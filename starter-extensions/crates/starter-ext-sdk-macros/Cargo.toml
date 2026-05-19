@@ -1,0 +1,31 @@
+[package]
+name        = "starter-ext-sdk-macros"
+description = "starter-extensions — proc-macros for `starter-ext-sdk`. `#[derive(Extension)]` reads `block.yaml` at the extension's compile time."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# A proc-macro crate. Reads the extension bundle's `block.yaml` from disk at
+# the *extension's* build time (see SCOPE.md R3, "Dispatch is manifest-driven")
+# and emits per-extension glue. No runtime logic; everything this crate writes
+# is consumed by the extension's compiler invocation, not the host.
+[lib]
+proc-macro = true
+
+[dependencies]
+# YAML + the workspace's `Manifest` schema. Bringing in `starter-ext-spi`
+# from a proc-macro crate is unusual but deliberate: the proc-macro must
+# validate against the **exact** schema the host will validate against, and
+# duplicating the schema here would invite drift (R3 — one source of truth).
+starter-ext-spi = { workspace = true }
+
+serde       = { workspace = true }
+serde_yaml  = { workspace = true }
+serde_json  = { workspace = true }
+semver      = { workspace = true }
+
+syn         = { workspace = true }
+quote       = { workspace = true }
+proc-macro2 = { workspace = true }

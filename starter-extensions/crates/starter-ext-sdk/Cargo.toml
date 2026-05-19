@@ -1,0 +1,40 @@
+[package]
+name        = "starter-ext-sdk"
+description = "What an extension author imports. `#[derive(Extension)]`, `requires!{}`, Ctx + Event + Cancel, and per-flavour entry-point glue."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# SCOPE.md R1: exactly one of `builtin`, `wasm`, `process` must be enabled.
+# Enforcement is layered:
+#   - `compile_error!` for zero flavours (clearest message).
+#   - Duplicate `#[no_mangle]` symbol for more-than-one (a linker error, as
+#     SCOPE.md explicitly calls out: "A linker error is the signal that more
+#     than one flavour is enabled at once.").
+[features]
+default = ["builtin"]
+builtin = []
+wasm    = []
+process = []
+
+[dependencies]
+starter-ext-spi        = { workspace = true }
+starter-ext-sdk-macros = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+serde_yaml  = { workspace = true }
+semver      = { workspace = true }
+thiserror   = { workspace = true }
+
+# `tokio::sync::mpsc::Sender<Event>` is the OnEvent shape we mirror from
+# `starter-spi::ai::OnEvent`. Only the `sync` feature — no runtime — so the
+# SDK does not impose a runtime choice on extension authors.
+tokio = { workspace = true }
+
+[dev-dependencies]
+# Tests in this crate exercise the declarative macros and the linker-symbol
+# trick; they do not need a proc-macro fixture (those live in
+# `examples/hello-builtin` once Phase 1 finishes).

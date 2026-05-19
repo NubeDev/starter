@@ -455,6 +455,34 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0c790de23124f9ab44544d7ac05d60440adc586479ce501c1d6d7da3cd8c9cf5"
 
 [[package]]
+name = "starter-ext-sdk"
+version = "0.1.0"
+dependencies = [
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-sdk-macros",
+ "starter-ext-spi",
+ "thiserror",
+ "tokio",
+]
+
+[[package]]
+name = "starter-ext-sdk-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-spi",
+ "syn",
+]
+
+[[package]]
 name = "starter-ext-spi"
 version = "0.1.0"
 dependencies = [

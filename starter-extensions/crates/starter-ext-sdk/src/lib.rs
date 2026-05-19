@@ -1,0 +1,404 @@
+//! # starter-ext-sdk
+//!
+//! What an extension author imports. SCOPE.md "What each crate / package
+//! owns — `starter-ext-sdk`" defines the contract:
+//!
+//! - `#[derive(Extension)]` reads `block.yaml` at the extension's compile
+//!   time and emits the metadata + handler-trait scaffolding (R3).
+//! - `requires!{}` declares the capability categories the extension needs
+//!   and generates a per-extension `Ctx` newtype whose method set reflects
+//!   that declaration (R6). No untyped `host_call(method, params)` escape
+//!   hatch in v0.1.
+//! - Mutually-exclusive cargo features (`builtin`, `wasm`, `process`)
+//!   gate the entry-point glue. Misconfiguration (zero or more than one
+//!   flavour) is caught at build time — `compile_error!` for zero,
+//!   duplicate `#[no_mangle]` symbol for more than one. SCOPE R1.
+//! - Builtin entry-point glue: `register_static_table!` exposes the
+//!   extension to a host that statically linked it in.
+//! - The `Ctx` always carries a `Stream<Item = Event>` shape mirroring
+//!   `starter-spi::ai::OnEvent + Cancel` (Stage 4 explicit requirement).
+//!
+//! The SDK re-exports the few `starter-ext-spi` items proc-macro-generated
+//! code needs to name (`Manifest`, `ExtensionId`, `Error`, `Result`,
+//! `serde_yaml`, `serde_json`, `semver`). Doing so keeps the extension's
+//! own `Cargo.toml` minimal — one dep, not five.
+
+// `deny(unsafe_code)` rather than `forbid`, with a narrow `allow` on the
+// flavour-marker statics below: `#[no_mangle]` triggers the
+// `unsafe_code` lint in current rustc (it lets a crate squat on a
+// linker-global symbol), and the marker symbols are the entire point of
+// the multi-flavour linker check. The crate body otherwise contains no
+// unsafe code; the `deny` keeps that property visible.
+#![deny(unsafe_code)]
+#![warn(missing_docs)]
+
+// ---------------------------------------------------------------------------
+// Mutually-exclusive flavour gate (SCOPE R1)
+// ---------------------------------------------------------------------------
+
+#[cfg(not(any(feature = "builtin", feature = "wasm", feature = "process")))]
+compile_error!(
+    "starter-ext-sdk: exactly one of the `builtin`, `wasm`, `process` features must be enabled. \
+     SCOPE.md R1: the entry-point glue differs per flavour; enabling zero or more than one is \
+     a build-time misconfiguration."
+);
+
+// The duplicate-`#[no_mangle]` trick is what gives "more than one flavour
+// enabled" a *linker* error (the wording SCOPE R1 specifically uses).
+// rustc accepts conflicting `#[no_mangle]` statics in the same crate up
+// until link time; the linker then sees two definitions of the same global
+// symbol and refuses.
+//
+// We expose the symbol with a deliberately-loud name so the linker diagnostic
+// points the operator at the right page in SCOPE.md.
+
+/// Marker symbol emitted exactly once per crate when a single flavour
+/// feature is enabled. Duplicate definition (more than one flavour) is a
+/// linker error; absent definition (zero flavours) is caught by the
+/// `compile_error!` above.
+///
+/// The value is the flavour code (0 = builtin, 1 = wasm, 2 = process) —
+/// purely informational; the link-time check does not inspect it.
+#[cfg(feature = "builtin")]
+#[allow(unsafe_code)]
+#[no_mangle]
+#[doc(hidden)]
+pub static __STARTER_EXT_FLAVOUR_MARKER: u8 = 0;
+#[cfg(feature = "wasm")]
+#[allow(unsafe_code)]
+#[no_mangle]
+#[doc(hidden)]
+pub static __STARTER_EXT_FLAVOUR_MARKER: u8 = 1;
+#[cfg(feature = "process")]
+#[allow(unsafe_code)]
+#[no_mangle]
+#[doc(hidden)]
+pub static __STARTER_EXT_FLAVOUR_MARKER: u8 = 2;
+
+// ---------------------------------------------------------------------------
+// Modules
+// ---------------------------------------------------------------------------
+
+pub mod ctx;
+pub mod meta;
+
+#[cfg(feature = "builtin")]
+pub mod builtin;
+#[cfg(feature = "process")]
+pub mod process;
+#[cfg(feature = "wasm")]
+pub mod wasm;
+
+// ---------------------------------------------------------------------------
+// Public re-exports
+//
+// What the proc-macro and `requires!{}` expansion needs to name with an
+// absolute path. Keeping these here means generated code looks the same
+// regardless of which `use` statements the extension author wrote.
+// ---------------------------------------------------------------------------
+
+pub use ctx::{Cancel, EmitEvent, Event, EventReceiver, EventSender};
+pub use meta::{ExtensionDispatch, ExtensionMeta};
+
+pub use starter_ext_spi::{
+    AuthGate, Authority, Backoff, Capability, ContributeCli, ContributeGrpc, ContributeRest,
+    ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker, Contributes, Error,
+    ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope, LifecycleState, Manifest,
+    PathSpec, RestartPolicy, Result, Runtime, RuntimeKind, Supervision,
+};
+
+/// Re-export so generated code can name `::starter_ext_sdk::serde_json::Value`
+/// without the extension's `Cargo.toml` adding `serde_json` itself.
+pub use serde_json;
+/// Re-export so generated code can lazily parse the embedded `block.yaml`.
+pub use serde_yaml;
+/// Re-export so generated code can name `::starter_ext_sdk::semver::Version`.
+pub use semver;
+
+/// `#[derive(Extension)]` — see the [crate-level docs](crate) and
+/// SCOPE.md "What each crate / package owns: starter-ext-sdk".
+pub use starter_ext_sdk_macros::Extension;
+
+// ---------------------------------------------------------------------------
+// `requires! { … }` — declarative macro generating a per-extension `Ctx`
+// newtype whose method set is determined by the capability categories the
+// extension declares (SCOPE R6).
+// ---------------------------------------------------------------------------
+
+/// Declare the capability categories an extension requires, and generate
+/// the typed `Ctx` newtype it receives at runtime.
+///
+/// Invoke once per extension crate:
+///
+/// ```ignore
+/// starter_ext_sdk::requires! {
+///     name = WeatherCtx,
+///     capabilities = [secrets, http_out, wall_clock],
+/// }
+/// ```
+///
+/// The macro emits:
+///
+/// - `pub struct WeatherCtx` wrapping the SDK's internal handle. The struct
+///   is opaque — the only way to obtain one is from the host's entry-point
+///   glue.
+/// - One method per declared capability category, returning a typed
+///   sub-handle. Categories not declared are not even *named* on the
+///   type — `ctx.http()` on a `Ctx` that did not declare `http_out` does
+///   not type-check (R6, "no untyped `host_call` escape hatch").
+/// - `events()` and `cancel()` methods that mirror
+///   `starter-spi::ai::OnEvent + Cancel`. These are *always* present on
+///   every Ctx because streaming + cancellation are kernel-level (post-R13
+///   stream sub-protocol).
+///
+/// The macro also emits a `const REQUIRED_CAPABILITIES: &[&str]` slice the
+/// host reads at load time to cross-check against the manifest's
+/// `requires:` block. Mismatch (declared in `requires!{}` but absent from
+/// `block.yaml`, or vice versa) is a load-time validation error in
+/// `starter-ext-host`.
+#[macro_export]
+macro_rules! requires {
+    (
+        name = $ctx_name:ident,
+        capabilities = [ $( $cap:ident ),* $(,)? ] $(,)?
+    ) => {
+        /// Per-extension Ctx newtype generated by `starter_ext_sdk::requires!`.
+        ///
+        /// Method set is the union of:
+        ///
+        /// - One accessor per capability category listed in the macro
+        ///   invocation. Methods absent from the macro invocation are absent
+        ///   from this type — there is no `host_call(name, params)` escape
+        ///   hatch (SCOPE R6).
+        /// - The always-present `events()` / `cancel()` pair mirroring
+        ///   `starter-spi::ai::OnEvent + Cancel` (Stage 4 requirement,
+        ///   post-R13 stream sub-protocol).
+        #[derive(Clone)]
+        pub struct $ctx_name {
+            inner: $crate::ctx::CtxInner,
+        }
+
+        impl $ctx_name {
+            /// The capability categories declared by `requires!`. The
+            /// host reads this slice at load time and cross-checks
+            /// against the manifest's `capabilities:` block (R6).
+            pub const REQUIRED_CAPABILITIES: &'static [&'static str] =
+                &[ $( stringify!($cap) ),* ];
+
+            /// Construct from an SDK-internal handle. Called only by the
+            /// per-flavour entry-point glue; extensions never call this.
+            #[doc(hidden)]
+            pub fn __from_inner(inner: $crate::ctx::CtxInner) -> Self {
+                Self { inner }
+            }
+
+            /// Borrow the bounded channel for emitting events back to the
+            /// host. Mirror of `starter-spi::ai::OnEvent` — bounded
+            /// `mpsc::Sender<Event>`, sync callers `try_send` and drop on
+            /// overflow, async callers `.await` each send. The host turns
+            /// these into `stream.event` JSON-RPC notifications.
+            pub fn events(&self) -> &$crate::EventSender {
+                self.inner.events()
+            }
+
+            /// Borrow the cancellation handle. Mirror of
+            /// `starter-spi::ai::Cancel`. Extension handlers poll
+            /// `is_cancelled()` between long steps or
+            /// `.select!` against `cancelled().await` in async contexts.
+            pub fn cancel(&self) -> &dyn $crate::Cancel {
+                self.inner.cancel()
+            }
+
+            $(
+                $crate::__requires_capability_method!($cap);
+            )*
+        }
+
+        impl ::std::fmt::Debug for $ctx_name {
+            fn fmt(&self, f: &mut ::std::fmt::Formatter<'_>) -> ::std::fmt::Result {
+                f.debug_struct(stringify!($ctx_name)).finish_non_exhaustive()
+            }
+        }
+
+    };
+}
+
+/// Internal helper expanding to one accessor method per capability category.
+///
+/// Lives at crate root so `requires!{}` can name it via `$crate::`. Each
+/// arm returns a category-specific borrow — secrets, http, fs, wall clock,
+/// custom — implemented as thin views over the same internal `CtxInner`.
+///
+/// Adding a new category here is the SDK side of the additive-extension
+/// pattern SCOPE describes ("Adding a new host method is an additive trait
+/// extension"). The matching `Capability` variant lives in
+/// `starter-ext-spi`.
+#[doc(hidden)]
+#[macro_export]
+macro_rules! __requires_capability_method {
+    (secrets) => {
+        /// Secret-store access. Granted by `capabilities.secrets:` in
+        /// `block.yaml`; an empty prefix list neutralises every call.
+        pub fn secrets(&self) -> &$crate::ctx::SecretsHandle {
+            self.inner.secrets()
+        }
+    };
+    (http_out) => {
+        /// Outbound HTTP. Granted by `capabilities.http_out:` in
+        /// `block.yaml`; an empty allowlist neutralises every call.
+        pub fn http(&self) -> &$crate::ctx::HttpOutHandle {
+            self.inner.http_out()
+        }
+    };
+    (fs) => {
+        /// Filesystem access. Granted by `capabilities.fs:`.
+        pub fn fs(&self) -> &$crate::ctx::FsHandle {
+            self.inner.fs()
+        }
+    };
+    (wall_clock) => {
+        /// Wall-clock time access. Boolean grant.
+        pub fn wall_clock(&self) -> &$crate::ctx::WallClockHandle {
+            self.inner.wall_clock()
+        }
+    };
+    (tracing) => {
+        /// Structured tracing surface. Always-safe; treated as a capability
+        /// so the manifest documents which extensions emit telemetry.
+        pub fn tracing(&self) -> &$crate::ctx::TracingHandle {
+            self.inner.tracing()
+        }
+    };
+    ($other:ident) => {
+        compile_error!(concat!(
+            "starter_ext_sdk::requires!: unknown capability category `",
+            stringify!($other),
+            "`. Known categories: secrets, http_out, fs, wall_clock, tracing. ",
+            "If you need a host-specific category, declare it as `custom` in the manifest \
+             and obtain it via the host's `Custom` capability variant — there is no untyped \
+             `host_call` escape hatch (SCOPE R6)."
+        ));
+    };
+}
+
+// ---------------------------------------------------------------------------
+// `register_static_table!` — builtin entry-point glue (SCOPE R1, "builtin").
+// ---------------------------------------------------------------------------
+
+/// Builtin flavour entry-point glue.
+///
+/// SCOPE R1: builtin extensions are statically linked into the host. They
+/// register themselves into a host-side dispatch table at startup. This
+/// macro is the only call an extension author makes to expose itself to a
+/// host that built it in.
+///
+/// Invoke once per extension crate, *after* the `#[derive(Extension)]`
+/// type and its `Handlers` impl:
+///
+/// ```ignore
+/// starter_ext_sdk::register_static_table! {
+///     extension: Weather,
+///     instance: Weather, // unit struct → const-constructible
+/// }
+/// ```
+///
+/// The macro emits a `#[linkme::distributed_slice]`-style entry under a
+/// fixed symbol the host (`starter-ext-host`) scans at startup. For v0.1
+/// we stay on stable Rust without `linkme`: the host calls a discovery
+/// function the SDK exposes per crate (`__starter_ext_register`) via a
+/// `#[ctor]`-style constructor — there isn't one on stable, so the
+/// host's `Loader::commit()` calls a user-provided `register_extensions!`
+/// macro that lists every linked crate. The list is short (one line per
+/// extension); the alternative (link-time discovery) is a stability
+/// landmine on stable Rust.
+///
+/// In Phase 1 (this stage) the macro emits a `pub fn register(table: &mut
+/// BuiltinTable)` symbol the host calls explicitly. Phase 2 of the SDK
+/// will introduce link-time discovery if and when stable Rust gains it.
+#[cfg(feature = "builtin")]
+#[macro_export]
+macro_rules! register_static_table {
+    ( extension: $ty:ty, ctx: $ctx_ty:ty, instance: $instance:expr $(,)? ) => {
+        /// Register this extension's dispatch entries into a host-side
+        /// table. Called by the host's `BuiltinRegistry::collect()` once
+        /// per linked extension at startup.
+        ///
+        /// This is the single symbol that distinguishes a builtin
+        /// extension from a non-extension Rust library — it is the
+        /// builtin-flavour analogue of the WASM component's
+        /// `wit_bindgen::export!` and the process binary's
+        /// `tokio::main`.
+        ///
+        /// The closure inside re-wraps the host's `CtxInner` into the
+        /// per-extension `Ctx` newtype generated by `requires!{}` before
+        /// invoking `ExtensionDispatch::dispatch_tool`. That keeps the
+        /// host's dispatch table flat (one closure type per extension,
+        /// erased into `Arc<BuiltinDispatchFn>`) without losing the
+        /// typed `Ctx` discipline of R6.
+        pub fn register(table: &mut $crate::builtin::BuiltinTable) {
+            // SAFETY note: `$instance` is moved into the closure once and
+            // shared across calls. SCOPE R5 demands `&self` methods, so a
+            // single instance shared across calls is correct by design.
+            let instance: $ty = $instance;
+            table.insert(
+                <$ty as $crate::ExtensionMeta>::id().clone(),
+                $crate::builtin::BuiltinEntry::new(
+                    <$ty as $crate::ExtensionDispatch>::declared_tool_ids(),
+                    move |tool_id, ctx_inner, params| {
+                        let ctx = <$ctx_ty>::__from_inner(ctx_inner.clone());
+                        <$ty as $crate::ExtensionDispatch>::dispatch_tool(
+                            &instance, tool_id, &ctx, params,
+                        )
+                    },
+                ),
+            );
+        }
+    };
+}
+
+#[cfg(test)]
+mod tests {
+    //! Compile-time sanity tests for the `requires!` macro. The flavour
+    //! feature gate is exercised implicitly: this crate's test target is
+    //! built with `--features builtin` (the workspace default), which
+    //! satisfies the `compile_error!`. Multi-flavour misconfiguration is
+    //! a *linker* check and is exercised in the workspace's integration
+    //! tests, not here.
+
+    // The `requires!` macro expands into a struct with always-present
+    // `events()` and `cancel()` methods plus per-capability accessors.
+    // We expand it under a known shape and assert the surface.
+
+    crate::requires! {
+        name = NoCapsCtx,
+        capabilities = [],
+    }
+
+    crate::requires! {
+        name = HttpCtx,
+        capabilities = [http_out],
+    }
+
+    crate::requires! {
+        name = MultiCtx,
+        capabilities = [secrets, http_out, wall_clock, tracing, fs],
+    }
+
+    #[test]
+    fn required_capabilities_slice_matches_macro_arguments() {
+        assert!(NoCapsCtx::REQUIRED_CAPABILITIES.is_empty());
+        assert_eq!(HttpCtx::REQUIRED_CAPABILITIES, &["http_out"]);
+        assert_eq!(
+            MultiCtx::REQUIRED_CAPABILITIES,
+            &["secrets", "http_out", "wall_clock", "tracing", "fs"]
+        );
+    }
+
+    #[test]
+    fn flavour_marker_symbol_has_expected_value_for_builtin_feature() {
+        // Crate-level: the default feature set is `builtin`, so the
+        // marker should be 0. Bumping the default feature or the value
+        // encoding is a deliberate (and load-bearing) change.
+        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 0);
+    }
+}

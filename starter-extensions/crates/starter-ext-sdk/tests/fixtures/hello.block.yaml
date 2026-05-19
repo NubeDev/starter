@@ -1,0 +1,17 @@
+v: 1
+id: com.acme.hello
+version: 0.1.0
+display_name: "Hello"
+runtime:
+  kind: builtin
+  crate_name: hello
+contributes:
+  tools:
+    - id: com.acme.hello.echo
+      input_schema: schemas/in.json
+      output_schema: schemas/out.json
+      description_file: docs/echo.md
+    - id: com.acme.hello.shout
+      input_schema: schemas/in.json
+      output_schema: schemas/out.json
+      description_file: docs/shout.md

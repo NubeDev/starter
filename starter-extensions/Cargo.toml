@@ -2,6 +2,8 @@
 resolver = "2"
 members = [
     "crates/starter-ext-spi",
+    "crates/starter-ext-sdk",
+    "crates/starter-ext-sdk-macros",
 ]
 
 # `starter-extensions` is a sibling workspace to `starter` (see
@@ -23,8 +25,9 @@ rust-version = "1.78"
 # The single contract crate shared with the parent workspace. R2: every crate
 # in `starter-extensions` is allowed to depend on `starter-ext-spi`, and
 # `starter-ext-spi` is allowed to depend on `starter-spi` — nothing else.
-starter-spi     = { path = "../crates/starter-spi", version = "0.1.0" }
-starter-ext-spi = { path = "crates/starter-ext-spi", version = "0.1.0" }
+starter-spi             = { path = "../crates/starter-spi", version = "0.1.0" }
+starter-ext-spi         = { path = "crates/starter-ext-spi", version = "0.1.0" }
+starter-ext-sdk-macros  = { path = "crates/starter-ext-sdk-macros", version = "0.1.0" }
 
 # Third-party building blocks. Kept aligned with the parent workspace so a
 # consumer importing both does not pull two majors of the same crate.
@@ -33,3 +36,9 @@ serde_json  = "1"
 serde_yaml  = "0.9"
 thiserror   = "1"
 semver      = { version = "1", features = ["serde"] }
+tokio       = { version = "1", default-features = false, features = ["sync"] }
+
+# proc-macro building blocks; only consumed by `starter-ext-sdk-macros`.
+syn         = { version = "2", features = ["full"] }
+quote       = "1"
+proc-macro2 = "1"
