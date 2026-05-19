@@ -18,13 +18,14 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
+use utoipa::ToSchema;
 
 use super::UnitError;
 
 /// Closed enum of physical quantities the platform recognises.
 ///
 /// See module docs for the R4 quote that pins this type's shape.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Quantity {
     /// Thermodynamic temperature. Canonical unit: degree Celsius.

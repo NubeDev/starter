@@ -9,12 +9,13 @@
 use serde::{Deserialize, Serialize};
 use std::fmt;
 use std::str::FromStr;
+use utoipa::ToSchema;
 
 use super::UnitError;
 
 /// Closed enum of unit codes for the v1 surface. Variants are locked
 /// in stage 1 of the Phase 0 plan.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Unit {
     // -- Temperature ----------------------------------------------------

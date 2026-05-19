@@ -20,6 +20,7 @@ pub mod error;
 pub mod filter;
 pub mod id;
 pub mod paging;
+pub mod preferences;
 pub mod secrets;
 pub mod service;
 pub mod sort;
