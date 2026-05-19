@@ -856,6 +856,23 @@ discipline mirrors `starter-spi`.
   **Revisit trigger:** the engine legitimately needs to dispatch on
   policy *slot* names (not policy *values*) — at which point R3
   itself is revisited, not the test.
+- **D1h — Phase 2 dep-tree gates landed as an automated test.** The
+  workspace dep-tree gates promised by the original starter-flow-
+  engine job (no `adk-rust` under `starter-flow` or
+  `starter-flow-nodes`, the `starter-flow-spi` Phase 1 dep baseline
+  in `DOCS/flow/scope/starter-flow-spi-deps.baseline.txt` holds, and
+  no flow crate depends on the Phase 3 surface crates `starter-mcp`
+  / `starter-server` / `starter-cli`) live as an executable
+  integration test at
+  `crates/starter-flow/tests/workspace_dep_tree_gates.rs`. The test
+  shells out to `cargo tree --edges normal` for each flow crate from
+  the workspace root resolved via `CARGO_MANIFEST_DIR`; absolute
+  worktree paths are normalised to `<WORKTREE>/…` before the SPI
+  baseline diff so the test is stable across worktree relocations.
+  **Revisit trigger:** the SPI crate legitimately gains a new
+  dependency — at which point the baseline file is re-generated in
+  the same commit that adds the dep, and the change must be
+  reviewed.
 
 ## Open questions
 
