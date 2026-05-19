@@ -5772,18 +5772,26 @@ name = "starter-auth-oauth"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum 0.8.9",
+ "base64 0.22.1",
  "chrono",
+ "http",
  "oauth2",
+ "rand 0.8.6",
  "reqwest 0.12.28",
  "serde",
  "serde_json",
+ "serde_urlencoded",
+ "sha2",
  "sqlx",
  "starter-auth-users",
  "starter-spi",
  "starter-store-sqlite",
  "thiserror 1.0.69",
  "tokio",
+ "tower 0.5.3",
  "tracing",
+ "url",
  "uuid",
 ]
 

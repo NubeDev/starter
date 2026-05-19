@@ -32,7 +32,11 @@ pub mod config;
 pub mod identity_store;
 pub mod linked_providers;
 pub mod provider;
+pub mod providers;
+pub mod routes;
+pub mod session_bridge;
 pub mod state_store;
+pub mod testing;
 
 pub use config::{OAuthConfig, OAuthConfigError, ProviderCredentials, StateStoreKind};
 pub use identity_store::{IdentityStore, IdentityStoreError, OAuthIdentity};
@@ -40,6 +44,9 @@ pub use identity_store::{IdentityStore, IdentityStoreError, OAuthIdentity};
 pub use identity_store::SqliteIdentityStore;
 pub use linked_providers::OAuthLinkedProviders;
 pub use provider::{OAuthProvider, ProviderError, ProviderIdentity};
+pub use providers::GitHubProvider;
+pub use routes::{oauth_router, OAuthRoutesState};
+pub use session_bridge::mint_session_headers;
 pub use state_store::{
     MemoryStateStore, OAuthFlowState, OAuthStateError, OAuthStateStore, STATE_TTL,
 };
