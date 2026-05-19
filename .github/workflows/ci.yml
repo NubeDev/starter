@@ -59,6 +59,9 @@ jobs:
       - name: test (starter-auth-users, sqlite feature)
         run: cargo test -p starter-auth-users --features sqlite --no-fail-fast
 
+      - name: test (starter-auth-oauth, sqlite feature)
+        run: cargo test -p starter-auth-oauth --features sqlite --no-fail-fast
+
       - name: test (starter-server, testing feature)
         run: cargo test -p starter-server --features testing --no-fail-fast
 

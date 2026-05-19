@@ -57,6 +57,7 @@ sqlx                 = { workspace = true, features = ["sqlite", "macros", "migr
 starter-auth-users   = { workspace = true, features = ["sqlite"] }
 tower                = { workspace = true }
 serde_urlencoded     = "0.7"
+tracing-subscriber   = { workspace = true }
 
 [package.metadata.docs.rs]
 all-features = true
