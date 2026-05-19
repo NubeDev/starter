@@ -2,112 +2,143 @@
 
 ## Current stage
 
-**Stage 2 — REVIEW gate (Phase 3 + 24/7 durability boundary).**
-Stage 1 (prose-only decision lock) is complete and pushed.
-Do not advance to stage 3 until the user signs off.
+**Stage 4 — three SQLite store impls in `crates/starter-store-sqlite/src/flow/`
+behind a new default-off `flow` feature.** Stage 3 (SPI fleshout +
+baseline regeneration) is complete and pushed.
 
-## Stage 1 outcome (one-line summary)
+## Stages complete
 
-D-F3.1 through D-F3.12 locked verbatim against the source-of-truth
-flow SCOPE; Q1–Q8 resolved; **Q4 → STANDALONE** (no four-transport
-smoke exists under `crates/smoke-tests/tests/` — five files there
-are workspace-level invariants, none transport-stream); one
-implementation-choice flag carried into stage 3
-(`EventSink::dedup_key` signature: `(&self, &Event)` vs
-`(&self, kind: &str, payload: &Value)` — both honour D-F3.12).
+- **Stage 1.** D-F3.1..D-F3.12 + Q1..Q8 locked; Q4 → STANDALONE.
+- **Stage 2.** REVIEW gate passed (user signed off via "keep going").
+- **Stage 3.** SPI trait fleshout + baseline regeneration landed in one
+  commit per D-F3.7.
 
-## What stage 2 reviewer needs to confirm
+## Stage 3 outcome (one-line summary)
 
-The six load-bearing decisions WORKFLOW.md flags (D-F3.1, D-F3.2,
-D-F3.6, D-F3.8, D-F3.11, D-F3.12) plus Q4. Stage-3 through stage-9
-re-do cost is high if these are wrong.
+`FlowStore` + `RunStore` + `SessionStore` trait method shapes per
+D-F3.1, `RunStore::find_by_dedup_key` added per D-F3.12, additive
+value types (`RunOpts`, `CheckpointRetention`, `RunState`,
+`RunCheckpoint`, `RunOutcome`, `FlowRevision`, `SessionId`,
+`SessionRecord`, `DedupKey`, `RunMetrics`, `EngineHealth`,
+`EngineError`), additive `FlowEvent` variants (`CheckpointFailed`,
+`DedupShortCircuit`), additive `FlowError::NotFound { kind, id }`,
+additive `EventSink::dedup_key(&self, kind, payload) -> Option<String>`
+default-`None` method. Baseline regenerated in the same commit per
+D-F3.7. 11 unit tests pass; workspace builds `--all-features`;
+`workspace_dep_tree_gates` test green (all 5 sub-tests including the
+baseline-holds check); clippy clean across SPI-dependent crates.
 
-1. **D-F3.1 — SPI trait method shapes.** Async + `&self` +
-   `Result<T, FlowError>`. `RunStore::checkpoint` takes
-   `&[(SlotRef, SlotValue)]` (borrowed). `RunStore` gains
-   `find_by_dedup_key(service_name, dedup_key)`. `FlowError`
-   additively gains `NotFound { kind, id }`. Every new public
-   enum + config struct `#[non_exhaustive]`.
-2. **D-F3.2 — per-tick checkpoint cadence**, not per-write.
-   Propagator's existing tick counter is `seq`.
-3. **D-F3.6 — smokes live in `crates/smoke-tests/`** per the D1d
-   revisit-trigger from the Phase 2 SCOPE. Engine-internal smokes
-   stay where they are.
-4. **D-F3.8 — `BEGIN IMMEDIATE` atomic-tx checkpoint + WAL pragmas**
-   (`journal_mode=WAL, synchronous=NORMAL, busy_timeout=5000,
-   foreign_keys=ON`) applied by extending the existing pool-init
-   path.
-5. **D-F3.11 — Degraded-mode backend-failure posture.** Retry-with-
-   backoff 50→100→200→400→800ms capped at 5; after the 5th the
-   engine transitions to `Degraded`; in-flight runs keep serving
-   from in-memory state (queue bounded by
-   `RunOpts.degraded_queue_capacity`, evict-oldest);
-   `Engine::start` returns `BackendUnavailable` while Degraded;
-   successful checkpoint drains queue and clears Degraded.
-6. **D-F3.12 — at-least-once + dedup.** `EventSink::dedup_key()`
-   additive optional method (default `None`); blake3 fallback;
-   `UNIQUE (service_name, dedup_key)` partial index on `runs`;
-   re-deliveries short-circuit via `find_by_dedup_key` and emit
-   `FlowEvent::DedupShortCircuit`.
+## Stage 3 implementation choices made
 
-## Reality-check addenda the reviewer should see
+- **`EventSink::dedup_key` signature**:
+  `(&self, kind: &str, payload: &Value) -> Option<String>` (mirrors
+  `emit`'s shape). Default `None` impl keeps all existing
+  `impl EventSink for …` blocks source-compatible (verified via
+  `cargo test -p starter-spi`).
+- **`RunStore::checkpoint` gained an explicit `seq: u64` param**
+  (deviation from the SCOPE prose "verbatim" block). Reason: the
+  resume path uses `MAX(seq)` to find the latest checkpoint, so
+  the propagator's monotonic tick counter (Q2) must drive `seq`;
+  store auto-increment would lose the tick-counter ↔ seq linkage
+  and break resume correctness. Documented in the trait method
+  doc-comment.
+- **`RunStore::start` gained an `Option<DedupKey>` param**
+  (deviation from the SCOPE prose "verbatim" block). Reason:
+  D-F3.12 requires dedup-key recording at run-start time inside
+  the `runs` row that the `UNIQUE (service_name, dedup_key)`
+  partial index protects. Non-service runs pass `None`. The
+  `DedupKey` type was added to the SPI to keep the pair typed.
+- **`EngineError` lives in `starter-flow-spi`** as a new
+  SPI-level type, distinct from the engine crate's internal
+  state-machine `EngineError` (which carries `IllegalTransition`
+  for the R12 transition matrix). Variants: `BackendUnavailable`
+  + `Flow(#[from] FlowError)`. Stage 6 will decide whether to
+  merge or keep separate.
+- **`RunState` enum** — minimal: `Running, Paused, Completed,
+  Failed, Cancelled`. `Paused` included now so the checkpoint
+  schema doesn't need a migration when Phase 7 lands per-flow
+  pause.
+- **No new `session.rs` file** — `SessionStore` co-located in
+  `flow.rs` per Q1 (smaller module surface).
 
-These came out of stage-1 verification against the live workspace
-and are recorded in SCOPE.md §"Stage 1 — decision lock":
+## Known pre-existing issues (NOT caused by stage 3)
 
-- **`FlowEvent::SlotChanged` is a doc-only carry-over.** The
-  per-run stream variant in `starter-flow-spi` is `NodeEmitted`;
-  `GraphEvent::SlotChanged` is the internal graph-level bus
-  name. Stage-6 + Stage-9 assertions use `NodeEmitted` for the
-  "in-flight runs keep emitting during outage" invariant. No new
-  `FlowEvent` variant added beyond `CheckpointFailed` +
-  `DedupShortCircuit`.
-- **`RunOpts` is net-new in stage 3.** Phase 2 has only
-  `PropagatorConfig { max_propagation_hops }` in
-  `starter-flow`. Stage 3 introduces `RunOpts` in
-  `starter-flow-spi`; stage 5's `Engine::with_run_store(…)`
-  builder projects `RunOpts.max_propagation_hops` into the
-  existing `PropagatorConfig`. **No rename or refactor of
-  `PropagatorConfig`** (out of scope per WORKFLOW anti-pattern).
-- **`EventSink::dedup_key` signature choice deferred to stage 3
-  implementation.** The Phase 2 `EventSink::emit(&self, kind:
-  &str, payload: Value)` shape gives stage 3 two source-compatible
-  options for the additive default-`None` accessor; pick at
-  implementation time. Both honour D-F3.12.
-- **Four Phase 3 smoke files live as siblings of the existing
-  five workspace smokes** under `crates/smoke-tests/tests/` with
-  a `flow_*.rs` prefix so `ls` keeps ordering visible.
+- `cargo clippy --workspace --all-targets -- -D warnings` fails
+  on master too with:
+  `error[E0432]: unresolved import 'starter_grpc::testing'` in
+  `crates/starter-grpc/tests/tools_service.rs` — needs
+  `--features testing` which workspace clippy doesn't add.
+  Worked around stage-3 verification by scoping clippy to
+  SPI-touched + transitive-dependent crates (all clean).
+- `cargo fmt --check` reports pre-existing drift in:
+  `crates/starter-spi/src/ui/theme/mod.rs`,
+  `crates/starter-ui-theme/src/{lib,routes}.rs`,
+  `examples/notes/src/server.rs`. Not stage-3 files.
+  Stage 10 should track these as a separate workspace-hygiene
+  follow-up (out of scope for this job).
 
 ## Branch + commits
 
 - Branch: `codeless/starter-flow-phase3-persistence-surfaces`.
-- Stage 1 commit: `stage 1: lock Phase 3 + 24/7 durability
-  boundary (D-F3.1..D-F3.12, Q1..Q8)`.
+- Stage 1 commit: `8407d6e` — decision lock.
+- Stage 3 commit: see latest log — SPI fleshout + baseline
+  regeneration.
 - Pushed to origin.
 
-## What stage 3 starts with (after REVIEW passes)
+## What stage 4 starts with
 
-- SPI trait fleshout in `crates/starter-flow-spi/src/flow.rs`
-  (and possibly a new `session.rs`) per D-F3.1 + additive
-  durability extensions per the Decisions block.
-- Net-new `RunOpts` struct in `starter-flow-spi` (D-F3.1 + Q5
-  addendum).
-- `EventSink::dedup_key` additive method on the existing
-  `starter-spi::service::sink::EventSink` trait (signature
-  chosen at stage 3 implementation time per the reality-check
-  addendum above).
-- Baseline regenerated **in the same commit** per D-F3.7 even if
-  byte-identical; commit message explicitly names the
-  regeneration.
-- Stages 4–10 producing a baseline diff is a stage-fail per
-  D-F3.7; revert.
+- New `flow` cargo feature on `starter-store-sqlite` (default-off
+  per D-F3.3).
+- `crates/starter-store-sqlite/src/flow/{flow_store,run_store,
+  session_store}.rs` + a sibling `schema` module for JSON-envelope
+  serializers.
+- Migrations in `crates/starter-store-sqlite/migrations/flow/`
+  following the existing `NNNN_<name>.sql` shape. First migration
+  carries a header comment naming the forward-only convention
+  (D-F3 durability hardening block).
+- Tables: `flow_revisions`, `flow_heads`, `runs` (with
+  `dedup_key TEXT NULL` + `service_name TEXT NULL` + the
+  `UNIQUE (service_name, dedup_key) WHERE … IS NOT NULL` partial
+  index per D-F3.12), `run_checkpoints` with `(run_id, seq)`
+  primary key, `sessions`.
+- WAL pragmas (`journal_mode=WAL, synchronous=NORMAL,
+  busy_timeout=5000, foreign_keys=ON`) applied by **extending**
+  (not replacing) the existing `crates/starter-store-sqlite/src/pool/`
+  connection-init path.
+- `SqliteRunStore::checkpoint` wraps the row insert + companion
+  `runs.status` update + in-tx pruning in a single
+  `BEGIN IMMEDIATE` transaction (D-F3.8 + D-F3.9).
+- Unit tests cover the five cases named in WORKFLOW.md stage 4
+  "Done when": (a) `BEGIN IMMEDIATE` atomicity via injected
+  fault; (b) in-tx pruning 200→100 with `min(seq)=101`;
+  (c) `finish` keep-final-row; (d) dedup-uniqueness collision;
+  (e) WAL-pragma verification.
+
+## Stage-4 implementation gotchas
+
+- The SPI `RunStore::checkpoint` signature includes the
+  `seq: u64` param; the store derives nothing from auto-increment.
+- The SPI `RunStore::start` signature includes
+  `dedup: Option<DedupKey>`; the store writes the pair into the
+  `runs` row when `Some`, leaves both NULL when `None`.
+- `chrono` is not a direct dep of `starter-flow-spi` (it's
+  transitive via `starter-spi`). `created_at` / `updated_at`
+  columns are populated inside the store impl (SQLite
+  `CURRENT_TIMESTAMP` or a Rust-side `chrono::Utc::now()` — pick
+  at impl time); they don't appear on the SPI value types.
 
 ## Phase-3 follow-up notes (not in scope for this job)
 
 - 1M-tick long-uptime soak as a nightly CI job (Q6).
-- `RunOpts.checkpoint_backoff` if a consumer surfaces real need
-  (Q8).
+- `RunOpts.checkpoint_backoff` if a consumer surfaces a real
+  need (Q8).
 - `FlowEvent::HealthChanged` engine-level event once a
   Phase-7-owned engine-level event bus exists (Q7).
 - `starter-store-postgres` `flow` feature mirror (D-F3.3 revisit
   trigger).
+- Reconcile the two `EngineError` types (SPI vs engine-internal)
+  — stage 6 decision.
+- Pre-existing workspace fmt drift in theme/ui-theme/notes
+  crates (out-of-scope for the Phase 3 job).
+- Pre-existing `starter-grpc` clippy failure under
+  `--workspace --all-targets` (needs `--features testing`).
