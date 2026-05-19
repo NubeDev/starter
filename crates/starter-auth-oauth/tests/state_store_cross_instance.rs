@@ -178,11 +178,7 @@ async fn memory_state_store_fails_fast_when_callback_lands_on_wrong_instance() {
     provider_b.set_identity(ident_for("sub-iso", "bob@example.com"));
     // A fresh MemoryStateStore — the per-process default — that
     // never saw A's `put`.
-    let state_b = instance_b(
-        pool,
-        Arc::new(MemoryStateStore::new()),
-        provider_b.clone(),
-    );
+    let state_b = instance_b(pool, Arc::new(MemoryStateStore::new()), provider_b.clone());
 
     let resp = callback_handler(
         Arc::new(state_b),
@@ -197,7 +193,11 @@ async fn memory_state_store_fails_fast_when_callback_lands_on_wrong_instance() {
     .await;
 
     let (status, body) = body_text(resp).await;
-    assert_eq!(status, StatusCode::BAD_REQUEST, "wrong-instance must not 500");
+    assert_eq!(
+        status,
+        StatusCode::BAD_REQUEST,
+        "wrong-instance must not 500"
+    );
     assert!(
         body.contains("sign_in_failed"),
         "user-facing body is sign_in_failed (not the internal reason): {body}",

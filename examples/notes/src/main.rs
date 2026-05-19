@@ -48,14 +48,27 @@ async fn main() -> Result<()> {
             Command::new("serve")
                 .about("Run HTTP + gRPC servers")
                 .arg(database_url_arg())
-                .arg(Arg::new("http-bind").long("http-bind").default_value(DEFAULT_HTTP_BIND))
-                .arg(Arg::new("grpc-bind").long("grpc-bind").default_value(DEFAULT_GRPC_BIND)),
+                .arg(
+                    Arg::new("http-bind")
+                        .long("http-bind")
+                        .default_value(DEFAULT_HTTP_BIND),
+                )
+                .arg(
+                    Arg::new("grpc-bind")
+                        .long("grpc-bind")
+                        .default_value(DEFAULT_GRPC_BIND),
+                ),
         )
         .subcommand(
             Command::new("claim")
                 .about("Regenerate the pending claim and print the new bearer")
                 .arg(database_url_arg())
-                .arg(Arg::new("yes").long("yes").short('y').action(ArgAction::SetTrue)),
+                .arg(
+                    Arg::new("yes")
+                        .long("yes")
+                        .short('y')
+                        .action(ArgAction::SetTrue),
+                ),
         )
         .subcommands(registry.subcommands());
 
@@ -64,7 +77,10 @@ async fn main() -> Result<()> {
         Some(("migrate", sub)) => run_migrate(sub).await,
         Some(("serve", sub)) => run_serve(sub).await,
         Some(("claim", sub)) => run_claim(sub).await,
-        _ => registry.dispatch(&matches).await.map_err(|e| anyhow::anyhow!("{e:?}")),
+        _ => registry
+            .dispatch(&matches)
+            .await
+            .map_err(|e| anyhow::anyhow!("{e:?}")),
     }
 }
 
@@ -80,7 +96,9 @@ async fn open_pool(matches: &ArgMatches) -> Result<Pool> {
         .get_one::<String>("database-url")
         .map(String::as_str)
         .unwrap_or(DEFAULT_DATABASE_URL);
-    pool::connect(url).await.with_context(|| format!("connect to {url}"))
+    pool::connect(url)
+        .await
+        .with_context(|| format!("connect to {url}"))
 }
 
 async fn run_migrate(matches: &ArgMatches) -> Result<()> {
@@ -141,7 +159,9 @@ async fn run_claim(matches: &ArgMatches) -> Result<()> {
     }
     let pool = open_pool(matches).await?;
     let store = SqliteClaimStore::new(pool);
-    let pending = regenerate_claim_pending(&store).await.context("regenerate claim pending")?;
+    let pending = regenerate_claim_pending(&store)
+        .await
+        .context("regenerate claim pending")?;
     println!("{}", pending.plaintext);
     Ok(())
 }

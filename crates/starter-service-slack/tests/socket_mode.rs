@@ -33,7 +33,10 @@ struct VecSink {
 #[async_trait]
 impl EventSink for VecSink {
     async fn emit(&self, kind: &str, payload: Value) -> SinkResult<()> {
-        self.events.lock().unwrap().push((kind.to_string(), payload));
+        self.events
+            .lock()
+            .unwrap()
+            .push((kind.to_string(), payload));
         Ok(())
     }
 }
@@ -42,6 +45,7 @@ impl EventSink for VecSink {
 ///   - accepts one connection,
 ///   - sends each frame in `frames` to the client,
 ///   - then waits for the client to close the socket.
+///
 /// Returns the bound `ws://127.0.0.1:PORT/`.
 async fn start_ws_server(frames: Vec<String>) -> (String, tokio::task::JoinHandle<Vec<String>>) {
     let listener = TcpListener::bind("127.0.0.1:0").await.unwrap();
@@ -108,10 +112,7 @@ async fn emits_events_api_envelope_and_acks() {
     );
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     // Wait for either the emit to land or a short timeout.
     let deadline = tokio::time::Instant::now() + Duration::from_secs(3);
@@ -140,7 +141,11 @@ async fn emits_events_api_envelope_and_acks() {
 
     // Inspect the emit.
     let events = sink.events.lock().unwrap().clone();
-    assert_eq!(events.len(), 1, "expected one emitted event, got {events:?}");
+    assert_eq!(
+        events.len(),
+        1,
+        "expected one emitted event, got {events:?}"
+    );
     assert_eq!(events[0].0, "slack.app_mention");
     assert_eq!(
         events[0].1["event"]["channel"].as_str(),
@@ -151,7 +156,11 @@ async fn emits_events_api_envelope_and_acks() {
     // The server should have observed exactly one ack carrying
     // `envelope_id = "abc-123"`.
     let acks = server_join.await.unwrap();
-    assert_eq!(acks.len(), 1, "expected exactly one ack frame, got {acks:?}");
+    assert_eq!(
+        acks.len(),
+        1,
+        "expected exactly one ack frame, got {acks:?}"
+    );
     let ack: Value = serde_json::from_str(&acks[0]).unwrap();
     assert_eq!(ack["envelope_id"], "abc-123");
 
@@ -186,10 +195,7 @@ async fn shutdown_breaks_the_connect_loop_during_backoff() {
     );
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     // Give the first attempt a moment to fail and enter the long sleep.
     tokio::time::sleep(Duration::from_millis(150)).await;
@@ -211,9 +217,8 @@ async fn circuit_trips_after_persistent_open_connection_failure() {
     let mock = MockServer::start().await;
     Mock::given(method("POST"))
         .respond_with(
-            ResponseTemplate::new(200).set_body_json(
-                serde_json::json!({"ok": false, "error": "invalid_auth"}),
-            ),
+            ResponseTemplate::new(200)
+                .set_body_json(serde_json::json!({"ok": false, "error": "invalid_auth"})),
         )
         .mount(&mock)
         .await;
@@ -234,10 +239,7 @@ async fn circuit_trips_after_persistent_open_connection_failure() {
 
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     // Wait for the circuit to trip. With max_attempts=3 and
     // initial=5ms / max=20ms backoff the entire run is well under 1s.

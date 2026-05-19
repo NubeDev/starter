@@ -1,0 +1,28 @@
+[package]
+name        = "starter-flow"
+description = "starter-flow — THE engine. Slot propagator, GraphStore impl, NodeKindRegistry, run lifecycle. Module skeleton today; engine lands in Phases 2/3/7."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase 1 of DOCS/flow/scope/SCOPE.md: this crate ships a module
+# skeleton — `graph`, `registry`, `propagator`, `engine`, `run`,
+# `state` — each pointing at an empty file with only a SCOPE pointer
+# + Phase-N marker doc comment. The engine internals land in
+# Phases 2/3/7.
+#
+# `default-features = []` on `starter-flow-spi` upholds the workspace
+# minimal-by-default policy (a consumer who does not want flows pays
+# nothing — locked in stage 0).
+[dependencies]
+starter-flow-spi = { workspace = true, default-features = false }
+# R2: the propagator is a synchronous loop driven from a tokio
+# runtime. The workspace tokio dep already enables `rt-multi-thread`;
+# the explicit `features = ["rt-multi-thread"]` line is kept here so
+# the requirement is grep-visible from this crate's manifest.
+tokio            = { workspace = true, features = ["rt-multi-thread"] }
+
+[features]
+default = []

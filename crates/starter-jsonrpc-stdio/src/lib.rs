@@ -244,7 +244,8 @@ mod tests {
 
     #[tokio::test]
     async fn additional_headers_ignored() {
-        let buf: &[u8] = b"Content-Type: application/vscode-jsonrpc\r\nContent-Length: 7\r\n\r\n{\"a\":1}";
+        let buf: &[u8] =
+            b"Content-Type: application/vscode-jsonrpc\r\nContent-Length: 7\r\n\r\n{\"a\":1}";
         let mut reader = BufReader::new(buf);
         let body = read_frame(&mut reader).await.unwrap().unwrap();
         assert_eq!(body, b"{\"a\":1}");

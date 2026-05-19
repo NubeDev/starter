@@ -13,7 +13,7 @@ use prometheus::Registry;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_spi::{ExposeSecret, Error as SpiError, Result as SpiResult};
+use starter_spi::{Error as SpiError, ExposeSecret, Result as SpiResult};
 
 use crate::config::SlackConfig;
 use crate::error::SlackError;

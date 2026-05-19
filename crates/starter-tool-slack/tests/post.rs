@@ -60,9 +60,8 @@ async fn happy_path_returns_channel_and_ts() {
         .and(path("/api/chat.postMessage"))
         .and(header("Authorization", "Bearer xoxb-test"))
         .respond_with(
-            ResponseTemplate::new(200).set_body_json(
-                json!({ "ok": true, "channel": "C1", "ts": "1700.0042" }),
-            ),
+            ResponseTemplate::new(200)
+                .set_body_json(json!({ "ok": true, "channel": "C1", "ts": "1700.0042" })),
         )
         .expect(1)
         .mount(&server)

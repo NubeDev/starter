@@ -50,14 +50,10 @@ impl NoteService for NotesGrpc {
     async fn get(&self, req: Request<GetRequest>) -> Result<Response<ProtoNote>, Status> {
         self.check_auth(&req).await?;
         let id = req.into_inner().id;
-        let note = self
-            .store
-            .get(&id)
-            .await
-            .map_err(|e| match e {
-                crate::domain::NoteError::NotFound(_) => Status::not_found("note not found"),
-                other => Status::internal(other.to_string()),
-            })?;
+        let note = self.store.get(&id).await.map_err(|e| match e {
+            crate::domain::NoteError::NotFound(_) => Status::not_found("note not found"),
+            other => Status::internal(other.to_string()),
+        })?;
         Ok(Response::new(ProtoNote {
             id: note.id,
             body: note.body,

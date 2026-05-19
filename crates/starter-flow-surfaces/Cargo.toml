@@ -1,0 +1,19 @@
+[package]
+name        = "starter-flow-surfaces"
+description = "starter-flow — Flow ↔ Tool/Service wrappers. FlowAsTool, FlowAsService. Skeleton today; lands in Phase 3."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase 1: empty skeleton. The FlowAsTool / FlowAsService wrappers
+# (analogues of starter-agent-surfaces) land in Phase 3 alongside
+# persistence per DOCS/flow/scope/SCOPE.md.
+#
+# Both deps carry `default-features = false` per workspace policy so
+# this crate never silently re-enables an upstream default feature
+# just by being on the dep graph.
+[dependencies]
+starter-flow-spi = { workspace = true, default-features = false }
+starter-spi      = { workspace = true, default-features = false }

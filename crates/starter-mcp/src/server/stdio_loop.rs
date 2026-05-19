@@ -54,7 +54,7 @@ pub async fn run_stdio(registry: ToolRegistry) -> std::io::Result<()> {
             if let Err(e) = starter_jsonrpc_stdio::write_json(&mut stdout, &value).await {
                 return Err(match e {
                     starter_jsonrpc_stdio::FrameError::Io(io) => io,
-                    other => std::io::Error::new(std::io::ErrorKind::Other, other.to_string()),
+                    other => std::io::Error::other(other.to_string()),
                 });
             }
         }

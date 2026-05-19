@@ -104,7 +104,9 @@ async fn branch_1_signin_hit_existing_identity() {
         .iter()
         .map(|h| h.to_str().unwrap().to_string())
         .collect::<Vec<_>>();
-    assert!(cookies.iter().any(|c| c.starts_with("starter_session=sas_")));
+    assert!(cookies
+        .iter()
+        .any(|c| c.starts_with("starter_session=sas_")));
     assert!(cookies.iter().any(|c| c.starts_with("starter_csrf=")));
 }
 

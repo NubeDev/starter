@@ -139,7 +139,11 @@ pub async fn handler(
                 error = %e,
                 "state store take failed",
             );
-            return sign_in_failed(StatusCode::INTERNAL_SERVER_ERROR, "sign_in_failed", &correlation_id);
+            return sign_in_failed(
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "sign_in_failed",
+                &correlation_id,
+            );
         }
     };
 

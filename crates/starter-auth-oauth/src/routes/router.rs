@@ -40,10 +40,12 @@ pub fn oauth_router<S: Clone + Send + Sync + 'static>(state: OAuthRoutesState) -
     Router::new()
         .route(
             "/auth/oauth/{provider}/login",
-            get(move |Path(provider): Path<String>, Query(q): Query<StartQuery>| {
-                let state = start_state.clone();
-                async move { start_handler(state, provider, q).await }
-            }),
+            get(
+                move |Path(provider): Path<String>, Query(q): Query<StartQuery>| {
+                    let state = start_state.clone();
+                    async move { start_handler(state, provider, q).await }
+                },
+            ),
         )
         .route(
             "/auth/oauth/{provider}/callback",
@@ -67,12 +69,10 @@ pub fn oauth_router<S: Clone + Send + Sync + 'static>(state: OAuthRoutesState) -
         )
         .route(
             "/auth/oauth/{provider}",
-            delete(
-                move |Path(provider): Path<String>, headers: HeaderMap| {
-                    let state = unlink_state.clone();
-                    async move { unlink_handler(state, provider, headers).await }
-                },
-            ),
+            delete(move |Path(provider): Path<String>, headers: HeaderMap| {
+                let state = unlink_state.clone();
+                async move { unlink_handler(state, provider, headers).await }
+            }),
         )
         .route(
             "/auth/oauth/identities",

@@ -1,0 +1,32 @@
+[package]
+name        = "starter-flow-spi"
+description = "starter-flow — service provider interface. Node, GraphStore, FlowEvent contracts. Zero runtime logic; depends only on starter-spi."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase 1 of DOCS/flow/scope/SCOPE.md: this crate is contracts-only.
+# It depends on starter-spi (and on the third-party types starter-spi
+# already pulls). No tokio runtime beyond the `sync` channel types
+# starter-spi already inherits.
+[dependencies]
+starter-spi = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
+uuid        = { workspace = true }
+futures     = { workspace = true }
+
+[features]
+# Default-off per the workspace policy: the `starter-skills` crate is
+# not yet a workspace member, so the `SkillSelection` re-export in
+# `skill.rs` is feature-gated AND additionally `cfg(any())`-gated so
+# `--all-features` (the Phase 1 stage-7 smoke) still builds green.
+# Once `starter-skills` lands as a workspace member, drop the `any()`
+# gate in `skill.rs` and add a matching optional
+# `[dependencies.starter-skills]` entry here.
+default = []
+skills  = []

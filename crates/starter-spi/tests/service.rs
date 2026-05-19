@@ -92,9 +92,7 @@ async fn shutdown_wedged_service_is_aborted() {
     let metrics = Arc::new(prometheus::Registry::new());
     let sink: Arc<dyn EventSink> = Arc::new(NullSink);
     reg.start_all(metrics, sink).await.unwrap();
-    let report = reg
-        .shutdown_with_deadline(Duration::from_millis(50))
-        .await;
+    let report = reg.shutdown_with_deadline(Duration::from_millis(50)).await;
     let (_, outcome) = &report.services[0];
     assert!(matches!(outcome, ServiceShutdownOutcome::Aborted));
 }

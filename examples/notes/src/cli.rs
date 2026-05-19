@@ -27,7 +27,9 @@ fn bearer_args(c: ClapCommand) -> ClapCommand {
 }
 
 fn http() -> reqwest::Client {
-    reqwest::Client::builder().build().expect("build reqwest client")
+    reqwest::Client::builder()
+        .build()
+        .expect("build reqwest client")
 }
 
 /// `notes add "body"` — POSTs a new note.
@@ -48,9 +50,16 @@ impl Command for NoteAdd {
     }
 
     async fn run(&self, matches: &ArgMatches) -> Result<(), CommandError> {
-        let base = matches.get_one::<String>("base-url").map(String::as_str).unwrap_or(DEFAULT_BASE);
-        let token = matches.get_one::<String>("token").expect("clap requires token");
-        let body = matches.get_one::<String>("body").expect("clap requires body");
+        let base = matches
+            .get_one::<String>("base-url")
+            .map(String::as_str)
+            .unwrap_or(DEFAULT_BASE);
+        let token = matches
+            .get_one::<String>("token")
+            .expect("clap requires token");
+        let body = matches
+            .get_one::<String>("body")
+            .expect("clap requires body");
         let res = http()
             .post(format!("{base}/notes"))
             .bearer_auth(token)
@@ -59,9 +68,15 @@ impl Command for NoteAdd {
             .await
             .map_err(|e| CommandError::UserFacing(format!("request failed: {e}")))?;
         if !res.status().is_success() {
-            return Err(CommandError::UserFacing(format!("server returned {}", res.status())));
+            return Err(CommandError::UserFacing(format!(
+                "server returned {}",
+                res.status()
+            )));
         }
-        let v: Value = res.json().await.map_err(|e| CommandError::UserFacing(e.to_string()))?;
+        let v: Value = res
+            .json()
+            .await
+            .map_err(|e| CommandError::UserFacing(e.to_string()))?;
         println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
         Ok(())
     }
@@ -81,8 +96,13 @@ impl Command for NoteList {
     }
 
     async fn run(&self, matches: &ArgMatches) -> Result<(), CommandError> {
-        let base = matches.get_one::<String>("base-url").map(String::as_str).unwrap_or(DEFAULT_BASE);
-        let token = matches.get_one::<String>("token").expect("clap requires token");
+        let base = matches
+            .get_one::<String>("base-url")
+            .map(String::as_str)
+            .unwrap_or(DEFAULT_BASE);
+        let token = matches
+            .get_one::<String>("token")
+            .expect("clap requires token");
         let res = http()
             .get(format!("{base}/notes"))
             .bearer_auth(token)
@@ -90,9 +110,15 @@ impl Command for NoteList {
             .await
             .map_err(|e| CommandError::UserFacing(format!("request failed: {e}")))?;
         if !res.status().is_success() {
-            return Err(CommandError::UserFacing(format!("server returned {}", res.status())));
+            return Err(CommandError::UserFacing(format!(
+                "server returned {}",
+                res.status()
+            )));
         }
-        let v: Value = res.json().await.map_err(|e| CommandError::UserFacing(e.to_string()))?;
+        let v: Value = res
+            .json()
+            .await
+            .map_err(|e| CommandError::UserFacing(e.to_string()))?;
         println!("{}", serde_json::to_string_pretty(&v).unwrap_or_default());
         Ok(())
     }
