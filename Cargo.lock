@@ -6303,11 +6303,13 @@ dependencies = [
 name = "starter-prefs"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "iso_currency",
  "serde",
  "serde_json",
  "sqlx",
  "starter-spi",
+ "tokio",
  "tracing",
  "utoipa",
 ]
