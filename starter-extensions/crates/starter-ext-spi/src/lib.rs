@@ -35,8 +35,8 @@ pub use jsonrpc::{
 };
 pub use lifecycle::LifecycleState;
 pub use manifest::{
-    AuthGate, Backoff, ContributeCli, ContributeGrpc, ContributeRest, ContributeTool,
-    ContributeUi, ContributeUiExpose, ContributeWorker, Contributes, HealthConfig, Manifest,
-    ManifestRequires, Require, RestStreaming, RestartPolicy, Runtime, RuntimeKind, Supervision,
-    MANIFEST_VERSION,
+    AuthGate, Backoff, CliStreaming, ContributeCli, ContributeGrpc, ContributeRest,
+    ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker, Contributes,
+    HealthConfig, Manifest, ManifestRequires, Require, RestStreaming, RestartPolicy, Runtime,
+    RuntimeKind, Supervision, MANIFEST_VERSION,
 };

@@ -101,11 +101,17 @@ pub use ctx::{Cancel, EmitEvent, Event, EventReceiver, EventSender};
 pub use meta::{ExtensionDispatch, ExtensionMeta};
 
 pub use starter_ext_spi::{
-    AuthGate, Authority, Backoff, Capability, ContributeCli, ContributeGrpc, ContributeRest,
-    ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker, Contributes, Error,
-    ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope, LifecycleState, Manifest,
-    PathSpec, RestStreaming, RestartPolicy, Result, Runtime, RuntimeKind, Supervision,
+    AuthGate, Authority, Backoff, Capability, CliStreaming, ContributeCli, ContributeGrpc,
+    ContributeRest, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker,
+    Contributes, Error, ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope,
+    LifecycleState, Manifest, PathSpec, RestStreaming, RestartPolicy, Result, Runtime,
+    RuntimeKind, Supervision,
 };
+/// Re-export so extensions can construct `Event { stream_id, payload }`
+/// without taking a direct `starter-ext-spi` dep (SCOPE "Extension
+/// author has zero starter-workspace deps beyond starter-ext-sdk +
+/// serde_json").
+pub use starter_ext_spi::jsonrpc::StreamId;
 
 /// Re-export so generated code can name `::starter_ext_sdk::serde_json::Value`
 /// without the extension's `Cargo.toml` adding `serde_json` itself.

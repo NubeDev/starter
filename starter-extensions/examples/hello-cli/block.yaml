@@ -1,0 +1,22 @@
+v: 1
+id: com.acme.hellocli
+version: 0.1.0
+display_name: "Hello (CLI)"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+runtime:
+  kind: builtin
+  crate_name: hello-cli
+
+contributes:
+  cli:
+    - id: com.acme.hellocli.greet
+      command: hellocli-greet
+      description_file: docs/greet.md
+      args_schema: schemas/greet_args.json
+    - id: com.acme.hellocli.tick
+      command: hellocli-tick
+      description_file: docs/tick.md
+      args_schema: schemas/tick_args.json
+      streaming: stdout

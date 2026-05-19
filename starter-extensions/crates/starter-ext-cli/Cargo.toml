@@ -1,0 +1,33 @@
+[package]
+name        = "starter-ext-cli"
+description = "starter-extensions — CLI adapter (Adapter Phase 6, SCOPE R13). Surfaces `contributes.cli` as `clap::Command` impls in `starter-cli::CommandRegistry`. Streaming=stdout renders Stream<Item=Event> as line-delimited stdout (one event per line); SIGINT from the terminal becomes a `stream.cancel` notification to the child."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Adapter dependency arrow (SCOPE R13): kernel registry + supervisor →
+# this adapter → `starter-cli::CommandRegistry`. The extension author
+# never touches `clap` directly; the adapter generates the clap surface
+# from the manifest's `args_schema:` + `command:`.
+[dependencies]
+starter-ext-spi        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
+starter-ext-supervisor = { workspace = true }
+starter-spi            = { workspace = true }
+starter-cli            = { workspace = true }
+
+clap        = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+futures     = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "signal", "io-std", "io-util", "sync", "time"] }
+tracing     = { workspace = true }
+
+[dev-dependencies]
+tokio       = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
+tempfile    = { workspace = true }

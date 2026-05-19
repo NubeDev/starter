@@ -314,9 +314,45 @@ pub struct ContributeCli {
     /// Path (relative to bundle root) to a JSON Schema describing the
     /// command's flag set. The adapter generates a `clap` parser from it.
     pub args_schema: String,
+    /// How the response is rendered to stdout. Defaults to
+    /// [`CliStreaming::None`] (single JSON document printed once when
+    /// the handler returns). When `Stdout`, the CLI adapter renders the
+    /// extension's `Stream<Item = Event>` as line-delimited JSON
+    /// (one event per line) on stdout, and a `SIGINT` from the
+    /// terminal becomes a `stream.cancel` notification to the child
+    /// within a few hundred milliseconds (Adapter Phase 6 — SCOPE
+    /// post-R13).
+    #[serde(default)]
+    pub streaming: CliStreaming,
     /// Optional per-entry auth gate.
     #[serde(default)]
     pub auth: AuthGate,
+}
+
+/// Streaming-render mode for a CLI contribution entry (Adapter Phase 6).
+///
+/// Selects how `starter-ext-cli`'s CLI adapter renders the extension's
+/// `Stream<Item = Event>` on stdout. The kernel shape is uniform
+/// (`stream.event` / `stream.end` / `stream.error` / `stream.cancel`
+/// notifications per SCOPE post-R13); this enum picks the stdout framing
+/// that wraps it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CliStreaming {
+    /// Single JSON document printed when the handler returns. Default.
+    #[default]
+    None,
+    /// Newline-delimited JSON; one event per line, flushed as it
+    /// arrives. `SIGINT` from the terminal becomes a `stream.cancel`
+    /// notification to the child.
+    Stdout,
+}
+
+impl CliStreaming {
+    /// `true` for any streaming variant (today: only `Stdout`).
+    pub fn is_streaming(self) -> bool {
+        !matches!(self, CliStreaming::None)
+    }
 }
 
 /// One REST route the extension provides.
@@ -641,6 +677,33 @@ contributes:
         assert_eq!(m.contributes.grpc.len(), 1);
         assert_eq!(m.contributes.workers.len(), 1);
         assert!(m.contributes.ui.is_some());
+    }
+
+    #[test]
+    fn cli_streaming_modes_parse() {
+        let yaml = r#"
+v: 1
+id: com.acme.clistream
+version: 0.0.1
+display_name: "CliStream"
+runtime: { kind: builtin, crate_name: clistream }
+contributes:
+  cli:
+    - id: com.acme.clistream.tail
+      command: clistream-tail
+      description_file: c.md
+      args_schema: a.json
+      streaming: stdout
+    - id: com.acme.clistream.once
+      command: clistream-once
+      description_file: c.md
+      args_schema: a.json
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.cli[0].streaming, CliStreaming::Stdout);
+        assert_eq!(m.contributes.cli[1].streaming, CliStreaming::None);
+        assert!(m.contributes.cli[0].streaming.is_streaming());
+        assert!(!m.contributes.cli[1].streaming.is_streaming());
     }
 
     #[test]
