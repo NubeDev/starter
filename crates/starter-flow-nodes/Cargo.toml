@@ -7,7 +7,48 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 
-# Phase 1: empty skeleton. Built-in kinds land across Phases 2, 4, and
-# 5 per DOCS/flow/scope/SCOPE.md — each behind its own cargo feature.
+# Phase 1: empty skeleton — each module file declares only the kind id
+# constant. NodeBehavior impls land in Phase 4 (ai-agent) and Phase 5
+# (the remainder) per DOCS/flow/scope/SCOPE.md.
 [dependencies]
-starter-flow-spi = { workspace = true }
+starter-flow-spi = { workspace = true, default-features = false }
+
+[features]
+# Default-off per the workspace policy: a consumer enables only the
+# kinds it needs. The `all-kinds` aggregate flips every built-in on at
+# once for `cargo check --features=all-kinds` and for downstream crates
+# that want the full set (e.g. the engine's integration tests, the
+# `starter-flow-surfaces` smoke tests).
+default = []
+
+transform         = []
+tool-call         = []
+ai-agent          = []
+branch            = []
+merge             = []
+gate              = []
+subflow           = []
+trigger-explicit  = []
+trigger-event     = []
+trigger-schedule  = []
+trigger-webhook   = []
+http-out          = []
+log               = []
+sleep             = []
+
+all-kinds = [
+    "transform",
+    "tool-call",
+    "ai-agent",
+    "branch",
+    "merge",
+    "gate",
+    "subflow",
+    "trigger-explicit",
+    "trigger-event",
+    "trigger-schedule",
+    "trigger-webhook",
+    "http-out",
+    "log",
+    "sleep",
+]
