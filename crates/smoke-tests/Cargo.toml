@@ -1,0 +1,35 @@
+[package]
+name        = "starter-smoke-tests"
+description = "starter — Stage 9 smoke tests for the starter-tool-* / starter-service-* family. Exercises the five design checks from DOCS/tools/scope/SCOPE.md against every shipped provider crate. No public API; the only build artefact is the test binaries under `tests/`."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+# Lives in the workspace but ships nothing — `lib.rs` is empty.
+# Everything load-bearing is under `tests/`, where each smoke test from
+# the SCOPE doc gets its own integration-test binary so a failure
+# names the specific design check that broke.
+[lib]
+path = "src/lib.rs"
+
+# Dev-dependencies only: smoke tests load every shipped provider crate
+# but consumers of the workspace never depend on `smoke-tests` itself.
+# `starter-spi` re-exports `SecretString`, so we never name `secrecy`
+# here — R5 applies to smoke tests too.
+[dev-dependencies]
+starter-spi              = { workspace = true }
+starter-secrets-file     = { workspace = true }
+starter-secrets-keyring  = { workspace = true }
+starter-tool-slack       = { workspace = true }
+starter-service-slack    = { workspace = true }
+starter-tool-telegram    = { workspace = true }
+starter-service-telegram = { workspace = true }
+starter-tool-gmail       = { workspace = true }
+
+tokio       = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
+async-trait = { workspace = true }
+prometheus  = { workspace = true }
+serde_json  = { workspace = true }

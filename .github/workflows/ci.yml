@@ -99,6 +99,28 @@ jobs:
       - name: build
         run: pnpm -r run build
 
+  spi-dep-baseline:
+    # Smoke test 1 of DOCS/tools/scope/SCOPE.md, lifted into a
+    # CI gate so a provider crate's deps cannot sneak into
+    # `starter-spi`'s transitive closure without the PR turning red.
+    # See Decision D1 — the baseline is updated only in the same
+    # commit that changes `starter-spi`'s own direct dependencies.
+    name: starter-spi dep baseline
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+
+      - name: check baseline
+        run: scripts/check-spi-dep-baseline.sh
+
   audit:
     name: cargo audit
     runs-on: ubuntu-latest

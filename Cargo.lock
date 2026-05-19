@@ -6076,6 +6076,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-smoke-tests"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "prometheus",
+ "serde_json",
+ "starter-secrets-file",
+ "starter-secrets-keyring",
+ "starter-service-slack",
+ "starter-service-telegram",
+ "starter-spi",
+ "starter-tool-gmail",
+ "starter-tool-slack",
+ "starter-tool-telegram",
+ "tokio",
+]
+
+[[package]]
 name = "starter-spi"
 version = "0.1.0"
 dependencies = [
