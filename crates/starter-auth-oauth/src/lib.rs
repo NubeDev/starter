@@ -44,7 +44,7 @@ pub use identity_store::{IdentityStore, IdentityStoreError, OAuthIdentity};
 pub use identity_store::SqliteIdentityStore;
 pub use linked_providers::OAuthLinkedProviders;
 pub use provider::{OAuthProvider, ProviderError, ProviderIdentity};
-pub use providers::GitHubProvider;
+pub use providers::{GitHubProvider, GoogleProvider};
 pub use routes::{oauth_router, OAuthRoutesState};
 pub use session_bridge::mint_session_headers;
 pub use state_store::{

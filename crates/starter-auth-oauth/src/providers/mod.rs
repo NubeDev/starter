@@ -7,5 +7,7 @@
 //! table, and linking logic stay provider-agnostic.
 
 pub mod github;
+pub mod google;
 
 pub use github::GitHubProvider;
+pub use google::GoogleProvider;
