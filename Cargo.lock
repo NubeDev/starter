@@ -5949,6 +5949,7 @@ name = "starter-flow"
 version = "0.1.0"
 dependencies = [
  "starter-flow-spi",
+ "tokio",
 ]
 
 [[package]]
