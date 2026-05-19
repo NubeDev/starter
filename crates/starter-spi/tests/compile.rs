@@ -89,3 +89,60 @@ fn filter_chains_predicates() {
 fn _authenticator_is_object_safe(_: Box<dyn Authenticator>) {}
 fn _secret_store_is_object_safe(_: Box<dyn SecretStore>) {}
 fn _ai_runner_is_object_safe(_: Box<dyn AiRunner>) {}
+
+// `ThemeStore` must stay object-safe so handlers can hold an
+// `Arc<dyn ThemeStore>` without per-backend generics.
+fn _theme_store_is_object_safe(_: Box<dyn starter_spi::ui::theme::ThemeStore>) {}
+
+#[test]
+fn theme_dtos_round_trip_json() {
+    use starter_spi::ui::theme::{ShellConfig, ThemeDocument, ThemeSaveInput, ThemeStyles};
+    let doc = ThemeDocument {
+        theme_styles: ThemeStyles {
+            light: [("primary".into(), "oklch(0.55 0.22 257)".into())]
+                .into_iter()
+                .collect(),
+            dark: [("primary".into(), "oklch(0.72 0.18 257)".into())]
+                .into_iter()
+                .collect(),
+        },
+        shell: ShellConfig {
+            nav_title: "My App".into(),
+            hide_features: vec!["page-builder".into()],
+        },
+        logo_url: Some("/api/v1/ui/theme/logo".into()),
+        favicon_url: None,
+    };
+    let json = serde_json::to_string(&doc).unwrap();
+    let parsed: ThemeDocument = serde_json::from_str(&json).unwrap();
+    assert_eq!(doc, parsed);
+
+    // `favicon_url: None` is omitted from the serialised form.
+    assert!(!json.contains("favicon_url"));
+
+    // Save input is `{ theme_styles, shell }`.
+    let input = ThemeSaveInput {
+        theme_styles: doc.theme_styles.clone(),
+        shell: doc.shell.clone(),
+    };
+    let saved = serde_json::to_string(&input).unwrap();
+    assert!(saved.contains("\"theme_styles\""));
+    assert!(saved.contains("\"shell\""));
+}
+
+#[test]
+fn theme_validator_rejects_unsafe_values() {
+    use starter_spi::ui::theme::{validate_save_input, ShellConfig, ThemeSaveInput, ThemeStyles};
+    let bad = ThemeSaveInput {
+        theme_styles: ThemeStyles {
+            light: [("primary".into(), "url(http://evil)".into())]
+                .into_iter()
+                .collect(),
+            ..Default::default()
+        },
+        shell: ShellConfig::default(),
+    };
+    let err = validate_save_input(&bad).unwrap_err();
+    assert_eq!(err.fragment, "url(");
+    assert_eq!(err.key, "light.primary");
+}

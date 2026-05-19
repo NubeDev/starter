@@ -26,6 +26,7 @@ pub mod secrets;
 pub mod service;
 pub mod sort;
 pub mod tool;
+pub mod ui;
 pub mod units;
 
 pub use error::{Error, Result};

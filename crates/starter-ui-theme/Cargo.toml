@@ -1,0 +1,46 @@
+[package]
+name        = "starter-ui-theme"
+description = "starter — org-level theme persistence backend: ThemeStore impls (sqlite/postgres) + axum routes wiring `starter_spi::ui::theme`."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+chrono      = { workspace = true }
+tracing     = { workspace = true }
+utoipa      = { workspace = true }
+
+# Routes feature — default-on, mirrors `starter-auth-users` which also
+# always ships its router. Consumers wanting the trait + a backend
+# impl without axum drop `default-features = false`.
+axum  = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+http  = { workspace = true, optional = true }
+mime  = { version = "0.3", optional = true }
+
+# Backend pools — both gated. A consumer picks one via the
+# `sqlite` / `postgres` features below.
+sqlx                   = { workspace = true, optional = true }
+starter-store-sqlite   = { workspace = true, optional = true }
+starter-store-postgres = { workspace = true, optional = true }
+
+[features]
+default  = ["routes"]
+routes   = ["dep:axum", "dep:bytes", "dep:http", "dep:mime"]
+sqlite   = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite"]
+postgres = ["dep:sqlx", "sqlx/postgres", "dep:starter-store-postgres"]
+
+[dev-dependencies]
+tokio                = { workspace = true, features = ["macros", "rt-multi-thread"] }
+starter-store-sqlite = { workspace = true, features = ["testing"] }
+sqlx                 = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+axum                 = { workspace = true }
+tower                = { workspace = true }
+http-body-util       = "0.1"
+reqwest              = { workspace = true, features = ["json"] }

@@ -3,12 +3,19 @@
 //! `pnpm codegen` reads the snapshot at workspace-root `openapi.json` to
 //! generate the TS wire types. Whenever a handler signature or DTO
 //! changes, this test fails — run with `UPDATE_SNAPSHOTS=1` to refresh.
+//!
+//! The snapshot is the **merged** OpenAPI doc for every public crate
+//! the frontend client speaks to. Right now that's `starter-auth-users`
+//! (auth, sessions, MFA, users admin) and `starter-ui-theme`
+//! (org-level theme). Add new crates here as they expose HTTP surfaces
+//! the TS client needs to call.
 
 use std::path::PathBuf;
 
 #[test]
 fn openapi_matches_snapshot() {
-    let doc = starter_auth_users::openapi::openapi();
+    let mut doc = starter_auth_users::openapi::openapi();
+    doc.merge(starter_ui_theme::openapi::openapi());
     let actual = serde_json::to_string_pretty(&doc).expect("serialize openapi");
 
     let path = workspace_root().join("openapi.json");

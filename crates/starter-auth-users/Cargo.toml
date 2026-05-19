@@ -45,6 +45,7 @@ tokio                 = { workspace = true, features = ["macros", "rt-multi-thre
 starter-store-sqlite  = { workspace = true, features = ["testing"] }
 starter-server        = { workspace = true, features = ["testing"] }
 starter-observability = { workspace = true }
+starter-ui-theme      = { workspace = true }
 prometheus            = { workspace = true }
 reqwest               = { workspace = true, features = ["json", "cookies"] }
 sqlx                  = { workspace = true, features = ["sqlite", "macros", "migrate"] }

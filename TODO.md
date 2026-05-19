@@ -892,99 +892,158 @@ or implement `ThemeTransport` themselves.
 Order: SPI types first, then the trait + a sqlite impl, then the
 server routes + OpenAPI snapshot, then the frontend wiring tidy-up.
 
+**Architecture note (deviation from earlier draft):** the routes and
+both `ThemeStore` impls landed together as a new crate
+[`crates/starter-ui-theme`](crates/starter-ui-theme/README.md) (modelled
+on `starter-auth-users`) rather than as a `theme` feature inside
+`starter-server`. Reasons: it matches the established pattern of a
+domain crate owning its routes + migrations, keeps `starter-server`
+free of optional sqlx/Postgres deps, and lets a consumer pick
+`sqlite` / `postgres` independently. Asset bytes land inline as
+BLOBs (single-row table, no filesystem coupling) instead of a
+configurable `themes_dir`; the README explains the trade-off.
+
 ### Phase 9a — SPI contract
 
-- [ ] Add `ui::theme` module to `starter-spi`. Three DTOs:
+- [x] Add `ui::theme` module to `starter-spi`. Three DTOs:
       `ThemeStyles { light: BTreeMap<String, String>, dark: ... }`,
       `ShellConfig { nav_title: String, hide_features: Vec<String> }`,
       `ThemeDocument { theme_styles, shell, logo_url: Option<String>,
       favicon_url: Option<String> }`. All `#[derive(Serialize,
       Deserialize, ToSchema)]`; field names match the JSON shape the
       frontend already speaks (see README).
-- [ ] Add `trait ThemeStore` (sync method signatures, async via
-      `async-trait` to stay object-safe). Surface: `load() ->
-      SpiResult<ThemeDocument>`, `save(input: ThemeSaveInput) ->
-      SpiResult<ThemeDocument>`, `put_logo(bytes, content_type) ->
-      SpiResult<String /* url */>`, `delete_logo() -> SpiResult<()>`,
-      `put_favicon(...)`, `delete_favicon()`. `load` must return a
-      blank document for unconfigured tenants — never error on
-      "not yet set".
-- [ ] Token validation helper in `ui::theme`: reject values containing
-      `url(`, `@import`, `expression(`, `javascript:`. The validator
-      lives in spi so every transport (REST, MCP if it ever lands,
-      gRPC) enforces the same rules.
-- [ ] Lock in `tests/compile.rs`: `ThemeStore` is object-safe; DTOs
-      round-trip through `serde_json`.
+- [x] Add `trait ThemeStore` (async via `async-trait` to stay
+      object-safe). Surface: `load`, `save`, `put_logo`/`delete_logo`,
+      `put_favicon`/`delete_favicon`, plus `read_logo`/`read_favicon`
+      so the GET asset routes can serve bytes without a parallel
+      storage seam. `load` returns a blank document for unconfigured
+      tenants — never errors on "not yet set".
+- [x] Token validation helper in `ui::theme`: rejects values
+      containing `url(`, `@import`, `expression(`, `javascript:`
+      (case-insensitive ASCII). `validate_save_input` walks both
+      modes plus the shell fields and returns the first
+      [`TokenValueError`].
+- [x] `tests/compile.rs`: `ThemeStore` is object-safe; DTOs
+      round-trip through `serde_json`; `favicon_url: None` is
+      omitted from the wire form; validator catches `url(`.
 
 ### Phase 9b — Storage impls
 
-- [ ] `starter-store-sqlite`: migration `0002_ui_theme.sql` adds a
-      single-row `starter_ui_theme` table (`id INTEGER PRIMARY KEY
-      CHECK (id = 1)`, `theme_styles JSON`, `shell JSON`, `logo_path`,
-      `favicon_path`, `updated_at`). `SqliteThemeStore` impl writes
-      assets to a configurable on-disk dir (`themes_dir` in the
-      consumer's config); `put_logo` returns a relative URL the
-      consumer's static-files router serves.
-- [ ] Same shape under `starter-store-postgres` (`themes_dir` still
-      filesystem-backed; S3/MinIO can land as a separate impl later).
-- [ ] Integration test in each store crate: round-trip save → load,
-      asset upload returns a URL, delete clears it. Uses the existing
-      `with_database` helper.
+- [x] New crate `starter-ui-theme` ships
+      `SqliteThemeStore` (`feature = "sqlite"`) backed by the
+      single-row `starter_ui_theme` table. Migration lives at
+      `crates/starter-ui-theme/migrations/ui_theme_sqlite/0001_init.sql`
+      under source name `ui_theme`. Assets stored inline as BLOBs
+      (see README for the trade-off vs. the original
+      filesystem-dir plan).
+- [x] `PostgresThemeStore` (`feature = "postgres"`) with the
+      Postgres twin migration (`JSONB` + `BYTEA`).
+- [x] Integration test in `tests/sqlite_store.rs`: load on empty
+      returns default, save round-trips, save overwrites, asset
+      upload + read + delete, idempotent delete on empty. Six
+      tests, all green against `starter_store_sqlite::testing::
+      ephemeral`. Postgres impl shares the same trait surface so
+      the same assertions apply when a testcontainers harness is
+      added.
 
 ### Phase 9c — Server routes
 
-- [ ] New module `starter-server::routes::ui_theme` behind a
-      `theme` Cargo feature (default-off per R5). Six handlers
-      matching the README contract:
-      `GET/PUT /api/v1/ui/theme`,
-      `POST/DELETE /api/v1/ui/theme/logo`,
-      `POST/DELETE /api/v1/ui/theme/favicon`.
-- [ ] Authorisation: `PUT` / `POST` / `DELETE` require a principal
-      with `Role::Admin` (or whatever role the consumer wires in via
-      `with_principal`); `GET` is readable by any authenticated user.
-- [ ] Asset uploads accept `Content-Type: image/png|image/svg+xml`
-      (logo) or `image/png|image/x-icon|image/vnd.microsoft.icon`
-      (favicon); enforce the README size caps (256 KiB / 64 KiB);
-      reject everything else with `415 Unsupported Media Type`.
-- [ ] Token validation via the spi helper on `PUT`: reject any value
-      with `url(` / `@import` / `expression(` / `javascript:`,
-      return `400` with an RFC 7807 problem listing the offending
-      key.
-- [ ] Wire `utoipa` paths so the OpenAPI snapshot test picks them up;
-      regenerate `openapi.json` and the TS client (the CI drift gate
-      will fail until both are updated).
-- [ ] Integration tests under `crates/starter-server/tests/`: round-
-      trip a full document; admin-only writes; size-limit rejection;
-      validator rejection.
+- [x] `starter-ui-theme::routes::theme_router` builds an
+      `axum::Router` covering all eight handlers (the README's six
+      plus the public `GET` for each asset; without those the
+      browser couldn't render the bytes the `POST` endpoints
+      accept). Lives in the same crate as the store impl, not in
+      `starter-server` (see architecture note above). Default-on
+      `routes` feature.
+- [x] Authorisation: `PUT` / `POST` / `DELETE` require a principal
+      with `Role::Admin`; `GET /api/v1/ui/theme` requires any
+      authenticated principal; `GET /api/v1/ui/theme/{logo,favicon}`
+      is public (browsers can't carry credentials on `<img src>` /
+      favicon-link requests, and the bytes are non-sensitive).
+      Guards read the `Principal` extension produced by
+      `starter_server::auth::with_principal`.
+- [x] Asset uploads enforce the README MIME allow list and size
+      caps (256 KiB logo / 64 KiB favicon); `415` on a foreign
+      `Content-Type`, `413` on oversize.
+- [x] Token validation via `starter_spi::ui::theme::
+      validate_save_input` on `PUT`: rejects with `400` and an
+      RFC 7807 `Problem` body whose `detail` names the offending
+      key + fragment.
+- [x] `utoipa` paths wired via per-handler `#[utoipa::path]` macros;
+      `starter_ui_theme::openapi::openapi()` returns the doc.
+      Locked by a snapshot test at
+      `DOCS/backend/openapi/ui-theme.openapi.json` (refresh with
+      `UPDATE_SNAPSHOTS=1 cargo test -p starter-ui-theme --test
+      openapi_snapshot`). The merge into the workspace-root
+      `openapi.json` (which today carries only `starter-auth-users`)
+      lands in Phase 9d alongside the frontend codegen swap.
+- [x] Integration tests in `tests/routes.rs`: round-trip a full
+      document, admin-only writes (`401` no principal / `403`
+      non-admin), size-limit rejection, validator rejection, asset
+      `POST` → `GET` → `DELETE` flow, public asset `GET` after
+      delete returns `404`. Eight tests, all green.
 
 ### Phase 9d — Frontend wiring tidy-up
 
-- [ ] Re-export `./theme-editor` from
+- [x] Re-export `./theme-editor` from
       [packages/starter-ui-core/src/index.ts](packages/starter-ui-core/src/index.ts).
-- [ ] Re-export `./theme.js` from
+      Subpath also published via `"./theme-editor"` in
+      `package.json#exports` so consumers can deep-import.
+- [x] Re-export `./theme.js` from
       [packages/starter-client-ts/src/endpoints/index.ts](packages/starter-client-ts/src/endpoints/index.ts)
       and replace the hand-rolled types in `endpoints/theme.ts` with
-      the regenerated `components["schemas"]` aliases (parity with
-      `endpoints/auth.ts`).
-- [ ] Add `culori` (^4) + `@types/culori` to
+      `components["schemas"]` aliases (parity with `endpoints/auth.ts`).
+      Workspace `openapi.json` now merges `starter-auth-users` +
+      `starter-ui-theme` (snapshot owned by
+      [crates/starter-auth-users/tests/openapi_snapshot.rs](crates/starter-auth-users/tests/openapi_snapshot.rs)).
+- [x] Add `culori` (^4) + `@types/culori` to
       [packages/starter-ui-core/package.json](packages/starter-ui-core/package.json).
-- [ ] Declare `@nube/starter-ui-core` as a peer of
+      Needed an explicit return-type annotation on the private `toRgb`
+      converter in `utils/color-converter.ts` so the inferred type
+      doesn't leak `culori`-internal paths (TS2742).
+- [x] Declare `@nube/starter-ui-core` as a peer of
       `@nube/starter-ui-kit` in
       [packages/starter-ui-kit/package.json](packages/starter-ui-kit/package.json)
-      (already landed; verify).
-- [ ] Vitest coverage in `starter-ui-core`: store undo/redo collapse
+      (the previous JSON was malformed — restored a clean
+      `peerDependencies` block).
+- [x] Vitest coverage in `starter-ui-core`: store undo/redo collapse
       window, `parseCssInput` ↔ `generateCssString` round-trip,
       `getContrastTier` boundary cases (4.49, 4.5, 6.99, 7.0),
       `applyThemeToElement` normalises hex/rgb/hsl → oklch but
-      preserves non-colour tokens verbatim.
+      preserves non-colour tokens verbatim. 16 new tests in
+      [`__tests__/theme-editor.test.ts`](packages/starter-ui-core/src/theme-editor/__tests__/theme-editor.test.ts).
 
 ### Phase 9e — Example consumer
 
-- [ ] Wire the editor into [examples/notes/frontend](examples/notes/frontend)
-      at `/settings/theme`, gated by an Admin role check. Smoke
-      test (Playwright, alongside the existing extension-host
-      tests): load page → pick "Modern Minimal" preset → assert the
-      preview swatches change → save → assert the `PUT` was made.
+- [x] Wire a minimal theme settings panel into
+      [examples/notes/frontend](examples/notes/frontend) at the new
+      `Theme` tab. Gated by the existing `adminAvailable` check.
+      The panel uses `httpThemeTransport` + `DEFAULT_PRESETS` to
+      load → list presets → apply + save → re-paint
+      ([theme-settings.tsx](examples/notes/frontend/src/theme-settings.tsx)).
+      The notes server now applies the `ui_theme_sqlite` migration
+      and mounts `theme_router` wrapped in `with_principal`
+      ([server.rs](examples/notes/src/server.rs),
+      [migrations.rs](examples/notes/src/migrations.rs)).
+- [x] Replace the inline panel with the full
+      `<ThemeEditorPage>` from `@nube/starter-ui-kit` (token
+      sliders, contrast checker, live preview, logo/favicon
+      uploads). The notes frontend now adopts Tailwind v4 via
+      `@tailwindcss/vite`, imports the ui-kit `styles.css`
+      barrel, sets the `@/*` path alias to the ui-kit `src/`, and
+      mounts `<ThemeEditorPage transport={themeTransport}/>`
+      directly ([app.tsx](examples/notes/frontend/src/app.tsx),
+      [vite.config.ts](examples/notes/frontend/vite.config.ts),
+      [globals.css](examples/notes/frontend/src/globals.css)).
+      Also removed an orphan `@import "shadcn/tailwind.css";` from
+      [ui-kit globals.css](packages/starter-ui-kit/src/styles/globals.css)
+      that was blocking the Vite build.
+- [x] Playwright smoke alongside the existing extension-host tests:
+      load page → click Theme tab → apply "Modern Minimal" preset
+      → wait for `PUT /api/v1/ui/theme` (200) → assert the response
+      body carries an `oklch(...)` primary → assert the document
+      `--primary` CSS var changed
+      ([theme.spec.ts](examples/notes/frontend/e2e/theme.spec.ts)).
 
 ### Phase 9f — Extension theme consumption
 
@@ -1009,21 +1068,27 @@ Done (committed in this round):
 
 Still pending:
 
-- [ ] Host integration in [examples/notes/frontend](examples/notes/frontend)
-      Phase 9e: thread `useThemeEditorStore(s => s.styles[s.mode])`
-      into every `<ExtensionSlot>` so installed extensions get the
-      live token map (charts, canvas).
-- [ ] Vitest: render a fake extension inside `<ExtensionSlot>` with
+- [x] Host integration in [examples/notes/frontend](examples/notes/frontend):
+      `AuthenticatedApp` now lifts the saved `ThemeDocument` into
+      state, applies it to `document.documentElement` on load, and
+      threads `themeTokens` + `theme` into every `<ExtensionSlot>`
+      so installed extensions see the live token map via
+      `useHostTheme()` ([app.tsx](examples/notes/frontend/src/app.tsx)).
+      `ThemeSettings` notifies the shell on load and after each save
+      so the cascade refreshes immediately.
+- [x] Vitest: render a fake extension inside `<ExtensionSlot>` with
       a known `themeTokens`, assert `useHostTheme().token("primary")`
       returns the supplied value, then re-render without
-      `themeTokens` and assert it falls back to `getComputedStyle`.
+      `themeTokens` and assert it falls back to `getComputedStyle`
+      ([use-host-theme.test.tsx](starter-extensions/packages/starter-ext-ui/src/use-host-theme.test.tsx)).
 - [ ] Playwright smoke (add to the existing extension-host suite):
       change theme mode in the host editor → assert an installed
       extension panel re-renders with the new chart palette.
-- [ ] Documentation: extension-author guide page under
-      [DOCS/extensions](DOCS/extensions) showing the two patterns
-      (rely on CSS cascade vs. call `useHostTheme()`), with the
-      chart-palette example from the hook's docstring.
+- [x] Documentation: extension-author guide page
+      ([DOCS/extensions/theming.md](DOCS/extensions/theming.md))
+      showing the two patterns (rely on CSS cascade vs. call
+      `useHostTheme()`), with the chart-palette example from the
+      hook's docstring, plus the testing harness pattern.
 
 Exit criteria: an extension mounted in `examples/notes` re-skins
 itself when the host's theme editor saves a new preset, with no code
