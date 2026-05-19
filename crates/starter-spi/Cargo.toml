@@ -44,6 +44,10 @@ tracing     = { workspace = true }
 # `starter_spi::units` module.
 uom         = { workspace = true }
 
+# BCP-47 language-tag parsing — used only by the `starter_spi::i18n`
+# module per the SCOPE Library-choices table.
+icu_locale_core = { workspace = true }
+
 [features]
 # `broadcast` ships the blanket `EventSink for tokio::sync::broadcast::Sender<E>`
 # impl. Default-on so `cargo add starter-spi` gets the ergonomic happy

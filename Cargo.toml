@@ -98,6 +98,11 @@ http        = "1"
 # `starter_spi::units` module.
 uom         = { version = "0.36", default-features = false, features = ["f64", "si", "std"] }
 
+# BCP-47 language-tag parsing for the `starter_spi::i18n::LanguageTag`
+# newtype. Authorised by the SCOPE Library-choices table on
+# `starter-spi`; used only by the `starter_spi::i18n` module.
+icu_locale_core = { version = "2", default-features = false, features = ["alloc"] }
+
 # Storage.
 sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros"] }
 base64      = "0.22"

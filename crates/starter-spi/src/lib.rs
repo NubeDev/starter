@@ -18,6 +18,7 @@ pub mod auth;
 pub mod dto;
 pub mod error;
 pub mod filter;
+pub mod i18n;
 pub mod id;
 pub mod paging;
 pub mod preferences;
