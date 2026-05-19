@@ -413,10 +413,19 @@ starter-extensions/                                  <- this workspace
                                                         Not a job queue — just periodic
                                                         invocation with backoff on error.
 
-    [reserved] starter-ext-grpc/                     <- DOCUMENTED SLOT, NOT PUBLISHED.
-                                                        Lands when starter-grpc lands.
-                                                        Surfaces contributes.grpc as
-                                                        tonic Service impls.
+    starter-ext-grpc/                                <- OPTIONAL, feature-gated.
+                                                        gRPC transport adapter on top of
+                                                        starter-grpc + tonic. Surfaces
+                                                        contributes.grpc as one
+                                                        backplane service
+                                                        `starter.ext.grpc.v1.ExtensionGrpc`
+                                                        with ListMethods + Invoke (unary)
+                                                        + InvokeStream (server-streaming),
+                                                        routed by (service, method)
+                                                        pairs from the manifest.
+                                                        Typed per-extension tonic
+                                                        services land additively
+                                                        under `starter.ext.grpc.v2`.
 
   packages/
     starter-ext-ui/                                  <- Host-side Module Federation
@@ -471,7 +480,9 @@ starter-ext-spi
    │                                surfaces: contributes.cli
    ├── starter-ext-workers      ──→ starter-ext-host (no transport dep)
    │                                surfaces: contributes.workers
-   └── [reserved] starter-ext-grpc                                 (when starter-grpc lands)
+   └── starter-ext-grpc         ──→ starter-ext-host + starter-ext-supervisor
+                                    + starter-grpc (parent workspace)
+                                    surfaces: contributes.grpc
 ```
 
 **Never** the other way: no crate in `starter-extensions` is consumed
@@ -751,7 +762,7 @@ contributes:
       description_file: docs/rest/live.md
       auth: { require_role: Reader }
 
-  grpc:                             # reserved; surfaced by starter-ext-grpc when it lands
+  grpc:                             # surfaced by starter-ext-grpc
     - id: com.acme.weather.WeatherService
       proto: proto/weather.proto    # static .proto file; method set is canonical
 
@@ -814,12 +825,18 @@ extensions calls the trait method directly and for process/wasm
 extensions invokes the child over JSON-RPC and waits for the result
 synchronously (with a configurable timeout).
 
-**gRPC services** (`contributes.grpc` → `starter-ext-grpc`, reserved).
-Each contribution names a `.proto` file in the bundle. The adapter
-generates a thin tonic `Service` impl whose methods proxy to the
-extension by method name. The proto is the schema contract; the
-manifest exists to declare the dispatch surface and capability needs.
-Deferred until `starter-grpc` lands.
+**gRPC services** (`contributes.grpc` → `starter-ext-grpc`). Every
+`contributes.grpc[]` entry across every loaded extension is reachable
+through one backplane service `starter.ext.grpc.v1.ExtensionGrpc`
+(`ListMethods` + `Invoke` unary + `InvokeStream` server-streaming),
+routed by the manifest's `(service, method)` pair. Arguments and
+results travel as canonical proto3 JSON strings — the kernel already
+speaks JSON when proxying to process/wasm extensions, so one codec
+runs end-to-end. The per-extension `.proto` file in the bundle
+remains the schema contract for typed client-side encoding. Typed
+dynamic `tonic::server::Grpc` registration (per-extension services
+on the same `Server::builder()`) is an additive v0.2 surface under
+`starter.ext.grpc.v2`; the v1 backplane never changes once shipped.
 
 **Background workers** (`contributes.workers` → `starter-ext-workers`).
 A periodic scheduler invokes each entry at its declared interval,
@@ -999,8 +1016,8 @@ cancellation contract has slipped.
 
 Take a streaming handler in the `hello-streaming` example. Surface
 it as `streaming: sse` over REST, `streaming: stdout` over CLI,
-`streaming: progress` over MCP, and (when phase 8 lands)
-server-streaming over gRPC. The four adapters render the same event
+`streaming: progress` over MCP, and server-streaming over gRPC
+(`InvokeStream`). The four adapters render the same event
 sequence in their respective native forms; the extension code is one
 function. If reshaping for a transport requires extension changes,
 the streaming abstraction has leaked.
@@ -1357,11 +1374,20 @@ kernel phase its transport depends on):
 - Surfaces worker state on `GET /extensions/<id>` (last run, last
   error, next due).
 
-### Phase 8 (reserved) — `starter-ext-grpc` adapter
+### Phase 8 — `starter-ext-grpc` adapter
 
-- Lands when `starter-grpc` lands in the parent workspace.
-- Surfaces `contributes.grpc` as tonic `Service` impls; the `.proto`
-  file is the schema contract.
+- Depends on `starter-grpc` (parent workspace) + tonic.
+- Surfaces `contributes.grpc` as one tonic backplane service
+  `starter.ext.grpc.v1.ExtensionGrpc` (`ListMethods` + unary
+  `Invoke` + server-streaming `InvokeStream`), routed by the
+  manifest's `(service, method)` pair.
+- Builtin dispatch ships end-to-end; process / wasm dispatchers carry
+  the `request_timeout` knob and return `UNIMPLEMENTED` until the
+  synchronous JSON-RPC dispatch slice lands additively (mirrors
+  `starter-ext-cli`'s v0.1 state).
+- Streaming follows the kernel's `stream.event` / `stream.end` /
+  `stream.cancel` notification convention; client disconnect fires
+  the dispatcher's `CancelHandle`.
 
 ## Bottom line
 

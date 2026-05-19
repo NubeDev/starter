@@ -8,6 +8,7 @@ members = [
     "crates/starter-store-sqlite",
     "crates/starter-store-postgres",
     "crates/starter-mcp",
+    "crates/starter-grpc",
     "crates/starter-jsonrpc-stdio",
     "crates/starter-auth-token",
     "crates/starter-auth-users",
@@ -49,6 +50,7 @@ starter-server           = { path = "crates/starter-server",           version =
 starter-store-sqlite     = { path = "crates/starter-store-sqlite",     version = "0.1.0" }
 starter-store-postgres   = { path = "crates/starter-store-postgres",   version = "0.1.0" }
 starter-mcp              = { path = "crates/starter-mcp",              version = "0.1.0" }
+starter-grpc             = { path = "crates/starter-grpc",             version = "0.1.0" }
 starter-jsonrpc-stdio    = { path = "crates/starter-jsonrpc-stdio",    version = "0.1.0" }
 starter-auth-token       = { path = "crates/starter-auth-token",       version = "0.1.0" }
 starter-auth-users       = { path = "crates/starter-auth-users",       version = "0.1.0" }

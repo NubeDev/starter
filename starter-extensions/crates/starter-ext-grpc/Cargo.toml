@@ -1,0 +1,41 @@
+[package]
+name        = "starter-ext-grpc"
+description = "starter-extensions — gRPC adapter (Adapter Phase 8, SCOPE R13). Surfaces `contributes.grpc` entries as a tonic backplane service (`starter.ext.grpc.v1.ExtensionGrpc` with Invoke + InvokeStream methods) routed by `(service, method)` pairs. Streaming RPCs map onto the kernel's `stream.event`/`stream.end`/`stream.cancel` notification convention — the same convention every other adapter renders natively."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Adapter dependency arrow (SCOPE R13): kernel registry + supervisor →
+# this adapter → `starter-grpc` (parent workspace) → tonic. Matches the
+# pattern set by `starter-ext-cli` (depends on `starter-cli`) and
+# `starter-ext-server` (depends on `starter-server`). The extension
+# author never touches `tonic` directly; the adapter generates the
+# gRPC surface from the manifest's `contributes.grpc[]` and the
+# bundle's static `.proto` files.
+[dependencies]
+starter-ext-spi        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
+starter-ext-supervisor = { workspace = true }
+starter-spi            = { workspace = true }
+starter-grpc           = { workspace = true }
+
+tonic        = { workspace = true }
+prost        = { workspace = true }
+async-trait  = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+futures      = { workspace = true }
+thiserror    = { workspace = true }
+tokio        = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "signal", "sync", "time"] }
+tokio-stream = "0.1"
+tracing      = { workspace = true }
+
+[build-dependencies]
+tonic-build = { workspace = true }
+
+[dev-dependencies]
+tokio    = { workspace = true, features = ["macros", "rt-multi-thread", "test-util", "net"] }
+tempfile = { workspace = true }

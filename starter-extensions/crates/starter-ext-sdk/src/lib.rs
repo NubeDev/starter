@@ -43,37 +43,45 @@ compile_error!(
      a build-time misconfiguration."
 );
 
-// The duplicate-`#[no_mangle]` trick is what gives "more than one flavour
-// enabled" a *linker* error (the wording SCOPE R1 specifically uses).
-// rustc accepts conflicting `#[no_mangle]` statics in the same crate up
-// until link time; the linker then sees two definitions of the same global
-// symbol and refuses.
+// The duplicate-symbol trick is what gives "more than one flavour enabled"
+// a *linker* error (the wording SCOPE R1 specifically uses). Each flavour
+// declares its own rustc-visible item (so workspace feature unification
+// does not produce a rustc E0428 — multiple flavours can co-exist in the
+// same crate graph at `cargo check` time), but all three resolve to the
+// same `#[export_name]` linker symbol, so the linker refuses to produce
+// any binary that pulls in two or more flavours at once.
 //
-// We expose the symbol with a deliberately-loud name so the linker diagnostic
-// points the operator at the right page in SCOPE.md.
+// Why this matters: cargo's workspace feature unifier will happily turn
+// on all three features on `starter-ext-sdk` when sibling example crates
+// each enable a different flavour. The SDK itself still has to compile
+// in that mode; the actual "exactly one flavour per binary" invariant is
+// enforced where it should be — at link time of the final binary.
+//
+// We expose the symbol with a deliberately-loud name so the linker
+// diagnostic points the operator at the right page in SCOPE.md.
 
-/// Marker symbol emitted exactly once per crate when a single flavour
-/// feature is enabled. Duplicate definition (more than one flavour) is a
-/// linker error; absent definition (zero flavours) is caught by the
-/// `compile_error!` above.
+/// Marker symbol emitted exactly once per linked binary when a single
+/// flavour feature is enabled. Duplicate definition (more than one
+/// flavour reached the same binary) is a linker error; absent definition
+/// (zero flavours) is caught by the `compile_error!` above.
 ///
 /// The value is the flavour code (0 = builtin, 1 = wasm, 2 = process) —
 /// purely informational; the link-time check does not inspect it.
 #[cfg(feature = "builtin")]
 #[allow(unsafe_code)]
-#[no_mangle]
+#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]
 #[doc(hidden)]
-pub static __STARTER_EXT_FLAVOUR_MARKER: u8 = 0;
+pub static __STARTER_EXT_FLAVOUR_MARKER_BUILTIN: u8 = 0;
 #[cfg(feature = "wasm")]
 #[allow(unsafe_code)]
-#[no_mangle]
+#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]
 #[doc(hidden)]
-pub static __STARTER_EXT_FLAVOUR_MARKER: u8 = 1;
+pub static __STARTER_EXT_FLAVOUR_MARKER_WASM: u8 = 1;
 #[cfg(feature = "process")]
 #[allow(unsafe_code)]
-#[no_mangle]
+#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]
 #[doc(hidden)]
-pub static __STARTER_EXT_FLAVOUR_MARKER: u8 = 2;
+pub static __STARTER_EXT_FLAVOUR_MARKER_PROCESS: u8 = 2;
 
 // ---------------------------------------------------------------------------
 // Modules
@@ -519,10 +527,10 @@ mod tests {
         // feature gate emits the matching value; runs under whichever
         // single feature the test invocation enabled.
         #[cfg(feature = "builtin")]
-        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 0);
+        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER_BUILTIN, 0);
         #[cfg(feature = "wasm")]
-        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 1);
+        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER_WASM, 1);
         #[cfg(feature = "process")]
-        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 2);
+        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER_PROCESS, 2);
     }
 }

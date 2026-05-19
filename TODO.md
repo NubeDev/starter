@@ -845,8 +845,13 @@ callable everywhere without per-tool wiring.
       receiver. Backpressure: lagged subscribers receive a `Lagged`
       event and reconnect; consistent with the notes example's
       `/notes/stream`.
-- [ ] (Deferred to consumer for now) gRPC unary `CallTool` RPC —
-      pattern documented in the notes example; no starter-side crate.
+- [x] gRPC unary `CallTool` RPC — landed as `crates/starter-grpc`.
+      Sibling of `starter-mcp`: tonic `starter.tools.v1.Tools` service
+      (`ListTools` + unary `CallTool`), `GrpcAuth::Bearer(Authenticator)`
+      seam, optional `reflection` feature, `testing::TestServer` for
+      in-process loopback tests. Notes demo's hand-rolled tonic service
+      is still consumer-owned (it's about consumer DOMAIN gRPC, not
+      the Tool registry).
 
 ### Phase 8f — Example consumer + smoke tests
 

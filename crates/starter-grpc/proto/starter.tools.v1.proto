@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+// Canonical gRPC surface for the `starter_spi::tool::Tool` registry.
+// One service, two RPCs — the gRPC mirror of the MCP `tools/list` +
+// `tools/call` methods that `starter-mcp` ships. Consumers that want
+// to expose their tools to gRPC clients import `starter-grpc` and
+// register the same `Tool` impls.
+//
+// Wire shape rationale:
+//
+//   - `input_schema_json` / `arguments_json` / `result_json` are
+//     JSON strings (not `google.protobuf.Struct`) on purpose. The
+//     `Tool` trait is already JSON-shaped (`invoke(Value) -> Value`),
+//     and a string round-trip preserves field ordering, integer
+//     precision, and unknown fields that `Struct` quietly drops.
+//     Clients that prefer structured protobuf should layer a
+//     consumer-owned tonic service on top, exactly as the
+//     `examples/notes` demo does — `starter-grpc` is the registry
+//     surface, not the totality of a consumer's gRPC API.
+//
+//   - One `Tools` service with stable v1 path. Future surfaces
+//     (`StreamingTools`, `Health`, capability negotiation) land as
+//     additive services under `starter.tools.v2` / `starter.health.v1`
+//     etc.; the v1 service does not change once shipped.
+package starter.tools.v1;
+
+service Tools {
+    // Enumerate every tool the server has registered.
+    rpc ListTools (ListToolsRequest) returns (ListToolsResponse);
+
+    // Invoke a registered tool by name.
+    //
+    // Auth, when enabled, runs before this handler: a missing or
+    // invalid bearer surfaces as `UNAUTHENTICATED`. An unknown tool
+    // name surfaces as `NOT_FOUND`. A tool that returns an error
+    // surfaces as `INTERNAL` with the error message in
+    // `Status::message()`.
+    rpc CallTool (CallToolRequest) returns (CallToolResponse);
+}
+
+message ListToolsRequest {}
+
+message ListToolsResponse {
+    repeated ToolDescriptor tools = 1;
+}
+
+message ToolDescriptor {
+    // Stable identifier (snake-case, domain-namespaced — same shape
+    // as the MCP tool name).
+    string name = 1;
+
+    // One-sentence human description; the LLM reads this.
+    string description = 2;
+
+    // JSON Schema describing the tool's input, encoded as a JSON
+    // string. Clients parse client-side.
+    string input_schema_json = 3;
+}
+
+message CallToolRequest {
+    // Tool name as registered on the server (same name returned by
+    // `ListTools`).
+    string name = 1;
+
+    // Tool arguments encoded as a JSON string. The server hands this
+    // straight to `Tool::invoke` after parsing — schema validation
+    // is the tool's responsibility, mirroring MCP behaviour.
+    string arguments_json = 2;
+}
+
+message CallToolResponse {
+    // The tool's result, encoded as a JSON string.
+    string result_json = 1;
+}

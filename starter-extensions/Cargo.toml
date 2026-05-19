@@ -10,12 +10,14 @@ members = [
     "crates/starter-ext-supervisor",
     "crates/starter-ext-wasm",
     "crates/starter-ext-cli",
+    "crates/starter-ext-grpc",
     "crates/starter-ext-workers",
     "crates/starter-ext-smoke",
     "examples/hello-builtin",
     "examples/hello-process",
     "examples/hello-wasm",
     "examples/hello-cli",
+    "examples/notes",
 ]
 
 # `starter-extensions` is a sibling workspace to `starter` (see
@@ -46,6 +48,7 @@ starter-ext-mcp         = { path = "crates/starter-ext-mcp", version = "0.1.0" }
 starter-ext-server      = { path = "crates/starter-ext-server", version = "0.1.0" }
 starter-ext-supervisor  = { path = "crates/starter-ext-supervisor", version = "0.1.0" }
 starter-ext-wasm        = { path = "crates/starter-ext-wasm", version = "0.1.0" }
+starter-ext-grpc        = { path = "crates/starter-ext-grpc", version = "0.1.0" }
 starter-ext-cli         = { path = "crates/starter-ext-cli", version = "0.1.0" }
 starter-ext-workers     = { path = "crates/starter-ext-workers", version = "0.1.0" }
 
@@ -53,6 +56,17 @@ starter-ext-workers     = { path = "crates/starter-ext-workers", version = "0.1.
 # path because the two workspaces sit next to each other in this repo.
 starter-mcp             = { path = "../crates/starter-mcp", version = "0.1.0" }
 starter-server          = { path = "../crates/starter-server", version = "0.1.0" }
+
+# Parent-workspace gRPC transport — consumed by `starter-ext-grpc`
+# (and only that adapter). Mirrors the `starter-cli` / `starter-mcp`
+# / `starter-server` arrows above.
+starter-grpc            = { path = "../crates/starter-grpc", version = "0.1.0" }
+
+# tonic stack — pinned to match the parent workspace's pins so a
+# consumer importing both ends up with one major of each.
+tonic        = { version = "0.12" }
+tonic-build  = { version = "0.12" }
+prost        = { version = "0.13" }
 starter-jsonrpc-stdio   = { path = "../crates/starter-jsonrpc-stdio", version = "0.1.0" }
 starter-cli             = { path = "../crates/starter-cli", version = "0.1.0" }
 

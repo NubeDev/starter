@@ -1,0 +1,44 @@
+[package]
+name        = "starter-grpc"
+description = "starter — gRPC server scaffold (tonic). Consumer registers `starter_spi::tool::Tool` impls; this crate surfaces them as `Tools/ListTools` + `Tools/CallTool` over gRPC, optionally gated by a `starter_spi::auth::Authenticator`. The gRPC sibling of `starter-mcp`."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Dependency arrow (SCOPE.md): starter-spi only, plus the tonic/prost
+# transport stack the parent workspace pins. This crate is a sibling of
+# `starter-mcp` — it consumes the same `Tool` trait surface and exposes
+# it on a different wire. Crates that don't need gRPC don't import this
+# crate; the auth seam (`Authenticator`) stays in spi so REST/MCP/gRPC
+# all gate access through one trait.
+[dependencies]
+starter-spi = { workspace = true }
+
+tonic       = { workspace = true }
+prost       = { workspace = true }
+async-trait = { workspace = true }
+serde_json  = { workspace = true }
+tokio       = { workspace = true, features = ["rt-multi-thread", "macros", "sync"] }
+tokio-stream = "0.1"
+tracing     = { workspace = true }
+thiserror   = { workspace = true }
+futures     = { workspace = true }
+
+# Reflection is opt-in (off by default). When on, the gRPC server
+# advertises its service descriptors so `grpcurl -list` and similar
+# tools work without a copy of the .proto file. Pulls
+# `tonic-reflection` only when the feature is enabled.
+tonic-reflection = { version = "0.12", optional = true }
+
+[features]
+default     = []
+testing     = []
+reflection  = ["dep:tonic-reflection"]
+
+[build-dependencies]
+tonic-build = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread", "test-util", "net", "time"] }

@@ -1,0 +1,39 @@
+[package]
+name        = "starter-notes-ext"
+description = "Single extension contributing notes CRUD across MCP tools, REST routes, CLI subcommands, and a UI panel — the cross-surface counterpart to hello-builtin/hello-cli/hello-ui."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[lib]
+name = "starter_notes_ext"
+path = "src/lib.rs"
+
+[[bin]]
+name = "starter-notes"
+path = "src/main.rs"
+
+[dependencies]
+# Extension side. SCOPE: one SDK dep + serde_json.
+starter-ext-sdk = { workspace = true, features = ["builtin"] }
+serde_json      = { workspace = true }
+
+# Host side (the bin). Loader + every adapter the manifest contributes
+# into, plus the parent workspace's MCP / server / CLI kernels the
+# adapters glue against.
+starter-ext-host       = { workspace = true }
+starter-ext-spi        = { workspace = true }
+starter-ext-mcp        = { workspace = true }
+starter-ext-server     = { workspace = true }
+starter-ext-cli        = { workspace = true }
+starter-mcp            = { workspace = true }
+starter-server         = { workspace = true }
+starter-cli            = { workspace = true }
+starter-spi            = { workspace = true }
+
+axum                   = { workspace = true }
+clap                   = { workspace = true }
+tokio                  = { workspace = true, features = ["macros", "rt-multi-thread", "time", "signal"] }
+tracing                = { workspace = true }

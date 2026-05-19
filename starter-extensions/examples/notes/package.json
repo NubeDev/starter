@@ -1,0 +1,29 @@
+{
+  "name": "@nube/starter-notes-ext",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Cross-surface notes extension example. Counterpart to the Rust crate in this same bundle directory — both share the block.yaml manifest.",
+  "type": "module",
+  "main": "./ui-src/remoteEntry.ts",
+  "exports": {
+    ".": "./ui-src/remoteEntry.ts",
+    "./Panel": "./ui-src/Panel.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "dependencies": {
+    "@nube/starter-ext-sdk-ts": "workspace:*"
+  },
+  "devDependencies": {
+    "@nube/starter-ext-ui": "workspace:*",
+    "@types/react": "^18.3.0",
+    "react": "^18.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}

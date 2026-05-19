@@ -1,0 +1,105 @@
+syntax = "proto3";
+
+// Backplane wire shape for the `starter-ext-grpc` adapter (SCOPE
+// R13, Adapter Phase 8).
+//
+// Every `contributes.grpc[]` entry across every loaded extension is
+// reachable through ONE gRPC service: `starter.ext.grpc.v1.ExtensionGrpc`.
+// Clients dial this service and pass the manifest-declared
+// `(service, method)` pair as the routing key; the adapter resolves
+// the pair against its registry and dispatches via the same
+// `GrpcDispatcher` trait the rest of the adapter shares.
+//
+// Why one backplane service instead of per-extension dynamic tonic
+// services in v0.1:
+//
+//   - Dynamic `tonic::server::Grpc` registration requires a custom
+//     codec per extension + runtime prost reflection — a substantial
+//     sub-project of its own.
+//   - The kernel's stream sub-protocol (R10/R13) is JSON-RPC
+//     notifications; the adapter already speaks JSON when proxying
+//     to process/wasm extensions. A JSON-over-gRPC backplane keeps
+//     ONE codec end-to-end.
+//   - The per-extension `.proto` files in each bundle are still the
+//     canonical client schema contract — `Invoke.args_proto_json` /
+//     `result_proto_json` carry the canonical JSON encoding of the
+//     extension's proto messages, so a client that has the .proto
+//     can serialize/deserialize against it client-side.
+//
+// Typed dynamic services are an additive v0.2 surface; they would
+// land as a sibling service under `starter.ext.grpc.v2` or as
+// runtime-registered `tonic::server::Grpc` routes on the same
+// `Server::builder()`. The v1 wire never changes once shipped.
+package starter.ext.grpc.v1;
+
+service ExtensionGrpc {
+    // Enumerate every `(extension, service, method)` triple registered
+    // across every Validated extension. Lets a client introspect what
+    // the host currently exposes without parsing manifests.
+    rpc ListMethods (ListMethodsRequest) returns (ListMethodsResponse);
+
+    // Invoke a unary RPC declared by some extension.
+    rpc Invoke (InvokeRequest) returns (InvokeResponse);
+
+    // Invoke a server-streaming RPC declared by some extension. The
+    // adapter pumps the kernel's `stream.event`/`stream.end`/
+    // `stream.error` notifications onto this server-streaming
+    // response.  Client cancellation (HTTP/2 RST_STREAM / context
+    // cancel) becomes a `stream.cancel` notification to the
+    // extension; the extension's handler observes cancellation
+    // through its `Ctx`'s cancel token, per the streaming
+    // contract.
+    rpc InvokeStream (InvokeRequest) returns (stream InvokeStreamEvent);
+}
+
+message ListMethodsRequest {}
+
+message ListMethodsResponse {
+    repeated MethodDescriptor methods = 1;
+}
+
+message MethodDescriptor {
+    // The extension id (reverse-DNS) that owns this contribution.
+    string extension_id = 1;
+    // The `contributes.grpc[].id` (must be within the extension's
+    // namespace, per SCOPE R4).
+    string contribute_id = 2;
+    // gRPC service name from the manifest (e.g. `weather.v1.Weather`).
+    string service = 3;
+    // gRPC method name from the manifest (e.g. `Current`).
+    string method = 4;
+    // `true` for server-streaming methods.
+    bool streaming = 5;
+    // Static markdown description as it appears in the bundle.
+    // Byte-identical at load time and call time (SCOPE R7).
+    string description = 6;
+    // The bundle-relative path of the `.proto` file, surfaced so
+    // clients can locate the schema contract.
+    string proto_path = 7;
+}
+
+message InvokeRequest {
+    // The gRPC service name from the extension's manifest entry.
+    string service = 1;
+    // The gRPC method name from the extension's manifest entry.
+    string method = 2;
+    // The request payload encoded as canonical proto3 JSON
+    // (https://protobuf.dev/programming-guides/proto3/#json). The
+    // adapter hands this straight to the dispatcher; for the
+    // builtin path the registered handler receives
+    // `serde_json::Value`, for process/wasm it travels in the
+    // JSON-RPC envelope unchanged.
+    string args_proto_json = 3;
+}
+
+message InvokeResponse {
+    // The reply encoded as canonical proto3 JSON.
+    string result_proto_json = 1;
+}
+
+message InvokeStreamEvent {
+    // One server-streaming event, encoded as canonical proto3 JSON.
+    // Corresponds to one kernel `stream.event` notification (or, for
+    // the builtin path, one item the handler yielded).
+    string payload_proto_json = 1;
+}

@@ -241,8 +241,13 @@ starter/                                   <- this repo
                                               composes their own binary; this
                                               crate is a library, not a binary.
 
-    [reserved] starter-grpc/               <- DOCUMENTED SLOT, NOT PUBLISHED YET.
-                                              Added when a real consumer needs it.
+    starter-grpc/                          <- tonic gRPC server scaffold. Sibling
+                                              of starter-mcp: consumer registers
+                                              `Tool` impls, this crate surfaces them
+                                              as `starter.tools.v1.Tools`
+                                              (ListTools + CallTool). Optional
+                                              Authenticator-gated bearer auth.
+                                              Optional `reflection` feature.
 
   packages/
     starter-client-ts/                     <- generated from OpenAPI. Zod
@@ -787,8 +792,13 @@ into a Studio-style consumer's source, the curated facade is missing.
 - **MCP transport:** stdio only for v1. SSE/HTTP transports added when
   a consumer needs them. (HTTP transport landed in Phase 5 behind
   `feature = "http"`; SSE still deferred.)
-- **gRPC:** deferred. The dep-graph slot is documented but no crate is
-  published until a real consumer justifies it.
+- **gRPC:** `starter-grpc` ships the gRPC sibling of `starter-mcp` —
+  one `Tools` service (`ListTools` + unary `CallTool`) backed by the
+  same `Tool` trait + `Authenticator` seam. JSON-over-gRPC wire
+  envelope; typed per-extension tonic services remain a consumer
+  responsibility (see `examples/notes/src/grpc.rs`). The extension
+  workspace's `starter-ext-grpc` adapter rides on top to surface
+  `contributes.grpc` entries.
 - **Theme tokens:** ship a neutral default set in `starter-ui-kit`;
   document the Tailwind-preset override path.
 - **SSE shape:** use `axum::response::sse` directly with thin helpers;

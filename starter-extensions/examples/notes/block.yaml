@@ -1,0 +1,57 @@
+v: 1
+id: com.nube.notes
+version: 0.1.0
+display_name: "Notes"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# Single builtin bundle contributing across every surface the extension
+# substrate exposes today: MCP tools, REST routes, CLI subcommands, and
+# a UI panel mounted into the host's `sidebar` slot. (Optionally also
+# gRPC via `contributes.grpc` + `starter-ext-grpc`; see README.)
+runtime:
+  kind: builtin
+  crate_name: starter_notes_ext
+
+contributes:
+  tools:
+    - id: com.nube.notes.add
+      input_schema:  schemas/add_in.json
+      output_schema: schemas/note_out.json
+      description_file: docs/add.md
+    - id: com.nube.notes.list
+      input_schema:  schemas/list_in.json
+      output_schema: schemas/list_out.json
+      description_file: docs/list.md
+    - id: com.nube.notes.search
+      input_schema:  schemas/search_in.json
+      output_schema: schemas/list_out.json
+      description_file: docs/search.md
+
+  rest:
+    - id: com.nube.notes.rest_create
+      method: POST
+      path: /notes
+      description_file: docs/rest_create.md
+      request_schema: schemas/add_in.json
+      response_schema: schemas/note_out.json
+    - id: com.nube.notes.rest_list
+      method: GET
+      path: /notes
+      description_file: docs/rest_list.md
+      response_schema: schemas/list_out.json
+
+  cli:
+    - id: com.nube.notes.cli_add
+      command: notes-add
+      description_file: docs/cli_add.md
+      args_schema: schemas/add_in.json
+    - id: com.nube.notes.cli_list
+      command: notes-list
+      description_file: docs/cli_list.md
+      args_schema: schemas/list_in.json
+
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - { name: NotesPanel, module: "./Panel", slot: sidebar }

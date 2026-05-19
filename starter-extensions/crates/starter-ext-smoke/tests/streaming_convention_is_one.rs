@@ -19,9 +19,9 @@
 //!   - Supervisor forwards stream.* without interpretation:
 //!     `starter-ext-supervisor/src/stream.rs`
 //!   - MCP notifications/progress + gRPC server-streaming: Adapter
-//!     Phase 8 lands these on the same convention; until then the gRPC
-//!     leg is `#[ignore]`-able and the MCP leg lives in the MCP adapter
-//!     (`starter-ext-mcp`) once the streaming surface stabilises.
+//!     Phase 8 (`starter-ext-grpc`) lands the gRPC leg on the same
+//!     convention; the MCP leg lives in `starter-ext-mcp` once the
+//!     streaming surface stabilises.
 
 use starter_ext_spi::jsonrpc::stream_methods as stream;
 use starter_ext_supervisor::is_streaming_notification;
