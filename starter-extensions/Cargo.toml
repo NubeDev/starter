@@ -8,8 +8,10 @@ members = [
     "crates/starter-ext-mcp",
     "crates/starter-ext-server",
     "crates/starter-ext-supervisor",
+    "crates/starter-ext-wasm",
     "examples/hello-builtin",
     "examples/hello-process",
+    "examples/hello-wasm",
 ]
 
 # `starter-extensions` is a sibling workspace to `starter` (see
@@ -39,6 +41,7 @@ starter-ext-host        = { path = "crates/starter-ext-host", version = "0.1.0" 
 starter-ext-mcp         = { path = "crates/starter-ext-mcp", version = "0.1.0" }
 starter-ext-server      = { path = "crates/starter-ext-server", version = "0.1.0" }
 starter-ext-supervisor  = { path = "crates/starter-ext-supervisor", version = "0.1.0" }
+starter-ext-wasm        = { path = "crates/starter-ext-wasm", version = "0.1.0" }
 
 # Parent-workspace crates the MCP and server adapters consume. Pulled in via
 # path because the two workspaces sit next to each other in this repo.

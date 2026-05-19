@@ -1,0 +1,105 @@
+// SPDX-License-Identifier: MIT OR Apache-2.0
+//
+// The `starter:extension` WIT package. One package, one major-zero
+// version (`0.1.0`). Per SCOPE.md "Phase 4 — `starter-ext-wasm`": one
+// WIT package, default-deny capability baseline, streaming-notification
+// import names reserved alongside so adapters that need them later are
+// additive within the same package.
+//
+// Field-order discipline mirrors the JSON-RPC envelope this WIT package
+// is the wasm-flavour twin of: every `dispatch` call returns its result
+// shape verbatim into a host-side JSON-RPC frame so adapters speak one
+// streaming shape across all three flavours (SCOPE post-R13).
+
+package starter:extension@0.1.0;
+
+// One opaque payload, JSON-encoded on the wire. Keeping params + result
+// as `string` (UTF-8 JSON text) rather than a per-tool typed record is
+// deliberate:
+//
+//  - The manifest's `contributes.tools[].input_schema` /
+//    `output_schema` files are the typed view (R3). The kernel itself
+//    is schema-agnostic — adapters translate between the schema and
+//    the host's transport (MCP, REST, gRPC, …).
+//  - WIT does not yet have an `any` type. Encoding the payload as JSON
+//    keeps the wasm-flavour wire identical to the process flavour
+//    (where stdio JSON-RPC carries the same payload shape).
+//
+// Per SCOPE.md "Stateless per-call instantiation in v0.1": the guest is
+// expected to have no observable state between dispatch calls. The host
+// instantiates a fresh component instance per call until the v0.2
+// `kv` capability is wired (see the reserved import below).
+type tool-id = string;
+type json-payload = string;
+
+// Per SCOPE.md "Capability: an extension that did not declare
+// `http_out` has no `wasi:http` import linked". WASM v0.1 hard-enforces
+// at link time — components that import a WASI interface the host did
+// not grant fail instantiation. The Rust-side host wires this in
+// `crates/starter-ext-wasm/src/host.rs`.
+//
+// Capability-gated WASI imports a component may opt into:
+//   - wasi:io/streams                  (always linked; no payload)
+//   - wasi:cli/stdio                   (always linked; no-op writers)
+//   - wasi:clocks/wall-clock           (requires `wall_clock`)
+//   - wasi:clocks/monotonic-clock      (requires `wall_clock`)
+//   - wasi:http/outgoing-handler       (requires `http_out`)
+//   - wasi:filesystem/types            (requires `fs`)
+// `secrets` is satisfied by the host-defined `starter:extension/host`
+// interface below (no public-WASI equivalent yet).
+
+// Host-provided imports the extension may rely on when the matching
+// capability is granted. v0.1 surfaces only the bare minimum the
+// kernel needs; new categories are additive within `0.1.x`.
+interface host {
+    // Emit a streaming-event payload back to the host. v0.1 carries the
+    // stream id + opaque JSON payload identically to the process
+    // flavour's `stream.event` JSON-RPC notification. The host wraps
+    // this call into one such notification before any adapter sees it.
+    //
+    // Reserved alongside `stream.end`, `stream.error`, `stream.cancel`
+    // imports below so a future minor adds the matching guest hooks
+    // without bumping the package major.
+    stream-event: func(stream-id: string, payload: json-payload);
+
+    // Reserved import names. Wired here as no-ops in v0.1 so the WIT
+    // package's surface area is the post-R13 streaming sub-protocol's
+    // full shape from day one. The Rust-side host emits `unreachable`
+    // bodies for these until v0.2 lands the guest-side hooks.
+    stream-end:    func(stream-id: string);
+    stream-error:  func(stream-id: string, payload: json-payload);
+    stream-cancel: func(stream-id: string);
+
+    // Reserved for v0.2: per-extension key-value store. v0.1 instantiates
+    // a fresh component per call, so there is intentionally nowhere to
+    // hang state. Once `kv` lands, the per-call instantiation discipline
+    // becomes a configuration choice (still default-on) rather than a
+    // necessity.
+    //   kv-get: func(key: string) -> option<json-payload>;
+    //   kv-put: func(key: string, value: json-payload);
+}
+
+// The single export every wasm-flavour extension must provide. The
+// proc-macro-generated `<Struct>ToolHandlers` impl on the guest is
+// what backs this; the host's `WasmHost::dispatch_tool` calls it via
+// the matching wasmtime component binding.
+//
+// `result<json-payload, json-payload>` carries the same shape on both
+// sides; the `Err` payload is the JSON-encoded `Error` enum from
+// `starter-ext-spi`. Adapters surface either side as their transport
+// dictates.
+interface guest {
+    dispatch-tool: func(tool: tool-id, params: json-payload)
+        -> result<json-payload, json-payload>;
+}
+
+// The world a wasm-flavour extension targets. `import host` means the
+// guest may call back into the host's streaming surface (subject to
+// the capability gate); `export guest` is the mandatory dispatch
+// entry. The world stays small on purpose — every additional export
+// or import is a substrate-level commitment the kernel must support
+// across both v0.1 hosts and future ones.
+world extension {
+    import host;
+    export guest;
+}

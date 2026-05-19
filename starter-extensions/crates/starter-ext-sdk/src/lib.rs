@@ -388,6 +388,67 @@ macro_rules! register_static_table {
 /// `#[tokio::main]` — keeping the macro free of `fn main` means the
 /// same macro invocation works from a lib (so an integration test can
 /// call `run()` directly) and from a binary crate.
+// ---------------------------------------------------------------------------
+// `register_wasm_main!` — wasm-flavour entry-point glue (SCOPE R1, "wasm").
+// Stage 11 — Kernel Phase 4.
+//
+// Mirrors `register_static_table!` (builtin) and `register_process_main!`
+// (process) for the WASI-p2 component flavour. Emits a `pub fn dispatch`
+// the wasm host calls into; on `wasm32-wasip2` builds a future
+// `wit_bindgen::export!` invocation will route the WIT-side
+// `starter:extension/guest.dispatch-tool` export onto this symbol, so the
+// shape today is what every future bindgen generation will hang on.
+// ---------------------------------------------------------------------------
+
+/// Wasm-flavour entry-point glue.
+///
+/// SCOPE R1: wasm extensions are WASI-p2 components instantiated by
+/// `starter-ext-wasm::WasmHost`. The host calls into the component's
+/// `starter:extension/guest.dispatch-tool` export; this macro is the
+/// single call an extension author makes to expose itself to that host.
+///
+/// Invoke once per extension crate, *after* the `#[derive(Extension)]`
+/// type and its `Handlers` impl:
+///
+/// ```ignore
+/// starter_ext_sdk::register_wasm_main! {
+///     extension: Hello,
+///     ctx: HelloCtx,
+///     instance: Hello,
+/// }
+/// ```
+///
+/// The macro emits `pub fn dispatch(tool_id, params) -> Result<Value>`
+/// that routes through [`crate::wasm::run_wasm_main`]. The function is
+/// the symbol a future `wit_bindgen::export!` invocation hangs on; on
+/// a host-target build (e.g. the workspace's `cargo test`) it stays an
+/// ordinary public function so the example compiles cleanly even
+/// without a wasm runtime.
+#[cfg(feature = "wasm")]
+#[macro_export]
+macro_rules! register_wasm_main {
+    ( extension: $ty:ty, ctx: $ctx_ty:ty, instance: $instance:expr $(,)? ) => {
+        /// Route one `dispatch-tool` call into the extension's typed
+        /// handler. Called by the wasm host
+        /// (`starter-ext-wasm::WasmHost::dispatch_tool`) via the
+        /// WIT-side `starter:extension/guest.dispatch-tool` export
+        /// once the v0.2 `wit_bindgen` integration lands; today this
+        /// is the canonical entry-point shape, callable directly.
+        pub fn dispatch(
+            tool_id: &str,
+            params: $crate::serde_json::Value,
+        ) -> $crate::Result<$crate::serde_json::Value> {
+            let instance: $ty = $instance;
+            $crate::wasm::run_wasm_main(
+                &instance,
+                tool_id,
+                params,
+                |inner| <$ctx_ty>::__from_inner(inner),
+            )
+        }
+    };
+}
+
 #[cfg(feature = "process")]
 #[macro_export]
 macro_rules! register_process_main {
@@ -444,10 +505,18 @@ mod tests {
     }
 
     #[test]
-    fn flavour_marker_symbol_has_expected_value_for_builtin_feature() {
-        // Crate-level: the default feature set is `builtin`, so the
-        // marker should be 0. Bumping the default feature or the value
-        // encoding is a deliberate (and load-bearing) change.
+    fn flavour_marker_symbol_matches_enabled_feature() {
+        // The marker value encodes which flavour feature is active so
+        // the linker symbol clash (R1 — "more than one flavour ⇒
+        // linker error") has a value to point at when diagnosing.
+        // 0 = builtin, 1 = wasm, 2 = process. The test asserts each
+        // feature gate emits the matching value; runs under whichever
+        // single feature the test invocation enabled.
+        #[cfg(feature = "builtin")]
         assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 0);
+        #[cfg(feature = "wasm")]
+        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 1);
+        #[cfg(feature = "process")]
+        assert_eq!(super::__STARTER_EXT_FLAVOUR_MARKER, 2);
     }
 }

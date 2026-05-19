@@ -1,0 +1,24 @@
+v: 1
+id: com.acme.hello
+version: 0.1.0
+display_name: "Hello (wasm)"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# SCOPE R1 / "One source, three flavours": the trait impl matches
+# hello-builtin / hello-process verbatim. Only `runtime.kind` and
+# `runtime.artefact` change.
+runtime:
+  kind: wasm
+  artefact: hello_wasm.wasm
+
+# SCOPE R8 default-deny: this example declares no capabilities.
+# `starter-ext-wasm`'s linker therefore wires no `wasi:*` interfaces;
+# the component must not import any.
+
+contributes:
+  tools:
+    - id: com.acme.hello.echo
+      input_schema:  schemas/echo_in.json
+      output_schema: schemas/echo_out.json
+      description_file: docs/echo.md
