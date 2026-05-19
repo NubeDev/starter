@@ -751,16 +751,58 @@ discipline mirrors `starter-spi`.
   Avoids the LoopAgent re-selection thrash.
 - **Tool stays as the MCP-callable primitive; Node is engine-internal.**
   R8 above. Two traits, not one.
+- **D1 resolved — `starter-flow-node-loop` wins; adk-rust stays out of
+  the workspace dep tree.** The `ai-agent` node kind body lifts
+  Codeless's `Runner` shape and routes every LLM call through
+  `starter_ai::AiRunner`. Derives from **R7** (the AI agent is a node
+  kind, not a runtime — workflow topology belongs to the engine, leaving
+  only the turn-based LLM-loop-with-tool-dispatch in the node body, which
+  Codeless's `Runner` already implements). Costs us adk-rust's planner
+  heuristics, which neither Codeless nor Rubix consumes today. **Revisit
+  trigger:** a consumer surfaces a hard, documented need for adk-rust
+  planner heuristics that neither Codeless's `Runner` shape nor Rubix's
+  reactive propagator provides — at which point Phase 4 may add
+  `starter-flow-node-adk` as a *second*, opt-in body (per R7's "if kept
+  at all, it ships as `starter-flow-node-adk`"), not as a replacement.
+  Phase 2 builds against this decision so that the `workspace builds
+  without adk-rust` smoke gate stays green.
+- **D1a — Cycle-bound budget defaults (Phase 2 entry-gate lock).**
+  Per R1, every flow run carries a per-run propagation budget. Defaults
+  locked at: `max_propagation_hops = 1000`; idempotent-write
+  short-circuit `on` (a `write_slot` whose new value equals the prior
+  value does not enqueue downstream invocations). Both are overridable
+  at `FlowRunner::start` via `RunOpts { max_propagation_hops,
+  idempotent_short_circuit }`; neither default is sealed inside the
+  propagator. Derives from **R1** ("cycles allowed" only holds if
+  cycles can't hang the engine). A run that exhausts the cap is marked
+  `Failed { error: cycle-budget-exhausted }` and emits the same span
+  shape as any other run failure.
+- **D1b — In-memory store shape for Phase 2.** The Phase 2 `GraphStore`
+  impl is `std::collections::BTreeMap<SlotRef, SlotValue>` guarded by
+  `tokio::sync::RwLock`, with `SubscriptionStream` backed by
+  `tokio::sync::broadcast`. Single writer goes through `write_slot`
+  (R2); subscribers receive `GraphEvent::SlotChanged` from one
+  per-store `broadcast::Sender`. This is **Phase 2 only**; the SQLite
+  `FlowStore` / `RunStore` / `SessionStore` impls in
+  `starter-store-sqlite` land in **Phase 3** and do not pre-decide
+  their on-disk shape here beyond the `GraphStore` trait contract
+  already specified. Anything the in-memory impl exposes beyond that
+  trait is an internal detail of `starter-flow` and may change in
+  Phase 3 without an SPI bump.
+- **D1c — `FlowEvent` stream cardinality.** One stream per `FlowRun`.
+  Each `FlowRun` handle owns a `tokio::sync::broadcast::Sender<FlowEvent>`;
+  every subscriber obtains its own `Receiver` via `FlowRun::subscribe()`
+  and sees the full sequence from the point of subscription forward
+  (standard `tokio::sync::broadcast` per-subscriber semantics, lagged
+  receivers observe a `Lagged` error rather than silently dropping
+  data). Multi-consumer is supported (REST adapter, CLI adapter, audit
+  span exporter can all subscribe to the same run concurrently). This
+  is the cardinality R13 ("streaming reuses existing seams")
+  presupposes; locking it here so Phase 2 doesn't accidentally ship a
+  single-consumer mpsc that R13 would have to walk back.
 
 ## Open questions
 
-- **D1 — adk-rust as the `ai-agent` body, or a leaner LLM-loop crate?**
-  Two implementations possible: (a) `starter-flow-node-adk` wrapping
-  adk-rust's `LlmAgent`; (b) `starter-flow-node-loop` lifting Codeless's
-  `Runner` trait. Recommended default: **(b)**. Costs us adk-rust's
-  planner heuristics (which neither codeless nor rubix uses); saves us
-  the bridge LoC tally, the pinned-version dance, and one external
-  dep. Decision deferred to Phase 2 entry gate.
 - **D2 — Where the host flow directory lives by default.**
   `$XDG_DATA_HOME/<binary>/flows/` matches the extensions + skills
   default convention. Belongs in `starter-config`'s defaults, not here.
