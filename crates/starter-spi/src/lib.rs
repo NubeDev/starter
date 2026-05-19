@@ -36,3 +36,13 @@ pub use paging::{Cursor, Page};
 /// reach for `starter_spi::SecretString` instead. This is the only
 /// place in the workspace `secrecy` is named as a direct dependency.
 pub use secrecy::SecretString;
+
+/// `secrecy::ExposeSecret` re-exported at the crate root.
+///
+/// R5 forbids provider crates from naming `secrecy` directly, but they
+/// still have to read the plaintext out of a [`SecretString`] when
+/// calling the third-party API. Importing
+/// `starter_spi::ExposeSecret` and calling `.expose_secret()` is the
+/// sanctioned path; the trait lives here so the `secrecy` crate name
+/// never appears in any provider crate's `Cargo.toml`.
+pub use secrecy::ExposeSecret;
