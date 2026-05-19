@@ -18,6 +18,8 @@ members = [
     "crates/starter-tauri",
     "crates/starter-tool-slack",
     "crates/starter-service-slack",
+    "crates/starter-tool-telegram",
+    "crates/starter-service-telegram",
     "examples/minimal",
     "examples/gh-report",
     "examples/notes",
@@ -48,6 +50,8 @@ starter-client-rs        = { path = "crates/starter-client-rs",        version =
 starter-cli              = { path = "crates/starter-cli",              version = "0.1.0" }
 starter-tool-slack       = { path = "crates/starter-tool-slack",       version = "0.1.0" }
 starter-service-slack    = { path = "crates/starter-service-slack",    version = "0.1.0" }
+starter-tool-telegram    = { path = "crates/starter-tool-telegram",    version = "0.1.0" }
+starter-service-telegram = { path = "crates/starter-service-telegram", version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.
