@@ -12,6 +12,34 @@ rust-version.workspace = true
 # (the remainder) per DOCS/flow/scope/SCOPE.md.
 [dependencies]
 starter-flow-spi = { workspace = true, default-features = false }
+# Phase 2 stage 3 (transform body) onward: node-kind bodies are async
+# trait impls that emit tracing spans and surface typed errors over
+# the `NodeBehavior` seam. These deps are unconditional — the
+# `cfg(feature = "...")` gates on each module keep the build green
+# when a consumer pays for none of the kinds.
+async-trait = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+# `tool-call` (stage 4) calls `Tool::invoke` through an
+# `Arc<dyn ToolRegistry>` whose value type is `starter_spi::Tool` and
+# forwards `serde_json::Value` input/output verbatim. Unconditional so
+# the crate's no-feature `cargo check` still resolves the trait the
+# registry names — the `cfg(feature = "tool-call")` gate on
+# `pub mod tool_call` in `src/lib.rs` keeps the module itself opt-in.
+starter-spi = { workspace = true }
+serde_json  = { workspace = true }
+# `tool-call` (stage 4) races the tool's future against the run's
+# `Cancel` inside a `tokio::select!`. Gated as `optional` so consumers
+# that don't opt into `tool-call` pay no tokio surface at compile time.
+tokio = { workspace = true, optional = true, features = ["macros", "sync", "rt"] }
+
+[dev-dependencies]
+# `#[tokio::test]` for the async unit tests + the engine crate for the
+# integration test that wraps a transform in a `FlowRunner` to confirm
+# `FlowEvent::NodeFailed` surfaces end-to-end (the propagator's
+# `Err → NodeFailed` wiring lives in `starter-flow`).
+tokio        = { workspace = true, features = ["rt-multi-thread", "sync", "macros", "time"] }
+starter-flow = { workspace = true }
 
 [features]
 # Default-off per the workspace policy: a consumer enables only the
@@ -22,7 +50,7 @@ starter-flow-spi = { workspace = true, default-features = false }
 default = []
 
 transform         = []
-tool-call         = []
+tool-call         = ["dep:tokio"]
 ai-agent          = []
 branch            = []
 merge             = []
