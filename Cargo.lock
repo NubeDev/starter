@@ -6140,6 +6140,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-tool-gmail"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
 name = "starter-tool-slack"
 version = "0.1.0"
 dependencies = [
