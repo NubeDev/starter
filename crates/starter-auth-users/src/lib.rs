@@ -38,6 +38,7 @@
 
 pub mod admin;
 pub mod authenticator;
+pub mod linked_providers;
 pub mod openapi;
 pub mod password;
 pub mod role;
@@ -48,5 +49,6 @@ pub mod store;
 pub mod token;
 
 pub use authenticator::AuthAuthenticator;
+pub use linked_providers::{LinkedProvidersError, LinkedProvidersLookup, NoLinkedProviders};
 pub use role::Role;
 pub use scope::Scope;

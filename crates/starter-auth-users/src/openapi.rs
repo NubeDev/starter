@@ -6,7 +6,7 @@
 
 use utoipa::OpenApi;
 
-use crate::routes::{LoginRequest, LoginResponse, MeResponse};
+use crate::routes::{LoginRequest, LoginResponse, MeResponse, PasswordNotSetResponse};
 use starter_spi::auth::Role;
 use starter_spi::dto::Problem;
 
@@ -22,7 +22,7 @@ use starter_spi::dto::Problem;
         crate::routes::logout::handler,
         crate::routes::me::handler,
     ),
-    components(schemas(LoginRequest, LoginResponse, MeResponse, Role, Problem)),
+    components(schemas(LoginRequest, LoginResponse, PasswordNotSetResponse, MeResponse, Role, Problem)),
     tags((name = "auth", description = "Authentication endpoints"))
 )]
 /// utoipa entry point holding the path + component derives for this crate.

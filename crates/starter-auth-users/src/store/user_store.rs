@@ -5,14 +5,21 @@ use async_trait::async_trait;
 use crate::role::Role;
 
 /// One user row, post-deserialization.
+///
+/// `password_hash` is `Option<String>` because a user may have been
+/// created via a third-party sign-in path (OAuth, SAML, ...) and never
+/// chosen a local password. `None` is **not** a wildcard — every login
+/// route must reject it explicitly. See `POST /auth/login` for the
+/// canonical `password_not_set` error path.
 #[derive(Debug, Clone)]
 pub struct UserRecord {
     /// Stable user id (the `Principal.subject`).
     pub id: String,
     /// Login email.
     pub email: String,
-    /// argon2id PHC string.
-    pub password_hash: String,
+    /// argon2id PHC string, or `None` for a user with no local
+    /// password (third-party sign-in only).
+    pub password_hash: Option<String>,
     /// User's role.
     pub role: Role,
 }
@@ -36,11 +43,15 @@ pub enum UserStoreError {
 #[async_trait]
 pub trait UserStore: Send + Sync {
     /// Insert a new user. Returns `Conflict` when the email is taken.
+    ///
+    /// `password_hash` is `None` for users created by a third-party
+    /// sign-in path that has no local password. Backends must store
+    /// `NULL` in the underlying column in that case.
     async fn create(
         &self,
         id: &str,
         email: &str,
-        password_hash: &str,
+        password_hash: Option<&str>,
         role: Role,
     ) -> Result<(), UserStoreError>;
 
@@ -80,10 +91,15 @@ mod sqlite {
         let role_str: String = row.get(3);
         let role = parse_role(&role_str)
             .ok_or_else(|| UserStoreError::Backend(format!("invalid role: {role_str}")))?;
+        // `password_hash` is nullable now (migration 0002 in
+        // starter-auth-oauth drops NOT NULL). `row.get::<Option<_>>` is
+        // the only safe shape; reading it as `String` would panic on a
+        // third-party-only user.
+        let password_hash: Option<String> = row.get(2);
         Ok(UserRecord {
             id: row.get(0),
             email: row.get(1),
-            password_hash: row.get(2),
+            password_hash,
             role,
         })
     }
@@ -111,7 +127,7 @@ mod sqlite {
             &self,
             id: &str,
             email: &str,
-            password_hash: &str,
+            password_hash: Option<&str>,
             role: Role,
         ) -> Result<(), UserStoreError> {
             let res = sqlx::query(

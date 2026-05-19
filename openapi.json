@@ -37,6 +37,16 @@
               }
             }
           },
+          "400": {
+            "description": "Account has no local password; sign in via a linked provider",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordNotSetResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Invalid credentials"
           }
@@ -136,6 +146,27 @@
           "subject": {
             "type": "string",
             "description": "Stable user identifier (the `Principal.subject`)."
+          }
+        }
+      },
+      "PasswordNotSetResponse": {
+        "type": "object",
+        "description": "Body returned by `POST /auth/login` when the matched user has no\nlocal password (`password_hash IS NULL`). The SPA reads\n`providers` to render \"Sign in with GitHub / Google\" buttons\nwithout a guess-and-check round trip.",
+        "required": [
+          "error",
+          "providers"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Always `\"password_not_set\"`. Discriminator field; lets clients\npattern-match without inspecting the HTTP status alone."
+          },
+          "providers": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Provider ids the user has linked. Empty list when no\nthird-party path is configured (the default\n[`crate::NoLinkedProviders`] impl)."
           }
         }
       },
