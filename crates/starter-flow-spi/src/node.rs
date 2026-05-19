@@ -43,15 +43,33 @@ pub trait NodeBehavior: Send + Sync + 'static {
 
 /// Per-invocation context handed to a [`NodeBehavior`].
 ///
-/// Phase 1 is a placeholder — concrete fields land in Phase 2 alongside
-/// the engine that constructs them (`Cancel` handle, `Principal`,
-/// trace span, `GraphStore` writer, etc.). Keeping the shape opaque
-/// here lets the engine add fields without churning the trait.
+/// Phase 2 (stage 4 — propagator) populates this with the minimum the
+/// propagator needs to call into a node body: the [`RunId`] of the
+/// owning run, the [`NodeId`] of the node being invoked, and a borrow
+/// of the run's [`Cancel`](crate::Cancel) token (R13). Future stages
+/// may add more borrowed fields (e.g. `Principal`, `GraphStore`
+/// writer, trace span) — the struct is `#[non_exhaustive]` so adding
+/// a field is non-breaking, and the [`Self::new`] constructor keeps
+/// engine-internal construction routed through one call site that
+/// knows the full set of fields.
 #[non_exhaustive]
 pub struct NodeCtx<'a> {
-    /// Lifetime carrier. Replaced by real borrowed fields in Phase 2.
-    #[doc(hidden)]
-    pub _phantom: std::marker::PhantomData<&'a ()>,
+    /// The run this invocation belongs to.
+    pub run: crate::flow::RunId,
+    /// The node being invoked.
+    pub node: &'a NodeId,
+    /// Cancellation handle for the run (SCOPE R13). Node bodies
+    /// `select!` against `cancel.cancelled()` or poll
+    /// `cancel.is_cancelled()` to abort promptly.
+    pub cancel: &'a dyn crate::Cancel,
+}
+
+impl<'a> NodeCtx<'a> {
+    /// Construct a [`NodeCtx`]. The propagator is the only in-engine
+    /// caller; it builds one of these per `NodeBehavior::invoke` call.
+    pub fn new(run: crate::flow::RunId, node: &'a NodeId, cancel: &'a dyn crate::Cancel) -> Self {
+        Self { run, node, cancel }
+    }
 }
 
 /// Lifecycle transition the engine notifies a node of.
