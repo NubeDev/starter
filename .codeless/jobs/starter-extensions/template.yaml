@@ -1,106 +1,16 @@
 name: starter-extensions
-goal: |
-  Build the starter-extensions sibling workspace as specified in
-  DOCS/extensions/scope/SCOPE.md — one ExtensionBehavior trait, three
-  packaging flavours (builtin / WASM / process), one YAML manifest,
-  one supervisor, one Module Federation UI runtime. Designed for the
-  third implementation: extracts the kernel that codeless and
-  rubix-agent re-invented separately, with domain knowledge kept out.
-  Ship in four phases — each independently mergeable and useful — so
-  stopping after any phase leaves a working product.
+goal: 'Build the starter-extensions sibling workspace as specified in DOCS/extensions/scope/SCOPE.md — one ExtensionBehavior trait, three packaging flavours (builtin / WASM / process), one YAML manifest, one supervisor, one Module Federation UI runtime. Designed for the third implementation: extracts the kernel that codeless and rubix-agent re-invented separately, with domain knowledge kept out. Ship in four phases — each independently mergeable and useful — so stopping after any phase leaves a working product.'
 
 stages:
-  - >-
-    resolve open questions in DOCS/extensions/scope/SCOPE.md —
-    extension bundle on-disk convention (default to
-    $XDG_DATA_HOME/<binary>/extensions/<id>/, override via
-    starter-config), admin-endpoint capability set (defer
-    Role::ExtensionManage until a consumer asks; ship behind
-    Role::Admin), enable/disable persistence model (sidecar
-    .state.yaml next to the bundle vs DB row — pick DB row keyed
-    by extension id), JSON-RPC wire-schema versioning
-    (host_capabilities in init handshake, deferred to v0.2 first
-    new method). Record decisions in SCOPE.md under Decisions with
-    revisit triggers
-  - REVIEW prerequisite decisions before any code lands
-  - >-
-    Phase 1 — starter-ext-spi (contracts crate, R2), depends only
-    on starter-spi — ExtensionBehavior trait, Manifest struct with
-    v=1, ExtensionId newtype with reverse-DNS validation,
-    Capability enum, LifecycleState enum, JsonRpcEnvelope, Error.
-    Zero runtime logic, zero I/O
-  - >-
-    Phase 1 — starter-ext-sdk — derive(Extension) proc-macro
-    reading block.yaml at compile time (R3 — manifest is source of
-    truth, dispatch table generated, missing or extra handler is a
-    compile error in the extension), requires! macro generating
-    per-extension Ctx newtype (R6 — typed capabilities, no untyped
-    host_call escape hatch), mutually-exclusive cargo features
-    builtin/wasm/process with linker error on misconfiguration,
-    builtin entry-point glue (register_static_table!)
-  - >-
-    Phase 1 — starter-ext-host — Loader::scan (per-extension
-    errors, no short-circuit), two-phase commit (validate_all then
-    commit), namespace ownership check (R4 — extension id and
-    dotted descendants only, reserved sys.* and starter.*
-    refused), capability compatibility check, ExtensionRegistry
-    immutable after build, plus examples/hello-builtin contributing
-    a Tool through the registry
-  - >-
-    REVIEW Phase 1 — hello-builtin loads end-to-end into a host
-    binary, the bad-manifest-is-isolated smoke test passes
-  - >-
-    Phase 2 — starter-ext-supervisor (the heaviest crate, gets the
-    most attention) — spawn child binary, stdio JSON-RPC framing
-    (Content-Length-headered, LSP/MCP-style) via the new
-    starter-jsonrpc-stdio crate in the starter workspace
-    (extracted, consumed by both starter-mcp and the supervisor),
-    init handshake with manifest content-hash verification (R3),
-    RestartPolicy (always/on_crash/never with intensity cap +
-    exponential backoff + jitter, no supervisor groups in v0.1 per
-    R9), Health periodic ping, EventRing bounded ring buffer per
-    extension, SIGTERM then grace then SIGKILL shutdown. Capability
-    enforcement at JSON-RPC wire boundary (advisory-deny per R8)
-    with capability_violation counter
-  - >-
-    Phase 2 — starter-ext-server (axum routes mountable into
-    starter-server::ServerBuilder) — GET /extensions, GET
-    /extensions/<id>, GET /extensions/<id>/events (paginated + SSE
-    upgrade), POST /extensions/<id>/enable, POST
-    /extensions/<id>/disable (both Role::Admin), GET
-    /extensions/<id>/ui/* for Module Federation bundles
-    (ETag-cached). Plus examples/hello-process — same source as
-    hello-builtin with one cargo feature flipped (R1 enforcement)
-  - >-
-    REVIEW Phase 2 — extension-survives-host-restart,
-    crash-loop-is-bounded, and
-    capability-violation-rejected-logged-counted smoke tests pass
-  - >-
-    Phase 3 — starter-ext-sdk-ts (fork of
-    rubix-workspace/extension-ui-sdk main entry, rubix graph hooks
-    stripped) — useHostClient typed wrapper over starter-client-ts,
-    BlockShell wrapper, useSlotContext hook,
-    registerExtensionContributions entry. Plus starter-ext-ui
-    (fork of rubix-workspace/extension-ui-sdk ./mf entry) — Module
-    Federation host runtime with ExtensionSlot, useExtensionHost,
-    registerExtensionRemote, singleton negotiation for React /
-    react-dom / @tanstack/react-query / zustand with matching-
-    majors load-time refusal on mismatch. Plus examples/hello-ui
-    contributing a React panel to a named slot.
-    Two-extensions-no-React-duplication smoke test passes
-  - >-
-    Phase 4 (optional) — starter-ext-wasm feature-gated behind
-    wasm — WASI-p2 component host on wasmtime, default-deny
-    capability baseline (R8) with per-call fuel + memory +
-    wall-clock caps, one WIT package starter-extension at 0.1.0,
-    stateless per-call instantiation in v0.1 (kv capability
-    reserved for v0.2). Plus examples/hello-wasm — same source as
-    the other two flavours, single cargo feature flipped
-  - >-
-    smoke tests pass — one-source-three-flavours (single-feature
-    flip across hello-* compiles, loads, responds in all enabled
-    flavours), LLM-facing-description-is-byte-identical-at-load-
-    and-call-time (R7 anti-prompt-injection guarantee), and
-    extension-author-has-zero-starter-workspace-deps-beyond-ext-
-    sdk-plus-ext-spi-plus-starter-spi-public-types (SDK has not
-    leaked host internals)
+  - 'resolve open questions in DOCS/extensions/scope/SCOPE.md — extension bundle on-disk convention (default to $XDG_DATA_HOME/<binary>/extensions/<id>/, override via starter-config), admin-endpoint capability set (defer Role::ExtensionManage until a consumer asks; ship behind Role::Admin), enable/disable persistence model (sidecar .state.yaml next to the bundle vs DB row — pick DB row keyed by extension id), JSON-RPC wire-schema versioning (host_capabilities in init handshake, deferred to v0.2 first new method). Record decisions in SCOPE.md under Decisions with revisit triggers'
+  - 'REVIEW prerequisite decisions before any code lands'
+  - 'Phase 1 — starter-ext-spi (contracts crate, R2), depends only on starter-spi — ExtensionBehavior trait, Manifest struct with v=1, ExtensionId newtype with reverse-DNS validation, Capability enum, LifecycleState enum, JsonRpcEnvelope, Error. Zero runtime logic, zero I/O'
+  - 'Phase 1 — starter-ext-sdk — derive(Extension) proc-macro reading block.yaml at compile time (R3 — manifest is source of truth, dispatch table generated, missing or extra handler is a compile error in the extension), requires! macro generating per-extension Ctx newtype (R6 — typed capabilities, no untyped host_call escape hatch), mutually-exclusive cargo features builtin/wasm/process with linker error on misconfiguration, builtin entry-point glue (register_static_table!)'
+  - 'Phase 1 — starter-ext-host — Loader::scan (per-extension errors, no short-circuit), two-phase commit (validate_all then commit), namespace ownership check (R4 — extension id and dotted descendants only, reserved sys.* and starter.* refused), capability compatibility check, ExtensionRegistry immutable after build, plus examples/hello-builtin contributing a Tool through the registry'
+  - 'REVIEW Phase 1 — hello-builtin loads end-to-end into a host binary, the bad-manifest-is-isolated smoke test passes'
+  - 'Phase 2 — starter-ext-supervisor (the heaviest crate, gets the most attention) — spawn child binary, stdio JSON-RPC framing (Content-Length-headered, LSP/MCP-style) via the new starter-jsonrpc-stdio crate in the starter workspace (extracted, consumed by both starter-mcp and the supervisor), init handshake with manifest content-hash verification (R3), RestartPolicy (always/on_crash/never with intensity cap + exponential backoff + jitter, no supervisor groups in v0.1 per R9), Health periodic ping, EventRing bounded ring buffer per extension, SIGTERM then grace then SIGKILL shutdown. Capability enforcement at JSON-RPC wire boundary (advisory-deny per R8) with capability_violation counter'
+  - 'Phase 2 — starter-ext-server (axum routes mountable into starter-server::ServerBuilder) — GET /extensions, GET /extensions/<id>, GET /extensions/<id>/events (paginated + SSE upgrade), POST /extensions/<id>/enable, POST /extensions/<id>/disable (both Role::Admin), GET /extensions/<id>/ui/* for Module Federation bundles (ETag-cached). Plus examples/hello-process — same source as hello-builtin with one cargo feature flipped (R1 enforcement)'
+  - 'REVIEW Phase 2 — extension-survives-host-restart, crash-loop-is-bounded, and capability-violation-rejected-logged-counted smoke tests pass'
+  - 'Phase 3 — starter-ext-sdk-ts (fork of rubix-workspace/extension-ui-sdk main entry, rubix graph hooks stripped) — useHostClient typed wrapper over starter-client-ts, BlockShell wrapper, useSlotContext hook, registerExtensionContributions entry. Plus starter-ext-ui (fork of rubix-workspace/extension-ui-sdk ./mf entry) — Module Federation host runtime with ExtensionSlot, useExtensionHost, registerExtensionRemote, singleton negotiation for React / react-dom / @tanstack/react-query / zustand with matching-majors load-time refusal on mismatch. Plus examples/hello-ui contributing a React panel to a named slot. Two-extensions-no-React-duplication smoke test passes'
+  - 'Phase 4 (optional) — starter-ext-wasm feature-gated behind wasm — WASI-p2 component host on wasmtime, default-deny capability baseline (R8) with per-call fuel + memory + wall-clock caps, one WIT package starter-extension at 0.1.0, stateless per-call instantiation in v0.1 (kv capability reserved for v0.2). Plus examples/hello-wasm — same source as the other two flavours, single cargo feature flipped'
+  - 'smoke tests pass — one-source-three-flavours (single-feature flip across hello-* compiles, loads, responds in all enabled flavours), LLM-facing-description-is-byte-identical-at-load-and-call-time (R7 anti-prompt-injection guarantee), and extension-author-has-zero-starter-workspace-deps-beyond-ext-sdk-plus-ext-spi-plus-starter-spi-public-types (SDK has not leaked host internals)'
