@@ -184,6 +184,28 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(jsdom@25.0.1)
 
+  starter-extensions/examples/notes:
+    dependencies:
+      '@nube/starter-ext-sdk-ts':
+        specifier: workspace:*
+        version: link:../../packages/starter-ext-sdk-ts
+    devDependencies:
+      '@nube/starter-ext-ui':
+        specifier: workspace:*
+        version: link:../../packages/starter-ext-ui
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(jsdom@25.0.1)
+
   starter-extensions/packages/starter-ext-sdk-ts:
     devDependencies:
       '@nube/starter-client-ts':

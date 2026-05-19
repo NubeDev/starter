@@ -5400,6 +5400,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "serde_yaml"
+version = "0.9.34+deprecated"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a8b1a1a2ebf674015cc02edccce75287f1a0130d394307b36743c2f5d504b47"
+dependencies = [
+ "indexmap 2.14.0",
+ "itoa",
+ "ryu",
+ "serde",
+ "unsafe-libyaml",
+]
+
+[[package]]
 name = "serialize-to-javascript"
 version = "0.1.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -5945,6 +5958,138 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ext-grpc"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures",
+ "prost",
+ "serde",
+ "serde_json",
+ "starter-ext-host",
+ "starter-ext-sdk",
+ "starter-ext-spi",
+ "starter-ext-supervisor",
+ "starter-grpc",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-stream",
+ "tonic",
+ "tonic-build",
+ "tracing",
+]
+
+[[package]]
+name = "starter-ext-host"
+version = "0.1.0"
+dependencies = [
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-spi",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "starter-ext-mcp"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "serde_json",
+ "starter-ext-host",
+ "starter-ext-sdk",
+ "starter-ext-spi",
+ "starter-mcp",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
+name = "starter-ext-sdk"
+version = "0.1.0"
+dependencies = [
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-sdk-macros",
+ "starter-ext-spi",
+ "thiserror 1.0.69",
+ "tokio",
+]
+
+[[package]]
+name = "starter-ext-sdk-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-spi",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "starter-ext-server"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "futures",
+ "hex",
+ "http",
+ "serde",
+ "serde_json",
+ "sha2",
+ "starter-ext-host",
+ "starter-ext-sdk",
+ "starter-ext-spi",
+ "starter-ext-supervisor",
+ "starter-server",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+]
+
+[[package]]
+name = "starter-ext-spi"
+version = "0.1.0"
+dependencies = [
+ "semver",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-spi",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "starter-ext-supervisor"
+version = "0.1.0"
+dependencies = [
+ "hex",
+ "rand 0.8.6",
+ "serde",
+ "serde_json",
+ "sha2",
+ "starter-ext-host",
+ "starter-ext-spi",
+ "starter-jsonrpc-stdio",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "starter-flow"
 version = "0.1.0"
 dependencies = [
@@ -6092,6 +6237,11 @@ dependencies = [
  "starter-auth-token",
  "starter-cli",
  "starter-client-rs",
+ "starter-ext-grpc",
+ "starter-ext-host",
+ "starter-ext-mcp",
+ "starter-ext-sdk",
+ "starter-ext-server",
  "starter-mcp",
  "starter-observability",
  "starter-server",
@@ -7589,6 +7739,12 @@ dependencies = [
  "crypto-common",
  "subtle",
 ]
+
+[[package]]
+name = "unsafe-libyaml"
+version = "0.2.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "673aac59facbab8a9007c7f6108d11f63b603f7cabff99fabf650fea5c32b861"
 
 [[package]]
 name = "untrusted"

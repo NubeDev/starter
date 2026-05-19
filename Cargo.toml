@@ -33,6 +33,12 @@ members = [
     "examples/gh-report",
     "examples/notes",
 ]
+# `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
+# `examples/notes` pulls a handful of its crates in via path dependencies
+# (SCOPE.md R3), but the ext crates use `workspace = true` against their
+# OWN root — so we must keep cargo from treating those manifests as
+# members of *this* workspace.
+exclude = ["starter-extensions"]
 
 [workspace.package]
 version = "0.1.0"

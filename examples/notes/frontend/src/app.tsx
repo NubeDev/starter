@@ -11,9 +11,12 @@ import { useAuth, AuthProvider, tokenStrategy } from "@nube/starter-ui-core/auth
 import { StarterClient } from "@nube/starter-client-ts";
 
 import { NotesClient, type Note } from "./notes-client.js";
+import { ExtensionsClient } from "./extensions-client.js";
+import { ExtensionsView } from "./extensions-view.js";
 
 const client = new StarterClient({ baseUrl: "" });
 const notesClient = new NotesClient(client);
+const extensionsClient = new ExtensionsClient(client);
 const strategy = tokenStrategy();
 
 export function App() {
@@ -70,6 +73,8 @@ function LoginForm() {
 
 function NotesView() {
   const auth = useAuth();
+  const [tab, setTab] = useState<"notes" | "extensions">("notes");
+  const [adminAvailable, setAdminAvailable] = useState(false);
   const [notes, setNotes] = useState<Note[]>([]);
   const [draft, setDraft] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -84,6 +89,16 @@ function NotesView() {
 
   useEffect(() => {
     void refresh();
+    // Probe the admin slice once. A 200 means the bearer carries
+    // Role::Admin — show the tab. 403 / 401 / network errors hide it.
+    void (async () => {
+      try {
+        await extensionsClient.list();
+        setAdminAvailable(true);
+      } catch {
+        setAdminAvailable(false);
+      }
+    })();
   }, []);
 
   return (
@@ -96,6 +111,75 @@ function NotesView() {
         </small>
       </header>
 
+      {adminAvailable && (
+        <nav style={{ display: "flex", gap: 8, marginBottom: 16, borderBottom: "1px solid #eee" }}>
+          <TabButton active={tab === "notes"} onClick={() => setTab("notes")}>notes</TabButton>
+          <TabButton active={tab === "extensions"} onClick={() => setTab("extensions")}>
+            extensions
+          </TabButton>
+        </nav>
+      )}
+
+      {tab === "extensions" ? (
+        <ExtensionsView client={extensionsClient} />
+      ) : (
+        <NotesPanel
+          notes={notes}
+          draft={draft}
+          setDraft={setDraft}
+          err={err}
+          setErr={setErr}
+          refresh={refresh}
+        />
+      )}
+    </main>
+  );
+}
+
+function TabButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        background: "transparent",
+        border: "none",
+        borderBottom: active ? "2px solid #333" : "2px solid transparent",
+        padding: "8px 4px",
+        cursor: "pointer",
+        fontWeight: active ? 600 : 400,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function NotesPanel({
+  notes,
+  draft,
+  setDraft,
+  err,
+  setErr,
+  refresh,
+}: {
+  notes: Note[];
+  draft: string;
+  setDraft: (s: string) => void;
+  err: string | null;
+  setErr: (s: string | null) => void;
+  refresh: () => Promise<void>;
+}) {
+  return (
+    <>
       <form
         onSubmit={async (e) => {
           e.preventDefault();
@@ -127,6 +211,6 @@ function NotesView() {
           </li>
         ))}
       </ul>
-    </main>
+    </>
   );
 }

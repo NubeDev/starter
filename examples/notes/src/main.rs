@@ -147,6 +147,7 @@ async fn run_serve(matches: &ArgMatches) -> Result<()> {
         r = starter_server::builder::bind(built.router, http_bind) => r.context("http serve")?,
         r = tonic::transport::Server::builder()
             .add_service(grpc.into_server())
+            .add_service(built.extension_grpc)
             .serve(grpc_bind) => r.context("grpc serve")?,
     }
     Ok(())
