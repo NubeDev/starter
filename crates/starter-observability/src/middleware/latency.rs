@@ -1,10 +1,6 @@
-//! Latency-observation middleware. Records request duration into
-//! the [`super::super::metrics::StandardMetrics`] histogram.
+//! Latency-observation hook. The wire-level middleware factory lives
+//! in `starter-server`; this module exists as a docs anchor and to
+//! keep the public namespace stable when consumers `use
+//! starter_observability::middleware::*` for the metric handle.
 
-/// Build a tower `Layer` that observes request latency.
-///
-/// Stub — implementation lands with `starter-server` so the service
-/// shape is pinned in one place.
-pub fn latency_layer() {
-    // TODO(ap): see request_id_layer's note.
-}
+// Intentionally empty. See `starter_server::middleware::latency`.

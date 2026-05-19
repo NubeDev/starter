@@ -1,0 +1,22 @@
+[package]
+name        = "starter-secrets-keyring"
+description = "starter — SecretStore impl backed by the OS keyring (macOS Keychain, Windows Credential Manager, Linux Secret Service). Desktop / developer workstations only."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+tracing     = { workspace = true }
+
+# The cross-platform OS keyring crate. The three platform features
+# below cover the SCOPE-named backends; `crypto-rust` keeps us off
+# OpenSSL so a default build doesn't need libssl on the host.
+keyring = { version = "3.6", default-features = false, features = [
+    "apple-native",
+    "windows-native",
+    "sync-secret-service",
+    "crypto-rust",
+] }

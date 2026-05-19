@@ -13,12 +13,14 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod ai;
 pub mod auth;
 pub mod dto;
 pub mod error;
 pub mod filter;
 pub mod id;
 pub mod paging;
+pub mod secrets;
 pub mod sort;
 pub mod tool;
 

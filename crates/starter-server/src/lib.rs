@@ -24,8 +24,10 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod auth;
 pub mod builder;
 pub mod error;
+pub mod middleware;
 pub mod openapi;
 pub mod routes;
 pub mod sse;

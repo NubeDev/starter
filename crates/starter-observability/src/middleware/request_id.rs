@@ -1,30 +1,29 @@
-//! Request-id middleware. Generates a v4 UUID per request (or
-//! adopts an incoming `X-Request-Id` header if present) and attaches
-//! it as a request extension so downstream handlers + tracing spans
-//! can reference it.
+//! Request-id extension type. The transport-side middleware that
+//! attaches one per request lives in `starter-server` so the concrete
+//! `http::Request` body type is pinned in one place — this crate
+//! deliberately stays HTTP-framework-agnostic.
 
 use uuid::Uuid;
 
-/// Wrapper around a request-scoped UUID. Inserted as an extension
-/// on the request so handlers can extract it.
-#[derive(Debug, Clone, Copy)]
+/// Wrapper around a request-scoped UUID. The starter-server middleware
+/// inserts one of these as a request extension on each incoming
+/// request; handlers extract it via `axum::Extension<RequestId>`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct RequestId(pub Uuid);
 
 impl RequestId {
-    /// Generate a new id.
+    /// Generate a new random v4 id.
     pub fn generate() -> Self {
         Self(Uuid::new_v4())
     }
 }
 
-/// Build a tower `Layer` that attaches a [`RequestId`] to each
-/// incoming request.
-///
-/// The actual layer construction lands with the server crate so we
-/// can pin the concrete service shape without committing to a
-/// specific http body type from this crate.
-pub fn request_id_layer() {
-    // TODO(ap): implement once starter-server's service type is
-    // chosen (likely tower::ServiceBuilder over axum's BoxBody).
-    // Stub kept so the public surface is reserved.
+impl std::fmt::Display for RequestId {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Display::fmt(&self.0, f)
+    }
 }
+
+/// Standard `X-Request-Id` header name. Used by both the inbound
+/// adopt-or-generate logic and the outbound echo header.
+pub const HEADER_NAME: &str = "x-request-id";

@@ -1,0 +1,73 @@
+# Multi-stage build template for a starter-based binary.
+#
+# Parameterised via build args:
+#   --build-arg BINARY_NAME=<your-bin>     (required; cargo package name of the binary)
+#   --build-arg FEATURES=""                (optional; space-separated cargo features)
+#   --build-arg RUST_VERSION=1.83          (optional; toolchain pin)
+#
+# Consumers copy this file into their repo and edit BINARY_NAME, then
+# `docker build --build-arg BINARY_NAME=my-app .`. Documented as a
+# starting point, not magic (SCOPE 261–264).
+
+ARG RUST_VERSION=1.83
+
+# -----------------------------------------------------------------------------
+# Stage 1: build
+# -----------------------------------------------------------------------------
+FROM rust:${RUST_VERSION}-slim-bookworm AS build
+
+ARG BINARY_NAME
+ARG FEATURES=""
+
+# System packages the build commonly needs. Trim to the minimum your
+# crate actually pulls; this set covers sqlx (libssl), reqwest (ca-certificates),
+# git deps, and pkg-config-driven crates.
+RUN apt-get update \
+ && apt-get install -y --no-install-recommends \
+      ca-certificates \
+      libssl-dev \
+      pkg-config \
+      git \
+ && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /workspace
+
+# Copy the workspace manifest first so the dep layer caches separately
+# from the source layer. Adjust the COPY paths if your repo layout
+# differs from the standard starter layout (Cargo.toml at repo root,
+# crates/ and packages/ siblings).
+COPY Cargo.toml Cargo.lock ./
+COPY crates ./crates
+# Uncomment if your binary lives outside `crates/`:
+# COPY examples ./examples
+
+# Build only the requested binary. `FEATURES` is empty by default; the
+# `sh -c` form makes the optional `--features` flag clean to omit.
+RUN sh -c 'if [ -n "$FEATURES" ]; then \
+             cargo build --release --bin "$BINARY_NAME" --features "$FEATURES"; \
+           else \
+             cargo build --release --bin "$BINARY_NAME"; \
+           fi'
+
+# -----------------------------------------------------------------------------
+# Stage 2: runtime
+# -----------------------------------------------------------------------------
+# `distroless/cc-debian12` keeps libc + libssl on the image, which
+# every reqwest / sqlx-backed binary needs, without shipping a full
+# shell or package manager. Switch to `static-debian12` if your
+# binary is statically linked (musl target + no native deps).
+FROM gcr.io/distroless/cc-debian12
+
+ARG BINARY_NAME
+ENV STARTER_LOG=info
+
+# The binary is the entrypoint; the consumer's `serve` subcommand (or
+# their own) is the default arg. Override at `docker run` time.
+COPY --from=build /workspace/target/release/${BINARY_NAME} /usr/local/bin/app
+
+# 1000:1000 is the distroless `nonroot` user.
+USER 1000:1000
+
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/app"]
+CMD ["serve"]

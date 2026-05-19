@@ -16,6 +16,10 @@ thiserror   = { workspace = true }
 async-trait = { workspace = true }
 uuid        = { workspace = true }
 chrono      = { workspace = true }
+# Needed for the `mpsc::Sender<Event>` shape `AiRunner::run` uses to
+# stream events. The `sync` channel module is pure data structures;
+# we just inherit whatever feature set the workspace sets.
+tokio       = { workspace = true, features = ["sync"] }
 
 # OpenAPI schema derivation. R7: utoipa is the single source of truth
 # for wire types; the TS client is codegen'd from the document this

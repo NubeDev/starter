@@ -12,9 +12,4 @@ starter-spi        = { workspace = true }
 tracing            = { workspace = true }
 tracing-subscriber = { workspace = true }
 prometheus         = { workspace = true }
-# Middleware factories return `tower::Layer` impls so any tower-based
-# transport can mount them. We don't pull axum here — that would put
-# HTTP in a crate whose job is "observability", not "server".
-tower              = { workspace = true }
-http               = { workspace = true }
 uuid               = { workspace = true }

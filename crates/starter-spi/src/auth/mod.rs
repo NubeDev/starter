@@ -5,6 +5,10 @@
 
 mod authenticator;
 mod principal;
+mod role;
+mod scope;
 
 pub use authenticator::Authenticator;
 pub use principal::Principal;
+pub use role::Role;
+pub use scope::Scope;

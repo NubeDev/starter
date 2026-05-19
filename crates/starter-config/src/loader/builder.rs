@@ -44,6 +44,8 @@ impl Loader {
 
     /// Final consume — deserialize into the consumer's struct.
     pub fn load<T: DeserializeOwned>(self) -> Result<T, ConfigError> {
-        self.figment.extract().map_err(ConfigError::Shape)
+        self.figment
+            .extract()
+            .map_err(|e| ConfigError::Shape(Box::new(e)))
     }
 }

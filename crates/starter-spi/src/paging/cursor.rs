@@ -2,6 +2,7 @@
 //! the store backend; clients treat it as a black-box string.
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 /// Opaque pagination cursor. Round-trip the value the server returned
 /// in `Page::next_cursor`; never construct one client-side.
@@ -9,7 +10,7 @@ use serde::{Deserialize, Serialize};
 /// Backends are free to encode whatever they need inside (typically
 /// a base64-encoded tuple of `(sort_key, last_id)`); from the API
 /// surface this is just a string.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(transparent)]
 pub struct Cursor(String);
 

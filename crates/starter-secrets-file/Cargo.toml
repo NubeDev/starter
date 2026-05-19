@@ -1,0 +1,26 @@
+[package]
+name        = "starter-secrets-file"
+description = "starter — SecretStore impl backed by an age-encrypted file. Headless servers / containers."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+tracing     = { workspace = true }
+thiserror   = { workspace = true }
+parking_lot = "0.12"
+
+# Age encryption — single-recipient X25519 keyfile, ASCII-armored on
+# disk for "operator pulls the file open in their editor" debuggability.
+age = { version = "0.11", features = ["armor"] }
+
+# `$XDG_DATA_HOME` resolution. `dirs` is tiny and stable.
+dirs = "5"
+
+[dev-dependencies]
+tempfile = "3"

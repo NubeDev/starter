@@ -6,6 +6,7 @@ use reqwest::Client as Reqwest;
 /// HTTP client handle. Cheap to clone (reqwest's `Client` is
 /// internally arc'd).
 #[derive(Clone)]
+#[allow(dead_code)]
 pub struct Client {
     pub(crate) http: Reqwest,
     pub(crate) base_url: String,

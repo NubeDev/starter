@@ -9,7 +9,9 @@ rust-version.workspace = true
 
 [dependencies]
 starter-spi = { workspace = true }
-sqlx        = { workspace = true, features = ["sqlite", "macros"] }
+sqlx        = { workspace = true, features = ["sqlite", "macros", "migrate"] }
+base64      = { workspace = true }
+serde_json  = { workspace = true }
 async-trait = { workspace = true }
 serde       = { workspace = true }
 thiserror   = { workspace = true }
@@ -20,3 +22,6 @@ default = []
 # Exposes `starter_store_sqlite::testing` with an in-memory pool
 # factory. Opt-in so production builds skip the harness.
 testing = []
+
+[dev-dependencies]
+tokio = { workspace = true }

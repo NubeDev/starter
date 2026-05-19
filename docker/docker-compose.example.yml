@@ -1,0 +1,55 @@
+# Reference compose for a starter-server binary against postgres.
+# Copy into your repo, set BINARY_NAME + FEATURES below, point at your
+# own Dockerfile.template copy. Documented as a starting point, not
+# magic (SCOPE 261–264).
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: starter
+      POSTGRES_PASSWORD: starter
+      POSTGRES_DB: starter
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      # `pg_isready` succeeds once the server accepts connections.
+      # `app` waits on this before booting so its first connection
+      # doesn't race the postgres startup.
+      test: ["CMD-SHELL", "pg_isready -U starter -d starter"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.template
+      args:
+        # Replace these with your binary + feature set. The values
+        # here exercise the postgres-backed path most starter-based
+        # services adopt.
+        BINARY_NAME: my-app
+        FEATURES: "postgres"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      # Standard env knobs starter-config picks up. The consumer's
+      # `Config` struct adds its own — these three are the minimum
+      # that anything wiring `starter-store-postgres` + a
+      # `starter-server` listener needs.
+      DATABASE_URL: postgres://starter:starter@postgres:5432/starter
+      STARTER_BIND_ADDR: 0.0.0.0:8080
+      RUST_LOG: info,starter_server=debug
+    ports:
+      - "8080:8080"
+    # `serve` is the conventional subcommand for a starter-cli binary
+    # to run the embedded server. Override if your binary uses a
+    # different verb.
+    command: ["serve"]
+
+volumes:
+  postgres_data:

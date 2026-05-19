@@ -5,5 +5,5 @@
 mod runner;
 mod source;
 
-pub use runner::migrate;
+pub use runner::{migrate, Migrate};
 pub use source::MigrationSource;

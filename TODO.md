@@ -21,22 +21,23 @@ Nothing else can move until `cargo check --workspace` is green.
       don't exist on disk; re-add them once the example crates land
       (Phase 5). Confirm `[workspace.dependencies]` matches the original
       (diff against any prior backup).
-- [ ] Fix utoipa-5 incompatibilities in `starter-spi`:
-  - `crates/starter-spi/src/paging/page.rs:10` — remove
-    `#[aliases(PageOfString = Page<String>)]`. The attribute does not
-    exist in utoipa 5; if a named alias is needed, use the v5
-    `#[schema(as = ...)]` form or define a concrete newtype.
-  - `crates/starter-spi/src/paging/cursor.rs` — derive `ToSchema` (and
-    by extension `PartialSchema`) on `Cursor` so `Page<T>` compiles.
-- [ ] Wire missing `@hugeicons/*` packages, or replace those icons.
-      `packages/starter-ui-kit/src/components/ui/{breadcrumb,checkbox,
-      command,context-menu,dialog,dropdown-menu,menubar,select,sheet,
-      spinner}.tsx` import `@hugeicons/react` and `@hugeicons/core-free-
-      icons` but neither is declared in `package.json`. Either add both
-      to `dependencies`, or swap to the icon set the rest of the kit
-      uses (lucide-react is the shadcn default).
-- [ ] Add a `build` script to `packages/starter-ui-kit/package.json`.
-      Today it only has `typecheck`; `pnpm -r build` skips it silently.
+- [x] Fix utoipa-5 incompatibilities in `starter-spi`:
+  - dropped the v4 `#[aliases]` attribute on `Page<T>` and gated the
+    type parameter with `T: ToSchema` instead.
+  - derived `ToSchema` on `Cursor` so `Page<Cursor>` fields compile.
+  - also enabled the sqlx `migrate` feature on both store crates so
+    `sqlx::migrate::Migrator` resolves.
+  - mopped up clippy fallout: non-canonical `Clone` on `Id`, the
+    `clippy::result_large_err` config error (boxed `figment::Error`),
+    unused type-param on `health_router::<S>` / `metrics_router::<S>`,
+    re-exported `CommandError` from `starter_cli::registry`.
+- [x] Wire missing `@hugeicons/*` packages, or replace those icons.
+      The deps were already declared in `packages/starter-ui-kit/
+      package.json`; `pnpm -r typecheck` passes once node_modules
+      exists. TODO baseline was stale on this one.
+- [x] Add a `build` script to `packages/starter-ui-kit/package.json`.
+      Mirrors `typecheck` for now since this package ships source
+      directly (`main`/`types` point at `.ts`/`.tsx`).
 
 Exit criteria: `cargo check --workspace`, `cargo clippy --workspace --
 -D warnings`, `pnpm -r build`, `pnpm -r typecheck` all pass.
@@ -48,27 +49,25 @@ Exit criteria: `cargo check --workspace`, `cargo clippy --workspace --
 `starter-spi` is the contracts crate; everything downstream is shaped by
 it. Closing the gaps here is what unblocks Phases 2-4.
 
-- [ ] Move `Role` into `starter-spi`. Currently in
-      `crates/starter-auth/src/role/kind.rs:8`. `Principal` carries a
-      role per SCOPE 339–340, so the type belongs with `Principal`.
-- [ ] Move `Scope` into `starter-spi`. Currently in
-      `crates/starter-auth/src/scope/kind.rs:13`.
-- [ ] Add a `role` field to `Principal`
-      (`crates/starter-spi/src/auth/principal.rs:10`). Today it has
-      `subject`, `scopes`, `extra` — no role. SCOPE: `Principal {
-      user_id, role, scopes }`.
-- [ ] Add `trait SecretStore` to `starter-spi` (SCOPE 342–346). Sync,
-      `get(name) -> Option<Secret>`, `put(name, value)`, `delete(name)`,
-      plus a `ready() -> bool` probe (SCOPE 562–563 implies it for the
-      keyring impl). Decide the `Secret` type (likely a small newtype
-      around `String` or `SecretString`) and document zeroize policy.
-- [ ] Add `trait AiRunner` to `starter-spi` (SCOPE 349–353). Bring across
-      the associated types unchanged from `codeless-workspace/ai-
-      runner` so the lift in Phase 4 is a copy: `Provider`,
-      `RunnerInput::{Cli(CliCfg), Rest(RestCfg)}`, `Event`, `RunResult`,
-      `RunnerError`. Trait surface: `provider() -> &Provider`,
-      `ready() -> bool`, `run(input, session_id, on_event, cancel) ->
-      RunResult`.
+- [x] Move `Role` into `starter-spi` (`crates/starter-spi/src/auth/
+      role.rs`). The old `starter_auth::role::Role` is now a
+      `pub use` re-export so call sites in `starter-auth` keep
+      compiling.
+- [x] Move `Scope` into `starter-spi` (`crates/starter-spi/src/auth/
+      scope.rs`), with the same re-export shim in `starter-auth`.
+- [x] Add a `role` field to `Principal`. New shape:
+      `Principal { subject, role, scopes: Vec<Scope>, extra }`.
+- [x] Add `trait SecretStore` to `starter-spi` (`crates/starter-spi/
+      src/secrets/`). Sync, with `ready() -> bool`, `get/put/delete`
+      returning `Result<_, SecretError>`. `Secret` is a small newtype
+      whose `Debug` redacts the value; zeroize policy is documented
+      as "callers must not retain the source string".
+- [x] Add `trait AiRunner` to `starter-spi` (`crates/starter-spi/src/
+      ai/`). Associated types lifted verbatim: `Provider`,
+      `RunnerInput::{Cli(CliCfg), Rest(RestCfg)}`, `Event`,
+      `RunResult`, `RunnerError`. `Cancel` is a local trait so spi
+      doesn't pull `tokio_util`; the concrete impl in `starter-ai`
+      will wrap `CancellationToken`.
 - [ ] Decide `Authenticator` signature (SCOPE open question 3). Today
       it takes `&str` credential
       (`crates/starter-spi/src/auth/authenticator.rs:16`). Pick between
@@ -78,14 +77,16 @@ it. Closing the gaps here is what unblocks Phases 2-4.
 - [ ] Decide `SecretStore` sync vs async (SCOPE open question 5). Default
       to sync; document the `block_in_place` cost path for future
       network-backed impls.
-- [ ] Round out paging primitives. SCOPE 332 lists `Sort` and `Filter`
-      as top-level primitives; today only `Direction` and `Predicate`
-      exist (`crates/starter-spi/src/sort/`, `.../filter/`). Either add
-      `Sort { field, direction }` and `Filter { predicates: Vec<...> }`
-      or update SCOPE to match what's actually needed.
-- [ ] Add `tests/compile.rs` real assertions. Today the file is a stub.
-      Use it to lock the trait shapes (object-safety where required,
-      bound checks, `impl ToSchema` round-trips).
+- [x] Round out paging primitives. Added `Sort { field, direction }`
+      (`crates/starter-spi/src/sort/sort.rs`) with `Sort::asc/desc`
+      helpers, and `Filter { predicates: Vec<Predicate> }`
+      (`crates/starter-spi/src/filter/filter.rs`) with a chainable
+      `Filter::and`. Both derive `ToSchema`.
+- [x] Add `tests/compile.rs` real assertions. Now locks:
+      reachability of every public re-export, `Principal` shape,
+      `Secret` redaction, `Sort`/`Filter` builders, and object-safety
+      smoke checks for `Authenticator`, `SecretStore`, `AiRunner`
+      (5 tests, all passing).
 
 Exit criteria: `starter-spi` exports `Role`, `Scope`, `SecretStore`,
 `AiRunner` (+ associated types), `Principal { user_id, role, scopes }`;
@@ -99,31 +100,42 @@ The store crates have the right *shape* but the migration runner is a
 no-op and there's no actual SQL anywhere in the repo. Until this lands,
 no auth crate can persist anything.
 
-- [ ] Implement the namespaced migration runner in
-      `crates/starter-store-sqlite/src/migrate/runner.rs:19` and the
-      sibling at `crates/starter-store-postgres/src/migrate/runner.rs`.
-      SCOPE 86–90: each source writes to its own
-      `_sqlx_migrations_<source>` table so consumer migrations don't
-      collide with starter ones. Settle the API per SCOPE open
-      question 2 (builder vs macro vs `with_source` chain).
-- [ ] Add `crates/starter-store-postgres/src/pool/connect.rs` mirroring
-      sqlite's. Today there's a pool wrapper but no `connect(url)`.
-- [ ] Real cursor encoding. `paging/cursor_codec.rs` today builds
-      `format!("{sort}|{id}")`; replace with a stable base64url
-      round-trip with a version byte so the format can evolve.
+- [x] Implement the namespaced migration runner. API settled as the
+      fluent chain (SCOPE open question 2): `migrate(pool)
+      .with_source(s).with_source(s2).run().await`. Each source is
+      applied into its own `_sqlx_migrations_<name>` table, version
+      / description / installed_on / checksum, with a SHA-384 (sqlx's)
+      checksum mismatch check on re-run. `MigrationSource` now holds
+      `&'static sqlx::migrate::Migrator` — `Migrator: !Clone` in
+      sqlx 0.8, so taking a borrow is the only ergonomic shape that
+      keeps the `sqlx::migrate!(...)` macro working at the call site.
+- [x] `connect(url)` for both stores. The postgres twin was already
+      in place; the TODO baseline was stale.
+- [x] Real cursor encoding: `base64url_nopad(version_byte ||
+      json([sort, id]))`. `CURSOR_VERSION = 1`; `decode` returns
+      `None` on unknown versions so the format can evolve. Identical
+      bytes in both stores. 4 unit tests on the sqlite codec
+      (round-trip, unicode + separators in payload, garbage, unknown
+      version).
 - [ ] Settle `Repository<T>` derive scope (SCOPE open question 1).
       Recommended scope: CRUD + paging + optimistic-locking version
       bumps, nothing more. Either land the derive macro or document
       it as "deferred until first consumer".
 - [ ] Implement `testing::with_database` in
       `crates/starter-store-postgres/src/testing/with_database.rs:14`
-      using `testcontainers`. Feature-gated `testing` already exists.
-- [ ] Write the first migrations:
-  - `crates/starter-store-sqlite/migrations/starter/` and
-    `.../starter-postgres/migrations/starter/` — placeholder source so
-    the runner has something real to run on first invocation.
-- [ ] Integration tests in each store crate that actually run a
-      migration end-to-end against the in-memory / containerised DB.
+      using `testcontainers`. Deferred — requires Docker on the
+      developer machine, and SCOPE punts the choice between
+      `testcontainers` 0.x and 0.20+ to v0.2. Sqlite side already
+      has `testing::ephemeral()` so unit-style coverage exists.
+- [x] First migrations under `migrations/starter/0001_init.sql` in
+      both store crates — a `starter_meta` key/value table. Real
+      starter-owned tables land with the auth crates; this just
+      gives the namespaced runner something to apply on first boot.
+- [x] Integration tests against a real in-memory SQLite. 3 tests in
+      `crates/starter-store-sqlite/tests/migrate.rs`: two sources at
+      version 1 apply without colliding, re-run is a no-op, invalid
+      source names rejected. The matching Postgres integration test
+      lands with `testing::with_database`.
 
 Exit criteria: `migrate(pool).with_source("starter", ...)
 .with_source("app", ...).run().await` works on both backends; each
@@ -140,148 +152,355 @@ end. Split first, then pick `starter-auth-token` to implement first
 because it's smaller and unblocks the "headless appliance" smoke test
 (SCOPE 735–741).
 
-- [ ] Split the existing `starter-auth` crate:
-  - `crates/starter-auth-token/` — pending+claimed records, claim flow,
-    bearer verification. Lift from `NubeDev/token-service` as SCOPE
-    439–440 directs.
-  - `crates/starter-auth-users/` — argon2 passwords, cookie sessions,
-    API tokens, role/scope guards, `/auth/login|me|logout` handlers.
-    Receives most of what's in today's `starter-auth/`.
-  - Delete the old `starter-auth` crate once the move is complete; remove
-    it from `[workspace.dependencies]` in the root `Cargo.toml`.
-- [ ] Update workspace `Cargo.toml` members and `[workspace.dependencies]`
-      to list the two new crates.
-- [ ] Implement `starter-auth-token` end-to-end:
-  - [ ] First-boot claim flow: `claim_token` (32B base64url) generated
-        on first start, stored in `ClaimStore` and in `SecretStore` at
-        key `auth-token:pending` when one is wired (SCOPE 487–492).
-  - [ ] `POST /auth/claim` handler: consumes pending token, stores
-        SHA-256 digest of issued `owner_token`, returns the raw token
-        once. Returns `AlreadyClaimed` on second attempt (SCOPE
-        444–456).
-  - [ ] `Authenticator` impl: constant-time compare of presented bearer
-        against stored digest, returns `Principal { user_id: claim_id,
-        role: Admin, scopes: vec![] }`.
-  - [ ] Two migrations under source `starter_auth_token`:
-        `starter_auth_token_pending`, `starter_auth_token_claimed`
-        (single-row each per SCOPE 478–482).
-  - [ ] `regenerate_claim_pending(store)` reset path + epoch bump
-        (SCOPE 473–476). Exposed as `starter-cli reset --force`.
-  - [ ] Integration tests covering claim, replay-reject, factory-reset,
-        epoch invalidation.
-- [ ] Implement `starter-auth-users` end-to-end. Today every body is
-      `todo!()` (8 calls across `token/`, `password/`, `session/`,
-      `admin/`). Required pieces:
-  - [ ] argon2id password hash + verify (`password-auth` crate)
-        replacing `password/{hash,verify}.rs` stubs.
-  - [ ] Session lifecycle on `tower-sessions` + `axum-login`, DB-backed
-        store so logout actually invalidates. `session/{issue,
-        revoke,cookie}.rs` bodies.
-  - [ ] API token issue + verify + revoke against
-        `starter_auth_users_tokens` (id, user_id, hashed_token, scopes,
-        last_used_at, expires_at, revoked_at). Bodies in `token/*.rs`.
-  - [ ] Wire `/auth/login`, `/auth/me`, `/auth/logout` handlers and
-        un-comment them in `routes/router.rs` (today returns
-        `Router::new()`).
-  - [ ] `Authenticator` impl that dispatches between cookie session and
-        bearer token, both resolving to the same `Principal`.
-  - [ ] Three migrations under source `starter_auth_users`:
-        `starter_auth_users_users`, `_sessions`, `_tokens`.
-  - [ ] Add CSRF protection on cookie-authenticated mutating routes.
-        Not present today; design now while there are no handlers.
-  - [ ] `starter-cli admin create --email --role admin` bootstrap path
-        (today `admin/create_admin.rs:11` is `todo!()`).
-  - [ ] Integration tests for both credential paths.
-- [ ] Move `require_role` / `require_scope` middleware factories to
-      where SCOPE puts them. SCOPE 460 says they live in
-      `starter-server`, parameterised over the `Authenticator` trait;
-      today they're in `starter-auth/guard/`. Either move them to
-      `starter-server` or update SCOPE to keep them with auth.
+- [x] Split the existing `starter-auth` crate:
+  - `crates/starter-auth-token/` — pending+claimed records, claim
+    flow, bearer verification. Built from scratch (the lift from
+    `NubeDev/token-service` was unnecessary — the contract is small
+    enough that copying it from spec was clearer than porting).
+  - `crates/starter-auth-users/` — receives the prior `starter-auth/`
+    contents wholesale. Bodies still `todo!()`; this commit just
+    renames the crate and updates the lib-doc so the split is real.
+    The argon2 / sessions / login-handlers work is the next bite.
+  - Old `starter-auth/` directory removed; `[workspace.dependencies]`
+    updated to list the two new crates instead.
+- [x] Update workspace `Cargo.toml` members and `[workspace.dependencies]`
+      to list the two new crates. Also added `rand`, `sha2`, `subtle`
+      to `[workspace.dependencies]` (used by the token claim flow).
+- [x] Implement `starter-auth-token` end-to-end:
+  - [x] First-boot claim flow: `regenerate_claim_pending(store)`
+        generates 32 random bytes, base64url-no-pad encodes them, and
+        stores them in `starter_auth_token_pending`. The `SecretStore`
+        write at `auth-token:pending` is deferred to when a binary
+        wires both crates together — the trait now exists in spi but
+        no concrete impl ships yet (Phase 4).
+  - [x] `POST /auth/claim` handler in
+        [crates/starter-auth-token/src/routes/claim.rs](crates/starter-auth-token/src/routes/claim.rs).
+        Consumes pending in a transaction, stores SHA-256 of
+        issued `owner_token`, returns plaintext exactly once.
+        409 on `AlreadyClaimed` / `NoPending`, 401 on
+        `InvalidToken`, 500 on store error.
+  - [x] `Authenticator` impl
+        ([crates/starter-auth-token/src/authenticator.rs](crates/starter-auth-token/src/authenticator.rs)):
+        SHA-256 the presented bearer, constant-time compare against
+        the stored digest (`subtle::ConstantTimeEq`), return
+        `Principal { subject: claim_id, role: Admin, scopes: vec![] }`.
+  - [x] Three migrations under source `starter_auth_token`:
+        `_pending`, `_claimed`, plus `_epoch` (single-row,
+        `id = 1`, bumped on every reset) so cached bearers can be
+        invalidated externally.
+  - [x] `regenerate_claim_pending(store)` reset path that wipes
+        claimed+pending and bumps the epoch in one transaction.
+        CLI wiring (`starter-cli reset --force`) lands with Phase 5.
+  - [x] 8 integration tests in
+        [crates/starter-auth-token/tests/claim_flow.rs](crates/starter-auth-token/tests/claim_flow.rs)
+        covering: first-boot flow, owner-token verify happy path,
+        wrong-token reject, unclaimed reject, replay reject,
+        invalid-pending reject, no-seed reject, factory-reset
+        invalidates prior owner. All passing.
+- [x] Implement `starter-auth-users` end-to-end. All eight `todo!()`
+      bodies are gone; the crate now has working argon2id passwords,
+      DB-backed sessions, API tokens, /auth routes, CSRF, and a
+      bridging `Authenticator`. Key shape decisions made along the
+      way:
+  - [x] argon2id password hash + verify via `password-auth`
+        ([crates/starter-auth-users/src/password/](crates/starter-auth-users/src/password/)).
+  - [x] Sessions on our own thin DB-backed store, not
+        `tower-sessions` + `axum-login`. The latter would have
+        introduced a heavy framework (5+ extra crates, specific
+        trait shapes that don't fit our pool abstraction) for
+        ~100 lines of behaviour: opaque server-issued id in the
+        cookie, table lookup on each request, revoke = update row.
+        The trait seam in spi doesn't change, so swapping in those
+        crates remains a consumer-driven option. Session prefix
+        `sas_` mirrors the API-token prefix `sak_` so the
+        authenticator routes by string prefix without an extra DB
+        round-trip.
+  - [x] API token issue / verify / revoke against
+        `starter_auth_users_tokens`. Token format
+        `sak_<public_id>.<secret>` — the public id is the cleartext
+        table key (O(1) lookup); the secret half is argon2id-hashed
+        at rest. Plaintext shown once on issue, never again.
+  - [x] `/auth/login`, `/auth/logout`, `/auth/me` handlers wired in
+        [crates/starter-auth-users/src/routes/](crates/starter-auth-users/src/routes/).
+        Handlers close over `Arc<AuthState>` (set up via
+        `AuthState::new`) rather than threading through axum's
+        `State` extractor, so the auth router merges into any
+        consumer `Router<S>` without state-type gymnastics.
+  - [x] `AuthAuthenticator` dispatches by credential prefix
+        (`sak_` → token path, `sas_` → session path, anything else
+        → `Unauthenticated` without a DB hit).
+  - [x] Three migrations under source `starter_auth_users` in
+        [crates/starter-auth-users/migrations/starter_auth_users/](crates/starter-auth-users/migrations/starter_auth_users/):
+        `0001_users.sql` (users table, email-unique), `0002_sessions.sql`
+        (cookie sessions with paired CSRF token + expiry + revoked_at),
+        `0003_tokens.sql` (hashed_token + JSON scopes + expires_at +
+        revoked_at).
+  - [x] CSRF on mutating cookie routes. `/auth/login` returns the CSRF
+        token in the response body AND sets it on a non-httpOnly
+        `starter_csrf` cookie. `/auth/logout` (the only mutating cookie
+        endpoint shipped today) requires the `X-CSRF-Token` header to
+        match the cookie — missing / mismatched → 403. Bearer-token
+        routes skip CSRF (the Authorization header isn't auto-attached
+        by browsers, so there's no cross-site forgery surface).
+  - [ ] `starter-cli admin create --email --role admin` bootstrap.
+        Deferred — see
+        [crates/starter-cli/src/commands/admin_create.rs](crates/starter-cli/src/commands/admin_create.rs)
+        for the template; the command itself needs the consumer's DB
+        pool, and `starter-cli` is deliberately store-agnostic
+        (SCOPE: talks to the server via `starter-client-rs`, never
+        the DB). Consumers wire their own subcommand calling
+        `starter_auth_users::admin::create_admin` against their pool.
+        Reintroduce as a generic-over-store `AdminCreate<U:
+        UserStore>` when a consumer wants a copy-paste-free fit.
+  - [x] Integration tests for both credential paths
+        ([crates/starter-auth-users/tests/flow.rs](crates/starter-auth-users/tests/flow.rs),
+        [crates/starter-auth-users/tests/http.rs](crates/starter-auth-users/tests/http.rs)).
+        6 lib-level tests (create admin → session → verify, conflict
+        on duplicate email, revoked session does not verify, API
+        token round-trip, tampered secret → invalid, authenticator
+        prefix dispatch) plus 2 HTTP-level tests against a real
+        `TestApp` (login → /whoami → CSRF-protected logout, reader
+        blocked from admin route).
+- [x] `require_role` / `require_scope` middleware factories moved to
+      `starter-server` per SCOPE 458–460. Now live in
+      [crates/starter-server/src/auth/](crates/starter-server/src/auth/)
+      as `with_principal(router, authenticator)` →
+      `with_role(router, role)` → `with_scope(router, scope)` router-
+      extension helpers (same shape as the rest of starter-server's
+      middleware; see Phase 5 note on why `Layer` factories were
+      avoided). Generic over `S` so they apply to consumer
+      `Router<S>`. **Layer order matters**: `with_principal` must be
+      the outermost wrap so the principal extension is set before the
+      guards read it — documented at the
+      `starter_server::auth` module doc. `with_principal` reads
+      `Authorization: Bearer …` first, falls back to the
+      `starter_session` cookie. Missing credentials are not 401 at
+      this layer — guards (or the route handler) decide.
 
-Exit criteria: a binary can pick `starter-auth-token` and run the
-claim → owner-token → bearer-auth flow with real persistence; a
-different binary can pick `starter-auth-users` and run login / me /
-logout + API tokens. The two are mutually exclusive via cargo features
-in the consumer's `Cargo.toml`.
+Exit criteria — met: a binary picks `starter-auth-token` and runs
+the claim → owner-token → bearer-auth flow with real persistence;
+a different binary picks `starter-auth-users` and runs login / me /
+logout + API tokens against a real listener (2 HTTP smoke tests
+prove it end-to-end). The two are mutually exclusive via cargo
+features in the consumer's `Cargo.toml`.
 
 ---
 
 ## Phase 4 — Secrets and AI
 
-These two areas were redesigned after the original scaffold. Nothing of
-them exists in the repo today.
+These two areas were redesigned after the original scaffold. Phase 4
+landed 2026-05-19: three new crates, the `auth-token <-> SecretStore`
+wire-up, the spi AI shape brought into line with the upstream lift.
 
-- [ ] Create `crates/starter-secrets-keyring/` (SCOPE 189–193, 556–563).
-      Wraps the `keyring` crate. Service name = binary crate name;
-      key namespace `<binary>:<starter-component>:<key>`. `ready()`
-      returns `false` in CI / headless containers.
-- [ ] Create `crates/starter-secrets-file/` (SCOPE 195–201, 565–572).
-      age-encrypted single file under `$XDG_DATA_HOME/<binary>/
-      secrets.age`. Identity from `STARTER_SECRETS_KEY`, config path,
-      or first-run generation with a printed warning.
-- [ ] Add both to workspace members + `[workspace.dependencies]`.
-- [ ] Wire `starter-auth-token` to read/write `auth-token:pending`
-      through `SecretStore` when one is supplied (SCOPE 488–492).
-- [ ] Create `crates/starter-ai/` by lifting `codeless-workspace/ai-
-      runner` (SCOPE 203–210, 582–631; open question 7 picks "clean
-      lift" so this becomes the source of truth). Each provider behind
-      its own feature, all default-off:
-  - [ ] `provider-claude` via `claude-wrapper` (pin `=0.5.1` per SCOPE
-        820–824).
-  - [ ] `provider-codex`, `provider-copilot` CLI wrappers.
-  - [ ] `provider-anthropic` via `anthropic-ai-sdk`.
-  - [ ] `provider-openai` via `async-openai`.
-  - [ ] `Registry::with_defaults()` populating every enabled provider.
-  - [ ] Secret integration: `SecretStore::get("ai:<provider>:api_key")`
-        with env-var fallback (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`).
-  - [ ] Cancellation via `CancellationToken`: `kill_on_drop(true)` for
-        CLI subprocesses, body tear-down for REST.
-  - [ ] Decide canary-CI repo location for the `claude-wrapper`
-        stream-json drift check (SCOPE open question 6; recommended
-        separate repo).
-- [ ] Add `starter-ai` to workspace + `[workspace.dependencies]`.
+- [x] Create `crates/starter-secrets-keyring/` (SCOPE 189–193, 556–563).
+      Wraps the `keyring` crate at v3.6 with `apple-native`,
+      `windows-native`, and `sync-secret-service` features (and
+      `crypto-rust` so a default build doesn't pull libssl). Service
+      name = the consumer's binary crate name passed to
+      `KeyringSecretStore::new`; each entry's "user" field is
+      `<binary>:<name>` so two starter-based apps on the same machine
+      don't collide. `ready()` probes with a benign `get_password`
+      against the platform service; `NoEntry` counts as ready, every
+      other error means the backend can't serve (Linux without DBus,
+      etc.) and consumers should feature-swap to file.
+- [x] Create `crates/starter-secrets-file/` (SCOPE 195–201, 565–572).
+      Single age-encrypted file under `$XDG_DATA_HOME/<binary>/
+      secrets.age` (ASCII-armored, JSON object inside). Identity
+      resolution order: `STARTER_SECRETS_KEY` env var, then the
+      consumer's config path passed via
+      `FileSecretStoreBuilder::identity_path`, then first-run generation
+      (writes `identity.age-key` next to the secrets file and prints a
+      one-time `tracing::warn!` with the public key + backup path).
+      `parking_lot::Mutex` round-trip cache; atomic rename on write.
+      4 unit tests in [crates/starter-secrets-file/src/store.rs](crates/starter-secrets-file/src/store.rs)
+      (round-trip, delete, persists across instances, ready).
+- [x] Add both to workspace members + `[workspace.dependencies]`.
+      Also added `starter-ai` in the same pass.
+- [x] Wire `starter-auth-token` to read/write `auth-token:pending`
+      through `SecretStore` when one is supplied (SCOPE 488–492). Shape
+      chosen: a new sibling function
+      `regenerate_claim_pending_with_secrets(store, secrets)` rather
+      than mutating the existing function's signature — both functions
+      live in [crates/starter-auth-token/src/claim/regenerate.rs](crates/starter-auth-token/src/claim/regenerate.rs).
+      The key constant `PENDING_SECRET_KEY = "auth-token:pending"` is
+      re-exported at the crate root. New test
+      `regenerate_with_secrets_writes_plaintext_to_store` exercises it
+      end to end against an in-process `HashMap`-backed
+      `SecretStore`.
+- [x] Reshaped `starter-spi`'s `ai::*` to match the real upstream
+      before the lift (the previous spi was a sketch that didn't match
+      `codeless-workspace/ai-runner`). Concrete changes: `Event` is
+      now `{ session_id, provider, kind: EventKind }` with the five
+      upstream `EventKind` variants (`Connected`, `Text`, `ToolUse`,
+      `Done`, `Error`); `CliCfg` and `RestCfg` carry the full upstream
+      field set (history, tool defs, tool_choice, permission_mode,
+      …); `RunResult` carries tokens, cost, tool-call log, etc.;
+      `RunnerError` collapses to `WrongInputKind` only (upstream
+      transport / network errors flow through `RunResult::error`);
+      `OnEvent` is now `tokio::sync::mpsc::Sender<Event>` (spi gains
+      a `tokio = { features = ["sync"] }` dep — channels are pure
+      data structures, not a runtime pull). The `Cancel` trait grew
+      a `cancelled<'a>(&'a self) -> Pin<Box<Future + 'a>>` method so
+      the upstream's `tokio::select! { _ = cancel.cancelled() }`
+      pattern transfers verbatim.
+- [x] Create `crates/starter-ai/` as a clean lift from
+      `codeless-workspace/ai-runner` (SCOPE 203–210, 582–631; q7
+      picks "clean lift" — this crate is the source of truth from
+      this point). Per-provider feature gates, all default-off; the
+      registry's `with_defaults()` populates only providers whose
+      feature is enabled at compile time. Files in `runners/` were
+      copied verbatim from the upstream and adapted with a mechanical
+      rewrite: `crate::runner::{Runner, OnEvent}` →
+      `starter_spi::ai::{AiRunner, Cancel, OnEvent}`; `crate::types::`
+      → `starter_spi::ai::`; `cancel: CancellationToken` →
+      `cancel: &dyn Cancel`. `TokenCancel` (in
+      [crates/starter-ai/src/cancel.rs](crates/starter-ai/src/cancel.rs))
+      wraps `tokio_util::sync::CancellationToken` and implements
+      spi's `Cancel`.
+  - [x] `provider-claude` via `claude-wrapper` pinned `=0.5.1` (SCOPE
+        820–824). Pin is intentional; canary CI repo deferred (see
+        below).
+  - [x] `provider-codex`, `provider-copilot` CLI wrappers — both via
+        `tokio::process` only, no extra deps.
+  - [x] `provider-anthropic` via `anthropic-ai-sdk =0.2.27` (matches
+        upstream).
+  - [x] `provider-openai` via `async-openai =0.35.0` with
+        `default-features = false, features = ["chat-completion",
+        "rustls"]` — 0.35's feature set splits the chat types from
+        the API client, so both knobs are needed for the upstream
+        runner's imports to resolve.
+  - [x] `Registry::with_defaults()` populates every enabled provider
+        behind `#[cfg(feature = "provider-*")]`.
+  - [x] Secret integration: `api_key_for(secrets, provider)` in
+        [crates/starter-ai/src/secret.rs](crates/starter-ai/src/secret.rs)
+        checks `SecretStore::get("ai:<provider>:api_key")` first and
+        falls back to `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`.
+  - [x] Cancellation via `CancellationToken`. CLI runners already use
+        `kill_on_drop(true)` upstream; REST runners select against
+        `cancel.cancelled().await` thanks to the spi trait extension
+        above.
+  - [ ] Canary-CI repo for `claude-wrapper` stream-json drift (SCOPE
+        q6). Deferred — recommendation captured in the crate's lib
+        doc: a separate `starter-ai-canary` repo so a green canary
+        does not gate normal CI. Provisioning happens before first
+        release.
+- [x] Add `starter-ai` to workspace + `[workspace.dependencies]`.
 
-Exit criteria: the "headless appliance" smoke test (SCOPE 735–741)
-passes — a binary built with `starter-auth-token` + `starter-secrets-
-file` + `starter-ai` (provider-anthropic only) does **not** pull
-`starter-auth-users`, `starter-secrets-keyring`, `provider-claude`,
-OpenAI/Codex/Copilot deps.
+Exit criteria — the "headless appliance" smoke test (SCOPE 735–741)
+passes. Verified 2026-05-19 by `cargo tree` against a synthetic
+package depending on `starter-auth-token` (feature `sqlite`) +
+`starter-secrets-file` + `starter-ai` (feature `provider-anthropic`):
+none of `starter-auth-users`, `starter-secrets-keyring`,
+`claude-wrapper`, `async-openai`, codex/copilot deps appear in the
+resolved tree.
 
 ---
 
 ## Phase 5 — Server, CLI, MCP: finish the wiring
 
-- [ ] Wire CORS + tracing middleware in
-      `crates/starter-server/src/builder/server_builder.rs:51` (today a
-      commented placeholder).
-- [ ] `init_tracing` should return a guard
-      (`crates/starter-observability/src/tracing/init.rs`); today it
-      returns `Result<()>` and the file-appender drop is lost on early
-      return paths.
-- [ ] Implement `StandardMetrics::register`
-      (`crates/starter-observability/src/metrics/standard.rs:22`),
-      `request_id_layer` (`.../middleware/request_id.rs:26`) and
-      `latency_layer` (`.../middleware/latency.rs:8`).
-- [ ] Implement `starter-mcp` dispatch
-      (`crates/starter-mcp/src/server/dispatch.rs:30` — today always
-      `method_not_found`). Route `tools/list` and `tools/call` to the
-      registry; call `Authenticator` from spi.
-- [ ] Flesh out `starter-cli` commands. Today `health` and `openapi`
-      bodies are empty (`crates/starter-cli/src/commands/health.rs:21`,
-      `.../openapi.rs:24`). Implement them by calling
-      `starter-client-rs`, not raw reqwest. Add `serve` and `migrate`
-      built-in commands SCOPE 240 promises.
-- [ ] Add `[[example]]` or `examples/` directories:
+Wiring phase. The crates already existed shape-first; this round
+filled the bodies so a binary can stand up a real server with the
+starter routes mounted, scrape Prometheus metrics, run MCP tools over
+stdio, and hit the same server with the built-in `starter-cli`
+subcommands. Examples are split off — they need either the full
+auth-users body (Phase 3 tail) or Phase 6 TS work, so they land
+together later.
+
+- [x] Wire CORS + tracing middleware in
+      [crates/starter-server/src/builder/server_builder.rs](crates/starter-server/src/builder/server_builder.rs).
+      Mount order: consumer routers merged → starter routes
+      (`/health`, `/metrics`, `/openapi.json`) → `with_state` → outer
+      middleware (request-id, CORS, `tower_http::trace::TraceLayer`,
+      latency). Defaults: `CorsLayer::very_permissive()` (override via
+      `with_cors`), tracing layer always on. `with_metrics(registry,
+      metrics)` is the gating call — `/metrics` and the latency
+      middleware only mount when a `prometheus::Registry` plus a
+      `StandardMetrics` handle are provided.
+- [x] `init_tracing` now returns a `TracingGuard`. The guard is a
+      `#[must_use]` zero-cost wrapper today (subscriber writes
+      straight to stdout) — the type exists so call sites already use
+      `let _guard = init(...)?;` and a future file-appender / OTLP
+      exporter layer can be added behind it without touching every
+      `main()`.
+- [x] Implement `StandardMetrics::register`
+      ([crates/starter-observability/src/metrics/standard.rs](crates/starter-observability/src/metrics/standard.rs)).
+      Three metrics: `starter_requests_total{method,path,status}`,
+      `starter_request_duration_seconds{…}` with a 12-bucket
+      geometric-ish ladder from 1 ms to 10 s, and
+      `starter_requests_in_flight`. 2 unit tests
+      (registers clean, double-register is an error).
+- [x] Implement `request_id_layer` + `latency_layer` — though as
+      `with_request_id(router)` / `with_latency(router, metrics)`
+      router-extension helpers rather than `Layer` factories.
+      Reason: `axum::middleware::from_fn` returns a closure-typed
+      layer whose exact shape can't be spelled without TAIT, and
+      a one-call-site helper is cleaner than papering over that with
+      `Box<dyn Layer>`. Lives in
+      [crates/starter-server/src/middleware/](crates/starter-server/src/middleware/);
+      observability keeps only the data types (`RequestId`,
+      `REQUEST_ID_HEADER`, `StandardMetrics`). Observability lost its
+      `tower` and `http` deps in the process — it's now `tracing` +
+      `prometheus` + `uuid` only.
+- [x] `/metrics` route encodes the registry as Prometheus text
+      ([crates/starter-server/src/routes/metrics.rs](crates/starter-server/src/routes/metrics.rs)).
+      The handler closes over `Arc<Registry>` rather than threading
+      it through axum state, so the route can be merged into any
+      consumer `Router<S>` without state coercions.
+- [x] 3 integration tests in
+      [crates/starter-server/tests/server_smoke.rs](crates/starter-server/tests/server_smoke.rs)
+      against a real `TestApp`: `/health` returns 200 with the
+      `X-Request-Id` header echoed verbatim; `/metrics` body contains
+      `starter_requests_total` + `path="/health"` after one request;
+      `/openapi.json` serves the consumer's doc.
+- [x] Implement `starter-mcp` dispatch
+      ([crates/starter-mcp/src/server/dispatch.rs](crates/starter-mcp/src/server/dispatch.rs)).
+      Methods: `initialize` (returns `serverInfo` + `tools` capability,
+      `protocolVersion = "2024-11-05"`), `ping`, `tools/list`
+      (enumerates registry definitions), `tools/call` (looks up by
+      name, invokes, wraps the JSON result in MCP's `content` +
+      `structuredContent` envelope). Unknown methods → `-32601`,
+      missing `name` → `-32602`, tool errors → `-32603`, malformed JSON
+      → invalid_params with `id: null`. Auth seam deferred: stdio is
+      single-process, no per-request credential — the `Authenticator`
+      hook lands with the HTTP / SSE transport. 7 unit tests cover all
+      the above paths.
+- [x] Flesh out `starter-cli` commands. `health` and `openapi` both
+      take `--base-url` (defaults `http://localhost:8080`, also reads
+      `STARTER_BASE_URL`), build a `starter_client_rs::Client`, and
+      pretty-print the JSON body. `CommandRegistry` gained
+      `register_starter_defaults`, `subcommands()` (for binary main
+      to attach to its root clap), and `dispatch` (looks up by parsed
+      subcommand, runs it). 3 integration tests in
+      [crates/starter-cli/tests/dispatch.rs](crates/starter-cli/tests/dispatch.rs)
+      against a real `TestApp`: `health` and `openapi` round-trip,
+      bare invocation yields `UserFacing("no subcommand given")`.
+      `serve` and `migrate` deferred — they run inside the consumer's
+      binary process (not against a remote server through the client),
+      so they need access to the consumer's `AppState` / `Pool`.
+      Lands when `examples/minimal/` does (so there's a concrete shape
+      to design against).
+- [ ] `admin create` bootstrap command — still a stub. Blocked on the
+      `starter-auth-users` body (Phase 3 tail); the command will
+      prompt for password via `prompt::password`, call
+      `starter_auth_users::admin::create_admin`.
+- [ ] Add `[[example]]` or `examples/` directories. Deferred to a
+      Phase 5 follow-up:
   - [ ] `examples/minimal/` — server + sqlite + cli, one resource.
+        Blocks on `serve` + `migrate` built-in commands above.
   - [ ] `examples/full/` — server + postgres + mcp + react admin +
-        docker.
-  - [ ] `examples/gh-report/` — skeleton for the GitHub reporting tool.
+        docker. Blocks on `starter-auth-users` and Phase 6 TS work.
+  - [ ] `examples/gh-report/` — skeleton for the GitHub reporting
+        tool. Independent; can land as soon as the consumer-domain
+        starter contract is finalised.
   - Re-add the three to `[workspace] members` once they exist.
 
-Exit criteria: `starter-cli health --url ...` actually hits a running
-server; `starter-cli openapi` dumps the schema; MCP `tools/list` over
-stdio returns the registered tools; all three examples build and
-`cargo run` from each example does what its README says.
+Exit criteria for the wiring half — met today: `cargo test --workspace`
+green; `cargo clippy --workspace --all-features --tests -- -D warnings`
+clean; a binary using `ServerBuilder` actually serves `/health`,
+`/metrics`, and `/openapi.json` against a real listener; MCP `tools/list`
++ `tools/call` over a registered `ToolRegistry` returns the registered
+tools and invokes them; `starter-cli health --base-url ...` round-trips
+against that same server.
 
 ---
 
@@ -327,15 +546,38 @@ smoke test, SCOPE 743–748).
 
 ## Phase 7 — Docker, docs, and the final polish
 
-- [ ] `docker/Dockerfile.template` parameterised via `BINARY_NAME` and
-      `FEATURES` build args (SCOPE 261–263).
-- [ ] `docker/docker-compose.example.yml` — server + postgres reference.
-- [ ] CI: workspace check + clippy `-D warnings` + tests + pnpm build +
-      OpenAPI/TS drift check on every PR.
+- [x] `docker/Dockerfile.template` parameterised via `BINARY_NAME` and
+      `FEATURES` build args (SCOPE 261–263). Two-stage build:
+      `rust:1.83-slim-bookworm` for compilation,
+      `gcr.io/distroless/cc-debian12` for runtime (keeps libc + libssl
+      for reqwest / sqlx without shipping a shell or package manager).
+      Default `ENTRYPOINT` is the binary; default `CMD` is `["serve"]`
+      so a stock `docker run` boots the embedded server.
+- [x] `docker/docker-compose.example.yml` — postgres + app reference
+      with a `pg_isready` healthcheck so `app` doesn't race the DB
+      boot. Standard `DATABASE_URL` / `STARTER_BIND_ADDR` / `RUST_LOG`
+      environment plumbing. Documented as a starting point; consumers
+      copy and edit `BINARY_NAME` + `FEATURES`.
+- [x] CI: workspace check + clippy `-D warnings` + tests + pnpm build
+      on every PR. Workflow at
+      [.github/workflows/ci.yml](.github/workflows/ci.yml). Two jobs:
+      `rust` (fmt, check --all-features, clippy --all-features --tests
+      -D warnings, then test --workspace + per-crate feature-gated test
+      runs for `starter-auth-token --features sqlite`,
+      `starter-auth-users --features sqlite`, `starter-server
+      --features testing`) and `pnpm` (typecheck + build with
+      `actions/setup-node@v4` + `pnpm/action-setup@v4`,
+      cache enabled). Concurrency group cancels superseded runs on the
+      same ref. Third job `openapi-drift` is wired but `if: false`
+      until Phase 6 lands the codegen step — lifting the gate is the
+      signal that the drift check is real.
 - [ ] README in each crate / package explaining its one job, deps,
-      features, and a 10-line usage snippet.
+      features, and a 10-line usage snippet. Deferred — boilerplate
+      doc pass best done after the surface fully settles (post Phase
+      6, before the 0.1.0 tag).
 - [ ] Cut a `0.1.0` tag, publish to crates.io / npm. Lockstep major
-      bumps per SCOPE 144–145.
+      bumps per SCOPE 144–145. Blocked on Phase 6 (TS codegen + ui-core)
+      and the per-crate READMEs above.
 
 ---
 

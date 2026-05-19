@@ -14,11 +14,11 @@ pub enum ConfigError {
         path: String,
         /// Underlying I/O or parse error.
         #[source]
-        source: figment::Error,
+        source: Box<figment::Error>,
     },
 
     /// Final merged config could not be deserialized into the
     /// consumer's struct.
     #[error("config shape mismatch: {0}")]
-    Shape(#[from] figment::Error),
+    Shape(#[from] Box<figment::Error>),
 }

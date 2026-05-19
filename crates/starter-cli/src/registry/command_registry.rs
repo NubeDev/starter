@@ -26,17 +26,40 @@ impl CommandRegistry {
         self
     }
 
-    /// Register the starter-shipped defaults (`health`, `openapi`,
-    /// `admin create`, …).
+    /// Register the starter-shipped defaults. Today this is `health`
+    /// and `openapi`; both speak to a running starter-server via
+    /// `starter-client-rs`. The `admin create` bootstrap path is
+    /// deferred — it lands with the `starter-auth-users` crate body.
     pub fn register_starter_defaults(self) -> Self {
-        // TODO(ap): register `commands::health::Health`, etc., once
-        // each command's body lands.
-        self
+        use crate::commands::{Health, OpenApi};
+        self.register(Health).register(OpenApi)
+    }
+
+    /// Iterate the registered clap subcommands in name order. The
+    /// binary's `main()` calls this to attach them to its root
+    /// `clap::Command`.
+    pub fn subcommands(&self) -> Vec<clap::Command> {
+        let mut names: Vec<&&'static str> = self.commands.keys().collect();
+        names.sort();
+        names
+            .into_iter()
+            .map(|n| self.commands[n].subcommand())
+            .collect()
     }
 
     /// Run the parsed clap matches against the registered commands.
-    pub async fn dispatch(&self, _matches: &clap::ArgMatches) -> Result<(), CommandError> {
-        // TODO(ap): look up by subcommand name and call `run`.
-        Ok(())
+    ///
+    /// Looks up the active subcommand by name; returns
+    /// `CommandError::UserFacing` when no subcommand was given or the
+    /// name is unknown.
+    pub async fn dispatch(&self, matches: &clap::ArgMatches) -> Result<(), CommandError> {
+        let (name, sub_matches) = matches
+            .subcommand()
+            .ok_or_else(|| CommandError::UserFacing("no subcommand given".into()))?;
+        let cmd = self
+            .commands
+            .get(name)
+            .ok_or_else(|| CommandError::UserFacing(format!("unknown subcommand: {name}")))?;
+        cmd.run(sub_matches).await
     }
 }

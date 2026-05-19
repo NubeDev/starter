@@ -45,10 +45,7 @@ impl<T> Id<T> {
 
 impl<T> Clone for Id<T> {
     fn clone(&self) -> Self {
-        Self {
-            value: self.value,
-            _marker: PhantomData,
-        }
+        *self
     }
 }
 

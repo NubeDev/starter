@@ -7,8 +7,10 @@ use super::cursor::Cursor;
 
 /// One page of `T`s. `next_cursor` is `Some` iff more pages exist.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
-#[aliases(PageOfString = Page<String>)]
-pub struct Page<T> {
+pub struct Page<T>
+where
+    T: ToSchema,
+{
     /// The items in this page, in sort order.
     pub items: Vec<T>,
 
@@ -17,7 +19,7 @@ pub struct Page<T> {
     pub next_cursor: Option<Cursor>,
 }
 
-impl<T> Page<T> {
+impl<T: ToSchema> Page<T> {
     /// Build a terminal page (no further results).
     pub fn final_page(items: Vec<T>) -> Self {
         Self {

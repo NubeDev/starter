@@ -1,0 +1,40 @@
+[package]
+name        = "starter-ai"
+description = "starter — unified AI runner. Per-provider features for Claude / Codex / Copilot CLIs and Anthropic / OpenAI REST."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+futures-util = "0.3"
+tokio       = { workspace = true, features = ["process", "io-util", "sync", "rt", "macros", "time"] }
+tokio-util  = { version = "0.7", features = ["rt"] }
+
+# Provider deps — each gated on its own feature so a binary that only
+# wants Anthropic REST does not pull the CLI wrappers or OpenAI SDK.
+#
+# `claude-wrapper`'s exact-version pin is deliberate (SCOPE 820–824):
+# its stream-json parser tracks the `claude` binary's output format,
+# which Anthropic does not promise to keep stable. A separate canary
+# CI repo (recommended in SCOPE q6, decision deferred) tracks upstream
+# drift; production stays on this pin until the canary signals an
+# upgrade is safe.
+claude-wrapper   = { version = "=0.5.1", optional = true }
+anthropic-ai-sdk = { version = "=0.2.27", optional = true }
+async-openai     = { version = "=0.35.0", optional = true, default-features = false, features = ["chat-completion", "rustls"] }
+
+[features]
+default = []
+provider-claude    = ["dep:claude-wrapper"]
+provider-codex     = []
+provider-copilot   = []
+provider-anthropic = ["dep:anthropic-ai-sdk"]
+provider-openai    = ["dep:async-openai"]

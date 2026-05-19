@@ -1,7 +1,15 @@
 //! The builder: collect consumer Routers, the OpenAPI doc, and
-//! configuration, and assemble a final `axum::Router`.
+//! the shared prometheus registry, and assemble a final `axum::Router`.
+
+use std::sync::Arc;
 
 use axum::Router;
+use prometheus::Registry;
+use starter_observability::metrics::StandardMetrics;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
+
+use crate::middleware::{with_latency, with_request_id};
+use crate::routes::{health_router, metrics_router, openapi_router};
 
 /// Fluent builder for the starter server.
 ///
@@ -14,12 +22,15 @@ use axum::Router;
 ///     .merge_router(domain_a::routes())
 ///     .merge_router(domain_b::routes())
 ///     .with_openapi(MyApiDoc::openapi())
+///     .with_metrics(registry, standard_metrics)
 ///     .build();
 /// ```
 pub struct ServerBuilder<S> {
     state: S,
     routers: Vec<Router<S>>,
     openapi: Option<utoipa::openapi::OpenApi>,
+    metrics: Option<(Arc<Registry>, Arc<StandardMetrics>)>,
+    cors: Option<CorsLayer>,
 }
 
 impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
@@ -29,6 +40,8 @@ impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
             state,
             routers: Vec::new(),
             openapi: None,
+            metrics: None,
+            cors: None,
         }
     }
 
@@ -45,16 +58,53 @@ impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
         self
     }
 
+    /// Attach the shared prometheus registry plus the standard
+    /// metrics handle. Required to expose `/metrics` and to drive the
+    /// latency middleware; without it neither is mounted.
+    pub fn with_metrics(mut self, registry: Arc<Registry>, metrics: Arc<StandardMetrics>) -> Self {
+        self.metrics = Some((registry, metrics));
+        self
+    }
+
+    /// Override the default permissive CORS layer with one of the
+    /// consumer's choosing. Passing `CorsLayer::very_permissive()` is
+    /// the default when this is not called.
+    pub fn with_cors(mut self, cors: CorsLayer) -> Self {
+        self.cors = Some(cors);
+        self
+    }
+
     /// Materialise the final `axum::Router`.
     ///
-    /// Mounts (in order): consumer routers → starter routes
-    /// (`/health`, `/metrics`, `/openapi.json`) → middleware stack
-    /// (CORS, tracing, request-id, latency).
+    /// Mount order: consumer routers (merged into one), starter-owned
+    /// routes (`/health`, `/metrics`, `/openapi.json`), then the
+    /// middleware stack — tracing, CORS, request-id, latency. Outer
+    /// layers see requests last and responses first.
     pub fn build(self) -> Router {
-        // TODO(ap): finish wiring once routes/openapi/middleware
-        // modules have concrete impls. Public surface is the locked
-        // shape; body lands next.
-        let _ = (self.state, self.routers, self.openapi);
-        Router::new()
+        let mut app: Router<S> = self.routers.into_iter().fold(Router::new(), Router::merge);
+
+        app = app.merge(health_router::<S>());
+
+        if let Some((registry, _)) = &self.metrics {
+            app = app.merge(metrics_router::<S>(registry.clone()));
+        }
+        if let Some(doc) = self.openapi {
+            app = app.merge(openapi_router::<S>(doc));
+        }
+
+        // Apply the consumer state so the result is `Router<()>` —
+        // axum requires a fully-resolved router before `serve`.
+        let mut app = app.with_state(self.state);
+
+        // Middleware stack. Order matters: layers applied later are
+        // outermost (see the request first, the response last).
+        let cors = self.cors.unwrap_or_else(CorsLayer::very_permissive);
+        app = with_request_id(app)
+            .layer(cors)
+            .layer(TraceLayer::new_for_http());
+        if let Some((_, metrics)) = self.metrics {
+            app = with_latency(app, metrics);
+        }
+        app
     }
 }

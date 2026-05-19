@@ -8,7 +8,11 @@ members = [
     "crates/starter-store-sqlite",
     "crates/starter-store-postgres",
     "crates/starter-mcp",
-    "crates/starter-auth",
+    "crates/starter-auth-token",
+    "crates/starter-auth-users",
+    "crates/starter-secrets-keyring",
+    "crates/starter-secrets-file",
+    "crates/starter-ai",
     "crates/starter-client-rs",
     "crates/starter-cli",
 ]
@@ -29,7 +33,11 @@ starter-server           = { path = "crates/starter-server",           version =
 starter-store-sqlite     = { path = "crates/starter-store-sqlite",     version = "0.1.0" }
 starter-store-postgres   = { path = "crates/starter-store-postgres",   version = "0.1.0" }
 starter-mcp              = { path = "crates/starter-mcp",              version = "0.1.0" }
-starter-auth             = { path = "crates/starter-auth",             version = "0.1.0" }
+starter-auth-token       = { path = "crates/starter-auth-token",       version = "0.1.0" }
+starter-auth-users       = { path = "crates/starter-auth-users",       version = "0.1.0" }
+starter-secrets-keyring  = { path = "crates/starter-secrets-keyring",  version = "0.1.0" }
+starter-secrets-file     = { path = "crates/starter-secrets-file",     version = "0.1.0" }
+starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-client-rs        = { path = "crates/starter-client-rs",        version = "0.1.0" }
 starter-cli              = { path = "crates/starter-cli",              version = "0.1.0" }
 
@@ -56,6 +64,14 @@ http        = "1"
 
 # Storage.
 sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros"] }
+base64      = "0.22"
+
+# Crypto primitives — used by `starter-auth-token` for the claim flow,
+# and `starter-auth-users` for password hashing + bearer tokens.
+rand          = "0.8"
+sha2          = "0.10"
+subtle        = "2"
+password-auth = "1"
 
 # Observability.
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }

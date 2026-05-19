@@ -17,3 +17,10 @@ serde_json        = { workspace = true }
 thiserror         = { workspace = true }
 tokio             = { workspace = true }
 tracing           = { workspace = true }
+
+[dev-dependencies]
+starter-server        = { workspace = true, features = ["testing"] }
+starter-observability = { workspace = true }
+tokio                 = { workspace = true, features = ["macros", "rt-multi-thread"] }
+prometheus            = { workspace = true }
+utoipa                = { workspace = true }

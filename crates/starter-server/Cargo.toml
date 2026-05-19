@@ -22,9 +22,15 @@ tracing               = { workspace = true }
 futures               = { workspace = true }
 bytes                 = { workspace = true }
 async-trait           = { workspace = true }
+uuid                  = { workspace = true }
+prometheus            = { workspace = true }
 
 [features]
 default = []
 # Exposes `starter_server::testing` — opt-in so production builds don't
 # pull the harness.
 testing = []
+
+[dev-dependencies]
+tokio   = { workspace = true, features = ["macros", "rt-multi-thread"] }
+reqwest = { workspace = true }

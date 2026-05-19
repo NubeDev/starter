@@ -1,0 +1,113 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+# Cancel superseded runs on the same ref. Keeps the queue from
+# stacking up when PRs see rapid pushes.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  # Keep the test runner deterministic; sccache and incremental
+  # don't pay for themselves in CI because each job starts cold.
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  rust:
+    name: rust (check / clippy / test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          # Distinct key per workflow file so a Cargo.toml edit
+          # doesn't share cache with an unrelated workflow run.
+          shared-key: workspace
+
+      - name: fmt
+        run: cargo fmt --all -- --check
+
+      - name: check (all features)
+        run: cargo check --workspace --all-features
+
+      - name: clippy (all features, -D warnings)
+        run: cargo clippy --workspace --all-features --tests -- -D warnings
+
+      - name: test (default features)
+        run: cargo test --workspace --no-fail-fast
+
+      # Feature-gated tests don't run under the default `--workspace`
+      # invocation because sqlx tooling isn't pulled in without the
+      # backend feature. Run them explicitly so the auth flows are
+      # exercised on every PR.
+      - name: test (starter-auth-token, sqlite feature)
+        run: cargo test -p starter-auth-token --features sqlite --no-fail-fast
+
+      - name: test (starter-auth-users, sqlite feature)
+        run: cargo test -p starter-auth-users --features sqlite --no-fail-fast
+
+      - name: test (starter-server, testing feature)
+        run: cargo test -p starter-server --features testing --no-fail-fast
+
+  pnpm:
+    name: pnpm (build / typecheck)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      - name: typecheck
+        run: pnpm -r run typecheck
+
+      - name: build
+        run: pnpm -r run build
+
+  openapi-drift:
+    name: openapi / ts drift
+    runs-on: ubuntu-latest
+    # Skipped until Phase 6 lands the codegen step. Lifting the
+    # `if: false` gate is the signal that the drift check is real.
+    if: false
+    steps:
+      - uses: actions/checkout@v4
+      - name: install rust
+        uses: dtolnay/rust-toolchain@stable
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: install
+        run: pnpm install --frozen-lockfile
+      - name: regenerate ts client and check diff
+        run: |
+          # TODO(phase6): boot a minimal server, fetch /openapi.json,
+          # run `pnpm codegen`, fail if the generated `index.ts`
+          # differs from the committed version.
+          echo "skipped until phase 6"
