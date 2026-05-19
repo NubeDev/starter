@@ -15,45 +15,90 @@ use serde_json::json;
 
 #[test]
 fn unit_system_wire_spellings() {
-    assert_eq!(serde_json::to_value(UnitSystem::Metric).unwrap(), json!("metric"));
-    assert_eq!(serde_json::to_value(UnitSystem::Imperial).unwrap(), json!("imperial"));
+    assert_eq!(
+        serde_json::to_value(UnitSystem::Metric).unwrap(),
+        json!("metric")
+    );
+    assert_eq!(
+        serde_json::to_value(UnitSystem::Imperial).unwrap(),
+        json!("imperial")
+    );
 }
 
 #[test]
 fn theme_wire_spellings() {
     assert_eq!(serde_json::to_value(Theme::Light).unwrap(), json!("light"));
     assert_eq!(serde_json::to_value(Theme::Dark).unwrap(), json!("dark"));
-    assert_eq!(serde_json::to_value(Theme::System).unwrap(), json!("system"));
+    assert_eq!(
+        serde_json::to_value(Theme::System).unwrap(),
+        json!("system")
+    );
 }
 
 #[test]
 fn date_format_wire_spellings() {
-    assert_eq!(serde_json::to_value(DateFormat::Auto).unwrap(), json!("auto"));
-    assert_eq!(serde_json::to_value(DateFormat::IsoYMD).unwrap(), json!("YYYY-MM-DD"));
-    assert_eq!(serde_json::to_value(DateFormat::DmySlash).unwrap(), json!("DD/MM/YYYY"));
-    assert_eq!(serde_json::to_value(DateFormat::MdySlash).unwrap(), json!("MM/DD/YYYY"));
+    assert_eq!(
+        serde_json::to_value(DateFormat::Auto).unwrap(),
+        json!("auto")
+    );
+    assert_eq!(
+        serde_json::to_value(DateFormat::IsoYMD).unwrap(),
+        json!("YYYY-MM-DD")
+    );
+    assert_eq!(
+        serde_json::to_value(DateFormat::DmySlash).unwrap(),
+        json!("DD/MM/YYYY")
+    );
+    assert_eq!(
+        serde_json::to_value(DateFormat::MdySlash).unwrap(),
+        json!("MM/DD/YYYY")
+    );
 }
 
 #[test]
 fn time_format_wire_spellings() {
-    assert_eq!(serde_json::to_value(TimeFormat::Auto).unwrap(), json!("auto"));
+    assert_eq!(
+        serde_json::to_value(TimeFormat::Auto).unwrap(),
+        json!("auto")
+    );
     assert_eq!(serde_json::to_value(TimeFormat::H24).unwrap(), json!("24h"));
     assert_eq!(serde_json::to_value(TimeFormat::H12).unwrap(), json!("12h"));
 }
 
 #[test]
 fn week_start_wire_spellings() {
-    assert_eq!(serde_json::to_value(WeekStart::Auto).unwrap(), json!("auto"));
-    assert_eq!(serde_json::to_value(WeekStart::Monday).unwrap(), json!("monday"));
-    assert_eq!(serde_json::to_value(WeekStart::Sunday).unwrap(), json!("sunday"));
+    assert_eq!(
+        serde_json::to_value(WeekStart::Auto).unwrap(),
+        json!("auto")
+    );
+    assert_eq!(
+        serde_json::to_value(WeekStart::Monday).unwrap(),
+        json!("monday")
+    );
+    assert_eq!(
+        serde_json::to_value(WeekStart::Sunday).unwrap(),
+        json!("sunday")
+    );
 }
 
 #[test]
 fn number_format_wire_spellings() {
-    assert_eq!(serde_json::to_value(NumberFormat::Auto).unwrap(), json!("auto"));
-    assert_eq!(serde_json::to_value(NumberFormat::CommaDot).unwrap(), json!("1,234.56"));
-    assert_eq!(serde_json::to_value(NumberFormat::DotComma).unwrap(), json!("1.234,56"));
-    assert_eq!(serde_json::to_value(NumberFormat::SpaceComma).unwrap(), json!("1 234,56"));
+    assert_eq!(
+        serde_json::to_value(NumberFormat::Auto).unwrap(),
+        json!("auto")
+    );
+    assert_eq!(
+        serde_json::to_value(NumberFormat::CommaDot).unwrap(),
+        json!("1,234.56")
+    );
+    assert_eq!(
+        serde_json::to_value(NumberFormat::DotComma).unwrap(),
+        json!("1.234,56")
+    );
+    assert_eq!(
+        serde_json::to_value(NumberFormat::SpaceComma).unwrap(),
+        json!("1 234,56")
+    );
 }
 
 #[test]

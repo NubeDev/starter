@@ -3,7 +3,9 @@
 //! drive the server through a real channel without pulling a second
 //! tonic dep in.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let mut cfg = tonic_build::configure().build_server(true).build_client(true);
+    let mut cfg = tonic_build::configure()
+        .build_server(true)
+        .build_client(true);
 
     // Emit the binary FileDescriptorSet so the optional `reflection`
     // feature can register it with `tonic-reflection`. Always written

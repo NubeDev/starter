@@ -29,7 +29,10 @@ fn static_registry_canonical_per_quantity() {
 fn supports_matrix_covers_every_scope_pair() {
     let reg = StaticRegistry::new();
     let pairs = [
-        (Quantity::Temperature, &[Unit::Celsius, Unit::Fahrenheit][..]),
+        (
+            Quantity::Temperature,
+            &[Unit::Celsius, Unit::Fahrenheit][..],
+        ),
         (
             Quantity::Pressure,
             &[Unit::Kilopascal, Unit::Psi, Unit::Bar][..],
@@ -61,11 +64,7 @@ fn supports_rejects_cross_quantity_pairs() {
     // `supports` is true only for the home quantity.
     for &q in Quantity::ALL {
         for &u in Unit::ALL {
-            let in_home = reg
-                .get(q)
-                .expect("def")
-                .allowed_units
-                .contains(&u);
+            let in_home = reg.get(q).expect("def").allowed_units.contains(&u);
             assert_eq!(
                 reg.supports(q, u),
                 in_home,

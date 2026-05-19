@@ -49,7 +49,10 @@ impl MessageKey {
                 reason: "contains whitespace",
             });
         }
-        if input.chars().any(|c| c.is_control() || !c.is_ascii_graphic()) {
+        if input
+            .chars()
+            .any(|c| c.is_control() || !c.is_ascii_graphic())
+        {
             return Err(I18nError::InvalidMessageKey {
                 input,
                 reason: "contains non-printable or non-ASCII byte",
