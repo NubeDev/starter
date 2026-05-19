@@ -1,0 +1,35 @@
+[package]
+name        = "starter-ext-smoke"
+description = "Cross-crate smoke tests for the starter-extensions kernel + adapter stack. SCOPE 'Smoke tests (before merging anything)' — one place every required scenario from SCOPE.md is asserted, so a stage-16 regression shows up as a `cargo test -p starter-ext-smoke` failure rather than a missing check three crates away."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+# This crate has no production surface. The `lib.rs` exists only because
+# cargo wants a target; the real content is in `tests/`.
+[lib]
+name = "starter_ext_smoke"
+path = "src/lib.rs"
+
+[dependencies]
+
+[dev-dependencies]
+# Kernel + adapter crates the integration tests drive.
+starter-ext-spi        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
+starter-ext-mcp        = { workspace = true }
+starter-ext-supervisor = { workspace = true }
+starter-mcp            = { workspace = true }
+starter-spi            = { workspace = true }
+hello-builtin          = { path = "../../examples/hello-builtin" }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+serde_yaml  = { workspace = true }
+toml        = "0.8"
+tokio       = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+tempfile    = { workspace = true }

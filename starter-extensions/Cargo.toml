@@ -11,6 +11,7 @@ members = [
     "crates/starter-ext-wasm",
     "crates/starter-ext-cli",
     "crates/starter-ext-workers",
+    "crates/starter-ext-smoke",
     "examples/hello-builtin",
     "examples/hello-process",
     "examples/hello-wasm",

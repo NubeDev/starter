@@ -2414,6 +2414,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ext-smoke"
+version = "0.1.0"
+dependencies = [
+ "hello-builtin",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-host",
+ "starter-ext-mcp",
+ "starter-ext-sdk",
+ "starter-ext-spi",
+ "starter-ext-supervisor",
+ "starter-mcp",
+ "starter-spi",
+ "tempfile",
+ "tokio",
+ "toml",
+]
+
+[[package]]
 name = "starter-ext-spi"
 version = "0.1.0"
 dependencies = [
