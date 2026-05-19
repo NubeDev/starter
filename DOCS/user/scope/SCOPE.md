@@ -606,6 +606,62 @@ workspace: ≤ 400 lines per file, ≤ ~10 public items per module, no
   unit only; the registry rejects `quantity: Ratio, unit: Percent` in
   a slot schema.
 
+### Phase 0 wire boundary (locked)
+
+The closed-enum boundary below is the contract `starter-spi` ships in
+Phase 0. R4 applies — adding a variant is a PR on `starter-spi` and
+the friction is intentional. Each rule lists the revisit trigger that
+would justify reopening it.
+
+- **`Quantity` v1 variants: `Temperature`, `Pressure`, `Speed`,
+  `Length`, `Mass`.** These are exactly the physical quantities the
+  Preferences model has a column for. `Money` stays out of `Quantity`
+  (R1 separates it as `i64` minor-units + ISO 4217 code). `Ratio` is
+  **deferred** — no Preferences column needs it in v1; `Percent`
+  remains display-only and the rejection rule for
+  `{Ratio, Percent}` lands in the Phase 1 resolver once `Ratio` is
+  introduced. *Revisit trigger:* a Preferences-model field, a slot
+  schema in a shipped block, or a consumer crate surfaces a need for
+  a quantity not in this list (energy, power, volume, time-duration,
+  angle, ratio, …).
+- **`Unit` v1 variants: `C`, `F`, `Kpa`, `Psi`, `Bar`, `MPerS`,
+  `KmPerH`, `Mph`, `Knot`, `M`, `Ft`, `Kg`, `Lb`.** Exactly the units
+  named in the Preferences-model column comments. The canonical
+  storage units from R1 (`°C`, `kPa`, `m/s`, `m`, `kg`) are all in
+  this set. *Revisit trigger:* same as `Quantity` — a new column,
+  block slot, or consumer need.
+- **Canonical SI per `Quantity` (R1):** `Temperature → C`,
+  `Pressure → Kpa`, `Speed → MPerS`, `Length → M`, `Mass → Kg`.
+  `normalize_for_storage(Quantity, Unit, f64) -> f64` lives in
+  `starter-spi::units` and is the single source of truth.
+  *Revisit trigger:* never under R1; would require a workspace-rule
+  change.
+- **Money is not in `Unit`.** Money values are `i64` minor-units plus
+  an ISO 4217 currency code (`String` or a dedicated type), per R1.
+  *Revisit trigger:* never under R1.
+- **`Theme` variants: `Light`, `Dark`, `System`. User-only.** No org
+  fallback row; the field is omitted from the org-layer Preferences
+  DTO. *Revisit trigger:* a consumer needs org-enforced theming
+  (brand lockdown).
+- **`DateFormat` variants: `Auto`, `IsoYMD` (`YYYY-MM-DD`),
+  `DmySlash` (`DD/MM/YYYY`), `MdySlash` (`MM/DD/YYYY`).** *Revisit
+  trigger:* a locale ships that none of these three formats fit
+  (e.g. dot-separated `DD.MM.YYYY` for de-DE if `Auto` derivation
+  proves insufficient).
+- **`TimeFormat` variants: `Auto`, `H24`, `H12`.** *Revisit
+  trigger:* none expected.
+- **`WeekStart` variants: `Auto`, `Monday`, `Sunday`.** *Revisit
+  trigger:* a locale that starts the week on Saturday surfaces as a
+  shipped requirement (parts of MENA).
+- **`NumberFormat` variants: `Auto`, `CommaDot` (`1,234.56`),
+  `DotComma` (`1.234,56`), `SpaceComma` (`1 234,56`).** *Revisit
+  trigger:* Indian grouping (`1,23,456.78`) becomes a shipped
+  requirement.
+- **`UnitSystem` variants: `Metric`, `Imperial`.** Drives `Auto`
+  derivation for per-unit fields. *Revisit trigger:* none expected;
+  US-customary vs Imperial nuance is handled in the derivation
+  table, not as a third variant.
+
 ## Consumer-defined quantities (v2)
 
 The closed-enum design (R4) is correct for v1 — every wire identifier
