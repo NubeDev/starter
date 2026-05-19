@@ -98,6 +98,17 @@ tower-http  = { version = "0.6", features = ["cors", "trace"] }
 utoipa      = { version = "5",   features = ["axum_extras", "uuid", "chrono"] }
 http        = "1"
 
+# Units of measurement — R4 of DOCS/user/scope/SCOPE.md authorises
+# this single dependency on `starter-spi` so conversion factors are
+# delegated to `uom` rather than hand-written. Used only by the
+# `starter_spi::units` module.
+uom         = { version = "0.36", default-features = false, features = ["f64", "si", "std"] }
+
+# BCP-47 language-tag parsing for the `starter_spi::i18n::LanguageTag`
+# newtype. Authorised by the SCOPE Library-choices table on
+# `starter-spi`; used only by the `starter_spi::i18n` module.
+icu_locale_core = { version = "2", default-features = false, features = ["alloc"] }
+
 # Storage.
 sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros"] }
 base64      = "0.22"
