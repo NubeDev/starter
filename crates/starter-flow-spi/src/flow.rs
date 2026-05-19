@@ -179,12 +179,19 @@ pub enum FlowEvent {
 impl FlowEvent {
     /// Convenience constructor for [`FlowEvent::NodeFailed`].
     pub fn node_failed(run: RunId, node: NodeId, err: &NodeError) -> Self {
-        Self::NodeFailed { run, node, error: err.to_string() }
+        Self::NodeFailed {
+            run,
+            node,
+            error: err.to_string(),
+        }
     }
 
     /// Convenience constructor for [`FlowEvent::RunFailed`].
     pub fn run_failed(run: RunId, err: &FlowError) -> Self {
-        Self::RunFailed { run, error: err.to_string() }
+        Self::RunFailed {
+            run,
+            error: err.to_string(),
+        }
     }
 }
 

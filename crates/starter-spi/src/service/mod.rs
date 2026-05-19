@@ -30,6 +30,7 @@ mod event;
 mod fanout;
 mod handle;
 mod registry;
+#[allow(clippy::module_inception)]
 mod service;
 mod sink;
 

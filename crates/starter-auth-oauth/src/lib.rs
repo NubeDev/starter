@@ -39,21 +39,20 @@ pub mod state_store;
 pub mod testing;
 
 pub use config::{OAuthConfig, OAuthConfigError, ProviderCredentials, StateStoreKind};
-pub use identity_store::{IdentityStore, IdentityStoreError, OAuthIdentity};
 #[cfg(feature = "sqlite")]
 pub use identity_store::SqliteIdentityStore;
+pub use identity_store::{IdentityStore, IdentityStoreError, OAuthIdentity};
 pub use linked_providers::OAuthLinkedProviders;
 pub use provider::{OAuthProvider, ProviderError, ProviderIdentity};
 pub use providers::{GitHubProvider, GoogleProvider};
 pub use routes::{
-    oauth_router, IdentitiesResponse, IdentitySummary, LinkRequest, LinkResponse,
-    OAuthRoutesState,
+    oauth_router, IdentitiesResponse, IdentitySummary, LinkRequest, LinkResponse, OAuthRoutesState,
 };
 pub use session_bridge::mint_session_headers;
+#[cfg(feature = "postgres")]
+pub use state_store::PostgresStateStore;
+#[cfg(feature = "sqlite")]
+pub use state_store::SqliteStateStore;
 pub use state_store::{
     MemoryStateStore, OAuthFlowState, OAuthStateError, OAuthStateStore, STATE_TTL,
 };
-#[cfg(feature = "sqlite")]
-pub use state_store::SqliteStateStore;
-#[cfg(feature = "postgres")]
-pub use state_store::PostgresStateStore;

@@ -12,7 +12,13 @@ static NOTES: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/notes");
 
 pub fn sources() -> [MigrationSource; 2] {
     [
-        MigrationSource { name: "starter_auth_token", migrator: &AUTH_TOKEN },
-        MigrationSource { name: "notes", migrator: &NOTES },
+        MigrationSource {
+            name: "starter_auth_token",
+            migrator: &AUTH_TOKEN,
+        },
+        MigrationSource {
+            name: "notes",
+            migrator: &NOTES,
+        },
     ]
 }

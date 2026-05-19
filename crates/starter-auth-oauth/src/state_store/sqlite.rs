@@ -95,13 +95,11 @@ impl OAuthStateStore for SqliteStateStore {
         let ttl = chrono::Duration::from_std(STATE_TTL)
             .map_err(|e| OAuthStateError::Backend(format!("ttl conversion: {e}")))?;
         let cutoff = ts_to_db(Utc::now() - ttl);
-        sqlx::query(
-            "DELETE FROM starter_auth_oauth_state WHERE created_at < ?1",
-        )
-        .bind(&cutoff)
-        .execute(self.pool.sqlx())
-        .await
-        .map_err(err)?;
+        sqlx::query("DELETE FROM starter_auth_oauth_state WHERE created_at < ?1")
+            .bind(&cutoff)
+            .execute(self.pool.sqlx())
+            .await
+            .map_err(err)?;
 
         // `RETURNING *` would let us collapse this into one
         // statement, but sqlite < 3.35 lacks it and the dev pool

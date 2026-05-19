@@ -116,7 +116,10 @@ impl GitHubProvider {
                 // (`api.github.com`) differ; the override collapses
                 // them onto one mock host because tests don't care
                 // about the split.
-                let path = public.split_once("://").map(|(_, rest)| rest).unwrap_or(public);
+                let path = public
+                    .split_once("://")
+                    .map(|(_, rest)| rest)
+                    .unwrap_or(public);
                 let path = path
                     .split_once('/')
                     .map(|(_, rest)| format!("/{rest}"))

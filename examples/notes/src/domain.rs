@@ -60,12 +60,11 @@ impl NoteStore {
     }
 
     pub async fn get(&self, id: &str) -> Result<Note, NoteError> {
-        let row: Option<(String, String, String, String)> = sqlx::query_as(
-            "SELECT id, body, created_at, created_by FROM notes WHERE id = ?1",
-        )
-        .bind(id)
-        .fetch_optional(&self.pool)
-        .await?;
+        let row: Option<(String, String, String, String)> =
+            sqlx::query_as("SELECT id, body, created_at, created_by FROM notes WHERE id = ?1")
+                .bind(id)
+                .fetch_optional(&self.pool)
+                .await?;
         match row {
             Some((id, body, created_at, created_by)) => Ok(Note {
                 id,

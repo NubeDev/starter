@@ -91,10 +91,7 @@ async fn seed_session(
         ))
         .unwrap(),
     );
-    headers.insert(
-        "x-csrf-token",
-        HeaderValue::from_str(&csrf_value).unwrap(),
-    );
+    headers.insert("x-csrf-token", HeaderValue::from_str(&csrf_value).unwrap());
     headers
 }
 
@@ -129,17 +126,10 @@ async fn unlinking_last_sign_in_method_is_refused() {
     let resp = unlink_handler(state.clone(), PROVIDER.into(), headers).await;
     let (status, body) = body_text(resp).await;
     assert_eq!(status, StatusCode::CONFLICT);
-    assert!(
-        body.contains("last_sign_in_method"),
-        "body was {body:?}"
-    );
+    assert!(body.contains("last_sign_in_method"), "body was {body:?}");
 
     // R4 requires the row to remain so the user is not locked out.
-    let row = state
-        .identity_store
-        .find(PROVIDER, "sub-1")
-        .await
-        .unwrap();
+    let row = state.identity_store.find(PROVIDER, "sub-1").await.unwrap();
     assert!(row.is_some(), "identity row must remain after refusal");
 }
 
@@ -207,11 +197,7 @@ async fn unlinking_succeeds_when_other_identity_remains() {
 
     let resp = unlink_handler(state.clone(), PROVIDER.into(), headers).await;
     assert_eq!(resp.status(), StatusCode::NO_CONTENT);
-    let remaining = state
-        .identity_store
-        .list_for_user("u-1")
-        .await
-        .unwrap();
+    let remaining = state.identity_store.list_for_user("u-1").await.unwrap();
     assert_eq!(remaining.len(), 1);
     assert_eq!(remaining[0].provider, "google");
 }

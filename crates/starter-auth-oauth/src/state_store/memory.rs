@@ -36,10 +36,7 @@ impl MemoryStateStore {
 
     /// How many live entries the store is holding. Diagnostic only.
     pub fn len(&self) -> usize {
-        self.inner
-            .lock()
-            .map(|m| m.len())
-            .unwrap_or(0)
+        self.inner.lock().map(|m| m.len()).unwrap_or(0)
     }
 
     /// `true` when the store holds no live entries.

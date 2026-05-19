@@ -100,11 +100,10 @@ impl Service for TelegramBotService {
         // Register metrics on the consumer's prometheus registry up
         // front. A failure here is a programmer error (two services
         // registered with the same names against the same registry).
-        let metrics = ServiceMetrics::register(&ctx.metrics).map_err(|e| {
-            starter_spi::Error::Internal {
+        let metrics =
+            ServiceMetrics::register(&ctx.metrics).map_err(|e| starter_spi::Error::Internal {
                 source: Box::new(e),
-            }
-        })?;
+            })?;
 
         // Clone the bits the spawned task owns so `&self` is not
         // held across the task boundary.
@@ -155,10 +154,7 @@ async fn run_loop(
 ) -> SpiResult<()> {
     loop {
         if *shutdown.borrow() {
-            tracing::info!(
-                service.name = SERVICE_NAME,
-                "shutdown observed before poll",
-            );
+            tracing::info!(service.name = SERVICE_NAME, "shutdown observed before poll",);
             return Ok(());
         }
 
@@ -200,11 +196,7 @@ async fn run_loop(
             Ok(updates) => {
                 retry.record_success();
                 if !updates.is_empty() {
-                    let next_offset = updates
-                        .iter()
-                        .map(|u| u.update_id)
-                        .max()
-                        .map(|m| m + 1);
+                    let next_offset = updates.iter().map(|u| u.update_id).max().map(|m| m + 1);
                     emit_updates(&updates, &sink, &metrics).await;
                     if let Some(next) = next_offset {
                         if let Err(err) = store.store(next).await {

@@ -31,7 +31,7 @@ pub struct NotesState {
 #[derive(OpenApi)]
 #[openapi(
     paths(create_note, list_notes, get_note, delete_note, me, stream_notes),
-    components(schemas(Note, CreateNote)),
+    components(schemas(Note, CreateNote))
 )]
 pub struct NotesApi;
 
@@ -121,14 +121,22 @@ async fn create_note(
     Json(body): Json<CreateNote>,
 ) -> impl IntoResponse {
     let Some(Extension(p)) = principal else {
-        return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "unauthenticated"}))).into_response();
+        return (
+            StatusCode::UNAUTHORIZED,
+            Json(serde_json::json!({"error": "unauthenticated"})),
+        )
+            .into_response();
     };
     match s.store.create(&body.body, &p.subject).await {
         Ok(note) => {
             // Send-error means no subscribers — that's fine, the
             // broadcast channel is fire-and-forget.
             let _ = s.events.send(note.clone());
-            (StatusCode::CREATED, Json(serde_json::to_value(&note).unwrap())).into_response()
+            (
+                StatusCode::CREATED,
+                Json(serde_json::to_value(&note).unwrap()),
+            )
+                .into_response()
         }
         Err(e) => internal(e),
     }

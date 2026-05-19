@@ -69,11 +69,10 @@ impl Service for SlackSocketModeService {
         // twice against the same registry, or another service grabbed
         // our names): surface it as `Internal` rather than letting the
         // spawned task fail silently.
-        let metrics = ServiceMetrics::register(&ctx.metrics).map_err(|e| {
-            starter_spi::Error::Internal {
+        let metrics =
+            ServiceMetrics::register(&ctx.metrics).map_err(|e| starter_spi::Error::Internal {
                 source: Box::new(e),
-            }
-        })?;
+            })?;
 
         // Clone the bits the spawned task owns so `&self` is not
         // held across the task boundary.
@@ -121,19 +120,15 @@ async fn run_loop(
         // Cheap try-borrow: if shutdown already fired, exit before we
         // burn a connect attempt.
         if *shutdown.borrow() {
-            tracing::info!(service.name = SERVICE_NAME, "shutdown observed before connect");
+            tracing::info!(
+                service.name = SERVICE_NAME,
+                "shutdown observed before connect"
+            );
             return Ok(());
         }
 
-        let attempt_result = connect_and_pump(
-            &http,
-            &endpoint,
-            &app_token,
-            &sink,
-            shutdown,
-            &metrics,
-        )
-        .await;
+        let attempt_result =
+            connect_and_pump(&http, &endpoint, &app_token, &sink, shutdown, &metrics).await;
 
         match attempt_result {
             Ok(ConnectOutcome::Shutdown) => {
@@ -145,10 +140,7 @@ async fn run_loop(
                 // disconnect after we'd been pumping is normal and
                 // must not count toward the circuit.
                 retry.record_success();
-                metrics
-                    .restarts
-                    .with_label_values(&["disconnect"])
-                    .inc();
+                metrics.restarts.with_label_values(&["disconnect"]).inc();
                 tracing::info!(
                     service.name = SERVICE_NAME,
                     "socket disconnected; reconnecting",
@@ -216,10 +208,7 @@ async fn connect_and_pump(
     metrics: &ServiceMetrics,
 ) -> Result<ConnectOutcome, SlackSocketModeError> {
     let wss_url = open_connection(http, endpoint, app_token).await?;
-    tracing::info!(
-        service.name = SERVICE_NAME,
-        "socket-mode connection opened",
-    );
+    tracing::info!(service.name = SERVICE_NAME, "socket-mode connection opened",);
     pump_until_closed(&wss_url, shutdown, sink, metrics, SERVICE_NAME).await
 }
 

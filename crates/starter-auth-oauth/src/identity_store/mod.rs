@@ -72,18 +72,11 @@ pub trait IdentityStore: Send + Sync {
 
     /// Delete by composite key. Idempotent — deleting a missing
     /// row is not an error.
-    async fn delete(
-        &self,
-        provider: &str,
-        provider_sub: &str,
-    ) -> Result<(), IdentityStoreError>;
+    async fn delete(&self, provider: &str, provider_sub: &str) -> Result<(), IdentityStoreError>;
 
     /// List every identity linked to a user, oldest first. Used by
     /// both `GET /auth/oauth/identities` and by the
     /// `LinkedProvidersLookup` impl that powers the
     /// `password_not_set` login error.
-    async fn list_for_user(
-        &self,
-        user_id: &str,
-    ) -> Result<Vec<OAuthIdentity>, IdentityStoreError>;
+    async fn list_for_user(&self, user_id: &str) -> Result<Vec<OAuthIdentity>, IdentityStoreError>;
 }

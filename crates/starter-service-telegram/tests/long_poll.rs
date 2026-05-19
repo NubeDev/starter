@@ -31,7 +31,10 @@ struct VecSink {
 #[async_trait]
 impl EventSink for VecSink {
     async fn emit(&self, kind: &str, payload: Value) -> SinkResult<()> {
-        self.events.lock().unwrap().push((kind.to_string(), payload));
+        self.events
+            .lock()
+            .unwrap()
+            .push((kind.to_string(), payload));
         Ok(())
     }
 }
@@ -84,10 +87,7 @@ async fn emits_update_as_kind_and_forwards_payload() {
     let svc = TelegramBotService::new(cfg).with_poll_timeout_secs(0);
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     // Wait for the first emit to land.
     let deadline = tokio::time::Instant::now() + Duration::from_secs(3);
@@ -170,10 +170,7 @@ async fn offset_cookie_is_persisted_across_polls() {
         .with_offset_store(store.clone());
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     // Let a couple of polls go through.
     let deadline = tokio::time::Instant::now() + Duration::from_secs(3);
@@ -213,10 +210,7 @@ async fn shutdown_breaks_the_poll_loop_during_backoff() {
         );
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     // Let the first attempt fail and enter the 30s sleep.
     tokio::time::sleep(Duration::from_millis(200)).await;
@@ -249,10 +243,7 @@ async fn circuit_trips_immediately_on_401() {
 
     let mut services = ServiceRegistry::new().register(svc);
     let metrics = Arc::new(Registry::new());
-    services
-        .start_all(metrics.clone(), sink_arc)
-        .await
-        .unwrap();
+    services.start_all(metrics.clone(), sink_arc).await.unwrap();
 
     let report = tokio::time::timeout(Duration::from_secs(5), services.shutdown())
         .await

@@ -115,7 +115,10 @@ impl GoogleProvider {
         match &self.base_override {
             None => public.to_string(),
             Some(base) => {
-                let path = public.split_once("://").map(|(_, rest)| rest).unwrap_or(public);
+                let path = public
+                    .split_once("://")
+                    .map(|(_, rest)| rest)
+                    .unwrap_or(public);
                 let path = path
                     .split_once('/')
                     .map(|(_, rest)| format!("/{rest}"))
@@ -290,14 +293,8 @@ mod tests {
         // the path portion is preserved so wiremock matchers stay
         // ergonomic.
         let p = GoogleProvider::with_base_override("a", "b", "http://127.0.0.1:9999");
-        assert_eq!(
-            p.authorize(),
-            "http://127.0.0.1:9999/o/oauth2/v2/auth"
-        );
+        assert_eq!(p.authorize(), "http://127.0.0.1:9999/o/oauth2/v2/auth");
         assert_eq!(p.token(), "http://127.0.0.1:9999/token");
-        assert_eq!(
-            p.userinfo(),
-            "http://127.0.0.1:9999/v1/userinfo"
-        );
+        assert_eq!(p.userinfo(), "http://127.0.0.1:9999/v1/userinfo");
     }
 }

@@ -10,11 +10,9 @@
 use std::sync::Arc;
 
 use chrono::Utc;
-use starter_auth_oauth::{
-    IdentityStore, OAuthIdentity, OAuthLinkedProviders, SqliteIdentityStore,
-};
-use starter_auth_users::{store::UserStore, LinkedProvidersLookup, Role};
+use starter_auth_oauth::{IdentityStore, OAuthIdentity, OAuthLinkedProviders, SqliteIdentityStore};
 use starter_auth_users::store::SqliteUserStore;
+use starter_auth_users::{store::UserStore, LinkedProvidersLookup, Role};
 use starter_store_sqlite::{migrate, migrate::MigrationSource, testing::ephemeral, Pool};
 
 static AUTH_USERS_MIGRATOR: sqlx::migrate::Migrator =

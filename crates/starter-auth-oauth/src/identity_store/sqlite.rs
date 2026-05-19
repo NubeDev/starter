@@ -93,11 +93,7 @@ impl IdentityStore for SqliteIdentityStore {
         }
     }
 
-    async fn delete(
-        &self,
-        provider: &str,
-        provider_sub: &str,
-    ) -> Result<(), IdentityStoreError> {
+    async fn delete(&self, provider: &str, provider_sub: &str) -> Result<(), IdentityStoreError> {
         sqlx::query(
             "DELETE FROM starter_auth_oauth_identities \
              WHERE provider = ?1 AND provider_sub = ?2",
@@ -110,10 +106,7 @@ impl IdentityStore for SqliteIdentityStore {
         Ok(())
     }
 
-    async fn list_for_user(
-        &self,
-        user_id: &str,
-    ) -> Result<Vec<OAuthIdentity>, IdentityStoreError> {
+    async fn list_for_user(&self, user_id: &str) -> Result<Vec<OAuthIdentity>, IdentityStoreError> {
         let rows = sqlx::query(
             "SELECT provider, provider_sub, user_id, email, display_name, linked_at \
              FROM starter_auth_oauth_identities \

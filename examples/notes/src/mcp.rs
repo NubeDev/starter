@@ -32,17 +32,18 @@ impl Tool for NoteSearchTool {
     }
 
     async fn invoke(&self, input: Value) -> SpiResult<Value> {
-        let query = input
-            .get("query")
-            .and_then(|v| v.as_str())
-            .ok_or_else(|| starter_spi::Error::Invalid {
+        let query = input.get("query").and_then(|v| v.as_str()).ok_or_else(|| {
+            starter_spi::Error::Invalid {
                 message: "missing 'query' string".into(),
-            })?;
+            }
+        })?;
         let notes = self
             .store
             .search(query)
             .await
-            .map_err(|e| starter_spi::Error::Internal { source: Box::new(e) })?;
+            .map_err(|e| starter_spi::Error::Internal {
+                source: Box::new(e),
+            })?;
         Ok(serde_json::to_value(&notes).unwrap_or(Value::Null))
     }
 }

@@ -69,9 +69,7 @@ async fn acme_signup_gets_writer_role_from_domain_map() {
     let mut map = HashMap::new();
     map.insert("acme.com".to_string(), Role::Writer);
     map.insert("evil.com".to_string(), Role::Reader);
-    me.state
-        .role_domain_maps
-        .insert(PROVIDER.to_string(), map);
+    me.state.role_domain_maps.insert(PROVIDER.to_string(), map);
     me.state.signup_default_role = Role::Reader;
 
     let user_store = me.state.user_store.clone();
@@ -97,9 +95,7 @@ async fn unmapped_domain_falls_back_to_default_role() {
     let mut me = MemoryEverything::new(vec![provider]).await;
     let mut map = HashMap::new();
     map.insert("acme.com".to_string(), Role::Writer);
-    me.state
-        .role_domain_maps
-        .insert(PROVIDER.to_string(), map);
+    me.state.role_domain_maps.insert(PROVIDER.to_string(), map);
     me.state.signup_default_role = Role::Reader;
 
     let user_store = me.state.user_store.clone();
@@ -142,9 +138,7 @@ async fn domain_match_is_case_insensitive() {
     let mut me = MemoryEverything::new(vec![provider]).await;
     let mut map = HashMap::new();
     map.insert("acme.com".to_string(), Role::Writer);
-    me.state
-        .role_domain_maps
-        .insert(PROVIDER.to_string(), map);
+    me.state.role_domain_maps.insert(PROVIDER.to_string(), map);
     me.state.signup_default_role = Role::Reader;
 
     let user_store = me.state.user_store.clone();

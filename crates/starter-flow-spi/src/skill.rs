@@ -6,10 +6,13 @@
 //!
 //! The canonical `SkillSelection` type lives in `starter-skills`. That
 //! crate is **not yet a workspace member** (per the agent SCOPE its
-//! addition is planned but unscheduled). The re-export below is
-//! feature-gated behind a default-off `skills` feature so the workspace
-//! still builds today; the gate flips on once `starter-skills` ships
-//! and is added as a workspace dependency.
+//! addition is planned but unscheduled). Until it ships the `skills`
+//! cargo feature is a declared-but-inert placeholder: the re-export
+//! below is gated on both `feature = "skills"` and the impossible
+//! `cfg(any())` so `--all-features` (the Phase 1 stage-7 smoke) still
+//! builds green. When `starter-skills` lands as a workspace member,
+//! drop the `any()` gate and add the matching optional dependency in
+//! `Cargo.toml`.
 
-#[cfg(feature = "skills")]
+#[cfg(all(feature = "skills", any()))]
 pub use starter_skills::SkillSelection;

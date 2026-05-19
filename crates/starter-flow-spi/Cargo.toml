@@ -23,10 +23,10 @@ futures     = { workspace = true }
 [features]
 # Default-off per the workspace policy: the `starter-skills` crate is
 # not yet a workspace member, so the `SkillSelection` re-export in
-# `skill.rs` is feature-gated. Enabling `skills` before `starter-skills`
-# ships will fail to resolve the dep on purpose — that is the gate that
-# keeps a half-wired re-export out of release builds. Once
-# `starter-skills` lands as a workspace member, add a matching optional
+# `skill.rs` is feature-gated AND additionally `cfg(any())`-gated so
+# `--all-features` (the Phase 1 stage-7 smoke) still builds green.
+# Once `starter-skills` lands as a workspace member, drop the `any()`
+# gate in `skill.rs` and add a matching optional
 # `[dependencies.starter-skills]` entry here.
 default = []
 skills  = []

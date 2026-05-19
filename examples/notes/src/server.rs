@@ -58,7 +58,9 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let notes = with_principal(notes, auth_for_http.clone());
 
     // /mcp — starter-mcp dispatch with the consumer's tool registered.
-    let tools = Arc::new(ToolRegistry::new().register(NoteSearchTool { store: note_store.clone() }));
+    let tools = Arc::new(ToolRegistry::new().register(NoteSearchTool {
+        store: note_store.clone(),
+    }));
     let mcp = mcp_router::<AppState>(tools, McpHttpOptions::new().with_auth(auth_for_http));
 
     let router = ServerBuilder::<AppState>::new(AppState)
@@ -69,7 +71,11 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         .with_metrics(registry, metrics)
         .build();
 
-    Built { router, authenticator, store: note_store }
+    Built {
+        router,
+        authenticator,
+        store: note_store,
+    }
 }
 
 /// Newtype wrapping `Arc<dyn Authenticator>` so it can be passed to
@@ -79,10 +85,7 @@ struct BoxedAuthenticator(Arc<dyn Authenticator>);
 
 #[async_trait::async_trait]
 impl Authenticator for BoxedAuthenticator {
-    async fn verify(
-        &self,
-        credential: &str,
-    ) -> starter_spi::Result<starter_spi::auth::Principal> {
+    async fn verify(&self, credential: &str) -> starter_spi::Result<starter_spi::auth::Principal> {
         self.0.verify(credential).await
     }
 }

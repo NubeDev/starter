@@ -30,21 +30,13 @@ pub trait NodeBehavior: Send + Sync + 'static {
     /// Invoke the node. Reads the input [`SlotMap`], returns the
     /// output [`SlotMap`]. The engine wires the output back through
     /// the single `GraphStore::write_slot` chokepoint (R2).
-    async fn invoke(
-        &self,
-        ctx: NodeCtx<'_>,
-        input: SlotMap,
-    ) -> Result<SlotMap, NodeError>;
+    async fn invoke(&self, ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError>;
 
     /// React to a lifecycle transition (Created → Active → Paused →
     /// Stopped → Removed per R1). The engine drives this; kinds that
     /// hold no per-lifecycle state ignore it.
     #[allow(unused_variables)]
-    async fn on_lifecycle(
-        &self,
-        ctx: NodeCtx<'_>,
-        ev: LifecycleEvent,
-    ) -> Result<(), NodeError> {
+    async fn on_lifecycle(&self, ctx: NodeCtx<'_>, ev: LifecycleEvent) -> Result<(), NodeError> {
         Ok(())
     }
 }
@@ -227,7 +219,10 @@ pub struct SlotRef {
 impl SlotRef {
     /// Construct a [`SlotRef`].
     pub fn new(node: NodeId, slot: impl Into<String>) -> Self {
-        Self { node, slot: slot.into() }
+        Self {
+            node,
+            slot: slot.into(),
+        }
     }
 }
 

@@ -64,10 +64,7 @@ where
 
     let subs = Arc::clone(subs);
     tokio::spawn(async move {
-        let _guard = DropGuard {
-            subs,
-            channel_id,
-        };
+        let _guard = DropGuard { subs, channel_id };
         tokio::pin!(stream);
         loop {
             tokio::select! {

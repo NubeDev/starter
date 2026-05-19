@@ -52,7 +52,10 @@ async fn every_surface_round_trips() {
         .json()
         .await
         .unwrap();
-    let owner = claim["owner_token"].as_str().expect("owner_token").to_string();
+    let owner = claim["owner_token"]
+        .as_str()
+        .expect("owner_token")
+        .to_string();
     assert!(!owner.is_empty());
 
     // 2. REST: POST /notes (consumer route, behind starter's auth layer).
@@ -82,7 +85,11 @@ async fn every_surface_round_trips() {
     assert_eq!(listed.as_array().expect("array").len(), 1);
 
     // 4. REST without bearer → 401 from starter's `with_principal`.
-    let resp = http.get(format!("{}/notes", app.base_url)).send().await.unwrap();
+    let resp = http
+        .get(format!("{}/notes", app.base_url))
+        .send()
+        .await
+        .unwrap();
     assert_eq!(resp.status(), 401);
 
     // 5. MCP `tools/list` over HTTP — the consumer-registered
@@ -97,7 +104,9 @@ async fn every_surface_round_trips() {
         .json()
         .await
         .unwrap();
-    let tools = listed_tools["result"]["tools"].as_array().expect("tools array");
+    let tools = listed_tools["result"]["tools"]
+        .as_array()
+        .expect("tools array");
     assert!(
         tools.iter().any(|t| t["name"] == "note_search"),
         "tools/list missing note_search: {tools:?}",
@@ -116,7 +125,9 @@ async fn every_surface_round_trips() {
         .json()
         .await
         .unwrap();
-    let hits = called["result"]["structuredContent"].as_array().expect("array");
+    let hits = called["result"]["structuredContent"]
+        .as_array()
+        .expect("array");
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0]["id"], note_id);
 
@@ -186,7 +197,9 @@ async fn every_surface_round_trips() {
     let grpc_handle = tokio::spawn(async move {
         tonic::transport::Server::builder()
             .add_service(grpc_svc.into_server())
-            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(grpc_listener))
+            .serve_with_incoming(tokio_stream::wrappers::TcpListenerStream::new(
+                grpc_listener,
+            ))
             .await
             .expect("grpc serve");
     });
@@ -201,18 +214,21 @@ async fn every_surface_round_trips() {
     // (`Status` is large). Setting the auth metadata per-call is
     // equivalent and clearer.
     let mut client = NoteServiceClient::new(channel);
-    let auth_md: tonic::metadata::MetadataValue<_> =
-        format!("Bearer {owner}").parse().unwrap();
+    let auth_md: tonic::metadata::MetadataValue<_> = format!("Bearer {owner}").parse().unwrap();
 
     let mut list_req = Request::new(ListRequest {});
-    list_req.metadata_mut().insert("authorization", auth_md.clone());
+    list_req
+        .metadata_mut()
+        .insert("authorization", auth_md.clone());
     let grpc_list = client.list(list_req).await.unwrap().into_inner();
     assert_eq!(grpc_list.notes.len(), 2);
     // Notes are returned newest-first; the SSE step inserted last.
     assert!(grpc_list.notes.iter().any(|n| n.id == note_id));
     assert!(grpc_list.notes.iter().any(|n| n.body == "via-sse"));
 
-    let mut get_req = Request::new(GetRequest { id: note_id.clone() });
+    let mut get_req = Request::new(GetRequest {
+        id: note_id.clone(),
+    });
     get_req.metadata_mut().insert("authorization", auth_md);
     let grpc_got = client.get(get_req).await.unwrap().into_inner();
     assert_eq!(grpc_got.body, "buy milk");
