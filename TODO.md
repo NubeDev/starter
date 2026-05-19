@@ -596,11 +596,17 @@ against that same server.
         plus an `isStarterQueryKey` guard for namespaced invalidation.
         Lint-rule enforcement deferred to when ui-core grows its first
         useQuery call site — until then, the helper is the convention.
-  - [ ] `testing/` exports (`MockServer` (msw), `renderWithProviders`).
-        Deferred — pulling msw + RTL into ui-core devDeps is a Phase 6
-        follow-up that only pays off when the first consumer test
-        appears. The module slot is reserved (commented out of
-        package.json `exports`).
+  - [x] `testing/` exports landed dependency-free in
+        [packages/starter-ui-core/src/testing/](packages/starter-ui-core/src/testing/),
+        exposed via the `@nube/starter-ui-core/testing` subpath.
+        `createMockServer()` is a fetch shim plugged into
+        `StarterClient` via the `fetch` option — mocks `/auth/me`,
+        `/auth/login`, `/auth/logout` with mutable state. msw was
+        skipped: its devDep tree is large and the three-route surface
+        we mock here doesn't justify it. `createAuthWrapper()` returns
+        a `({ children }) => ReactNode` for RTL-style
+        `render(ui, { wrapper })`; RTL itself stays a consumer choice
+        (devDep, not a peer).
 - [x] `packages/starter-ui-kit/` left as the full shadcn dump (consumer-
       level decision: trimming risks breaking apps that already pull
       from the kit). Added [README.md](packages/starter-ui-kit/README.md)
@@ -641,9 +647,9 @@ and `pnpm -r build` all pass.
       --features testing`) and `pnpm` (typecheck + build with
       `actions/setup-node@v4` + `pnpm/action-setup@v4`,
       cache enabled). Concurrency group cancels superseded runs on the
-      same ref. Third job `openapi-drift` is wired but `if: false`
-      until Phase 6 lands the codegen step — lifting the gate is the
-      signal that the drift check is real.
+      same ref. Third job `openapi-drift` runs the snapshot test,
+      regenerates the TS client, and fails on any diff against the
+      checked-in `packages/starter-client-ts/src/generated/index.ts`.
 - [x] README in each crate / package explaining its one job, deps,
       features, and a usage snippet. Landed: all 14 Rust crates
       (`crates/starter-*`), all three TS packages (`packages/starter-*`),
@@ -665,9 +671,34 @@ and `pnpm -r build` all pass.
       `starter-mcp`, `starter-secrets-file`, `starter-observability`,
       and the `examples/minimal` end-to-end smoke. Backend-feature
       coverage runs in CI under explicit `-p crate --features …`
-      invocations.
+      invocations. TS side: vitest covers `starter-client-ts` (8
+      tests: error parsing + endpoint wire contracts) and
+      `starter-ui-core` (16 tests: query-key namespacing, mock
+      server, end-to-end AuthProvider flow under jsdom + RTL).
+      `pnpm -r test` runs in CI alongside typecheck and build.
 - [x] No `todo!()` remains on any production path. The auth bodies and
       observability/server middleware all carry real implementations.
+      The two CLI prompts (`prompt::password`, `prompt::confirm`) that
+      previously held `todo!()` placeholders now have real impls —
+      `rpassword::prompt_password` for the password path; a plain
+      stdin read with `[y/N]` default-no for confirm. `rpassword` is a
+      workspace dep.
+- [x] Supply-chain visibility via `cargo-audit` wired into CI as the
+      `audit` job. `.cargo/audit.toml` documents the two ignores
+      (`RUSTSEC-2023-0071` rsa via unused `sqlx-mysql`,
+      `RUSTSEC-2025-0111` tokio-tar via dev-deps-only testcontainers)
+      with paper-trail rationale. Bumped `prometheus` 0.13 → 0.14 to
+      retire the `protobuf 2.x` transitive (`RUSTSEC-2024-0437`).
+- [x] Every public `pub enum *Error` in the workspace is now
+      `#[non_exhaustive]` (15 enums across spi / config / client-rs /
+      cli / auth-token / auth-users / secrets-file). Adding a new
+      error variant no longer forces a major bump, which matters
+      heavily for a 0.x scaffold that should iterate fast. Cost:
+      cross-crate `match` sites against `starter_spi::Error` now need
+      a fallback arm; the two in-tree sites (`starter-server`'s
+      `into_response` and `status_for`) got `_ => internal / 500`
+      catch-alls so future spi variants degrade gracefully until a
+      dedicated mapping is added.
 - [x] Audited `.unwrap()` / `.expect()` usage across all `crates/*/src`.
       Every remaining occurrence is one of: (a) inside `#[cfg(test)]`
       or a `testing` module, (b) standard `Mutex.lock().expect(...)`

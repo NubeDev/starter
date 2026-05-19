@@ -15,8 +15,10 @@ members = [
     "crates/starter-ai",
     "crates/starter-client-rs",
     "crates/starter-cli",
+    "crates/starter-tauri",
     "examples/minimal",
     "examples/gh-report",
+    "examples/notes",
 ]
 
 [workspace.package]
@@ -77,11 +79,19 @@ password-auth = "1"
 
 # Observability.
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
-prometheus  = "0.13"
+prometheus  = "0.14"
 
 # Client / CLI.
 reqwest     = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 clap        = { version = "4",    features = ["derive", "env"] }
+rpassword   = "7"
+
+# gRPC. Only the notes demo uses these — they prove a consumer can
+# layer in surfaces (gRPC, GraphQL, anything tonic-compatible) that
+# starter itself doesn't ship.
+tonic       = "0.12"
+tonic-build = "0.12"
+prost       = "0.13"
 
 # Config.
 figment     = { version = "0.10", features = ["toml", "env"] }

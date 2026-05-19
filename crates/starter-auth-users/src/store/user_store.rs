@@ -19,6 +19,7 @@ pub struct UserRecord {
 
 /// Errors specific to user persistence.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum UserStoreError {
     /// A user with the supplied email already exists.
     #[error("user already exists")]

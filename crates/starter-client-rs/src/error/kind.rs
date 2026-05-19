@@ -4,6 +4,7 @@ use thiserror::Error;
 
 /// Failures the client surfaces to callers.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum ClientError {
     /// Transport-level error (DNS, TLS, connection refused, etc).
     #[error(transparent)]

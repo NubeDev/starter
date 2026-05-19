@@ -52,6 +52,7 @@ pub trait SecretStore: Send + Sync + 'static {
 
 /// Failure modes any `SecretStore` impl can surface.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum SecretError {
     /// Backend is present but rejected the operation (permissions,
     /// locked keyring, decryption failure).

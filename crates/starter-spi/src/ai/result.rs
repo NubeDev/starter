@@ -68,6 +68,7 @@ pub struct RunResult {
 /// through `RunResult::error`; this enum is for misuse the runner
 /// detects up front.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum RunnerError {
     /// The runner was handed a `RunnerInput` variant it does not
     /// accept (CLI cfg passed to a REST runner, etc).

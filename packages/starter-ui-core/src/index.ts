@@ -7,7 +7,10 @@
 //   surface across modes so app code doesn't branch.
 // - `query/` — `starterQueryKey(...)` helper so every starter-owned
 //   react-query key is namespaced under `['starter', ...]`.
-// - `testing/` — `MockServer` + `renderWithProviders` for consumer tests.
+// - `testing/` — `createMockServer` (fetch shim) and `createAuthWrapper`
+//   (component wrapper for RTL-style render). Imported via the
+//   `@nube/starter-ui-core/testing` subpath to keep test-only code out
+//   of production bundles.
 
 export * from "./auth/index.js";
 export * from "./query/index.js";

@@ -54,6 +54,7 @@ pub async fn issue<S: TokenStore + ?Sized>(
 
 /// Token-handling failures.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum TokenError {
     /// Database error.
     #[error("token store error: {0}")]

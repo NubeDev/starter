@@ -785,7 +785,8 @@ into a Studio-style consumer's source, the curated facade is missing.
 - **TS state management:** `@tanstack/react-query` for server state +
   `zustand` for client state.
 - **MCP transport:** stdio only for v1. SSE/HTTP transports added when
-  a consumer needs them.
+  a consumer needs them. (HTTP transport landed in Phase 5 behind
+  `feature = "http"`; SSE still deferred.)
 - **gRPC:** deferred. The dep-graph slot is documented but no crate is
   published until a real consumer justifies it.
 - **Theme tokens:** ship a neutral default set in `starter-ui-kit`;
@@ -793,42 +794,49 @@ into a Studio-style consumer's source, the curated facade is missing.
 - **SSE shape:** use `axum::response::sse` directly with thin helpers;
   no higher-level abstraction at this layer (consumer-specific stream
   schemas belong in consumer crates).
+- **`Repository<T>` derive scope:** deferred to v0.2. Hand-written sqlx
+  queries are fine at current volume; the macro carries permanent
+  maintenance / debugging cost without a consumer to design against.
+  When it lands, scope is bare CRUD + paging + optimistic locking,
+  nothing more.
+- **Migration source registration API:** fluent builder. Final shape is
+  `migrate(pool).with_source("starter", STARTER_SOURCE).with_source(...)
+  .run().await`. Each source lands in its own `_sqlx_migrations_<name>`
+  table with checksum + version tracking.
+- **`Authenticator` signature:** stays `verify(&str)`. Rationale on the
+  trait docs at `crates/starter-spi/src/auth/authenticator.rs`. `&Parts`
+  and `AuthContext` were both rejected — `&str` keeps the trait useful
+  from every transport (HTTP, MCP, future gRPC), and the HTTP boundary
+  pre-parses bearer + session cookie into a single string inside
+  `starter_server::auth::with_principal`.
+- **TS codegen tool:** `openapi-typescript`. Type-only output keeps
+  `starter-client-ts` thin; hooks live in `starter-ui-core`. Codegen
+  source-of-truth is the checked-in `openapi.json` snapshot generated
+  by a Rust test; CI's `openapi-drift` job fails on any diff.
+- **`SecretStore` sync vs async:** stays **sync**. Both shipped impls
+  (keyring, age-file) are sync at the bottom; secrets read at startup,
+  not on the request hot path. Future network-backed impls cache
+  aggressively + use `block_in_place` on cold paths, OR ship a sibling
+  `AsyncSecretStore`.
+- **`starter-ai` provider pinning:** `claude-wrapper` pinned at
+  `=0.5.1` (stream-json isn't a stable API). Canary CI lives in a
+  separate `starter-ai-canary` repo so a red canary doesn't gate
+  normal PRs. The canary repo itself is provisioning work for the
+  pre-release pass; recommendation captured in
+  `crates/starter-ai/src/lib.rs`.
+- **`starter-ai` provider lift mechanics:** clean lift from
+  `codeless-workspace/ai-runner`. Source of truth is `starter-ai` from
+  the lift forward; the original `ai-runner` can keep running until
+  codeless migrates. Decided: dual-track maintenance always rots one
+  side.
 
-## Open questions (genuinely undecided)
+## Open questions
 
-1. **`Repository<T>` derive scope.** How much CRUD does the derive
-   cover before consumers drop to raw SQL? Recommend: bare CRUD +
-   paging + optimistic locking, nothing more. Decide before the first
-   consumer adopts it.
-2. **Migration source registration API.** Most ergonomic shape:
-   `migrate(pool).with_source("starter", STARTER_SOURCE).with_source("app", APP_SOURCE).run().await`
-   — or a typed builder, or a macro? Pick before `starter-store-*`
-   crates ship.
-3. **Authenticator async shape.** Decided: returns `Option<Principal>`,
-   where `Principal` carries `user_id`, `role`, and `scopes`. Open
-   sub-question: does the trait take `&Parts` or a richer
-   `AuthContext` that pre-parses cookies + bearer? Pick before either
-   `starter-auth-token` or `starter-auth-users` lands.
-4. **Codegen tool for TS.** `openapi-typescript` (lighter, type-only) vs
-   `orval` (heavier, generates react-query hooks). Affects how thin
-   `starter-client-ts` stays vs how much `starter-ui-core` has to wrap.
-5. **`SecretStore` sync vs async.** Sync today (keyring + file are
-   local, fast). If a future consumer wants a network-backed impl
-   (Vault, AWS Secrets Manager) they pay a `block_in_place` cost.
-   Recommend: keep sync; a network-backed impl is large enough to
-   justify its own trait. Confirm before `starter-spi` ships v1.
-6. **`starter-ai` provider pinning.** `claude-wrapper`'s `=0.5.1` pin
-   is right (stream-json output isn't a stable API), but the canary
-   CI job needs a home. Either in this repo or a separate
-   `starter-ai-canary` repo so a green run doesn't gate normal CI.
-   Recommend separate repo; decide before the first release.
-7. **`starter-ai` provider lift mechanics.** Copy code from
-   `codeless-workspace/ai-runner` once and own it here, or keep
-   `ai-runner` as the source of truth and re-publish under the
-   starter name? Recommend a clean lift (copy + rename) — dual-track
-   maintenance always rots one side. Source of truth becomes `starter`
-   the moment the lift lands; `codeless-workspace/ai-runner` can keep
-   running until codeless migrates.
+All open questions from earlier drafts have been resolved (see the
+section above). New questions opened during implementation:
+
+- None tracked at workspace-level today. Per-crate questions live in
+  the crate's own `lib.rs` doc when they exist.
 
 ## Bottom line
 

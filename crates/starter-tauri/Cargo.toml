@@ -1,0 +1,28 @@
+[package]
+name        = "starter-tauri"
+description = "starter — reusable Tauri 2 desktop shell helpers: event bridge, data paths, command errors, REST bind."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+serde      = { workspace = true }
+thiserror  = { workspace = true }
+tracing    = { workspace = true }
+directories = "5"
+
+# IPC bits — opt-in so workspace builds don't require Tauri's system
+# deps (webkit2gtk, libsoup, …) when consumers only want `paths`.
+tauri          = { version = "2",     optional = true }
+tokio          = { workspace = true,  optional = true }
+tokio-util     = { version = "0.7",   features = ["rt"], optional = true }
+futures        = { workspace = true,  optional = true }
+parking_lot    = { version = "0.12",  optional = true }
+
+[features]
+default = []
+# Pulls Tauri 2 and enables `events`, `error`, and `rest` modules.
+ipc = ["dep:tauri", "dep:tokio", "dep:tokio-util", "dep:futures", "dep:parking_lot"]
+

@@ -20,6 +20,7 @@ pub struct SessionRecord {
 
 /// Errors specific to session persistence.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum SessionStoreError {
     /// Backing store failed.
     #[error("session store error: {0}")]

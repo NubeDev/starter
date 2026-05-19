@@ -31,5 +31,8 @@ fn kind_str(err: &Error) -> &'static str {
         Error::Forbidden => "forbidden",
         Error::Conflict { .. } => "conflict",
         Error::Internal { .. } => "internal",
+        // `Error` is `#[non_exhaustive]`; future variants map to
+        // `internal` until they get a dedicated arm.
+        _ => "internal",
     }
 }

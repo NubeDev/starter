@@ -15,6 +15,7 @@ use starter_spi::secrets::{Secret, SecretError, SecretStore};
 /// Errors specific to building the file-backed store. Once it's built,
 /// `SecretStore` methods return `SecretError`.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum FileSecretsError {
     /// `STARTER_SECRETS_KEY` was set but did not parse as an age
     /// identity.

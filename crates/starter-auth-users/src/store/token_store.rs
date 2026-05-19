@@ -24,6 +24,7 @@ pub struct TokenRecord {
 
 /// Errors specific to token persistence.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum TokenStoreError {
     /// Backing store failed.
     #[error("token store error: {0}")]

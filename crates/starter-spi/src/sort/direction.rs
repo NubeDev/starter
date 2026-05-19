@@ -5,17 +5,12 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 /// Ascending or descending sort.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "lowercase")]
 pub enum Direction {
     /// Smallest first.
+    #[default]
     Asc,
     /// Largest first.
     Desc,
-}
-
-impl Default for Direction {
-    fn default() -> Self {
-        Self::Asc
-    }
 }

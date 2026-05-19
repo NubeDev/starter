@@ -93,8 +93,28 @@ jobs:
       - name: typecheck
         run: pnpm -r run typecheck
 
+      - name: test
+        run: pnpm -r run test
+
       - name: build
         run: pnpm -r run build
+
+  audit:
+    name: cargo audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      # rustsec/audit-check reads .cargo/audit.toml for the ignore list
+      # + threshold settings. Failures are real vulnerabilities only;
+      # unmaintained warnings show in the job log without gating PRs.
+      - name: cargo audit
+        uses: rustsec/audit-check@v2
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
 
   openapi-drift:
     name: openapi / ts drift

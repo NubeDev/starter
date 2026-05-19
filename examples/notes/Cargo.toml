@@ -1,0 +1,63 @@
+[package]
+name        = "starter-notes"
+description = "Demo consumer: notes app proving CLI / REST / gRPC / MCP extension on starter-* libraries with zero starter modifications."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+[[bin]]
+name = "notes"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+# Everything from starter is consumed as a library. No path-edits in
+# the starter crates were needed to land any feature in this demo.
+starter-spi           = { workspace = true }
+starter-server        = { workspace = true }
+starter-store-sqlite  = { workspace = true }
+starter-auth-token    = { workspace = true, features = ["sqlite"] }
+starter-mcp           = { workspace = true, features = ["http"] }
+starter-observability = { workspace = true }
+starter-cli           = { workspace = true }
+starter-client-rs     = { workspace = true }
+
+# Standard web stack.
+axum         = { workspace = true }
+clap         = { workspace = true }
+prometheus   = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+sqlx         = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "signal"] }
+tracing      = { workspace = true }
+utoipa       = { workspace = true }
+anyhow       = { workspace = true }
+async-trait  = { workspace = true }
+thiserror    = { workspace = true }
+chrono       = { workspace = true }
+uuid         = { workspace = true }
+
+# gRPC — consumer-owned. Starter has no opinion on tonic; this demo
+# stands up its own gRPC surface alongside the REST routes to prove
+# the point.
+tonic        = { workspace = true }
+prost        = { workspace = true }
+
+# Consumer-owned HTTP client. Proves you don't have to extend
+# starter-client-rs to talk to your own endpoints — just use reqwest
+# directly. (starter-client-rs is still used for the shipped
+# `health` / `openapi` subcommands via `register_starter_defaults`.)
+reqwest      = { workspace = true, features = ["json"] }
+
+[build-dependencies]
+tonic-build  = { workspace = true }
+
+[dev-dependencies]
+starter-server  = { workspace = true, features = ["testing"] }
+tokio-stream    = "0.1"

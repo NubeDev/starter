@@ -14,5 +14,8 @@ pub fn status_for(err: &Error) -> StatusCode {
         Error::Forbidden => StatusCode::FORBIDDEN,
         Error::Conflict { .. } => StatusCode::CONFLICT,
         Error::Internal { .. } => StatusCode::INTERNAL_SERVER_ERROR,
+        // `Error` is `#[non_exhaustive]`; unknown variants surface as
+        // 500 until a dedicated mapping is added here.
+        _ => StatusCode::INTERNAL_SERVER_ERROR,
     }
 }

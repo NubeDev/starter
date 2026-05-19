@@ -6,6 +6,7 @@ use thiserror::Error;
 
 /// Failure modes when loading config.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum ConfigError {
     /// The configuration file at `path` could not be read or parsed.
     #[error("failed to read config file {path}: {source}")]

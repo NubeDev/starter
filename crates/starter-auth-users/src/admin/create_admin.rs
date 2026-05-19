@@ -33,6 +33,7 @@ pub async fn create_admin<U: UserStore + ?Sized>(
 
 /// Admin-operation failures.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum AdminError {
     /// A user with that email already exists.
     #[error("user already exists")]

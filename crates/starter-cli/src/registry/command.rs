@@ -24,6 +24,7 @@ pub trait Command: Send + Sync + 'static {
 
 /// Failures bubbled up by a `Command::run`.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum CommandError {
     /// The command's preconditions weren't met (file missing,
     /// server unreachable, etc.).

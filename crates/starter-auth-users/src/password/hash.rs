@@ -15,6 +15,7 @@ pub fn hash(password: &str) -> Result<String, PasswordError> {
 
 /// Password-handling failures.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum PasswordError {
     /// Hashing failed (typically an internal argon2 error).
     #[error("password hashing failed")]

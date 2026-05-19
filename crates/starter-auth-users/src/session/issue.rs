@@ -58,6 +58,7 @@ pub async fn issue<S: SessionStore + ?Sized>(
 
 /// Session-handling failures.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum SessionError {
     /// Database error.
     #[error("session store error: {0}")]

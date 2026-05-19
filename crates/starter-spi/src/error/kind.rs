@@ -13,6 +13,7 @@ use thiserror::Error;
 /// Otherwise reuse `Internal { source }` and let the message carry
 /// the detail.
 #[derive(Debug, Error)]
+#[non_exhaustive]
 pub enum Error {
     /// The requested resource does not exist.
     #[error("not found: {what}")]

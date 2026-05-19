@@ -1,0 +1,33 @@
+# cargo-audit configuration. See https://github.com/RustSec/rustsec/tree/main/cargo-audit
+#
+# Advisories listed here have been triaged and intentionally ignored. Each
+# entry must carry a comment explaining why — if the reason rots, the
+# entry should be removed.
+
+[advisories]
+ignore = [
+    # `rsa` 0.9 — Marvin Attack (timing sidechannel). Reaches us only
+    # via `sqlx-mysql`, which is NOT enabled by any feature in this
+    # workspace. The crate sits in Cargo.lock as resolution noise but
+    # no consumer feature path activates it. `cargo tree -p rsa`
+    # returns nothing. Re-evaluate if a workspace crate ever turns on
+    # `sqlx/mysql`.
+    "RUSTSEC-2023-0071",
+
+    # `tokio-tar` — PAX-header parsing bug allowing file smuggling.
+    # Pulled in by `testcontainers` (dev-dependency, postgres backend
+    # integration tests only). Never shipped in any published crate.
+    # No upstream fix available; testcontainers maintainers track this
+    # upstream.
+    "RUSTSEC-2025-0111",
+]
+informational_warnings = []
+severity_threshold = "none"
+
+# `deny = ["warnings"]` was tempting — but the rustsec advisory db
+# routinely flags transitive deps as "unmaintained" (instant, backoff,
+# rustls-pemfile) and those don't reflect actual risk. The default
+# "fail only on real vulnerabilities" behaviour is what we want; the
+# three unmaintained warnings are visible in CI logs without gating.
+[output]
+quiet = false

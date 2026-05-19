@@ -33,7 +33,10 @@ packages/
   starter-ui-core          react-query + zustand hooks. The brain.
 
 docker/                    parameterized Dockerfile + reference compose.
-examples/                  minimal, full, and gh-report walkthroughs.
+examples/                  minimal (sqlite + auth-token + MCP) and
+                           gh-report (domain CLI on starter-cli).
+                           `full` (postgres + react admin + docker)
+                           lands when a real consumer asks.
 ```
 
 ## Two installs, the consumer's choice

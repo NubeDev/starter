@@ -29,6 +29,7 @@ pub struct ClaimedToken {
 
 /// Errors specific to the claim flow.
 #[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
 pub enum ClaimError {
     /// No pending row exists. Either the server has already been
     /// claimed (call [`crate::regenerate_claim_pending`] to reset)

@@ -1,0 +1,32 @@
+syntax = "proto3";
+
+package notes.v1;
+
+// Notes service. The point: starter has no gRPC opinions, this is
+// entirely consumer-owned. The demo binary stands up tonic alongside
+// starter-server's axum router on a different port — both share the
+// same sqlite Pool + the same auth check.
+
+service NoteService {
+    rpc Get(GetRequest) returns (Note);
+    rpc List(ListRequest) returns (ListResponse);
+}
+
+message GetRequest {
+    string id = 1;
+}
+
+message ListRequest {
+    // Empty for now; pagination is a v2 problem.
+}
+
+message ListResponse {
+    repeated Note notes = 1;
+}
+
+message Note {
+    string id          = 1;
+    string body        = 2;
+    string created_at  = 3;  // RFC 3339
+    string created_by  = 4;  // Principal.subject
+}
