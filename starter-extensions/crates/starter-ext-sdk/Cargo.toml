@@ -17,7 +17,7 @@ rust-version.workspace = true
 default = ["builtin"]
 builtin = []
 wasm    = []
-process = []
+process = ["dep:starter-jsonrpc-stdio", "dep:sha2", "tokio/io-util", "tokio/io-std", "tokio/rt", "tokio/macros", "tokio/time"]
 
 [dependencies]
 starter-ext-spi        = { workspace = true }
@@ -30,9 +30,17 @@ semver      = { workspace = true }
 thiserror   = { workspace = true }
 
 # `tokio::sync::mpsc::Sender<Event>` is the OnEvent shape we mirror from
-# `starter-spi::ai::OnEvent`. Only the `sync` feature — no runtime — so the
-# SDK does not impose a runtime choice on extension authors.
+# `starter-spi::ai::OnEvent`. Only the `sync` feature by default — no
+# runtime — so the SDK does not impose a runtime choice on builtin / wasm
+# extensions. The `process` feature opts in to `io-util`, `io-std`, `rt`,
+# `macros`, `time` so the entry-point loop can `#[tokio::main]`.
 tokio = { workspace = true }
+
+# Process-flavour entry-point needs the framing crate and a hash. Both
+# are `optional = true` so a builtin or wasm extension does not pay for
+# them transitively.
+starter-jsonrpc-stdio = { workspace = true, optional = true }
+sha2                  = { workspace = true, optional = true }
 
 [dev-dependencies]
 # Tests in this crate exercise the declarative macros and the linker-symbol

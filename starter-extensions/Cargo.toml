@@ -6,7 +6,9 @@ members = [
     "crates/starter-ext-sdk-macros",
     "crates/starter-ext-host",
     "crates/starter-ext-mcp",
+    "crates/starter-ext-supervisor",
     "examples/hello-builtin",
+    "examples/hello-process",
 ]
 
 # `starter-extensions` is a sibling workspace to `starter` (see
@@ -34,10 +36,12 @@ starter-ext-sdk         = { path = "crates/starter-ext-sdk", version = "0.1.0", 
 starter-ext-sdk-macros  = { path = "crates/starter-ext-sdk-macros", version = "0.1.0" }
 starter-ext-host        = { path = "crates/starter-ext-host", version = "0.1.0" }
 starter-ext-mcp         = { path = "crates/starter-ext-mcp", version = "0.1.0" }
+starter-ext-supervisor  = { path = "crates/starter-ext-supervisor", version = "0.1.0" }
 
 # Parent-workspace crates the MCP adapter consumes. Pulled in via path because
 # the two workspaces sit next to each other in this repo.
 starter-mcp             = { path = "../crates/starter-mcp", version = "0.1.0" }
+starter-jsonrpc-stdio   = { path = "../crates/starter-jsonrpc-stdio", version = "0.1.0" }
 
 # Third-party building blocks. Kept aligned with the parent workspace so a
 # consumer importing both does not pull two majors of the same crate.
@@ -47,6 +51,10 @@ serde_yaml  = "0.9"
 thiserror   = "1"
 semver      = { version = "1", features = ["serde"] }
 tokio       = { version = "1", default-features = false, features = ["sync"] }
+tracing     = "0.1"
+sha2        = "0.10"
+hex         = "0.4"
+rand        = "0.8"
 
 # Used by adapter / integration tests only.
 async-trait = "0.1"

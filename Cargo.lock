@@ -5860,6 +5860,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-jsonrpc-stdio"
+version = "0.1.0"
+dependencies = [
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "starter-mcp"
 version = "0.1.0"
 dependencies = [
@@ -5869,6 +5879,7 @@ dependencies = [
  "reqwest 0.12.28",
  "serde",
  "serde_json",
+ "starter-jsonrpc-stdio",
  "starter-server",
  "starter-spi",
  "thiserror 1.0.69",

@@ -1,0 +1,17 @@
+[package]
+name        = "starter-jsonrpc-stdio"
+description = "Content-Length-framed JSON-RPC 2.0 reader/writer over async stdio. Shared by starter-mcp and starter-ext-supervisor (SCOPE.md decision: one framing implementation, no drift)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true, features = ["io-util"] }
+tracing     = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt", "io-util"] }
