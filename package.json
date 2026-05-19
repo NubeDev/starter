@@ -1,0 +1,14 @@
+{
+  "name": "starter-workspace",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Root of the starter pnpm workspace. Not published. See packages/* for the published artifacts.",
+  "scripts": {
+    "build": "pnpm -r run build",
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "codegen": "pnpm --filter @nube/starter-client-ts run codegen"
+  },
+  "packageManager": "pnpm@9.0.0"
+}

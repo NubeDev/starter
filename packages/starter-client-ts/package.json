@@ -1,0 +1,25 @@
+{
+  "name": "@nube/starter-client-ts",
+  "version": "0.1.0",
+  "description": "TS HTTP client for starter-server. Codegen'd from OpenAPI. Zero React.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./generated": "./src/generated/index.ts"
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "codegen": "echo 'TODO(ap): wire openapi-typescript or orval — see SCOPE.md open question 4'"
+  },
+  "dependencies": {
+    "zod": "^3.23.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  }
+}

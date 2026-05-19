@@ -1,0 +1,30 @@
+[package]
+name        = "starter-server"
+description = "starter — axum app builder, OpenAPI emission, SSE helpers, testing harness."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi           = { workspace = true }
+starter-observability = { workspace = true }
+axum                  = { workspace = true }
+tokio                 = { workspace = true }
+tower                 = { workspace = true }
+tower-http            = { workspace = true }
+http                  = { workspace = true }
+utoipa                = { workspace = true }
+serde                 = { workspace = true }
+serde_json            = { workspace = true }
+tracing               = { workspace = true }
+futures               = { workspace = true }
+bytes                 = { workspace = true }
+async-trait           = { workspace = true }
+
+[features]
+default = []
+# Exposes `starter_server::testing` — opt-in so production builds don't
+# pull the harness.
+testing = []

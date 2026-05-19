@@ -1,0 +1,2 @@
+starter-owned SQLite migrations go here. None ship in v0.1 — the
+first will arrive with `starter-auth`'s user/session/token tables.

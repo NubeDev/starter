@@ -1,0 +1,14 @@
+[package]
+name        = "starter-config"
+description = "starter — layered config loader (defaults < file < env < flags). Domain-agnostic."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+serde       = { workspace = true }
+thiserror   = { workspace = true }
+figment     = { workspace = true }

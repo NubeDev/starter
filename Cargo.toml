@@ -1,0 +1,69 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/starter-spi",
+    "crates/starter-config",
+    "crates/starter-observability",
+    "crates/starter-server",
+    "crates/starter-store-sqlite",
+    "crates/starter-store-postgres",
+    "crates/starter-mcp",
+    "crates/starter-auth",
+    "crates/starter-client-rs",
+    "crates/starter-cli",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/NubeDev/starter"
+rust-version = "1.78"
+
+[workspace.dependencies]
+# Internal crates — every consumer crate picks what it needs.
+starter-spi              = { path = "crates/starter-spi",              version = "0.1.0" }
+starter-config           = { path = "crates/starter-config",           version = "0.1.0" }
+starter-observability    = { path = "crates/starter-observability",    version = "0.1.0" }
+starter-server           = { path = "crates/starter-server",           version = "0.1.0" }
+starter-store-sqlite     = { path = "crates/starter-store-sqlite",     version = "0.1.0" }
+starter-store-postgres   = { path = "crates/starter-store-postgres",   version = "0.1.0" }
+starter-mcp              = { path = "crates/starter-mcp",              version = "0.1.0" }
+starter-auth             = { path = "crates/starter-auth",             version = "0.1.0" }
+starter-client-rs        = { path = "crates/starter-client-rs",        version = "0.1.0" }
+starter-cli              = { path = "crates/starter-cli",              version = "0.1.0" }
+
+# Common third-party deps. Per R5, no crate should pull these by default
+# unless its job genuinely needs them.
+serde       = { version = "1",   features = ["derive"] }
+serde_json  = "1"
+thiserror   = "1"
+anyhow      = "1"
+tracing     = "0.1"
+async-trait = "0.1"
+futures     = "0.3"
+bytes       = "1"
+uuid        = { version = "1", features = ["v4", "serde"] }
+chrono      = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+
+# Server-only.
+axum        = { version = "0.8", features = ["macros"] }
+tokio       = { version = "1",   features = ["rt-multi-thread", "macros", "sync", "signal"] }
+tower       = "0.5"
+tower-http  = { version = "0.6", features = ["cors", "trace"] }
+utoipa      = { version = "5",   features = ["axum_extras", "uuid", "chrono"] }
+http        = "1"
+
+# Storage.
+sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros"] }
+
+# Observability.
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+prometheus  = "0.13"
+
+# Client / CLI.
+reqwest     = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+clap        = { version = "4",    features = ["derive", "env"] }
+
+# Config.
+figment     = { version = "0.10", features = ["toml", "env"] }

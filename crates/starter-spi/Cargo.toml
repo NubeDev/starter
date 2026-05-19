@@ -1,0 +1,23 @@
+[package]
+name        = "starter-spi"
+description = "starter — service provider interface. Wire types, errors, traits. Zero internal deps."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R2: zero internal deps. Only third-party building blocks for the
+# type system. No HTTP, no SQL, no runtime logic.
+[dependencies]
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
+uuid        = { workspace = true }
+chrono      = { workspace = true }
+
+# OpenAPI schema derivation. R7: utoipa is the single source of truth
+# for wire types; the TS client is codegen'd from the document this
+# crate's DTOs produce.
+utoipa = { workspace = true }

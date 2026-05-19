@@ -1,0 +1,20 @@
+[package]
+name        = "starter-observability"
+description = "starter — tracing-subscriber setup, prometheus registry, middleware factories. No HTTP server."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi        = { workspace = true }
+tracing            = { workspace = true }
+tracing-subscriber = { workspace = true }
+prometheus         = { workspace = true }
+# Middleware factories return `tower::Layer` impls so any tower-based
+# transport can mount them. We don't pull axum here — that would put
+# HTTP in a crate whose job is "observability", not "server".
+tower              = { workspace = true }
+http               = { workspace = true }
+uuid               = { workspace = true }
