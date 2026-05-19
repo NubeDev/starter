@@ -1,0 +1,43 @@
+[package]
+name        = "starter-auth-oauth"
+description = "starter — third-party sign-up/sign-in via OAuth 2.0 / OIDC providers; reuses starter-auth-users sessions."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+# One-way arrow: oauth → users → spi. The reverse must never compile.
+starter-auth-users = { workspace = true }
+starter-spi        = { workspace = true }
+
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+chrono      = { workspace = true }
+uuid        = { workspace = true }
+
+# OAuth 2.0 / PKCE plumbing. v5 is the first line that targets
+# reqwest 0.12; staying on 4.x would force a parallel reqwest tree.
+oauth2  = { version = "5", default-features = false }
+reqwest = { workspace = true }
+
+# Backend pool — gated. A consumer who wires only the memory state
+# store and an external identity store pays for neither.
+sqlx                 = { workspace = true, optional = true }
+starter-store-sqlite = { workspace = true, optional = true }
+
+[features]
+# Off by default: a consumer that wires only the in-memory state
+# store + an external identity store pays nothing for sqlx.
+default = []
+sqlite  = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite"]
+
+[dev-dependencies]
+tokio                = { workspace = true, features = ["macros", "rt-multi-thread"] }
+starter-store-sqlite = { workspace = true, features = ["testing"] }
+sqlx                 = { workspace = true, features = ["sqlite", "macros", "migrate"] }
+starter-auth-users   = { workspace = true, features = ["sqlite"] }
