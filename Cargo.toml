@@ -16,6 +16,7 @@ members = [
     "crates/starter-client-rs",
     "crates/starter-cli",
     "examples/minimal",
+    "examples/gh-report",
 ]
 
 [workspace.package]

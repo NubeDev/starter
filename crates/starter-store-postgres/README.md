@@ -21,9 +21,16 @@ migrate(&pool)
 
 ## Features
 
-- `testing` — placeholder; `testing::with_database` is deferred to
-  v0.2 (needs Docker on the dev machine; SCOPE punts the
-  `testcontainers` version pin). Use `starter-store-sqlite::testing`
-  for unit-style coverage in the meantime.
+- `testing` — `testing::with_database()` spins up an ephemeral
+  Postgres container via `testcontainers-modules` (0.23 / 0.11) and
+  returns `(Pool, ContainerGuard)`. Requires Docker on the host;
+  integration tests are marked `#[ignore]` so plain `cargo test`
+  skips them. Run explicitly:
+
+  ```bash
+  cargo test -p starter-store-postgres --features testing -- --ignored
+  ```
+
+  CI runs this on every PR (GitHub-hosted runners ship Docker).
 
 Migration source names must match `^[a-z][a-z0-9_]{0,30}$`.

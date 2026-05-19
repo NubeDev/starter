@@ -13,9 +13,9 @@
 //! Unknown methods fall through to JSON-RPC `-32601 method not found`.
 //!
 //! Authentication seam: stdio is single-process, so there is no
-//! per-request credential to check at this layer. The
-//! `Authenticator` hook lands when the HTTP / SSE transport ships
-//! (deferred per SCOPE — stdio only for v1).
+//! per-request credential to check at this layer. The HTTP transport
+//! ([`super::http`], `feature = "http"`) wraps `dispatch` with an
+//! optional bearer-token check via the spi `Authenticator` trait.
 
 use std::sync::Arc;
 

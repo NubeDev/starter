@@ -1,0 +1,26 @@
+[package]
+name        = "starter-gh-report"
+description = "Skeleton: GitHub reporting CLI built on the starter contract."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+[[bin]]
+name = "starter-gh-report"
+path = "src/main.rs"
+
+[dependencies]
+starter-spi           = { workspace = true }
+starter-cli           = { workspace = true }
+starter-observability = { workspace = true }
+
+clap        = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+tokio       = { workspace = true, features = ["rt-multi-thread", "macros"] }
+tracing     = { workspace = true }
+anyhow      = { workspace = true }
+async-trait = { workspace = true }

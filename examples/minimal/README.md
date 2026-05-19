@@ -9,6 +9,9 @@ Headless single-owner appliance in one binary. Demonstrates the
   runner.
 - `starter-auth-token` ships the claim flow (`POST /auth/claim`) and
   the `TokenAuthenticator` that backs `with_principal`.
+- `starter-mcp` (`feature = "http"`) exposes `POST /mcp` bearer-
+  authenticated by the same `TokenAuthenticator`. Demonstrates an
+  `echo` tool registration.
 - `starter-cli` provides the remote-only subcommands (`health`,
   `openapi`); the consumer wires the local subcommands (`serve`,
   `migrate`, `claim-reset`) in their own `main.rs`.
@@ -40,6 +43,12 @@ curl -s -XPOST http://127.0.0.1:8080/auth/claim \
 # Hit the protected route.
 curl -s http://127.0.0.1:8080/hello -H "Authorization: Bearer <owner_token>"
 # → hello, <claim_id>
+
+# Call an MCP tool over HTTP.
+curl -s -XPOST http://127.0.0.1:8080/mcp \
+  -H "Authorization: Bearer <owner_token>" \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/call","params":{"name":"echo","arguments":{"ping":"pong"}}}'
+# → {"jsonrpc":"2.0","id":1,"result":{"content":[{"type":"text","text":"…"}],"structuredContent":{"ping":"pong"}}}
 
 # Built-in remote helpers (talk over HTTP via starter-client-rs).
 cargo run -p starter-minimal -- health

@@ -16,9 +16,20 @@ tokio       = { workspace = true, features = ["io-std", "io-util"] }
 tracing     = { workspace = true }
 thiserror   = { workspace = true }
 
+# `http` feature exposes an `axum::Router` so consumers can serve MCP
+# over POST /mcp alongside the rest of their starter-server routes.
+# Off by default — pure-stdio consumers don't need to drag axum in.
+axum = { workspace = true, optional = true }
+http = { workspace = true, optional = true }
+
 [features]
 default = []
 testing = []
+http    = ["dep:axum", "dep:http"]
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
+axum           = { workspace = true }
+http           = { workspace = true }
+starter-server = { workspace = true, features = ["testing"] }
+reqwest        = { workspace = true, features = ["json"] }

@@ -62,6 +62,16 @@ jobs:
       - name: test (starter-server, testing feature)
         run: cargo test -p starter-server --features testing --no-fail-fast
 
+      - name: test (starter-mcp, http feature)
+        run: cargo test -p starter-mcp --features http --no-fail-fast
+
+      # Postgres testcontainers run is a separate job (needs Docker on
+      # the runner — GitHub-hosted ubuntu-latest has it by default).
+      # Marked `--ignored` so it never runs accidentally in
+      # plain-`cargo test` invocations.
+      - name: test (starter-store-postgres, testing feature, --ignored)
+        run: cargo test -p starter-store-postgres --features testing -- --ignored
+
   pnpm:
     name: pnpm (build / typecheck)
     runs-on: ubuntu-latest

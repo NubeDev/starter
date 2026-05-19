@@ -132,12 +132,18 @@ no auth crate can persist anything.
       maintenance / debugging cost. Recommended scope when it does
       land: `find_by_id`, `list`, `insert`, `update` (optimistic
       version bump), `delete`. Nothing more.
-- [ ] Implement `testing::with_database` in
-      `crates/starter-store-postgres/src/testing/with_database.rs:14`
-      using `testcontainers`. Deferred — requires Docker on the
-      developer machine, and SCOPE punts the choice between
-      `testcontainers` 0.x and 0.20+ to v0.2. Sqlite side already
-      has `testing::ephemeral()` so unit-style coverage exists.
+- [x] Implemented `testing::with_database` in
+      [crates/starter-store-postgres/src/testing/with_database.rs](crates/starter-store-postgres/src/testing/with_database.rs)
+      using `testcontainers` 0.23 + `testcontainers-modules` 0.11
+      (postgres module). Returns `(Pool, ContainerGuard)`; drop the
+      guard last. SCOPE's "0.x vs 0.20+" question was a stale read —
+      0.20+ never shipped; the coordinated current majors are
+      0.23 / 0.11 and that's what we pin. Integration tests in
+      [crates/starter-store-postgres/tests/migrate.rs](crates/starter-store-postgres/tests/migrate.rs)
+      mirror the sqlite suite (`two_sources_apply_without_colliding`,
+      `rerun_is_a_noop`); both marked `#[ignore]` since they need
+      Docker. CI runs them via `cargo test -p starter-store-postgres
+      --features testing -- --ignored` on every PR.
 - [x] First migrations under `migrations/starter/0001_init.sql` in
       both store crates — a `starter_meta` key/value table. Real
       starter-owned tables land with the auth crates; this just
@@ -471,10 +477,25 @@ together later.
       name, invokes, wraps the JSON result in MCP's `content` +
       `structuredContent` envelope). Unknown methods → `-32601`,
       missing `name` → `-32602`, tool errors → `-32603`, malformed JSON
-      → invalid_params with `id: null`. Auth seam deferred: stdio is
-      single-process, no per-request credential — the `Authenticator`
-      hook lands with the HTTP / SSE transport. 7 unit tests cover all
-      the above paths.
+      → invalid_params with `id: null`. 7 unit tests cover all the
+      above paths.
+- [x] MCP HTTP transport ([crates/starter-mcp/src/server/http.rs](crates/starter-mcp/src/server/http.rs))
+      behind `feature = "http"`. `mcp_router(registry, opts)` returns
+      an `axum::Router<S>` exposing `POST /mcp` — single JSON-RPC
+      envelope in, JSON response out, `204 No Content` for
+      notifications. Optional `McpHttpOptions::with_auth(authenticator)`
+      enforces `Authorization: Bearer …` via the spi `Authenticator`
+      trait — same trait used by `starter_server::auth::with_principal`
+      so `TokenAuthenticator` / `AuthAuthenticator` work unchanged.
+      On 401 the body is a JSON-RPC error frame (`code: -32001`) so
+      MCP clients see a structured error rather than an opaque HTTP
+      status. 5 integration tests (open route, notification → 204,
+      missing/invalid/valid bearer paths). Wired into
+      [examples/minimal](examples/minimal/src/server.rs) — same
+      `TokenAuthenticator` instance guards both `/hello` and `/mcp`,
+      with an `echo` tool registered for the e2e test. SSE (Streamable
+      HTTP) progress events deferred to v0.2 as a `mcp_sse_router`
+      sibling; `Tool::invoke` stays single-shot.
 - [x] Flesh out `starter-cli` commands. `health` and `openapi` both
       take `--base-url` (defaults `http://localhost:8080`, also reads
       `STARTER_BASE_URL`), build a `starter_client_rs::Client`, and
@@ -510,10 +531,18 @@ together later.
       `starter-cli`. Added as a workspace member.
 - [ ] `examples/full/` — server + postgres + mcp + react admin +
       docker. Deferred — blocks on a real consumer to design against;
-      `examples/minimal/` covers the headless-appliance shape already.
-- [ ] `examples/gh-report/` — skeleton for the GitHub reporting
-      tool. Independent; can land as soon as the consumer-domain
-      starter contract is finalised.
+      `examples/minimal/` already covers server + sqlite + auth +
+      MCP-over-HTTP, which is the harder integration. The remaining
+      delta is "swap sqlite → postgres + ship a React admin" — both
+      are mechanical once a consumer asks for it.
+- [x] [examples/gh-report/](examples/gh-report/) — skeleton CLI
+      built on `starter-cli` + `starter-observability`. The `report`
+      subcommand prints a stubbed JSON body so the consumer-domain
+      layout is locked while the actual GitHub-API integration stays
+      consumer-owned (drop in `octocrab`, fetch the PAT via
+      `SecretStore::get("github:pat")`, rewrite `report::generate`).
+      Demonstrates the "domain CLI on starter-cli" pattern as a
+      counterpart to `examples/minimal`'s "domain server + CLI" shape.
 
 Exit criteria for the wiring half — met today: `cargo test --workspace`
 green; `cargo clippy --workspace --all-features --tests -- -D warnings`
@@ -639,8 +668,13 @@ and `pnpm -r build` all pass.
       invocations.
 - [x] No `todo!()` remains on any production path. The auth bodies and
       observability/server middleware all carry real implementations.
-- [ ] Audit `.unwrap()` / `.expect()` usage as code lands; today
-      occurrences are confined to test harnesses and one-shot startup
-      paths (server bind), and are acceptable.
+- [x] Audited `.unwrap()` / `.expect()` usage across all `crates/*/src`.
+      Every remaining occurrence is one of: (a) inside `#[cfg(test)]`
+      or a `testing` module, (b) standard `Mutex.lock().expect(...)`
+      panic-on-poisoned (idiomatic), (c) infallible-by-construction
+      with a documenting message — `serde_json::to_vec(&(&str,&str))`,
+      `Stdio::piped` -> `child.stdout.take()`, or upstream-lifted
+      openai-spec message builders. No production-path fixes needed;
+      revisit if a new call site adds a fallible path.
 - [ ] Keep this file in sync — when a checkbox flips, edit it in the
       same commit that lands the work.

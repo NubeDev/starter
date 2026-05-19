@@ -17,8 +17,21 @@ serde       = { workspace = true }
 thiserror   = { workspace = true }
 tracing     = { workspace = true }
 
+# `testing` feature pulls testcontainers + the postgres module so a
+# call to `testing::with_database()` spins up an ephemeral container,
+# waits for healthy, and returns a connected Pool. Off by default —
+# pulls Docker-client crates and adds compile time. Pinned to
+# testcontainers 0.23 + testcontainers-modules 0.11 (the current
+# coordinated majors; SCOPE's "0.x vs 0.20+" question was a stale
+# read — 0.20+ doesn't exist, the live ecosystem is 0.23 / 0.11).
+testcontainers         = { version = "0.23", optional = true }
+testcontainers-modules = { version = "0.11", features = ["postgres"], optional = true }
+tokio                  = { workspace = true, optional = true }
+
 [features]
 default = []
-# `testing` requires the `testcontainers` ecosystem; gated to keep
-# regular builds light.
-testing = []
+testing = ["dep:testcontainers", "dep:testcontainers-modules", "dep:tokio"]
+
+[dev-dependencies]
+sqlx  = { workspace = true, features = ["postgres", "macros", "migrate", "runtime-tokio"] }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -17,6 +17,7 @@ starter-spi           = { workspace = true }
 starter-server        = { workspace = true }
 starter-store-sqlite  = { workspace = true }
 starter-auth-token    = { workspace = true, features = ["sqlite"] }
+starter-mcp           = { workspace = true, features = ["http"] }
 starter-observability = { workspace = true }
 starter-cli           = { workspace = true }
 starter-client-rs     = { workspace = true }

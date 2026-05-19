@@ -72,5 +72,46 @@ async fn claim_then_hello_round_trip() {
         .unwrap();
     assert!(body.starts_with("hello, "), "got: {body:?}");
 
+    // 4. MCP over HTTP: POST /mcp without bearer → 401.
+    let resp = client
+        .post(format!("{}/mcp", app.base_url))
+        .body(r#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#)
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 401);
+
+    // 5. MCP tools/list with bearer → echo tool present.
+    let listed: Value = client
+        .post(format!("{}/mcp", app.base_url))
+        .bearer_auth(&owner)
+        .body(r#"{"jsonrpc":"2.0","id":1,"method":"tools/list"}"#)
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    let tools = listed["result"]["tools"].as_array().expect("tools array");
+    assert!(
+        tools.iter().any(|t| t["name"] == "echo"),
+        "tools/list missing echo: {tools:?}",
+    );
+
+    // 6. MCP tools/call: round-trip the echo tool.
+    let called: Value = client
+        .post(format!("{}/mcp", app.base_url))
+        .bearer_auth(&owner)
+        .body(
+            r#"{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"echo","arguments":{"k":42}}}"#,
+        )
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+    assert_eq!(called["result"]["structuredContent"]["k"], 42);
+
     app.shutdown().await;
 }
