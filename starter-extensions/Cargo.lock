@@ -2460,6 +2460,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ext-workers"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "rand 0.8.6",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-ext-host",
+ "starter-ext-sdk",
+ "starter-ext-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "starter-jsonrpc-stdio"
 version = "0.1.0"
 dependencies = [

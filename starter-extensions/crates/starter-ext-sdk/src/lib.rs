@@ -104,8 +104,8 @@ pub use starter_ext_spi::{
     AuthGate, Authority, Backoff, Capability, CliStreaming, ContributeCli, ContributeGrpc,
     ContributeRest, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker,
     Contributes, Error, ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope,
-    LifecycleState, Manifest, PathSpec, RestStreaming, RestartPolicy, Result, Runtime,
-    RuntimeKind, Supervision,
+    LifecycleState, Manifest, OnErrorPolicy, PathSpec, RestStreaming, RestartPolicy,
+    Result, RetryStrategy, Runtime, RuntimeKind, Supervision,
 };
 /// Re-export so extensions can construct `Event { stream_id, payload }`
 /// without taking a direct `starter-ext-spi` dep (SCOPE "Extension

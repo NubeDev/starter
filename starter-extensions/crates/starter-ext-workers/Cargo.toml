@@ -1,0 +1,29 @@
+[package]
+name        = "starter-ext-workers"
+description = "starter-extensions — periodic workers adapter (Adapter Phase 7, SCOPE R13). Invokes `contributes.workers` handlers at manifest-declared `interval_seconds` (with optional `jitter_seconds`); applies per-worker error backoff (`on_error.retry exponential`, capped by `max_attempts`); surfaces worker state on `GET /extensions/<id>` and offers `tick_now(id)` as a testing seam. Workers are periodic, not jobs: no shared queue, no fan-out (mirrors the parent SCOPE non-goal)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Adapter dependency arrow (SCOPE R13): kernel registry → this adapter
+# → host's periodic-worker scheduler. No transport-specific deps (no
+# axum, no clap); the worker scheduler is a long-running task the
+# consumer owns alongside its admin router.
+[dependencies]
+starter-ext-spi        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
+
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "sync", "time"] }
+tracing     = { workspace = true }
+rand        = { workspace = true }
+
+[dev-dependencies]
+tokio       = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
+serde_yaml  = { workspace = true }

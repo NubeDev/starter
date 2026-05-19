@@ -39,7 +39,19 @@ struct Inner {
     store: Arc<dyn EnablementStore>,
     factory: DynFactory,
     etag_cache: EtagCache,
+    worker_states: Option<WorkerStatesFn>,
 }
+
+/// Closure shape the admin route calls when rendering
+/// `GET /extensions/<id>`'s `workers:` field.
+///
+/// This is the seam between `starter-ext-server` and any periodic-
+/// worker adapter (notably `starter-ext-workers`, Adapter Phase 7).
+/// Keeping it as a `Fn(&ExtensionId) -> Vec<Value>` means the admin
+/// crate does not depend on the workers adapter; the consumer wires
+/// its own scheduler handle in.
+pub type WorkerStatesFn =
+    Arc<dyn Fn(&ExtensionId) -> Vec<serde_json::Value> + Send + Sync + 'static>;
 
 impl ExtensionAdmin {
     /// Start building from a sealed registry.
@@ -49,6 +61,7 @@ impl ExtensionAdmin {
             supervisors: HashMap::new(),
             store: None,
             factory: None,
+            worker_states: None,
         }
     }
 
@@ -97,6 +110,18 @@ impl ExtensionAdmin {
     pub(crate) fn etag_cache(&self) -> &EtagCache {
         &self.inner.etag_cache
     }
+
+    /// Render the worker-state field for `GET /extensions/<id>`.
+    /// Returns an empty vector when no provider is wired — the JSON
+    /// response still includes a `workers: []` field, which is the
+    /// truthful shape for hosts that did not opt into the periodic-
+    /// worker adapter.
+    pub(crate) fn worker_states(&self, id: &ExtensionId) -> Vec<serde_json::Value> {
+        match &self.inner.worker_states {
+            Some(f) => f(id),
+            None => Vec::new(),
+        }
+    }
 }
 
 /// Fluent builder. `registry` is the only required input; the rest
@@ -107,6 +132,7 @@ pub struct ExtensionAdminBuilder {
     supervisors: HashMap<String, SupervisorHandle>,
     store: Option<Arc<dyn EnablementStore>>,
     factory: Option<DynFactory>,
+    worker_states: Option<WorkerStatesFn>,
 }
 
 impl ExtensionAdminBuilder {
@@ -135,6 +161,20 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Wire a periodic-worker state provider — typically the handle
+    /// returned by `starter_ext_workers::WorkersScheduler::start`,
+    /// adapted into a closure that serialises each `WorkerState`
+    /// into JSON. When unset, the admin route's `workers:` field is
+    /// always `[]` (truthful for hosts that did not opt into the
+    /// workers adapter).
+    pub fn with_worker_states_fn<F>(mut self, f: F) -> Self
+    where
+        F: Fn(&ExtensionId) -> Vec<serde_json::Value> + Send + Sync + 'static,
+    {
+        self.worker_states = Some(Arc::new(f));
+        self
+    }
+
     /// Materialise the [`ExtensionAdmin`].
     pub fn build(self) -> ExtensionAdmin {
         ExtensionAdmin {
@@ -148,6 +188,7 @@ impl ExtensionAdminBuilder {
                     .factory
                     .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory)),
                 etag_cache: EtagCache::new(),
+                worker_states: self.worker_states,
             }),
         }
     }

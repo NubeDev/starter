@@ -442,23 +442,109 @@ pub struct ContributeGrpc {
 }
 
 /// One periodic worker the extension provides.
+///
+/// Workers are **periodic, not jobs** (Adapter Phase 7, SCOPE non-goal
+/// mirror): the adapter does not maintain a shared queue and does not
+/// fan-out across hosts; each worker is a self-pacing task that runs at
+/// `interval_seconds` (± up to `jitter_seconds`) and, when its handler
+/// returns an error, backs off per [`OnErrorPolicy`].
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ContributeWorker {
     /// Worker id; must be the extension id or a dotted descendant (R4).
     pub id: String,
-    /// Cron expression (5- or 6-field). The adapter parses it.
-    pub cron: String,
+    /// Nominal interval between two successive invocations of the
+    /// handler, in seconds. The adapter schedules
+    /// `next_due = now + interval_seconds + rand(0..=jitter_seconds)`
+    /// after every (successful or errored-and-retried-out) run.
+    pub interval_seconds: u32,
+    /// Maximum amount of uniform random jitter, in seconds, added on
+    /// top of `interval_seconds` when computing `next_due`. Zero
+    /// (the default) gives a strictly periodic cadence; non-zero
+    /// spreads the load across replicas that come up at the same time.
+    #[serde(default)]
+    pub jitter_seconds: u32,
+    /// Per-worker error backoff policy. See [`OnErrorPolicy`].
+    #[serde(default)]
+    pub on_error: OnErrorPolicy,
     /// Path (relative to bundle root) to the worker's static markdown
     /// description. R7.
     pub description_file: String,
     /// Optional cap on concurrent executions of this worker (default 1).
+    /// `> 1` is reserved for future use; the v0.1 scheduler treats
+    /// every worker as `1` because there is no shared queue and no
+    /// fan-out (SCOPE non-goal).
     #[serde(default = "default_one")]
     pub concurrency: u32,
     /// Optional per-entry auth gate (workers run under a system principal
     /// if omitted; the gate is for operator-triggered runs).
     #[serde(default)]
     pub auth: AuthGate,
+}
+
+/// Error-recovery policy for a single periodic worker.
+///
+/// When the handler returns `Err`, the scheduler:
+///
+/// 1. Records the error and the failing attempt on the worker's state
+///    (surfaced as `last_error` and `attempt` on
+///    `GET /extensions/<id>`).
+/// 2. If `retry == RetryStrategy::Exponential` **and**
+///    `attempt < max_attempts`: schedules the next run at
+///    `now + min(max_backoff_ms, initial_backoff_ms * 2^(attempt-1))`,
+///    keeping the same cadence afterwards (so an error costs at most
+///    one delayed cycle).
+/// 3. If `attempt >= max_attempts`: the worker stops scheduling new
+///    runs until the extension is re-enabled or `tick_now(id)` is
+///    invoked (testing seam). The error is sticky on `last_error`.
+/// 4. If `retry == RetryStrategy::Never`: any error transitions
+///    straight to the "stopped, sticky error" state on attempt 1.
+///
+/// Defaults are conservative: exponential retry with 1s/60s bounds
+/// and 5 attempts. A worker that loops on a permanently broken
+/// downstream stops by itself.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OnErrorPolicy {
+    /// Retry strategy. `Exponential` (the default) doubles the
+    /// backoff between attempts within `[initial_backoff_ms, max_backoff_ms]`.
+    #[serde(default)]
+    pub retry: RetryStrategy,
+    /// First backoff after the first failure, in milliseconds.
+    #[serde(default = "default_initial_backoff_ms")]
+    pub initial_backoff_ms: u32,
+    /// Cap on the exponential backoff, in milliseconds.
+    #[serde(default = "default_max_backoff_ms")]
+    pub max_backoff_ms: u32,
+    /// Cap on the number of consecutive failures before the worker
+    /// goes into the sticky "stopped" state. Counts reset to zero
+    /// after the first successful run.
+    #[serde(default = "default_max_attempts")]
+    pub max_attempts: u32,
+}
+
+impl Default for OnErrorPolicy {
+    fn default() -> Self {
+        Self {
+            retry: RetryStrategy::default(),
+            initial_backoff_ms: default_initial_backoff_ms(),
+            max_backoff_ms: default_max_backoff_ms(),
+            max_attempts: default_max_attempts(),
+        }
+    }
+}
+
+/// Retry shape for [`OnErrorPolicy`].
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RetryStrategy {
+    /// Exponential backoff with the bounds declared in
+    /// [`OnErrorPolicy::initial_backoff_ms`] / `max_backoff_ms`.
+    #[default]
+    Exponential,
+    /// No retries at all. The first error stops the worker; operators
+    /// re-enable through the admin route.
+    Never,
 }
 
 /// The extension's UI block.
@@ -507,6 +593,15 @@ fn default_true() -> bool {
 }
 fn default_one() -> u32 {
     1
+}
+fn default_initial_backoff_ms() -> u32 {
+    1_000
+}
+fn default_max_backoff_ms() -> u32 {
+    60_000
+}
+fn default_max_attempts() -> u32 {
+    5
 }
 
 #[cfg(test)]
@@ -663,8 +758,14 @@ contributes:
       description_file: c.md
   workers:
     - id: com.acme.all.w1
-      cron: "*/5 * * * *"
+      interval_seconds: 300
+      jitter_seconds: 30
       description_file: c.md
+      on_error:
+        retry: exponential
+        initial_backoff_ms: 500
+        max_backoff_ms: 30000
+        max_attempts: 6
   ui:
     entry: ui/remoteEntry.js
     exposes:

@@ -37,6 +37,6 @@ pub use lifecycle::LifecycleState;
 pub use manifest::{
     AuthGate, Backoff, CliStreaming, ContributeCli, ContributeGrpc, ContributeRest,
     ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker, Contributes,
-    HealthConfig, Manifest, ManifestRequires, Require, RestStreaming, RestartPolicy, Runtime,
-    RuntimeKind, Supervision, MANIFEST_VERSION,
+    HealthConfig, Manifest, ManifestRequires, OnErrorPolicy, Require, RestStreaming,
+    RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision, MANIFEST_VERSION,
 };

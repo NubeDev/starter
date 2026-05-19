@@ -88,6 +88,12 @@ pub(crate) struct ExtensionDetail {
     /// Sequence number the next event will receive — clients use this
     /// as a `?after=<seq>` cursor when polling the events endpoint.
     pub events_cursor: u64,
+    /// Per-worker state from the periodic-worker adapter (Adapter
+    /// Phase 7). Empty when no `WorkerStatesFn` is wired on the
+    /// admin builder, or when the extension contributes no workers.
+    /// Each element is one serialised `WorkerState` (see
+    /// `starter_ext_workers::WorkerState`).
+    pub workers: Vec<serde_json::Value>,
 }
 
 pub(crate) async fn detail(
@@ -128,6 +134,11 @@ pub(crate) async fn detail(
         })
         .unwrap_or(0);
 
+    let workers = match &parsed_id {
+        Some(eid) => admin.worker_states(eid),
+        None => Vec::new(),
+    };
+
     Ok(Json(ExtensionDetail {
         id: rec.id_hint.clone(),
         state: rec.state,
@@ -137,6 +148,7 @@ pub(crate) async fn detail(
         restart_count,
         capability_violations,
         events_cursor,
+        workers,
     }))
 }
 
