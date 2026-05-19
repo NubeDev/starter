@@ -709,3 +709,166 @@ and `pnpm -r build` all pass.
       revisit if a new call site adds a fallible path.
 - [ ] Keep this file in sync — when a checkbox flips, edit it in the
       same commit that lands the work.
+
+---
+
+## Phase 8 — Tools and services (third-party integrations)
+
+Scope: [DOCS/tools/scope/SCOPE.md](DOCS/tools/scope/SCOPE.md). Add a
+family of sibling crates that wrap third-party providers (Gmail,
+Slack, Telegram, …) as `Tool`s (one-shot request/response) or new
+`Service`s (long-running listeners). One crate per integration, no
+mega-crate, no cargo-feature matrix. Selected by Cargo dependency,
+constructed in the consumer's `main.rs`.
+
+Order: SPI types land first (everything else depends on them), then
+the registry + supervision shell, then the first three provider
+crates, then the surface adapters that expose tools over REST / CLI.
+
+### Phase 8a — `starter-spi` additions
+
+- [ ] Add `service::Service` trait (`async fn start(&self, ctx:
+      ServiceContext) -> SpiResult<ServiceHandle>` + `name()`).
+      Object-safe; covered by `tests/compile.rs`.
+- [ ] Add `service::EventSink` trait (`async fn emit(&self, kind:
+      &str, payload: serde_json::Value) -> SpiResult<()>`). Object-
+      safe. Ship a blanket impl for `tokio::sync::broadcast::Sender<T>
+      where T: From<(String, Value)>` and a `FanOut(Vec<Arc<dyn
+      EventSink>>)` helper.
+- [ ] Add `service::ServiceContext` (`#[non_exhaustive]`) with `metrics:
+      Arc<prometheus::Registry>`, `shutdown: tokio::sync::watch::
+      Receiver<bool>`, `sink: Arc<dyn EventSink>`.
+- [ ] Add `service::ServiceHandle { join: JoinHandle<SpiResult<()>> }`.
+      No shutdown sender — the registry owns the single
+      `watch::Sender<bool>` and fans receivers out via
+      `ServiceContext.shutdown` (R2/R9 in the scope doc).
+- [ ] Re-export `secrecy::SecretString` from `starter-spi` so provider
+      crates depend on the re-export, not `secrecy` directly (R5).
+      Add `secrecy` to `[workspace.dependencies]`.
+- [ ] Bump `starter-spi/tests/compile.rs` to lock the new exports:
+      `Service` + `EventSink` object-safe, `ServiceContext` has the
+      v1 fields, `SecretString` reachable.
+
+### Phase 8b — `starter-services` registry crate
+
+Sibling to `starter-cli` / `starter-mcp`. Holds the `ServiceRegistry`
+and the supervision/shutdown plumbing — purely infrastructural, no
+provider knowledge.
+
+- [ ] Create `crates/starter-services/`. Single dep on `starter-spi`
+      plus `tokio`, `tracing`, `prometheus`.
+- [ ] Implement `ServiceRegistry::new()`, `.register(impl Service)`,
+      `.start_all(metrics, sink) -> RunningServices`. `start_all`
+      owns the single `watch::Sender<bool>`, hands cloned receivers
+      to each `Service::start` via `ServiceContext`, returns a
+      `RunningServices` guard.
+- [ ] `RunningServices::shutdown(deadline)` flips the watch and awaits
+      every `JoinHandle` with the configured deadline (default 5 s,
+      override via builder). Returns a per-service exit summary.
+- [ ] Restart policy: registry **never auto-restarts** (R9). On
+      `JoinHandle` resolving to `Err`, record on the service span,
+      increment `starter_service_restarts_total{service}`, and mark
+      the service stopped. Document the `RestartingService<S: Service>`
+      adapter pattern in the README for consumers who want supervised
+      restart; do not ship the adapter in v1.
+- [ ] Standard service metrics registered on the supplied
+      `prometheus::Registry`: `starter_service_events_total{service,
+      kind}`, `starter_service_restarts_total{service}`,
+      `starter_service_running{service}` (gauge).
+- [ ] Integration test in `tests/lifecycle.rs`: a `NoopService` that
+      sleeps until `ctx.shutdown.changed()`, registered, started,
+      shut down within 200 ms; gauge flips 1 → 0; second test where
+      a service returns `Err` and the registry records the restart
+      counter without auto-restarting.
+
+### Phase 8c — Observability helpers
+
+These live in `starter-observability` so every provider crate has
+exactly two starter deps (`starter-spi` + `starter-observability`,
+per R7).
+
+- [ ] Add `tool_metrics(registry, tool_name)` returning a struct
+      with `latency: Histogram`, `errors: Counter`. Provider crates
+      register once at `Tool::new` time.
+- [ ] Add `service_metrics(registry, service_name)` returning
+      `events: CounterVec<&[&str]>`, `restarts: Counter`, `running:
+      Gauge`. The registry crate (Phase 8b) calls this; provider
+      crates use the returned handles via `ServiceContext.metrics`.
+- [ ] Tracing span helpers: `tool_span(name)` / `service_span(name)`
+      with stable field names (`tool.name` / `service.name`), used
+      by both provider crates and the registry.
+
+### Phase 8d — First three providers
+
+Each crate ships: `Config` struct with `SecretString` fields, at
+least one `Tool` impl (and where applicable a `Service` impl),
+a README mirroring the notes example's "how it's extended" table,
+and one integration test against a `wiremock`-style mock HTTP
+server (no live network in tests).
+
+Mine
+`/home/user/code/rust/codeless-workspace/codeless/crates/codeless-{slack,telegram,bot-core,tools}`
+for working code (local reference, NubeDev only) — lift
+implementations, not architecture.
+
+- [ ] `crates/starter-tool-gmail/` — `GmailSendTool` (send via Gmail
+      API with refresh-token auth). Service deferred until a real
+      consumer asks for Gmail watch.
+- [ ] `crates/starter-tool-slack/` — `SlackPostTool` (chat.postMessage)
+      + optional `SlackUpdateTool` (chat.update).
+- [ ] `crates/starter-service-slack/` — `SlackSocketModeService`.
+      Publishes `slack.message`, `slack.app_mention`, etc. via the
+      `EventSink` from `ServiceContext`.
+- [ ] `crates/starter-tool-telegram/` — `TelegramSendTool`
+      (sendMessage).
+- [ ] `crates/starter-service-telegram/` — `TelegramBotService`
+      (long-poll `getUpdates`). Webhook variant deferred.
+- [ ] Add all five crates to workspace members + `[workspace.
+      dependencies]`.
+
+### Phase 8e — Surface adapters
+
+`Tool`s already reach MCP for free via `starter-mcp`. The other
+surfaces need thin generic adapters so a registered tool is
+callable everywhere without per-tool wiring.
+
+- [ ] `starter-server`: add `tools_router(tools: Arc<ToolRegistry>)
+      -> Router<S>` exposing `POST /tools/{name}` (one generic
+      endpoint dispatches every registered tool). Auth via the
+      consumer's `with_principal` wrap, same as `/mcp`.
+- [ ] `starter-cli`: add a generic `tools call <name> --input <json>`
+      subcommand registered by `register_starter_defaults` (alongside
+      `health` / `openapi`). Pretty-prints the tool's JSON result.
+- [ ] SSE bridge in `starter-server`: `events_sse_router(rx:
+      broadcast::Receiver<ServiceEvent>) -> Router<S>` exposing
+      `GET /events`. Consumer-built `EventSink` fan-outs into this
+      receiver. Backpressure: lagged subscribers receive a `Lagged`
+      event and reconnect; consistent with the notes example's
+      `/notes/stream`.
+- [ ] (Deferred to consumer for now) gRPC unary `CallTool` RPC —
+      pattern documented in the notes example; no starter-side crate.
+
+### Phase 8f — Example consumer + smoke tests
+
+- [ ] Extend `examples/notes/` (or a new `examples/relay/`) with one
+      tool registration + one service registration, end-to-end. The
+      e2e test exercises: register tool → call via `/tools/{name}`,
+      register service → emit event → observe via `/events` SSE.
+- [ ] CI gate `starter-spi-deps-drift`: runs `cargo tree -p starter-spi
+      --edges normal`, diffs against `DOCS/tools/scope/starter-spi-deps.baseline.txt`,
+      fails on any change (the baseline updates only when `starter-spi`
+      itself changes, in the same commit). Path-stripping rule
+      documented in the workflow.
+- [ ] Run the 5-point smoke test from SCOPE.md (no dep leakage, no
+      special-case wiring, config-guarded construction, swappable
+      secrets backend, bounded shutdown) against each provider crate
+      before merging it.
+
+Exit criteria: a binary depending on `starter-spi`, `starter-server`,
+`starter-services`, `starter-tool-slack`, and `starter-service-slack`
+can register both, run them, post a Slack message via `POST
+/tools/slack_post`, receive a Slack event over `GET /events`, and
+shut down cleanly inside the 5-second deadline. Adding
+`starter-tool-telegram` is a one-line `Cargo.toml` change plus an
+`if cfg.telegram.enabled { … }` block in `main.rs` — no other code
+touched.
