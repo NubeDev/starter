@@ -8,13 +8,14 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::Serialize;
+use utoipa::ToSchema;
 
 use crate::session::verify_session;
 
 use super::state::AuthState;
 
 /// Response body for `GET /auth/me`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct MeResponse {
     /// Stable user identifier (the `Principal.subject`).
     pub subject: String,
@@ -24,7 +25,17 @@ pub struct MeResponse {
     pub role: crate::role::Role,
 }
 
-pub(super) async fn handler(state: Arc<AuthState>, headers: HeaderMap) -> Response {
+#[utoipa::path(
+    get,
+    path = "/auth/me",
+    tag = "auth",
+    operation_id = "me",
+    responses(
+        (status = 200, description = "Current user identity", body = MeResponse),
+        (status = 401, description = "Not authenticated"),
+    ),
+)]
+pub(crate) async fn handler(state: Arc<AuthState>, headers: HeaderMap) -> Response {
     let cookie_value = match cookie_value(&headers, crate::session::SESSION_COOKIE) {
         Some(v) => v,
         None => return StatusCode::UNAUTHORIZED.into_response(),

@@ -10,8 +10,15 @@
 //! `SqliteUserStore`, prompt for the password via
 //! [`crate::prompt::password`], and call `create_admin`.
 //!
-//! Re-introduce as a generic-over-store `AdminCreate<U: UserStore>`
-//! when a real consumer needs a copy-paste-free integration.
+//! See `examples/minimal/src/main.rs` for the matching pattern used
+//! by the headless-appliance example to wire its `serve` / `migrate`
+//! / `claim-reset` subcommands.
+//!
+//! A generic-over-store `AdminCreate<U: UserStore>` was considered and
+//! rejected: it would force `starter-cli` to take a `starter-auth-users`
+//! dep (currently zero auth deps in this crate) and would still leave
+//! the consumer wiring the pool and DI. The 10-line copy-paste below
+//! is cheaper than the abstraction.
 
 use async_trait::async_trait;
 use clap::{Arg, ArgMatches, Command as ClapCommand};

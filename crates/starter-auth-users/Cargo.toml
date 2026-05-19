@@ -24,6 +24,7 @@ password-auth = { workspace = true }
 http          = { workspace = true }
 tower         = { workspace = true }
 futures       = { workspace = true }
+utoipa        = { workspace = true }
 
 # Backend pools — both gated. A consumer picks one via the
 # `sqlite` / `postgres` features below.

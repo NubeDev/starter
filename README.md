@@ -19,6 +19,11 @@ crates/
   starter-store-sqlite     sqlx-on-sqlite typed building blocks.
   starter-store-postgres   sqlx-on-postgres typed building blocks.
   starter-mcp              MCP stdio server scaffold.
+  starter-auth-token       single-owner bearer auth (headless appliance).
+  starter-auth-users       multi-user: cookie sessions + API tokens.
+  starter-secrets-keyring  SecretStore over the OS keychain.
+  starter-secrets-file     SecretStore over an age-encrypted file.
+  starter-ai               AiRunner for 5 providers (all feature-gated).
   starter-client-rs        reqwest client mirroring the server surface.
   starter-cli              clap building blocks. Library, not a binary.
 

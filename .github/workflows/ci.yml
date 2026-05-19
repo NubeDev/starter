@@ -89,25 +89,37 @@ jobs:
   openapi-drift:
     name: openapi / ts drift
     runs-on: ubuntu-latest
-    # Skipped until Phase 6 lands the codegen step. Lifting the
-    # `if: false` gate is the signal that the drift check is real.
-    if: false
     steps:
       - uses: actions/checkout@v4
-      - name: install rust
+
+      - name: install toolchain
         uses: dtolnay/rust-toolchain@stable
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+
       - uses: pnpm/action-setup@v4
         with:
           version: 9
+
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
+
       - name: install
         run: pnpm install --frozen-lockfile
-      - name: regenerate ts client and check diff
-        run: |
-          # TODO(phase6): boot a minimal server, fetch /openapi.json,
-          # run `pnpm codegen`, fail if the generated `index.ts`
-          # differs from the committed version.
-          echo "skipped until phase 6"
+
+      # Source of truth: the openapi snapshot test in starter-auth-users.
+      # If a handler or DTO changed without `UPDATE_SNAPSHOTS=1`, this
+      # fails before we ever get to the TS side.
+      - name: openapi snapshot up to date
+        run: cargo test -p starter-auth-users --features sqlite --test openapi_snapshot
+
+      - name: regenerate ts client
+        run: pnpm --filter @nube/starter-client-ts run codegen
+
+      - name: fail on drift
+        run: git diff --exit-code packages/starter-client-ts/src/generated/index.ts

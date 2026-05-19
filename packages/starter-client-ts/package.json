@@ -14,12 +14,13 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "codegen": "echo 'TODO(ap): wire openapi-typescript or orval — see SCOPE.md open question 4'"
+    "codegen": "openapi-typescript ../../openapi.json -o ./src/generated/index.ts"
   },
   "dependencies": {
     "zod": "^3.23.0"
   },
   "devDependencies": {
+    "openapi-typescript": "^7.4.0",
     "typescript": "^5.4.0"
   }
 }

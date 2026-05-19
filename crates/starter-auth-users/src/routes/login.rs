@@ -10,6 +10,7 @@ use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::password;
 use crate::session::{issue, IssuedSession, SESSION_COOKIE};
@@ -22,7 +23,7 @@ use super::state::AuthState;
 pub const CSRF_COOKIE: &str = "starter_csrf";
 
 /// Request body for `POST /auth/login`.
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Deserialize, ToSchema)]
 pub struct LoginRequest {
     /// User's email (the primary identifier in `starter_auth_users`).
     pub email: String,
@@ -31,14 +32,25 @@ pub struct LoginRequest {
 }
 
 /// Response body for `POST /auth/login`.
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, ToSchema)]
 pub struct LoginResponse {
     /// CSRF double-submit token. Send back as `X-CSRF-Token` on
     /// mutating cookie-authenticated requests.
     pub csrf_token: String,
 }
 
-pub(super) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest>) -> Response {
+#[utoipa::path(
+    post,
+    path = "/auth/login",
+    tag = "auth",
+    operation_id = "login",
+    request_body = LoginRequest,
+    responses(
+        (status = 200, description = "Logged in; session + CSRF cookies set", body = LoginResponse),
+        (status = 401, description = "Invalid credentials"),
+    ),
+)]
+pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest>) -> Response {
     let user = match state.users.find_by_email(&body.email).await {
         Ok(Some(u)) => u,
         Ok(None) => return StatusCode::UNAUTHORIZED.into_response(),

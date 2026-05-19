@@ -38,6 +38,7 @@
 
 pub mod admin;
 pub mod authenticator;
+pub mod openapi;
 pub mod password;
 pub mod role;
 pub mod routes;

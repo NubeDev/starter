@@ -1,0 +1,39 @@
+[package]
+name        = "starter-minimal"
+description = "Headless single-owner appliance: server + sqlite + auth-token + cli, in one binary."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+[[bin]]
+name = "starter-minimal"
+path = "src/main.rs"
+
+[dependencies]
+starter-spi           = { workspace = true }
+starter-server        = { workspace = true }
+starter-store-sqlite  = { workspace = true }
+starter-auth-token    = { workspace = true, features = ["sqlite"] }
+starter-observability = { workspace = true }
+starter-cli           = { workspace = true }
+starter-client-rs     = { workspace = true }
+
+axum         = { workspace = true }
+clap         = { workspace = true }
+prometheus   = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+sqlx         = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "signal"] }
+tracing      = { workspace = true }
+utoipa       = { workspace = true }
+anyhow       = { workspace = true }
+async-trait  = { workspace = true }
+
+[dev-dependencies]
+starter-server  = { workspace = true, features = ["testing"] }
+reqwest         = { workspace = true, features = ["json"] }
+

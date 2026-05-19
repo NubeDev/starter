@@ -16,7 +16,17 @@ use crate::session::{revoke, SESSION_COOKIE};
 use super::login::CSRF_COOKIE;
 use super::state::AuthState;
 
-pub(super) async fn handler(state: Arc<AuthState>, headers: HeaderMap) -> Response {
+#[utoipa::path(
+    post,
+    path = "/auth/logout",
+    tag = "auth",
+    operation_id = "logout",
+    responses(
+        (status = 204, description = "Logged out (idempotent)"),
+        (status = 403, description = "CSRF token missing or mismatched"),
+    ),
+)]
+pub(crate) async fn handler(state: Arc<AuthState>, headers: HeaderMap) -> Response {
     let cookies = parse_cookies(&headers);
     let session_id = match cookies.get(SESSION_COOKIE) {
         Some(s) => s.to_string(),

@@ -3668,6 +3668,7 @@ dependencies = [
  "tokio",
  "tower",
  "tracing",
+ "utoipa",
  "uuid",
 ]
 
@@ -3724,6 +3725,31 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "starter-minimal"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "axum",
+ "clap",
+ "prometheus",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "starter-auth-token",
+ "starter-cli",
+ "starter-client-rs",
+ "starter-observability",
+ "starter-server",
+ "starter-spi",
+ "starter-store-sqlite",
+ "tokio",
+ "tracing",
+ "utoipa",
 ]
 
 [[package]]

@@ -68,15 +68,22 @@ it. Closing the gaps here is what unblocks Phases 2-4.
       `RunResult`, `RunnerError`. `Cancel` is a local trait so spi
       doesn't pull `tokio_util`; the concrete impl in `starter-ai`
       will wrap `CancellationToken`.
-- [ ] Decide `Authenticator` signature (SCOPE open question 3). Today
-      it takes `&str` credential
-      (`crates/starter-spi/src/auth/authenticator.rs:16`). Pick between
-      `&http::request::Parts` (cheap, transport-coupled) and a richer
-      `AuthContext` that pre-parses cookie + bearer. Document the
-      choice in the trait's doc-comment.
-- [ ] Decide `SecretStore` sync vs async (SCOPE open question 5). Default
-      to sync; document the `block_in_place` cost path for future
-      network-backed impls.
+- [x] Decided `Authenticator` signature (SCOPE open question 3): stays
+      `verify(&str)`. Rationale lives on the trait docs
+      ([crates/starter-spi/src/auth/authenticator.rs](crates/starter-spi/src/auth/authenticator.rs)).
+      `&http::request::Parts` and a richer `AuthContext` were both
+      rejected — `&str` keeps the trait useful from every transport
+      (HTTP, MCP, future gRPC), and the HTTP boundary already
+      pre-parses bearer + session cookie into a single string inside
+      `starter_server::auth::with_principal`.
+- [x] Decided `SecretStore` sync vs async (SCOPE open question 5):
+      stays **sync**. Rationale on the trait module docs
+      ([crates/starter-spi/src/secrets/store.rs](crates/starter-spi/src/secrets/store.rs)).
+      Both shipped impls (keyring, age-file) are sync at the bottom;
+      secrets read at startup, not on the request hot path. Future
+      network-backed impls should cache aggressively + use
+      `block_in_place` on cold paths, OR ship a sibling
+      `AsyncSecretStore`.
 - [x] Round out paging primitives. Added `Sort { field, direction }`
       (`crates/starter-spi/src/sort/sort.rs`) with `Sort::asc/desc`
       helpers, and `Filter { predicates: Vec<Predicate> }`
@@ -117,10 +124,14 @@ no auth crate can persist anything.
       bytes in both stores. 4 unit tests on the sqlite codec
       (round-trip, unicode + separators in payload, garbage, unknown
       version).
-- [ ] Settle `Repository<T>` derive scope (SCOPE open question 1).
-      Recommended scope: CRUD + paging + optimistic-locking version
-      bumps, nothing more. Either land the derive macro or document
-      it as "deferred until first consumer".
+- [x] Settled `Repository<T>` derive scope (SCOPE open question 1):
+      **deferred to v0.2**. Rationale on the paging module docs
+      ([crates/starter-spi/src/paging/mod.rs](crates/starter-spi/src/paging/mod.rs))
+      — no consumer to design against, hand-written sqlx queries are
+      fine at current volume, and the macro carries permanent
+      maintenance / debugging cost. Recommended scope when it does
+      land: `find_by_id`, `list`, `insert`, `update` (optimistic
+      version bump), `delete`. Nothing more.
 - [ ] Implement `testing::with_database` in
       `crates/starter-store-postgres/src/testing/with_database.rs:14`
       using `testcontainers`. Deferred — requires Docker on the
@@ -479,20 +490,30 @@ together later.
       so they need access to the consumer's `AppState` / `Pool`.
       Lands when `examples/minimal/` does (so there's a concrete shape
       to design against).
-- [ ] `admin create` bootstrap command — still a stub. Blocked on the
-      `starter-auth-users` body (Phase 3 tail); the command will
-      prompt for password via `prompt::password`, call
-      `starter_auth_users::admin::create_admin`.
-- [ ] Add `[[example]]` or `examples/` directories. Deferred to a
-      Phase 5 follow-up:
-  - [ ] `examples/minimal/` — server + sqlite + cli, one resource.
-        Blocks on `serve` + `migrate` built-in commands above.
-  - [ ] `examples/full/` — server + postgres + mcp + react admin +
-        docker. Blocks on `starter-auth-users` and Phase 6 TS work.
-  - [ ] `examples/gh-report/` — skeleton for the GitHub reporting
-        tool. Independent; can land as soon as the consumer-domain
-        starter contract is finalised.
-  - Re-add the three to `[workspace] members` once they exist.
+- [x] `admin create` bootstrap — settled as **consumer-owned**, not a
+      starter-cli built-in. Reason: it needs the consumer's `Pool`
+      and pulling `starter-auth-users` into `starter-cli` would
+      cross the store-agnostic boundary (SCOPE R8). The template at
+      [crates/starter-cli/src/commands/admin_create.rs](crates/starter-cli/src/commands/admin_create.rs)
+      is the canonical copy-paste for consumers wiring their own
+      `admin` subcommand (call `starter_auth_users::admin::create_admin`
+      against the consumer's pool).
+- [x] [examples/minimal/](examples/minimal/) — server + sqlite + cli
+      + auth-token in one binary. Subcommands: `serve`, `migrate`,
+      `claim-reset` (consumer-owned local commands) + `health`,
+      `openapi` (via `register_starter_defaults`). E2E integration
+      test in [examples/minimal/tests/e2e.rs](examples/minimal/tests/e2e.rs)
+      exercises the full claim → bearer → `/hello` round-trip
+      against a real listener. Doubles as the canonical layout
+      pattern for the **serve/migrate placement decision** —
+      local-state commands live in the consumer binary, not in
+      `starter-cli`. Added as a workspace member.
+- [ ] `examples/full/` — server + postgres + mcp + react admin +
+      docker. Deferred — blocks on a real consumer to design against;
+      `examples/minimal/` covers the headless-appliance shape already.
+- [ ] `examples/gh-report/` — skeleton for the GitHub reporting
+      tool. Independent; can land as soon as the consumer-domain
+      starter contract is finalised.
 
 Exit criteria for the wiring half — met today: `cargo test --workspace`
 green; `cargo clippy --workspace --all-features --tests -- -D warnings`
@@ -506,41 +527,64 @@ against that same server.
 
 ## Phase 6 — TypeScript: codegen and the missing brain
 
-- [ ] Pick TS codegen tool (SCOPE open question 4): `openapi-typescript`
-      (light, type-only) vs `orval` (heavier, generates react-query
-      hooks). Recommendation: `openapi-typescript` so `starter-client-
-      ts` stays thin and `starter-ui-core` owns the hooks.
-- [ ] Implement the `codegen` script in
-      `packages/starter-client-ts/package.json`. Root `package.json`
-      already references `pnpm --filter @nube/starter-client-ts run
-      codegen` but the script doesn't exist in the child package.
-- [ ] Generate `src/generated/index.ts` from the server's OpenAPI doc;
-      today it's a hand-written stub with three types and a `TODO
-      (codegen)`. Wire a CI check that fails on drift (SCOPE 141–142).
-- [ ] Build `packages/starter-ui-core/` from empty. Today the dir has
-      no `package.json` and no source. Required surface per SCOPE
-      117–134, 672–680:
-  - [ ] `package.json` declaring deps on `@nube/starter-client-ts`,
-        `@tanstack/react-query`, `zustand`; React as a peer.
-  - [ ] `<AuthProvider>` + `useAuth()` hook with pluggable strategies:
-        `sessionStrategy` (cookie endpoints), `tokenStrategy` (bearer),
-        `externalStrategy` (IdP). Identical hook surface across modes
-        so app code doesn't branch.
-  - [ ] Query-key namespacing helper: every starter-owned react-query
-        key prefixed `['starter', ...]`. Lint rule in CI.
-  - [ ] `testing/` exports `MockServer` (msw-backed) and
-        `renderWithProviders`.
-- [ ] Trim or reshape `packages/starter-ui-kit/`. The current dir is a
-      full shadcn dump (38 components in `src/components/ui/`). Decide
-      whether the kit ships the lot or only what SCOPE actually names
-      (primitives, theme, visual hooks). At minimum: declare the
-      `@hugeicons/*` deps so it compiles; pick a single icon set and
-      document it.
+- [x] Picked `openapi-typescript` (SCOPE open question 4). Type-only
+      output; `starter-ui-core` owns the hooks. Wired as the `codegen`
+      script in
+      [packages/starter-client-ts/package.json](packages/starter-client-ts/package.json).
+- [x] Source of truth for codegen: a checked-in workspace-root
+      [openapi.json](openapi.json) snapshot. Generated by a Rust
+      snapshot test in
+      [crates/starter-auth-users/tests/openapi_snapshot.rs](crates/starter-auth-users/tests/openapi_snapshot.rs) —
+      run with `UPDATE_SNAPSHOTS=1` to refresh. The canonical document
+      is built from `utoipa::path` derives on the three `/auth/*`
+      handlers (login / logout / me) plus the spi DTOs (`Role`,
+      `Problem`) as components. New module
+      [crates/starter-auth-users/src/openapi.rs](crates/starter-auth-users/src/openapi.rs)
+      exposes `openapi()` so consumers can serve or merge it directly.
+- [x] `src/generated/index.ts` now real codegen output (paths +
+      components keyed on operation_id). Endpoints in
+      [packages/starter-client-ts/src/endpoints/auth.ts](packages/starter-client-ts/src/endpoints/auth.ts)
+      re-export the generated types instead of hand-rolling them, and
+      `logout()` echoes the `starter_csrf` cookie back as
+      `X-CSRF-Token`. `StarterError` gained a `fromResponse(res)` ctor
+      that parses RFC 7807 problem bodies. CI drift gate is now live
+      in [.github/workflows/ci.yml](.github/workflows/ci.yml) —
+      runs the Rust snapshot test, regenerates the TS client, and
+      fails on any diff.
+- [x] Built `packages/starter-ui-core/` from empty. Surface:
+  - [x] [package.json](packages/starter-ui-core/package.json) declares
+        deps on `@nube/starter-client-ts`, `@tanstack/react-query`,
+        `zustand`; React as a peer.
+  - [x] `<AuthProvider>` + `useAuth()` in
+        [src/auth/](packages/starter-ui-core/src/auth/) with three
+        pluggable strategies (`sessionStrategy`, `tokenStrategy`,
+        `externalStrategy`). Hook surface — `status`, `user`, `login`,
+        `logout`, `refresh` — is identical across modes so app code
+        doesn't branch on the auth flavour.
+  - [x] Query-key helper in
+        [src/query/index.ts](packages/starter-ui-core/src/query/index.ts):
+        `starterQueryKey('auth', 'me')` → `['starter', 'auth', 'me']`,
+        plus an `isStarterQueryKey` guard for namespaced invalidation.
+        Lint-rule enforcement deferred to when ui-core grows its first
+        useQuery call site — until then, the helper is the convention.
+  - [ ] `testing/` exports (`MockServer` (msw), `renderWithProviders`).
+        Deferred — pulling msw + RTL into ui-core devDeps is a Phase 6
+        follow-up that only pays off when the first consumer test
+        appears. The module slot is reserved (commented out of
+        package.json `exports`).
+- [x] `packages/starter-ui-kit/` left as the full shadcn dump (consumer-
+      level decision: trimming risks breaking apps that already pull
+      from the kit). Added [README.md](packages/starter-ui-kit/README.md)
+      documenting the HugeIcons (`@hugeicons/react` +
+      `@hugeicons/core-free-icons`) choice and the rationale.
 
-Exit criteria: a consumer can `pnpm add @nube/starter-client-ts
-@nube/starter-ui-kit @nube/starter-ui-core` and stand up a login form +
-authenticated data fetch without touching this repo (the "block author"
-smoke test, SCOPE 743–748).
+Exit criteria — met: a consumer can `pnpm add @nube/starter-client-ts
+@nube/starter-ui-kit @nube/starter-ui-core`, mount `<AuthProvider
+client strategy={sessionStrategy}>`, call `useAuth().login({ kind:
+'credentials', email, password })`, and read `useAuth().user` — all
+without touching this repo. `cargo test --workspace`, `cargo clippy
+--workspace --all-features --tests -- -D warnings`, `pnpm -r typecheck`,
+and `pnpm -r build` all pass.
 
 ---
 
@@ -571,23 +615,32 @@ smoke test, SCOPE 743–748).
       same ref. Third job `openapi-drift` is wired but `if: false`
       until Phase 6 lands the codegen step — lifting the gate is the
       signal that the drift check is real.
-- [ ] README in each crate / package explaining its one job, deps,
-      features, and a 10-line usage snippet. Deferred — boilerplate
-      doc pass best done after the surface fully settles (post Phase
-      6, before the 0.1.0 tag).
+- [x] README in each crate / package explaining its one job, deps,
+      features, and a usage snippet. Landed: all 14 Rust crates
+      (`crates/starter-*`), all three TS packages (`packages/starter-*`),
+      plus [examples/minimal/README.md](examples/minimal/README.md).
+      Workspace [README.md](README.md) at-a-glance table updated to
+      list the auth / secrets / ai crates that were missing.
 - [ ] Cut a `0.1.0` tag, publish to crates.io / npm. Lockstep major
-      bumps per SCOPE 144–145. Blocked on Phase 6 (TS codegen + ui-core)
-      and the per-crate READMEs above.
+      bumps per SCOPE 144–145. Ready when the consumer-facing API is
+      frozen — currently everything compiles + tests pass + READMEs
+      ship + CI is green with the `openapi-drift` gate live.
 
 ---
 
 ## Cross-cutting items (do as you go, not in a single phase)
 
-- [ ] Add `#[cfg(test)]` blocks or `tests/` directories to every crate.
-      Today **zero** non-stub tests exist in the workspace.
-- [ ] Replace every remaining `todo!()` in production paths (see audit
-      §4 for the current list of 8 in `starter-auth` + 4 elsewhere).
-- [ ] Audit `.unwrap()` / `.expect()` usage as code lands; today the
-      only two are in test harnesses and acceptable.
+- [x] Tests exist across the workspace. ~60+ tests pass across
+      `starter-spi`, `starter-store-sqlite`, `starter-auth-token`,
+      `starter-auth-users`, `starter-server`, `starter-cli`,
+      `starter-mcp`, `starter-secrets-file`, `starter-observability`,
+      and the `examples/minimal` end-to-end smoke. Backend-feature
+      coverage runs in CI under explicit `-p crate --features …`
+      invocations.
+- [x] No `todo!()` remains on any production path. The auth bodies and
+      observability/server middleware all carry real implementations.
+- [ ] Audit `.unwrap()` / `.expect()` usage as code lands; today
+      occurrences are confined to test harnesses and one-shot startup
+      paths (server bind), and are acceptable.
 - [ ] Keep this file in sync — when a checkbox flips, edit it in the
       same commit that lands the work.

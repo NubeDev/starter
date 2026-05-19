@@ -15,6 +15,7 @@ members = [
     "crates/starter-ai",
     "crates/starter-client-rs",
     "crates/starter-cli",
+    "examples/minimal",
 ]
 
 [workspace.package]

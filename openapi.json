@@ -1,0 +1,184 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "starter-auth-users",
+    "description": "Cookie-session + API-token authentication routes shipped by starter-auth-users.",
+    "license": {
+      "name": "MIT OR Apache-2.0",
+      "identifier": "MIT OR Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/auth/login": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Logged in; session + CSRF cookies set",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/auth/logout": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Logged out (idempotent)"
+          },
+          "403": {
+            "description": "CSRF token missing or mismatched"
+          }
+        }
+      }
+    },
+    "/auth/me": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "description": "Current user identity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "type": "object",
+        "description": "Request body for `POST /auth/login`.",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User's email (the primary identifier in `starter_auth_users`)."
+          },
+          "password": {
+            "type": "string",
+            "description": "Plaintext password."
+          }
+        }
+      },
+      "LoginResponse": {
+        "type": "object",
+        "description": "Response body for `POST /auth/login`.",
+        "required": [
+          "csrf_token"
+        ],
+        "properties": {
+          "csrf_token": {
+            "type": "string",
+            "description": "CSRF double-submit token. Send back as `X-CSRF-Token` on\nmutating cookie-authenticated requests."
+          }
+        }
+      },
+      "MeResponse": {
+        "type": "object",
+        "description": "Response body for `GET /auth/me`.",
+        "required": [
+          "subject",
+          "email",
+          "role"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User's email."
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role",
+            "description": "Role: reader / writer / admin."
+          },
+          "subject": {
+            "type": "string",
+            "description": "Stable user identifier (the `Principal.subject`)."
+          }
+        }
+      },
+      "Problem": {
+        "type": "object",
+        "description": "Machine-readable error body.\n\nMirrors RFC 7807 loosely. The `type` field is a stable string\nidentifier (`not_found`, `invalid_input`, …) that callers can\nswitch on; the HTTP status is set by the transport.",
+        "required": [
+          "type",
+          "title"
+        ],
+        "properties": {
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional detailed explanation."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short human title for the problem."
+          },
+          "type": {
+            "type": "string",
+            "description": "Stable identifier for the error class. Matches lower-case\nsnake-case of [`crate::error::Error`] variants."
+          }
+        }
+      },
+      "Role": {
+        "type": "string",
+        "description": "Coarse permission level. Three roles are enough for the common\ncase; consumers needing more wire their own `Authenticator` and\ntranslate to/from this set at the boundary.",
+        "enum": [
+          "reader",
+          "writer",
+          "admin"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "auth",
+      "description": "Authentication endpoints"
+    }
+  ]
+}
