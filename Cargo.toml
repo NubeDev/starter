@@ -17,6 +17,12 @@ members = [
     "crates/starter-client-rs",
     "crates/starter-cli",
     "crates/starter-tauri",
+    "crates/starter-tool-slack",
+    "crates/starter-service-slack",
+    "crates/starter-tool-telegram",
+    "crates/starter-service-telegram",
+    "crates/starter-tool-gmail",
+    "crates/smoke-tests",
     "examples/minimal",
     "examples/gh-report",
     "examples/notes",
@@ -46,6 +52,11 @@ starter-secrets-file     = { path = "crates/starter-secrets-file",     version =
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-client-rs        = { path = "crates/starter-client-rs",        version = "0.1.0" }
 starter-cli              = { path = "crates/starter-cli",              version = "0.1.0" }
+starter-tool-slack       = { path = "crates/starter-tool-slack",       version = "0.1.0" }
+starter-service-slack    = { path = "crates/starter-service-slack",    version = "0.1.0" }
+starter-tool-telegram    = { path = "crates/starter-tool-telegram",    version = "0.1.0" }
+starter-service-telegram = { path = "crates/starter-service-telegram", version = "0.1.0" }
+starter-tool-gmail       = { path = "crates/starter-tool-gmail",       version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.
@@ -82,6 +93,10 @@ password-auth = "1"
 # Observability.
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 prometheus  = "0.14"
+
+# Secret material handling. Re-exported from `starter-spi` so provider
+# crates don't pick up `secrecy` directly (SCOPE rule R5).
+secrecy     = { version = "0.10", features = ["serde"] }
 
 # Client / CLI.
 reqwest     = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }

@@ -209,6 +209,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "assert-json-diff"
+version = "2.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "47e4f2b81832e72834d7518d8487a0396a28cc408186a2e8854c0f98011faf12"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "async-broadcast"
 version = "0.7.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1334,6 +1344,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "data-encoding"
+version = "2.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a4ae5f15dda3c708c0ade84bfee31ccab44a3da4f88015ed22f63732abe300c8"
+
+[[package]]
 name = "dbus"
 version = "0.9.11"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1361,6 +1377,24 @@ dependencies = [
  "sha2",
  "zeroize",
 ]
+
+[[package]]
+name = "deadpool"
+version = "0.12.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0be2b1d1d6ec8d846f05e137292d0b89133caf95ef33695424c09568bdd39b1b"
+dependencies = [
+ "deadpool-runtime",
+ "lazy_static",
+ "num_cpus",
+ "tokio",
+]
+
+[[package]]
+name = "deadpool-runtime"
+version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "092966b41edc516079bdf31ec78a2e0588d1d0c08f78b91d8307215928642b2b"
 
 [[package]]
 name = "der"
@@ -2604,7 +2638,7 @@ dependencies = [
  "tokio",
  "tokio-rustls",
  "tower-service",
- "webpki-roots",
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]
@@ -3560,6 +3594,16 @@ checksum = "071dfc062690e90b734c0b2273ce72ad0ffa95f0c74596bc250dcfd960262841"
 dependencies = [
  "autocfg",
  "libm",
+]
+
+[[package]]
+name = "num_cpus"
+version = "1.17.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "91df4bbde75afed763b708b7eee1e8e7651e02d97f6d5dd763e89367e957b23b"
+dependencies = [
+ "hermit-abi",
+ "libc",
 ]
 
 [[package]]
@@ -4757,7 +4801,7 @@ dependencies = [
  "wasm-bindgen-futures",
  "wasm-streams 0.4.2",
  "web-sys",
- "webpki-roots",
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]
@@ -6052,15 +6096,73 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-service-slack"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "futures-util",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-tungstenite",
+ "tracing",
+ "url",
+ "wiremock",
+]
+
+[[package]]
+name = "starter-service-telegram"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
+name = "starter-smoke-tests"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "prometheus",
+ "serde_json",
+ "starter-secrets-file",
+ "starter-secrets-keyring",
+ "starter-service-slack",
+ "starter-service-telegram",
+ "starter-spi",
+ "starter-tool-gmail",
+ "starter-tool-slack",
+ "starter-tool-telegram",
+ "tokio",
+]
+
+[[package]]
 name = "starter-spi"
 version = "0.1.0"
 dependencies = [
  "async-trait",
  "chrono",
+ "prometheus",
+ "secrecy",
  "serde",
  "serde_json",
  "thiserror 1.0.69",
  "tokio",
+ "tracing",
  "utoipa",
  "uuid",
 ]
@@ -6110,6 +6212,58 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "starter-tool-gmail"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
+name = "starter-tool-slack"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wiremock",
+]
+
+[[package]]
+name = "starter-tool-telegram"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wiremock",
 ]
 
 [[package]]
@@ -6787,6 +6941,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-tungstenite"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "edc5f74e248dc973e0dbb7b74c7e0d6fcc301c694ff50049504004ef4d0cdcd9"
+dependencies = [
+ "futures-util",
+ "log",
+ "rustls",
+ "rustls-pki-types",
+ "tokio",
+ "tokio-rustls",
+ "tungstenite",
+ "webpki-roots 0.26.11",
+]
+
+[[package]]
 name = "tokio-util"
 version = "0.7.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -7160,6 +7330,26 @@ name = "try-lock"
 version = "0.2.5"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e421abadd41a4225275504ea4d6566923418b7f05506fbc9c0fe86ba7396114b"
+
+[[package]]
+name = "tungstenite"
+version = "0.24.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "18e5b8366ee7a95b16d32197d0b2604b43a0be89dc5fac9f8e96ccafbaedda8a"
+dependencies = [
+ "byteorder",
+ "bytes",
+ "data-encoding",
+ "http",
+ "httparse",
+ "log",
+ "rand 0.8.6",
+ "rustls",
+ "rustls-pki-types",
+ "sha1",
+ "thiserror 1.0.69",
+ "utf-8",
+]
 
 [[package]]
 name = "type-map"
@@ -7685,6 +7875,15 @@ dependencies = [
  "pkg-config",
  "soup3-sys",
  "system-deps",
+]
+
+[[package]]
+name = "webpki-roots"
+version = "0.26.11"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "521bc38abb08001b01866da9f51eb7c5d647a19260e00054a8c7fd5f9e57f7a9"
+dependencies = [
+ "webpki-roots 1.0.7",
 ]
 
 [[package]]
@@ -8297,6 +8496,29 @@ checksum = "cb5a765337c50e9ec252c2069be9bf91c7df47afb103b642ba3a53bf8101be97"
 dependencies = [
  "cfg-if",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "wiremock"
+version = "0.6.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "08db1edfb05d9b3c1542e521aea074442088292f00b5f28e435c714a98f85031"
+dependencies = [
+ "assert-json-diff",
+ "base64 0.22.1",
+ "deadpool",
+ "futures",
+ "http",
+ "http-body-util",
+ "hyper",
+ "hyper-util",
+ "log",
+ "once_cell",
+ "regex",
+ "serde",
+ "serde_json",
+ "tokio",
+ "url",
 ]
 
 [[package]]

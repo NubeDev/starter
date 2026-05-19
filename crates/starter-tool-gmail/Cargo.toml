@@ -1,0 +1,36 @@
+[package]
+name        = "starter-tool-gmail"
+description = "starter — outbound Gmail Tool wrapping the REST users.messages.send call. Sibling crate selected by Cargo dependency; see DOCS/tools/scope/SCOPE.md."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R7 (observability is required) + R8 (no transitive vendor SDKs in
+# starter-spi) — the only starter-side deps are starter-spi and
+# starter-observability. Everything else is third-party.
+#
+# Gmail is send-only at v0.1 per the SCOPE one-line summary; inbound
+# (users.watch + Pub/Sub or history.list long-poll) is deferred. That
+# is why this crate is `starter-tool-gmail` and **not** paired with a
+# `starter-service-gmail` yet.
+[dependencies]
+starter-spi           = { workspace = true }
+starter-observability = { workspace = true }
+
+reqwest     = { workspace = true }
+tokio       = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+tracing     = { workspace = true }
+async-trait = { workspace = true }
+thiserror   = { workspace = true }
+prometheus  = { workspace = true }
+# RFC 5322 → base64url for the `raw` field on users.messages.send.
+# Workspace pins one version; no new dep family lands here.
+base64      = { workspace = true }
+
+[dev-dependencies]
+tokio    = { workspace = true, features = ["rt-multi-thread", "macros"] }
+wiremock = "0.6"

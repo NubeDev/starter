@@ -374,3 +374,164 @@ Before merging any provider crate, verify:
    `ServiceContext.shutdown` fail this test.
 
 If any of these fails, the design is wrong, not the implementation.
+
+## Decisions
+
+Stage 1 resolved the design points the rules above left implicit. Each
+decision names its **revisit trigger** — the observable condition that
+should make a future contributor reopen the choice rather than working
+around it.
+
+### D1 — `starter-spi` dep baseline is pinned, not regenerated
+
+`DOCS/tools/scope/starter-spi-deps.baseline.txt` is the canonical
+transitive-dep list for `starter-spi`. Smoke test 1 (R8) compares the
+live `cargo tree -p starter-spi --edges normal` output against this
+file. The baseline is **only** updated in the same commit that changes
+`starter-spi`'s own direct dependencies — never to silence a
+provider-crate leak, and never as a "sync the snapshot" janitorial PR.
+
+Header at the top of the file documents the exact generating command
+so the comparison is reproducible across machines.
+
+**Revisit trigger:** the baseline drifts on more than two unrelated PRs
+in a release cycle (signals the comparison is too brittle and needs a
+canonical normalization step, e.g. dropping `(proc-macro)` markers or
+patch versions), **or** a provider crate's deps slip into the baseline
+without anyone noticing (signals the smoke test isn't actually wired
+into CI).
+
+### D2 — Blanket `EventSink for broadcast::Sender<Event>` ships in `starter-spi` behind a default-on `broadcast` feature
+
+The blanket impl lives in `starter-spi::service::broadcast` and is
+gated on a `broadcast` Cargo feature that is **on by default**. Rationale:
+
+- Default-on means the happy-path consumer (`cargo add starter-spi`)
+  gets the `broadcast::Sender<Event>` ergonomics with zero ceremony, so
+  provider crates can document `let (tx, _rx) = broadcast::channel(…);
+  registry.context_with_sink(Arc::new(tx))` as the canonical pattern.
+- Opt-out exists because R8 keeps `starter-spi` cheap to depend on. A
+  minimal embedded consumer that doesn't want `tokio::sync::broadcast`
+  in its tree disables `default-features` and still gets the `Service`
+  / `EventSink` trait machinery — they just bring their own sink impl
+  (e.g. an `mpsc::Sender`-backed one).
+- The impl lives next to the `EventSink` trait it implements, not in
+  a fan-out helper crate or each provider, so there is exactly one
+  implementation to audit for back-pressure semantics (see D4).
+
+The `EventSink` trait itself, the `Vec<Arc<dyn EventSink>>` fan-out
+helper, and the `Saturated` error variant (D4) live in the **default**
+module, not behind the feature — only the broadcast blanket impl is
+gated.
+
+**Revisit trigger:** more than one provider crate ends up needing to
+turn `default-features = false` on `starter-spi` (signals the feature
+is mis-defaulted), **or** a consumer reports the blanket impl picking
+up the wrong type inference in their tree (signals the impl should
+move out into an explicit newtype).
+
+### D3 — `ServiceRegistry` owns the shutdown deadline contract
+
+`starter-spi::service::ServiceRegistry` exposes:
+
+```rust
+pub const SHUTDOWN_DEADLINE_DEFAULT: Duration = Duration::from_secs(5);
+
+impl ServiceRegistry {
+    pub async fn shutdown(&self) -> ShutdownReport {
+        self.shutdown_with_deadline(SHUTDOWN_DEADLINE_DEFAULT).await
+    }
+    pub async fn shutdown_with_deadline(&self, deadline: Duration) -> ShutdownReport { … }
+}
+```
+
+The constant is the **contract**: smoke test 5 (R9 / SCOPE Smoke
+test 5) asserts against `ServiceRegistry::SHUTDOWN_DEADLINE_DEFAULT`
+rather than hard-coding `5s` in the test, so changing the default is a
+one-line edit visible in SemVer review. `shutdown()` is the
+zero-argument convenience; consumers who need a different deadline
+(e.g. a long-running batch service that flushes on exit) call
+`shutdown_with_deadline(...)` explicitly.
+
+`ShutdownReport` records, per service: whether it exited cleanly, the
+join error if any, and whether it was force-aborted at the deadline.
+Services that ignore `ServiceContext.shutdown` and get aborted show up
+in the report — smoke test 5 fails the build for any such service.
+
+**Revisit trigger:** a real provider service legitimately needs more
+than 5s to drain (signals the default is too short and we should
+either lengthen it or split into `drain_deadline` +
+`abort_deadline`), **or** a consumer reports `ShutdownReport` is
+unergonomic to log/inspect (signals the shape needs to grow a
+`Display` or be replaced with a typed event stream).
+
+### D4 — `EventSink::emit` returns `SpiResult<()>` with a typed `SinkError`; fan-out logs-and-continues but `Saturated` bubbles
+
+```rust
+#[derive(Debug, thiserror::Error)]
+pub enum SinkError {
+    /// The sink's buffer / channel is full. Drop policy is the caller's;
+    /// the broadcast blanket impl raises this rather than silently
+    /// dropping the event.
+    #[error("sink saturated: {kind}")]
+    Saturated { kind: &'static str },
+
+    /// The sink is permanently closed (receiver dropped, task gone).
+    #[error("sink closed: {kind}")]
+    Closed { kind: &'static str },
+
+    /// Anything else — serde failure, downstream I/O, etc.
+    #[error("sink failed: {0}")]
+    Other(#[source] Box<dyn std::error::Error + Send + Sync>),
+}
+
+#[async_trait]
+pub trait EventSink: Send + Sync + 'static {
+    async fn emit(&self, kind: &str, payload: serde_json::Value)
+        -> SpiResult<(), SinkError>;
+}
+```
+
+`SpiResult<T, E>` is the existing `starter-spi` result alias; if it is
+single-parameter today, this decision extends it (or adds a sibling
+`SpiSinkResult<()>`)—Stage 3 makes the call when the trait actually
+lands. Either way, the public surface is a `Result<(), SinkError>`.
+
+The `Vec<Arc<dyn EventSink>>` **fan-out helper**:
+
+- iterates sinks, calls `emit` on each, and **logs and continues** on
+  any individual sink's `Err` so one broken downstream does not gag
+  the rest;
+- **but** if any sink returns `SinkError::Saturated`, the helper
+  bubbles a `Saturated` back to the service caller after the fan-out
+  completes. Rationale: a slow sink silently dropping events is the
+  exact failure mode R7's "event-emitted counter" cannot catch — the
+  service needs to know it is losing data so it can apply
+  back-pressure on its own upstream (e.g. stop ack'ing Slack events,
+  pause the long-poll loop) rather than reading from the network
+  faster than the consumer can absorb.
+- `SinkError::Closed` is logged-and-skipped, **not** bubbled — a
+  closed sink is a normal shutdown race, not a back-pressure signal.
+
+The broadcast blanket impl from D2 maps:
+
+- `broadcast::Sender::send` returning `Err(SendError(_))` →
+  `SinkError::Saturated { kind }` when the channel is full
+  (`tokio::sync::broadcast` overwrites the oldest message when slow
+  receivers lag; the blanket impl treats lag-overwrite as saturation
+  for the same reason).
+- All-receivers-dropped → `SinkError::Closed { kind }`.
+
+**Revisit trigger:** a real consumer reports `Saturated` is too noisy
+(every Slack burst trips it) and they'd rather drop, signalling the
+default policy should flip to log-and-drop with an opt-in
+"strict" mode; **or** sinks grow a second method (`emit_batch`)
+because per-event `async` overhead dominates, signalling the trait
+needs a wider v2.
+
+## Decisions log
+
+- 2026-05-19 — D1–D4 recorded (Stage 1 of the
+  starter-tool-* / starter-service-* rollout). No code in
+  `starter-spi` yet; decisions are the input to Stage 2.
+
