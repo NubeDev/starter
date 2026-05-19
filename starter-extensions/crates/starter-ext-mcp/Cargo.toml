@@ -1,0 +1,32 @@
+[package]
+name        = "starter-ext-mcp"
+description = "starter-extensions — MCP transport adapter. Reads `contributes.tools` from validated extensions and registers wrapper `starter_spi::tool::Tool` impls into `starter_mcp::ToolRegistry`."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Adapter dependency arrow (SCOPE R13): the adapter bridges the kernel's
+# `ExtensionRegistry` to one specific transport. It depends on the kernel
+# (`starter-ext-host`), the parent's `starter-mcp` for the `ToolRegistry`
+# seam, and the SDK for the builtin flavour's dispatch table. Process /
+# WASM flavours get separate adapters in later phases — this one only
+# wires builtin extensions today.
+[dependencies]
+starter-ext-spi  = { workspace = true }
+starter-ext-host = { workspace = true }
+starter-ext-sdk  = { workspace = true, features = ["builtin"] }
+starter-spi      = { workspace = true }
+starter-mcp      = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+async-trait = { workspace = true }
+tokio       = { workspace = true }
+
+[dev-dependencies]
+tokio        = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tempfile     = { workspace = true }
+hello-builtin = { path = "../../examples/hello-builtin" }

@@ -4,6 +4,9 @@ members = [
     "crates/starter-ext-spi",
     "crates/starter-ext-sdk",
     "crates/starter-ext-sdk-macros",
+    "crates/starter-ext-host",
+    "crates/starter-ext-mcp",
+    "examples/hello-builtin",
 ]
 
 # `starter-extensions` is a sibling workspace to `starter` (see
@@ -27,7 +30,14 @@ rust-version = "1.78"
 # `starter-ext-spi` is allowed to depend on `starter-spi` — nothing else.
 starter-spi             = { path = "../crates/starter-spi", version = "0.1.0" }
 starter-ext-spi         = { path = "crates/starter-ext-spi", version = "0.1.0" }
+starter-ext-sdk         = { path = "crates/starter-ext-sdk", version = "0.1.0", default-features = false }
 starter-ext-sdk-macros  = { path = "crates/starter-ext-sdk-macros", version = "0.1.0" }
+starter-ext-host        = { path = "crates/starter-ext-host", version = "0.1.0" }
+starter-ext-mcp         = { path = "crates/starter-ext-mcp", version = "0.1.0" }
+
+# Parent-workspace crates the MCP adapter consumes. Pulled in via path because
+# the two workspaces sit next to each other in this repo.
+starter-mcp             = { path = "../crates/starter-mcp", version = "0.1.0" }
 
 # Third-party building blocks. Kept aligned with the parent workspace so a
 # consumer importing both does not pull two majors of the same crate.
@@ -37,6 +47,10 @@ serde_yaml  = "0.9"
 thiserror   = "1"
 semver      = { version = "1", features = ["serde"] }
 tokio       = { version = "1", default-features = false, features = ["sync"] }
+
+# Used by adapter / integration tests only.
+async-trait = "0.1"
+tempfile    = "3"
 
 # proc-macro building blocks; only consumed by `starter-ext-sdk-macros`.
 syn         = { version = "2", features = ["full"] }

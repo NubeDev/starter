@@ -1,0 +1,16 @@
+[package]
+name        = "hello-builtin"
+description = "Minimal builtin-flavour extension: a single `echo` tool reachable through the MCP transport adapter."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# An extension author's `Cargo.toml` is short by design (SCOPE "Extension
+# author has zero starter-workspace deps" test): one SDK dep, one `serde_json`
+# for handler payloads, nothing else from the starter / starter-extensions
+# workspaces leaks through.
+[dependencies]
+starter-ext-sdk = { workspace = true, features = ["builtin"] }
+serde_json      = { workspace = true }
