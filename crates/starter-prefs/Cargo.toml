@@ -1,0 +1,34 @@
+[package]
+name        = "starter-prefs"
+description = "starter — user/org preferences (locale, units, timezone) with three-layer resolution. See DOCS/user/scope/SCOPE.md."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Workspace policy posture: default-features = []. A consumer that does
+# not opt into `routes` gets only the resolver + store types; no axum,
+# no HTTP surface. See SCOPE.md "Rollout (proposed phases)" — Phase 1.
+[features]
+default = []
+# `routes` pulls in the REST surface (GET/PATCH /v1/me/preferences,
+# GET/PATCH /v1/orgs/{id}/preferences, GET /v1/units) plus the tower
+# middleware that threads resolved prefs into request extensions.
+# See SCOPE.md "API surface" + "Middleware".
+routes = []
+
+[dependencies]
+starter-spi = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+sqlx        = { workspace = true }
+utoipa      = { workspace = true }
+tracing     = { workspace = true }
+
+# ISO 4217 currency code validation + metadata. Lands here (NOT on
+# starter-spi) per SCOPE.md "Decisions" D-U0.3 — Phase 0 deliberately
+# kept iso_currency off starter-spi to avoid pulling currency data
+# into every downstream crate; starter-prefs is the one place that
+# needs it (PrefsResolver currency validation, /v1/units payload).
+iso_currency = "0.5"
