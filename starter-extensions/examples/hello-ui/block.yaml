@@ -1,0 +1,20 @@
+v: 1
+id: com.acme.hello-ui
+version: 0.1.0
+display_name: "Hello UI"
+description_file: docs/README.md
+authors: ["ap@nube-io.com"]
+
+# `runtime.kind: builtin` is the simplest flavour for an extension that
+# only contributes UI — there is no Rust extension behavior to spawn.
+# The Rust side is a no-op behavior; the React `remoteEntry.js` is what
+# the federation runtime in `@nube/starter-ext-ui` loads.
+runtime:
+  kind: builtin
+  crate_name: hello-ui
+
+contributes:
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - { name: HelloPanel, module: "./Panel", slot: sidebar }

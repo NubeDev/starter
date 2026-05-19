@@ -1,0 +1,32 @@
+{
+  "name": "hello-ui",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Minimal UI extension contributing one React panel into the host's `sidebar` slot. Imports only @nube/starter-ext-sdk-ts + React — proves the SCOPE 'extension author has zero extra deps' rule for the UI side.",
+  "type": "module",
+  "main": "./src/remoteEntry.ts",
+  "exports": {
+    ".": "./src/remoteEntry.ts",
+    "./Panel": "./src/Panel.tsx"
+  },
+  "scripts": {
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "dependencies": {
+    "@nube/starter-ext-sdk-ts": "workspace:*"
+  },
+  "devDependencies": {
+    "@nube/starter-ext-ui": "workspace:*",
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.0",
+    "jsdom": "^25.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}
