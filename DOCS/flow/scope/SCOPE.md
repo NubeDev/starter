@@ -800,6 +800,62 @@ discipline mirrors `starter-spi`.
   is the cardinality R13 ("streaming reuses existing seams")
   presupposes; locking it here so Phase 2 doesn't accidentally ship a
   single-consumer mpsc that R13 would have to walk back.
+- **D1d — Phase 2 catch-up: smoke-test home crate.** The two Phase 2
+  Smoke tests ("One write chokepoint", "Engine is reader of policies")
+  and the R3 grep-contract test live as integration tests under
+  `crates/starter-flow/tests/`, not under `crates/smoke-tests/`. The
+  workspace `crates/smoke-tests/` crate is owned by the tools SCOPE
+  Stage 9 work and cross-crate end-to-end smokes; placing engine-
+  internal smokes there would collide with that ownership and pull
+  `starter-flow` into a crate whose dep graph is meant to stay
+  consumer-shaped. Engine-internal behaviour proofs ride with the
+  engine crate they prove. **Revisit trigger:** a smoke needs node
+  kinds or surfaces from a crate `starter-flow` cannot depend on
+  without a cycle — then that smoke (and only that smoke) moves to
+  `crates/smoke-tests/` under the tools SCOPE ownership.
+- **D1e — `transform` body substrate.** The Phase 2 `transform`
+  node-kind body in `crates/starter-flow-nodes/src/transform.rs`
+  uses a **registered Rust closure** indexed by a `config.fn_id`
+  slot value — closures are registered against the `transform` kind
+  at kind-registration time and looked up per invocation by the
+  `fn_id` the node config carries. No `rhai`, no `starlark`, no
+  embedded `wasm` dep is added to `starter-flow-nodes` in Phase 2.
+  Inherits the sub-decision locked in the merged starter-flow-engine
+  job Stage 1. **Revisit trigger:** a consumer surfaces a need for
+  in-flow scripting that the Rust-closure path cannot serve — at
+  which point Phase 5's richer `transform` language (`rhai` /
+  `starlark` / `wasm`) is reopened as a *second*, opt-in body, not
+  as a replacement.
+- **D1f — `tool-call` body `ToolRegistry` injection shape.** The
+  Phase 2 `tool-call` node-kind body in
+  `crates/starter-flow-nodes/src/tool_call.rs` looks up its `Tool`
+  via an `Arc<dyn starter_spi::ToolRegistry>` **threaded through the
+  run** (engine is constructed with the registry; the propagator
+  passes it into each `tool-call` invocation via the per-run
+  context). No global static, no `OnceCell`, no thread-local. Same
+  substrate locked in the merged starter-flow-engine job Stage 1,
+  re-affirmed here so the catch-up bodies don't drift. **Revisit
+  trigger:** a node kind genuinely cannot accept the registry by
+  argument (e.g. a pre-Phase-2 callsite outside the engine's call
+  graph) — at which point we add a registry accessor on the run
+  context, not a global.
+- **D1g — R3 grep-contract test placement and shape.** The R3 grep-
+  contract test lives at `crates/starter-flow/tests/
+  r3_no_policy_match_arms.rs` and asserts on the crate's own `src/`
+  tree that no code path performs a literal `match` arm on any of
+  the seven policy slot names — `session_policy`, `on_failure`,
+  `cost_cap`, `safe_state`, `trigger`, `auth`, `timeout`. Hits in
+  doc comments (`///`, `//!`, `/* … */`) and string literals are
+  fine; hits inside a `match` expression's arms (a literal pattern
+  matching one of those names, or a string-equality compare against
+  one of those names inside a match arm) are a **stage-fail**.
+  Test reads `crates/starter-flow/src/**/*.rs` directly (no
+  `cargo expand`, no syn — a line-oriented scan is sufficient and
+  keeps the test dep-free). This is the executable form of R3
+  ("engine is reader of policies, not a switch over policy names").
+  **Revisit trigger:** the engine legitimately needs to dispatch on
+  policy *slot* names (not policy *values*) — at which point R3
+  itself is revisited, not the test.
 
 ## Open questions
 
