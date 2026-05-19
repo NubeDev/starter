@@ -12,6 +12,22 @@ rust-version.workspace = true
 # (the remainder) per DOCS/flow/scope/SCOPE.md.
 [dependencies]
 starter-flow-spi = { workspace = true, default-features = false }
+# Phase 2 stage 3 (transform body) onward: node-kind bodies are async
+# trait impls that emit tracing spans and surface typed errors over
+# the `NodeBehavior` seam. These deps are unconditional — the
+# `cfg(feature = "...")` gates on each module keep the build green
+# when a consumer pays for none of the kinds.
+async-trait = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+[dev-dependencies]
+# `#[tokio::test]` for the async unit tests + the engine crate for the
+# integration test that wraps a transform in a `FlowRunner` to confirm
+# `FlowEvent::NodeFailed` surfaces end-to-end (the propagator's
+# `Err → NodeFailed` wiring lives in `starter-flow`).
+tokio        = { workspace = true, features = ["rt-multi-thread", "sync", "macros", "time"] }
+starter-flow = { workspace = true }
 
 [features]
 # Default-off per the workspace policy: a consumer enables only the

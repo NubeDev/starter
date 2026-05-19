@@ -6106,7 +6106,12 @@ dependencies = [
 name = "starter-flow-nodes"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "starter-flow",
  "starter-flow-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
