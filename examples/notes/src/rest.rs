@@ -11,7 +11,9 @@ use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::routing::{get, post};
 use axum::{Extension, Json, Router};
+use futures::StreamExt;
 use starter_spi::auth::Principal;
+use tokio::sync::broadcast;
 use utoipa::OpenApi;
 
 use crate::domain::{CreateNote, Note, NoteError, NoteStore};
@@ -19,11 +21,16 @@ use crate::domain::{CreateNote, Note, NoteError, NoteStore};
 #[derive(Clone)]
 pub struct NotesState {
     pub store: Arc<NoteStore>,
+    /// Fan-out for SSE subscribers. Every successful POST /notes
+    /// publishes here. `broadcast` drops events for slow subscribers
+    /// (lagging clients see a `Lagged` error in the stream) — that's
+    /// the right shape for "real-time but eventually-consistent" UIs.
+    pub events: broadcast::Sender<Note>,
 }
 
 #[derive(OpenApi)]
 #[openapi(
-    paths(create_note, list_notes, get_note, delete_note),
+    paths(create_note, list_notes, get_note, delete_note, me, stream_notes),
     components(schemas(Note, CreateNote)),
 )]
 pub struct NotesApi;
@@ -38,8 +45,38 @@ where
     Router::new()
         .route("/notes", post(create_note).get(list_notes))
         .route("/notes/{id}", get(get_note).delete(delete_note))
+        .route("/notes/stream", get(stream_notes))
         .route("/auth/me", get(me))
         .with_state(state)
+}
+
+/// `GET /notes/stream` — Server-Sent Events. Each new note POSTed
+/// elsewhere appears here as a `data: { ... }` JSON event. Demonstrates
+/// the `starter_server::sse::from_stream` helper: consumer brings a
+/// `Stream<Item = T: Serialize>`, starter handles SSE framing + the
+/// standard 15-second keep-alive policy.
+#[utoipa::path(
+    get,
+    path = "/notes/stream",
+    tag = "notes",
+    operation_id = "stream_notes",
+    responses(
+        (status = 200, description = "SSE stream of new notes", content_type = "text/event-stream"),
+        (status = 401, description = "Missing bearer"),
+    ),
+)]
+async fn stream_notes(
+    State(s): State<NotesState>,
+    principal: Option<Extension<Principal>>,
+) -> axum::response::Response {
+    if principal.is_none() {
+        return (StatusCode::UNAUTHORIZED, "unauthenticated").into_response();
+    }
+    let rx = s.events.subscribe();
+    let stream = tokio_stream::wrappers::BroadcastStream::new(rx)
+        // Drop `Lagged` errors; only emit successfully-received notes.
+        .filter_map(|res| async move { res.ok() });
+    starter_server::sse::from_stream(stream).into_response()
 }
 
 #[utoipa::path(
@@ -87,7 +124,12 @@ async fn create_note(
         return (StatusCode::UNAUTHORIZED, Json(serde_json::json!({"error": "unauthenticated"}))).into_response();
     };
     match s.store.create(&body.body, &p.subject).await {
-        Ok(note) => (StatusCode::CREATED, Json(serde_json::to_value(&note).unwrap())).into_response(),
+        Ok(note) => {
+            // Send-error means no subscribers — that's fine, the
+            // broadcast channel is fire-and-forget.
+            let _ = s.events.send(note.clone());
+            (StatusCode::CREATED, Json(serde_json::to_value(&note).unwrap())).into_response()
+        }
         Err(e) => internal(e),
     }
 }

@@ -20,14 +20,14 @@ use utoipa::OpenApi;
 
 use crate::domain::NoteStore;
 use crate::mcp::NoteSearchTool;
-use crate::rest::{notes_router, NotesApi, NotesState};
+use crate::rest::{notes_router, NotesApi as AppApi, NotesState};
 
 #[derive(Clone)]
 pub struct AppState;
 
-#[derive(OpenApi)]
-#[openapi(nest((path = "/", api = NotesApi)))]
-struct AppApi;
+// `NotesApi` is the openapi document. `nest` would let us add a
+// prefix or compose multiple sub-docs, but with one consumer surface
+// the direct re-use is clearer.
 
 pub struct Built {
     pub router: Router,
@@ -46,7 +46,11 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let claim_router = starter_auth_token::routes::claim_router::<AppState>(claim_state);
 
     // /notes/* — consumer-owned, guarded by bearer.
-    let notes = notes_router::<AppState>(NotesState { store: note_store.clone() });
+    let (events, _) = tokio::sync::broadcast::channel(64);
+    let notes = notes_router::<AppState>(NotesState {
+        store: note_store.clone(),
+        events,
+    });
     // `with_principal` is generic over the Authenticator type; pass a
     // sized newtype rather than the `Arc<dyn ...>` we hold so the
     // bound is satisfied. The trait object lives on for gRPC reuse.

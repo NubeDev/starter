@@ -120,7 +120,62 @@ async fn every_surface_round_trips() {
     assert_eq!(hits.len(), 1);
     assert_eq!(hits[0]["id"], note_id);
 
-    // 7. gRPC — starter ships no gRPC support; this is entirely
+    // 7. SSE — starter ships only thin helpers
+    //    (`starter_server::sse::from_stream`). The consumer hands it a
+    //    broadcast stream of new notes. Subscribe BEFORE creating the
+    //    triggering note so the event isn't missed.
+    let sse_url = format!("{}/notes/stream", app.base_url);
+    let owner_for_sse = owner.clone();
+    let http_for_sse = http.clone();
+    let sse_task = tokio::spawn(async move {
+        let res = http_for_sse
+            .get(&sse_url)
+            .bearer_auth(&owner_for_sse)
+            .send()
+            .await
+            .unwrap();
+        assert_eq!(res.status(), 200);
+        assert_eq!(
+            res.headers().get("content-type").unwrap().to_str().unwrap(),
+            "text/event-stream",
+        );
+        // Read until we find a `data:` line with a JSON note.
+        let mut stream = res.bytes_stream();
+        let mut buf = Vec::new();
+        use futures::StreamExt as _;
+        while let Some(chunk) = stream.next().await {
+            buf.extend_from_slice(&chunk.unwrap());
+            let s = String::from_utf8_lossy(&buf);
+            if let Some(line) = s.lines().find(|l| l.starts_with("data:")) {
+                let payload = line.trim_start_matches("data:").trim();
+                return serde_json::from_str::<Value>(payload).unwrap();
+            }
+        }
+        panic!("SSE stream closed before a data event arrived");
+    });
+
+    // Give the subscriber a beat to attach.
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+
+    let triggered: Value = http
+        .post(format!("{}/notes", app.base_url))
+        .bearer_auth(&owner)
+        .json(&serde_json::json!({ "body": "via-sse" }))
+        .send()
+        .await
+        .unwrap()
+        .json()
+        .await
+        .unwrap();
+
+    let sse_event = tokio::time::timeout(std::time::Duration::from_secs(2), sse_task)
+        .await
+        .expect("SSE event timed out")
+        .expect("SSE task panicked");
+    assert_eq!(sse_event["body"], "via-sse");
+    assert_eq!(sse_event["id"], triggered["id"]);
+
+    // 8. gRPC — starter ships no gRPC support; this is entirely
     //    consumer-owned, but reuses the SAME authenticator + store.
     let grpc_listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
     let grpc_addr = grpc_listener.local_addr().unwrap();
@@ -152,8 +207,10 @@ async fn every_surface_round_trips() {
     let mut list_req = Request::new(ListRequest {});
     list_req.metadata_mut().insert("authorization", auth_md.clone());
     let grpc_list = client.list(list_req).await.unwrap().into_inner();
-    assert_eq!(grpc_list.notes.len(), 1);
-    assert_eq!(grpc_list.notes[0].id, note_id);
+    assert_eq!(grpc_list.notes.len(), 2);
+    // Notes are returned newest-first; the SSE step inserted last.
+    assert!(grpc_list.notes.iter().any(|n| n.id == note_id));
+    assert!(grpc_list.notes.iter().any(|n| n.body == "via-sse"));
 
     let mut get_req = Request::new(GetRequest { id: note_id.clone() });
     get_req.metadata_mut().insert("authorization", auth_md);

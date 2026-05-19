@@ -5911,6 +5911,7 @@ dependencies = [
  "axum 0.8.9",
  "chrono",
  "clap",
+ "futures",
  "prometheus",
  "prost",
  "reqwest 0.12.28",
@@ -6710,6 +6711,7 @@ dependencies = [
  "futures-core",
  "pin-project-lite",
  "tokio",
+ "tokio-util",
 ]
 
 [[package]]

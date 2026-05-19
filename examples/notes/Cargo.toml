@@ -49,6 +49,12 @@ uuid         = { workspace = true }
 tonic        = { workspace = true }
 prost        = { workspace = true }
 
+# Stream adapter: consumer-side glue from `tokio::sync::broadcast` to
+# the `futures::Stream` shape that `starter_server::sse::from_stream`
+# accepts. Same pattern any consumer would use.
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures      = { workspace = true }
+
 # Consumer-owned HTTP client. Proves you don't have to extend
 # starter-client-rs to talk to your own endpoints — just use reqwest
 # directly. (starter-client-rs is still used for the shipped
@@ -60,4 +66,3 @@ tonic-build  = { workspace = true }
 
 [dev-dependencies]
 starter-server  = { workspace = true, features = ["testing"] }
-tokio-stream    = "0.1"

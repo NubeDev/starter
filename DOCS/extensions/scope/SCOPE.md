@@ -292,6 +292,47 @@ Same as starter R8. Doc-comments on every public item; no
 `// FIXED:` banners, no emoji, no progress logs. TODOs carry a name
 or ticket.
 
+### R13 — Extensions contribute to every transport the host exposes through one seam
+
+An extension is not "an MCP tool" or "a REST handler" or "a CLI
+command" — it is a contributor that can produce **any of those** from
+the same trait + manifest. The host's *transport adapters* turn
+manifest contributions into transport-native objects:
+
+| Contribution        | Adapter crate                | Adapter output                            |
+| ------------------- | ---------------------------- | ----------------------------------------- |
+| `contributes.tools` | `starter-ext-mcp` (optional) | registers `Tool` impl in `ToolRegistry`   |
+| `contributes.tools` | `starter-ext-server` (REST)  | surfaces same `Tool` at `/tools/<id>`     |
+| `contributes.cli`   | `starter-ext-cli` (optional) | registers `Command` in `CommandRegistry`  |
+| `contributes.rest`  | `starter-ext-server`         | merges `axum::Router` fragment            |
+| `contributes.grpc`  | `starter-ext-grpc` (slot)    | registers tonic `Service` impl            |
+| `contributes.workers` | `starter-ext-workers`      | schedules tick handler on host scheduler  |
+| `contributes.ui`    | `starter-ext-ui`             | mounts MF remote at named slot            |
+
+**One contribution can surface in multiple transports.** A
+`contributes.tools` entry is reachable from MCP (via `starter-mcp`)
+and from REST (via `starter-server`'s `/tools/<id>`) without the
+extension author writing two handlers. The adapter decides whether to
+expose the contribution; the extension declares what exists.
+
+For builtin flavour, the adapter calls into the extension's
+statically-linked dispatch table directly. For process and wasm
+flavours, the adapter forwards the call over the existing JSON-RPC
+channel — every transport reuses the **one** stdio channel from R10;
+adapters do not open new wire formats to talk to extensions.
+
+Adding a new transport to the host (websockets, GraphQL, anything
+future) is one new `starter-ext-<transport>` adapter crate, one new
+`contributes.<transport>` block in the manifest schema. **The trait
+does not change.** Extensions written today keep working when a new
+transport adapter ships, as long as they do not opt in. Operators
+turn adapters on with cargo features.
+
+This is the seam that justifies the whole framework. Without it,
+"extension" would mean a different thing per surface and the host
+would accrete bespoke plugin hooks per transport — exactly the drift
+the parent SCOPE.md is trying to prevent.
+
 ## Repo layout
 
 ```
@@ -338,15 +379,44 @@ starter-extensions/                                  <- this workspace
                                                         model; per-call fuel + memory +
                                                         deadline caps.
 
-    starter-ext-server/                              <- Axum routes:
-                                                        GET  /extensions
-                                                        GET  /extensions/<id>
-                                                        GET  /extensions/<id>/events
-                                                        POST /extensions/<id>/disable
-                                                        POST /extensions/<id>/enable
-                                                        GET  /extensions/<id>/ui/*
-                                                        Glues host + supervisor into a
-                                                        starter-server ServerBuilder.
+    starter-ext-server/                              <- HTTP transport adapter + admin
+                                                        routes. Surfaces
+                                                        contributes.rest as merged Router
+                                                        fragments; surfaces
+                                                        contributes.tools at /tools/<id>;
+                                                        owns admin endpoints:
+                                                          GET  /extensions
+                                                          GET  /extensions/<id>
+                                                          GET  /extensions/<id>/events
+                                                          POST /extensions/<id>/enable
+                                                          POST /extensions/<id>/disable
+                                                          GET  /extensions/<id>/ui/*
+                                                        Depends on starter-server.
+
+    starter-ext-mcp/                                 <- OPTIONAL, feature-gated.
+                                                        MCP transport adapter. Registers
+                                                        contributes.tools entries into
+                                                        starter-mcp::ToolRegistry. Depends
+                                                        on starter-mcp + starter-ext-host.
+
+    starter-ext-cli/                                 <- OPTIONAL, feature-gated.
+                                                        CLI transport adapter. Registers
+                                                        contributes.cli entries as
+                                                        Command impls in starter-cli::
+                                                        CommandRegistry. Depends on
+                                                        starter-cli + starter-ext-host.
+
+    starter-ext-workers/                             <- OPTIONAL, feature-gated.
+                                                        Tick-based scheduler that invokes
+                                                        contributes.workers handlers at
+                                                        manifest-declared intervals.
+                                                        Not a job queue — just periodic
+                                                        invocation with backoff on error.
+
+    [reserved] starter-ext-grpc/                     <- DOCUMENTED SLOT, NOT PUBLISHED.
+                                                        Lands when starter-grpc lands.
+                                                        Surfaces contributes.grpc as
+                                                        tonic Service impls.
 
   packages/
     starter-ext-ui/                                  <- Host-side Module Federation
@@ -387,9 +457,21 @@ starter-ext-spi
    ├── starter-ext-host
    ├── starter-ext-supervisor   ──→ starter-ext-host (registry types)
    ├── starter-ext-wasm         ──→ starter-ext-host (registry types)
-   └── starter-ext-server       ──→ starter-ext-host + starter-ext-supervisor
-                                    + optionally starter-ext-wasm
-                                    + starter-server (from starter workspace)
+   │
+   │  --- transport adapters (each optional, each feature-gated) ---
+   │
+   ├── starter-ext-server       ──→ starter-ext-host + starter-ext-supervisor
+   │                                + optionally starter-ext-wasm
+   │                                + starter-server (parent workspace)
+   │                                surfaces: contributes.rest, contributes.tools,
+   │                                          contributes.ui (file serving), admin
+   ├── starter-ext-mcp          ──→ starter-ext-host + starter-mcp
+   │                                surfaces: contributes.tools (MCP transport)
+   ├── starter-ext-cli          ──→ starter-ext-host + starter-cli
+   │                                surfaces: contributes.cli
+   ├── starter-ext-workers      ──→ starter-ext-host (no transport dep)
+   │                                surfaces: contributes.workers
+   └── [reserved] starter-ext-grpc                                 (when starter-grpc lands)
 ```
 
 **Never** the other way: no crate in `starter-extensions` is consumed
@@ -640,21 +722,163 @@ config_schema: schemas/config.json  # JSON Schema for the manifest's `config:` p
 config: {}                          # consumer/operator-supplied values; validated at load
 
 contributes:
-  tools:
+
+  tools:                            # surfaced by starter-ext-mcp AND starter-ext-server
     - id: com.acme.weather.current
       input_schema:  schemas/current_in.json
       output_schema: schemas/current_out.json
       description_file: docs/tools/current.md
-  ui:
+
+  cli:                              # surfaced by starter-ext-cli
+    - id: com.acme.weather.fetch    # becomes `<host-bin> weather-fetch [args]`
+      subcommand: weather-fetch
+      args_schema: schemas/fetch_args.json
+      description_file: docs/cli/fetch.md
+
+  rest:                             # surfaced by starter-ext-server
+    - id: com.acme.weather.forecast
+      method: GET
+      path: /weather/forecast       # mounted under host's prefix
+      input_schema:  schemas/forecast_in.json
+      output_schema: schemas/forecast_out.json
+      description_file: docs/rest/forecast.md
+      auth: { require_role: Reader }
+    - id: com.acme.weather.live     # streaming endpoint
+      method: GET
+      path: /weather/live
+      streaming: sse                # unary (default) | sse | ndjson
+      event_schema: schemas/live_event.json
+      description_file: docs/rest/live.md
+      auth: { require_role: Reader }
+
+  grpc:                             # reserved; surfaced by starter-ext-grpc when it lands
+    - id: com.acme.weather.WeatherService
+      proto: proto/weather.proto    # static .proto file; method set is canonical
+
+  workers:                          # surfaced by starter-ext-workers
+    - id: com.acme.weather.refresh
+      interval_seconds: 300
+      jitter_seconds: 30
+      on_error: { retry: exponential, max_attempts: 5 }
+
+  ui:                               # surfaced by starter-ext-ui (Module Federation)
     entry: ui/remoteEntry.js
     exposes:
       - { name: WeatherPanel, module: "./Panel", slot: sidebar }
 ```
 
+Every contribution kind shares the same shape: **`id` (must be in the
+extension's namespace), declarative metadata, paths to static
+schemas/descriptions, and optional auth/scope/rate-limit knobs**.
+None of them carries inline code; the actual handler is the
+extension's compiled trait impl.
+
 Every `*_file` and `*_schema` field is a path **relative to the
 bundle root**; the loader reads the referenced file at load time and
 caches it. `deny_unknown_fields` ensures a typo in a key name is a
 load error, not a silent ignore.
+
+## Per-transport contribution mechanics
+
+How a single `ExtensionBehavior` impl reaches every transport. The
+mechanics differ per flavour; the *trait the author writes* does not.
+
+**MCP tools** (`contributes.tools` → `starter-ext-mcp`). The adapter
+reads the manifest's tools list, constructs a `starter_spi::tool::Tool`
+impl per entry, and registers it in `starter-mcp::ToolRegistry`.
+Invocation: MCP receives a `tools/call`; registry lookup yields the
+extension's Tool; the Tool's `invoke` calls into the extension. For
+builtin, a direct function call; for process/wasm, a JSON-RPC
+`tool.call` to the child over the existing stdio channel.
+
+**REST routes** (`contributes.rest` → `starter-ext-server`). The
+adapter generates one axum handler per entry, applies the declared
+auth (`require_role` / `require_scope` from `starter-spi`), and
+merges the resulting `Router` fragment into the consumer's
+`ServerBuilder`. Path collisions across extensions are a load error.
+Bodies and query strings are validated against the entry's
+`input_schema` before the extension sees them.
+
+**REST surface for tools** (also in `starter-ext-server`). The same
+`contributes.tools` entries are surfaced as `POST /tools/<id>`
+endpoints when `starter-ext-server` is mounted — one tool, two
+transports, one handler. An operator who wants tools available to
+HTTP clients does not need a separate REST contribution.
+
+**CLI subcommands** (`contributes.cli` → `starter-ext-cli`). The
+adapter builds a `clap::Command` per entry and registers it in
+`starter-cli::CommandRegistry`. The consumer's CLI binary calls
+`registry.dispatch(matches)` as it does today; the dispatch routes
+extension subcommands through the adapter, which for builtin
+extensions calls the trait method directly and for process/wasm
+extensions invokes the child over JSON-RPC and waits for the result
+synchronously (with a configurable timeout).
+
+**gRPC services** (`contributes.grpc` → `starter-ext-grpc`, reserved).
+Each contribution names a `.proto` file in the bundle. The adapter
+generates a thin tonic `Service` impl whose methods proxy to the
+extension by method name. The proto is the schema contract; the
+manifest exists to declare the dispatch surface and capability needs.
+Deferred until `starter-grpc` lands.
+
+**Background workers** (`contributes.workers` → `starter-ext-workers`).
+A periodic scheduler invokes each entry at its declared interval,
+with jitter and error backoff. Workers are not jobs — there is no
+queue, no fan-out, no retry policy beyond the local backoff. A
+consumer who needs a real job queue brings their own (R-aligned with
+parent SCOPE.md's "not a workflow / job-queue engine" non-goal).
+
+**UI panels** (`contributes.ui` → `starter-ext-ui`). Already covered
+under R11. Module Federation; host mounts exposed modules at named
+slots; RPC calls from the panel back to the host go through
+`useHostClient()`, never directly to extensions.
+
+**Streaming responses are orthogonal to transport.** A handler that
+produces a stream of events (AI tokens, log tails, the event ring
+live feed, progress updates) is the same handler shape regardless of
+how the adapter chooses to render it on the wire. The extension
+returns a `Stream<Item = Event>` (mirroring the `OnEvent` channel
+shape in `starter-spi::ai`); each adapter renders it natively:
+
+| Transport | Streaming render                                       |
+| --------- | ------------------------------------------------------ |
+| REST      | SSE frames (or NDJSON if the entry declares it)        |
+| CLI       | line-delimited stdout (one event per line)             |
+| MCP       | MCP `notifications/progress` messages on the call      |
+| gRPC      | server-streaming response (`stream` keyword in proto)  |
+
+The manifest declares streaming per entry:
+`streaming: sse` on a REST entry, `streaming: progress` on an MCP
+tool, `streaming: stdout` on a CLI command. The default is unary
+(single response).
+
+Over the JSON-RPC stdio channel from R10, streaming is a layered
+convention: the extension responds to the original request with an
+immediate ack carrying a `stream_id`, then emits a sequence of
+JSON-RPC notifications (`method: "stream.event"`) tagged with that
+`stream_id`, terminating with `method: "stream.end"` (or
+`stream.error`). The adapter consumes notifications and translates
+them to the transport's native streaming form. **No new wire
+format** — same stdio channel, same JSON-RPC framing.
+
+**Cancellation flows back the same way.** Client disconnects (HTTP
+close, CLI SIGINT, MCP cancel, gRPC client-side cancel) become a
+JSON-RPC `stream.cancel` notification from adapter to extension. The
+extension's handler observes cancellation through its `Ctx`'s
+cancellation token (mirroring `starter-spi::ai::Cancel`). Extensions
+must respect cancellation within a few hundred milliseconds; the
+adapter does not wait indefinitely.
+
+For builtin flavour, streams are real `Stream<Item = Event>` values
+the adapter drains in-process — no notification framing, no wire
+hops. The trait surface is identical; only the wiring differs.
+
+**Authorization is enforced at the adapter, not the extension.**
+Each transport adapter applies the auth declaration from the
+manifest before invoking the extension. Extensions receive a verified
+`Principal` (where the transport has one) but do not perform the
+auth check themselves. This keeps auth uniform across surfaces and
+prevents an extension from accidentally weakening it.
 
 ## Testing seams
 
@@ -682,7 +906,17 @@ as parent SCOPE.md's testing section.
 - **`starter-ext-server::testing::TestApp`** — wraps
   `starter-server::testing::TestApp` with a pre-configured
   `ExtensionRegistry`; consumer integration tests can hit
-  `/extensions` endpoints with fixtures.
+  `/extensions` and any `contributes.rest` routes with fixtures.
+- **`starter-ext-mcp::testing::tool_pair()`** — pair of (in-memory
+  MCP client, MCP server) with an `ExtensionRegistry` mounted so
+  `contributes.tools` entries can be exercised end-to-end without
+  spawning a subprocess. Builds on `starter-mcp::testing`.
+- **`starter-ext-cli::testing::dispatch(matches)`** — invokes the
+  `CommandRegistry` against an extension's `contributes.cli` entry
+  without spinning up a real binary. Returns captured stdout/stderr.
+- **`starter-ext-workers::testing::tick_now(id)`** — fires a worker
+  contribution synchronously, bypassing the scheduler, for
+  deterministic tests of periodic logic.
 
 On the TS side, `starter-ext-ui/testing` exports
 `renderWithExtensionHost(node, { extensions })`, which mounts an
@@ -749,6 +983,27 @@ byte-identical. No runtime templating, no substitution, no
 extension-mutable text. If an extension can change its own description
 after load, R7 has slipped and the anti-prompt-injection guarantee is
 gone.
+
+### "Streaming response cancels promptly" test
+
+An extension contributes a REST entry with `streaming: sse` that
+emits one event per second indefinitely. A client opens the SSE
+stream, receives a few events, and disconnects. Within a few hundred
+milliseconds the extension's handler observes cancellation through
+its `Ctx` cancellation token and stops emitting. For process flavour,
+no JSON-RPC notifications continue to flow after the cancel. If the
+extension keeps producing events into a dropped channel, the
+cancellation contract has slipped.
+
+### "Same source streams over four transports" test
+
+Take a streaming handler in the `hello-streaming` example. Surface
+it as `streaming: sse` over REST, `streaming: stdout` over CLI,
+`streaming: progress` over MCP, and (when phase 8 lands)
+server-streaming over gRPC. The four adapters render the same event
+sequence in their respective native forms; the extension code is one
+function. If reshaping for a transport requires extension changes,
+the streaming abstraction has leaked.
 
 ### "Extension author has zero starter-workspace deps" test
 
@@ -882,6 +1137,35 @@ accidentally re-exported host-internal types, the test fails.
   `plugin.toml` and rubix's `block.yaml` so migration is *possible*.
   Migration is not v0.1's job; the framework does not change to
   accommodate either existing project.
+- **Per-transport adapter crates, not a monolithic loader.** Each
+  surface an extension can contribute to (MCP tools, REST routes, CLI
+  commands, gRPC services, periodic workers, UI panels) gets its own
+  small adapter crate, feature-gated. Reasons: (a) a CLI-only
+  consumer should not pay for axum transitively; (b) an MCP-stdio
+  consumer should not pay for clap; (c) adding a future transport
+  (websockets, GraphQL) is a new adapter crate, never a change to
+  `starter-ext-sdk` or the trait. The cost is a few more small
+  crates; the benefit is that R5 of the parent SCOPE.md
+  ("default-features minimal; opt-in everything else") survives the
+  extension framework.
+- **Adapters apply auth, not extensions.** Each adapter reads the
+  manifest's per-contribution auth declaration (`require_role`,
+  `require_scope`) and applies it before invoking the extension.
+  Extensions receive a verified `Principal` (where the transport
+  carries one) but never perform the auth check themselves. This
+  prevents extensions from accidentally weakening host security and
+  keeps auth uniform across surfaces.
+- **Streaming is orthogonal to transport; one convention over
+  JSON-RPC.** Handlers return `Stream<Item = Event>` (mirroring
+  `starter-spi::ai::OnEvent`). The manifest declares `streaming:` per
+  entry (`sse | ndjson | progress | stdout`); adapters render the
+  same stream natively per transport. Over the stdio JSON-RPC channel
+  (R10), streaming is realised as a notification convention:
+  `stream.event` notifications tagged with the parent request's
+  `stream_id`, terminated by `stream.end` or `stream.error`.
+  Cancellation flows back as a `stream.cancel` notification.
+  No new wire format; no new spi trait — the existing `Cancel`
+  pattern from `starter-spi::ai` is the model.
 
 ## Open questions
 
@@ -912,38 +1196,40 @@ accidentally re-exported host-internal types, the test fails.
 Each phase is independently mergeable and useful. Stopping after any
 phase leaves a working product.
 
-### Phase 1 — `starter-ext-spi` + `starter-ext-host` + `starter-ext-sdk` (builtin only)
+**Kernel phases** (must ship in order):
+
+### Phase 1 — `starter-ext-spi` + `starter-ext-host` + `starter-ext-sdk` (builtin only) + `starter-ext-mcp` adapter
 
 - Trait + manifest + two-phase loader + namespace check + capability
   validation.
 - `#[derive(Extension)]` + `requires!{}` macros.
-- `examples/hello-builtin` contributes a `Tool` through the registry.
-- No supervisor, no WASM, no UI, no HTTP routes.
+- MCP transport adapter — the simplest adapter, validates the
+  contribute-→-adapter pattern end-to-end.
+- `examples/hello-builtin` contributes a `Tool` reachable over MCP.
 
 Outcome: end-to-end load of a statically-linked extension into a host
-binary. Validates the SPI surface.
+binary, callable from an MCP client. Validates the SPI surface and
+the adapter pattern in one shot.
 
 ### Phase 2 — `starter-ext-supervisor` + process flavour + `starter-ext-server` admin routes
 
 - stdio JSON-RPC framing + init handshake + bidirectional dispatch.
 - Restart policy + intensity cap + backoff + health checks.
 - Event ring + stderr forwarding.
-- `GET /extensions`, `GET /extensions/<id>/events`, enable/disable.
-- `examples/hello-process` is the same source as `hello-builtin` with
-  one cargo feature flipped.
+- Admin endpoints (`/extensions`, events, enable/disable).
+- `examples/hello-process` reuses `hello-builtin` source with one
+  cargo feature flipped.
 
-Outcome: out-of-process extensions are first-class. The heaviest
-phase; gets the most attention.
+Outcome: out-of-process extensions are first-class.
 
-### Phase 3 — `starter-ext-ui` + `starter-ext-sdk-ts` (forked from rubix)
+### Phase 3 — `starter-ext-ui` + `starter-ext-sdk-ts` + bundle serving
 
 - Module Federation host runtime + singleton negotiation.
 - `<ExtensionSlot/>`, `useExtensionHost()`, `useHostClient()`.
 - `GET /extensions/<id>/ui/*` serves bundles.
 - `examples/hello-ui` renders a React panel in a host slot.
 
-Outcome: UI extension story is complete. Independent of phase 2 —
-builtin extensions can contribute UI without the supervisor.
+Outcome: UI extension story is complete.
 
 ### Phase 4 — `starter-ext-wasm` (WASI-p2)
 
@@ -952,13 +1238,46 @@ builtin extensions can contribute UI without the supervisor.
 - Per-call fuel + memory + deadline caps.
 - `examples/hello-wasm`: same source as the other two flavours.
 
-Outcome: untrusted-extension story is complete. Deferrable if no
-consumer needs it day-one.
+Outcome: untrusted-extension story is complete.
+
+**Adapter phases** (independent; each can ship any time after the
+kernel phase its transport depends on):
+
+### Phase 5 — `starter-ext-server` REST adapter
+
+- Surfaces `contributes.rest` as merged `axum::Router` fragments.
+- Surfaces `contributes.tools` as `POST /tools/<id>` (one tool, two
+  transports).
+- Path-collision detection across extensions at load time.
+- Auth + tracing layers applied by adapter, not extension.
+
+### Phase 6 — `starter-ext-cli` adapter
+
+- Surfaces `contributes.cli` as `Command` impls in
+  `starter-cli::CommandRegistry`.
+- Synchronous JSON-RPC dispatch for process-flavour CLI invocations
+  (with timeout).
+- `examples/hello-cli`: a subcommand contributed by an extension.
+
+### Phase 7 — `starter-ext-workers` adapter
+
+- Tick scheduler with manifest-declared intervals + jitter.
+- Per-worker error backoff; no shared queue, no fan-out.
+- Surfaces worker state on `GET /extensions/<id>` (last run, last
+  error, next due).
+
+### Phase 8 (reserved) — `starter-ext-grpc` adapter
+
+- Lands when `starter-grpc` lands in the parent workspace.
+- Surfaces `contributes.grpc` as tonic `Service` impls; the `.proto`
+  file is the schema contract.
 
 ## Bottom line
 
 **One trait, three flavours, one manifest, one supervisor, one UI
-runtime. Designed for the third implementation, not the first. A
-consumer's product gets a load-bearing extension substrate by adding
-two crates and one TS package — and an extension author writes one
-struct + one YAML file.**
+runtime — and one contribution model that reaches every transport
+the host exposes (MCP, REST, CLI, gRPC, workers, UI) through small
+adapter crates. Designed for the third implementation, not the
+first. A consumer's product opts into the adapters it needs; an
+extension author writes one struct + one YAML file and reaches every
+surface the host has turned on.**
