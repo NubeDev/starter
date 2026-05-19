@@ -5948,8 +5948,12 @@ dependencies = [
 name = "starter-flow"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "futures",
  "starter-flow-spi",
  "tokio",
+ "tokio-stream",
+ "tracing",
 ]
 
 [[package]]

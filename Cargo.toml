@@ -84,6 +84,7 @@ chrono      = { version = "0.4", default-features = false, features = ["serde", 
 # Server-only.
 axum        = { version = "0.8", features = ["macros"] }
 tokio       = { version = "1",   features = ["rt-multi-thread", "macros", "sync", "signal"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
 tower       = "0.5"
 tower-http  = { version = "0.6", features = ["cors", "trace"] }
 utoipa      = { version = "5",   features = ["axum_extras", "uuid", "chrono"] }

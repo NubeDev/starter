@@ -55,17 +55,39 @@ pub struct WriteSlotOpts {
     /// checkpoint, audit replay). The propagator must not emit a
     /// `SlotChanged` event for replay writes.
     pub replay: bool,
+    /// `true` to defeat the R3 idempotent-write short-circuit. When
+    /// `false` (the default) a `write_slot` whose new value equals the
+    /// prior value emits no `SlotChanged` event and does not enqueue
+    /// downstream invocations. When `true`, the write always counts as
+    /// a change (subject to the [`Self::replay`] rule above).
+    pub force: bool,
 }
 
 impl WriteSlotOpts {
-    /// Default options for a live write (`replay = false`).
+    /// Default options for a live write (`replay = false`, `force = false`).
     pub fn live() -> Self {
-        Self { replay: false }
+        Self {
+            replay: false,
+            force: false,
+        }
     }
 
-    /// Options for a replay write (`replay = true`).
+    /// Options for a replay write (`replay = true`, `force = false`).
     pub fn replay() -> Self {
-        Self { replay: true }
+        Self {
+            replay: true,
+            force: false,
+        }
+    }
+
+    /// Options for a forced live write — defeats the R3 idempotent
+    /// short-circuit so the write always emits a `SlotChanged` event
+    /// (still subject to the [`Self::replay`] rule).
+    pub fn forced() -> Self {
+        Self {
+            replay: false,
+            force: true,
+        }
     }
 }
 
@@ -92,6 +114,16 @@ pub struct GraphEventEnvelope {
     pub slot: SlotRef,
     /// The new value, if the event carries one.
     pub value: Option<SlotValue>,
+}
+
+impl GraphEventEnvelope {
+    /// Construct an envelope for a value-carrying event.
+    pub fn slot_changed(slot: SlotRef, value: SlotValue) -> Self {
+        Self {
+            slot,
+            value: Some(value),
+        }
+    }
 }
 
 /// Errors a [`GraphStore`] may return.
