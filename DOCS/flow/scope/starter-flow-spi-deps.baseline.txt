@@ -1,0 +1,134 @@
+starter-flow-spi v0.1.0 (/home/user/.codeless/worktrees/job-01KRZXKWVD5QP0D9FK2SMRK1RG/crates/starter-flow-spi)
+├── async-trait v0.1.89 (proc-macro)
+│   ├── proc-macro2 v1.0.106
+│   │   └── unicode-ident v1.0.24
+│   ├── quote v1.0.45
+│   │   └── proc-macro2 v1.0.106 (*)
+│   └── syn v2.0.117
+│       ├── proc-macro2 v1.0.106 (*)
+│       ├── quote v1.0.45 (*)
+│       └── unicode-ident v1.0.24
+├── futures v0.3.32
+│   ├── futures-channel v0.3.32
+│   │   ├── futures-core v0.3.32
+│   │   └── futures-sink v0.3.32
+│   ├── futures-core v0.3.32
+│   ├── futures-executor v0.3.32
+│   │   ├── futures-core v0.3.32
+│   │   ├── futures-task v0.3.32
+│   │   └── futures-util v0.3.32
+│   │       ├── futures-channel v0.3.32 (*)
+│   │       ├── futures-core v0.3.32
+│   │       ├── futures-io v0.3.32
+│   │       ├── futures-macro v0.3.32 (proc-macro)
+│   │       │   ├── proc-macro2 v1.0.106 (*)
+│   │       │   ├── quote v1.0.45 (*)
+│   │       │   └── syn v2.0.117 (*)
+│   │       ├── futures-sink v0.3.32
+│   │       ├── futures-task v0.3.32
+│   │       ├── memchr v2.8.0
+│   │       ├── pin-project-lite v0.2.17
+│   │       └── slab v0.4.12
+│   ├── futures-io v0.3.32
+│   ├── futures-sink v0.3.32
+│   ├── futures-task v0.3.32
+│   └── futures-util v0.3.32 (*)
+├── serde v1.0.228
+│   ├── serde_core v1.0.228
+│   └── serde_derive v1.0.228 (proc-macro)
+│       ├── proc-macro2 v1.0.106 (*)
+│       ├── quote v1.0.45 (*)
+│       └── syn v2.0.117 (*)
+├── serde_json v1.0.149
+│   ├── itoa v1.0.18
+│   ├── memchr v2.8.0
+│   ├── serde_core v1.0.228
+│   └── zmij v1.0.21
+├── starter-spi v0.1.0 (/home/user/.codeless/worktrees/job-01KRZXKWVD5QP0D9FK2SMRK1RG/crates/starter-spi)
+│   ├── async-trait v0.1.89 (proc-macro) (*)
+│   ├── chrono v0.4.44
+│   │   ├── iana-time-zone v0.1.65
+│   │   ├── num-traits v0.2.19
+│   │   └── serde v1.0.228 (*)
+│   ├── prometheus v0.14.0
+│   │   ├── cfg-if v1.0.4
+│   │   ├── fnv v1.0.7
+│   │   ├── lazy_static v1.5.0
+│   │   ├── memchr v2.8.0
+│   │   ├── parking_lot v0.12.5
+│   │   │   ├── lock_api v0.4.14
+│   │   │   │   └── scopeguard v1.2.0
+│   │   │   └── parking_lot_core v0.9.12
+│   │   │       ├── cfg-if v1.0.4
+│   │   │       ├── libc v0.2.186
+│   │   │       └── smallvec v1.15.1
+│   │   ├── protobuf v3.7.2
+│   │   │   ├── once_cell v1.21.4
+│   │   │   ├── protobuf-support v3.7.2
+│   │   │   │   └── thiserror v1.0.69
+│   │   │   │       └── thiserror-impl v1.0.69 (proc-macro)
+│   │   │   │           ├── proc-macro2 v1.0.106 (*)
+│   │   │   │           ├── quote v1.0.45 (*)
+│   │   │   │           └── syn v2.0.117 (*)
+│   │   │   └── thiserror v1.0.69 (*)
+│   │   └── thiserror v2.0.18
+│   │       └── thiserror-impl v2.0.18 (proc-macro)
+│   │           ├── proc-macro2 v1.0.106 (*)
+│   │           ├── quote v1.0.45 (*)
+│   │           └── syn v2.0.117 (*)
+│   ├── secrecy v0.10.3
+│   │   ├── serde v1.0.228 (*)
+│   │   └── zeroize v1.8.2
+│   ├── serde v1.0.228 (*)
+│   ├── serde_json v1.0.149 (*)
+│   ├── thiserror v1.0.69 (*)
+│   ├── tokio v1.52.3
+│   │   ├── libc v0.2.186
+│   │   ├── mio v1.2.0
+│   │   │   └── libc v0.2.186
+│   │   ├── pin-project-lite v0.2.17
+│   │   ├── signal-hook-registry v1.4.8
+│   │   │   ├── errno v0.3.14
+│   │   │   │   └── libc v0.2.186
+│   │   │   └── libc v0.2.186
+│   │   └── tokio-macros v2.7.0 (proc-macro)
+│   │       ├── proc-macro2 v1.0.106 (*)
+│   │       ├── quote v1.0.45 (*)
+│   │       └── syn v2.0.117 (*)
+│   ├── tracing v0.1.44
+│   │   ├── pin-project-lite v0.2.17
+│   │   ├── tracing-attributes v0.1.31 (proc-macro)
+│   │   │   ├── proc-macro2 v1.0.106 (*)
+│   │   │   ├── quote v1.0.45 (*)
+│   │   │   └── syn v2.0.117 (*)
+│   │   └── tracing-core v0.1.36
+│   │       └── once_cell v1.21.4
+│   ├── utoipa v5.5.0
+│   │   ├── indexmap v2.14.0
+│   │   │   ├── equivalent v1.0.2
+│   │   │   ├── hashbrown v0.17.1
+│   │   │   └── serde_core v1.0.228
+│   │   ├── serde v1.0.228 (*)
+│   │   ├── serde_json v1.0.149 (*)
+│   │   └── utoipa-gen v5.5.0 (proc-macro)
+│   │       ├── proc-macro2 v1.0.106 (*)
+│   │       ├── quote v1.0.45 (*)
+│   │       ├── regex v1.12.3
+│   │       │   ├── aho-corasick v1.1.4
+│   │       │   │   └── memchr v2.8.0
+│   │       │   ├── memchr v2.8.0
+│   │       │   ├── regex-automata v0.4.14
+│   │       │   │   ├── aho-corasick v1.1.4 (*)
+│   │       │   │   ├── memchr v2.8.0
+│   │       │   │   └── regex-syntax v0.8.10
+│   │       │   └── regex-syntax v0.8.10
+│   │       ├── syn v2.0.117 (*)
+│   │       └── uuid v1.23.1
+│   │           └── serde_core v1.0.228
+│   └── uuid v1.23.1
+│       ├── getrandom v0.4.2
+│       │   ├── cfg-if v1.0.4
+│       │   └── libc v0.2.186
+│       └── serde_core v1.0.228
+├── thiserror v1.0.69 (*)
+└── uuid v1.23.1 (*)

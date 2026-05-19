@@ -1,0 +1,14 @@
+[package]
+name        = "starter-flow"
+description = "starter-flow — THE engine. Slot propagator, GraphStore impl, NodeKindRegistry, run lifecycle. Skeleton today; engine lands in Phase 2."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase 1: this crate is an empty skeleton so the workspace builds
+# end-to-end with the four flow crates in place. Engine internals land
+# in Phase 2 per DOCS/flow/scope/SCOPE.md phasing.
+[dependencies]
+starter-flow-spi = { workspace = true }

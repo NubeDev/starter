@@ -1,0 +1,13 @@
+[package]
+name        = "starter-flow-nodes"
+description = "starter-flow — built-in node kinds (ai-agent, tool-call, transform, branch, merge, gate, subflow, trigger.*, http-out, log, sleep). Skeleton today."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase 1: empty skeleton. Built-in kinds land across Phases 2, 4, and
+# 5 per DOCS/flow/scope/SCOPE.md — each behind its own cargo feature.
+[dependencies]
+starter-flow-spi = { workspace = true }
