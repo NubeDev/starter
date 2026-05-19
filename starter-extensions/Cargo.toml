@@ -1,0 +1,35 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/starter-ext-spi",
+]
+
+# `starter-extensions` is a sibling workspace to `starter` (see
+# DOCS/extensions/scope/SCOPE.md, "Relationship to starter"). It lives in a
+# subdirectory of the starter repo for convenience of the bootstrap, but it is
+# a fully independent cargo workspace — `starter`'s root `Cargo.toml` does not
+# list any of these crates. The dependency arrow goes
+# `starter-spi → starter-ext-spi → everything else in this workspace`; nothing
+# here is reachable from `starter` itself (SCOPE.md R2).
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+license      = "MIT OR Apache-2.0"
+repository   = "https://github.com/NubeDev/starter"
+rust-version = "1.78"
+
+[workspace.dependencies]
+# The single contract crate shared with the parent workspace. R2: every crate
+# in `starter-extensions` is allowed to depend on `starter-ext-spi`, and
+# `starter-ext-spi` is allowed to depend on `starter-spi` — nothing else.
+starter-spi     = { path = "../crates/starter-spi", version = "0.1.0" }
+starter-ext-spi = { path = "crates/starter-ext-spi", version = "0.1.0" }
+
+# Third-party building blocks. Kept aligned with the parent workspace so a
+# consumer importing both does not pull two majors of the same crate.
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+serde_yaml  = "0.9"
+thiserror   = "1"
+semver      = { version = "1", features = ["serde"] }
