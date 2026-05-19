@@ -40,6 +40,12 @@ thiserror        = { workspace = true }
 # Pull `macros` for `#[tokio::test]` and `time` for the lag/yield
 # helpers used by the in-memory-store unit tests.
 tokio            = { workspace = true, features = ["rt-multi-thread", "sync", "macros", "time"] }
+# Phase 2 stage 5 SCOPE Smoke "One write chokepoint" attaches a
+# tracing Layer that counts `write_slot` spans whose `node_id` /
+# `slot_name` fields match the test's target slot. Pulled into
+# dev-deps only — the production crate stays free of any subscriber
+# implementation.
+tracing-subscriber = { workspace = true }
 
 [features]
 default = []
