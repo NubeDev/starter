@@ -199,6 +199,7 @@ mod sqlite {
                 base_url: "https://app.example.com".to_string(),
                 signup_enabled: true,
                 signup_default_role: Role::Reader,
+                role_domain_maps: std::collections::HashMap::new(),
                 default_return_to: "/".to_string(),
             };
 

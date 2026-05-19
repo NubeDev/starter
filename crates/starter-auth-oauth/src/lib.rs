@@ -53,3 +53,7 @@ pub use session_bridge::mint_session_headers;
 pub use state_store::{
     MemoryStateStore, OAuthFlowState, OAuthStateError, OAuthStateStore, STATE_TTL,
 };
+#[cfg(feature = "sqlite")]
+pub use state_store::SqliteStateStore;
+#[cfg(feature = "postgres")]
+pub use state_store::PostgresStateStore;

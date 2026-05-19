@@ -37,14 +37,18 @@ reqwest = { workspace = true }
 
 # Backend pool — gated. A consumer who wires only the memory state
 # store and an external identity store pays for neither.
-sqlx                 = { workspace = true, optional = true }
-starter-store-sqlite = { workspace = true, optional = true }
+sqlx                   = { workspace = true, optional = true }
+starter-store-sqlite   = { workspace = true, optional = true }
+starter-store-postgres = { workspace = true, optional = true }
 
 [features]
 # Off by default: a consumer that wires only the in-memory state
-# store + an external identity store pays nothing for sqlx.
-default = []
-sqlite  = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite"]
+# store + an external identity store pays nothing for sqlx. Phase 4
+# adds `postgres`: the same trait, a `PostgresStateStore` impl, and
+# the postgres migration variant for `starter_auth_oauth_state`.
+default  = []
+sqlite   = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite"]
+postgres = ["dep:sqlx", "sqlx/postgres", "sqlx/chrono", "dep:starter-store-postgres"]
 
 [dev-dependencies]
 tokio                = { workspace = true, features = ["macros", "rt-multi-thread"] }

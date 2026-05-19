@@ -21,6 +21,16 @@ use chrono::{DateTime, Utc};
 mod memory;
 pub use memory::MemoryStateStore;
 
+#[cfg(feature = "sqlite")]
+mod sqlite;
+#[cfg(feature = "sqlite")]
+pub use sqlite::SqliteStateStore;
+
+#[cfg(feature = "postgres")]
+mod postgres;
+#[cfg(feature = "postgres")]
+pub use postgres::PostgresStateStore;
+
 /// How long a started OAuth flow remains valid. Ten minutes is the
 /// upper bound a human takes to bounce through a provider's consent
 /// screen on a slow connection; making it longer just widens the

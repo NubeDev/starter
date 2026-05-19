@@ -332,15 +332,19 @@ async fn resolve(
                 // OAuth-only marker; `POST /auth/login` will surface
                 // `password_not_set` if the user later tries the
                 // password path.
+                //
+                // Role assignment: the verified email's domain is
+                // checked against this provider's role-domain map.
+                // On hit the matched role wins; on miss the user
+                // falls back to `OAUTH_SIGNUP_DEFAULT_ROLE`. We only
+                // reach this branch with `email_verified == true`
+                // (the guard above), so an unverified-email-controlled
+                // domain cannot inject a privileged role.
+                let role = resolve_signup_role(state, provider_id, &identity.email);
                 let new_user_id = uuid::Uuid::new_v4().to_string();
                 if let Err(e) = state
                     .user_store
-                    .create(
-                        &new_user_id,
-                        &identity.email,
-                        None,
-                        state.signup_default_role,
-                    )
+                    .create(&new_user_id, &identity.email, None, role)
                     .await
                 {
                     tracing::warn!(
@@ -368,7 +372,7 @@ async fn resolve(
                     provider = provider_id,
                     user_id = new_user_id.as_str(),
                     action = "signup",
-                    role = ?state.signup_default_role,
+                    role = ?role,
                     "oauth signup created new local user",
                 );
                 Outcome::SignIn(new_user_id)
@@ -384,6 +388,31 @@ async fn resolve(
             }
         },
     }
+}
+
+/// Look up the verified email's domain in the provider's
+/// `role_domain_map`. Fall back to `signup_default_role` on any
+/// miss: no entry for the provider, no entry for this domain, or an
+/// email shape we can't split.
+fn resolve_signup_role(
+    state: &OAuthRoutesState,
+    provider_id: &str,
+    email: &str,
+) -> starter_auth_users::Role {
+    let map = match state.role_domain_maps.get(provider_id) {
+        Some(m) if !m.is_empty() => m,
+        _ => return state.signup_default_role,
+    };
+    let Some((_, domain)) = email.rsplit_once('@') else {
+        return state.signup_default_role;
+    };
+    let domain = domain.trim().to_ascii_lowercase();
+    if domain.is_empty() {
+        return state.signup_default_role;
+    }
+    map.get(&domain)
+        .copied()
+        .unwrap_or(state.signup_default_role)
 }
 
 fn identity_insert_failure(e: IdentityStoreError, correlation_id: &str) -> Outcome {

@@ -6,7 +6,7 @@
 //! a consumer can mount both routers under any `AppState` without
 //! state-type gymnastics.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 use std::sync::Arc;
 
 use starter_auth_users::store::{SessionStore, UserStore};
@@ -43,9 +43,16 @@ pub struct OAuthRoutesState {
     /// here from Phase 1 so changing the env flag is just a config
     /// bump.
     pub signup_enabled: bool,
-    /// Role assigned to newly-created OAuth users when no domain
-    /// map matches (the map itself lands in Phase 4).
+    /// Role assigned to newly-created OAuth users when no per-
+    /// provider domain map produces a match.
     pub signup_default_role: Role,
+    /// Per-provider `email-domain → Role` maps. Populated from
+    /// `OAUTH_<PROVIDER>_ROLE_DOMAIN_MAP`. Keys are lowercase
+    /// provider ids matching [`providers`]; values are lowercase
+    /// domain strings. Lookups in the callback signup branch use
+    /// the verified email's host portion (lowercased). Empty /
+    /// absent → every signup gets `signup_default_role`.
+    pub role_domain_maps: HashMap<String, HashMap<String, Role>>,
     /// Where the browser lands after a successful callback when the
     /// flow's `return_to` is `None`. Usually `/`.
     pub default_return_to: String,

@@ -23,7 +23,7 @@
 //! `OAUTH_*` shouty form. Both names are documented per field
 //! below so an operator can pick either path without guessing.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, HashMap};
 
 use starter_spi::auth::Role;
 use starter_spi::secrets::{Secret, SecretError, SecretStore};
@@ -53,7 +53,11 @@ pub struct OAuthConfig {
     pub providers: BTreeMap<String, ProviderCredentials>,
 }
 
-/// Operator-supplied client credentials for one provider.
+/// Operator-supplied client credentials for one provider plus the
+/// per-provider domain → [`Role`] map. The SCOPE calls this the
+/// `ProviderConfig`; the name stays `ProviderCredentials` for
+/// backward compat with Phase 1, but the role_domain_map field is
+/// the v0.4 addition.
 #[derive(Debug, Clone)]
 pub struct ProviderCredentials {
     /// OAuth `client_id` shown on the provider's app dashboard.
@@ -61,6 +65,17 @@ pub struct ProviderCredentials {
     /// OAuth `client_secret`. Wrapped in [`Secret`] so a stray
     /// `Debug` cannot leak it.
     pub client_secret: Secret,
+    /// `email-domain → Role` overrides. Populated from
+    /// `OAUTH_<PROVIDER>_ROLE_DOMAIN_MAP=acme.com=Writer,evil.com=Reader`.
+    /// On new-user signup the callback handler looks up the verified
+    /// email's domain here; on hit the matched role wins, on miss
+    /// the user gets `OAUTH_SIGNUP_DEFAULT_ROLE`. An unverified
+    /// email always falls through to the default (the verification
+    /// gate runs before the lookup).
+    ///
+    /// Domain keys are lowercased on parse so `Acme.com` and
+    /// `acme.com` are the same entry.
+    pub role_domain_map: HashMap<String, Role>,
 }
 
 /// Which backend persists the short-lived `OAuthFlowState`.
@@ -172,6 +187,14 @@ fn load_provider(
 
     let client_id = optional_dynamic(secrets, &id_name, &id_env)?;
     let client_secret = optional_dynamic(secrets, &secret_name, &secret_env)?;
+    let role_map_name = format!("oauth.{id}.role_domain_map");
+    let role_map_env = format!("OAUTH_{upper}_ROLE_DOMAIN_MAP");
+    let role_domain_raw = optional_dynamic(secrets, &role_map_name, &role_map_env)?;
+    let role_domain_map = role_domain_raw
+        .as_deref()
+        .map(parse_role_domain_map)
+        .transpose()?
+        .unwrap_or_default();
 
     // SCOPE Constraints: presence of *both* enables the provider.
     // Half-configured (only client_id) almost certainly means the
@@ -181,6 +204,7 @@ fn load_provider(
         (Some(client_id), Some(secret)) => Ok(Some(ProviderCredentials {
             client_id,
             client_secret: Secret::new(secret),
+            role_domain_map,
         })),
         (None, None) => Ok(None),
         (Some(_), None) | (None, Some(_)) => {
@@ -235,6 +259,36 @@ fn parse_bool(s: &str) -> Result<bool, OAuthConfigError> {
             "expected boolean, got {other:?}"
         ))),
     }
+}
+
+/// Parse `acme.com=Writer,evil.com=Reader` into a domain→role map.
+/// Whitespace around tokens is ignored; an empty input is a valid
+/// empty map (so `OAUTH_FOO_ROLE_DOMAIN_MAP=` behaves the same as
+/// "no env-var set"). The shape is deliberately strict — an entry
+/// without `=` or with an unknown role surfaces as a config error
+/// at startup, not a misclassified user at signup time.
+fn parse_role_domain_map(s: &str) -> Result<HashMap<String, Role>, OAuthConfigError> {
+    let mut out = HashMap::new();
+    for entry in s.split(',') {
+        let entry = entry.trim();
+        if entry.is_empty() {
+            continue;
+        }
+        let (domain, role) = entry.split_once('=').ok_or_else(|| {
+            OAuthConfigError::Invalid(format!(
+                "ROLE_DOMAIN_MAP entry {entry:?} missing '=' (expected domain=Role)"
+            ))
+        })?;
+        let domain = domain.trim().to_ascii_lowercase();
+        let role = parse_role(role.trim())?;
+        if domain.is_empty() {
+            return Err(OAuthConfigError::Invalid(format!(
+                "ROLE_DOMAIN_MAP entry {entry:?} has empty domain"
+            )));
+        }
+        out.insert(domain, role);
+    }
+    Ok(out)
 }
 
 fn parse_role(s: &str) -> Result<Role, OAuthConfigError> {
