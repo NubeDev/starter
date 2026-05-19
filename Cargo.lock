@@ -6304,12 +6304,17 @@ name = "starter-prefs"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum 0.8.9",
+ "bytes",
+ "http",
+ "http-body-util",
  "iso_currency",
  "serde",
  "serde_json",
  "sqlx",
  "starter-spi",
  "tokio",
+ "tower 0.5.3",
  "tracing",
  "utoipa",
 ]

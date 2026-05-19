@@ -17,7 +17,7 @@ default = []
 # GET/PATCH /v1/orgs/{id}/preferences, GET /v1/units) plus the tower
 # middleware that threads resolved prefs into request extensions.
 # See SCOPE.md "API surface" + "Middleware".
-routes = []
+routes = ["dep:axum", "dep:http", "dep:bytes"]
 # `sqlite` enables the sqlx-based `store::SqlitePrefsStore`
 # implementation of `store::PrefsStore`. Default-off per workspace
 # policy R5 — a consumer that only wants the resolver + trait shape
@@ -34,6 +34,12 @@ sqlx        = { workspace = true }
 utoipa      = { workspace = true }
 tracing     = { workspace = true }
 
+# Routes feature deps — only compiled when the `routes` feature is
+# active. See SCOPE.md "Rollout (proposed phases)" — Phase 1.
+axum  = { workspace = true, optional = true }
+http  = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+
 # ISO 4217 currency code validation + metadata. Lands here (NOT on
 # starter-spi) per SCOPE.md "Decisions" D-U0.3 — Phase 0 deliberately
 # kept iso_currency off starter-spi to avoid pulling currency data
@@ -42,5 +48,10 @@ tracing     = { workspace = true }
 iso_currency = "0.5"
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
-sqlx  = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
+sqlx           = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+axum           = { workspace = true }
+tower          = { workspace = true }
+http           = { workspace = true }
+http-body-util = "0.1"
+serde_json     = { workspace = true }
