@@ -38,6 +38,12 @@ prometheus  = { workspace = true }
 secrecy     = { workspace = true }
 tracing     = { workspace = true }
 
+# R4 of DOCS/user/scope/SCOPE.md: "Conversion factors are delegated
+# to `uom` internally. The registry is the thin serialisable veneer;
+# we never hand-write conversion math." Used only by the
+# `starter_spi::units` module.
+uom         = { workspace = true }
+
 [features]
 # `broadcast` ships the blanket `EventSink for tokio::sync::broadcast::Sender<E>`
 # impl. Default-on so `cargo add starter-spi` gets the ergonomic happy

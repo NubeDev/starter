@@ -24,6 +24,7 @@ pub mod secrets;
 pub mod service;
 pub mod sort;
 pub mod tool;
+pub mod units;
 
 pub use error::{Error, Result};
 pub use id::Id;
