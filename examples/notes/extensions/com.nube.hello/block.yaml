@@ -22,7 +22,7 @@ contributes:
 
   rest:
     - id: com.nube.hello.rest_greet
-      method: GET
+      method: POST
       path: /hello
       description_file: docs/rest_greet.md
       response_schema: schemas/greet_out.json

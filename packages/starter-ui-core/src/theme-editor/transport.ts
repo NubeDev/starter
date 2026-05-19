@@ -38,15 +38,35 @@ export interface ThemeTransport {
   setFavicon(file: File | null): Promise<void>;
 }
 
-/** HTTP transport over the starter-server REST surface. */
+/** HTTP transport over the starter-server REST surface.
+ *
+ * The wire types from `@nube/starter-client-ts` are generated from
+ * OpenAPI and mark every field as optional (utoipa default). The
+ * editor's local `ThemeDocument` shape is stricter — both mode maps
+ * are required (the editor always renders both halves), and `shell`
+ * fields are required (the editor controls them). We normalise here
+ * so the rest of the editor never sees an undefined `light` /
+ * `dark` / `nav_title`. */
 export function httpThemeTransport(opts: { client: StarterClient }): ThemeTransport {
   const { client } = opts;
+  const normalise = (raw: Awaited<ReturnType<StarterClient["themeGet"]>>): ThemeDocument => ({
+    theme_styles: {
+      light: raw.theme_styles.light ?? {},
+      dark: raw.theme_styles.dark ?? {},
+    },
+    shell: {
+      nav_title: raw.shell.nav_title ?? "",
+      hide_features: raw.shell.hide_features ?? [],
+    },
+    logo_url: raw.logo_url ?? null,
+    favicon_url: raw.favicon_url ?? null,
+  });
   return {
     async load() {
-      return client.themeGet();
+      return normalise(await client.themeGet());
     },
     async save(input) {
-      return client.themeSave(input);
+      return normalise(await client.themeSave(input));
     },
     async setLogo(file) {
       if (file == null) {

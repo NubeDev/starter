@@ -144,25 +144,42 @@ methods and the editor doesn't notice the difference.
 
 ---
 
-## REST contract (pending)
+## REST contract
 
-`httpThemeTransport` expects six endpoints. They are not yet
-implemented in `starter-server` — the work is tracked in
-[TODO.md Phase 9](../../../TODO.md#phase-9--theme-persistence-backend).
-Until then, consumers can either ship the routes themselves or use the
-`localStorage` transport.
+The six endpoints are implemented in
+[`crates/starter-ui-theme`](../../../crates/starter-ui-theme/README.md).
+Mount the router from the consumer's `main.rs`:
+
+```rust
+use starter_ui_theme::{routes::{theme_router, ThemeState}, store::SqliteThemeStore};
+
+let store = std::sync::Arc::new(SqliteThemeStore::new(pool));
+let router = theme_router::<AppState>(ThemeState::new(store));
+let router = starter_server::auth::with_principal(router, authenticator);
+server_builder.merge_router(router);
+```
+
+Apply the migration under source name `ui_theme` from
+`crates/starter-ui-theme/migrations/ui_theme_sqlite/` (or the
+`ui_theme_postgres/` twin).
 
 | Method | Path | Body | Returns |
 |---|---|---|---|
-| `GET` | `/api/v1/ui/theme` | — | `ThemeDocument` JSON |
-| `PUT` | `/api/v1/ui/theme` | `{ theme_styles, shell }` JSON | `ThemeDocument` JSON (or `204 No Content`) |
-| `POST` | `/api/v1/ui/theme/logo` | raw bytes; `Content-Type` = file MIME | `204` |
-| `DELETE` | `/api/v1/ui/theme/logo` | — | `204` |
-| `POST` | `/api/v1/ui/theme/favicon` | raw bytes; `Content-Type` = file MIME | `204` |
-| `DELETE` | `/api/v1/ui/theme/favicon` | — | `204` |
+| `GET` | `/api/v1/ui/theme` | — | `ThemeDocument` JSON (auth: any role) |
+| `PUT` | `/api/v1/ui/theme` | `ThemeSaveInput` JSON | `ThemeDocument` JSON (auth: admin) |
+| `POST` | `/api/v1/ui/theme/logo` | raw bytes; `Content-Type` = file MIME | `204` (auth: admin) |
+| `DELETE` | `/api/v1/ui/theme/logo` | — | `204` (auth: admin) |
+| `GET` | `/api/v1/ui/theme/logo` | — | bytes with stored MIME (public) |
+| `POST` | `/api/v1/ui/theme/favicon` | raw bytes; `Content-Type` = file MIME | `204` (auth: admin) |
+| `DELETE` | `/api/v1/ui/theme/favicon` | — | `204` (auth: admin) |
+| `GET` | `/api/v1/ui/theme/favicon` | — | bytes with stored MIME (public) |
 
-```json
-// ThemeDocument
+```jsonenforces the same):
+logo PNG / SVG ≤ 256 KiB; favicon PNG / ICO ≤ 64 KiB. The server
+returns `413 Payload Too Large` on oversize, `415 Unsupported
+Media Type` on a foreign `Content-Type`, and a `400` problem doc
+naming the offending key for any value containing `url(`,
+`@import`, `expression(` or `javascript:`
 {
   "theme_styles": {
     "light": { "primary": "oklch(0.55 0.22 257)", "...": "..." },

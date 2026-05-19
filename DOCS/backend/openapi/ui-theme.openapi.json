@@ -1,0 +1,349 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "starter-ui-theme",
+    "description": "Org-level theme persistence routes shipped by starter-ui-theme.",
+    "license": {
+      "name": "MIT OR Apache-2.0",
+      "identifier": "MIT OR Apache-2.0"
+    },
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/ui/theme": {
+      "get": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_get",
+        "responses": {
+          "200": {
+            "description": "Current theme document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeDocument"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication required"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_put",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ThemeSaveInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Saved; returns the updated document",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ThemeDocument"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation failed"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "413": {
+            "description": "Body too large"
+          }
+        }
+      }
+    },
+    "/api/v1/ui/theme/favicon": {
+      "get": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_favicon_get",
+        "responses": {
+          "200": {
+            "description": "Favicon bytes (content-type as stored)"
+          },
+          "404": {
+            "description": "No favicon configured"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_favicon_post",
+        "requestBody": {
+          "description": "Raw image bytes",
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Favicon stored"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "413": {
+            "description": "Asset too large"
+          },
+          "415": {
+            "description": "Unsupported media type"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_favicon_delete",
+        "responses": {
+          "204": {
+            "description": "Favicon cleared (idempotent)"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    },
+    "/api/v1/ui/theme/logo": {
+      "get": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_logo_get",
+        "responses": {
+          "200": {
+            "description": "Logo bytes (content-type as stored)"
+          },
+          "404": {
+            "description": "No logo configured"
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_logo_post",
+        "requestBody": {
+          "description": "Raw image bytes",
+          "content": {
+            "image/png": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "integer",
+                  "format": "int32",
+                  "minimum": 0
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "204": {
+            "description": "Logo stored"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin role required"
+          },
+          "413": {
+            "description": "Asset too large"
+          },
+          "415": {
+            "description": "Unsupported media type"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "ui-theme"
+        ],
+        "operationId": "ui_theme_logo_delete",
+        "responses": {
+          "204": {
+            "description": "Logo cleared (idempotent)"
+          },
+          "401": {
+            "description": "Authentication required"
+          },
+          "403": {
+            "description": "Admin role required"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Problem": {
+        "type": "object",
+        "description": "Machine-readable error body.\n\nMirrors RFC 7807 loosely. The `type` field is a stable string\nidentifier (`not_found`, `invalid_input`, …) that callers can\nswitch on; the HTTP status is set by the transport.",
+        "required": [
+          "type",
+          "title"
+        ],
+        "properties": {
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional detailed explanation."
+          },
+          "title": {
+            "type": "string",
+            "description": "Short human title for the problem."
+          },
+          "type": {
+            "type": "string",
+            "description": "Stable identifier for the error class. Matches lower-case\nsnake-case of [`crate::error::Error`] variants."
+          }
+        }
+      },
+      "ShellConfig": {
+        "type": "object",
+        "description": "Non-token branding choices that travel with the theme.\n\n`hide_features` carries consumer-defined string ids — starter\nitself attaches no meaning to them; the consumer's shell layer\nreads the list and hides the matching nav items.",
+        "properties": {
+          "hide_features": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Consumer-defined feature ids the admin wants hidden."
+          },
+          "nav_title": {
+            "type": "string",
+            "description": "Display name shown in the top nav."
+          }
+        }
+      },
+      "ThemeDocument": {
+        "type": "object",
+        "description": "The full org-level theme: style maps, branding sidecar, and the\n(optional) URLs of the uploaded logo / favicon.\n\nAsset URLs are `None` until the consumer uploads each asset; the\nfrontend treats `None` as \"fall back to your bundled defaults\".",
+        "required": [
+          "theme_styles",
+          "shell"
+        ],
+        "properties": {
+          "favicon_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the server serves the favicon, if any."
+          },
+          "logo_url": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Where the server serves the logo, if any."
+          },
+          "shell": {
+            "$ref": "#/components/schemas/ShellConfig",
+            "description": "Branding sidecar."
+          },
+          "theme_styles": {
+            "$ref": "#/components/schemas/ThemeStyles",
+            "description": "Light + dark token maps."
+          }
+        }
+      },
+      "ThemeSaveInput": {
+        "type": "object",
+        "description": "Editor → server save payload. Mirrors the shape the frontend\n`httpThemeTransport.save({ theme_styles, shell })` already sends.\n\nAsset URLs are *not* in this DTO — uploads are separate\n`POST /api/v1/ui/theme/{logo,favicon}` endpoints so the JSON\nsurface stays plain JSON (no multipart juggling).",
+        "required": [
+          "theme_styles",
+          "shell"
+        ],
+        "properties": {
+          "shell": {
+            "$ref": "#/components/schemas/ShellConfig",
+            "description": "Branding sidecar."
+          },
+          "theme_styles": {
+            "$ref": "#/components/schemas/ThemeStyles",
+            "description": "Light + dark token maps."
+          }
+        }
+      },
+      "ThemeStyles": {
+        "type": "object",
+        "description": "Light + dark CSS-custom-property maps.\n\nKeys are the unprefixed token names (`\"primary\"`, not\n`\"--primary\"`); the frontend stamps the `--` prefix at apply\ntime. Values are CSS strings — colours, lengths, font stacks —\nwhatever the corresponding token expects. See the token surface\ntable in `DOCS/frontend/theme/README.md` for the canonical\n38-key set.\n\n`BTreeMap` rather than `HashMap`: serialised output is\ndeterministic, which keeps OpenAPI snapshots and integration\ntests stable.",
+        "properties": {
+          "dark": {
+            "type": "object",
+            "description": "Tokens applied when the resolved mode is `dark`.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          },
+          "light": {
+            "type": "object",
+            "description": "Tokens applied when the resolved mode is `light`.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "propertyNames": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "ui-theme",
+      "description": "Org-level theme persistence"
+    }
+  ]
+}

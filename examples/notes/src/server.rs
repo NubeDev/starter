@@ -33,8 +33,8 @@ use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_mcp::register_tools;
 use starter_ext_sdk::builtin::BuiltinTable;
 use starter_ext_server::{
-    rest_router, router_with_auth, ExtensionAdmin, InMemoryEnablementStore, NotWiredDispatcher,
-    RestRouterOptions,
+    rest_router, router_with_auth, BuiltinRestDispatcher, ExtensionAdmin,
+    InMemoryEnablementStore, RestRouterOptions,
 };
 use starter_mcp::{mcp_router, McpHttpOptions, ToolRegistry};
 use starter_observability::metrics::StandardMetrics;
@@ -42,6 +42,10 @@ use starter_server::auth::with_principal;
 use starter_server::ServerBuilder;
 use starter_spi::auth::Authenticator;
 use starter_store_sqlite::Pool;
+use starter_ui_theme::{
+    routes::{theme_router, ThemeState},
+    store::SqliteThemeStore,
+};
 use utoipa::OpenApi;
 
 use crate::domain::NoteStore;
@@ -103,10 +107,25 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let tools = ToolRegistry::new().register(NoteSearchTool {
         store: note_store.clone(),
     });
-    // No builtin extensions ship in this example. The empty
-    // BuiltinTable means process / wasm extensions still load, their
-    // tool entries simply count as `tools_skipped_non_builtin`.
-    let builtins = Arc::new(BuiltinTable::new());
+    // Register the bundled `com.nube.hello` extension's contribute
+    // ids so the BuiltinRestDispatcher and MCP adapter can invoke them.
+    let builtins = {
+        use starter_ext_sdk::builtin::BuiltinEntry;
+        use starter_ext_sdk::ExtensionId;
+        let entry = BuiltinEntry::new(
+            &["com.nube.hello.greet", "com.nube.hello.rest_greet"],
+            |_contribute_id, _ctx, params| {
+                let name = params
+                    .get("name")
+                    .and_then(serde_json::Value::as_str)
+                    .unwrap_or("world");
+                Ok(serde_json::json!({ "message": format!("Hello, {name}!") }))
+            },
+        );
+        let mut table = BuiltinTable::new();
+        table.insert(ExtensionId::new("com.nube.hello").unwrap(), entry);
+        Arc::new(table)
+    };
     let (tools, mcp_outcome, mcp_result) =
         register_tools(&ext_registry, &builtins, tools);
     if let Err(err) = mcp_result {
@@ -132,10 +151,8 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         router_with_auth::<AppState, _>(admin, Arc::new(BoxedAuthenticator(authenticator.clone())));
 
     // Extension-contributed REST routes + auto-mounted POST /tools/<id>.
-    // Non-builtin records dispatch through NotWiredDispatcher — they
-    // return 501 until the consumer wires a per-flavour dispatcher.
     let rest_dispatcher: Arc<dyn starter_ext_server::RestDispatcher> =
-        Arc::new(NotWiredDispatcher);
+        Arc::new(BuiltinRestDispatcher::new(builtins.clone(), ext_registry.clone()));
     let ext_rest = match rest_router::<AppState>(
         ext_registry.clone(),
         rest_dispatcher,
@@ -151,12 +168,22 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         }
     };
 
+    // /api/v1/ui/theme — org-level theme persistence. Admin-only
+    // writes, asset GETs are public (browsers can't carry credentials
+    // on <img src> / favicon-link requests). The router is wrapped in
+    // `with_principal` so the handler-level role guard sees the
+    // resolved `Principal`.
+    let theme_store = Arc::new(SqliteThemeStore::new(pool.clone()));
+    let theme = theme_router::<AppState>(ThemeState::new(theme_store));
+    let theme = with_principal(theme, auth_for_http.clone());
+
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(claim_router)
         .merge_router(notes)
         .merge_router(mcp)
         .merge_router(admin_router)
         .merge_router(ext_rest)
+        .merge_router(theme)
         .with_openapi(AppApi::openapi())
         .with_metrics(registry, metrics)
         .build();

@@ -18,8 +18,8 @@
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "pe@nube/starter-ui-core": "workspace:*",
-    "erDependencies": {
+  "peerDependencies": {
+    "@nube/starter-ui-core": "workspace:*",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19",
     "tailwindcss": "^4"

@@ -1,18 +1,34 @@
-// Notes app. Sits on top of starter's React glue:
-//   - `<AuthProvider>` + `useAuth()` from @nube/starter-ui-core
-//   - `tokenStrategy` because we use auth-token (single bearer)
-//   - `StarterClient` extended with `listNotes` / `createNote`
-//
-// Nothing in @nube/starter-ui-core or @nube/starter-client-ts was
-// modified — both are consumed as published libraries.
+// Notes app with shadcn/ui-style components and live extension rendering.
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAuth, AuthProvider, tokenStrategy } from "@nube/starter-ui-core/auth";
+import {
+  applyThemeToElement,
+  httpThemeTransport,
+  useThemeEditorStore,
+} from "@nube/starter-ui-core/theme-editor";
+import { ThemeEditorPage } from "@nube/starter-ui-kit/theme-editor";
 import { StarterClient } from "@nube/starter-client-ts";
+import { ExtensionHostProvider, ExtensionSlot } from "@nube/starter-ext-ui";
 
 import { NotesClient, type Note } from "./notes-client.js";
 import { ExtensionsClient } from "./extensions-client.js";
 import { ExtensionsView } from "./extensions-view.js";
+import { createExtensionHost, loadExtensionRemotes } from "./extension-host.js";
+
+import {
+  Button,
+  Input,
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  Badge,
+  Separator,
+  Tabs,
+  TabsList,
+  TabsTrigger,
+} from "./ui.js";
 
 const client = new StarterClient({ baseUrl: "" });
 const notesClient = new NotesClient(client);
@@ -30,9 +46,9 @@ export function App() {
 function Shell() {
   const auth = useAuth();
 
-  if (auth.status === "loading") return <p>checking session…</p>;
+  if (auth.status === "loading") return <p style={{ padding: 32 }}>checking session…</p>;
   if (auth.status === "unauthenticated") return <LoginForm />;
-  return <NotesView />;
+  return <AuthenticatedApp />;
 }
 
 function LoginForm() {
@@ -41,40 +57,170 @@ function LoginForm() {
   const [err, setErr] = useState<string | null>(null);
 
   return (
-    <main style={{ maxWidth: 480, margin: "4rem auto", fontFamily: "sans-serif" }}>
-      <h1>notes — sign in</h1>
-      <p style={{ color: "#666" }}>
-        Paste the bearer token printed by <code>notes claim --yes</code>.
-      </p>
-      <form
-        onSubmit={async (e) => {
-          e.preventDefault();
-          setErr(null);
-          try {
-            await auth.login({ kind: "token", token });
-          } catch (e) {
-            setErr((e as Error).message);
-          }
-        }}
-      >
-        <input
-          type="password"
-          value={token}
-          onChange={(e) => setToken(e.target.value)}
-          style={{ width: "100%", padding: 8, fontFamily: "monospace" }}
-          placeholder="bearer token"
-        />
-        <button type="submit" style={{ marginTop: 12 }}>sign in</button>
-      </form>
-      {err && <p style={{ color: "crimson" }}>{err}</p>}
+    <main style={{ maxWidth: 400, margin: "6rem auto", padding: "0 1rem" }}>
+      <Card>
+        <CardHeader>
+          <CardTitle>notes — sign in</CardTitle>
+          <p className="ui-card-desc">
+            Paste the bearer token printed by <code>notes claim --yes</code>.
+          </p>
+        </CardHeader>
+        <CardContent>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              setErr(null);
+              try {
+                await auth.login({ kind: "token", token });
+              } catch (e) {
+                setErr((e as Error).message);
+              }
+            }}
+            style={{ display: "flex", flexDirection: "column", gap: 12 }}
+          >
+            <Input
+              type="password"
+              value={token}
+              onChange={(e) => setToken(e.target.value)}
+              placeholder="bearer token"
+            />
+            <Button type="submit">Sign in</Button>
+          </form>
+          {err && <p style={{ color: "var(--destructive)", marginTop: 8, fontSize: "0.85rem" }}>{err}</p>}
+        </CardContent>
+      </Card>
     </main>
   );
 }
 
-function NotesView() {
+function AuthenticatedApp() {
   const auth = useAuth();
-  const [tab, setTab] = useState<"notes" | "extensions">("notes");
+  const [tab, setTab] = useState<"notes" | "extensions" | "theme">("notes");
   const [adminAvailable, setAdminAvailable] = useState(false);
+
+  // One shared `ThemeTransport` for both the top-level hydration and
+  // the `<ThemeEditorPage>` on the Theme tab.
+  const themeTransport = useMemo(() => httpThemeTransport({ client }), []);
+
+  // Live token map driven by the shared `useThemeEditorStore`. When
+  // admin saves a new preset inside the editor, `markSaved()` keeps
+  // the styles in the store, so this selector re-fires and the host
+  // re-applies the tokens to `<html>` + every `<ExtensionSlot>`.
+  const themeMode = useThemeEditorStore((s) => s.mode);
+  const themeTokens = useThemeEditorStore((s) => s.styles[s.mode]);
+  const hydrateTheme = useThemeEditorStore((s) => s.hydrate);
+
+  // One-shot hydration on first authenticated render so the saved
+  // theme applies before admin ever opens the Theme tab. Errors are
+  // swallowed — the editor tab will surface its own error state and
+  // the CSS-default oklch tokens from `globals.css` keep the UI
+  // looking sensible meanwhile.
+  useEffect(() => {
+    void (async () => {
+      try {
+        const doc = await themeTransport.load();
+        hydrateTheme(doc.theme_styles, doc.shell);
+      } catch {
+        /* keep CSS defaults */
+      }
+    })();
+  }, [themeTransport, hydrateTheme]);
+
+  // Create and bootstrap the extension host
+  const host = useMemo(() => createExtensionHost({ client }), []);
+  const [hostReady, setHostReady] = useState(false);
+
+  useEffect(() => {
+    void loadExtensionRemotes(host).then(() => setHostReady(true));
+  }, [host]);
+
+  // Apply the live token map to the document root so the host UI
+  // (notes, extensions tabs) reflects every theme change immediately.
+  useEffect(() => {
+    if (Object.keys(themeTokens).length > 0) {
+      applyThemeToElement(document.documentElement, themeTokens, themeMode);
+    }
+  }, [themeTokens, themeMode]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        await extensionsClient.list();
+        setAdminAvailable(true);
+      } catch {
+        setAdminAvailable(false);
+      }
+    })();
+  }, []);
+
+  return (
+    <ExtensionHostProvider host={host}>
+      <main style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
+        {/* Header */}
+        <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>notes</h1>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Badge variant={hostReady ? "success" : "secondary"}>
+              {hostReady ? "● extensions ready" : "○ loading…"}
+            </Badge>
+            <Badge variant="secondary">{auth.user?.subject?.slice(0, 8)}…</Badge>
+            <Button variant="ghost" size="sm" onClick={() => void auth.logout()}>
+              Sign out
+            </Button>
+          </div>
+        </header>
+
+        <Separator />
+
+        {/* Tabs */}
+        {adminAvailable && (
+          <div style={{ marginTop: 16 }}>
+            <Tabs>
+              <TabsList>
+                <TabsTrigger active={tab === "notes"} onClick={() => setTab("notes")}>
+                  Notes
+                </TabsTrigger>
+                <TabsTrigger active={tab === "extensions"} onClick={() => setTab("extensions")}>
+                  Extensions
+                </TabsTrigger>
+                <TabsTrigger active={tab === "theme"} onClick={() => setTab("theme")}>
+                  Theme
+                </TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+        )}
+
+        {/* Tab Content */}
+        <div style={{ marginTop: 16 }}>
+          {tab === "extensions" ? (
+            <ExtensionsView client={extensionsClient} />
+          ) : tab === "theme" ? (
+            <ThemeEditorPage transport={themeTransport} />
+          ) : (
+            <NotesPanel />
+          )}
+        </div>
+
+        {/* Extension sidebar slot — renders live extension UIs.
+            `themeTokens` threads the active host preset into
+            `SlotContext` so the extension's `useHostTheme()` sees
+            the live token map (charts, canvas, etc.). */}
+        {hostReady && (
+          <div style={{ marginTop: 24 }}>
+            <ExtensionSlot
+              id="sidebar"
+              theme={themeMode}
+              themeTokens={themeTokens}
+            />
+          </div>
+        )}
+      </main>
+    </ExtensionHostProvider>
+  );
+}
+
+function NotesPanel() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [draft, setDraft] = useState("");
   const [err, setErr] = useState<string | null>(null);
@@ -87,97 +233,8 @@ function NotesView() {
     }
   }
 
-  useEffect(() => {
-    void refresh();
-    // Probe the admin slice once. A 200 means the bearer carries
-    // Role::Admin — show the tab. 403 / 401 / network errors hide it.
-    void (async () => {
-      try {
-        await extensionsClient.list();
-        setAdminAvailable(true);
-      } catch {
-        setAdminAvailable(false);
-      }
-    })();
-  }, []);
+  useEffect(() => { void refresh(); }, []);
 
-  return (
-    <main style={{ maxWidth: 640, margin: "2rem auto", fontFamily: "sans-serif" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
-        <h1>notes</h1>
-        <small>
-          signed in as {auth.user?.subject} ·{" "}
-          <button type="button" onClick={() => void auth.logout()}>sign out</button>
-        </small>
-      </header>
-
-      {adminAvailable && (
-        <nav style={{ display: "flex", gap: 8, marginBottom: 16, borderBottom: "1px solid #eee" }}>
-          <TabButton active={tab === "notes"} onClick={() => setTab("notes")}>notes</TabButton>
-          <TabButton active={tab === "extensions"} onClick={() => setTab("extensions")}>
-            extensions
-          </TabButton>
-        </nav>
-      )}
-
-      {tab === "extensions" ? (
-        <ExtensionsView client={extensionsClient} />
-      ) : (
-        <NotesPanel
-          notes={notes}
-          draft={draft}
-          setDraft={setDraft}
-          err={err}
-          setErr={setErr}
-          refresh={refresh}
-        />
-      )}
-    </main>
-  );
-}
-
-function TabButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      style={{
-        background: "transparent",
-        border: "none",
-        borderBottom: active ? "2px solid #333" : "2px solid transparent",
-        padding: "8px 4px",
-        cursor: "pointer",
-        fontWeight: active ? 600 : 400,
-      }}
-    >
-      {children}
-    </button>
-  );
-}
-
-function NotesPanel({
-  notes,
-  draft,
-  setDraft,
-  err,
-  setErr,
-  refresh,
-}: {
-  notes: Note[];
-  draft: string;
-  setDraft: (s: string) => void;
-  err: string | null;
-  setErr: (s: string | null) => void;
-  refresh: () => Promise<void>;
-}) {
   return (
     <>
       <form
@@ -192,25 +249,38 @@ function NotesPanel({
             setErr((e as Error).message);
           }
         }}
+        style={{ display: "flex", gap: 8 }}
       >
-        <input
+        <Input
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          placeholder="new note…"
-          style={{ width: "100%", padding: 8 }}
+          placeholder="Write a new note…"
+          style={{ flex: 1 }}
         />
+        <Button type="submit">Add</Button>
       </form>
 
-      {err && <p style={{ color: "crimson" }}>{err}</p>}
+      {err && <p style={{ color: "var(--destructive)", marginTop: 8, fontSize: "0.85rem" }}>{err}</p>}
 
-      <ul style={{ listStyle: "none", padding: 0, marginTop: 16 }}>
+      <div style={{ marginTop: 16, display: "flex", flexDirection: "column", gap: 8 }}>
         {notes.map((n) => (
-          <li key={n.id} style={{ padding: "8px 0", borderBottom: "1px solid #eee" }}>
-            <div>{n.body}</div>
-            <small style={{ color: "#888" }}>{new Date(n.created_at).toLocaleString()}</small>
-          </li>
+          <Card key={n.id}>
+            <CardContent style={{ padding: "12px 16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+                <span>{n.body}</span>
+                <small style={{ color: "var(--muted-foreground)", fontSize: "0.75rem" }}>
+                  {new Date(n.created_at).toLocaleString()}
+                </small>
+              </div>
+            </CardContent>
+          </Card>
         ))}
-      </ul>
+        {notes.length === 0 && (
+          <p style={{ color: "var(--muted-foreground)", textAlign: "center", padding: 32 }}>
+            No notes yet. Write one above!
+          </p>
+        )}
+      </div>
     </>
   );
 }

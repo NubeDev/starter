@@ -12,10 +12,15 @@ import {
   formatRgb,
   parse,
   type Color,
+  type Rgb,
 } from "culori";
 
 const toOklch = converter("oklch");
-const toRgb = converter("rgb");
+// Explicit return-shape annotation keeps the inferred type
+// portable (TS2742 fires without it because `Converter<...>` references
+// types under `culori/src/converter` that aren't part of the public
+// type surface).
+const toRgb: (color: string | Color | undefined) => Rgb | undefined = converter("rgb");
 
 /** Output formats the editor understands. */
 export type ColorFormat = "hex" | "rgb" | "oklch";

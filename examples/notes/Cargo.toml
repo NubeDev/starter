@@ -26,6 +26,7 @@ starter-mcp           = { workspace = true, features = ["http"] }
 starter-observability = { workspace = true }
 starter-cli           = { workspace = true }
 starter-client-rs     = { workspace = true }
+starter-ui-theme      = { workspace = true, features = ["sqlite"] }
 
 # Extension hosting — cross-workspace path deps to `starter-extensions`.
 # Per SCOPE.md R3 this mirrors what a third-party consumer would do once

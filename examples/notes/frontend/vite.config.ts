@@ -1,8 +1,25 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: {
+      // `@nube/starter-ui-kit` ships source-only and uses `@/` to
+      // self-reference its component / lib directories. Vite needs
+      // the alias spelled out so the import graph resolves at dev
+      // time the same way tsc does (see tsconfig#paths).
+      "@": path.resolve(
+        __dirname,
+        "../../../packages/starter-ui-kit/src",
+      ),
+    },
+  },
   server: {
     port: 5173,
     proxy: {
@@ -15,6 +32,7 @@ export default defineConfig({
       "/extensions": "http://localhost:8080",
       "/health": "http://localhost:8080",
       "/hello": "http://localhost:8080",
+      "/api": "http://localhost:8080",
     },
   },
 });

@@ -102,7 +102,7 @@ async function registerOne(
   // `vite-ignore` keeps the dynamic-import bare specifier from being
   // statically analysed. The URL is server-side data, not a literal
   // module path the bundler should pre-resolve.
-  const url = `${client.baseUrl}/extensions/${encodeURIComponent(id)}/ui/${ui.entry}`;
+  const url = `${client.baseUrl}/extensions/${encodeURIComponent(id)}/${ui.entry}`;
   const mod: { default: import("@nube/starter-ext-ui").ExtensionRemoteFactory } =
     await import(/* @vite-ignore */ url);
   await host.registerExtensionRemote(id, ui, mod.default);

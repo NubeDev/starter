@@ -5,3 +5,4 @@
 export * from "./health.js";
 export * from "./auth.js";
 export * from "./openapi.js";
+export * from "./theme.js";

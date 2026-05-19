@@ -697,25 +697,47 @@ end.
 
 Each phase is independently deployable and reversible.
 
-- **Phase 0** — Land `starter-spi::units` (enums + `StaticRegistry`)
-  and `starter-spi::preferences` (DTOs). No storage, no routes.
-  Unblocks downstream design without committing to the wire surface.
-- **Phase 1** — `starter-prefs`: tables + 4 REST endpoints + resolver
-  + `starter-client-rs` methods + a `starter-cli prefs` subcommand.
-  Three-layer resolution works end-to-end against a sqlite store.
-- **Phase 2** — `Accept-Units` middleware + per-series response
-  shape. Read-path conversion is live; storage stays canonical.
-  Audit middleware to confirm no log line ever sees a converted
-  value (R6).
-- **Phase 3** — `starter-i18n`: catalog loader, `Accept-Language`
-  middleware, `GET /v1/i18n/catalogs/{lang}`, seed `en.json` +
-  `es.json` covering starter's own UI strings (auth, errors,
-  settings page chrome).
-- **Phase 4** — `@nube/starter-ui-core`: `PreferencesProvider`,
-  `formatters.ts`, Settings page wired into `starter-auth-users`'
+Open work and per-phase open items are tracked in
+[TODO.md](./TODO.md). Phase 0's verification report is in
+[PHASE0-VERIFY.md](./PHASE0-VERIFY.md).
+
+- **Phase 0 — DONE.** Landed via job
+  [`.codeless/jobs/starter-prefs-spi`](../../../.codeless/jobs/starter-prefs-spi/SCOPE.md)
+  (stages 1–7, commits `984a262` → `61921d4`). `starter-spi` now
+  exposes the `units`, `preferences`, and `i18n` modules with the
+  closed `Quantity` / `Unit` enums, `ResolvedPreferences` /
+  `PreferencesPatch` DTOs, `LanguageTag` / `MessageKey` /
+  `Diagnostic`, and a `StaticRegistry` that routes every conversion
+  through `uom`. New starter-spi deps: `uom` (si) and
+  `icu_locale_core`. Baseline at
+  [`starter-spi-deps.baseline.txt`](./starter-spi-deps.baseline.txt)
+  is the CI seam every future starter-spi-touching PR diffs against.
+  Headless-appliance smoke (no `starter-prefs` / `starter-i18n` in
+  the build graph) holds — those crates do not exist yet by design.
+  **Open follow-up:** the `starter-flow-spi` baseline drifted
+  (`uom` + `icu_locale_core` transitive through `starter-spi`); see
+  [PHASE0-VERIFY.md](./PHASE0-VERIFY.md) §"starter-flow-spi
+  baseline — REGRESSION FLAG" and the matching entry in
+  [TODO.md](./TODO.md).
+- **Phase 1 — TODO.** `starter-prefs` crate: tables + 4 REST
+  endpoints + three-layer resolver + `"auto"` derivation +
+  `starter-client-rs` methods + a `starter-cli prefs` subcommand.
+  End-to-end against a sqlite store. Lands `iso_currency` (D-U0.3:
+  ISO 4217 validation lives here, not in `starter-spi`).
+- **Phase 2 — TODO.** `Accept-Units` middleware in `starter-server`
+  + per-series response shape (R8). Read-path conversion live;
+  storage stays canonical. Audit middleware to confirm no log line
+  ever sees a converted value (R6).
+- **Phase 3 — TODO.** `starter-i18n` crate: catalog loader,
+  `Accept-Language` middleware, `GET /v1/i18n/catalogs/{lang}` +
+  `/v1/i18n/manifest`, seed `en.json` + `es.json` covering
+  starter's own UI strings (auth, errors, settings page chrome).
+- **Phase 4 — TODO.** `@nube/starter-ui-core`:
+  `PreferencesProvider`, `formatters.ts`, `IntlProvider`,
+  `useTranslate`, Settings page wired into `starter-auth-users`'
   account page. Re-export pure formatters + `useTranslate` for
   consumer apps.
-- **Phase 5** — Diagnostics rewriter (opt-in feature on
+- **Phase 5 — TODO.** Diagnostics rewriter (opt-in feature on
   `starter-i18n`) for server-originated messages on long-running
   jobs. Closes the one documented exception to client-side
   translation.

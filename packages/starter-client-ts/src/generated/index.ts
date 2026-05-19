@@ -4,6 +4,54 @@
  */
 
 export interface paths {
+    "/api/v1/ui/theme": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ui_theme_get"];
+        put: operations["ui_theme_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ui/theme/favicon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ui_theme_favicon_get"];
+        put?: never;
+        post: operations["ui_theme_favicon_post"];
+        delete: operations["ui_theme_favicon_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ui/theme/logo": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["ui_theme_logo_get"];
+        put?: never;
+        post: operations["ui_theme_logo_post"];
+        delete: operations["ui_theme_logo_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -81,6 +129,25 @@ export interface components {
             subject: string;
         };
         /**
+         * @description Body returned by `POST /auth/login` when the matched user has no
+         *     local password (`password_hash IS NULL`). The SPA reads
+         *     `providers` to render "Sign in with GitHub / Google" buttons
+         *     without a guess-and-check round trip.
+         */
+        PasswordNotSetResponse: {
+            /**
+             * @description Always `"password_not_set"`. Discriminator field; lets clients
+             *     pattern-match without inspecting the HTTP status alone.
+             */
+            error: string;
+            /**
+             * @description Provider ids the user has linked. Empty list when no
+             *     third-party path is configured (the default
+             *     [`crate::NoLinkedProviders`] impl).
+             */
+            providers: string[];
+        };
+        /**
          * @description Machine-readable error body.
          *
          *     Mirrors RFC 7807 loosely. The `type` field is a stable string
@@ -105,6 +172,74 @@ export interface components {
          * @enum {string}
          */
         Role: "reader" | "writer" | "admin";
+        /**
+         * @description Non-token branding choices that travel with the theme.
+         *
+         *     `hide_features` carries consumer-defined string ids — starter
+         *     itself attaches no meaning to them; the consumer's shell layer
+         *     reads the list and hides the matching nav items.
+         */
+        ShellConfig: {
+            /** @description Consumer-defined feature ids the admin wants hidden. */
+            hide_features?: string[];
+            /** @description Display name shown in the top nav. */
+            nav_title?: string;
+        };
+        /**
+         * @description The full org-level theme: style maps, branding sidecar, and the
+         *     (optional) URLs of the uploaded logo / favicon.
+         *
+         *     Asset URLs are `None` until the consumer uploads each asset; the
+         *     frontend treats `None` as "fall back to your bundled defaults".
+         */
+        ThemeDocument: {
+            /** @description Where the server serves the favicon, if any. */
+            favicon_url?: string | null;
+            /** @description Where the server serves the logo, if any. */
+            logo_url?: string | null;
+            /** @description Branding sidecar. */
+            shell: components["schemas"]["ShellConfig"];
+            /** @description Light + dark token maps. */
+            theme_styles: components["schemas"]["ThemeStyles"];
+        };
+        /**
+         * @description Editor → server save payload. Mirrors the shape the frontend
+         *     `httpThemeTransport.save({ theme_styles, shell })` already sends.
+         *
+         *     Asset URLs are *not* in this DTO — uploads are separate
+         *     `POST /api/v1/ui/theme/{logo,favicon}` endpoints so the JSON
+         *     surface stays plain JSON (no multipart juggling).
+         */
+        ThemeSaveInput: {
+            /** @description Branding sidecar. */
+            shell: components["schemas"]["ShellConfig"];
+            /** @description Light + dark token maps. */
+            theme_styles: components["schemas"]["ThemeStyles"];
+        };
+        /**
+         * @description Light + dark CSS-custom-property maps.
+         *
+         *     Keys are the unprefixed token names (`"primary"`, not
+         *     `"--primary"`); the frontend stamps the `--` prefix at apply
+         *     time. Values are CSS strings — colours, lengths, font stacks —
+         *     whatever the corresponding token expects. See the token surface
+         *     table in `DOCS/frontend/theme/README.md` for the canonical
+         *     38-key set.
+         *
+         *     `BTreeMap` rather than `HashMap`: serialised output is
+         *     deterministic, which keeps OpenAPI snapshots and integration
+         *     tests stable.
+         */
+        ThemeStyles: {
+            /** @description Tokens applied when the resolved mode is `dark`. */
+            dark?: {
+                [key: string]: string;
+            };
+            /** @description Tokens applied when the resolved mode is `light`. */
+            light?: {
+                [key: string]: string;
+            };
+        };
     };
     responses: never;
     parameters: never;
@@ -114,6 +249,301 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    ui_theme_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Current theme document */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThemeDocument"];
+                };
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ThemeSaveInput"];
+            };
+        };
+        responses: {
+            /** @description Saved; returns the updated document */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ThemeDocument"];
+                };
+            };
+            /** @description Validation failed */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Body too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_favicon_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Favicon bytes (content-type as stored) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No favicon configured */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_favicon_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Raw image bytes */
+        requestBody: {
+            content: {
+                "image/png": number[];
+            };
+        };
+        responses: {
+            /** @description Favicon stored */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Asset too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unsupported media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_favicon_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Favicon cleared (idempotent) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_logo_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logo bytes (content-type as stored) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No logo configured */
+            404: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_logo_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** @description Raw image bytes */
+        requestBody: {
+            content: {
+                "image/png": number[];
+            };
+        };
+        responses: {
+            /** @description Logo stored */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Asset too large */
+            413: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Unsupported media type */
+            415: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ui_theme_logo_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Logo cleared (idempotent) */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Authentication required */
+            401: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Admin role required */
+            403: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -134,6 +564,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["LoginResponse"];
+                };
+            };
+            /** @description Account has no local password; sign in via a linked provider */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PasswordNotSetResponse"];
                 };
             };
             /** @description Invalid credentials */

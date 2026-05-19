@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./auth": "./src/auth/index.ts",
     "./query": "./src/query/index.ts",
-    "./testing": "./src/testing/index.ts"
+    "./testing": "./src/testing/index.ts",
+    "./theme-editor": "./src/theme-editor/index.ts"
   },
   "files": ["src", "README.md"],
   "scripts": {
@@ -24,10 +25,12 @@
   "dependencies": {
     "@nube/starter-client-ts": "workspace:*",
     "@tanstack/react-query": "^5.59.0",
+    "culori": "^4.0.1",
     "zustand": "^5.0.0"
   },
   "devDependencies": {
     "@testing-library/react": "^16.1.0",
+    "@types/culori": "^4.0.0",
     "@types/react": "^18.3.0",
     "@types/react-dom": "^18.3.0",
     "jsdom": "^25.0.0",

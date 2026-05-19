@@ -10,7 +10,10 @@ static AUTH_TOKEN: sqlx::migrate::Migrator =
 
 static NOTES: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/notes");
 
-pub fn sources() -> [MigrationSource; 2] {
+static UI_THEME: sqlx::migrate::Migrator =
+    sqlx::migrate!("../../crates/starter-ui-theme/migrations/ui_theme_sqlite");
+
+pub fn sources() -> [MigrationSource; 3] {
     [
         MigrationSource {
             name: "starter_auth_token",
@@ -19,6 +22,10 @@ pub fn sources() -> [MigrationSource; 2] {
         MigrationSource {
             name: "notes",
             migrator: &NOTES,
+        },
+        MigrationSource {
+            name: "ui_theme",
+            migrator: &UI_THEME,
         },
     ]
 }
