@@ -19,10 +19,27 @@ rust-version.workspace = true
 [dependencies]
 starter-flow-spi = { workspace = true, default-features = false }
 # R2: the propagator is a synchronous loop driven from a tokio
-# runtime. The workspace tokio dep already enables `rt-multi-thread`;
-# the explicit `features = ["rt-multi-thread"]` line is kept here so
-# the requirement is grep-visible from this crate's manifest.
-tokio            = { workspace = true, features = ["rt-multi-thread"] }
+# runtime. The workspace tokio dep already enables `rt-multi-thread`,
+# `macros`, `sync`, `signal`; the explicit feature list is kept here
+# so the requirement is grep-visible from this crate's manifest.
+# `sync` underwrites the in-memory `GraphStore` impl (`RwLock` +
+# `broadcast`).
+tokio            = { workspace = true, features = ["rt-multi-thread", "sync"] }
+# `tokio_stream::wrappers::BroadcastStream` is the bridge from the
+# per-store `broadcast::Sender` to the SPI `SubscriptionStream`
+# (`BoxStream<GraphEventEnvelope>`).
+tokio-stream     = { workspace = true }
+# Per-write `tracing` span on `write_slot` (R2 observability).
+tracing          = { workspace = true }
+async-trait      = { workspace = true }
+futures          = { workspace = true }
+# Typed error surface for the in-engine registries (stage 5).
+thiserror        = { workspace = true }
+
+[dev-dependencies]
+# Pull `macros` for `#[tokio::test]` and `time` for the lag/yield
+# helpers used by the in-memory-store unit tests.
+tokio            = { workspace = true, features = ["rt-multi-thread", "sync", "macros", "time"] }
 
 [features]
 default = []
