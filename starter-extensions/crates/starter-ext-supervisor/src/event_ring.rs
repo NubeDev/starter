@@ -89,6 +89,12 @@ pub const MAX_STDERR_LINE_BYTES: usize = 1024;
 pub struct Event {
     /// Wall-clock time the event was recorded.
     pub at: SystemTime,
+    /// Monotonically-increasing per-ring sequence number. Surfaced so
+    /// `GET /extensions/<id>/events?after=<seq>` (and its SSE live-tail
+    /// upgrade) can resume cleanly across reconnects without depending
+    /// on wall-clock equality. Never re-used: the counter is monotone
+    /// even when older entries fall off the front of the ring.
+    pub seq: u64,
     /// Typed event payload.
     pub kind: EventKind,
 }
@@ -100,8 +106,15 @@ pub const DEFAULT_CAPACITY: usize = 1000;
 /// amortised behind a `Mutex`.
 #[derive(Debug)]
 pub struct EventRing {
-    inner: Mutex<VecDeque<Event>>,
+    inner: Mutex<RingInner>,
     capacity: usize,
+}
+
+#[derive(Debug)]
+struct RingInner {
+    queue: VecDeque<Event>,
+    /// Total number of pushes ever seen (monotone; survives ring eviction).
+    next_seq: u64,
 }
 
 impl EventRing {
@@ -115,22 +128,28 @@ impl EventRing {
     /// caller meant.
     pub fn with_capacity(cap: usize) -> Self {
         Self {
-            inner: Mutex::new(VecDeque::with_capacity(cap.max(1))),
+            inner: Mutex::new(RingInner {
+                queue: VecDeque::with_capacity(cap.max(1)),
+                next_seq: 0,
+            }),
             capacity: cap.max(1),
         }
     }
 
     /// Append. Drops the oldest entry once the ring is full.
     pub fn push(&self, kind: EventKind) {
+        let mut inner = self.inner.lock().expect("event ring mutex poisoned");
+        let seq = inner.next_seq;
+        inner.next_seq = inner.next_seq.wrapping_add(1);
         let event = Event {
             at: SystemTime::now(),
+            seq,
             kind,
         };
-        let mut q = self.inner.lock().expect("event ring mutex poisoned");
-        if q.len() == self.capacity {
-            q.pop_front();
+        if inner.queue.len() == self.capacity {
+            inner.queue.pop_front();
         }
-        q.push_back(event);
+        inner.queue.push_back(event);
     }
 
     /// Snapshot every entry, oldest first. Bounded by capacity; safe to
@@ -139,9 +158,35 @@ impl EventRing {
         self.inner
             .lock()
             .expect("event ring mutex poisoned")
+            .queue
             .iter()
             .cloned()
             .collect()
+    }
+
+    /// Snapshot every entry whose `seq` is strictly greater than `after`,
+    /// oldest first. Used by the live-tail SSE upgrade in
+    /// `starter-ext-server` to resume from a known cursor without
+    /// re-emitting history.
+    pub fn since(&self, after: u64) -> Vec<Event> {
+        self.inner
+            .lock()
+            .expect("event ring mutex poisoned")
+            .queue
+            .iter()
+            .filter(|e| e.seq > after)
+            .cloned()
+            .collect()
+    }
+
+    /// The sequence number the *next* push will receive. Equivalent to
+    /// "total pushes seen so far". The admin endpoint exposes this as
+    /// the `next_seq` cursor in paginated responses.
+    pub fn next_seq(&self) -> u64 {
+        self.inner
+            .lock()
+            .expect("event ring mutex poisoned")
+            .next_seq
     }
 
     /// Number of entries currently in the ring.
@@ -149,6 +194,7 @@ impl EventRing {
         self.inner
             .lock()
             .expect("event ring mutex poisoned")
+            .queue
             .len()
     }
 
@@ -192,5 +238,20 @@ mod tests {
         assert_eq!(j["kind"], "state_transition");
         let back: EventKind = serde_json::from_value(j).unwrap();
         assert_eq!(back, e);
+    }
+
+    #[test]
+    fn seq_is_monotone_and_survives_eviction() {
+        let ring = EventRing::with_capacity(3);
+        for i in 0..5 {
+            ring.push(EventKind::Spawned { pid: i });
+        }
+        let snap = ring.snapshot();
+        assert_eq!(snap[0].seq, 2);
+        assert_eq!(snap[1].seq, 3);
+        assert_eq!(snap[2].seq, 4);
+        assert_eq!(ring.next_seq(), 5);
+        assert_eq!(ring.since(2).len(), 2);
+        assert_eq!(ring.since(4).len(), 0);
     }
 }

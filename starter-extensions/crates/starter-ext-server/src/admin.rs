@@ -1,0 +1,154 @@
+//! [`ExtensionAdmin`] — shared state for the admin routes.
+//!
+//! One cheap-to-clone handle the router and every handler share. It
+//! wraps:
+//!
+//! - The sealed [`ExtensionRegistry`] returned from
+//!   `Loader::commit`. Immutable for the host's lifetime.
+//! - A map of currently-running [`SupervisorHandle`]s keyed by
+//!   extension id. Mutable: disable removes an entry (after sending
+//!   shutdown), enable inserts one (after re-spawning via the factory).
+//! - An [`EnablementStore`] for persistence.
+//! - A [`SupervisorFactory`] for spawning on enable.
+//! - The on-disk ETag cache used by `GET /extensions/<id>/ui/*`.
+//!
+//! The struct is cheap to `Clone` because the heavy state is behind
+//! `Arc`. Handlers take a `State<ExtensionAdmin>` and pull what they
+//! need.
+
+use std::collections::HashMap;
+use std::sync::{Arc, RwLock};
+
+use starter_ext_host::ExtensionRegistry;
+use starter_ext_spi::ExtensionId;
+use starter_ext_supervisor::SupervisorHandle;
+
+use crate::etag::EtagCache;
+use crate::factory::{DefaultSupervisorFactory, DynFactory};
+use crate::store::{EnablementStore, InMemoryEnablementStore};
+
+/// Cheap-to-clone shared state. See module docs.
+#[derive(Clone)]
+pub struct ExtensionAdmin {
+    inner: Arc<Inner>,
+}
+
+struct Inner {
+    registry: Arc<ExtensionRegistry>,
+    supervisors: RwLock<HashMap<String, SupervisorHandle>>,
+    store: Arc<dyn EnablementStore>,
+    factory: DynFactory,
+    etag_cache: EtagCache,
+}
+
+impl ExtensionAdmin {
+    /// Start building from a sealed registry.
+    pub fn builder(registry: Arc<ExtensionRegistry>) -> ExtensionAdminBuilder {
+        ExtensionAdminBuilder {
+            registry,
+            supervisors: HashMap::new(),
+            store: None,
+            factory: None,
+        }
+    }
+
+    /// Read the underlying registry. Adapters / tests may need direct
+    /// access to enumerate records.
+    pub fn registry(&self) -> &ExtensionRegistry {
+        &self.inner.registry
+    }
+
+    /// Look up a live supervisor handle by id.
+    pub(crate) fn supervisor(&self, id: &ExtensionId) -> Option<SupervisorHandle> {
+        self.inner
+            .supervisors
+            .read()
+            .expect("supervisor map poisoned")
+            .get(id.as_str())
+            .cloned()
+    }
+
+    /// Replace (or remove) the live supervisor handle for an id.
+    /// Returns the previous handle, if any.
+    pub(crate) fn replace_supervisor(
+        &self,
+        id: &ExtensionId,
+        new: Option<SupervisorHandle>,
+    ) -> Option<SupervisorHandle> {
+        let mut map = self
+            .inner
+            .supervisors
+            .write()
+            .expect("supervisor map poisoned");
+        match new {
+            Some(h) => map.insert(id.as_str().to_string(), h),
+            None => map.remove(id.as_str()),
+        }
+    }
+
+    pub(crate) fn store(&self) -> &dyn EnablementStore {
+        &*self.inner.store
+    }
+
+    pub(crate) fn factory(&self) -> &DynFactory {
+        &self.inner.factory
+    }
+
+    pub(crate) fn etag_cache(&self) -> &EtagCache {
+        &self.inner.etag_cache
+    }
+}
+
+/// Fluent builder. `registry` is the only required input; the rest
+/// fall back to sensible defaults so a `TestApp` can construct one
+/// with `.build()` and no further setup.
+pub struct ExtensionAdminBuilder {
+    registry: Arc<ExtensionRegistry>,
+    supervisors: HashMap<String, SupervisorHandle>,
+    store: Option<Arc<dyn EnablementStore>>,
+    factory: Option<DynFactory>,
+}
+
+impl ExtensionAdminBuilder {
+    /// Pre-populate the supervisor map. Called by the host immediately
+    /// after `Loader::commit` returns, once supervisors have been
+    /// spawned for every initially-enabled process record.
+    pub fn with_supervisors(
+        mut self,
+        supervisors: HashMap<String, SupervisorHandle>,
+    ) -> Self {
+        self.supervisors = supervisors;
+        self
+    }
+
+    /// Wire a custom persistence backend. Defaults to
+    /// [`InMemoryEnablementStore`] when unset.
+    pub fn with_enablement_store(mut self, store: Arc<dyn EnablementStore>) -> Self {
+        self.store = Some(store);
+        self
+    }
+
+    /// Wire a custom supervisor factory. Defaults to
+    /// [`DefaultSupervisorFactory`] when unset.
+    pub fn with_supervisor_factory(mut self, factory: DynFactory) -> Self {
+        self.factory = Some(factory);
+        self
+    }
+
+    /// Materialise the [`ExtensionAdmin`].
+    pub fn build(self) -> ExtensionAdmin {
+        ExtensionAdmin {
+            inner: Arc::new(Inner {
+                registry: self.registry,
+                supervisors: RwLock::new(self.supervisors),
+                store: self
+                    .store
+                    .unwrap_or_else(|| Arc::new(InMemoryEnablementStore::new())),
+                factory: self
+                    .factory
+                    .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory)),
+                etag_cache: EtagCache::new(),
+            }),
+        }
+    }
+}
