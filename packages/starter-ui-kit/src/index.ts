@@ -19,6 +19,7 @@ export { cn } from "./lib/utils.js";
 
 export * from "./theme/index.js";
 export * from "./hooks/index.js";
+export * from "./theme-editor/index.js";
 
 export * from "./components/ui/alert.js";
 export * from "./components/ui/alert-dialog.js";

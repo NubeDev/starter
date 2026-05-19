@@ -655,8 +655,14 @@ Host-side Module Federation runtime. **Forked from
 rubix-specific concepts (graph nodes, kind ids, slot path strings
 tied to the graph store) stripped.
 
-- `<ExtensionSlot id="sidebar"/>` — declared slot location; mounts
-  every contribution whose manifest sets `slot: sidebar`.
+- `<ExtensionSlot id="sidebar" theme={mode} themeTokens={tokens}/>` —
+  declared slot location; mounts every contribution whose manifest
+  sets `slot: sidebar`. `theme` / `themeTokens` are optional and
+  thread the host's active mode (`light` | `dark` | custom) and the
+  resolved 38-key token map through the per-slot `SlotContext`. Hosts
+  wiring `@nube/starter-ui-core/theme-editor` pass
+  `useThemeEditorStore(s => s.styles[s.mode])` as `themeTokens`;
+  extensions then read them via `useHostTheme()` (see SDK below).
 - `useExtensionHost()` — list installed extensions, their state, and
   trigger enable/disable. Reads from `starter-client-ts` against
   `/extensions`.
@@ -666,6 +672,12 @@ tied to the graph store) stripped.
 - Negotiated singletons: React, react-dom, `@tanstack/react-query`,
   zustand. Extensions consume the host's instance; the host enforces
   matching majors.
+- **Theme inheritance is automatic for shadcn primitives.** Every
+  extension panel mounts inside the host's `<html>`, so the CSS
+  variables the host stamps on `:root` (`--background`, `--primary`,
+  `--chart-1` …) cascade into the extension's DOM without explicit
+  wiring. Extensions only need `useHostTheme()` when they read
+  tokens programmatically (chart libraries, canvas, CSS-in-JS).
 
 ### `starter-ext-sdk-ts` (TS)
 
@@ -679,8 +691,16 @@ starter.
   pre-configured with auth + tracing.
 - `<BlockShell>` — standard panel wrapper providing the slot
   context, error boundary, and loading state.
-- `useSlotContext()` — hook returning the slot id, host theme, and
-  feature flags relevant to where the extension is mounted.
+- `useSlotContext()` — hook returning the slot id, host theme mode,
+  resolved theme token map, and feature flags relevant to where the
+  extension is mounted.
+- `useHostTheme()` — the supported read API for the host theme.
+  Returns `{ mode, tokens, token(key) }`; the `token()` helper
+  prefers the host-supplied map and falls back to live
+  `getComputedStyle(document.documentElement)` so the hook works
+  even when the host has not wired the theme editor yet. Use this
+  for chart palettes, canvas drawings, or any code that needs the
+  raw value rather than relying on the CSS-variable cascade.
 - `registerExtensionContributions({ slots, components })` — single
   registration entry point called from the extension's `remoteEntry`
   init.

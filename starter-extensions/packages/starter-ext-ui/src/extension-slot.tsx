@@ -14,6 +14,7 @@
 import * as React from "react";
 
 import { SlotContextProvider } from "@nube/starter-ext-sdk-ts";
+import type { HostThemeMode, HostThemeTokens } from "@nube/starter-ext-sdk-ts";
 
 import { useExtensionHostManager } from "./host-context.js";
 
@@ -24,11 +25,22 @@ export interface ExtensionSlotProps {
    */
   id: string;
   /**
-   * Host theme passed down to the per-slot context. Defaults to
+   * Host theme mode passed down to the per-slot context. Defaults to
    * `"light"`; consumers wiring real theming pipe their current
-   * theme name through.
+   * mode (typically `useTheme().resolved` from
+   * `@nube/starter-ui-kit`) through.
    */
-  theme?: string;
+  theme?: HostThemeMode;
+  /**
+   * Resolved theme token map for the current mode. When supplied,
+   * extensions can read it programmatically via `useHostTheme()`;
+   * when omitted, the hook falls back to live `getComputedStyle` on
+   * `document.documentElement`. The host's theme editor in
+   * `@nube/starter-ui-core/theme-editor` exposes the map via its
+   * `useThemeEditorStore`; consumers wiring the editor through pipe
+   * `state.styles[state.mode]` here.
+   */
+  themeTokens?: HostThemeTokens;
   /**
    * Feature flags passed to every contribution mounted in this slot.
    * The host's flag store is opaque to this package; the consumer
@@ -68,6 +80,7 @@ export function ExtensionSlot(props: ExtensionSlotProps): React.ReactElement {
               slotId: props.id,
               extensionId: r.extensionId,
               theme: props.theme ?? "light",
+              themeTokens: props.themeTokens ?? null,
               flags: props.flags ?? {},
             }}
           >

@@ -34,7 +34,13 @@ export {
   useSlotContext,
   type SlotContext,
   type SlotContextProviderProps,
+  type HostThemeMode,
+  type HostThemeTokens,
 } from "./slot-context.js";
+export {
+  useHostTheme,
+  type HostTheme,
+} from "./use-host-theme.js";
 export {
   registerExtensionContributions,
   type ExtensionContributions,

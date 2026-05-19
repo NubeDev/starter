@@ -1,0 +1,4 @@
+.env.e2e
+.e2e-notes.db
+test-results/
+playwright-report/

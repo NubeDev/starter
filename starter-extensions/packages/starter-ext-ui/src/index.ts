@@ -67,4 +67,7 @@ export type {
   ExtensionRemoteHandle,
   ExtensionContributions,
   ResolvedSingletons,
+  HostThemeMode,
+  HostThemeTokens,
+  HostTheme,
 } from "@nube/starter-ext-sdk-ts";

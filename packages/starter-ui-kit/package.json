@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/globals.css",
+    "./theme-editor": "./src/theme-editor/index.ts",
     "./components/*": "./src/components/ui/*.tsx",
     "./lib/utils": "./src/lib/utils.ts"
   },
@@ -17,7 +18,8 @@
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
-  "peerDependencies": {
+  "pe@nube/starter-ui-core": "workspace:*",
+    "erDependencies": {
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19",
     "tailwindcss": "^4"

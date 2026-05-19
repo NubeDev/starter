@@ -1,0 +1,33 @@
+v: 1
+id: com.nube.hello
+version: 0.1.0
+display_name: "Hello"
+description_file: docs/README.md
+authors: ["notes-example"]
+
+# Builtin runtime: the host's `server.rs` registers a `BuiltinTable`
+# entry for `com.nube.hello` with one closure handling both the tool
+# id and the REST id. `crate_name` is informational — the actual
+# binding is by `ExtensionId` lookup, not by linker symbol.
+runtime:
+  kind: builtin
+  crate_name: notes_hello_demo
+
+contributes:
+  tools:
+    - id: com.nube.hello.greet
+      input_schema:  schemas/greet_in.json
+      output_schema: schemas/greet_out.json
+      description_file: docs/greet.md
+
+  rest:
+    - id: com.nube.hello.rest_greet
+      method: GET
+      path: /hello
+      description_file: docs/rest_greet.md
+      response_schema: schemas/greet_out.json
+
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - { name: HelloPanel, module: "./Panel", slot: sidebar }

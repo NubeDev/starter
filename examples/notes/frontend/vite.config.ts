@@ -12,6 +12,9 @@ export default defineConfig({
       "/notes": "http://localhost:8080",
       "/auth": "http://localhost:8080",
       "/mcp": "http://localhost:8080",
+      "/extensions": "http://localhost:8080",
+      "/health": "http://localhost:8080",
+      "/hello": "http://localhost:8080",
     },
   },
 });
