@@ -81,6 +81,10 @@ password-auth = "1"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 prometheus  = "0.14"
 
+# Secret material handling. Re-exported from `starter-spi` so provider
+# crates don't pick up `secrecy` directly (SCOPE rule R5).
+secrecy     = { version = "0.10", features = ["serde"] }
+
 # Client / CLI.
 reqwest     = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
 clap        = { version = "4",    features = ["derive", "env"] }

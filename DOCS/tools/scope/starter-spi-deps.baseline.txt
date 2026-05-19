@@ -21,34 +21,52 @@ cfg-if v1.0.4
 chrono v0.4.44
 equivalent v1.0.2
 errno v0.3.14
+fnv v1.0.7
 getrandom v0.4.2
 hashbrown v0.17.1
 iana-time-zone v0.1.65
 indexmap v2.14.0
 itoa v1.0.18
+lazy_static v1.5.0
 libc v0.2.186
+lock_api v0.4.14
 memchr v2.8.0
 mio v1.2.0
 num-traits v0.2.19
+once_cell v1.21.4
+parking_lot v0.12.5
+parking_lot_core v0.9.12
 pin-project-lite v0.2.17
 proc-macro2 v1.0.106
+prometheus v0.14.0
+protobuf v3.7.2
+protobuf-support v3.7.2
 quote v1.0.45
 regex v1.12.3
 regex-automata v0.4.14
 regex-syntax v0.8.10
+scopeguard v1.2.0
+secrecy v0.10.3
 serde v1.0.228
 serde_core v1.0.228
 serde_derive v1.0.228 (proc-macro)
 serde_json v1.0.149
 signal-hook-registry v1.4.8
+smallvec v1.15.1
 starter-spi v0.1.0
 syn v2.0.117
 thiserror v1.0.69
+thiserror v2.0.18
 thiserror-impl v1.0.69 (proc-macro)
+thiserror-impl v2.0.18 (proc-macro)
 tokio v1.52.3
 tokio-macros v2.7.0 (proc-macro)
+tracing v0.1.44
+tracing-attributes v0.1.31 (proc-macro)
+tracing-core v0.1.36
 unicode-ident v1.0.24
 utoipa v5.5.0
 utoipa-gen v5.5.0 (proc-macro)
 uuid v1.23.1
+zeroize v1.8.2
 zmij v1.0.21

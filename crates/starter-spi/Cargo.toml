@@ -19,9 +19,30 @@ chrono      = { workspace = true }
 # Needed for the `mpsc::Sender<Event>` shape `AiRunner::run` uses to
 # stream events. The `sync` channel module is pure data structures;
 # we just inherit whatever feature set the workspace sets.
-tokio       = { workspace = true, features = ["sync"] }
+tokio       = { workspace = true, features = ["sync", "time", "rt", "macros"] }
 
 # OpenAPI schema derivation. R7: utoipa is the single source of truth
 # for wire types; the TS client is codegen'd from the document this
 # crate's DTOs produce.
 utoipa = { workspace = true }
+
+# `Service`-side additions per DOCS/tools/scope/SCOPE.md.
+#
+# `prometheus::Registry` is plumbed through `ServiceContext` so provider
+# crates register their own metrics against the consumer's registry
+# (R7). `secrecy::SecretString` is re-exported at the crate root so
+# provider crates don't pull `secrecy` directly (R5). `tracing` is used
+# by the `Vec<Arc<dyn EventSink>>` fan-out helper to log-and-continue on
+# per-sink errors (D4).
+prometheus  = { workspace = true }
+secrecy     = { workspace = true }
+tracing     = { workspace = true }
+
+[features]
+# `broadcast` ships the blanket `EventSink for tokio::sync::broadcast::Sender<E>`
+# impl. Default-on so `cargo add starter-spi` gets the ergonomic happy
+# path (Decision D2). An embedded consumer that wants `Service`/
+# `EventSink` without the broadcast machinery disables default features
+# and brings its own sink impl.
+default   = ["broadcast"]
+broadcast = []

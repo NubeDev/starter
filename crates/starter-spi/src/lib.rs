@@ -21,9 +21,18 @@ pub mod filter;
 pub mod id;
 pub mod paging;
 pub mod secrets;
+pub mod service;
 pub mod sort;
 pub mod tool;
 
 pub use error::{Error, Result};
 pub use id::Id;
 pub use paging::{Cursor, Page};
+
+/// `secrecy::SecretString` re-exported at the crate root.
+///
+/// SCOPE rule R5: provider crates take already-resolved secrets as
+/// `SecretString` and **do not depend on `secrecy` directly**. They
+/// reach for `starter_spi::SecretString` instead. This is the only
+/// place in the workspace `secrecy` is named as a direct dependency.
+pub use secrecy::SecretString;
