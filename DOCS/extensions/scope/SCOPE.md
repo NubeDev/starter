@@ -882,30 +882,121 @@ accidentally re-exported host-internal types, the test fails.
   `plugin.toml` and rubix's `block.yaml` so migration is *possible*.
   Migration is not v0.1's job; the framework does not change to
   accommodate either existing project.
+- **Extension bundle on-disk convention:** default location is
+  `$XDG_DATA_HOME/<binary>/extensions/<id>/` (falling back to
+  `~/.local/share/<binary>/extensions/<id>/` when `XDG_DATA_HOME` is
+  unset, per the XDG Base Directory Specification). `<binary>` is the
+  consumer product's binary name; `<id>` is the extension's
+  reverse-DNS id. The consumer can override the root via
+  `starter-config` (`extensions.root` key) — the default is just the
+  default, never the contract. The loader walks the configured root
+  one directory deep; each immediate child whose name matches an
+  `id` is a candidate. **Revisit trigger:** a consumer ships on a
+  platform without an XDG-equivalent (Windows-only deploy), or a
+  consumer needs multi-root layering (e.g. system bundles + user
+  bundles merged). Either bumps this from a default to a contract
+  shaped by real constraints.
+- **Admin-endpoint capability set:** `POST
+  /extensions/<id>/enable|disable` ships behind `Role::Admin` from
+  `starter-spi` in v0.1. The proposed `Role::ExtensionManage` (or
+  `Scope::ExtensionManage`) is **explicitly deferred** — adding it
+  speculatively would force consumers to model a role they may never
+  need, and removing it later is a breaking change to their RBAC
+  config. **Revisit trigger:** the first consumer who wants an
+  operator persona that can toggle extensions but cannot perform
+  other admin actions. At that point the finer-grained scope is
+  added as an *alternative* gate (admin OR extension-manage), not a
+  replacement, so existing deployments keep working.
+- **`enable`/`disable` persistence model:** disabled state lives in
+  a database row keyed by extension id, in a table owned by the
+  consumer's storage layer (the same storage seam that backs other
+  starter-server admin state). On startup `starter-ext-host` queries
+  that table during `Loader::commit` and applies the persisted
+  disabled bit to the registry record's `enabled` field; the
+  supervisor consults `enabled` before spawning. A sidecar
+  `.state.yaml` next to the bundle was rejected because bundles are
+  intended to be immutable artefacts (often read-only mounts in
+  container deploys); writing mutable state next to them violates
+  that. A separate config file was rejected because admin actions
+  must be durable across process restarts without a file-write
+  step. **Revisit trigger:** a consumer ships without a DB (e.g.
+  pure-CLI deploy) and needs a file-backed alternative — the
+  persistence layer becomes a small trait (`EnableStore`) with a
+  default DB-backed impl plus a file-backed impl, gated by feature.
+- **JSON-RPC wire-schema versioning via `host_capabilities`:** when
+  v0.2 adds its first new host method, the init handshake gains a
+  `host_capabilities` field — an explicit set of method names (and
+  optional minor versions) the host supports. The extension's SDK
+  records this set on the `Ctx` handle; calls to methods absent from
+  the set return a typed `Error::Capability("unsupported by host")`
+  *before* hitting the wire. Older extensions that never read
+  `host_capabilities` are unaffected (they only call v0.1 methods,
+  which are always present). Versioning is **per-method capability
+  presence**, not a monotonic wire-schema integer — that keeps
+  extensions forward-compatible with hosts that add methods, and
+  hosts forward-compatible with extensions that ignore new
+  capabilities. **Revisit trigger:** the first v0.2 host method
+  lands; the handshake field is wired in the same change that adds
+  the method, not earlier. (Adding the field with no consumers would
+  bake in a shape we cannot validate.)
+
+### Post-R13 follow-ups (adapter / streaming / per-entry auth)
+
+- **JSON-RPC streaming convention lives in `starter-ext-spi`
+  alongside `JsonRpcEnvelope`.** Long-running calls (SSE responses,
+  CLI tail-style output, gRPC server-streaming, periodic worker
+  progress) use a fixed shape: the initial request returns a
+  response carrying a `stream_id`; subsequent notifications use
+  reserved method names tagged with that id:
+  - `stream.event` — one payload chunk for an open stream.
+  - `stream.end`   — normal termination (no more events).
+  - `stream.error` — abnormal termination (carries an error payload
+    matching `Error`'s wire shape).
+  - `stream.cancel` — host→extension cancellation request (also
+    extension→host if the extension wants to abort an in-flight
+    stream it opened).
+  Every notification carries `{ "stream_id": "<opaque>", ... }` in
+  its params. Adapters (MCP, REST/SSE, CLI, gRPC, periodic, UI)
+  translate the streaming shape into their transport's native
+  conventions — SSE frames, gRPC server-streaming messages, MCP
+  notifications — but the *kernel* shape is one. This belongs in
+  `starter-ext-spi` because (a) it is wire-schema (no runtime
+  logic), (b) every adapter crate consumes it, and (c) putting it
+  anywhere else duplicates the envelope crate's role. **Revisit
+  trigger:** an adapter needs back-pressure or flow-control
+  signalling that does not fit the four-notification model. That
+  promotes streams from "notifications tagged with a stream_id" to a
+  first-class lifecycle with its own state machine; v0.1 stays
+  simple.
+- **Per-entry auth shape in the manifest:** each `contributes` entry
+  (tools, ui, future REST/CLI/gRPC entries) carries an optional
+  `require_role` and/or `require_scope` field. Both reference types
+  defined in `starter-spi` (`Role`, `Scope`) — the same types
+  consumer code uses to gate its own routes. **The adapter enforces
+  the gate, never the extension.** When a transport-specific adapter
+  (e.g. `starter-ext-rest-adapter`) wires an extension entry into a
+  route, it wraps the handler with the `Authenticator` middleware
+  configured for `require_role` / `require_scope`; the extension
+  never sees the request unless the gate passes. This keeps two
+  invariants: extensions cannot weaken or skip auth (R6 capability
+  discipline), and operators read auth requirements off the manifest
+  without reading extension source. Omitting both fields means
+  "inherit the adapter's default" (typically `Role::User` for the
+  extension namespace, configurable per-adapter). **Revisit
+  trigger:** an adapter needs a richer gate than role + scope (e.g.
+  ABAC, per-tenant policy). That gate is expressed as a `Scope`
+  with parameters, not as a new manifest field — the manifest shape
+  is stable.
 
 ## Open questions
 
-- **Versioning the JSON-RPC wire schema.** Today the envelope is a
-  fixed shape (`v: 1`-tagged). When the host adds a new host method
-  (say `kv` for cross-call state in v0.2), how does it negotiate
-  with older extensions? Likely a `host_capabilities` field in the
-  init handshake. Decision deferred until v0.2's first new host
-  method.
-- **Where extension bundles live on disk.** A default convention is
-  needed (`$XDG_DATA_HOME/<binary>/extensions/<id>/`?). Consumer can
-  override via config. Probably belongs in `starter-config`'s
-  defaults section, not here.
-- **Whether `starter-ext-server`'s admin endpoints need their own
-  capability set.** Currently gated behind `Role::Admin` from
-  `starter-spi`. Possibly needs a finer-grained
-  `Scope::ExtensionManage` so a non-admin operator can
-  enable/disable extensions without full admin. Defer until a real
-  consumer asks.
-- **`enable`/`disable` persistence model.** Operator disables an
-  extension via the admin endpoint. On host restart, is the disabled
-  state remembered? Almost certainly yes — but where (DB? config
-  file? a sidecar `.state.yaml` next to the bundle?). Defer the
-  decision until the storage seam is wired.
+*(All previously open questions have been resolved; see the
+corresponding entries under "Decisions made". This section is kept
+deliberately so that future questions land here before being
+promoted.)*
+
+- (none — see Decisions for the resolutions of the four previously
+  open questions and the two post-R13 follow-ups.)
 
 ## Phasing
 
