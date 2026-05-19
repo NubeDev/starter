@@ -1,0 +1,32 @@
+[package]
+name        = "starter-service-slack"
+description = "starter — inbound Slack Service implementing Socket Mode. Sibling crate to starter-tool-slack; see DOCS/tools/scope/SCOPE.md."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R7 (observability is required) + R8 (no transitive vendor SDKs in
+# starter-spi) — the only starter-side deps are starter-spi and
+# starter-observability. Everything else is third-party.
+[dependencies]
+starter-spi           = { workspace = true }
+starter-observability = { workspace = true }
+
+reqwest          = { workspace = true }
+tokio            = { workspace = true, features = ["rt", "rt-multi-thread", "macros", "sync", "time", "net"] }
+tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "rustls-tls-webpki-roots"] }
+futures-util     = "0.3"
+serde            = { workspace = true }
+serde_json       = { workspace = true }
+tracing          = { workspace = true }
+async-trait      = { workspace = true }
+thiserror        = { workspace = true }
+prometheus       = { workspace = true }
+url              = "2"
+
+[dev-dependencies]
+tokio            = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
+tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "handshake"] }
+wiremock         = "0.6"
