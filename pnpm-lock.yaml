@@ -153,6 +153,88 @@ importers:
         specifier: ^5.4
         version: 5.9.3
 
+  starter-extensions/examples/hello-ui:
+    dependencies:
+      '@nube/starter-ext-sdk-ts':
+        specifier: workspace:*
+        version: link:../../packages/starter-ext-sdk-ts
+    devDependencies:
+      '@nube/starter-ext-ui':
+        specifier: workspace:*
+        version: link:../../packages/starter-ext-ui
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.0
+        version: 18.3.1(react@18.3.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(jsdom@25.0.1)
+
+  starter-extensions/packages/starter-ext-sdk-ts:
+    devDependencies:
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../../packages/starter-client-ts
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(jsdom@25.0.1)
+
+  starter-extensions/packages/starter-ext-ui:
+    devDependencies:
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../../packages/starter-client-ts
+      '@nube/starter-ext-sdk-ts':
+        specifier: workspace:*
+        version: link:../starter-ext-sdk-ts
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@18.3.7(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@types/react':
+        specifier: ^18.3.0
+        version: 18.3.28
+      '@types/react-dom':
+        specifier: ^18.3.0
+        version: 18.3.7(@types/react@18.3.28)
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+      react:
+        specifier: ^18.3.0
+        version: 18.3.1
+      react-dom:
+        specifier: ^18.3.0
+        version: 18.3.1(react@18.3.1)
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(jsdom@25.0.1)
+
 packages:
 
   '@asamuzakjp/css-color@3.2.0':
@@ -3272,6 +3354,16 @@ snapshots:
       '@types/react': 18.3.28
       '@types/react-dom': 18.3.7(@types/react@18.3.28)
 
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@18.3.28))(@types/react@18.3.28)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@babel/runtime': 7.29.2
+      '@testing-library/dom': 10.4.1
+      react: 18.3.1
+      react-dom: 18.3.1(react@18.3.1)
+    optionalDependencies:
+      '@types/react': 18.3.28
+      '@types/react-dom': 19.2.3(@types/react@18.3.28)
+
   '@types/aria-query@5.0.4': {}
 
   '@types/babel__core@7.20.5':
@@ -3304,6 +3396,11 @@ snapshots:
   '@types/react-dom@18.3.7(@types/react@18.3.28)':
     dependencies:
       '@types/react': 18.3.28
+
+  '@types/react-dom@19.2.3(@types/react@18.3.28)':
+    dependencies:
+      '@types/react': 18.3.28
+    optional: true
 
   '@types/react-dom@19.2.3(@types/react@19.2.14)':
     dependencies:

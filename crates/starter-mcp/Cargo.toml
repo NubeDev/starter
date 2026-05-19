@@ -8,7 +8,8 @@ repository.workspace   = true
 rust-version.workspace = true
 
 [dependencies]
-starter-spi = { workspace = true }
+starter-spi           = { workspace = true }
+starter-jsonrpc-stdio = { workspace = true }
 async-trait = { workspace = true }
 serde       = { workspace = true }
 serde_json  = { workspace = true }

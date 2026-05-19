@@ -1,0 +1,34 @@
+[package]
+name        = "hello-cli"
+description = "Minimal CLI-flavour extension example: contributes one non-streaming `greet` subcommand and one streaming `tick` subcommand through `starter-ext-cli` into `starter-cli::CommandRegistry`."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Two artefacts: a tiny library that defines the extension struct (so
+# the SCOPE "Extension author has zero starter-workspace deps" test
+# bites — the lib leaves the lib crate's deps untouched) and a binary
+# that wires the host-side CLI adapter into `starter-cli`. The binary
+# is what an operator runs; the lib is the extension code.
+[lib]
+name = "hello_cli"
+path = "src/lib.rs"
+
+[[bin]]
+name = "hello-cli"
+path = "src/main.rs"
+
+[dependencies]
+# Extension side. SCOPE: one SDK dep + serde_json.
+starter-ext-sdk = { workspace = true, features = ["builtin"] }
+serde_json      = { workspace = true }
+
+# Host side (the bin). The adapter + the kernel registry + clap.
+starter-cli            = { workspace = true }
+starter-ext-cli        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-spi        = { workspace = true }
+clap                   = { workspace = true }
+tokio                  = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }

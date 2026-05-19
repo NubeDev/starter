@@ -1,0 +1,27 @@
+[package]
+name        = "hello-process"
+description = "Process-flavour mirror of hello-builtin. Same source; only the cargo feature flips (SCOPE 'One source, three flavours' smoke test)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Build is a single binary: the supervisor spawns it directly. The
+# manifest's `runtime.bin` (see `block.yaml`) names the produced binary
+# inside the bundle.
+[[bin]]
+name = "hello-process"
+path = "src/main.rs"
+
+# SCOPE.md "One source, three flavours, mutually-exclusive features":
+# the *only* delta between this crate and hello-builtin is which feature
+# of `starter-ext-sdk` is selected. The Rust source in `src/main.rs` is
+# byte-identical to hello-builtin's body modulo the entry-point macro
+# (`register_static_table!` → `register_process_main!`) — that one
+# difference is what R1 reserves for "entry-point glue", and the trait
+# impl above it is shared.
+[dependencies]
+starter-ext-sdk = { workspace = true, default-features = false, features = ["process"] }
+serde_json      = { workspace = true }
+tokio           = { workspace = true, features = ["rt", "macros", "io-std", "io-util", "time"] }

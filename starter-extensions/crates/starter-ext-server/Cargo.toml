@@ -1,0 +1,42 @@
+[package]
+name        = "starter-ext-server"
+description = "starter-extensions — Axum admin routes for the extension registry + supervisor. Mounts `GET /extensions`, `GET /extensions/<id>`, `GET /extensions/<id>/events` (paginated + SSE live tail), `POST /extensions/<id>/enable|disable` (Role::Admin), and `GET /extensions/<id>/ui/*` (ETag-cached Module-Federation bundles)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Adapter dependency arrow (SCOPE R13): this crate wires the kernel
+# (`starter-ext-host` registry + `starter-ext-supervisor` handles) into the
+# parent workspace's `starter-server` HTTP stack via the public
+# `with_principal` + `with_role` middleware. It does NOT expose the
+# contributes.rest entries — that surface ships in Adapter Phase 5; this
+# stage is admin slice only.
+[dependencies]
+starter-ext-spi        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
+starter-ext-supervisor = { workspace = true }
+starter-spi            = { workspace = true }
+starter-server         = { workspace = true }
+
+axum        = { workspace = true }
+tower       = { workspace = true }
+http        = { workspace = true }
+tokio       = { workspace = true, features = ["macros", "rt-multi-thread", "fs", "time"] }
+futures     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+async-trait = { workspace = true }
+sha2        = { workspace = true }
+hex         = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+[dev-dependencies]
+tower    = { workspace = true, features = ["util"] }
+tempfile = { workspace = true }
+tokio    = { workspace = true, features = ["macros", "rt-multi-thread", "fs", "time"] }
+futures  = { workspace = true }
+http-body-util = "0.1"

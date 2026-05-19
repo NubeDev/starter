@@ -1,0 +1,29 @@
+[package]
+name        = "hello-wasm"
+description = "WASM-flavour mirror of hello-builtin / hello-process. Same source modulo the entry-point macro and the cargo feature (SCOPE 'One source, three flavours' smoke test, Stage 11 — Kernel Phase 4)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# WASM-flavour extensions are compiled to a WASI-p2 component
+# (`wasm32-wasip2` target plus `cargo component build`). The `cdylib`
+# crate-type is what `cargo component` and `wit_bindgen` expect; the
+# `rlib` is here so the workspace's host-target `cargo test` can still
+# load the crate (the WASM entry-point glue is `#[cfg(target_family = "wasm")]`
+# inside the SDK and inert on the host).
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+# SCOPE.md "One source, three flavours, mutually-exclusive features":
+# the *only* delta between this crate and hello-builtin / hello-process
+# is which feature of `starter-ext-sdk` is selected. The Rust source in
+# `src/lib.rs` is byte-identical modulo the entry-point macro
+# (`register_static_table!` → `register_process_main!` →
+# `register_wasm_main!`) — that one difference is what R1 reserves for
+# "entry-point glue", and the trait impl above it is shared.
+[dependencies]
+starter-ext-sdk = { workspace = true, default-features = false, features = ["wasm"] }
+serde_json      = { workspace = true }

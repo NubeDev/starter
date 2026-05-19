@@ -1,0 +1,141 @@
+name: starter-extensions
+
+# Stage 16 — smoke-test sweep for the `starter-extensions/` sibling
+# workspace. Runs the kernel + adapter test sweep plus the
+# one-source-three-flavours feature matrix that proves the SDK's
+# mutually-exclusive `builtin`/`wasm`/`process` features hold:
+# each hello-* example crate must compile cleanly under its own flavour
+# and *only* its own flavour.
+
+on:
+  pull_request:
+    paths:
+      - starter-extensions/**
+      - .github/workflows/starter-extensions.yml
+  push:
+    branches: [master, main]
+    paths:
+      - starter-extensions/**
+      - .github/workflows/starter-extensions.yml
+
+concurrency:
+  group: starter-extensions-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+defaults:
+  run:
+    # Every cargo invocation in this workflow runs from the sibling
+    # workspace root, never from the parent.
+    working-directory: starter-extensions
+
+jobs:
+  # 1. Per-crate test sweep. `cargo test --workspace` cannot be used
+  #    against this workspace as-is — the three `hello-*` examples
+  #    request different mutually-exclusive flavours of
+  #    `starter-ext-sdk`, and cargo's workspace-wide feature unification
+  #    would enable two flavours at once and trip the SDK's
+  #    duplicate-`#[no_mangle]` linker trap (that *is* the guard the
+  #    one-source-three-flavours scenario protects). Instead we drive
+  #    each kernel + adapter crate with `-p`.
+  test:
+    name: cargo test (per-crate sweep)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: starter-extensions -> target
+          shared-key: starter-extensions
+
+      - name: fmt
+        run: cargo fmt --all -- --check
+
+      - name: build hello-process (needed by the supervisor integration test)
+        run: cargo build -p hello-process
+
+      - name: test starter-ext-spi
+        run: cargo test -p starter-ext-spi --no-fail-fast
+      - name: test starter-ext-sdk
+        run: cargo test -p starter-ext-sdk --no-fail-fast
+      - name: test starter-ext-sdk-macros
+        run: cargo test -p starter-ext-sdk-macros --no-fail-fast
+      - name: test starter-ext-host
+        run: cargo test -p starter-ext-host --no-fail-fast
+      - name: test starter-ext-mcp
+        run: cargo test -p starter-ext-mcp --no-fail-fast
+      - name: test starter-ext-supervisor
+        run: cargo test -p starter-ext-supervisor --no-fail-fast
+      - name: test starter-ext-server
+        run: cargo test -p starter-ext-server --no-fail-fast
+      - name: test starter-ext-cli
+        run: cargo test -p starter-ext-cli --no-fail-fast
+      - name: test starter-ext-workers
+        run: cargo test -p starter-ext-workers --no-fail-fast
+      - name: test starter-ext-smoke
+        run: cargo test -p starter-ext-smoke --no-fail-fast
+
+  # 2. One-source-three-flavours matrix. Each hello-* example crate
+  #    builds cleanly under its own flavour feature *and only its own*.
+  #    Two flavours simultaneously trips the duplicate-`#[no_mangle]`
+  #    linker trap in `starter-ext-sdk::lib.rs`; zero flavours trips
+  #    the `compile_error!`. We don't assert the negatives here — the
+  #    SDK's unit tests pin that — but we do assert the positives,
+  #    one job per example × flavour.
+  one_source_three_flavours:
+    name: build ${{ matrix.example }} (${{ matrix.flavour }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - example: hello-builtin
+            flavour: builtin
+          - example: hello-process
+            flavour: process
+          - example: hello-wasm
+            flavour: wasm
+          - example: hello-cli
+            flavour: builtin
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: starter-extensions -> target
+          shared-key: starter-extensions-${{ matrix.flavour }}
+
+      # `cargo check` is enough — full `build` is exercised in the
+      # `test` job above. This job's purpose is to assert each example's
+      # cargo invocation is *self-contained*: nothing else needs to
+      # build first, and the resulting feature set is the single one
+      # the example declared.
+      - name: cargo check -p ${{ matrix.example }}
+        run: cargo check -p ${{ matrix.example }}
+
+  # 3. Extension-author-zero-extra-deps. Run the dedicated audit test
+  #    in the smoke crate; redundant with (1) but called out separately
+  #    so a regression in the audit list is visible as its own red dot.
+  zero_extra_deps:
+    name: extension-author dep audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: starter-extensions -> target
+          shared-key: starter-extensions
+      - name: cargo test -p starter-ext-smoke --test zero_extra_deps
+        run: cargo test -p starter-ext-smoke --test zero_extra_deps

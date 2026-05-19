@@ -1,0 +1,24 @@
+[package]
+name        = "starter-ext-host"
+description = "starter-extensions — manifest loader, two-phase validator, ExtensionRegistry. No spawning, no WASM, no I/O beyond reading bundle files at load time."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# SCOPE.md dependency arrow: ext-host depends on ext-spi only. No SDK, no
+# adapters, no transport crates. The adapter crates (starter-ext-mcp,
+# starter-ext-rest, …) bridge the registry to their transport — they pull in
+# both ext-host and the per-flavour SDK; the kernel itself stays small.
+[dependencies]
+starter-ext-spi = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+serde_yaml  = { workspace = true }
+thiserror   = { workspace = true }
+semver      = { workspace = true }
+
+[dev-dependencies]
+tempfile    = { workspace = true }

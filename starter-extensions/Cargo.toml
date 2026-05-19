@@ -1,0 +1,92 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/starter-ext-spi",
+    "crates/starter-ext-sdk",
+    "crates/starter-ext-sdk-macros",
+    "crates/starter-ext-host",
+    "crates/starter-ext-mcp",
+    "crates/starter-ext-server",
+    "crates/starter-ext-supervisor",
+    "crates/starter-ext-wasm",
+    "crates/starter-ext-cli",
+    "crates/starter-ext-workers",
+    "crates/starter-ext-smoke",
+    "examples/hello-builtin",
+    "examples/hello-process",
+    "examples/hello-wasm",
+    "examples/hello-cli",
+]
+
+# `starter-extensions` is a sibling workspace to `starter` (see
+# DOCS/extensions/scope/SCOPE.md, "Relationship to starter"). It lives in a
+# subdirectory of the starter repo for convenience of the bootstrap, but it is
+# a fully independent cargo workspace — `starter`'s root `Cargo.toml` does not
+# list any of these crates. The dependency arrow goes
+# `starter-spi → starter-ext-spi → everything else in this workspace`; nothing
+# here is reachable from `starter` itself (SCOPE.md R2).
+
+[workspace.package]
+version      = "0.1.0"
+edition      = "2021"
+license      = "MIT OR Apache-2.0"
+repository   = "https://github.com/NubeDev/starter"
+rust-version = "1.78"
+
+[workspace.dependencies]
+# The single contract crate shared with the parent workspace. R2: every crate
+# in `starter-extensions` is allowed to depend on `starter-ext-spi`, and
+# `starter-ext-spi` is allowed to depend on `starter-spi` — nothing else.
+starter-spi             = { path = "../crates/starter-spi", version = "0.1.0" }
+starter-ext-spi         = { path = "crates/starter-ext-spi", version = "0.1.0" }
+starter-ext-sdk         = { path = "crates/starter-ext-sdk", version = "0.1.0", default-features = false }
+starter-ext-sdk-macros  = { path = "crates/starter-ext-sdk-macros", version = "0.1.0" }
+starter-ext-host        = { path = "crates/starter-ext-host", version = "0.1.0" }
+starter-ext-mcp         = { path = "crates/starter-ext-mcp", version = "0.1.0" }
+starter-ext-server      = { path = "crates/starter-ext-server", version = "0.1.0" }
+starter-ext-supervisor  = { path = "crates/starter-ext-supervisor", version = "0.1.0" }
+starter-ext-wasm        = { path = "crates/starter-ext-wasm", version = "0.1.0" }
+starter-ext-cli         = { path = "crates/starter-ext-cli", version = "0.1.0" }
+starter-ext-workers     = { path = "crates/starter-ext-workers", version = "0.1.0" }
+
+# Parent-workspace crates the MCP and server adapters consume. Pulled in via
+# path because the two workspaces sit next to each other in this repo.
+starter-mcp             = { path = "../crates/starter-mcp", version = "0.1.0" }
+starter-server          = { path = "../crates/starter-server", version = "0.1.0" }
+starter-jsonrpc-stdio   = { path = "../crates/starter-jsonrpc-stdio", version = "0.1.0" }
+starter-cli             = { path = "../crates/starter-cli", version = "0.1.0" }
+
+# clap building blocks; only the CLI adapter consumes this directly. Pinned
+# to a single major so every consumer that pulls in both `starter-cli` and
+# `starter-ext-cli` resolves one copy.
+clap        = { version = "4", features = ["derive", "env", "string"] }
+
+# HTTP stack — aligned with parent workspace's pins so a consumer importing
+# both ends up with one major of each.
+axum        = { version = "0.8", features = ["macros"] }
+tower       = "0.5"
+tower-http  = { version = "0.6", features = ["cors", "trace"] }
+http        = "1"
+futures     = "0.3"
+
+# Third-party building blocks. Kept aligned with the parent workspace so a
+# consumer importing both does not pull two majors of the same crate.
+serde       = { version = "1", features = ["derive"] }
+serde_json  = "1"
+serde_yaml  = "0.9"
+thiserror   = "1"
+semver      = { version = "1", features = ["serde"] }
+tokio       = { version = "1", default-features = false, features = ["sync"] }
+tracing     = "0.1"
+sha2        = "0.10"
+hex         = "0.4"
+rand        = "0.8"
+
+# Used by adapter / integration tests only.
+async-trait = "0.1"
+tempfile    = "3"
+
+# proc-macro building blocks; only consumed by `starter-ext-sdk-macros`.
+syn         = { version = "2", features = ["full"] }
+quote       = "1"
+proc-macro2 = "1"

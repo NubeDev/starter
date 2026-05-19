@@ -1,0 +1,44 @@
+[package]
+name        = "starter-ext-wasm"
+description = "Optional WASI-p2 component host for `starter-extensions`. Default-deny capability baseline, per-call fuel + memory + wall-clock caps configured host-side (not in the manifest), stateless per-call instantiation. Stage 11 — Kernel Phase 4."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# SCOPE.md "Phase 4 — `starter-ext-wasm`" / "OPTIONAL, feature-gated
+# behind wasm". Crate-level gating rather than a cargo feature inside a
+# shared crate keeps the wasmtime / cranelift compile cost out of every
+# consumer's build — a host that only ships builtin + process extensions
+# does not depend on `starter-ext-wasm` at all and pays nothing for it.
+#
+# Dependency arrow (SCOPE.md "Dependency arrow (Rust)"):
+#   starter-ext-wasm → starter-ext-host (registry types)
+#                    + starter-ext-spi  (wire types, Capability, Error)
+[dependencies]
+starter-ext-spi  = { workspace = true }
+starter-ext-host = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+# `tokio::time::interval` powers `WasmHost::epoch_ticker` — the background
+# loop that ticks the wasmtime engine's epoch so the per-call
+# `wall_clock_deadline` cap fires. The consumer's own runtime drives the
+# spawn (this crate does not start a runtime).
+tokio = { version = "1", default-features = false, features = ["time"] }
+
+# wasmtime 30 (component model + WASI-p2 sync host bindings). Pinned to
+# `=30.0.2` because every wasmtime minor reshuffles the component-model
+# binding surface; flexible-versioning across a major would silently
+# break the linker setup. Default features are accepted: cranelift,
+# component-model, pooling-allocator, gc — all load-bearing for the
+# host's "fresh instance per call" + per-call fuel discipline below.
+wasmtime      = { version = "=30.0.2" }
+wasmtime-wasi = { version = "=30.0.2" }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time"] }

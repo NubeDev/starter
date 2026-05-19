@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["count"],
+  "properties": {
+    "count": {
+      "type": "integer",
+      "description": "How many ticks to emit before ending the stream."
+    },
+    "label": {
+      "type": "string",
+      "description": "Label included on each tick line."
+    }
+  }
+}

@@ -1,0 +1,40 @@
+[package]
+name        = "starter-ext-supervisor"
+description = "Process-flavour lifecycle. Spawns child binaries, frames stdio JSON-RPC via starter-jsonrpc-stdio, restart policy with intensity cap + exponential backoff + jitter, periodic health, per-extension event ring, advisory capability enforcement, SIGTERM→grace→SIGKILL shutdown (SCOPE.md R8, R9, R10)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# SCOPE.md dependency arrow: `starter-ext-supervisor` → `starter-ext-host`
+# (registry types) + `starter-ext-spi` (wire types, manifest schema,
+# lifecycle enum). The supervisor is the heaviest single crate in the
+# workspace because the cost of getting it wrong is the highest.
+[dependencies]
+starter-ext-spi       = { workspace = true }
+starter-ext-host      = { workspace = true }
+starter-jsonrpc-stdio = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+# `process`, `io-util`, `signal` for spawning + stdio + SIGTERM dispatch.
+# `time` for backoff sleeps + health-ping intervals. `rt` and `macros` are
+# pulled in by the dev-dependencies block only — the library never assumes
+# the consumer's runtime shape, only that one exists.
+tokio = { version = "1", features = ["process", "io-util", "signal", "time", "sync", "rt", "macros"] }
+
+# Manifest content hashing (R3: init handshake includes the manifest hash).
+sha2 = { workspace = true }
+hex  = { workspace = true }
+
+# Backoff jitter (R9: exponential with jitter).
+rand = { workspace = true }
+
+[dev-dependencies]
+tokio      = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
+tempfile   = { workspace = true }
+serde_yaml = { workspace = true }
