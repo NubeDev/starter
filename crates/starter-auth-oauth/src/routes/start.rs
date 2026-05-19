@@ -125,7 +125,7 @@ pub(crate) fn is_safe_return_to(s: &str) -> bool {
     true
 }
 
-fn random_b64url(n: usize) -> String {
+pub(super) fn random_b64url(n: usize) -> String {
     let mut buf = vec![0u8; n];
     rand::thread_rng().fill_bytes(&mut buf);
     URL_SAFE_NO_PAD.encode(buf)
@@ -134,7 +134,7 @@ fn random_b64url(n: usize) -> String {
 /// Build a fresh PKCE verifier + S256 challenge. Verifier is a
 /// 32-byte URL-safe-no-pad string (~43 chars, well within the
 /// RFC 7636 43–128 range); challenge is `base64url(sha256(verifier))`.
-fn new_pkce_pair() -> (String, String) {
+pub(super) fn new_pkce_pair() -> (String, String) {
     let verifier = random_b64url(32);
     let digest = Sha256::digest(verifier.as_bytes());
     let challenge = URL_SAFE_NO_PAD.encode(digest);
