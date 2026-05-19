@@ -15,6 +15,12 @@ use starter_store_sqlite::{migrate, migrate::MigrationSource, testing::ephemeral
 
 static AUTH_USERS_MIGRATOR: sqlx::migrate::Migrator =
     sqlx::migrate!("./migrations/starter_auth_users");
+// The `password_hash` NOT NULL relaxation ships in the OAuth crate's
+// migration set, not this one (Hard rule R8 + SCOPE Constraints). The
+// tests in this file rely on it so they apply it inline; consumers
+// who do not enable OAuth will never see it.
+static AUTH_OAUTH_SQLITE_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("../starter-auth-oauth/migrations/starter_auth_oauth_sqlite");
 
 async fn fresh_pool() -> Pool {
     let pool = ephemeral().await;
@@ -22,6 +28,10 @@ async fn fresh_pool() -> Pool {
         .with_source(MigrationSource {
             name: "starter_auth_users",
             migrator: &AUTH_USERS_MIGRATOR,
+        })
+        .with_source(MigrationSource {
+            name: "starter_auth_oauth",
+            migrator: &AUTH_OAUTH_SQLITE_MIGRATOR,
         })
         .run()
         .await
@@ -162,6 +172,25 @@ async fn wrong_secret_after_correct_prefix_is_invalid() {
         .await
         .unwrap_err();
     assert!(matches!(err, token::TokenError::Invalid));
+}
+
+#[tokio::test]
+async fn user_with_null_password_hash_round_trips() {
+    // OAuth-created users have `password_hash IS NULL`. The store
+    // must accept `None` on create and round-trip it as `None`.
+    let pool = fresh_pool().await;
+    let (users, _sessions, _tokens) = stores(pool);
+    users
+        .create("uid-oauth", "oauth@example.com", None, Role::Reader)
+        .await
+        .expect("create with NULL hash");
+    let row = users
+        .find_by_email("oauth@example.com")
+        .await
+        .unwrap()
+        .unwrap();
+    assert!(row.password_hash.is_none());
+    assert_eq!(row.id, "uid-oauth");
 }
 
 #[tokio::test]

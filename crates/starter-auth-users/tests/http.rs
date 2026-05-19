@@ -11,8 +11,9 @@ use axum::Router;
 use prometheus::Registry;
 use starter_auth_users::{
     admin::create_admin,
+    linked_providers::{LinkedProvidersError, LinkedProvidersLookup},
     routes::{auth_router, AuthState},
-    store::{SqliteSessionStore, SqliteTokenStore, SqliteUserStore},
+    store::{SqliteSessionStore, SqliteTokenStore, SqliteUserStore, UserStore},
     AuthAuthenticator, Role,
 };
 use starter_observability::metrics::StandardMetrics;
@@ -26,6 +27,8 @@ use starter_store_sqlite::{migrate, migrate::MigrationSource, testing::ephemeral
 
 static AUTH_USERS_MIGRATOR: sqlx::migrate::Migrator =
     sqlx::migrate!("./migrations/starter_auth_users");
+static AUTH_OAUTH_SQLITE_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("../starter-auth-oauth/migrations/starter_auth_oauth_sqlite");
 
 async fn fresh_pool() -> Pool {
     let pool = ephemeral().await;
@@ -33,6 +36,10 @@ async fn fresh_pool() -> Pool {
         .with_source(MigrationSource {
             name: "starter_auth_users",
             migrator: &AUTH_USERS_MIGRATOR,
+        })
+        .with_source(MigrationSource {
+            name: "starter_auth_oauth",
+            migrator: &AUTH_OAUTH_SQLITE_MIGRATOR,
         })
         .run()
         .await
@@ -147,6 +154,107 @@ async fn login_logout_round_trip() {
         .await
         .unwrap();
     assert_eq!(resp.status(), 401);
+
+    app.shutdown().await;
+}
+
+/// Stand-in for the `OAuthLinkedProviders` impl that lives in
+/// `starter-auth-oauth`. Returns a canned list so the login route
+/// can be tested in isolation.
+struct StubLinkedProviders(Vec<String>);
+
+#[async_trait::async_trait]
+impl LinkedProvidersLookup for StubLinkedProviders {
+    async fn linked_providers(&self, _user_id: &str) -> Result<Vec<String>, LinkedProvidersError> {
+        Ok(self.0.clone())
+    }
+}
+
+#[tokio::test]
+async fn login_with_null_password_hash_returns_password_not_set() {
+    // OAuth-only user. The login route must respond 400 with the
+    // `password_not_set` envelope and the linked-providers list,
+    // never 401 (which would tell the caller "wrong password" and
+    // invite a password-set flow that does not apply).
+    let pool = fresh_pool().await;
+    let users = Arc::new(SqliteUserStore::new(pool.clone()));
+    let sessions = Arc::new(SqliteSessionStore::new(pool.clone()));
+    let tokens = Arc::new(SqliteTokenStore::new(pool));
+
+    users
+        .create("uid-1", "oauth@example.com", None, Role::Reader)
+        .await
+        .unwrap();
+
+    let auth_state = AuthState::new(
+        users.clone() as _,
+        sessions.clone() as _,
+        tokens.clone() as _,
+    )
+    .with_linked_providers(Arc::new(StubLinkedProviders(vec!["github".into()])));
+
+    let registry = Arc::new(Registry::new());
+    let metrics = Arc::new(StandardMetrics::register(&registry).unwrap());
+    let router = ServerBuilder::<EmptyState>::new(EmptyState)
+        .merge_router(auth_router::<EmptyState>(auth_state))
+        .with_metrics(registry, metrics)
+        .build();
+    let app = TestApp::spawn(router).await;
+    let client = reqwest::Client::new();
+
+    let resp = client
+        .post(format!("{}/auth/login", app.base_url))
+        .json(&serde_json::json!({"email": "oauth@example.com", "password": "anything"}))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 400);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["error"], "password_not_set");
+    assert_eq!(body["providers"], serde_json::json!(["github"]));
+
+    app.shutdown().await;
+}
+
+#[tokio::test]
+async fn login_with_null_password_hash_and_no_linked_providers_returns_empty_list() {
+    // Default `AuthState::new` wires `NoLinkedProviders`. The envelope
+    // shape is the same; `providers` is just `[]`.
+    let pool = fresh_pool().await;
+    let users = Arc::new(SqliteUserStore::new(pool.clone()));
+    let sessions = Arc::new(SqliteSessionStore::new(pool.clone()));
+    let tokens = Arc::new(SqliteTokenStore::new(pool));
+
+    users
+        .create("uid-2", "lone@example.com", None, Role::Reader)
+        .await
+        .unwrap();
+
+    let auth_state = AuthState::new(
+        users.clone() as _,
+        sessions.clone() as _,
+        tokens.clone() as _,
+    );
+
+    let registry = Arc::new(Registry::new());
+    let metrics = Arc::new(StandardMetrics::register(&registry).unwrap());
+    let router = ServerBuilder::<EmptyState>::new(EmptyState)
+        .merge_router(auth_router::<EmptyState>(auth_state))
+        .with_metrics(registry, metrics)
+        .build();
+    let app = TestApp::spawn(router).await;
+    let client = reqwest::Client::new();
+
+    let resp = client
+        .post(format!("{}/auth/login", app.base_url))
+        .json(&serde_json::json!({"email": "lone@example.com", "password": "x"}))
+        .send()
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), 400);
+    let body: serde_json::Value = resp.json().await.unwrap();
+    assert_eq!(body["error"], "password_not_set");
+    assert_eq!(body["providers"], serde_json::json!([]));
 
     app.shutdown().await;
 }

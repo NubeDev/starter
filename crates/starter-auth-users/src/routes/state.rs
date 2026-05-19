@@ -4,6 +4,7 @@
 
 use std::sync::Arc;
 
+use crate::linked_providers::{LinkedProvidersLookup, NoLinkedProviders};
 use crate::store::{SessionStore, TokenStore, UserStore};
 
 /// Shared state for the `/auth/*` handlers. Build once at startup and
@@ -16,10 +17,16 @@ pub struct AuthState {
     pub sessions: Arc<dyn SessionStore>,
     /// Token table.
     pub tokens: Arc<dyn TokenStore>,
+    /// Linked-providers lookup. Defaults to [`NoLinkedProviders`]
+    /// (returns `[]`) for consumers that do not wire
+    /// `starter-auth-oauth`.
+    pub linked_providers: Arc<dyn LinkedProvidersLookup>,
 }
 
 impl AuthState {
-    /// Build the state from the three stores.
+    /// Build the state from the three stores. The linked-providers
+    /// lookup defaults to [`NoLinkedProviders`]; consumers wiring
+    /// `starter-auth-oauth` swap it via [`Self::with_linked_providers`].
     pub fn new(
         users: Arc<dyn UserStore>,
         sessions: Arc<dyn SessionStore>,
@@ -29,6 +36,15 @@ impl AuthState {
             users,
             sessions,
             tokens,
+            linked_providers: Arc::new(NoLinkedProviders),
         }
+    }
+
+    /// Override the linked-providers lookup. Builder-style so the
+    /// common (OAuth-disabled) case stays a single `AuthState::new`
+    /// call.
+    pub fn with_linked_providers(mut self, lookup: Arc<dyn LinkedProvidersLookup>) -> Self {
+        self.linked_providers = lookup;
+        self
     }
 }

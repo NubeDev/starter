@@ -104,17 +104,34 @@ async fn apply_source(
             continue;
         }
 
-        let mut tx = pool.begin().await?;
-        tx.execute(migration.sql.as_ref()).await?;
-        sqlx::query(&format!(
-            "INSERT INTO {table} (version, description, checksum) VALUES (?1, ?2, ?3)"
-        ))
-        .bind(migration.version)
-        .bind(migration.description.as_ref())
-        .bind(migration.checksum.as_ref())
-        .execute(&mut *tx)
-        .await?;
-        tx.commit().await?;
+        // Files prefixed with `-- no-transaction` set `no_tx = true`
+        // on the parsed `Migration`. We honour that here because the
+        // standard SQLite "rebuild a table" trick requires
+        // `PRAGMA foreign_keys = OFF` before the rebuild starts, and
+        // that pragma is silently ignored inside a transaction.
+        if migration.no_tx {
+            pool.execute(migration.sql.as_ref()).await?;
+            sqlx::query(&format!(
+                "INSERT INTO {table} (version, description, checksum) VALUES (?1, ?2, ?3)"
+            ))
+            .bind(migration.version)
+            .bind(migration.description.as_ref())
+            .bind(migration.checksum.as_ref())
+            .execute(pool)
+            .await?;
+        } else {
+            let mut tx = pool.begin().await?;
+            tx.execute(migration.sql.as_ref()).await?;
+            sqlx::query(&format!(
+                "INSERT INTO {table} (version, description, checksum) VALUES (?1, ?2, ?3)"
+            ))
+            .bind(migration.version)
+            .bind(migration.description.as_ref())
+            .bind(migration.checksum.as_ref())
+            .execute(&mut *tx)
+            .await?;
+            tx.commit().await?;
+        }
     }
 
     Ok(())

@@ -10,6 +10,7 @@ members = [
     "crates/starter-mcp",
     "crates/starter-auth-token",
     "crates/starter-auth-users",
+    "crates/starter-auth-oauth",
     "crates/starter-secrets-keyring",
     "crates/starter-secrets-file",
     "crates/starter-ai",
@@ -39,6 +40,7 @@ starter-store-postgres   = { path = "crates/starter-store-postgres",   version =
 starter-mcp              = { path = "crates/starter-mcp",              version = "0.1.0" }
 starter-auth-token       = { path = "crates/starter-auth-token",       version = "0.1.0" }
 starter-auth-users       = { path = "crates/starter-auth-users",       version = "0.1.0" }
+starter-auth-oauth       = { path = "crates/starter-auth-oauth",       version = "0.1.0" }
 starter-secrets-keyring  = { path = "crates/starter-secrets-keyring",  version = "0.1.0" }
 starter-secrets-file     = { path = "crates/starter-secrets-file",     version = "0.1.0" }
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }

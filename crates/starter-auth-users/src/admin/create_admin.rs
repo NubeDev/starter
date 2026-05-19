@@ -21,7 +21,7 @@ pub async fn create_admin<U: UserStore + ?Sized>(
     let hash = password::hash(password).map_err(|_| AdminError::HashFailed)?;
     let id = Uuid::new_v4().to_string();
     store
-        .create(&id, email, &hash, role)
+        .create(&id, email, Some(&hash), role)
         .await
         .map_err(|e| match e {
             UserStoreError::Conflict => AdminError::Conflict,

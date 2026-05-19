@@ -205,29 +205,123 @@ phases.
   sqlite-in-memory identity store + `starter-auth-users`'s
   in-memory `UserStore` and `SessionStore`).
 
-## Open questions (resolve in stage 1)
+## Open questions (resolved in stage 1)
 
-The four open questions from the source SCOPE §"Open questions",
-with biases the runner records the resolved answer to under
-"Decisions" before stage 3 (the first code stage) begins.
+The four open questions from the source SCOPE §"Open questions" are
+now resolved. Each landed on its stated bias; the recorded outcome
+plus revisit trigger lives under "Decisions" below. This section is
+retained as a pointer so a future reader can trace the lineage.
 
-1. **Callback rate-limiting.** Bias: defer to `starter-server`
-   when it grows a rate limiter; the provider already rate-limits
-   the redirect.
-2. **Audit log of identity changes.** Bias: emit `tracing` events
-   at `info` level with structured fields (provider, user_id,
-   action ∈ `{signup, link, unlink}`); durable audit table deferred
-   to `starter-observability`'s audit-sink concept.
-3. **Email-change-as-security-event.** Bias: emit a separate
-   high-severity `tracing` event on email change vs initial set so
-   an audit sink can pick it up later; structured shape deferred.
-4. **First-time signup consent screen.** Bias: skip in v0.1; the
-   provider's display name becomes the initial display name. A
-   future `OAUTH_REQUIRE_ONBOARDING` flag inserts the step.
+1. **Callback rate-limiting.** → Decision: defer to `starter-server`.
+2. **Audit log of identity changes.** → Decision: `tracing` events
+   now; durable audit table deferred to `starter-observability`.
+3. **Email-change-as-security-event.** → Decision: separate
+   high-severity `tracing` event on change vs initial set;
+   structured shape deferred to the audit sink.
+4. **First-time signup consent screen.** → Decision: skip in v0.1;
+   reserve `OAUTH_REQUIRE_ONBOARDING` flag for later.
 
 ## Decisions
 
-(populated in stage 1)
+Resolved in stage 1. Each entry is the chosen path, the rationale in
+one or two lines, and a concrete revisit trigger — the observable
+condition that flips the decision from "good enough" to "needs
+revisiting" so a future reader does not have to re-derive the
+bias.
+
+- **Callback rate-limiting — deferred to `starter-server`.**
+  The OAuth callback path is not rate-limited inside
+  `starter-auth-oauth`. The provider already rate-limits the
+  redirect (GitHub / Google reject obvious replays at their edge),
+  and the callback is single-use against the state-store entry: a
+  flood that gets past the provider still consumes one
+  `OAuthFlowState` row per request and dies on first success.
+  Generic HTTP rate limiting belongs to `starter-server` where it
+  applies uniformly to every route, not bolted into one handler.
+  - *Revisit trigger:* `starter-server` grows a rate-limiter
+    extractor or middleware, **or** a real consumer reports
+    callback-path abuse that the state-store TTL does not absorb
+    (e.g. forged-`state` floods burning DB writes on
+    `SqliteStateStore` / `PostgresStateStore`). At that point wire
+    the callback through the shared limiter with a tighter bucket
+    than the default.
+  - *Owner on revisit:* the crate touching the limiter
+    (`starter-server`); `starter-auth-oauth` only needs to opt in.
+
+- **Audit log of identity changes — `tracing` now, durable sink
+  later.** Every signup, link, and unlink emits one
+  `tracing::info!` event with structured fields
+  `provider`, `user_id`, `action ∈ {signup, link, unlink}`,
+  `identity_id`, and (for `signup`) the role assigned by the
+  role-domain map. No durable audit table inside
+  `starter-auth-oauth`. The reasoning: a tracing subscriber is
+  already a hard dependency of starter-based products, and
+  `starter-observability` is the right home for an audit-sink that
+  every starter crate writes to with one shape — duplicating that
+  table here would invite drift the moment a second crate (users,
+  sessions, API tokens) grows audit needs of its own.
+  - *Revisit trigger:* `starter-observability` lands an
+    `AuditSink` trait (or equivalent: durable, queryable, retention
+    policy). At that point swap the bare `tracing::info!` for an
+    `AuditSink::record` call alongside the tracing event; the
+    structured fields above are the wire shape that crosses over.
+    A second revisit trigger is a compliance ask (SOC2, ISO 27001)
+    from a consumer — those land before the observability crate is
+    ready and force an interim durable table; if that happens the
+    table ships in `starter-auth-oauth`'s own migrations as
+    `0003_oauth_identity_audit.sql` and is migrated into the
+    shared sink later.
+  - *Owner on revisit:* `starter-observability` defines the trait;
+    `starter-auth-oauth` swaps its emitter.
+
+- **Email-change-as-security-event — separate high-severity
+  tracing event.** When the callback's `fetch_identity` returns
+  a provider email that differs from the email already stored on
+  the matched `oauth_identities` row (or on the linked
+  `users` row for the canonical email), emit
+  `tracing::warn!` with action `email_changed` and fields
+  `provider`, `user_id`, `identity_id`, plus hashed (not raw) old
+  and new email values for correlation. The first-time set
+  (NULL → value on signup, or new identity row on link) stays at
+  `info` with action `signup` / `link`. This separation matters:
+  a downstream audit sink will want to alert on change but not on
+  initial set, and burying both in one event forces every consumer
+  to re-derive the distinction. Hashing avoids leaking PII into
+  log aggregators that are not yet treated as PII stores.
+  - *Revisit trigger:* the same `AuditSink` trait above lands and
+    grows a severity / category field — at that point migrate this
+    event to `AuditSink::record` with category
+    `auth.identity.email_changed` and severity `high`, and decide
+    whether to keep hashing (yes if the sink is shared across
+    services not yet audited for PII; no if it is a dedicated
+    PII-cleared audit store).
+  - *Structured shape:* deferred. The current event is best-effort
+    structured fields; the final on-wire shape is the audit sink's
+    call.
+
+- **First-time signup consent screen — skipped in v0.1.** A new
+  user created by the OAuth callback gets the provider's display
+  name (`name` on Google's userinfo, `name` or `login` on GitHub)
+  as the initial `display_name` on the `users` row, and the email
+  the verified-email rule selected. No interstitial page; no
+  consent prompt; no terms-of-service checkbox. The reasoning: the
+  provider already showed its own consent screen, the starter does
+  not yet have a ToS page to point at, and adding a redirect step
+  in v0.1 means every consumer ships a half-built onboarding flow.
+  An `OAUTH_REQUIRE_ONBOARDING` env-var slot is reserved (parsed
+  and threaded through config, default `false`, no behaviour
+  change in v0.1) so flipping it on later is a config bump, not a
+  schema change.
+  - *Revisit trigger:* a consumer needs ToS-acceptance, a
+    username-pick step, or a marketing-opt-in checkbox before the
+    new user's first session mints. At that point the reserved
+    flag turns on, the callback emits a 303 to an onboarding route
+    on `true`, and the new-user `INSERT` moves behind that step.
+    The route itself is a consumer concern (no shipped template),
+    matching the "Admin UI for linking / unlinking — HTTP endpoints
+    only" stance under "Out of scope".
+  - *Owner on revisit:* the consumer wiring the onboarding route;
+    `starter-auth-oauth` only honours the flag.
 
 ## Cross-cutting checks the runner must keep honest
 

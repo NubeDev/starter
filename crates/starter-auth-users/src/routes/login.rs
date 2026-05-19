@@ -39,6 +39,21 @@ pub struct LoginResponse {
     pub csrf_token: String,
 }
 
+/// Body returned by `POST /auth/login` when the matched user has no
+/// local password (`password_hash IS NULL`). The SPA reads
+/// `providers` to render "Sign in with GitHub / Google" buttons
+/// without a guess-and-check round trip.
+#[derive(Debug, Serialize, ToSchema)]
+pub struct PasswordNotSetResponse {
+    /// Always `"password_not_set"`. Discriminator field; lets clients
+    /// pattern-match without inspecting the HTTP status alone.
+    pub error: &'static str,
+    /// Provider ids the user has linked. Empty list when no
+    /// third-party path is configured (the default
+    /// [`crate::NoLinkedProviders`] impl).
+    pub providers: Vec<String>,
+}
+
 #[utoipa::path(
     post,
     path = "/auth/login",
@@ -47,6 +62,7 @@ pub struct LoginResponse {
     request_body = LoginRequest,
     responses(
         (status = 200, description = "Logged in; session + CSRF cookies set", body = LoginResponse),
+        (status = 400, description = "Account has no local password; sign in via a linked provider", body = PasswordNotSetResponse),
         (status = 401, description = "Invalid credentials"),
     ),
 )]
@@ -59,7 +75,38 @@ pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest
             return StatusCode::INTERNAL_SERVER_ERROR.into_response();
         }
     };
-    match password::verify(&body.password, &user.password_hash) {
+    // `password_hash IS NULL` means this account was created via a
+    // third-party sign-in path and never set a local password. Return
+    // 400 (not 401) with the providers list so the SPA can route the
+    // user to the right "Sign in with ..." button. The list is
+    // produced by the `LinkedProvidersLookup` trait — the
+    // `NoLinkedProviders` default returns `[]`, which is still a
+    // valid response shape.
+    let password_hash = match &user.password_hash {
+        Some(h) => h.as_str(),
+        None => {
+            let providers = match state.linked_providers.linked_providers(&user.id).await {
+                Ok(p) => p,
+                Err(e) => {
+                    tracing::warn!(
+                        target: "starter_auth_users",
+                        error = %e,
+                        "linked-providers lookup failed",
+                    );
+                    return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+                }
+            };
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(PasswordNotSetResponse {
+                    error: "password_not_set",
+                    providers,
+                }),
+            )
+                .into_response();
+        }
+    };
+    match password::verify(&body.password, password_hash) {
         Ok(true) => {}
         Ok(false) => return StatusCode::UNAUTHORIZED.into_response(),
         Err(e) => {

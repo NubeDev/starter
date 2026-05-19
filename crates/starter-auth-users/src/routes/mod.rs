@@ -7,7 +7,7 @@ pub(crate) mod me;
 mod router;
 mod state;
 
-pub use login::{LoginRequest, LoginResponse, CSRF_COOKIE};
+pub use login::{LoginRequest, LoginResponse, PasswordNotSetResponse, CSRF_COOKIE};
 pub use me::MeResponse;
 pub use router::auth_router;
 pub use state::AuthState;
