@@ -61,6 +61,7 @@ mod admin;
 mod etag;
 mod events;
 mod factory;
+mod rest;
 mod router;
 mod routes;
 mod store;
@@ -68,5 +69,9 @@ mod ui;
 
 pub use admin::{ExtensionAdmin, ExtensionAdminBuilder};
 pub use factory::{DefaultSupervisorFactory, SupervisorFactory, SupervisorFactoryError};
+pub use rest::{
+    rest_router, BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, RestBuildError,
+    RestDispatcher, RestRouterOptions, SchemaCheck, StreamResponse,
+};
 pub use router::{router, router_with_auth, AdminRouterOptions};
 pub use store::{EnablementState, EnablementStore, InMemoryEnablementStore};

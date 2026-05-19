@@ -83,6 +83,15 @@ impl BuiltinEntry {
     pub fn declared_tool_ids(&self) -> &'static [&'static str] {
         self.declared_tool_ids
     }
+
+    /// A clone of the `Arc`-wrapped dispatch closure. Adapter crates
+    /// that need to move the dispatcher onto a `spawn_blocking` task
+    /// (so a sync handler does not block the async runtime) clone this
+    /// Arc and call it inside the task. The closure itself is the
+    /// stable handle — re-cloning across phases is cheap.
+    pub fn dispatch_arc(&self) -> Arc<BuiltinDispatchFn> {
+        self.dispatch.clone()
+    }
 }
 
 impl std::fmt::Debug for BuiltinEntry {

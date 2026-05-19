@@ -339,14 +339,45 @@ pub struct ContributeRest {
     /// Optional path to a JSON Schema for the response body.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub response_schema: Option<String>,
-    /// `true` if the response is a server-sent event stream. Adapters use
-    /// the streaming sub-protocol (`stream.event` / `stream.end` / …) to
-    /// drive it.
+    /// How the response is rendered to the HTTP client. Defaults to
+    /// [`RestStreaming::None`] (single JSON body). When `Sse`, the REST
+    /// adapter renders the extension's `Stream<Item = Event>` as a
+    /// `text/event-stream` response with `retry:` + default heartbeat;
+    /// when `Ndjson`, as `application/x-ndjson` newline-delimited frames.
+    /// A client disconnect on either streaming flavour propagates back
+    /// to the child as a `stream.cancel` notification within a few
+    /// hundred milliseconds (Adapter Phase 5 — SCOPE post-R13).
     #[serde(default)]
-    pub streaming: bool,
+    pub streaming: RestStreaming,
     /// Optional per-entry auth gate.
     #[serde(default)]
     pub auth: AuthGate,
+}
+
+/// Streaming-render mode for a REST contribution entry (Adapter Phase 5).
+///
+/// Selects how `starter-ext-server`'s REST adapter renders the extension's
+/// `Stream<Item = Event>` on the wire. The kernel shape is uniform
+/// (`stream.event` / `stream.end` / `stream.error` / `stream.cancel`
+/// notifications per SCOPE post-R13); this enum picks the HTTP framing
+/// that wraps it.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RestStreaming {
+    /// Single response body; not a stream. Default.
+    #[default]
+    None,
+    /// `Content-Type: text/event-stream` with `retry:` + heartbeat.
+    Sse,
+    /// `Content-Type: application/x-ndjson` newline-delimited JSON frames.
+    Ndjson,
+}
+
+impl RestStreaming {
+    /// `true` for any streaming variant (`Sse` or `Ndjson`).
+    pub fn is_streaming(self) -> bool {
+        !matches!(self, RestStreaming::None)
+    }
 }
 
 /// One gRPC RPC the extension provides.
@@ -610,6 +641,39 @@ contributes:
         assert_eq!(m.contributes.grpc.len(), 1);
         assert_eq!(m.contributes.workers.len(), 1);
         assert!(m.contributes.ui.is_some());
+    }
+
+    #[test]
+    fn rest_streaming_modes_parse() {
+        let yaml = r#"
+v: 1
+id: com.acme.stream
+version: 0.0.1
+display_name: "Stream"
+runtime: { kind: builtin, crate_name: stream }
+contributes:
+  rest:
+    - id: com.acme.stream.live
+      method: GET
+      path: /live/sse
+      description_file: c.md
+      streaming: sse
+    - id: com.acme.stream.tail
+      method: GET
+      path: /live/ndjson
+      description_file: c.md
+      streaming: ndjson
+    - id: com.acme.stream.now
+      method: GET
+      path: /now
+      description_file: c.md
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.rest[0].streaming, RestStreaming::Sse);
+        assert_eq!(m.contributes.rest[1].streaming, RestStreaming::Ndjson);
+        assert_eq!(m.contributes.rest[2].streaming, RestStreaming::None);
+        assert!(m.contributes.rest[0].streaming.is_streaming());
+        assert!(!m.contributes.rest[2].streaming.is_streaming());
     }
 
     #[test]

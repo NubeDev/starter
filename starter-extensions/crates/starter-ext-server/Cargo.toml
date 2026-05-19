@@ -16,6 +16,7 @@ rust-version.workspace = true
 [dependencies]
 starter-ext-spi        = { workspace = true }
 starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
 starter-ext-supervisor = { workspace = true }
 starter-spi            = { workspace = true }
 starter-server         = { workspace = true }
@@ -37,3 +38,5 @@ tracing     = { workspace = true }
 tower    = { workspace = true, features = ["util"] }
 tempfile = { workspace = true }
 tokio    = { workspace = true, features = ["macros", "rt-multi-thread", "fs", "time"] }
+futures  = { workspace = true }
+http-body-util = "0.1"

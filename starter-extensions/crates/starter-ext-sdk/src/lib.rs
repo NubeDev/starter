@@ -104,7 +104,7 @@ pub use starter_ext_spi::{
     AuthGate, Authority, Backoff, Capability, ContributeCli, ContributeGrpc, ContributeRest,
     ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker, Contributes, Error,
     ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope, LifecycleState, Manifest,
-    PathSpec, RestartPolicy, Result, Runtime, RuntimeKind, Supervision,
+    PathSpec, RestStreaming, RestartPolicy, Result, Runtime, RuntimeKind, Supervision,
 };
 
 /// Re-export so generated code can name `::starter_ext_sdk::serde_json::Value`
