@@ -2,130 +2,138 @@
 
 ## Current stage
 
-**Stage 4 — three SQLite store impls in `crates/starter-store-sqlite/src/flow/`
-behind a new default-off `flow` feature.** Stage 3 (SPI fleshout +
-baseline regeneration) is complete and pushed.
+**Stage 5 — engine wiring: `Engine::with_run_store(...)` builder hook,
+per-tick checkpoint cadence, resume-from-checkpoint on
+`Engine::start(known_run_id)`.** Stage 4 (SQLite store impls) is
+complete and pushed.
 
 ## Stages complete
 
 - **Stage 1.** D-F3.1..D-F3.12 + Q1..Q8 locked; Q4 → STANDALONE.
-- **Stage 2.** REVIEW gate passed (user signed off via "keep going").
-- **Stage 3.** SPI trait fleshout + baseline regeneration landed in one
-  commit per D-F3.7.
+- **Stage 2.** REVIEW gate passed.
+- **Stage 3.** SPI trait fleshout + baseline regeneration.
+- **Stage 4.** Three SQLite store impls behind default-off `flow`
+  feature; 8 integration tests green; workspace gates clean.
 
-## Stage 3 outcome (one-line summary)
+## Stage 4 outcome (one-line summary)
 
-`FlowStore` + `RunStore` + `SessionStore` trait method shapes per
-D-F3.1, `RunStore::find_by_dedup_key` added per D-F3.12, additive
-value types (`RunOpts`, `CheckpointRetention`, `RunState`,
-`RunCheckpoint`, `RunOutcome`, `FlowRevision`, `SessionId`,
-`SessionRecord`, `DedupKey`, `RunMetrics`, `EngineHealth`,
-`EngineError`), additive `FlowEvent` variants (`CheckpointFailed`,
-`DedupShortCircuit`), additive `FlowError::NotFound { kind, id }`,
-additive `EventSink::dedup_key(&self, kind, payload) -> Option<String>`
-default-`None` method. Baseline regenerated in the same commit per
-D-F3.7. 11 unit tests pass; workspace builds `--all-features`;
-`workspace_dep_tree_gates` test green (all 5 sub-tests including the
-baseline-holds check); clippy clean across SPI-dependent crates.
+`SqliteFlowStore` + `SqliteRunStore` + `SqliteSessionStore` land in
+`crates/starter-store-sqlite/src/flow/` behind a new default-off
+`flow` cargo feature (D-F3.3, D-F3.7). Five-table schema in
+`migrations/flow/0001_init.sql` (`flow_revisions`, `flow_heads`,
+`runs` + `UNIQUE (service_name, dedup_key)` partial index,
+`run_checkpoints` keyed on `(run_id, seq)`, `sessions`). Pool's
+`connect()` extended with an `after_connect` hook applying the
+four pragmas workspace-wide (`journal_mode=WAL,
+synchronous=NORMAL, busy_timeout=5000, foreign_keys=ON`).
 
-## Stage 3 implementation choices made
+## Stage 4 implementation choices made
 
-- **`EventSink::dedup_key` signature**:
-  `(&self, kind: &str, payload: &Value) -> Option<String>` (mirrors
-  `emit`'s shape). Default `None` impl keeps all existing
-  `impl EventSink for …` blocks source-compatible (verified via
-  `cargo test -p starter-spi`).
-- **`RunStore::checkpoint` gained an explicit `seq: u64` param**
-  (deviation from the SCOPE prose "verbatim" block). Reason: the
-  resume path uses `MAX(seq)` to find the latest checkpoint, so
-  the propagator's monotonic tick counter (Q2) must drive `seq`;
-  store auto-increment would lose the tick-counter ↔ seq linkage
-  and break resume correctness. Documented in the trait method
-  doc-comment.
-- **`RunStore::start` gained an `Option<DedupKey>` param**
-  (deviation from the SCOPE prose "verbatim" block). Reason:
-  D-F3.12 requires dedup-key recording at run-start time inside
-  the `runs` row that the `UNIQUE (service_name, dedup_key)`
-  partial index protects. Non-service runs pass `None`. The
-  `DedupKey` type was added to the SPI to keep the pair typed.
-- **`EngineError` lives in `starter-flow-spi`** as a new
-  SPI-level type, distinct from the engine crate's internal
-  state-machine `EngineError` (which carries `IllegalTransition`
-  for the R12 transition matrix). Variants: `BackendUnavailable`
-  + `Flow(#[from] FlowError)`. Stage 6 will decide whether to
-  merge or keep separate.
-- **`RunState` enum** — minimal: `Running, Paused, Completed,
-  Failed, Cancelled`. `Paused` included now so the checkpoint
-  schema doesn't need a migration when Phase 7 lands per-flow
-  pause.
-- **No new `session.rs` file** — `SessionStore` co-located in
-  `flow.rs` per Q1 (smaller module surface).
+- **Pool pragmas are workspace-wide, not flow-feature-gated**.
+  Reason: connection pragmas are per-connection in SQLite — the
+  pool either applies them on every checkout or it doesn't. Each
+  pragma is a safe default for every existing consumer (`:memory:`
+  silently ignores `journal_mode=WAL`; `foreign_keys=ON` matches
+  what every other store crate's tests already expect). Stage-4
+  test `wal_pragmas_applied_on_file_backed_pool` locks this on
+  a file-backed pool where journal_mode actually takes effect.
+- **`BEGIN DEFERRED` (sqlx default), not `BEGIN IMMEDIATE`**.
+  D-F3.8 names atomicity, not lock-upgrade-deadlock avoidance —
+  the engine has a single-writer-per-run invariant so the
+  upgrade-from-SHARED race doesn't apply. If a later stage
+  surfaces multi-writer contention, `Pool::begin_with` in sqlx
+  0.8 supports the upgrade additively.
+- **Retention loaded outside the checkpoint tx**. `RunOpts` is
+  immutable for a run's lifetime (set at `start`); reading it
+  inside the tx would only add lock contention.
+- **`INSERT OR IGNORE` on `flow_revisions.put`**. Revisions are
+  immutable per SCOPE "Decisions made"; a re-put of the same
+  `(flow_id, revision_id)` pair is a no-op. Mismatched body on
+  re-put is a caller bug the engine layer guards (stage 5).
+- **`sessions.list(principal)` scans + filters by `subject`**.
+  Sessions are small-cardinality per principal; an indexed
+  `subject` column lands additively when a hot listing path
+  surfaces.
+- **Status mirroring**. `runs.status` mirrors the engine-typed
+  `RunState` written into each checkpoint so `list_open` is a
+  one-shot indexed lookup against `finished_at IS NULL`.
+- **Wildcard match arms on `RunState` / `RunOutcome`**. Both are
+  `#[non_exhaustive]` in the SPI; unknown variants map to safe
+  defaults (`"running"` / `"failed"` respectively) rather than a
+  `Backend` error that would mask the actual checkpoint write.
+- **Migrator export**. `starter_store_sqlite::flow::FLOW_MIGRATOR`
+  (`static sqlx::migrate::Migrator`) +
+  `FLOW_MIGRATION_SOURCE` const so consumers can do
+  `migrate(&pool).with_source(FLOW_MIGRATION_SOURCE)` without
+  knowing the table name.
 
-## Known pre-existing issues (NOT caused by stage 3)
+## Known pre-existing issues (NOT caused by stage 3 or 4)
 
 - `cargo clippy --workspace --all-targets -- -D warnings` fails
-  on master too with:
-  `error[E0432]: unresolved import 'starter_grpc::testing'` in
+  on master too with `error[E0432]: unresolved import
+  'starter_grpc::testing'` in
   `crates/starter-grpc/tests/tools_service.rs` — needs
   `--features testing` which workspace clippy doesn't add.
-  Worked around stage-3 verification by scoping clippy to
-  SPI-touched + transitive-dependent crates (all clean).
 - `cargo fmt --check` reports pre-existing drift in:
   `crates/starter-spi/src/ui/theme/mod.rs`,
   `crates/starter-ui-theme/src/{lib,routes}.rs`,
-  `examples/notes/src/server.rs`. Not stage-3 files.
-  Stage 10 should track these as a separate workspace-hygiene
-  follow-up (out of scope for this job).
+  `examples/notes/src/server.rs`.
 
 ## Branch + commits
 
 - Branch: `codeless/starter-flow-phase3-persistence-surfaces`.
 - Stage 1 commit: `8407d6e` — decision lock.
-- Stage 3 commit: see latest log — SPI fleshout + baseline
-  regeneration.
+- Stage 3 commit: `44f19f5` — SPI fleshout + baseline regeneration.
+- Stage 4 commit: see latest log — SQLite store impls.
 - Pushed to origin.
 
-## What stage 4 starts with
+## What stage 5 starts with
 
-- New `flow` cargo feature on `starter-store-sqlite` (default-off
-  per D-F3.3).
-- `crates/starter-store-sqlite/src/flow/{flow_store,run_store,
-  session_store}.rs` + a sibling `schema` module for JSON-envelope
-  serializers.
-- Migrations in `crates/starter-store-sqlite/migrations/flow/`
-  following the existing `NNNN_<name>.sql` shape. First migration
-  carries a header comment naming the forward-only convention
-  (D-F3 durability hardening block).
-- Tables: `flow_revisions`, `flow_heads`, `runs` (with
-  `dedup_key TEXT NULL` + `service_name TEXT NULL` + the
-  `UNIQUE (service_name, dedup_key) WHERE … IS NOT NULL` partial
-  index per D-F3.12), `run_checkpoints` with `(run_id, seq)`
-  primary key, `sessions`.
-- WAL pragmas (`journal_mode=WAL, synchronous=NORMAL,
-  busy_timeout=5000, foreign_keys=ON`) applied by **extending**
-  (not replacing) the existing `crates/starter-store-sqlite/src/pool/`
-  connection-init path.
-- `SqliteRunStore::checkpoint` wraps the row insert + companion
-  `runs.status` update + in-tx pruning in a single
-  `BEGIN IMMEDIATE` transaction (D-F3.8 + D-F3.9).
-- Unit tests cover the five cases named in WORKFLOW.md stage 4
-  "Done when": (a) `BEGIN IMMEDIATE` atomicity via injected
-  fault; (b) in-tx pruning 200→100 with `min(seq)=101`;
-  (c) `finish` keep-final-row; (d) dedup-uniqueness collision;
-  (e) WAL-pragma verification.
+- `Engine::with_run_store(Arc<dyn RunStore>) -> Self` builder
+  hook on the engine crate (additive — non-store consumers keep
+  the no-store ctor).
+- Per-tick checkpoint cadence (D-F3.2): the propagator collects
+  the per-tick slot-write batch and calls
+  `RunStore::checkpoint(run_id, seq, state, &writes)` once at
+  the end of each propagation tick. `seq` is the propagator's
+  existing monotonic tick counter (Q2).
+- Resume-from-checkpoint: `Engine::start(known_run_id)` loads
+  `RunStore::load(run_id)`, replays `RunCheckpoint::writes`
+  through `GraphStore::write_slot` (R2 unchanged — the resume
+  path is **not** a second writer), then hands off to the
+  propagator.
+- Checkpoint-failure retry: 5 attempts with exponential backoff
+  per D-F3.11; on the 5th failure the engine transitions to
+  `EngineHealth::Degraded` and starts buffering checkpoint
+  batches into a per-run in-memory queue
+  (`RunOpts::degraded_queue_capacity`, evict-oldest on overflow).
+  `Engine::start` rejects new runs with
+  `EngineError::BackendUnavailable` while degraded.
+- The two-`EngineError` reconciliation question lands here.
+  Recommendation: keep them separate — engine-internal
+  `IllegalTransition` is a propagator-state-machine concern,
+  SPI-level `BackendUnavailable + Flow(#[from] FlowError)` is
+  the public surface. Wire engine-internal failures into the
+  public type via a `From` impl in the engine crate, not in the
+  SPI.
 
-## Stage-4 implementation gotchas
+## Stage 5 implementation gotchas
 
-- The SPI `RunStore::checkpoint` signature includes the
-  `seq: u64` param; the store derives nothing from auto-increment.
-- The SPI `RunStore::start` signature includes
-  `dedup: Option<DedupKey>`; the store writes the pair into the
-  `runs` row when `Some`, leaves both NULL when `None`.
-- `chrono` is not a direct dep of `starter-flow-spi` (it's
-  transitive via `starter-spi`). `created_at` / `updated_at`
-  columns are populated inside the store impl (SQLite
-  `CURRENT_TIMESTAMP` or a Rust-side `chrono::Utc::now()` — pick
-  at impl time); they don't appear on the SPI value types.
+- `chrono` is already a transitive dep of `starter-flow-spi`
+  via `starter-spi`; engine code can pull it without a new
+  dependency baseline regeneration.
+- The propagator's tick counter is per-run, not global. Q2
+  locked that `seq` is monotonic per-run.
+- `RunStore::checkpoint` takes the writes batch by slice borrow
+  — the propagator must hold the batch in an owned `Vec`
+  through the await point (no escape from the iterator).
+- `FlowEvent::CheckpointFailed { attempt }` is emitted once per
+  retry (`1..=5`); the broadcast is best-effort per D-F3.10.
+- `FlowEvent::DedupShortCircuit { prior_run_id }` is emitted by
+  `FlowAsService` (stage 7), not by the engine — stage 5 just
+  needs to make sure the engine's `EngineError::BackendUnavailable`
+  path doesn't accidentally short-circuit through the same
+  variant.
 
 ## Phase-3 follow-up notes (not in scope for this job)
 
@@ -136,9 +144,9 @@ baseline-holds check); clippy clean across SPI-dependent crates.
   Phase-7-owned engine-level event bus exists (Q7).
 - `starter-store-postgres` `flow` feature mirror (D-F3.3 revisit
   trigger).
-- Reconcile the two `EngineError` types (SPI vs engine-internal)
-  — stage 6 decision.
+- Add a `subject` indexed column to `sessions` if a hot
+  per-principal listing path surfaces.
 - Pre-existing workspace fmt drift in theme/ui-theme/notes
-  crates (out-of-scope for the Phase 3 job).
+  crates (out-of-scope).
 - Pre-existing `starter-grpc` clippy failure under
   `--workspace --all-targets` (needs `--features testing`).

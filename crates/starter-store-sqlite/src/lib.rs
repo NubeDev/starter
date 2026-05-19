@@ -7,6 +7,8 @@
 //! - [`migrate`] — namespaced migration runner.
 //! - [`paging`] — cursor encode/decode helpers.
 //! - [`testing`] — in-memory pool factory (`feature = "testing"`).
+//! - [`flow`] — SQLite impls of the starter-flow-spi store seams
+//!   (`feature = "flow"`, default-off per D-F3.3 / D-F3.7).
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -17,6 +19,9 @@ pub mod pool;
 
 #[cfg(feature = "testing")]
 pub mod testing;
+
+#[cfg(feature = "flow")]
+pub mod flow;
 
 pub use migrate::{migrate, MigrationSource};
 pub use pool::Pool;
