@@ -5,7 +5,7 @@
 // and persists via the REST client. Optimistic-lock conflicts (409)
 // surface as a non-destructive banner so the user keeps their edits.
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -16,10 +16,87 @@ import {
   type FlowGraph,
   type FlowNode,
   type NodeKindSpec,
+  type NodeRunState,
+  type RunOverlay,
 } from "@nube/starter-ui-flow";
-import { Alert, AlertDescription, AlertTitle, Button } from "@nube/starter-ui-kit";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+  Badge,
+  Button,
+} from "@nube/starter-ui-kit";
 
-import { ApiError, api, type Flow } from "../lib/api";
+import { ApiError, api, type Flow, type Run } from "../lib/api";
+import { useSse } from "../lib/sse";
+
+// SSE payloads emitted by `GET /api/flows/{id}/events`. Mirrors the
+// `RunEvent` enum in `src/sse.rs`. Kept narrow — only the variants the
+// editor reduces into overlay state.
+type RunEventDto =
+  | { type: "run-started"; flow_id: string; run_id: string }
+  | {
+      type: "node-status";
+      flow_id: string;
+      run_id: string;
+      node_id: string;
+      status: string;
+    }
+  | {
+      type: "edge-active";
+      flow_id: string;
+      run_id: string;
+      edge_id: string;
+    }
+  | {
+      type: "run-finished";
+      flow_id: string;
+      run_id: string;
+      status: string;
+    };
+
+const EMPTY_OVERLAY: RunOverlay = { nodes: {}, activeEdges: [] };
+const TERMINAL_CLEAR_MS = 1000;
+
+function statusToNodeRunState(status: string): NodeRunState {
+  switch (status) {
+    case "running":
+      return "running";
+    case "ok":
+    case "success":
+    case "completed":
+      return "ok";
+    case "error":
+    case "failed":
+      return "error";
+    case "cancelled":
+      return "cancelled";
+    case "skipped":
+      return "skipped";
+    case "ready":
+      return "ready";
+    default:
+      return "idle";
+  }
+}
+
+function runBadgeVariant(
+  status: string,
+): "default" | "secondary" | "destructive" | "outline" {
+  switch (status) {
+    case "ok":
+    case "success":
+    case "completed":
+      return "default";
+    case "running":
+      return "secondary";
+    case "error":
+    case "failed":
+      return "destructive";
+    default:
+      return "outline";
+  }
+}
 
 // Module-scope registry: seeded once with the built-in kinds. Future
 // stages add agent-backed kinds via `registry.register(...)` here.
@@ -108,6 +185,102 @@ export function FlowEditor() {
     },
   });
 
+  // --- Live run overlay (SSE) ---------------------------------------
+  //
+  // `RunEvent`s are reduced into a `RunOverlay` shape that <FlowCanvas>
+  // consumes. Only events for the currently active run are kept so a
+  // stale prior run can't bleed colour into the new one.
+  const [overlay, setOverlay] = useState<RunOverlay>(EMPTY_OVERLAY);
+  const [activeRunId, setActiveRunId] = useState<string | null>(null);
+  const clearTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const runsQuery = useQuery<Run[]>({
+    queryKey: ["flow-runs", id],
+    queryFn: () => api.flows.runs(id),
+    enabled: !!id,
+    // Keep a small refresh cadence so the side panel stays in sync even
+    // without a dedicated runs SSE channel.
+    refetchInterval: 5_000,
+  });
+
+  const handleRunEvent = useCallback(
+    (ev: RunEventDto) => {
+      switch (ev.type) {
+        case "run-started": {
+          if (clearTimerRef.current) {
+            clearTimeout(clearTimerRef.current);
+            clearTimerRef.current = null;
+          }
+          setActiveRunId(ev.run_id);
+          setOverlay({ nodes: {}, activeEdges: [] });
+          // The run row appears in the panel via the polling query;
+          // nudge it once so the new run shows up immediately.
+          void runsQuery.refetch();
+          break;
+        }
+        case "node-status": {
+          // Drop events from prior runs.
+          if (activeRunId && ev.run_id !== activeRunId) return;
+          setOverlay((prev) => ({
+            nodes: {
+              ...prev.nodes,
+              [ev.node_id]: statusToNodeRunState(ev.status),
+            },
+            activeEdges: prev.activeEdges ?? [],
+          }));
+          break;
+        }
+        case "edge-active": {
+          if (activeRunId && ev.run_id !== activeRunId) return;
+          setOverlay((prev) => {
+            const existing = prev.activeEdges ?? [];
+            if (existing.includes(ev.edge_id)) return prev;
+            return {
+              nodes: prev.nodes,
+              activeEdges: [...existing, ev.edge_id],
+            };
+          });
+          break;
+        }
+        case "run-finished": {
+          if (activeRunId && ev.run_id !== activeRunId) return;
+          // Hold the terminal frame for 1s so the user sees the final
+          // colours, then clear the overlay.
+          if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+          clearTimerRef.current = setTimeout(() => {
+            setOverlay(EMPTY_OVERLAY);
+            setActiveRunId(null);
+            clearTimerRef.current = null;
+          }, TERMINAL_CLEAR_MS);
+          void runsQuery.refetch();
+          break;
+        }
+      }
+    },
+    [activeRunId, runsQuery],
+  );
+
+  useSse<RunEventDto>(id ? `/api/flows/${id}/events` : null, handleRunEvent);
+
+  useEffect(
+    () => () => {
+      if (clearTimerRef.current) clearTimeout(clearTimerRef.current);
+    },
+    [],
+  );
+
+  const fire = useMutation({
+    mutationFn: async () => api.flows.fire(id, {}),
+    onSuccess: (res) => {
+      // The `run-started` SSE will arrive momentarily and replace this
+      // — but seeding it now means UI feedback is immediate even if the
+      // event is briefly delayed.
+      setActiveRunId(res.run_id);
+      setOverlay({ nodes: {}, activeEdges: [] });
+      void runsQuery.refetch();
+    },
+  });
+
   const palettePicks = useMemo(() => nodeRegistry.list().map((e) => e.spec), []);
 
   function handleCanvasChange(next: FlowGraph) {
@@ -193,6 +366,25 @@ export function FlowEditor() {
           >
             {save.isPending ? "Saving…" : "Save"}
           </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => fire.mutate()}
+            disabled={fire.isPending || dirty || activeRunId !== null}
+            title={
+              dirty
+                ? "Save before running"
+                : activeRunId !== null
+                  ? "A run is already in progress"
+                  : "Fire the flow"
+            }
+          >
+            {fire.isPending
+              ? "Firing…"
+              : activeRunId !== null
+                ? "Running…"
+                : "Run"}
+          </Button>
         </div>
       </header>
 
@@ -249,11 +441,23 @@ export function FlowEditor() {
         </div>
       </div>
 
+      {fire.isError ? (
+        <Alert className="mx-6 mt-3 border-destructive/60 bg-destructive/5">
+          <AlertTitle>Run failed to start</AlertTitle>
+          <AlertDescription>
+            {fire.error instanceof Error
+              ? fire.error.message
+              : String(fire.error)}
+          </AlertDescription>
+        </Alert>
+      ) : null}
+
       <div className="relative min-h-0 flex-1">
         <FlowCanvas
           key={canvasKey}
           registry={nodeRegistry}
           graph={graph}
+          overlay={overlay}
           onChange={handleCanvasChange}
         >
           {/* Floating palette overlay (richer than the top strip — kept
@@ -264,6 +468,73 @@ export function FlowEditor() {
           </div>
         </FlowCanvas>
       </div>
+
+      <RecentRunsPanel
+        runs={runsQuery.data ?? []}
+        loading={runsQuery.isLoading}
+        activeRunId={activeRunId}
+      />
     </div>
   );
+}
+
+// Last 10 runs for this flow. Status + relative timestamp.
+function RecentRunsPanel({
+  runs,
+  loading,
+  activeRunId,
+}: {
+  runs: Run[];
+  loading: boolean;
+  activeRunId: string | null;
+}) {
+  const recent = runs.slice(0, 10);
+  return (
+    <aside className="border-t border-border/60 bg-muted/20 px-6 py-3">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          Recent runs
+        </h2>
+        <span className="text-[10px] text-muted-foreground">
+          {loading ? "Loading…" : `${recent.length} shown`}
+        </span>
+      </div>
+      {recent.length === 0 ? (
+        <p className="text-xs text-muted-foreground">
+          No runs yet. Hit Run to fire this flow.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-1.5">
+          {recent.map((run) => {
+            const isActive = run.id === activeRunId;
+            // Treat the in-flight run as "running" even if the row was
+            // persisted with an earlier status snapshot.
+            const status = isActive ? "running" : run.status;
+            return (
+              <li
+                key={run.id}
+                className="flex items-center justify-between gap-3 rounded-md border border-border/40 bg-background px-3 py-1.5 text-xs"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <Badge variant={runBadgeVariant(status)}>{status}</Badge>
+                  <code className="truncate font-mono text-[11px] text-muted-foreground">
+                    {run.id.slice(0, 8)}
+                  </code>
+                </div>
+                <span className="text-[11px] text-muted-foreground">
+                  {formatTimestamp(run.finished_at ?? run.started_at)}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      )}
+    </aside>
+  );
+}
+
+function formatTimestamp(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  return d.toLocaleString();
 }
