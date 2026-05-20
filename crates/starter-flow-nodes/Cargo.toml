@@ -27,6 +27,7 @@ tracing     = { workspace = true }
 # registry names — the `cfg(feature = "tool-call")` gate on
 # `pub mod tool_call` in `src/lib.rs` keeps the module itself opt-in.
 starter-spi = { workspace = true }
+serde       = { workspace = true }
 serde_json  = { workspace = true }
 # `tool-call` (stage 4) races the tool's future against the run's
 # `Cancel` inside a `tokio::select!`. Gated as `optional` so consumers
@@ -51,7 +52,7 @@ default = []
 
 transform         = []
 tool-call         = ["dep:tokio"]
-ai-agent          = []
+ai-agent          = ["dep:tokio"]
 branch            = []
 merge             = []
 gate              = []

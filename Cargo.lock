@@ -6203,6 +6203,7 @@ name = "starter-flow-nodes"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "serde",
  "serde_json",
  "starter-flow",
  "starter-flow-spi",
