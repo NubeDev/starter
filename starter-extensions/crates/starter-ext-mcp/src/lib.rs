@@ -33,5 +33,5 @@ mod ctx_stub;
 mod register;
 mod tool_wrapper;
 
-pub use register::{register_tools, RegisterError, RegisterOutcome};
-pub use tool_wrapper::ExtensionToolBinding;
+pub use register::{register_process_tools, register_tools, RegisterError, RegisterOutcome};
+pub use tool_wrapper::{ExtensionToolBinding, ProcessExtensionToolBinding};

@@ -30,10 +30,13 @@
 //!   request immediately and surfaces [`NodeError::Cancelled`].
 
 use std::collections::BTreeMap;
+use std::sync::LazyLock;
 use std::time::Duration;
 
 use async_trait::async_trait;
 use reqwest::{Client, Method};
+use schemars::{schema::RootSchema, JsonSchema};
+use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use thiserror::Error;
 
@@ -97,6 +100,79 @@ pub const DEFAULT_TIMEOUT_MS: u64 = 30_000;
 /// Hard ceiling on the configurable timeout. Held to ten minutes so a
 /// typo can't pin a flow worker indefinitely.
 pub const MAX_TIMEOUT_MS: u64 = 10 * 60 * 1000;
+
+/// Publish-time configuration carried on an `http-out` node's
+/// `settings:` field in a flow body. Per
+/// [`DOCS/flow/scope/settings.md`](../../../DOCS/flow/scope/settings.md)
+/// Phase S-4: declares the typed schema editor surfaces validate
+/// drafts against.
+///
+/// Distinct from the *runtime* input slots ([`URL_SLOT`],
+/// [`METHOD_SLOT`], …) — those receive values from upstream nodes at
+/// invoke time. The settings here are the *publish-time* defaults a
+/// flow author writes into the body; once `TopologyResolver::resolve`
+/// lands (`DOCS/flow/scope/hot-reload.md` HR5) it will seed each
+/// field into the matching config slot. All fields are optional so a
+/// fully-dynamic `http-out` (every slot driven by an upstream link)
+/// validates with an empty settings object.
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct HttpOutSettings {
+    /// Default request URL. Must be an `http://` or `https://` URL
+    /// when present.
+    #[serde(default)]
+    pub url: Option<String>,
+
+    /// Default HTTP method. Case-insensitive at runtime; the schema
+    /// constrains the publish-time value to the supported set.
+    #[serde(default)]
+    pub method: Option<HttpMethod>,
+
+    /// Default request headers as a string→string map.
+    #[serde(default)]
+    pub headers: Option<BTreeMap<String, String>>,
+
+    /// Default request body as a UTF-8 string. JSON bodies are
+    /// modelled as a string at publish time so the schema stays
+    /// expressible in plain JSON Schema; runtime callers wanting a
+    /// structured body still link a [`BODY_SLOT`] from an upstream
+    /// node that yields [`SlotValue::Json`].
+    #[serde(default)]
+    pub body: Option<String>,
+
+    /// Default per-request timeout in milliseconds. Must satisfy
+    /// `1 ..= MAX_TIMEOUT_MS` when present. Absent uses
+    /// [`DEFAULT_TIMEOUT_MS`].
+    #[serde(default)]
+    pub timeout_ms: Option<u64>,
+}
+
+/// HTTP method values an `http-out` node accepts at publish time.
+/// The runtime path is case-insensitive (see [`parse_method`]); this
+/// enum is the canonical lower-case-friendly enumeration the schema
+/// surfaces to editors.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "UPPERCASE")]
+pub enum HttpMethod {
+    /// HTTP `GET`.
+    Get,
+    /// HTTP `POST`.
+    Post,
+    /// HTTP `PUT`.
+    Put,
+    /// HTTP `PATCH`.
+    Patch,
+    /// HTTP `DELETE`.
+    Delete,
+    /// HTTP `HEAD`.
+    Head,
+}
+
+/// Derived JSON Schema for [`HttpOutSettings`]. Returned by reference
+/// from [`HttpOut::config_schema`]; built once per process via
+/// [`LazyLock`].
+pub static HTTP_OUT_SETTINGS_SCHEMA: LazyLock<RootSchema> =
+    LazyLock::new(|| schemars::schema_for!(HttpOutSettings));
 
 /// Typed errors surfaced by [`HttpOut::invoke`].
 #[derive(Debug, Error)]
@@ -194,6 +270,10 @@ fn parse_method(s: &str) -> Result<Method, HttpOutError> {
 impl NodeBehavior for HttpOut {
     fn kind_id(&self) -> &KindId {
         &self.kind
+    }
+
+    fn config_schema(&self) -> &'static RootSchema {
+        &HTTP_OUT_SETTINGS_SCHEMA
     }
 
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {

@@ -154,7 +154,12 @@ None at the SPI / engine level. Risk is in features absent today: an extension a
 
 ## Top 5 prioritized recommendations
 
-1. **Land process-flavour synchronous JSON-RPC dispatch** across REST, CLI, gRPC, MCP. The supervisor speaks JSON-RPC; build the request/response demultiplexer on top and remove `NotWired` from those three crates' `ProcessXxxDispatcher` types. Without this, R13's "one trait, three flavours" is not delivered.
+1. **~~Land process-flavour synchronous JSON-RPC dispatch~~** ✅ **Done (2026-05-20).**
+   - Added `SupervisorHandle::call(method, params, timeout)` — a request/response demultiplexer keyed by dispatch ids ≥ `1_000_000` (health pings stay in their own id range). On task exit, pending senders are dropped so in-flight callers see a transport error instead of hanging. [starter-extensions/crates/starter-ext-supervisor/src/supervisor.rs](starter-extensions/crates/starter-ext-supervisor/src/supervisor.rs)
+   - Removed `NotWired` from the unary path of `ProcessCliDispatcher`, `ProcessGrpcDispatcher`, and the new `ProcessRestDispatcher`. All three dispatch as `tools/<contribute_id>` so the existing `register_process_main!`-generated child loop routes through `ExtensionDispatch::dispatch_tool` unchanged.
+   - Added `register_process_tools` + `ProcessExtensionToolBinding` in `starter-ext-mcp` so process-flavour extensions' `contributes.tools[]` reach MCP without modification.
+   - 3-test E2E suite against `hello-process` exercises round-trip, error envelope translation, concurrent in-flight calls (proves the per-id pending-map routing isn't serialising), and the timeout path. [starter-extensions/crates/starter-ext-supervisor/tests/dispatch_demux.rs](starter-extensions/crates/starter-ext-supervisor/tests/dispatch_demux.rs)
+   - Streaming (`dispatch_stream`) for process flavour remains `NotWired` with a sharpened message; the per-stream `stream.event/end` demultiplexer is a follow-up slice.
 
 2. **Implement the missing flow node kinds** (`branch`, `merge`, `gate`, `sleep`, `http_out`, `trigger.webhook`, `trigger.schedule`, `trigger.event`, `subflow`) at [crates/starter-flow-nodes/src/](crates/starter-flow-nodes/src). They are ~13 LOC stubs today. Without them, the engine cannot express the workflow its own SCOPE motivates with.
 

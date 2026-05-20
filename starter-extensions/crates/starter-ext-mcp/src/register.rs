@@ -14,14 +14,19 @@
 //! on the first failure, matching the kernel's per-extension isolation
 //! discipline.
 
+use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration;
 
 use starter_ext_host::ExtensionRegistry;
 use starter_ext_sdk::builtin::BuiltinTable;
-use starter_ext_spi::{Error, RuntimeKind};
+use starter_ext_spi::{Error, ExtensionId, RuntimeKind};
 use starter_mcp::ToolRegistry;
 
-use crate::{ctx_stub::make_stub_ctx, tool_wrapper::ExtensionToolBinding};
+use crate::{
+    ctx_stub::make_stub_ctx,
+    tool_wrapper::{ExtensionToolBinding, ProcessExtensionToolBinding},
+};
 
 /// Summary of what `register_tools` did. Surfaced so a consumer can log
 /// the outcome without re-scanning the registry.
@@ -124,6 +129,89 @@ pub fn register_tools(
                 tool_entry,
                 builtins.clone(),
                 ctx.clone(),
+            ) {
+                Ok(binding) => {
+                    tools = tools.register(binding);
+                    outcome.tools_registered += 1;
+                }
+                Err(e) => failures.push(ToolBindingFailure {
+                    extension: extension_id.as_str().to_owned(),
+                    tool: tool_entry.id.clone(),
+                    source: e,
+                }),
+            }
+        }
+    }
+
+    let err = if failures.is_empty() {
+        Ok(())
+    } else {
+        Err(RegisterError::Collected(failures))
+    };
+    (tools, outcome, err)
+}
+
+/// Register every process-flavour extension's `contributes.tools[]`
+/// entries into `tools`, dispatching through their supervisor handles.
+///
+/// Companion to [`register_tools`] for the process flavour: walks every
+/// `Validated` record whose manifest declares `runtime.kind: process`,
+/// looks up its [`starter_ext_supervisor::SupervisorHandle`] in
+/// `handles`, and wraps each declared tool in a
+/// [`ProcessExtensionToolBinding`] that issues a JSON-RPC
+/// `tools/<id>` request via [`starter_ext_supervisor::SupervisorHandle::call`]
+/// on every MCP invocation.
+///
+/// Per-tool failures (description / schema file unreadable, handle
+/// missing) are aggregated into [`RegisterError::Collected`] — the
+/// adapter does *not* short-circuit on the first failure, matching the
+/// kernel's per-extension isolation discipline.
+pub fn register_process_tools(
+    registry: &ExtensionRegistry,
+    handles: &HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
+    request_timeout: Duration,
+    mut tools: ToolRegistry,
+) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
+    let mut outcome = RegisterOutcome::default();
+    let mut failures: Vec<ToolBindingFailure> = Vec::new();
+
+    for record in registry.iter_validated() {
+        outcome.extensions_seen += 1;
+        let Some(manifest) = record.manifest.as_ref() else {
+            continue;
+        };
+        if manifest.runtime.kind != RuntimeKind::Process {
+            // Builtin/wasm extensions are not this function's
+            // responsibility — `register_tools` (builtin) and a future
+            // `register_wasm_tools` cover those.
+            outcome.tools_skipped_non_builtin += manifest.contributes.tools.len();
+            continue;
+        }
+        let Some(extension_id) = record.id.clone() else {
+            continue;
+        };
+        let Some(handle) = handles.get(&extension_id) else {
+            for tool_entry in &manifest.contributes.tools {
+                failures.push(ToolBindingFailure {
+                    extension: extension_id.as_str().to_owned(),
+                    tool: tool_entry.id.clone(),
+                    source: Error::validation(format!(
+                        "extension {:?} declares process runtime but no supervisor handle \
+                         was supplied to register_process_tools",
+                        extension_id.as_str()
+                    )),
+                });
+            }
+            continue;
+        };
+
+        for tool_entry in &manifest.contributes.tools {
+            match ProcessExtensionToolBinding::build(
+                extension_id.clone(),
+                &record.bundle_dir,
+                tool_entry,
+                handle.clone(),
+                request_timeout,
             ) {
                 Ok(binding) => {
                     tools = tools.register(binding);

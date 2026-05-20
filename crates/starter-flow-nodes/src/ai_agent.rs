@@ -45,9 +45,10 @@
 
 use std::collections::{BTreeSet, HashMap};
 use std::pin::Pin;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use async_trait::async_trait;
+use schemars::{schema::RootSchema, JsonSchema};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tracing::field;
@@ -117,6 +118,64 @@ pub const TURN_COUNT_SLOT: &str = "turn_count";
 /// Phase 2 D1a hop-budget posture; future revisions may make this
 /// a `RunOpts` config slot.
 pub const MAX_TURNS: u32 = 64;
+
+/// Publish-time configuration carried on an `ai-agent` node's
+/// `settings:` field in a flow body. Per
+/// [`DOCS/flow/scope/settings.md`](../../../DOCS/flow/scope/settings.md)
+/// Phase S-4: the kind exposes a typed schema derived from this
+/// struct via [`schemars`] so editor surfaces (REST, CLI, UI canvas)
+/// can validate drafts and generate forms without re-implementing
+/// per-kind knowledge.
+///
+/// Runtime [`AiAgent::invoke`] keeps reading from the
+/// `PROVIDER_ID_SLOT` / `SYSTEM_PROMPT_SLOT` / … input slots via
+/// [`AgentConfig::from_input`] — schema is the *publish-time gate*,
+/// not a second runtime mechanism (settings.md "What does NOT
+/// land"). Once `TopologyResolver::resolve` lands
+/// (see `DOCS/flow/scope/hot-reload.md` HR5) it will project the
+/// fields here into the matching config slots before invocation.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct AiAgentSettings {
+    /// Reverse-DNS provider id the body resolves against the
+    /// [`AiRunnerRegistry`] (e.g. `anthropic/claude-sonnet-4-6`).
+    /// Required at publish time — runtime still enforces the same
+    /// constraint via `provider_id_required` / `provider_id_invalid`
+    /// domain errors.
+    pub provider_id: String,
+
+    /// Optional system prompt prepended to the conversation.
+    #[serde(default)]
+    pub system_prompt: Option<String>,
+
+    /// Node-local tool allowlist (reverse-DNS tool ids). Intersected
+    /// with the host `ToolRegistry` and the active skill's
+    /// `allowed_tools` per D-F4.5; an empty intersection surfaces
+    /// `no_tools_visible` at runtime.
+    #[serde(default)]
+    pub allowed_tools: Vec<String>,
+
+    /// Session-continuity policy. One of
+    /// `"fresh_per_invocation"` | `"reuse_across_run"` |
+    /// `"reuse_across_flow"`. Absent defaults to
+    /// `"fresh_per_invocation"` (matches
+    /// [`SessionMode::FreshPerInvocation`](starter_flow_spi::flow::SessionMode)).
+    #[serde(default)]
+    pub session_mode: Option<String>,
+
+    /// `RunnerInput` transport. `"rest"` (default) drives the
+    /// in-body turn loop with host tool dispatch;
+    /// `"cli"` hands a `RunnerInput::Cli` to the runner once and
+    /// lets the CLI binary own the tool loop (D-F5.6).
+    #[serde(default)]
+    pub input_kind: Option<String>,
+}
+
+/// Derived JSON Schema for [`AiAgentSettings`]. Returned by
+/// reference from [`AiAgent::config_schema`]; built once per process
+/// via [`LazyLock`].
+pub static AI_AGENT_SETTINGS_SCHEMA: LazyLock<RootSchema> =
+    LazyLock::new(|| schemars::schema_for!(AiAgentSettings));
 
 /// Which `RunnerInput` variant the body hands to the resolved
 /// runner. CLI-shape runners (e.g. `ClaudeRunner`) reject
@@ -248,6 +307,10 @@ impl AiAgent {
 impl NodeBehavior for AiAgent {
     fn kind_id(&self) -> &KindId {
         &self.kind_id
+    }
+
+    fn config_schema(&self) -> &'static RootSchema {
+        &AI_AGENT_SETTINGS_SCHEMA
     }
 
     async fn invoke(&self, ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError> {

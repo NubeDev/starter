@@ -427,12 +427,15 @@ impl GrpcDispatcher for NotWiredGrpcDispatcher {
     }
 }
 
-/// Process-flavour dispatcher. v0.1 stub: returns `NotWired` for every
-/// call (the brief asks for "synchronous JSON-RPC dispatch with
-/// configurable timeout for process and wasm flavours" — the timeout
-/// knob is here and observed; the supervisor's request/response
-/// demultiplexer ships in the next slice without changing this trait
-/// or any call site).
+/// Process-flavour dispatcher.
+///
+/// Holds the per-extension [`starter_ext_supervisor::SupervisorHandle`]
+/// map and a default per-call timeout. Synchronous unary dispatch is
+/// implemented on top of [`starter_ext_supervisor::SupervisorHandle::call`]:
+/// the request method on the wire is `tools/<contribute_id>` so the
+/// `starter-ext-sdk` `register_process_main!`-generated child loop
+/// routes the call through `ExtensionDispatch::dispatch_tool`. Streaming
+/// dispatch remains `NotWired` until the per-stream demultiplexer lands.
 pub struct ProcessGrpcDispatcher {
     handles: HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
     request_timeout: Duration,
@@ -462,6 +465,14 @@ impl ProcessGrpcDispatcher {
     ) -> Option<Arc<starter_ext_supervisor::SupervisorHandle>> {
         self.handles.get(extension).cloned()
     }
+
+    fn effective_timeout(&self, per_call: Duration) -> Duration {
+        if per_call.is_zero() {
+            self.request_timeout
+        } else {
+            per_call.min(self.request_timeout)
+        }
+    }
 }
 
 #[async_trait]
@@ -470,22 +481,21 @@ impl GrpcDispatcher for ProcessGrpcDispatcher {
         &self,
         extension: &ExtensionId,
         contribute_id: &str,
-        _input: serde_json::Value,
-        _timeout: Duration,
+        input: serde_json::Value,
+        timeout: Duration,
     ) -> Result<serde_json::Value, DispatchError> {
-        if self.handles.contains_key(extension) {
-            Err(DispatchError::NotWired(format!(
-                "process-flavour synchronous JSON-RPC dispatch for {contribute_id:?} \
-                 ships in the next adapter slice; the request_timeout knob is in place \
-                 (default {:?})",
-                self.request_timeout
-            )))
-        } else {
-            Err(DispatchError::NotFound(format!(
+        let handle = self.handles.get(extension).ok_or_else(|| {
+            DispatchError::NotFound(format!(
                 "no supervisor handle for extension {:?}",
                 extension.as_str()
-            )))
-        }
+            ))
+        })?;
+        let method = format!("tools/{contribute_id}");
+        let effective = self.effective_timeout(timeout);
+        handle
+            .call(&method, input, effective)
+            .await
+            .map_err(DispatchError::from_kernel)
     }
 
     async fn dispatch_stream(
@@ -498,7 +508,8 @@ impl GrpcDispatcher for ProcessGrpcDispatcher {
         if self.handles.contains_key(extension) {
             Err(DispatchError::NotWired(format!(
                 "process-flavour streaming dispatch for {contribute_id:?} \
-                 ships in the next adapter slice"
+                 is a follow-up slice (unary path is wired; streaming \
+                 needs the per-stream stream.event/end demultiplexer)"
             )))
         } else {
             Err(DispatchError::NotFound(format!(

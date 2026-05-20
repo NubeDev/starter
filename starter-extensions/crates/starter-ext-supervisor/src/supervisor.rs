@@ -26,9 +26,11 @@
 //! Both are intentional: keeping the v0.1 supervisor's state machine an
 //! order of magnitude simpler is what SCOPE asks for ("v0.1 stays simple").
 
+use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Stdio;
-use std::sync::Arc;
+use std::sync::atomic::{AtomicI64, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use serde_json::json;
@@ -36,9 +38,24 @@ use starter_ext_host::ExtensionRecord;
 use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Error, ExtensionId, LifecycleState, Result};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
-use tokio::sync::{mpsc, watch};
+use tokio::sync::{mpsc, oneshot, watch};
 use tokio::task::JoinHandle;
 use tracing::{debug, info, warn};
+
+/// Dispatch request ids start above this floor so they never collide
+/// with the supervisor's internal health-ping ids (which start at
+/// `1_000` and increment per ping). Adapters allocate ids from
+/// [`SupervisorHandle::call`] using a per-handle atomic seeded above
+/// this value; the wire-loop demultiplexer routes responses with
+/// `id >= DISPATCH_ID_FLOOR` into the pending map and treats anything
+/// below as a health response (clears the deadline only).
+const DISPATCH_ID_FLOOR: i64 = 1_000_000;
+
+/// Inner table of in-flight dispatch requests, keyed by JSON-RPC id.
+/// Shared by [`SupervisorHandle`] (inserts on send) and the supervisor
+/// task (removes on response, or drains on task exit so callers see a
+/// transport error instead of hanging on `recv`).
+type PendingMap = Arc<Mutex<HashMap<i64, oneshot::Sender<core::result::Result<serde_json::Value, Error>>>>>;
 
 use crate::backoff::BackoffSchedule;
 use crate::capability::{CapabilityGate, CapabilityViolationCounter};
@@ -70,6 +87,8 @@ pub struct SupervisorHandle {
     events: Arc<EventRing>,
     violations: Arc<CapabilityViolationCounter>,
     inbound: mpsc::UnboundedSender<serde_json::Value>,
+    pending: PendingMap,
+    next_request_id: Arc<AtomicI64>,
 }
 
 impl SupervisorHandle {
@@ -109,6 +128,80 @@ impl SupervisorHandle {
     /// the manifest's grace window, then `SIGKILL` if needed.
     pub async fn shutdown(&self) {
         let _ = self.shutdown_tx.send(()).await;
+    }
+
+    /// Synchronous JSON-RPC call against the child.
+    ///
+    /// Allocates a dispatch id (above [`DISPATCH_ID_FLOOR`]), frames a
+    /// JSON-RPC 2.0 request `{ method, params }`, pushes it through the
+    /// supervisor's outbound channel, and awaits the matching response
+    /// from the child up to `timeout`.
+    ///
+    /// Errors:
+    /// - [`Error::Transport`] if the supervisor task is no longer
+    ///   running, the timeout elapses, or the child closes its stdout
+    ///   before answering.
+    /// - The child's own error envelope (decoded as [`Error`]) is
+    ///   returned verbatim so adapters can map it onto their transport's
+    ///   error vocabulary (`DispatchError::from_kernel`).
+    ///
+    /// This is the request/response demultiplexer the transport
+    /// adapters (`starter-ext-cli`, `starter-ext-server`,
+    /// `starter-ext-grpc`, `starter-ext-mcp`) build on top of to remove
+    /// their `NotWired` paths. The streaming sub-protocol
+    /// (`stream.event` / `stream.end` / `stream.error`) is *not* served
+    /// here — streaming dispatch requires a separate per-stream
+    /// demultiplexer that ships in a later slice.
+    pub async fn call(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+        timeout: Duration,
+    ) -> Result<serde_json::Value> {
+        let id = self.next_request_id.fetch_add(1, Ordering::Relaxed);
+        let (tx, rx) = oneshot::channel();
+        {
+            let mut guard = self
+                .pending
+                .lock()
+                .map_err(|_| Error::transport("pending map poisoned"))?;
+            guard.insert(id, tx);
+        }
+
+        let envelope = json!({
+            "jsonrpc": JSONRPC_VERSION,
+            "id": id,
+            "method": method,
+            "params": params,
+        });
+        if let Err(e) = self.send(envelope) {
+            // Remove our pending entry so the slot doesn't leak; the
+            // task is gone so no one will complete it.
+            if let Ok(mut g) = self.pending.lock() {
+                g.remove(&id);
+            }
+            return Err(e);
+        }
+
+        match tokio::time::timeout(timeout, rx).await {
+            Ok(Ok(result)) => result,
+            Ok(Err(_)) => {
+                if let Ok(mut g) = self.pending.lock() {
+                    g.remove(&id);
+                }
+                Err(Error::transport(
+                    "supervisor task dropped pending request (child likely crashed)",
+                ))
+            }
+            Err(_) => {
+                if let Ok(mut g) = self.pending.lock() {
+                    g.remove(&id);
+                }
+                Err(Error::transport(format!(
+                    "jsonrpc request timed out after {timeout:?}"
+                )))
+            }
+        }
     }
 }
 
@@ -165,6 +258,8 @@ impl Supervisor {
         let (inbound_tx, inbound_rx) = mpsc::unbounded_channel::<serde_json::Value>();
         let events = Arc::new(EventRing::new());
         let violations = Arc::new(CapabilityViolationCounter::default());
+        let pending: PendingMap = Arc::new(Mutex::new(HashMap::new()));
+        let next_request_id = Arc::new(AtomicI64::new(DISPATCH_ID_FLOOR));
 
         let task = SupervisorTask {
             id: id.clone(),
@@ -181,6 +276,7 @@ impl Supervisor {
             inbound_rx,
             events: events.clone(),
             violations: violations.clone(),
+            pending: pending.clone(),
         };
         tokio::spawn(task.run());
 
@@ -191,6 +287,8 @@ impl Supervisor {
             events,
             violations,
             inbound: inbound_tx,
+            pending,
+            next_request_id,
         })
     }
 }
@@ -214,6 +312,23 @@ struct SupervisorTask {
     inbound_rx: mpsc::UnboundedReceiver<serde_json::Value>,
     events: Arc<EventRing>,
     violations: Arc<CapabilityViolationCounter>,
+    /// Pending dispatch requests (id ≥ [`DISPATCH_ID_FLOOR`]) waiting
+    /// for the matching child response. Drained on task exit so any
+    /// in-flight [`SupervisorHandle::call`] returns a transport error
+    /// instead of hanging.
+    pending: PendingMap,
+}
+
+impl Drop for SupervisorTask {
+    fn drop(&mut self) {
+        // Cancel every in-flight dispatch — dropping the `oneshot::Sender`
+        // makes the receiver fail with `RecvError`, which the handle's
+        // `call` translates into `Error::Transport("... child likely
+        // crashed")`.
+        if let Ok(mut g) = self.pending.lock() {
+            g.clear();
+        }
+    }
 }
 
 impl SupervisorTask {
@@ -543,21 +658,57 @@ impl SupervisorTask {
             }
         };
 
-        // Response from the host (to our `health` ping, or to a tool
-        // invocation an adapter sent earlier).
+        // Response from the child (to our `health` ping, or to an
+        // adapter-issued dispatch call).
         if value.get("id").is_some()
             && (value.get("result").is_some() || value.get("error").is_some())
         {
-            // Health responses clear the deadline. We don't strictly
-            // require the id to match — any response landing inside the
-            // window is evidence the child is alive.
+            // Any response landing inside the window is evidence the
+            // child is alive — clear the health deadline regardless of
+            // which id it answers.
             *health_deadline = None;
-            // Forward to adapters/inbound consumers via the same outbound
-            // ring; in v0.1 there is no separate response channel so
-            // adapters consume the ring snapshot.
-            self.events.push(EventKind::StateTransition {
-                to: LifecycleState::Running,
-            });
+
+            // Route dispatch responses (id ≥ DISPATCH_ID_FLOOR) into the
+            // pending map. Anything below that floor is a health-ping
+            // response (or an unknown id we ignore).
+            let id_opt = value.get("id").and_then(|v| v.as_i64());
+            if let Some(id) = id_opt {
+                if id >= DISPATCH_ID_FLOOR {
+                    let sender = {
+                        match self.pending.lock() {
+                            Ok(mut g) => g.remove(&id),
+                            Err(_) => None,
+                        }
+                    };
+                    if let Some(tx) = sender {
+                        let payload = if let Some(err_val) = value.get("error") {
+                            // Try to decode the structured kernel Error
+                            // first; fall back to a transport error
+                            // wrapping the raw JSON so dispatchers never
+                            // see a silent truncation.
+                            let kernel_err = serde_json::from_value::<Error>(err_val.clone())
+                                .unwrap_or_else(|_| {
+                                    Error::extension_internal(format!(
+                                        "child returned non-Error error payload: {err_val}"
+                                    ))
+                                });
+                            Err(kernel_err)
+                        } else {
+                            Ok(value
+                                .get("result")
+                                .cloned()
+                                .unwrap_or(serde_json::Value::Null))
+                        };
+                        let _ = tx.send(payload);
+                    } else {
+                        debug!(
+                            ext = %self.id.as_str(),
+                            id,
+                            "received response for unknown / cancelled dispatch id",
+                        );
+                    }
+                }
+            }
             return;
         }
 

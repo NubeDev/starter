@@ -40,7 +40,8 @@ mod router;
 mod schema;
 
 pub use dispatcher::{
-    BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, RestDispatcher, StreamResponse,
+    BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, ProcessRestDispatcher,
+    RestDispatcher, StreamResponse,
 };
 pub use router::{rest_router, RestBuildError, RestRouterOptions};
 pub use schema::SchemaCheck;

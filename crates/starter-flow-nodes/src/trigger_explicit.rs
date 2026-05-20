@@ -32,9 +32,11 @@
 //!   practice).
 
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, LazyLock};
 
 use async_trait::async_trait;
+use schemars::{schema::RootSchema, JsonSchema};
+use serde::Deserialize;
 use thiserror::Error;
 
 use starter_flow_spi::node::{
@@ -65,6 +67,31 @@ pub const CHANNEL_ID_SLOT: &str = "channel_id";
 /// as [`SlotValue::Json`]. Downstream nodes read the payload as a
 /// JSON value the host produced when calling [`TriggerSender::fire`].
 pub const PAYLOAD_SLOT: &str = "payload";
+
+/// Publish-time configuration carried on a `trigger.explicit` node's
+/// `settings:` field in a flow body. Per
+/// [`DOCS/flow/scope/settings.md`](../../../DOCS/flow/scope/settings.md)
+/// Phase S-4.
+///
+/// Runtime [`TriggerExplicit::invoke`] still reads
+/// [`CHANNEL_ID_SLOT`] from the input [`SlotMap`]; once
+/// `TopologyResolver::resolve` lands (`DOCS/flow/scope/hot-reload.md`
+/// HR5) it will project [`Self::channel_id`] into that slot. Until
+/// then this struct only powers schema-fetch surfaces.
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct TriggerExplicitSettings {
+    /// Reverse-DNS id of the fire channel the host bound this
+    /// trigger to (e.g. `examples.notes.demo`). The body resolves
+    /// this against the [`TriggerChannelRegistry`] at invoke time.
+    pub channel_id: String,
+}
+
+/// Derived JSON Schema for [`TriggerExplicitSettings`]. Returned by
+/// reference from [`TriggerExplicit::config_schema`]; built once per
+/// process via [`LazyLock`].
+pub static TRIGGER_EXPLICIT_SETTINGS_SCHEMA: LazyLock<RootSchema> =
+    LazyLock::new(|| schemars::schema_for!(TriggerExplicitSettings));
 
 /// Receiver half of a host-bound trigger channel.
 ///
@@ -200,6 +227,10 @@ impl TriggerExplicit {
 impl NodeBehavior for TriggerExplicit {
     fn kind_id(&self) -> &KindId {
         &self.kind
+    }
+
+    fn config_schema(&self) -> &'static RootSchema {
+        &TRIGGER_EXPLICIT_SETTINGS_SCHEMA
     }
 
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {

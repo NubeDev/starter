@@ -29,7 +29,11 @@
 //!   `ctx.cancel.is_cancelled()` once before emitting; bounded
 //!   sub-millisecond cancel-to-exit.
 
+use std::sync::LazyLock;
+
 use async_trait::async_trait;
+use schemars::{schema::RootSchema, JsonSchema};
+use serde::Deserialize;
 use thiserror::Error;
 
 use starter_flow_spi::node::{
@@ -68,6 +72,51 @@ pub const EMITTED_SLOT: &str = "emitted";
 /// Tracing target every `log` node emits under. Lets a subscriber
 /// filter on the flow-log channel without scraping every flow span.
 pub const TRACING_TARGET: &str = "starter.flow.log";
+
+/// Publish-time configuration carried on a `log` node's
+/// `settings:` field in a flow body. Per
+/// [`DOCS/flow/scope/settings.md`](../../../DOCS/flow/scope/settings.md)
+/// Phase S-4: the kind exposes a typed schema derived from this
+/// struct via [`schemars`] so editor surfaces can validate drafts
+/// and generate forms without re-implementing per-kind knowledge.
+///
+/// Runtime [`Log::invoke`] still reads [`LEVEL_SLOT`] from the
+/// input [`SlotMap`]; once `TopologyResolver::resolve` lands
+/// (see `DOCS/flow/scope/hot-reload.md` HR5) it will project the
+/// settings here into that config slot. Until then this struct
+/// only powers schema-fetch surfaces.
+#[derive(Debug, Clone, Default, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct LogSettings {
+    /// Tracing level the emitted event uses. One of
+    /// `"trace" | "debug" | "info" | "warn" | "error"`. Defaults
+    /// to `"info"` when absent.
+    #[serde(default)]
+    pub level: Option<LogLevel>,
+}
+
+/// Tracing level a `log` node emits at. Mirrors the runtime values
+/// [`parse_level`] accepts.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize, JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum LogLevel {
+    /// `tracing::Level::TRACE`.
+    Trace,
+    /// `tracing::Level::DEBUG`.
+    Debug,
+    /// `tracing::Level::INFO` — the default when absent.
+    Info,
+    /// `tracing::Level::WARN`.
+    Warn,
+    /// `tracing::Level::ERROR`.
+    Error,
+}
+
+/// Derived JSON Schema for [`LogSettings`]. Returned by reference
+/// from [`Log::config_schema`]; built once per process via
+/// [`LazyLock`].
+pub static LOG_SETTINGS_SCHEMA: LazyLock<RootSchema> =
+    LazyLock::new(|| schemars::schema_for!(LogSettings));
 
 /// Typed errors surfaced by [`Log::invoke`].
 #[derive(Debug, Error)]
@@ -125,6 +174,10 @@ fn parse_level(s: &str) -> Result<tracing::Level, LogError> {
 impl NodeBehavior for Log {
     fn kind_id(&self) -> &KindId {
         &self.kind
+    }
+
+    fn config_schema(&self) -> &'static RootSchema {
+        &LOG_SETTINGS_SCHEMA
     }
 
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {

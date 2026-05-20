@@ -39,6 +39,43 @@ pub trait NodeBehavior: Send + Sync + 'static {
     async fn on_lifecycle(&self, ctx: NodeCtx<'_>, ev: LifecycleEvent) -> Result<(), NodeError> {
         Ok(())
     }
+
+    /// JSON Schema describing this kind's settings (the typed,
+    /// publish-time configuration carried on the node's
+    /// `settings:` field in a flow body).
+    ///
+    /// Per `DOCS/flow/scope/settings.md` S-1 + S-2: the schema is
+    /// derived from the kind's `#[derive(JsonSchema)]` `Settings`
+    /// struct via `schemars::schema_for!(...)`, stored as a
+    /// `LazyLock<RootSchema>`, and returned by reference here. The
+    /// default impl returns
+    /// [`crate::settings::EMPTY_SCHEMA`] — a kind with no settings
+    /// compiles unchanged.
+    fn config_schema(&self) -> &'static schemars::schema::RootSchema {
+        &crate::settings::EMPTY_SCHEMA
+    }
+
+    /// Validate a draft `settings` body against this kind's schema.
+    ///
+    /// Per `DOCS/flow/scope/settings.md` S-2: the default impl runs
+    /// the body through [`crate::settings::default_validate`] using
+    /// [`Self::config_schema`]. Kinds with cross-field rules JSON
+    /// Schema cannot express (e.g. *"if `auth_kind = bearer` then
+    /// `auth_token` is required"*) override this method, call the
+    /// default first, and surface domain rules as
+    /// [`crate::settings::SettingsError::Domain`].
+    ///
+    /// Called by `DefinitionManager::publish` (see
+    /// `DOCS/flow/scope/hot-reload.md` HR1) before a `FlowRevision`
+    /// is written. Runtime `invoke()` keeps its existing checks;
+    /// schema is the *publish-time* gate, not a second runtime
+    /// mechanism.
+    fn validate_settings(
+        &self,
+        body: &serde_json::Value,
+    ) -> Result<(), crate::settings::SettingsError> {
+        crate::settings::default_validate(self.config_schema(), body)
+    }
 }
 
 /// Per-invocation context handed to a [`NodeBehavior`].

@@ -497,13 +497,13 @@ impl CliDispatcher for NotWiredCliDispatcher {
 /// Process-flavour dispatcher.
 ///
 /// Holds the per-extension [`starter_ext_supervisor::SupervisorHandle`]
-/// map and a configurable request timeout. v0.1 stub: returns
-/// `DispatchError::NotWired` for every call (the brief asks for
-/// "synchronous JSON-RPC dispatch with configurable timeout for process
-/// and wasm flavours" — the timeout knob is here and observed; the
-/// supervisor's request/response demultiplexer ships in the next
-/// slice, at which point this dispatcher acquires its real body
-/// without touching the `CliDispatcher` trait or any call site).
+/// map and a default request timeout. Synchronous unary dispatch is
+/// implemented on top of [`starter_ext_supervisor::SupervisorHandle::call`]:
+/// the request method on the wire is `tools/<contribute_id>` so the
+/// `starter-ext-sdk` `register_process_main!`-generated child loop
+/// routes the call through `ExtensionDispatch::dispatch_tool`. Streaming
+/// dispatch remains a follow-up slice (the streaming sub-protocol needs
+/// its own per-stream demultiplexer).
 pub struct ProcessCliDispatcher {
     handles: HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
     request_timeout: Duration,
@@ -512,8 +512,7 @@ pub struct ProcessCliDispatcher {
 impl ProcessCliDispatcher {
     /// New process dispatcher. `request_timeout` is the fallback the
     /// adapter uses when the consumer did not supply a per-call value;
-    /// the actual dispatch will pick `min(per_call, default)` once
-    /// the JSON-RPC slice lands.
+    /// the actual dispatch picks `min(per_call, default)`.
     pub fn new(
         handles: HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
         request_timeout: Duration,
@@ -538,6 +537,18 @@ impl ProcessCliDispatcher {
     ) -> Option<Arc<starter_ext_supervisor::SupervisorHandle>> {
         self.handles.get(extension).cloned()
     }
+
+    /// Pick the effective timeout for a call. A zero per-call value
+    /// means "use the dispatcher default"; otherwise the smaller of
+    /// the two wins so neither the caller nor the host configuration
+    /// can extend the other's bound.
+    fn effective_timeout(&self, per_call: Duration) -> Duration {
+        if per_call.is_zero() {
+            self.request_timeout
+        } else {
+            per_call.min(self.request_timeout)
+        }
+    }
 }
 
 #[async_trait]
@@ -546,22 +557,21 @@ impl CliDispatcher for ProcessCliDispatcher {
         &self,
         extension: &ExtensionId,
         contribute_id: &str,
-        _input: serde_json::Value,
-        _timeout: Duration,
+        input: serde_json::Value,
+        timeout: Duration,
     ) -> Result<serde_json::Value, DispatchError> {
-        if self.handles.contains_key(extension) {
-            Err(DispatchError::NotWired(format!(
-                "process-flavour synchronous JSON-RPC dispatch for {contribute_id:?} \
-                 ships in the next adapter slice; the request_timeout knob is in place \
-                 (default {:?})",
-                self.request_timeout
-            )))
-        } else {
-            Err(DispatchError::NotFound(format!(
+        let handle = self.handles.get(extension).ok_or_else(|| {
+            DispatchError::NotFound(format!(
                 "no supervisor handle for extension {:?}",
                 extension.as_str()
-            )))
-        }
+            ))
+        })?;
+        let method = format!("tools/{contribute_id}");
+        let effective = self.effective_timeout(timeout);
+        handle
+            .call(&method, input, effective)
+            .await
+            .map_err(DispatchError::from_kernel)
     }
 
     async fn dispatch_stream(
@@ -574,7 +584,8 @@ impl CliDispatcher for ProcessCliDispatcher {
         if self.handles.contains_key(extension) {
             Err(DispatchError::NotWired(format!(
                 "process-flavour streaming dispatch for {contribute_id:?} \
-                 ships in the next adapter slice"
+                 is a follow-up slice (the unary path is wired; streaming \
+                 needs the per-stream stream.event/end demultiplexer)"
             )))
         } else {
             Err(DispatchError::NotFound(format!(

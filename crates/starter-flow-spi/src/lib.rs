@@ -23,6 +23,7 @@ pub mod event_dto;
 pub mod flow;
 pub mod graph;
 pub mod node;
+pub mod settings;
 pub mod skill;
 
 /// Re-export of [`starter_spi::ai::Cancel`].

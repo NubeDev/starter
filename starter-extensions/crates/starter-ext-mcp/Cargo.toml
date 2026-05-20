@@ -14,11 +14,12 @@ rust-version.workspace = true
 # WASM flavours get separate adapters in later phases — this one only
 # wires builtin extensions today.
 [dependencies]
-starter-ext-spi  = { workspace = true }
-starter-ext-host = { workspace = true }
-starter-ext-sdk  = { workspace = true, features = ["builtin"] }
-starter-spi      = { workspace = true }
-starter-mcp      = { workspace = true }
+starter-ext-spi        = { workspace = true }
+starter-ext-host       = { workspace = true }
+starter-ext-sdk        = { workspace = true, features = ["builtin"] }
+starter-ext-supervisor = { workspace = true }
+starter-spi            = { workspace = true }
+starter-mcp            = { workspace = true }
 
 serde       = { workspace = true }
 serde_json  = { workspace = true }

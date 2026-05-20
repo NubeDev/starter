@@ -122,6 +122,18 @@ uom         = { version = "0.36", default-features = false, features = ["f64", "
 # `starter-spi`; used only by the `starter_spi::i18n` module.
 icu_locale_core = { version = "2", default-features = false, features = ["alloc"] }
 
+# Flow node-settings schema (DOCS/flow/scope/settings.md, Phase S-1).
+# `schemars` derives JSON Schema from the kind's `Settings` Rust struct
+# — the single source of truth, so the schema cannot drift from the
+# `serde` deserialiser. `jsonschema` performs the publish-time
+# validation. Both land in `starter-flow-spi` so kinds outside the
+# workspace can implement `NodeBehavior::config_schema` without re-
+# adding the deps. Default-features off on `jsonschema` to keep the
+# SPI dep tree free of `reqwest` / TLS (we only need the in-process
+# validator, never the remote `$ref` resolver).
+schemars   = { version = "0.8", features = ["preserve_order"] }
+jsonschema = { version = "0.18", default-features = false }
+
 # Storage.
 sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros"] }
 base64      = "0.22"

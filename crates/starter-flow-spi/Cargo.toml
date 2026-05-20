@@ -19,6 +19,13 @@ thiserror   = { workspace = true }
 async-trait = { workspace = true }
 uuid        = { workspace = true }
 futures     = { workspace = true }
+# DOCS/flow/scope/settings.md Phase S-1: per-kind `Settings` structs
+# derive `JsonSchema`; the trait's default `validate_settings` runs
+# the derived schema against a draft body using `jsonschema`. Both
+# are pure data — no I/O, no tokio runtime — so they fit the
+# contracts-only posture of this crate.
+schemars    = { workspace = true }
+jsonschema  = { workspace = true }
 
 [features]
 # Default-off per the workspace policy: the `starter-skills` crate is

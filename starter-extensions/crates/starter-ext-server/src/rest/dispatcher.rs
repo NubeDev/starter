@@ -370,6 +370,96 @@ impl RestDispatcher for NotWiredDispatcher {
 }
 
 // ---------------------------------------------------------------------------
+// ProcessRestDispatcher — process-flavour synchronous JSON-RPC dispatch
+// ---------------------------------------------------------------------------
+
+/// Process-flavour REST dispatcher.
+///
+/// Holds the per-extension [`starter_ext_supervisor::SupervisorHandle`]
+/// map and a default per-call timeout. Synchronous unary dispatch is
+/// implemented on top of [`starter_ext_supervisor::SupervisorHandle::call`]:
+/// the request method on the wire is `tools/<contribute_id>` so the
+/// `starter-ext-sdk` `register_process_main!`-generated child loop
+/// routes the call through `ExtensionDispatch::dispatch_tool`. Streaming
+/// dispatch remains `NotWired` until the per-stream demultiplexer for
+/// `stream.event` / `stream.end` notifications lands additively.
+pub struct ProcessRestDispatcher {
+    handles: std::collections::HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
+    request_timeout: Duration,
+}
+
+impl ProcessRestDispatcher {
+    /// New process dispatcher with a default per-call timeout.
+    pub fn new(
+        handles: std::collections::HashMap<
+            ExtensionId,
+            Arc<starter_ext_supervisor::SupervisorHandle>,
+        >,
+        request_timeout: Duration,
+    ) -> Self {
+        Self {
+            handles,
+            request_timeout,
+        }
+    }
+
+    /// Default per-call timeout the consumer configured.
+    pub fn default_request_timeout(&self) -> Duration {
+        self.request_timeout
+    }
+
+    /// Look up the supervisor handle for an extension.
+    pub fn handle_for(
+        &self,
+        extension: &ExtensionId,
+    ) -> Option<Arc<starter_ext_supervisor::SupervisorHandle>> {
+        self.handles.get(extension).cloned()
+    }
+}
+
+#[async_trait]
+impl RestDispatcher for ProcessRestDispatcher {
+    async fn dispatch(
+        &self,
+        extension: &ExtensionId,
+        contribute_id: &str,
+        input: serde_json::Value,
+    ) -> Result<serde_json::Value, DispatchError> {
+        let handle = self.handles.get(extension).ok_or_else(|| {
+            DispatchError::NotFound(format!(
+                "no supervisor handle for extension {:?}",
+                extension.as_str()
+            ))
+        })?;
+        let method = format!("tools/{contribute_id}");
+        handle
+            .call(&method, input, self.request_timeout)
+            .await
+            .map_err(DispatchError::from_kernel)
+    }
+
+    async fn dispatch_stream(
+        &self,
+        extension: &ExtensionId,
+        contribute_id: &str,
+        _input: serde_json::Value,
+    ) -> Result<StreamResponse, DispatchError> {
+        if self.handles.contains_key(extension) {
+            Err(DispatchError::NotWired(format!(
+                "process-flavour streaming REST dispatch for {contribute_id:?} \
+                 is a follow-up slice (unary path is wired; streaming \
+                 needs the per-stream stream.event/end demultiplexer)"
+            )))
+        } else {
+            Err(DispatchError::NotFound(format!(
+                "no supervisor handle for extension {:?}",
+                extension.as_str()
+            )))
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Internals: stub capability backends, NeverCancel-style cancel-on-disconnect
 // ---------------------------------------------------------------------------
 
