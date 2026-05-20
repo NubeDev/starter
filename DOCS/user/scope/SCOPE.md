@@ -877,28 +877,44 @@ Open work and per-phase open items are tracked in
   [PHASE0-VERIFY.md](./PHASE0-VERIFY.md) §"starter-flow-spi
   baseline — REGRESSION FLAG" and the matching entry in
   [TODO.md](./TODO.md).
-- **Phase 1 — TODO.** `starter-prefs` crate: tables + 4 REST
-  endpoints + three-layer resolver + `"auto"` derivation +
-  `starter-client-rs` methods + a `starter-cli prefs` subcommand.
-  End-to-end against a sqlite store. Lands `iso_currency` (D-U0.3:
-  ISO 4217 validation lives here, not in `starter-spi`).
-- **Phase 2 — TODO.** `Accept-Units` middleware in `starter-server`
-  + per-series response shape (R8). Read-path conversion live;
-  storage stays canonical. Audit middleware to confirm no log line
-  ever sees a converted value (R6).
-- **Phase 3 — TODO.** `starter-i18n` crate: catalog loader,
-  `Accept-Language` middleware, `GET /v1/i18n/catalogs/{lang}` +
+- **Phase 1 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 1–7, commits `b644ebb` → `bdccc81`). `starter-prefs` crate:
+  tables + 4 REST endpoints + three-layer resolver + `"auto"`
+  derivation + `starter-client-rs` methods + a `starter-cli prefs`
+  subcommand. End-to-end against a sqlite store. Lands
+  `iso_currency` (D-U0.3: ISO 4217 validation lives here, not in
+  `starter-spi`).
+- **Phase 2 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 8–10, commits `c1bc53c` → `62fe8b2`). `Accept-Units`
+  middleware in `starter-server` + per-series response shape (R8).
+  Read-path conversion live; storage stays canonical. Canonical-only
+  logs audit harness in `starter-server/tests/canonical_logs.rs`.
+- **Phase 3 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 11–15, commits `ebaa4c5` → `0dae71e`). `starter-i18n`
+  crate: catalog loader, `Accept-Language` middleware,
+  `GET /v1/i18n/catalogs/{lang}` (+ content-hashed immutable form) +
   `/v1/i18n/manifest`, seed `en.json` + `es.json` covering
-  starter's own UI strings (auth, errors, settings page chrome).
-- **Phase 4 — TODO.** `@nube/starter-ui-core`:
+  starter-owned chrome (auth, errors, settings page).
+- **Phase 4 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 16–18, commits `dbbdd2d` → `09dcb15`). `@nube/starter-ui-core`:
   `PreferencesProvider`, `formatters.ts`, `IntlProvider`,
   `useTranslate`, Settings page wired into `starter-auth-users`'
-  account page. Re-export pure formatters + `useTranslate` for
+  account page. Pure formatters + `useTranslate` re-exported for
   consumer apps.
-- **Phase 5 — TODO.** Diagnostics rewriter (opt-in feature on
-  `starter-i18n`) for server-originated messages on long-running
-  jobs. Closes the one documented exception to client-side
-  translation.
+- **Phase 5 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 19–20, commits `632ae40` → `d77d89f`). Scope-limited
+  diagnostics rewriter on `starter-i18n` behind a default-off
+  `diagnostics` cargo feature. Touches only the documented
+  `{ diagnostic: { code, params } }` envelope at documented top-
+  level paths; SSE / streaming bodies are never rewritten (R5).
+
+### Landed in `starter-prefs-i18n` job
+
+Phases 1–5 shipped as a single rollout (22 stages, head `febb6c3`
+plus stage-22 docs sweep). Verification: see
+[PHASES-1-5-VERIFY.md](./PHASES-1-5-VERIFY.md). Open caveats
+(starter-flow-spi baseline drift, pre-existing fmt drift) are
+recorded there so they are not re-discovered.
 
 ## Smoke tests (before merging)
 

@@ -90,7 +90,7 @@ fn header_has_wildcard(header: &str) -> bool {
 ///    each entry:
 ///    a. exact match against `available`, then
 ///    b. language-family match (`"en-US"` requested → any `"en-*"`
-///       available; `"en"` requested → any `"en-*"` available).
+///    available; `"en"` requested → any `"en-*"` available).
 /// 2. If the header contains `*`, return the first entry of
 ///    `available`.
 /// 3. Otherwise return `fallback` (typically `"en"`).
