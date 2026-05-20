@@ -1,0 +1,49 @@
+[package]
+name        = "starter-i18n"
+description = "starter — internationalisation: catalog loader, language negotiation, translate bundle. See DOCS/user/scope/SCOPE.md Phase 3."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Workspace policy posture: default-features = []. A consumer that does
+# not opt into `routes` gets the locale-negotiation + catalog-loader
+# core only; no axum / no tower. Diagnostics rewriter lands at
+# Phase 5 behind its own (default-off) `diagnostics` feature.
+[features]
+default = []
+# `routes` pulls in the REST surface (GET /v1/i18n/catalogs/{lang},
+# GET /v1/i18n/manifest) plus the Accept-Language tower middleware.
+# Owned by SCOPE.md Phase 3 + the "API surface" block.
+routes = ["dep:axum", "dep:http", "dep:tower"]
+# Phase 5 — scope-limited diagnostics rewriter (opt-in response
+# extension). Lands in a later stage; the feature flag is reserved
+# here so the dep-graph posture is locked from day one.
+diagnostics = []
+
+[dependencies]
+starter-spi = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+utoipa      = { workspace = true }
+tracing     = { workspace = true }
+
+# BCP-47 parsing. Used by `locale::pick_language` for the family /
+# fallback walk (per SCOPE R5). `starter-spi` exposes `LanguageTag`
+# but the negotiation logic needs to introspect the underlying
+# `LanguageIdentifier`, so we depend on the same crate directly.
+icu_locale_core = { workspace = true }
+
+# Catalog fingerprinting for content-hash URLs (SCOPE Phase 3 +
+# "Decisions" — sha256 hex prefix, 16 chars).
+sha2 = { workspace = true }
+
+# `routes` feature deps — only compiled when the `routes` feature is
+# active.
+axum  = { workspace = true, optional = true }
+http  = { workspace = true, optional = true }
+tower = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

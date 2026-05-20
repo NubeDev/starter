@@ -5,6 +5,7 @@ members = [
     "crates/starter-config",
     "crates/starter-observability",
     "crates/starter-prefs",
+    "crates/starter-i18n",
     "crates/starter-server",
     "crates/starter-store-sqlite",
     "crates/starter-store-postgres",
@@ -55,6 +56,7 @@ starter-spi              = { path = "crates/starter-spi",              version =
 starter-config           = { path = "crates/starter-config",           version = "0.1.0" }
 starter-observability    = { path = "crates/starter-observability",    version = "0.1.0" }
 starter-prefs            = { path = "crates/starter-prefs",            version = "0.1.0" }
+starter-i18n             = { path = "crates/starter-i18n",             version = "0.1.0" }
 starter-server           = { path = "crates/starter-server",           version = "0.1.0" }
 starter-store-sqlite     = { path = "crates/starter-store-sqlite",     version = "0.1.0" }
 starter-store-postgres   = { path = "crates/starter-store-postgres",   version = "0.1.0" }

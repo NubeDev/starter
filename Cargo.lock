@@ -6199,6 +6199,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-i18n"
+version = "0.1.0"
+dependencies = [
+ "axum 0.8.9",
+ "http",
+ "icu_locale_core",
+ "serde",
+ "serde_json",
+ "sha2",
+ "starter-spi",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+ "utoipa",
+]
+
+[[package]]
 name = "starter-jsonrpc-stdio"
 version = "0.1.0"
 dependencies = [
