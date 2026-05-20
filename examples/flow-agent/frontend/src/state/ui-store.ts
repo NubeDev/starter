@@ -5,26 +5,41 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
+export type ActiveSection = "flows" | "agents" | "settings";
+
 interface UiState {
   sidebarOpen: boolean;
   setSidebarOpen(open: boolean): void;
 
-  expandedFlowGroups: string[];
-  setExpandedFlowGroups(paths: string[]): void;
+  /**
+   * Expanded sidebar group paths (e.g. "flows", "agents", or
+   * "flows/<id>" for nested entries). Persisted in localStorage so
+   * the user's expand state survives a refresh.
+   */
+  expandedGroups: string[];
+  setExpandedGroups(paths: string[]): void;
+  toggleGroup(path: string): void;
 
-  activeSection: "flows" | "agents" | "settings";
-  setActiveSection(s: UiState["activeSection"]): void;
+  activeSection: ActiveSection;
+  setActiveSection(s: ActiveSection): void;
 }
 
 export const useUiStore = create<UiState>()(
   persist(
-    (set) => ({
+    (set, get) => ({
       sidebarOpen: true,
       setSidebarOpen: (sidebarOpen) => set({ sidebarOpen }),
 
-      expandedFlowGroups: [],
-      setExpandedFlowGroups: (expandedFlowGroups) =>
-        set({ expandedFlowGroups }),
+      expandedGroups: ["flows", "agents"],
+      setExpandedGroups: (expandedGroups) => set({ expandedGroups }),
+      toggleGroup: (path) => {
+        const cur = get().expandedGroups;
+        set({
+          expandedGroups: cur.includes(path)
+            ? cur.filter((p) => p !== path)
+            : [...cur, path],
+        });
+      },
 
       activeSection: "flows",
       setActiveSection: (activeSection) => set({ activeSection }),
@@ -33,7 +48,7 @@ export const useUiStore = create<UiState>()(
       name: "fa-ui",
       partialize: (s) => ({
         sidebarOpen: s.sidebarOpen,
-        expandedFlowGroups: s.expandedFlowGroups,
+        expandedGroups: s.expandedGroups,
         activeSection: s.activeSection,
       }),
     },
