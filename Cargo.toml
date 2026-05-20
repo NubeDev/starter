@@ -94,7 +94,7 @@ tracing     = "0.1"
 async-trait = "0.1"
 futures     = "0.3"
 bytes       = "1"
-uuid        = { version = "1", features = ["v4", "serde"] }
+uuid        = { version = "1", features = ["v4", "v5", "serde"] }
 chrono      = { version = "0.4", default-features = false, features = ["serde", "clock"] }
 
 # Server-only.

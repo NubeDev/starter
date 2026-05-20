@@ -18,6 +18,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod ai_runner;
 pub mod flow;
 pub mod graph;
 pub mod node;

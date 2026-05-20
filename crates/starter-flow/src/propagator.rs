@@ -48,6 +48,7 @@ use tokio::task::JoinHandle;
 use starter_flow_spi::flow::{FlowError, FlowEvent, RunId, RunState as SpiRunState, RunStore};
 use starter_flow_spi::graph::{GraphStore, SubscribeOpts, SubscriptionStream, WriteSlotOpts};
 use starter_flow_spi::node::{NodeBehavior, NodeCtx, NodeId, SlotMap, SlotRef, SlotValue};
+use starter_flow_spi::skill::SkillSelection;
 use starter_flow_spi::Cancel;
 
 use crate::health::HealthHandle;
@@ -517,7 +518,7 @@ pub async fn drive_with_checkpoint(
                     run,
                     node: node_id.clone(),
                 });
-                let ctx = NodeCtx::new(run, &node_id, &*cancel);
+                let ctx = NodeCtx::new(run, &node_id, &*cancel, SkillSelection::NONE);
                 let invoke_res = behavior.invoke(ctx, input).await;
 
                 match invoke_res {

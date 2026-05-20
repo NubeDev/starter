@@ -338,7 +338,12 @@ mod tests {
     }
 
     fn make_ctx<'a>(node: &'a NodeId, cancel: &'a NoCancel) -> NodeCtx<'a> {
-        NodeCtx::new(starter_flow_spi::flow::RunId::new(), node, cancel)
+        NodeCtx::new(
+            starter_flow_spi::flow::RunId::new(),
+            node,
+            cancel,
+            starter_flow_spi::skill::SkillSelection::NONE,
+        )
     }
 
     /// Identity transform emits its input verbatim on output.
