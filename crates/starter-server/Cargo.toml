@@ -36,3 +36,13 @@ tokio              = { workspace = true, features = ["macros", "rt-multi-thread"
 reqwest            = { workspace = true }
 http-body-util     = "0.1"
 tracing-subscriber = { workspace = true }
+# Stage 21 — `tests/australian_operator.rs` builds an in-process
+# axum app exercising the Accept-Units middleware end-to-end. The
+# integration test needs the same shapes the middleware crate already
+# pulls in (tower::ServiceExt for `oneshot`, async-trait for the
+# `PrefsResolverFor` stub, serde derives for the query DTO).
+tower       = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
+serde_json  = { workspace = true }
+starter-spi = { workspace = true }

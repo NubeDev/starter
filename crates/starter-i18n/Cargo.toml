@@ -72,3 +72,12 @@ bytes          = { workspace = true, optional = true }
 [dev-dependencies]
 tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
 http-body-util = "0.1"
+# Stage 21 — `tests/add_a_language.rs` drives the `routes` feature's
+# Router via tower::ServiceExt and decodes JSON bodies. These are
+# already pulled in as feature-gated deps above; declaring them under
+# `[dev-dependencies]` keeps the integration test buildable when the
+# `routes` feature is enabled at test time.
+tower      = { workspace = true }
+http       = { workspace = true }
+axum       = { workspace = true }
+serde_json = { workspace = true }
