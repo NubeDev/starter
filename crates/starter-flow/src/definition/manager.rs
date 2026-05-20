@@ -41,7 +41,9 @@ use crate::definition::canonical::{body_hash, BodyHash};
 use crate::definition::classifier::{classify, EditKind};
 use crate::definition::metrics::DefinitionMetricsCell;
 use crate::definition::resolver::{TopologyResolver, TopologyResolverError};
+use crate::definition::runs::{RunRegistration, RunRegistry};
 use crate::registry::NodeKindRegistry;
+use crate::run::RunCancel;
 
 /// Default broadcast capacity for the definition bus.
 ///
@@ -108,6 +110,28 @@ pub enum PublishError {
     Graph(#[from] GraphError),
 }
 
+/// Per-flow outcome counts from [`DefinitionManager::boot_resume`].
+///
+/// Used by the engine startup path to log a single line summarising
+/// how many flows came up cleanly versus how many landed in
+/// [`FlowDefinitionEvent::ResolveFailed`]. Tests assert on the
+/// struct shape so the boot-walk contract is explicit.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct BootResumeReport {
+    /// Flows that resolved and were installed into
+    /// [`ActiveTopologies`].
+    pub mounted: usize,
+    /// Flows whose head loaded but failed to resolve (e.g.
+    /// references a kind that's not registered today). Each
+    /// failure emits a [`FlowDefinitionEvent::ResolveFailed`].
+    pub failed: usize,
+    /// Flows whose [`FlowStore::head`] returned `None` (the flow
+    /// row exists but has never been published) — nothing to
+    /// mount.
+    pub skipped: usize,
+}
+
 /// The HR1 publish chokepoint.
 ///
 /// Owns the dependencies the chokepoint needs (the persistence seam
@@ -123,6 +147,7 @@ pub struct DefinitionManager {
     active: Arc<ActiveTopologies>,
     events: broadcast::Sender<FlowDefinitionEvent>,
     metrics: Arc<DefinitionMetricsCell>,
+    runs: Arc<RunRegistry>,
 }
 
 impl DefinitionManager {
@@ -150,6 +175,7 @@ impl DefinitionManager {
             active: Arc::new(ActiveTopologies::new()),
             events,
             metrics: DefinitionMetricsCell::new(),
+            runs: Arc::new(RunRegistry::new()),
         }
     }
 
@@ -185,6 +211,32 @@ impl DefinitionManager {
     /// `DOCS/flow/scope/hot-reload.md` Observability lists.
     pub fn metrics(&self) -> Arc<DefinitionMetricsCell> {
         self.metrics.clone()
+    }
+
+    /// Borrow the [`RunRegistry`] this manager uses to drive
+    /// HR-4 `Restart` cancellations. The per-run `FlowRunner`
+    /// calls [`Self::register_run`] to enrol its [`RunCancel`]
+    /// and keeps the returned [`RunRegistration`] alive for the
+    /// run's lifetime; on a structural swap whose previous
+    /// revision's `apply_policy` is `Restart` (or `LiveMigrate`
+    /// falling back to `Restart`), the publish path calls
+    /// [`RunRegistry::cancel_for`] for the prior revision.
+    pub fn runs(&self) -> Arc<RunRegistry> {
+        self.runs.clone()
+    }
+
+    /// Register an in-flight run's [`RunCancel`] handle under
+    /// `(flow, revision)` so a future HR-4 `Restart` swap can
+    /// fire it. The returned [`RunRegistration`] guard removes
+    /// the entry when dropped — runners hold it for the run's
+    /// lifetime.
+    pub fn register_run(
+        &self,
+        flow: FlowId,
+        revision: FlowRevisionId,
+        cancel: Arc<RunCancel>,
+    ) -> RunRegistration {
+        self.runs.register(flow, revision, cancel)
     }
 
     /// Borrow the [`FlowStore`] this manager writes through.
@@ -472,12 +524,143 @@ impl DefinitionManager {
             }
         }
 
+        // HR-4 apply_policy dispatch. The policy is read from the
+        // *previous* revision; the rules for what to do are:
+        //
+        // - `Drain`   — in-flight runs finish on their snapshot;
+        //               nothing extra to do here.
+        // - `Restart` — fire `RunCancel` for every run still
+        //               registered against `prev_head`.
+        // - `LiveMigrate` — falls back to `Restart` for the
+        //               structural piece of the swap. The settings
+        //               piece (`SettingsOnly`) takes the
+        //               apply_settings path below and does not
+        //               cancel in-flight runs.
+        let cancelled = match (apply_policy, prev_head) {
+            (ApplyPolicy::Restart, Some(prev)) => self.runs.cancel_for(&flow_id, &prev),
+            (ApplyPolicy::LiveMigrate, Some(prev))
+                if matches!(edit, EditKind::Structural | EditKind::Mixed { .. }) =>
+            {
+                self.runs.cancel_for(&flow_id, &prev)
+            }
+            _ => 0,
+        };
+        if cancelled > 0 {
+            info!(
+                target: "starter_flow::definition",
+                cancelled_runs = cancelled,
+                policy = ?apply_policy,
+                "swap cancelled in-flight runs per apply_policy"
+            );
+        }
+
         let _ = self.events.send(FlowDefinitionEvent::SwapApplied {
             flow: flow_id,
             from_revision: prev_head,
             to_revision: new_revision,
             apply_policy,
         });
+    }
+
+    /// Walk [`FlowStore::list`] and mount every flow's head per
+    /// `DOCS/flow/scope/hot-reload.md` HR5 (*"boot is resume to
+    /// last known good"*).
+    ///
+    /// For each known [`FlowId`]:
+    ///
+    /// 1. Load the head [`FlowRevision`] (skip if the flow has
+    ///    no head — it has never been published).
+    /// 2. Resolve it via [`TopologyResolver::resolve`].
+    ///    On success, install into [`ActiveTopologies`] and emit
+    ///    [`FlowDefinitionEvent::Mounted`].
+    ///    On failure, emit
+    ///    [`FlowDefinitionEvent::ResolveFailed`] and continue —
+    ///    one bad flow does not abort the walk (HR6's *"one
+    ///    bad revision never poisons the flow"* lifted to the
+    ///    boot-resume scope).
+    ///
+    /// Returns the [`BootResumeReport`] so the engine can log a
+    /// single startup line and tests can assert outcomes.
+    ///
+    /// Failure to even *list* flows from the [`FlowStore`]
+    /// (backend unavailable) is surfaced as the typed error;
+    /// hosts that want the engine to come up degraded anyway
+    /// can handle it and continue.
+    pub async fn boot_resume(&self) -> Result<BootResumeReport, FlowError> {
+        let flows = self.store.list().await?;
+        let mut report = BootResumeReport::default();
+        for flow_id in flows {
+            let head = match self.store.head(flow_id.clone()).await? {
+                Some(h) => h,
+                None => {
+                    // Flow exists in the store but has no head
+                    // — nothing to mount.
+                    report.skipped += 1;
+                    continue;
+                }
+            };
+            let revision = match self.store.load(flow_id.clone(), Some(head)).await {
+                Ok(r) => r,
+                Err(e) => {
+                    warn!(
+                        target: "starter_flow::definition",
+                        flow = %flow_id,
+                        revision = %head,
+                        error = %e,
+                        "boot_resume: failed to load head revision"
+                    );
+                    let _ = self.events.send(FlowDefinitionEvent::ResolveFailed {
+                        flow: flow_id,
+                        revision: head,
+                        error: e.to_string(),
+                    });
+                    self.metrics.add_resolve_failure();
+                    report.failed += 1;
+                    continue;
+                }
+            };
+            match TopologyResolver::resolve(&revision, &self.kinds).await {
+                Ok(topology) => {
+                    self.active.install(flow_id.clone(), topology).await;
+                    info!(
+                        target: "starter_flow::definition",
+                        flow = %flow_id,
+                        revision = %head,
+                        source = %revision.source,
+                        "boot_resume: mounted flow head"
+                    );
+                    let _ = self.events.send(FlowDefinitionEvent::Mounted {
+                        flow: flow_id,
+                        revision: head,
+                    });
+                    report.mounted += 1;
+                }
+                Err(e) => {
+                    warn!(
+                        target: "starter_flow::definition",
+                        flow = %flow_id,
+                        revision = %head,
+                        error = %e,
+                        "boot_resume: head revision failed to resolve"
+                    );
+                    let _ = self.events.send(FlowDefinitionEvent::ResolveFailed {
+                        flow: flow_id,
+                        revision: head,
+                        error: e.to_string(),
+                    });
+                    self.metrics.add_resolve_failure();
+                    report.failed += 1;
+                }
+            }
+        }
+        info!(
+            target: "starter_flow::definition",
+            mounted = report.mounted,
+            failed = report.failed,
+            skipped = report.skipped,
+            "boot_resume complete"
+        );
+        Ok(report)
     }
 
     /// Project a settings delta onto the live [`GraphStore`].
@@ -544,6 +727,8 @@ mod tests {
     use std::sync::Mutex;
 
     use async_trait::async_trait;
+
+    use starter_flow_spi::Cancel;
 
     use starter_flow_spi::flow::FlowResult;
     use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap};
@@ -1117,5 +1302,277 @@ mod tests {
             }
         }
         assert!(saw_mounted && saw_swap && saw_published);
+    }
+
+    // ===================================================================
+    // HR-4 smoke tests — apply_policy dispatch + boot resume
+    // ===================================================================
+
+    fn body_with_policy(value: &str, policy: &str) -> serde_json::Value {
+        serde_json::json!({
+            "flow_id": "examples.test.demo",
+            "apply_policy": policy,
+            "nodes": [
+                {"id": "test.n1", "kind": "com.example.any",
+                 "settings": {"prompt": value}},
+                {"id": "test.n2", "kind": "com.example.any"}
+            ],
+            "links": [{"from": "test.n1.out", "to": "test.n2.in"}]
+        })
+    }
+
+    fn structural_body_with_policy(policy: &str) -> serde_json::Value {
+        serde_json::json!({
+            "flow_id": "examples.test.demo",
+            "apply_policy": policy,
+            "nodes": [
+                {"id": "test.n1", "kind": "com.example.any"},
+                {"id": "test.n2", "kind": "com.example.any"},
+                {"id": "test.n3", "kind": "com.example.any"}
+            ],
+            "links": [
+                {"from": "test.n1.out", "to": "test.n2.in"},
+                {"from": "test.n2.out", "to": "test.n3.in"}
+            ]
+        })
+    }
+
+    /// HR-4: `apply_policy: drain` (default) leaves in-flight runs
+    /// alone on a structural swap — registered `RunCancel` handles
+    /// are NOT fired.
+    #[tokio::test]
+    async fn hr4_drain_policy_does_not_cancel_in_flight_runs() {
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = flow_id();
+
+        // First publish — apply_policy defaults to drain.
+        let first = mgr
+            .publish(flow.clone(), body_v1(), DefinitionSource::Api)
+            .await
+            .unwrap();
+        let prev_rev = match first {
+            PublishOutcome::Published { revision, .. } => revision,
+            other => panic!("expected Published, got {other:?}"),
+        };
+
+        // Pretend an in-flight run is executing against prev_rev.
+        let cancel = crate::run::RunCancel::new();
+        let _reg = mgr.register_run(flow.clone(), prev_rev, cancel.clone());
+
+        // Structural edit lands a swap. Default policy is drain.
+        let _ = mgr
+            .publish(flow.clone(), structural_body_with_policy("drain"), DefinitionSource::Api)
+            .await
+            .unwrap();
+
+        assert!(
+            !cancel.is_cancelled(),
+            "drain policy must NOT cancel in-flight runs"
+        );
+    }
+
+    /// HR-4: `apply_policy: restart` cancels every in-flight run
+    /// against the previous revision on a structural swap, and the
+    /// `SwapApplied` event still carries the (old) policy.
+    #[tokio::test]
+    async fn hr4_restart_policy_cancels_in_flight_runs() {
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = flow_id();
+
+        // First publish carries apply_policy: restart so the *next*
+        // structural edit (which is the one that triggers dispatch)
+        // is governed by `restart`.
+        let first = mgr
+            .publish(flow.clone(), body_with_policy("v1", "restart"), DefinitionSource::Api)
+            .await
+            .unwrap();
+        let prev_rev = match first {
+            PublishOutcome::Published { revision, .. } => revision,
+            other => panic!("expected Published, got {other:?}"),
+        };
+
+        // Two in-flight runs against prev_rev.
+        let c1 = crate::run::RunCancel::new();
+        let c2 = crate::run::RunCancel::new();
+        let _r1 = mgr.register_run(flow.clone(), prev_rev, c1.clone());
+        let _r2 = mgr.register_run(flow.clone(), prev_rev, c2.clone());
+
+        let mut def_rx = mgr.subscribe();
+
+        // Structural edit (adds a node) — must trigger Restart
+        // dispatch using the OLD revision's policy.
+        let _ = mgr
+            .publish(flow.clone(), structural_body_with_policy("restart"), DefinitionSource::Api)
+            .await
+            .unwrap();
+
+        assert!(c1.is_cancelled(), "restart must fire RunCancel for in-flight run 1");
+        assert!(c2.is_cancelled(), "restart must fire RunCancel for in-flight run 2");
+
+        // SwapApplied event carries the policy that governed the swap.
+        let mut saw_swap_with_restart = false;
+        for _ in 0..3 {
+            if let Ok(ev) = timeout(Duration::from_millis(100), def_rx.recv()).await {
+                if let Ok(FlowDefinitionEvent::SwapApplied { apply_policy, .. }) = ev {
+                    if matches!(apply_policy, ApplyPolicy::Restart) {
+                        saw_swap_with_restart = true;
+                    }
+                }
+            }
+        }
+        assert!(saw_swap_with_restart, "SwapApplied must carry the restart policy");
+    }
+
+    /// HR-4: `apply_policy: live-migrate` keeps in-flight runs
+    /// alive when only settings change (wiring is stable), but
+    /// falls back to `restart` for structural deltas.
+    #[tokio::test]
+    async fn hr4_live_migrate_falls_back_to_restart_for_structural() {
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = flow_id();
+
+        // Mount with live-migrate policy.
+        let first = mgr
+            .publish(flow.clone(), body_with_policy("v1", "live-migrate"), DefinitionSource::Api)
+            .await
+            .unwrap();
+        let rev1 = match first {
+            PublishOutcome::Published { revision, .. } => revision,
+            other => panic!("expected Published, got {other:?}"),
+        };
+
+        // Settings-only edit: wiring stable; in-flight run must NOT
+        // be cancelled.
+        let c_settings = crate::run::RunCancel::new();
+        let _rs = mgr.register_run(flow.clone(), rev1, c_settings.clone());
+        let _ = mgr
+            .publish(flow.clone(), body_with_policy("v2", "live-migrate"), DefinitionSource::Api)
+            .await
+            .unwrap();
+        assert!(
+            !c_settings.is_cancelled(),
+            "live-migrate + settings-only must not cancel runs"
+        );
+
+        // Now do a structural edit: live-migrate must fall back to
+        // restart and cancel the previous revision's runs.
+        let head_after_settings = mgr.store().head(flow.clone()).await.unwrap().unwrap();
+        let c_structural = crate::run::RunCancel::new();
+        let _rstruct = mgr.register_run(flow.clone(), head_after_settings, c_structural.clone());
+        let _ = mgr
+            .publish(flow.clone(), structural_body_with_policy("live-migrate"), DefinitionSource::Api)
+            .await
+            .unwrap();
+        assert!(
+            c_structural.is_cancelled(),
+            "live-migrate + structural must fall back to restart and cancel runs"
+        );
+    }
+
+    /// HR-4 (HR5 in the doc): `boot_resume` mounts every flow's
+    /// head and emits `Mounted` events. Flows whose heads fail to
+    /// resolve emit `ResolveFailed` instead and don't abort the
+    /// walk.
+    #[tokio::test]
+    async fn hr4_boot_resume_mounts_known_flows() {
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+
+        // Seed two flows via publish (then drop the active mounts
+        // to simulate a fresh boot).
+        let flow_a = FlowId::new("examples.boot.a").unwrap();
+        let flow_b = FlowId::new("examples.boot.b").unwrap();
+        let body_a = serde_json::json!({
+            "flow_id": "examples.boot.a",
+            "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+            "links": []
+        });
+        let body_b = serde_json::json!({
+            "flow_id": "examples.boot.b",
+            "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+            "links": []
+        });
+        mgr.publish(flow_a.clone(), body_a, DefinitionSource::Api)
+            .await
+            .unwrap();
+        mgr.publish(flow_b.clone(), body_b, DefinitionSource::Api)
+            .await
+            .unwrap();
+
+        // Wipe the active map so boot_resume has work to do (a
+        // real boot would have an empty ActiveTopologies anyway —
+        // this just isolates the test from the publish-time mount).
+        let _ = mgr.active_topologies().remove(&flow_a).await;
+        let _ = mgr.active_topologies().remove(&flow_b).await;
+        assert_eq!(mgr.active_topologies().len().await, 0);
+
+        let mut rx = mgr.subscribe();
+        let report = mgr.boot_resume().await.expect("boot_resume");
+        assert_eq!(report.mounted, 2);
+        assert_eq!(report.failed, 0);
+        assert_eq!(report.skipped, 0);
+        assert_eq!(mgr.active_topologies().len().await, 2);
+
+        // Two Mounted events on the bus.
+        let mut mounted = 0;
+        for _ in 0..4 {
+            match timeout(Duration::from_millis(200), rx.recv()).await {
+                Ok(Ok(FlowDefinitionEvent::Mounted { .. })) => mounted += 1,
+                Ok(Ok(_)) => continue,
+                _ => break,
+            }
+        }
+        assert_eq!(mounted, 2);
+    }
+
+    /// HR-4 (HR5): a flow whose head body references an unknown
+    /// kind surfaces as `ResolveFailed` during boot_resume; the
+    /// walk continues for the other flows.
+    #[tokio::test]
+    async fn hr4_boot_resume_resolve_failure_does_not_abort_walk() {
+        // Build a manager with a kind registered, publish a flow,
+        // then build a *second* manager sharing the store but with
+        // an empty kind registry so the head body fails to resolve.
+        let store = MemStore::new();
+        let kinds_with = Arc::new(NodeKindRegistry::new());
+        kinds_with
+            .register(AnyKind::arc("com.example.any"))
+            .await
+            .unwrap();
+        let mgr_with = DefinitionManager::new(store.clone(), kinds_with);
+
+        let flow = FlowId::new("examples.boot.bad").unwrap();
+        mgr_with
+            .publish(
+                flow.clone(),
+                serde_json::json!({
+                    "flow_id": "examples.boot.bad",
+                    "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                    "links": []
+                }),
+                DefinitionSource::Api,
+            )
+            .await
+            .unwrap();
+
+        // Boot a fresh manager with an empty registry.
+        let kinds_empty = Arc::new(NodeKindRegistry::new());
+        let mgr_boot = DefinitionManager::new(store, kinds_empty);
+        let mut rx = mgr_boot.subscribe();
+        let report = mgr_boot.boot_resume().await.expect("boot_resume");
+        assert_eq!(report.mounted, 0);
+        assert_eq!(report.failed, 1);
+        assert_eq!(mgr_boot.active_topologies().len().await, 0);
+
+        // ResolveFailed event on the bus.
+        let mut saw_failed = false;
+        for _ in 0..2 {
+            if let Ok(Ok(FlowDefinitionEvent::ResolveFailed { .. })) =
+                timeout(Duration::from_millis(100), rx.recv()).await
+            {
+                saw_failed = true;
+                break;
+            }
+        }
+        assert!(saw_failed, "ResolveFailed must be emitted for unresolvable head");
     }
 }

@@ -403,8 +403,39 @@ impl Engine {
 
     /// `Starting → Running`. Idempotent on `Running` is **not**
     /// supported — a second call returns [`EngineError::IllegalTransition`].
+    ///
+    /// If a [`crate::definition::DefinitionManager`] is attached
+    /// (via [`Self::with_definition_manager`]), the start walk
+    /// kicks off the HR-5 boot-resume per
+    /// `DOCS/flow/scope/hot-reload.md`: every flow known to the
+    /// `FlowStore` is loaded, resolved, and either installed into
+    /// [`crate::definition::ActiveTopologies`] or surfaced as a
+    /// [`starter_flow_spi::definition::FlowDefinitionEvent::ResolveFailed`].
+    /// A boot whose `FlowStore::list` errors logs the failure
+    /// and continues into `Running` — the engine boots degraded
+    /// rather than refusing to start, matching the
+    /// `EngineHealth::Degraded` posture from D-F3.11.
     pub async fn start(&self) -> Result<(), EngineError> {
-        self.transition(EngineState::Running)
+        self.transition(EngineState::Running)?;
+        if let Some(manager) = self.definitions.as_ref() {
+            match manager.boot_resume().await {
+                Ok(report) => {
+                    tracing::info!(
+                        mounted = report.mounted,
+                        failed = report.failed,
+                        skipped = report.skipped,
+                        "engine.start: boot_resume complete",
+                    );
+                }
+                Err(err) => {
+                    tracing::warn!(
+                        error = %err,
+                        "engine.start: boot_resume failed; continuing in degraded mode",
+                    );
+                }
+            }
+        }
+        Ok(())
     }
 
     /// `Running → Pausing → Paused`. Each leg is a separate transition
