@@ -49,6 +49,16 @@ use starter_flow_spi::node::{
 /// (per § "R10 — Reverse-DNS ids; namespace ownership enforced").
 pub const KIND_ID: &str = "starter.flow.tool-call";
 
+/// Static metadata for the catalog / discovery surface. Help text is
+/// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
+pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+    starter_flow_spi::node::NodeDescriptor::new(
+        KIND_ID,
+        "starter.flow.node.tool-call.label",
+        "starter.flow.node.tool-call.summary",
+        "starter.flow.node.tool-call.help",
+    );
+
 /// Input slot carrying the [`KindId`] of the tool to invoke. The slot
 /// value must be a [`SlotValue::String`] holding a reverse-DNS id; the
 /// body validates it through [`KindId::new`] and rejects malformed ids

@@ -148,6 +148,88 @@ impl From<NodeId> for String {
     }
 }
 
+/// Static metadata describing a node kind for discovery surfaces
+/// (catalog browsers, designers, MCP `flow.nodes.list`, CLI `--help`).
+///
+/// Carries i18n *message-key* strings rather than translated text so a
+/// single descriptor serves every locale. Resolution happens at the
+/// presentation layer through `starter_spi::i18n::MessageKey` and the
+/// `starter-i18n` catalogs at `crates/starter-i18n/catalogs/starter/`.
+///
+/// Each `*_key` field is the reverse-DNS catalog key for one piece of
+/// help text:
+///
+/// - `label_key` — a short human label (e.g. "Log", "Branch"). Used
+///   in palettes and dropdowns.
+/// - `summary_key` — a one-line description of what the node does.
+///   Used in tooltips and list views.
+/// - `help_key` — longer-form help describing inputs, outputs, and
+///   common usage. Used in detail panes and `--help` surfaces.
+///
+/// By convention every built-in node uses keys under
+/// `starter.flow.node.<kind>.{label,summary,help}` (e.g.
+/// `starter.flow.node.log.label`). Third-party node crates follow the
+/// same shape under their own reverse-DNS prefix.
+///
+/// The struct is `#[non_exhaustive]` so future additions (icon, input
+/// slot schemas, category) are non-breaking. All fields are
+/// `&'static str` so a descriptor can be a `const` — zero allocation,
+/// embeddable in static slices used by the registry.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[non_exhaustive]
+pub struct NodeDescriptor {
+    /// Reverse-DNS kind id (matches the value [`NodeBehavior::kind_id`]
+    /// returns). Stored as `&'static str` rather than [`KindId`] so
+    /// the descriptor can be `const`; validate via
+    /// [`KindId::new`] at use sites that need a typed id.
+    pub kind: &'static str,
+    /// i18n catalog key for the short label.
+    pub label_key: &'static str,
+    /// i18n catalog key for the one-line summary.
+    pub summary_key: &'static str,
+    /// i18n catalog key for the long-form help text.
+    pub help_key: &'static str,
+}
+
+impl NodeDescriptor {
+    /// `const` constructor. External crates use this rather than the
+    /// struct literal because [`NodeDescriptor`] is `#[non_exhaustive]`;
+    /// future field additions stay non-breaking because every existing
+    /// call site goes through here.
+    pub const fn new(
+        kind: &'static str,
+        label_key: &'static str,
+        summary_key: &'static str,
+        help_key: &'static str,
+    ) -> Self {
+        Self {
+            kind,
+            label_key,
+            summary_key,
+            help_key,
+        }
+    }
+}
+
+/// Read-only registry exposing the [`NodeDescriptor`]s the engine
+/// knows about.
+///
+/// Adapters (REST, MCP, CLI) call into this to enumerate available
+/// kinds and surface help text — the SCOPE R5 chokepoint pattern the
+/// `ToolRegistry` already uses for tools. The host populates the
+/// registry at engine-build time and hands it out as
+/// `Arc<dyn NodeKindRegistry>`; the surface is read-only thereafter.
+pub trait NodeKindRegistry: Send + Sync + 'static {
+    /// Look up a descriptor by kind id. Returns `None` if no kind is
+    /// registered under that id.
+    fn lookup(&self, kind: &KindId) -> Option<&NodeDescriptor>;
+
+    /// Snapshot every registered descriptor. Order is registry-defined
+    /// (typically registration order); callers that need a stable sort
+    /// should sort by `kind`.
+    fn all(&self) -> Vec<&NodeDescriptor>;
+}
+
 /// Reverse-DNS node-kind identifier (SCOPE R10).
 ///
 /// Same validation rules as [`NodeId`]; a separate type so the
@@ -372,6 +454,18 @@ mod tests {
         KindId::new("starter.flow.tool-call").unwrap();
         KindId::new("sys.gate").unwrap();
         NodeId::new("a.b1_c-d.e").unwrap();
+    }
+
+    #[test]
+    fn descriptor_is_const_constructible() {
+        const D: NodeDescriptor = NodeDescriptor::new(
+            "starter.flow.log",
+            "starter.flow.node.log.label",
+            "starter.flow.node.log.summary",
+            "starter.flow.node.log.help",
+        );
+        assert_eq!(D.kind, "starter.flow.log");
+        KindId::new(D.kind).expect("descriptor.kind parses as KindId");
     }
 
     #[test]

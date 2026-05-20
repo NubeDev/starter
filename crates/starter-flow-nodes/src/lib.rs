@@ -21,6 +21,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod node_registry;
 pub mod tool_registry;
 
 #[cfg(feature = "transform")]

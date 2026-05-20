@@ -42,6 +42,16 @@ use starter_flow_spi::node::{
 /// (per § "R10 — Reverse-DNS ids; namespace ownership enforced").
 pub const KIND_ID: &str = "starter.flow.transform";
 
+/// Static metadata for the catalog / discovery surface. Help text is
+/// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
+pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+    starter_flow_spi::node::NodeDescriptor::new(
+        KIND_ID,
+        "starter.flow.node.transform.label",
+        "starter.flow.node.transform.summary",
+        "starter.flow.node.transform.help",
+    );
+
 /// Input slot name carrying the `fn_id` string — the key the registry
 /// is looked up by.
 ///

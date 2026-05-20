@@ -1103,3 +1103,87 @@ document, and `examples/notes` ships the editor at
 `/settings/theme`. `cargo test --workspace --all-features`,
 `pnpm -r typecheck`, and the OpenAPI drift gate all pass.
 
+---
+
+## Phase 10 — Peer review follow-ups (2026-05-20)
+
+Drawn from [PEER-REVIEW.md](PEER-REVIEW.md). The architecture audit
+concluded that Goals 2 (server framework + extensions), 3 (flow-based
+AI engine), and 4 (gRPC / CLI / SSE / REST extensibility) all sit at
+"Partial" — design delivered, dispatch wiring unfinished. The items
+below are what moves those three verdicts to "Yes". Ordered by load-
+bearing weight; (1) and (3) gate the other two stated goals.
+
+- [ ] **Land process-flavour synchronous JSON-RPC dispatch** across
+      REST, CLI, gRPC, and MCP. The supervisor at
+      [starter-extensions/crates/starter-ext-supervisor/src/supervisor.rs](starter-extensions/crates/starter-ext-supervisor/src/supervisor.rs)
+      already speaks JSON-RPC; build the request/response demultiplexer
+      on top and remove `DispatchError::NotWired` from
+      `ProcessRestDispatcher`, `ProcessCliDispatcher`,
+      `ProcessGrpcDispatcher`, and the MCP equivalent. Until this
+      lands, a process-flavour extension boots, restarts, and reports
+      state — but its handlers are unreachable. This is the single
+      biggest gap between extension SCOPE and reality.
+- [ ] **Implement the missing flow node kinds** at
+      [crates/starter-flow-nodes/src/](crates/starter-flow-nodes/src):
+      `branch.rs`, `merge.rs`, `gate.rs`, `sleep.rs`, `http_out.rs`,
+      `subflow.rs`, `trigger_event.rs`, `trigger_schedule.rs`,
+      `trigger_webhook.rs`. All are 11–14 LOC stubs today; only
+      `ai_agent`, `tool_call`, `transform`, `trigger_explicit`, and
+      `log` carry real bodies. The motivating "ingest webhook →
+      agent → branch → DB → loop" workflow from
+      [DOCS/flow/scope/SCOPE.md:54-62](DOCS/flow/scope/SCOPE.md#L54-L62)
+      is not expressible until these land.
+- [ ] **Ship `starter-ext-flow`** (the missing adapter crate, Phase 6
+      of [DOCS/flow/scope/SCOPE.md:1280](DOCS/flow/scope/SCOPE.md#L1280)).
+      Parses `contributes.nodes` / `contributes.flows` from extension
+      manifests and surfaces them through the same R13 "one trait,
+      three flavours" shape as `starter-ext-rest` / `starter-ext-cli`
+      / `starter-ext-grpc`. Until this exists, extensions can ship
+      REST handlers and tools but not flow nodes — the flow engine is
+      consumer-extensible only, not extension-extensible.
+- [ ] **Fix `Arc<dyn Authenticator>` ergonomics** at
+      `with_principal`, `McpHttpOptions::with_auth`, and
+      `router_with_auth`. Today consumers wrap dyn-auth in a
+      `BoxedAuthenticator` newtype (three call sites in
+      [examples/notes/src/server.rs](examples/notes/src/server.rs);
+      every consumer using dyn auth will write the same boilerplate).
+      The trait is already object-safe; the fix is widening the
+      generic bound to accept `Arc<dyn Authenticator>` directly. See
+      the matching open question in [SCOPE.md](SCOPE.md).
+- [ ] **Add a "contribute everywhere" smoke test** mirroring the
+      four-transport flow event smoke at
+      [crates/smoke-tests/tests/flow_event_stream_over_four_transports.rs](crates/smoke-tests/tests/flow_event_stream_over_four_transports.rs).
+      A single extension manifest with `contributes.tools + cli +
+      rest + grpc + ui` (and, once Phase 10 item 3 lands,
+      `contributes.nodes`) that asserts the host wires the
+      contribution into every surface. Today the wiring is there but
+      no test gates regressions; the next architectural drift will
+      break one transport silently. `com.nube.hello` at
+      [examples/notes/extensions/com.nube.hello/block.yaml](examples/notes/extensions/com.nube.hello/block.yaml)
+      contributes tool + REST + UI but not gRPC / CLI together — the
+      smoke needs a fuller manifest.
+
+### Code-smell cleanups (nice-to-have, not gating)
+
+Surfaced by the same review; tracked here so they don't drift:
+
+- [ ] Replace stringly-typed slot keys (`format!("{node_id}.{slot}")`
+      round-tripped through `BTreeMap<String, SlotValue>` at
+      [examples/notes/src/flow_demo.rs:296](examples/notes/src/flow_demo.rs#L296))
+      with a `SlotRef`-keyed map.
+- [ ] Replace the lossy `format!("{other:?}")` fallback in
+      [examples/notes/src/flow_demo.rs:352](examples/notes/src/flow_demo.rs#L352)
+      with an explicit `SlotValue` → JSON match that fails loudly on
+      unknown variants.
+- [ ] Remove the 60s quiescence padding at
+      [examples/notes/src/flow_demo.rs:167-170](examples/notes/src/flow_demo.rs#L167-L170)
+      by emitting heartbeat `SlotChanged` events while a node body is
+      mid-invoke (engine-level fix; the consumer workaround leaks
+      propagator internals into demo code).
+
+Exit criteria: PEER-REVIEW.md's three "Partial" verdicts move to
+"Yes" after the first three items land; the smoke test in item 5
+gates future regressions on R13's "contribute once, surface
+everywhere" claim.
+
