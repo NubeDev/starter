@@ -94,3 +94,29 @@ Stage 7 itself does NOT execute either fix — the directive says the
 new baseline is byte-for-byte-stable, and forcing either fix at this
 late stage exceeds Phase 0's "wire surface only, no behaviour" scope.
 The next session picks the call.
+
+## F-0.1 / F-0.2 closure (Phases 1–5 rollout, stage 22)
+
+The `starter-prefs-i18n` job (Phases 1–5) revisited both follow-ups.
+Resolution recorded honestly:
+
+- **F-0.1 — `starter-flow-spi` baseline drift.** Still **OPEN** at
+  HEAD `febb6c3` + stage-22 docs sweep. The intended resolution
+  (recommendation (b): feature-gate `uom` + `icu_locale_core` on
+  `starter-spi` behind default-off `units` / `i18n` features) was
+  *not* executed despite intermediate stage commit messages claiming
+  it. `crates/starter-spi/Cargo.toml` still lists both deps
+  unconditionally, and
+  `cargo test -p starter-flow --test workspace_dep_tree_gates
+  starter_flow_spi_baseline_holds` fails with the same uom + icu
+  drift. Full details + the two reconciliation paths land in
+  [PHASES-1-5-VERIFY.md](./PHASES-1-5-VERIFY.md) §C-1.
+- **F-0.2 — Worktree-path-sensitive baseline capture.** **CLOSED.**
+  `crates/starter-flow/tests/workspace_dep_tree_gates.rs` normalises
+  any `/worktrees/job-XXX/` absolute path to a stable `<WORKTREE>/`
+  prefix before diffing the baseline, so the test is reproducible
+  across worktrees and CI nodes. The capture helper
+  [`capture-baseline.sh`](./capture-baseline.sh) applies the same
+  post-process when re-baselining. The two cosmetic worktree-path
+  diff lines that originally surfaced in this report no longer
+  produce a test failure on their own.

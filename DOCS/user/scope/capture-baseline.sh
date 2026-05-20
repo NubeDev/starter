@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 #
-# F-0.2: reproducible baseline-capture for `cargo tree -p starter-spi`.
+# F-0.2: reproducible `cargo tree` baseline capture portable across
+# `.codeless/worktrees/job-*` checkouts and CI nodes.
 #
 # The raw output of `cargo tree` embeds an absolute path to the crate
 # manifest on the first line, e.g.
@@ -9,18 +10,23 @@
 #
 # Codeless runs jobs from per-worktree paths like
 # `/home/user/.codeless/worktrees/job-01KS.../crates/starter-spi`, so a
-# baseline captured in the worktree never matches one captured in the
-# repo. This script strips the absolute path to its repo-relative form
-# so the baseline is byte-stable across worktrees.
+# baseline captured in a worktree never matches one captured in the
+# main repo. This script strips the absolute prefix down to the
+# repo-relative tail so the baseline is byte-stable across worktrees.
 #
-# Usage (from repo root):
+# The strip rule preserves the path tail starting at `/crates/`,
+# `/examples/`, or `/starter-extensions/crates/` — uniquely identifying
+# the crate. Non-workspace crates print without a path and pass
+# through untouched.
 #
-#     bash DOCS/user/scope/capture-baseline.sh starter-spi \
+# Usage (from anywhere — the script re-anchors to the repo root):
+#
+#     DOCS/user/scope/capture-baseline.sh starter-spi \
 #         > DOCS/user/scope/starter-spi-deps.baseline.txt
 #
 # Diff a candidate against the baseline:
 #
-#     bash DOCS/user/scope/capture-baseline.sh starter-spi \
+#     DOCS/user/scope/capture-baseline.sh starter-spi \
 #         | diff - DOCS/user/scope/starter-spi-deps.baseline.txt
 #
 # The script intentionally captures the default-feature view (no
@@ -28,15 +34,24 @@
 # `i18n`, and `preferences` behind opt-in features so the default view
 # is the contract every downstream crate inherits when it writes
 # `starter-spi = { workspace = true }`.
+#
+# F-0.2 (DOCS/user/scope/TODO.md) closes once both
+# starter-spi-deps.baseline.txt and
+# DOCS/flow/scope/starter-flow-spi-deps.baseline.txt have been
+# re-captured through this script.
 
 set -euo pipefail
 
-if [[ $# -lt 1 ]]; then
-    echo "usage: $0 <crate-name>" >&2
+if [[ $# -ne 1 ]]; then
+    echo "usage: $0 <crate>" >&2
     exit 2
 fi
 
 crate="$1"
 
-cargo tree -p "${crate}" --edges normal \
-    | sed -E 's#\(/[^)]*/(starter-extensions/crates|crates)/([a-zA-Z0-9_-]+)\)#(\1/\2)#g'
+# Re-anchor to the repo root so the script is callable from anywhere.
+repo_root="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+cd "$repo_root"
+
+cargo tree -p "$crate" --edges normal \
+    | sed -E 's#\(/[^)]*/(starter-extensions/crates|crates|examples)/#(/\1/#g'

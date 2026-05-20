@@ -1,0 +1,57 @@
+[package]
+name        = "starter-prefs"
+description = "starter — user/org preferences (locale, units, timezone) with three-layer resolution. See DOCS/user/scope/SCOPE.md."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Workspace policy posture: default-features = []. A consumer that does
+# not opt into `routes` / `sqlite` gets only the resolver + trait
+# types; no axum, no sqlx driver compiled in. See SCOPE.md
+# "Rollout (proposed phases)" — Phase 1.
+[features]
+default = []
+# `routes` pulls in the REST surface (GET/PATCH /v1/me/preferences,
+# GET/PATCH /v1/orgs/{id}/preferences, GET /v1/units) plus the tower
+# middleware that threads resolved prefs into request extensions.
+# See SCOPE.md "API surface" + "Middleware".
+routes = ["dep:axum", "dep:http", "dep:bytes"]
+# `sqlite` enables the sqlx-based `store::SqlitePrefsStore`
+# implementation of `store::PrefsStore`. Default-off per workspace
+# policy R5 — a consumer that only wants the resolver + trait shape
+# pays nothing. Postgres is deferred per the SCOPE.md Phase 1
+# decision lock.
+sqlite = ["sqlx/sqlite", "sqlx/migrate", "sqlx/runtime-tokio"]
+
+[dependencies]
+starter-spi = { workspace = true, features = ["preferences"] }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+sqlx        = { workspace = true }
+utoipa      = { workspace = true }
+tracing     = { workspace = true }
+
+# Routes feature deps — only compiled when the `routes` feature is
+# active. See SCOPE.md "Rollout (proposed phases)" — Phase 1.
+axum  = { workspace = true, optional = true }
+http  = { workspace = true, optional = true }
+bytes = { workspace = true, optional = true }
+
+# ISO 4217 currency code validation + metadata. Lands here (NOT on
+# starter-spi) per SCOPE.md "Decisions" D-U0.3 — Phase 0 deliberately
+# kept iso_currency off starter-spi to avoid pulling currency data
+# into every downstream crate; starter-prefs is the one place that
+# needs it (PrefsResolver currency validation, /v1/units payload).
+iso_currency = "0.5"
+
+[dev-dependencies]
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
+sqlx           = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+axum           = { workspace = true }
+tower          = { workspace = true }
+http           = { workspace = true }
+http-body-util = "0.1"
+serde_json     = { workspace = true }
