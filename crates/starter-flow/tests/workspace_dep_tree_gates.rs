@@ -115,6 +115,39 @@ fn starter_flow_surfaces_tree_contains_no_adk_rust() {
     );
 }
 
+/// Phase 4 D-F4.12: enabling the opt-in `ai-agent` cargo feature on
+/// `starter-flow-nodes` must NOT pull `adk-rust` into the dep tree
+/// (D-F4.2 D1 invariant). The four other `*_contains_no_adk_rust`
+/// gates above cover the default-feature path; this one covers the
+/// `--features ai-agent` path so the invariant holds whether or not
+/// consumers enable the feature.
+#[test]
+fn starter_flow_nodes_with_ai_agent_feature_does_not_pull_adk_rust() {
+    let output = Command::new(env!("CARGO"))
+        .args([
+            "tree",
+            "-p",
+            "starter-flow-nodes",
+            "--features",
+            "ai-agent",
+            "--edges",
+            "normal",
+        ])
+        .current_dir(workspace_root())
+        .output()
+        .unwrap_or_else(|e| panic!("spawn cargo tree --features ai-agent: {e}"));
+    assert!(
+        output.status.success(),
+        "cargo tree --features ai-agent failed: stderr={}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let tree = String::from_utf8(output.stdout).expect("cargo tree stdout is utf-8");
+    assert!(
+        !tree.contains("adk-rust"),
+        "starter-flow-nodes --features ai-agent dep tree must not contain `adk-rust`:\n{tree}"
+    );
+}
+
 #[test]
 fn starter_flow_spi_baseline_holds() {
     let baseline_path = workspace_root()

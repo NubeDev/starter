@@ -2,12 +2,75 @@
 
 ## Current stage
 
-**Stage 1 — lock the Phase 4 boundary (no code).** Job folder
-bootstrapped on `master` at `af52c7b` (immediately after the
-Phase 3 stage 10 verify pass merged). Stage 1's work is to record
-the twelve D-F4 decisions in `DOCS/flow/scope/SCOPE.md` under
-"Decisions" per the Phase 3 stage 1 precedent. No code lands until
-the stage 2 REVIEW gate signs off.
+**Phase 4 complete on branch `codeless/starter-flow-phase4-ai-agent`;
+ready to open PR against master.** All nine stages landed on the
+branch with the gate-set re-confirmed green at stage 9. The
+`ai-agent` node kind body, the engine wiring, the new dep-tree
+gate, and the two SCOPE smokes are in place; the engine can run
+agentic flows end-to-end on the 24/7-rated persistent runtime
+Phase 3 shipped.
+
+## Stage 9 outcome (verify pass)
+
+| Gate | Result |
+|---|---|
+| workspace dep-tree gates (now 6 including ai-agent feature path) | **pass** — 6/6 |
+| starter-flow tests | **pass** — every binary green (Phase 2 smokes + stage5/6/7 tests + stage5_skill_threading 4/4) |
+| starter-flow-spi tests | **pass** — 11/11 |
+| starter-flow-surfaces tests | **pass** — stage7 6/6, stage8 5/5 |
+| starter-flow-nodes --features ai-agent,tool-call | **pass** — 13/13 (6 ai-agent + 7 tool-call) |
+| starter-store-sqlite --features flow,testing | **pass** — flow 8/8, migrate 3/3 |
+| Phase 3 smokes (4 files, 13 tests) | **pass** — all green |
+| Phase 4 smokes (2 files, 3 tests) | **pass** — ai_agent_is_just_a_node_kind 1/1, skill_quarantine 2/2 |
+| flow-scoped clippy --features ai-agent,tool-call | **pass** — 0 warnings |
+| flow-scoped fmt --check | **pass** — exit 0 |
+
+## Commits (in order)
+
+- `d1a4909` master — bootstrap job folder.
+- `deb9e94` branch — stage 1: D-F4.1..D-F4.12 in SCOPE.md.
+- `0db2123` branch — stage 3: SPI shape (AiRunnerRegistry, SkillSelector, SkillSelection, SessionMode, NodeCtx.skill, baseline regen).
+- `42499d5` branch — stage 4: ai-agent body behind default-off `ai-agent` feature + 6 unit tests.
+- `5cdaee4` branch — stage 5: Engine builder hooks + selector threading through NodeCtx + stage5_skill_threading 4 tests.
+- `a7b3788` branch — stage 6: sixth dep-tree gate for the --features ai-agent path.
+- `0c1c6da` branch — stage 7: smoke 1 + RecordingAiRunner testkit (starter-ai testing feature).
+- `828729e` branch — stage 8: smoke 2 (skill quarantine + cross-run mutation).
+- (this commit) branch — stage 9: verify pass + handover update.
+
+## Implementation notes worth remembering
+
+- **`AiAgent.with_provider_id` is a Phase-4 workaround.** The
+  Phase 2 propagator only routes declared trigger slots into a
+  node body's `input` map; a `provider_id` declared as a non-
+  trigger config slot is invisible. The smoke + downstream
+  consumers pin the provider at construction time. Retire this
+  when NodeCtx gains a graph-store reference so the body can read
+  config slots directly (likely Phase 5/6).
+- **`SessionId::for_ai_agent_node` uses uuid v5** over a frozen
+  namespace (constant `SESSION_NS` in starter-flow-spi flow.rs).
+  Workspace `uuid` feature gained `v5` in stage 3, pulling
+  `sha1_smol` into the SPI tree — baseline regenerated in same
+  commit per D-F3.7.
+- **CancelAdapter doesn't impl AiCancel.** The trait requires
+  `'static`; a borrowed adapter can't satisfy it. The outer
+  `tokio::select!` in `run_agent_loop` races the runner future
+  against `ctx.cancel.cancelled()` directly; the AiRunner
+  receives a static `NoOpAiCancel`. Cancel-to-exit ≤ 200ms
+  (asserted in stage 4 unit tests).
+- **`SkillError` from the selector is non-fatal** — the runner
+  logs a warn and falls back to `SkillSelection::None`. Matches
+  the Phase 2 "selector failure is not fatal" posture. Revisit
+  when a host surfaces a need to hard-fail (D-F4.4 revisit
+  trigger).
+- **The R12 span shape is unit-tested in the body**, not in the
+  smoke. Cargo's process-wide tracing-subscriber default fights
+  with cross-thread propagator dispatch; the smoke pins the
+  end-to-end FlowTopology → propagator → NodeBehavior::invoke →
+  GraphStore::write_slot chain.
+- **AiAgent body is ~900 lines** with 6 inline unit tests; the
+  bulk is config validation + tools intersection + the LLM loop
+  + the cancel adapter + session resolution. tool_call.rs is
+  the structural precedent (633 lines).
 
 ## Phase 3 inheritance — what stays green
 

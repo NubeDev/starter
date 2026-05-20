@@ -121,72 +121,36 @@ impl Cancel for RunCancel {
     }
 }
 
-/// Skill selection produced by a [`SkillSelector`] at the top of an
-/// outer flow run.
+/// Re-export of the SPI [`SkillSelection`](starter_flow_spi::skill::SkillSelection).
 ///
-/// SCOPE: the canonical `SkillSelection` shape lives in
-/// `starter-skills`, which is not yet a workspace member. This Phase-2
-/// placeholder pins the *seam* — every `RunState` carries an
-/// `Option<Arc<SkillSelection>>` and the `ai-agent` node body (Phase 4)
-/// will read it via the `RunState`. When `starter-skills` lands, drop
-/// this placeholder and re-export the canonical type from
-/// [`starter_flow_spi::skill`].
-///
-/// `#[non_exhaustive]` so adding fields when the real type lands is
-/// not a breaking change for code that constructs the placeholder.
-#[non_exhaustive]
-#[derive(Debug, Default, Clone)]
-pub struct SkillSelection {
-    /// Free-form selection label. Phase 4 / `starter-skills` replaces
-    /// this with the canonical structured selection.
-    pub label: String,
-}
+/// Phase 4 stage 3 promoted the placeholder local type to the real
+/// `starter-flow-spi::skill::SkillSelection` (a `Selected { skill_id,
+/// allowed_tools, resources, content_hash } | None` enum); this
+/// re-export keeps existing callsites in `starter-flow::run` /
+/// `starter-flow::state` working without renaming the import.
+pub use starter_flow_spi::skill::SkillSelection;
 
-impl SkillSelection {
-    /// Construct a [`SkillSelection`] with a free-form label.
-    pub fn new(label: impl Into<String>) -> Self {
-        Self {
-            label: label.into(),
-        }
-    }
-}
+/// Re-export of the SPI [`SkillSelector`](starter_flow_spi::skill::SkillSelector).
+pub use starter_flow_spi::skill::SkillSelector;
 
-/// Outer-run skill selection hook (R7).
-///
-/// SCOPE R7: the AI agent is a *node kind*, not a runtime — and skill
-/// selection runs **once per outer flow run**, with the result threaded
-/// through every `ai-agent` node in that run. This trait is the seam
-/// [`FlowRunner::start`] calls exactly once at the top of every run.
-///
-/// Phase 2 wires the seam; Phase 4 fleshes out the `ai-agent` body
-/// that reads the selection.
-#[async_trait]
-pub trait SkillSelector: Send + Sync + 'static {
-    /// Select the skills for one outer run.
-    async fn select(
-        &self,
-        flow: &FlowId,
-        revision: &FlowRevisionId,
-        input: &SlotMap,
-    ) -> SkillSelection;
-}
+/// Re-export of the SPI [`NullSkillSelector`](starter_flow_spi::skill::NullSkillSelector)
+/// — the engine default when no selector is registered. Returns
+/// [`SkillSelection::None`] for every run.
+pub use starter_flow_spi::skill::NullSkillSelector;
 
-/// Trivial selector that always returns an empty [`SkillSelection`].
-///
-/// Default plug for engines that have not been configured with a real
-/// selector — keeps the R7 seam alive on every run without imposing a
-/// real skills dependency in Phase 2.
-pub struct NoopSkillSelector;
+/// Re-export of the SPI [`SkillError`](starter_flow_spi::skill::SkillError).
+pub use starter_flow_spi::skill::SkillError;
 
-#[async_trait]
-impl SkillSelector for NoopSkillSelector {
-    async fn select(
-        &self,
-        _flow: &FlowId,
-        _revision: &FlowRevisionId,
-        _input: &SlotMap,
-    ) -> SkillSelection {
-        SkillSelection::default()
+/// `system/Admin` `Principal` used when neither `RunSpec::with_principal`
+/// nor `NodeCtx` carries a real identity (Phase 2 stage-5 default;
+/// retired once `NodeCtx` grows a `Principal` field in a later
+/// phase).
+fn default_system_admin_principal() -> Principal {
+    Principal {
+        subject: "system/Admin".to_string(),
+        role: starter_spi::auth::Role::Admin,
+        scopes: Vec::new(),
+        extra: serde_json::Value::Null,
     }
 }
 
@@ -435,7 +399,7 @@ impl FlowRunner {
             spi_run_store: None,
             run_opts: RunOpts::default(),
             health: HealthHandle::new(),
-            skill_selector: Arc::new(NoopSkillSelector),
+            skill_selector: Arc::new(NullSkillSelector),
             config: FlowRunnerConfig::default(),
         }
     }
@@ -592,11 +556,26 @@ impl FlowRunner {
         resume: Option<ResumeContext>,
     ) -> RunHandle {
         // 1. Skill selection — exactly once per outer run (R7).
-        let selection = Arc::new(
-            self.skill_selector
-                .select(&spec.flow, &spec.revision, &input)
-                .await,
-        );
+        //    SPI signature is `select(input, principal)`; the run's
+        //    principal comes from RunSpec::with_principal or falls
+        //    back to the stage-5 system/Admin default (Phase 4
+        //    retires this default once NodeCtx grows a Principal
+        //    field).
+        let principal_for_selection = spec
+            .principal
+            .clone()
+            .unwrap_or_else(default_system_admin_principal);
+        let selection = match self
+            .skill_selector
+            .select(&input, &principal_for_selection)
+            .await
+        {
+            Ok(sel) => Arc::new(sel),
+            Err(e) => {
+                tracing::warn!(error = %e, "skill_selector failed; falling back to SkillSelection::None for this run");
+                Arc::new(SkillSelection::None)
+            }
+        };
 
         // 2. Per-run primitives. `resume` reuses the existing
         //    `RunId`; a fresh start mints a new one.
@@ -820,6 +799,12 @@ async fn run_coordinator(
             metrics.clone(),
         )
     });
+    let skill_arc = {
+        let st = state.read().await;
+        st.skill_selection
+            .clone()
+            .unwrap_or_else(|| Arc::new(SkillSelection::None))
+    };
     let prop_handle = propagator::spawn_with_checkpoint(
         store.clone(),
         topology,
@@ -828,6 +813,7 @@ async fn run_coordinator(
         run,
         cfg.propagator,
         checkpoint_hook,
+        skill_arc,
     );
 
     // Seed writes — these enter through the single chokepoint per R2.
@@ -1304,12 +1290,16 @@ mod tests {
         impl SkillSelector for Counting {
             async fn select(
                 &self,
-                _flow: &FlowId,
-                _revision: &FlowRevisionId,
                 _input: &SlotMap,
-            ) -> SkillSelection {
+                _principal: &Principal,
+            ) -> Result<SkillSelection, SkillError> {
                 self.calls.fetch_add(1, Ordering::SeqCst);
-                SkillSelection::new("counted")
+                Ok(SkillSelection::Selected {
+                    skill_id: starter_flow_spi::skill::SkillId::new("test.counted").unwrap(),
+                    allowed_tools: Vec::new(),
+                    resources: Vec::new(),
+                    content_hash: "counted".to_string(),
+                })
             }
         }
 
@@ -1353,6 +1343,11 @@ mod tests {
             .skill_selection
             .as_ref()
             .expect("skill selection must be pinned on RunState");
-        assert_eq!(sel.label, "counted");
+        match sel.as_ref() {
+            SkillSelection::Selected { content_hash, .. } => {
+                assert_eq!(content_hash, "counted");
+            }
+            other => panic!("expected Selected, got {other:?}"),
+        }
     }
 }

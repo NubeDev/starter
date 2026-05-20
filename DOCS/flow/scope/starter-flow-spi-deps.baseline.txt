@@ -129,6 +129,7 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │       ├── getrandom v0.4.2
 │       │   ├── cfg-if v1.0.4
 │       │   └── libc v0.2.186
-│       └── serde_core v1.0.228
+│       ├── serde_core v1.0.228
+│       └── sha1_smol v1.0.1
 ├── thiserror v1.0.69 (*)
 └── uuid v1.23.1 (*)

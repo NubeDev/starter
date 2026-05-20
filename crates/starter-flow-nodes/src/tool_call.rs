@@ -399,7 +399,12 @@ mod tests {
     }
 
     fn make_ctx<'a>(node: &'a NodeId, cancel: &'a dyn Cancel) -> NodeCtx<'a> {
-        NodeCtx::new(starter_flow_spi::flow::RunId::new(), node, cancel)
+        NodeCtx::new(
+            starter_flow_spi::flow::RunId::new(),
+            node,
+            cancel,
+            starter_flow_spi::skill::SkillSelection::NONE,
+        )
     }
 
     fn tool_id(s: &str) -> KindId {
@@ -516,6 +521,7 @@ mod tests {
                     // owned/borrowed split.
                     Box::leak(Box::new(node)),
                     cancel.as_ref(),
+                    starter_flow_spi::skill::SkillSelection::NONE,
                 );
                 node_kind
                     .invoke(ctx, input_with("com.acme.slow", serde_json::json!({})))

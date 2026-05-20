@@ -564,6 +564,61 @@ impl SessionId {
     pub fn new() -> Self {
         Self(Uuid::new_v4())
     }
+
+    /// Derive a deterministic session id for an `ai-agent` node
+    /// invocation per [`SessionMode`] (D-F4.6).
+    ///
+    /// - [`SessionMode::FreshPerInvocation`] returns a fresh
+    ///   [`Uuid::new_v4`].
+    /// - [`SessionMode::ReuseAcrossRun`] hashes `(node_id, run_id)`
+    ///   into a deterministic [`Uuid::new_v5`].
+    /// - [`SessionMode::ReuseAcrossFlow`] hashes
+    ///   `(node_id, flow_id, principal.id())` into a deterministic
+    ///   [`Uuid::new_v5`].
+    pub fn for_ai_agent_node(
+        mode: SessionMode,
+        node_id: &crate::node::NodeId,
+        run_id: RunId,
+        flow_id: FlowId,
+        principal: &crate::Principal,
+    ) -> Self {
+        match mode {
+            SessionMode::FreshPerInvocation => Self::new(),
+            SessionMode::ReuseAcrossRun => {
+                let key = format!("{node_id}|{run_id}");
+                Self(Uuid::new_v5(&SESSION_NS, key.as_bytes()))
+            }
+            SessionMode::ReuseAcrossFlow => {
+                let key = format!("{node_id}|{flow_id}|{}", principal.subject);
+                Self(Uuid::new_v5(&SESSION_NS, key.as_bytes()))
+            }
+        }
+    }
+}
+
+/// UUID namespace for deterministic [`SessionId::for_ai_agent_node`]
+/// derivations. Frozen — changing this value invalidates every
+/// persisted `ReuseAcrossRun`/`ReuseAcrossFlow` session.
+const SESSION_NS: Uuid = Uuid::from_bytes([
+    0x6f, 0x39, 0xa1, 0xb2, 0x55, 0x4c, 0x4e, 0xa9, 0x9d, 0xe7, 0x4f, 0x21, 0x80, 0x12, 0x10, 0x73,
+]);
+
+/// Session-continuity policy for an `ai-agent` node invocation
+/// (D-F4.6).
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum SessionMode {
+    /// Fresh `SessionId` per invocation. Default — cheapest and most
+    /// predictable.
+    #[default]
+    FreshPerInvocation,
+    /// Reuse the same `SessionId` across every invocation of this
+    /// node within one run. Keyed on `(node_id, run_id)`.
+    ReuseAcrossRun,
+    /// Reuse the same `SessionId` across every invocation of this
+    /// node across every run of the owning flow for one principal.
+    /// Keyed on `(node_id, flow_id, principal_id)`.
+    ReuseAcrossFlow,
 }
 
 impl Default for SessionId {

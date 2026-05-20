@@ -36,6 +36,11 @@ starter-tool-gmail       = { workspace = true }
 starter-flow             = { workspace = true }
 starter-flow-spi         = { workspace = true }
 starter-flow-surfaces    = { workspace = true }
+# Phase 4 stage 7 + 8 — ai-agent body + RecordingAiRunner testkit.
+starter-flow-nodes       = { workspace = true, features = ["ai-agent", "tool-call"] }
+starter-ai               = { workspace = true, features = ["testing"] }
+tracing                  = { workspace = true }
+tracing-subscriber       = { workspace = true }
 starter-store-sqlite     = { workspace = true, features = ["flow", "testing"] }
 starter-mcp              = { workspace = true, features = ["testing"] }
 starter-grpc             = { workspace = true, features = ["testing"] }

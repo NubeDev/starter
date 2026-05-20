@@ -62,13 +62,29 @@ pub struct NodeCtx<'a> {
     /// `select!` against `cancel.cancelled()` or poll
     /// `cancel.is_cancelled()` to abort promptly.
     pub cancel: &'a dyn crate::Cancel,
+    /// Frozen skill selection for the owning run (D-F4.4). Every
+    /// `ai-agent` node invocation in a single run sees the same
+    /// [`SkillSelection`]; the engine's [`crate::skill::SkillSelector`]
+    /// is invoked exactly once per `FlowRunner::start`. Non-ai-agent
+    /// kinds ignore this field.
+    pub skill: &'a crate::skill::SkillSelection,
 }
 
 impl<'a> NodeCtx<'a> {
     /// Construct a [`NodeCtx`]. The propagator is the only in-engine
     /// caller; it builds one of these per `NodeBehavior::invoke` call.
-    pub fn new(run: crate::flow::RunId, node: &'a NodeId, cancel: &'a dyn crate::Cancel) -> Self {
-        Self { run, node, cancel }
+    pub fn new(
+        run: crate::flow::RunId,
+        node: &'a NodeId,
+        cancel: &'a dyn crate::Cancel,
+        skill: &'a crate::skill::SkillSelection,
+    ) -> Self {
+        Self {
+            run,
+            node,
+            cancel,
+            skill,
+        }
     }
 }
 
@@ -300,6 +316,22 @@ pub enum NodeError {
     /// token (R13).
     #[error("cancelled")]
     Cancelled,
+
+    /// Node-kind body refused the invocation for a typed, structural
+    /// reason (e.g. missing config slot, unregistered provider id,
+    /// empty tools intersection). Phase 4 D-F4.5 + D-F4.8: `ai-agent`
+    /// surfaces `code = "provider_id_required"`,
+    /// `"provider_not_registered"`, `"no_tools_visible"`, and
+    /// `"turn_budget_exhausted"` via this variant. The `code` is
+    /// machine-readable and stable; `message` is human-friendly and
+    /// safe to surface in logs.
+    #[error("domain error [{code}]: {message}")]
+    Domain {
+        /// Short stable machine-readable code.
+        code: &'static str,
+        /// Human-readable message.
+        message: String,
+    },
 
     /// Any other error surfaced by a node-kind body.
     #[error(transparent)]

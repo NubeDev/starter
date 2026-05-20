@@ -58,6 +58,12 @@ mod secret;
 
 pub mod runners;
 
+/// Phase 4 D-F4.11: recording-fake `AiRunner` for smoke tests.
+/// Gated behind the `testing` cargo feature so production binaries
+/// never carry the fake.
+#[cfg(feature = "testing")]
+pub mod testing;
+
 pub use cancel::TokenCancel;
 pub use defaults::AiDefaults;
 pub use registry::{ProviderStatus, Registry};
