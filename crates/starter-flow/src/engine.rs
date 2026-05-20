@@ -308,6 +308,19 @@ impl Engine {
         self
     }
 
+    /// Replace the engine's [`NodeKindRegistry`] with a shared
+    /// `Arc` — useful when a [`crate::definition::DefinitionManager`]
+    /// already holds the registry that hosts want to wire through
+    /// [`Self::register_kind`] / [`Self::deregister_kind`]. The
+    /// engine creates a fresh empty registry in [`Self::new`]; this
+    /// builder lets callers replace it with the same `Arc` they
+    /// pass to [`crate::definition::DefinitionManager::new`] so the
+    /// HR-6 walks resolve against the registry they just mutated.
+    pub fn with_node_kinds(mut self, kinds: Arc<NodeKindRegistry>) -> Self {
+        self.node_kinds = kinds;
+        self
+    }
+
     /// Borrow the attached [`SpiRunStore`] if any. Callers wiring
     /// per-run constructors (e.g. [`crate::run::FlowRunner`]) clone
     /// this `Arc` into the run.
@@ -345,6 +358,83 @@ impl Engine {
     ) -> Option<tokio::sync::broadcast::Receiver<starter_flow_spi::definition::FlowDefinitionEvent>>
     {
         self.definitions.as_ref().map(|m| m.subscribe())
+    }
+
+    /// Register a node kind through the engine's chokepoint
+    /// (HR-6 / HR8 first paragraph).
+    ///
+    /// Forwards to [`NodeKindRegistry::register`]. If a
+    /// [`crate::definition::DefinitionManager`] is attached, the
+    /// engine subsequently invokes
+    /// [`crate::definition::DefinitionManager::on_kind_registered`]
+    /// so any flow currently in `ResolveFailed` for this kind can
+    /// remount. Callers who hold the registry directly are still
+    /// supported, but they MUST drive the remount walk themselves
+    /// — preferring this method keeps the host honest.
+    pub async fn register_kind(
+        &self,
+        behavior: Arc<dyn starter_flow_spi::node::NodeBehavior>,
+    ) -> Result<(), crate::registry::RegistryError> {
+        let kind = behavior.kind_id().clone();
+        self.node_kinds.register(behavior).await?;
+        if let Some(defs) = self.definitions.as_ref() {
+            let remounted = defs.on_kind_registered(&kind).await;
+            tracing::debug!(
+                target: "starter_flow::engine",
+                kind = %kind,
+                remounted,
+                "register_kind: remount walk complete"
+            );
+        }
+        Ok(())
+    }
+
+    /// Host-only variant: register a kind under the reserved
+    /// `starter.flow.*` prefix. Forwards to
+    /// [`NodeKindRegistry::register_builtin`] then fires the same
+    /// HR-6 remount walk as [`Self::register_kind`].
+    pub async fn register_builtin_kind(
+        &self,
+        behavior: Arc<dyn starter_flow_spi::node::NodeBehavior>,
+    ) -> Result<(), crate::registry::RegistryError> {
+        let kind = behavior.kind_id().clone();
+        self.node_kinds.register_builtin(behavior).await?;
+        if let Some(defs) = self.definitions.as_ref() {
+            let _ = defs.on_kind_registered(&kind).await;
+        }
+        Ok(())
+    }
+
+    /// Deregister a node kind through the engine's chokepoint
+    /// (HR-6 / HR8 second paragraph).
+    ///
+    /// Forwards to [`NodeKindRegistry::deregister`]. If a
+    /// [`crate::definition::DefinitionManager`] is attached, the
+    /// engine subsequently invokes
+    /// [`crate::definition::DefinitionManager::on_kind_deregistered`]
+    /// to revoke every active topology that references the kind,
+    /// cancel in-flight runs per each flow's `apply_policy`, and
+    /// transition affected flows to `ResolveFailed`.
+    pub async fn deregister_kind(
+        &self,
+        kind: &starter_flow_spi::node::KindId,
+    ) -> Result<(), crate::registry::RegistryError> {
+        // Drive the manager walk *first* so in-flight runs get
+        // their cancel signal while behaviors are still reachable
+        // through both the registry and the active-topology
+        // snapshot. The registry drop then races only with the
+        // snapshot Arcs held by drain-policy runs, which is the
+        // HR8 memory-safety contract.
+        if let Some(defs) = self.definitions.as_ref() {
+            let revoked = defs.on_kind_deregistered(kind).await;
+            tracing::debug!(
+                target: "starter_flow::engine",
+                kind = %kind,
+                revoked,
+                "deregister_kind: revoke walk complete"
+            );
+        }
+        self.node_kinds.deregister(kind).await
     }
 
     /// Read the engine's current health (D-F3.11). Lock-free; backed

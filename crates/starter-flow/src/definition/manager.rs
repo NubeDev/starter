@@ -2032,4 +2032,84 @@ mod tests {
         .unwrap();
         assert!(mgr.failed_flows().await.is_empty());
     }
+
+    /// HR-6 engine wiring: `Engine::register_kind` /
+    /// `Engine::deregister_kind` route through the attached
+    /// `DefinitionManager` so a host that never touches the
+    /// registry directly still gets remount-on-register and
+    /// revoke-on-deregister behaviour.
+    #[tokio::test]
+    async fn hr6_engine_register_and_deregister_kind_fires_walks() {
+        use crate::engine::Engine;
+        use crate::graph::InMemoryGraphStore;
+
+        let graph: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
+        let store = MemStore::new();
+        // Empty registry: any flow referencing `com.example.any`
+        // will resolve-fail until the kind is registered.
+        let kinds = Arc::new(NodeKindRegistry::new());
+        let mgr = Arc::new(DefinitionManager::new(store.clone(), Arc::clone(&kinds)));
+        // Share the registry so engine.register_kind hits the same
+        // Arc the manager uses for remount resolution.
+        let engine = Engine::new(graph)
+            .with_node_kinds(Arc::clone(&kinds))
+            .with_definition_manager(Arc::clone(&mgr));
+
+        // Seed a flow whose head references the not-yet-registered
+        // kind via a separate manager with a registered copy.
+        let kinds_seed = Arc::new(NodeKindRegistry::new());
+        kinds_seed
+            .register(AnyKind::arc("com.example.any"))
+            .await
+            .unwrap();
+        let mgr_seed = DefinitionManager::new(store, kinds_seed);
+        let flow = FlowId::new("examples.hr6.engine").unwrap();
+        mgr_seed
+            .publish(
+                flow.clone(),
+                serde_json::json!({
+                    "flow_id": "examples.hr6.engine",
+                    "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                    "links": []
+                }),
+                DefinitionSource::Api,
+            )
+            .await
+            .unwrap();
+
+        // Boot the real engine's manager into ResolveFailed for the flow.
+        let report = mgr.boot_resume().await.unwrap();
+        assert_eq!(report.failed, 1);
+
+        // engine.register_kind must fire the remount walk.
+        let mut rx = mgr.subscribe();
+        engine
+            .register_kind(AnyKind::arc("com.example.any"))
+            .await
+            .unwrap();
+        let evt = timeout(Duration::from_millis(200), rx.recv()).await;
+        assert!(
+            matches!(evt, Ok(Ok(FlowDefinitionEvent::Mounted { .. }))),
+            "Mounted must be emitted by engine.register_kind, got {evt:?}"
+        );
+        assert_eq!(mgr.active_topologies().len().await, 1);
+
+        // engine.deregister_kind must fire the revoke walk.
+        let mut rx2 = mgr.subscribe();
+        let kind = KindId::new("com.example.any").unwrap();
+        engine.deregister_kind(&kind).await.unwrap();
+        let mut saw_revoked = false;
+        for _ in 0..4 {
+            match timeout(Duration::from_millis(200), rx2.recv()).await {
+                Ok(Ok(FlowDefinitionEvent::KindRevoked { .. })) => {
+                    saw_revoked = true;
+                    break;
+                }
+                Ok(Ok(_)) => continue,
+                _ => break,
+            }
+        }
+        assert!(saw_revoked, "KindRevoked must be emitted by engine.deregister_kind");
+        assert_eq!(mgr.active_topologies().len().await, 0);
+    }
 }
