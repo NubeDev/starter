@@ -148,6 +148,69 @@ fn starter_flow_nodes_with_ai_agent_feature_does_not_pull_adk_rust() {
     );
 }
 
+/// Phase 5 D-F5.5: enabling the opt-in `trigger-explicit` cargo
+/// feature on `starter-flow-nodes` must NOT pull `adk-rust` into
+/// the dep tree (D-F4.2 D1 invariant). Mirrors the
+/// `--features ai-agent` gate verbatim; only the feature name
+/// differs.
+#[test]
+fn starter_flow_nodes_with_trigger_explicit_feature_does_not_pull_adk_rust() {
+    let output = Command::new(env!("CARGO"))
+        .args([
+            "tree",
+            "-p",
+            "starter-flow-nodes",
+            "--features",
+            "trigger-explicit",
+            "--edges",
+            "normal",
+        ])
+        .current_dir(workspace_root())
+        .output()
+        .unwrap_or_else(|e| panic!("spawn cargo tree --features trigger-explicit: {e}"));
+    assert!(
+        output.status.success(),
+        "cargo tree --features trigger-explicit failed: stderr={}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let tree = String::from_utf8(output.stdout).expect("cargo tree stdout is utf-8");
+    assert!(
+        !tree.contains("adk-rust"),
+        "starter-flow-nodes --features trigger-explicit dep tree must not contain `adk-rust`:\n{tree}"
+    );
+}
+
+/// Phase 5 D-F5.5: enabling the opt-in `log` cargo feature on
+/// `starter-flow-nodes` must NOT pull `adk-rust` into the dep
+/// tree (D-F4.2 D1 invariant). Mirrors the
+/// `--features trigger-explicit` gate verbatim.
+#[test]
+fn starter_flow_nodes_with_log_feature_does_not_pull_adk_rust() {
+    let output = Command::new(env!("CARGO"))
+        .args([
+            "tree",
+            "-p",
+            "starter-flow-nodes",
+            "--features",
+            "log",
+            "--edges",
+            "normal",
+        ])
+        .current_dir(workspace_root())
+        .output()
+        .unwrap_or_else(|e| panic!("spawn cargo tree --features log: {e}"));
+    assert!(
+        output.status.success(),
+        "cargo tree --features log failed: stderr={}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let tree = String::from_utf8(output.stdout).expect("cargo tree stdout is utf-8");
+    assert!(
+        !tree.contains("adk-rust"),
+        "starter-flow-nodes --features log dep tree must not contain `adk-rust`:\n{tree}"
+    );
+}
+
 #[test]
 fn starter_flow_spi_baseline_holds() {
     let baseline_path = workspace_root()

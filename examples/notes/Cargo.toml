@@ -78,6 +78,15 @@ futures      = { workspace = true }
 # `health` / `openapi` subcommands via `register_starter_defaults`.)
 reqwest      = { workspace = true, features = ["json"] }
 
+# Flow demo (Phase 5 starter-flow-phase5-demo job): wires a
+# trigger.explicit → ai-agent → log flow against the local Claude
+# Code CLI runner. The demo lives in `src/flow_demo.rs` and mounts
+# `POST /api/flows/codeless-demo/fire` onto the existing router.
+starter-flow       = { workspace = true }
+starter-flow-spi   = { workspace = true }
+starter-flow-nodes = { workspace = true, features = ["ai-agent", "trigger-explicit", "log"] }
+starter-ai         = { workspace = true, features = ["provider-claude"] }
+
 [build-dependencies]
 tonic-build  = { workspace = true }
 

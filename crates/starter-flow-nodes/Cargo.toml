@@ -41,6 +41,10 @@ tokio = { workspace = true, optional = true, features = ["macros", "sync", "rt"]
 # `Err → NodeFailed` wiring lives in `starter-flow`).
 tokio        = { workspace = true, features = ["rt-multi-thread", "sync", "macros", "time"] }
 starter-flow = { workspace = true }
+# The `log` body's unit tests install a tracing-subscriber layer that
+# captures emitted events under the `starter.flow.log` target and
+# asserts the (level, value-debug) shape.
+tracing-subscriber = { workspace = true }
 
 [features]
 # Default-off per the workspace policy: a consumer enables only the
@@ -57,12 +61,12 @@ branch            = []
 merge             = []
 gate              = []
 subflow           = []
-trigger-explicit  = []
+trigger-explicit  = ["dep:tokio"]
 trigger-event     = []
 trigger-schedule  = []
 trigger-webhook   = []
 http-out          = []
-log               = []
+log               = ["dep:tokio"]
 sleep             = []
 
 all-kinds = [

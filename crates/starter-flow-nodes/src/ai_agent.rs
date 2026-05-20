@@ -58,11 +58,11 @@ use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, 
 use starter_flow_spi::skill::SkillSelection;
 use starter_flow_spi::{Cancel as FlowCancel, Principal};
 use starter_spi::ai::{
-    AiRunner, Cancel as AiCancel, Event, HistoryMessage, RestCfg, RunnerInput, ToolChoice, ToolDef,
-    ToolUse,
+    AiRunner, Cancel as AiCancel, CliCfg, Event, HistoryMessage, RestCfg, RunnerInput, ToolChoice,
+    ToolDef, ToolUse,
 };
 
-use crate::tool_call::ToolRegistry;
+use crate::tool_registry::ToolRegistry;
 
 /// Reverse-DNS kind id in the reserved `starter.flow.*` namespace.
 pub const KIND_ID: &str = "starter.flow.ai-agent";
@@ -89,6 +89,11 @@ pub const SESSION_MODE_SLOT: &str = "session_mode";
 /// lands with the future `starter-skills` crate.
 pub const SKILL_HINT_SLOT: &str = "skill_hint";
 
+/// Optional config slot selecting the `RunnerInput` variant the
+/// body hands to the resolved runner. Values: `"rest"` (default)
+/// or `"cli"`. See D-F5.6 in `DOCS/flow/scope/SCOPE.md`.
+pub const INPUT_KIND_SLOT: &str = "input_kind";
+
 /// Input slot carrying the user message text.
 pub const INPUT_SLOT: &str = "input";
 
@@ -102,6 +107,37 @@ pub const TURN_COUNT_SLOT: &str = "turn_count";
 /// Phase 2 D1a hop-budget posture; future revisions may make this
 /// a `RunOpts` config slot.
 pub const MAX_TURNS: u32 = 64;
+
+/// Which `RunnerInput` variant the body hands to the resolved
+/// runner. CLI-shape runners (e.g. `ClaudeRunner`) reject
+/// `RunnerInput::Rest` with `RunnerError::WrongInputKind`; this
+/// enum selects between the two transports up front.
+///
+/// Per D-F5.6, the CLI path drives the runner once and surfaces
+/// `RunResult::text` as the body's output: the CLI binary runs
+/// its own internal tool-call loop, so the body's `ToolRegistry`
+/// dispatch path is skipped and `turn_count = 1`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum AgentInputKind {
+    /// Hand a `RunnerInput::Rest` to the runner and drive the
+    /// in-body turn loop with host tool dispatch (Phase 4 default).
+    #[default]
+    Rest,
+    /// Hand a `RunnerInput::Cli` to the runner once; the CLI
+    /// binary owns the tool loop. Skips the host `ToolRegistry`
+    /// dispatch path.
+    Cli,
+}
+
+impl AgentInputKind {
+    fn parse(raw: &str) -> Option<Self> {
+        match raw {
+            "rest" => Some(Self::Rest),
+            "cli" => Some(Self::Cli),
+            _ => None,
+        }
+    }
+}
 
 /// In-memory [`AiRunnerRegistry`] populated at engine-build time.
 #[derive(Default)]
@@ -150,6 +186,13 @@ pub struct AiAgent {
     /// time. The [`PROVIDER_ID_SLOT`] still takes precedence when
     /// present so per-invocation overrides keep working.
     default_provider_id: Option<KindId>,
+    /// Default [`AgentInputKind`] used when the [`INPUT_KIND_SLOT`]
+    /// is not present in the invocation's input map. Set via
+    /// [`Self::with_input_kind`]. Mirrors the [`default_provider_id`]
+    /// Phase-4 workaround posture — the propagator only routes
+    /// declared trigger slots, so CLI-shape runners need the kind
+    /// pinned at construction time. `None` means [`AgentInputKind::Rest`].
+    default_input_kind: Option<AgentInputKind>,
 }
 
 impl AiAgent {
@@ -163,6 +206,7 @@ impl AiAgent {
             sessions: None,
             kind_id: KindId::new(KIND_ID).expect("KIND_ID is a valid reverse-DNS"),
             default_provider_id: None,
+            default_input_kind: None,
         }
     }
 
@@ -178,6 +222,16 @@ impl AiAgent {
         self.default_provider_id = Some(provider_id);
         self
     }
+
+    /// Set the default [`AgentInputKind`], used when the
+    /// per-invocation [`INPUT_KIND_SLOT`] is absent. Required for
+    /// CLI-shape runners (e.g. `ClaudeRunner`) until the propagator
+    /// can route arbitrary config slots. The [`INPUT_KIND_SLOT`]
+    /// still takes precedence when present.
+    pub fn with_input_kind(mut self, kind: AgentInputKind) -> Self {
+        self.default_input_kind = Some(kind);
+        self
+    }
 }
 
 #[async_trait]
@@ -190,7 +244,11 @@ impl NodeBehavior for AiAgent {
         let principal = system_admin_principal();
         let principal_hash = principal_id_hash(&principal);
 
-        let cfg = AgentConfig::from_input(&input, self.default_provider_id.as_ref())?;
+        let cfg = AgentConfig::from_input(
+            &input,
+            self.default_provider_id.as_ref(),
+            self.default_input_kind,
+        )?;
         let span = tracing::info_span!(
             "ai_agent.invoke",
             node_id = %ctx.node,
@@ -229,8 +287,12 @@ impl NodeBehavior for AiAgent {
             &principal,
         );
 
-        let prior_history = match (&self.sessions, cfg.session_mode) {
-            (Some(store), SessionMode::ReuseAcrossRun | SessionMode::ReuseAcrossFlow) => store
+        let prior_history = match (&self.sessions, cfg.session_mode, cfg.input_kind) {
+            (
+                Some(store),
+                SessionMode::ReuseAcrossRun | SessionMode::ReuseAcrossFlow,
+                AgentInputKind::Rest,
+            ) => store
                 .get(session_id)
                 .await
                 .map_err(|e| NodeError::Backend(format!("session_store.get: {e}")))?
@@ -248,17 +310,31 @@ impl NodeBehavior for AiAgent {
                     message: format!("no AiRunner registered for {}", cfg.provider_id),
                 })?;
 
-        let loop_outcome = run_agent_loop(LoopInputs {
-            runner: &*provider_runner,
-            tools: &*self.tools,
-            visible_tools: &effective_tools,
-            session_id,
-            cancel: &cancel,
-            system_prompt: cfg.system_prompt.as_deref(),
-            initial_user_msg: cfg.user_input,
-            prior_history,
-        })
-        .await;
+        let loop_outcome = match cfg.input_kind {
+            AgentInputKind::Rest => {
+                run_agent_loop(LoopInputs {
+                    runner: &*provider_runner,
+                    tools: &*self.tools,
+                    visible_tools: &effective_tools,
+                    session_id,
+                    cancel: &cancel,
+                    system_prompt: cfg.system_prompt.as_deref(),
+                    initial_user_msg: cfg.user_input,
+                    prior_history,
+                })
+                .await
+            }
+            AgentInputKind::Cli => {
+                run_cli_once(CliInputs {
+                    runner: &*provider_runner,
+                    session_id,
+                    cancel: &cancel,
+                    system_prompt: cfg.system_prompt.as_deref(),
+                    user_input: cfg.user_input,
+                })
+                .await
+            }
+        };
 
         if let (Some(store), SessionMode::ReuseAcrossRun | SessionMode::ReuseAcrossFlow) =
             (&self.sessions, cfg.session_mode)
@@ -299,12 +375,14 @@ struct AgentConfig {
     session_mode: SessionMode,
     skill_hint: Option<String>,
     user_input: String,
+    input_kind: AgentInputKind,
 }
 
 impl AgentConfig {
     fn from_input(
         input: &SlotMap,
         default_provider_id: Option<&KindId>,
+        default_input_kind: Option<AgentInputKind>,
     ) -> Result<Self, NodeError> {
         let provider_id = match read_string(input, PROVIDER_ID_SLOT) {
             Some(s) => KindId::new(s).map_err(|e| NodeError::Domain {
@@ -365,6 +443,14 @@ impl AgentConfig {
         let skill_hint = read_string(input, SKILL_HINT_SLOT).filter(|s| !s.is_empty());
         let user_input = read_string(input, INPUT_SLOT).unwrap_or_default();
 
+        let input_kind = match read_string(input, INPUT_KIND_SLOT).as_deref() {
+            None | Some("") => default_input_kind.unwrap_or_default(),
+            Some(raw) => AgentInputKind::parse(raw).ok_or_else(|| NodeError::Domain {
+                code: "input_kind_invalid",
+                message: format!("unknown {INPUT_KIND_SLOT} `{raw}`; expected `rest` or `cli`"),
+            })?,
+        };
+
         Ok(Self {
             provider_id,
             system_prompt,
@@ -372,6 +458,7 @@ impl AgentConfig {
             session_mode,
             skill_hint,
             user_input,
+            input_kind,
         })
     }
 
@@ -647,6 +734,110 @@ async fn dispatch_tool_use<'a>(
     match tool.invoke(tu.input.clone()).await {
         Ok(v) => format!("tool `{}` (id={}) returned: {}", tu.name, tu.id, v),
         Err(e) => format!("tool `{}` (id={}) errored: {}", tu.name, tu.id, e),
+    }
+}
+
+// ---------------------------------------------------------------------
+// CLI-shape path (D-F5.6)
+// ---------------------------------------------------------------------
+
+struct CliInputs<'a> {
+    runner: &'a dyn AiRunner,
+    session_id: SessionId,
+    cancel: &'a CancelAdapter<'a>,
+    system_prompt: Option<&'a str>,
+    user_input: String,
+}
+
+/// Drive a CLI-shape runner exactly once.
+///
+/// Per D-F5.6, the CLI binary owns its own tool-call loop and
+/// session/transcript management, so this path:
+///
+/// - Does not advertise the host `ToolRegistry` to the model
+///   (CLI tools are dispatched by the wrapper, e.g. via MCP).
+/// - Reports `turn_count = 1` and `tool_call_count = 0` from the
+///   body's perspective — the wrapper's per-call log is on
+///   `RunResult::tool_call_log` for callers that want it.
+/// - Returns `history_snapshot = None` so the post-loop session
+///   write in [`AiAgent::invoke`] is a no-op; CLI resume support
+///   lives on `CliCfg::resume_id` and is wired by Phase 5 / later
+///   work, not by `SessionStore`.
+async fn run_cli_once<'a>(inputs: CliInputs<'a>) -> LoopOutcome {
+    let CliInputs {
+        runner,
+        session_id,
+        cancel,
+        system_prompt,
+        user_input,
+    } = inputs;
+
+    if cancel.is_cancelled() {
+        return LoopOutcome {
+            result: Err(NodeError::Cancelled),
+            turn_count: 0,
+            tool_call_count: 0,
+            history_snapshot: None,
+        };
+    }
+
+    let cfg = CliCfg {
+        prompt: user_input,
+        system_prompt: system_prompt.map(|s| s.to_string()),
+        ..CliCfg::default()
+    };
+
+    let (tx, mut rx) = mpsc::channel::<Event>(64);
+    let drain = tokio::spawn(async move { while rx.recv().await.is_some() {} });
+
+    let ai_session_id: starter_spi::ai::SessionId = session_id.to_string().into();
+    let no_op_cancel = NoOpAiCancel;
+    let run_fut = runner.run(RunnerInput::Cli(cfg), ai_session_id, tx, &no_op_cancel);
+    let run_res = tokio::select! {
+        biased;
+        _ = cancel.cancelled() => {
+            drain.abort();
+            return LoopOutcome {
+                result: Err(NodeError::Cancelled),
+                turn_count: 1,
+                tool_call_count: 0,
+                history_snapshot: None,
+            };
+        }
+        r = run_fut => {
+            drain.abort();
+            r
+        }
+    };
+
+    let result = match run_res {
+        Ok(r) => r,
+        Err(e) => {
+            return LoopOutcome {
+                result: Err(NodeError::Backend(format!("ai_runner.run: {e}"))),
+                turn_count: 1,
+                tool_call_count: 0,
+                history_snapshot: None,
+            };
+        }
+    };
+
+    if let Some(upstream_err) = result.error.clone() {
+        return LoopOutcome {
+            result: Err(NodeError::Backend(format!(
+                "ai_runner upstream error: {upstream_err}"
+            ))),
+            turn_count: 1,
+            tool_call_count: 0,
+            history_snapshot: None,
+        };
+    }
+
+    LoopOutcome {
+        result: Ok(result.text),
+        turn_count: 1,
+        tool_call_count: 0,
+        history_snapshot: None,
     }
 }
 
@@ -1207,5 +1398,154 @@ mod tests {
         );
         assert_eq!(out.get(TURN_COUNT_SLOT), Some(&SlotValue::Int(1)));
         assert_eq!(runner.calls().len(), 1);
+    }
+
+    /// CLI-only runner: rejects `RunnerInput::Rest` and records the
+    /// `CliCfg.prompt` / `CliCfg.system_prompt` it observed. Models
+    /// the `ClaudeRunner` shape from `starter-ai/src/runners/claude.rs`
+    /// without needing the `claude` binary on PATH.
+    struct CliOnlyRecordingRunner {
+        provider: Provider,
+        observed: Mutex<Vec<(String, Option<String>)>>,
+        reply: String,
+    }
+
+    impl CliOnlyRecordingRunner {
+        fn new(reply: &str) -> Arc<Self> {
+            Arc::new(Self {
+                provider: Provider::Claude,
+                observed: Mutex::new(Vec::new()),
+                reply: reply.to_string(),
+            })
+        }
+    }
+
+    #[async_trait]
+    impl AiRunner for CliOnlyRecordingRunner {
+        fn provider(&self) -> &Provider {
+            &self.provider
+        }
+        async fn ready(&self) -> bool {
+            true
+        }
+        async fn run(
+            &self,
+            input: RunnerInput,
+            _session_id: starter_spi::ai::SessionId,
+            _on_event: mpsc::Sender<Event>,
+            _cancel: &dyn AiCancel,
+        ) -> Result<RunResult, starter_spi::ai::RunnerError> {
+            let cfg = match input {
+                RunnerInput::Cli(c) => c,
+                other => {
+                    return Err(starter_spi::ai::RunnerError::WrongInputKind {
+                        provider: self.provider.to_string(),
+                        expected: "cli",
+                        got: other.kind_tag(),
+                    });
+                }
+            };
+            self.observed
+                .lock()
+                .unwrap()
+                .push((cfg.prompt.clone(), cfg.system_prompt.clone()));
+            Ok(RunResult {
+                text: self.reply.clone(),
+                provider: self.provider.to_string(),
+                ..RunResult::default()
+            })
+        }
+    }
+
+    #[tokio::test]
+    async fn input_kind_cli_drives_cli_runner_once_and_returns_text() {
+        let runner = CliOnlyRecordingRunner::new("claude says hi");
+        let agent = AiAgent::new(
+            empty_tool_registry(),
+            runner_registry_with("p.claude.cli", runner.clone()),
+        );
+        let n = node("flow.test.ai");
+        let cancel = NoCancel;
+        let out = agent
+            .invoke(
+                ctx(&n, &cancel),
+                input_with(&[
+                    (
+                        PROVIDER_ID_SLOT,
+                        SlotValue::String("p.claude.cli".to_string()),
+                    ),
+                    (INPUT_KIND_SLOT, SlotValue::String("cli".to_string())),
+                    (
+                        SYSTEM_PROMPT_SLOT,
+                        SlotValue::String("you are terse".to_string()),
+                    ),
+                    (INPUT_SLOT, SlotValue::String("hello".to_string())),
+                ]),
+            )
+            .await
+            .expect("cli path succeeds");
+        assert_eq!(
+            out.get(OUTPUT_SLOT),
+            Some(&SlotValue::String("claude says hi".to_string()))
+        );
+        assert_eq!(out.get(TURN_COUNT_SLOT), Some(&SlotValue::Int(1)));
+        let observed = runner.observed.lock().unwrap().clone();
+        assert_eq!(observed.len(), 1, "CLI runner driven exactly once");
+        assert_eq!(observed[0].0, "hello");
+        assert_eq!(observed[0].1.as_deref(), Some("you are terse"));
+    }
+
+    #[tokio::test]
+    async fn with_input_kind_cli_default_drives_cli_path_without_slot() {
+        let runner = CliOnlyRecordingRunner::new("ok");
+        let agent = AiAgent::new(
+            empty_tool_registry(),
+            runner_registry_with("p.claude.cli", runner.clone()),
+        )
+        .with_input_kind(AgentInputKind::Cli);
+        let n = node("flow.test.ai");
+        let cancel = NoCancel;
+        let out = agent
+            .invoke(
+                ctx(&n, &cancel),
+                input_with(&[
+                    (
+                        PROVIDER_ID_SLOT,
+                        SlotValue::String("p.claude.cli".to_string()),
+                    ),
+                    (INPUT_SLOT, SlotValue::String("hi".to_string())),
+                ]),
+            )
+            .await
+            .expect("cli path succeeds without explicit slot");
+        assert_eq!(
+            out.get(OUTPUT_SLOT),
+            Some(&SlotValue::String("ok".to_string()))
+        );
+        assert_eq!(runner.observed.lock().unwrap().len(), 1);
+    }
+
+    #[tokio::test]
+    async fn invalid_input_kind_surfaces_typed_domain_error() {
+        let agent = AiAgent::new(
+            empty_tool_registry(),
+            runner_registry_with("p.test", RecordingAiRunner::new(vec![])),
+        );
+        let n = node("flow.test.ai");
+        let cancel = NoCancel;
+        let err = agent
+            .invoke(
+                ctx(&n, &cancel),
+                input_with(&[
+                    (PROVIDER_ID_SLOT, SlotValue::String("p.test".to_string())),
+                    (INPUT_KIND_SLOT, SlotValue::String("graphql".to_string())),
+                ]),
+            )
+            .await
+            .expect_err("expected NodeError::Domain");
+        match err {
+            NodeError::Domain { code, .. } => assert_eq!(code, "input_kind_invalid"),
+            other => panic!("expected input_kind_invalid; got {other:?}"),
+        }
     }
 }

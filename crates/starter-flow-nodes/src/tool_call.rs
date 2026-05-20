@@ -36,7 +36,6 @@
 //!
 //! [`GraphStore::write_slot`]: starter_flow_spi::graph::GraphStore::write_slot
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
@@ -45,7 +44,6 @@ use thiserror::Error;
 use starter_flow_spi::node::{
     anyhow_compat, KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
 };
-use starter_spi::tool::Tool;
 
 /// Reverse-DNS kind id in the reserved `starter.flow.*` namespace
 /// (per § "R10 — Reverse-DNS ids; namespace ownership enforced").
@@ -72,47 +70,11 @@ pub const TOOL_OUTPUT_SLOT: &str = "output";
 /// Host-controlled tool registry the [`ToolCall`] body resolves
 /// `tool_id` against.
 ///
-/// SCOPE R5 keeps the body stateless: the registry is an `Arc<dyn>`
-/// handed in at construction time and the trait surface is read-only.
-/// The host constructs and freezes the registry at engine-build time;
-/// the body never mutates it. The registry's value type is
-/// `Arc<dyn Tool>` so the same `Tool` can be shared across many
-/// concurrent invocations on a single registration.
-pub trait ToolRegistry: Send + Sync + 'static {
-    /// Look up a tool by its reverse-DNS [`KindId`]. Returns `None`
-    /// if no tool is registered under the given id.
-    fn lookup(&self, tool_id: &KindId) -> Option<Arc<dyn Tool>>;
-}
-
-/// In-memory [`ToolRegistry`] populated at engine-build time.
-///
-/// Mutation is confined to the builder phase ([`Self::register`]); once
-/// the registry is wrapped in an `Arc<dyn ToolRegistry>` and handed to
-/// [`ToolCall::new`], it is read-only.
-#[derive(Default)]
-pub struct StaticToolRegistry {
-    tools: HashMap<KindId, Arc<dyn Tool>>,
-}
-
-impl StaticToolRegistry {
-    /// Construct an empty registry.
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    /// Register a tool under its [`KindId`]. Replaces any previous
-    /// entry under the same id (the registry is host-owned, so
-    /// collisions are a host-build bug, not a runtime error).
-    pub fn register(&mut self, tool_id: KindId, tool: Arc<dyn Tool>) {
-        self.tools.insert(tool_id, tool);
-    }
-}
-
-impl ToolRegistry for StaticToolRegistry {
-    fn lookup(&self, tool_id: &KindId) -> Option<Arc<dyn Tool>> {
-        self.tools.get(tool_id).cloned()
-    }
-}
+/// Re-exported from [`crate::tool_registry`] so the trait lives in
+/// an always-compiled module shared with the `ai-agent` body
+/// (D-F4.9 single chokepoint), without forcing the `ai-agent`
+/// feature to enable `tool-call`.
+pub use crate::tool_registry::{StaticToolRegistry, ToolRegistry};
 
 /// Typed errors surfaced by [`ToolCall::invoke`].
 ///
@@ -279,7 +241,7 @@ mod tests {
     use starter_flow_spi::node::{NodeId, SlotMap, SlotValue};
     use starter_flow_spi::Cancel;
     use starter_spi::error::{Error as SpiError, Result as SpiResult};
-    use starter_spi::tool::ToolDefinition;
+    use starter_spi::tool::{Tool, ToolDefinition};
 
     /// Always-live cancel — the unit tests that don't exercise R13
     /// never fire it.

@@ -1,0 +1,68 @@
+/*
+ * @nube/starter-ui-flow — visual defaults.
+ *
+ * Variables (override in your app's CSS):
+ *   --sf-node-bg, --sf-node-border, --sf-node-divider, --sf-node-extra
+ *   --sf-handle-border
+ *   --sf-slot-label
+ *   --sf-edge-label-bg
+ *   --sf-palette-bg, --sf-palette-border, --sf-palette-hover
+ *   --sf-font
+ */
+
+:root {
+  --sf-node-bg: #ffffff;
+  --sf-node-border: #e2e8f0;
+  --sf-node-divider: #f1f5f9;
+  --sf-node-extra: #475569;
+  --sf-handle-border: #ffffff;
+  --sf-slot-label: #475569;
+  --sf-edge-label-bg: #ffffff;
+  --sf-palette-bg: #ffffff;
+  --sf-palette-border: #e2e8f0;
+  --sf-palette-hover: #f1f5f9;
+  --sf-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --sf-node-bg: #0f172a;
+    --sf-node-border: #1e293b;
+    --sf-node-divider: #1e293b;
+    --sf-node-extra: #cbd5e1;
+    --sf-handle-border: #0f172a;
+    --sf-slot-label: #cbd5e1;
+    --sf-edge-label-bg: #0f172a;
+    --sf-palette-bg: #0f172a;
+    --sf-palette-border: #1e293b;
+    --sf-palette-hover: #1e293b;
+  }
+}
+
+.sf-edge--active {
+  animation: sf-dash 600ms linear infinite;
+}
+
+@keyframes sf-dash {
+  to {
+    stroke-dashoffset: -20;
+  }
+}
+
+.sf-node {
+  transition: box-shadow 120ms ease, border-color 120ms ease;
+}
+
+.sf-node--running {
+  animation: sf-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes sf-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+  }
+}
