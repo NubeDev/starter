@@ -42,3 +42,13 @@ pub mod run;
 /// the adk-rust checkpoint blob.
 /// Lands in Phase 2 — see SCOPE "Phase 2 — `starter-flow` engine".
 pub mod state;
+
+/// Engine-level health handle (`EngineHealth::{Healthy, Degraded}`).
+/// Lands in Phase 3 stage 6 — see SCOPE "durability hardening" /
+/// D-F3.11.
+pub mod health;
+
+/// Per-run observability counters (`subscriber_lagged_count`,
+/// `degraded_dropped_count`). Lands in Phase 3 stage 6 — see SCOPE
+/// "durability hardening" / D-F3.10 + D-F3.11.
+pub mod metrics;

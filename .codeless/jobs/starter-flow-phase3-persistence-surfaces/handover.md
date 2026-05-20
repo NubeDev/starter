@@ -2,9 +2,11 @@
 
 ## Current stage
 
-**Stage 6 — durability hardening.** Stage 5 (engine wiring +
-resume-from-checkpoint + R2 chokepoint test) is complete and
-pushed.
+**Stage 7 — `FlowAsTool` body in `starter-flow-surfaces`.**
+Stage 6 (durability hardening: retry-with-backoff,
+`EngineHealth`, degraded queue, `FlowRunner::start` rejection,
+per-run broadcast capacity hook, `TickCounter` newtype) is
+complete and pushed.
 
 ## Stages complete
 
@@ -16,123 +18,172 @@ pushed.
 - **Stage 5.** Engine wiring: `Engine::with_run_store(...)`
   builder, per-tick checkpoint cadence in propagator, resume-
   from-checkpoint on `FlowRunner::resume(...)`, R2 chokepoint
-  integrity test (`stage5_resume_chokepoint.rs`) green. All
-  three Phase 2 smokes still green.
+  integrity test (`stage5_resume_chokepoint.rs`) green.
+- **Stage 6.** Durability hardening:
+  retry-with-backoff (50→100→200→400→800ms, 5 attempts) on
+  `RunStore::checkpoint` errors emitting one
+  `FlowEvent::CheckpointFailed` per attempt 1..=5;
+  `EngineHealth::{Healthy, Degraded}` accessor on `Engine`
+  backed by an `AtomicU8` (lock-free) via a shared `HealthHandle`;
+  per-run in-memory `DegradedQueue` capped by
+  `RunOpts.degraded_queue_capacity` (default 1024, evict-oldest)
+  drained in `(run_id, seq)` order on the next successful
+  checkpoint write; `FlowRunner::start` now returns
+  `Result<RunHandle, EngineError>` and rejects with
+  `EngineError::BackendUnavailable` while `Degraded`;
+  `RunOpts.event_broadcast_capacity` wired into `FlowRunner::launch`
+  with an engine-owned `Lagged`-watcher subscriber incrementing
+  `RunMetrics.subscriber_lagged_count`; `TickCounter` newtype
+  promoted from the propagator's `hops: u64` local with a
+  `const _: () = assert!(size_of::<TickCounter>() == 8)`
+  compile-time check, composing additively with stage 5's
+  `CheckpointHook.initial_seq`.
 
-## Stage 5 outcome (one-line summary)
+## Stage 6 outcome (one-line summary)
 
-`FlowRunner::with_spi_run_store(Arc<dyn spi::RunStore>)` +
-`Engine::with_run_store(...)` plus a new `propagator::
-CheckpointHook` thread per-tick `RunStore::checkpoint(run, seq,
-state, &writes)` calls into the SPI store; `FlowRunner::resume
-(spec, input, run_id)` loads the latest checkpoint and replays
-its writes through the single `GraphStore::write_slot`
-chokepoint (R2 unchanged), then spawns a fresh propagator with
-`initial_seq = checkpoint.seq` so the first post-resume
-checkpoint carries `seq = checkpoint.seq + 1`.
+Five durability invariants land on `starter-flow` (retry-with-
+backoff + `EngineHealth` + degraded queue + `start`-rejection
++ per-run broadcast capacity + Lagged-watcher) plus the
+`TickCounter` newtype with the compile-time size assertion;
+seven unit tests in `stage6_durability.rs` cover each invariant
+in isolation, all three Phase 2 smokes + the stage-5 resume
+chokepoint test stay green, workspace dep-tree gates +
+`starter-flow-spi` baseline unchanged.
 
-## Stage 5 implementation choices made
+## Stage 6 implementation choices made
 
-- **`Engine::with_run_store(...)` is a passive holder; the wiring
-  lives on `FlowRunner`**. Reason: the `Engine` state machine
-  (R12) does not spawn runs — `FlowRunner` does. Putting the
-  active hook on `Engine` would require either a major API shift
-  (`Engine::start_run(...)` etc.) or threading the engine into
-  the FlowRunner. The handover called for both names; the
-  SCOPE-named `Engine::with_run_store` is preserved as a builder
-  + `Engine::run_store()` accessor that surface adapters
-  (stage 7/8 `FlowAsTool`/`FlowAsService`) will pull from when
-  constructing per-call FlowRunners.
-- **Two `RunStore` traits coexist**. The Phase-2 in-memory
-  `crate::run::RunStore` (record/get/len) is kept verbatim so
-  existing callers don't break; the Phase-3 SPI
-  `starter_flow_spi::flow::RunStore` (start/checkpoint/load/
-  finish/list_open/find_by_dedup_key) is attached additively via
-  `FlowRunner::with_spi_run_store(...)`. When unattached, the
-  runner behaves exactly as Phase 2 (matches SCOPE: "when no
-  RunStore is attached, the engine behaves exactly as it does
-  today").
-- **Per-tick batch lives only when a hook is attached**. The
-  propagator skips the `tick_writes: Vec<(SlotRef, SlotValue)>`
-  push when `checkpoint.is_none()` so the no-store path
-  allocates nothing. Writes are mirrored into the batch only on
-  `write_slot` success, so a failed fan-out doesn't poison the
-  checkpoint.
-- **One checkpoint per tick, not per write**. Per D-F3.2: the
-  propagator's "tick" = one event-handler iteration; all fan-out
-  + node-output writes during that iteration land in one
-  `RunStore::checkpoint(...)` call. Seq is monotonic per-run via
-  the existing propagator `hops: u64` counter plus the
-  `initial_seq` offset for resume.
-- **Stage 5 logs checkpoint failures and continues**. Per the
-  WORKFLOW per-stage table, retry-with-backoff +
-  `EngineHealth::Degraded` is Stage 6's job; stage 5 emits a
-  `warn!` and lets the run continue. The
-  `FlowEvent::CheckpointFailed { attempt }` event is reserved
-  for stage 6 (it requires the retry loop to fill `attempt`).
-- **SPI `start`/`finish` lifecycle wired**. `FlowRunner::launch`
-  calls `spi.start(run_id, revision, opts, Principal, None)`
-  before spawning the coordinator (fresh runs only; resumed
-  runs skip to avoid PK collision on `runs.run_id`). The
-  coordinator calls `spi.finish(run_id, outcome)` after the
-  terminal status is set so SCOPE D-F3.9 "final-checkpoint
-  preserved" is honoured.
-- **Default Principal is a hardcoded "system/Admin"** at the
-  `FlowRunner` boundary. Reason: `RunSpec` is `#[non_exhaustive]`
-  and bumping it with a `principal` field is best done when the
-  surfaces (stage 7/8) ship — they're the natural Principal
-  source. The placeholder is unambiguous in logs; stage 7/8
-  replaces it via a `RunSpec::with_principal(...)` extension
-  or a richer `FlowRunner::start_for(principal, ...)` overload.
-- **New direct dep: `starter-spi` on `starter-flow`**. Reason:
-  constructing a `Principal { subject, role, scopes, extra }`
-  needs the `Role` enum which `starter-flow-spi` re-exports for
-  `Principal` only. `starter-flow-spi` already pulls
-  `starter-spi` transitively so the engine's dep tree gains
-  nothing new (the `workspace_dep_tree_gates` test stays green;
-  the `starter-flow-spi` baseline is unchanged). Added with
-  `serde_json` for the `Principal.extra` field.
-- **`RunSpec::new(...)` constructor added**. The stage-5 test
-  lives under `crates/starter-flow/tests/` (external crate
-  boundary) and cannot use the struct-expression form because
-  of `#[non_exhaustive]`. The constructor is also the right
-  ergonomics for future surfaces.
-- **`propagator::spawn_with_checkpoint` + `drive_with_checkpoint`
-  are new entry points; `spawn`/`drive` delegate**. Reason: the
-  existing `spawn`/`drive` signatures are public and called by
-  three external sites (`starter-flow/tests/
-  smoke_one_write_chokepoint.rs`, `starter-flow-nodes/tests/
-  transform_node_failed.rs`, the engine internal coordinator).
-  A breaking change would mean retroactively touching those
-  files; the delegate keeps them green and the new APIs
-  surface the hook explicitly.
+- **Shared `HealthHandle` cloneable through the engine and the
+  runner.** `HealthHandle` wraps an `Arc<AtomicU8>` with
+  `Healthy = 0` / `Degraded = 1`. The propagator's retry-with-
+  backoff loop flips it via `set_degraded()` / `set_healthy()`;
+  `FlowRunner::start` reads via `health.get()`. `Engine::health()
+  -> EngineHealth` is the lock-free SPI-typed accessor; the engine
+  owns one canonical handle and hands clones via
+  `Engine::health_handle()` to `FlowRunner::with_health_handle(...)`.
+  Reason: lets surfaces (stage 7/8) construct one engine per
+  process but spawn many per-call runners that all see the same
+  health flag, satisfying the SCOPE D-F3.11 "engine-level health
+  state" contract without forcing the runner to embed the engine.
+- **Retry-with-backoff lives inside the propagator, not the
+  store.** `checkpoint_one_tick` wraps `try_persist_with_backoff`
+  which loops `1..=5` over the `CHECKPOINT_BACKOFF_MS`
+  `[50, 100, 200, 400, 800]` schedule, emitting one
+  `FlowEvent::CheckpointFailed { run, error, attempt }` per
+  failed attempt and sleeping the backoff between (not after) the
+  last attempt. Reason: the SPI `RunStore::checkpoint` contract
+  stays a single-shot fallible call; the retry policy is engine
+  policy, not store policy (matches D-F3.11 wording "the engine
+  retries with exponential backoff").
+- **Per-run `DegradedQueue` lives on `CheckpointHook`.** `CheckpointHook`
+  gains `health: HealthHandle`, `queue: Arc<DegradedQueue>`, and
+  `metrics: Arc<RunMetricsCell>` fields plus a `new(...)` ctor;
+  the queue is constructed in `FlowRunner::launch` with the
+  per-run `RunOpts.degraded_queue_capacity`. Reason: per-run
+  ownership matches the SCOPE "drain in `(run_id, seq)` order"
+  contract — `(run_id, seq)` ordering trivially holds because
+  the queue is per-run and the `TickCounter` is monotonic, so a
+  single `VecDeque` push-back / pop-front is the queue-drain
+  contract verbatim.
+- **`FlowRunner::start` returns `Result<RunHandle, EngineError>`.**
+  The Degraded-rejection check is a single `AtomicU8` load before
+  any per-run allocation, so the runner sheds load cleanly when
+  the backend is unreachable. `EngineError` is the
+  SPI-defined `starter_flow_spi::flow::EngineError`
+  (`BackendUnavailable` + `Flow(FlowError)`), not the engine
+  crate's internal state-machine `EngineError` (the latter stays
+  the R12 transition matrix type). This is a public API change
+  — the four internal tests in `run.rs` plus the
+  `stage5_resume_chokepoint.rs` test were updated with
+  `.expect("start rejected")` at their call sites.
+- **`spawn_lagged_watcher` is a `metrics`-module helper, not
+  inline in the runner.** Factored out as
+  `pub fn spawn_lagged_watcher(events_tx, metrics) -> JoinHandle<()>`
+  so the per-run launch path can `drop(spawn_lagged_watcher(...))`
+  to fire-and-forget, and so the stage-6 test can exercise the
+  Lagged-counter path directly against a hand-rolled broadcast
+  channel (the test doesn't need a full flow run to assert the
+  metric increments).
+- **`TickCounter` is a newtype over `u64`, not a renamed type
+  alias.** Field is private, accessed via `tick()` / `get()`.
+  The `const _: () = assert!(std::mem::size_of::<TickCounter>()
+  == 8);` runs at compile time so any future refactor that
+  widens / narrows the counter fails the build, not the soak.
+  Composes additively with stage 5's `CheckpointHook.initial_seq`:
+  the per-run checkpoint seq is computed as
+  `hook.initial_seq.saturating_add(tick.get())`.
+- **Per-tick checkpoint fires for fan-out-only ticks too.** The
+  prior `tick_writes` path only checkpointed when a node was
+  triggered; stage 6 adds the same checkpoint call along the
+  fan-out-only paths (`!triggers_node` and "no behavior") because
+  the writes still need to durably land before the next tick
+  (D-F3.2 "per-tick batch"). Reason: a flow whose downstream
+  link fans out without invoking a node still produces durable
+  slot state; skipping the checkpoint there would leave a
+  recoverable gap.
+- **Long quiescence in flaky-store tests.** The default
+  `FlowRunnerConfig.quiescence` of 100 ms is shorter than the
+  retry backoff intervals (200 / 400 / 800 ms), so the coordinator
+  pre-quiesces while the propagator is mid-`tokio::time::sleep`
+  in the retry loop. Stage-6 tests that exercise the retry path
+  build a `long_quiesce_config()` with a 3 s window so the
+  coordinator stays alive long enough for the retry loop +
+  queue drain to complete. Reason: this is a test-rig choice;
+  the production default keeps the 100 ms quiescence (matches
+  Phase 2). A follow-up consideration is whether to make the
+  retry loop cancellation-aware (it currently isn't — `cancel`
+  is checked only at the propagator's outer `select!`); deferred
+  because the SCOPE doesn't require it and cancel-during-retry
+  works fine in practice (the propagator finishes the current
+  attempt then exits on the next `sub.next()` await).
+- **`broadcast_cap` clamped to `>= 1`.** `RunOpts.event_broadcast_capacity`
+  is a `usize` with a 1024 default; `FlowRunner::launch` applies
+  `.max(1)` so a misconfigured `0` doesn't panic
+  `broadcast::channel`. Same `.max(1)` on `DegradedQueue::new`
+  for the cap.
 
-## Stage 5 files touched
+## Stage 6 files touched
 
-- `crates/starter-flow/Cargo.toml` — added `starter-spi` +
-  `serde_json` direct deps.
-- `crates/starter-flow/src/engine.rs` — `Engine::with_run_store`
-  + `Engine::run_store` + `run_store: Option<Arc<dyn spi::
-  RunStore>>` field.
-- `crates/starter-flow/src/propagator.rs` — `CheckpointHook`
-  struct + `spawn_with_checkpoint` / `drive_with_checkpoint`
-  entry points + per-tick batch collection + one
-  `RunStore::checkpoint` call per non-empty tick.
-- `crates/starter-flow/src/run.rs` — `FlowRunner::
-  with_spi_run_store` / `with_run_opts` / `spi_run_store`
-  accessors; new `FlowRunner::resume(spec, input, run_id)`
-  method; new `FlowRunnerError` enum; `RunSpec::new(...)`
-  constructor; coordinator threads spi store through to
-  `propagator::spawn_with_checkpoint` and calls
-  `spi.start(...)` / `spi.finish(...)` on the lifecycle.
+- `crates/starter-flow/src/lib.rs` — declare the new `health` +
+  `metrics` modules.
+- `crates/starter-flow/src/health.rs` — new file:
+  `HealthHandle` (`Arc<AtomicU8>` wrapper) + accessors.
+- `crates/starter-flow/src/metrics.rs` — new file:
+  `RunMetricsCell` (two `AtomicU64`s + snapshot into the SPI
+  `RunMetrics`) + `spawn_lagged_watcher` helper.
+- `crates/starter-flow/src/engine.rs` — `Engine.health:
+  HealthHandle` field, `Engine::health() -> EngineHealth`,
+  `Engine::health_handle() -> HealthHandle`.
+- `crates/starter-flow/src/propagator.rs` — `TickCounter` newtype
+  + compile-time size assert + propagator loop rewritten to use
+  it; `CHECKPOINT_BACKOFF_MS` constant; `QueuedBatch` +
+  `DegradedQueue` types; `CheckpointHook` gains `health`, `queue`,
+  `metrics` fields + `new(...)` ctor; `checkpoint_one_tick` +
+  `try_persist_with_backoff` private helpers; per-tick checkpoint
+  call added along the fan-out-only paths.
+- `crates/starter-flow/src/run.rs` — `FlowRunner.health:
+  HealthHandle` field + `with_health_handle` + `health_handle()`
+  accessor; `FlowRunner::start` returns
+  `Result<RunHandle, EngineError>` (rejects on `Degraded`);
+  `launch` reads `RunOpts.event_broadcast_capacity` (not the
+  fixed `FlowRunnerConfig.event_buffer`), constructs the per-run
+  `DegradedQueue` + `RunMetricsCell`, spawns the
+  `spawn_lagged_watcher` task, threads health + queue + metrics
+  into `CheckpointHook::new`; `RunHandle` gains `metrics:
+  Arc<RunMetricsCell>` field; `run_coordinator` signature gains
+  the three handles.
+- `crates/starter-flow/tests/stage6_durability.rs` — new file,
+  seven tests covering each invariant in isolation
+  (`tick_counter_is_u64_sized`,
+  `engine_default_health_is_healthy_and_handle_round_trips`,
+  `failing_run_store_emits_five_checkpoint_failed_events_then_degrades`,
+  `start_rejects_with_backend_unavailable_while_degraded`,
+  `degraded_queue_evict_oldest_increments_dropped_count`,
+  `engine_recovers_to_healthy_when_store_comes_back`,
+  `lagged_subscriber_increments_subscriber_lagged_count`).
 - `crates/starter-flow/tests/stage5_resume_chokepoint.rs` —
-  new test asserting (a) checkpoint history accumulates during
-  a fresh run, (b) resume returns Some when a checkpoint
-  exists, (c) replay writes go through the `GraphStore::
-  write_slot` chokepoint (counted via a wrapper store), and
-  (d) every replayed slot lands with the checkpoint's value.
+  call-site update for `runner.start(...)` returning `Result`.
 
-## Known pre-existing issues (NOT caused by stage 3/4/5)
+## Known pre-existing issues (NOT caused by stage 3/4/5/6)
 
 - `cargo clippy --workspace --all-targets -- -D warnings` fails
   on master too with `error[E0432]: unresolved import
@@ -151,9 +202,7 @@ checkpoint carries `seq = checkpoint.seq + 1`.
 - `cargo` emits `default-features = false` warnings for
   `starter-flow-spi` / `starter-spi` workspace deps —
   pre-existing on master in `starter-flow-surfaces` and
-  `starter-flow-nodes` (Cargo wants the workspace root to
-  declare `default-features` for the warning to land
-  cleanly). Out of scope.
+  `starter-flow-nodes`. Out of scope.
 
 ## Branch + commits
 
@@ -161,76 +210,70 @@ checkpoint carries `seq = checkpoint.seq + 1`.
 - Stage 1 commit: `8407d6e` — decision lock.
 - Stage 3 commit: `44f19f5` — SPI fleshout + baseline regeneration.
 - Stage 4 commit: `8a60ddb` — SQLite store impls.
-- Stage 5 commit: see latest log — engine wiring + resume + R2
+- Stage 5 commit: `f8fed76` — engine wiring + resume + R2
   chokepoint test.
+- Stage 6 commit: see latest log — durability hardening.
 - Pushed to origin.
 
-## What stage 6 starts with
+## What stage 7 starts with
 
-- **Retry-with-backoff** on `RunStore::checkpoint` errors per
-  D-F3.11 (50→100→200→400→800ms, 5 attempts, then
-  `EngineHealth::Degraded`). Replaces the stage-5
-  `tracing::warn!("checkpoint failed; log and continue")`
-  callsite in `propagator::drive_with_checkpoint`.
-- **`EngineHealth { Healthy, Degraded }` accessor** on
-  `Engine` (the type already exists in
-  `starter_flow_spi::flow`); plus `Engine::health() ->
-  EngineHealth` reading an `AtomicU8` so the lookup is
-  lock-free.
-- **Per-run in-memory checkpoint queue** under
-  `RunOpts.degraded_queue_capacity` (default 1024, evict-
-  oldest). When in `Degraded` the engine queues batches and
-  drains in `(run_id, seq)` order on the next successful
-  checkpoint write.
-- **`Engine::start` returns `EngineError::BackendUnavailable`**
-  while `Degraded`. The Phase-2 `Engine::start()` lifecycle
-  method (Starting → Running) is unchanged; this is the
-  per-run `FlowRunner::start(...)` path that gains the
-  rejection. Probably surfaces as a new `Result<RunHandle,
-  EngineError>` return type — that's a public API change so
-  worth confirming the shape before commit.
-- **Per-run broadcast capacity hook** wired into
-  `FlowRunner::launch` using
-  `RunOpts.event_broadcast_capacity` (currently the runner
-  uses the fixed `FlowRunnerConfig.event_buffer` 256).
-- **Engine's own `Lagged`-watching subscriber** on every
-  per-run broadcast that increments
-  `RunMetrics.subscriber_lagged_count`.
-- **Monotonic `u64` tick-counter assertion** + the
-  `const _: () = assert!(std::mem::size_of::<TickCounter>()
-  == 8)` compile-time check. The current propagator counter
-  is a plain `u64` local; promoting it to a named
-  `TickCounter` newtype is the least-invasive way to satisfy
-  the assertion.
+- **`FlowAsTool` body** in
+  `crates/starter-flow-surfaces/src/lib.rs`. Fields per R8 +
+  D-F3.4 (explicit schemas at construction): `flow_id: FlowId`,
+  `engine: Arc<Engine>`, `tool_id: KindId`, `name: String`,
+  `description: String`, `input_schema: serde_json::Value`,
+  `output_schema: serde_json::Value`.
+- **`Tool` impl from `starter_spi::tool::Tool`** that forwards
+  `Tool::call(args, principal, cancel, sink)` into the engine by
+  constructing a per-call `FlowRunner` (pulling the engine's
+  `health_handle()` + `run_store()`), driving the flow, and
+  returning the terminal output slot value as the tool's return.
+- **Stage 7 inherits the stage-6 plumbing**: the engine's shared
+  `HealthHandle` flows through `with_health_handle(...)`; the
+  per-run metrics are accessible via `RunHandle::metrics` for
+  the span side-channel; `Tool::call`'s `Cancel` parameter
+  becomes the per-run `RunCancel`.
+- **Span on `flow_as_tool.call`** records `(flow_id, tool_id,
+  principal_id_hash, run_id)`. The Phase 2 engine substrate's
+  `span = tracing::info_span!("write_slot", ...)` is the existing
+  pattern to mirror.
+- **Tests cover** happy-path / error mapped to typed `ToolError`
+  / cancel-within-200ms / no-tokio-task-leak (span open/close
+  balance). All four live in `starter-flow-surfaces/tests/`.
 
-## Stage 6 implementation gotchas
+## Stage 7 implementation gotchas
 
-- The `RunOpts` shape is `#[non_exhaustive]` and the
-  `degraded_queue_capacity` + `event_broadcast_capacity`
-  fields already exist (Stage 3 landed them); stage 6 just
-  reads them rather than adding them.
-- The Phase 3 `FlowEvent::CheckpointFailed { attempt }`
-  variant already exists in the SPI (Stage 3 landed it); stage
-  6 just emits it from the retry loop. Same for
-  `FlowEvent::DedupShortCircuit` — stage 6 doesn't emit it
-  (stage 8 / `FlowAsService` does); stage 5 already verified
-  the variant doesn't accidentally short-circuit
-  `BackendUnavailable`.
-- The `EngineHealth` type lives in `starter_flow_spi::flow`;
-  the `Engine::health()` accessor in `starter-flow` just
-  returns the SPI type. Same for `EngineError`.
-- Adding a `tick_counter` newtype touches the propagator's
-  `hops: u64` local. The `CheckpointHook.initial_seq` field
-  added in stage 5 stays — they compose: `seq =
-  initial_seq + tick_counter`.
+- The stage-5 hardcoded `"system/Admin"` Principal default is
+  the right time to revisit: `Tool::call` already carries a
+  `Principal`, so `FlowAsTool` should thread that through
+  via a `RunSpec::with_principal(...)` extension or
+  `FlowRunner::start_for(principal, ...)`.
+- `starter-flow-surfaces` already path-deps on `starter-flow`
+  (verified by stage-3 dep-tree gates); no Cargo.toml changes
+  for the wire-up itself.
+- `starter_spi::tool::Tool` is `async_trait`; the `call`
+  signature returns `Result<ToolOutput, ToolError>`. Mapping
+  `RunStatus::Failed(error)` to a typed `ToolError` variant is
+  the spot to look at next.
+- The `Cancel`-to-`RunCancel` plumbing already exists at
+  `RunHandle::cancel`; `FlowAsTool::call` registers a watcher
+  task that calls `handle.cancel.cancel()` when the incoming
+  `Tool::call`'s cancel fires.
 
 ## Phase-3 follow-up notes (not in scope for this job)
 
 - 1M-tick long-uptime soak as a nightly CI job (Q6).
 - `RunOpts.checkpoint_backoff` if a consumer surfaces a real
-  need (Q8).
+  need (Q8); stage 6 hardcodes
+  `CHECKPOINT_BACKOFF_MS = [50, 100, 200, 400, 800]`.
 - `FlowEvent::HealthChanged` engine-level event once a
   Phase-7-owned engine-level event bus exists (Q7).
+- Cancellation-aware retry loop (`select!` over
+  `tokio::time::sleep` + `cancel.cancelled()`) so an outage that
+  coincides with a fired cancel exits sooner than the longest
+  backoff (800 ms). Deferred — SCOPE doesn't require it; cancel
+  during retry already exits cleanly at the next `sub.next()`
+  await.
 - `starter-store-postgres` `flow` feature mirror (D-F3.3 revisit
   trigger).
 - Add a `subject` indexed column to `sessions` if a hot
@@ -242,6 +285,8 @@ checkpoint carries `seq = checkpoint.seq + 1`.
 - A `RunSpec::with_principal(...)` / `FlowRunner::start_for
   (principal, ...)` extension to replace the stage-5 hardcoded
   "system/Admin" Principal default — best landed in stage 7/8
-  with the surfaces.
-
-
+  with the surfaces (now imminent).
+- `FlowRunnerConfig.event_buffer` field is now dead code (stage
+  6 reads `RunOpts.event_broadcast_capacity` instead). Left in
+  place to avoid a breaking-config churn on Phase 2 callers;
+  consider removing in a follow-up cleanup once Phase 3 ships.

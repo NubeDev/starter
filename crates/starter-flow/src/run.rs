@@ -46,14 +46,16 @@ use tokio::task::JoinHandle;
 use tokio::time::{sleep_until, Instant};
 
 use starter_flow_spi::flow::{
-    DedupKey, FlowEvent, FlowId, FlowRevisionId, RunCheckpoint, RunId, RunOpts, RunOutcome,
-    RunStore as SpiRunStore,
+    DedupKey, EngineError, FlowEvent, FlowId, FlowRevisionId, RunCheckpoint, RunId, RunOpts,
+    RunOutcome, RunStore as SpiRunStore,
 };
 use starter_flow_spi::graph::{GraphStore, WriteSlotOpts};
 use starter_flow_spi::node::{SlotMap, SlotRef, SlotValue};
 use starter_flow_spi::{Cancel, Principal};
 
-use crate::propagator::{self, CheckpointHook, FlowTopology, PropagatorConfig};
+use crate::health::HealthHandle;
+use crate::metrics::{spawn_lagged_watcher, RunMetricsCell};
+use crate::propagator::{self, CheckpointHook, DegradedQueue, FlowTopology, PropagatorConfig};
 use crate::state::{RunState, RunStatus};
 
 /// Per-run cancellation handle.
@@ -353,6 +355,11 @@ pub struct RunHandle {
     /// Coordinator task handle. Resolves to the terminal [`RunStatus`]
     /// once the run finishes.
     pub join: JoinHandle<RunStatus>,
+    /// Per-run live metrics counters (D-F3.10 + D-F3.11). The
+    /// runner threads the same `Arc` into the propagator's
+    /// [`CheckpointHook`] and into the engine-owned `Lagged`-watcher
+    /// subscriber, so reads here observe live increments.
+    pub metrics: Arc<RunMetricsCell>,
 }
 
 /// The per-engine entry point that turns a [`RunSpec`] into a live
@@ -376,6 +383,12 @@ pub struct FlowRunner {
     /// D-F3.11 degraded queue capacity). Defaulted from
     /// [`RunOpts::default`]; per-run override lands in stage 6.
     run_opts: RunOpts,
+    /// Engine-level health flag (D-F3.11). Shared with the engine
+    /// via [`Self::with_health_handle`]; the propagator's per-tick
+    /// retry-with-backoff loop flips this on degrade / recovery and
+    /// [`Self::start`] reads it to reject new runs while
+    /// [`starter_flow_spi::flow::EngineHealth::Degraded`].
+    health: HealthHandle,
     skill_selector: Arc<dyn SkillSelector>,
     config: FlowRunnerConfig,
 }
@@ -388,6 +401,7 @@ impl FlowRunner {
             run_store,
             spi_run_store: None,
             run_opts: RunOpts::default(),
+            health: HealthHandle::new(),
             skill_selector: Arc::new(NoopSkillSelector),
             config: FlowRunnerConfig::default(),
         }
@@ -409,6 +423,21 @@ impl FlowRunner {
     pub fn with_run_opts(mut self, opts: RunOpts) -> Self {
         self.run_opts = opts;
         self
+    }
+
+    /// Share the engine's health flag (D-F3.11). When the engine
+    /// degrades, [`Self::start`] returns
+    /// [`EngineError::BackendUnavailable`]; when the next
+    /// `RunStore::checkpoint` succeeds the engine recovers and
+    /// new `start(...)` calls are accepted again.
+    pub fn with_health_handle(mut self, health: HealthHandle) -> Self {
+        self.health = health;
+        self
+    }
+
+    /// Borrow the current health handle (test convenience).
+    pub fn health_handle(&self) -> &HealthHandle {
+        &self.health
     }
 
     /// Borrow the attached [`SpiRunStore`] if any.
@@ -440,8 +469,19 @@ impl FlowRunner {
     /// The returned [`RunHandle::initial_rx`] is subscribed
     /// synchronously *before* the coordinator task spawns, so the
     /// caller is guaranteed not to miss `FlowEvent::RunStarted`.
-    pub async fn start(&self, spec: RunSpec, input: SlotMap) -> RunHandle {
-        self.launch(spec, input, None).await
+    ///
+    /// Stage 6 (D-F3.11): rejects new runs with
+    /// [`EngineError::BackendUnavailable`] while the engine is in
+    /// [`starter_flow_spi::flow::EngineHealth::Degraded`]. The
+    /// rejection is fast (a single `AtomicU8` load) and happens
+    /// before any per-run allocation, so the runner sheds load
+    /// cleanly when the backend is unreachable.
+    pub async fn start(&self, spec: RunSpec, input: SlotMap) -> Result<RunHandle, EngineError> {
+        use starter_flow_spi::flow::EngineHealth;
+        if self.health.get() == EngineHealth::Degraded {
+            return Err(EngineError::BackendUnavailable);
+        }
+        Ok(self.launch(spec, input, None).await)
     }
 
     /// Resume an in-flight run whose state was persisted via a
@@ -532,7 +572,29 @@ impl FlowRunner {
             None => (RunId::new(), 0, false),
         };
         let cancel = RunCancel::new();
-        let (events_tx, _) = broadcast::channel::<FlowEvent>(self.config.event_buffer);
+        // Stage 6 (D-F3.10): per-run broadcast capacity comes from
+        // `RunOpts.event_broadcast_capacity`, not the fixed
+        // `FlowRunnerConfig.event_buffer`. Producers never block
+        // (`broadcast::Sender::send` evicts the oldest event for the
+        // slowest subscriber); the engine spawns its own
+        // Lagged-watcher subscriber below to count drops.
+        let broadcast_cap = self.run_opts.event_broadcast_capacity.max(1);
+        let (events_tx, _) = broadcast::channel::<FlowEvent>(broadcast_cap);
+
+        // Stage 6 (D-F3.10 + D-F3.11): per-run live metrics + the
+        // degraded-mode in-memory queue. Both are owned by the
+        // propagator's checkpoint hook and observed via
+        // `RunHandle::metrics`.
+        let metrics = RunMetricsCell::new();
+        let degraded_queue =
+            DegradedQueue::new(self.run_opts.degraded_queue_capacity, metrics.clone());
+
+        // Stage 6 (D-F3.10): engine-owned `Lagged`-watcher subscriber.
+        // Subscribed synchronously *before* spawning so the runner is
+        // guaranteed to see every Lagged signal the per-run channel
+        // emits; runs as a detached task and exits cleanly when
+        // every other sender is dropped.
+        drop(spawn_lagged_watcher(&events_tx, metrics.clone()));
 
         // 3. Record the RunState with the in-memory RunStore. The
         //    coordinator below mutates this same Arc<RwLock<_>>.
@@ -586,6 +648,9 @@ impl FlowRunner {
         let store = self.store.clone();
         let cfg = self.config;
         let spi_for_task = self.spi_run_store.clone();
+        let health_for_task = self.health.clone();
+        let queue_for_task = degraded_queue.clone();
+        let metrics_for_task = metrics.clone();
         let RunSpec {
             flow,
             revision: _,
@@ -613,6 +678,9 @@ impl FlowRunner {
                 cfg,
                 spi_for_task,
                 initial_seq,
+                health_for_task,
+                queue_for_task,
+                metrics_for_task,
             )
             .await
         });
@@ -623,6 +691,7 @@ impl FlowRunner {
             events_tx,
             initial_rx,
             join,
+            metrics,
         }
     }
 }
@@ -677,6 +746,9 @@ async fn run_coordinator(
     cfg: FlowRunnerConfig,
     spi_run_store: Option<Arc<dyn SpiRunStore>>,
     initial_seq: u64,
+    health: HealthHandle,
+    degraded_queue: Arc<DegradedQueue>,
+    metrics: Arc<RunMetricsCell>,
 ) -> RunStatus {
     // Mark Running.
     {
@@ -697,9 +769,14 @@ async fn run_coordinator(
     // hook adds it to the per-run hop counter so the first
     // post-resume checkpoint carries `seq = initial_seq + 1`,
     // keeping `(run_id, seq)` strictly monotonic across SIGKILL.
-    let checkpoint_hook = spi_run_store.as_ref().map(|spi| CheckpointHook {
-        store: spi.clone(),
-        initial_seq,
+    let checkpoint_hook = spi_run_store.as_ref().map(|spi| {
+        CheckpointHook::new(
+            spi.clone(),
+            initial_seq,
+            health.clone(),
+            degraded_queue.clone(),
+            metrics.clone(),
+        )
     });
     let prop_handle = propagator::spawn_with_checkpoint(
         store.clone(),
@@ -986,7 +1063,10 @@ mod tests {
             terminal_slots: vec![slot("flow.test.c", "out")],
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
         let status = timeout(Duration::from_secs(2), &mut handle.join)
             .await
             .expect("coordinator did not exit in time")
@@ -1075,7 +1155,10 @@ mod tests {
             terminal_slots: vec![],
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
 
         // Give the propagator a moment to start, then cancel.
         sleep(Duration::from_millis(50)).await;
@@ -1133,7 +1216,10 @@ mod tests {
             terminal_slots: vec![],
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
         let status = timeout(Duration::from_secs(2), &mut handle.join)
             .await
             .expect("coordinator did not exit on cycle exhaustion")
@@ -1197,7 +1283,10 @@ mod tests {
             terminal_slots: vec![slot("flow.test.c", "out")],
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
         let _ = timeout(Duration::from_secs(2), &mut handle.join).await;
 
         assert_eq!(

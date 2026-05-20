@@ -295,7 +295,10 @@ async fn resume_replays_via_write_slot_chokepoint() {
         &node_b,
         SlotValue::String("hello".into()),
     );
-    let handle1 = runner1.start(spec1, SlotMap::new()).await;
+    let handle1 = runner1
+        .start(spec1, SlotMap::new())
+        .await
+        .expect("start rejected");
     let run_id = handle1.run;
     let status = tokio::time::timeout(Duration::from_secs(3), handle1.join)
         .await
