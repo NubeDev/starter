@@ -28,10 +28,9 @@ use axum::{extract::State, http::StatusCode, response::IntoResponse, routing::po
 use serde::{Deserialize, Serialize};
 use tokio::time::timeout;
 
-use starter_flow::engine::Engine;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::propagator::FlowTopology;
-use starter_flow::run::{FlowRunner, InMemoryRunStore, RunSpec, RunStore};
+use starter_flow::run::{FlowRunner, FlowRunnerConfig, InMemoryRunStore, RunSpec, RunStore};
 use starter_flow_nodes::ai_agent::{AgentInputKind, AiAgent, StaticAiRunnerRegistry};
 use starter_flow_nodes::log::Log;
 use starter_flow_nodes::tool_registry::StaticToolRegistry;
@@ -63,8 +62,6 @@ pub struct FlowDemoState {
 }
 
 struct FlowDemoInner {
-    /// Per-engine entry point; built once, reused across fires.
-    runner: FlowRunner,
     /// Frozen topology — same three nodes, same links, every run.
     topology: Arc<FlowTopology>,
     /// Sender half of the fire channel; cloned into each handler call.
@@ -151,20 +148,8 @@ impl FlowDemoState {
             behaviors,
         });
 
-        // Per-engine FlowRunner; in-memory stores, this is a demo.
-        let graph_store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
-        let run_store: Arc<dyn RunStore> = Arc::new(InMemoryRunStore::new());
-        let runner = FlowRunner::new(graph_store, run_store);
-
-        // The Engine itself is unused beyond stage-1 wiring for the
-        // demo (we drive runs directly via FlowRunner); kept here to
-        // mirror how a host wires the full registry set in
-        // production.
-        let _engine = Engine::new(Arc::new(InMemoryGraphStore::new()));
-
         Ok(Self {
             inner: Arc::new(FlowDemoInner {
-                runner,
                 topology,
                 sender,
                 flow_id: FlowId::new(FLOW_ID)?,
@@ -172,6 +157,28 @@ impl FlowDemoState {
                 log_node,
             }),
         })
+    }
+
+    /// Build a fresh FlowRunner per fire so each run gets a clean
+    /// InMemoryGraphStore. Sharing the store across runs hits the
+    /// R3 idempotent-write short-circuit on the second seed
+    /// (channel_id is already at the same value), so the trigger
+    /// never re-fires. A per-run store sidesteps that and keeps
+    /// the demo's "fire and see a fresh response" semantics. The
+    /// future engine-wide solution is a per-run slot namespace;
+    /// that's Phase 6 territory.
+    fn build_runner() -> FlowRunner {
+        let graph_store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
+        let run_store: Arc<dyn RunStore> = Arc::new(InMemoryRunStore::new());
+        let mut runner_config = FlowRunnerConfig::default();
+        // Quiescence bumped to 60s — Claude CLI invocations can
+        // take 5-30s, and the propagator emits no SlotChanged
+        // events while a node body is mid-invoke. The handler
+        // short-circuits on the log node's NodeEmitted so the
+        // normal happy-path latency is ai-agent + ms, not 60s;
+        // the long quiescence is the wall-clock failure bound.
+        runner_config.quiescence = Duration::from_secs(60);
+        FlowRunner::new(graph_store, run_store).with_config(runner_config)
     }
 
     /// Build the axum sub-router exposing the demo endpoint.
@@ -235,9 +242,12 @@ async fn fire(
     // host send and the trigger body's recv. This way we never miss
     // a payload even if the run hasn't reached the trigger node
     // yet.
+    // ai-agent's `input` slot reads a string via read_string —
+    // it accepts SlotValue::String or SlotValue::Json(Value::String),
+    // but not a JSON object. Fire the bare prompt string.
     inner
         .sender
-        .fire(serde_json::json!({ "prompt": body.prompt }))
+        .fire(serde_json::Value::String(body.prompt.clone()))
         .await
         .map_err(|e| {
             (
@@ -246,35 +256,39 @@ async fn fire(
             )
         })?;
 
-    let mut handle = inner
-        .runner
-        .start(spec, SlotMap::new())
-        .await
-        .map_err(|e| {
-            (
-                StatusCode::INTERNAL_SERVER_ERROR,
-                format!("start failed: {e}"),
-            )
-        })?;
+    let runner = FlowDemoState::build_runner();
+    let mut handle = runner.start(spec, SlotMap::new()).await.map_err(|e| {
+        (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            format!("start failed: {e}"),
+        )
+    })?;
 
     let run_id = handle.run.to_string();
 
     // Drain events until RunCompleted / RunFailed / RunCancelled.
     // Bound the wait — the Claude CLI can take a while but the
     // demo handler shouldn't block a request thread indefinitely.
-    let outcome = timeout(Duration::from_secs(120), drain_to_terminal(&mut handle))
-        .await
-        .map_err(|_| {
-            (
-                StatusCode::REQUEST_TIMEOUT,
-                "flow run did not complete within 120s".to_owned(),
-            )
-        })?;
+    let outcome = timeout(
+        Duration::from_secs(120),
+        drain_to_terminal(&mut handle, &inner.log_node),
+    )
+    .await
+    .map_err(|_| {
+        (
+            StatusCode::REQUEST_TIMEOUT,
+            "flow run did not complete within 120s".to_owned(),
+        )
+    })?;
 
     let (status, output) = outcome;
+    // SlotMap keys in RunCompleted.output are `<node_id>.<slot>` —
+    // not just the bare slot name. (See e.g. the stage-5 smoke
+    // assertion at crates/smoke-tests/tests/codeless_shape_on_one_engine.rs.)
+    let emitted_key = format!("{LOG_NODE}.{}", "emitted");
     let log = output
         .as_ref()
-        .and_then(|o| o.get("emitted"))
+        .and_then(|o| o.get(&emitted_key))
         .map(slot_to_json);
 
     Ok(Json(FireResponse {
@@ -284,7 +298,10 @@ async fn fire(
     }))
 }
 
-async fn drain_to_terminal(handle: &mut starter_flow::run::RunHandle) -> (String, Option<SlotMap>) {
+async fn drain_to_terminal(
+    handle: &mut starter_flow::run::RunHandle,
+    log_node: &NodeId,
+) -> (String, Option<SlotMap>) {
     use tokio::sync::broadcast::error::RecvError;
     loop {
         match handle.initial_rx.recv().await {
@@ -296,6 +313,18 @@ async fn drain_to_terminal(handle: &mut starter_flow::run::RunHandle) -> (String
             }
             Ok(FlowEvent::RunCancelled { .. }) => {
                 return ("Cancelled".to_owned(), None);
+            }
+            // Short-circuit on the terminal log node's `emitted`
+            // emit so the handler returns immediately instead of
+            // waiting out the full quiescence window (which can
+            // be tens of seconds because a node mid-invoke
+            // produces no SlotChanged events).
+            Ok(FlowEvent::NodeEmitted {
+                node, slot, value, ..
+            }) if &node == log_node && slot == "emitted" => {
+                let mut out = SlotMap::new();
+                out.insert(format!("{node}.{slot}"), value);
+                return ("Completed".to_owned(), Some(out));
             }
             Ok(_) => {}
             Err(RecvError::Lagged(_)) => continue,
