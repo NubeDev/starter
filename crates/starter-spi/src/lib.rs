@@ -19,15 +19,18 @@ pub mod authz;
 pub mod dto;
 pub mod error;
 pub mod filter;
+#[cfg(feature = "i18n")]
 pub mod i18n;
 pub mod id;
 pub mod paging;
+#[cfg(feature = "preferences")]
 pub mod preferences;
 pub mod secrets;
 pub mod service;
 pub mod sort;
 pub mod tool;
 pub mod ui;
+#[cfg(feature = "units")]
 pub mod units;
 
 pub use error::{Error, Result};

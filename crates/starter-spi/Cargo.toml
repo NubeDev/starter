@@ -41,12 +41,15 @@ tracing     = { workspace = true }
 # R4 of DOCS/user/scope/SCOPE.md: "Conversion factors are delegated
 # to `uom` internally. The registry is the thin serialisable veneer;
 # we never hand-write conversion math." Used only by the
-# `starter_spi::units` module.
-uom         = { workspace = true }
+# `starter_spi::units` module. Optional + feature-gated per
+# F-0.1 of `.codeless/jobs/starter-prefs-i18n/SCOPE.md`: the Phase 0
+# landing must not leak `uom` into `starter-flow-spi`'s dep tree.
+uom         = { workspace = true, optional = true }
 
 # BCP-47 language-tag parsing — used only by the `starter_spi::i18n`
-# module per the SCOPE Library-choices table.
-icu_locale_core = { workspace = true }
+# module per the SCOPE Library-choices table. Optional + feature-gated
+# for the same F-0.1 reason as `uom` above.
+icu_locale_core = { workspace = true, optional = true }
 
 [features]
 # `broadcast` ships the blanket `EventSink for tokio::sync::broadcast::Sender<E>`
@@ -56,3 +59,17 @@ icu_locale_core = { workspace = true }
 # and brings its own sink impl.
 default   = ["broadcast"]
 broadcast = []
+
+# F-0.1: `units`, `i18n`, and `preferences` are off by default so the
+# starter-flow-spi dep tree (which only needs `starter-spi`'s core
+# `Service` / `Tool` / `Ai` / error shapes) does not pull `uom` or
+# `icu_locale_core`. Crates that need the preferences DTOs
+# (`starter-prefs`, `starter-server`'s units middleware, etc.) opt in
+# via `starter-spi = { workspace = true, features = ["preferences"] }`.
+#
+# `preferences` depends on `units` because `ResolvedPreferences` /
+# `PreferencesPatch` carry typed `Unit` fields (`temperature_unit`,
+# `pressure_unit`, …).
+units       = ["dep:uom"]
+i18n        = ["dep:icu_locale_core"]
+preferences = ["units"]
