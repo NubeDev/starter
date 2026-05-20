@@ -9,6 +9,11 @@
 //! scaffold: the module tree, feature gates, and dep graph. Later
 //! stages fill in resolver, store, routes, and middleware.
 
+/// Data-transfer objects for the platform wire surface. Owns the
+/// per-series response shape from SCOPE.md R8 / decision D-2.1; see
+/// [`dto::series::SeriesEnvelope`].
+pub mod dto;
+
 /// Three-layer resolver: user → org → default, with `"auto"`
 /// derivation per **R3 — Three-layer resolution** in
 /// `DOCS/user/scope/SCOPE.md`.

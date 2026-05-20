@@ -18,12 +18,14 @@
 
 mod convert;
 mod error;
+mod metadata;
 mod quantity;
 mod registry;
 mod unit;
 
 pub use convert::normalize_for_storage;
 pub use error::UnitError;
+pub use metadata::UnitMetadata;
 pub use quantity::Quantity;
 pub use registry::{QuantityDef, StaticRegistry, UnitRegistry};
 pub use unit::Unit;
