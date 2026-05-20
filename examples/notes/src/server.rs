@@ -177,13 +177,29 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let theme = theme_router::<AppState>(ThemeState::new(theme_store));
     let theme = with_principal(theme, auth_for_http.clone());
 
-    let router = ServerBuilder::<AppState>::new(AppState)
+    // Flow demo (Phase 5 starter-flow-phase5-demo job): mount the
+    // codeless-shape demo router. Build is infallible in the happy
+    // path; if KindId/NodeId validation regresses we skip mounting
+    // and log so the rest of the notes app still boots.
+    let flow_demo_router = match crate::flow_demo::FlowDemoState::build() {
+        Ok(state) => Some(state.router()),
+        Err(err) => {
+            tracing::error!(error = %err, "flow demo state build failed; skipping mount");
+            None
+        }
+    };
+
+    let mut builder = ServerBuilder::<AppState>::new(AppState)
         .merge_router(claim_router)
         .merge_router(notes)
         .merge_router(mcp)
         .merge_router(admin_router)
         .merge_router(ext_rest)
-        .merge_router(theme)
+        .merge_router(theme);
+    if let Some(r) = flow_demo_router {
+        builder = builder.merge_router(r);
+    }
+    let router = builder
         .with_openapi(AppApi::openapi())
         .with_metrics(registry, metrics)
         .build();

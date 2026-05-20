@@ -4,6 +4,7 @@
 
 pub mod cli;
 pub mod domain;
+pub mod flow_demo;
 pub mod grpc;
 pub mod mcp;
 pub mod migrations;
