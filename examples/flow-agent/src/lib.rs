@@ -4,6 +4,7 @@
 //! directly without spawning the binary.
 
 pub mod domain;
+pub mod flow_engine;
 pub mod migrations;
 pub mod rest;
 pub mod server;
