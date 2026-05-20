@@ -16,3 +16,4 @@ export * from "./auth/index.js";
 export * from "./query/index.js";
 export * from "./theme-editor/index.js";
 export * from "./preferences/index.js";
+export * from "./i18n/index.js";

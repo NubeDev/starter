@@ -53,3 +53,19 @@ for the recommended shape.
 for the `/auth/*` surface (login + logout + me + their DTOs). Locked
 to the workspace-root `openapi.json` snapshot; see
 `tests/openapi_snapshot.rs`.
+
+## Account-page settings (frontend, Phase 4)
+
+The `/account/settings` route is consumer-mounted. The
+`@nube/starter-ui-core/i18n` package ships a ready-made `<SettingsPage />`
+bound to `<PreferencesProvider>` — drop it into your account surface:
+
+```tsx
+import { SettingsPage } from "@nube/starter-ui-core/i18n";
+
+// router
+<Route path="/account/settings" element={<SettingsPage onToast={pushToast} />} />
+```
+
+The Rust side (this crate) owns the auth shell; the React side owns
+the form chrome. See `packages/starter-ui-core/src/preferences/SettingsPage.tsx`.

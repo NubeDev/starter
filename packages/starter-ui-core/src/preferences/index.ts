@@ -44,3 +44,6 @@ export type {
   PreferencesContextValue,
   PreferencesProviderProps,
 } from "./provider.js";
+
+export { SettingsPage } from "./SettingsPage.js";
+export type { SettingsPageProps, ToastFn } from "./SettingsPage.js";

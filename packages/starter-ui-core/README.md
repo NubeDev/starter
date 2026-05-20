@@ -80,3 +80,29 @@ useQuery({
 
 Use `isStarterQueryKey(key)` to invalidate starter-owned keys without
 touching consumer-owned keys.
+
+## i18n (Phase 4 stage 18)
+
+`@nube/starter-ui-core/i18n` wraps `react-intl` against the
+`starter-i18n` catalog endpoints. Wire it inside `<PreferencesProvider>`
+so the active language tracks `prefs.language`:
+
+```tsx
+import { PreferencesProvider } from "@nube/starter-ui-core/preferences";
+import { IntlProvider, useTranslate, SettingsPage } from "@nube/starter-ui-core/i18n";
+
+<QueryClientProvider client={qc}>
+  <PreferencesProvider client={client}>
+    <IntlProvider client={client}>
+      <App />
+      <SettingsPage onToast={pushToast} />
+    </IntlProvider>
+  </PreferencesProvider>
+</QueryClientProvider>
+```
+
+`useTranslate()` returns a `t(key, values?)` function bound to the
+active catalog with a fallback to the `en` catalog and finally to the
+key id verbatim (matches `starter-i18n` R5). Add typed keys via TS
+module augmentation of `AppMessageKeys`. The fingerprinted catalog
+URL is cached permanently per `starter-i18n`'s immutable contract.
