@@ -37,6 +37,7 @@ export {
 
 export {
   DEFAULT_WORKSPACE,
+  PreferencesContext,
   PreferencesProvider,
   usePreferences,
 } from "./provider.js";

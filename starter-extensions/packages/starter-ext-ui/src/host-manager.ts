@@ -28,9 +28,38 @@ import type { StarterClient } from "@nube/starter-client-ts";
 
 import {
   matchingMajor,
+  parseMajor,
+  parseMinor,
   SingletonMismatchError,
+  type SingletonMinorDrift,
   type SingletonMismatchReason,
 } from "./singletons.js";
+
+/**
+ * Telemetry events emitted by `ExtensionHostManager` when it
+ * negotiates singletons. Names match
+ * `examples/notes/user-pref.md` § Telemetry. Production deployments
+ * key dashboards off these strings — they are part of the public
+ * contract.
+ */
+export type ExtensionHostTelemetryEvent =
+  | {
+      kind: "extension.singleton_mismatch";
+      severity: "error";
+      extensionId: string;
+      reasons: ReadonlyArray<SingletonMismatchReason>;
+    }
+  | {
+      kind: "extension.singleton_minor_drift";
+      severity: "warn";
+      extensionId: string;
+      drifts: ReadonlyArray<SingletonMinorDrift>;
+    };
+
+/** Sink for telemetry events. Implementations should be cheap and
+ * non-throwing — the host swallows any exception so a misbehaving
+ * sink can't take down the registration path. */
+export type ExtensionHostTelemetrySink = (event: ExtensionHostTelemetryEvent) => void;
 
 /**
  * The host-side declaration of one shared singleton. Bundled as a
@@ -116,6 +145,14 @@ export interface ExtensionHostManagerOptions {
    * baseline; consumers may add more (e.g. a design-system package).
    */
   singletons: Readonly<Record<string, SingletonProvision>>;
+  /**
+   * Optional telemetry sink. When provided, the manager emits one
+   * `extension.singleton_mismatch` event per refused registration and
+   * one `extension.singleton_minor_drift` event per registration with
+   * a minor-only drift. Production hosts wire this through the
+   * existing observability event bus; tests inject a recording sink.
+   */
+  telemetry?: ExtensionHostTelemetrySink;
 }
 
 /**
@@ -128,6 +165,7 @@ type Listener = () => void;
 export class ExtensionHostManager {
   readonly client: StarterClient;
   readonly singletons: Readonly<Record<string, SingletonProvision>>;
+  private readonly telemetry: ExtensionHostTelemetrySink | undefined;
 
   private remotes = new Map<string, RegisteredRemote>();
   private listeners = new Set<Listener>();
@@ -141,6 +179,19 @@ export class ExtensionHostManager {
   constructor(opts: ExtensionHostManagerOptions) {
     this.client = opts.client;
     this.singletons = opts.singletons;
+    this.telemetry = opts.telemetry;
+  }
+
+  /** Emit a telemetry event, swallowing any error from the sink so a
+   * misbehaving observer can't take down extension registration. */
+  private emit(event: ExtensionHostTelemetryEvent): void {
+    if (!this.telemetry) return;
+    try {
+      this.telemetry(event);
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.warn("[starter-ext-ui] telemetry sink threw:", err);
+    }
   }
 
   // --- subscription -----------------------------------------------------
@@ -219,7 +270,23 @@ export class ExtensionHostManager {
   ): Promise<RegisteredRemote> {
     const mismatches = this.checkSingletons(factory.singletons);
     if (mismatches.length > 0) {
+      this.emit({
+        kind: "extension.singleton_mismatch",
+        severity: "error",
+        extensionId: id,
+        reasons: mismatches,
+      });
       throw new SingletonMismatchError(id, mismatches);
+    }
+
+    const drifts = this.checkMinorDrift(factory.singletons);
+    if (drifts.length > 0) {
+      this.emit({
+        kind: "extension.singleton_minor_drift",
+        severity: "warn",
+        extensionId: id,
+        drifts,
+      });
     }
 
     const resolved: Record<string, unknown> = {};
@@ -289,6 +356,45 @@ export class ExtensionHostManager {
       }
     }
     return reasons;
+  }
+
+  /**
+   * Return any singletons whose declared minor is *strictly behind*
+   * the host's minor (host: 1.3, extension: 1.1 → drift of 2). Used
+   * to fire `extension.singleton_minor_drift` after a successful
+   * major-match. Same major is a precondition: callers only invoke
+   * this once `checkSingletons` has returned no mismatches, so we
+   * silently skip any pkg whose major doesn't match (defensive — it
+   * shouldn't happen). Extensions declared *ahead* of the host on
+   * minor are not flagged; that's a host-needs-updating signal, not
+   * an extension issue.
+   */
+  private checkMinorDrift(
+    declared: Readonly<Record<string, { version: string }>>,
+  ): SingletonMinorDrift[] {
+    const out: SingletonMinorDrift[] = [];
+    for (const [pkg, decl] of Object.entries(declared)) {
+      const provision = this.singletons[pkg];
+      if (!provision) continue;
+      const hostMajor = parseMajor(provision.version);
+      const extMajor = parseMajor(decl.version);
+      if (hostMajor === null || extMajor === null || hostMajor !== extMajor) {
+        continue;
+      }
+      const hostMinor = parseMinor(provision.version);
+      const extMinor = parseMinor(decl.version);
+      if (hostMinor === null || extMinor === null) continue;
+      const drift = hostMinor - extMinor;
+      if (drift > 0) {
+        out.push({
+          pkg,
+          hostVersion: provision.version,
+          extensionVersion: decl.version,
+          driftMinors: drift,
+        });
+      }
+    }
+    return out;
   }
 }
 

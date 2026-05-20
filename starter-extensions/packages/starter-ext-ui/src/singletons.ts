@@ -47,6 +47,44 @@ export function matchingMajor(a: string, b: string): boolean {
 }
 
 /**
+ * Extract the minor-version number from a semver string. Returns
+ * `null` for inputs the parser cannot interpret. Used by the
+ * host's drift detector — if the host runs a higher minor than the
+ * extension declared, the load is still compatible but worth
+ * surfacing as a `extension.singleton_minor_drift` telemetry event
+ * so the platform team has a tripwire when adoption lags.
+ */
+export function parseMinor(version: string): number | null {
+  const m = /^[~^=><\s]*\d+\.(\d+)/.exec(version);
+  if (!m) return null;
+  const minor = m[1];
+  if (minor === undefined) return null;
+  const n = Number.parseInt(minor, 10);
+  return Number.isFinite(n) ? n : null;
+}
+
+/**
+ * Well-known singleton ids. Singleton keys are the package name +
+ * subpath an extension would `import` (per D-NP.1) — using the same
+ * convention as React/ReactDOM keeps the table consistent.
+ */
+export const SINGLETON_REACT = "react" as const;
+export const SINGLETON_REACT_DOM = "react-dom" as const;
+export const SINGLETON_UI_CORE_PREFERENCES = "@nube/starter-ui-core/preferences" as const;
+export const SINGLETON_UI_CORE_I18N = "@nube/starter-ui-core/i18n" as const;
+
+/**
+ * Diagnostic carried by a minor-drift telemetry event.
+ */
+export interface SingletonMinorDrift {
+  pkg: string;
+  hostVersion: string;
+  extensionVersion: string;
+  /** Host minor minus extension minor (always positive when reported). */
+  driftMinors: number;
+}
+
+/**
  * Diagnostic carried by `SingletonMismatchError`. Adapter code
  * surfaces these on `GET /extensions/<id>` so an operator sees
  * exactly why a remote refused to load.

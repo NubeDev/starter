@@ -4,11 +4,12 @@
 export type { Catalog, I18nManifest, LanguageTag, MessageKey } from "./types.js";
 
 export {
+  IntlContext,
   IntlProvider,
   useIntlContext,
   _resetManifestCacheForTesting,
 } from "./provider.js";
-export type { IntlProviderProps } from "./provider.js";
+export type { IntlContextValue, IntlProviderProps } from "./provider.js";
 
 export {
   fetchManifest,

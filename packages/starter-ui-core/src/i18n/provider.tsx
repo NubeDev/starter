@@ -78,7 +78,16 @@ interface IntlContextValue {
   error: unknown;
 }
 
-const IntlContext = createContext<IntlContextValue | undefined>(undefined);
+/**
+ * The React Context object backing `<IntlProvider>`. Exported so the
+ * host's Module-Federation runtime can register it as the
+ * `@nube/starter-ui-core/i18n` singleton — extensions then
+ * `useContext(handle.singletons["@nube/starter-ui-core/i18n"])` against
+ * the host's instance rather than bundling their own.
+ */
+export const IntlContext = createContext<IntlContextValue | undefined>(undefined);
+
+export type { IntlContextValue };
 
 export interface IntlProviderProps {
   /** Shared `StarterClient`. */

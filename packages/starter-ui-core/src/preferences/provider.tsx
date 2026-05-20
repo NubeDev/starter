@@ -41,7 +41,14 @@ export interface PreferencesContextValue {
   setPreferences: (patch: PreferencesPatch) => Promise<void>;
 }
 
-const PreferencesContext = createContext<PreferencesContextValue | undefined>(undefined);
+/**
+ * The React Context object backing `<PreferencesProvider>`. Exported
+ * so the host's Module-Federation runtime can register it as the
+ * `@nube/starter-ui-core/preferences` singleton — extensions then
+ * `useContext(handle.singletons["@nube/starter-ui-core/preferences"])`
+ * against the host's instance instead of bundling their own copy.
+ */
+export const PreferencesContext = createContext<PreferencesContextValue | undefined>(undefined);
 
 export interface PreferencesProviderProps {
   /** The shared `StarterClient`. Re-used for the underlying HTTP. */

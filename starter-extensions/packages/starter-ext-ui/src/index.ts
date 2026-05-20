@@ -32,6 +32,8 @@
 export {
   ExtensionHostManager,
   type ExtensionHostManagerOptions,
+  type ExtensionHostTelemetryEvent,
+  type ExtensionHostTelemetrySink,
   type ExtensionRemoteFactory,
   type ManifestUi,
   type ManifestUiExpose,
@@ -59,7 +61,13 @@ export {
 export {
   matchingMajor,
   parseMajor,
+  parseMinor,
+  SINGLETON_REACT,
+  SINGLETON_REACT_DOM,
+  SINGLETON_UI_CORE_I18N,
+  SINGLETON_UI_CORE_PREFERENCES,
   SingletonMismatchError,
+  type SingletonMinorDrift,
   type SingletonMismatchReason,
 } from "./singletons.js";
 

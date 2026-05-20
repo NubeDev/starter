@@ -10,11 +10,16 @@ import { StarterClient } from "@nube/starter-client-ts";
 
 import {
   ExtensionHostManager,
+  type ExtensionHostTelemetryEvent,
   type ExtensionRemoteFactory,
   type ManifestUi,
   type SingletonProvision,
 } from "./host-manager.js";
-import { SingletonMismatchError } from "./singletons.js";
+import {
+  SingletonMismatchError,
+  SINGLETON_UI_CORE_I18N,
+  SINGLETON_UI_CORE_PREFERENCES,
+} from "./singletons.js";
 
 // One fixed React-shaped singleton both extensions in the
 // "no React duplication" scenario share. Concretely it's any unique
@@ -136,6 +141,170 @@ describe("the two-extensions-no-React-duplication smoke test", () => {
     expect(Object.keys(mgr.singletons).sort()).toEqual(
       ["react", "react-dom"].sort(),
     );
+  });
+});
+
+describe("singleton telemetry (Stage 2 — prefs + i18n singletons)", () => {
+  // The two new ui-core singletons. The "instance" is a sentinel
+  // marker — in production it's the React Context object; here it's
+  // any unique reference so we can assert the host hands it through
+  // unchanged.
+  const HOST_PREFS_CTX = { __id: "the-one-PreferencesContext" } as const;
+  const HOST_INTL_CTX = { __id: "the-one-IntlContext" } as const;
+
+  function makeWithUiCore(
+    extraOpts: { telemetry?: (e: ExtensionHostTelemetryEvent) => void } = {},
+  ) {
+    return new ExtensionHostManager({
+      client: new StarterClient({ baseUrl: "http://localhost.invalid" }),
+      singletons: {
+        react: { version: "18.3.1", instance: HOST_REACT },
+        "react-dom": { version: "18.3.1", instance: HOST_REACT_DOM },
+        [SINGLETON_UI_CORE_PREFERENCES]: {
+          version: "1.3.0",
+          instance: HOST_PREFS_CTX,
+        },
+        [SINGLETON_UI_CORE_I18N]: {
+          version: "1.3.0",
+          instance: HOST_INTL_CTX,
+        },
+      },
+      telemetry: extraOpts.telemetry,
+    });
+  }
+
+  it("hands the host's PreferencesContext + IntlContext to the extension's init", async () => {
+    const mgr = makeWithUiCore();
+    let prefs: unknown = null;
+    let intl: unknown = null;
+    await mgr.registerExtensionRemote("com.acme.a", UI, {
+      singletons: {
+        react: { version: "18.3.1" },
+        [SINGLETON_UI_CORE_PREFERENCES]: { version: "1.3.0" },
+        [SINGLETON_UI_CORE_I18N]: { version: "1.3.0" },
+      },
+      init(handle) {
+        prefs = handle.singletons[SINGLETON_UI_CORE_PREFERENCES];
+        intl = handle.singletons[SINGLETON_UI_CORE_I18N];
+      },
+    });
+    expect(prefs).toBe(HOST_PREFS_CTX);
+    expect(intl).toBe(HOST_INTL_CTX);
+  });
+
+  it("emits extension.singleton_mismatch on major mismatch and refuses to load", async () => {
+    const events: ExtensionHostTelemetryEvent[] = [];
+    const mgr = makeWithUiCore({ telemetry: (e) => events.push(e) });
+
+    await expect(
+      mgr.registerExtensionRemote("com.acme.bad", UI, {
+        singletons: {
+          react: { version: "18.3.1" },
+          // Built against the next major of ui-core/preferences.
+          [SINGLETON_UI_CORE_PREFERENCES]: { version: "2.0.0" },
+        },
+        init() {
+          throw new Error("init must not run on mismatch");
+        },
+      }),
+    ).rejects.toBeInstanceOf(SingletonMismatchError);
+
+    expect(events).toHaveLength(1);
+    const ev = events[0]!;
+    expect(ev.kind).toBe("extension.singleton_mismatch");
+    expect(ev.severity).toBe("error");
+    expect(ev.extensionId).toBe("com.acme.bad");
+    if (ev.kind === "extension.singleton_mismatch") {
+      expect(ev.reasons.map((r) => r.pkg)).toContain(
+        SINGLETON_UI_CORE_PREFERENCES,
+      );
+    }
+    expect(mgr.getRemote("com.acme.bad")).toBeUndefined();
+  });
+
+  it("emits extension.singleton_minor_drift when the extension is behind on minor but still loads", async () => {
+    const events: ExtensionHostTelemetryEvent[] = [];
+    const mgr = makeWithUiCore({ telemetry: (e) => events.push(e) });
+
+    await mgr.registerExtensionRemote("com.acme.lag", UI, {
+      singletons: {
+        react: { version: "18.3.1" },
+        // Host is on 1.3.0; extension built against 1.1.0 — minor
+        // drift of 2.
+        [SINGLETON_UI_CORE_PREFERENCES]: { version: "1.1.0" },
+      },
+      init() {},
+    });
+
+    expect(mgr.getRemote("com.acme.lag")).toBeDefined();
+    const drift = events.find(
+      (e) => e.kind === "extension.singleton_minor_drift",
+    );
+    expect(drift).toBeDefined();
+    if (drift && drift.kind === "extension.singleton_minor_drift") {
+      expect(drift.severity).toBe("warn");
+      expect(drift.extensionId).toBe("com.acme.lag");
+      expect(drift.drifts).toHaveLength(1);
+      const d = drift.drifts[0]!;
+      expect(d.pkg).toBe(SINGLETON_UI_CORE_PREFERENCES);
+      expect(d.hostVersion).toBe("1.3.0");
+      expect(d.extensionVersion).toBe("1.1.0");
+      expect(d.driftMinors).toBe(2);
+    }
+  });
+
+  it("stays silent on patch drift", async () => {
+    const events: ExtensionHostTelemetryEvent[] = [];
+    const mgr = makeWithUiCore({ telemetry: (e) => events.push(e) });
+
+    await mgr.registerExtensionRemote("com.acme.patch", UI, {
+      singletons: {
+        react: { version: "18.3.1" },
+        // Host 1.3.0 vs extension 1.3.5 — same minor, patch drift only.
+        [SINGLETON_UI_CORE_PREFERENCES]: { version: "1.3.5" },
+      },
+      init() {},
+    });
+
+    expect(events).toHaveLength(0);
+  });
+
+  it("does not flag the host being behind on minor (only extension-behind drift)", async () => {
+    const events: ExtensionHostTelemetryEvent[] = [];
+    const mgr = makeWithUiCore({ telemetry: (e) => events.push(e) });
+
+    await mgr.registerExtensionRemote("com.acme.ahead", UI, {
+      singletons: {
+        react: { version: "18.3.1" },
+        // Host 1.3.0; extension built against 1.5.0. Same major;
+        // host needs updating, but that is not the extension's fault
+        // and the panel will work — no drift event.
+        [SINGLETON_UI_CORE_PREFERENCES]: { version: "1.5.0" },
+      },
+      init() {},
+    });
+
+    expect(events).toHaveLength(0);
+  });
+
+  it("swallows exceptions from the telemetry sink", async () => {
+    const mgr = makeWithUiCore({
+      telemetry: () => {
+        throw new Error("sink exploded");
+      },
+    });
+    // A mismatch still produces the SingletonMismatchError (the throw
+    // is propagated as the host's contract), but the sink throwing
+    // does not turn into an unhandled exception.
+    await expect(
+      mgr.registerExtensionRemote("com.acme.bad", UI, {
+        singletons: {
+          react: { version: "18.3.1" },
+          [SINGLETON_UI_CORE_PREFERENCES]: { version: "2.0.0" },
+        },
+        init() {},
+      }),
+    ).rejects.toBeInstanceOf(SingletonMismatchError);
   });
 });
 

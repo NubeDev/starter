@@ -29,19 +29,86 @@
 
 import * as React from "react";
 import * as ReactDOM from "react-dom";
-import { ExtensionHostManager } from "@nube/starter-ext-ui";
+import {
+  ExtensionHostManager,
+  SINGLETON_REACT,
+  SINGLETON_REACT_DOM,
+  SINGLETON_UI_CORE_I18N,
+  SINGLETON_UI_CORE_PREFERENCES,
+  type ExtensionHostTelemetryEvent,
+  type ExtensionHostTelemetrySink,
+} from "@nube/starter-ext-ui";
 import type { StarterClient } from "@nube/starter-client-ts";
+import { PreferencesContext } from "@nube/starter-ui-core/preferences";
+import { IntlContext } from "@nube/starter-ui-core/i18n";
+
+/**
+ * The semver string the host declares for each ui-core singleton.
+ * Bumping the major refuses to load extensions built against the old
+ * major (D-NP.10). Bumping the minor passes the load check but emits
+ * `extension.singleton_minor_drift` for any extension still on an
+ * older minor. Patch drift is silent.
+ *
+ * Pinned here (not read from `package.json#version`) because the
+ * singleton contract — `ResolvedPreferences` shape + hook surface +
+ * IntlShape consumers — is what extensions key off, not the ui-core
+ * release number. Moving the package to `1.0.0` is independent.
+ */
+export const UI_CORE_PREFERENCES_VERSION = "1.0.0";
+export const UI_CORE_I18N_VERSION = "1.0.0";
 
 export interface BootstrapInput {
   client: StarterClient;
+  /**
+   * Optional telemetry sink for the host. When omitted, the host
+   * logs `extension.singleton_mismatch` as a console error and
+   * `extension.singleton_minor_drift` as a console warn. Production
+   * deployments pass a sink that forwards to
+   * `starter-observability`.
+   */
+  telemetry?: ExtensionHostTelemetrySink;
+}
+
+/** Default sink — console output. Production wires a real sink. */
+function consoleTelemetry(event: ExtensionHostTelemetryEvent): void {
+  if (event.kind === "extension.singleton_mismatch") {
+    // eslint-disable-next-line no-console
+    console.error(
+      `[notes] extension ${event.extensionId} refused: singleton-mismatch`,
+      event.reasons.map((r) => r.reason),
+    );
+    return;
+  }
+  // eslint-disable-next-line no-console
+  console.warn(
+    `[notes] extension ${event.extensionId} loaded with minor drift`,
+    event.drifts.map(
+      (d) => `${d.pkg}: host ${d.hostVersion}, extension ${d.extensionVersion}`,
+    ),
+  );
 }
 
 export function createExtensionHost(input: BootstrapInput): ExtensionHostManager {
   return new ExtensionHostManager({
     client: input.client,
+    telemetry: input.telemetry ?? consoleTelemetry,
     singletons: {
-      react: { version: React.version, instance: React },
-      "react-dom": { version: ReactDOM.version, instance: ReactDOM },
+      [SINGLETON_REACT]: { version: React.version, instance: React },
+      [SINGLETON_REACT_DOM]: { version: ReactDOM.version, instance: ReactDOM },
+      // The two new ui-core singletons. The "instance" is the React
+      // Context object itself; Stage-3 SDK hooks call
+      // `useContext(handle.singletons["@nube/starter-ui-core/preferences"])`
+      // against the host's instance instead of the extension's own
+      // bundled copy — one source of truth across the federation
+      // boundary (D-NP.1, examples/notes/user-pref.md § Stage 2).
+      [SINGLETON_UI_CORE_PREFERENCES]: {
+        version: UI_CORE_PREFERENCES_VERSION,
+        instance: PreferencesContext,
+      },
+      [SINGLETON_UI_CORE_I18N]: {
+        version: UI_CORE_I18N_VERSION,
+        instance: IntlContext,
+      },
     },
   });
 }
