@@ -1,0 +1,39 @@
+{
+  "name": "@nube/starter-ui-flow",
+  "version": "0.1.0",
+  "description": "React components for the starter-flow node graph. Wraps @xyflow/react with typed slots, a node-kind registry, and built-in node visuals (ai-agent, tool-call, trigger, branch, transform). Zero I/O.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./styles.css": "./src/styles/flow.css",
+    "./canvas": "./src/canvas/index.ts",
+    "./nodes": "./src/nodes/index.ts",
+    "./edges": "./src/edges/index.ts",
+    "./slots": "./src/slots/index.ts",
+    "./hooks": "./src/hooks/index.ts"
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@xyflow/react": "^12.3.0",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@xyflow/react": "^12.3.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5.4"
+  }
+}
