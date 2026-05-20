@@ -84,6 +84,15 @@ export type {
   PlatformMessageKey,
 } from "./message-keys.js";
 
+// Catalog-merge surface (Stage 5, `examples/notes/user-pref.md`). The
+// helpers live in `@nube/starter-ui-core/i18n` because the registry has
+// to share module state with `<IntlProvider>`; the SDK does not pull
+// `@nube/starter-ui-core` into its dep graph (SCOPE: TS dep ban). The
+// notes host's `extension-host.ts` imports them directly from ui-core.
+//
+// Documented here only — see
+// `packages/starter-ui-core/src/i18n/extension-messages.ts`.
+
 export type {
   CurrencyCode,
   DateFormat,

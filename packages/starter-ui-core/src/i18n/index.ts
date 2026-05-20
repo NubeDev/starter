@@ -18,6 +18,19 @@ export {
   _resetCatalogCacheForTesting,
 } from "./fetcher.js";
 
+export {
+  registerExtensionMessages,
+  unregisterExtensionMessages,
+  setExtensionMessageTelemetry,
+  subscribeExtensionMessages,
+  extensionMessagesVersion,
+  getExtensionMessages,
+  _resetExtensionMessagesForTesting,
+  type ExtensionMessageTelemetryEvent,
+  type ExtensionMessageTelemetrySink,
+  type RegisterExtensionMessagesInput,
+} from "./extension-messages.js";
+
 export { useTranslate } from "./use-translate.js";
 export type {
   AppMessageKeys,

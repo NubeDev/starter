@@ -1,0 +1,4 @@
+{
+  "greeting": "Hello, {name}!",
+  "unread": "{count, plural, =0 {No unread notes} one {# unread note} other {# unread notes}}"
+}

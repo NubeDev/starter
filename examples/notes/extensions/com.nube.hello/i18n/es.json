@@ -1,0 +1,4 @@
+{
+  "greeting": "¡Hola, {name}!",
+  "unread": "{count, plural, =0 {Sin notas sin leer} one {# nota sin leer} other {# notas sin leer}}"
+}

@@ -40,7 +40,12 @@ import {
 } from "@nube/starter-ext-ui";
 import type { StarterClient } from "@nube/starter-client-ts";
 import { PreferencesContext } from "@nube/starter-ui-core/preferences";
-import { IntlContext } from "@nube/starter-ui-core/i18n";
+import {
+  IntlContext,
+  registerExtensionMessages,
+  unregisterExtensionMessages,
+  type LanguageTag,
+} from "@nube/starter-ui-core/i18n";
 
 /**
  * The semver string the host declares for each ui-core singleton.
@@ -143,6 +148,33 @@ export async function loadExtensionRemotes(
   );
 }
 
+/**
+ * Per-extension Stage-5 i18n manifest. Populated by `registerOne`
+ * from `manifest.contributes.i18n.catalogs` and consumed by
+ * [`useExtensionCatalogLoader`] to lazy-fetch the active language's
+ * catalog and merge it through `registerExtensionMessages`.
+ *
+ * Module-level (not React state) because the host-manager itself
+ * doesn't retain the manifest blocks — keeping a small parallel
+ * registry avoids a wider refactor.
+ */
+interface ExtensionCatalogManifest {
+  /** Language tag → bundle-relative path. We only use the keys
+   * client-side (to decide which language tags the extension
+   * supports); the path is informational. */
+  catalogs: Record<string, string>;
+}
+
+const EXTENSION_CATALOGS = new Map<string, ExtensionCatalogManifest>();
+
+/** Test-/dev-only — read the set of extensions that registered an
+ * i18n manifest. The notes app uses it indirectly via
+ * `useExtensionCatalogLoader`; exposed so unit tests can assert the
+ * discovery step ran. */
+export function _listExtensionCatalogsForTesting(): ReadonlyMap<string, ExtensionCatalogManifest> {
+  return EXTENSION_CATALOGS;
+}
+
 async function registerOne(
   host: ExtensionHostManager,
   id: string,
@@ -160,9 +192,22 @@ async function registerOne(
           entry: string;
           exposes: Array<{ name: string; module: string; slot: string }>;
         };
+        i18n?: {
+          catalogs?: Record<string, string>;
+        };
       };
     };
   };
+  // Remember the i18n manifest before the UI gate below — an
+  // extension may ship catalogs without exposing a panel (server-only
+  // strings that show up in admin chrome).
+  const catalogs = detail.manifest?.contributes?.i18n?.catalogs;
+  if (catalogs && Object.keys(catalogs).length > 0) {
+    EXTENSION_CATALOGS.set(id, { catalogs });
+  } else {
+    EXTENSION_CATALOGS.delete(id);
+    unregisterExtensionMessages(id);
+  }
   const ui = detail.manifest?.contributes?.ui;
   if (!ui) return;
 

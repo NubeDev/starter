@@ -17,6 +17,7 @@ import { ExtensionsClient } from "./extensions-client.js";
 import { ExtensionsView } from "./extensions-view.js";
 import { createExtensionHost, loadExtensionRemotes } from "./extension-host.js";
 import { PrefsHostShell, PrefsProbe } from "./prefs-host.js";
+import { ExtensionCatalogLoader } from "./extension-catalog-loader.js";
 
 import {
   Button,
@@ -191,6 +192,10 @@ function AuthenticatedApp() {
 
   return (
     <ExtensionHostProvider host={host}>
+      {/* Lazy-fetch each enabled extension's catalog for the active
+          language and merge into the host's <IntlProvider> (Stage 5
+          — examples/notes/user-pref.md § D-NP.8). Headless, no UI. */}
+      <ExtensionCatalogLoader client={client} />
       <main style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
         {/* Header */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>

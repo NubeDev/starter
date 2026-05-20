@@ -20,6 +20,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { RawIntlProvider as RawIntlProviderUntyped, createIntl, createIntlCache } from "react-intl";
@@ -35,6 +36,11 @@ const RawIntlProvider = RawIntlProviderUntyped as unknown as ComponentType<Provi
 import type { StarterClient } from "@nube/starter-client-ts";
 
 import { usePreferences } from "../preferences/provider.js";
+import {
+  extensionMessagesVersion,
+  getExtensionMessages,
+  subscribeExtensionMessages,
+} from "./extension-messages.js";
 import { fetchManifest, loadCatalogCached } from "./fetcher.js";
 import type { Catalog, I18nManifest, LanguageTag } from "./types.js";
 
@@ -188,7 +194,38 @@ export function IntlProvider({
   }, [client, pick]);
 
   const activeLanguage = catalog?.language ?? FALLBACK_LANGUAGE;
-  const messages = catalog?.messages ?? defaultMessages ?? {};
+
+  // Extension catalogs (Stage 5 — `examples/notes/user-pref.md`). The
+  // host's `extension-host.ts` lazy-fetches each enabled extension's
+  // `i18n/<activeLanguage>.json` and calls `registerExtensionMessages`;
+  // we subscribe via `useSyncExternalStore` so the merged bundle
+  // rebuilds in the same commit as the registry mutation. The version
+  // counter is monotone so React's bail-out works without a deep diff.
+  const extVersion = useSyncExternalStore(
+    subscribeExtensionMessages,
+    extensionMessagesVersion,
+    extensionMessagesVersion,
+  );
+  const extensionMessages = useMemo(
+    () => getExtensionMessages(activeLanguage),
+    // Re-read on every registry bump *and* on language switch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeLanguage, extVersion],
+  );
+
+  // Merge order: platform (or defaults) ← extension messages. Platform
+  // keys cannot be shadowed because extension keys are namespaced by
+  // extension id before they reach the registry (D-NP.3); the spread
+  // order is therefore semantically irrelevant, but kept extensions-
+  // last so a future debug-only override could land without
+  // re-ordering.
+  const messages: Record<string, string> = useMemo(
+    () => ({
+      ...(catalog?.messages ?? defaultMessages ?? {}),
+      ...extensionMessages,
+    }),
+    [catalog, defaultMessages, extensionMessages],
+  );
 
   // `intl` is built below from `(activeLanguage, messages)`; we
   // declare the context value after it so the value memo can close
@@ -207,7 +244,7 @@ export function IntlProvider({
         {
           locale: activeLanguage,
           defaultLocale: FALLBACK_LANGUAGE,
-          messages: messages as Record<string, string>,
+          messages,
           onError: () => {
             /* See above — silence missing-translation warnings
              * during the prefs→catalog race. */

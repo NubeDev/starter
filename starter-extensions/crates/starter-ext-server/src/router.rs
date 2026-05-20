@@ -11,6 +11,7 @@
 //! | POST   | `/extensions/:id/enable`          | `Role::Admin`  |
 //! | POST   | `/extensions/:id/disable`         | `Role::Admin`  |
 //! | GET    | `/extensions/:id/ui/*path`        | (unauthed)     |
+//! | GET    | `/extensions/:id/i18n/:lang`      | (unauthed)     |
 //!
 //! The UI bundle path is deliberately unauthed: Module-Federation hosts
 //! load `remoteEntry.js` with no credentials, and the bundle bytes are
@@ -34,6 +35,7 @@ use starter_spi::auth::{Authenticator, Role};
 use crate::admin::ExtensionAdmin;
 use crate::events::events;
 use crate::routes::{detail, disable, enable, list};
+use crate::i18n::i18n;
 use crate::ui::ui;
 
 /// Build options. Kept as a struct so future knobs (custom path prefix,
@@ -85,5 +87,9 @@ where
 {
     Router::new()
         .route("/extensions/{id}/ui/{*path}", get(ui))
+        // Catalog endpoint — same unauthed posture as the UI bundle:
+        // the bytes ship inside the admin-approved extension and carry
+        // no operator data. See `examples/notes/user-pref.md` § Stage 5.
+        .route("/extensions/{id}/i18n/{lang}", get(i18n))
         .with_state(admin)
 }

@@ -55,7 +55,9 @@ pub struct Manifest {
 
     /// Host interface dependencies. The host hard-fails the load if any
     /// required interface is missing or at an incompatible version (R6).
-    #[serde(default)]
+    /// Accepts either typed `{id, version}` or bare-string surface form
+    /// — see [`Require`].
+    #[serde(default, deserialize_with = "deserialize_requires")]
     pub requires: Vec<Require>,
 
     /// How this extension is packaged (R1: exactly one of builtin / wasm /
@@ -91,13 +93,83 @@ pub struct Manifest {
 }
 
 /// `Manifest::requires` element — a host interface dependency.
+///
+/// Two surface forms accepted on the wire (R6 + `examples/notes/user-pref.md`
+/// § Stage 5):
+///
+/// ```yaml
+/// requires:
+///   - { id: starter.spi.tool, version: "^1" }   # typed form, Rust SPI
+///   - "@nube/starter-ui-core/preferences"        # singleton form, JS surface
+/// ```
+///
+/// The bare-string form maps to `version: "*"` because singleton ids
+/// declare a capability, not a Rust crate semver bound — the actual
+/// version negotiation happens host-side via
+/// `ExtensionHostManager.checkSingletons` against
+/// `RemoteFactory.singletons` (which carries the real version pin).
+/// Listing the id in `requires:` is the manifest's way of saying "the
+/// host must provide this singleton at load time" so the operator can
+/// see the dependency without parsing the JS bundle.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Require {
-    /// Interface id (e.g. `starter.spi.tool`).
+    /// Interface id (e.g. `starter.spi.tool`,
+    /// `@nube/starter-ui-core/preferences`).
     pub id: String,
-    /// Semver requirement (e.g. `"^1"`).
+    /// Semver requirement (e.g. `"^1"`). Defaults to `"*"` so the
+    /// bare-string surface form (see [`Require`]) deserialises without
+    /// the caller having to repeat the unbounded marker.
+    #[serde(default = "any_version_req")]
     pub version: semver::VersionReq,
+}
+
+fn any_version_req() -> semver::VersionReq {
+    semver::VersionReq::STAR
+}
+
+/// Surface-form for [`Require`] — accepts a bare string or the typed
+/// struct. Normalised into [`Require`] post-deserialisation so the rest
+/// of the loader works against one shape.
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(untagged)]
+enum RequireWire {
+    Bare(String),
+    Typed(RequireTyped),
+}
+
+#[derive(Debug, Clone, PartialEq, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct RequireTyped {
+    id: String,
+    #[serde(default = "any_version_req")]
+    version: semver::VersionReq,
+}
+
+impl From<RequireWire> for Require {
+    fn from(w: RequireWire) -> Self {
+        match w {
+            RequireWire::Bare(id) => Self {
+                id,
+                version: any_version_req(),
+            },
+            RequireWire::Typed(t) => Self {
+                id: t.id,
+                version: t.version,
+            },
+        }
+    }
+}
+
+/// Custom deserializer that normalises `Vec<RequireWire>` into
+/// `Vec<Require>`. Used by [`Manifest::requires`] so callers see one
+/// shape regardless of which surface form the YAML used.
+fn deserialize_requires<'de, D>(deserializer: D) -> Result<Vec<Require>, D::Error>
+where
+    D: serde::Deserializer<'de>,
+{
+    let wire = <Vec<RequireWire> as Deserialize>::deserialize(deserializer)?;
+    Ok(wire.into_iter().map(Require::from).collect())
 }
 
 /// Backwards-compatibility alias for code that historically named this
@@ -255,6 +327,27 @@ pub struct Contributes {
     /// single `remoteEntry.js` exposing one or more modules).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ui: Option<ContributeUi>,
+    /// i18n catalog declarations (D-NP.7, `examples/notes/user-pref.md`
+    /// § Stage 5). Each language tag maps to a bundle-relative path
+    /// to a flat ICU-MessageFormat JSON file. The host serves them at
+    /// `GET /extensions/<id>/i18n/<lang>.json`; the client merges them
+    /// into the active `IntlProvider` bundle namespaced under the
+    /// extension id (`com.nube.hello.greeting`, never bare `greeting`).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub i18n: Option<ContributeI18n>,
+}
+
+/// The extension's i18n block.
+#[derive(Debug, Clone, PartialEq, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeI18n {
+    /// Per-language catalog paths, relative to the bundle root. Keys are
+    /// BCP-47 language tags; values are paths to flat JSON catalog files
+    /// (e.g. `i18n/en.json`). Lazy-loaded by the host per active locale
+    /// — every catalog except the current one is left on disk until the
+    /// user flips to that language (D-NP.8).
+    #[serde(default)]
+    pub catalogs: std::collections::BTreeMap<String, String>,
 }
 
 /// Per-entry auth gate (SCOPE post-R13 "per-entry auth shape").
@@ -838,6 +931,45 @@ contributes:
         assert_eq!(m.contributes.rest[2].streaming, RestStreaming::None);
         assert!(m.contributes.rest[0].streaming.is_streaming());
         assert!(!m.contributes.rest[2].streaming.is_streaming());
+    }
+
+    #[test]
+    fn requires_accepts_bare_string_and_typed_struct() {
+        let yaml = r#"
+v: 1
+id: com.acme.mixed
+version: 0.0.1
+display_name: "Mixed"
+runtime: { kind: builtin, crate_name: mixed }
+requires:
+  - "@nube/starter-ui-core/preferences"
+  - { id: starter.spi.tool, version: "^1" }
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.requires.len(), 2);
+        assert_eq!(m.requires[0].id, "@nube/starter-ui-core/preferences");
+        assert_eq!(m.requires[0].version, semver::VersionReq::STAR);
+        assert_eq!(m.requires[1].id, "starter.spi.tool");
+    }
+
+    #[test]
+    fn contributes_i18n_catalogs_parse() {
+        let yaml = r#"
+v: 1
+id: com.acme.localised
+version: 0.0.1
+display_name: "Localised"
+runtime: { kind: builtin, crate_name: localised }
+contributes:
+  i18n:
+    catalogs:
+      en: i18n/en.json
+      es: i18n/es.json
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        let i18n = m.contributes.i18n.as_ref().expect("i18n block parsed");
+        assert_eq!(i18n.catalogs.get("en").map(String::as_str), Some("i18n/en.json"));
+        assert_eq!(i18n.catalogs.get("es").map(String::as_str), Some("i18n/es.json"));
     }
 
     #[test]
