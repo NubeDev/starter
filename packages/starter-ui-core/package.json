@@ -11,7 +11,8 @@
     "./auth": "./src/auth/index.ts",
     "./query": "./src/query/index.ts",
     "./testing": "./src/testing/index.ts",
-    "./theme-editor": "./src/theme-editor/index.ts"
+    "./theme-editor": "./src/theme-editor/index.ts",
+    "./preferences": "./src/preferences/index.ts"
   },
   "files": ["src", "README.md"],
   "scripts": {
