@@ -171,10 +171,7 @@ where
 /// Read the chosen [`LanguageTag`] from request extensions. Falls
 /// back to the bundle's static fallback if no `LocaleCtx` is
 /// present (the locale middleware was not chained upstream).
-fn locale_from_extensions(
-    extensions: &http::Extensions,
-    bundle: &MessageBundle,
-) -> LanguageTag {
+fn locale_from_extensions(extensions: &http::Extensions, bundle: &MessageBundle) -> LanguageTag {
     #[cfg(feature = "routes")]
     {
         if let Some(ctx) = extensions.get::<LocaleCtx>() {
@@ -191,11 +188,7 @@ fn locale_from_extensions(
 /// present), the body is JSON, and the response is not a streaming
 /// shape we cannot safely buffer, attempt the rewrite. Otherwise
 /// forward the response unchanged.
-async fn maybe_rewrite(
-    resp: Response,
-    bundle: &MessageBundle,
-    language: &LanguageTag,
-) -> Response {
+async fn maybe_rewrite(resp: Response, bundle: &MessageBundle, language: &LanguageTag) -> Response {
     // 1. The handler must have opted in. Absence is a no-op per
     //    SCOPE D-5.1.
     if resp.extensions().get::<DiagnosticBody>().is_none() {
@@ -273,11 +266,7 @@ fn is_json(resp: &Response) -> bool {
 /// envelope shapes, and re-emit. If buffering or parsing fails the
 /// response is forwarded unchanged (the rewriter is opt-in
 /// best-effort, not a correctness gate).
-async fn rewrite_json(
-    resp: Response,
-    bundle: &MessageBundle,
-    language: &LanguageTag,
-) -> Response {
+async fn rewrite_json(resp: Response, bundle: &MessageBundle, language: &LanguageTag) -> Response {
     let (mut parts, body) = resp.into_parts();
     let collected = match body.collect().await {
         Ok(c) => c.to_bytes(),
@@ -465,11 +454,17 @@ mod tests {
     fn bundle() -> Arc<MessageBundle> {
         let mut b = MessageBundle::new(tag("en"));
         let mut en = std::collections::BTreeMap::new();
-        en.insert(key("auth.token.expired"), "Your session has expired.".to_string());
+        en.insert(
+            key("auth.token.expired"),
+            "Your session has expired.".to_string(),
+        );
         en.insert(key("with.param"), "Hello, {name}!".to_string());
         b.insert(tag("en"), Catalog { messages: en });
         let mut es = std::collections::BTreeMap::new();
-        es.insert(key("auth.token.expired"), "Tu sesión ha expirado.".to_string());
+        es.insert(
+            key("auth.token.expired"),
+            "Tu sesión ha expirado.".to_string(),
+        );
         es.insert(key("with.param"), "Hola, {name}!".to_string());
         b.insert(tag("es"), Catalog { messages: es });
         Arc::new(b)
@@ -533,15 +528,17 @@ mod tests {
             .layer(crate::middleware::accept_language_layer(b))
             // Each test pins its language by injecting Accept-Language
             // through this lambda; the value is captured here.
-            .layer(axum::middleware::from_fn(move |mut req: axum::extract::Request, next: axum::middleware::Next| {
-                if !lang.is_empty() {
-                    req.headers_mut().insert(
-                        http::header::ACCEPT_LANGUAGE,
-                        HeaderValue::from_static(lang),
-                    );
-                }
-                async move { next.run(req).await }
-            }))
+            .layer(axum::middleware::from_fn(
+                move |mut req: axum::extract::Request, next: axum::middleware::Next| {
+                    if !lang.is_empty() {
+                        req.headers_mut().insert(
+                            http::header::ACCEPT_LANGUAGE,
+                            HeaderValue::from_static(lang),
+                        );
+                    }
+                    async move { next.run(req).await }
+                },
+            ))
     }
 
     use tower::ServiceExt;
@@ -553,7 +550,12 @@ mod tests {
         });
         let app = app_with_locale(payload, true, "es");
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/d").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/d")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
@@ -578,7 +580,12 @@ mod tests {
         });
         let app = app_with_locale(payload, true, "es");
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/d").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/d")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         let v = body_value(resp).await;
@@ -593,7 +600,12 @@ mod tests {
         });
         let app = app_with_locale(payload.clone(), false, "es");
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/d").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/d")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         let v = body_value(resp).await;
@@ -661,7 +673,12 @@ mod tests {
         });
         let app = app_with_locale(payload, true, "es");
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/d").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/d")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         let v = body_value(resp).await;
@@ -686,7 +703,12 @@ mod tests {
         });
         let app = app_with_locale(payload, true, "es");
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/d").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/d")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         let v = body_value(resp).await;
@@ -728,14 +750,18 @@ mod tests {
 
     #[test]
     fn interpolate_unterminated_brace_survives() {
-        assert_eq!(interpolate("oops {unterminated", None), "oops {unterminated");
+        assert_eq!(
+            interpolate("oops {unterminated", None),
+            "oops {unterminated"
+        );
     }
 
     #[test]
     fn is_json_accepts_application_json_and_structured_suffix() {
         let mk = |ct: &'static str| {
             let mut r = Response::new(Body::empty());
-            r.headers_mut().insert(CONTENT_TYPE, HeaderValue::from_static(ct));
+            r.headers_mut()
+                .insert(CONTENT_TYPE, HeaderValue::from_static(ct));
             r
         };
         assert!(is_json(&mk("application/json")));
@@ -758,7 +784,10 @@ mod tests {
             r
         };
         assert!(is_streaming(&mk("content-type", "text/event-stream")));
-        assert!(is_streaming(&mk("content-type", "text/event-stream; charset=utf-8")));
+        assert!(is_streaming(&mk(
+            "content-type",
+            "text/event-stream; charset=utf-8"
+        )));
         assert!(is_streaming(&mk("transfer-encoding", "chunked")));
         assert!(is_streaming(&mk("transfer-encoding", "gzip, chunked")));
         assert!(!is_streaming(&mk("content-type", "application/json")));

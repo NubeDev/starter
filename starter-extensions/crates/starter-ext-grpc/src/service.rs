@@ -72,11 +72,13 @@ impl ExtensionGrpcService {
     /// Resolve a `(service, method)` pair to the manifest entry or
     /// return a tonic `NOT_FOUND` status.
     fn resolve(&self, service: &str, method: &str) -> Result<&GrpcMethod, Status> {
-        self.by_pair.get(&(service.to_owned(), method.to_owned())).ok_or_else(|| {
-            Status::not_found(format!(
-                "no extension method registered for ({service:?}, {method:?})"
-            ))
-        })
+        self.by_pair
+            .get(&(service.to_owned(), method.to_owned()))
+            .ok_or_else(|| {
+                Status::not_found(format!(
+                    "no extension method registered for ({service:?}, {method:?})"
+                ))
+            })
     }
 
     fn parse_input(args_proto_json: &str) -> Result<serde_json::Value, Status> {
@@ -171,9 +173,7 @@ impl ExtensionGrpc for ExtensionGrpcService {
         // the response (which tonic does when the client disconnects)
         // drops the handle, which fires `stream.cancel`. This is the
         // same shape the CLI adapter uses on SIGINT.
-        let crate::dispatcher::StreamResponse {
-            events, cancel, ..
-        } = response;
+        let crate::dispatcher::StreamResponse { events, cancel, .. } = response;
         let cancel = Arc::new(cancel);
         let mapped = events.map(move |item| {
             // Keep `cancel` alive for the lifetime of the stream by

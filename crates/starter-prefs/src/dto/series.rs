@@ -144,9 +144,7 @@ pub trait FromCanonicalSeries: Sized {
     /// Build `Self` from canonical-unit envelopes. The implementor is
     /// responsible for asserting each envelope's `quantity`/`unit`
     /// match its expected slot.
-    fn from_canonical_series(
-        series: &[SeriesEnvelope<f64>],
-    ) -> Result<Self, Self::Error>;
+    fn from_canonical_series(series: &[SeriesEnvelope<f64>]) -> Result<Self, Self::Error>;
 }
 
 #[cfg(test)]
@@ -266,9 +264,7 @@ mod tests {
     impl FromCanonicalSeries for TempIn {
         type Error = &'static str;
 
-        fn from_canonical_series(
-            series: &[SeriesEnvelope<f64>],
-        ) -> Result<Self, Self::Error> {
+        fn from_canonical_series(series: &[SeriesEnvelope<f64>]) -> Result<Self, Self::Error> {
             let s = series
                 .iter()
                 .find(|s| s.slot == "temp_in")

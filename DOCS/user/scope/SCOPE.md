@@ -310,6 +310,77 @@ convention yet. If a consumer's timeseries surface differs, the rule
 that matters is the metadata-hoisting principle (declared once at the
 tightest homogeneous scope), not the literal tuple shape.
 
+### R9 — Extensions consume prefs + i18n through named singletons; one source of truth
+
+The prefs/i18n providers shipped by `@nube/starter-ui-core`
+(`PreferencesProvider`, `IntlProvider`) are exposed to Module-
+Federated extensions as **two named host singletons**, alongside the
+existing React/ReactDOM singletons negotiated per the extensions
+SCOPE R11:
+
+- `@nube/starter-ui-core/preferences` — the resolved
+  `PreferencesContext` value, including `setPreferences(patch)`.
+- `@nube/starter-ui-core/i18n` — the host's `react-intl` `IntlShape`.
+
+The contract is one fetch, one resolution, one re-render across host
+chrome and every loaded extension panel. Extensions do not refetch
+`/v1/me/preferences`, do not mount their own `IntlProvider`, and do
+not call `Intl.DateTimeFormat()` with a hard-coded locale.
+
+**Versioning.** Each singleton id is versioned by major. Hosts on
+major `N` refuse to register extensions declared against any other
+major (`Failed` lifecycle, reason
+`singleton-mismatch: <pkg>@<major>`, other extensions unaffected).
+Minor drift loads with a warn-level telemetry event; patch drift is
+silent. The deprecation policy is one minor of warn + one minor of
+console-warn before removal in the next major. The SDK package
+(`@nube/starter-ext-sdk-ts`) versions in lockstep with the singleton
+major: bumping the singleton major is the only way to change the
+hook signatures.
+
+**Catalog packaging.** Extensions ship their own catalogs as
+`i18n/<lang>.json` files declared under
+`contributes.i18n.catalogs` in `block.yaml`. The host registers
+them into the merged bundle namespaced by extension id
+(`com.nube.hello.greeting`, not bare `greeting`). Catalogs are
+flat-keyed ICU MessageFormat. Per-locale lazy loading is mandatory:
+non-default locales fetch on first use, never up-front.
+
+**Catalog parity is a build-time invariant.** A `check:i18n`
+workspace task asserts (a) every non-`en` catalog has the same key
+set as `en`, (b) every value is a non-empty string, (c) ICU
+placeholders match across languages. CI fails on drift. Production
+teams cannot ship a partially-translated locale by accident.
+
+**A11y is owned by the provider.** `PreferencesProvider` sets
+`document.documentElement.lang` (and `dir` for known RTL languages)
+from the resolved language and announces language changes through
+an `aria-live="polite"` region. Consumers do not re-implement the
+side effect.
+
+**Multi-tab consistency.** `PreferencesProvider` mirrors every
+successful `setPreferences` over a `BroadcastChannel("starter-
+prefs")` and applies received patches optimistically with server
+re-validation. Cross-device propagation (SSE / long-poll on
+`/v1/me/preferences`) is a deferred v2 — reserve the URL,
+return 501 until the surface ships.
+
+**Telemetry.** The host emits the following stable events (no PII;
+keys and language tags only):
+
+- `extension.singleton_mismatch` (error) — major refused load.
+- `extension.singleton_minor_drift` (warn) — minor mismatch loaded.
+- `extension.catalog_key_collision` (warn) — extension wrote into
+  another extension's namespace.
+- `i18n.locale_fallback` (info) — first fallback per session per
+  locale.
+- `i18n.message_missing` (warn) — translation key not found.
+- `prefs.broadcast_dropped` (warn) — `BroadcastChannel` post failed.
+
+**Reference implementation.** [`examples/notes/user-pref.md`](../../../examples/notes/user-pref.md)
+is the canonical wiring proof; when this rule and that file disagree,
+this rule wins.
+
 ## Preferences model
 
 ```

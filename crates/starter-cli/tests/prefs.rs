@@ -92,8 +92,7 @@ async fn prefs_get_table_output() {
 async fn prefs_get_json_output() {
     let app = spawn_prefs_server().await;
     let out = run(&app.base_url, "get", &["--output", "json"]).await;
-    let parsed: serde_json::Value =
-        serde_json::from_str(out.trim()).expect("json parses");
+    let parsed: serde_json::Value = serde_json::from_str(out.trim()).expect("json parses");
     assert!(parsed.get("timezone").is_some());
     assert!(parsed.get("locale").is_some());
     assert!(parsed.get("temperature_unit").is_some());

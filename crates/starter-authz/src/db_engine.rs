@@ -1,5 +1,5 @@
 //! DB-backed policy engine. Thin facade over [`crate::PolicyStore`]
-//! + [`crate::StaticRbacEngine`]: every `reload` snapshot the
+//! and [`crate::StaticRbacEngine`]: every `reload` snapshot the
 //! whole rule/assignment table, recompile, swap the inner engine.
 //! `check` always hits the cached `StaticRbacEngine` so the hot
 //! path is allocation-free.

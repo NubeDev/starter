@@ -43,8 +43,8 @@ use serde_json::Value;
 use starter_ext_spi::{Error, Result};
 
 use crate::ctx::{
-    CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend,
-    TracingBackend, WallClockBackend,
+    CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend, TracingBackend,
+    WallClockBackend,
 };
 use crate::meta::ExtensionDispatch;
 

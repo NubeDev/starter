@@ -60,6 +60,7 @@ async fn admin_gate(req: Request<Body>, next: Next) -> Response {
 /// `Err(403)` on mismatch — handlers `?`-propagate this before
 /// touching the store. Mirrors `starter_auth_users::routes`'s
 /// logout/signup pattern.
+#[allow(clippy::result_large_err)] // `axum::Response` size is fixed by axum.
 pub(super) fn check_csrf(headers: &HeaderMap) -> Result<(), Response> {
     let cookies = parse_cookies(headers);
     let cookie = cookies.get("starter_csrf").map(String::as_str);

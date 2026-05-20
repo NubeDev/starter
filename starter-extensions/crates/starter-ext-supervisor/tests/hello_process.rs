@@ -32,7 +32,10 @@ fn hello_process_bin() -> PathBuf {
     // helper below skips the test gracefully when the binary is missing
     // so a fresh checkout does not show as a spurious failure.
     let workspace_root = fixtures_root().parent().unwrap().to_path_buf();
-    workspace_root.join("target").join("debug").join("hello-process")
+    workspace_root
+        .join("target")
+        .join("debug")
+        .join("hello-process")
 }
 
 /// Stage a bundle directory whose `block.yaml` matches the one
@@ -50,12 +53,12 @@ fn stage_bundle() -> Option<(TempDir, ExtensionRecord)> {
     // Copy block.yaml + docs + schemas into the bundle so the
     // supervisor's manifest-hash computation matches the child's
     // (#[derive(Extension)] embedded the same bytes at compile time).
-    std::fs::copy(src_root.join("block.yaml"), bundle.path().join("block.yaml")).unwrap();
     std::fs::copy(
-        &bin,
-        bundle.path().join("hello-process"),
+        src_root.join("block.yaml"),
+        bundle.path().join("block.yaml"),
     )
     .unwrap();
+    std::fs::copy(&bin, bundle.path().join("hello-process")).unwrap();
     // Mark the staged binary executable (cp preserves perms but
     // `std::fs::copy` does too on Unix; this is a no-op on most platforms
     // and a safety net otherwise).
@@ -176,4 +179,3 @@ runtime:
     // Asking it to shut down should not hang.
     let _ = tokio::time::timeout(Duration::from_secs(2), handle.shutdown()).await;
 }
-

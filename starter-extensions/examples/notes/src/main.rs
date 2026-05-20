@@ -37,8 +37,7 @@ use starter_ext_cli::{
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_mcp::register_tools;
 use starter_ext_server::{
-    rest_router, router as admin_router, BuiltinRestDispatcher, ExtensionAdmin,
-    RestRouterOptions,
+    rest_router, router as admin_router, BuiltinRestDispatcher, ExtensionAdmin, RestRouterOptions,
 };
 use starter_ext_spi::ExtensionId;
 use starter_mcp::ToolRegistry;
@@ -82,27 +81,31 @@ async fn main() -> std::process::ExitCode {
     let builtins = Arc::new(starter_notes_ext::build_builtin_table());
 
     // ---- 3. MCP tools ----------------------------------------------------
-    let (tools, mcp_outcome, mcp_err) =
-        register_tools(&registry, &builtins, ToolRegistry::new());
+    let (tools, mcp_outcome, mcp_err) = register_tools(&registry, &builtins, ToolRegistry::new());
     if let Err(e) = mcp_err {
         eprintln!("starter-notes: mcp register: {e}");
         return std::process::ExitCode::FAILURE;
     }
-    tracing::info!(
-        registered = mcp_outcome.tools_registered,
-        "mcp tools wired"
-    );
+    tracing::info!(registered = mcp_outcome.tools_registered, "mcp tools wired");
     let _tools = tools; // The example's `serve` doesn't expose MCP over
-                       // HTTP yet — wiring `starter-mcp`'s transport
-                       // would mean adding `starter-mcp-http` to the
-                       // deps. Tools are loaded and queryable; serving
-                       // them is left as the next slice.
+                        // HTTP yet — wiring `starter-mcp`'s transport
+                        // would mean adding `starter-mcp-http` to the
+                        // deps. Tools are loaded and queryable; serving
+                        // them is left as the next slice.
 
     // ---- 4. CLI registry -------------------------------------------------
     let ext_id = ExtensionId::new(NOTES_EXT_ID).expect("known id");
     let cli_registry = BuiltinCliRegistry::new()
-        .register(ext_id.clone(), "com.nube.notes.cli_add", starter_notes_ext::cli_add)
-        .register(ext_id.clone(), "com.nube.notes.cli_list", starter_notes_ext::cli_list);
+        .register(
+            ext_id.clone(),
+            "com.nube.notes.cli_add",
+            starter_notes_ext::cli_add,
+        )
+        .register(
+            ext_id.clone(),
+            "com.nube.notes.cli_list",
+            starter_notes_ext::cli_list,
+        );
     let cli_dispatcher = Arc::new(BuiltinCliDispatcher::new(Arc::new(cli_registry)));
     let ext_cmds = match build_cli_commands(&registry, cli_dispatcher, DEFAULT_REQUEST_TIMEOUT) {
         Ok(v) => v,
@@ -151,10 +154,13 @@ async fn run_serve(
     registry: Arc<ExtensionRegistry>,
     builtins: Arc<starter_ext_sdk::builtin::BuiltinTable>,
 ) -> Result<(), String> {
-    let rest_dispatcher =
-        Arc::new(BuiltinRestDispatcher::new(builtins, registry.clone()));
-    let rest = rest_router::<()>(registry.clone(), rest_dispatcher, RestRouterOptions::default())
-        .map_err(|e| format!("rest router: {e}"))?;
+    let rest_dispatcher = Arc::new(BuiltinRestDispatcher::new(builtins, registry.clone()));
+    let rest = rest_router::<()>(
+        registry.clone(),
+        rest_dispatcher,
+        RestRouterOptions::default(),
+    )
+    .map_err(|e| format!("rest router: {e}"))?;
     let admin = ExtensionAdmin::builder(registry).build();
     let admin_rt: Router<()> = admin_router(admin);
 
@@ -185,4 +191,3 @@ fn locate_bundle_root() -> Result<PathBuf, String> {
         .map(|p| p.to_path_buf())
         .ok_or_else(|| "examples/ parent missing".into())
 }
-

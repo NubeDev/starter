@@ -59,7 +59,10 @@ fn copy_bundle(src: &Path, dest: &Path) {
 
 fn stage_registry() -> (tempfile::TempDir, Arc<ExtensionRegistry>) {
     let tmp = tempdir().unwrap();
-    copy_bundle(&hello_cli_bundle_src(), &tmp.path().join("com.acme.hellocli"));
+    copy_bundle(
+        &hello_cli_bundle_src(),
+        &tmp.path().join("com.acme.hellocli"),
+    );
     let records = Loader::scan(tmp.path()).validate_all();
     let mut registry = ExtensionRegistry::new();
     let outcome = Loader::commit(records, &mut registry);
@@ -77,10 +80,7 @@ fn greet_handler(params: serde_json::Value, _ctx: &CtxInner) -> Result<serde_jso
 }
 
 fn tick_handler(params: serde_json::Value, ctx: &CtxInner) -> Result<()> {
-    let count = params
-        .get("count")
-        .and_then(|v| v.as_i64())
-        .unwrap_or(3);
+    let count = params.get("count").and_then(|v| v.as_i64()).unwrap_or(3);
     let sender = ctx.events().clone();
     for n in 0..count {
         if ctx.cancel().is_cancelled() {
@@ -108,10 +108,13 @@ async fn build_cli_commands_produces_one_subcommand_per_entry() {
     let dispatcher = Arc::new(BuiltinCliDispatcher::new(Arc::new(cli_registry)));
 
     let commands = build_cli_commands(&registry, dispatcher, DEFAULT_REQUEST_TIMEOUT).unwrap();
-    let names: Vec<&str> = commands.iter().map(|c| {
-        use starter_cli::Command;
-        c.name()
-    }).collect();
+    let names: Vec<&str> = commands
+        .iter()
+        .map(|c| {
+            use starter_cli::Command;
+            c.name()
+        })
+        .collect();
     assert!(names.contains(&"hellocli-greet"));
     assert!(names.contains(&"hellocli-tick"));
 }

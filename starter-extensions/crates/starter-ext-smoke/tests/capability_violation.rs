@@ -58,7 +58,9 @@ fn ungranted_fs_read_is_rejected_and_counted() {
 /// silently forwarding to the host risks bypassing R8".
 #[test]
 fn unknown_namespace_is_treated_as_a_violation() {
-    let gate = CapabilityGate::from_manifest(&[Capability::HttpOut { authorities: vec![] }]);
+    let gate = CapabilityGate::from_manifest(&[Capability::HttpOut {
+        authorities: vec![],
+    }]);
     let result = gate.check("rampage.do_a_thing");
     assert!(matches!(result, Err(Error::Capability(_))));
 }

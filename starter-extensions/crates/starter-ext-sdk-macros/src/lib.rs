@@ -124,22 +124,28 @@ fn expand(input: DeriveInput) -> syn::Result<TokenStream2> {
         .map(|t| handler_ident(&t.id))
         .collect();
 
-    let trait_method_defs = tool_methods.iter().zip(tool_id_lits.iter()).map(|(m, id_lit)| {
-        quote! {
-            #[doc = concat!("Handler for tool `", #id_lit, "`. Declared in `block.yaml`.")]
-            fn #m(
-                &self,
-                ctx: &Self::Ctx,
-                params: ::starter_ext_sdk::serde_json::Value,
-            ) -> ::starter_ext_sdk::Result<::starter_ext_sdk::serde_json::Value>;
-        }
-    });
+    let trait_method_defs = tool_methods
+        .iter()
+        .zip(tool_id_lits.iter())
+        .map(|(m, id_lit)| {
+            quote! {
+                #[doc = concat!("Handler for tool `", #id_lit, "`. Declared in `block.yaml`.")]
+                fn #m(
+                    &self,
+                    ctx: &Self::Ctx,
+                    params: ::starter_ext_sdk::serde_json::Value,
+                ) -> ::starter_ext_sdk::Result<::starter_ext_sdk::serde_json::Value>;
+            }
+        });
 
-    let dispatch_arms = tool_methods.iter().zip(tool_id_lits.iter()).map(|(m, id_lit)| {
-        quote! {
-            #id_lit => <Self as #handlers_trait>::#m(self, ctx, params),
-        }
-    });
+    let dispatch_arms = tool_methods
+        .iter()
+        .zip(tool_id_lits.iter())
+        .map(|(m, id_lit)| {
+            quote! {
+                #id_lit => <Self as #handlers_trait>::#m(self, ctx, params),
+            }
+        });
 
     Ok(quote! {
         // Tell rustc that a change to `block.yaml` invalidates this crate.

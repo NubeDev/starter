@@ -180,6 +180,7 @@ pub(super) async fn delete_rule(
     }
 }
 
+#[allow(clippy::result_large_err)] // `axum::Response` size is fixed by axum.
 fn validate_effect(s: &str) -> Result<(), Response> {
     if s == "allow" || s == "deny" {
         Ok(())

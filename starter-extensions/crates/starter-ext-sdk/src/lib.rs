@@ -108,26 +108,26 @@ pub mod wasm;
 pub use ctx::{Cancel, EmitEvent, Event, EventReceiver, EventSender};
 pub use meta::{ExtensionDispatch, ExtensionMeta};
 
-pub use starter_ext_spi::{
-    AuthGate, Authority, Backoff, Capability, CliStreaming, ContributeCli, ContributeGrpc,
-    ContributeRest, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker,
-    Contributes, Error, ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope,
-    LifecycleState, Manifest, OnErrorPolicy, PathSpec, RestStreaming, RestartPolicy,
-    Result, RetryStrategy, Runtime, RuntimeKind, Supervision,
-};
 /// Re-export so extensions can construct `Event { stream_id, payload }`
 /// without taking a direct `starter-ext-spi` dep (SCOPE "Extension
 /// author has zero starter-workspace deps beyond starter-ext-sdk +
 /// serde_json").
 pub use starter_ext_spi::jsonrpc::StreamId;
+pub use starter_ext_spi::{
+    AuthGate, Authority, Backoff, Capability, CliStreaming, ContributeCli, ContributeGrpc,
+    ContributeRest, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker,
+    Contributes, Error, ExtensionBehavior, ExtensionId, HealthConfig, JsonRpcEnvelope,
+    LifecycleState, Manifest, OnErrorPolicy, PathSpec, RestStreaming, RestartPolicy, Result,
+    RetryStrategy, Runtime, RuntimeKind, Supervision,
+};
 
+/// Re-export so generated code can name `::starter_ext_sdk::semver::Version`.
+pub use semver;
 /// Re-export so generated code can name `::starter_ext_sdk::serde_json::Value`
 /// without the extension's `Cargo.toml` adding `serde_json` itself.
 pub use serde_json;
 /// Re-export so generated code can lazily parse the embedded `block.yaml`.
 pub use serde_yaml;
-/// Re-export so generated code can name `::starter_ext_sdk::semver::Version`.
-pub use semver;
 
 /// `#[derive(Extension)]` — see the [crate-level docs](crate) and
 /// SCOPE.md "What each crate / package owns: starter-ext-sdk".
@@ -453,12 +453,9 @@ macro_rules! register_wasm_main {
             params: $crate::serde_json::Value,
         ) -> $crate::Result<$crate::serde_json::Value> {
             let instance: $ty = $instance;
-            $crate::wasm::run_wasm_main(
-                &instance,
-                tool_id,
-                params,
-                |inner| <$ctx_ty>::__from_inner(inner),
-            )
+            $crate::wasm::run_wasm_main(&instance, tool_id, params, |inner| {
+                <$ctx_ty>::__from_inner(inner)
+            })
         }
     };
 }
@@ -471,11 +468,8 @@ macro_rules! register_process_main {
         /// disconnects or asks us to shut down.
         pub async fn run() -> $crate::Result<()> {
             let instance: $ty = $instance;
-            $crate::process::run_process_main(
-                instance,
-                |inner| <$ctx_ty>::__from_inner(inner),
-            )
-            .await
+            $crate::process::run_process_main(instance, |inner| <$ctx_ty>::__from_inner(inner))
+                .await
         }
     };
 }

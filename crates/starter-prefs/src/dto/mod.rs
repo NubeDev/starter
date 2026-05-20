@@ -8,6 +8,4 @@
 
 pub mod series;
 
-pub use series::{
-    FromCanonicalSeries, SeriesEnvelope, SeriesPoint, ToCanonicalSeries,
-};
+pub use series::{FromCanonicalSeries, SeriesEnvelope, SeriesPoint, ToCanonicalSeries};

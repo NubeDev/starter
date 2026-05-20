@@ -43,11 +43,7 @@ pub trait EnablementStore: Send + Sync + 'static {
 
     /// Write the state for one id. The store is responsible for an
     /// atomic upsert against the underlying storage.
-    async fn set(
-        &self,
-        id: &ExtensionId,
-        state: EnablementState,
-    ) -> Result<(), StoreError>;
+    async fn set(&self, id: &ExtensionId, state: EnablementState) -> Result<(), StoreError>;
 }
 
 /// Error type returned by [`EnablementStore`] implementations. Surfaced
@@ -90,11 +86,7 @@ impl EnablementStore for InMemoryEnablementStore {
             .copied())
     }
 
-    async fn set(
-        &self,
-        id: &ExtensionId,
-        state: EnablementState,
-    ) -> Result<(), StoreError> {
+    async fn set(&self, id: &ExtensionId, state: EnablementState) -> Result<(), StoreError> {
         self.inner
             .lock()
             .expect("InMemoryEnablementStore poisoned")

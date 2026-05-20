@@ -91,7 +91,10 @@ fn check_capability_compatibility(m: &Manifest) -> Result<()> {
         let Some(category) = req.id.strip_prefix("cap.") else {
             continue;
         };
-        let granted = m.capabilities.iter().any(|c| capability_matches(c, category));
+        let granted = m
+            .capabilities
+            .iter()
+            .any(|c| capability_matches(c, category));
         if !granted {
             return Err(Error::validation(format!(
                 "extension requires capability {:?} but the manifest's `capabilities:` block \
@@ -112,7 +115,9 @@ fn capability_matches(c: &Capability, category: &str) -> bool {
         (Capability::WallClock { .. }, "wall_clock") => true,
         (Capability::Custom { name, .. }, c) => {
             // `custom:<name>` in `requires:` matches `Capability::Custom { name }`.
-            c.strip_prefix("custom:").map(|n| n == name).unwrap_or(false)
+            c.strip_prefix("custom:")
+                .map(|n| n == name)
+                .unwrap_or(false)
         }
         _ => false,
     }

@@ -149,9 +149,8 @@ impl ExtensionSubcommand {
     /// values; otherwise each property in the schema becomes one key.
     fn matches_to_json(&self, matches: &ArgMatches) -> Result<Value, CommandError> {
         if let Some(raw) = matches.get_one::<String>("input") {
-            return serde_json::from_str(raw).map_err(|e| {
-                CommandError::UserFacing(format!("--input is not valid JSON: {e}"))
-            });
+            return serde_json::from_str(raw)
+                .map_err(|e| CommandError::UserFacing(format!("--input is not valid JSON: {e}")));
         }
         let mut out = serde_json::Map::new();
         if let Some(props) = self
@@ -172,10 +171,9 @@ impl ExtensionSubcommand {
                     }
                 } else if let Some(v) = matches.get_one::<String>(name) {
                     let coerced = match ty {
-                        "integer" => v
-                            .parse::<i64>()
-                            .map(Value::from)
-                            .map_err(|_| CommandError::UserFacing(format!("--{name} not an integer")))?,
+                        "integer" => v.parse::<i64>().map(Value::from).map_err(|_| {
+                            CommandError::UserFacing(format!("--{name} not an integer"))
+                        })?,
                         "number" => v
                             .parse::<f64>()
                             .map(|f| {
@@ -183,7 +181,9 @@ impl ExtensionSubcommand {
                                     .map(Value::Number)
                                     .unwrap_or(Value::Null)
                             })
-                            .map_err(|_| CommandError::UserFacing(format!("--{name} not a number")))?,
+                            .map_err(|_| {
+                                CommandError::UserFacing(format!("--{name} not a number"))
+                            })?,
                         _ => Value::String(v.to_owned()),
                     };
                     out.insert(name.clone(), coerced);
@@ -228,8 +228,7 @@ impl Command for ExtensionSubcommand {
                 // Pretty-print the response for human consumption.
                 // Pipelines that need stable framing should select
                 // `streaming: stdout`.
-                let pretty = serde_json::to_string_pretty(&v)
-                    .unwrap_or_else(|_| v.to_string());
+                let pretty = serde_json::to_string_pretty(&v).unwrap_or_else(|_| v.to_string());
                 println!("{pretty}");
                 Ok(())
             }
@@ -251,9 +250,9 @@ impl Command for ExtensionSubcommand {
 /// backtrace; everything else is a user-facing message.
 fn dispatch_to_cmd_err(e: DispatchError) -> CommandError {
     match e {
-        DispatchError::Substrate(m) => CommandError::Other(
-            std::io::Error::new(std::io::ErrorKind::Other, m).into(),
-        ),
+        DispatchError::Substrate(m) => {
+            CommandError::Other(std::io::Error::new(std::io::ErrorKind::Other, m).into())
+        }
         other => CommandError::UserFacing(other.to_string()),
     }
 }
@@ -267,7 +266,10 @@ async fn run_streaming(mut response: StreamResponse) -> Result<(), CommandError>
     // `response` itself for one branch of the select while the body
     // keeps the stream end. The `events` field still moves into the
     // streaming loop below.
-    let cancel = std::mem::replace(&mut response.cancel, crate::dispatcher::CancelHandle::noop());
+    let cancel = std::mem::replace(
+        &mut response.cancel,
+        crate::dispatcher::CancelHandle::noop(),
+    );
     let cancel = Arc::new(cancel);
 
     let cancel_for_signal = cancel.clone();
@@ -291,8 +293,8 @@ async fn run_streaming(mut response: StreamResponse) -> Result<(), CommandError>
     while let Some(item) = events.next().await {
         match item {
             Ok(ev) => {
-                let line = serde_json::to_string(&ev.payload)
-                    .unwrap_or_else(|_| ev.payload.to_string());
+                let line =
+                    serde_json::to_string(&ev.payload).unwrap_or_else(|_| ev.payload.to_string());
                 // Re-acquire the lock per event so the lock guard
                 // never spans an `await`. Cheap; stdout is already
                 // line-buffered on a tty.

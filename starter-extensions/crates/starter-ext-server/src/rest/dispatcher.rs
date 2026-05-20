@@ -25,8 +25,8 @@
 //! declared property of the entry, so the trait reflects that.
 
 use std::pin::Pin;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -228,10 +228,9 @@ impl BuiltinRestDispatcher {
     }
 
     fn ensure_builtin(&self, extension: &ExtensionId) -> Result<(), DispatchError> {
-        let rec = self
-            .registry
-            .get(extension)
-            .ok_or_else(|| DispatchError::NotFound(format!("extension {:?}", extension.as_str())))?;
+        let rec = self.registry.get(extension).ok_or_else(|| {
+            DispatchError::NotFound(format!("extension {:?}", extension.as_str()))
+        })?;
         let manifest = rec
             .manifest
             .as_ref()
@@ -274,11 +273,9 @@ impl RestDispatcher for BuiltinRestDispatcher {
         let entry_dispatch = entry.dispatch_arc();
         let contribute_id_owned = contribute_id.to_owned();
         let result: starter_ext_spi::Result<serde_json::Value> =
-            tokio::task::spawn_blocking(move || {
-                entry_dispatch(&contribute_id_owned, &ctx, input)
-            })
-            .await
-            .map_err(|e| DispatchError::Substrate(format!("dispatch join: {e}")))?;
+            tokio::task::spawn_blocking(move || entry_dispatch(&contribute_id_owned, &ctx, input))
+                .await
+                .map_err(|e| DispatchError::Substrate(format!("dispatch join: {e}")))?;
         result.map_err(DispatchError::from_kernel)
     }
 
@@ -297,11 +294,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         })?;
 
         // Allocate a stream id and a cancel watch the handler observes.
-        let stream_id = StreamId(format!(
-            "rest-{}-{}",
-            extension.as_str(),
-            uuid_like_short(),
-        ));
+        let stream_id = StreamId(format!("rest-{}-{}", extension.as_str(), uuid_like_short(),));
         let (cancel_tx, cancel_rx) = watch::channel(false);
         let cancel = WatchCancel::new(cancel_rx);
         let (tx, rx) = mpsc::channel(self.event_channel_capacity);
@@ -396,7 +389,9 @@ fn build_ctx(events: mpsc::Sender<StreamEvent>, cancel: Arc<dyn Cancel>) -> CtxI
 struct StubSecrets;
 impl SecretsBackend for StubSecrets {
     fn get(&self, _name: &str) -> starter_ext_spi::Result<String> {
-        Err(Error::capability("secrets not wired in REST adapter Phase 5"))
+        Err(Error::capability(
+            "secrets not wired in REST adapter Phase 5",
+        ))
     }
 }
 
@@ -404,7 +399,9 @@ impl SecretsBackend for StubSecrets {
 struct StubHttpOut;
 impl HttpOutBackend for StubHttpOut {
     fn request(&self, _req: serde_json::Value) -> starter_ext_spi::Result<serde_json::Value> {
-        Err(Error::capability("http_out not wired in REST adapter Phase 5"))
+        Err(Error::capability(
+            "http_out not wired in REST adapter Phase 5",
+        ))
     }
 }
 
@@ -420,7 +417,9 @@ impl FsBackend for StubFs {
 struct StubWallClock;
 impl WallClockBackend for StubWallClock {
     fn now_unix_ms(&self) -> starter_ext_spi::Result<u64> {
-        Err(Error::capability("wall_clock not wired in REST adapter Phase 5"))
+        Err(Error::capability(
+            "wall_clock not wired in REST adapter Phase 5",
+        ))
     }
 }
 
@@ -436,9 +435,7 @@ impl Cancel for NeverCancel {
     fn is_cancelled(&self) -> bool {
         false
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(std::future::pending())
     }
 }
@@ -460,9 +457,7 @@ impl Cancel for WatchCancel {
     fn is_cancelled(&self) -> bool {
         *self.rx.borrow()
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(async move {
             let mut rx = self.rx.clone();
             // Already cancelled? Resolve immediately.
@@ -534,10 +529,7 @@ impl StreamResponse {
     /// the adapter's renderer can emit it as either an SSE `data:`
     /// field or an NDJSON line with one uniform JSON shape. Surfaced
     /// publicly for adapter tests that round-trip the wire shape.
-    pub fn to_notification(
-        stream_id: &StreamId,
-        payload: serde_json::Value,
-    ) -> StreamNotification {
+    pub fn to_notification(stream_id: &StreamId, payload: serde_json::Value) -> StreamNotification {
         StreamNotification::Event(starter_ext_spi::jsonrpc::StreamEvent {
             stream_id: stream_id.clone(),
             payload,

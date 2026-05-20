@@ -294,10 +294,7 @@ mod private {
     /// Host-side backing for [`super::HttpOutHandle`].
     pub trait HttpOutBackend: std::fmt::Debug + Send + Sync + 'static {
         /// Issue an outbound HTTP request encoded as JSON.
-        fn request(
-            &self,
-            req: serde_json::Value,
-        ) -> starter_ext_spi::Result<serde_json::Value>;
+        fn request(&self, req: serde_json::Value) -> starter_ext_spi::Result<serde_json::Value>;
     }
 
     /// Host-side backing for [`super::FsHandle`].

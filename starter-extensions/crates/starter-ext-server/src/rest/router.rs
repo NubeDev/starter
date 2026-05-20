@@ -254,9 +254,7 @@ where
         }
     };
     let path = mount_path(&path_prefix.map(str::to_string), &rest.path);
-    let sub: Router<S> = Router::new()
-        .route(&path, method_router)
-        .with_state(spec);
+    let sub: Router<S> = Router::new().route(&path, method_router).with_state(spec);
     let sub = apply_gate(sub, &rest.auth, &entry_label)?;
     Ok(router.merge(sub))
 }

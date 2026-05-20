@@ -75,7 +75,10 @@ pub(crate) async fn ui(
 
     // `If-None-Match` short-circuit. Match is byte-exact against the
     // quoted ETag.
-    if let Some(inm) = headers.get(header::IF_NONE_MATCH).and_then(|v| v.to_str().ok()) {
+    if let Some(inm) = headers
+        .get(header::IF_NONE_MATCH)
+        .and_then(|v| v.to_str().ok())
+    {
         if inm.split(',').any(|t| t.trim() == etag) {
             return Response::builder()
                 .status(StatusCode::NOT_MODIFIED)

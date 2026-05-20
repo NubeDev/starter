@@ -32,7 +32,11 @@ fn copy_bundle(src: &Path, dest: &Path) {
     fs::copy(src.join("block.yaml"), dest.join("block.yaml")).unwrap();
     fs::create_dir_all(dest.join("schemas")).unwrap();
     for name in ["echo_in.json", "echo_out.json"] {
-        fs::copy(src.join("schemas").join(name), dest.join("schemas").join(name)).unwrap();
+        fs::copy(
+            src.join("schemas").join(name),
+            dest.join("schemas").join(name),
+        )
+        .unwrap();
     }
     fs::create_dir_all(dest.join("docs")).unwrap();
     for name in ["echo.md", "README.md"] {

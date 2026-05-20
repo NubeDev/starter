@@ -165,7 +165,9 @@ impl Drop for CancelHandle {
 
 impl fmt::Debug for CancelHandle {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("CancelHandle").field("fired", &self.was_fired()).finish()
+        f.debug_struct("CancelHandle")
+            .field("fired", &self.was_fired())
+            .finish()
     }
 }
 
@@ -198,8 +200,10 @@ pub trait GrpcDispatcher: Send + Sync + 'static {
 // ---------------------------------------------------------------------------
 
 /// Closure shape for a unary gRPC handler.
-pub type GrpcHandler =
-    dyn Fn(serde_json::Value, &CtxInner) -> Result<serde_json::Value, Error> + Send + Sync + 'static;
+pub type GrpcHandler = dyn Fn(serde_json::Value, &CtxInner) -> Result<serde_json::Value, Error>
+    + Send
+    + Sync
+    + 'static;
 
 /// Closure shape for a server-streaming gRPC handler.
 pub type GrpcStreamingHandler =
@@ -276,7 +280,9 @@ impl BuiltinGrpcRegistry {
 
 impl fmt::Debug for BuiltinGrpcRegistry {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("BuiltinGrpcRegistry").field("len", &self.handlers.len()).finish()
+        f.debug_struct("BuiltinGrpcRegistry")
+            .field("len", &self.handlers.len())
+            .finish()
     }
 }
 
@@ -362,11 +368,7 @@ impl GrpcDispatcher for BuiltinGrpcDispatcher {
     ) -> Result<StreamResponse, DispatchError> {
         let handler = self.lookup_streaming(extension, contribute_id)?;
 
-        let stream_id = StreamId(format!(
-            "grpc-{}-{}",
-            extension.as_str(),
-            uuid_like_short(),
-        ));
+        let stream_id = StreamId(format!("grpc-{}-{}", extension.as_str(), uuid_like_short(),));
         let (cancel_tx, cancel_rx) = watch::channel(false);
         let cancel = WatchCancel::new(cancel_rx);
         let (tx, rx) = mpsc::channel::<StreamEvent>(self.event_channel_capacity);
@@ -579,7 +581,9 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
 struct StubSecrets;
 impl SecretsBackend for StubSecrets {
     fn get(&self, _name: &str) -> starter_ext_spi::Result<String> {
-        Err(Error::capability("secrets not wired in gRPC adapter Phase 8"))
+        Err(Error::capability(
+            "secrets not wired in gRPC adapter Phase 8",
+        ))
     }
 }
 
@@ -587,7 +591,9 @@ impl SecretsBackend for StubSecrets {
 struct StubHttpOut;
 impl HttpOutBackend for StubHttpOut {
     fn request(&self, _req: serde_json::Value) -> starter_ext_spi::Result<serde_json::Value> {
-        Err(Error::capability("http_out not wired in gRPC adapter Phase 8"))
+        Err(Error::capability(
+            "http_out not wired in gRPC adapter Phase 8",
+        ))
     }
 }
 
@@ -603,7 +609,9 @@ impl FsBackend for StubFs {
 struct StubWallClock;
 impl WallClockBackend for StubWallClock {
     fn now_unix_ms(&self) -> starter_ext_spi::Result<u64> {
-        Err(Error::capability("wall_clock not wired in gRPC adapter Phase 8"))
+        Err(Error::capability(
+            "wall_clock not wired in gRPC adapter Phase 8",
+        ))
     }
 }
 
@@ -619,9 +627,7 @@ impl Cancel for NeverCancel {
     fn is_cancelled(&self) -> bool {
         false
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(std::future::pending())
     }
 }
@@ -640,9 +646,7 @@ impl Cancel for WatchCancel {
     fn is_cancelled(&self) -> bool {
         *self.rx.borrow()
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(async move {
             let mut rx = self.rx.clone();
             if *rx.borrow() {

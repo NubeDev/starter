@@ -48,9 +48,7 @@ use axum::response::IntoResponse;
 use axum::response::Response;
 use axum::routing::get;
 use axum::Router;
-use http::header::{
-    HeaderValue, CACHE_CONTROL, CONTENT_TYPE, ETAG, IF_NONE_MATCH, VARY,
-};
+use http::header::{HeaderValue, CACHE_CONTROL, CONTENT_TYPE, ETAG, IF_NONE_MATCH, VARY};
 use http::StatusCode;
 use starter_spi::i18n::LanguageTag;
 
@@ -78,8 +76,7 @@ pub fn router(bundle: Arc<MessageBundle>) -> Router {
 fn manifest_bytes(bundle: &MessageBundle) -> Vec<u8> {
     // BTreeMap gives deterministic key order, which keeps the ETag
     // stable across processes regardless of insertion order.
-    let mut map: std::collections::BTreeMap<String, String> =
-        std::collections::BTreeMap::new();
+    let mut map: std::collections::BTreeMap<String, String> = std::collections::BTreeMap::new();
     for lang in bundle.languages() {
         if let Some(cat) = bundle.catalog(lang) {
             map.insert(lang.as_str().to_string(), cat.fingerprint());
@@ -301,7 +298,12 @@ mod tests {
     }
 
     async fn body_bytes(resp: Response) -> Vec<u8> {
-        resp.into_body().collect().await.unwrap().to_bytes().to_vec()
+        resp.into_body()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes()
+            .to_vec()
     }
 
     fn app() -> Router {
@@ -322,7 +324,13 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(r1.status(), StatusCode::OK);
-        let etag1 = r1.headers().get(ETAG).unwrap().to_str().unwrap().to_string();
+        let etag1 = r1
+            .headers()
+            .get(ETAG)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         let j1 = body_json(r1).await;
 
         // Repeat — same fingerprints, same ETag.
@@ -335,7 +343,13 @@ mod tests {
             )
             .await
             .unwrap();
-        let etag2 = r2.headers().get(ETAG).unwrap().to_str().unwrap().to_string();
+        let etag2 = r2
+            .headers()
+            .get(ETAG)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         let j2 = body_json(r2).await;
         assert_eq!(etag1, etag2);
         assert_eq!(j1, j2);
@@ -363,7 +377,13 @@ mod tests {
             )
             .await
             .unwrap();
-        let etag = r1.headers().get(ETAG).unwrap().to_str().unwrap().to_string();
+        let etag = r1
+            .headers()
+            .get(ETAG)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let r2 = app()
             .oneshot(
@@ -411,7 +431,13 @@ mod tests {
             )
             .await
             .unwrap();
-        let etag = r1.headers().get(ETAG).unwrap().to_str().unwrap().to_string();
+        let etag = r1
+            .headers()
+            .get(ETAG)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
 
         let r2 = app()
             .oneshot(
@@ -460,13 +486,24 @@ mod tests {
 
         let url = format!("/v1/i18n/catalogs/en-{fp}.json");
         let resp = app()
-            .oneshot(HttpRequest::builder().uri(&url).body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri(&url)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
         let cc = resp.headers().get(CACHE_CONTROL).unwrap().to_str().unwrap();
         assert_eq!(cc, CC_IMMUTABLE);
-        let etag = resp.headers().get(ETAG).unwrap().to_str().unwrap().to_string();
+        let etag = resp
+            .headers()
+            .get(ETAG)
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         assert_eq!(etag, format!("\"{fp}\""));
 
         // Body matches what the un-fingerprinted endpoint serves.
@@ -515,7 +552,12 @@ mod tests {
         let app = router(bundle);
         let url = format!("/v1/i18n/catalogs/en-GB-{fp}.json");
         let resp = app
-            .oneshot(HttpRequest::builder().uri(&url).body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri(&url)
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);

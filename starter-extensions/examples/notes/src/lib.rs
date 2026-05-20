@@ -79,9 +79,7 @@ impl NotesToolHandlers for Notes {
         let query = params
             .get("query")
             .and_then(Value::as_str)
-            .ok_or_else(|| {
-                starter_ext_spi::Error::validation("`query` (string) is required")
-            })?;
+            .ok_or_else(|| starter_ext_spi::Error::validation("`query` (string) is required"))?;
         Ok(search_notes(query))
     }
 }
@@ -160,9 +158,7 @@ pub fn add_note(params: &Value) -> starter_ext_sdk::Result<Value> {
         .get("body")
         .and_then(Value::as_str)
         .filter(|s| !s.is_empty())
-        .ok_or_else(|| {
-            starter_ext_spi::Error::validation("`body` (non-empty string) is required")
-        })?
+        .ok_or_else(|| starter_ext_spi::Error::validation("`body` (non-empty string) is required"))?
         .to_owned();
     let mut guard = store().lock().expect("notes store poisoned");
     let id = guard.len() as u64 + 1;

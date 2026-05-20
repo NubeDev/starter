@@ -112,8 +112,8 @@ impl ExtensionRegistry {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use starter_ext_spi::{ExtensionId, LifecycleState};
+    use std::path::PathBuf;
 
     fn validated_record(id: &str) -> ExtensionRecord {
         ExtensionRecord {
@@ -130,10 +130,7 @@ mod tests {
     fn install_then_lookup_returns_record() {
         let mut reg = ExtensionRegistry::new();
         let mut m = HashMap::new();
-        m.insert(
-            "com.acme.a".to_string(),
-            validated_record("com.acme.a"),
-        );
+        m.insert("com.acme.a".to_string(), validated_record("com.acme.a"));
         reg.install(m);
         assert!(reg.get_by_id_str("com.acme.a").is_some());
         assert_eq!(reg.list().len(), 1);

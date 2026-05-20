@@ -83,11 +83,7 @@ fn write_rest_bundle(root: &std::path::Path, id: &str) {
         "schemas/echo_in.json",
         br#"{ "type": "object", "required": ["msg"] }"#,
     );
-    write_file(
-        &dir,
-        "schemas/echo_out.json",
-        br#"{ "type": "object" }"#,
-    );
+    write_file(&dir, "schemas/echo_out.json", br#"{ "type": "object" }"#);
     write_file(
         &dir,
         "schemas/create_in.json",
@@ -107,8 +103,7 @@ fn load_registry(root: &std::path::Path) -> Arc<ExtensionRegistry> {
 /// `com.acme.rest` extension.
 fn rest_builtin_table(cancel_observer: Arc<AtomicBool>) -> Arc<BuiltinTable> {
     let mut table = BuiltinTable::new();
-    let extension_id =
-        starter_ext_spi::ExtensionId::new("com.acme.rest").unwrap();
+    let extension_id = starter_ext_spi::ExtensionId::new("com.acme.rest").unwrap();
     let cancel_obs = cancel_observer;
     let entry = BuiltinEntry::new(
         &["com.acme.rest.echo"],
@@ -127,8 +122,7 @@ fn rest_builtin_table(cancel_observer: Arc<AtomicBool>) -> Arc<BuiltinTable> {
                 // `ctx.cancel().is_cancelled()` flips. We mirror the
                 // flip into the test-observable atomic so the smoke
                 // test can assert it within the deadline.
-                let stream_id =
-                    StreamId(format!("test-{}", contribute_id));
+                let stream_id = StreamId(format!("test-{}", contribute_id));
                 for n in 0u64.. {
                     if ctx.cancel().is_cancelled() {
                         cancel_obs.store(true, Ordering::SeqCst);
@@ -163,9 +157,7 @@ fn rest_builtin_table(cancel_observer: Arc<AtomicBool>) -> Arc<BuiltinTable> {
     Arc::new(table)
 }
 
-fn build_test_app(
-    cancel_observer: Arc<AtomicBool>,
-) -> (axum::Router, tempfile::TempDir) {
+fn build_test_app(cancel_observer: Arc<AtomicBool>) -> (axum::Router, tempfile::TempDir) {
     let tmp = tempdir().unwrap();
     write_rest_bundle(tmp.path(), "com.acme.rest");
     let registry = load_registry(tmp.path());

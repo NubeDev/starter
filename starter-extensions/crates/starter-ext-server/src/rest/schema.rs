@@ -139,7 +139,9 @@ mod tests {
             "type": "object",
             "required": ["city", "units"]
         }));
-        assert!(c.check(&json!({ "city": "Sydney", "units": "metric" })).is_ok());
+        assert!(c
+            .check(&json!({ "city": "Sydney", "units": "metric" }))
+            .is_ok());
         let err = c.check(&json!({ "city": "Sydney" })).unwrap_err();
         assert!(err.contains("units"), "{err}");
     }

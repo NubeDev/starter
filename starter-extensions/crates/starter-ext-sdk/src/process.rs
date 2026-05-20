@@ -37,13 +37,11 @@ use std::time::Duration;
 use serde_json::json;
 use tokio::io::BufReader;
 
-use starter_ext_spi::{
-    jsonrpc::JSONRPC_VERSION, Capability, Error, Result,
-};
+use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, Result};
 
 use crate::ctx::{
-    CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend,
-    TracingBackend, WallClockBackend,
+    CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend, TracingBackend,
+    WallClockBackend,
 };
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
 
@@ -244,8 +242,8 @@ async fn write_value<W>(writer: &mut W, value: &serde_json::Value) -> Result<()>
 where
     W: tokio::io::AsyncWrite + Unpin,
 {
-    let body = serde_json::to_vec(value)
-        .map_err(|e| Error::transport(format!("serialise: {e}")))?;
+    let body =
+        serde_json::to_vec(value).map_err(|e| Error::transport(format!("serialise: {e}")))?;
     starter_jsonrpc_stdio::write_frame(writer, &body)
         .await
         .map_err(|e| Error::transport(format!("write: {e}")))

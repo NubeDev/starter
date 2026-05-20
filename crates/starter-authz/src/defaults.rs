@@ -7,10 +7,10 @@
 //!
 //! - `Reader`  → `read` on every registered resource.
 //! - `Writer`  → `read | create | update` on every registered
-//!               resource except the sensitive set
-//!               (`users | sessions | tokens | secrets |
-//!               oauth_identities`), where they may only update
-//!               their own row.
+//!   resource except the sensitive set
+//!   (`users | sessions | tokens | secrets |
+//!   oauth_identities`), where they may only update
+//!   their own row.
 //! - `Admin`   → `*` on every registered resource.
 //!
 //! Resource kinds are matched with `"*"` because resources are

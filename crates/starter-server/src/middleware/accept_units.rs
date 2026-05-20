@@ -429,14 +429,25 @@ mod tests {
         let resolver = Arc::new(StubResolver(imperial_prefs()));
         let app = app(resolver);
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/t").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/t")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
         // Vary header present and names Accept-Units.
-        let vary = resp.headers().get(VARY).expect("Vary header").to_str().unwrap();
+        let vary = resp
+            .headers()
+            .get(VARY)
+            .expect("Vary header")
+            .to_str()
+            .unwrap();
         assert!(
-            vary.split(',').any(|p| p.trim().eq_ignore_ascii_case("Accept-Units")),
+            vary.split(',')
+                .any(|p| p.trim().eq_ignore_ascii_case("Accept-Units")),
             "Vary did not list Accept-Units: {vary}"
         );
         let body = body_json(resp).await;
@@ -500,7 +511,12 @@ mod tests {
         let resolver = Arc::new(StubResolver(imperial_prefs()));
         let app = app(resolver);
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/t").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/t")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
@@ -512,15 +528,29 @@ mod tests {
         // quantity — protects the affine-inverse math against future
         // edits to normalize_for_storage.
         let registry: Arc<dyn UnitRegistry + Send + Sync> = Arc::new(StaticRegistry::new());
-        let ctx = UnitsCtx::new(
-            UnitsMode::Preferred,
-            Arc::new(imperial_prefs()),
-            registry,
-        );
+        let ctx = UnitsCtx::new(UnitsMode::Preferred, Arc::new(imperial_prefs()), registry);
         let cases = [
-            (Quantity::Temperature, 0.0, Unit::Celsius, Unit::Fahrenheit, 32.0),
-            (Quantity::Temperature, 100.0, Unit::Celsius, Unit::Fahrenheit, 212.0),
-            (Quantity::Length, 1.0, Unit::Meter, Unit::Foot, 3.280_839_895),
+            (
+                Quantity::Temperature,
+                0.0,
+                Unit::Celsius,
+                Unit::Fahrenheit,
+                32.0,
+            ),
+            (
+                Quantity::Temperature,
+                100.0,
+                Unit::Celsius,
+                Unit::Fahrenheit,
+                212.0,
+            ),
+            (
+                Quantity::Length,
+                1.0,
+                Unit::Meter,
+                Unit::Foot,
+                3.280_839_895,
+            ),
         ];
         for (q, v, src, expect_unit, expect_val) in cases {
             let (out, unit) = ctx.convert(q, v, src).unwrap();
@@ -548,12 +578,23 @@ mod tests {
             .route("/h", get(h))
             .layer(accept_units_layer(registry, resolver));
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/h").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/h")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         let vary = resp.headers().get(VARY).unwrap().to_str().unwrap();
-        let parts: Vec<_> = vary.split(',').map(|p| p.trim().to_ascii_lowercase()).collect();
-        assert!(parts.contains(&"accept-language".to_string()), "vary={vary}");
+        let parts: Vec<_> = vary
+            .split(',')
+            .map(|p| p.trim().to_ascii_lowercase())
+            .collect();
+        assert!(
+            parts.contains(&"accept-language".to_string()),
+            "vary={vary}"
+        );
         assert!(parts.contains(&"accept-units".to_string()), "vary={vary}");
     }
 }

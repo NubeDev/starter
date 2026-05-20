@@ -139,10 +139,7 @@ impl ExtensionAdminBuilder {
     /// Pre-populate the supervisor map. Called by the host immediately
     /// after `Loader::commit` returns, once supervisors have been
     /// spawned for every initially-enabled process record.
-    pub fn with_supervisors(
-        mut self,
-        supervisors: HashMap<String, SupervisorHandle>,
-    ) -> Self {
+    pub fn with_supervisors(mut self, supervisors: HashMap<String, SupervisorHandle>) -> Self {
         self.supervisors = supervisors;
         self
     }

@@ -64,8 +64,16 @@ fn stage_bundle() -> TempDir {
     )
     .unwrap();
     fs::write(root.join("docs/README.md"), "Weather extension\n").unwrap();
-    fs::write(root.join("docs/current.md"), "Get the current temperature.\n").unwrap();
-    fs::write(root.join("docs/live.md"), "Stream live temperature updates.\n").unwrap();
+    fs::write(
+        root.join("docs/current.md"),
+        "Get the current temperature.\n",
+    )
+    .unwrap();
+    fs::write(
+        root.join("docs/live.md"),
+        "Stream live temperature updates.\n",
+    )
+    .unwrap();
     tmp
 }
 
@@ -78,11 +86,11 @@ fn loaded_registry(tmp: &Path) -> Arc<ExtensionRegistry> {
     Arc::new(registry)
 }
 
-fn current_handler(
-    args: serde_json::Value,
-    _ctx: &CtxInner,
-) -> ExtResult<serde_json::Value> {
-    let city = args.get("city").and_then(|v| v.as_str()).unwrap_or("nowhere");
+fn current_handler(args: serde_json::Value, _ctx: &CtxInner) -> ExtResult<serde_json::Value> {
+    let city = args
+        .get("city")
+        .and_then(|v| v.as_str())
+        .unwrap_or("nowhere");
     Ok(serde_json::json!({ "city": city, "temp_c": 21.4 }))
 }
 
@@ -145,7 +153,10 @@ async fn list_methods_returns_each_contribute_grpc_entry() {
     assert_eq!(methods[0].method, "Current");
     assert_eq!(methods[0].service, "weather.v1.Weather");
     assert!(!methods[0].streaming);
-    assert_eq!(methods[0].description.trim(), "Get the current temperature.");
+    assert_eq!(
+        methods[0].description.trim(),
+        "Get the current temperature."
+    );
     assert_eq!(methods[0].proto_path, "proto/weather.proto");
     assert_eq!(methods[1].method, "Live");
     assert!(methods[1].streaming);
@@ -233,17 +244,16 @@ async fn invoke_stream_emits_one_event_per_handler_tick() {
         .unwrap();
     let mut stream = resp.into_inner();
     let mut frames = Vec::new();
-    while let Some(item) =
-        tokio::time::timeout(Duration::from_secs(2), stream.next()).await.unwrap()
+    while let Some(item) = tokio::time::timeout(Duration::from_secs(2), stream.next())
+        .await
+        .unwrap()
     {
         frames.push(item.unwrap());
     }
     assert_eq!(frames.len(), 4);
-    let first: serde_json::Value =
-        serde_json::from_str(&frames[0].payload_proto_json).unwrap();
+    let first: serde_json::Value = serde_json::from_str(&frames[0].payload_proto_json).unwrap();
     assert_eq!(first["payload"]["i"], 0);
-    let last: serde_json::Value =
-        serde_json::from_str(&frames[3].payload_proto_json).unwrap();
+    let last: serde_json::Value = serde_json::from_str(&frames[3].payload_proto_json).unwrap();
     assert_eq!(last["payload"]["i"], 3);
 }
 

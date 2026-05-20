@@ -222,10 +222,7 @@ mod tests {
         }
         let snap = ring.snapshot();
         assert_eq!(snap.len(), 3);
-        assert!(matches!(
-            snap[0].kind,
-            EventKind::Spawned { pid: 2 }
-        ));
+        assert!(matches!(snap[0].kind, EventKind::Spawned { pid: 2 }));
         assert!(matches!(snap[2].kind, EventKind::Spawned { pid: 4 }));
     }
 

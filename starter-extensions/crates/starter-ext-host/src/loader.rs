@@ -87,9 +87,8 @@ impl Loader {
             let dir_name = entry.file_name().to_string_lossy().into_owned();
             let manifest_path = bundle_dir.join("block.yaml");
             let parsed = match fs::read_to_string(&manifest_path) {
-                Ok(s) => serde_yaml::from_str::<Manifest>(&s).map_err(|e| {
-                    Error::manifest(format!("{}: {}", manifest_path.display(), e))
-                }),
+                Ok(s) => serde_yaml::from_str::<Manifest>(&s)
+                    .map_err(|e| Error::manifest(format!("{}: {}", manifest_path.display(), e))),
                 Err(e) => Err(Error::manifest(format!(
                     "{}: {}",
                     manifest_path.display(),
@@ -377,7 +376,10 @@ contributes:
 "#,
         );
         let recs = Loader::scan(tmp.path()).validate_all();
-        let bad = recs.iter().find(|r| r.id_hint == "com.acme.bad-ns").unwrap();
+        let bad = recs
+            .iter()
+            .find(|r| r.id_hint == "com.acme.bad-ns")
+            .unwrap();
         assert!(bad.is_failed());
         let good = recs.iter().find(|r| r.id_hint == "com.acme.good").unwrap();
         assert!(good.is_validated());

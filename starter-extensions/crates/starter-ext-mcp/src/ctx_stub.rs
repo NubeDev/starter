@@ -62,10 +62,7 @@ impl SecretsBackend for StubSecrets {
 #[derive(Debug)]
 struct StubHttpOut;
 impl HttpOutBackend for StubHttpOut {
-    fn request(
-        &self,
-        _req: serde_json::Value,
-    ) -> starter_ext_spi::Result<serde_json::Value> {
+    fn request(&self, _req: serde_json::Value) -> starter_ext_spi::Result<serde_json::Value> {
         Err(deny("http_out"))
     }
 }

@@ -50,15 +50,6 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │   │   ├── iana-time-zone v0.1.65
 │   │   ├── num-traits v0.2.19
 │   │   └── serde v1.0.228 (*)
-│   ├── icu_locale_core v2.2.0
-│   │   ├── displaydoc v0.2.5 (proc-macro)
-│   │   │   ├── proc-macro2 v1.0.106 (*)
-│   │   │   ├── quote v1.0.45 (*)
-│   │   │   └── syn v2.0.117 (*)
-│   │   ├── litemap v0.8.2
-│   │   ├── tinystr v0.8.3
-│   │   │   └── displaydoc v0.2.5 (proc-macro) (*)
-│   │   └── writeable v0.6.3
 │   ├── prometheus v0.14.0
 │   │   ├── cfg-if v1.0.4
 │   │   ├── fnv v1.0.7
@@ -112,9 +103,6 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │   │   │   └── syn v2.0.117 (*)
 │   │   └── tracing-core v0.1.36
 │   │       └── once_cell v1.21.4
-│   ├── uom v0.36.0
-│   │   ├── num-traits v0.2.19
-│   │   └── typenum v1.20.0
 │   ├── utoipa v5.5.0
 │   │   ├── indexmap v2.14.0
 │   │   │   ├── equivalent v1.0.2

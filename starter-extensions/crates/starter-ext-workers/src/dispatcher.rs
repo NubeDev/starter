@@ -97,8 +97,7 @@ impl WorkerError {
 /// `Ctx`; the worker's "input" is implicit (the scheduler fires it on
 /// a timer, not from operator input). Returns `Ok(())` on a successful
 /// run; `Err` triggers `on_error` handling.
-pub type WorkerHandler =
-    dyn Fn(&CtxInner) -> Result<(), Error> + Send + Sync + 'static;
+pub type WorkerHandler = dyn Fn(&CtxInner) -> Result<(), Error> + Send + Sync + 'static;
 
 /// The adapter ↔ kernel seam.
 #[async_trait]
@@ -132,12 +131,7 @@ impl BuiltinWorkerRegistry {
 
     /// Register a worker handler. Returns the registry for builder
     /// chaining.
-    pub fn register<F>(
-        mut self,
-        extension: ExtensionId,
-        worker_id: impl Into<String>,
-        f: F,
-    ) -> Self
+    pub fn register<F>(mut self, extension: ExtensionId, worker_id: impl Into<String>, f: F) -> Self
     where
         F: Fn(&CtxInner) -> Result<(), Error> + Send + Sync + 'static,
     {
@@ -373,9 +367,7 @@ impl Cancel for NeverCancel {
     fn is_cancelled(&self) -> bool {
         false
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(std::future::pending())
     }
 }
@@ -395,7 +387,9 @@ mod tests {
             Ok(())
         });
         let d = BuiltinWorkerDispatcher::new(Arc::new(reg));
-        d.run(&ext, "com.acme.x.w", Duration::from_secs(1)).await.unwrap();
+        d.run(&ext, "com.acme.x.w", Duration::from_secs(1))
+            .await
+            .unwrap();
         assert_eq!(counter.load(Ordering::SeqCst), 1);
     }
 
@@ -407,7 +401,9 @@ mod tests {
             Ok(())
         });
         let d = BuiltinWorkerDispatcher::new(Arc::new(reg));
-        let r = d.run(&ext, "com.acme.x.slow", Duration::from_millis(30)).await;
+        let r = d
+            .run(&ext, "com.acme.x.slow", Duration::from_millis(30))
+            .await;
         assert!(matches!(r, Err(WorkerError::Timeout(_))));
     }
 

@@ -11,7 +11,7 @@
 use std::collections::BTreeSet;
 
 use starter_i18n::catalog::Catalog;
-use starter_i18n::platform::{STARTER_EN_JSON, STARTER_ES_JSON, starter_en, starter_es};
+use starter_i18n::platform::{starter_en, starter_es, STARTER_EN_JSON, STARTER_ES_JSON};
 use starter_spi::i18n::MessageKey;
 
 fn keys(cat: &Catalog) -> BTreeSet<MessageKey> {
@@ -60,8 +60,8 @@ fn every_top_level_key_is_a_valid_message_key() {
     // `Catalog::from_json_str` succeeded above is the proof.
     // This test exists as an explicit, fail-loud guard so the
     // intent shows up in `cargo test` output.
-    starter_en();
-    starter_es();
+    let _ = starter_en();
+    let _ = starter_es();
 }
 
 #[test]

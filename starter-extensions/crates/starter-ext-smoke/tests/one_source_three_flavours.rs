@@ -106,13 +106,14 @@ fn hello_wasm_selects_only_wasm() {
 /// differ — that is the entire SCOPE R1 budget.
 #[test]
 fn hello_trait_impl_body_is_byte_identical_across_flavours() {
-    let builtin = std::fs::read_to_string(workspace_root().join("examples/hello-builtin/src/lib.rs"))
-        .unwrap();
+    let builtin =
+        std::fs::read_to_string(workspace_root().join("examples/hello-builtin/src/lib.rs"))
+            .unwrap();
     let process =
         std::fs::read_to_string(workspace_root().join("examples/hello-process/src/main.rs"))
             .unwrap();
-    let wasm = std::fs::read_to_string(workspace_root().join("examples/hello-wasm/src/lib.rs"))
-        .unwrap();
+    let wasm =
+        std::fs::read_to_string(workspace_root().join("examples/hello-wasm/src/lib.rs")).unwrap();
 
     fn extract_impl_body(src: &str) -> String {
         let start = src
@@ -149,6 +150,9 @@ fn hello_trait_impl_body_is_byte_identical_across_flavours() {
     let b = extract_impl_body(&builtin);
     let p = extract_impl_body(&process);
     let w = extract_impl_body(&wasm);
-    assert_eq!(b, p, "builtin and process trait impls must be byte-identical");
+    assert_eq!(
+        b, p,
+        "builtin and process trait impls must be byte-identical"
+    );
     assert_eq!(b, w, "builtin and wasm trait impls must be byte-identical");
 }

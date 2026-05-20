@@ -244,7 +244,10 @@ mod tests {
     fn default_wasi_category_set_is_empty() {
         let set = WasiCategorySet::default();
         for cat in WasiCategory::ALL {
-            assert!(!set.contains(*cat), "default-deny: {cat:?} must not be granted");
+            assert!(
+                !set.contains(*cat),
+                "default-deny: {cat:?} must not be granted"
+            );
         }
     }
 

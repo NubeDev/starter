@@ -286,6 +286,31 @@ retry are uniform.
 who renders shadcn primitives without extensions does not pay for
 the Module Federation runtime.
 
+**Named singletons (current set).** The host singleton registry
+contains, at minimum:
+
+| Singleton id | Source | Purpose |
+|---|---|---|
+| `react` | host runtime | one React per page |
+| `react-dom` | host runtime | matched to React |
+| `@nube/starter-ui-core/preferences` | `@nube/starter-ui-core` | host's resolved `PreferencesContext` (R9 of the prefs SCOPE) |
+| `@nube/starter-ui-core/i18n` | `@nube/starter-ui-core` | host's `react-intl` `IntlShape` (R9 of the prefs SCOPE) |
+
+Singleton ids match the **package + subpath** an extension would
+`import` if linked directly. Each is independently versioned by
+major; mismatch on any one fails registration for that extension
+without affecting others. Minor drift loads with a
+`extension.singleton_minor_drift` telemetry event; patch drift is
+silent. The SDK package (`@nube/starter-ext-sdk-ts`) versions in
+lockstep with the prefs/i18n singleton major.
+
+Extension authors read these singletons via the SDK hooks
+(`useHostPrefs`, `useHostTranslate`, `useHostFormatters`) rather
+than reaching into the singleton table directly. The SDK auto-
+prefixes message keys with the calling extension's id so
+`com.nube.hello/i18n/en.json` `greeting` resolves as
+`com.nube.hello.greeting` in the merged bundle.
+
 ### R12 — Comments explain *why*, never *what*. No session-progress chatter
 
 Same as starter R8. Doc-comments on every public item; no

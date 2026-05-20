@@ -179,8 +179,7 @@ where
                 .unwrap_or("")
                 .to_string();
 
-            let chosen =
-                pick_language(available.as_ref(), &raw, bundle.fallback().clone());
+            let chosen = pick_language(available.as_ref(), &raw, bundle.fallback().clone());
 
             // Determine whether the chosen tag was an exact match for
             // any quality-weighted entry of the parsed list. If so
@@ -317,7 +316,11 @@ mod tests {
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
-            resp.headers().get(CONTENT_LANGUAGE).unwrap().to_str().unwrap(),
+            resp.headers()
+                .get(CONTENT_LANGUAGE)
+                .unwrap()
+                .to_str()
+                .unwrap(),
             "es"
         );
         let vary = resp.headers().get(VARY).unwrap().to_str().unwrap();
@@ -332,15 +335,27 @@ mod tests {
     async fn missing_header_falls_back_to_en_and_sets_x_i18n_fallback_when_enabled() {
         let app = app(bundle(), true);
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/t").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/t")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
         assert_eq!(
-            resp.headers().get(CONTENT_LANGUAGE).unwrap().to_str().unwrap(),
+            resp.headers()
+                .get(CONTENT_LANGUAGE)
+                .unwrap()
+                .to_str()
+                .unwrap(),
             "en"
         );
-        let xfb = resp.headers().get(X_I18N_FALLBACK).expect("X-I18n-Fallback present");
+        let xfb = resp
+            .headers()
+            .get(X_I18N_FALLBACK)
+            .expect("X-I18n-Fallback present");
         assert_eq!(xfb.to_str().unwrap(), "en");
         assert_eq!(body_string(resp).await, "en|true");
     }
@@ -349,7 +364,12 @@ mod tests {
     async fn fallback_header_off_by_default() {
         let app = app(bundle(), false);
         let resp = app
-            .oneshot(HttpRequest::builder().uri("/t").body(Body::empty()).unwrap())
+            .oneshot(
+                HttpRequest::builder()
+                    .uri("/t")
+                    .body(Body::empty())
+                    .unwrap(),
+            )
             .await
             .unwrap();
         assert_eq!(resp.status(), StatusCode::OK);
@@ -372,10 +392,17 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(
-            resp.headers().get(CONTENT_LANGUAGE).unwrap().to_str().unwrap(),
+            resp.headers()
+                .get(CONTENT_LANGUAGE)
+                .unwrap()
+                .to_str()
+                .unwrap(),
             "en"
         );
-        let xfb = resp.headers().get(X_I18N_FALLBACK).expect("X-I18n-Fallback present");
+        let xfb = resp
+            .headers()
+            .get(X_I18N_FALLBACK)
+            .expect("X-I18n-Fallback present");
         assert_eq!(xfb.to_str().unwrap(), "en");
     }
 }

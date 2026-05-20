@@ -10,8 +10,7 @@
 //! wire frames.
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     let out_dir = std::env::var("OUT_DIR")?;
-    let descriptor_path =
-        std::path::PathBuf::from(out_dir).join("starter_ext_grpc_v1.bin");
+    let descriptor_path = std::path::PathBuf::from(out_dir).join("starter_ext_grpc_v1.bin");
     tonic_build::configure()
         .build_server(true)
         .build_client(true)

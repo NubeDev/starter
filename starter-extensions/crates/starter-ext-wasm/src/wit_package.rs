@@ -39,7 +39,12 @@ mod tests {
         // — the four post-R13 notifications must exist in the package
         // even when v0.1's host wires them as no-ops, so a future minor
         // adds the matching guest hooks without bumping the major.
-        for name in ["stream-event", "stream-end", "stream-error", "stream-cancel"] {
+        for name in [
+            "stream-event",
+            "stream-end",
+            "stream-error",
+            "stream-cancel",
+        ] {
             assert!(
                 WIT_PACKAGE.contains(name),
                 "expected {name:?} import reserved in the WIT package"

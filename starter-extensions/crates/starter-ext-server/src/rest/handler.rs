@@ -117,10 +117,7 @@ pub(crate) async fn non_streaming(
 /// content-type + heartbeat for free, and we emit a `retry:` field on
 /// the first frame (browser `EventSource` reads it as the reconnect
 /// delay).
-pub(crate) async fn sse(
-    State(spec): State<Arc<HandlerSpec>>,
-    body: Bytes,
-) -> Response<Body> {
+pub(crate) async fn sse(State(spec): State<Arc<HandlerSpec>>, body: Bytes) -> Response<Body> {
     let (input, schema_err) = parse_and_check(&spec, body);
     if let Some(resp) = schema_err {
         return resp;
@@ -186,10 +183,7 @@ pub(crate) async fn sse(
 }
 
 /// NDJSON handler — newline-delimited JSON streaming.
-pub(crate) async fn ndjson(
-    State(spec): State<Arc<HandlerSpec>>,
-    body: Bytes,
-) -> Response<Body> {
+pub(crate) async fn ndjson(State(spec): State<Arc<HandlerSpec>>, body: Bytes) -> Response<Body> {
     let (input, schema_err) = parse_and_check(&spec, body);
     if let Some(resp) = schema_err {
         return resp;
@@ -244,10 +238,7 @@ pub(crate) async fn ndjson(
 /// Decode + schema-check the request body. Returns the parsed input
 /// plus an optional response that the caller should return verbatim
 /// on a parse/validation failure.
-fn parse_and_check(
-    spec: &HandlerSpec,
-    body: Bytes,
-) -> (Value, Option<Response<Body>>) {
+fn parse_and_check(spec: &HandlerSpec, body: Bytes) -> (Value, Option<Response<Body>>) {
     match parse_body(&body) {
         Ok(input) => {
             if let Err(msg) = spec.request_schema.check(&input) {

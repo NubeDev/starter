@@ -130,6 +130,7 @@ async fn bearer_required_rejects_missing_token() {
 }
 
 #[tokio::test]
+#[allow(clippy::result_large_err)] // `tonic::Status` size is fixed by the interceptor signature.
 async fn bearer_required_accepts_valid_token() {
     let registry = Arc::new(ToolRegistry::new().register(EchoTool));
     let auth = GrpcAuth::Bearer(Arc::new(FixedAuthenticator { expected: "good" }));
@@ -150,6 +151,7 @@ async fn bearer_required_accepts_valid_token() {
 }
 
 #[tokio::test]
+#[allow(clippy::result_large_err)] // `tonic::Status` size is fixed by the interceptor signature.
 async fn bearer_required_rejects_wrong_token() {
     let registry = Arc::new(ToolRegistry::new().register(EchoTool));
     let auth = GrpcAuth::Bearer(Arc::new(FixedAuthenticator { expected: "good" }));

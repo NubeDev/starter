@@ -80,7 +80,10 @@ impl CapabilityGate {
     /// method, and `Err(Error::Capability)` for a refused one.
     pub fn check(&self, method: &str) -> Result<Option<&'static str>, Error> {
         // Substrate prefixes: never gated.
-        if SUBSTRATE_PREFIXES.iter().any(|p| method == *p || method.starts_with(&format!("{p}."))) {
+        if SUBSTRATE_PREFIXES
+            .iter()
+            .any(|p| method == *p || method.starts_with(&format!("{p}.")))
+        {
             return Ok(None);
         }
 
@@ -155,7 +158,9 @@ mod tests {
             .iter()
             .map(|c| match *c {
                 "secrets" => Capability::Secrets { prefixes: vec![] },
-                "http_out" => Capability::HttpOut { authorities: vec![] },
+                "http_out" => Capability::HttpOut {
+                    authorities: vec![],
+                },
                 "fs" => Capability::Fs { paths: vec![] },
                 "wall_clock" => Capability::WallClock { granted: true },
                 other => Capability::Custom {

@@ -35,9 +35,7 @@ use super::{Quantity, Unit};
 /// Field order follows the SCOPE per-series example (`quantity` before
 /// `unit`) so the openapi.json field ordering matches the SCOPE
 /// document.
-#[derive(
-    Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema,
-)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize, ToSchema)]
 pub struct UnitMetadata {
     /// The physical quantity carried by the values in scope. Closed
     /// enum — see [`Quantity`].

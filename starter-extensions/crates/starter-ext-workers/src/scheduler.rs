@@ -151,10 +151,10 @@ impl WorkersScheduler {
                     .insert((desc.extension.clone(), desc.worker_id.clone()), initial);
 
                 let notify = Arc::new(Notify::new());
-                notifies
-                    .lock()
-                    .unwrap()
-                    .insert((desc.extension.clone(), desc.worker_id.clone()), notify.clone());
+                notifies.lock().unwrap().insert(
+                    (desc.extension.clone(), desc.worker_id.clone()),
+                    notify.clone(),
+                );
 
                 let task = tokio::spawn(run_worker(
                     desc,
@@ -421,7 +421,11 @@ contributes:
         map.insert("com.acme.tick".to_string(), record);
         registry.install(map);
         registry.seal();
-        (Arc::new(registry), ext, "com.acme.tick.heartbeat".to_string())
+        (
+            Arc::new(registry),
+            ext,
+            "com.acme.tick.heartbeat".to_string(),
+        )
     }
 
     #[tokio::test]

@@ -125,24 +125,22 @@ async fn gate(
     }
 }
 
+/// Boxed future type returned by the [`require_permission`] gate closure.
+/// Factored out to keep the public return type readable; the `Pin<Box<dyn …>>`
+/// shape is forced on us by `axum::middleware::from_fn`'s closure-returns-future
+/// contract.
+type GateFuture = std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>;
+
 /// Re-exported alias so callers can write
 /// `.layer(require_permission(...))` matching the `require_role`
 /// shape. Equivalent to constructing a single-route `Router` and
 /// wrapping with [`with_permission`].
+#[allow(clippy::type_complexity)]
 pub fn require_permission(
     kind: &'static str,
     action: &'static str,
-) -> axum::middleware::FromFnLayer<
-    impl Fn(
-            Request<Body>,
-            Next,
-        ) -> std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
-        + Clone,
-    (),
-    (),
-> {
+) -> axum::middleware::FromFnLayer<impl Fn(Request<Body>, Next) -> GateFuture + Clone, (), ()> {
     from_fn(move |req: Request<Body>, next: Next| {
-        Box::pin(gate(kind, action, req, next))
-            as std::pin::Pin<Box<dyn std::future::Future<Output = Response> + Send>>
+        Box::pin(gate(kind, action, req, next)) as GateFuture
     })
 }

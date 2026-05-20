@@ -62,10 +62,7 @@ pub fn greet(
 
 /// Streaming `hellocli-tick` handler. Emits one event per logical
 /// tick; honours cancellation between ticks.
-pub fn tick(
-    params: Value,
-    ctx: &starter_ext_sdk::ctx::CtxInner,
-) -> starter_ext_sdk::Result<()> {
+pub fn tick(params: Value, ctx: &starter_ext_sdk::ctx::CtxInner) -> starter_ext_sdk::Result<()> {
     let count = params.get("count").and_then(Value::as_i64).unwrap_or(3);
     let label = params
         .get("label")

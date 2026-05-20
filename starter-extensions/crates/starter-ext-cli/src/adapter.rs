@@ -135,13 +135,12 @@ pub fn build_cli_commands(
     for (ext_id, bundle, cli) in entries {
         let entry_label = format!("{}:{}", ext_id.as_str(), cli.id);
         let schema_path = bundle.join(&cli.args_schema);
-        let schema_bytes = std::fs::read(&schema_path).map_err(|source| {
-            BuildCliError::SchemaIo {
+        let schema_bytes =
+            std::fs::read(&schema_path).map_err(|source| BuildCliError::SchemaIo {
                 entry: entry_label.clone(),
                 path: cli.args_schema.clone(),
                 source,
-            }
-        })?;
+            })?;
         let schema: serde_json::Value =
             serde_json::from_slice(&schema_bytes).map_err(|source| BuildCliError::SchemaJson {
                 entry: entry_label.clone(),
@@ -150,13 +149,12 @@ pub fn build_cli_commands(
             })?;
 
         let desc_path = bundle.join(&cli.description_file);
-        let description = std::fs::read_to_string(&desc_path).map_err(|source| {
-            BuildCliError::DescriptionIo {
+        let description =
+            std::fs::read_to_string(&desc_path).map_err(|source| BuildCliError::DescriptionIo {
                 entry: entry_label.clone(),
                 path: cli.description_file.clone(),
                 source,
-            }
-        })?;
+            })?;
         // Use the first non-empty line as the clap `about:` blurb;
         // the long help can come from the manifest's full file via
         // a future `long_about:` wiring.

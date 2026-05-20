@@ -49,7 +49,9 @@ pub enum BuildGrpcError {
     /// `(service, method)` pair. Surfaces both registrants so the
     /// operator sees one diagnostic instead of an opaque "duplicate"
     /// failure at request time.
-    #[error("(service, method) collision on `{service}/{method}` between {first:?} and {second:?}")]
+    #[error(
+        "(service, method) collision on `{service}/{method}` between {first:?} and {second:?}"
+    )]
     Collision {
         /// The gRPC service name involved in the collision.
         service: String,
@@ -95,9 +97,7 @@ pub enum BuildGrpcError {
 /// `(service, method)` collisions across extensions are returned as
 /// [`BuildGrpcError::Collision`] before any descriptor is produced —
 /// the caller never sees a partial set.
-pub fn build_grpc_methods(
-    registry: &ExtensionRegistry,
-) -> Result<Vec<GrpcMethod>, BuildGrpcError> {
+pub fn build_grpc_methods(registry: &ExtensionRegistry) -> Result<Vec<GrpcMethod>, BuildGrpcError> {
     // First pass: collision detection on `(service, method)`. Done
     // before any I/O so a duplicate entry doesn't waste a `read` on
     // the second registrant's description file.
@@ -125,7 +125,11 @@ pub fn build_grpc_methods(
                 });
             }
             seen.insert(key, label);
-            entries.push((extension_id.clone(), record.bundle_dir.clone(), entry.clone()));
+            entries.push((
+                extension_id.clone(),
+                record.bundle_dir.clone(),
+                entry.clone(),
+            ));
         }
     }
 
@@ -142,12 +146,13 @@ pub fn build_grpc_methods(
         })?;
 
         let desc_path = bundle.join(&entry.description_file);
-        let description =
-            std::fs::read_to_string(&desc_path).map_err(|source| BuildGrpcError::DescriptionIo {
+        let description = std::fs::read_to_string(&desc_path).map_err(|source| {
+            BuildGrpcError::DescriptionIo {
                 entry: entry_label.clone(),
                 path: entry.description_file.clone(),
                 source,
-            })?;
+            }
+        })?;
 
         out.push(GrpcMethod {
             extension: ext_id,

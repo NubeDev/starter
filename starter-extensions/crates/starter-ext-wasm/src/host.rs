@@ -144,8 +144,8 @@ impl WasmHost {
         // info noticeably enlarges compiled artefacts.
         cfg.debug_info(false);
 
-        let engine = Engine::new(&cfg)
-            .map_err(|e| Error::spawn(format!("wasmtime engine init: {e}")))?;
+        let engine =
+            Engine::new(&cfg).map_err(|e| Error::spawn(format!("wasmtime engine init: {e}")))?;
         Ok(Self {
             engine,
             caps: Arc::new(caps),
@@ -346,9 +346,7 @@ fn build_linker(
             WasiCategory::WallClock => {
                 use wasmtime_wasi::bindings;
                 bindings::clocks::wall_clock::add_to_linker_get_host(&mut linker, wasi_closure)
-                    .map_err(|e| {
-                        Error::spawn(format!("wasi:clocks/wall-clock add: {e}"))
-                    })?;
+                    .map_err(|e| Error::spawn(format!("wasi:clocks/wall-clock add: {e}")))?;
                 bindings::clocks::monotonic_clock::add_to_linker_get_host(
                     &mut linker,
                     wasi_closure,
@@ -363,9 +361,7 @@ fn build_linker(
                 )
                 .map_err(|e| Error::spawn(format!("wasi:filesystem/types add: {e}")))?;
                 bindings::filesystem::preopens::add_to_linker_get_host(&mut linker, wasi_closure)
-                    .map_err(|e| {
-                        Error::spawn(format!("wasi:filesystem/preopens add: {e}"))
-                    })?;
+                    .map_err(|e| Error::spawn(format!("wasi:filesystem/preopens add: {e}")))?;
             }
             WasiCategory::HttpOut => {
                 // `wasi:http` lives in a separate `wasmtime-wasi-http`
@@ -392,9 +388,11 @@ fn build_linker(
 /// wants for a `WasiView`-keyed binding. Identical shape to what
 /// `wasmtime-wasi`'s `add_to_linker_sync` uses internally — re-declared
 /// here so we can compose it per-category instead of all-at-once.
-fn wasi_state_closure(
-) -> impl Fn(&mut InstanceState) -> wasmtime_wasi::WasiImpl<&mut InstanceState> + Copy + Send + Sync + 'static
-{
+fn wasi_state_closure() -> impl Fn(&mut InstanceState) -> wasmtime_wasi::WasiImpl<&mut InstanceState>
+       + Copy
+       + Send
+       + Sync
+       + 'static {
     |t| wasmtime_wasi::WasiImpl(wasmtime_wasi::IoImpl(t))
 }
 
@@ -403,9 +401,11 @@ fn wasi_state_closure(
 /// `WasiImpl<...>`. The split is wasmtime-wasi's own; we re-declare
 /// the two closures so the type inference at the binding call sites
 /// stays unambiguous.
-fn io_state_closure(
-) -> impl Fn(&mut InstanceState) -> wasmtime_wasi::IoImpl<&mut InstanceState> + Copy + Send + Sync + 'static
-{
+fn io_state_closure() -> impl Fn(&mut InstanceState) -> wasmtime_wasi::IoImpl<&mut InstanceState>
+       + Copy
+       + Send
+       + Sync
+       + 'static {
     |t| wasmtime_wasi::IoImpl(t)
 }
 
@@ -415,8 +415,7 @@ mod tests {
     use crate::caps::WasiCategorySet;
 
     fn test_caps() -> Caps {
-        Caps::new(1_000_000, 16 * 1024 * 1024, Duration::from_millis(500))
-            .expect("test caps")
+        Caps::new(1_000_000, 16 * 1024 * 1024, Duration::from_millis(500)).expect("test caps")
     }
 
     #[test]

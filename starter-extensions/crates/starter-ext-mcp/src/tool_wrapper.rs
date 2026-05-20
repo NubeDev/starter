@@ -60,20 +60,16 @@ impl ExtensionToolBinding {
                     entry.description_file, e
                 ))
             })?;
-        let schema_bytes = std::fs::read_to_string(bundle_dir.join(&entry.input_schema))
-            .map_err(|e| {
-                Error::manifest(format!(
-                    "input_schema {:?}: {}",
-                    entry.input_schema, e
-                ))
+        let schema_bytes =
+            std::fs::read_to_string(bundle_dir.join(&entry.input_schema)).map_err(|e| {
+                Error::manifest(format!("input_schema {:?}: {}", entry.input_schema, e))
             })?;
-        let input_schema: serde_json::Value =
-            serde_json::from_str(&schema_bytes).map_err(|e| {
-                Error::manifest(format!(
-                    "input_schema {:?} is not valid JSON: {}",
-                    entry.input_schema, e
-                ))
-            })?;
+        let input_schema: serde_json::Value = serde_json::from_str(&schema_bytes).map_err(|e| {
+            Error::manifest(format!(
+                "input_schema {:?} is not valid JSON: {}",
+                entry.input_schema, e
+            ))
+        })?;
         Ok(Self {
             extension_id,
             tool_id: entry.id.clone(),
@@ -95,19 +91,17 @@ impl Tool for ExtensionToolBinding {
         }
     }
 
-    async fn invoke(
-        &self,
-        input: serde_json::Value,
-    ) -> starter_spi::Result<serde_json::Value> {
-        let entry = self.builtins.get(&self.extension_id).ok_or_else(|| {
-            starter_spi::Error::NotFound {
-                what: format!(
-                    "starter-ext-mcp: extension {:?} is not in the BuiltinTable — was \
+    async fn invoke(&self, input: serde_json::Value) -> starter_spi::Result<serde_json::Value> {
+        let entry =
+            self.builtins
+                .get(&self.extension_id)
+                .ok_or_else(|| starter_spi::Error::NotFound {
+                    what: format!(
+                        "starter-ext-mcp: extension {:?} is not in the BuiltinTable — was \
                      `register_static_table!` called for its crate?",
-                    self.extension_id.as_str()
-                ),
-            }
-        })?;
+                        self.extension_id.as_str()
+                    ),
+                })?;
         let result = entry.dispatch(&self.tool_id, &self.ctx, input);
         result.map_err(map_ext_error)
     }

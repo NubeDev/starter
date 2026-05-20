@@ -33,9 +33,7 @@ use std::time::Duration;
 
 use serde_json::json;
 use starter_ext_host::ExtensionRecord;
-use starter_ext_spi::{
-    jsonrpc::JSONRPC_VERSION, Error, ExtensionId, LifecycleState, Result,
-};
+use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Error, ExtensionId, LifecycleState, Result};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::{mpsc, watch};
@@ -347,9 +345,7 @@ impl SupervisorTask {
                 tracing::info!(target: "starter_ext_supervisor::stderr",
                     ext = %stderr_id.as_str(),
                     "{capped}");
-                stderr_events.push(EventKind::Stderr {
-                    line: capped,
-                });
+                stderr_events.push(EventKind::Stderr { line: capped });
             }
         });
 
@@ -394,10 +390,7 @@ impl SupervisorTask {
         let value: serde_json::Value = serde_json::from_slice(&frame)
             .map_err(|e| Error::transport(format!("init response not JSON: {e}")))?;
         let result = value.get("result").ok_or_else(|| {
-            Error::transport(format!(
-                "init response missing `result`: {}",
-                value
-            ))
+            Error::transport(format!("init response missing `result`: {}", value))
         })?;
         let parsed: InitReady = serde_json::from_value(result.clone())
             .map_err(|e| Error::transport(format!("init result shape: {e}")))?;

@@ -248,10 +248,8 @@ pub type CliHandler = dyn Fn(serde_json::Value, &CtxInner) -> Result<serde_json:
 /// polls `ctx.cancel().is_cancelled()` to honor SIGINT-driven cancel.
 /// Returns `Ok(())` on clean end-of-stream; `Err` aborts the stream
 /// and exits non-zero.
-pub type CliStreamingHandler = dyn Fn(serde_json::Value, &CtxInner) -> Result<(), Error>
-    + Send
-    + Sync
-    + 'static;
+pub type CliStreamingHandler =
+    dyn Fn(serde_json::Value, &CtxInner) -> Result<(), Error> + Send + Sync + 'static;
 
 /// Per-host map of CLI handlers keyed by `(extension_id, cli_id)`.
 ///
@@ -358,7 +356,11 @@ impl BuiltinCliDispatcher {
         extension: &ExtensionId,
         cli_id: &str,
     ) -> Result<Arc<CliHandler>, DispatchError> {
-        match self.registry.handlers.get(&(extension.clone(), cli_id.to_owned())) {
+        match self
+            .registry
+            .handlers
+            .get(&(extension.clone(), cli_id.to_owned()))
+        {
             Some(HandlerEntry::NonStreaming(h)) => Ok(h.clone()),
             Some(HandlerEntry::Streaming(_)) => Err(DispatchError::NotFound(format!(
                 "cli {cli_id:?} is registered as streaming; manifest says non-streaming"
@@ -376,7 +378,11 @@ impl BuiltinCliDispatcher {
         extension: &ExtensionId,
         cli_id: &str,
     ) -> Result<Arc<CliStreamingHandler>, DispatchError> {
-        match self.registry.handlers.get(&(extension.clone(), cli_id.to_owned())) {
+        match self
+            .registry
+            .handlers
+            .get(&(extension.clone(), cli_id.to_owned()))
+        {
             Some(HandlerEntry::Streaming(h)) => Ok(h.clone()),
             Some(HandlerEntry::NonStreaming(_)) => Err(DispatchError::NotFound(format!(
                 "cli {cli_id:?} is registered as non-streaming; manifest says streaming=stdout"
@@ -424,11 +430,7 @@ impl CliDispatcher for BuiltinCliDispatcher {
     ) -> Result<StreamResponse, DispatchError> {
         let handler = self.lookup_streaming(extension, contribute_id)?;
 
-        let stream_id = StreamId(format!(
-            "cli-{}-{}",
-            extension.as_str(),
-            uuid_like_short(),
-        ));
+        let stream_id = StreamId(format!("cli-{}-{}", extension.as_str(), uuid_like_short(),));
         let (cancel_tx, cancel_rx) = watch::channel(false);
         let cancel = WatchCancel::new(cancel_rx);
         let (tx, rx) = mpsc::channel::<StreamEvent>(self.event_channel_capacity);
@@ -656,7 +658,9 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
 struct StubSecrets;
 impl SecretsBackend for StubSecrets {
     fn get(&self, _name: &str) -> starter_ext_spi::Result<String> {
-        Err(Error::capability("secrets not wired in CLI adapter Phase 6"))
+        Err(Error::capability(
+            "secrets not wired in CLI adapter Phase 6",
+        ))
     }
 }
 
@@ -664,7 +668,9 @@ impl SecretsBackend for StubSecrets {
 struct StubHttpOut;
 impl HttpOutBackend for StubHttpOut {
     fn request(&self, _req: serde_json::Value) -> starter_ext_spi::Result<serde_json::Value> {
-        Err(Error::capability("http_out not wired in CLI adapter Phase 6"))
+        Err(Error::capability(
+            "http_out not wired in CLI adapter Phase 6",
+        ))
     }
 }
 
@@ -680,7 +686,9 @@ impl FsBackend for StubFs {
 struct StubWallClock;
 impl WallClockBackend for StubWallClock {
     fn now_unix_ms(&self) -> starter_ext_spi::Result<u64> {
-        Err(Error::capability("wall_clock not wired in CLI adapter Phase 6"))
+        Err(Error::capability(
+            "wall_clock not wired in CLI adapter Phase 6",
+        ))
     }
 }
 
@@ -696,9 +704,7 @@ impl Cancel for NeverCancel {
     fn is_cancelled(&self) -> bool {
         false
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(std::future::pending())
     }
 }
@@ -717,9 +723,7 @@ impl Cancel for WatchCancel {
     fn is_cancelled(&self) -> bool {
         *self.rx.borrow()
     }
-    fn cancelled<'a>(
-        &'a self,
-    ) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
+    fn cancelled<'a>(&'a self) -> Pin<Box<dyn std::future::Future<Output = ()> + Send + 'a>> {
         Box::pin(async move {
             let mut rx = self.rx.clone();
             if *rx.borrow() {
@@ -799,7 +803,13 @@ mod tests {
     async fn not_wired_dispatcher_returns_not_wired() {
         let d = NotWiredCliDispatcher;
         let id = ExtensionId::new("com.acme.x").unwrap();
-        let r = d.dispatch(&id, "com.acme.x.greet", serde_json::json!({}), Duration::from_secs(1))
+        let r = d
+            .dispatch(
+                &id,
+                "com.acme.x.greet",
+                serde_json::json!({}),
+                Duration::from_secs(1),
+            )
             .await;
         assert!(matches!(r, Err(DispatchError::NotWired(_))));
     }
@@ -807,14 +817,17 @@ mod tests {
     #[tokio::test]
     async fn builtin_dispatcher_round_trips_a_handler() {
         let ext = ExtensionId::new("com.acme.x").unwrap();
-        let reg = BuiltinCliRegistry::new().register(
-            ext.clone(),
-            "com.acme.x.echo",
-            |params, _ctx| Ok(params),
-        );
+        let reg =
+            BuiltinCliRegistry::new()
+                .register(ext.clone(), "com.acme.x.echo", |params, _ctx| Ok(params));
         let d = BuiltinCliDispatcher::new(Arc::new(reg));
         let r = d
-            .dispatch(&ext, "com.acme.x.echo", serde_json::json!({"k": 1}), Duration::from_secs(5))
+            .dispatch(
+                &ext,
+                "com.acme.x.echo",
+                serde_json::json!({"k": 1}),
+                Duration::from_secs(5),
+            )
             .await
             .unwrap();
         assert_eq!(r, serde_json::json!({"k": 1}));
@@ -823,14 +836,10 @@ mod tests {
     #[tokio::test]
     async fn builtin_dispatcher_times_out_long_handler() {
         let ext = ExtensionId::new("com.acme.x").unwrap();
-        let reg = BuiltinCliRegistry::new().register(
-            ext.clone(),
-            "com.acme.x.slow",
-            |_p, _ctx| {
-                std::thread::sleep(Duration::from_millis(500));
-                Ok(serde_json::json!(null))
-            },
-        );
+        let reg = BuiltinCliRegistry::new().register(ext.clone(), "com.acme.x.slow", |_p, _ctx| {
+            std::thread::sleep(Duration::from_millis(500));
+            Ok(serde_json::json!(null))
+        });
         let d = BuiltinCliDispatcher::new(Arc::new(reg));
         let r = d
             .dispatch(
@@ -849,7 +858,10 @@ mod tests {
         assert_eq!(DispatchError::NotFound("e".into()).exit_code(), 2);
         assert_eq!(DispatchError::Forbidden("e".into()).exit_code(), 3);
         assert_eq!(DispatchError::NotWired("e".into()).exit_code(), 4);
-        assert_eq!(DispatchError::Timeout(Duration::from_secs(1)).exit_code(), 5);
+        assert_eq!(
+            DispatchError::Timeout(Duration::from_secs(1)).exit_code(),
+            5
+        );
         assert_eq!(DispatchError::Substrate("e".into()).exit_code(), 70);
     }
 }

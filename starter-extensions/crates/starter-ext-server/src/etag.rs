@@ -41,10 +41,7 @@ impl EtagCache {
     /// Get an ETag for `path`, recomputing if mtime or size has changed.
     /// Returns `Ok((etag, bytes))` so the caller can stream the body
     /// without re-reading from disk.
-    pub(crate) async fn etag_and_bytes(
-        &self,
-        path: &Path,
-    ) -> std::io::Result<(String, Vec<u8>)> {
+    pub(crate) async fn etag_and_bytes(&self, path: &Path) -> std::io::Result<(String, Vec<u8>)> {
         let meta = tokio::fs::metadata(path).await?;
         if !meta.is_file() {
             return Err(std::io::Error::new(
@@ -80,17 +77,14 @@ impl EtagCache {
         hasher.update(&bytes);
         let digest = hasher.finalize();
         let etag = format!("\"{}\"", hex::encode(digest));
-        self.inner
-            .write()
-            .expect("etag cache poisoned")
-            .insert(
-                path.to_path_buf(),
-                Entry {
-                    etag: etag.clone(),
-                    mtime,
-                    size,
-                },
-            );
+        self.inner.write().expect("etag cache poisoned").insert(
+            path.to_path_buf(),
+            Entry {
+                etag: etag.clone(),
+                mtime,
+                size,
+            },
+        );
         Ok((etag, bytes))
     }
 }

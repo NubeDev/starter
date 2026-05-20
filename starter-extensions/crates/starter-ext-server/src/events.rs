@@ -85,10 +85,7 @@ pub(crate) async fn events(
 
     // Snapshot mode.
     let snapshot = handle.events();
-    let mut filtered: Vec<RingEvent> = snapshot
-        .into_iter()
-        .filter(|e| e.seq > q.after)
-        .collect();
+    let mut filtered: Vec<RingEvent> = snapshot.into_iter().filter(|e| e.seq > q.after).collect();
     if let Some(limit) = q.limit {
         let limit = limit.min(DEFAULT_LIMIT);
         if filtered.len() > limit {
@@ -161,10 +158,7 @@ fn sse_stream(
                 let new: Vec<RingEvent> =
                     snapshot.into_iter().filter(|e| e.seq >= cursor).collect();
                 if !new.is_empty() {
-                    let next_cursor = new
-                        .last()
-                        .map(|e| e.seq.wrapping_add(1))
-                        .unwrap_or(cursor);
+                    let next_cursor = new.last().map(|e| e.seq.wrapping_add(1)).unwrap_or(cursor);
                     return Some((new, (handle, next_cursor)));
                 }
                 if matches!(

@@ -105,9 +105,7 @@ fn format_rfc3339(t: SystemTime) -> String {
     let m = (rem / 60) % 60;
     let s = rem % 60;
     let (y, mo, d) = civil_from_days(days);
-    format!(
-        "{y:04}-{mo:02}-{d:02}T{h:02}:{m:02}:{s:02}.{millis:03}Z"
-    )
+    format!("{y:04}-{mo:02}-{d:02}T{h:02}:{m:02}:{s:02}.{millis:03}Z")
 }
 
 // "civil_from_days" — Howard Hinnant's algorithm. ~10 LoC; lets us

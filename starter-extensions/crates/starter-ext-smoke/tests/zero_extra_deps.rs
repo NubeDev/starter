@@ -56,8 +56,8 @@ struct ManifestShape {
 fn dep_keys(manifest_path: &Path) -> BTreeSet<String> {
     let text = std::fs::read_to_string(manifest_path)
         .unwrap_or_else(|e| panic!("read {manifest_path:?}: {e}"));
-    let parsed: ManifestShape = toml::from_str(&text)
-        .unwrap_or_else(|e| panic!("parse {manifest_path:?}: {e}"));
+    let parsed: ManifestShape =
+        toml::from_str(&text).unwrap_or_else(|e| panic!("parse {manifest_path:?}: {e}"));
     parsed.dependencies.keys().cloned().collect()
 }
 
