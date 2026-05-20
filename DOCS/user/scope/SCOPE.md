@@ -662,6 +662,164 @@ would justify reopening it.
   US-customary vs Imperial nuance is handled in the derivation
   table, not as a third variant.
 
+### Phase 1-5 decisions (locked)
+
+Locked in the `starter-prefs-i18n` job, stage 1. Each decision lists
+the rule it derives from and the trigger that would justify reopening
+it (per the WORKFLOW convention).
+
+**Phase 0 closure**
+
+- **D-0.1 — `starter-spi` deps `uom` + `icu_locale_core` move behind
+  default-off cargo features.** Adopt PHASE0-VERIFY.md recommendation
+  (b). New features: `units` (gates `uom` + the `starter_spi::units`
+  module) and `i18n` (gates `icu_locale_core` + the `starter_spi::i18n`
+  module). Defaults stay `["broadcast"]` — no `units`, no `i18n`.
+  `starter-prefs` enables `units`; `starter-i18n` enables `i18n`.
+  *Derives from:* workspace R5 ("default-features minimal"); SCOPE R4
+  ("starter-flow-spi baseline holds across Phase 0"). *Revisit
+  trigger:* a future starter crate needs the `Quantity` / `Unit` /
+  `LanguageTag` types without opting in via cargo feature — at which
+  point the gate should be reconsidered (likely by splitting the
+  pure-Rust types from the third-party adapter layer).
+- **D-0.2 — `starter-spi-deps.baseline.txt` re-captures against the
+  default-feature build** (`cargo tree -p starter-spi --edges normal`,
+  no `--all-features`). `uom`, `icu_locale_core`, and their
+  transitives (`displaydoc`, `litemap`, `tinystr`, `writeable`,
+  `num-traits`, `typenum`) drop out of the baseline.
+  `starter-flow-spi-deps.baseline.txt` stays as-is — F-0.1 closes
+  because the regression no longer exists. *Derives from:* D-0.1.
+  *Revisit trigger:* D-0.1 reopens.
+- **D-0.3 — Baseline capture script lives at
+  `DOCS/user/scope/capture-baseline.sh`.** Strips worktree paths from
+  the top-level crate lines so the file is portable across
+  `.codeless/worktrees/job-*` checkouts and CI nodes. The
+  `starter-flow-spi` baseline gets the same treatment in a separate
+  follow-up (tracked in TODO.md F-0.2 — closed once both baselines
+  re-captured through the script). *Derives from:* the
+  "byte-for-byte CI gate" posture in Phase 0's verification.
+  *Revisit trigger:* a baseline embeds a second worktree-sensitive
+  field that the current sed isn't handling.
+
+**Phase 1 — `starter-prefs`**
+
+- **D-1.1 — `PrefsStore` trait is sqlx::Pool-backed, not
+  `Repository<T>`.** Concrete shape: `trait PrefsStore { async fn
+  load_user(...); async fn load_org(...); async fn upsert_user(...);
+  async fn upsert_org(...); }` with a `SqlitePrefsStore` impl that
+  holds a `sqlx::SqlitePool`. *Derives from:* SCOPE Open-questions
+  block ("`Repository<T>` derive for prefs tables — deferred to
+  v0.2"); workspace R5 (minimal surface). *Revisit trigger:*
+  `starter-store-*` ships a `Repository<T>` derive consumers can
+  reuse without bespoke trait plumbing.
+- **D-1.2 — sqlite only for v1; Postgres deferred.** `starter-prefs`
+  ships a `sqlite` feature with `SqlitePrefsStore`. A
+  `postgres`/`PostgresPrefsStore` feature exists in the SCOPE
+  Crate-layout block by implication; landing the impl is a follow-up
+  job. Migrations under `starter_prefs` source name target SQLite
+  syntax; the SCOPE "BIGINT on Postgres" note carries forward into
+  the follow-up. *Derives from:* SCOPE Crate-layout block explicitly
+  lists `starter-store-sqlite`; workspace R5. *Revisit trigger:* a
+  consumer ships against Postgres and the sqlite path is no longer
+  enough.
+- **D-1.3 — `iso_currency` lands on `starter-prefs`, not
+  `starter-spi`.** Closes D-U0.3 from Phase 0. The crate uses
+  `iso_currency` for two paths: ISO 4217 code validation on
+  `PreferencesPatch.currency`, and the locale → currency derivation
+  table that powers `currency: "auto"`. *Derives from:* Phase 0
+  D-U0.3 ("ISO 4217 validation lives in `starter-prefs`, not
+  `starter-spi`"); workspace R5. *Revisit trigger:* a second crate
+  needs ISO 4217 validation — at which point `iso_currency` belongs
+  in a shared dep (likely `starter-spi` behind a `currency` feature).
+
+**Phase 2 — `Accept-Units` + per-series shape**
+
+- **D-2.1 — Per-series wire shape (R8) lands exactly as written in
+  SCOPE §R8.** Canonical form:
+  `{ "series": [{ "slot", "quantity", "unit", "points": [[ts_ms, value], …] }] }`.
+  Single-value reads: `{ "value", "unit", "quantity" }`. The
+  `points` tuple-of-arrays shape is starter-prefs-owned and ships
+  as a `ToSchema` DTO in `starter-prefs::dto::series` so the
+  OpenAPI doc captures it. *Derives from:* SCOPE R8.
+  *Revisit trigger:* a consumer ships timeseries on a different
+  shape and the metadata-hoisting principle has to be re-stated.
+- **D-2.2 — `UnitsCtx::convert(quantity, value, source_unit)` is
+  called at the handler / response-serialiser layer, never as a
+  body-rewriting middleware.** `accept_units_layer` inserts
+  `UnitsCtx` into request extensions; handlers opt in by calling
+  `ctx.convert(...)` on the values they emit. Response bodies are
+  not walked or rewritten. *Derives from:* SCOPE R6 (single
+  conversion layer per surface; middleware does **not** mutate
+  response bodies). *Revisit trigger:* a structured-body rewriter
+  ships under a different opt-in (e.g. the Phase 5 diagnostics
+  rewriter, which is scope-limited — see D-5.1).
+
+**Phase 3 — `starter-i18n`**
+
+- **D-3.1 — Catalog file format: plain ICU JSON keyed by
+  `MessageKey`.** Schema: `{ "<message_key>": "<ICU message
+  string>" }`, top-level object only, no nested namespaces in the
+  file itself (namespace lives in the key, e.g.
+  `"auth.signin.title"`). The loader is `serde_json` with
+  `#[serde(deny_unknown_fields)]` on the outer wrapper struct so
+  malformed catalogs fail at boot, not at lookup time. *Derives
+  from:* SCOPE Library-choices ("plain JSON catalogs, ICU
+  MessageFormat — no Fluent in v1"); workspace R7. *Revisit
+  trigger:* plural / gender rules outgrow ICU MessageFormat (Fluent
+  port) or a consumer needs namespaced sub-objects in the file.
+- **D-3.2 — Manifest fingerprint: `sha256` hex, first 16 chars.**
+  Computed over the canonicalised catalog JSON bytes (sorted keys,
+  no trailing newline). Embedded in the immutable URL:
+  `/v1/i18n/catalogs/{lang}-{fingerprint16}.json`. The manifest
+  endpoint returns `{ "<lang>": "<fingerprint16>" }`. *Derives
+  from:* SCOPE R5 ("content-hash URL for immutable caching");
+  workspace R7. *Revisit trigger:* 16 hex chars collide in
+  practice (≈ 18 quintillion buckets — not expected) or a stronger
+  hash becomes a deployment requirement.
+
+**Phase 4 — `@nube/starter-ui-core`**
+
+- **D-4.1 — `PreferencesProvider` state management: `react-query`
+  for the fetch + cache + invalidation seam, `zustand` for ephemeral
+  UI state (e.g. the Settings page form draft before save).**
+  Matches the existing `@nube/starter-ui-core` posture (workspace
+  R6). Query keys namespaced `['starter', 'prefs', ...]`. *Derives
+  from:* SCOPE TypeScript-surface block ("React Query + ETag
+  caching"); workspace R6. *Revisit trigger:* the workspace migrates
+  off react-query (TanStack split, RSC, …) — at which point the
+  same seam re-emerges under a new library name.
+- **D-4.2 — `IntlProvider` catalog loader is lazy per language,
+  manifest-driven.** Boot sequence: fetch `/v1/i18n/manifest` →
+  pick the user's resolved `language` from `PreferencesProvider` →
+  dynamic `import()` (or `fetch` against the fingerprinted URL) for
+  exactly that one language → hand the catalog to `react-intl`'s
+  `IntlProvider`. The unresolved English seed bundles ship in-tree
+  as a synchronous fallback so first paint never blocks on the
+  network. *Derives from:* SCOPE R5 (immutable-cache URL shape);
+  D-3.2. *Revisit trigger:* a consumer needs all languages
+  pre-loaded (e.g. an offline appliance) — at which point a
+  build-time bundling path lands alongside the lazy path.
+
+**Phase 5 — Diagnostics rewriter**
+
+- **D-5.1 — The rewriter touches exactly one envelope shape at
+  exactly two top-level paths.** Shape: `{ "diagnostic": { "code":
+  "<MessageKey>", "params": { … } } }`. Paths the rewriter looks at:
+  (i) the response body's top-level `diagnostic` key, and (ii) the
+  top-level `diagnostics` array (each element is the same
+  `{code, params}` shape). Nothing else in the body is read,
+  walked, or rewritten. SSE / chunked / `text/event-stream`
+  responses are bypassed unconditionally — they ship codes + params
+  and the consumer translates per event. The rewriter only runs when
+  the handler inserts a `DiagnosticBody` response extension; absence
+  of the extension is a no-op. Feature-gated on `starter-i18n`'s
+  `diagnostics` feature, default-off. *Derives from:* SCOPE R5
+  ("scope-limited; declared envelope shape only; documented
+  top-level paths; SSE not rewritten"). *Revisit trigger:* a
+  long-running-job endpoint emits a diagnostic envelope at a path
+  other than these two — at which point the path list grows by PR
+  on `starter-i18n` and the change is callout-worthy in the SCOPE.
+
 ## Consumer-defined quantities (v2)
 
 The closed-enum design (R4) is correct for v1 — every wire identifier
@@ -719,28 +877,44 @@ Open work and per-phase open items are tracked in
   [PHASE0-VERIFY.md](./PHASE0-VERIFY.md) §"starter-flow-spi
   baseline — REGRESSION FLAG" and the matching entry in
   [TODO.md](./TODO.md).
-- **Phase 1 — TODO.** `starter-prefs` crate: tables + 4 REST
-  endpoints + three-layer resolver + `"auto"` derivation +
-  `starter-client-rs` methods + a `starter-cli prefs` subcommand.
-  End-to-end against a sqlite store. Lands `iso_currency` (D-U0.3:
-  ISO 4217 validation lives here, not in `starter-spi`).
-- **Phase 2 — TODO.** `Accept-Units` middleware in `starter-server`
-  + per-series response shape (R8). Read-path conversion live;
-  storage stays canonical. Audit middleware to confirm no log line
-  ever sees a converted value (R6).
-- **Phase 3 — TODO.** `starter-i18n` crate: catalog loader,
-  `Accept-Language` middleware, `GET /v1/i18n/catalogs/{lang}` +
+- **Phase 1 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 1–7, commits `b644ebb` → `bdccc81`). `starter-prefs` crate:
+  tables + 4 REST endpoints + three-layer resolver + `"auto"`
+  derivation + `starter-client-rs` methods + a `starter-cli prefs`
+  subcommand. End-to-end against a sqlite store. Lands
+  `iso_currency` (D-U0.3: ISO 4217 validation lives here, not in
+  `starter-spi`).
+- **Phase 2 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 8–10, commits `c1bc53c` → `62fe8b2`). `Accept-Units`
+  middleware in `starter-server` + per-series response shape (R8).
+  Read-path conversion live; storage stays canonical. Canonical-only
+  logs audit harness in `starter-server/tests/canonical_logs.rs`.
+- **Phase 3 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 11–15, commits `ebaa4c5` → `0dae71e`). `starter-i18n`
+  crate: catalog loader, `Accept-Language` middleware,
+  `GET /v1/i18n/catalogs/{lang}` (+ content-hashed immutable form) +
   `/v1/i18n/manifest`, seed `en.json` + `es.json` covering
-  starter's own UI strings (auth, errors, settings page chrome).
-- **Phase 4 — TODO.** `@nube/starter-ui-core`:
+  starter-owned chrome (auth, errors, settings page).
+- **Phase 4 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 16–18, commits `dbbdd2d` → `09dcb15`). `@nube/starter-ui-core`:
   `PreferencesProvider`, `formatters.ts`, `IntlProvider`,
   `useTranslate`, Settings page wired into `starter-auth-users`'
-  account page. Re-export pure formatters + `useTranslate` for
+  account page. Pure formatters + `useTranslate` re-exported for
   consumer apps.
-- **Phase 5 — TODO.** Diagnostics rewriter (opt-in feature on
-  `starter-i18n`) for server-originated messages on long-running
-  jobs. Closes the one documented exception to client-side
-  translation.
+- **Phase 5 — DONE.** Landed via the `starter-prefs-i18n` job
+  (stages 19–20, commits `632ae40` → `d77d89f`). Scope-limited
+  diagnostics rewriter on `starter-i18n` behind a default-off
+  `diagnostics` cargo feature. Touches only the documented
+  `{ diagnostic: { code, params } }` envelope at documented top-
+  level paths; SSE / streaming bodies are never rewritten (R5).
+
+### Landed in `starter-prefs-i18n` job
+
+Phases 1–5 shipped as a single rollout (22 stages, head `febb6c3`
+plus stage-22 docs sweep). Verification: see
+[PHASES-1-5-VERIFY.md](./PHASES-1-5-VERIFY.md). Open caveats
+(starter-flow-spi baseline drift, pre-existing fmt drift) are
+recorded there so they are not re-discovered.
 
 ## Smoke tests (before merging)
 

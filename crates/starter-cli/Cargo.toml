@@ -22,6 +22,11 @@ tracing           = { workspace = true }
 [dev-dependencies]
 starter-server        = { workspace = true, features = ["testing"] }
 starter-observability = { workspace = true }
+starter-prefs         = { workspace = true, features = ["routes", "sqlite"] }
 tokio                 = { workspace = true, features = ["macros", "rt-multi-thread"] }
 prometheus            = { workspace = true }
 utoipa                = { workspace = true }
+axum                  = { workspace = true }
+sqlx                  = { workspace = true, features = ["sqlite", "runtime-tokio", "migrate"] }
+serde_json            = { workspace = true }
+tower                 = { workspace = true }

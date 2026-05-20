@@ -43,6 +43,15 @@ Commits `984a262` → `61921d4` (stages 1–7).
 
 ## Open follow-ups from Phase 0
 
+**Decision lock (stage 1 of `starter-prefs-i18n`).** F-0.1 resolves
+via PHASE0-VERIFY.md recommendation (b) — feature-gate `uom` +
+`icu_locale_core` on `starter-spi` behind default-off `units` /
+`i18n` features (SCOPE §"Phase 1-5 decisions (locked)" D-0.1).
+F-0.2 resolves via the capture script at
+[`capture-baseline.sh`](./capture-baseline.sh) (D-0.3). Both close
+once stage 2 lands the Cargo.toml + module cfg gates and re-captures
+the two baselines through the script.
+
 ### F-0.1 — `starter-flow-spi` baseline drift
 
 Severity: **must fix before Phase 1 lands** (Phase 1 will further

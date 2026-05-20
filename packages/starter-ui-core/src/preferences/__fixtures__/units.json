@@ -1,0 +1,29 @@
+{
+  "quantities": [
+    {
+      "quantity": "temperature",
+      "canonical": "celsius",
+      "allowed": ["celsius", "fahrenheit"]
+    },
+    {
+      "quantity": "pressure",
+      "canonical": "kilopascal",
+      "allowed": ["kilopascal", "psi", "bar"]
+    },
+    {
+      "quantity": "speed",
+      "canonical": "meter_per_second",
+      "allowed": ["meter_per_second", "kilometer_per_hour", "mile_per_hour", "knot"]
+    },
+    {
+      "quantity": "length",
+      "canonical": "meter",
+      "allowed": ["meter", "foot"]
+    },
+    {
+      "quantity": "mass",
+      "canonical": "kilogram",
+      "allowed": ["kilogram", "pound"]
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+[package]
+name        = "starter-i18n"
+description = "starter — internationalisation: catalog loader, language negotiation, translate bundle. See DOCS/user/scope/SCOPE.md Phase 3."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Workspace policy posture: default-features = []. A consumer that does
+# not opt into `routes` gets the locale-negotiation + catalog-loader
+# core only; no axum / no tower. Diagnostics rewriter lands at
+# Phase 5 behind its own (default-off) `diagnostics` feature.
+[features]
+default = []
+# `routes` pulls in the REST surface (GET /v1/i18n/catalogs/{lang},
+# GET /v1/i18n/manifest) plus the Accept-Language tower middleware.
+# Owned by SCOPE.md Phase 3 + the "API surface" block.
+routes = ["dep:axum", "dep:http", "dep:tower", "dep:futures", "dep:async-trait"]
+# Phase 5 — scope-limited diagnostics rewriter (opt-in response
+# extension). Builds on the same axum / tower stack as `routes`;
+# also pulls in `http-body-util` + `bytes` because the rewriter
+# buffers and re-emits the response body in the narrow case where
+# a handler opts in via the `DiagnosticBody` extension. Default-off
+# per SCOPE D-5.1; binaries that ship the rewriter typically also
+# enable `routes` so the `Accept-Language` middleware threads a
+# `LocaleCtx` upstream.
+diagnostics = [
+    "dep:axum",
+    "dep:http",
+    "dep:tower",
+    "dep:futures",
+    "dep:async-trait",
+    "dep:http-body-util",
+    "dep:bytes",
+]
+
+[dependencies]
+starter-spi = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+utoipa      = { workspace = true }
+tracing     = { workspace = true }
+
+# BCP-47 parsing. Used by `locale::pick_language` for the family /
+# fallback walk (per SCOPE R5). `starter-spi` exposes `LanguageTag`
+# but the negotiation logic needs to introspect the underlying
+# `LanguageIdentifier`, so we depend on the same crate directly.
+icu_locale_core = { workspace = true }
+
+# Catalog fingerprinting for content-hash URLs (SCOPE Phase 3 +
+# "Decisions" — sha256 hex prefix, 16 chars).
+sha2 = { workspace = true }
+
+# Catalog loader / bundle error types (`CatalogError`).
+thiserror = { workspace = true }
+
+# `routes` feature deps — only compiled when the `routes` feature is
+# active.
+axum        = { workspace = true, optional = true }
+http        = { workspace = true, optional = true }
+tower       = { workspace = true, optional = true }
+futures     = { workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }
+
+# `diagnostics` feature deps — body buffering for the opt-in
+# rewriter. Both are also pulled in transitively by axum, but
+# declaring them here keeps the dep-graph honest.
+http-body-util = { version = "0.1", optional = true }
+bytes          = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
+http-body-util = "0.1"
+# Stage 21 — `tests/add_a_language.rs` drives the `routes` feature's
+# Router via tower::ServiceExt and decodes JSON bodies. These are
+# already pulled in as feature-gated deps above; declaring them under
+# `[dev-dependencies]` keeps the integration test buildable when the
+# `routes` feature is enabled at test time.
+tower      = { workspace = true }
+http       = { workspace = true }
+axum       = { workspace = true }
+serde_json = { workspace = true }
