@@ -37,9 +37,11 @@ pub mod body;
 pub mod canonical;
 pub mod classifier;
 pub mod manager;
+pub mod metrics;
 pub mod resolver;
 
 pub use active::ActiveTopologies;
 pub use classifier::{EditKind, classify};
 pub use manager::{DefinitionManager, PublishError, PublishOutcome};
+pub use metrics::{DefinitionMetrics, DefinitionMetricsCell};
 pub use resolver::{TopologyResolver, TopologyResolverError};

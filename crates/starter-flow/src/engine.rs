@@ -226,6 +226,16 @@ pub struct Engine {
     /// [`starter_flow_spi::skill::SkillSelection::None`]). Hosts
     /// attach a real selector via [`Self::with_skill_selector`].
     skill_selector: Arc<dyn starter_flow_spi::skill::SkillSelector>,
+    /// HR-3 (`DOCS/flow/scope/hot-reload.md`): optional
+    /// [`crate::definition::DefinitionManager`] — the HR-1
+    /// publish chokepoint, HR-2 active-topology registry, HR-3
+    /// observability surface and definition bus. `None` means
+    /// the engine runs without hot-reload: hand-built
+    /// [`crate::propagator::FlowTopology`]s come in through
+    /// [`crate::run::FlowRunner`] directly, the way Phase 2
+    /// demos already do. Hosts wanting hot-reload attach a
+    /// manager via [`Self::with_definition_manager`].
+    definitions: Option<Arc<crate::definition::DefinitionManager>>,
 }
 
 impl Engine {
@@ -244,6 +254,7 @@ impl Engine {
             health: HealthHandle::new(),
             ai_runners: None,
             skill_selector: Arc::new(starter_flow_spi::skill::NullSkillSelector),
+            definitions: None,
         }
     }
 
@@ -302,6 +313,38 @@ impl Engine {
     /// this `Arc` into the run.
     pub fn run_store(&self) -> Option<&Arc<dyn SpiRunStore>> {
         self.run_store.as_ref()
+    }
+
+    /// Attach the hot-reload [`crate::definition::DefinitionManager`]
+    /// per `DOCS/flow/scope/hot-reload.md` HR-3. The manager owns
+    /// the publish chokepoint, the active-topology registry, the
+    /// definition bus, and the definition-layer metrics cell.
+    /// Hosts that don't want hot-reload simply don't attach one.
+    ///
+    /// Self-by-value builder mirrors the other `with_*` hooks.
+    pub fn with_definition_manager(
+        mut self,
+        manager: Arc<crate::definition::DefinitionManager>,
+    ) -> Self {
+        self.definitions = Some(manager);
+        self
+    }
+
+    /// Borrow the attached
+    /// [`crate::definition::DefinitionManager`] if any.
+    pub fn definitions(&self) -> Option<&Arc<crate::definition::DefinitionManager>> {
+        self.definitions.as_ref()
+    }
+
+    /// Subscribe to the definition bus, if a
+    /// [`crate::definition::DefinitionManager`] is attached.
+    /// Returns `None` when hot-reload isn't wired \u2014 callers must
+    /// degrade gracefully (no events to surface).
+    pub fn definition_events(
+        &self,
+    ) -> Option<tokio::sync::broadcast::Receiver<starter_flow_spi::definition::FlowDefinitionEvent>>
+    {
+        self.definitions.as_ref().map(|m| m.subscribe())
     }
 
     /// Read the engine's current health (D-F3.11). Lock-free; backed

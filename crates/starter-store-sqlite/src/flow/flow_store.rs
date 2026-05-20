@@ -60,8 +60,8 @@ impl FlowStore for SqliteFlowStore {
             }
         };
 
-        let row: (String,) = sqlx::query_as(
-            "SELECT body_json FROM flow_revisions \
+        let row: (String, String) = sqlx::query_as(
+            "SELECT body_json, source FROM flow_revisions \
              WHERE flow_id = ?1 AND revision_id = ?2",
         )
         .bind(&flow_id_s)
@@ -71,7 +71,7 @@ impl FlowStore for SqliteFlowStore {
         .map_err(|e| sqlx_to_flow(e, "flow_revision", revision_id.0.to_string()))?;
 
         let body = from_json::<serde_json::Value>("flow_revisions.body_json", &row.0)?;
-        Ok(FlowRevision::new(flow_id, revision_id, body))
+        Ok(FlowRevision::new(flow_id, revision_id, body).with_source(row.1))
     }
 
     async fn put(&self, revision: FlowRevision) -> FlowResult<FlowRevisionId> {
@@ -91,11 +91,12 @@ impl FlowStore for SqliteFlowStore {
         // engine-side guard.
         sqlx::query(
             "INSERT OR IGNORE INTO flow_revisions \
-             (flow_id, revision_id, body_json) VALUES (?1, ?2, ?3)",
+             (flow_id, revision_id, body_json, source) VALUES (?1, ?2, ?3, ?4)",
         )
         .bind(&flow_id_s)
         .bind(&revision_id_s)
         .bind(&body_json)
+        .bind(&revision.source)
         .execute(&mut *tx)
         .await
         .map_err(sqlx_backend)?;

@@ -497,16 +497,45 @@ pub struct FlowRevision {
     /// crystallise a concrete struct here; until then the
     /// engine + UI co-own the JSON schema.
     pub body: serde_json::Value,
+    /// Provenance tag from the hot-reload publish chokepoint
+    /// (`DefinitionSource::audit_tag` in `starter-flow`).
+    /// Persisted on the `flow_revisions` table per
+    /// `DOCS/flow/scope/hot-reload.md` HR3 (Replay/audit). Stored
+    /// as an opaque short string so the engine can evolve the
+    /// `DefinitionSource` enum without the store needing to know;
+    /// shapes like `"api"`, `"cli"`, `"file:/etc/flows/foo.json"`,
+    /// `"extension:com.example.tools"` are the contract today.
+    ///
+    /// Defaults to `"api"` so existing callers that construct a
+    /// `FlowRevision` directly do not need to be retrofitted; the
+    /// hot-reload chokepoint stamps the real source via
+    /// [`Self::with_source`].
+    #[serde(default = "FlowRevision::default_source")]
+    pub source: String,
 }
 
 impl FlowRevision {
-    /// Construct a [`FlowRevision`].
+    /// Construct a [`FlowRevision`] with the default
+    /// [`Self::source`] tag (`"api"`).
     pub fn new(flow_id: FlowId, revision_id: FlowRevisionId, body: serde_json::Value) -> Self {
         Self {
             flow_id,
             revision_id,
             body,
+            source: Self::default_source(),
         }
+    }
+
+    /// Builder-style override of [`Self::source`]. The hot-reload
+    /// publish chokepoint calls this with
+    /// `DefinitionSource::audit_tag` (see `starter-flow`).
+    pub fn with_source(mut self, source: impl Into<String>) -> Self {
+        self.source = source.into();
+        self
+    }
+
+    fn default_source() -> String {
+        "api".to_string()
     }
 }
 

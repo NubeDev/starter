@@ -27,7 +27,7 @@ use std::sync::Arc;
 
 use thiserror::Error;
 use tokio::sync::broadcast;
-use tracing::{debug, info, warn};
+use tracing::{Instrument, debug, info, info_span, warn};
 
 use starter_flow_spi::definition::{
     ApplyPolicy, DefinitionSource, EditKindTag, FlowDefinitionEvent,
@@ -39,6 +39,7 @@ use crate::definition::active::ActiveTopologies;
 use crate::definition::body::{self, FlowBody};
 use crate::definition::canonical::{body_hash, BodyHash};
 use crate::definition::classifier::{classify, EditKind};
+use crate::definition::metrics::DefinitionMetricsCell;
 use crate::definition::resolver::{TopologyResolver, TopologyResolverError};
 use crate::registry::NodeKindRegistry;
 
@@ -118,19 +119,10 @@ pub enum PublishError {
 pub struct DefinitionManager {
     store: Arc<dyn FlowStore>,
     kinds: Arc<NodeKindRegistry>,
-    /// Optional live graph store. When set, settings-only edits and
-    /// the settings half of mixed edits project onto live slots via
-    /// [`GraphStore::write_slot`] with [`WriteSlotOpts::config`].
-    /// When unset, the manager records the new revision and swaps
-    /// the active topology but cannot apply settings deltas —
-    /// useful in tools and tests that don't run a propagator.
     graph: Option<Arc<dyn GraphStore>>,
-    /// Per-flow [`ActiveTopology`] registry. Structural and mixed
-    /// edits install the freshly-resolved topology here; the engine
-    /// run path resolves through [`ActiveTopologies::get`] so
-    /// in-flight runs see new wiring on the next propagation step.
     active: Arc<ActiveTopologies>,
     events: broadcast::Sender<FlowDefinitionEvent>,
+    metrics: Arc<DefinitionMetricsCell>,
 }
 
 impl DefinitionManager {
@@ -157,6 +149,7 @@ impl DefinitionManager {
             graph: None,
             active: Arc::new(ActiveTopologies::new()),
             events,
+            metrics: DefinitionMetricsCell::new(),
         }
     }
 
@@ -183,6 +176,15 @@ impl DefinitionManager {
     /// reads see the freshest topology.
     pub fn active_topologies(&self) -> Arc<ActiveTopologies> {
         self.active.clone()
+    }
+
+    /// Borrow the per-engine definition-layer counter cell.
+    /// Hosts emitting Prometheus take a
+    /// [`crate::definition::metrics::DefinitionMetrics`] snapshot
+    /// via `metrics().snapshot()` and re-export under the names
+    /// `DOCS/flow/scope/hot-reload.md` Observability lists.
+    pub fn metrics(&self) -> Arc<DefinitionMetricsCell> {
+        self.metrics.clone()
     }
 
     /// Borrow the [`FlowStore`] this manager writes through.
@@ -249,6 +251,28 @@ impl DefinitionManager {
         body: serde_json::Value,
         source: DefinitionSource,
     ) -> Result<PublishOutcome, PublishError> {
+        // `flow.definition.publish` per the Observability section.
+        // `outcome` is recorded by `record_outcome` once the path
+        // resolves; `kind` is recorded once classified.
+        let span = info_span!(
+            "flow.definition.publish",
+            flow = %flow_id,
+            revision = tracing::field::Empty,
+            prev_head = tracing::field::Empty,
+            source = %source.audit_tag(),
+            kind = tracing::field::Empty,
+            outcome = tracing::field::Empty,
+        );
+        self.publish_inner(flow_id, body, source).instrument(span).await
+    }
+
+    async fn publish_inner(
+        &self,
+        flow_id: FlowId,
+        body: serde_json::Value,
+        source: DefinitionSource,
+    ) -> Result<PublishOutcome, PublishError> {
+        let span = tracing::Span::current();
         // Step 1: parse the typed body.
         let parsed: FlowBody = match body::parse_body(&body) {
             Ok(b) => b,
@@ -256,6 +280,8 @@ impl DefinitionManager {
                 let err = TopologyResolverError::BodyShape {
                     detail: e.to_string(),
                 };
+                span.record("outcome", "rejected");
+                self.metrics.add_rejected();
                 self.emit_rejected(&flow_id, &source, &err);
                 return Err(err.into());
             }
@@ -265,6 +291,9 @@ impl DefinitionManager {
         let topology = match TopologyResolver::resolve_body(&parsed, &flow_id, &self.kinds).await {
             Ok(t) => t,
             Err(e) => {
+                span.record("outcome", "rejected");
+                self.metrics.add_rejected();
+                self.metrics.add_resolve_failure();
                 self.emit_rejected(&flow_id, &source, &e);
                 return Err(e.into());
             }
@@ -284,12 +313,13 @@ impl DefinitionManager {
         if let Some(prev) = prev_revision.as_ref() {
             let head_hash = body_hash(&prev.body);
             if head_hash == draft_hash {
+                span.record("outcome", "short_circuited");
+                span.record("revision", &tracing::field::display(&prev.revision_id));
+                self.metrics.add_short_circuited();
                 debug!(
                     target: "starter_flow::definition",
-                    flow = %flow_id,
                     head = %prev.revision_id,
                     body_hash = %draft_hash,
-                    source = %source.audit_tag(),
                     "publish short-circuited: draft body hash matches head"
                 );
                 let _ = self.events.send(FlowDefinitionEvent::PublishShortCircuited {
@@ -311,7 +341,6 @@ impl DefinitionManager {
                 Err(e) => {
                     warn!(
                         target: "starter_flow::definition",
-                        flow = %flow_id,
                         head = %prev.revision_id,
                         error = %e,
                         "prev head body failed to re-parse; treating as Structural"
@@ -321,23 +350,23 @@ impl DefinitionManager {
             },
         };
         let kind_tag = edit.tag();
+        span.record("kind", tracing::field::debug(&kind_tag));
 
         // Step 5: write a fresh revision BEFORE any side-effects.
         let revision_id = FlowRevisionId::new();
-        let revision = FlowRevision::new(flow_id.clone(), revision_id, body);
+        let revision = FlowRevision::new(flow_id.clone(), revision_id, body)
+            .with_source(source.audit_tag());
         let written = self.store.put(revision).await?;
+        span.record("revision", &tracing::field::display(&written));
+        if let Some(prev) = prev_head.as_ref() {
+            span.record("prev_head", &tracing::field::display(prev));
+        }
 
         // Emit RevisionPublished FIRST so consumers observe the
         // logical order revision-committed → topology-mounted →
-        // settings-projected. Bus-driven UIs rely on this ordering
-        // to update their canvas before re-painting per-slot state.
+        // settings-projected.
         info!(
             target: "starter_flow::definition",
-            flow = %flow_id,
-            revision = %written,
-            prev_head = ?prev_head.as_ref().map(ToString::to_string),
-            source = %source.audit_tag(),
-            kind = ?kind_tag,
             body_hash = %draft_hash,
             "publish accepted: new flow revision written"
         );
@@ -376,22 +405,17 @@ impl DefinitionManager {
                 &edit,
             )
             .await;
+            self.metrics.add_swap();
         }
 
-        // HR3 order: swap first, then settings writes — so writes
-        // land in the new topology's slot graph. (The active
-        // topology is the same process-wide `InMemoryGraphStore`
-        // today, but the ordering contract is set now so the
-        // per-flow graph store HR7 may introduce can honour it
-        // without re-shuffling the publish path.)
         if !settings_writes.is_empty() {
             self.apply_settings(&flow_id, &settings_writes).await?;
         }
 
+        self.metrics.add_published();
+        span.record("outcome", "published");
         debug!(
             target: "starter_flow::definition",
-            flow = %flow_id,
-            revision = %written,
             settings_writes = settings_writes.len(),
             "publish dispatch complete"
         );
@@ -416,14 +440,21 @@ impl DefinitionManager {
         source: &DefinitionSource,
         edit: &EditKind,
     ) {
+        let span = info_span!(
+            "flow.definition.swap",
+            flow = %flow_id,
+            from_revision = ?prev_head.as_ref().map(ToString::to_string),
+            to_revision = %new_revision,
+            apply_policy = ?apply_policy,
+        );
+        let _enter = span.enter();
+
         self.active.install(flow_id.clone(), topology).await;
 
         match prev_head {
             None => {
                 info!(
                     target: "starter_flow::definition",
-                    flow = %flow_id,
-                    revision = %new_revision,
                     source = %source.audit_tag(),
                     "flow mounted (initial publish)"
                 );
@@ -432,13 +463,9 @@ impl DefinitionManager {
                     revision: new_revision,
                 });
             }
-            Some(prev) => {
+            Some(_) => {
                 info!(
                     target: "starter_flow::definition",
-                    flow = %flow_id,
-                    from_revision = %prev,
-                    to_revision = %new_revision,
-                    apply_policy = ?apply_policy,
                     edit_kind = ?edit.tag(),
                     "active topology swapped"
                 );
@@ -490,11 +517,15 @@ impl DefinitionManager {
         source: &DefinitionSource,
         err: &TopologyResolverError,
     ) {
-        warn!(
-            target: "starter_flow::definition",
+        let span = info_span!(
+            "flow.definition.resolve_failed",
             flow = %flow_id,
             source = %source.audit_tag(),
             error = %err,
+        );
+        let _enter = span.enter();
+        warn!(
+            target: "starter_flow::definition",
             "publish rejected"
         );
         let _ = self.events.send(FlowDefinitionEvent::Rejected {
