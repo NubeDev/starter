@@ -62,7 +62,7 @@ use starter_spi::ai::{
     ToolDef, ToolUse,
 };
 
-use crate::tool_call::ToolRegistry;
+use crate::tool_registry::ToolRegistry;
 
 /// Reverse-DNS kind id in the reserved `starter.flow.*` namespace.
 pub const KIND_ID: &str = "starter.flow.ai-agent";
