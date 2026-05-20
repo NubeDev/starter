@@ -17,13 +17,15 @@
 //! is re-exported here.
 
 mod convert;
+mod display;
 mod error;
 mod metadata;
 mod quantity;
 mod registry;
 mod unit;
 
-pub use convert::normalize_for_storage;
+pub use convert::{from_canonical, normalize_for_storage};
+pub use display::{convert_for_display, Converted};
 pub use error::UnitError;
 pub use metadata::UnitMetadata;
 pub use quantity::Quantity;

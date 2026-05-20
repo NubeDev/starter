@@ -78,6 +78,53 @@ const MASS: QuantityDef = QuantityDef {
     allowed_units: &[Unit::Kilogram, Unit::Pound],
 };
 
+const DURATION: QuantityDef = QuantityDef {
+    canonical: Unit::Second,
+    allowed_units: &[
+        Unit::Second,
+        Unit::Millisecond,
+        Unit::Minute,
+        Unit::Hour,
+        Unit::Day,
+    ],
+};
+
+const VOLUME: QuantityDef = QuantityDef {
+    canonical: Unit::CubicMeter,
+    allowed_units: &[
+        Unit::CubicMeter,
+        Unit::Liter,
+        Unit::Milliliter,
+        Unit::GallonUs,
+        Unit::FluidOunceUs,
+    ],
+};
+
+const ENERGY: QuantityDef = QuantityDef {
+    canonical: Unit::Joule,
+    allowed_units: &[Unit::Joule, Unit::Kilojoule, Unit::KilowattHour, Unit::Btu],
+};
+
+const POWER: QuantityDef = QuantityDef {
+    canonical: Unit::Watt,
+    allowed_units: &[Unit::Watt, Unit::Kilowatt, Unit::Horsepower],
+};
+
+const AREA: QuantityDef = QuantityDef {
+    canonical: Unit::SquareMeter,
+    allowed_units: &[Unit::SquareMeter, Unit::SquareFoot, Unit::Acre, Unit::Hectare],
+};
+
+const ANGLE: QuantityDef = QuantityDef {
+    canonical: Unit::Radian,
+    allowed_units: &[Unit::Radian, Unit::Degree],
+};
+
+const FREQUENCY: QuantityDef = QuantityDef {
+    canonical: Unit::Hertz,
+    allowed_units: &[Unit::Hertz, Unit::Kilohertz, Unit::Megahertz],
+};
+
 impl UnitRegistry for StaticRegistry {
     fn get(&self, quantity: Quantity) -> Option<&QuantityDef> {
         Some(match quantity {
@@ -86,6 +133,13 @@ impl UnitRegistry for StaticRegistry {
             Quantity::Speed => &SPEED,
             Quantity::Length => &LENGTH,
             Quantity::Mass => &MASS,
+            Quantity::Duration => &DURATION,
+            Quantity::Volume => &VOLUME,
+            Quantity::Energy => &ENERGY,
+            Quantity::Power => &POWER,
+            Quantity::Area => &AREA,
+            Quantity::Angle => &ANGLE,
+            Quantity::Frequency => &FREQUENCY,
         })
     }
 }

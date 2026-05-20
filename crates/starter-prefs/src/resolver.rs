@@ -470,6 +470,18 @@ fn unit_for_system(quantity: Quantity, system: UnitSystem) -> Option<Unit> {
         (Quantity::Length, UnitSystem::Imperial) => Unit::Foot,
         (Quantity::Mass, UnitSystem::Metric) => Unit::Kilogram,
         (Quantity::Mass, UnitSystem::Imperial) => Unit::Pound,
+        (Quantity::Volume, UnitSystem::Metric) => Unit::Liter,
+        (Quantity::Volume, UnitSystem::Imperial) => Unit::GallonUs,
+        (Quantity::Area, UnitSystem::Metric) => Unit::SquareMeter,
+        (Quantity::Area, UnitSystem::Imperial) => Unit::SquareFoot,
+        // Quantities with no metric/imperial split (duration, energy,
+        // power, angle, frequency) fall through to the hardcoded
+        // default in [`resolve_unit`].
+        (Quantity::Duration, _)
+        | (Quantity::Energy, _)
+        | (Quantity::Power, _)
+        | (Quantity::Angle, _)
+        | (Quantity::Frequency, _) => return None,
     })
 }
 
