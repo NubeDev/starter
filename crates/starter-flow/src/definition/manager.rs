@@ -148,6 +148,13 @@ pub struct DefinitionManager {
     events: broadcast::Sender<FlowDefinitionEvent>,
     metrics: Arc<DefinitionMetricsCell>,
     runs: Arc<RunRegistry>,
+    /// HR-6 graveyard of flows whose head currently fails to
+    /// resolve. Populated by `publish` and `boot_resume` when
+    /// the resolver errors and by `on_kind_deregistered` when a
+    /// deregister revokes a live topology; drained by
+    /// `on_kind_registered` when the missing kind shows up
+    /// (HR8 first paragraph).
+    failed: tokio::sync::RwLock<std::collections::HashMap<FlowId, FlowRevisionId>>,
 }
 
 impl DefinitionManager {
@@ -176,6 +183,7 @@ impl DefinitionManager {
             events,
             metrics: DefinitionMetricsCell::new(),
             runs: Arc::new(RunRegistry::new()),
+            failed: tokio::sync::RwLock::new(std::collections::HashMap::new()),
         }
     }
 
@@ -464,6 +472,10 @@ impl DefinitionManager {
             self.apply_settings(&flow_id, &settings_writes).await?;
         }
 
+        // HR-6: a successful publish supersedes any prior
+        // ResolveFailed state for this flow.
+        self.failed.write().await.remove(&flow_id);
+
         self.metrics.add_published();
         span.record("outcome", "published");
         debug!(
@@ -535,6 +547,11 @@ impl DefinitionManager {
         span.record("cancelled_runs", cancelled);
 
         let removed = self.active.remove(&flow_id).await.is_some();
+        // HR-6: deleting a flow also drops any ResolveFailed
+        // bookkeeping for it; a subsequent re-register of the
+        // missing kind must NOT remount a flow that was deleted
+        // in the meantime.
+        self.failed.write().await.remove(&flow_id);
         if removed {
             info!(
                 target: "starter_flow::definition",
@@ -687,10 +704,11 @@ impl DefinitionManager {
                         "boot_resume: failed to load head revision"
                     );
                     let _ = self.events.send(FlowDefinitionEvent::ResolveFailed {
-                        flow: flow_id,
+                        flow: flow_id.clone(),
                         revision: head,
                         error: e.to_string(),
                     });
+                    self.failed.write().await.insert(flow_id, head);
                     self.metrics.add_resolve_failure();
                     report.failed += 1;
                     continue;
@@ -699,6 +717,7 @@ impl DefinitionManager {
             match TopologyResolver::resolve(&revision, &self.kinds).await {
                 Ok(topology) => {
                     self.active.install(flow_id.clone(), topology).await;
+                    self.failed.write().await.remove(&flow_id);
                     info!(
                         target: "starter_flow::definition",
                         flow = %flow_id,
@@ -721,10 +740,11 @@ impl DefinitionManager {
                         "boot_resume: head revision failed to resolve"
                     );
                     let _ = self.events.send(FlowDefinitionEvent::ResolveFailed {
-                        flow: flow_id,
+                        flow: flow_id.clone(),
                         revision: head,
                         error: e.to_string(),
                     });
+                    self.failed.write().await.insert(flow_id, head);
                     self.metrics.add_resolve_failure();
                     report.failed += 1;
                 }
@@ -738,6 +758,162 @@ impl DefinitionManager {
             "boot_resume complete"
         );
         Ok(report)
+    }
+
+    /// HR-6 / HR8 first paragraph: a node kind was registered.
+    /// Walk every flow currently in `ResolveFailed` state and
+    /// re-attempt [`TopologyResolver::resolve`] against the live
+    /// `NodeKindRegistry`. Successful resolves install into
+    /// [`ActiveTopologies`] and emit
+    /// [`FlowDefinitionEvent::Mounted`].
+    ///
+    /// Returns the number of flows that successfully remounted.
+    /// Hosts call this from the wrapper around
+    /// [`crate::registry::NodeKindRegistry::register`] (the
+    /// registry itself doesn't depend on the definition layer).
+    pub async fn on_kind_registered(&self, _kind: &starter_flow_spi::node::KindId) -> usize {
+        // Snapshot the failed map so we can release the lock
+        // before doing async work.
+        let candidates: Vec<(FlowId, FlowRevisionId)> = {
+            let guard = self.failed.read().await;
+            guard.iter().map(|(f, r)| (f.clone(), *r)).collect()
+        };
+        let mut remounted = 0usize;
+        for (flow_id, revision_id) in candidates {
+            let revision = match self.store.load(flow_id.clone(), Some(revision_id)).await {
+                Ok(r) => r,
+                Err(_) => continue,
+            };
+            match TopologyResolver::resolve(&revision, &self.kinds).await {
+                Ok(topology) => {
+                    self.active.install(flow_id.clone(), topology).await;
+                    self.failed.write().await.remove(&flow_id);
+                    info!(
+                        target: "starter_flow::definition",
+                        flow = %flow_id,
+                        revision = %revision_id,
+                        "kind registration remounted previously-failed flow"
+                    );
+                    let _ = self.events.send(FlowDefinitionEvent::Mounted {
+                        flow: flow_id,
+                        revision: revision_id,
+                    });
+                    remounted += 1;
+                }
+                Err(_) => {
+                    // Still can't resolve — leave it in the
+                    // failed map for the next kind registration.
+                }
+            }
+        }
+        if remounted > 0 {
+            info!(
+                target: "starter_flow::definition",
+                remounted,
+                "on_kind_registered: walk complete"
+            );
+        }
+        remounted
+    }
+
+    /// HR-6 / HR8 second paragraph: a node kind was deregistered.
+    /// Walk every [`ActiveTopologies`] entry; for each topology
+    /// that references the kind:
+    ///
+    /// 1. Apply the flow's `apply_policy` per HR4 (
+    ///    `drain` lets in-flight runs finish on the snapshot they
+    ///    already hold — which is safe because behaviors live
+    ///    inside the topology snapshot, not in the registry;
+    ///    `restart` cancels via [`RunRegistry::cancel_for`];
+    ///    `live-migrate` falls back to `restart` for deregister
+    ///    because it is structural by definition).
+    /// 2. Remove the [`ActiveTopologies`] entry; add the flow's
+    ///    head to the `failed` map so a subsequent re-register
+    ///    of the kind can remount it.
+    /// 3. Emit [`FlowDefinitionEvent::KindRevoked`] and
+    ///    [`FlowDefinitionEvent::ResolveFailed`].
+    ///
+    /// Returns the number of flows revoked.
+    pub async fn on_kind_deregistered(
+        &self,
+        kind: &starter_flow_spi::node::KindId,
+    ) -> usize {
+        // Snapshot the flow ids first; releasing the lock keeps
+        // the walk lock-free during the async store load below.
+        let active_ids = self.active.snapshot_ids().await;
+        let mut revoked = 0usize;
+        for flow_id in active_ids {
+            let active = match self.active.get(&flow_id).await {
+                Some(a) => a,
+                None => continue,
+            };
+            let topology = active.load();
+            let references_kind = topology
+                .behaviors
+                .values()
+                .any(|behavior| behavior.kind_id() == kind);
+            if !references_kind {
+                continue;
+            }
+
+            // Read the flow's head + apply_policy.
+            let head = match self.store.head(flow_id.clone()).await {
+                Ok(Some(h)) => h,
+                _ => continue,
+            };
+            let apply_policy = match self.store.load(flow_id.clone(), Some(head)).await {
+                Ok(rev) => body::parse_body(&rev.body)
+                    .map(|b| b.apply_policy)
+                    .unwrap_or_default(),
+                Err(_) => ApplyPolicy::default(),
+            };
+
+            let cancelled = match apply_policy {
+                ApplyPolicy::Restart | ApplyPolicy::LiveMigrate => {
+                    self.runs.cancel_for(&flow_id, &head)
+                }
+                ApplyPolicy::Drain => 0,
+                _ => 0,
+            };
+
+            self.active.remove(&flow_id).await;
+            self.failed.write().await.insert(flow_id.clone(), head);
+
+            let span = info_span!(
+                "flow.definition.kind_revoked",
+                flow = %flow_id,
+                kind = %kind,
+                apply_policy = ?apply_policy,
+                cancelled_runs = cancelled,
+            );
+            let _enter = span.enter();
+            info!(
+                target: "starter_flow::definition",
+                "kind deregistration revoked active topology"
+            );
+
+            let _ = self.events.send(FlowDefinitionEvent::KindRevoked {
+                flow: flow_id.clone(),
+                kind: kind.to_string(),
+                apply_policy,
+            });
+            let _ = self.events.send(FlowDefinitionEvent::ResolveFailed {
+                flow: flow_id,
+                revision: head,
+                error: format!("kind `{kind}` was deregistered"),
+            });
+            self.metrics.add_resolve_failure();
+            revoked += 1;
+        }
+        revoked
+    }
+
+    /// Snapshot the set of flow ids currently tracked as
+    /// `ResolveFailed`. Exposed for tests and host introspection
+    /// (e.g. an admin endpoint that surfaces unmounted flows).
+    pub async fn failed_flows(&self) -> Vec<(FlowId, FlowRevisionId)> {
+        let guard = self.failed.read().await;
+        guard.iter().map(|(f, r)| (f.clone(), *r)).collect()
     }
 
     /// Project a settings delta onto the live [`GraphStore`].
@@ -1651,5 +1827,209 @@ mod tests {
             }
         }
         assert!(saw_failed, "ResolveFailed must be emitted for unresolvable head");
+    }
+
+    // -------- HR-6 tests --------
+
+    /// HR-6 / HR8 first paragraph: registering a previously-missing
+    /// kind remounts every flow that was stuck in `ResolveFailed`
+    /// because of it.
+    #[tokio::test]
+    async fn hr6_on_kind_registered_remounts_previously_failed_flows() {
+        // Build a manager whose registry is missing the kind; seed
+        // a failed flow via boot_resume on a shared store that
+        // already has a published head referencing the kind.
+        let store = MemStore::new();
+        let kinds_with = Arc::new(NodeKindRegistry::new());
+        kinds_with
+            .register(AnyKind::arc("com.example.any"))
+            .await
+            .unwrap();
+        let mgr_with = DefinitionManager::new(store.clone(), kinds_with);
+        let flow = FlowId::new("examples.hr6.remount").unwrap();
+        mgr_with
+            .publish(
+                flow.clone(),
+                serde_json::json!({
+                    "flow_id": "examples.hr6.remount",
+                    "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                    "links": []
+                }),
+                DefinitionSource::Api,
+            )
+            .await
+            .unwrap();
+
+        // Fresh manager, empty registry -> boot_resume records
+        // the flow as failed.
+        let kinds_empty = Arc::new(NodeKindRegistry::new());
+        let mgr = DefinitionManager::new(store, kinds_empty.clone());
+        let report = mgr.boot_resume().await.unwrap();
+        assert_eq!(report.failed, 1);
+        assert_eq!(mgr.failed_flows().await.len(), 1);
+        assert_eq!(mgr.active_topologies().len().await, 0);
+
+        // Register the kind, then notify the manager.
+        kinds_empty
+            .register(AnyKind::arc("com.example.any"))
+            .await
+            .unwrap();
+        let mut rx = mgr.subscribe();
+        let kind = KindId::new("com.example.any").unwrap();
+        let remounted = mgr.on_kind_registered(&kind).await;
+        assert_eq!(remounted, 1);
+        assert_eq!(mgr.active_topologies().len().await, 1);
+        assert!(mgr.failed_flows().await.is_empty());
+
+        // Mounted event on the bus.
+        let evt = timeout(Duration::from_millis(200), rx.recv()).await;
+        assert!(matches!(evt, Ok(Ok(FlowDefinitionEvent::Mounted { .. }))));
+    }
+
+    /// HR-6 / HR8 second paragraph: deregistering a kind revokes
+    /// every active topology that references it, transitions the
+    /// flow to `ResolveFailed`, and emits `KindRevoked`.
+    #[tokio::test]
+    async fn hr6_on_kind_deregistered_revokes_active_topology() {
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = FlowId::new("examples.hr6.revoke").unwrap();
+        mgr.publish(
+            flow.clone(),
+            serde_json::json!({
+                "flow_id": "examples.hr6.revoke",
+                "apply_policy": "drain",
+                "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                "links": []
+            }),
+            DefinitionSource::Api,
+        )
+        .await
+        .unwrap();
+        assert_eq!(mgr.active_topologies().len().await, 1);
+
+        let mut rx = mgr.subscribe();
+        let kind = KindId::new("com.example.any").unwrap();
+        let revoked = mgr.on_kind_deregistered(&kind).await;
+        assert_eq!(revoked, 1);
+        assert_eq!(mgr.active_topologies().len().await, 0);
+        assert_eq!(mgr.failed_flows().await.len(), 1);
+
+        let mut saw_revoked = false;
+        let mut saw_failed = false;
+        for _ in 0..4 {
+            match timeout(Duration::from_millis(200), rx.recv()).await {
+                Ok(Ok(FlowDefinitionEvent::KindRevoked {
+                    kind: k,
+                    apply_policy,
+                    ..
+                })) => {
+                    assert_eq!(k, "com.example.any");
+                    assert_eq!(apply_policy, ApplyPolicy::Drain);
+                    saw_revoked = true;
+                }
+                Ok(Ok(FlowDefinitionEvent::ResolveFailed { .. })) => saw_failed = true,
+                Ok(Ok(_)) => continue,
+                _ => break,
+            }
+        }
+        assert!(saw_revoked, "KindRevoked must be emitted");
+        assert!(saw_failed, "ResolveFailed must follow revocation");
+    }
+
+    /// HR-6: `restart` policy on revocation cancels every
+    /// in-flight `RunCancel` registered under the flow's head.
+    #[tokio::test]
+    async fn hr6_deregister_with_restart_cancels_in_flight_runs() {
+        use starter_flow_spi::Cancel;
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = FlowId::new("examples.hr6.restart").unwrap();
+        mgr.publish(
+            flow.clone(),
+            serde_json::json!({
+                "flow_id": "examples.hr6.restart",
+                "apply_policy": "restart",
+                "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                "links": []
+            }),
+            DefinitionSource::Api,
+        )
+        .await
+        .unwrap();
+        let head = mgr.store().head(flow.clone()).await.unwrap().unwrap();
+
+        let cancel = Arc::new(RunCancel::new());
+        let _guard = mgr.register_run(flow.clone(), head, Arc::clone(&cancel));
+
+        let kind = KindId::new("com.example.any").unwrap();
+        let revoked = mgr.on_kind_deregistered(&kind).await;
+        assert_eq!(revoked, 1);
+        assert!(cancel.is_cancelled());
+    }
+
+    /// HR-6: deregistering a kind not referenced by any active
+    /// topology is a no-op (no events, no failed entries).
+    #[tokio::test]
+    async fn hr6_deregister_unreferenced_kind_is_noop() {
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = FlowId::new("examples.hr6.noop").unwrap();
+        mgr.publish(
+            flow,
+            serde_json::json!({
+                "flow_id": "examples.hr6.noop",
+                "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                "links": []
+            }),
+            DefinitionSource::Api,
+        )
+        .await
+        .unwrap();
+        let other = KindId::new("com.example.unused").unwrap();
+        let revoked = mgr.on_kind_deregistered(&other).await;
+        assert_eq!(revoked, 0);
+        assert_eq!(mgr.active_topologies().len().await, 1);
+        assert!(mgr.failed_flows().await.is_empty());
+    }
+
+    /// HR-6: a successful republish supersedes a prior failure;
+    /// the flow no longer appears in `failed_flows()`.
+    #[tokio::test]
+    async fn hr6_successful_publish_clears_failed_entry() {
+        // First, drive a flow into the failed map via revocation.
+        let (mgr, _store, _graph) = build_manager_with_graph().await;
+        let flow = FlowId::new("examples.hr6.republish").unwrap();
+        mgr.publish(
+            flow.clone(),
+            serde_json::json!({
+                "flow_id": "examples.hr6.republish",
+                "nodes": [{"id": "boot.n", "kind": "com.example.any"}],
+                "links": []
+            }),
+            DefinitionSource::Api,
+        )
+        .await
+        .unwrap();
+        let kind = KindId::new("com.example.any").unwrap();
+        let revoked = mgr.on_kind_deregistered(&kind).await;
+        assert_eq!(revoked, 1);
+        assert_eq!(mgr.failed_flows().await.len(), 1);
+
+        // Republish — succeeds because the registry still holds
+        // the kind from build_manager_with_graph (deregister was
+        // only at the manager-walk level above).
+        mgr.publish(
+            flow.clone(),
+            serde_json::json!({
+                "flow_id": "examples.hr6.republish",
+                "nodes": [
+                    {"id": "boot.n", "kind": "com.example.any"},
+                    {"id": "boot.m", "kind": "com.example.any"}
+                ],
+                "links": []
+            }),
+            DefinitionSource::Api,
+        )
+        .await
+        .unwrap();
+        assert!(mgr.failed_flows().await.is_empty());
     }
 }

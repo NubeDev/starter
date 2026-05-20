@@ -128,6 +128,13 @@ impl ActiveTopologies {
     pub async fn is_empty(&self) -> bool {
         self.inner.read().await.is_empty()
     }
+
+    /// Snapshot the set of mounted flow ids. Used by HR-6 walks
+    /// (`on_kind_deregistered`) so the iteration can release the
+    /// map lock before doing async work per id.
+    pub async fn snapshot_ids(&self) -> Vec<FlowId> {
+        self.inner.read().await.keys().cloned().collect()
+    }
 }
 
 #[cfg(test)]
