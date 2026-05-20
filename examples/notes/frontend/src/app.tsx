@@ -8,6 +8,9 @@ import {
   useThemeEditorStore,
 } from "@nube/starter-ui-core/theme-editor";
 import { ThemeEditorPage } from "@nube/starter-ui-kit/theme-editor";
+import { SettingsPage } from "@nube/starter-ui-core/preferences";
+import { setPreferencesTelemetry } from "@nube/starter-ui-core/preferences";
+import { setI18nTelemetry } from "@nube/starter-ui-core/i18n";
 import { StarterClient } from "@nube/starter-client-ts";
 import { ExtensionHostProvider, ExtensionSlot } from "@nube/starter-ext-ui";
 
@@ -15,6 +18,8 @@ import { NotesClient, type Note } from "./notes-client.js";
 import { ExtensionsClient } from "./extensions-client.js";
 import { ExtensionsView } from "./extensions-view.js";
 import { createExtensionHost, loadExtensionRemotes } from "./extension-host.js";
+import { PrefsHostShell, PrefsProbe } from "./prefs-host.js";
+import { ExtensionCatalogLoader } from "./extension-catalog-loader.js";
 
 import {
   Button,
@@ -43,12 +48,46 @@ export function App() {
   );
 }
 
+/** Top-bar skeleton shown by `<PreferencesProvider>` while the
+ * initial `/v1/me/preferences` probe is in flight. Keeping the
+ * fallback inside the host (rather than inside the package) lets the
+ * branded chrome render — formatters still never see undefined
+ * prefs because no children mount until prefs resolve. */
+function PrefsLoadingSkeleton() {
+  return (
+    <main style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: 16,
+        }}
+        aria-busy="true"
+      >
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>notes</h1>
+        <span style={{ color: "var(--muted-foreground)", fontSize: "0.85rem" }}>
+          loading preferences…
+        </span>
+      </header>
+    </main>
+  );
+}
+
 function Shell() {
   const auth = useAuth();
 
   if (auth.status === "loading") return <p style={{ padding: 32 }}>checking session…</p>;
   if (auth.status === "unauthenticated") return <LoginForm />;
-  return <AuthenticatedApp />;
+  // Prefs + i18n live *inside* the auth boundary so they can read
+  // the bearer token off the shared client. The loading-contract
+  // fallback is the host's top-bar skeleton — branded chrome stays
+  // on screen while `/v1/me/preferences` resolves.
+  return (
+    <PrefsHostShell client={client} fallback={<PrefsLoadingSkeleton />}>
+      <AuthenticatedApp />
+    </PrefsHostShell>
+  );
 }
 
 function LoginForm() {
@@ -95,7 +134,7 @@ function LoginForm() {
 
 function AuthenticatedApp() {
   const auth = useAuth();
-  const [tab, setTab] = useState<"notes" | "extensions" | "theme">("notes");
+  const [tab, setTab] = useState<"notes" | "extensions" | "theme" | "settings">("notes");
   const [adminAvailable, setAdminAvailable] = useState(false);
 
   // One shared `ThemeTransport` for both the top-level hydration and
@@ -134,6 +173,40 @@ function AuthenticatedApp() {
     void loadExtensionRemotes(host).then(() => setHostReady(true));
   }, [host]);
 
+  // Stage-7 cross-cut — wire the two ui-core process-wide telemetry
+  // sinks to the host's console so `i18n.locale_fallback`,
+  // `i18n.message_missing`, and `prefs.broadcast_dropped` show up in
+  // dev tools. Production deployments swap these out for a real
+  // observability sink; the contract is the event names, not the
+  // transport (`examples/notes/user-pref.md` § Telemetry).
+  useEffect(() => {
+    const disposeI18n = setI18nTelemetry((event) => {
+      if (event.kind === "i18n.locale_fallback") {
+        // eslint-disable-next-line no-console
+        console.info(
+          `[notes][i18n.locale_fallback] ${event.requested} → ${event.picked}`,
+          { chain: event.chain },
+        );
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[notes][i18n.message_missing] ${event.key} (${event.language})`,
+          { extensionId: event.extensionId },
+        );
+      }
+    });
+    const disposePrefs = setPreferencesTelemetry((event) => {
+      // eslint-disable-next-line no-console
+      console.warn(`[notes][prefs.broadcast_dropped] ${event.reason}`, {
+        patch: event.patch,
+      });
+    });
+    return () => {
+      disposeI18n();
+      disposePrefs();
+    };
+  }, []);
+
   // Apply the live token map to the document root so the host UI
   // (notes, extensions tabs) reflects every theme change immediately.
   useEffect(() => {
@@ -155,11 +228,19 @@ function AuthenticatedApp() {
 
   return (
     <ExtensionHostProvider host={host}>
+      {/* Lazy-fetch each enabled extension's catalog for the active
+          language and merge into the host's <IntlProvider> (Stage 5
+          — examples/notes/user-pref.md § D-NP.8). Headless, no UI. */}
+      <ExtensionCatalogLoader client={client} />
       <main style={{ maxWidth: 720, margin: "2rem auto", padding: "0 1rem" }}>
         {/* Header */}
         <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
           <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>notes</h1>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            {/* Stage-1 prefs probe — one date + one temperature
+                rendered through the resolved prefs. Doubles as a
+                live indicator that the prefs surface is wired. */}
+            <PrefsProbe />
             <Badge variant={hostReady ? "success" : "secondary"}>
               {hostReady ? "● extensions ready" : "○ loading…"}
             </Badge>
@@ -186,6 +267,9 @@ function AuthenticatedApp() {
                 <TabsTrigger active={tab === "theme"} onClick={() => setTab("theme")}>
                   Theme
                 </TabsTrigger>
+                <TabsTrigger active={tab === "settings"} onClick={() => setTab("settings")}>
+                  Settings
+                </TabsTrigger>
               </TabsList>
             </Tabs>
           </div>
@@ -197,6 +281,8 @@ function AuthenticatedApp() {
             <ExtensionsView client={extensionsClient} />
           ) : tab === "theme" ? (
             <ThemeEditorPage transport={themeTransport} />
+          ) : tab === "settings" ? (
+            <SettingsPage />
           ) : (
             <NotesPanel />
           )}

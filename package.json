@@ -8,7 +8,8 @@
     "lint": "pnpm -r run lint",
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
-    "codegen": "pnpm --filter @nube/starter-client-ts run codegen"
+    "codegen": "pnpm --filter @nube/starter-client-ts run codegen",
+    "check:i18n": "node scripts/check-i18n.mjs"
   },
   "packageManager": "pnpm@9.0.0"
 }

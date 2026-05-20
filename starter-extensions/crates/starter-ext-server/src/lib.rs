@@ -61,6 +61,7 @@ mod admin;
 mod etag;
 mod events;
 mod factory;
+mod i18n;
 mod rest;
 mod router;
 mod routes;

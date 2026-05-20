@@ -20,6 +20,7 @@ import {
   useEffect,
   useMemo,
   useState,
+  useSyncExternalStore,
   type ReactNode,
 } from "react";
 import { RawIntlProvider as RawIntlProviderUntyped, createIntl, createIntlCache } from "react-intl";
@@ -35,13 +36,32 @@ const RawIntlProvider = RawIntlProviderUntyped as unknown as ComponentType<Provi
 import type { StarterClient } from "@nube/starter-client-ts";
 
 import { usePreferences } from "../preferences/provider.js";
+import {
+  extensionMessagesVersion,
+  getExtensionMessages,
+  subscribeExtensionMessages,
+} from "./extension-messages.js";
 import { fetchManifest, loadCatalogCached } from "./fetcher.js";
+import { I18N_FALLBACK_LANGUAGE, resolveLocale } from "./locale-fallback.js";
+import { emitI18nTelemetry } from "./telemetry.js";
 import type { Catalog, I18nManifest, LanguageTag } from "./types.js";
 
 /** Hard-coded fallback language per SCOPE R5 — every starter binary
  * ships `en` and falls back to it when the requested language is
- * unknown. */
-const FALLBACK_LANGUAGE: LanguageTag = "en";
+ * unknown. Re-exported from `./locale-fallback` so the resolver and
+ * the provider agree on the floor. */
+const FALLBACK_LANGUAGE: LanguageTag = I18N_FALLBACK_LANGUAGE;
+
+/** Module-level "have we already fired `i18n.locale_fallback` for this
+ * (requested,picked) pair this session?" guard — D-NP.6 says one
+ * event per session per locale, not one per render. Lives outside
+ * React state so tests can flush it via `_resetLocaleFallbackDedupeForTesting`. */
+const fallbackFired = new Set<string>();
+
+/** Test helper — wipe the per-session fallback de-dupe. */
+export function _resetLocaleFallbackDedupeForTesting(): void {
+  fallbackFired.clear();
+}
 
 /** Module-level memoised manifest fetch. The manifest is small and
  * the fingerprints inside are content-addressed, so caching for the
@@ -76,9 +96,41 @@ interface IntlContextValue {
   isLoading: boolean;
   /** Last fetch error, if any. */
   error: unknown;
+  /**
+   * The host's `IntlShape` from `react-intl`. Exposed here so an
+   * extension reading this context through the
+   * `@nube/starter-ui-core/i18n` singleton can call
+   * `intl.formatMessage(...)` against the host's catalog + language
+   * even when the extension bundles its own `react-intl` (in which
+   * case react-intl's internal context inside the extension is empty
+   * and `useIntl()` would not work). Typed as `unknown` so consumers
+   * that do not pull react-intl into their type graph (the SDK) can
+   * still narrow to a duck-typed call site. `null` while the first
+   * catalog probe is in flight.
+   */
+  intl: unknown;
+  /**
+   * Stage-7 cross-cut. Reporter the SDK's `useHostTranslate` calls
+   * when react-intl returned the key verbatim (no catalog hit). The
+   * SDK does not depend on `@nube/starter-ui-core`; piping the hook
+   * through the singleton handle lets the missing-key event flow
+   * into the host's single `setI18nTelemetry` sink without crossing
+   * the package boundary. Typed loosely so the SDK's duck-typed
+   * `HostIntlContextValue` accepts the same shape.
+   */
+  reportMissingKey: (key: string, extensionId: string) => void;
 }
 
-const IntlContext = createContext<IntlContextValue | undefined>(undefined);
+/**
+ * The React Context object backing `<IntlProvider>`. Exported so the
+ * host's Module-Federation runtime can register it as the
+ * `@nube/starter-ui-core/i18n` singleton — extensions then
+ * `useContext(handle.singletons["@nube/starter-ui-core/i18n"])` against
+ * the host's instance rather than bundling their own.
+ */
+export const IntlContext = createContext<IntlContextValue | undefined>(undefined);
+
+export type { IntlContextValue };
 
 export interface IntlProviderProps {
   /** Shared `StarterClient`. */
@@ -127,19 +179,28 @@ export function IntlProvider({
     };
   }, [client]);
 
-  // Pick fingerprint for the requested language; fall back to en.
+  // Pick fingerprint for the requested language via the D-NP.6
+  // left-truncating BCP-47 chain, floor `en`. The resolver also tells
+  // us *how* it picked so we can emit the one `i18n.locale_fallback`
+  // event per (requested,picked) per session.
   const pick = useMemo(() => {
     if (!manifest) return null;
-    if (manifest[requested]) {
-      return { language: requested, fingerprint: manifest[requested]! };
+    const r = resolveLocale(requested, manifest);
+    if (!r) return null;
+    if (r.fallbackUsed) {
+      const dedupeKey = `${requested}${r.picked}`;
+      if (!fallbackFired.has(dedupeKey)) {
+        fallbackFired.add(dedupeKey);
+        emitI18nTelemetry({
+          kind: "i18n.locale_fallback",
+          severity: "info",
+          requested,
+          picked: r.picked,
+          chain: r.chain,
+        });
+      }
     }
-    if (manifest[FALLBACK_LANGUAGE]) {
-      return {
-        language: FALLBACK_LANGUAGE,
-        fingerprint: manifest[FALLBACK_LANGUAGE]!,
-      };
-    }
-    return null;
+    return { language: r.picked, fingerprint: r.fingerprint };
   }, [manifest, requested]);
 
   // Load the catalog for the picked (language, fingerprint).
@@ -166,17 +227,42 @@ export function IntlProvider({
   }, [client, pick]);
 
   const activeLanguage = catalog?.language ?? FALLBACK_LANGUAGE;
-  const messages = catalog?.messages ?? defaultMessages ?? {};
 
-  const ctxValue = useMemo<IntlContextValue>(
-    () => ({
-      language: activeLanguage,
-      manifest,
-      isLoading,
-      error,
-    }),
-    [activeLanguage, manifest, isLoading, error],
+  // Extension catalogs (Stage 5 — `examples/notes/user-pref.md`). The
+  // host's `extension-host.ts` lazy-fetches each enabled extension's
+  // `i18n/<activeLanguage>.json` and calls `registerExtensionMessages`;
+  // we subscribe via `useSyncExternalStore` so the merged bundle
+  // rebuilds in the same commit as the registry mutation. The version
+  // counter is monotone so React's bail-out works without a deep diff.
+  const extVersion = useSyncExternalStore(
+    subscribeExtensionMessages,
+    extensionMessagesVersion,
+    extensionMessagesVersion,
   );
+  const extensionMessages = useMemo(
+    () => getExtensionMessages(activeLanguage),
+    // Re-read on every registry bump *and* on language switch.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [activeLanguage, extVersion],
+  );
+
+  // Merge order: platform (or defaults) ← extension messages. Platform
+  // keys cannot be shadowed because extension keys are namespaced by
+  // extension id before they reach the registry (D-NP.3); the spread
+  // order is therefore semantically irrelevant, but kept extensions-
+  // last so a future debug-only override could land without
+  // re-ordering.
+  const messages: Record<string, string> = useMemo(
+    () => ({
+      ...(catalog?.messages ?? defaultMessages ?? {}),
+      ...extensionMessages,
+    }),
+    [catalog, defaultMessages, extensionMessages],
+  );
+
+  // `intl` is built below from `(activeLanguage, messages)`; we
+  // declare the context value after it so the value memo can close
+  // over the `intl` instance.
 
   // Build an `IntlShape` directly so we sidestep react-intl's class-
   // component `<IntlProvider>` (whose typings don't line up with
@@ -191,7 +277,7 @@ export function IntlProvider({
         {
           locale: activeLanguage,
           defaultLocale: FALLBACK_LANGUAGE,
-          messages: messages as Record<string, string>,
+          messages,
           onError: () => {
             /* See above — silence missing-translation warnings
              * during the prefs→catalog race. */
@@ -200,6 +286,31 @@ export function IntlProvider({
         createIntlCache(),
       ),
     [activeLanguage, messages],
+  );
+
+  const reportMissingKey = useMemo(
+    () => (key: string, extensionId: string) => {
+      emitI18nTelemetry({
+        kind: "i18n.message_missing",
+        severity: "warn",
+        key,
+        language: activeLanguage,
+        extensionId,
+      });
+    },
+    [activeLanguage],
+  );
+
+  const ctxValue = useMemo<IntlContextValue>(
+    () => ({
+      language: activeLanguage,
+      manifest,
+      isLoading,
+      error,
+      intl,
+      reportMissingKey,
+    }),
+    [activeLanguage, manifest, isLoading, error, intl, reportMissingKey],
   );
 
   return (

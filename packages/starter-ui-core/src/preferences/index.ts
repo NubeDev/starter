@@ -37,6 +37,8 @@ export {
 
 export {
   DEFAULT_WORKSPACE,
+  PREFERENCES_BROADCAST_CHANNEL,
+  PreferencesContext,
   PreferencesProvider,
   usePreferences,
 } from "./provider.js";
@@ -44,6 +46,16 @@ export type {
   PreferencesContextValue,
   PreferencesProviderProps,
 } from "./provider.js";
+
+export {
+  setPreferencesTelemetry,
+  emitPreferencesTelemetry,
+  _resetPreferencesTelemetryForTesting,
+} from "./telemetry.js";
+export type {
+  PreferencesTelemetryEvent,
+  PreferencesTelemetrySink,
+} from "./telemetry.js";
 
 export { SettingsPage } from "./SettingsPage.js";
 export type { SettingsPageProps, ToastFn } from "./SettingsPage.js";

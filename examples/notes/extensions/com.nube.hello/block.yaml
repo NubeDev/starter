@@ -5,6 +5,18 @@ display_name: "Hello"
 description_file: docs/README.md
 authors: ["notes-example"]
 
+# Host interface dependencies (R6). The two singletons are declared
+# bare-string per `examples/notes/user-pref.md` § Stage 5 — the host
+# refuses to load the extension when either is missing from the
+# `ExtensionHostManager` singleton table (see
+# `examples/notes/frontend/src/extension-host.ts`). The actual semver
+# negotiation happens host-side via `RemoteFactory.singletons` inside
+# `ui/remoteEntry.js`; this list is the manifest's audit trail of the
+# capabilities the bundle depends on.
+requires:
+  - "@nube/starter-ui-core/preferences"
+  - "@nube/starter-ui-core/i18n"
+
 # Builtin runtime: the host's `server.rs` registers a `BuiltinTable`
 # entry for `com.nube.hello` with one closure handling both the tool
 # id and the REST id. `crate_name` is informational — the actual
@@ -31,3 +43,14 @@ contributes:
     entry: ui/remoteEntry.js
     exposes:
       - { name: HelloPanel, module: "./Panel", slot: sidebar }
+
+  # i18n catalogs (Stage 5, D-NP.7 / D-NP.8 — flat ICU MessageFormat,
+  # lazy-loaded per active language). The host serves these files via
+  # `GET /extensions/com.nube.hello/i18n/<lang>.json`; the SDK's
+  # `registerExtensionMessages` helper merges the response into the
+  # active `IntlProvider` bundle namespaced as `com.nube.hello.*` so
+  # the keys never collide with platform strings (D-NP.3).
+  i18n:
+    catalogs:
+      en: i18n/en.json
+      es: i18n/es.json

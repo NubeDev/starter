@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { matchingMajor, parseMajor } from "./singletons.js";
+import { matchingMajor, parseMajor, parseMinor } from "./singletons.js";
 
 describe("parseMajor", () => {
   it("parses common semver shapes", () => {
@@ -18,6 +18,23 @@ describe("parseMajor", () => {
     expect(parseMajor("")).toBeNull();
     expect(parseMajor("latest")).toBeNull();
     expect(parseMajor("x.y.z")).toBeNull();
+  });
+});
+
+describe("parseMinor", () => {
+  it("parses common semver shapes", () => {
+    expect(parseMinor("18.3.1")).toBe(3);
+    expect(parseMinor("1.0.0")).toBe(0);
+    expect(parseMinor("1.13.7")).toBe(13);
+    expect(parseMinor("^1.3.0")).toBe(3);
+    expect(parseMinor("~1.3.0")).toBe(3);
+    expect(parseMinor("1.0.0-rc.1")).toBe(0);
+  });
+
+  it("returns null for inputs without a minor component", () => {
+    expect(parseMinor("")).toBeNull();
+    expect(parseMinor("18")).toBeNull();
+    expect(parseMinor("latest")).toBeNull();
   });
 });
 
