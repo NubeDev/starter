@@ -6209,6 +6209,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "starter-spi",
+ "thiserror 1.0.69",
  "tokio",
  "tower 0.5.3",
  "tracing",

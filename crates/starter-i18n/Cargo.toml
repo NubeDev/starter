@@ -39,6 +39,9 @@ icu_locale_core = { workspace = true }
 # "Decisions" — sha256 hex prefix, 16 chars).
 sha2 = { workspace = true }
 
+# Catalog loader / bundle error types (`CatalogError`).
+thiserror = { workspace = true }
+
 # `routes` feature deps — only compiled when the `routes` feature is
 # active.
 axum  = { workspace = true, optional = true }
