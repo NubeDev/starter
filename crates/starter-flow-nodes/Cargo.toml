@@ -56,7 +56,9 @@ default = []
 
 transform         = []
 tool-call         = ["dep:tokio"]
-ai-agent          = ["dep:tokio"]
+# `ai-agent` reuses the `tool-call` body's `ToolRegistry` trait
+# (D-F4.5 / D-F4.9) so it cannot build without it.
+ai-agent          = ["dep:tokio", "tool-call"]
 branch            = []
 merge             = []
 gate              = []

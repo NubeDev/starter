@@ -1070,6 +1070,24 @@ discipline mirrors `starter-spi`.
   **Revisit trigger:** verbatim D-F4.12 — the body grows
   enough sub-features that per-feature gates become unwieldy,
   at which point the gates parameterise over the feature set.
+- **D-F5.6 — `ai-agent` body supports both `RunnerInput::Rest`
+  and `RunnerInput::Cli` via the `input_kind` config slot.**
+  Default `"rest"` preserves Phase 4 behaviour (LLM-loop with
+  host `ToolRegistry` tool dispatch); `"cli"` drives a
+  CLI-shape runner (e.g. `ClaudeRunner`) exactly once and
+  surfaces `RunResult::text` as the body's output. The CLI
+  path skips the host tool-dispatch path because the CLI
+  binary owns its own tool-call loop (MCP servers configured
+  via `CliCfg::mcp_*`); `turn_count` is always `1` on this
+  path and `SessionStore` reads/writes are no-ops (CLI resume
+  lives on `CliCfg::resume_id`, threaded by future work, not
+  by `SessionStore`). A new `AiAgent::with_input_kind(...)`
+  builder mirrors the `with_provider_id` Phase-4 workaround
+  so hosts can pin the kind at construction time until the
+  propagator can route arbitrary config slots. **Revisit
+  trigger:** a third input kind appears (e.g. `Stream`), at
+  which point the slot becomes an open enum and the body
+  factors out a `RunnerDispatch` trait.
 
 ## Open questions
 
