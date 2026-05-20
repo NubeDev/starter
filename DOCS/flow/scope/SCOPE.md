@@ -995,6 +995,81 @@ discipline mirrors `starter-spi`.
   feature. **Revisit trigger:** the body grows enough sub-features
   that per-feature gates become unwieldy — at which point the
   gate is parameterised over the feature set.
+- **D-F5.1 — `trigger.explicit` body lives in
+  `crates/starter-flow-nodes/src/trigger_explicit.rs` behind a
+  new default-off `trigger-explicit` cargo feature on
+  `starter-flow-nodes`.** Mirrors the D-F4.1 posture verbatim:
+  feature-off path stays adk-rust-free trivially, headless
+  appliance preserved. The body exposes a host-side
+  `fire(payload: SlotMap)` handle via a per-channel
+  `tokio::sync::mpsc` pair; the registry trait
+  `TriggerChannelRegistry` is local to the body file (no SPI
+  edit — the registry is opaque to the engine, only the body
+  resolves channels). Mandatory config slot `channel_id`
+  (reverse-DNS `KindId`) lets a host distinguish multiple
+  explicit triggers by binding each to a separate Sender. No
+  axum/cron/event-bus substrate; that's `trigger.{webhook,
+  schedule, event}` territory for a follow-up job. **Revisit
+  trigger:** a consumer needs cross-process fire (e.g. a CLI
+  fires a flow running in a long-lived daemon) — at which point
+  the channel registry gains a transport-agnostic
+  `RemoteTriggerChannel` impl alongside the in-process one.
+- **D-F5.2 — `log` body lives in
+  `crates/starter-flow-nodes/src/log.rs` behind a new
+  default-off `log` cargo feature on `starter-flow-nodes`.**
+  Body emits its mandatory `value` input slot as a
+  structured `tracing::event!` at a configurable level (`level`
+  config slot, optional, default `Level::INFO`, validated to
+  enum `{"trace","debug","info","warn","error"}`). Event target
+  is hardcoded `"starter.flow.log"` and the event payload
+  includes `(node_id, run_id, principal_id_hash, value)`. No
+  file/stdout sink — R13 mandates the existing tracing seam
+  routes to whatever subscriber the host attached. Output slot
+  `emitted` carries a passthrough copy of the input so the
+  slot can chain into a downstream node if desired. **Revisit
+  trigger:** a consumer surfaces a need for non-tracing sinks
+  (file, syslog, OTEL log signal direct) — at which point a
+  `sink` config slot lands enumerating supported targets, not
+  a parallel sink trait.
+- **D-F5.3 — Phase 5 demo wiring lives in `examples/notes/`
+  against the existing Claude runner from `starter-ai`.** The
+  demo flow at `examples/notes/flows/codeless-demo.yaml`
+  chains `trigger.explicit → ai-agent → log`. Node-kind
+  registration + `AiRunnerRegistry` + `TriggerChannelRegistry`
+  construction happens at notes-app boot (verified at stage 4
+  entry — likely `examples/notes/src/server.rs`). The fire
+  endpoint is `POST /api/flows/codeless-demo/fire` returning a
+  run id; subsequent log events stream through the existing
+  notes UI event channel. CLI parity is out of scope for this
+  demo. **Revisit trigger:** a second example host adopts the
+  flow stack — at which point common boot-time wiring lifts
+  into a `starter-flow-host` helper crate, not duplicated
+  between hosts.
+- **D-F5.4 — End-to-end smoke
+  `codeless_shape_on_one_engine.rs` lives under
+  `crates/smoke-tests/tests/` per D-F4.10 precedent.** Driven
+  by `RecordingAiRunner` from `starter-ai`'s `testing` feature
+  so CI never hits the Anthropic API; the notes host runs the
+  real Claude runner only when a user fires the button locally.
+  One `#[tokio::test]` asserts the trigger-payload→ai-agent
+  input plumbing and the ai-agent-output→log event plumbing
+  end-to-end on one engine. The Rubix half of Phase 5's
+  "Codeless and Rubix shape on one engine" smoke is **not** in
+  this job — it needs `branch` + `merge` + `http-out` and
+  lands in the follow-up job that picks up the remaining eight
+  node kinds. **Revisit trigger:** none expected; this matches
+  the D-F4.10 / D-F3.6 smoke-location precedent.
+- **D-F5.5 — Two new dep-tree gates cover the opt-in
+  `--features trigger-explicit` and `--features log` paths.**
+  Add `starter_flow_nodes_with_trigger_explicit_feature_does_not_pull_adk_rust`
+  and `starter_flow_nodes_with_log_feature_does_not_pull_adk_rust`
+  to `crates/starter-flow/tests/workspace_dep_tree_gates.rs`.
+  Test shape mirrors the six existing `*_contains_no_adk_rust`
+  gates verbatim — same `Command::new("cargo")` + same grep +
+  same assert; only the `--features <name>` arg differs.
+  **Revisit trigger:** verbatim D-F4.12 — the body grows
+  enough sub-features that per-feature gates become unwieldy,
+  at which point the gates parameterise over the feature set.
 
 ## Open questions
 
