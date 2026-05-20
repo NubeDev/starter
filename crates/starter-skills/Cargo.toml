@@ -1,0 +1,22 @@
+[package]
+name        = "starter-skills"
+description = "starter — skill bundle loader, content-hash quarantine, and SkillSelector implementations behind the starter-flow-spi seam."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase 1 of the starter-skills job (.codeless/jobs/starter-skills/SCOPE.md):
+# crate skeleton + SKILL.md parser. The crate's dep tree is locked to
+# `starter-flow-spi + serde + serde_yaml + thiserror + async-trait +
+# blake3 + tracing` per the SCOPE constraints — no provider SDKs, no
+# tokio runtime beyond what `async-trait` needs, no I/O crates yet.
+[dependencies]
+starter-flow-spi = { workspace = true }
+serde            = { workspace = true }
+serde_yaml       = "0.9"
+thiserror        = { workspace = true }
+async-trait      = { workspace = true }
+blake3           = { workspace = true }
+tracing          = { workspace = true }

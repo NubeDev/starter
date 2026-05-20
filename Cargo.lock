@@ -6769,6 +6769,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-skills"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "blake3",
+ "serde",
+ "serde_yaml",
+ "starter-flow-spi",
+ "thiserror 1.0.69",
+ "tracing",
+]
+
+[[package]]
 name = "starter-smoke-tests"
 version = "0.1.0"
 dependencies = [
