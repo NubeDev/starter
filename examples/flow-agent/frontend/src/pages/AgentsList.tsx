@@ -7,6 +7,12 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
+  Empty,
+  EmptyContent,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
   Input,
 } from "@nube/starter-ui-kit";
 
@@ -44,7 +50,7 @@ export function AgentsList() {
         </span>
       </header>
 
-      <Card className="mb-6 border-border/60 shadow-sm">
+      <Card className="mb-6 rounded-xl border border-border/60 shadow-sm ring-0">
         <CardHeader>
           <CardTitle className="text-base">New agent</CardTitle>
         </CardHeader>
@@ -74,7 +80,7 @@ export function AgentsList() {
         {agents.data?.map((a) => (
           <Card
             key={a.id}
-            className="border-border/60 shadow-sm transition-colors hover:bg-accent/30"
+            className="rounded-xl border border-border/60 shadow-sm ring-0 transition-colors hover:bg-accent/30"
           >
             <CardContent className="flex items-center justify-between p-4">
               <Link to={`/agents/${a.id}`} className="flex flex-col text-sm">
@@ -95,9 +101,38 @@ export function AgentsList() {
           </Card>
         ))}
         {agents.data?.length === 0 && (
-          <p className="py-16 text-center text-sm text-muted-foreground">
-            No agents yet. Create one above.
-          </p>
+          <Empty className="border border-dashed border-border/60 bg-card/30">
+            <EmptyHeader>
+              <EmptyMedia variant="icon" aria-hidden>
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  className="size-5"
+                >
+                  <circle cx="12" cy="8" r="3.25" />
+                  <path d="M5 20c0-3.5 3.13-6 7-6s7 2.5 7 6" strokeLinecap="round" />
+                </svg>
+              </EmptyMedia>
+              <EmptyTitle>No agents yet</EmptyTitle>
+              <EmptyDescription>
+                Create an agent to chat with a model and call flows as tools.
+              </EmptyDescription>
+            </EmptyHeader>
+            <EmptyContent>
+              <Button
+                onClick={() => {
+                  const el = document.querySelector<HTMLInputElement>(
+                    'input[placeholder="Assistant"]',
+                  );
+                  el?.focus();
+                }}
+              >
+                New agent
+              </Button>
+            </EmptyContent>
+          </Empty>
         )}
       </div>
     </div>

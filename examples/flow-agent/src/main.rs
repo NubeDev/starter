@@ -1,7 +1,6 @@
 //! `flow-agent` — single entry: boot the HTTP server. No CLI
 //! subcommands (per SCOPE F5). `cargo run -p flow-agent` runs migrate
-//! + serve; everything else (auth, claim issuance) is intentionally
-//! absent.
+//! + serve; everything else (auth, claim issuance) is intentionally absent.
 
 use std::net::SocketAddr;
 

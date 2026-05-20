@@ -13,6 +13,31 @@ use crate::domain::{
     UpdateFlow,
 };
 
+/// `(id, name, description, graph_json, version, created_at, updated_at)`
+type FlowRow = (String, String, Option<String>, String, i64, String, String);
+
+/// `(id, name, provider, model, system_prompt, tools_json, created_at, updated_at)`
+type AgentRow = (
+    String,
+    String,
+    String,
+    String,
+    Option<String>,
+    String,
+    String,
+    String,
+);
+
+/// `(id, flow_id, status, started_at, finished_at, trace_json)`
+type RunRow = (
+    String,
+    String,
+    String,
+    String,
+    Option<String>,
+    Option<String>,
+);
+
 #[derive(Clone)]
 pub struct FlowStore {
     pool: SqlitePool,
@@ -43,7 +68,7 @@ impl FlowStore {
     }
 
     pub async fn get(&self, id: &str) -> Result<Flow, DomainError> {
-        let row: Option<(String, String, Option<String>, String, i64, String, String)> = sqlx::query_as(
+        let row: Option<FlowRow> = sqlx::query_as(
             "SELECT id, name, description, graph_json, version, created_at, updated_at \
              FROM flows WHERE id = ?1",
         )
@@ -166,16 +191,7 @@ impl AgentStore {
     }
 
     pub async fn get(&self, id: &str) -> Result<Agent, DomainError> {
-        let row: Option<(
-            String,
-            String,
-            String,
-            String,
-            Option<String>,
-            String,
-            String,
-            String,
-        )> = sqlx::query_as(
+        let row: Option<AgentRow> = sqlx::query_as(
             "SELECT id, name, provider, model, system_prompt, tools_json, created_at, updated_at \
              FROM agents WHERE id = ?1",
         )
@@ -304,7 +320,7 @@ impl RunStore {
         trace: Option<&serde_json::Value>,
     ) -> Result<(), DomainError> {
         let now = Utc::now().to_rfc3339();
-        let trace_json = trace.map(|t| serde_json::to_string(t)).transpose()?;
+        let trace_json = trace.map(serde_json::to_string).transpose()?;
         sqlx::query("UPDATE runs SET status = ?1, finished_at = ?2, trace_json = ?3 WHERE id = ?4")
             .bind(status)
             .bind(&now)
@@ -316,7 +332,7 @@ impl RunStore {
     }
 
     pub async fn list_for_flow(&self, flow_id: &str) -> Result<Vec<Run>, DomainError> {
-        let rows: Vec<(String, String, String, String, Option<String>, Option<String>)> = sqlx::query_as(
+        let rows: Vec<RunRow> = sqlx::query_as(
             "SELECT id, flow_id, status, started_at, finished_at, trace_json \
              FROM runs WHERE flow_id = ?1 ORDER BY started_at DESC LIMIT 50",
         )

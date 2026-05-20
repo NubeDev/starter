@@ -432,8 +432,9 @@ export function FlowEditor() {
               className="flex items-center gap-1.5 rounded-md border border-border/60 bg-background px-2.5 py-1 text-xs font-medium shadow-sm transition-colors hover:bg-accent"
             >
               <span
-                className="inline-block h-2 w-2 rounded-sm"
-                style={{ background: spec.color ?? "#94a3b8" }}
+                aria-hidden
+                className="inline-block h-2 w-2 rounded-sm bg-muted-foreground/60"
+                style={spec.color ? { background: spec.color } : undefined}
               />
               {spec.label}
             </button>
@@ -452,7 +453,7 @@ export function FlowEditor() {
         </Alert>
       ) : null}
 
-      <div className="relative min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1 bg-background">
         <FlowCanvas
           key={canvasKey}
           registry={nodeRegistry}

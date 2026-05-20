@@ -49,7 +49,7 @@ export const ChatMessage = React.forwardRef<HTMLDivElement, ChatMessageProps>(
       >
         <div
           className={cn(
-            "flex max-w-[85%] gap-2",
+            "flex max-w-[70%] gap-2",
             isUser ? "flex-row-reverse" : "flex-row",
           )}
         >

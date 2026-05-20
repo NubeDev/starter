@@ -27,7 +27,7 @@ export function Settings() {
   return (
     <div className="mx-auto w-full max-w-3xl p-6">
       <h1 className="mb-4 text-2xl font-semibold tracking-tight">Settings</h1>
-      <Card className="border-border/60 shadow-sm">
+      <Card className="rounded-xl border border-border/60 shadow-sm ring-0">
         <CardHeader>
           <CardTitle className="text-base">Providers</CardTitle>
         </CardHeader>

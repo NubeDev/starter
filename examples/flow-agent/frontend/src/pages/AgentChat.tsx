@@ -41,6 +41,11 @@ export function AgentChat() {
             ? `${agent.data.provider} · ${agent.data.model}`
             : "Loading agent…"
         }
+        suggestions={[
+          { label: "Say hi" },
+          { label: "List my flows" },
+          { label: "What can you do?" },
+        ]}
         className="h-full"
       />
     </div>
