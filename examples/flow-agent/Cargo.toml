@@ -1,0 +1,50 @@
+[package]
+name        = "flow-agent"
+description = "Demo: flow editor + AI agent chat on starter-* libraries. SSE + REST, no login."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+[[bin]]
+name = "flow-agent"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+starter-spi           = { workspace = true }
+starter-server        = { workspace = true }
+starter-store-sqlite  = { workspace = true }
+starter-observability = { workspace = true }
+
+# Flow engine + nodes (Phase 3+).
+starter-flow       = { workspace = true }
+starter-flow-spi   = { workspace = true }
+starter-flow-nodes = { workspace = true, features = ["ai-agent", "trigger-explicit", "log"] }
+
+# AI providers (Phase 4+).
+starter-ai = { workspace = true, features = ["provider-claude"] }
+
+# Web stack.
+axum         = { workspace = true }
+prometheus   = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+sqlx         = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "signal"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+futures      = { workspace = true }
+tracing      = { workspace = true }
+utoipa       = { workspace = true }
+anyhow       = { workspace = true }
+async-trait  = { workspace = true }
+thiserror    = { workspace = true }
+chrono       = { workspace = true }
+uuid         = { workspace = true }
+
+[dev-dependencies]
+starter-server = { workspace = true, features = ["testing"] }
