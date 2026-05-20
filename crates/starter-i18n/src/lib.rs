@@ -51,3 +51,13 @@ pub mod routes;
 /// reason. Empty in stage 12; filled in by the next stage.
 #[cfg(feature = "routes")]
 pub mod middleware;
+
+/// Scope-limited diagnostics rewriter — the SCOPE.md Phase 5
+/// translator. Default-off, opt-in per handler via the
+/// [`diagnostics::DiagnosticBody`] response extension. Touches only
+/// the documented envelope shape (`{ diagnostic: { code, params } }`
+/// at the response root, and the top-level `diagnostics` array of
+/// the same elements). SSE / chunked / streaming responses are
+/// bypassed unconditionally per SCOPE R5.
+#[cfg(feature = "diagnostics")]
+pub mod diagnostics;
