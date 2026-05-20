@@ -18,11 +18,7 @@ import type { NodeKindRegistry } from "../nodes/NodeRegistry.js";
 
 /** Internal node `data` shape consumed by every kind's renderer. */
 export interface RFNodeData extends Record<string, unknown> {
-  kindSpec: ReturnType<NodeKindRegistry["get"]> extends infer T
-    ? T extends { spec: infer S }
-      ? S
-      : never
-    : never;
+  kindSpec?: NonNullable<ReturnType<NodeKindRegistry["get"]>>["spec"];
   label?: string;
   state?: NodeRunState;
   preview?: string;

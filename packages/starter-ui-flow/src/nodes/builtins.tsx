@@ -92,7 +92,7 @@ interface FlowNodeData {
 }
 
 function genericRenderer(props: NodeProps) {
-  const data = props.data as FlowNodeData;
+  const data = props.data as unknown as FlowNodeData;
   return (
     <BaseNode
       spec={data.kindSpec}
