@@ -5,6 +5,11 @@
 //! `version` column — every successful PUT bumps it and the next PUT
 //! must present the previous value.
 
+// The sqlx tuple shapes are deliberately literal — extracting a `type
+// alias` per query would add a layer of indirection between schema
+// and call site for no gain. Allowed at the file level.
+#![allow(clippy::type_complexity)]
+
 use chrono::{DateTime, Utc};
 use sqlx::SqlitePool;
 
@@ -304,7 +309,7 @@ impl RunStore {
         trace: Option<&serde_json::Value>,
     ) -> Result<(), DomainError> {
         let now = Utc::now().to_rfc3339();
-        let trace_json = trace.map(|t| serde_json::to_string(t)).transpose()?;
+        let trace_json = trace.map(serde_json::to_string).transpose()?;
         sqlx::query("UPDATE runs SET status = ?1, finished_at = ?2, trace_json = ?3 WHERE id = ?4")
             .bind(status)
             .bind(&now)

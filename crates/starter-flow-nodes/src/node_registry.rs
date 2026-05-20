@@ -37,6 +37,7 @@ use starter_flow_spi::node::{KindId, NodeDescriptor, NodeKindRegistry};
 ///
 /// Order is the declaration order in [`crate`]'s `lib.rs`. Callers
 /// that need a stable sort should sort by `descriptor.kind`.
+#[allow(clippy::vec_init_then_push)]
 pub fn builtin_descriptors() -> Vec<&'static NodeDescriptor> {
     let mut out: Vec<&'static NodeDescriptor> = Vec::new();
 

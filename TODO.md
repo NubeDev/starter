@@ -1124,16 +1124,17 @@ bearing weight; (1) and (3) gate the other two stated goals.
       lands, a process-flavour extension boots, restarts, and reports
       state — but its handlers are unreachable. This is the single
       biggest gap between extension SCOPE and reality.
-- [ ] **Implement the missing flow node kinds** at
-      [crates/starter-flow-nodes/src/](crates/starter-flow-nodes/src):
-      `branch.rs`, `merge.rs`, `gate.rs`, `sleep.rs`, `http_out.rs`,
-      `subflow.rs`, `trigger_event.rs`, `trigger_schedule.rs`,
-      `trigger_webhook.rs`. All are 11–14 LOC stubs today; only
-      `ai_agent`, `tool_call`, `transform`, `trigger_explicit`, and
-      `log` carry real bodies. The motivating "ingest webhook →
-      agent → branch → DB → loop" workflow from
-      [DOCS/flow/scope/SCOPE.md:54-62](DOCS/flow/scope/SCOPE.md#L54-L62)
-      is not expressible until these land.
+- [~] **Implement the missing flow node kinds** at
+      [crates/starter-flow-nodes/src/](crates/starter-flow-nodes/src).
+      Done in this pass: `branch.rs` (truthy-routing, 10 tests),
+      `merge.rs` (object/array/first strategies, 7 tests), and
+      `sleep.rs` (tokio-time wait with cancel-aware select!,
+      7 tests). Still stubs: `gate.rs` (needs external approver
+      coordination), `http_out.rs` (reqwest config + retry policy),
+      `subflow.rs` (engine-level run nesting),
+      `trigger_event.rs` / `trigger_schedule.rs` /
+      `trigger_webhook.rs` (each needs scheduler / dispatcher
+      infrastructure). Those each merit their own design pass.
 - [ ] **Ship `starter-ext-flow`** (the missing adapter crate, Phase 6
       of [DOCS/flow/scope/SCOPE.md:1280](DOCS/flow/scope/SCOPE.md#L1280)).
       Parses `contributes.nodes` / `contributes.flows` from extension
@@ -1142,15 +1143,15 @@ bearing weight; (1) and (3) gate the other two stated goals.
       / `starter-ext-grpc`. Until this exists, extensions can ship
       REST handlers and tools but not flow nodes — the flow engine is
       consumer-extensible only, not extension-extensible.
-- [ ] **Fix `Arc<dyn Authenticator>` ergonomics** at
-      `with_principal`, `McpHttpOptions::with_auth`, and
-      `router_with_auth`. Today consumers wrap dyn-auth in a
-      `BoxedAuthenticator` newtype (three call sites in
+- [x] **Fix `Arc<dyn Authenticator>` ergonomics** at
+      `with_principal` and `router_with_auth`. Both now bound `A` as
+      `Authenticator + ?Sized`, so `Arc<dyn Authenticator>` is
+      accepted directly. `McpHttpOptions::with_auth` already took
+      `Arc<dyn Authenticator>`. The `BoxedAuthenticator` newtype is
+      gone from
       [examples/notes/src/server.rs](examples/notes/src/server.rs);
-      every consumer using dyn auth will write the same boilerplate).
-      The trait is already object-safe; the fix is widening the
-      generic bound to accept `Arc<dyn Authenticator>` directly. See
-      the matching open question in [SCOPE.md](SCOPE.md).
+      all three call sites now pass the dyn-typed handle straight
+      through. Matching open question removed from SCOPE.md.
 - [ ] **Add a "contribute everywhere" smoke test** mirroring the
       four-transport flow event smoke at
       [crates/smoke-tests/tests/flow_event_stream_over_four_transports.rs](crates/smoke-tests/tests/flow_event_stream_over_four_transports.rs).

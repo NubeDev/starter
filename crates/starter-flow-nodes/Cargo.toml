@@ -67,7 +67,7 @@ trigger-schedule  = []
 trigger-webhook   = []
 http-out          = []
 log               = ["dep:tokio"]
-sleep             = []
+sleep             = ["dep:tokio"]
 
 all-kinds = [
     "transform",

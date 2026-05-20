@@ -845,17 +845,13 @@ into a Studio-style consumer's source, the curated facade is missing.
 All open questions from earlier drafts have been resolved (see the
 section above). New questions opened during implementation:
 
-- **`Arc<dyn Authenticator>` ergonomics at generic-bound APIs.**
-  Surfaced by the 2026-05-20 peer review of the workspace. Consumers
-  with a dynamically-dispatched authenticator currently wrap it in a
-  newtype (e.g. `BoxedAuthenticator(Arc<dyn Authenticator>)` in
-  `examples/notes/src/server.rs`) to satisfy the generic bounds on
-  `with_principal`, `McpHttpOptions::with_auth`, and
-  `router_with_auth`. The trait itself is object-safe; the wrap is
-  pure ceremony. Decision pending on widening those APIs to accept
-  `Arc<dyn Authenticator>` directly versus standardising a single
-  starter-owned `BoxedAuthenticator` newtype. Tracked in
-  [TODO.md Phase 10](TODO.md).
+- **`Arc<dyn Authenticator>` ergonomics — resolved 2026-05-20.** The
+  generic-bound APIs (`with_principal`, `router_with_auth`) now bound
+  `A` as `Authenticator + ?Sized`, so callers pass `Arc<dyn
+  Authenticator>` directly. The `BoxedAuthenticator` newtype that the
+  peer review flagged in `examples/notes/src/server.rs` is gone.
+  `McpHttpOptions::with_auth` already accepted `Arc<dyn Authenticator>`
+  and was untouched.
 - Per-crate questions live in the crate's own `lib.rs` doc when they
   exist.
 

@@ -60,7 +60,7 @@ where
 pub fn router_with_auth<S, A>(admin: ExtensionAdmin, authenticator: Arc<A>) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
-    A: Authenticator,
+    A: Authenticator + ?Sized,
 {
     let gated: Router<S> = gated_routes(admin.clone());
     let gated = with_principal(with_role(gated, Role::Admin), authenticator);

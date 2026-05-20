@@ -99,7 +99,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         store: note_store.clone(),
         events,
     });
-    let auth_for_http = Arc::new(BoxedAuthenticator(authenticator.clone()));
+    let auth_for_http: Arc<dyn Authenticator> = authenticator.clone();
     let notes = with_principal(notes, auth_for_http.clone());
 
     // /mcp — starter-mcp dispatch with the consumer's NoteSearchTool +
@@ -147,7 +147,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         .with_enablement_store(Arc::new(InMemoryEnablementStore::default()))
         .build();
     let admin_router =
-        router_with_auth::<AppState, _>(admin, Arc::new(BoxedAuthenticator(authenticator.clone())));
+        router_with_auth::<AppState, dyn Authenticator>(admin, authenticator.clone());
 
     // Extension-contributed REST routes + auto-mounted POST /tools/<id>.
     let rest_dispatcher: Arc<dyn starter_ext_server::RestDispatcher> = Arc::new(
@@ -224,14 +224,3 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     }
 }
 
-/// Newtype wrapping `Arc<dyn Authenticator>` so it can be passed to
-/// `with_principal` / `McpHttpOptions::with_auth` /
-/// `router_with_auth`, all of which take `Arc<A: Authenticator + Sized>`.
-struct BoxedAuthenticator(Arc<dyn Authenticator>);
-
-#[async_trait::async_trait]
-impl Authenticator for BoxedAuthenticator {
-    async fn verify(&self, credential: &str) -> starter_spi::Result<starter_spi::auth::Principal> {
-        self.0.verify(credential).await
-    }
-}
