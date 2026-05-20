@@ -1126,15 +1126,21 @@ bearing weight; (1) and (3) gate the other two stated goals.
       biggest gap between extension SCOPE and reality.
 - [~] **Implement the missing flow node kinds** at
       [crates/starter-flow-nodes/src/](crates/starter-flow-nodes/src).
-      Done in this pass: `branch.rs` (truthy-routing, 10 tests),
-      `merge.rs` (object/array/first strategies, 7 tests), and
+      Done: `branch.rs` (truthy routing, 10 tests),
+      `merge.rs` (object/array/first strategies, 7 tests),
       `sleep.rs` (tokio-time wait with cancel-aware select!,
-      7 tests). Still stubs: `gate.rs` (needs external approver
-      coordination), `http_out.rs` (reqwest config + retry policy),
-      `subflow.rs` (engine-level run nesting),
+      7 tests), and `http_out.rs` (reqwest GET/POST/PUT/PATCH/
+      DELETE/HEAD with JSON / bytes / string body shaping,
+      per-request safety-net timeout, response-body auto-parse on
+      `Content-Type: application/json`, cancel races against both
+      send and body read; 8 tests against an in-process raw-TCP
+      one-shot responder). Still stubs: `gate.rs` (external approver
+      coordination), `subflow.rs` (engine-level run nesting),
       `trigger_event.rs` / `trigger_schedule.rs` /
       `trigger_webhook.rs` (each needs scheduler / dispatcher
       infrastructure). Those each merit their own design pass.
+      Retry / backoff / circuit-break stay engine-side per R3 —
+      `http-out` carries only the per-request timeout.
 - [ ] **Ship `starter-ext-flow`** (the missing adapter crate, Phase 6
       of [DOCS/flow/scope/SCOPE.md:1280](DOCS/flow/scope/SCOPE.md#L1280)).
       Parses `contributes.nodes` / `contributes.flows` from extension
@@ -1173,10 +1179,13 @@ Surfaced by the same review; tracked here so they don't drift:
       round-tripped through `BTreeMap<String, SlotValue>` at
       [examples/notes/src/flow_demo.rs:296](examples/notes/src/flow_demo.rs#L296))
       with a `SlotRef`-keyed map.
-- [ ] Replace the lossy `format!("{other:?}")` fallback in
-      [examples/notes/src/flow_demo.rs:352](examples/notes/src/flow_demo.rs#L352)
-      with an explicit `SlotValue` → JSON match that fails loudly on
-      unknown variants.
+- [x] Replace the lossy `format!("{other:?}")` fallback in
+      [examples/notes/src/flow_demo.rs](examples/notes/src/flow_demo.rs)
+      with an explicit `SlotValue` → JSON match. `Null` / `Bool` /
+      `Int` / `Float` / `String` / `Bytes` / `Json` each get a typed
+      projection; future `#[non_exhaustive]` variants fall through to
+      `{"unknown_slot_variant": "<Debug>"}` so a regression is visible
+      in the response rather than silently stringified.
 - [ ] Remove the 60s quiescence padding at
       [examples/notes/src/flow_demo.rs:167-170](examples/notes/src/flow_demo.rs#L167-L170)
       by emitting heartbeat `SlotChanged` events while a node body is

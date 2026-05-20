@@ -335,13 +335,27 @@ async fn drain_to_terminal(
     }
 }
 
+/// Lossless [`SlotValue`] → JSON projection. Every variant the
+/// engine emits today has a well-defined JSON shape; future variants
+/// of `SlotValue` (the type is `#[non_exhaustive]`) fall through to a
+/// `{"unknown_slot_variant": "<Debug>"}` shape so a regression is
+/// visible in the response rather than silently stringified.
 fn slot_to_json(v: &SlotValue) -> serde_json::Value {
     match v {
-        SlotValue::String(s) => serde_json::Value::String(s.clone()),
-        SlotValue::Json(j) => j.clone(),
-        SlotValue::Int(i) => serde_json::Value::from(*i),
+        SlotValue::Null => serde_json::Value::Null,
         SlotValue::Bool(b) => serde_json::Value::Bool(*b),
-        other => serde_json::Value::String(format!("{other:?}")),
+        SlotValue::Int(i) => serde_json::Value::from(*i),
+        SlotValue::Float(f) => serde_json::Number::from_f64(*f)
+            .map(serde_json::Value::Number)
+            .unwrap_or(serde_json::Value::Null),
+        SlotValue::String(s) => serde_json::Value::String(s.clone()),
+        SlotValue::Bytes(b) => {
+            serde_json::Value::Array(b.iter().map(|byte| serde_json::Value::from(*byte)).collect())
+        }
+        SlotValue::Json(j) => j.clone(),
+        other => serde_json::json!({
+            "unknown_slot_variant": format!("{other:?}")
+        }),
     }
 }
 
