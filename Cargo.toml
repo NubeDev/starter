@@ -23,6 +23,7 @@ members = [
     "crates/starter-flow",
     "crates/starter-flow-nodes",
     "crates/starter-flow-surfaces",
+    "crates/starter-flow-watch",
     "crates/starter-client-rs",
     "crates/starter-cli",
     "crates/starter-tauri",
@@ -78,6 +79,7 @@ starter-flow-spi         = { path = "crates/starter-flow-spi",         version =
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }
 starter-flow-nodes       = { path = "crates/starter-flow-nodes",       version = "0.1.0" }
 starter-flow-surfaces    = { path = "crates/starter-flow-surfaces",    version = "0.1.0" }
+starter-flow-watch       = { path = "crates/starter-flow-watch",       version = "0.1.0" }
 starter-client-rs        = { path = "crates/starter-client-rs",        version = "0.1.0" }
 starter-cli              = { path = "crates/starter-cli",              version = "0.1.0" }
 starter-tool-slack       = { path = "crates/starter-tool-slack",       version = "0.1.0" }

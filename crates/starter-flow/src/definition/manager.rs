@@ -479,6 +479,83 @@ impl DefinitionManager {
         })
     }
 
+    /// Unmount a flow whose source has been removed (e.g. a YAML
+    /// file deleted under a host-dir watcher).
+    ///
+    /// Per `DOCS/flow/scope/hot-reload.md` HR7: removing a file
+    /// deletes the flow via `publish_delete(flow_id)` — the
+    /// fourth method on the chokepoint. Semantics:
+    ///
+    /// 1. If the flow has a head in the [`FlowStore`], read its
+    ///    `apply_policy` and fire `RunCancel` for every
+    ///    registered run on that revision when the policy is
+    ///    `Restart` (or `LiveMigrate` — unmount is structural).
+    ///    `Drain` lets in-flight runs finish on the snapshot
+    ///    they already hold.
+    /// 2. Remove the [`ActiveTopologies`] entry. New runs will
+    ///    fail to resolve until the flow is re-published.
+    /// 3. Emit [`FlowDefinitionEvent::Removed`] on the bus.
+    ///
+    /// The append-only [`FlowStore`] is intentionally NOT
+    /// touched — revisions are immutable per the SCOPE
+    /// "Decisions made" block. If the flow is later re-published
+    /// (e.g. the YAML file is restored), the new revision lands
+    /// alongside the old ones and `boot_resume` picks it up.
+    pub async fn publish_delete(
+        &self,
+        flow_id: FlowId,
+        source: DefinitionSource,
+    ) -> Result<(), PublishError> {
+        let span = info_span!(
+            "flow.definition.publish_delete",
+            flow = %flow_id,
+            source = %source.audit_tag(),
+            cancelled_runs = tracing::field::Empty,
+        );
+        let _enter = span.enter();
+
+        let prev_head = self.store.head(flow_id.clone()).await?;
+        let apply_policy = if let Some(head) = prev_head {
+            match self.store.load(flow_id.clone(), Some(head)).await {
+                Ok(rev) => body::parse_body(&rev.body)
+                    .map(|b| b.apply_policy)
+                    .unwrap_or_default(),
+                Err(_) => ApplyPolicy::default(),
+            }
+        } else {
+            ApplyPolicy::default()
+        };
+
+        let cancelled = match (apply_policy, prev_head) {
+            (ApplyPolicy::Restart | ApplyPolicy::LiveMigrate, Some(prev)) => {
+                self.runs.cancel_for(&flow_id, &prev)
+            }
+            _ => 0,
+        };
+        span.record("cancelled_runs", cancelled);
+
+        let removed = self.active.remove(&flow_id).await.is_some();
+        if removed {
+            info!(
+                target: "starter_flow::definition",
+                cancelled_runs = cancelled,
+                policy = ?apply_policy,
+                "flow removed via publish_delete"
+            );
+        } else {
+            debug!(
+                target: "starter_flow::definition",
+                "publish_delete: flow was not mounted; emitting Removed anyway"
+            );
+        }
+
+        let _ = self.events.send(FlowDefinitionEvent::Removed {
+            flow: flow_id,
+            source,
+        });
+        Ok(())
+    }
+
     /// Install a freshly-resolved topology and emit the swap event.
     /// Initial mounts also emit a `Mounted` event so consumers can
     /// distinguish first-time mount from subsequent swaps.

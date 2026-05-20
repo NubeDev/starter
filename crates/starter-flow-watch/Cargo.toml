@@ -1,0 +1,37 @@
+[package]
+name        = "starter-flow-watch"
+version     = { workspace = true }
+edition     = { workspace = true }
+license     = { workspace = true }
+repository  = { workspace = true }
+rust-version = { workspace = true }
+description = "Optional file-system watcher that publishes flow definitions through DefinitionManager (DOCS/flow/scope/hot-reload.md HR7)."
+
+[features]
+# Off by default — hosts that don't want filesystem coupling pay
+# nothing. Hosts that DO enable it get the `notify`-backed watcher,
+# YAML/JSON parser, and boot-walk reconciler.
+default = []
+watch   = ["dep:notify", "dep:serde_yaml"]
+
+[dependencies]
+starter-flow-spi = { workspace = true }
+starter-flow     = { workspace = true }
+
+tokio       = { workspace = true }
+tracing     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+blake3      = { workspace = true }
+async-trait = { workspace = true }
+
+# Watch-specific deps are optional so a host that only builds the
+# library shell (e.g. for type-checking in CI) doesn't pull
+# `notify`'s native bindings.
+notify      = { version = "6", optional = true }
+serde_yaml  = { version = "0.9", optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["full"] }
+tempfile = "3"
