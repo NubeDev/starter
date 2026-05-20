@@ -6356,6 +6356,7 @@ dependencies = [
  "bytes",
  "futures",
  "http",
+ "http-body-util",
  "prometheus",
  "reqwest 0.12.28",
  "serde",

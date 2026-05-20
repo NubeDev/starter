@@ -32,5 +32,6 @@ default = []
 testing = []
 
 [dev-dependencies]
-tokio   = { workspace = true, features = ["macros", "rt-multi-thread"] }
-reqwest = { workspace = true }
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
+reqwest        = { workspace = true }
+http-body-util = "0.1"
