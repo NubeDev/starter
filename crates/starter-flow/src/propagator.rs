@@ -325,13 +325,23 @@ pub fn spawn(
     run: RunId,
     config: PropagatorConfig,
 ) -> JoinHandle<()> {
-    spawn_with_checkpoint(store, topology, cancel, events, run, config, None)
+    spawn_with_checkpoint(
+        store,
+        topology,
+        cancel,
+        events,
+        run,
+        config,
+        None,
+        Arc::new(SkillSelection::None),
+    )
 }
 
 /// Same as [`spawn`] but with an optional [`CheckpointHook`] for
 /// per-tick `RunStore::checkpoint` persistence (D-F3.2). When
 /// `checkpoint` is `None` the propagator behaves identically to
 /// [`spawn`] — the Phase-2 in-memory substrate.
+#[allow(clippy::too_many_arguments)]
 pub fn spawn_with_checkpoint(
     store: Arc<dyn GraphStore>,
     topology: Arc<FlowTopology>,
@@ -340,6 +350,7 @@ pub fn spawn_with_checkpoint(
     run: RunId,
     config: PropagatorConfig,
     checkpoint: Option<CheckpointHook>,
+    skill: Arc<SkillSelection>,
 ) -> JoinHandle<()> {
     // Subscribe *synchronously* before spawning the task so that any
     // writes the caller performs immediately after `spawn()` returns
@@ -347,7 +358,7 @@ pub fn spawn_with_checkpoint(
     // — no "did the spawned task get to `subscribe` first?" races.
     let sub = store.subscribe(SubscribeOpts::default());
     tokio::spawn(drive_with_checkpoint(
-        store, sub, topology, cancel, events, run, config, checkpoint,
+        store, sub, topology, cancel, events, run, config, checkpoint, skill,
     ))
 }
 
@@ -363,7 +374,18 @@ pub async fn drive(
     run: RunId,
     config: PropagatorConfig,
 ) {
-    drive_with_checkpoint(store, sub, topology, cancel, events, run, config, None).await
+    drive_with_checkpoint(
+        store,
+        sub,
+        topology,
+        cancel,
+        events,
+        run,
+        config,
+        None,
+        Arc::new(SkillSelection::None),
+    )
+    .await
 }
 
 /// Same as [`drive`] but with an optional per-tick checkpoint hook.
@@ -377,6 +399,7 @@ pub async fn drive_with_checkpoint(
     run: RunId,
     config: PropagatorConfig,
     checkpoint: Option<CheckpointHook>,
+    skill: Arc<SkillSelection>,
 ) {
     let mut tick = TickCounter::new();
 
@@ -518,7 +541,7 @@ pub async fn drive_with_checkpoint(
                     run,
                     node: node_id.clone(),
                 });
-                let ctx = NodeCtx::new(run, &node_id, &*cancel, SkillSelection::NONE);
+                let ctx = NodeCtx::new(run, &node_id, &*cancel, &skill);
                 let invoke_res = behavior.invoke(ctx, input).await;
 
                 match invoke_res {

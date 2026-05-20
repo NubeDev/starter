@@ -213,6 +213,19 @@ pub struct Engine {
     /// [`Self::health_handle`]; the propagator's per-tick
     /// retry-with-backoff loop flips this on degrade / recovery.
     health: HealthHandle,
+    /// Phase 4 D-F4.3: optional `AiRunnerRegistry` the `ai-agent`
+    /// node body resolves its `provider_id` config slot against.
+    /// `None` means no providers registered — the body errors with
+    /// `NodeError::Domain { code: "provider_not_registered" }` on
+    /// invoke. Engine consumers attach via
+    /// [`Self::with_ai_runner_registry`].
+    ai_runners: Option<Arc<dyn starter_flow_spi::ai_runner::AiRunnerRegistry>>,
+    /// Phase 4 D-F4.4: engine-level `SkillSelector` invoked once
+    /// per [`crate::run::FlowRunner::start`]. Defaults to
+    /// [`starter_flow_spi::skill::NullSkillSelector`] (returns
+    /// [`starter_flow_spi::skill::SkillSelection::None`]). Hosts
+    /// attach a real selector via [`Self::with_skill_selector`].
+    skill_selector: Arc<dyn starter_flow_spi::skill::SkillSelector>,
 }
 
 impl Engine {
@@ -229,7 +242,47 @@ impl Engine {
             writables: RwLock::new(Vec::new()),
             run_store: None,
             health: HealthHandle::new(),
+            ai_runners: None,
+            skill_selector: Arc::new(starter_flow_spi::skill::NullSkillSelector),
         }
+    }
+
+    /// Attach a Phase 4 [`AiRunnerRegistry`](starter_flow_spi::ai_runner::AiRunnerRegistry)
+    /// — the `ai-agent` node body resolves its mandatory
+    /// `provider_id` config slot against this. D-F4.3. Self-by-value
+    /// builder mirrors [`Self::with_run_store`].
+    pub fn with_ai_runner_registry(
+        mut self,
+        registry: Arc<dyn starter_flow_spi::ai_runner::AiRunnerRegistry>,
+    ) -> Self {
+        self.ai_runners = Some(registry);
+        self
+    }
+
+    /// Borrow the attached [`AiRunnerRegistry`] if any.
+    pub fn ai_runners(&self) -> Option<&Arc<dyn starter_flow_spi::ai_runner::AiRunnerRegistry>> {
+        self.ai_runners.as_ref()
+    }
+
+    /// Attach a Phase 4 [`SkillSelector`](starter_flow_spi::skill::SkillSelector)
+    /// — invoked exactly once per outer flow run by
+    /// [`crate::run::FlowRunner::start`], with the result threaded
+    /// through every `NodeCtx` as
+    /// [`starter_flow_spi::skill::SkillSelection`]. D-F4.4.
+    /// Self-by-value builder mirrors [`Self::with_run_store`].
+    pub fn with_skill_selector(
+        mut self,
+        selector: Arc<dyn starter_flow_spi::skill::SkillSelector>,
+    ) -> Self {
+        self.skill_selector = selector;
+        self
+    }
+
+    /// Clone the engine's [`SkillSelector`]. Callers wiring per-run
+    /// constructors (e.g. [`crate::run::FlowRunner`]) clone this
+    /// `Arc` into the run.
+    pub fn skill_selector(&self) -> Arc<dyn starter_flow_spi::skill::SkillSelector> {
+        self.skill_selector.clone()
     }
 
     /// Attach a Phase 3 SPI [`SpiRunStore`] for run lifecycle +
