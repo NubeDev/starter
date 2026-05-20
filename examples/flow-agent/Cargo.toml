@@ -48,3 +48,4 @@ uuid         = { workspace = true }
 
 [dev-dependencies]
 starter-server = { workspace = true, features = ["testing"] }
+starter-ai     = { workspace = true, features = ["provider-claude", "testing"] }

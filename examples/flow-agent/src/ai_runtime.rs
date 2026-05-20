@@ -1,9 +1,13 @@
-//! Stage 4: agent chat runtime.
+//! Agent chat runtime.
 //!
 //! Owns a shared [`starter_ai::Registry`] (built from
 //! `Registry::with_defaults()`, so whichever provider features are
-//! enabled at compile time light up automatically). Exposes two
-//! affordances to the REST layer:
+//! enabled at compile time light up automatically) plus host-side
+//! handles (`FlowStore`, `FlowEngine`, `RunStore`, `EventHub`) so a
+//! single chat turn can fan out into flow runs and back without
+//! leaving the host process.
+//!
+//! Exposes three affordances to the REST layer:
 //!
 //! 1. [`AiRuntime::list_providers`] — read-only detection so the
 //!    Settings page can show why an agent might fail.
@@ -14,8 +18,17 @@
 //!
 //!    - `data: {"type":"text","text":"…"}` — assistant tokens.
 //!    - `data: {"type":"tool-call","toolCall":{…}}` — tool invocations.
+//!    - `data: {"type":"tool-result","toolCall":{…}}` — flow-tool
+//!      replies (host-emitted, used by the agent-as-tool bridge).
 //!    - `data: {"type":"error","error":"…"}` — runner-level errors.
 //!    - `data: [DONE]` — terminal frame (always emitted).
+//! 3. [`AiRuntime::run_agent_raw`] — same as `run_agent` but yields
+//!    the raw `data:` payload strings; the production SSE handler
+//!    wraps them, the bridge integration test consumes them directly.
+//!
+//! The agent-as-tool bridge (flow-tool synthesis, dispatch, run
+//! draining) lives next door in [`crate::agent_bridge`] so this file
+//! stays under the 400-line workspace rule.
 //!
 //! Conversations are not persisted at this stage; the frontend keeps
 //! a react-query-scoped history per page mount.
@@ -30,12 +43,19 @@ use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use utoipa::ToSchema;
 
-use starter_ai::{Registry, TokenCancel};
-use starter_spi::ai::{
-    AiRunner, CliCfg, Event, EventKind, HistoryMessage, Provider, RestCfg, RunnerInput, SessionId,
-};
+use starter_ai::Registry;
+use starter_spi::ai::{AiRunner, HistoryMessage, Provider};
 
 use crate::domain::Agent;
+use crate::flow_engine::FlowEngine;
+use crate::sse::EventHub;
+use crate::store::{FlowStore, RunStore};
+
+/// Hard ceiling on the in-runtime agentic loop. Mirrors the
+/// `starter-flow-nodes::ai_agent::MAX_TURNS` posture: when the model
+/// keeps emitting tool calls we eventually stop dispatching to keep
+/// runaway agents bounded.
+pub const MAX_AGENT_TURNS: u32 = 16;
 
 /// What `GET /api/providers` returns.
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -60,20 +80,70 @@ pub enum AgentRunError {
     /// `Provider` is known but no runner is registered (feature off).
     #[error("provider `{0}` is not available in this build")]
     ProviderUnavailable(String),
+    /// Could not enumerate flows for tool synthesis.
+    #[error("flow registry error: {0}")]
+    Registry(String),
 }
 
-/// Cheap-to-clone handle around the AI runner registry.
+/// Cheap-to-clone handle around the AI runner registry plus the host
+/// surfaces the agent-as-tool bridge needs to fire flows.
 #[derive(Clone)]
 pub struct AiRuntime {
     registry: Arc<Registry>,
+    flows: Arc<FlowStore>,
+    engine: FlowEngine,
+    runs: Arc<RunStore>,
+    hub: Arc<EventHub>,
 }
 
 impl AiRuntime {
     /// Build the runtime with every compiled-in provider registered.
-    pub fn new() -> Self {
+    pub fn new(
+        flows: Arc<FlowStore>,
+        engine: FlowEngine,
+        runs: Arc<RunStore>,
+        hub: Arc<EventHub>,
+    ) -> Self {
+        Self::with_registry(Arc::new(Registry::with_defaults()), flows, engine, runs, hub)
+    }
+
+    /// Construct with a caller-supplied registry. Used by integration
+    /// tests to inject a `RecordingAiRunner` without spinning real
+    /// provider impls.
+    pub fn with_registry(
+        registry: Arc<Registry>,
+        flows: Arc<FlowStore>,
+        engine: FlowEngine,
+        runs: Arc<RunStore>,
+        hub: Arc<EventHub>,
+    ) -> Self {
         Self {
-            registry: Arc::new(Registry::with_defaults()),
+            registry,
+            flows,
+            engine,
+            runs,
+            hub,
         }
+    }
+
+    // -----------------------------------------------------------------
+    // Bridge accessors. Kept `pub(crate)` so `agent_bridge.rs` can
+    // reach the same handles without making the fields themselves
+    // crate-public (preserves the current encapsulation of the
+    // constructor surface).
+    // -----------------------------------------------------------------
+
+    pub(crate) fn flows(&self) -> &FlowStore {
+        &self.flows
+    }
+    pub(crate) fn engine(&self) -> &FlowEngine {
+        &self.engine
+    }
+    pub(crate) fn runs_store(&self) -> &RunStore {
+        &self.runs
+    }
+    pub(crate) fn hub(&self) -> &Arc<EventHub> {
+        &self.hub
     }
 
     /// Probe each provider the Settings page cares about.
@@ -126,7 +196,7 @@ impl AiRuntime {
 
     /// Resolve an agent's `provider` string to a [`Provider`] +
     /// registered runner.
-    fn resolve(
+    pub(crate) fn resolve(
         &self,
         provider: &str,
     ) -> Result<(Provider, Arc<dyn AiRunner>), AgentRunError> {
@@ -149,13 +219,9 @@ impl AiRuntime {
     }
 
     /// Drive one chat turn against the agent's provider and return a
-    /// stream of pre-formatted SSE events.
-    ///
-    /// `prompt` is the user's freshly typed text; `history` carries
-    /// prior turns the chat surface already accumulated (REST runners
-    /// consume it directly; CLI runners fold it into the system
-    /// prompt as plain text since `claude-wrapper` has no
-    /// `--history` flag).
+    /// stream of pre-formatted SSE events. See [`Self::run_agent_raw`]
+    /// for the underlying JSON-string stream the integration tests
+    /// consume.
     pub fn run_agent(
         &self,
         agent: &Agent,
@@ -165,109 +231,49 @@ impl AiRuntime {
         impl Stream<Item = Result<sse::Event, std::convert::Infallible>> + Send + 'static,
         AgentRunError,
     > {
+        let raw = self.run_agent_raw(agent, prompt, history)?;
+        Ok(raw.map(|payload| Ok(sse::Event::default().data(payload))))
+    }
+
+    /// Same as [`Self::run_agent`] but yields the raw `data:` payload
+    /// strings (one per SSE frame) instead of wrapping them in
+    /// `axum::response::sse::Event`. This is the source-of-truth
+    /// stream the SSE handler and the bridge integration tests both
+    /// consume. The terminal `[DONE]` sentinel is always emitted.
+    ///
+    /// If the agent's `tools` array contains `flow:*` or `flow:<id>`
+    /// entries AND its provider takes [`RunnerInput::Rest`], the
+    /// runtime drives an in-process agentic loop: each turn, the
+    /// runner is handed the synthesised `ToolDef`s; tool calls that
+    /// match a `flow:*` name are dispatched through [`FlowEngine`]
+    /// and their terminal output is fed back as a `user`-role history
+    /// message before the next turn. CLI-shape runners (Claude CLI)
+    /// manage their own tool loop, so flow tools are silently dropped
+    /// on that path.
+    pub fn run_agent_raw(
+        &self,
+        agent: &Agent,
+        prompt: String,
+        history: Vec<HistoryMessage>,
+    ) -> Result<impl Stream<Item = String> + Send + 'static, AgentRunError> {
         let (provider, runner) = self.resolve(&agent.provider)?;
-        let input = build_input(&provider, agent, prompt, history);
-        let session_id = SessionId::from(format!("agent-{}", agent.id));
+        let (tx, rx) = mpsc::channel::<String>(64);
 
-        let (tx, rx) = mpsc::channel::<Event>(32);
+        let agent = agent.clone();
+        let this = self.clone();
 
-        // Spawn the runner. We don't expose cancellation to the chat
-        // adapter yet — the SSE stream just runs until the runner
-        // closes its `OnEvent` sender. The TokenCancel is held by the
-        // task so the trait object satisfies the `&dyn Cancel`
-        // lifetime requirement.
-        let runner_handle = runner;
         tokio::spawn(async move {
-            let cancel = TokenCancel::new();
-            if let Err(err) = runner_handle.run(input, session_id, tx, &cancel).await {
-                tracing::error!(error = %err, "agent runner failed");
+            let outcome = this
+                .drive_chat(provider, runner, agent, prompt, history, tx.clone())
+                .await;
+            if let Err(msg) = outcome {
+                let _ = tx
+                    .send(json!({ "type": "error", "error": msg }).to_string())
+                    .await;
             }
+            let _ = tx.send("[DONE]".to_owned()).await;
         });
 
-        // Translate Event → SSE frame, then append the terminal
-        // `[DONE]` sentinel so `createSseAdapter`'s default parser can
-        // close cleanly.
-        let event_stream = ReceiverStream::new(rx).filter_map(|ev| async move { event_to_sse(&ev) });
-        let done = futures::stream::once(async {
-            sse::Event::default().data("[DONE]")
-        });
-        let combined = event_stream
-            .chain(done)
-            .map(|e| Ok::<_, std::convert::Infallible>(e));
-        Ok(combined)
+        Ok(ReceiverStream::new(rx))
     }
-}
-
-impl Default for AiRuntime {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-/// Build the runner input variant the resolved provider expects.
-fn build_input(
-    provider: &Provider,
-    agent: &Agent,
-    prompt: String,
-    history: Vec<HistoryMessage>,
-) -> RunnerInput {
-    match provider {
-        Provider::Claude | Provider::Codex | Provider::Copilot => {
-            // CLI runners take a single prompt + optional system
-            // context. Fold history into the system prompt so the
-            // model still sees prior turns.
-            let folded_history = fold_history_for_cli(&history);
-            let system_prompt = match (agent.system_prompt.as_deref(), folded_history.as_str()) {
-                (None, "") => None,
-                (Some(s), "") => Some(s.to_owned()),
-                (None, h) => Some(h.to_owned()),
-                (Some(s), h) => Some(format!("{s}\n\n# Prior conversation\n{h}")),
-            };
-            RunnerInput::Cli(CliCfg {
-                prompt,
-                system_prompt,
-                model: Some(agent.model.clone()),
-                permission_mode: Some(starter_spi::ai::PermissionMode::Bypass),
-                ..CliCfg::default()
-            })
-        }
-        Provider::Anthropic | Provider::OpenAi => RunnerInput::Rest(RestCfg {
-            prompt,
-            system_prompt: agent.system_prompt.clone(),
-            model: Some(agent.model.clone()),
-            history,
-            ..RestCfg::default()
-        }),
-    }
-}
-
-fn fold_history_for_cli(history: &[HistoryMessage]) -> String {
-    history
-        .iter()
-        .filter(|m| m.role != "system")
-        .map(|m| format!("{}: {}", m.role, m.content))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
-/// Convert an `Event` from the runner to the SSE frame shape the chat
-/// adapter expects. Returns `None` for events the chat surface
-/// doesn't render (e.g. `Connected`, `Done` — the latter is replaced
-/// with the literal `[DONE]` sentinel by the caller).
-fn event_to_sse(ev: &Event) -> Option<sse::Event> {
-    let payload = match &ev.kind {
-        EventKind::Text { content } => json!({ "type": "text", "text": content }),
-        EventKind::ToolUse { id, name, input } => json!({
-            "type": "tool-call",
-            "toolCall": {
-                "id": id.clone().unwrap_or_default(),
-                "name": name,
-                "args": input.clone().unwrap_or(serde_json::Value::Null),
-                "state": "running",
-            },
-        }),
-        EventKind::Error { message } => json!({ "type": "error", "error": message }),
-        EventKind::Connected { .. } | EventKind::Done { .. } => return None,
-    };
-    Some(sse::Event::default().data(payload.to_string()))
 }

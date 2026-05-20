@@ -85,6 +85,7 @@ struct FlowEngineInner {
     ai_runners: Arc<dyn AiRunnerRegistry>,
     tools: Arc<dyn ToolRegistry>,
     provider_id: KindId,
+    quiescence: Duration,
 }
 
 impl FlowEngine {
@@ -111,7 +112,26 @@ impl FlowEngine {
                 ai_runners,
                 tools,
                 provider_id,
+                quiescence: Duration::from_secs(60),
             }),
+        }
+    }
+
+    /// Override the per-run quiescence window. The default is 60 s
+    /// so Claude CLI invocations (5–30 s of silence on stdout while
+    /// thinking) don't get reaped as idle. Tests that only exercise
+    /// cheap nodes pass a shorter window (typically 200 ms) so the
+    /// engine emits `RunCompleted` promptly after the terminal slot
+    /// is written.
+    pub fn with_quiescence(self, quiescence: Duration) -> Self {
+        let inner = FlowEngineInner {
+            ai_runners: self.inner.ai_runners.clone(),
+            tools: self.inner.tools.clone(),
+            provider_id: self.inner.provider_id.clone(),
+            quiescence,
+        };
+        Self {
+            inner: Arc::new(inner),
         }
     }
 
@@ -293,9 +313,10 @@ impl FlowEngine {
         let run_store: Arc<dyn EngineRunStore> = Arc::new(InMemoryRunStore::new());
         let mut cfg = FlowRunnerConfig::default();
         // Claude CLI invocations can take 5–30s and produce no
-        // SlotChanged events while in-flight — bump quiescence so the
-        // engine doesn't reap the run as idle.
-        cfg.quiescence = Duration::from_secs(60);
+        // SlotChanged events while in-flight — the configured
+        // quiescence (defaults to 60 s) keeps the engine from reaping
+        // the run as idle. Tests override via [`FlowEngine::with_quiescence`].
+        cfg.quiescence = self.inner.quiescence;
         let runner = FlowRunner::new(graph_store, run_store).with_config(cfg);
 
         // Fire FIRST — the mpsc buffer absorbs the race between the

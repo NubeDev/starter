@@ -35,7 +35,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let runs = Arc::new(RunStore::new(sqlx));
     let hub = Arc::new(EventHub::new());
     let engine = FlowEngine::new();
-    let ai = AiRuntime::new();
+    let ai = AiRuntime::new(flows.clone(), engine.clone(), runs.clone(), hub.clone());
 
     let rest_state = RestState {
         flows: flows.clone(),

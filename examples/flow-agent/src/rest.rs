@@ -557,6 +557,10 @@ impl IntoResponse for ApiError {
                 AgentRunError::UnknownProvider(_) | AgentRunError::ProviderUnavailable(_) => {
                     (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
                 }
+                AgentRunError::Registry(_) => {
+                    tracing::error!(error = %e, "flow registry error during agent run");
+                    (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
+                }
             },
             ApiError::Engine(e) => match e {
                 FlowEngineError::Parse(_) | FlowEngineError::Invalid(_) => {
