@@ -31,6 +31,7 @@
 pub mod config;
 pub mod identity_store;
 pub mod linked_providers;
+pub mod principal_extras;
 pub mod provider;
 pub mod providers;
 pub mod routes;
@@ -43,6 +44,7 @@ pub use config::{OAuthConfig, OAuthConfigError, ProviderCredentials, StateStoreK
 pub use identity_store::SqliteIdentityStore;
 pub use identity_store::{IdentityStore, IdentityStoreError, OAuthIdentity};
 pub use linked_providers::OAuthLinkedProviders;
+pub use principal_extras::OAuthPrincipalExtras;
 pub use provider::{OAuthProvider, ProviderError, ProviderIdentity};
 pub use providers::{GitHubProvider, GoogleProvider};
 pub use routes::{

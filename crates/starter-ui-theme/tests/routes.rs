@@ -17,8 +17,7 @@ use starter_store_sqlite::{migrate, migrate::MigrationSource, testing::ephemeral
 use starter_ui_theme::{routes::theme_router, routes::ThemeState, store::SqliteThemeStore};
 use tower::ServiceExt;
 
-static UI_THEME_MIGRATOR: sqlx::migrate::Migrator =
-    sqlx::migrate!("./migrations/ui_theme_sqlite");
+static UI_THEME_MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/ui_theme_sqlite");
 
 async fn fresh_router() -> Router {
     let pool: Pool = ephemeral().await;
@@ -218,7 +217,11 @@ async fn logo_post_get_delete_flow() {
     // GET serves bytes — public, no principal required.
     let resp = app
         .clone()
-        .oneshot(req("GET", "/api/v1/ui/theme/logo").body(Body::empty()).unwrap())
+        .oneshot(
+            req("GET", "/api/v1/ui/theme/logo")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
@@ -243,7 +246,11 @@ async fn logo_post_get_delete_flow() {
 
     // GET is 404 after delete.
     let resp = app
-        .oneshot(req("GET", "/api/v1/ui/theme/logo").body(Body::empty()).unwrap())
+        .oneshot(
+            req("GET", "/api/v1/ui/theme/logo")
+                .body(Body::empty())
+                .unwrap(),
+        )
         .await
         .unwrap();
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);

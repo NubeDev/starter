@@ -19,4 +19,4 @@ pub use save_input::ThemeSaveInput;
 pub use shell_config::ShellConfig;
 pub use store::ThemeStore;
 pub use styles::ThemeStyles;
-pub use validator::{validate_token_value, validate_save_input, TokenValueError};
+pub use validator::{validate_save_input, validate_token_value, TokenValueError};

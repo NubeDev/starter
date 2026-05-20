@@ -8,7 +8,12 @@ use starter_spi::dto::Problem;
 use starter_spi::error::Error;
 use starter_spi::ui::theme::TokenValueError;
 
-pub(crate) fn problem(status: StatusCode, kind: &str, title: &str, detail: Option<String>) -> Response {
+pub(crate) fn problem(
+    status: StatusCode,
+    kind: &str,
+    title: &str,
+    detail: Option<String>,
+) -> Response {
     let body = Problem {
         kind: kind.to_string(),
         title: title.to_string(),

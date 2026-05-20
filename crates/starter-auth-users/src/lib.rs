@@ -41,14 +41,17 @@ pub mod authenticator;
 pub mod linked_providers;
 pub mod openapi;
 pub mod password;
+pub mod principal_extras;
 pub mod role;
 pub mod routes;
 pub mod scope;
 pub mod session;
+pub mod signup;
 pub mod store;
 pub mod token;
 
 pub use authenticator::AuthAuthenticator;
 pub use linked_providers::{LinkedProvidersError, LinkedProvidersLookup, NoLinkedProviders};
+pub use principal_extras::{NoPrincipalExtras, PrincipalExtrasError, PrincipalExtrasLookup};
 pub use role::Role;
 pub use scope::Scope;

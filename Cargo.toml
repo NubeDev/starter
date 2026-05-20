@@ -13,6 +13,7 @@ members = [
     "crates/starter-auth-token",
     "crates/starter-auth-users",
     "crates/starter-auth-oauth",
+    "crates/starter-authz",
     "crates/starter-secrets-keyring",
     "crates/starter-secrets-file",
     "crates/starter-ai",
@@ -62,6 +63,7 @@ starter-jsonrpc-stdio    = { path = "crates/starter-jsonrpc-stdio",    version =
 starter-auth-token       = { path = "crates/starter-auth-token",       version = "0.1.0" }
 starter-auth-users       = { path = "crates/starter-auth-users",       version = "0.1.0" }
 starter-auth-oauth       = { path = "crates/starter-auth-oauth",       version = "0.1.0" }
+starter-authz            = { path = "crates/starter-authz",            version = "0.1.0" }
 starter-secrets-keyring  = { path = "crates/starter-secrets-keyring",  version = "0.1.0" }
 starter-secrets-file     = { path = "crates/starter-secrets-file",     version = "0.1.0" }
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
@@ -144,3 +146,4 @@ prost       = "0.13"
 
 # Config.
 figment     = { version = "0.10", features = ["toml", "env"] }
+toml        = "0.8"

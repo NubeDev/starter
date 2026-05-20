@@ -49,11 +49,7 @@ pub mod accepted_mime {
     /// MIME types accepted for the logo upload endpoint.
     pub const LOGO: &[&str] = &["image/png", "image/svg+xml"];
     /// MIME types accepted for the favicon upload endpoint.
-    pub const FAVICON: &[&str] = &[
-        "image/png",
-        "image/x-icon",
-        "image/vnd.microsoft.icon",
-    ];
+    pub const FAVICON: &[&str] = &["image/png", "image/x-icon", "image/vnd.microsoft.icon"];
 }
 
 /// URL paths the GET asset endpoints are served at. Stored back into

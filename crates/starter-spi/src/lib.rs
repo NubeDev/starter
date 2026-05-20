@@ -15,6 +15,7 @@
 
 pub mod ai;
 pub mod auth;
+pub mod authz;
 pub mod dto;
 pub mod error;
 pub mod filter;

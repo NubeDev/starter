@@ -5,6 +5,10 @@
 use std::sync::Arc;
 
 use crate::linked_providers::{LinkedProvidersLookup, NoLinkedProviders};
+use crate::principal_extras::{NoPrincipalExtras, PrincipalExtrasLookup};
+use crate::role::Role;
+use crate::signup::mode::SignupMode;
+use crate::signup::rate_limit::{MemoryRateLimiter, SignupRateLimiter};
 use crate::store::{SessionStore, TokenStore, UserStore};
 
 /// Shared state for the `/auth/*` handlers. Build once at startup and
@@ -21,6 +25,17 @@ pub struct AuthState {
     /// (returns `[]`) for consumers that do not wire
     /// `starter-auth-oauth`.
     pub linked_providers: Arc<dyn LinkedProvidersLookup>,
+    /// Principal-extras lookup. Defaults to
+    /// [`NoPrincipalExtras`] (returns `Value::Null`); consumers
+    /// wiring an identity-attribute source (e.g.
+    /// `starter-auth-oauth`'s `OAuthPrincipalExtras`) swap it via
+    /// [`Self::with_principal_extras`].
+    pub principal_extras: Arc<dyn PrincipalExtrasLookup>,
+    /// Signup mode. Defaults to [`SignupMode::Disabled`].
+    pub signup: SignupMode,
+    /// Rate limiter for signup requests. Defaults to
+    /// [`MemoryRateLimiter`].
+    pub rate_limit: Arc<dyn SignupRateLimiter>,
 }
 
 impl AuthState {
@@ -37,6 +52,9 @@ impl AuthState {
             sessions,
             tokens,
             linked_providers: Arc::new(NoLinkedProviders),
+            principal_extras: Arc::new(NoPrincipalExtras),
+            signup: SignupMode::Disabled,
+            rate_limit: Arc::new(MemoryRateLimiter::new()),
         }
     }
 
@@ -45,6 +63,27 @@ impl AuthState {
     /// call.
     pub fn with_linked_providers(mut self, lookup: Arc<dyn LinkedProvidersLookup>) -> Self {
         self.linked_providers = lookup;
+        self
+    }
+
+    /// Override the principal-extras lookup. The OAuth crate
+    /// wires `OAuthPrincipalExtras` here so every authenticated
+    /// request carries the `oauth.*` attribute block on
+    /// `Principal.extra` (SCOPE.md R8).
+    pub fn with_principal_extras(mut self, lookup: Arc<dyn PrincipalExtrasLookup>) -> Self {
+        self.principal_extras = lookup;
+        self
+    }
+
+    /// Enable open signup with the given default role.
+    pub fn with_signup_open(mut self, default_role: Role) -> Self {
+        self.signup = SignupMode::Open { default_role };
+        self
+    }
+
+    /// Override the signup rate limiter.
+    pub fn with_rate_limiter(mut self, limiter: Arc<dyn SignupRateLimiter>) -> Self {
+        self.rate_limit = limiter;
         self
     }
 }

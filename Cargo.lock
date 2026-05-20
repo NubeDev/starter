@@ -5958,6 +5958,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-authz"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "starter-spi",
+ "starter-store-postgres",
+ "starter-store-sqlite",
+ "thiserror 1.0.69",
+ "tokio",
+ "toml 0.8.23",
+ "tower 0.5.3",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "starter-cli"
 version = "0.1.0"
 dependencies = [

@@ -5,9 +5,11 @@ pub(crate) mod login;
 pub(crate) mod logout;
 pub(crate) mod me;
 mod router;
+pub(crate) mod signup;
 mod state;
 
 pub use login::{LoginRequest, LoginResponse, PasswordNotSetResponse, CSRF_COOKIE};
 pub use me::MeResponse;
 pub use router::auth_router;
+pub use signup::{SignupError, SignupRequest, SignupResponse};
 pub use state::AuthState;

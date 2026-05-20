@@ -100,7 +100,14 @@ enum Asset {
     ),
 )]
 pub(crate) async fn post_logo(state: Arc<ThemeState>, req: Request<Body>) -> Response {
-    upload_asset(state, req, accepted_mime::LOGO, limits::LOGO_MAX_BYTES, Asset::Logo).await
+    upload_asset(
+        state,
+        req,
+        accepted_mime::LOGO,
+        limits::LOGO_MAX_BYTES,
+        Asset::Logo,
+    )
+    .await
 }
 
 #[utoipa::path(

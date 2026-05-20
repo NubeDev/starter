@@ -1,0 +1,36 @@
+[package]
+name        = "starter-authz"
+description = "starter — policy-based authorization layer (RBAC + ownership + attribute conditions) over starter-spi's Principal."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+axum        = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+tower       = { workspace = true }
+toml        = { workspace = true }
+uuid        = { workspace = true, optional = true }
+sqlx        = { workspace = true, optional = true }
+starter-store-sqlite   = { workspace = true, optional = true }
+starter-store-postgres = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true }
+starter-store-sqlite = { workspace = true, features = ["testing"] }
+sqlx  = { workspace = true, features = ["sqlite"] }
+uuid  = { workspace = true }
+
+[features]
+default = []
+# Persisted policy store + DB-backed engine on top of sqlite.
+sqlite   = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite", "dep:uuid"]
+# Persisted policy store + DB-backed engine on top of postgres.
+postgres = ["dep:sqlx", "sqlx/postgres", "dep:starter-store-postgres", "dep:uuid"]

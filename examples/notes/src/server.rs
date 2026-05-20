@@ -33,8 +33,8 @@ use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_mcp::register_tools;
 use starter_ext_sdk::builtin::BuiltinTable;
 use starter_ext_server::{
-    rest_router, router_with_auth, BuiltinRestDispatcher, ExtensionAdmin,
-    InMemoryEnablementStore, RestRouterOptions,
+    rest_router, router_with_auth, BuiltinRestDispatcher, ExtensionAdmin, InMemoryEnablementStore,
+    RestRouterOptions,
 };
 use starter_mcp::{mcp_router, McpHttpOptions, ToolRegistry};
 use starter_observability::metrics::StandardMetrics;
@@ -126,8 +126,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         table.insert(ExtensionId::new("com.nube.hello").unwrap(), entry);
         Arc::new(table)
     };
-    let (tools, mcp_outcome, mcp_result) =
-        register_tools(&ext_registry, &builtins, tools);
+    let (tools, mcp_outcome, mcp_result) = register_tools(&ext_registry, &builtins, tools);
     if let Err(err) = mcp_result {
         tracing::warn!(error = %err, "some extension tool bindings failed to wire");
     }
@@ -151,8 +150,9 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         router_with_auth::<AppState, _>(admin, Arc::new(BoxedAuthenticator(authenticator.clone())));
 
     // Extension-contributed REST routes + auto-mounted POST /tools/<id>.
-    let rest_dispatcher: Arc<dyn starter_ext_server::RestDispatcher> =
-        Arc::new(BuiltinRestDispatcher::new(builtins.clone(), ext_registry.clone()));
+    let rest_dispatcher: Arc<dyn starter_ext_server::RestDispatcher> = Arc::new(
+        BuiltinRestDispatcher::new(builtins.clone(), ext_registry.clone()),
+    );
     let ext_rest = match rest_router::<AppState>(
         ext_registry.clone(),
         rest_dispatcher,
