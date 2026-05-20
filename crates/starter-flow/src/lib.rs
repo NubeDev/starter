@@ -52,3 +52,11 @@ pub mod health;
 /// `degraded_dropped_count`). Lands in Phase 3 stage 6 — see SCOPE
 /// "durability hardening" / D-F3.10 + D-F3.11.
 pub mod metrics;
+
+/// Hot-reload definition layer (`DOCS/flow/scope/hot-reload.md`).
+/// HR1 publish chokepoint (`DefinitionManager`), HR5 resolver
+/// (`TopologyResolver`), and the typed body shape both sides parse.
+/// Phase HR-1 ships the validation + publish surface; `ActiveTopology`
+/// swap, classifier, `apply_policy`, observability, boot resume,
+/// file-watch, and the kind revoke walk land in HR-2..HR-6.
+pub mod definition;

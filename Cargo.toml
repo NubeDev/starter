@@ -102,6 +102,13 @@ bytes       = "1"
 uuid        = { version = "1", features = ["v4", "v5", "serde"] }
 chrono      = { version = "0.4", default-features = false, features = ["serde", "clock"] }
 
+# Hot-reload (DOCS/flow/scope/hot-reload.md):
+# `blake3` hashes the canonicalised body for HR1's idempotent
+# short-circuit. `arc-swap` is the wait-free swap primitive HR2
+# uses for the per-flow `ActiveTopology` pointer (D-HR1).
+blake3      = "1"
+arc-swap    = "1"
+
 # Server-only.
 axum        = { version = "0.8", features = ["macros"] }
 tokio       = { version = "1",   features = ["rt-multi-thread", "macros", "sync", "signal"] }

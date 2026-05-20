@@ -6325,8 +6325,12 @@ dependencies = [
 name = "starter-flow"
 version = "0.1.0"
 dependencies = [
+ "arc-swap",
  "async-trait",
+ "blake3",
  "futures",
+ "schemars 0.8.22",
+ "serde",
  "serde_json",
  "starter-flow-spi",
  "starter-spi",

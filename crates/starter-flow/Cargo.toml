@@ -43,6 +43,14 @@ async-trait      = { workspace = true }
 futures          = { workspace = true }
 # Typed error surface for the in-engine registries (stage 5).
 thiserror        = { workspace = true }
+# Hot-reload (DOCS/flow/scope/hot-reload.md): blake3 is the content
+# hash powering HR1's idempotent short-circuit on canonical bodies;
+# arc-swap is the wait-free primitive HR2's `ActiveTopology` rides
+# on (D-HR1). `serde` is needed by the typed `FlowBody` parser
+# (HR3's body classifier and HR1's resolver share that struct).
+blake3           = { workspace = true }
+arc-swap         = { workspace = true }
+serde            = { workspace = true }
 
 [dev-dependencies]
 # Pull `macros` for `#[tokio::test]` and `time` for the lag/yield
@@ -54,6 +62,11 @@ tokio            = { workspace = true, features = ["rt-multi-thread", "sync", "m
 # dev-deps only — the production crate stays free of any subscriber
 # implementation.
 tracing-subscriber = { workspace = true }
+# Hot-reload HR-1 resolver tests use a small test-only kind whose
+# `Settings` derives `JsonSchema` to verify
+# `validate_settings` is invoked through the publish chokepoint.
+schemars         = { workspace = true }
+serde            = { workspace = true }
 
 [features]
 default = []

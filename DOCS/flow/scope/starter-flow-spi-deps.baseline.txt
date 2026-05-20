@@ -33,17 +33,177 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │   ├── futures-sink v0.3.32
 │   ├── futures-task v0.3.32
 │   └── futures-util v0.3.32 (*)
-├── serde v1.0.228
-│   ├── serde_core v1.0.228
-│   └── serde_derive v1.0.228 (proc-macro)
-│       ├── proc-macro2 v1.0.106 (*)
-│       ├── quote v1.0.45 (*)
-│       └── syn v2.0.117 (*)
-├── serde_json v1.0.149
+├── jsonschema v0.18.3
+│   ├── ahash v0.8.12
+│   │   ├── cfg-if v1.0.4
+│   │   ├── getrandom v0.3.4
+│   │   │   ├── cfg-if v1.0.4
+│   │   │   └── libc v0.2.186
+│   │   ├── once_cell v1.21.4
+│   │   ├── serde v1.0.228
+│   │   │   ├── serde_core v1.0.228
+│   │   │   └── serde_derive v1.0.228 (proc-macro)
+│   │   │       ├── proc-macro2 v1.0.106 (*)
+│   │   │       ├── quote v1.0.45 (*)
+│   │   │       └── syn v2.0.117 (*)
+│   │   └── zerocopy v0.8.48
+│   ├── anyhow v1.0.102
+│   ├── base64 v0.22.1
+│   ├── bytecount v0.6.9
+│   ├── fancy-regex v0.13.0
+│   │   ├── bit-set v0.5.3
+│   │   │   └── bit-vec v0.6.3
+│   │   ├── regex-automata v0.4.14
+│   │   │   ├── aho-corasick v1.1.4
+│   │   │   │   └── memchr v2.8.0
+│   │   │   ├── memchr v2.8.0
+│   │   │   └── regex-syntax v0.8.10
+│   │   └── regex-syntax v0.8.10
+│   ├── fraction v0.15.4
+│   │   ├── lazy_static v1.5.0
+│   │   └── num v0.4.3
+│   │       ├── num-bigint v0.4.6
+│   │       │   ├── num-integer v0.1.46
+│   │       │   │   └── num-traits v0.2.19
+│   │       │   └── num-traits v0.2.19
+│   │       ├── num-complex v0.4.6
+│   │       │   └── num-traits v0.2.19
+│   │       ├── num-integer v0.1.46 (*)
+│   │       ├── num-iter v0.1.45
+│   │       │   ├── num-integer v0.1.46 (*)
+│   │       │   └── num-traits v0.2.19
+│   │       ├── num-rational v0.4.2
+│   │       │   ├── num-bigint v0.4.6 (*)
+│   │       │   ├── num-integer v0.1.46 (*)
+│   │       │   └── num-traits v0.2.19
+│   │       └── num-traits v0.2.19
+│   ├── iso8601 v0.6.3
+│   │   └── nom v8.0.0
+│   │       └── memchr v2.8.0
 │   ├── itoa v1.0.18
 │   ├── memchr v2.8.0
-│   ├── serde_core v1.0.228
-│   └── zmij v1.0.21
+│   ├── num-cmp v0.1.0
+│   ├── once_cell v1.21.4
+│   ├── parking_lot v0.12.5
+│   │   ├── lock_api v0.4.14
+│   │   │   └── scopeguard v1.2.0
+│   │   └── parking_lot_core v0.9.12
+│   │       ├── cfg-if v1.0.4
+│   │       ├── libc v0.2.186
+│   │       └── smallvec v1.15.1
+│   ├── percent-encoding v2.3.2
+│   ├── regex v1.12.3
+│   │   ├── aho-corasick v1.1.4 (*)
+│   │   ├── memchr v2.8.0
+│   │   ├── regex-automata v0.4.14 (*)
+│   │   └── regex-syntax v0.8.10
+│   ├── serde v1.0.228 (*)
+│   ├── serde_json v1.0.149
+│   │   ├── itoa v1.0.18
+│   │   ├── memchr v2.8.0
+│   │   ├── serde_core v1.0.228
+│   │   └── zmij v1.0.21
+│   ├── time v0.3.47
+│   │   ├── deranged v0.5.8
+│   │   │   └── powerfmt v0.2.0
+│   │   ├── num-conv v0.2.2
+│   │   ├── powerfmt v0.2.0
+│   │   ├── time-core v0.1.8
+│   │   └── time-macros v0.2.27 (proc-macro)
+│   │       ├── num-conv v0.2.2
+│   │       └── time-core v0.1.8
+│   ├── url v2.5.8
+│   │   ├── form_urlencoded v1.2.2
+│   │   │   └── percent-encoding v2.3.2
+│   │   ├── idna v1.1.0
+│   │   │   ├── idna_adapter v1.2.2
+│   │   │   │   ├── icu_normalizer v2.2.0
+│   │   │   │   │   ├── icu_collections v2.2.0
+│   │   │   │   │   │   ├── displaydoc v0.2.5 (proc-macro)
+│   │   │   │   │   │   │   ├── proc-macro2 v1.0.106 (*)
+│   │   │   │   │   │   │   ├── quote v1.0.45 (*)
+│   │   │   │   │   │   │   └── syn v2.0.117 (*)
+│   │   │   │   │   │   ├── potential_utf v0.1.5
+│   │   │   │   │   │   │   └── zerovec v0.11.6
+│   │   │   │   │   │   │       ├── yoke v0.8.2
+│   │   │   │   │   │   │       │   ├── stable_deref_trait v1.2.1
+│   │   │   │   │   │   │       │   ├── yoke-derive v0.8.2 (proc-macro)
+│   │   │   │   │   │   │       │   │   ├── proc-macro2 v1.0.106 (*)
+│   │   │   │   │   │   │       │   │   ├── quote v1.0.45 (*)
+│   │   │   │   │   │   │       │   │   ├── syn v2.0.117 (*)
+│   │   │   │   │   │   │       │   │   └── synstructure v0.13.2
+│   │   │   │   │   │   │       │   │       ├── proc-macro2 v1.0.106 (*)
+│   │   │   │   │   │   │       │   │       ├── quote v1.0.45 (*)
+│   │   │   │   │   │   │       │   │       └── syn v2.0.117 (*)
+│   │   │   │   │   │   │       │   └── zerofrom v0.1.8
+│   │   │   │   │   │   │       │       └── zerofrom-derive v0.1.7 (proc-macro)
+│   │   │   │   │   │   │       │           ├── proc-macro2 v1.0.106 (*)
+│   │   │   │   │   │   │       │           ├── quote v1.0.45 (*)
+│   │   │   │   │   │   │       │           ├── syn v2.0.117 (*)
+│   │   │   │   │   │   │       │           └── synstructure v0.13.2 (*)
+│   │   │   │   │   │   │       ├── zerofrom v0.1.8 (*)
+│   │   │   │   │   │   │       └── zerovec-derive v0.11.3 (proc-macro)
+│   │   │   │   │   │   │           ├── proc-macro2 v1.0.106 (*)
+│   │   │   │   │   │   │           ├── quote v1.0.45 (*)
+│   │   │   │   │   │   │           └── syn v2.0.117 (*)
+│   │   │   │   │   │   ├── utf8_iter v1.0.4
+│   │   │   │   │   │   ├── yoke v0.8.2 (*)
+│   │   │   │   │   │   ├── zerofrom v0.1.8 (*)
+│   │   │   │   │   │   └── zerovec v0.11.6 (*)
+│   │   │   │   │   ├── icu_normalizer_data v2.2.0
+│   │   │   │   │   ├── icu_provider v2.2.0
+│   │   │   │   │   │   ├── displaydoc v0.2.5 (proc-macro) (*)
+│   │   │   │   │   │   ├── icu_locale_core v2.2.0
+│   │   │   │   │   │   │   ├── displaydoc v0.2.5 (proc-macro) (*)
+│   │   │   │   │   │   │   ├── litemap v0.8.2
+│   │   │   │   │   │   │   ├── tinystr v0.8.3
+│   │   │   │   │   │   │   │   ├── displaydoc v0.2.5 (proc-macro) (*)
+│   │   │   │   │   │   │   │   └── zerovec v0.11.6 (*)
+│   │   │   │   │   │   │   ├── writeable v0.6.3
+│   │   │   │   │   │   │   └── zerovec v0.11.6 (*)
+│   │   │   │   │   │   ├── writeable v0.6.3
+│   │   │   │   │   │   ├── yoke v0.8.2 (*)
+│   │   │   │   │   │   ├── zerofrom v0.1.8 (*)
+│   │   │   │   │   │   ├── zerotrie v0.2.4
+│   │   │   │   │   │   │   ├── displaydoc v0.2.5 (proc-macro) (*)
+│   │   │   │   │   │   │   ├── yoke v0.8.2 (*)
+│   │   │   │   │   │   │   └── zerofrom v0.1.8 (*)
+│   │   │   │   │   │   └── zerovec v0.11.6 (*)
+│   │   │   │   │   ├── smallvec v1.15.1
+│   │   │   │   │   └── zerovec v0.11.6 (*)
+│   │   │   │   └── icu_properties v2.2.0
+│   │   │   │       ├── icu_collections v2.2.0 (*)
+│   │   │   │       ├── icu_locale_core v2.2.0 (*)
+│   │   │   │       ├── icu_properties_data v2.2.0
+│   │   │   │       ├── icu_provider v2.2.0 (*)
+│   │   │   │       ├── zerotrie v0.2.4 (*)
+│   │   │   │       └── zerovec v0.11.6 (*)
+│   │   │   ├── smallvec v1.15.1
+│   │   │   └── utf8_iter v1.0.4
+│   │   └── percent-encoding v2.3.2
+│   └── uuid v1.23.1
+│       ├── getrandom v0.4.2
+│       │   ├── cfg-if v1.0.4
+│       │   └── libc v0.2.186
+│       ├── serde_core v1.0.228
+│       └── sha1_smol v1.0.1
+├── schemars v0.8.22
+│   ├── dyn-clone v1.0.20
+│   ├── indexmap v1.9.3
+│   │   ├── hashbrown v0.12.3
+│   │   └── serde v1.0.228 (*)
+│   ├── schemars_derive v0.8.22 (proc-macro)
+│   │   ├── proc-macro2 v1.0.106 (*)
+│   │   ├── quote v1.0.45 (*)
+│   │   ├── serde_derive_internals v0.29.1
+│   │   │   ├── proc-macro2 v1.0.106 (*)
+│   │   │   ├── quote v1.0.45 (*)
+│   │   │   └── syn v2.0.117 (*)
+│   │   └── syn v2.0.117 (*)
+│   ├── serde v1.0.228 (*)
+│   └── serde_json v1.0.149 (*)
+├── serde v1.0.228 (*)
+├── serde_json v1.0.149 (*)
 ├── starter-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-spi)
 │   ├── async-trait v0.1.89 (proc-macro) (*)
 │   ├── chrono v0.4.44
@@ -55,13 +215,7 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │   │   ├── fnv v1.0.7
 │   │   ├── lazy_static v1.5.0
 │   │   ├── memchr v2.8.0
-│   │   ├── parking_lot v0.12.5
-│   │   │   ├── lock_api v0.4.14
-│   │   │   │   └── scopeguard v1.2.0
-│   │   │   └── parking_lot_core v0.9.12
-│   │   │       ├── cfg-if v1.0.4
-│   │   │       ├── libc v0.2.186
-│   │   │       └── smallvec v1.15.1
+│   │   ├── parking_lot v0.12.5 (*)
 │   │   ├── protobuf v3.7.2
 │   │   │   ├── once_cell v1.21.4
 │   │   │   ├── protobuf-support v3.7.2
@@ -113,23 +267,10 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │   │   └── utoipa-gen v5.5.0 (proc-macro)
 │   │       ├── proc-macro2 v1.0.106 (*)
 │   │       ├── quote v1.0.45 (*)
-│   │       ├── regex v1.12.3
-│   │       │   ├── aho-corasick v1.1.4
-│   │       │   │   └── memchr v2.8.0
-│   │       │   ├── memchr v2.8.0
-│   │       │   ├── regex-automata v0.4.14
-│   │       │   │   ├── aho-corasick v1.1.4 (*)
-│   │       │   │   ├── memchr v2.8.0
-│   │       │   │   └── regex-syntax v0.8.10
-│   │       │   └── regex-syntax v0.8.10
+│   │       ├── regex v1.12.3 (*)
 │   │       ├── syn v2.0.117 (*)
 │   │       └── uuid v1.23.1
 │   │           └── serde_core v1.0.228
-│   └── uuid v1.23.1
-│       ├── getrandom v0.4.2
-│       │   ├── cfg-if v1.0.4
-│       │   └── libc v0.2.186
-│       ├── serde_core v1.0.228
-│       └── sha1_smol v1.0.1
+│   └── uuid v1.23.1 (*)
 ├── thiserror v1.0.69 (*)
 └── uuid v1.23.1 (*)
