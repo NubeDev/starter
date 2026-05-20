@@ -2,9 +2,76 @@
 
 ## Current stage
 
-**Bootstrap on `master`; ready for stage 1 (D-F5 decisions) on the
-branch `codeless/starter-flow-phase5-demo`.** The job folder is
-in place; no SCOPE.md edits yet — those land at stage 1.
+**Phase 5 demo complete on branch
+`codeless/starter-flow-phase5-demo`; ready to open PR against
+master.** All six stages landed plus two mid-job extension
+commits (stage 3b adding `RunnerInput::Cli` support to the
+ai-agent body, stage 3c splitting `tool_registry` into an
+always-compiled module so `ai-agent` and `tool-call` feature
+paths are orthogonal). The codeless shape (`trigger.explicit →
+ai-agent → log`) runs end-to-end through the engine in CI via
+RecordingAiRunner and through `examples/notes` against the
+local Claude Code CLI.
+
+## Stage 6 outcome (verify pass)
+
+| Gate | Result |
+|---|---|
+| workspace dep-tree gates (now 8 with `trigger-explicit` + `log` paths) | **pass** — 8/8 |
+| starter-flow-nodes --features all-kinds (lib) | **pass** — 31/31 |
+| Phase 2 + Phase 3 + Phase 4 + Phase 5 smokes | **pass** — 7 files, 12 tests across the flow suite |
+| codeless_shape_on_one_engine smoke (Phase 5) | **pass** — 1/1 |
+| starter-notes builds clean with the demo wired in | **pass** |
+| flow-scoped clippy --features all-kinds | **pass** — 0 warnings |
+| flow-scoped fmt --check | **pass** — exit 0 |
+
+## Commits (in order)
+
+- `45ec414` master — bootstrap job folder.
+- `05cd198` branch — stage 1: D-F5.1..D-F5.5 in SCOPE.md.
+- `3cebb6e` branch — stage 2: trigger.explicit body + 5th dep-tree gate.
+- `bae901a` branch — stage 3: log body + 6th dep-tree gate.
+- `9e50679` branch — stage 3b: ai-agent supports `RunnerInput::Cli`.
+- `5fd33b7` branch — stage 3c: split ToolRegistry into always-compiled module.
+- `7a76473` branch — stage 4: codeless-demo flow wired into examples/notes.
+- `3a5b8bb` branch — stage 5: end-to-end codeless-shape smoke.
+- (this commit) branch — stage 6: verify pass + handover update.
+
+## Implementation notes worth remembering
+
+- **`AiAgent::with_input_kind(AgentInputKind::Cli)`** is the
+  required twin to `with_provider_id` whenever a CLI-shape
+  runner (Claude Code) backs the agent — the propagator's
+  same Phase 2 trigger-slot-only routing limitation means
+  both must be pinned at construction time. D-F5.6 names the
+  revisit trigger.
+- **`tool_registry` is now always compiled** regardless of
+  features. The trait + `StaticToolRegistry` live in
+  `crates/starter-flow-nodes/src/tool_registry.rs`;
+  `tool_call.rs` and `ai_agent.rs` both import from there.
+  Downstream consumers can keep importing through
+  `starter_flow_nodes::tool_call::{ToolRegistry,
+  StaticToolRegistry}` — those are re-exports of the
+  always-compiled path.
+- **`TriggerChannelRegistry` is body-local**, not in the SPI.
+  The body file holds the trait + `StaticTriggerChannelRegistry`
+  + `TriggerSender`/`TriggerReceiver` types. No SPI baseline
+  drift this job (D-F3.7 untouched).
+- **The fire-before-start ordering** in
+  `examples/notes/src/flow_demo.rs` and the stage-5 smoke is
+  deliberate: the trigger body's mpsc receiver is bounded,
+  so firing first guarantees the payload is queued before the
+  body's recv awaits. No race window.
+- **CI never hits Anthropic.** The stage-5 smoke uses
+  `RecordingAiRunner`. The notes host's POST
+  `/api/flows/codeless-demo/fire` endpoint hits the local
+  Claude Code CLI when a developer fires it — `claude auth
+  login` is the auth path.
+- **The Rubix half of Phase 5's "Codeless and Rubix shape on
+  one engine" smoke is deferred** to a follow-up job. It
+  needs `branch` + `merge` + `http-out` which this job does
+  not ship; the other eight Phase 5 node kinds stay stubbed
+  at 14 lines each.
 
 ## Why this job exists
 
