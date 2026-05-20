@@ -2,10 +2,9 @@
 
 ## Current stage
 
-**Stage 5 — engine wiring: `Engine::with_run_store(...)` builder hook,
-per-tick checkpoint cadence, resume-from-checkpoint on
-`Engine::start(known_run_id)`.** Stage 4 (SQLite store impls) is
-complete and pushed.
+**Stage 6 — durability hardening.** Stage 5 (engine wiring +
+resume-from-checkpoint + R2 chokepoint test) is complete and
+pushed.
 
 ## Stages complete
 
@@ -14,60 +13,126 @@ complete and pushed.
 - **Stage 3.** SPI trait fleshout + baseline regeneration.
 - **Stage 4.** Three SQLite store impls behind default-off `flow`
   feature; 8 integration tests green; workspace gates clean.
+- **Stage 5.** Engine wiring: `Engine::with_run_store(...)`
+  builder, per-tick checkpoint cadence in propagator, resume-
+  from-checkpoint on `FlowRunner::resume(...)`, R2 chokepoint
+  integrity test (`stage5_resume_chokepoint.rs`) green. All
+  three Phase 2 smokes still green.
 
-## Stage 4 outcome (one-line summary)
+## Stage 5 outcome (one-line summary)
 
-`SqliteFlowStore` + `SqliteRunStore` + `SqliteSessionStore` land in
-`crates/starter-store-sqlite/src/flow/` behind a new default-off
-`flow` cargo feature (D-F3.3, D-F3.7). Five-table schema in
-`migrations/flow/0001_init.sql` (`flow_revisions`, `flow_heads`,
-`runs` + `UNIQUE (service_name, dedup_key)` partial index,
-`run_checkpoints` keyed on `(run_id, seq)`, `sessions`). Pool's
-`connect()` extended with an `after_connect` hook applying the
-four pragmas workspace-wide (`journal_mode=WAL,
-synchronous=NORMAL, busy_timeout=5000, foreign_keys=ON`).
+`FlowRunner::with_spi_run_store(Arc<dyn spi::RunStore>)` +
+`Engine::with_run_store(...)` plus a new `propagator::
+CheckpointHook` thread per-tick `RunStore::checkpoint(run, seq,
+state, &writes)` calls into the SPI store; `FlowRunner::resume
+(spec, input, run_id)` loads the latest checkpoint and replays
+its writes through the single `GraphStore::write_slot`
+chokepoint (R2 unchanged), then spawns a fresh propagator with
+`initial_seq = checkpoint.seq` so the first post-resume
+checkpoint carries `seq = checkpoint.seq + 1`.
 
-## Stage 4 implementation choices made
+## Stage 5 implementation choices made
 
-- **Pool pragmas are workspace-wide, not flow-feature-gated**.
-  Reason: connection pragmas are per-connection in SQLite — the
-  pool either applies them on every checkout or it doesn't. Each
-  pragma is a safe default for every existing consumer (`:memory:`
-  silently ignores `journal_mode=WAL`; `foreign_keys=ON` matches
-  what every other store crate's tests already expect). Stage-4
-  test `wal_pragmas_applied_on_file_backed_pool` locks this on
-  a file-backed pool where journal_mode actually takes effect.
-- **`BEGIN DEFERRED` (sqlx default), not `BEGIN IMMEDIATE`**.
-  D-F3.8 names atomicity, not lock-upgrade-deadlock avoidance —
-  the engine has a single-writer-per-run invariant so the
-  upgrade-from-SHARED race doesn't apply. If a later stage
-  surfaces multi-writer contention, `Pool::begin_with` in sqlx
-  0.8 supports the upgrade additively.
-- **Retention loaded outside the checkpoint tx**. `RunOpts` is
-  immutable for a run's lifetime (set at `start`); reading it
-  inside the tx would only add lock contention.
-- **`INSERT OR IGNORE` on `flow_revisions.put`**. Revisions are
-  immutable per SCOPE "Decisions made"; a re-put of the same
-  `(flow_id, revision_id)` pair is a no-op. Mismatched body on
-  re-put is a caller bug the engine layer guards (stage 5).
-- **`sessions.list(principal)` scans + filters by `subject`**.
-  Sessions are small-cardinality per principal; an indexed
-  `subject` column lands additively when a hot listing path
-  surfaces.
-- **Status mirroring**. `runs.status` mirrors the engine-typed
-  `RunState` written into each checkpoint so `list_open` is a
-  one-shot indexed lookup against `finished_at IS NULL`.
-- **Wildcard match arms on `RunState` / `RunOutcome`**. Both are
-  `#[non_exhaustive]` in the SPI; unknown variants map to safe
-  defaults (`"running"` / `"failed"` respectively) rather than a
-  `Backend` error that would mask the actual checkpoint write.
-- **Migrator export**. `starter_store_sqlite::flow::FLOW_MIGRATOR`
-  (`static sqlx::migrate::Migrator`) +
-  `FLOW_MIGRATION_SOURCE` const so consumers can do
-  `migrate(&pool).with_source(FLOW_MIGRATION_SOURCE)` without
-  knowing the table name.
+- **`Engine::with_run_store(...)` is a passive holder; the wiring
+  lives on `FlowRunner`**. Reason: the `Engine` state machine
+  (R12) does not spawn runs — `FlowRunner` does. Putting the
+  active hook on `Engine` would require either a major API shift
+  (`Engine::start_run(...)` etc.) or threading the engine into
+  the FlowRunner. The handover called for both names; the
+  SCOPE-named `Engine::with_run_store` is preserved as a builder
+  + `Engine::run_store()` accessor that surface adapters
+  (stage 7/8 `FlowAsTool`/`FlowAsService`) will pull from when
+  constructing per-call FlowRunners.
+- **Two `RunStore` traits coexist**. The Phase-2 in-memory
+  `crate::run::RunStore` (record/get/len) is kept verbatim so
+  existing callers don't break; the Phase-3 SPI
+  `starter_flow_spi::flow::RunStore` (start/checkpoint/load/
+  finish/list_open/find_by_dedup_key) is attached additively via
+  `FlowRunner::with_spi_run_store(...)`. When unattached, the
+  runner behaves exactly as Phase 2 (matches SCOPE: "when no
+  RunStore is attached, the engine behaves exactly as it does
+  today").
+- **Per-tick batch lives only when a hook is attached**. The
+  propagator skips the `tick_writes: Vec<(SlotRef, SlotValue)>`
+  push when `checkpoint.is_none()` so the no-store path
+  allocates nothing. Writes are mirrored into the batch only on
+  `write_slot` success, so a failed fan-out doesn't poison the
+  checkpoint.
+- **One checkpoint per tick, not per write**. Per D-F3.2: the
+  propagator's "tick" = one event-handler iteration; all fan-out
+  + node-output writes during that iteration land in one
+  `RunStore::checkpoint(...)` call. Seq is monotonic per-run via
+  the existing propagator `hops: u64` counter plus the
+  `initial_seq` offset for resume.
+- **Stage 5 logs checkpoint failures and continues**. Per the
+  WORKFLOW per-stage table, retry-with-backoff +
+  `EngineHealth::Degraded` is Stage 6's job; stage 5 emits a
+  `warn!` and lets the run continue. The
+  `FlowEvent::CheckpointFailed { attempt }` event is reserved
+  for stage 6 (it requires the retry loop to fill `attempt`).
+- **SPI `start`/`finish` lifecycle wired**. `FlowRunner::launch`
+  calls `spi.start(run_id, revision, opts, Principal, None)`
+  before spawning the coordinator (fresh runs only; resumed
+  runs skip to avoid PK collision on `runs.run_id`). The
+  coordinator calls `spi.finish(run_id, outcome)` after the
+  terminal status is set so SCOPE D-F3.9 "final-checkpoint
+  preserved" is honoured.
+- **Default Principal is a hardcoded "system/Admin"** at the
+  `FlowRunner` boundary. Reason: `RunSpec` is `#[non_exhaustive]`
+  and bumping it with a `principal` field is best done when the
+  surfaces (stage 7/8) ship — they're the natural Principal
+  source. The placeholder is unambiguous in logs; stage 7/8
+  replaces it via a `RunSpec::with_principal(...)` extension
+  or a richer `FlowRunner::start_for(principal, ...)` overload.
+- **New direct dep: `starter-spi` on `starter-flow`**. Reason:
+  constructing a `Principal { subject, role, scopes, extra }`
+  needs the `Role` enum which `starter-flow-spi` re-exports for
+  `Principal` only. `starter-flow-spi` already pulls
+  `starter-spi` transitively so the engine's dep tree gains
+  nothing new (the `workspace_dep_tree_gates` test stays green;
+  the `starter-flow-spi` baseline is unchanged). Added with
+  `serde_json` for the `Principal.extra` field.
+- **`RunSpec::new(...)` constructor added**. The stage-5 test
+  lives under `crates/starter-flow/tests/` (external crate
+  boundary) and cannot use the struct-expression form because
+  of `#[non_exhaustive]`. The constructor is also the right
+  ergonomics for future surfaces.
+- **`propagator::spawn_with_checkpoint` + `drive_with_checkpoint`
+  are new entry points; `spawn`/`drive` delegate**. Reason: the
+  existing `spawn`/`drive` signatures are public and called by
+  three external sites (`starter-flow/tests/
+  smoke_one_write_chokepoint.rs`, `starter-flow-nodes/tests/
+  transform_node_failed.rs`, the engine internal coordinator).
+  A breaking change would mean retroactively touching those
+  files; the delegate keeps them green and the new APIs
+  surface the hook explicitly.
 
-## Known pre-existing issues (NOT caused by stage 3 or 4)
+## Stage 5 files touched
+
+- `crates/starter-flow/Cargo.toml` — added `starter-spi` +
+  `serde_json` direct deps.
+- `crates/starter-flow/src/engine.rs` — `Engine::with_run_store`
+  + `Engine::run_store` + `run_store: Option<Arc<dyn spi::
+  RunStore>>` field.
+- `crates/starter-flow/src/propagator.rs` — `CheckpointHook`
+  struct + `spawn_with_checkpoint` / `drive_with_checkpoint`
+  entry points + per-tick batch collection + one
+  `RunStore::checkpoint` call per non-empty tick.
+- `crates/starter-flow/src/run.rs` — `FlowRunner::
+  with_spi_run_store` / `with_run_opts` / `spi_run_store`
+  accessors; new `FlowRunner::resume(spec, input, run_id)`
+  method; new `FlowRunnerError` enum; `RunSpec::new(...)`
+  constructor; coordinator threads spi store through to
+  `propagator::spawn_with_checkpoint` and calls
+  `spi.start(...)` / `spi.finish(...)` on the lifecycle.
+- `crates/starter-flow/tests/stage5_resume_chokepoint.rs` —
+  new test asserting (a) checkpoint history accumulates during
+  a fresh run, (b) resume returns Some when a checkpoint
+  exists, (c) replay writes go through the `GraphStore::
+  write_slot` chokepoint (counted via a wrapper store), and
+  (d) every replayed slot lands with the checkpoint's value.
+
+## Known pre-existing issues (NOT caused by stage 3/4/5)
 
 - `cargo clippy --workspace --all-targets -- -D warnings` fails
   on master too with `error[E0432]: unresolved import
@@ -77,63 +142,87 @@ synchronous=NORMAL, busy_timeout=5000, foreign_keys=ON`).
 - `cargo fmt --check` reports pre-existing drift in:
   `crates/starter-spi/src/ui/theme/mod.rs`,
   `crates/starter-ui-theme/src/{lib,routes}.rs`,
-  `examples/notes/src/server.rs`.
+  `examples/notes/src/server.rs`, and several files under
+  `starter-extensions/`.
+- All four CI red checks on PR #9 (`rust check`, `pnpm
+  build/typecheck`, `starter-spi dep baseline`, `openapi/ts
+  drift`) also fail on master and are not caused by this
+  branch.
+- `cargo` emits `default-features = false` warnings for
+  `starter-flow-spi` / `starter-spi` workspace deps —
+  pre-existing on master in `starter-flow-surfaces` and
+  `starter-flow-nodes` (Cargo wants the workspace root to
+  declare `default-features` for the warning to land
+  cleanly). Out of scope.
 
 ## Branch + commits
 
 - Branch: `codeless/starter-flow-phase3-persistence-surfaces`.
 - Stage 1 commit: `8407d6e` — decision lock.
 - Stage 3 commit: `44f19f5` — SPI fleshout + baseline regeneration.
-- Stage 4 commit: see latest log — SQLite store impls.
+- Stage 4 commit: `8a60ddb` — SQLite store impls.
+- Stage 5 commit: see latest log — engine wiring + resume + R2
+  chokepoint test.
 - Pushed to origin.
 
-## What stage 5 starts with
+## What stage 6 starts with
 
-- `Engine::with_run_store(Arc<dyn RunStore>) -> Self` builder
-  hook on the engine crate (additive — non-store consumers keep
-  the no-store ctor).
-- Per-tick checkpoint cadence (D-F3.2): the propagator collects
-  the per-tick slot-write batch and calls
-  `RunStore::checkpoint(run_id, seq, state, &writes)` once at
-  the end of each propagation tick. `seq` is the propagator's
-  existing monotonic tick counter (Q2).
-- Resume-from-checkpoint: `Engine::start(known_run_id)` loads
-  `RunStore::load(run_id)`, replays `RunCheckpoint::writes`
-  through `GraphStore::write_slot` (R2 unchanged — the resume
-  path is **not** a second writer), then hands off to the
-  propagator.
-- Checkpoint-failure retry: 5 attempts with exponential backoff
-  per D-F3.11; on the 5th failure the engine transitions to
-  `EngineHealth::Degraded` and starts buffering checkpoint
-  batches into a per-run in-memory queue
-  (`RunOpts::degraded_queue_capacity`, evict-oldest on overflow).
-  `Engine::start` rejects new runs with
-  `EngineError::BackendUnavailable` while degraded.
-- The two-`EngineError` reconciliation question lands here.
-  Recommendation: keep them separate — engine-internal
-  `IllegalTransition` is a propagator-state-machine concern,
-  SPI-level `BackendUnavailable + Flow(#[from] FlowError)` is
-  the public surface. Wire engine-internal failures into the
-  public type via a `From` impl in the engine crate, not in the
-  SPI.
+- **Retry-with-backoff** on `RunStore::checkpoint` errors per
+  D-F3.11 (50→100→200→400→800ms, 5 attempts, then
+  `EngineHealth::Degraded`). Replaces the stage-5
+  `tracing::warn!("checkpoint failed; log and continue")`
+  callsite in `propagator::drive_with_checkpoint`.
+- **`EngineHealth { Healthy, Degraded }` accessor** on
+  `Engine` (the type already exists in
+  `starter_flow_spi::flow`); plus `Engine::health() ->
+  EngineHealth` reading an `AtomicU8` so the lookup is
+  lock-free.
+- **Per-run in-memory checkpoint queue** under
+  `RunOpts.degraded_queue_capacity` (default 1024, evict-
+  oldest). When in `Degraded` the engine queues batches and
+  drains in `(run_id, seq)` order on the next successful
+  checkpoint write.
+- **`Engine::start` returns `EngineError::BackendUnavailable`**
+  while `Degraded`. The Phase-2 `Engine::start()` lifecycle
+  method (Starting → Running) is unchanged; this is the
+  per-run `FlowRunner::start(...)` path that gains the
+  rejection. Probably surfaces as a new `Result<RunHandle,
+  EngineError>` return type — that's a public API change so
+  worth confirming the shape before commit.
+- **Per-run broadcast capacity hook** wired into
+  `FlowRunner::launch` using
+  `RunOpts.event_broadcast_capacity` (currently the runner
+  uses the fixed `FlowRunnerConfig.event_buffer` 256).
+- **Engine's own `Lagged`-watching subscriber** on every
+  per-run broadcast that increments
+  `RunMetrics.subscriber_lagged_count`.
+- **Monotonic `u64` tick-counter assertion** + the
+  `const _: () = assert!(std::mem::size_of::<TickCounter>()
+  == 8)` compile-time check. The current propagator counter
+  is a plain `u64` local; promoting it to a named
+  `TickCounter` newtype is the least-invasive way to satisfy
+  the assertion.
 
-## Stage 5 implementation gotchas
+## Stage 6 implementation gotchas
 
-- `chrono` is already a transitive dep of `starter-flow-spi`
-  via `starter-spi`; engine code can pull it without a new
-  dependency baseline regeneration.
-- The propagator's tick counter is per-run, not global. Q2
-  locked that `seq` is monotonic per-run.
-- `RunStore::checkpoint` takes the writes batch by slice borrow
-  — the propagator must hold the batch in an owned `Vec`
-  through the await point (no escape from the iterator).
-- `FlowEvent::CheckpointFailed { attempt }` is emitted once per
-  retry (`1..=5`); the broadcast is best-effort per D-F3.10.
-- `FlowEvent::DedupShortCircuit { prior_run_id }` is emitted by
-  `FlowAsService` (stage 7), not by the engine — stage 5 just
-  needs to make sure the engine's `EngineError::BackendUnavailable`
-  path doesn't accidentally short-circuit through the same
-  variant.
+- The `RunOpts` shape is `#[non_exhaustive]` and the
+  `degraded_queue_capacity` + `event_broadcast_capacity`
+  fields already exist (Stage 3 landed them); stage 6 just
+  reads them rather than adding them.
+- The Phase 3 `FlowEvent::CheckpointFailed { attempt }`
+  variant already exists in the SPI (Stage 3 landed it); stage
+  6 just emits it from the retry loop. Same for
+  `FlowEvent::DedupShortCircuit` — stage 6 doesn't emit it
+  (stage 8 / `FlowAsService` does); stage 5 already verified
+  the variant doesn't accidentally short-circuit
+  `BackendUnavailable`.
+- The `EngineHealth` type lives in `starter_flow_spi::flow`;
+  the `Engine::health()` accessor in `starter-flow` just
+  returns the SPI type. Same for `EngineError`.
+- Adding a `tick_counter` newtype touches the propagator's
+  `hops: u64` local. The `CheckpointHook.initial_seq` field
+  added in stage 5 stays — they compose: `seq =
+  initial_seq + tick_counter`.
 
 ## Phase-3 follow-up notes (not in scope for this job)
 
@@ -150,3 +239,9 @@ synchronous=NORMAL, busy_timeout=5000, foreign_keys=ON`).
   crates (out-of-scope).
 - Pre-existing `starter-grpc` clippy failure under
   `--workspace --all-targets` (needs `--features testing`).
+- A `RunSpec::with_principal(...)` / `FlowRunner::start_for
+  (principal, ...)` extension to replace the stage-5 hardcoded
+  "system/Admin" Principal default — best landed in stage 7/8
+  with the surfaces.
+
+

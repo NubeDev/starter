@@ -44,9 +44,9 @@ use futures::StreamExt;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
 
-use starter_flow_spi::flow::{FlowError, FlowEvent, RunId};
+use starter_flow_spi::flow::{FlowError, FlowEvent, RunId, RunState as SpiRunState, RunStore};
 use starter_flow_spi::graph::{GraphStore, SubscribeOpts, SubscriptionStream, WriteSlotOpts};
-use starter_flow_spi::node::{NodeBehavior, NodeCtx, NodeId, SlotMap, SlotRef};
+use starter_flow_spi::node::{NodeBehavior, NodeCtx, NodeId, SlotMap, SlotRef, SlotValue};
 use starter_flow_spi::Cancel;
 
 /// Default per-run propagation budget — locked at Phase 2 stage 1
@@ -117,6 +117,34 @@ pub struct FlowTopology {
     pub behaviors: BTreeMap<NodeId, Arc<dyn NodeBehavior>>,
 }
 
+/// Per-tick checkpoint hook the propagator calls at the end of every
+/// event-handler iteration (D-F3.2: per-tick cadence, not per
+/// `write_slot`).
+///
+/// Constructed by [`crate::run::FlowRunner`] when a Phase 3 SPI
+/// [`RunStore`] is attached to the engine and threaded into
+/// [`spawn_with_checkpoint`] / [`drive_with_checkpoint`].
+///
+/// `initial_seq` is the propagator-tick counter the resume path
+/// loaded from `RunStore::load(run_id)`; a fresh run passes `0`. The
+/// first checkpoint a fresh run writes therefore carries `seq = 1`;
+/// a resumed run continues at `initial_seq + 1`. This keeps the
+/// `(run_id, seq)` primary key in `run_checkpoints` strictly
+/// monotonic across the SIGKILL-and-resume boundary.
+///
+/// Stage 5 logs `RunStore::checkpoint` failures at `warn!` and
+/// continues; retry-with-backoff + `EngineHealth::Degraded` land in
+/// stage 6 (per the job WORKFLOW per-stage table).
+#[derive(Clone)]
+pub struct CheckpointHook {
+    /// The SPI [`RunStore`] every per-tick checkpoint writes to.
+    pub store: Arc<dyn RunStore>,
+    /// Seq offset applied to the propagator's per-run hop counter
+    /// when computing the checkpoint `seq` field. `0` for a fresh
+    /// run; loaded checkpoint's `seq` for a resumed run.
+    pub initial_seq: u64,
+}
+
 /// Spawn the propagator task driving one run.
 ///
 /// Returns the [`JoinHandle`] for the spawned task. The task exits
@@ -138,12 +166,30 @@ pub fn spawn(
     run: RunId,
     config: PropagatorConfig,
 ) -> JoinHandle<()> {
+    spawn_with_checkpoint(store, topology, cancel, events, run, config, None)
+}
+
+/// Same as [`spawn`] but with an optional [`CheckpointHook`] for
+/// per-tick `RunStore::checkpoint` persistence (D-F3.2). When
+/// `checkpoint` is `None` the propagator behaves identically to
+/// [`spawn`] — the Phase-2 in-memory substrate.
+pub fn spawn_with_checkpoint(
+    store: Arc<dyn GraphStore>,
+    topology: Arc<FlowTopology>,
+    cancel: Arc<dyn Cancel>,
+    events: broadcast::Sender<FlowEvent>,
+    run: RunId,
+    config: PropagatorConfig,
+    checkpoint: Option<CheckpointHook>,
+) -> JoinHandle<()> {
     // Subscribe *synchronously* before spawning the task so that any
     // writes the caller performs immediately after `spawn()` returns
     // are guaranteed to land in the propagator's subscription queue
     // — no "did the spawned task get to `subscribe` first?" races.
     let sub = store.subscribe(SubscribeOpts::default());
-    tokio::spawn(drive(store, sub, topology, cancel, events, run, config))
+    tokio::spawn(drive_with_checkpoint(
+        store, sub, topology, cancel, events, run, config, checkpoint,
+    ))
 }
 
 /// Body of the propagator task. Public for ergonomics ([`spawn`] is
@@ -151,12 +197,27 @@ pub fn spawn(
 /// tests and Phase 3 engine wiring can drive the loop inline.
 pub async fn drive(
     store: Arc<dyn GraphStore>,
+    sub: SubscriptionStream,
+    topology: Arc<FlowTopology>,
+    cancel: Arc<dyn Cancel>,
+    events: broadcast::Sender<FlowEvent>,
+    run: RunId,
+    config: PropagatorConfig,
+) {
+    drive_with_checkpoint(store, sub, topology, cancel, events, run, config, None).await
+}
+
+/// Same as [`drive`] but with an optional per-tick checkpoint hook.
+#[allow(clippy::too_many_arguments)]
+pub async fn drive_with_checkpoint(
+    store: Arc<dyn GraphStore>,
     mut sub: SubscriptionStream,
     topology: Arc<FlowTopology>,
     cancel: Arc<dyn Cancel>,
     events: broadcast::Sender<FlowEvent>,
     run: RunId,
     config: PropagatorConfig,
+    checkpoint: Option<CheckpointHook>,
 ) {
     let mut hops: u64 = 0;
 
@@ -193,6 +254,14 @@ pub async fn drive(
                     return;
                 }
 
+                // Per-tick checkpoint batch (D-F3.2): every `write_slot`
+                // call this iteration issues is mirrored into
+                // `tick_writes` and persisted in one
+                // `RunStore::checkpoint(...)` call at the end. The
+                // batch lives only when a `CheckpointHook` is
+                // attached so the no-store path allocates nothing.
+                let mut tick_writes: Vec<(SlotRef, SlotValue)> = Vec::new();
+
                 // 1. Fan out along outbound links — copy the value into
                 //    each downstream input slot through the single
                 //    write_slot chokepoint. The store's R3
@@ -217,6 +286,8 @@ pub async fn drive(
                                 error = %e,
                                 "propagator failed to fan out to downstream slot",
                             );
+                        } else if checkpoint.is_some() {
+                            tick_writes.push((dst.clone(), value.clone()));
                         }
                     }
                 }
@@ -271,7 +342,7 @@ pub async fn drive(
                             });
                             let sr = SlotRef::new(node_id.clone(), slot_name);
                             if let Err(e) = store
-                                .write_slot(&sr, out_value, WriteSlotOpts::live())
+                                .write_slot(&sr, out_value.clone(), WriteSlotOpts::live())
                                 .await
                             {
                                 tracing::warn!(
@@ -280,11 +351,36 @@ pub async fn drive(
                                     error = %e,
                                     "propagator failed to write node output",
                                 );
+                            } else if checkpoint.is_some() {
+                                tick_writes.push((sr, out_value));
                             }
                         }
                     }
                     Err(e) => {
                         let _ = events.send(FlowEvent::node_failed(run, node_id, &e));
+                    }
+                }
+
+                // Per-tick checkpoint (D-F3.2). Single call per
+                // propagator iteration, regardless of fan-out width.
+                // Stage 5: log + continue on failure; stage 6 adds
+                // retry-with-backoff + `EngineHealth::Degraded`
+                // transition.
+                if let Some(hook) = checkpoint.as_ref() {
+                    if !tick_writes.is_empty() {
+                        let seq = hook.initial_seq.saturating_add(hops);
+                        if let Err(e) = hook
+                            .store
+                            .checkpoint(run, seq, SpiRunState::Running, &tick_writes)
+                            .await
+                        {
+                            tracing::warn!(
+                                run = %run,
+                                seq,
+                                error = %e,
+                                "run_store checkpoint failed (stage 5: log and continue)",
+                            );
+                        }
                     }
                 }
             }
