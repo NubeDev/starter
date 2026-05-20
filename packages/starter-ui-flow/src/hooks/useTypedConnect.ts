@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import type { Connection, IsValidConnection } from "@xyflow/react";
+import type { Connection, Edge, IsValidConnection } from "@xyflow/react";
 import type { NodeKindRegistry } from "../nodes/NodeRegistry.js";
 import type { FlowNode, SlotKind } from "../types.js";
 
@@ -30,7 +30,7 @@ export function useTypedConnect({
   compatible = defaultCompatible,
 }: UseTypedConnectArgs): IsValidConnection {
   return useCallback<IsValidConnection>(
-    (c: Connection) => {
+    (c: Edge | Connection) => {
       if (!c.source || !c.target || !c.sourceHandle || !c.targetHandle) {
         return false;
       }
