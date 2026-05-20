@@ -42,6 +42,48 @@ pub trait GraphStore: Send + Sync + 'static {
     fn subscribe(&self, opts: SubscribeOpts) -> SubscriptionStream;
 }
 
+/// Provenance of a single write — stamped on the per-write `write_slot`
+/// tracing span as the `origin` field so audit / replay tooling can
+/// distinguish run-driven writes from definition-driven writes from
+/// replay-driven writes without re-deriving it from the call site.
+///
+/// Per `DOCS/flow/scope/hot-reload.md` HR3: the settings path of a
+/// publish writes through this same chokepoint but stamps
+/// [`Self::Definition`] so the audit story tells you *why* a slot
+/// moved.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum WriteOrigin {
+    /// A normal in-flow write driven by a [`crate::node::NodeBehavior`]
+    /// firing through the propagator. Default.
+    #[default]
+    Live,
+    /// A replay write produced by the resume-from-checkpoint path
+    /// (R2 replay rule). Implies `replay = true` on the
+    /// [`WriteSlotOpts`] carrying this origin — set both rather
+    /// than just the flag if you want the audit row to reflect it.
+    Replay,
+    /// A write produced by the HR1 publish chokepoint applying a
+    /// settings delta to the live [`crate::graph::GraphStore`].
+    /// Implies `force = false` (R2 idempotent short-circuit is
+    /// honoured — a settings edit that re-asserts the current value
+    /// is a no-op) and `replay = false` (the propagator must see
+    /// the change so reactive downstream nodes re-tick).
+    Definition,
+}
+
+impl WriteOrigin {
+    /// Short stable lowercase tag suitable for the `origin` field of
+    /// the per-write `write_slot` tracing span and audit columns.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::Live => "live",
+            Self::Replay => "replay",
+            Self::Definition => "definition",
+        }
+    }
+}
+
 /// Options on a single write.
 ///
 /// SCOPE R2 replay rule: `replay = true` reconstructs `GraphStore` state
@@ -61,22 +103,29 @@ pub struct WriteSlotOpts {
     /// downstream invocations. When `true`, the write always counts as
     /// a change (subject to the [`Self::replay`] rule above).
     pub force: bool,
+    /// Provenance tag stamped on the `write_slot` tracing span's
+    /// `origin` field. Defaults to [`WriteOrigin::Live`].
+    pub origin: WriteOrigin,
 }
 
 impl WriteSlotOpts {
-    /// Default options for a live write (`replay = false`, `force = false`).
+    /// Default options for a live write (`replay = false`, `force = false`,
+    /// `origin = Live`).
     pub fn live() -> Self {
         Self {
             replay: false,
             force: false,
+            origin: WriteOrigin::Live,
         }
     }
 
-    /// Options for a replay write (`replay = true`, `force = false`).
+    /// Options for a replay write (`replay = true`, `force = false`,
+    /// `origin = Replay`).
     pub fn replay() -> Self {
         Self {
             replay: true,
             force: false,
+            origin: WriteOrigin::Replay,
         }
     }
 
@@ -87,6 +136,24 @@ impl WriteSlotOpts {
         Self {
             replay: false,
             force: true,
+            origin: WriteOrigin::Live,
+        }
+    }
+
+    /// Options for a definition-origin write — the HR-2 settings
+    /// path uses this when projecting a settings-only edit onto its
+    /// config slots.
+    ///
+    /// `replay = false` so reactive subscribers re-tick; `force = false`
+    /// so the R3 idempotent short-circuit still drops writes whose
+    /// value already matches the live store; `origin = Definition`
+    /// so the per-write tracing span carries `origin = "definition"`
+    /// per `DOCS/flow/scope/hot-reload.md` HR3.
+    pub fn config() -> Self {
+        Self {
+            replay: false,
+            force: false,
+            origin: WriteOrigin::Definition,
         }
     }
 }

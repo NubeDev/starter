@@ -151,6 +151,7 @@ impl GraphStore for InMemoryGraphStore {
             slot_name = %slot.slot,
             replay_flag = opts.replay,
             force_flag = opts.force,
+            origin = opts.origin.as_str(),
             prev_was_equal = tracing::field::Empty,
         );
         let _enter = span.enter();

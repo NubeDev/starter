@@ -32,10 +32,14 @@
 //! the kind revoke walk) layer on top of these primitives without
 //! changing the chokepoint shape.
 
+pub mod active;
 pub mod body;
 pub mod canonical;
+pub mod classifier;
 pub mod manager;
 pub mod resolver;
 
+pub use active::ActiveTopologies;
+pub use classifier::{EditKind, classify};
 pub use manager::{DefinitionManager, PublishError, PublishOutcome};
 pub use resolver::{TopologyResolver, TopologyResolverError};
