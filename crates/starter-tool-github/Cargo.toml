@@ -1,0 +1,34 @@
+[package]
+name        = "starter-tool-github"
+description = "starter — outbound GitHub Tool wrapping REST API endpoints (issues, PRs). Sibling crate selected by Cargo dependency; see DOCS/tools/scope/SCOPE.md."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R7 (observability is required) + R8 (no transitive vendor SDKs in
+# starter-spi) — the only starter-side deps are starter-spi and
+# starter-observability. Everything else is third-party.
+#
+# Authentication reuses the same OAuth access token pattern as
+# starter-auth-oauth's GitHub provider (read:user + repo scopes).
+# This crate does NOT acquire tokens — the consumer resolves a
+# personal access token or OAuth bearer and hands it in via
+# `GitHubConfig`.
+[dependencies]
+starter-spi           = { workspace = true }
+starter-observability = { workspace = true }
+
+reqwest     = { workspace = true }
+tokio       = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+tracing     = { workspace = true }
+async-trait = { workspace = true }
+thiserror   = { workspace = true }
+prometheus  = { workspace = true }
+
+[dev-dependencies]
+tokio    = { workspace = true, features = ["rt-multi-thread", "macros"] }
+wiremock = "0.6"

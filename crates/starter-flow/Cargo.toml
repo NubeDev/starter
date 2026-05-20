@@ -17,7 +17,15 @@ rust-version.workspace = true
 # minimal-by-default policy (a consumer who does not want flows pays
 # nothing — locked in stage 0).
 [dependencies]
-starter-flow-spi = { workspace = true, default-features = false }
+starter-flow-spi = { workspace = true }
+# Phase 3 stage 5: `FlowRunner` constructs a `Principal` when calling
+# the SPI `RunStore::start` lifecycle hook. The Principal struct +
+# `Role` enum live in `starter-spi` (re-exported in part through
+# `starter-flow-spi`); the explicit dep keeps the constructor
+# grep-visible from this crate.
+starter-spi      = { workspace = true }
+# `serde_json::Value` for the Principal `extra` field.
+serde_json       = { workspace = true }
 # R2: the propagator is a synchronous loop driven from a tokio
 # runtime. The workspace tokio dep already enables `rt-multi-thread`,
 # `macros`, `sync`, `signal`; the explicit feature list is kept here

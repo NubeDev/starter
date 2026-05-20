@@ -6,7 +6,11 @@
 
 use utoipa::OpenApi;
 
-use crate::routes::{LoginRequest, LoginResponse, MeResponse, PasswordNotSetResponse};
+use crate::routes::{
+    LoginRequest, LoginResponse, MeResponse, PasswordNotSetResponse, SignupError, SignupRequest,
+    SignupResponse,
+};
+use crate::signup::mode::SignupMode;
 use starter_spi::auth::Role;
 use starter_spi::dto::Problem;
 
@@ -28,7 +32,34 @@ use starter_spi::dto::Problem;
 /// utoipa entry point holding the path + component derives for this crate.
 pub struct AuthUsersApi;
 
+#[derive(OpenApi)]
+#[openapi(
+    info(
+        title = "starter-auth-users",
+        description = "Cookie-session + API-token authentication routes shipped by starter-auth-users.",
+        version = env!("CARGO_PKG_VERSION"),
+    ),
+    paths(
+        crate::routes::login::handler,
+        crate::routes::logout::handler,
+        crate::routes::me::handler,
+        crate::routes::signup::handler,
+    ),
+    components(schemas(
+        LoginRequest, LoginResponse, PasswordNotSetResponse, MeResponse,
+        SignupRequest, SignupResponse, SignupError,
+        Role, Problem,
+    )),
+    tags((name = "auth", description = "Authentication endpoints"))
+)]
+/// utoipa entry point including signup routes.
+pub struct AuthUsersApiWithSignup;
+
 /// Build the canonical OpenAPI document for this crate's routes.
-pub fn openapi() -> utoipa::openapi::OpenApi {
-    AuthUsersApi::openapi()
+/// When signup is enabled, includes the signup endpoint.
+pub fn openapi(signup_mode: &SignupMode) -> utoipa::openapi::OpenApi {
+    match signup_mode {
+        SignupMode::Disabled => AuthUsersApi::openapi(),
+        SignupMode::Open { .. } => AuthUsersApiWithSignup::openapi(),
+    }
 }

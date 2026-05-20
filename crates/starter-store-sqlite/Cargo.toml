@@ -17,11 +17,25 @@ serde       = { workspace = true }
 thiserror   = { workspace = true }
 tracing     = { workspace = true }
 
+# `flow` feature deps. The flow store implementations live behind a
+# default-off feature so consumers that don't run the starter-flow
+# engine pay no dependency or compile cost for them (D-F3.3, D-F3.7).
+starter-flow-spi = { workspace = true, optional = true }
+chrono           = { workspace = true, optional = true }
+uuid             = { workspace = true, optional = true }
+
 [features]
 default = []
 # Exposes `starter_store_sqlite::testing` with an in-memory pool
 # factory. Opt-in so production builds skip the harness.
 testing = []
+# Compiles the `flow` module with SQLite-backed `FlowStore`,
+# `RunStore`, and `SessionStore` implementations of the
+# `starter-flow-spi` contracts. Default-off per D-F3.3 / D-F3.7 so
+# the starter-store-sqlite dependency baseline is unchanged for
+# every existing consumer.
+flow = ["dep:starter-flow-spi", "dep:chrono", "dep:uuid"]
 
 [dev-dependencies]
-tokio = { workspace = true }
+tokio    = { workspace = true }
+tempfile = "3"

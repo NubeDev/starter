@@ -37,21 +37,68 @@
 //!
 //! [`InMemoryGraphStore`]: crate::graph::InMemoryGraphStore
 
-use std::collections::{BTreeMap, BTreeSet, HashMap};
-use std::sync::Arc;
+use std::collections::{BTreeMap, BTreeSet, HashMap, VecDeque};
+use std::sync::{Arc, Mutex};
+use std::time::Duration;
 
 use futures::StreamExt;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
 
-use starter_flow_spi::flow::{FlowError, FlowEvent, RunId};
+use starter_flow_spi::flow::{FlowError, FlowEvent, RunId, RunState as SpiRunState, RunStore};
 use starter_flow_spi::graph::{GraphStore, SubscribeOpts, SubscriptionStream, WriteSlotOpts};
-use starter_flow_spi::node::{NodeBehavior, NodeCtx, NodeId, SlotMap, SlotRef};
+use starter_flow_spi::node::{NodeBehavior, NodeCtx, NodeId, SlotMap, SlotRef, SlotValue};
 use starter_flow_spi::Cancel;
+
+use crate::health::HealthHandle;
+use crate::metrics::RunMetricsCell;
 
 /// Default per-run propagation budget — locked at Phase 2 stage 1
 /// "Decisions made" (R1 cycle-bound budget defaults).
 pub const DEFAULT_MAX_PROPAGATION_HOPS: u64 = 1000;
+
+/// Per-run monotonic tick counter.
+///
+/// SCOPE Phase 3 stage 6 / D-F3.11 long-uptime invariant: the
+/// propagator's per-run hop counter must be a `u64` so it does not
+/// wrap under years of uninterrupted ticking (`u64` at 1 kHz wraps
+/// in ~584 million years). [`TickCounter`] is a one-field newtype
+/// over `u64` so the underlying width is fixed at the type level;
+/// the compile-time [`assert!`] below catches any accidental
+/// re-typing on the future propagator refactor that splits this
+/// counter out of the loop.
+///
+/// The counter starts at `0` and increments by one on every
+/// `SlotChanged` event the propagator consumes. The current value
+/// composes with the resume path's `initial_seq` (loaded from the
+/// last checkpoint via [`CheckpointHook::initial_seq`]) to produce
+/// the checkpoint's `seq` field: `seq = initial_seq + tick.get()`.
+#[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
+pub struct TickCounter(u64);
+
+impl TickCounter {
+    /// Construct a fresh counter at zero.
+    pub const fn new() -> Self {
+        Self(0)
+    }
+
+    /// Increment by one (saturating at `u64::MAX`) and return the
+    /// new value.
+    pub fn tick(&mut self) -> u64 {
+        self.0 = self.0.saturating_add(1);
+        self.0
+    }
+
+    /// Borrow the current counter value.
+    pub fn get(self) -> u64 {
+        self.0
+    }
+}
+
+// D-F3.11 long-uptime invariant: the tick counter is a `u64`,
+// no wider, no narrower. Catching a refactor that widens / narrows
+// this at compile time is cheaper than catching it in a soak.
+const _: () = assert!(std::mem::size_of::<TickCounter>() == 8);
 
 /// Propagator policies exposed at `FlowRunner::start` time.
 ///
@@ -117,6 +164,145 @@ pub struct FlowTopology {
     pub behaviors: BTreeMap<NodeId, Arc<dyn NodeBehavior>>,
 }
 
+/// Backoff schedule for `RunStore::checkpoint` retries (D-F3.11).
+/// 50 → 100 → 200 → 400 → 800 milliseconds, exactly 5 attempts.
+/// The retry loop emits one [`FlowEvent::CheckpointFailed`] per
+/// attempt; after the fifth the engine transitions to
+/// [`starter_flow_spi::flow::EngineHealth::Degraded`] and the batch
+/// is moved into the per-run in-memory queue.
+pub const CHECKPOINT_BACKOFF_MS: [u64; 5] = [50, 100, 200, 400, 800];
+
+/// One queued checkpoint batch the propagator was unable to
+/// persist; held in memory while
+/// [`starter_flow_spi::flow::EngineHealth::Degraded`] and drained on
+/// the next successful `RunStore::checkpoint`.
+#[derive(Debug, Clone)]
+struct QueuedBatch {
+    seq: u64,
+    state: SpiRunState,
+    writes: Vec<(SlotRef, SlotValue)>,
+}
+
+/// Per-run in-memory checkpoint queue (D-F3.11).
+///
+/// Capped at [`Self::capacity`]; once full, pushing evicts the
+/// oldest batch and increments
+/// [`RunMetricsCell::degraded_dropped_count`]. The queue drains in
+/// `(run_id, seq)` order on the next successful `RunStore::checkpoint`
+/// write; the queue is per-run so the FIFO insertion order is the
+/// `seq` order (the propagator's `TickCounter` increments
+/// monotonically).
+#[derive(Debug)]
+pub struct DegradedQueue {
+    capacity: usize,
+    inner: Mutex<VecDeque<QueuedBatch>>,
+    metrics: Arc<RunMetricsCell>,
+}
+
+impl DegradedQueue {
+    /// Construct an empty queue with the given capacity. `0` is
+    /// treated as `1` so the engine never silently swallows every
+    /// queued batch — D-F3.11 explicitly defaults the cap to 1024
+    /// and the runner enforces a sane minimum.
+    pub fn new(capacity: usize, metrics: Arc<RunMetricsCell>) -> Arc<Self> {
+        Arc::new(Self {
+            capacity: capacity.max(1),
+            inner: Mutex::new(VecDeque::new()),
+            metrics,
+        })
+    }
+
+    fn push(&self, batch: QueuedBatch) {
+        let mut q = self.inner.lock().expect("DegradedQueue mutex poisoned");
+        while q.len() >= self.capacity {
+            q.pop_front();
+            self.metrics.add_dropped(1);
+        }
+        q.push_back(batch);
+    }
+
+    fn pop_front(&self) -> Option<QueuedBatch> {
+        self.inner
+            .lock()
+            .expect("DegradedQueue mutex poisoned")
+            .pop_front()
+    }
+
+    /// Snapshot count (test convenience).
+    pub fn len(&self) -> usize {
+        self.inner
+            .lock()
+            .expect("DegradedQueue mutex poisoned")
+            .len()
+    }
+
+    /// Whether the queue is empty.
+    pub fn is_empty(&self) -> bool {
+        self.len() == 0
+    }
+}
+
+/// Per-tick checkpoint hook the propagator calls at the end of every
+/// event-handler iteration (D-F3.2: per-tick cadence, not per
+/// `write_slot`).
+///
+/// Constructed by [`crate::run::FlowRunner`] when a Phase 3 SPI
+/// [`RunStore`] is attached to the engine and threaded into
+/// [`spawn_with_checkpoint`] / [`drive_with_checkpoint`].
+///
+/// Stage 6 (D-F3.11) fields:
+///
+/// - [`Self::health`] — shared engine-level health flag. The retry
+///   loop flips this to [`starter_flow_spi::flow::EngineHealth::Degraded`]
+///   after five consecutive failures, and back to `Healthy` once
+///   the next checkpoint succeeds and the queue is drained.
+/// - [`Self::queue`] — per-run in-memory queue used to hold
+///   checkpoint batches when the backend is degraded. Drained in
+///   `(run_id, seq)` order on the next successful write.
+/// - [`Self::metrics`] — per-run live counters; the queue increments
+///   `degraded_dropped_count` on overflow.
+///
+/// `initial_seq` is the propagator-tick counter the resume path
+/// loaded from `RunStore::load(run_id)`; a fresh run passes `0`.
+#[derive(Clone)]
+#[non_exhaustive]
+pub struct CheckpointHook {
+    /// The SPI [`RunStore`] every per-tick checkpoint writes to.
+    pub store: Arc<dyn RunStore>,
+    /// Seq offset applied to the propagator's per-run hop counter
+    /// when computing the checkpoint `seq` field. `0` for a fresh
+    /// run; loaded checkpoint's `seq` for a resumed run.
+    pub initial_seq: u64,
+    /// Engine-level health flag the retry loop flips on degrade /
+    /// recovery (D-F3.11).
+    pub health: HealthHandle,
+    /// Per-run in-memory queue for degraded-mode batches (D-F3.11).
+    pub queue: Arc<DegradedQueue>,
+    /// Per-run live metrics counters (D-F3.10 + D-F3.11).
+    pub metrics: Arc<RunMetricsCell>,
+}
+
+impl CheckpointHook {
+    /// Construct a [`CheckpointHook`] with the stage-6 durability
+    /// fields fully wired. Sized for use by [`crate::run::FlowRunner`]
+    /// at run launch time.
+    pub fn new(
+        store: Arc<dyn RunStore>,
+        initial_seq: u64,
+        health: HealthHandle,
+        queue: Arc<DegradedQueue>,
+        metrics: Arc<RunMetricsCell>,
+    ) -> Self {
+        Self {
+            store,
+            initial_seq,
+            health,
+            queue,
+            metrics,
+        }
+    }
+}
+
 /// Spawn the propagator task driving one run.
 ///
 /// Returns the [`JoinHandle`] for the spawned task. The task exits
@@ -138,12 +324,30 @@ pub fn spawn(
     run: RunId,
     config: PropagatorConfig,
 ) -> JoinHandle<()> {
+    spawn_with_checkpoint(store, topology, cancel, events, run, config, None)
+}
+
+/// Same as [`spawn`] but with an optional [`CheckpointHook`] for
+/// per-tick `RunStore::checkpoint` persistence (D-F3.2). When
+/// `checkpoint` is `None` the propagator behaves identically to
+/// [`spawn`] — the Phase-2 in-memory substrate.
+pub fn spawn_with_checkpoint(
+    store: Arc<dyn GraphStore>,
+    topology: Arc<FlowTopology>,
+    cancel: Arc<dyn Cancel>,
+    events: broadcast::Sender<FlowEvent>,
+    run: RunId,
+    config: PropagatorConfig,
+    checkpoint: Option<CheckpointHook>,
+) -> JoinHandle<()> {
     // Subscribe *synchronously* before spawning the task so that any
     // writes the caller performs immediately after `spawn()` returns
     // are guaranteed to land in the propagator's subscription queue
     // — no "did the spawned task get to `subscribe` first?" races.
     let sub = store.subscribe(SubscribeOpts::default());
-    tokio::spawn(drive(store, sub, topology, cancel, events, run, config))
+    tokio::spawn(drive_with_checkpoint(
+        store, sub, topology, cancel, events, run, config, checkpoint,
+    ))
 }
 
 /// Body of the propagator task. Public for ergonomics ([`spawn`] is
@@ -151,14 +355,29 @@ pub fn spawn(
 /// tests and Phase 3 engine wiring can drive the loop inline.
 pub async fn drive(
     store: Arc<dyn GraphStore>,
-    mut sub: SubscriptionStream,
+    sub: SubscriptionStream,
     topology: Arc<FlowTopology>,
     cancel: Arc<dyn Cancel>,
     events: broadcast::Sender<FlowEvent>,
     run: RunId,
     config: PropagatorConfig,
 ) {
-    let mut hops: u64 = 0;
+    drive_with_checkpoint(store, sub, topology, cancel, events, run, config, None).await
+}
+
+/// Same as [`drive`] but with an optional per-tick checkpoint hook.
+#[allow(clippy::too_many_arguments)]
+pub async fn drive_with_checkpoint(
+    store: Arc<dyn GraphStore>,
+    mut sub: SubscriptionStream,
+    topology: Arc<FlowTopology>,
+    cancel: Arc<dyn Cancel>,
+    events: broadcast::Sender<FlowEvent>,
+    run: RunId,
+    config: PropagatorConfig,
+    checkpoint: Option<CheckpointHook>,
+) {
+    let mut tick = TickCounter::new();
 
     loop {
         tokio::select! {
@@ -180,7 +399,7 @@ pub async fn drive(
                     continue;
                 };
 
-                hops = hops.saturating_add(1);
+                let hops = tick.tick();
                 if hops > config.max_propagation_hops {
                     let err = FlowError::CycleBudgetExhausted { hops };
                     tracing::warn!(
@@ -192,6 +411,14 @@ pub async fn drive(
                     let _ = events.send(FlowEvent::run_failed(run, &err));
                     return;
                 }
+
+                // Per-tick checkpoint batch (D-F3.2): every `write_slot`
+                // call this iteration issues is mirrored into
+                // `tick_writes` and persisted in one
+                // `RunStore::checkpoint(...)` call at the end. The
+                // batch lives only when a `CheckpointHook` is
+                // attached so the no-store path allocates nothing.
+                let mut tick_writes: Vec<(SlotRef, SlotValue)> = Vec::new();
 
                 // 1. Fan out along outbound links — copy the value into
                 //    each downstream input slot through the single
@@ -217,6 +444,8 @@ pub async fn drive(
                                 error = %e,
                                 "propagator failed to fan out to downstream slot",
                             );
+                        } else if checkpoint.is_some() {
+                            tick_writes.push((dst.clone(), value.clone()));
                         }
                     }
                 }
@@ -228,9 +457,40 @@ pub async fn drive(
                     .get(&env.slot.node)
                     .is_some_and(|inputs| inputs.contains(&env.slot.slot));
                 if !triggers_node {
+                    // Per-tick checkpoint even when the slot only
+                    // fans out without triggering — the writes still
+                    // need to durably land before the next tick.
+                    if let Some(hook) = checkpoint.as_ref() {
+                        if !tick_writes.is_empty() {
+                            let seq = hook.initial_seq.saturating_add(hops);
+                            checkpoint_one_tick(
+                                hook,
+                                run,
+                                seq,
+                                SpiRunState::Running,
+                                tick_writes,
+                                &events,
+                            )
+                            .await;
+                        }
+                    }
                     continue;
                 }
                 let Some(behavior) = topology.behaviors.get(&env.slot.node).cloned() else {
+                    if let Some(hook) = checkpoint.as_ref() {
+                        if !tick_writes.is_empty() {
+                            let seq = hook.initial_seq.saturating_add(hops);
+                            checkpoint_one_tick(
+                                hook,
+                                run,
+                                seq,
+                                SpiRunState::Running,
+                                tick_writes,
+                                &events,
+                            )
+                            .await;
+                        }
+                    }
                     continue;
                 };
 
@@ -271,7 +531,7 @@ pub async fn drive(
                             });
                             let sr = SlotRef::new(node_id.clone(), slot_name);
                             if let Err(e) = store
-                                .write_slot(&sr, out_value, WriteSlotOpts::live())
+                                .write_slot(&sr, out_value.clone(), WriteSlotOpts::live())
                                 .await
                             {
                                 tracing::warn!(
@@ -280,6 +540,8 @@ pub async fn drive(
                                     error = %e,
                                     "propagator failed to write node output",
                                 );
+                            } else if checkpoint.is_some() {
+                                tick_writes.push((sr, out_value));
                             }
                         }
                     }
@@ -287,9 +549,137 @@ pub async fn drive(
                         let _ = events.send(FlowEvent::node_failed(run, node_id, &e));
                     }
                 }
+
+                // Per-tick checkpoint (D-F3.2). Single call per
+                // propagator iteration, regardless of fan-out width.
+                // Stage 6 (D-F3.11) wraps the call in retry-with-
+                // backoff and the degraded-mode queue; see
+                // `checkpoint_one_tick` for the policy.
+                if let Some(hook) = checkpoint.as_ref() {
+                    if !tick_writes.is_empty() {
+                        let seq = hook.initial_seq.saturating_add(hops);
+                        checkpoint_one_tick(
+                            hook,
+                            run,
+                            seq,
+                            SpiRunState::Running,
+                            tick_writes,
+                            &events,
+                        )
+                        .await;
+                    }
+                }
             }
         }
     }
+}
+
+/// Attempt to persist one per-tick checkpoint with retry-with-backoff
+/// (D-F3.11), and on success drain any batches the degraded queue
+/// accumulated while the backend was unreachable.
+///
+/// Behaviour:
+///
+/// 1. Try `hook.store.checkpoint(...)` for up to
+///    [`CHECKPOINT_BACKOFF_MS`]`.len()` attempts. On each failure,
+///    emit [`FlowEvent::CheckpointFailed`] with the 1-indexed
+///    `attempt` and sleep the backoff window before the next try.
+/// 2. On success: flip the engine back to
+///    [`starter_flow_spi::flow::EngineHealth::Healthy`], then drain
+///    the per-run queue in `(run_id, seq)` order. A drain entry
+///    that itself fails goes back on the queue head and aborts the
+///    drain — the engine returns to `Degraded` on its next failure.
+/// 3. After all attempts fail: flip to
+///    [`starter_flow_spi::flow::EngineHealth::Degraded`] and push the
+///    current batch onto the per-run queue (evict-oldest on overflow
+///    increments [`crate::metrics::RunMetricsCell::degraded_dropped_count`]).
+async fn checkpoint_one_tick(
+    hook: &CheckpointHook,
+    run: RunId,
+    seq: u64,
+    state: SpiRunState,
+    writes: Vec<(SlotRef, SlotValue)>,
+    events: &broadcast::Sender<FlowEvent>,
+) {
+    match try_persist_with_backoff(hook, run, seq, state, &writes, events).await {
+        Ok(()) => {
+            // Successful write → engine is healthy again. Drain the
+            // per-run queue in FIFO (== seq) order.
+            hook.health.set_healthy();
+            while let Some(batch) = hook.queue.pop_front() {
+                let drain_writes = batch.writes;
+                let drain_seq = batch.seq;
+                let drain_state = batch.state;
+                if let Err(()) = try_persist_with_backoff(
+                    hook,
+                    run,
+                    drain_seq,
+                    drain_state,
+                    &drain_writes,
+                    events,
+                )
+                .await
+                {
+                    // Drain failure: push back at head, mark
+                    // degraded, abort drain. The next successful
+                    // tick will pick up here.
+                    hook.health.set_degraded();
+                    hook.queue.push(QueuedBatch {
+                        seq: drain_seq,
+                        state: drain_state,
+                        writes: drain_writes,
+                    });
+                    return;
+                }
+            }
+        }
+        Err(()) => {
+            // All retries exhausted → degrade + enqueue.
+            hook.health.set_degraded();
+            hook.queue.push(QueuedBatch { seq, state, writes });
+        }
+    }
+}
+
+/// Best-effort persist with the [`CHECKPOINT_BACKOFF_MS`] schedule.
+/// Returns `Ok(())` on the first successful attempt, `Err(())` if
+/// every attempt fails. Emits one [`FlowEvent::CheckpointFailed`]
+/// per failed attempt.
+async fn try_persist_with_backoff(
+    hook: &CheckpointHook,
+    run: RunId,
+    seq: u64,
+    state: SpiRunState,
+    writes: &[(SlotRef, SlotValue)],
+    events: &broadcast::Sender<FlowEvent>,
+) -> Result<(), ()> {
+    let max_attempts = CHECKPOINT_BACKOFF_MS.len() as u32;
+    for attempt in 1..=max_attempts {
+        match hook.store.checkpoint(run, seq, state, writes).await {
+            Ok(()) => return Ok(()),
+            Err(e) => {
+                let error = e.to_string();
+                tracing::warn!(
+                    run = %run,
+                    seq,
+                    attempt,
+                    error = %error,
+                    "run_store checkpoint failed",
+                );
+                let _ = events.send(FlowEvent::CheckpointFailed {
+                    run,
+                    error,
+                    attempt,
+                });
+                if attempt < max_attempts {
+                    let backoff =
+                        Duration::from_millis(CHECKPOINT_BACKOFF_MS[(attempt - 1) as usize]);
+                    tokio::time::sleep(backoff).await;
+                }
+            }
+        }
+    }
+    Err(())
 }
 
 #[cfg(test)]

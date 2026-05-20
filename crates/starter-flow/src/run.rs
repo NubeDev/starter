@@ -45,12 +45,17 @@ use tokio::sync::{broadcast, Notify, RwLock};
 use tokio::task::JoinHandle;
 use tokio::time::{sleep_until, Instant};
 
-use starter_flow_spi::flow::{FlowEvent, FlowId, FlowRevisionId, RunId};
+use starter_flow_spi::flow::{
+    DedupKey, EngineError, FlowEvent, FlowId, FlowRevisionId, RunCheckpoint, RunId, RunOpts,
+    RunOutcome, RunStore as SpiRunStore,
+};
 use starter_flow_spi::graph::{GraphStore, WriteSlotOpts};
 use starter_flow_spi::node::{SlotMap, SlotRef, SlotValue};
-use starter_flow_spi::Cancel;
+use starter_flow_spi::{Cancel, Principal};
 
-use crate::propagator::{self, FlowTopology, PropagatorConfig};
+use crate::health::HealthHandle;
+use crate::metrics::{spawn_lagged_watcher, RunMetricsCell};
+use crate::propagator::{self, CheckpointHook, DegradedQueue, FlowTopology, PropagatorConfig};
 use crate::state::{RunState, RunStatus};
 
 /// Per-run cancellation handle.
@@ -276,6 +281,60 @@ pub struct RunSpec {
     /// Slots whose values are gathered into the `RunCompleted.output`
     /// map at the end of a successful run.
     pub terminal_slots: Vec<SlotRef>,
+    /// Optional caller-supplied [`Principal`] threaded into
+    /// `SpiRunStore::start`. `None` falls back to the engine's
+    /// `system/Admin` default. Set via [`Self::with_principal`].
+    /// Lands here in stage 8 so `FlowAsService` (and surfaces in
+    /// general) can record the on-behalf-of identity that drove a
+    /// per-event run.
+    pub principal: Option<Principal>,
+    /// Optional caller-supplied [`DedupKey`] threaded into
+    /// `SpiRunStore::start` so future `find_by_dedup_key` lookups
+    /// can short-circuit re-deliveries (D-F3.12). Set via
+    /// [`Self::with_dedup_key`].
+    pub dedup_key: Option<DedupKey>,
+}
+
+impl RunSpec {
+    /// Construct a [`RunSpec`]. Public constructor for downstream
+    /// crates that cannot use the struct-expression form because
+    /// of `#[non_exhaustive]`.
+    pub fn new(
+        flow: FlowId,
+        revision: FlowRevisionId,
+        topology: Arc<FlowTopology>,
+        seeds: Vec<(SlotRef, SlotValue)>,
+        terminal_slots: Vec<SlotRef>,
+    ) -> Self {
+        Self {
+            flow,
+            revision,
+            topology,
+            seeds,
+            terminal_slots,
+            principal: None,
+            dedup_key: None,
+        }
+    }
+
+    /// Attach a [`Principal`] to be recorded on the run row by the
+    /// SPI `RunStore::start` call. Retires the stage-5
+    /// `system/Admin` hardcode for surfaces that have a real
+    /// identity to thread through (D-F3.12 + R7 outer-run
+    /// binding).
+    pub fn with_principal(mut self, principal: Principal) -> Self {
+        self.principal = Some(principal);
+        self
+    }
+
+    /// Attach a [`DedupKey`] for D-F3.12 short-circuit lookups.
+    /// `FlowAsService` resolves the key per-event and threads it
+    /// here so the SPI `RunStore` can persist it under the
+    /// `UNIQUE (service_name, dedup_key)` partial index.
+    pub fn with_dedup_key(mut self, dedup: DedupKey) -> Self {
+        self.dedup_key = Some(dedup);
+        self
+    }
 }
 
 /// Tunable knobs on [`FlowRunner::start`].
@@ -329,6 +388,11 @@ pub struct RunHandle {
     /// Coordinator task handle. Resolves to the terminal [`RunStatus`]
     /// once the run finishes.
     pub join: JoinHandle<RunStatus>,
+    /// Per-run live metrics counters (D-F3.10 + D-F3.11). The
+    /// runner threads the same `Arc` into the propagator's
+    /// [`CheckpointHook`] and into the engine-owned `Lagged`-watcher
+    /// subscriber, so reads here observe live increments.
+    pub metrics: Arc<RunMetricsCell>,
 }
 
 /// The per-engine entry point that turns a [`RunSpec`] into a live
@@ -342,6 +406,22 @@ pub struct RunHandle {
 pub struct FlowRunner {
     store: Arc<dyn GraphStore>,
     run_store: Arc<dyn RunStore>,
+    /// Phase 3 SPI [`SpiRunStore`] for run lifecycle + per-tick
+    /// checkpoint persistence (R6, D-F3.2). `None` means the runner
+    /// is in Phase-2 in-memory-only mode and the propagator runs
+    /// without a checkpoint hook (`Engine` behaves exactly as it
+    /// does today).
+    spi_run_store: Option<Arc<dyn SpiRunStore>>,
+    /// Per-run knobs (D-F3.9 retention, D-F3.10 broadcast capacity,
+    /// D-F3.11 degraded queue capacity). Defaulted from
+    /// [`RunOpts::default`]; per-run override lands in stage 6.
+    run_opts: RunOpts,
+    /// Engine-level health flag (D-F3.11). Shared with the engine
+    /// via [`Self::with_health_handle`]; the propagator's per-tick
+    /// retry-with-backoff loop flips this on degrade / recovery and
+    /// [`Self::start`] reads it to reject new runs while
+    /// [`starter_flow_spi::flow::EngineHealth::Degraded`].
+    health: HealthHandle,
     skill_selector: Arc<dyn SkillSelector>,
     config: FlowRunnerConfig,
 }
@@ -352,9 +432,50 @@ impl FlowRunner {
         Self {
             store,
             run_store,
+            spi_run_store: None,
+            run_opts: RunOpts::default(),
+            health: HealthHandle::new(),
             skill_selector: Arc::new(NoopSkillSelector),
             config: FlowRunnerConfig::default(),
         }
+    }
+
+    /// Attach a Phase 3 SPI [`SpiRunStore`] (R6, D-F3.2). When
+    /// attached, every run started by this runner persists its
+    /// lifecycle (`start` / `finish`) and per-tick checkpoint
+    /// batches through the SPI store; the resume path
+    /// ([`Self::resume`]) reads back the latest checkpoint and
+    /// replays its slot writes through the single
+    /// [`GraphStore::write_slot`] chokepoint (R2 unchanged).
+    pub fn with_spi_run_store(mut self, store: Arc<dyn SpiRunStore>) -> Self {
+        self.spi_run_store = Some(store);
+        self
+    }
+
+    /// Replace the per-run [`RunOpts`].
+    pub fn with_run_opts(mut self, opts: RunOpts) -> Self {
+        self.run_opts = opts;
+        self
+    }
+
+    /// Share the engine's health flag (D-F3.11). When the engine
+    /// degrades, [`Self::start`] returns
+    /// [`EngineError::BackendUnavailable`]; when the next
+    /// `RunStore::checkpoint` succeeds the engine recovers and
+    /// new `start(...)` calls are accepted again.
+    pub fn with_health_handle(mut self, health: HealthHandle) -> Self {
+        self.health = health;
+        self
+    }
+
+    /// Borrow the current health handle (test convenience).
+    pub fn health_handle(&self) -> &HealthHandle {
+        &self.health
+    }
+
+    /// Borrow the attached [`SpiRunStore`] if any.
+    pub fn spi_run_store(&self) -> Option<&Arc<dyn SpiRunStore>> {
+        self.spi_run_store.as_ref()
     }
 
     /// Replace the [`SkillSelector`] hook.
@@ -381,7 +502,95 @@ impl FlowRunner {
     /// The returned [`RunHandle::initial_rx`] is subscribed
     /// synchronously *before* the coordinator task spawns, so the
     /// caller is guaranteed not to miss `FlowEvent::RunStarted`.
-    pub async fn start(&self, spec: RunSpec, input: SlotMap) -> RunHandle {
+    ///
+    /// Stage 6 (D-F3.11): rejects new runs with
+    /// [`EngineError::BackendUnavailable`] while the engine is in
+    /// [`starter_flow_spi::flow::EngineHealth::Degraded`]. The
+    /// rejection is fast (a single `AtomicU8` load) and happens
+    /// before any per-run allocation, so the runner sheds load
+    /// cleanly when the backend is unreachable.
+    pub async fn start(&self, spec: RunSpec, input: SlotMap) -> Result<RunHandle, EngineError> {
+        use starter_flow_spi::flow::EngineHealth;
+        if self.health.get() == EngineHealth::Degraded {
+            return Err(EngineError::BackendUnavailable);
+        }
+        Ok(self.launch(spec, input, None).await)
+    }
+
+    /// Resume an in-flight run whose state was persisted via a
+    /// Phase 3 SPI [`SpiRunStore`] before the previous process
+    /// exited.
+    ///
+    /// Returns `Ok(Some(_))` if the store had a checkpoint for
+    /// `run_id` (the slot writes are replayed through the single
+    /// [`GraphStore::write_slot`] chokepoint per R2 and a fresh
+    /// propagator picks up from `initial_seq = checkpoint.seq`);
+    /// `Ok(None)` if no checkpoint exists; `Err` if no SPI store
+    /// is attached.
+    ///
+    /// SCOPE Phase 3 "Run checkpointing wired into the engine":
+    /// the resume path is **not** a second writer — it goes through
+    /// the same `GraphStore::write_slot`, and the propagator's
+    /// short-circuit on idempotent writes (D1a) absorbs the no-op
+    /// writes that already-current slots produce. The freshly-
+    /// spawned propagator's `initial_seq` is set so its first
+    /// post-resume checkpoint carries `seq = checkpoint.seq + 1`,
+    /// keeping `(run_id, seq)` strictly monotonic across the
+    /// SIGKILL boundary.
+    pub async fn resume(
+        &self,
+        spec: RunSpec,
+        input: SlotMap,
+        run_id: RunId,
+    ) -> Result<Option<RunHandle>, FlowRunnerError> {
+        let Some(spi) = self.spi_run_store.clone() else {
+            return Err(FlowRunnerError::NoRunStore);
+        };
+        let checkpoint = spi
+            .load(run_id)
+            .await
+            .map_err(|e| FlowRunnerError::Backend(e.to_string()))?;
+        let Some(cp) = checkpoint else {
+            return Ok(None);
+        };
+        // R2 chokepoint: every replayed write goes through the
+        // single `GraphStore::write_slot` path. The R3 idempotent
+        // short-circuit absorbs already-current values.
+        for (slot, value) in &cp.writes {
+            if let Err(e) = self
+                .store
+                .write_slot(slot, value.clone(), WriteSlotOpts::live())
+                .await
+            {
+                tracing::warn!(
+                    run = %run_id,
+                    target = ?slot,
+                    error = %e,
+                    "resume: replay write failed",
+                );
+            }
+        }
+        let handle = self
+            .launch(
+                spec,
+                input,
+                Some(ResumeContext {
+                    run_id,
+                    checkpoint: cp,
+                }),
+            )
+            .await;
+        Ok(Some(handle))
+    }
+
+    /// Shared launch path for [`Self::start`] (fresh `RunId`) and
+    /// [`Self::resume`] (loaded `RunId` + initial seq).
+    async fn launch(
+        &self,
+        spec: RunSpec,
+        input: SlotMap,
+        resume: Option<ResumeContext>,
+    ) -> RunHandle {
         // 1. Skill selection — exactly once per outer run (R7).
         let selection = Arc::new(
             self.skill_selector
@@ -389,10 +598,36 @@ impl FlowRunner {
                 .await,
         );
 
-        // 2. Per-run primitives.
-        let run = RunId::new();
+        // 2. Per-run primitives. `resume` reuses the existing
+        //    `RunId`; a fresh start mints a new one.
+        let (run, initial_seq, is_resume) = match resume.as_ref() {
+            Some(rc) => (rc.run_id, rc.checkpoint.seq, true),
+            None => (RunId::new(), 0, false),
+        };
         let cancel = RunCancel::new();
-        let (events_tx, _) = broadcast::channel::<FlowEvent>(self.config.event_buffer);
+        // Stage 6 (D-F3.10): per-run broadcast capacity comes from
+        // `RunOpts.event_broadcast_capacity`, not the fixed
+        // `FlowRunnerConfig.event_buffer`. Producers never block
+        // (`broadcast::Sender::send` evicts the oldest event for the
+        // slowest subscriber); the engine spawns its own
+        // Lagged-watcher subscriber below to count drops.
+        let broadcast_cap = self.run_opts.event_broadcast_capacity.max(1);
+        let (events_tx, _) = broadcast::channel::<FlowEvent>(broadcast_cap);
+
+        // Stage 6 (D-F3.10 + D-F3.11): per-run live metrics + the
+        // degraded-mode in-memory queue. Both are owned by the
+        // propagator's checkpoint hook and observed via
+        // `RunHandle::metrics`.
+        let metrics = RunMetricsCell::new();
+        let degraded_queue =
+            DegradedQueue::new(self.run_opts.degraded_queue_capacity, metrics.clone());
+
+        // Stage 6 (D-F3.10): engine-owned `Lagged`-watcher subscriber.
+        // Subscribed synchronously *before* spawning so the runner is
+        // guaranteed to see every Lagged signal the per-run channel
+        // emits; runs as a detached task and exits cleanly when
+        // every other sender is dropped.
+        drop(spawn_lagged_watcher(&events_tx, metrics.clone()));
 
         // 3. Record the RunState with the in-memory RunStore. The
         //    coordinator below mutates this same Arc<RwLock<_>>.
@@ -406,6 +641,44 @@ impl FlowRunner {
         )));
         self.run_store.record(state.clone()).await;
 
+        // 3b. Phase 3 SPI store: `start` the run on a fresh launch
+        //     so subsequent `checkpoint(...)` calls have a parent
+        //     row to reference. Resumed runs skip this (the row
+        //     already exists from the prior process); a duplicate
+        //     `start` would fail the `runs.run_id` PK constraint.
+        if let Some(spi) = self.spi_run_store.as_ref() {
+            if !is_resume {
+                // Stage 8 (D-F3.12): if the caller (typically
+                // `FlowAsService`) supplied a `Principal` /
+                // `DedupKey` via `RunSpec::with_principal` /
+                // `with_dedup_key`, use them; otherwise fall back
+                // to the stage-5 `system/Admin` default and a
+                // `None` dedup key.
+                let principal = spec.principal.clone().unwrap_or(Principal {
+                    subject: "system".to_string(),
+                    role: starter_spi::auth::Role::Admin,
+                    scopes: Vec::new(),
+                    extra: serde_json::Value::Null,
+                });
+                if let Err(e) = spi
+                    .start(
+                        run,
+                        spec.revision,
+                        self.run_opts.clone(),
+                        principal,
+                        spec.dedup_key.clone(),
+                    )
+                    .await
+                {
+                    tracing::warn!(
+                        run = %run,
+                        error = %e,
+                        "spi run_store start failed (stage 5: log and continue)",
+                    );
+                }
+            }
+        }
+
         // 4. Subscribe BEFORE spawning so the caller never misses
         //    `RunStarted` (the broadcast channel only delivers to
         //    receivers that exist at send time).
@@ -414,12 +687,18 @@ impl FlowRunner {
 
         let store = self.store.clone();
         let cfg = self.config;
+        let spi_for_task = self.spi_run_store.clone();
+        let health_for_task = self.health.clone();
+        let queue_for_task = degraded_queue.clone();
+        let metrics_for_task = metrics.clone();
         let RunSpec {
             flow,
             revision: _,
             topology,
             seeds,
             terminal_slots,
+            principal: _,
+            dedup_key: _,
         } = spec;
 
         let cancel_for_task = cancel.clone();
@@ -439,6 +718,11 @@ impl FlowRunner {
                 terminal_slots,
                 state_for_task,
                 cfg,
+                spi_for_task,
+                initial_seq,
+                health_for_task,
+                queue_for_task,
+                metrics_for_task,
             )
             .await
         });
@@ -449,8 +733,31 @@ impl FlowRunner {
             events_tx,
             initial_rx,
             join,
+            metrics,
         }
     }
+}
+
+/// Internal state for the resume path threaded into
+/// [`FlowRunner::launch`].
+struct ResumeContext {
+    run_id: RunId,
+    checkpoint: RunCheckpoint,
+}
+
+/// Errors raised by [`FlowRunner::resume`] (and future per-run
+/// engine APIs).
+#[derive(Debug, thiserror::Error)]
+#[non_exhaustive]
+pub enum FlowRunnerError {
+    /// No Phase 3 SPI [`SpiRunStore`] is attached; resume requires
+    /// one. Attach via [`FlowRunner::with_spi_run_store`].
+    #[error("no SPI RunStore attached; call FlowRunner::with_spi_run_store first")]
+    NoRunStore,
+    /// The SPI store call failed. String form of the underlying
+    /// [`starter_flow_spi::flow::FlowError`] for portability.
+    #[error("spi run_store backend error: {0}")]
+    Backend(String),
 }
 
 /// Coordinator task body. Owns the per-run choreography:
@@ -479,6 +786,11 @@ async fn run_coordinator(
     terminal_slots: Vec<SlotRef>,
     state: Arc<RwLock<RunState>>,
     cfg: FlowRunnerConfig,
+    spi_run_store: Option<Arc<dyn SpiRunStore>>,
+    initial_seq: u64,
+    health: HealthHandle,
+    degraded_queue: Arc<DegradedQueue>,
+    metrics: Arc<RunMetricsCell>,
 ) -> RunStatus {
     // Mark Running.
     {
@@ -492,14 +804,30 @@ async fn run_coordinator(
         flow: flow.clone(),
     });
 
-    // Spawn propagator.
-    let prop_handle = propagator::spawn(
+    // Spawn propagator. When a Phase 3 SPI RunStore is attached,
+    // thread a `CheckpointHook` through so per-tick batches land in
+    // `run_checkpoints` (D-F3.2). `initial_seq` is the loaded
+    // checkpoint's `seq` for a resumed run (0 for a fresh one); the
+    // hook adds it to the per-run hop counter so the first
+    // post-resume checkpoint carries `seq = initial_seq + 1`,
+    // keeping `(run_id, seq)` strictly monotonic across SIGKILL.
+    let checkpoint_hook = spi_run_store.as_ref().map(|spi| {
+        CheckpointHook::new(
+            spi.clone(),
+            initial_seq,
+            health.clone(),
+            degraded_queue.clone(),
+            metrics.clone(),
+        )
+    });
+    let prop_handle = propagator::spawn_with_checkpoint(
         store.clone(),
         topology,
         cancel.clone(),
         events_tx.clone(),
         run,
         cfg.propagator,
+        checkpoint_hook,
     );
 
     // Seed writes — these enter through the single chokepoint per R2.
@@ -577,6 +905,39 @@ async fn run_coordinator(
         let mut st = state.write().await;
         st.status = final_status.clone();
     }
+
+    // Phase 3 SPI: durably record the run outcome (R6 + D-F3.9
+    // "final-checkpoint preserved"). Stage 5 logs failures and
+    // continues; stage 6 adds retry-with-backoff and the
+    // EngineHealth::Degraded transition.
+    if let Some(spi) = spi_run_store.as_ref() {
+        let outcome = match &final_status {
+            RunStatus::Completed => {
+                let mut output = SlotMap::new();
+                for sr in &terminal_slots {
+                    if let Ok(v) = store.read_slot(sr).await {
+                        output.insert(format!("{}.{}", sr.node, sr.slot), v);
+                    }
+                }
+                RunOutcome::Completed { output }
+            }
+            RunStatus::Failed(err) => RunOutcome::Failed { error: err.clone() },
+            RunStatus::Cancelled | RunStatus::Pending | RunStatus::Running => RunOutcome::Cancelled,
+            // `RunStatus` is `#[non_exhaustive]`; future variants
+            // map to `Cancelled` defensively (matches the SqliteRunStore
+            // outcome_status() fallback rationale).
+            #[allow(unreachable_patterns)]
+            _ => RunOutcome::Cancelled,
+        };
+        if let Err(e) = spi.finish(run, outcome).await {
+            tracing::warn!(
+                run = %run,
+                error = %e,
+                "spi run_store finish failed (stage 5: log and continue)",
+            );
+        }
+    }
+
     final_status
 }
 
@@ -742,9 +1103,14 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.a", "out"), SlotValue::Int(42))],
             terminal_slots: vec![slot("flow.test.c", "out")],
+            principal: None,
+            dedup_key: None,
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
         let status = timeout(Duration::from_secs(2), &mut handle.join)
             .await
             .expect("coordinator did not exit in time")
@@ -831,9 +1197,14 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.n", "in"), SlotValue::Int(1))],
             terminal_slots: vec![],
+            principal: None,
+            dedup_key: None,
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
 
         // Give the propagator a moment to start, then cancel.
         sleep(Duration::from_millis(50)).await;
@@ -889,9 +1260,14 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.n", "in"), SlotValue::Int(1))],
             terminal_slots: vec![],
+            principal: None,
+            dedup_key: None,
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
         let status = timeout(Duration::from_secs(2), &mut handle.join)
             .await
             .expect("coordinator did not exit on cycle exhaustion")
@@ -953,9 +1329,14 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.a", "out"), SlotValue::Int(1))],
             terminal_slots: vec![slot("flow.test.c", "out")],
+            principal: None,
+            dedup_key: None,
         };
 
-        let mut handle = runner.start(spec, SlotMap::new()).await;
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
         let _ = timeout(Duration::from_secs(2), &mut handle.join).await;
 
         assert_eq!(

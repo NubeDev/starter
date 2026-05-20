@@ -55,6 +55,10 @@ pub trait UserStore: Send + Sync {
         role: Role,
     ) -> Result<(), UserStoreError>;
 
+    /// Set the `email_verified` flag for a user.
+    async fn set_email_verified(&self, user_id: &str, verified: bool)
+        -> Result<(), UserStoreError>;
+
     /// Fetch by email. `None` on miss.
     async fn find_by_email(&self, email: &str) -> Result<Option<UserRecord>, UserStoreError>;
 
@@ -147,6 +151,20 @@ mod sqlite {
                 }
                 Err(e) => Err(err(e)),
             }
+        }
+
+        async fn set_email_verified(
+            &self,
+            user_id: &str,
+            verified: bool,
+        ) -> Result<(), UserStoreError> {
+            sqlx::query("UPDATE starter_auth_users_users SET email_verified = ?1 WHERE id = ?2")
+                .bind(verified as i32)
+                .bind(user_id)
+                .execute(self.pool.sqlx())
+                .await
+                .map_err(err)?;
+            Ok(())
         }
 
         async fn find_by_email(&self, email: &str) -> Result<Option<UserRecord>, UserStoreError> {

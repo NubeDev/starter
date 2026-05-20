@@ -7,8 +7,7 @@ use starter_spi::ui::theme::{ShellConfig, ThemeSaveInput, ThemeStore, ThemeStyle
 use starter_store_sqlite::{migrate, migrate::MigrationSource, testing::ephemeral, Pool};
 use starter_ui_theme::store::SqliteThemeStore;
 
-static UI_THEME_MIGRATOR: sqlx::migrate::Migrator =
-    sqlx::migrate!("./migrations/ui_theme_sqlite");
+static UI_THEME_MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/ui_theme_sqlite");
 
 async fn fresh_store() -> SqliteThemeStore {
     let pool: Pool = ephemeral().await;

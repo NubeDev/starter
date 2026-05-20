@@ -1013,3 +1013,237 @@ normally with the dedup key recorded at `Engine::start` time.
    configurable via `RunOpts.checkpoint_backoff` if a consumer
    surfaces a real need; until then a single tuning point is
    simpler.
+
+## Stage 1 — decision lock (prose-only, no code)
+
+Stage 1 verifies the drafted Decisions block above against (a) the
+source-of-truth flow SCOPE at
+[`DOCS/flow/scope/SCOPE.md`](../../../DOCS/flow/scope/SCOPE.md)
+§"Phase 3 — Persistence + surface wrappers" plus the R6 / R8 / R9
+rule blocks, and (b) the actual Phase 2 substrate in the workspace
+(merged via `starter-flow-engine-finish`, PR #6). Each D-F3 ID
+below restates the lock plus any reality-check addendum the
+verification surfaced. The Decisions block above is the canonical
+form; this section is the verification record stages 3–10 binds
+to.
+
+### Decision lock — D-F3.1 through D-F3.12 (canonical)
+
+- **D-F3.1 — locked.** SPI trait method shapes per the Decisions
+  block above. `RunStore` gains
+  `find_by_dedup_key(service_name, dedup_key) -> Option<RunId>`
+  (named in `template.yaml` stage 3, missing from the prose
+  Decisions block above — counted as locked here so the runner
+  doesn't drop it). All methods `async`, `&self`,
+  `Result<T, FlowError>`. `FlowError` extended additively with
+  `NotFound { kind: &'static str, id: String }`. `#[non_exhaustive]`
+  on every new public enum + config struct.
+- **D-F3.2 — locked.** Per-tick checkpoint cadence, not per
+  `write_slot`. Propagator's existing tick counter is `seq`.
+- **D-F3.3 — locked.** Three SQLite impls under
+  `crates/starter-store-sqlite/src/flow/` behind a default-off
+  `flow` feature; migrations in
+  `crates/starter-store-sqlite/migrations/flow/`.
+  Reality check: the current crate layout has
+  [`crates/starter-store-sqlite/src/{lib.rs, migrate/, paging/, pool/, testing/}`](../../../crates/starter-store-sqlite/src/)
+  and [`migrations/starter/`](../../../crates/starter-store-sqlite/migrations/)
+  — Phase 3 adds `src/flow/` and `migrations/flow/` as siblings,
+  matching the existing naming convention.
+- **D-F3.4 — locked.** Explicit schemas at
+  `FlowAsTool::new(…)`, not derived from the flow revision body.
+- **D-F3.5 — locked.** `FlowAsService` subscribes on
+  `Service::start`, drains and unsubscribes on `Service::stop`.
+- **D-F3.6 — locked.** Four Phase 3 smokes live under
+  `crates/smoke-tests/tests/` per the D1d revisit-trigger from
+  the Phase 2 SCOPE. Reality check: the directory currently
+  holds five workspace-level invariant smokes
+  (`smoke_1_no_dep_leakage.rs` through
+  `smoke_5_shutdown_actually_shuts_down.rs`); the four Phase 3
+  files land as siblings using a `flow_*.rs` prefix to keep
+  ordering visible in `ls`.
+- **D-F3.7 — locked.** Phase 1 baseline file at
+  [`DOCS/flow/scope/starter-flow-spi-deps.baseline.txt`](../../../DOCS/flow/scope/starter-flow-spi-deps.baseline.txt)
+  regenerated once in stage 3's single commit, even if the
+  fleshout adds no new deps. Stages 4–10 producing a baseline
+  diff is a stage-fail.
+- **D-F3.8 — locked.** `BEGIN IMMEDIATE` per-tick atomic-tx
+  checkpoint; pool-init pragmas
+  `journal_mode=WAL, synchronous=NORMAL, busy_timeout=5000,
+  foreign_keys=ON` applied by extending (not replacing) the
+  existing [`crates/starter-store-sqlite/src/pool/`](../../../crates/starter-store-sqlite/src/pool/)
+  connection-init path.
+- **D-F3.9 — locked.** In-tx pruning at end of each
+  `SqliteRunStore::checkpoint`. Default
+  `RunOpts.checkpoint_retention = Bounded(100)` per open run;
+  one final row per finished run preserved.
+- **D-F3.10 — locked.** `tokio::sync::broadcast` capacity from
+  `RunOpts.event_broadcast_capacity` (default 1024); producers
+  never block; slow consumers see `RecvError::Lagged(n)` on
+  next `recv`; engine-owned per-run subscriber increments
+  `RunMetrics.subscriber_lagged_count`; exposed via
+  `Engine::run_metrics(run_id)`.
+- **D-F3.11 — locked.** Retry-with-backoff 50→100→200→400→800ms
+  capped at 5 attempts; after the 5th the engine transitions to
+  `EngineHealth::Degraded` (per-engine atomic state, not
+  per-run); in-flight runs keep serving from in-memory state
+  with checkpoint queue bounded by
+  `RunOpts.degraded_queue_capacity` (default 1024, evict-oldest
+  with `RunMetrics.degraded_dropped_count` increment);
+  `Engine::start` returns `EngineError::BackendUnavailable`
+  while `Degraded`; successful checkpoint drains the queue in
+  `(run_id, seq)` order and clears `Degraded`. Reality-check
+  addendum: SCOPE prose elsewhere in this file says the engine
+  "keeps producing `SlotChanged` events for in-flight runs"
+  during the outage. The per-run `FlowEvent` stream variant in
+  [`crates/starter-flow-spi/src/flow.rs`](../../../crates/starter-flow-spi/src/flow.rs)
+  is `NodeEmitted` (per-graph `GraphEvent::SlotChanged` is the
+  internal name on the graph-level bus and is not re-exported
+  onto the per-run stream). The Stage-9 smoke and the Stage-6
+  durability test assert on `FlowEvent::NodeEmitted` for the
+  "in-flight runs keep emitting" invariant; the SCOPE prose
+  reference to `SlotChanged` is a doc-only carry-over, not a
+  new variant to add.
+- **D-F3.12 — locked.** Per-event dedup key via
+  `EventSink::dedup_key()` (additive optional method with
+  default `None` impl on the existing trait in
+  [`crates/starter-spi/src/service/sink.rs`](../../../crates/starter-spi/src/service/sink.rs))
+  with `blake3((service_name, event_id, payload_bytes))`
+  fallback; `UNIQUE (service_name, dedup_key)` partial index on
+  the `runs` table; re-delivered events short-circuit via
+  `RunStore::find_by_dedup_key` and emit
+  `FlowEvent::DedupShortCircuit`.
+
+### Open-question resolutions (Q1–Q8)
+
+- **Q1 — locked: bias accepted.** `SessionStore` lives in
+  `starter-flow-spi::flow` (single-module surface). Move to
+  `starter-spi` if a non-flow consumer surfaces a need.
+- **Q2 — locked: bias accepted.** Checkpoint `seq` is the
+  propagator's existing tick counter via a private
+  `Propagator::current_tick()` accessor; resume uses
+  `MAX(seq)` at the store level.
+- **Q3 — locked: bias accepted.** `FlowAsService.default_principal:
+  Option<Principal>`. `None` + event-with-no-principal is a typed
+  invocation error; the service continues processing subsequent
+  events.
+- **Q4 — locked: STANDALONE.** Inspection of
+  [`crates/smoke-tests/tests/`](../../../crates/smoke-tests/)
+  finds five files, none of which is a four-transport stream
+  smoke (the existing five are workspace-level invariants:
+  dep-leakage, special-case wiring, config-guarded
+  construction, secrets backend swap, shutdown actually shuts
+  down). Stage 9 lands a standalone
+  `crates/smoke-tests/tests/flow_event_stream_over_four_transports.rs`
+  covering REST SSE, MCP streaming, gRPC streaming, and
+  JSON-RPC stdio against a `FlowEvent` source, with one
+  lagging-consumer sub-row per transport asserting non-zero
+  `RunMetrics.subscriber_lagged_count` while the run still
+  finishes successfully (D-F3.10 backpressure invariant). The
+  four-transport extension form named in the SCOPE Smoke block
+  is moot — there is nothing to extend.
+- **Q5 — locked: bias accepted with addendum.** `runs.run_opts_json`
+  serializes the full `RunOpts` struct. Reality-check addendum:
+  the existing engine uses
+  [`PropagatorConfig { max_propagation_hops }`](../../../crates/starter-flow/src/propagator.rs)
+  (no `RunOpts` type exists yet in Phase 2). Stage 3 introduces
+  `RunOpts` net-new in `starter-flow-spi` carrying
+  `max_propagation_hops`, `idempotent_short_circuit`,
+  `checkpoint_retention`, `event_broadcast_capacity`,
+  `degraded_queue_capacity` (all `#[non_exhaustive]`-absorbed
+  for future fields). Stage 5's `Engine::with_run_store(…)`
+  builder hook accepts a `RunOpts` per run and projects
+  `max_propagation_hops` into the existing
+  `PropagatorConfig` — no rename or refactor of the propagator
+  config type (out-of-scope per WORKFLOW anti-pattern
+  "refactoring the engine").
+- **Q6 — locked: 10000 ticks accepted.** Soak case in
+  `flow_crash_and_resume.rs` sub-case (c) ticks 10000 times
+  under the in-memory store, ~10s budget on CI. A 1M-tick
+  long-uptime soak lands in a nightly CI job in a follow-up
+  (out of scope; tracked as a Phase-3-follow-up note in
+  `handover.md`).
+- **Q7 — locked: bias accepted.** `Engine::health() ->
+  EngineHealth` sync accessor backed by an `AtomicU8`. No
+  `FlowEvent::HealthChanged` shape this job — engine-level
+  events are a Phase 7 concern.
+- **Q8 — locked: bias accepted.** Backoff schedule hard-coded
+  in the engine at 50/100/200/400/800ms, 5 attempts.
+  `RunOpts.checkpoint_backoff` is a follow-up if a consumer
+  surfaces a real need.
+
+### Source-of-truth alignment check
+
+The job SCOPE.md above is consistent with
+[`DOCS/flow/scope/SCOPE.md`](../../../DOCS/flow/scope/SCOPE.md)
+§"Phase 3 — Persistence + surface wrappers" plus R6 / R8 / R9.
+The doc's Phase 3 block names: `FlowStore` + `RunStore` impls in
+`starter-store-sqlite` behind a `flow` feature; run checkpointing
+on slot writes; resume from checkpoint after a process restart;
+`starter-flow-surfaces::{FlowAsTool, FlowAsService}`; the three
+SCOPE smokes (MCP-invoked flow, flow-as-Service, four-transport
+extended with a `FlowEvent` source). The job SCOPE.md
+**additively** lands the 24/7 durability hardening on top
+(atomic-tx checkpoint, bounded checkpoint history, backend-
+failure `Degraded` posture, backpressure semantics, at-least-once
++ dedup, the crash-and-resume smoke). The doc does not preclude
+any of those additions; they are the load-bearing difference
+between "Phase 3 compiles" and "Phase 3 deploys". Per the
+opening preamble of this file, when the job SCOPE.md disagrees
+with the doc, the doc wins. No disagreement found in stage 1.
+
+### Phase 2 substrate verification
+
+Verified in stage 1 against the live workspace:
+
+- [`crates/starter-flow-spi/src/flow.rs`](../../../crates/starter-flow-spi/src/flow.rs)
+  declares `FlowStore` and `RunStore` as empty trait seams
+  (`pub trait FlowStore: Send + Sync + 'static {}`) — matches
+  the Phase 1 posture the SCOPE assumes. No `SessionStore`
+  trait yet — Phase 3 adds it.
+- `FlowEvent` variants present in Phase 2:
+  `RunStarted, NodeStarted, NodeEmitted, NodeFailed,
+  RunCompleted, RunFailed, RunCancelled` — all
+  `#[non_exhaustive]`-friendly under the existing
+  `#[non_exhaustive]` attribute. Stage 3's
+  `CheckpointFailed` and `DedupShortCircuit` additions are
+  source-compatible.
+- [`crates/starter-flow/src/propagator.rs`](../../../crates/starter-flow/src/propagator.rs)
+  carries `PropagatorConfig { max_propagation_hops: u64 }`
+  (default 1000) — the tick counter is the source for the
+  `(run_id, seq)` key per D-F3.2 + Q2.
+- [`crates/starter-flow/src/state.rs`](../../../crates/starter-flow/src/state.rs)
+  + [`run.rs`](../../../crates/starter-flow/src/run.rs)
+  carry `events_tx: broadcast::Sender<FlowEvent>` per-run —
+  D-F3.10 backpressure semantics layer on top by constructing
+  the sender with `RunOpts.event_broadcast_capacity` (default
+  1024 replaces the current hardcoded capacity).
+- [`crates/starter-spi/src/service/sink.rs`](../../../crates/starter-spi/src/service/sink.rs)
+  defines `trait EventSink { async fn emit(…) -> SinkResult<()>; }`.
+  D-F3.12's `dedup_key(&self, _event: &Event) -> Option<String>`
+  addition needs a concrete `Event` type — Phase 2 has none.
+  Stage 3 introduces a minimal `Event` envelope type on the
+  `EventSink` trait or, simpler, places `dedup_key` on the
+  emitted payload by changing the method signature to
+  `dedup_key(&self, kind: &str, payload: &Value) -> Option<String>`
+  with a default `None` impl. Final signature picked at stage 3
+  implementation; both shapes are source-compatible additive
+  changes that leave the existing `emit(…)` method untouched.
+  Flagged here as a Stage-3 implementation choice, not a
+  stage-1 lock — both candidates honour the D-F3.12 contract.
+- [`crates/starter-store-sqlite/src/{lib.rs, pool/, migrate/}`](../../../crates/starter-store-sqlite/src/)
+  and [`migrations/starter/`](../../../crates/starter-store-sqlite/migrations/)
+  match the SCOPE's assumed crate layout — Phase 3's
+  `src/flow/` and `migrations/flow/` slot in cleanly.
+- [`crates/smoke-tests/tests/`](../../../crates/smoke-tests/tests/)
+  holds five workspace-level invariant smokes; no
+  four-transport stream smoke exists (Q4 → standalone).
+
+### Decisions block the runner must bind to
+
+Stages 3 through 10 bind to the locked D-F3.1 through D-F3.12
+decisions plus the Q1–Q8 resolutions above. The single
+implementation-choice flag carried into stage 3 is the precise
+shape of `EventSink::dedup_key` (`(&self, &Event)` vs
+`(&self, kind: &str, payload: &Value)`); either honours D-F3.12,
+both are additive and source-compatible. No other open items.
+

@@ -23,9 +23,11 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{watch, Mutex, RwLock};
 
+use starter_flow_spi::flow::{EngineHealth, RunStore as SpiRunStore};
 use starter_flow_spi::graph::{GraphStore, WriteSlotOpts};
 use starter_flow_spi::node::{SlotRef, SlotValue};
 
+use crate::health::HealthHandle;
 use crate::registry::{FlowRegistry, NodeKindRegistry};
 
 /// Engine state — lifted verbatim from rubix RUNTIME per R12.
@@ -198,6 +200,19 @@ pub struct Engine {
     propagator: Mutex<Option<tokio::task::JoinHandle<()>>>,
     /// Writable outputs the safe-state walk drives on stop (R12).
     writables: RwLock<Vec<Arc<dyn WritableOutput>>>,
+    /// Phase 3 SPI [`SpiRunStore`] for run lifecycle + per-tick
+    /// checkpoint persistence (R6, D-F3.2). The engine itself does
+    /// not call this; it is held here so the per-run constructor
+    /// (`FlowRunner` in [`crate::run`]) can pull it via
+    /// [`Self::run_store`] and thread it into the run. `None` means
+    /// the engine runs Phase-2-style in-memory only.
+    run_store: Option<Arc<dyn SpiRunStore>>,
+    /// Engine-level health flag (D-F3.11). Backed by an `AtomicU8`
+    /// so [`Self::health`] is lock-free. Shared with every
+    /// [`crate::run::FlowRunner`] launched off this engine via
+    /// [`Self::health_handle`]; the propagator's per-tick
+    /// retry-with-backoff loop flips this on degrade / recovery.
+    health: HealthHandle,
 }
 
 impl Engine {
@@ -212,7 +227,48 @@ impl Engine {
             state_tx,
             propagator: Mutex::new(None),
             writables: RwLock::new(Vec::new()),
+            run_store: None,
+            health: HealthHandle::new(),
         }
+    }
+
+    /// Attach a Phase 3 SPI [`SpiRunStore`] for run lifecycle +
+    /// per-tick checkpoint persistence (R6, D-F3.2). Builder hook
+    /// per the Phase 3 SCOPE: "the engine's per-run propagator
+    /// gains an `Option<Arc<dyn RunStore>>` slot threaded through
+    /// `Engine::with_run_store(…)`". When no store is attached
+    /// the engine behaves exactly as it does today (in-memory
+    /// Phase-2 substrate).
+    pub fn with_run_store(mut self, store: Arc<dyn SpiRunStore>) -> Self {
+        self.run_store = Some(store);
+        self
+    }
+
+    /// Borrow the attached [`SpiRunStore`] if any. Callers wiring
+    /// per-run constructors (e.g. [`crate::run::FlowRunner`]) clone
+    /// this `Arc` into the run.
+    pub fn run_store(&self) -> Option<&Arc<dyn SpiRunStore>> {
+        self.run_store.as_ref()
+    }
+
+    /// Read the engine's current health (D-F3.11). Lock-free; backed
+    /// by an `AtomicU8`. Returns
+    /// [`EngineHealth::Healthy`] under normal operation and
+    /// [`EngineHealth::Degraded`] after the per-run propagator has
+    /// observed five consecutive `RunStore::checkpoint` failures
+    /// (the engine returns to `Healthy` once the next checkpoint
+    /// succeeds and the per-run in-memory queue is drained).
+    pub fn health(&self) -> EngineHealth {
+        self.health.get()
+    }
+
+    /// Clone the engine's shared health handle. Hand this to a
+    /// [`crate::run::FlowRunner`] via
+    /// [`crate::run::FlowRunner::with_health_handle`] so the
+    /// runner's `start(...)` rejection check and the propagator's
+    /// degrade/recover transitions see the same flag.
+    pub fn health_handle(&self) -> HealthHandle {
+        self.health.clone()
     }
 
     /// Borrow the current state.

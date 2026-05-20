@@ -14,7 +14,8 @@ use std::path::PathBuf;
 
 #[test]
 fn openapi_matches_snapshot() {
-    let mut doc = starter_auth_users::openapi::openapi();
+    let mut doc =
+        starter_auth_users::openapi::openapi(&starter_auth_users::signup::SignupMode::Disabled);
     doc.merge(starter_ui_theme::openapi::openapi());
     let actual = serde_json::to_string_pretty(&doc).expect("serialize openapi");
 
