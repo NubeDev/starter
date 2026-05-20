@@ -16,7 +16,7 @@ default = []
 # `routes` pulls in the REST surface (GET /v1/i18n/catalogs/{lang},
 # GET /v1/i18n/manifest) plus the Accept-Language tower middleware.
 # Owned by SCOPE.md Phase 3 + the "API surface" block.
-routes = ["dep:axum", "dep:http", "dep:tower"]
+routes = ["dep:axum", "dep:http", "dep:tower", "dep:futures", "dep:async-trait"]
 # Phase 5 — scope-limited diagnostics rewriter (opt-in response
 # extension). Lands in a later stage; the feature flag is reserved
 # here so the dep-graph posture is locked from day one.
@@ -44,9 +44,12 @@ thiserror = { workspace = true }
 
 # `routes` feature deps — only compiled when the `routes` feature is
 # active.
-axum  = { workspace = true, optional = true }
-http  = { workspace = true, optional = true }
-tower = { workspace = true, optional = true }
+axum        = { workspace = true, optional = true }
+http        = { workspace = true, optional = true }
+tower       = { workspace = true, optional = true }
+futures     = { workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }
 
 [dev-dependencies]
-tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
+http-body-util = "0.1"

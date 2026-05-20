@@ -6202,8 +6202,11 @@ dependencies = [
 name = "starter-i18n"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "axum 0.8.9",
+ "futures",
  "http",
+ "http-body-util",
  "icu_locale_core",
  "serde",
  "serde_json",
