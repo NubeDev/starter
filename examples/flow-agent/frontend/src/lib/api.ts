@@ -110,6 +110,13 @@ async function req<T>(method: string, path: string, body?: unknown): Promise<T> 
   return (await res.json()) as T;
 }
 
+export type ProviderStatus = {
+  id: string;
+  label: string;
+  available: boolean;
+  hint: string;
+};
+
 export const api = {
   flows: {
     list: () => req<FlowSummary[]>("GET", "/api/flows"),
@@ -129,5 +136,8 @@ export const api = {
     update: (id: string, body: UpdateAgent) =>
       req<Agent>("PUT", `/api/agents/${id}`, body),
     delete: (id: string) => req<void>("DELETE", `/api/agents/${id}`),
+  },
+  providers: {
+    list: () => req<ProviderStatus[]>("GET", "/api/providers"),
   },
 };

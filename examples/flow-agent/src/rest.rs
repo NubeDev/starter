@@ -14,6 +14,7 @@ use futures::StreamExt;
 use tokio_stream::wrappers::BroadcastStream;
 use utoipa::OpenApi;
 
+use crate::ai_runtime::{AgentRunError, AiRuntime, ProviderStatusDto};
 use crate::domain::{
     Agent, AgentSummary, CreateAgent, CreateFlow, DomainError, FirePayload, FireResponse, Flow,
     FlowSummary, Run, UpdateAgent, UpdateFlow,
@@ -22,6 +23,7 @@ use crate::flow_engine::{FireOutcome, FlowEngine, FlowEngineError};
 use crate::sse::{EventHub, FlowEvent, RunEvent};
 use crate::store::{AgentStore, FlowStore, RunStore};
 use starter_flow_spi::flow::FlowEvent as EngineFlowEvent;
+use starter_spi::ai::HistoryMessage;
 
 #[derive(Clone)]
 pub struct RestState {
@@ -30,6 +32,7 @@ pub struct RestState {
     pub runs: Arc<RunStore>,
     pub hub: Arc<EventHub>,
     pub engine: FlowEngine,
+    pub ai: AiRuntime,
 }
 
 #[derive(OpenApi)]
@@ -38,6 +41,7 @@ pub struct RestState {
         list_flows, create_flow, get_flow, update_flow, delete_flow,
         fire_flow, list_runs,
         list_agents, create_agent, get_agent, update_agent, delete_agent,
+        run_agent, list_providers,
         sidebar_events, flow_events,
     ),
     components(schemas(
@@ -45,6 +49,7 @@ pub struct RestState {
         Agent, AgentSummary, CreateAgent, UpdateAgent,
         Run, FirePayload, FireResponse,
         FlowEvent, RunEvent,
+        ProviderStatusDto,
     ))
 )]
 pub struct FlowAgentApi;
@@ -68,6 +73,9 @@ where
             "/api/agents/{id}",
             get(get_agent).put(update_agent).delete(delete_agent),
         )
+        .route("/api/agents/{id}/run", post(run_agent))
+        // Providers (Settings page surfaces this read-only).
+        .route("/api/providers", get(list_providers))
         // SSE
         .route("/api/events", get(sidebar_events))
         .route("/api/flows/{id}/events", get(flow_events))
@@ -388,6 +396,76 @@ async fn delete_agent(
 }
 
 // ---------------------------------------------------------------------
+// Agent chat (SSE response)
+// ---------------------------------------------------------------------
+
+/// Body shape sent by `@nube/starter-ui-chat`'s default `createSseAdapter`.
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+pub struct AgentRunRequest {
+    /// New user input — text + optional metadata (we only consume `text`).
+    pub input: ChatSendInputDto,
+    /// Prior conversation turns the chat surface has accumulated.
+    #[serde(default)]
+    pub history: Vec<ChatMessageDto>,
+}
+
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+pub struct ChatSendInputDto {
+    pub text: String,
+}
+
+#[derive(Debug, serde::Deserialize, utoipa::ToSchema)]
+pub struct ChatMessageDto {
+    pub role: String,
+    pub content: String,
+}
+
+#[utoipa::path(post, path = "/api/agents/{id}/run", tag = "agents",
+    params(("id" = String, Path, description = "Agent id")),
+    request_body = AgentRunRequest,
+    responses(
+        (status = 200, description = "SSE chat stream", content_type = "text/event-stream"),
+        (status = 404),
+        (status = 422, description = "Provider unknown / unavailable"),
+    ))]
+async fn run_agent(
+    State(s): State<RestState>,
+    Path(id): Path<String>,
+    Json(body): Json<AgentRunRequest>,
+) -> Result<axum::response::Response, ApiError> {
+    let agent = s.agents.get(&id).await?;
+    let history: Vec<HistoryMessage> = body
+        .history
+        .into_iter()
+        .filter(|m| matches!(m.role.as_str(), "user" | "assistant" | "system"))
+        .map(|m| HistoryMessage {
+            role: m.role,
+            content: m.content,
+        })
+        .collect();
+
+    let stream = s
+        .ai
+        .run_agent(&agent, body.input.text, history)
+        .map_err(ApiError::from)?;
+
+    let sse = Sse::new(stream).keep_alive(
+        axum::response::sse::KeepAlive::new()
+            .interval(std::time::Duration::from_secs(15))
+            .text("keep-alive"),
+    );
+    Ok(sse.into_response())
+}
+
+#[utoipa::path(get, path = "/api/providers", tag = "providers",
+    responses((status = 200, body = [ProviderStatusDto])))]
+async fn list_providers(
+    State(s): State<RestState>,
+) -> Result<Json<Vec<ProviderStatusDto>>, ApiError> {
+    Ok(Json(s.ai.list_providers().await))
+}
+
+// ---------------------------------------------------------------------
 // SSE handlers
 // ---------------------------------------------------------------------
 
@@ -442,6 +520,7 @@ async fn flow_events(
 pub enum ApiError {
     Domain(DomainError),
     Engine(FlowEngineError),
+    Agent(AgentRunError),
 }
 
 impl From<DomainError> for ApiError {
@@ -456,6 +535,12 @@ impl From<FlowEngineError> for ApiError {
     }
 }
 
+impl From<AgentRunError> for ApiError {
+    fn from(e: AgentRunError) -> Self {
+        Self::Agent(e)
+    }
+}
+
 impl IntoResponse for ApiError {
     fn into_response(self) -> axum::response::Response {
         let (status, msg) = match &self {
@@ -466,6 +551,11 @@ impl IntoResponse for ApiError {
                 DomainError::Db(_) | DomainError::Json(_) => {
                     tracing::error!(error = %e, "internal error");
                     (StatusCode::INTERNAL_SERVER_ERROR, "internal".into())
+                }
+            },
+            ApiError::Agent(e) => match e {
+                AgentRunError::UnknownProvider(_) | AgentRunError::ProviderUnavailable(_) => {
+                    (StatusCode::UNPROCESSABLE_ENTITY, e.to_string())
                 }
             },
             ApiError::Engine(e) => match e {

@@ -11,6 +11,7 @@ use starter_server::ServerBuilder;
 use starter_store_sqlite::Pool;
 use utoipa::OpenApi;
 
+use crate::ai_runtime::AiRuntime;
 use crate::flow_engine::FlowEngine;
 use crate::rest::{router as rest_router, FlowAgentApi, RestState};
 use crate::sse::EventHub;
@@ -34,6 +35,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let runs = Arc::new(RunStore::new(sqlx));
     let hub = Arc::new(EventHub::new());
     let engine = FlowEngine::new();
+    let ai = AiRuntime::new();
 
     let rest_state = RestState {
         flows: flows.clone(),
@@ -41,6 +43,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         runs: runs.clone(),
         hub: hub.clone(),
         engine,
+        ai,
     };
 
     let router = ServerBuilder::<AppState>::new(AppState)
