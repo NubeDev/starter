@@ -1,5 +1,5 @@
 import type { NodeProps } from "@xyflow/react";
-import type { NodeKindSpec, NodeRunState } from "../types.js";
+import type { NodeKindSpec, NodeRunState, SlotName } from "../types.js";
 import { BaseNode } from "./BaseNode.js";
 import type { NodeKindEntry } from "./NodeRegistry.js";
 
@@ -89,6 +89,7 @@ interface FlowNodeData {
   label?: string;
   state?: NodeRunState;
   preview?: string;
+  slotValues?: Record<SlotName, unknown>;
 }
 
 function genericRenderer(props: NodeProps) {
@@ -99,6 +100,7 @@ function genericRenderer(props: NodeProps) {
       label={data.label}
       state={data.state}
       selected={props.selected}
+      slotValues={data.slotValues}
     >
       {data.preview ? <span>{data.preview}</span> : null}
     </BaseNode>

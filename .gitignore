@@ -23,4 +23,7 @@ dist/
 
 # Generated
 *.log
+*.db
+*.db-*
+*.pid
 coverage/

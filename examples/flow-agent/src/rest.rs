@@ -22,6 +22,7 @@ use crate::domain::{
 use crate::flow_engine::{FireOutcome, FlowEngine, FlowEngineError};
 use crate::sse::{EventHub, FlowEvent, RunEvent};
 use crate::store::{AgentStore, FlowStore, RunStore};
+use starter_flow_spi::event_dto::{slot_value_to_json, NodeSlotValue};
 use starter_flow_spi::flow::FlowEvent as EngineFlowEvent;
 use starter_spi::ai::HistoryMessage;
 
@@ -284,10 +285,24 @@ fn handle_engine_event(
                     });
                 }
             }
-            // Treat an emit as the node being "ok" for now — the
-            // engine has no NodeCompleted variant and most kinds emit
-            // exactly one terminal output.
+            // Forward the slot value as a NodeOutput event so the
+            // frontend (and any curl-based listener) can see what the
+            // node actually produced. Uses the shared
+            // `NodeSlotValue::from_event` projection so every host
+            // emits identically shaped values.
             if let Some(ui_id) = outcome.ui_node_id(node) {
+                if let Some(dto) = NodeSlotValue::from_event(ev) {
+                    let _ = hub.runs.send(RunEvent::NodeOutput {
+                        flow_id: flow_id.to_owned(),
+                        run_id: run_db_id.to_owned(),
+                        node_id: ui_id.to_owned(),
+                        slot: dto.slot,
+                        value: dto.value,
+                    });
+                }
+                // Treat an emit as the node being "ok" for now — the
+                // engine has no NodeCompleted variant and most kinds
+                // emit exactly one terminal output.
                 let _ = hub.runs.send(RunEvent::NodeStatus {
                     flow_id: flow_id.to_owned(),
                     run_id: run_db_id.to_owned(),
@@ -309,7 +324,16 @@ fn handle_engine_event(
             tracing::warn!(node = %node, error = %error, "flow node failed");
             None
         }
-        EngineFlowEvent::RunCompleted { .. } => Some(("ok".to_owned(), None)),
+        EngineFlowEvent::RunCompleted { output, .. } => {
+            let trace = serde_json::to_value(
+                output
+                    .iter()
+                    .map(|(k, v)| (k.clone(), slot_value_to_json(v)))
+                    .collect::<serde_json::Map<_, _>>(),
+            )
+            .ok();
+            Some(("ok".to_owned(), trace))
+        }
         EngineFlowEvent::RunFailed { error, .. } => Some((
             "error".to_owned(),
             Some(serde_json::json!({ "error": error })),
@@ -497,6 +521,7 @@ async fn flow_events(
                 RunEvent::RunStarted { flow_id, .. }
                 | RunEvent::NodeStatus { flow_id, .. }
                 | RunEvent::EdgeActive { flow_id, .. }
+                | RunEvent::NodeOutput { flow_id, .. }
                 | RunEvent::RunFinished { flow_id, .. } => flow_id == &want,
             };
             belongs.then_some(ev)

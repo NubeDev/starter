@@ -81,6 +81,16 @@ pub enum RunEvent {
         run_id: String,
         edge_id: String,
     },
+    /// Value written to an output slot. Echoes `FlowEvent::NodeEmitted`
+    /// from the engine, with the engine node id translated back to
+    /// the UI id and the value serialized as JSON.
+    NodeOutput {
+        flow_id: String,
+        run_id: String,
+        node_id: String,
+        slot: String,
+        value: serde_json::Value,
+    },
     RunFinished {
         flow_id: String,
         run_id: String,

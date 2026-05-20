@@ -1,5 +1,5 @@
 import type { CSSProperties, ReactNode } from "react";
-import type { NodeKindSpec, NodeRunState } from "../types.js";
+import type { NodeKindSpec, NodeRunState, SlotName, SlotSpec } from "../types.js";
 import { SlotHandle } from "../slots/SlotHandle.js";
 import { cn } from "../lib/cn.js";
 
@@ -8,6 +8,13 @@ export interface BaseNodeProps {
   label?: string;
   state?: NodeRunState;
   selected?: boolean;
+  /**
+   * Live per-slot values, keyed by slot name. Renderers show each
+   * value as a small monospaced badge adjacent to its slot label.
+   * Currently rendered for output slots only — input badges land
+   * once the engine emits input-write events.
+   */
+  slotValues?: Record<SlotName, unknown>;
   /** Optional body slot for kind-specific config preview. */
   children?: ReactNode;
 }
@@ -34,6 +41,7 @@ export function BaseNode({
   label,
   state = "idle",
   selected,
+  slotValues,
   children,
 }: BaseNodeProps) {
   const accent = spec.color ?? "#0ea5e9";
@@ -83,7 +91,7 @@ export function BaseNode({
       <div className="sf-node__body" style={body}>
         <div className="sf-node__inputs" style={{ display: "flex", flexDirection: "column" }}>
           {spec.inputs.map((s) => (
-            <SlotHandle key={`in-${s.name}`} spec={s} side="input" />
+            <SlotRow key={`in-${s.name}`} spec={s} side="input" value={slotValues?.[s.name]} />
           ))}
         </div>
         <div
@@ -91,7 +99,7 @@ export function BaseNode({
           style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}
         >
           {spec.outputs.map((s) => (
-            <SlotHandle key={`out-${s.name}`} spec={s} side="output" />
+            <SlotRow key={`out-${s.name}`} spec={s} side="output" value={slotValues?.[s.name]} />
           ))}
         </div>
       </div>
@@ -110,4 +118,79 @@ export function BaseNode({
       ) : null}
     </div>
   );
+}
+
+const BADGE_MAX = 48;
+
+function SlotRow({
+  spec,
+  side,
+  value,
+}: {
+  spec: SlotSpec;
+  side: "input" | "output";
+  value: unknown;
+}) {
+  const rendered = renderSlotValue(value);
+  const wrap: CSSProperties = {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: side === "input" ? "flex-start" : "flex-end",
+  };
+  const badge: CSSProperties = {
+    marginLeft: side === "input" ? 16 : 0,
+    marginRight: side === "output" ? 16 : 0,
+    marginTop: 1,
+    padding: "1px 6px",
+    borderRadius: 4,
+    background: "var(--sf-slot-value-bg, rgba(15,23,42,0.06))",
+    color: "var(--sf-slot-value-fg, #0f172a)",
+    fontFamily:
+      "var(--sf-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
+    fontSize: 10,
+    lineHeight: 1.3,
+    maxWidth: 180,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap",
+  };
+  return (
+    <div style={wrap}>
+      <SlotHandle spec={spec} side={side} />
+      {rendered !== null ? (
+        <span
+          className="sf-slot__value"
+          data-slot-kind={spec.kind}
+          title={rendered}
+          style={badge}
+        >
+          {rendered.length > BADGE_MAX
+            ? `${rendered.slice(0, BADGE_MAX - 1)}…`
+            : rendered}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+/**
+ * Project an arbitrary slot value to a compact display string, or
+ * `null` if the badge should be hidden entirely.
+ *
+ * Null/undefined collapse the badge. Strings render verbatim. Numbers
+ * and booleans use their canonical `String(...)`. Everything else
+ * falls through to `JSON.stringify`, with a fallback to `String(v)`
+ * when the value contains a cycle or otherwise refuses to serialize.
+ */
+function renderSlotValue(v: unknown): string | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "string") return v;
+  if (typeof v === "number" || typeof v === "boolean" || typeof v === "bigint") {
+    return String(v);
+  }
+  try {
+    return JSON.stringify(v);
+  } catch {
+    return String(v);
+  }
 }

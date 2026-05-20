@@ -19,11 +19,11 @@ export default defineConfig({
     },
   },
   server: {
-    port: 5174,
+    port: 9742,
     proxy: {
-      "/api": "http://localhost:8090",
-      "/health": "http://localhost:8090",
-      "/openapi.json": "http://localhost:8090",
+      "/api": "http://localhost:9741",
+      "/health": "http://localhost:9741",
+      "/openapi.json": "http://localhost:9741",
     },
   },
 });

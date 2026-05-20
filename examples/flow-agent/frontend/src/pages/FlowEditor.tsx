@@ -49,13 +49,21 @@ type RunEventDto =
       edge_id: string;
     }
   | {
+      type: "node-output";
+      flow_id: string;
+      run_id: string;
+      node_id: string;
+      slot: string;
+      value: unknown;
+    }
+  | {
       type: "run-finished";
       flow_id: string;
       run_id: string;
       status: string;
     };
 
-const EMPTY_OVERLAY: RunOverlay = { nodes: {}, activeEdges: [] };
+const EMPTY_OVERLAY: RunOverlay = { nodes: {}, activeEdges: [], slotValues: {} };
 const TERMINAL_CLEAR_MS = 1000;
 
 function statusToNodeRunState(status: string): NodeRunState {
@@ -212,7 +220,7 @@ export function FlowEditor() {
             clearTimerRef.current = null;
           }
           setActiveRunId(ev.run_id);
-          setOverlay({ nodes: {}, activeEdges: [] });
+          setOverlay({ nodes: {}, activeEdges: [], slotValues: {} });
           // The run row appears in the panel via the polling query;
           // nudge it once so the new run shows up immediately.
           void runsQuery.refetch();
@@ -222,11 +230,11 @@ export function FlowEditor() {
           // Drop events from prior runs.
           if (activeRunId && ev.run_id !== activeRunId) return;
           setOverlay((prev) => ({
+            ...prev,
             nodes: {
               ...prev.nodes,
               [ev.node_id]: statusToNodeRunState(ev.status),
             },
-            activeEdges: prev.activeEdges ?? [],
           }));
           break;
         }
@@ -236,8 +244,26 @@ export function FlowEditor() {
             const existing = prev.activeEdges ?? [];
             if (existing.includes(ev.edge_id)) return prev;
             return {
-              nodes: prev.nodes,
+              ...prev,
               activeEdges: [...existing, ev.edge_id],
+            };
+          });
+          break;
+        }
+        case "node-output": {
+          if (activeRunId && ev.run_id !== activeRunId) return;
+          // Accumulate per-node, per-slot values. Replace previous
+          // values for the same slot so the latest emit wins (matches
+          // engine semantics: re-emit overwrites).
+          setOverlay((prev) => {
+            const prevSlots = prev.slotValues ?? {};
+            const prevForNode = prevSlots[ev.node_id] ?? {};
+            return {
+              ...prev,
+              slotValues: {
+                ...prevSlots,
+                [ev.node_id]: { ...prevForNode, [ev.slot]: ev.value },
+              },
             };
           });
           break;
@@ -276,7 +302,7 @@ export function FlowEditor() {
       // — but seeding it now means UI feedback is immediate even if the
       // event is briefly delayed.
       setActiveRunId(res.run_id);
-      setOverlay({ nodes: {}, activeEdges: [] });
+      setOverlay({ nodes: {}, activeEdges: [], slotValues: {} });
       void runsQuery.refetch();
     },
   });

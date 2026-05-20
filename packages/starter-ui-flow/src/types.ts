@@ -94,4 +94,13 @@ export interface RunOverlay {
   nodes: Record<NodeId, NodeRunState>;
   /** Active edges (currently propagating). */
   activeEdges?: string[];
+  /**
+   * Per-node slot values emitted during the run, keyed by node id
+   * then by output-slot name. Hosts accumulate these from engine
+   * `NodeEmitted` events. Renderers show each value as a small
+   * monospaced badge next to its slot handle; missing entries
+   * collapse the badge. Stays optional so authoring-only canvases
+   * pay nothing.
+   */
+  slotValues?: Record<NodeId, Record<SlotName, unknown>>;
 }
