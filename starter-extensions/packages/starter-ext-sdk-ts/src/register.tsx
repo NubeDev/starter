@@ -22,7 +22,9 @@
 // into host internals directly; the SDK call delegates to the
 // handle's `register` method, which the host owns.
 
-import type * as React from "react";
+import * as React from "react";
+
+import { HostBindingsProvider } from "./host-bindings.js";
 
 /**
  * Resolved singleton instances the host gives the extension. Keyed
@@ -96,5 +98,32 @@ export function registerExtensionContributions(
   handle: ExtensionRemoteHandle,
   contributions: ExtensionContributions,
 ): void {
-  handle.register(contributions);
+  // Wrap every contributed component in a `<HostBindingsProvider>`
+  // seeded from the handle (extension id + resolved singletons). The
+  // wrapping happens once at registration time, not per render, so
+  // it does not add a useState/useEffect cost; the wrapper is a
+  // closure over a stable `bindings` object. Hooks
+  // (`useHostPrefs`/`useHostTranslate`/`useHostFormatters`) read
+  // through this provider — extension authors get the host's prefs
+  // and IntlShape without seeing the plumbing.
+  const bindings = { extensionId: handle.id, singletons: handle.singletons };
+  const wrapped: Record<string, React.ComponentType<unknown>> = {};
+  for (const [name, Component] of Object.entries(contributions.components)) {
+    wrapped[name] = wrapWithBindings(name, Component, bindings);
+  }
+  handle.register({ components: wrapped });
+}
+
+function wrapWithBindings(
+  displayName: string,
+  Component: React.ComponentType<unknown>,
+  bindings: { extensionId: string; singletons: ResolvedSingletons },
+): React.ComponentType<unknown> {
+  const Wrapped = (props: unknown): React.ReactElement => (
+    <HostBindingsProvider bindings={bindings}>
+      <Component {...(props as Record<string, unknown>)} />
+    </HostBindingsProvider>
+  );
+  Wrapped.displayName = `HostBindings(${bindings.extensionId}:${displayName})`;
+  return Wrapped;
 }

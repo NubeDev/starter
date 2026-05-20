@@ -76,6 +76,19 @@ interface IntlContextValue {
   isLoading: boolean;
   /** Last fetch error, if any. */
   error: unknown;
+  /**
+   * The host's `IntlShape` from `react-intl`. Exposed here so an
+   * extension reading this context through the
+   * `@nube/starter-ui-core/i18n` singleton can call
+   * `intl.formatMessage(...)` against the host's catalog + language
+   * even when the extension bundles its own `react-intl` (in which
+   * case react-intl's internal context inside the extension is empty
+   * and `useIntl()` would not work). Typed as `unknown` so consumers
+   * that do not pull react-intl into their type graph (the SDK) can
+   * still narrow to a duck-typed call site. `null` while the first
+   * catalog probe is in flight.
+   */
+  intl: unknown;
 }
 
 /**
@@ -177,15 +190,9 @@ export function IntlProvider({
   const activeLanguage = catalog?.language ?? FALLBACK_LANGUAGE;
   const messages = catalog?.messages ?? defaultMessages ?? {};
 
-  const ctxValue = useMemo<IntlContextValue>(
-    () => ({
-      language: activeLanguage,
-      manifest,
-      isLoading,
-      error,
-    }),
-    [activeLanguage, manifest, isLoading, error],
-  );
+  // `intl` is built below from `(activeLanguage, messages)`; we
+  // declare the context value after it so the value memo can close
+  // over the `intl` instance.
 
   // Build an `IntlShape` directly so we sidestep react-intl's class-
   // component `<IntlProvider>` (whose typings don't line up with
@@ -209,6 +216,17 @@ export function IntlProvider({
         createIntlCache(),
       ),
     [activeLanguage, messages],
+  );
+
+  const ctxValue = useMemo<IntlContextValue>(
+    () => ({
+      language: activeLanguage,
+      manifest,
+      isLoading,
+      error,
+      intl,
+    }),
+    [activeLanguage, manifest, isLoading, error, intl],
   );
 
   return (

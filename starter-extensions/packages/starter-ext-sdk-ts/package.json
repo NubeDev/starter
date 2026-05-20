@@ -1,19 +1,21 @@
 {
   "name": "@nube/starter-ext-sdk-ts",
   "version": "0.1.0",
-  "description": "What UI extension authors import. Forked from rubix-workspace/extension-ui-sdk main entry, with rubix graph hooks (useNode/useSlot/useKinds) stripped — those are rubix-specific. Provides useHostClient (typed wrapper over @nube/starter-client-ts; UI extensions never raw fetch per SCOPE R11), BlockShell, useSlotContext, registerExtensionContributions.",
+  "description": "What UI extension authors import. Forked from rubix-workspace/extension-ui-sdk main entry, with rubix graph hooks (useNode/useSlot/useKinds) stripped — those are rubix-specific. Provides useHostClient (typed wrapper over @nube/starter-client-ts; UI extensions never raw fetch per SCOPE R11), BlockShell, useSlotContext, registerExtensionContributions, plus the prefs/i18n hook surface (useHostPrefs/useHostTranslate/useHostFormatters) and the MockHostProvider test helper.",
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./testing": "./src/testing/index.ts"
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "scripts", "README.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "gen-keys": "node scripts/gen-message-keys.mjs"
   },
   "peerDependencies": {
     "@nube/starter-client-ts": "workspace:*",
@@ -21,8 +23,12 @@
   },
   "devDependencies": {
     "@nube/starter-client-ts": "workspace:*",
+    "@testing-library/react": "^16.1.0",
     "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "jsdom": "^25.0.0",
     "react": "^18.3.0",
+    "react-dom": "^18.3.0",
     "typescript": "^5.4.0",
     "vitest": "^2.1.0"
   }

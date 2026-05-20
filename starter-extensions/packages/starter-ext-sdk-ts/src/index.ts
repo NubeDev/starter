@@ -47,3 +47,56 @@ export {
   type ExtensionRemoteHandle,
   type ResolvedSingletons,
 } from "./register.js";
+
+// Prefs + i18n hook surface (Stage 3, examples/notes/user-pref.md).
+// These three hooks are the one stable read API an extension author
+// uses to consume the host's resolved preferences + IntlShape via
+// the singleton handshake.
+
+export {
+  HostBindingsProvider,
+  useHostBindings,
+  type HostBindings,
+  type HostBindingsProviderProps,
+} from "./host-bindings.js";
+
+export {
+  SINGLETON_REACT,
+  SINGLETON_REACT_DOM,
+  SINGLETON_UI_CORE_I18N,
+  SINGLETON_UI_CORE_PREFERENCES,
+} from "./singleton-keys.js";
+
+export { useHostPrefs } from "./use-host-prefs.js";
+export {
+  useHostTranslate,
+  type MessageValues,
+  type TranslateFn,
+} from "./use-host-translate.js";
+export {
+  useHostFormatters,
+  type HostFormatters,
+} from "./use-host-formatters.js";
+
+export type {
+  ExtensionMessageKey,
+  MessageKey,
+  PlatformMessageKey,
+} from "./message-keys.js";
+
+export type {
+  CurrencyCode,
+  DateFormat,
+  HostIntlContextValue,
+  HostIntlShape,
+  HostPreferencesContextValue,
+  NumberFormat,
+  PreferencesPatch,
+  Quantity,
+  ResolvedPreferences,
+  Theme,
+  TimeFormat,
+  Unit,
+  UnitSystem,
+  WeekStart,
+} from "./prefs-types.js";
