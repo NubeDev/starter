@@ -14,6 +14,12 @@
 /// [`dto::series::SeriesEnvelope`].
 pub mod dto;
 
+/// Money: minor-units integer + ISO 4217 code, with a minimal
+/// presentation-edge formatter. Per SCOPE.md R1 — no floats in
+/// storage, no implicit currency, no FX conversion (that's a separate
+/// future feature).
+pub mod money;
+
 /// Three-layer resolver: user → org → default, with `"auto"`
 /// derivation per **R3 — Three-layer resolution** in
 /// `DOCS/user/scope/SCOPE.md`.

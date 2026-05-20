@@ -38,6 +38,20 @@ pub enum Quantity {
     Length,
     /// Mass. Canonical unit: kilogram.
     Mass,
+    /// Time / duration. Canonical unit: second.
+    Duration,
+    /// Volume. Canonical unit: cubic metre.
+    Volume,
+    /// Energy. Canonical unit: joule.
+    Energy,
+    /// Power. Canonical unit: watt.
+    Power,
+    /// Area. Canonical unit: square metre.
+    Area,
+    /// Plane angle. Canonical unit: radian.
+    Angle,
+    /// Frequency. Canonical unit: hertz.
+    Frequency,
 }
 
 impl Quantity {
@@ -50,6 +64,13 @@ impl Quantity {
             Self::Speed => "speed",
             Self::Length => "length",
             Self::Mass => "mass",
+            Self::Duration => "duration",
+            Self::Volume => "volume",
+            Self::Energy => "energy",
+            Self::Power => "power",
+            Self::Area => "area",
+            Self::Angle => "angle",
+            Self::Frequency => "frequency",
         }
     }
 
@@ -61,6 +82,13 @@ impl Quantity {
         Quantity::Speed,
         Quantity::Length,
         Quantity::Mass,
+        Quantity::Duration,
+        Quantity::Volume,
+        Quantity::Energy,
+        Quantity::Power,
+        Quantity::Area,
+        Quantity::Angle,
+        Quantity::Frequency,
     ];
 }
 
@@ -80,6 +108,13 @@ impl FromStr for Quantity {
             "speed" => Ok(Self::Speed),
             "length" => Ok(Self::Length),
             "mass" => Ok(Self::Mass),
+            "duration" => Ok(Self::Duration),
+            "volume" => Ok(Self::Volume),
+            "energy" => Ok(Self::Energy),
+            "power" => Ok(Self::Power),
+            "area" => Ok(Self::Area),
+            "angle" => Ok(Self::Angle),
+            "frequency" => Ok(Self::Frequency),
             other => Err(UnitError::UnknownQuantity(other.to_owned())),
         }
     }

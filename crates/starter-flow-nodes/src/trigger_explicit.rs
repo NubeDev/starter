@@ -45,6 +45,16 @@ use starter_flow_spi::node::{
 /// (per § "R10 — Reverse-DNS ids; namespace ownership enforced").
 pub const KIND_ID: &str = "starter.flow.trigger.explicit";
 
+/// Static metadata for the catalog / discovery surface. Help text is
+/// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
+pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+    starter_flow_spi::node::NodeDescriptor::new(
+        KIND_ID,
+        "starter.flow.node.trigger-explicit.label",
+        "starter.flow.node.trigger-explicit.summary",
+        "starter.flow.node.trigger-explicit.help",
+    );
+
 /// Mandatory config slot carrying the reverse-DNS [`KindId`] of the
 /// fire channel the host bound this trigger to. The slot value must
 /// be a [`SlotValue::String`]; the body validates it through

@@ -5,6 +5,11 @@
 //! `version` column — every successful PUT bumps it and the next PUT
 //! must present the previous value.
 
+// The sqlx tuple shapes are deliberately literal — extracting a `type
+// alias` per query would add a layer of indirection between schema
+// and call site for no gain. Allowed at the file level.
+#![allow(clippy::type_complexity)]
+
 use chrono::{DateTime, Utc};
 use sqlx::SqlitePool;
 

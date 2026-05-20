@@ -3108,6 +3108,7 @@ dependencies = [
  "iso_country",
  "proc-macro2",
  "quote",
+ "serde",
 ]
 
 [[package]]
@@ -6232,6 +6233,7 @@ name = "starter-flow-nodes"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "reqwest 0.12.28",
  "serde",
  "serde_json",
  "starter-flow",
@@ -6436,6 +6438,14 @@ dependencies = [
  "tracing",
  "tracing-subscriber",
  "uuid",
+]
+
+[[package]]
+name = "starter-port"
+version = "0.1.0"
+dependencies = [
+ "thiserror 1.0.69",
+ "tokio",
 ]
 
 [[package]]
@@ -6650,6 +6660,23 @@ dependencies = [
  "tokio",
  "tokio-util",
  "tracing",
+]
+
+[[package]]
+name = "starter-tool-github"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "prometheus",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-observability",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+ "wiremock",
 ]
 
 [[package]]

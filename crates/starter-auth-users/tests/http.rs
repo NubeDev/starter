@@ -65,7 +65,7 @@ async fn login_logout_round_trip() {
     let sessions = Arc::new(SqliteSessionStore::new(pool.clone()));
     let tokens = Arc::new(SqliteTokenStore::new(pool));
 
-    create_admin(users.as_ref(), "u@example.com", "pw", Role::Admin)
+    create_admin(users.as_ref(), "u@example.com", "long-enough-pw", Role::Admin)
         .await
         .unwrap();
 
@@ -110,7 +110,7 @@ async fn login_logout_round_trip() {
     // Login.
     let login = client
         .post(format!("{}/auth/login", app.base_url))
-        .json(&serde_json::json!({"email": "u@example.com", "password": "pw"}))
+        .json(&serde_json::json!({"email": "u@example.com", "password": "long-enough-pw"}))
         .send()
         .await
         .unwrap();
@@ -266,7 +266,7 @@ async fn reader_blocked_from_admin_route() {
     let sessions = Arc::new(SqliteSessionStore::new(pool.clone()));
     let tokens = Arc::new(SqliteTokenStore::new(pool));
 
-    create_admin(users.as_ref(), "r@example.com", "pw", Role::Reader)
+    create_admin(users.as_ref(), "r@example.com", "long-enough-pw", Role::Reader)
         .await
         .unwrap();
 
@@ -301,7 +301,7 @@ async fn reader_blocked_from_admin_route() {
 
     let _ = client
         .post(format!("{}/auth/login", app.base_url))
-        .json(&serde_json::json!({"email": "r@example.com", "password": "pw"}))
+        .json(&serde_json::json!({"email": "r@example.com", "password": "long-enough-pw"}))
         .send()
         .await
         .unwrap();

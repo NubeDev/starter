@@ -158,6 +158,22 @@ impl UnitsCtx {
             Quantity::Speed => self.prefs.speed_unit,
             Quantity::Length => self.prefs.length_unit,
             Quantity::Mass => self.prefs.mass_unit,
+            // Quantities added after the prefs schema (duration,
+            // volume, energy, power, area, angle, frequency) have no
+            // `*_unit` column yet — Phase B will add them. Until then
+            // we fall back to the registry canonical so callers still
+            // get a usable Unit.
+            Quantity::Duration
+            | Quantity::Volume
+            | Quantity::Energy
+            | Quantity::Power
+            | Quantity::Area
+            | Quantity::Angle
+            | Quantity::Frequency => self
+                .registry
+                .get(quantity)
+                .map(|d| d.canonical)
+                .expect("StaticRegistry covers every Quantity"),
         }
     }
 

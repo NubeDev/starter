@@ -14,6 +14,13 @@ fn static_registry_canonical_per_quantity() {
         (Quantity::Speed, Unit::MeterPerSecond),
         (Quantity::Length, Unit::Meter),
         (Quantity::Mass, Unit::Kilogram),
+        (Quantity::Duration, Unit::Second),
+        (Quantity::Volume, Unit::CubicMeter),
+        (Quantity::Energy, Unit::Joule),
+        (Quantity::Power, Unit::Watt),
+        (Quantity::Area, Unit::SquareMeter),
+        (Quantity::Angle, Unit::Radian),
+        (Quantity::Frequency, Unit::Hertz),
     ];
     for (q, canonical) in expected {
         let def = reg.get(q).expect("every Quantity has a definition");
@@ -48,6 +55,43 @@ fn supports_matrix_covers_every_scope_pair() {
         ),
         (Quantity::Length, &[Unit::Meter, Unit::Foot][..]),
         (Quantity::Mass, &[Unit::Kilogram, Unit::Pound][..]),
+        (
+            Quantity::Duration,
+            &[
+                Unit::Second,
+                Unit::Millisecond,
+                Unit::Minute,
+                Unit::Hour,
+                Unit::Day,
+            ][..],
+        ),
+        (
+            Quantity::Volume,
+            &[
+                Unit::CubicMeter,
+                Unit::Liter,
+                Unit::Milliliter,
+                Unit::GallonUs,
+                Unit::FluidOunceUs,
+            ][..],
+        ),
+        (
+            Quantity::Energy,
+            &[Unit::Joule, Unit::Kilojoule, Unit::KilowattHour, Unit::Btu][..],
+        ),
+        (
+            Quantity::Power,
+            &[Unit::Watt, Unit::Kilowatt, Unit::Horsepower][..],
+        ),
+        (
+            Quantity::Area,
+            &[Unit::SquareMeter, Unit::SquareFoot, Unit::Acre, Unit::Hectare][..],
+        ),
+        (Quantity::Angle, &[Unit::Radian, Unit::Degree][..]),
+        (
+            Quantity::Frequency,
+            &[Unit::Hertz, Unit::Kilohertz, Unit::Megahertz][..],
+        ),
     ];
     for (q, units) in pairs {
         for &u in units {
@@ -123,6 +167,13 @@ fn normalize_canonical_is_identity() {
         (Quantity::Speed, 12.3, Unit::MeterPerSecond),
         (Quantity::Length, 7.0, Unit::Meter),
         (Quantity::Mass, 2.5, Unit::Kilogram),
+        (Quantity::Duration, 90.0, Unit::Second),
+        (Quantity::Volume, 0.5, Unit::CubicMeter),
+        (Quantity::Energy, 1000.0, Unit::Joule),
+        (Quantity::Power, 750.0, Unit::Watt),
+        (Quantity::Area, 100.0, Unit::SquareMeter),
+        (Quantity::Angle, 1.5, Unit::Radian),
+        (Quantity::Frequency, 60.0, Unit::Hertz),
     ];
     for (q, v, u) in cases {
         let out = normalize_for_storage(q, v, u).unwrap();
@@ -158,6 +209,49 @@ fn unit_serde_snake_case_matches_scope_example() {
     assert_eq!(j, "\"meter_per_second\"");
     let back: Unit = serde_json::from_str("\"kilometer_per_hour\"").unwrap();
     assert_eq!(back, Unit::KilometerPerHour);
+}
+
+#[test]
+fn convert_for_display_round_trips_temperature() {
+    // 25 °C canonical → 77 °F display
+    let out = convert_for_display(Quantity::Temperature, 25.0, Unit::Fahrenheit).unwrap();
+    assert!((out.original - 25.0).abs() < EPS);
+    assert!((out.value - 77.0).abs() < 1e-9, "got {}", out.value);
+    assert_eq!(out.unit, Unit::Fahrenheit);
+    assert_eq!(out.symbol, "°F");
+}
+
+#[test]
+fn convert_for_display_duration_seconds_to_hours() {
+    let out = convert_for_display(Quantity::Duration, 3600.0, Unit::Hour).unwrap();
+    assert!((out.value - 1.0).abs() < 1e-9, "got {}", out.value);
+    assert_eq!(out.symbol, "h");
+}
+
+#[test]
+fn convert_for_display_energy_joule_to_kwh() {
+    let out = convert_for_display(Quantity::Energy, 3_600_000.0, Unit::KilowattHour).unwrap();
+    assert!((out.value - 1.0).abs() < 1e-9, "got {}", out.value);
+    assert_eq!(out.symbol, "kWh");
+}
+
+#[test]
+fn convert_for_display_rejects_cross_quantity() {
+    let err = convert_for_display(Quantity::Volume, 1.0, Unit::Watt).unwrap_err();
+    assert_eq!(
+        err,
+        UnitError::UnitNotInQuantity {
+            quantity: Quantity::Volume,
+            unit: Unit::Watt,
+        }
+    );
+}
+
+#[test]
+fn every_unit_has_a_nonempty_symbol() {
+    for &u in Unit::ALL {
+        assert!(!u.symbol().is_empty(), "{u} has empty symbol");
+    }
 }
 
 #[test]

@@ -845,8 +845,15 @@ into a Studio-style consumer's source, the curated facade is missing.
 All open questions from earlier drafts have been resolved (see the
 section above). New questions opened during implementation:
 
-- None tracked at workspace-level today. Per-crate questions live in
-  the crate's own `lib.rs` doc when they exist.
+- **`Arc<dyn Authenticator>` ergonomics — resolved 2026-05-20.** The
+  generic-bound APIs (`with_principal`, `router_with_auth`) now bound
+  `A` as `Authenticator + ?Sized`, so callers pass `Arc<dyn
+  Authenticator>` directly. The `BoxedAuthenticator` newtype that the
+  peer review flagged in `examples/notes/src/server.rs` is gone.
+  `McpHttpOptions::with_auth` already accepted `Arc<dyn Authenticator>`
+  and was untouched.
+- Per-crate questions live in the crate's own `lib.rs` doc when they
+  exist.
 
 ## Bottom line
 

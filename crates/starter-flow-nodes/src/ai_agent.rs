@@ -67,6 +67,16 @@ use crate::tool_registry::ToolRegistry;
 /// Reverse-DNS kind id in the reserved `starter.flow.*` namespace.
 pub const KIND_ID: &str = "starter.flow.ai-agent";
 
+/// Static metadata for the catalog / discovery surface. Help text is
+/// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
+pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+    starter_flow_spi::node::NodeDescriptor::new(
+        KIND_ID,
+        "starter.flow.node.ai-agent.label",
+        "starter.flow.node.ai-agent.summary",
+        "starter.flow.node.ai-agent.help",
+    );
+
 /// Mandatory config slot carrying the reverse-DNS `provider_id`.
 pub const PROVIDER_ID_SLOT: &str = "provider_id";
 

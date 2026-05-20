@@ -25,10 +25,14 @@ use starter_spi::auth::Authenticator;
 const SESSION_COOKIE_NAME: &str = "starter_session";
 
 /// Apply principal extraction to `router` using `authenticator`.
+///
+/// `A` is `?Sized` so callers can pass either `Arc<ConcreteAuth>` or
+/// `Arc<dyn Authenticator>` without a `BoxedAuthenticator` newtype
+/// shim. See `PEER-REVIEW.md` (2026-05-20) for the prior workaround.
 pub fn with_principal<S, A>(router: Router<S>, authenticator: Arc<A>) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
-    A: Authenticator,
+    A: Authenticator + ?Sized,
 {
     router.layer(from_fn(move |req: Request<Body>, next: Next| {
         let authenticator = authenticator.clone();
@@ -36,7 +40,7 @@ where
     }))
 }
 
-async fn extract<A: Authenticator>(
+async fn extract<A: Authenticator + ?Sized>(
     authenticator: Arc<A>,
     mut req: Request<Body>,
     next: Next,

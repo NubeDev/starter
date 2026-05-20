@@ -5,6 +5,7 @@ use uuid::Uuid;
 
 use crate::password;
 use crate::role::Role;
+use crate::signup::validate::{self, ValidationError};
 use crate::store::{UserStore, UserStoreError};
 
 /// Create a user with the given email, password, and role.
@@ -18,6 +19,15 @@ pub async fn create_admin<U: UserStore + ?Sized>(
     password: &str,
     role: Role,
 ) -> Result<String, AdminError> {
+    // Same validation as signup (R5).
+    let min_len = validate::password_min_len_from_env();
+    if let Err(e) = validate::validate_signup_input(email, password, min_len) {
+        return Err(match e {
+            ValidationError::InvalidEmail(msg) => AdminError::Validation(msg),
+            ValidationError::WeakPassword(msg) => AdminError::Validation(msg),
+        });
+    }
+
     let hash = password::hash(password).map_err(|_| AdminError::HashFailed)?;
     let id = Uuid::new_v4().to_string();
     store
@@ -44,4 +54,7 @@ pub enum AdminError {
     /// Argon2 hash generation failed.
     #[error("password hashing failed")]
     HashFailed,
+    /// Email or password validation failed.
+    #[error("validation error: {0}")]
+    Validation(String),
 }

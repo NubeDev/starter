@@ -45,7 +45,7 @@ bytes = { workspace = true, optional = true }
 # kept iso_currency off starter-spi to avoid pulling currency data
 # into every downstream crate; starter-prefs is the one place that
 # needs it (PrefsResolver currency validation, /v1/units payload).
-iso_currency = "0.5"
+iso_currency = { version = "0.5", features = ["with-serde"] }
 
 [dev-dependencies]
 tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }

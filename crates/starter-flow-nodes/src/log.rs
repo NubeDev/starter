@@ -40,6 +40,16 @@ use starter_flow_spi::node::{
 /// (per § "R10 — Reverse-DNS ids; namespace ownership enforced").
 pub const KIND_ID: &str = "starter.flow.log";
 
+/// Static metadata for the catalog / discovery surface. Help text is
+/// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
+pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+    starter_flow_spi::node::NodeDescriptor::new(
+        KIND_ID,
+        "starter.flow.node.log.label",
+        "starter.flow.node.log.summary",
+        "starter.flow.node.log.help",
+    );
+
 /// Mandatory input slot carrying the value to emit. The slot
 /// value may be any [`SlotValue`] variant; the body Debug-formats it
 /// into the tracing event's `value` field.
