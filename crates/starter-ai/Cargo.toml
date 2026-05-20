@@ -38,3 +38,8 @@ provider-codex     = []
 provider-copilot   = []
 provider-anthropic = ["dep:anthropic-ai-sdk"]
 provider-openai    = ["dep:async-openai"]
+# Phase 4 D-F4.11: RecordingAiRunner test harness lives in
+# `src/testing.rs`. Gated behind this feature so smoke tests opt in
+# with `--features testing`; production binaries don't carry the
+# fake.
+testing            = []

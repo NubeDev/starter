@@ -137,23 +137,45 @@ pub struct AiAgent {
     runners: Arc<dyn AiRunnerRegistry>,
     sessions: Option<Arc<dyn SessionStore>>,
     kind_id: KindId,
+    /// Default `provider_id` used when the [`PROVIDER_ID_SLOT`] is
+    /// not present in the invocation's input map. Set via
+    /// [`Self::with_provider_id`].
+    ///
+    /// **Phase 4 workaround.** The Phase 2 propagator only routes
+    /// declared trigger slots into a node body's `input` map. A
+    /// `provider_id` declared as a non-trigger config slot is
+    /// invisible to the body. Pending a NodeCtx extension that
+    /// exposes the graph store (so the body can read config slots
+    /// directly), instances pin the provider here at construction
+    /// time. The [`PROVIDER_ID_SLOT`] still takes precedence when
+    /// present so per-invocation overrides keep working.
+    default_provider_id: Option<KindId>,
 }
 
 impl AiAgent {
     /// Construct an `ai-agent` body with the given tool + runner
-    /// registries. No session store attached.
+    /// registries. No session store attached; no default
+    /// `provider_id`.
     pub fn new(tools: Arc<dyn ToolRegistry>, runners: Arc<dyn AiRunnerRegistry>) -> Self {
         Self {
             tools,
             runners,
             sessions: None,
             kind_id: KindId::new(KIND_ID).expect("KIND_ID is a valid reverse-DNS"),
+            default_provider_id: None,
         }
     }
 
     /// Attach a [`SessionStore`] for session-mode persistence.
     pub fn with_session_store(mut self, sessions: Arc<dyn SessionStore>) -> Self {
         self.sessions = Some(sessions);
+        self
+    }
+
+    /// Set the default `provider_id`, used when the per-invocation
+    /// [`PROVIDER_ID_SLOT`] is absent.
+    pub fn with_provider_id(mut self, provider_id: KindId) -> Self {
+        self.default_provider_id = Some(provider_id);
         self
     }
 }
@@ -168,7 +190,7 @@ impl NodeBehavior for AiAgent {
         let principal = system_admin_principal();
         let principal_hash = principal_id_hash(&principal);
 
-        let cfg = AgentConfig::from_input(&input)?;
+        let cfg = AgentConfig::from_input(&input, self.default_provider_id.as_ref())?;
         let span = tracing::info_span!(
             "ai_agent.invoke",
             node_id = %ctx.node,
@@ -280,16 +302,24 @@ struct AgentConfig {
 }
 
 impl AgentConfig {
-    fn from_input(input: &SlotMap) -> Result<Self, NodeError> {
-        let provider_id_str =
-            read_string(input, PROVIDER_ID_SLOT).ok_or_else(|| NodeError::Domain {
-                code: "provider_id_required",
-                message: format!("{PROVIDER_ID_SLOT} config slot is required"),
-            })?;
-        let provider_id = KindId::new(provider_id_str).map_err(|e| NodeError::Domain {
-            code: "provider_id_invalid",
-            message: format!("invalid reverse-DNS provider id: {e}"),
-        })?;
+    fn from_input(
+        input: &SlotMap,
+        default_provider_id: Option<&KindId>,
+    ) -> Result<Self, NodeError> {
+        let provider_id = match read_string(input, PROVIDER_ID_SLOT) {
+            Some(s) => KindId::new(s).map_err(|e| NodeError::Domain {
+                code: "provider_id_invalid",
+                message: format!("invalid reverse-DNS provider id: {e}"),
+            })?,
+            None => default_provider_id
+                .cloned()
+                .ok_or_else(|| NodeError::Domain {
+                    code: "provider_id_required",
+                    message: format!(
+                    "{PROVIDER_ID_SLOT} config slot is required (and no default set on AiAgent)"
+                ),
+                })?,
+        };
 
         let system_prompt = read_string(input, SYSTEM_PROMPT_SLOT);
 

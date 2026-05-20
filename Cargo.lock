@@ -6519,7 +6519,9 @@ dependencies = [
  "prometheus",
  "serde_json",
  "sqlx",
+ "starter-ai",
  "starter-flow",
+ "starter-flow-nodes",
  "starter-flow-spi",
  "starter-flow-surfaces",
  "starter-grpc",
@@ -6540,6 +6542,8 @@ dependencies = [
  "tokio-stream",
  "tonic",
  "tower 0.5.3",
+ "tracing",
+ "tracing-subscriber",
 ]
 
 [[package]]
