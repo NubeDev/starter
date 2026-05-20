@@ -19,16 +19,13 @@ import {
   type NodeRunState,
   type RunOverlay,
 } from "@nube/starter-ui-flow";
-import {
-  Alert,
-  AlertDescription,
-  AlertTitle,
-  Badge,
-  Button,
-} from "@nube/starter-ui-kit";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
-import { ApiError, api, type Flow, type Run } from "../lib/api";
-import { useSse } from "../lib/sse";
+import { ApiError, api, type Flow, type Run } from "@/lib/api";
+import { useSse } from "@/lib/sse";
 
 // SSE payloads emitted by `GET /api/flows/{id}/events`. Mirrors the
 // `RunEvent` enum in `src/sse.rs`. Kept narrow — only the variants the

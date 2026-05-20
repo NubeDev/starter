@@ -1,27 +1,40 @@
-import { useState } from "react";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
+import { useState } from "react"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { Link } from "react-router-dom"
+import { IconPlus, IconRobot, IconTrash } from "@tabler/icons-react"
+
+import { Button } from "@/components/ui/button"
 import {
-  Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
+} from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
+import { Badge } from "@/components/ui/badge"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import {
   Empty,
   EmptyContent,
   EmptyDescription,
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
-  Input,
-} from "@nube/starter-ui-kit";
-
-import { api } from "../lib/api";
+} from "@/components/ui/empty"
+import { api } from "@/lib/api"
 
 export function AgentsList() {
-  const qc = useQueryClient();
-  const agents = useQuery({ queryKey: ["agents"], queryFn: api.agents.list });
-  const [name, setName] = useState("");
+  const qc = useQueryClient()
+  const agents = useQuery({ queryKey: ["agents"], queryFn: api.agents.list })
+  const [name, setName] = useState("")
 
   const create = useMutation({
     mutationFn: () =>
@@ -31,35 +44,44 @@ export function AgentsList() {
         model: "claude-sonnet-4-6",
       }),
     onSuccess: () => {
-      setName("");
-      qc.invalidateQueries({ queryKey: ["agents"] });
+      setName("")
+      qc.invalidateQueries({ queryKey: ["agents"] })
     },
-  });
+  })
 
   const del = useMutation({
     mutationFn: (id: string) => api.agents.delete(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["agents"] }),
-  });
+  })
+
+  const total = agents.data?.length ?? 0
+  const isEmpty = total === 0 && !agents.isLoading
 
   return (
-    <div className="mx-auto w-full max-w-3xl p-6">
-      <header className="mb-4 flex items-baseline justify-between">
-        <h1 className="text-2xl font-semibold tracking-tight">Agents</h1>
-        <span className="text-xs text-muted-foreground">
-          {agents.data?.length ?? 0} total
-        </span>
-      </header>
+    <div className="flex flex-col gap-6 px-4 py-6 lg:px-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-semibold tracking-tight">Agents</h2>
+          <p className="text-sm text-muted-foreground">
+            Chat with a model and let it call flows as tools.
+          </p>
+        </div>
+        <Badge variant="secondary">{total} total</Badge>
+      </div>
 
-      <Card className="mb-6 rounded-xl border border-border/60 shadow-sm ring-0">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">New agent</CardTitle>
+          <CardDescription>
+            Defaults to anthropic.claude / claude-sonnet-4-6 — edit later.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form
             onSubmit={(e) => {
-              e.preventDefault();
-              if (!name.trim()) return;
-              create.mutate();
+              e.preventDefault()
+              if (!name.trim()) return
+              create.mutate()
             }}
             className="flex gap-2"
           >
@@ -70,71 +92,75 @@ export function AgentsList() {
               className="flex-1"
             />
             <Button type="submit" disabled={!name.trim() || create.isPending}>
+              <IconPlus className="size-4" />
               Create
             </Button>
           </form>
         </CardContent>
       </Card>
 
-      <div className="flex flex-col gap-2">
-        {agents.data?.map((a) => (
-          <Card
-            key={a.id}
-            className="rounded-xl border border-border/60 shadow-sm ring-0 transition-colors hover:bg-accent/30"
-          >
-            <CardContent className="flex items-center justify-between p-4">
-              <Link to={`/agents/${a.id}`} className="flex flex-col text-sm">
-                <span className="font-medium">{a.name}</span>
-                <span className="text-xs text-muted-foreground">
-                  {a.provider} · {a.model}
-                </span>
-              </Link>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => del.mutate(a.id)}
-                className="text-muted-foreground hover:text-destructive"
-              >
-                Delete
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-        {agents.data?.length === 0 && (
-          <Empty className="border border-dashed border-border/60 bg-card/30">
-            <EmptyHeader>
-              <EmptyMedia variant="icon" aria-hidden>
-                <svg
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  className="size-5"
-                >
-                  <circle cx="12" cy="8" r="3.25" />
-                  <path d="M5 20c0-3.5 3.13-6 7-6s7 2.5 7 6" strokeLinecap="round" />
-                </svg>
-              </EmptyMedia>
-              <EmptyTitle>No agents yet</EmptyTitle>
-              <EmptyDescription>
-                Create an agent to chat with a model and call flows as tools.
-              </EmptyDescription>
-            </EmptyHeader>
-            <EmptyContent>
-              <Button
-                onClick={() => {
-                  const el = document.querySelector<HTMLInputElement>(
-                    'input[placeholder="Assistant"]',
-                  );
-                  el?.focus();
-                }}
-              >
-                New agent
-              </Button>
-            </EmptyContent>
-          </Empty>
-        )}
-      </div>
+      {isEmpty ? (
+        <Empty className="border border-dashed bg-card/30">
+          <EmptyHeader>
+            <EmptyMedia variant="icon" aria-hidden>
+              <IconRobot className="size-5" />
+            </EmptyMedia>
+            <EmptyTitle>No agents yet</EmptyTitle>
+            <EmptyDescription>
+              Create an agent above to chat with a model.
+            </EmptyDescription>
+          </EmptyHeader>
+          <EmptyContent />
+        </Empty>
+      ) : (
+        <Card className="overflow-hidden p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Name</TableHead>
+                <TableHead>Provider</TableHead>
+                <TableHead>Model</TableHead>
+                <TableHead className="w-56">Updated</TableHead>
+                <TableHead className="w-16" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {agents.data?.map((a) => (
+                <TableRow key={a.id}>
+                  <TableCell>
+                    <Link
+                      to={`/agents/${a.id}`}
+                      className="font-medium hover:underline"
+                    >
+                      {a.name}
+                    </Link>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline">{a.provider}</Badge>
+                  </TableCell>
+                  <TableCell className="font-mono text-xs text-muted-foreground">
+                    {a.model}
+                  </TableCell>
+                  <TableCell className="text-sm text-muted-foreground">
+                    {new Date(a.updated_at).toLocaleString()}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => del.mutate(a.id)}
+                      aria-label={`Delete ${a.name}`}
+                      className="text-muted-foreground hover:text-destructive"
+                    >
+                      <IconTrash className="size-4" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </Card>
+      )}
     </div>
-  );
+  )
 }

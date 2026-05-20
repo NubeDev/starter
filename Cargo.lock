@@ -6784,6 +6784,7 @@ dependencies = [
  "starter-flow-nodes",
  "starter-flow-spi",
  "starter-flow-surfaces",
+ "starter-flow-watch",
  "starter-grpc",
  "starter-jsonrpc-stdio",
  "starter-mcp",

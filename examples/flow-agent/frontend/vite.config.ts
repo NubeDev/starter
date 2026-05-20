@@ -12,7 +12,8 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@": path.resolve(
+      "@": path.resolve(__dirname, "src"),
+      "@kit": path.resolve(
         __dirname,
         "../../../packages/starter-ui-kit/src",
       ),

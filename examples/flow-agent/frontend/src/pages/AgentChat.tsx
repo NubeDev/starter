@@ -14,7 +14,7 @@ import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Chat, createSseAdapter } from "@nube/starter-ui-chat";
 
-import { api } from "../lib/api";
+import { api } from "@/lib/api";
 
 export function AgentChat() {
   const { id = "" } = useParams();

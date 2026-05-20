@@ -36,6 +36,7 @@ starter-tool-gmail       = { workspace = true }
 starter-flow             = { workspace = true }
 starter-flow-spi         = { workspace = true }
 starter-flow-surfaces    = { workspace = true }
+starter-flow-watch       = { workspace = true }
 # Phase 4 stage 7 + 8 — ai-agent body + RecordingAiRunner testkit.
 # Phase 5 stage 5 — codeless-shape end-to-end smoke pulls trigger-explicit + log.
 starter-flow-nodes       = { workspace = true, features = ["ai-agent", "tool-call", "trigger-explicit", "log"] }
