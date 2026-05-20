@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/sidebar"
 import type { NavMainItem } from "@/components/nav-main"
 import { Badge } from "@/components/ui/badge"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { api, type AgentSummary, type FlowSummary } from "@/lib/api"
 import { useSse } from "@/lib/sse"
 
@@ -125,7 +126,7 @@ export function Shell() {
           brand={{ title: "flow-agent", url: "/flows" }}
         />
         <SidebarInset>
-          <SiteHeader title={title} />
+          <SiteHeader title={title} actions={<ThemeToggle />} />
           <div className="flex flex-1 flex-col">
             <div className="@container/main flex flex-1 flex-col">
               <Outlet />
