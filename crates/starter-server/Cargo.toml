@@ -8,7 +8,7 @@ repository.workspace   = true
 rust-version.workspace = true
 
 [dependencies]
-starter-spi           = { workspace = true }
+starter-spi           = { workspace = true, features = ["preferences"] }
 starter-observability = { workspace = true }
 axum                  = { workspace = true }
 tokio                 = { workspace = true }
@@ -45,4 +45,4 @@ tower       = { workspace = true }
 async-trait = { workspace = true }
 serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
-starter-spi = { workspace = true }
+starter-spi = { workspace = true, features = ["preferences"] }

@@ -29,7 +29,28 @@ starter-tool-telegram    = { workspace = true }
 starter-service-telegram = { workspace = true }
 starter-tool-gmail       = { workspace = true }
 
-tokio       = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
+# Phase 3 stage 9 — Flow SCOPE smokes. The four smokes wire together
+# the Phase 3 surface (`FlowAsTool` / `FlowAsService`), the engine,
+# the SQLite SPI store (real, behind the default-off `flow` feature),
+# and the four wire transports per D-F3.6.
+starter-flow             = { workspace = true }
+starter-flow-spi         = { workspace = true }
+starter-flow-surfaces    = { workspace = true }
+starter-store-sqlite     = { workspace = true, features = ["flow", "testing"] }
+starter-mcp              = { workspace = true, features = ["testing"] }
+starter-grpc             = { workspace = true, features = ["testing"] }
+starter-jsonrpc-stdio    = { workspace = true }
+starter-server           = { workspace = true, features = ["testing"] }
+
+tokio       = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time", "io-util", "process"] }
 async-trait = { workspace = true }
 prometheus  = { workspace = true }
 serde_json  = { workspace = true }
+tempfile    = "3"
+sqlx        = { workspace = true, features = ["sqlite", "macros", "runtime-tokio"] }
+futures     = { workspace = true }
+tonic       = { workspace = true }
+tower       = { workspace = true }
+axum        = { workspace = true }
+tokio-stream = "0.1"
+http-body-util = "0.1"

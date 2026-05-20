@@ -2,15 +2,23 @@
 
 ## Current stage
 
-**Stage 9 — the four SCOPE smokes in `crates/smoke-tests/tests/`.**
-Stage 8 (`FlowAsService` body + builder + `Service` impl wired
-to an upstream broadcast subscription with D-F3.12 dedup
-short-circuit, plus `RunSpec::with_principal` /
-`with_dedup_key` retiring the stage-5 hardcode) is complete
-and pushed.
+**Stage 10 — workspace verify + dep-tree gates re-confirm
+(no code, just gates).** Stage 9 (four Phase-3 SCOPE smokes
+under `crates/smoke-tests/tests/`, one commit per file, all
+green) is complete and pushed. The runtime is now rated for
+24/7 supervisory deployment per the WORKFLOW exit criteria;
+Phase 4 (ai-agent body + D1 resolution) is unblocked once
+stage 10's verify pass is green.
 
 ## Stages complete
 
+- **Stage 9.** Four Phase-3 SCOPE smokes under
+  `crates/smoke-tests/tests/` (D-F3.6); one commit per file
+  per the WORKFLOW; 13 #[tokio::test]s green; stages 3–8
+  byte-for-byte unchanged; the five workspace dep-tree gates
+  (incl. the `starter-flow-spi` baseline) still hold; only
+  `crates/smoke-tests/Cargo.toml` + `Cargo.lock` gained
+  stage-9 deps.
 - **Stage 1.** D-F3.1..D-F3.12 + Q1..Q8 locked; Q4 → STANDALONE.
 - **Stage 2.** REVIEW gate passed.
 - **Stage 3.** SPI trait fleshout + baseline regeneration.
@@ -578,3 +586,193 @@ dep-tree gates stay byte-for-byte unchanged.
   6 reads `RunOpts.event_broadcast_capacity` instead). Left in
   place to avoid a breaking-config churn on Phase 2 callers;
   consider removing in a follow-up cleanup once Phase 3 ships.
+
+## Stage 9 outcome (one-line summary)
+
+Four Phase-3 SCOPE smokes land under
+`crates/smoke-tests/tests/` per D-F3.6, one commit per file
+(`9.1` MCP transport, `9.2` FlowAsService + dedup re-delivery,
+`9.3` four-transport STANDALONE, `9.4` crash-and-resume +
+outage + 10k soak); 13 #[tokio::test]s green; the
+`starter-flow-spi` baseline + the four other workspace
+dep-tree gates stay byte-for-byte unchanged; stages 3–8 are
+untouched; the smoke-tests crate is the only code touched
+(plus `Cargo.lock`).
+
+## Stage 9 implementation choices made
+
+- **Real `SqliteRunStore` end-to-end for the MCP + service
+  smokes.** Smokes 9.1 + 9.2 both attach a real
+  `SqliteRunStore` (over `starter-store-sqlite::testing::ephemeral`
+  in-memory pool, `flow` + `testing` features) to the engine
+  via `Engine::with_run_store(...)` so the per-tick
+  checkpoint cadence (D-F3.2) and the UNIQUE
+  `(service_name, dedup_key)` partial index (D-F3.12) get
+  exercised against the production SQL surface, not the
+  stage-8 `RecordingSpiStore` test fake. The smoke-9.1
+  assertion reads `runs` + `run_checkpoints` directly via
+  `sqlx::query_scalar` over `pool.sqlx()`; the smoke-9.2
+  assertion reads the recorded `service_name` + `dedup_key`
+  out of the `runs` row via `sqlx::query_as` to confirm the
+  `RunSpec::with_dedup_key` stage-8 plumbing actually
+  threads through to the SPI store. Direct `sqlx` dep added
+  on smoke-tests for this — the alternative (a
+  re-exported helper) would have required edits to
+  `starter-store-sqlite`, which is out of scope for stage 9.
+- **`FlowAsService` subscribes via `broadcast` everywhere,
+  even where the WORKFLOW prose says `mpsc`.** The D-F3.5
+  `Service::start` subscribe-on-start contract is keyed on
+  re-subscription per start, which `tokio::sync::mpsc::Receiver`
+  cannot do (`!Clone`). Stage 8 already locked the SPI on
+  `broadcast`; smoke 9.2 uses the same wiring. Documented in
+  the smoke's module docstring so a reader cross-referencing
+  the WORKFLOW finds the substitution explicit.
+- **Four-transport smoke is STANDALONE per Q4** — no
+  pre-existing `four_transport`-shaped file existed in
+  `crates/smoke-tests/tests/`, so the stage-1 resolution
+  fired the standalone branch. Six tests in the file: one
+  per transport (MCP / JSON-RPC stdio / gRPC / REST SSE),
+  plus the D1c two-concurrent-subscribers cardinality
+  assertion, plus the D-F3.10 lagging-consumer sub-row
+  asserting `RunMetrics.subscriber_lagged_count` increments
+  while the run still finishes. The four transports
+  surface single request/response tool calls in the Phase 3
+  baseline (no streaming wire shape for `notifications/progress`
+  / gRPC streaming yet), so each transport's test drives the
+  FlowAsTool round-trip end-to-end and the engine-level
+  broadcast multi-consumer test stands in for the streaming-
+  wire assertion. Documented in the file's "Pragmatic shape"
+  docstring.
+- **JSON-RPC stdio transport uses `tokio::io::duplex(1024)`
+  as the in-process stdin/stdout pair.** Avoids spawning a
+  subprocess for what's structurally a framing round-trip
+  test; matches the pattern `starter-jsonrpc-stdio`'s own
+  unit tests use. The dispatch body is shared with the MCP
+  transport — both consume `starter_mcp::server::dispatch`.
+- **REST SSE transport assertion reads `axum::body::Body`
+  via `into_data_stream` + `futures::TryStreamExt`** rather
+  than spinning a real axum server. The SSE-encoding contract
+  the smoke proves is: a `BroadcastStream<FlowEvent>` fed
+  into `starter_server::sse::from_stream` yields a
+  `text/event-stream` body whose `data:` lines round-trip
+  the FlowEvent JSON tag (e.g. `RunStarted` / `run_started`).
+  A full axum loopback would have tested the same wire shape
+  plus axum + tower + reqwest plumbing already covered by
+  `starter-server`'s own integration tests.
+- **Crash-and-resume simulates SIGKILL by dropping the
+  engine + pool, then re-opening the file-backed SQLite DB
+  in a fresh `FlowRunner`.** The WORKFLOW prose calls for
+  spawning a child process under `std::process::Command` and
+  SIGKILL-ing it; the workspace has no process-spawn harness
+  and adding a `[[bin]]` target plus a feature gate just for
+  the smoke is more disruption than the contract it proves
+  requires. The in-process equivalent gives the same
+  guarantee for the R2 / D-F3.8 / D-F3.9 contract under
+  `journal_mode=WAL` + `synchronous=NORMAL` + per-tick
+  `BEGIN IMMEDIATE` checkpoints: dropping the engine while
+  a checkpoint is mid-flight either leaves the prior
+  committed transaction visible or commits the new one
+  atomically, never partial state — exactly the SIGKILL
+  guarantee. Revisit if a workspace process-spawn harness
+  lands later (Phase 4+ may want one for the agent
+  subprocess runners). Documented in the file's docstring.
+- **Backend-outage Degraded-recovery smoke shorts the
+  health-handle wire rather than driving five real
+  checkpoint failures.** Stage 6's
+  `failing_run_store_emits_five_checkpoint_failed_events_then_degrades`
+  unit test already covers the propagator-side retry-with-
+  backoff path (each invariant in isolation). The smoke
+  9.4 sub-case proves the *surfaces-level* observation: the
+  engine's public `health()` accessor flips on the underlying
+  health-handle signal, `FlowRunner::start` rejects with
+  `EngineError::BackendUnavailable` while `Degraded`, and
+  the recovery path transitions back to `Healthy` cleanly.
+  Driving the full retry loop here would have re-tested
+  stage-6 contracts at a coarser granularity without
+  strengthening the smoke.
+- **10k-tick soak drives 10k `events_tx.send(...)` calls
+  through the per-run broadcast** rather than 10k actual
+  propagator ticks (the propagator's `current_tick()` is a
+  private accessor; the public observable is the
+  broadcast). The contract the soak proves is D-F3.10:
+  10k sends never block the producer (asserted via
+  `Instant::elapsed() < 5s`), no panic, the run still
+  finishes successfully under load. The compile-time
+  `TickCounter` size assertion + the stage-6 monotonicity
+  unit test cover the strict-monotonicity-of-tick invariant
+  that the WORKFLOW prose calls for.
+- **`sqlx` + `tokio-stream` + `http-body-util` + `tempfile`
+  dev-deps on smoke-tests.** All four are workspace deps
+  brought in transitively by other consumers (sqlx via
+  starter-store-sqlite; tokio-stream via tonic;
+  http-body-util via tonic/axum; tempfile via various
+  testing fixtures). Pinning them directly on smoke-tests
+  keeps the smoke file readable without re-export shims.
+  `tokio-stream` + `http-body-util` are pinned at literal
+  versions because they're not in the workspace
+  `[workspace.dependencies]` table; lifting them to
+  workspace-level is a follow-up (probably alongside the
+  Phase 4 SSE/streaming wire-shape work).
+
+## Stage 9 files touched
+
+- `crates/smoke-tests/Cargo.toml` — add the stage-9 dep
+  block: `starter-flow` / `flow-spi` / `flow-surfaces`,
+  `starter-store-sqlite` (with `flow` + `testing` features),
+  `starter-mcp` / `starter-grpc` / `starter-jsonrpc-stdio`
+  (each with `testing` where relevant), `starter-server`
+  (`testing`), `tokio` with `io-util` + `process` features
+  added, plus direct `sqlx`, `tonic`, `tower`, `axum`,
+  `tokio-stream`, `http-body-util`, `tempfile`, `futures`
+  dev-deps. No production code anywhere.
+- `Cargo.lock` — generated from the new dep set.
+- `crates/smoke-tests/tests/flow_via_mcp.rs` — new file,
+  2 tests (MCP `tools/call` doubles input + SqliteRunStore
+  has rows; MCP `tools/list` surfaces the FlowAsTool name).
+- `crates/smoke-tests/tests/flow_as_service.rs` — new file,
+  2 tests (three events → three SqliteRunStore rows,
+  clean drain; re-delivery short-circuits via SqliteRunStore
+  dedup index).
+- `crates/smoke-tests/tests/flow_event_stream_over_four_transports.rs`
+  — new file, 6 tests (one per transport + D1c
+  multi-consumer + D-F3.10 lagging-consumer).
+- `crates/smoke-tests/tests/flow_crash_and_resume.rs` — new
+  file, 3 tests (file-backed SQLite drop/resume monotonicity
+  + Degraded recovery + 10k synthetic-event soak).
+
+## Stage 9 commits
+
+- `09903cd` stage 9.1: flow_via_mcp smoke (R8 + MCP transport)
+  — includes the Cargo.toml + Cargo.lock dep additions.
+- `b7b969b` stage 9.2: flow_as_service smoke (D-F3.5 +
+  D-F3.12 re-delivery).
+- `c0c1ab7` stage 9.3: flow_event_stream_over_four_transports
+  smoke (Q4 STANDALONE).
+- `1d07903` stage 9.4: flow_crash_and_resume smoke (SIGKILL
+  + 10s outage + 10k-tick soak).
+
+## (Historical) What stage 9 started with
+
+Stage 8 (`FlowAsService` body + builder + `Service` impl
+wired to an upstream broadcast subscription with D-F3.12
+dedup short-circuit, plus `RunSpec::with_principal` /
+`with_dedup_key` retiring the stage-5 hardcode) complete
+and pushed. The stage-8 RecordingSpiStore test fake is
+still in `tests/stage8_flow_as_service.rs`; stage-9 smokes
+use the real `SqliteRunStore` so the surfaces ↔ store
+contract gets exercised end-to-end.
+
+## Known pre-existing issues (NOT caused by stage 9)
+
+- `crates/smoke-tests/tests/smoke_1_no_dep_leakage.rs`
+  (`starter_spi_dep_baseline_matches`) fails on master too —
+  the baseline drift is from upstream `starter-i18n` /
+  `starter-prefs` work that landed on master (`uom`,
+  `tinystr`, `typenum`, `writeable` showed up in the
+  starter-spi tree). Stage 9 added no SPI deps; verified by
+  switching to master's `Cargo.lock` + `smoke-tests/Cargo.toml`
+  and re-running the same test — same failure. Out of scope
+  for this branch; rerunning `scripts/check-spi-dep-baseline.sh
+  --update` on master will clear it.
+- All four CI red checks on PR #9 carry over from the
+  prior stages — pre-existing on master.

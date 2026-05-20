@@ -8,7 +8,7 @@ repository.workspace   = true
 rust-version.workspace = true
 
 [dependencies]
-starter-spi       = { workspace = true }
+starter-spi       = { workspace = true, features = ["preferences"] }
 starter-client-rs = { workspace = true }
 clap              = { workspace = true }
 rpassword         = { workspace = true }

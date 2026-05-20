@@ -26,7 +26,7 @@ routes = ["dep:axum", "dep:http", "dep:bytes"]
 sqlite = ["sqlx/sqlite", "sqlx/migrate", "sqlx/runtime-tokio"]
 
 [dependencies]
-starter-spi = { workspace = true }
+starter-spi = { workspace = true, features = ["preferences"] }
 async-trait = { workspace = true }
 serde       = { workspace = true }
 serde_json  = { workspace = true }
