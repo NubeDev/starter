@@ -2,16 +2,28 @@
 
 ## Current stage
 
-**Stage 10 — workspace verify + dep-tree gates re-confirm
-(no code, just gates).** Stage 9 (four Phase-3 SCOPE smokes
-under `crates/smoke-tests/tests/`, one commit per file, all
-green) is complete and pushed. The runtime is now rated for
-24/7 supervisory deployment per the WORKFLOW exit criteria;
-Phase 4 (ai-agent body + D1 resolution) is unblocked once
-stage 10's verify pass is green.
+**Phase 3 complete; Phase 4 (ai-agent body + D1) is
+unblocked.** Stage 10 (workspace verify + dep-tree gates
+re-confirm, no code) passed post-merge on `master` at
+`496dec9` (PR #10 merged). All eight flow-scoped gates from
+`template.yaml` line 46 are green; the five workspace
+dep-tree gates including the `starter-flow-spi` baseline
+hold byte-for-byte; the three Phase 2 smokes
+(`smoke_one_write_chokepoint`,
+`smoke_engine_is_reader_of_policies`,
+`r3_no_policy_match_arms`) still pass; the four Phase 3
+stage-9 smokes (13 `#[tokio::test]`s) still pass; clippy +
+fmt clean on the flow scope. The runtime is honestly rated
+for 24/7 supervisory deployment per the WORKFLOW exit
+criteria.
 
 ## Stages complete
 
+- **Stage 10.** Post-merge verify pass on `master` at
+  `496dec9`. No code changes; ran the eight flow-scoped
+  gates from `template.yaml` line 46 and confirmed each
+  one green. See "Stage 10 outcome" + "Stage 10 gate
+  results" below.
 - **Stage 9.** Four Phase-3 SCOPE smokes under
   `crates/smoke-tests/tests/` (D-F3.6); one commit per file
   per the WORKFLOW; 13 #[tokio::test]s green; stages 3–8
@@ -586,6 +598,105 @@ dep-tree gates stay byte-for-byte unchanged.
   6 reads `RunOpts.event_broadcast_capacity` instead). Left in
   place to avoid a breaking-config churn on Phase 2 callers;
   consider removing in a follow-up cleanup once Phase 3 ships.
+
+## Stage 10 outcome (one-line summary)
+
+Post-merge verify pass on `master` at `496dec9` (PR #10
+merged): the eight flow-scoped gates from `template.yaml`
+line 46 all green; no code changes; the five workspace
+dep-tree gates (incl. the `starter-flow-spi` baseline) hold
+byte-for-byte; the three Phase 2 smokes + the four Phase 3
+stage-9 smokes (13 `#[tokio::test]`s) still pass; clippy +
+fmt clean on the flow scope. Phase 3 SCOPE exit criteria
+are honestly met; Phase 4 (ai-agent body + D1) is
+unblocked.
+
+## Stage 10 gate results
+
+All gates run from `master` HEAD at `496dec9` (post-PR-#10
+merge). Each line is `gate — outcome — command proving it`.
+
+- **workspace dep-tree gates (5 tests)** — pass —
+  `cargo test -p starter-flow --test workspace_dep_tree_gates`
+  → `5 passed; 0 failed`. Individual gates:
+  `starter_flow_spi_baseline_holds` ok;
+  `starter_flow_tree_contains_no_adk_rust` ok;
+  `starter_flow_nodes_tree_contains_no_adk_rust` ok;
+  `starter_flow_surfaces_tree_contains_no_adk_rust` ok;
+  `no_flow_crate_depends_on_phase3_surfaces` ok.
+- **starter-flow tests** — pass —
+  `cargo test -p starter-flow` → every test binary green,
+  including `stage5_resume_chokepoint` (1), `stage6_durability`
+  (7), `workspace_dep_tree_gates` (5), `r3_no_policy_match_arms`
+  (9), `smoke_engine_is_reader_of_policies` (2),
+  `smoke_one_write_chokepoint` (1), plus the in-crate unit tests.
+- **starter-flow-spi tests** — pass —
+  `cargo test -p starter-flow-spi` → `11 passed; 0 failed`.
+- **starter-flow-surfaces tests** — pass —
+  `cargo test -p starter-flow-surfaces` →
+  `stage7_flow_as_tool` 6 ok, `stage8_flow_as_service` 5 ok.
+- **starter-store-sqlite (flow,testing) tests** — pass —
+  `cargo test -p starter-store-sqlite --features flow,testing`
+  → `tests/flow.rs` 8 ok (incl. WAL pragmas, dedup pair
+  unique collision, checkpoint atomicity, retention pruning),
+  `tests/migrate.rs` 3 ok.
+- **Phase 3 stage-9 smokes (13 tests)** — pass —
+  `cargo test -p starter-smoke-tests --test flow_via_mcp
+  --test flow_as_service --test flow_event_stream_over_four_transports
+  --test flow_crash_and_resume` →
+  `flow_via_mcp` 2 ok, `flow_as_service` 2 ok,
+  `flow_event_stream_over_four_transports` 6 ok,
+  `flow_crash_and_resume` 3 ok.
+- **flow-scoped clippy** — pass —
+  `cargo clippy -p starter-flow -p starter-flow-spi
+  -p starter-flow-surfaces -p starter-smoke-tests
+  --all-targets -- -D warnings` → `Finished dev profile`
+  with zero warnings.
+- **flow-scoped fmt --check** — pass —
+  `cargo fmt --check -- crates/starter-flow/**/*.rs
+  crates/starter-flow-spi/**/*.rs
+  crates/starter-flow-surfaces/**/*.rs
+  crates/smoke-tests/tests/flow_*.rs` → exit 0, no
+  diff output.
+
+### Phase 2 smoke re-confirm (under starter-flow)
+
+`smoke_one_write_chokepoint::three_writers_share_one_chokepoint`
+ok; `smoke_engine_is_reader_of_policies` 2 ok
+(`engine_stop_drives_declared_safe_states`,
+`no_hardcoded_policy_slot_match_arms_in_src`);
+`r3_no_policy_match_arms` 9 ok (incl.
+`no_policy_name_match_arms_in_engine_src` and all the
+comment / string-literal / identifier match-arm guards).
+
+### Pre-existing out-of-scope state observed (NOT flow-owned, NOT touched)
+
+- The working tree on `master` carries a large block of
+  uncommitted modifications across non-flow crates
+  (`starter-authz`, `starter-i18n`, `starter-prefs`,
+  `starter-server`, `starter-spi/units`, the whole
+  `starter-extensions/*` tree, `starter-cli/tests/prefs.rs`,
+  `starter-grpc/tests/tools_service.rs`, plus
+  `examples/notes/`). None of these files are in the
+  flow lane; per the stage 10 brief they are noted and
+  left untouched.
+- The committed `DOCS/flow/scope/starter-flow-spi-deps.baseline.txt`
+  on `master` also has local uncommitted edits (icu_locale_core
+  + uom subtrees removed). `starter_flow_spi_baseline_holds`
+  passes against the working-tree baseline, which means
+  the current `cargo tree -p starter-flow-spi` output
+  matches the locally-edited file (an unrelated upstream
+  change must have removed those subtrees from the SPI tree
+  on master post-stage-3). The flow lane did not regenerate
+  the baseline (D-F3.7 forbids stages 4–10 from doing so
+  without a direct-dep change on `starter-flow-spi`), so
+  the local edit is left as-is for the owning lane to
+  commit; the gate still holds.
+- Per the stage 9 handover, `smoke_1_no_dep_leakage`
+  (`starter_spi_dep_baseline_matches`) is expected to fail
+  on master from upstream `starter-i18n` / `starter-prefs`
+  drift — not run here because it is not in the stage 10
+  flow-scope gate list.
 
 ## Stage 9 outcome (one-line summary)
 
