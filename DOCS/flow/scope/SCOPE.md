@@ -873,6 +873,128 @@ discipline mirrors `starter-spi`.
   dependency — at which point the baseline file is re-generated in
   the same commit that adds the dep, and the change must be
   reviewed.
+- **D-F4.1 — `ai-agent` body lives in
+  `crates/starter-flow-nodes/src/ai_agent.rs` behind a new
+  default-off `ai-agent` cargo feature on `starter-flow-nodes`.**
+  Mirrors the Phase 3 stage-4 posture (`flow` feature on
+  `starter-store-sqlite`): the dep-tree gate forbidding `adk-rust`
+  stays trivially green for consumers who don't enable the feature,
+  and the headless-appliance posture (SCOPE 735) is preserved.
+  **Revisit trigger:** the body grows large enough that a
+  dedicated `starter-flow-node-ai-agent` crate becomes cheaper to
+  maintain than a feature flag on the polyglot nodes crate.
+- **D-F4.2 — D1 re-confirmed: `starter-flow-node-loop` shape
+  wins; adk-rust stays out.** Phase 4 lifts Codeless's `Runner`
+  (turn-based LLM-loop with tool-dispatch) and routes every model
+  call through `starter_spi::ai::AiRunner`. **Revisit trigger:**
+  verbatim D1 — a consumer surfaces a hard, documented need for
+  adk-rust planner heuristics that neither Codeless's `Runner`
+  shape nor Rubix's reactive propagator provides. At that point a
+  second opt-in body ships as `starter-flow-node-adk` *alongside*,
+  not as a replacement.
+- **D-F4.3 — `AiRunnerRegistry` lives in `starter-flow-spi`,
+  hosted via `Engine::with_ai_runner_registry`.** Trait shape
+  mirrors `ToolRegistry` (`fn lookup(&self, provider_id: &KindId)
+  -> Option<Arc<dyn AiRunner>>`). Concrete `StaticAiRunnerRegistry`
+  ships in `crates/starter-flow-nodes/src/ai_agent.rs` next to the
+  body. **Revisit trigger:** a host needs dynamic provider
+  registration after engine construction — at which point the
+  trait gains a `register` method as an additive default-impl
+  extension (per the established `#[non_exhaustive]` posture).
+- **D-F4.4 — `SkillSelector` trait + `NullSkillSelector`
+  default; per-node `skill_hint` is the only override.** The full
+  `starter-skills` crate is **not** in Phase 4 scope. Phase 4 ships
+  the trait, the `SkillSelection` enum (`None` |
+  `Selected { skill_id, allowed_tools, resources, content_hash }`),
+  the `Engine::with_skill_selector(...)` builder hook, and a
+  `NullSkillSelector` returning `SkillSelection::None`. **Revisit
+  trigger:** the `starter-skills` crate lands as a workspace member
+  — at which point the placeholder re-export in
+  `starter-flow-spi/src/skill.rs` swaps for the real type and the
+  `cfg(any())` gate drops.
+- **D-F4.5 — Tools allowlist for any ai-agent invocation is the
+  intersection of (host `ToolRegistry` keyset ∩ skill
+  `allowed_tools` if `Selected` ∩ node `config.allowed_tools` if
+  declared); empty intersection is a hard error.** Body surfaces
+  `NodeError::Domain { code: "no_tools_visible" }` rather than
+  silently running with zero tools. The intersection is computed
+  once at invocation entry and frozen for the duration of the LLM
+  loop; mid-loop skill bundle updates do not change the allowlist
+  within an invocation. **Revisit trigger:** a consumer surfaces a
+  legitimate "ai-agent runs with zero tools" case (pure-text
+  workflow) — at which point an explicit
+  `allow_zero_tools: bool` config slot lands and the default
+  stays the hard error.
+- **D-F4.6 — Session mode is per-node config; default
+  `FreshPerInvocation`.** Enum `SessionMode { FreshPerInvocation,
+  ReuseAcrossRun, ReuseAcrossFlow }` (`#[non_exhaustive]`).
+  `ReuseAcrossRun` keys on `(node_id, run_id)`;
+  `ReuseAcrossFlow` keys on
+  `(node_id, flow_id, blake3(principal_id))`. `SessionStore`
+  from Phase 3 holds transcripts; new
+  `SessionId::for_ai_agent_node(...)` constructor is deterministic
+  in its inputs. **Revisit trigger:** a real production workload
+  surfaces a cross-flow session-sharing case — at which point a
+  fourth `ReuseAcrossPrincipal` variant lands additively.
+- **D-F4.7 — Cancellation: `NodeCtx::cancel` is wrapped at the
+  call site as `starter_spi::ai::Cancel`; cancel-to-exit ≤ 200 ms.**
+  Same budget as `tool-call`. The LLM loop `select!`s against
+  `cancel.cancelled().await` between turns and inside tool
+  dispatch. **Revisit trigger:** a real provider surfaces a
+  cancel-during-stream-decode path that exceeds the 200 ms budget
+  — at which point the budget moves to a config slot per the
+  Phase 3 D-F3.11 retry-backoff precedent.
+- **D-F4.8 — `provider_id` is mandatory; no implicit default.**
+  Node config slot `provider_id` is a non-empty reverse-DNS
+  `KindId`. Missing or unregistered surfaces
+  `NodeError::Domain { code: "provider_id_required" }` or
+  `{ code: "provider_not_registered" }`. Explicit beats implicit
+  (matches R10 + the headless-appliance posture). **Revisit
+  trigger:** a developer-tooling case surfaces a real need for a
+  "pick whatever is registered" fallback — at which point an
+  explicit `provider_id: "any"` sentinel lands, not an implicit
+  default.
+- **D-F4.9 — Tool-call dispatch within the LLM loop uses the
+  same `ToolRegistry::lookup` chokepoint as the `tool-call` body
+  (R8 verbatim).** When the model emits a tool-call, the ai-agent
+  body resolves it via the host's registered `Tool`, awaits the
+  result, appends it as a tool-result message, and continues the
+  loop. No second tool-dispatch path. **Revisit trigger:** none
+  expected; this is a core R8 invariant.
+- **D-F4.10 — Phase 4 SCOPE smokes live under
+  `crates/smoke-tests/tests/` per D-F3.6 precedent.** Two files,
+  one commit per file:
+  `ai_agent_is_just_a_node_kind.rs` (R1 + R2 + R12) and
+  `skill_quarantine_survives_bundle_update_through_a_flow.rs`
+  (per-run skill freeze + tools-intersection enforcement). Each
+  smoke depends on `starter-ai` (the `RecordingAiRunner`
+  testkit) and `starter-flow-nodes` (the body), neither of which
+  `starter-flow` can depend on without a cycle — the D-F3.6
+  revisit-trigger applies verbatim. **Revisit trigger:** none
+  expected; this matches the established Phase 3 smoke location.
+- **D-F4.11 — `RecordingAiRunner` testkit lives in
+  `crates/starter-ai/src/testing.rs` behind the existing
+  `testing` cargo feature mirror.** Records every call with
+  `(input, tools_visible, session_id_or_none,
+  principal_id_hash, turn_number)` and replays a configurable
+  script of `(text, tool_calls)` per turn. Keeps the harness
+  close to the real provider impls; the two Phase 4 smokes
+  import `starter-ai` with `--features testing` per the
+  established pattern. **Revisit trigger:** another consumer
+  needs a different testkit shape (e.g. a streaming-token
+  fake) — at which point the testkit module gains a sibling
+  type, not a replacement.
+- **D-F4.12 — Sixth dep-tree gate covers the opt-in
+  `--features ai-agent` path.** Add
+  `starter_flow_nodes_with_ai_agent_feature_does_not_pull_adk_rust`
+  to `crates/starter-flow/tests/workspace_dep_tree_gates.rs`.
+  Test shape mirrors the existing four `*_contains_no_adk_rust`
+  tests verbatim — same `Command::new("cargo")` + same grep +
+  same assert; only the `--features ai-agent` arg differs. The
+  D1 invariant holds whether or not consumers enable the
+  feature. **Revisit trigger:** the body grows enough sub-features
+  that per-feature gates become unwieldy — at which point the
+  gate is parameterised over the feature set.
 
 ## Open questions
 
