@@ -2,11 +2,10 @@
 
 ## Current stage
 
-**Stage 7 — `FlowAsTool` body in `starter-flow-surfaces`.**
-Stage 6 (durability hardening: retry-with-backoff,
-`EngineHealth`, degraded queue, `FlowRunner::start` rejection,
-per-run broadcast capacity hook, `TickCounter` newtype) is
-complete and pushed.
+**Stage 8 — `FlowAsService` body in `starter-flow-surfaces`.**
+Stage 7 (`FlowAsTool` body + builder + `Tool` impl wired
+through the engine with health/cancel/forwarder/event-watcher
+plumbing) is complete and pushed.
 
 ## Stages complete
 
@@ -19,6 +18,21 @@ complete and pushed.
   builder, per-tick checkpoint cadence in propagator, resume-
   from-checkpoint on `FlowRunner::resume(...)`, R2 chokepoint
   integrity test (`stage5_resume_chokepoint.rs`) green.
+- **Stage 7.** `FlowAsTool` body in
+  `crates/starter-flow-surfaces/src/lib.rs`: explicit-field
+  builder (D-F3.4), `Tool` impl forwarding `invoke` into a
+  one-shot `FlowRunner` off `Arc<Engine>` sharing
+  `engine.health_handle()` + optional `engine.run_store()`,
+  cancel-forwarder task wiring an external `Arc<RunCancel>` into
+  the per-run cancel within ~50 ms, event-watcher task
+  capturing `FlowEvent::NodeFailed` so a per-node error
+  surfaces as typed `SpiError::Internal` even though the
+  engine quiesces as `Completed`, terminal-slot read-back via
+  an explicit `OutputAdapter`, plus `invoke_with_cancel` and
+  `invoke_with_timeout` convenience methods. Six unit tests in
+  `tests/stage7_flow_as_tool.rs` cover builder validation /
+  happy-path / typed-error / Degraded-rejection /
+  cancel-within-200ms / no-task-leak.
 - **Stage 6.** Durability hardening:
   retry-with-backoff (50→100→200→400→800ms, 5 attempts) on
   `RunStore::checkpoint` errors emitting one
@@ -215,7 +229,128 @@ chokepoint test stay green, workspace dep-tree gates +
 - Stage 6 commit: see latest log — durability hardening.
 - Pushed to origin.
 
-## What stage 7 starts with
+## Stage 7 outcome (one-line summary)
+
+`FlowAsTool` body lands in `starter-flow-surfaces` with an
+explicit-field builder (D-F3.4), a `Tool` impl that drives a
+one-shot `FlowRunner` off `Arc<Engine>` and maps
+RunStatus + NodeFailed events into typed `SpiError`, plus
+`invoke_with_cancel` / `invoke_with_timeout` helpers; six
+unit tests cover every invariant; the stage adds one Cargo
+dep (`starter-flow`) on the surfaces crate, dep-tree gates and
+the `starter-flow-spi` baseline both stay clean.
+
+## Stage 7 implementation choices made
+
+- **Explicit-fields builder, no convenience constructor.**
+  `FlowAsToolBuilder::build` fails fast with
+  `FlowAsToolBuildError::MissingField(name)` naming the first
+  missing required field. D-F3.4 forbids derive-from-flow-
+  revision, so the builder makes the explicit-schema contract
+  enforced rather than convention.
+- **`SeedAdapter` / `OutputAdapter` are caller-supplied
+  closures.** Both are `Arc<dyn Fn(...) + Send + Sync +
+  'static>` type aliases. Reason: a flow's input/output JSON
+  shape is per-flow and not derivable from the topology in
+  Phase 3; the explicit adapter is the matching imperative
+  side of D-F3.4's explicit schemas.
+- **One-shot `FlowRunner` per `invoke` call.** `FlowAsTool`
+  holds `Arc<Engine>` and constructs a fresh `FlowRunner` per
+  `invoke`, sharing the engine's `health_handle()` and
+  conditionally `run_store()`. Reason: matches Phase 3 SCOPE
+  "engine: Arc<Engine>"; lets stage-6 degraded-mode rejection
+  fire at `runner.start(...)` instead of requiring duplicated
+  health-check logic in the surfaces crate.
+- **Cancel-forwarder + event-watcher as `tokio::spawn` tasks
+  with explicit `.abort()` on every termination path.** The
+  forwarder calls `cancel.cancelled().await; run_cancel.cancel()`;
+  the watcher loops `events_rx.recv().await` capturing
+  the first `FlowEvent::NodeFailed`. Both are aborted in
+  every match arm and on join-error so no per-call task can
+  leak. Test 6 (`invoke_does_not_leak_tokio_tasks`) asserts
+  this empirically across 16 back-to-back invocations.
+- **`FlowEvent::NodeFailed` surfaces as a typed error.** A
+  single failing node does not flip `RunStatus` to `Failed`
+  (the propagator emits `NodeFailed` and the coordinator
+  quiesces normally as `Completed`). The watcher task remembers
+  the first `NodeFailed`; on `RunStatus::Completed` the
+  surface checks the slot first and returns
+  `SpiError::Internal` carrying `"flow run failed: node {n}
+  returned {error}"` rather than silently returning the
+  output-adapter's fallback (typically `Null`). Reason:
+  matches caller expectation that an erroring tool call is
+  an `Err`, not an `Ok(Null)`.
+- **Tool trait signature is `invoke(input) -> Result<Value>`.**
+  The current workspace `Tool` trait in
+  `crates/starter-spi/src/tool/kind.rs` carries no
+  `Principal` / `Cancel` / `EventSink` args (unlike the
+  SCOPE's aspirational "call(args, principal, cancel, sink)"
+  shape). `FlowAsTool::invoke_with_cancel` /
+  `invoke_with_timeout` are the host-facing escape hatches
+  for R13 cancellation; `Tool::invoke` delegates with a fresh
+  never-fired `RunCancel`. The hardcoded `"system/Admin"`
+  Principal default in stage 5 stays — moving it to a
+  `RunSpec::with_principal(...)` extension is deferred to
+  stage 8 / a follow-up because the surface has no Principal
+  to thread in until the trait evolves.
+- **`InMemoryRunStore` for the per-call `FlowRunner::new`
+  positional arg.** The runner still requires a non-Phase-3
+  `RunStore` for its Phase 2 in-memory accounting. Reason:
+  keeps Phase 2 `FlowRunner` API unchanged; the SPI
+  `RunStore` (if attached to the engine) is the one that
+  actually persists checkpoints.
+- **`Cargo.toml` dep additions on `starter-flow-surfaces`.**
+  Added `starter-flow`, `async-trait`, `serde_json`,
+  `tokio { features = ["macros", "sync", "rt", "time"] }`,
+  `tracing`, plus `tokio` dev-dep with `rt-multi-thread`.
+  Verified against `workspace_dep_tree_gates`: the
+  `no_flow_crate_depends_on_phase3_surfaces` test forbids
+  surface → mcp/server/cli only — flow → surface is fine; the
+  `starter-flow-spi` baseline test is unaffected (no SPI dep
+  edits).
+
+## Stage 7 files touched
+
+- `crates/starter-flow-surfaces/Cargo.toml` — add
+  `starter-flow`, `async-trait`, `serde_json`, `tokio`,
+  `tracing` runtime deps + `tokio` dev-dep.
+- `crates/starter-flow-surfaces/src/lib.rs` — full rewrite:
+  `FlowAsTool` struct + builder + `Tool` impl +
+  `invoke_with_cancel` / `invoke_with_timeout`; `FlowAsService`
+  stays empty (stage 8).
+- `crates/starter-flow-surfaces/tests/stage7_flow_as_tool.rs`
+  — new file, six tests:
+  `builder_rejects_missing_required_fields`,
+  `invoke_drives_flow_and_returns_terminal_output`,
+  `invoke_surfaces_flow_failure_as_typed_error`,
+  `invoke_rejects_while_engine_is_degraded`,
+  `invoke_with_cancel_propagates_within_200ms`,
+  `invoke_does_not_leak_tokio_tasks`.
+
+## What stage 8 starts with
+
+- **`FlowAsService` body** in
+  `crates/starter-flow-surfaces/src/lib.rs` next to
+  `FlowAsTool`. Fields per R9 + D-F3.5: engine handle, flow
+  topology + terminal slots, `EventSink` subscription, service
+  name, lifecycle hooks (`start` → subscribe + spawn, `stop` →
+  drain + join), per-event seed adapter, dedup-key resolver
+  (D-F3.12: `EventSink::dedup_key()` first, blake3 fallback),
+  `FlowEvent::DedupShortCircuit` emission on re-delivery via
+  `RunStore::find_by_dedup_key`.
+- **`Service` impl from `starter_spi::service::Service`.**
+  `start(ctx) -> Result<ServiceHandle>`; the handle's `stop()`
+  drains the subscription and joins the inner runner tasks.
+- **Tests under `starter-flow-surfaces/tests/`** mirroring
+  stage 7's six-test shape: subscribe-on-start, drain-on-stop,
+  dedup-short-circuit-emits-event, no-task-leak.
+- **Optional stage-8 housekeeping**: land
+  `RunSpec::with_principal(...)` so the per-event Principal
+  the service derives (host-specific) is threadable into the
+  per-event run instead of the stage-5 `"system/Admin"`
+  default.
+
+## (Historical) What stage 7 started with
 
 - **`FlowAsTool` body** in
   `crates/starter-flow-surfaces/src/lib.rs`. Fields per R8 +
