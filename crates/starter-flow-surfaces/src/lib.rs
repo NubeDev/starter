@@ -18,6 +18,8 @@ use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
 use async_trait::async_trait;
+use tokio::sync::broadcast;
+use tokio::task::JoinHandle;
 use tokio::time::timeout;
 
 use starter_flow::engine::Engine;
@@ -26,10 +28,11 @@ use starter_flow::run::{
     FlowRunner, FlowRunnerConfig, InMemoryRunStore, RunCancel, RunSpec, RunStore as FlowRunStore,
 };
 use starter_flow::state::RunStatus;
-use starter_flow_spi::flow::{FlowEvent, FlowId, FlowRevisionId};
+use starter_flow_spi::flow::{DedupKey, FlowEvent, FlowId, FlowRevisionId};
 use starter_flow_spi::node::{KindId, SlotMap, SlotRef, SlotValue};
-use starter_flow_spi::Cancel;
+use starter_flow_spi::{Cancel, Principal};
 use starter_spi::error::{Error as SpiError, Result as SpiResult};
+use starter_spi::service::{Event, EventSink, Service, ServiceContext, ServiceHandle};
 use starter_spi::tool::{Tool, ToolDefinition};
 
 // ---------------------------------------------------------------------------
@@ -454,18 +457,492 @@ impl FlowAsToolBuilder {
 }
 
 // ---------------------------------------------------------------------------
-// FlowAsService — body lands in stage 8.
+// FlowAsService — SCOPE R9 + D-F3.5 + D-F3.12.
 // ---------------------------------------------------------------------------
 
-/// Wraps a flow as a `starter_spi::service::Service` (R9).
+/// Adapter mapping one incoming [`Event`] to the per-event seed
+/// slot writes the wrapped flow's propagator consumes.
 ///
-/// Stage 7 ships [`FlowAsTool`]; the [`FlowAsService`] body lands
-/// in stage 8 per the job WORKFLOW per-stage table. The struct
-/// stays empty until then so consumers can name the type in
-/// `where` bounds without inheriting a half-built impl.
+/// The output mirrors the per-tool [`SeedAdapter`] but is keyed on
+/// the [`Event`] envelope (`kind` + `payload`) rather than a raw
+/// JSON input. Returning an empty vec is a valid "no-op event"
+/// signal — the service logs and continues without starting a
+/// new run.
+pub type ServiceSeedAdapter =
+    Arc<dyn Fn(&Event) -> Vec<(SlotRef, SlotValue)> + Send + Sync + 'static>;
+
+/// Factory yielding a fresh subscriber to the upstream event
+/// stream every time [`Service::start`] runs.
+///
+/// `tokio::sync::broadcast::Receiver` is `!Clone`, so the
+/// subscription is materialised on each `start` by calling this
+/// closure. The closure typically captures an `Arc<broadcast::Sender<Event>>`
+/// and returns `sender.subscribe()`. Tests construct one inline;
+/// production wiring lives in whichever crate owns the upstream
+/// `EventSink` (typically a service that publishes via the
+/// blanket `broadcast::Sender<E>` impl per
+/// [`starter_spi::service::broadcast`]).
+pub type EventSubscriber = Arc<dyn Fn() -> broadcast::Receiver<Event> + Send + Sync + 'static>;
+
+/// Wraps a flow as a `starter_spi::service::Service` (SCOPE R9 +
+/// D-F3.5).
+///
+/// Per R9: a flow with a `trigger.webhook` entry node and an
+/// `ai-agent` body and a `tool-call` output is, simultaneously,
+/// a webhook endpoint, an MCP tool (via [`FlowAsTool`]), and an
+/// event-driven service (via [`FlowAsService`]). The author
+/// wrote one flow.
+///
+/// Per D-F3.5: subscription happens inside
+/// [`Service::start`] (not at construction time) so the
+/// `ServiceContext::shutdown` watch is wired through to the
+/// worker task; the worker exits cleanly when the watch flips
+/// to `true` and the spawned `JoinHandle` resolves with `Ok(())`.
+///
+/// Per D-F3.12: the dedup key for each incoming event is
+/// resolved as `EventSink::dedup_key(kind, payload)` first, with
+/// a blake3-over-canonical-bytes fallback when the sink declines
+/// to provide one. The key is threaded through
+/// [`RunSpec::with_dedup_key`] so the SPI `RunStore::start` call
+/// persists it under the `UNIQUE (service_name, dedup_key)`
+/// partial index; re-deliveries hit
+/// `RunStore::find_by_dedup_key` and short-circuit with a
+/// [`FlowEvent::DedupShortCircuit`] emission instead of starting
+/// a duplicate run.
+///
+/// Degraded-engine policy (stage 8 decision): the service stays
+/// alive when [`Engine`] is degraded; per-event
+/// `FlowRunner::start` rejections surface as a `tracing::warn!`
+/// event with the dedup key for downstream investigation. The
+/// service does **not** queue events (the engine's own degraded
+/// queue is per-run; per-service queuing would invite unbounded
+/// memory growth on a long-degraded backend). Re-delivery from
+/// the upstream transport is the recovery path; D-F3.12 dedup
+/// makes that safe.
 pub struct FlowAsService {
-    // Phase 3 stage 8 — fields per R9 + D-F3.5
-    // (subscribe-on-start lifecycle, dedup-key resolution, etc.).
-    // Left absent rather than `todo!()` so a half-finished impl
-    // cannot leak into consumers.
+    flow_id: FlowId,
+    revision: FlowRevisionId,
+    topology: Arc<FlowTopology>,
+    terminal_slots: Vec<SlotRef>,
+    engine: Arc<Engine>,
+    service_id: KindId,
+    name: String,
+    description: String,
+    event_sink: Arc<dyn EventSink>,
+    event_subscriber: EventSubscriber,
+    seed_adapter: ServiceSeedAdapter,
+    principal: Principal,
+}
+
+impl FlowAsService {
+    /// Start a fresh [`FlowAsServiceBuilder`].
+    pub fn builder() -> FlowAsServiceBuilder {
+        FlowAsServiceBuilder::default()
+    }
+
+    /// Borrow the [`FlowId`] this wrapper invokes.
+    pub fn flow_id(&self) -> &FlowId {
+        &self.flow_id
+    }
+
+    /// Borrow the reverse-DNS [`KindId`] this service is
+    /// registered under (R10).
+    pub fn service_id(&self) -> &KindId {
+        &self.service_id
+    }
+
+    /// Borrow the human-facing description.
+    pub fn description(&self) -> &str {
+        &self.description
+    }
+
+    /// Borrow the human-facing name (tracing/metrics label).
+    pub fn display_name(&self) -> &str {
+        &self.name
+    }
+}
+
+#[async_trait]
+impl Service for FlowAsService {
+    fn name(&self) -> &'static str {
+        // The trait wants `&'static str` for tracing/metrics
+        // labels; the runtime `String` `name` lives on the
+        // builder for human display. The `service_id.as_str()`
+        // is the reverse-DNS stable id, but it's not `'static`.
+        // Fall back to the constant the service crate name
+        // makes available — operators correlate runs via the
+        // tracing field `service = %self.service_id.as_str()`
+        // emitted on every per-event log line.
+        "starter.flow-as-service"
+    }
+
+    async fn start(&self, ctx: ServiceContext) -> SpiResult<ServiceHandle> {
+        let mut rx = (self.event_subscriber)();
+        let mut shutdown = ctx.shutdown.clone();
+        let me = FlowAsServiceWorkerHandle::new(self);
+
+        let join: JoinHandle<SpiResult<()>> = tokio::spawn(async move {
+            tracing::info!(
+                service = %me.service_id.as_str(),
+                "flow_as_service.worker.started",
+            );
+            loop {
+                tokio::select! {
+                    biased;
+                    changed = shutdown.changed() => {
+                        if changed.is_err() || *shutdown.borrow() {
+                            break;
+                        }
+                    }
+                    recv = rx.recv() => {
+                        match recv {
+                            Ok(event) => {
+                                if let Err(e) = me.handle_event(event).await {
+                                    tracing::warn!(
+                                        service = %me.service_id.as_str(),
+                                        error = ?e,
+                                        "flow_as_service.handle_event_failed",
+                                    );
+                                }
+                            }
+                            Err(broadcast::error::RecvError::Lagged(n)) => {
+                                tracing::warn!(
+                                    service = %me.service_id.as_str(),
+                                    dropped = n,
+                                    "flow_as_service.subscriber_lagged",
+                                );
+                            }
+                            Err(broadcast::error::RecvError::Closed) => {
+                                tracing::info!(
+                                    service = %me.service_id.as_str(),
+                                    "flow_as_service.subscription_closed",
+                                );
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            tracing::info!(
+                service = %me.service_id.as_str(),
+                "flow_as_service.worker.exited",
+            );
+            Ok(())
+        });
+
+        Ok(ServiceHandle::new(join))
+    }
+}
+
+/// Per-worker borrow of [`FlowAsService`] inputs. The
+/// [`Service::start`] task takes `&self`, but the spawned worker
+/// needs `'static` access; this handle clones the small `Arc`-
+/// shaped fields once at start time so the worker can `await`
+/// without retaining a reference into `self`.
+struct FlowAsServiceWorkerHandle {
+    flow_id: FlowId,
+    revision: FlowRevisionId,
+    topology: Arc<FlowTopology>,
+    terminal_slots: Vec<SlotRef>,
+    engine: Arc<Engine>,
+    service_id: KindId,
+    event_sink: Arc<dyn EventSink>,
+    seed_adapter: ServiceSeedAdapter,
+    principal: Principal,
+}
+
+impl FlowAsServiceWorkerHandle {
+    fn new(svc: &FlowAsService) -> Self {
+        Self {
+            flow_id: svc.flow_id.clone(),
+            revision: svc.revision,
+            topology: svc.topology.clone(),
+            terminal_slots: svc.terminal_slots.clone(),
+            engine: svc.engine.clone(),
+            service_id: svc.service_id.clone(),
+            event_sink: svc.event_sink.clone(),
+            seed_adapter: svc.seed_adapter.clone(),
+            principal: svc.principal.clone(),
+        }
+    }
+
+    async fn handle_event(&self, event: Event) -> SpiResult<Option<()>> {
+        // Reconstruct a minimal `FlowAsService`-shaped view by
+        // delegating: rather than duplicate the body, build a
+        // throwaway `FlowAsService` view? Simpler: inline the
+        // body here, since the worker has all the same fields.
+        let dedup = {
+            let key = match self.event_sink.dedup_key(&event.kind, &event.payload) {
+                Some(k) => k,
+                None => {
+                    let mut hasher = blake3::Hasher::new();
+                    hasher.update(self.service_id.as_str().as_bytes());
+                    hasher.update(b"\0");
+                    hasher.update(event.kind.as_bytes());
+                    hasher.update(b"\0");
+                    if let Ok(bytes) = serde_json::to_vec(&event.payload) {
+                        hasher.update(&bytes);
+                    }
+                    hasher.finalize().to_hex().to_string()
+                }
+            };
+            DedupKey::new(self.service_id.as_str(), key)
+        };
+
+        if let Some(spi) = self.engine.run_store() {
+            match spi.find_by_dedup_key(&dedup.service_name, &dedup.key).await {
+                Ok(Some(prior_run_id)) => {
+                    let ev = FlowEvent::DedupShortCircuit { prior_run_id };
+                    tracing::info!(
+                        service = %self.service_id.as_str(),
+                        dedup_key = %dedup.key,
+                        ?ev,
+                        "flow_as_service.dedup_short_circuit",
+                    );
+                    return Ok(None);
+                }
+                Ok(None) => {}
+                Err(e) => {
+                    tracing::warn!(
+                        service = %self.service_id.as_str(),
+                        error = %e,
+                        "flow_as_service.find_by_dedup_key failed; falling through to start",
+                    );
+                }
+            }
+        }
+
+        let seeds = (self.seed_adapter)(&event);
+        if seeds.is_empty() {
+            tracing::debug!(
+                service = %self.service_id.as_str(),
+                kind = %event.kind,
+                "flow_as_service.seed_adapter returned no seeds; skipping",
+            );
+            return Ok(None);
+        }
+        let spec = RunSpec::new(
+            self.flow_id.clone(),
+            self.revision,
+            self.topology.clone(),
+            seeds,
+            self.terminal_slots.clone(),
+        )
+        .with_principal(self.principal.clone())
+        .with_dedup_key(dedup.clone());
+
+        let mut runner = FlowRunner::new(
+            self.engine.store.clone(),
+            Arc::new(InMemoryRunStore::new()) as Arc<dyn FlowRunStore>,
+        )
+        .with_health_handle(self.engine.health_handle())
+        .with_config(FlowRunnerConfig::default());
+        if let Some(spi_store) = self.engine.run_store() {
+            runner = runner.with_spi_run_store(spi_store.clone());
+        }
+
+        let handle = match runner.start(spec, SlotMap::new()).await {
+            Ok(h) => h,
+            Err(e) => {
+                tracing::warn!(
+                    service = %self.service_id.as_str(),
+                    dedup_key = %dedup.key,
+                    error = %e,
+                    "flow_as_service.start_refused",
+                );
+                return Ok(None);
+            }
+        };
+
+        match handle.join.await {
+            Ok(status) => {
+                tracing::debug!(
+                    service = %self.service_id.as_str(),
+                    run = %handle.run,
+                    ?status,
+                    "flow_as_service.run_terminated",
+                );
+            }
+            Err(join_err) => {
+                tracing::warn!(
+                    service = %self.service_id.as_str(),
+                    error = %join_err,
+                    "flow_as_service.run_join_failed",
+                );
+            }
+        }
+        Ok(Some(()))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// FlowAsServiceBuilder
+// ---------------------------------------------------------------------------
+
+/// Builder for [`FlowAsService`]. Every field is required;
+/// missing fields surface as
+/// [`FlowAsServiceBuildError::MissingField`] from
+/// [`FlowAsServiceBuilder::build`].
+#[must_use = "FlowAsServiceBuilder does nothing until `.build()` is called"]
+#[derive(Default)]
+pub struct FlowAsServiceBuilder {
+    flow_id: Option<FlowId>,
+    revision: Option<FlowRevisionId>,
+    topology: Option<Arc<FlowTopology>>,
+    terminal_slots: Vec<SlotRef>,
+    engine: Option<Arc<Engine>>,
+    service_id: Option<KindId>,
+    name: Option<String>,
+    description: Option<String>,
+    event_sink: Option<Arc<dyn EventSink>>,
+    event_subscriber: Option<EventSubscriber>,
+    seed_adapter: Option<ServiceSeedAdapter>,
+    principal: Option<Principal>,
+}
+
+/// Error from [`FlowAsServiceBuilder::build`].
+#[derive(Debug)]
+#[non_exhaustive]
+pub enum FlowAsServiceBuildError {
+    /// One or more required fields were not set; the value
+    /// names the first missing field encountered.
+    MissingField(&'static str),
+}
+
+impl std::fmt::Display for FlowAsServiceBuildError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::MissingField(name) => write!(f, "FlowAsService builder missing field: {name}"),
+        }
+    }
+}
+
+impl std::error::Error for FlowAsServiceBuildError {}
+
+impl FlowAsServiceBuilder {
+    /// Required: the flow this service wraps.
+    pub fn flow_id(mut self, id: FlowId) -> Self {
+        self.flow_id = Some(id);
+        self
+    }
+    /// Required: the immutable revision the wrapper pins.
+    pub fn revision(mut self, rev: FlowRevisionId) -> Self {
+        self.revision = Some(rev);
+        self
+    }
+    /// Required: the propagator topology the flow runs on.
+    pub fn topology(mut self, topology: Arc<FlowTopology>) -> Self {
+        self.topology = Some(topology);
+        self
+    }
+    /// Required (non-empty): the terminal slots gathered into
+    /// the per-run output map.
+    pub fn terminal_slots(mut self, slots: Vec<SlotRef>) -> Self {
+        self.terminal_slots = slots;
+        self
+    }
+    /// Required: the engine handle.
+    pub fn engine(mut self, engine: Arc<Engine>) -> Self {
+        self.engine = Some(engine);
+        self
+    }
+    /// Required: the reverse-DNS service id (R10). Used as the
+    /// `DedupKey.service_name` for D-F3.12.
+    pub fn service_id(mut self, id: KindId) -> Self {
+        self.service_id = Some(id);
+        self
+    }
+    /// Required: human-readable service name (tracing/metrics
+    /// labels, registry display).
+    pub fn name(mut self, name: impl Into<String>) -> Self {
+        self.name = Some(name.into());
+        self
+    }
+    /// Required: human description of what the service does.
+    pub fn description(mut self, desc: impl Into<String>) -> Self {
+        self.description = Some(desc.into());
+        self
+    }
+    /// Required: the upstream [`EventSink`]. Consulted for its
+    /// optional [`EventSink::dedup_key`] override per D-F3.12;
+    /// otherwise an inert reference held only so this wrapper
+    /// can ask the same sink about future events.
+    pub fn event_sink(mut self, sink: Arc<dyn EventSink>) -> Self {
+        self.event_sink = Some(sink);
+        self
+    }
+    /// Required: factory for fresh subscribers to the upstream
+    /// event stream. Called once per [`Service::start`]
+    /// invocation (D-F3.5 subscribe-on-start lifecycle).
+    pub fn event_subscriber(mut self, subscriber: EventSubscriber) -> Self {
+        self.event_subscriber = Some(subscriber);
+        self
+    }
+    /// Required: maps an incoming [`Event`] into seed slot writes.
+    /// Returning an empty `Vec` means "no-op event; skip".
+    pub fn seed_adapter(mut self, adapter: ServiceSeedAdapter) -> Self {
+        self.seed_adapter = Some(adapter);
+        self
+    }
+    /// Required: the [`Principal`] every per-event run is
+    /// recorded under (retires the stage-5 `system/Admin`
+    /// default for service-driven runs).
+    pub fn principal(mut self, principal: Principal) -> Self {
+        self.principal = Some(principal);
+        self
+    }
+
+    /// Finalise the builder.
+    pub fn build(self) -> Result<FlowAsService, FlowAsServiceBuildError> {
+        let flow_id = self
+            .flow_id
+            .ok_or(FlowAsServiceBuildError::MissingField("flow_id"))?;
+        let revision = self
+            .revision
+            .ok_or(FlowAsServiceBuildError::MissingField("revision"))?;
+        let topology = self
+            .topology
+            .ok_or(FlowAsServiceBuildError::MissingField("topology"))?;
+        if self.terminal_slots.is_empty() {
+            return Err(FlowAsServiceBuildError::MissingField("terminal_slots"));
+        }
+        let engine = self
+            .engine
+            .ok_or(FlowAsServiceBuildError::MissingField("engine"))?;
+        let service_id = self
+            .service_id
+            .ok_or(FlowAsServiceBuildError::MissingField("service_id"))?;
+        let name = self
+            .name
+            .ok_or(FlowAsServiceBuildError::MissingField("name"))?;
+        let description = self
+            .description
+            .ok_or(FlowAsServiceBuildError::MissingField("description"))?;
+        let event_sink = self
+            .event_sink
+            .ok_or(FlowAsServiceBuildError::MissingField("event_sink"))?;
+        let event_subscriber = self
+            .event_subscriber
+            .ok_or(FlowAsServiceBuildError::MissingField("event_subscriber"))?;
+        let seed_adapter = self
+            .seed_adapter
+            .ok_or(FlowAsServiceBuildError::MissingField("seed_adapter"))?;
+        let principal = self
+            .principal
+            .ok_or(FlowAsServiceBuildError::MissingField("principal"))?;
+        Ok(FlowAsService {
+            flow_id,
+            revision,
+            topology,
+            terminal_slots: self.terminal_slots,
+            engine,
+            service_id,
+            name,
+            description,
+            event_sink,
+            event_subscriber,
+            seed_adapter,
+            principal,
+        })
+    }
 }

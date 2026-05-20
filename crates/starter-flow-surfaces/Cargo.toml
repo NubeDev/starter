@@ -24,5 +24,13 @@ serde_json  = { workspace = true }
 tokio       = { workspace = true, features = ["macros", "sync", "rt", "time"] }
 tracing     = { workspace = true }
 
+# Stage 8 (D-F3.12): blake3 content hash for the `FlowAsService`
+# dedup-key fallback when an `EventSink::dedup_key` impl returns
+# `None`. Direct dep (not workspace) — `starter-flow-surfaces` is
+# the only crate that needs it today; promotes to a workspace dep
+# the first time a second consumer appears.
+blake3 = "1"
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time"] }
+prometheus = { workspace = true }

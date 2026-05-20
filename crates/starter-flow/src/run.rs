@@ -281,6 +281,18 @@ pub struct RunSpec {
     /// Slots whose values are gathered into the `RunCompleted.output`
     /// map at the end of a successful run.
     pub terminal_slots: Vec<SlotRef>,
+    /// Optional caller-supplied [`Principal`] threaded into
+    /// `SpiRunStore::start`. `None` falls back to the engine's
+    /// `system/Admin` default. Set via [`Self::with_principal`].
+    /// Lands here in stage 8 so `FlowAsService` (and surfaces in
+    /// general) can record the on-behalf-of identity that drove a
+    /// per-event run.
+    pub principal: Option<Principal>,
+    /// Optional caller-supplied [`DedupKey`] threaded into
+    /// `SpiRunStore::start` so future `find_by_dedup_key` lookups
+    /// can short-circuit re-deliveries (D-F3.12). Set via
+    /// [`Self::with_dedup_key`].
+    pub dedup_key: Option<DedupKey>,
 }
 
 impl RunSpec {
@@ -300,7 +312,28 @@ impl RunSpec {
             topology,
             seeds,
             terminal_slots,
+            principal: None,
+            dedup_key: None,
         }
+    }
+
+    /// Attach a [`Principal`] to be recorded on the run row by the
+    /// SPI `RunStore::start` call. Retires the stage-5
+    /// `system/Admin` hardcode for surfaces that have a real
+    /// identity to thread through (D-F3.12 + R7 outer-run
+    /// binding).
+    pub fn with_principal(mut self, principal: Principal) -> Self {
+        self.principal = Some(principal);
+        self
+    }
+
+    /// Attach a [`DedupKey`] for D-F3.12 short-circuit lookups.
+    /// `FlowAsService` resolves the key per-event and threads it
+    /// here so the SPI `RunStore` can persist it under the
+    /// `UNIQUE (service_name, dedup_key)` partial index.
+    pub fn with_dedup_key(mut self, dedup: DedupKey) -> Self {
+        self.dedup_key = Some(dedup);
+        self
     }
 }
 
@@ -615,18 +648,25 @@ impl FlowRunner {
         //     `start` would fail the `runs.run_id` PK constraint.
         if let Some(spi) = self.spi_run_store.as_ref() {
             if !is_resume {
+                // Stage 8 (D-F3.12): if the caller (typically
+                // `FlowAsService`) supplied a `Principal` /
+                // `DedupKey` via `RunSpec::with_principal` /
+                // `with_dedup_key`, use them; otherwise fall back
+                // to the stage-5 `system/Admin` default and a
+                // `None` dedup key.
+                let principal = spec.principal.clone().unwrap_or(Principal {
+                    subject: "system".to_string(),
+                    role: starter_spi::auth::Role::Admin,
+                    scopes: Vec::new(),
+                    extra: serde_json::Value::Null,
+                });
                 if let Err(e) = spi
                     .start(
                         run,
                         spec.revision,
                         self.run_opts.clone(),
-                        Principal {
-                            subject: "system".to_string(),
-                            role: starter_spi::auth::Role::Admin,
-                            scopes: Vec::new(),
-                            extra: serde_json::Value::Null,
-                        },
-                        None::<DedupKey>,
+                        principal,
+                        spec.dedup_key.clone(),
                     )
                     .await
                 {
@@ -657,6 +697,8 @@ impl FlowRunner {
             topology,
             seeds,
             terminal_slots,
+            principal: _,
+            dedup_key: _,
         } = spec;
 
         let cancel_for_task = cancel.clone();
@@ -1061,6 +1103,8 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.a", "out"), SlotValue::Int(42))],
             terminal_slots: vec![slot("flow.test.c", "out")],
+            principal: None,
+            dedup_key: None,
         };
 
         let mut handle = runner
@@ -1153,6 +1197,8 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.n", "in"), SlotValue::Int(1))],
             terminal_slots: vec![],
+            principal: None,
+            dedup_key: None,
         };
 
         let mut handle = runner
@@ -1214,6 +1260,8 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.n", "in"), SlotValue::Int(1))],
             terminal_slots: vec![],
+            principal: None,
+            dedup_key: None,
         };
 
         let mut handle = runner
@@ -1281,6 +1329,8 @@ mod tests {
             topology,
             seeds: vec![(slot("flow.test.a", "out"), SlotValue::Int(1))],
             terminal_slots: vec![slot("flow.test.c", "out")],
+            principal: None,
+            dedup_key: None,
         };
 
         let mut handle = runner

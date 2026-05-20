@@ -2,10 +2,12 @@
 
 ## Current stage
 
-**Stage 8 — `FlowAsService` body in `starter-flow-surfaces`.**
-Stage 7 (`FlowAsTool` body + builder + `Tool` impl wired
-through the engine with health/cancel/forwarder/event-watcher
-plumbing) is complete and pushed.
+**Stage 9 — the four SCOPE smokes in `crates/smoke-tests/tests/`.**
+Stage 8 (`FlowAsService` body + builder + `Service` impl wired
+to an upstream broadcast subscription with D-F3.12 dedup
+short-circuit, plus `RunSpec::with_principal` /
+`with_dedup_key` retiring the stage-5 hardcode) is complete
+and pushed.
 
 ## Stages complete
 
@@ -327,7 +329,158 @@ the `starter-flow-spi` baseline both stay clean.
   `invoke_with_cancel_propagates_within_200ms`,
   `invoke_does_not_leak_tokio_tasks`.
 
-## What stage 8 starts with
+## Stage 8 outcome (one-line summary)
+
+`FlowAsService` body lands in `starter-flow-surfaces` with an
+explicit-field builder, a `Service` impl that subscribes to an
+upstream broadcast on `start(ctx)` and runs one one-shot
+`FlowRunner` per event via `engine.run_store()`, D-F3.12 dedup
+short-circuit via `RunStore::find_by_dedup_key` (sink-supplied
+key first, blake3 fallback over `(service_id, kind,
+canonical_payload_bytes)` second), and clean drain on
+`ctx.shutdown` flip. Stage 8 also lands
+`RunSpec::with_principal` / `with_dedup_key` on `starter-flow`
+to retire the stage-5 `system/Admin` + `None::<DedupKey>`
+hardcode in `FlowRunner::launch`. Five tests in
+`tests/stage8_flow_as_service.rs` cover every invariant; all
+prior surfaces + flow tests stay green; the
+`starter-flow-spi` baseline + the four other workspace
+dep-tree gates stay byte-for-byte unchanged.
+
+## Stage 8 implementation choices made
+
+- **`RunSpec::with_principal` + `with_dedup_key` land on
+  `starter-flow` (engine), not on `starter-flow-spi`.** The
+  prompt explicitly forbids SPI edits at stage 8; the engine
+  crate is the right home for caller-supplied per-run
+  metadata that the engine then threads into the SPI
+  `RunStore::start` call. `RunSpec` is `#[non_exhaustive]`
+  with the new fields plumbed as `Option<_>` so `RunSpec::new`
+  stays source-compatible; the four internal struct-literal
+  callsites inside `crates/starter-flow/src/run.rs` were
+  updated with `principal: None, dedup_key: None,` rows.
+  Reason: matches the existing builder-style pattern on
+  `FlowRunner` (`with_health_handle`, `with_config`, …) and
+  keeps callers that don't care about service metadata free
+  from boilerplate.
+- **`FlowAsService` worker handle separates `Service::start`
+  borrow from the spawned task's `'static` requirement.**
+  `Service::start(&self, ctx)` takes `&self`, but the
+  spawned `tokio::spawn(async move { … })` body needs owned
+  data. A private `FlowAsServiceWorkerHandle` struct clones
+  the small `Arc`-shaped fields once at start time so the
+  worker never holds a reference back into the
+  `FlowAsService` value. Reason: matches the SPI's
+  `Service::start` contract (the registry observes the
+  `JoinHandle` independently of the service's lifetime); the
+  worker outliving the wrapper is intentional.
+- **Subscription is via a caller-supplied `EventSubscriber`
+  closure, not by holding a `broadcast::Receiver` on the
+  struct.** `tokio::sync::broadcast::Receiver` is `!Clone`;
+  if we held one on the struct, `Service::start` couldn't
+  produce a fresh receiver per call. The
+  `EventSubscriber = Arc<dyn Fn() -> broadcast::Receiver<Event>>`
+  closure is invoked exactly once per `start(ctx)` per D-F3.5
+  ("subscribes on Service::start, not at construction
+  time"). The closure typically captures
+  `Arc<broadcast::Sender<Event>>` and calls `.subscribe()`.
+- **`EventSink` is held only for `dedup_key()` consultation;
+  delivery flows through the `EventSubscriber` closure.** The
+  prompt asked for an `event_sink: Arc<dyn EventSink>` field;
+  the SPI `EventSink` trait carries `emit()` (publish) and
+  `dedup_key()` (advisory), but no subscribe/recv. The
+  splitting is intentional: the wrapper publishes nothing
+  (it receives events from upstream and starts runs), but
+  the upstream sink is the authoritative source for D-F3.12
+  dedup key derivation. Tests demonstrate both branches:
+  `DedupPolicy::PayloadId` returns `Some(payload.id)`, and
+  `DedupPolicy::Fallback` returns `None` so the blake3
+  fallback fires.
+- **Degraded-engine policy: stay alive; drop per-event with
+  a warn; rely on transport re-delivery + D-F3.12 dedup.**
+  When the engine is `Degraded`, `FlowRunner::start` returns
+  `EngineError::BackendUnavailable`; the worker logs
+  `flow_as_service.start_refused` with the dedup key and
+  loops. We do NOT queue events service-side: the engine has
+  its own per-run degraded queue (R3 D-F3.11); per-service
+  queuing would invite unbounded memory growth on a
+  long-degraded backend. The at-least-once contract of the
+  upstream transport plus D-F3.12 dedup makes the recovery
+  path safe — when the engine recovers, the next re-delivery
+  starts the run cleanly. Documented in the
+  `FlowAsService` rustdoc under "Degraded-engine policy".
+- **blake3 ships as a direct dep on `starter-flow-surfaces`,
+  not as a workspace dep.** D-F3.12 locks blake3 as the
+  fallback hash algorithm; `starter-flow-surfaces` is the
+  only consumer today, so the dep lives directly in its
+  `Cargo.toml` with `blake3 = "1"`. Promotes to a workspace
+  dep the first time a second consumer appears (likely the
+  stage-9 four-transport smoke). Adds 5 transitive crates
+  (`arrayref`, `arrayvec`, `blake3`, `constant_time_eq`,
+  `cpufeatures`); none affect the dep-tree gates (which are
+  on `starter-flow-spi` + the no-adk-rust + the
+  no-surface-from-flow rules).
+- **Hash input canonicalisation is
+  `(service_id || \0 || kind || \0 || serde_json::to_vec(payload))`.**
+  Single null separators between the three fields prevent
+  prefix collisions; `serde_json::to_vec` on an
+  already-parsed `Value` is deterministic for re-deliveries
+  of the same payload (no key-reordering risk because we hash
+  the bytes the upstream parsed, not a re-serialised form).
+  Documented inline in `resolve_dedup_key`.
+- **`Service::name` returns a constant `"starter.flow-as-service"`.**
+  The trait wants `&'static str` for tracing/metrics labels;
+  the per-instance display name lives on the builder
+  (`display_name()` accessor) and the reverse-DNS stable id
+  lives on `service_id()`. Every per-event log line tags
+  `service = %self.service_id.as_str()` so operators
+  correlate runs back to the specific FlowAsService instance
+  without needing per-instance `'static` strings.
+- **Test SPI `RunStore` (`RecordingSpiStore`) records every
+  `start` call and implements `find_by_dedup_key` against
+  the same table.** Lives test-local in
+  `tests/stage8_flow_as_service.rs`. Reason: the SQLite SPI
+  store from stage 4 lives behind a feature flag in a
+  different crate; pulling it in here would add an indirect
+  dep without strengthening the test contract. The recording
+  store demonstrates the SPI contract verbatim and lets the
+  tests assert run counts + distinct dedup-key counts
+  independent of any storage backend.
+
+## Stage 8 files touched
+
+- `crates/starter-flow/src/run.rs` —
+  - `RunSpec` gains `principal: Option<Principal>` and
+    `dedup_key: Option<DedupKey>` fields plus
+    `with_principal(...)` / `with_dedup_key(...)` builder
+    methods; `RunSpec::new` defaults both to `None`.
+  - `FlowRunner::launch` reads `spec.principal` /
+    `spec.dedup_key` instead of the hardcoded
+    `system/Admin` Principal + `None::<DedupKey>` at the
+    SPI `RunStore::start` call site (stage-5 hardcode
+    retired for service-driven runs).
+  - The `RunSpec { … }` destructure picks up the two new
+    fields (ignored: `principal: _, dedup_key: _`).
+  - Four internal struct-literal callsites updated with
+    `principal: None, dedup_key: None,` rows.
+- `crates/starter-flow-surfaces/Cargo.toml` — add direct
+  `blake3 = "1"` runtime dep + `prometheus = { workspace =
+  true }` dev-dep (the latter for `ServiceContext::new` in
+  the stage-8 tests).
+- `crates/starter-flow-surfaces/src/lib.rs` — `FlowAsService`
+  body + `FlowAsServiceBuilder` + `FlowAsServiceBuildError`
+  + `ServiceSeedAdapter` + `EventSubscriber` type aliases +
+  the `FlowAsServiceWorkerHandle` private worker struct +
+  `Service` trait impl.
+- `crates/starter-flow-surfaces/tests/stage8_flow_as_service.rs`
+  — new file, five tests:
+  `builder_rejects_missing_required_fields`,
+  `service_subscribes_and_invokes_flow_per_event`,
+  `service_drains_on_stop_with_no_task_leak`,
+  `dedup_short_circuit_emits_on_re_delivery`,
+  `dedup_key_falls_back_to_blake3_when_event_sink_returns_none`.
+
+## (Historical) What stage 8 started with
 
 - **`FlowAsService` body** in
   `crates/starter-flow-surfaces/src/lib.rs` next to
