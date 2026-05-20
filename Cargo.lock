@@ -5941,17 +5941,21 @@ name = "starter-cli"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "axum 0.8.9",
  "clap",
  "prometheus",
  "rpassword",
  "serde",
  "serde_json",
+ "sqlx",
  "starter-client-rs",
  "starter-observability",
+ "starter-prefs",
  "starter-server",
  "starter-spi",
  "thiserror 1.0.69",
  "tokio",
+ "tower 0.5.3",
  "tracing",
  "utoipa",
 ]

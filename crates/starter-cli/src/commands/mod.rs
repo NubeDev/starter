@@ -5,6 +5,8 @@
 mod admin_create;
 mod health;
 mod openapi;
+mod prefs;
 
 pub use health::Health;
 pub use openapi::OpenApi;
+pub use prefs::{run_with as run_prefs_with, Prefs};

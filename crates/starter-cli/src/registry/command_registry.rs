@@ -31,8 +31,8 @@ impl CommandRegistry {
     /// `starter-client-rs`. The `admin create` bootstrap path is
     /// deferred — it lands with the `starter-auth-users` crate body.
     pub fn register_starter_defaults(self) -> Self {
-        use crate::commands::{Health, OpenApi};
-        self.register(Health).register(OpenApi)
+        use crate::commands::{Health, OpenApi, Prefs};
+        self.register(Health).register(OpenApi).register(Prefs)
     }
 
     /// Iterate the registered clap subcommands in name order. The
