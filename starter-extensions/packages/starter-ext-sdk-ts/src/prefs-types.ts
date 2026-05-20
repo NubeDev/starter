@@ -115,4 +115,14 @@ export interface HostIntlContextValue {
   isLoading: boolean;
   error: unknown;
   intl: HostIntlShape;
+  /**
+   * Stage-7 cross-cut (`examples/notes/user-pref.md` § Stage 7):
+   * the host's IntlProvider populates this with an
+   * `emitI18nTelemetry`-bound reporter so `useHostTranslate` can fire
+   * `i18n.message_missing` through the host's single telemetry
+   * pipeline without the SDK pulling `@nube/starter-ui-core` into its
+   * dep graph. Optional so older hosts that pre-date Stage 7 keep
+   * working (SDK simply skips the emit).
+   */
+  reportMissingKey?: (key: string, extensionId: string) => void;
 }

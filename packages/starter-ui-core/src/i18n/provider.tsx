@@ -42,12 +42,26 @@ import {
   subscribeExtensionMessages,
 } from "./extension-messages.js";
 import { fetchManifest, loadCatalogCached } from "./fetcher.js";
+import { I18N_FALLBACK_LANGUAGE, resolveLocale } from "./locale-fallback.js";
+import { emitI18nTelemetry } from "./telemetry.js";
 import type { Catalog, I18nManifest, LanguageTag } from "./types.js";
 
 /** Hard-coded fallback language per SCOPE R5 — every starter binary
  * ships `en` and falls back to it when the requested language is
- * unknown. */
-const FALLBACK_LANGUAGE: LanguageTag = "en";
+ * unknown. Re-exported from `./locale-fallback` so the resolver and
+ * the provider agree on the floor. */
+const FALLBACK_LANGUAGE: LanguageTag = I18N_FALLBACK_LANGUAGE;
+
+/** Module-level "have we already fired `i18n.locale_fallback` for this
+ * (requested,picked) pair this session?" guard — D-NP.6 says one
+ * event per session per locale, not one per render. Lives outside
+ * React state so tests can flush it via `_resetLocaleFallbackDedupeForTesting`. */
+const fallbackFired = new Set<string>();
+
+/** Test helper — wipe the per-session fallback de-dupe. */
+export function _resetLocaleFallbackDedupeForTesting(): void {
+  fallbackFired.clear();
+}
 
 /** Module-level memoised manifest fetch. The manifest is small and
  * the fingerprints inside are content-addressed, so caching for the
@@ -95,6 +109,16 @@ interface IntlContextValue {
    * catalog probe is in flight.
    */
   intl: unknown;
+  /**
+   * Stage-7 cross-cut. Reporter the SDK's `useHostTranslate` calls
+   * when react-intl returned the key verbatim (no catalog hit). The
+   * SDK does not depend on `@nube/starter-ui-core`; piping the hook
+   * through the singleton handle lets the missing-key event flow
+   * into the host's single `setI18nTelemetry` sink without crossing
+   * the package boundary. Typed loosely so the SDK's duck-typed
+   * `HostIntlContextValue` accepts the same shape.
+   */
+  reportMissingKey: (key: string, extensionId: string) => void;
 }
 
 /**
@@ -155,19 +179,28 @@ export function IntlProvider({
     };
   }, [client]);
 
-  // Pick fingerprint for the requested language; fall back to en.
+  // Pick fingerprint for the requested language via the D-NP.6
+  // left-truncating BCP-47 chain, floor `en`. The resolver also tells
+  // us *how* it picked so we can emit the one `i18n.locale_fallback`
+  // event per (requested,picked) per session.
   const pick = useMemo(() => {
     if (!manifest) return null;
-    if (manifest[requested]) {
-      return { language: requested, fingerprint: manifest[requested]! };
+    const r = resolveLocale(requested, manifest);
+    if (!r) return null;
+    if (r.fallbackUsed) {
+      const dedupeKey = `${requested}${r.picked}`;
+      if (!fallbackFired.has(dedupeKey)) {
+        fallbackFired.add(dedupeKey);
+        emitI18nTelemetry({
+          kind: "i18n.locale_fallback",
+          severity: "info",
+          requested,
+          picked: r.picked,
+          chain: r.chain,
+        });
+      }
     }
-    if (manifest[FALLBACK_LANGUAGE]) {
-      return {
-        language: FALLBACK_LANGUAGE,
-        fingerprint: manifest[FALLBACK_LANGUAGE]!,
-      };
-    }
-    return null;
+    return { language: r.picked, fingerprint: r.fingerprint };
   }, [manifest, requested]);
 
   // Load the catalog for the picked (language, fingerprint).
@@ -255,6 +288,19 @@ export function IntlProvider({
     [activeLanguage, messages],
   );
 
+  const reportMissingKey = useMemo(
+    () => (key: string, extensionId: string) => {
+      emitI18nTelemetry({
+        kind: "i18n.message_missing",
+        severity: "warn",
+        key,
+        language: activeLanguage,
+        extensionId,
+      });
+    },
+    [activeLanguage],
+  );
+
   const ctxValue = useMemo<IntlContextValue>(
     () => ({
       language: activeLanguage,
@@ -262,8 +308,9 @@ export function IntlProvider({
       isLoading,
       error,
       intl,
+      reportMissingKey,
     }),
-    [activeLanguage, manifest, isLoading, error, intl],
+    [activeLanguage, manifest, isLoading, error, intl, reportMissingKey],
   );
 
   return (

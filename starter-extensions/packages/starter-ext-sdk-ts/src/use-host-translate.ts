@@ -62,14 +62,30 @@ export function useHostTranslate(): TranslateFn {
   }
   const intl: HostIntlShape = value.intl;
 
+  const reportMissingKey = value.reportMissingKey;
+
   return React.useMemo<TranslateFn>(() => {
     const translate = (id: MessageKey, values?: MessageValues): string => {
       // Auto-prefix bare keys with the extension id (D-NP.3). A
       // fully-qualified key carries at least one dot; bare keys are
       // single-segment identifiers like `greeting`.
       const fullId = typeof id === "string" && id.includes(".") ? id : `${extensionId}.${id}`;
-      return intl.formatMessage({ id: fullId }, values);
+      const out = intl.formatMessage({ id: fullId }, values);
+      // Stage-7 cross-cut: when react-intl returns the id verbatim
+      // (no catalog hit on the active locale nor the en default),
+      // fire `i18n.message_missing` through the host's telemetry
+      // pipeline so production dashboards count the gap. The SDK
+      // does not import ui-core directly — the host supplies the
+      // reporter on the IntlContext singleton.
+      if (out === fullId && reportMissingKey) {
+        try {
+          reportMissingKey(fullId, extensionId);
+        } catch {
+          /* reporter is host-side — swallow to keep render safe. */
+        }
+      }
+      return out;
     };
     return translate as TranslateFn;
-  }, [intl, extensionId]);
+  }, [intl, extensionId, reportMissingKey]);
 }

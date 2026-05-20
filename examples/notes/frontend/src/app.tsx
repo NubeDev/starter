@@ -9,6 +9,8 @@ import {
 } from "@nube/starter-ui-core/theme-editor";
 import { ThemeEditorPage } from "@nube/starter-ui-kit/theme-editor";
 import { SettingsPage } from "@nube/starter-ui-core/preferences";
+import { setPreferencesTelemetry } from "@nube/starter-ui-core/preferences";
+import { setI18nTelemetry } from "@nube/starter-ui-core/i18n";
 import { StarterClient } from "@nube/starter-client-ts";
 import { ExtensionHostProvider, ExtensionSlot } from "@nube/starter-ext-ui";
 
@@ -170,6 +172,40 @@ function AuthenticatedApp() {
   useEffect(() => {
     void loadExtensionRemotes(host).then(() => setHostReady(true));
   }, [host]);
+
+  // Stage-7 cross-cut — wire the two ui-core process-wide telemetry
+  // sinks to the host's console so `i18n.locale_fallback`,
+  // `i18n.message_missing`, and `prefs.broadcast_dropped` show up in
+  // dev tools. Production deployments swap these out for a real
+  // observability sink; the contract is the event names, not the
+  // transport (`examples/notes/user-pref.md` § Telemetry).
+  useEffect(() => {
+    const disposeI18n = setI18nTelemetry((event) => {
+      if (event.kind === "i18n.locale_fallback") {
+        // eslint-disable-next-line no-console
+        console.info(
+          `[notes][i18n.locale_fallback] ${event.requested} → ${event.picked}`,
+          { chain: event.chain },
+        );
+      } else {
+        // eslint-disable-next-line no-console
+        console.warn(
+          `[notes][i18n.message_missing] ${event.key} (${event.language})`,
+          { extensionId: event.extensionId },
+        );
+      }
+    });
+    const disposePrefs = setPreferencesTelemetry((event) => {
+      // eslint-disable-next-line no-console
+      console.warn(`[notes][prefs.broadcast_dropped] ${event.reason}`, {
+        patch: event.patch,
+      });
+    });
+    return () => {
+      disposeI18n();
+      disposePrefs();
+    };
+  }, []);
 
   // Apply the live token map to the document root so the host UI
   // (notes, extensions tabs) reflects every theme change immediately.

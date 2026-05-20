@@ -11,6 +11,8 @@
 
 import { useIntl } from "react-intl";
 
+import { emitI18nTelemetry } from "./telemetry.js";
+
 /** The reverse-DNS-style key shape. Apps can declare their own keys
  * by augmenting this module — e.g.
  *
@@ -43,16 +45,26 @@ export interface TranslateFn {
 export function useTranslate(): TranslateFn {
   const intl = useIntl();
   return ((id: MessageKey, values?: MessageValues) => {
-    // react-intl handles the en-fallback via `defaultLocale`; when
-    // the key is absent from both, it returns the id verbatim. We
-    // explicitly cast `values` because react-intl's signature is
-    // wider than we expose.
-    // react-intl's `formatMessage` overload set wants a narrower
-    // value type than our `MessageValues`; cast at the boundary so
-    // callers don't need to import react-intl's types.
-    return intl.formatMessage(
+    const out = intl.formatMessage(
       { id: id as string },
       values as Parameters<typeof intl.formatMessage>[1],
     ) as unknown as string;
+    // react-intl returns the id verbatim when neither the active
+    // catalog nor the `en` default catalog has the key — that's our
+    // "missing translation" signal. Fire `i18n.message_missing` once
+    // per call so production dashboards can count gaps; in dev the
+    // sink's default `console.warn` path is what surfaces it to the
+    // author. `extensionId: null` — platform callers, not extension
+    // callers (the SDK wires its own emit with the extension id).
+    if (out === id) {
+      emitI18nTelemetry({
+        kind: "i18n.message_missing",
+        severity: "warn",
+        key: id as string,
+        language: intl.locale,
+        extensionId: null,
+      });
+    }
+    return out;
   }) as TranslateFn;
 }
