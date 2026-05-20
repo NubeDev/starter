@@ -13,6 +13,7 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   type ReactNode,
 } from "react";
@@ -49,6 +50,12 @@ export interface PreferencesProviderProps {
    * `@starter/default` sentinel so single-tenant deployments work
    * with zero configuration. */
   workspaceId?: string;
+  /** Rendered while the initial prefs probe is in flight. Default:
+   * an empty fragment. Stage-1 loading contract — formatters never
+   * run against unresolved prefs because consumers below this
+   * provider only mount once `preferences !== null`. Pass the
+   * host's top-bar skeleton here so the FOUC stays on-brand. */
+  fallback?: ReactNode;
   children: ReactNode;
 }
 
@@ -57,6 +64,7 @@ export interface PreferencesProviderProps {
 export function PreferencesProvider({
   client,
   workspaceId = DEFAULT_WORKSPACE,
+  fallback = null,
   children,
 }: PreferencesProviderProps) {
   const queryClient = useQueryClient();
@@ -91,7 +99,27 @@ export function PreferencesProvider({
     [query.data, query.isLoading, query.error, setPreferences],
   );
 
-  return <PreferencesContext.Provider value={value}>{children}</PreferencesContext.Provider>;
+  // Side-effect: keep `<html lang>` in sync with the resolved
+  // language so screen readers, browser hyphenation, spell-check and
+  // font fallback all use the right rules. The provider owns this so
+  // every consumer gets it for free; teams that forget to wire it
+  // ship a broken a11y story and do not notice.
+  const language = query.data?.language;
+  useEffect(() => {
+    if (typeof document === "undefined" || !language) return;
+    document.documentElement.lang = language;
+  }, [language]);
+
+  // Loading contract — children only mount once `preferences` is
+  // non-null. This guarantees the formatter hooks added in Stage 3
+  // never run against `undefined` prefs.
+  const ready = query.data != null;
+
+  return (
+    <PreferencesContext.Provider value={value}>
+      {ready ? children : fallback}
+    </PreferencesContext.Provider>
+  );
 }
 
 /** Read the preferences context. Throws if called outside a

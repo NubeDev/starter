@@ -28,6 +28,13 @@ starter-cli           = { workspace = true }
 starter-client-rs     = { workspace = true }
 starter-ui-theme      = { workspace = true, features = ["sqlite"] }
 
+# Prefs + i18n — needed by the Phase-4 prefs/i18n surface this example
+# proves end-to-end. `routes` mounts the REST surface
+# (GET/PATCH /v1/me/preferences, GET /v1/i18n/manifest, …); `sqlite`
+# brings the prefs store implementation. See `user-pref.md` Stage 1.
+starter-prefs         = { workspace = true, features = ["routes", "sqlite"] }
+starter-i18n          = { workspace = true, features = ["routes"] }
+
 # Extension hosting — cross-workspace path deps to `starter-extensions`.
 # Per SCOPE.md R3 this mirrors what a third-party consumer would do once
 # the crates are published; the path form works today without publishing.
