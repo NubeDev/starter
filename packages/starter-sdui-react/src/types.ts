@@ -33,7 +33,19 @@ export type Kind =
   | "field"
   | "select"
   | "toggle"
-  | "custom";
+  | "custom"
+  | "chart"
+  | "sparkline"
+  | "tree"
+  | "timeline"
+  | "markdown"
+  | "code"
+  | "wizard"
+  | "drawer"
+  | "rich_text"
+  | "diff"
+  | "ref_picker"
+  | "date_range";
 
 export interface UiComponent {
   type: string;

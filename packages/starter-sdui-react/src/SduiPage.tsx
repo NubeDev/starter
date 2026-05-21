@@ -190,6 +190,7 @@ export function SduiPage({
       setPageState={mergePageState}
       treeQueryKey={queryKey}
       writePlan={data.writes ?? []}
+      streamingTransport={transport}
     >
       <Renderer node={data.render.root} />
       <SduiDialogHost />

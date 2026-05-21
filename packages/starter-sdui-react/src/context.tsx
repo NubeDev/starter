@@ -8,6 +8,7 @@
  */
 import React, { createContext, useContext } from "react";
 import type { UiActionResponse, WritePlanEntry } from "./types.js";
+import type { SubscriptionTransport } from "./useSubscriptions.js";
 
 export type ActionFn = (
   handler: string,
@@ -64,6 +65,14 @@ export interface SduiCtx {
    * resolution error).
    */
   writePlan: WritePlanEntry[];
+  /**
+   * Optional streaming transport. Subscribed to by `text` /
+   * `markdown` / `code` / `timeline` nodes that carry a
+   * `subscribe` subject. The transport delivers chunks plus the
+   * `stream_end` sentinel (per SCOPE S-D5). Absent transport →
+   * streaming nodes render their server-baked seed and stay static.
+   */
+  streamingTransport?: SubscriptionTransport;
 }
 
 const SduiContext = createContext<SduiCtx | null>(null);
@@ -81,6 +90,7 @@ export function SduiProvider({
   setPageState,
   treeQueryKey,
   writePlan,
+  streamingTransport,
   children,
 }: SduiCtx & { children: React.ReactNode }) {
   return (
@@ -92,6 +102,7 @@ export function SduiProvider({
         setPageState,
         treeQueryKey,
         writePlan,
+        streamingTransport,
       }}
     >
       {children}

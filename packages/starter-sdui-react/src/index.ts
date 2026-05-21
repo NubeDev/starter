@@ -32,6 +32,19 @@ export type { SubscriptionTransport } from "./useSubscriptions.js";
 export { useBoundWrite } from "./useBoundWrite.js";
 export type { BoundWrite } from "./useBoundWrite.js";
 
+export {
+  useStreaming,
+  registerStreamingTransport,
+  getStreamingTransport,
+  useStreamingTransport,
+} from "./useStreaming.js";
+export type {
+  StreamEndReason,
+  StreamEndSentinel,
+  UseStreamingOptions,
+  StreamingState,
+} from "./useStreaming.js";
+
 export { evaluateShowWhen } from "./show-when.js";
 
 export {

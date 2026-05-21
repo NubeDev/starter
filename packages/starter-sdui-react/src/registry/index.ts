@@ -23,6 +23,17 @@ import { tableSpec } from "../components/Table.js";
 import { formSpec } from "../components/Form.js";
 import { fieldSpec, selectSpec, toggleSpec } from "../components/Inputs.js";
 import { customSpec } from "../components/Custom.js";
+import { chartSpec, sparklineSpec } from "../components/Chart.js";
+import { treeSpec } from "../components/Tree.js";
+import {
+  markdownSpec,
+  codeSpec,
+  timelineSpec,
+} from "../components/Streaming.js";
+import { wizardSpec, drawerSpec } from "../components/Wizard.js";
+import { richTextSpec } from "../components/RichText.js";
+import { diffSpec } from "../components/Diff.js";
+import { refPickerSpec, dateRangeSpec } from "../components/Pickers.js";
 
 export type { ComponentRegistry, ComponentSpec, Kind } from "./types.js";
 
@@ -49,6 +60,13 @@ function collectSpecs(): ReadonlyArray<ComponentSpec<unknown>> {
     tableSpec, formSpec,
     fieldSpec, selectSpec, toggleSpec,
     customSpec,
+    // Phase 6 — remaining IR variants.
+    chartSpec, sparklineSpec,
+    treeSpec, timelineSpec,
+    markdownSpec, codeSpec,
+    wizardSpec, drawerSpec,
+    richTextSpec, diffSpec,
+    refPickerSpec, dateRangeSpec,
   ] as unknown as ReadonlyArray<ComponentSpec<unknown>>;
 }
 

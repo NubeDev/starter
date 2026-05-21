@@ -33,7 +33,20 @@ export type Kind =
   | "field"
   | "select"
   | "toggle"
-  | "custom";
+  | "custom"
+  // Phase 6 — remaining IR variants.
+  | "chart"
+  | "sparkline"
+  | "tree"
+  | "timeline"
+  | "markdown"
+  | "code"
+  | "wizard"
+  | "drawer"
+  | "rich_text"
+  | "diff"
+  | "ref_picker"
+  | "date_range";
 
 export type ComponentRenderProps<TNode> = { node: TNode };
 

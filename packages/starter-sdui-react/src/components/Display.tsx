@@ -8,6 +8,7 @@
 import { Badge } from "@nube/starter-ui-kit";
 import type { ComponentSpec } from "../registry/types.js";
 import type { UiComponent } from "../types.js";
+import { StreamingTextComponent, type StreamingTextNode } from "./Streaming.js";
 
 type Tone = "default" | "muted" | "danger" | "success" | "warning";
 const TONE_TEXT: Record<Tone, string> = {
@@ -25,11 +26,21 @@ export interface TextNode extends UiComponent {
 }
 export const textSpec: ComponentSpec<TextNode> = {
   kind: "text",
-  Component: ({ node }) => (
-    <p className={`text-sm ${TONE_TEXT[node.tone ?? "default"]} ${node.style?.className ?? ""}`}>
-      {node.value}
-    </p>
-  ),
+  Component: ({ node }) => {
+    // Streaming variant — when the IR carries a `subscribe` subject
+    // the node opts into the streaming path per SCOPE.md
+    // "Streaming content". Static `text` nodes ignore the streaming
+    // hook entirely.
+    const streaming = node as TextNode & { subscribe?: string };
+    if (streaming.subscribe) {
+      return <StreamingTextComponent node={streaming as unknown as StreamingTextNode} />;
+    }
+    return (
+      <p className={`text-sm ${TONE_TEXT[node.tone ?? "default"]} ${node.style?.className ?? ""}`}>
+        {node.value}
+      </p>
+    );
+  },
 };
 
 export interface HeadingNode extends UiComponent {
