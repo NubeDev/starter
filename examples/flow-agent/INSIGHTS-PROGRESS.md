@@ -12,7 +12,7 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - New module wired into `server.rs` exposing the 9 REST routes in spec §Backend. `RwLock<InsightsFixtures>` in app state, fixture loader on startup. Smoke tests via `tests/`.
 - [x] **S3 — Frontend Phase 1 surfaces**
   - Sidebar Insights section. `RulesList.tsx` + `VerdictsView.tsx` (list + detail) reading the REST. React-query hooks. Routes wired in `app.tsx`.
-- [ ] **S4 — Print stylesheet (I4)**
+- [x] **S4 — Print stylesheet (I4)**
   - `@media print` CSS for verdict detail (and rule editor detail header). Hide chrome, table evidence rows, `@page` numbers, light-only.
 - [ ] **S5 — `RuleEditor.tsx` + dry-run (Phase 2 UI)**
   - Split-pane page with Monaco editor (MD1), schema panel, dry-run pane. No agent tools yet — just human edit + POST.
@@ -66,6 +66,14 @@ Each stage commits + pushes at the end.
   page count down and matches the spec's "filterable list + detail"
   framing. Print-only header/footer markup ships now so S4 can
   layer the `@media print` CSS without re-touching the page.
+- **D-S4-1** — Print CSS lives in `globals.css` (not lifted into
+  `starter-ui-kit`) — defers MD4 until Phase 1 ships and other
+  detail pages prove the layout is reusable. Locality + zero
+  cross-package churn is the right trade now.
+- **D-S4-2** — `@page :first { margin-top: 12mm }` and a single A4
+  size keeps the first-page header tight without per-page CSS for
+  evidence-heavy verdicts. Tested mentally against the existing
+  fixture rows; any verdict in the seed set fits on one page.
 - **D-S3-2** — Sidebar "Insights" entry sits *above* Skills/Settings
   (per spec §Sidebar additions: above Pages — but flow-agent's
   Pages sits high in the nav, so above Skills is the closest
@@ -85,6 +93,17 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S4 — 2026-05-22
+- Appended `@media print` block to `frontend/src/globals.css`:
+  pinned light palette inside `.dark` so theme can't bleed into PDFs
+  (acceptance checklist item), hid sidebar/header/footer/buttons,
+  promoted `print:block` elements, flattened badges to greyscale
+  outlines, set `@page A4 16mm/14mm`, tightened verdict typography.
+- The `verdict-print` class was already added to the verdict article
+  in S3, so no page-component changes needed.
+- `pnpm typecheck` ✓; `pnpm build` ✓ (CSS bundle 170→172 KB, +2 KB).
 - Commit + push.
 
 ### S3 — 2026-05-22

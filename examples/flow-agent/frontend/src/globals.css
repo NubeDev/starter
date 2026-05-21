@@ -101,3 +101,154 @@
     -webkit-overflow-scrolling: touch;
   }
 }
+
+/* ----------------------------------------------------------------- */
+/* Insights print stylesheet (I4)                                     */
+/*                                                                    */
+/* Verdict detail and rule editor detail pages opt in by adding the   */
+/* `verdict-print` class on their root <article>. Hides sidebar,      */
+/* header, footer, agent dock and any element marked `print:hidden`;  */
+/* shows print-only headers/footers; switches to a single-column      */
+/* greyscale layout with page numbers. Always light — `@media print`  */
+/* runs after light/dark variables are set, but we re-pin colors so   */
+/* the dark theme can't bleed into PDFs.                              */
+/* ----------------------------------------------------------------- */
+@media print {
+  @page {
+    margin: 16mm 14mm;
+    size: A4;
+  }
+  @page :first {
+    margin-top: 12mm;
+  }
+
+  :root,
+  .dark {
+    /* Force light palette so PDFs render the same in either theme. */
+    --background: #ffffff;
+    --foreground: #111111;
+    --muted: #f5f5f5;
+    --muted-foreground: #555555;
+    --border: #d4d4d4;
+    --card: #ffffff;
+    --card-foreground: #111111;
+    --primary: #111111;
+    --primary-foreground: #ffffff;
+    --secondary: #f5f5f5;
+    --secondary-foreground: #111111;
+    --accent: #f5f5f5;
+    --accent-foreground: #111111;
+    --destructive: #1a1a1a;
+    --destructive-foreground: #ffffff;
+  }
+
+  html,
+  body {
+    background: #ffffff !important;
+    color: #111111 !important;
+    font-size: 11pt;
+    line-height: 1.4;
+  }
+
+  /* Strip chrome — sidebar, top header, footer, agent dock, theme   */
+  /* toggle, and anything explicitly marked print:hidden by Tailwind. */
+  [data-slot="sidebar"],
+  [data-slot="sidebar-rail"],
+  [data-slot="sidebar-trigger"],
+  aside[data-sidebar],
+  header[data-slot="site-header"],
+  .site-header,
+  .agent-dock,
+  .print\:hidden,
+  nav.print-hide,
+  .fixed.inset-x-0.bottom-0 {
+    display: none !important;
+  }
+
+  /* Promote print-only elements that are hidden on screen. */
+  .print\:block {
+    display: block !important;
+  }
+
+  /* The verdict / rule print container becomes the page. */
+  .verdict-print {
+    box-shadow: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    max-width: 100% !important;
+    color: #111111 !important;
+    background: #ffffff !important;
+    page-break-inside: auto;
+  }
+
+  /* Drop card lifts, rounded heavy shadows, hover effects. */
+  .card-lift,
+  [data-slot="card"] {
+    box-shadow: none !important;
+    border: 1px solid #d4d4d4 !important;
+    break-inside: avoid;
+  }
+
+  /* Real <table> for evidence — keep borders crisp, avoid splits. */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+  thead {
+    display: table-header-group;
+  }
+  tr,
+  td,
+  th {
+    page-break-inside: avoid;
+    border-color: #d4d4d4 !important;
+  }
+  th {
+    text-align: left;
+    font-weight: 600;
+    border-bottom: 1px solid #111111 !important;
+  }
+
+  /* Severity / tag badges flatten to greyscale outlines. */
+  [data-slot="badge"] {
+    background: transparent !important;
+    color: #111111 !important;
+    border: 1px solid #111111 !important;
+    box-shadow: none !important;
+  }
+
+  /* Buttons / links: drop chrome but keep underlines for context. */
+  button,
+  [role="button"] {
+    display: none !important;
+  }
+  a[href] {
+    color: #111111 !important;
+    text-decoration: underline;
+  }
+
+  /* Tighten section spacing so a single verdict fits on one page    */
+  /* when evidence is short — printable-by-default per spec §I4.     */
+  article.verdict-print > * + * {
+    margin-top: 12pt;
+  }
+  article.verdict-print h1 {
+    font-size: 16pt;
+    margin-bottom: 4pt;
+  }
+  article.verdict-print h2 {
+    font-size: 12pt;
+    margin-bottom: 4pt;
+    border-bottom: 1px solid #d4d4d4;
+    padding-bottom: 2pt;
+  }
+
+  /* AI-explanation block: italic blockquote for visual auditability. */
+  article.verdict-print blockquote {
+    border-left: 2pt solid #111111 !important;
+    color: #333333 !important;
+    font-style: italic;
+    padding-left: 8pt;
+  }
+}
