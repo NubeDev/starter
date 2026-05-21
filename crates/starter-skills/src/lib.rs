@@ -13,7 +13,9 @@
 //! - the [`SkillParseError`] structured-error enum that names the
 //!   offending path on every failure mode.
 //!
-//! Subsequent stages add the bundle-hash, registry, approval store,
+//! Phase 2 adds the content-hash algorithm under
+//! [`approval`] (`hash_bundle` + `EXCLUDED`, R-skills-2 / agent
+//! R4). Subsequent stages add the registry, approval store,
 //! selectors, and ai-agent on-mount verification. Nothing in this
 //! module performs templating, interpolation, or env expansion —
 //! a `{{x}}` inside a `SKILL.md` body is literal text the model
@@ -22,6 +24,7 @@
 #![deny(missing_docs)]
 #![forbid(unsafe_code)]
 
+pub mod approval;
 pub mod bundle;
 pub mod error;
 pub mod parser;
