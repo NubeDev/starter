@@ -14,6 +14,9 @@ use utoipa::OpenApi;
 
 use crate::ai_runtime::AiRuntime;
 use crate::flow_engine::FlowEngine;
+use crate::insights_mock::{
+    default_fixtures_dir, router as insights_router, InsightsFixtures, InsightsState,
+};
 use crate::rest::{router as rest_router, FlowAgentApi, RestState};
 use crate::sse::EventHub;
 use crate::store::{AgentStore, FlowStore, RunStore};
@@ -54,8 +57,27 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         agent_sessions,
     };
 
+    // Insights mock-up surface (INSIGHTS-MOCKUP.md). Fixture files
+    // are loaded on startup; missing fixtures degrade to an empty
+    // in-memory store so the rest of the server keeps booting.
+    let insights_dir = default_fixtures_dir();
+    let insights_data = InsightsFixtures::load(&insights_dir).unwrap_or_else(|err| {
+        tracing::warn!(
+            target: "flow_agent::insights_mock",
+            dir = %insights_dir.display(),
+            error = %err,
+            "insights fixtures not loaded; mock surface will return empty arrays",
+        );
+        InsightsFixtures {
+            root: insights_dir.clone(),
+            ..InsightsFixtures::default()
+        }
+    });
+    let insights_state = InsightsState::new(insights_data);
+
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(rest_router(rest_state))
+        .merge_router(insights_router(insights_state))
         .with_openapi(FlowAgentApi::openapi())
         .with_metrics(registry, metrics)
         .build();

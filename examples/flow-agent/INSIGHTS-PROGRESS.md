@@ -8,7 +8,7 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - Read spec, survey repo layout. Create fixtures dir with placeholder + this progress doc.
 - [x] **S1 — Fixtures: schema + seed data (Phase 1 data)**
   - Author `fixtures/insights/{rules,verdicts,pipelines,coverage,tags-index}.json` covering IoT, Energy, Bills scenarios per spec §Fixtures. Write `fixtures/insights/README.md`.
-- [ ] **S2 — Backend `insights_mock.rs` (Phase 1 backend)**
+- [x] **S2 — Backend `insights_mock.rs` (Phase 1 backend)**
   - New module wired into `server.rs` exposing the 9 REST routes in spec §Backend. `RwLock<InsightsFixtures>` in app state, fixture loader on startup. Smoke tests via `tests/`.
 - [ ] **S3 — Frontend Phase 1 surfaces**
   - Sidebar Insights section. `RulesList.tsx` + `VerdictsView.tsx` (list + detail) reading the REST. React-query hooks. Routes wired in `app.tsx`.
@@ -44,6 +44,23 @@ Each stage commits + pushes at the end.
   edges:[{from,to,type}]}` where `type ∈ {Dataset, Verdict, Frame}`
   per spec §PipelineCanvas. The canvas layer (S8) will translate to
   the `starter-ui-flow` node model.
+- **D-S2-1** — `insights_mock.rs` keeps rows as raw `serde_json::Value`
+  (not typed Rust structs). Reason: the fixture JSON shapes are
+  load-bearing (I2), not the Rust types; staying schema-less means
+  we don't need to keep two definitions in sync. The eventual
+  `starter-insights` crate will introduce typed `Verdict`/`Rule`
+  structs and this module will be deleted (I5).
+- **D-S2-2** — Insights router exposed as its own
+  `router<S>(state) -> Router<S>` with `with_state(state)` baked in,
+  then merged in `server::build`. Avoids widening `RestState` for a
+  surface we'll delete.
+- **D-S2-3** — `POST /api/insights/pipelines` covers both create and
+  graph-update by id (spec lists POST for both). Halves the
+  surface area without losing capability.
+- **D-S2-4** — Fixture loader degrades to an empty store with a
+  warn-level log if files are missing. Keeps `cargo run -p flow-agent`
+  bootable from any CWD even when the bin is launched outside the
+  workspace.
 
 ## Run log
 
@@ -59,4 +76,17 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S2 — 2026-05-22
+- Added `src/insights_mock.rs` (rules, verdicts, pipelines CRUD + dry-run +
+  coverage/tags helpers) with `tokio::sync::RwLock<InsightsFixtures>` and
+  pretty-printed write-back to disk.
+- Wired into `server.rs` via `merge_router(insights_router(...))`. Default
+  fixtures dir resolves via `CARGO_MANIFEST_DIR` with
+  `INSIGHTS_FIXTURES_DIR` override.
+- New `tests/insights_mock.rs`: 5 tests (list rules, get + 404, filter
+  verdicts, dry-run, upsert pipeline round-trips to disk via tempdir).
+- `cargo build -p flow-agent` ✓; `cargo test -p flow-agent` ✓ (6 tests
+  passing total: 1 existing + 5 new). 0 boundary-check script in repo.
 - Commit + push.

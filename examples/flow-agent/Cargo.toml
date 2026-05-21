@@ -47,5 +47,8 @@ chrono       = { workspace = true }
 uuid         = { workspace = true }
 
 [dev-dependencies]
-starter-server = { workspace = true, features = ["testing"] }
-starter-ai     = { workspace = true, features = ["provider-claude", "provider-anthropic", "testing"] }
+starter-server  = { workspace = true, features = ["testing"] }
+starter-ai      = { workspace = true, features = ["provider-claude", "provider-anthropic", "testing"] }
+tower           = { workspace = true, features = ["util"] }
+http-body-util  = "0.1"
+tempfile        = "3"
