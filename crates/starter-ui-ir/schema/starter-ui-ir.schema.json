@@ -1,0 +1,4534 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ComponentTree",
+  "description": "Root of every component tree. Carries the IR version so clients can refuse to render incompatible trees.",
+  "type": "object",
+  "required": [
+    "ir_version",
+    "root"
+  ],
+  "properties": {
+    "ir_version": {
+      "description": "Protocol version — currently [`IR_VERSION`].",
+      "type": "integer",
+      "format": "uint32",
+      "minimum": 0.0
+    },
+    "root": {
+      "description": "The root component (always a `page` variant for resolve output).",
+      "allOf": [
+        {
+          "$ref": "#/definitions/Component"
+        }
+      ]
+    },
+    "vars": {
+      "description": "Author-declared constants, referenced from bindings via `{{$vars.<key>}}`. Scoped to the whole tree; resolved once per resolve call, before any other binding substitution. Values are any JSON — strings, numbers, arrays, nested objects. Vars cannot reference other vars in v1 (no recursion).",
+      "type": "object",
+      "additionalProperties": true
+    }
+  },
+  "definitions": {
+    "Component": {
+      "description": "A single component in the IR tree.\n\nDiscriminated by the `\"type\"` field on the wire (`#[serde(tag = \"type\")]`). Variant names are `snake_case` on the wire (`page`, `row`, `col`, …).",
+      "oneOf": [
+        {
+          "description": "Root component for a resolved page.",
+          "type": "object",
+          "required": [
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "page"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "header_actions": {
+              "description": "Buttons rendered in the page header beside the title.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ToolbarAction"
+              }
+            },
+            "children": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "default_row_gap": {
+              "description": "Default horizontal gap between widgets in a row. CSS length (e.g. `\"1rem\"`, `\"16px\"`). Renderer emits this as the `--rb-row-gap` CSS custom property on the page root; rows without their own `gap` fall back to it. Absent = renderer default. Captures intent at the page level so widgets added later inherit consistent spacing without the authoring layer needing to know what it is.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "default_column_gap": {
+              "description": "Default vertical gap between rows. CSS length. Emitted as `--rb-column-gap`; the page wrapper consumes it to space stacked rows.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "default_page_padding": {
+              "description": "Inner padding of the page wrapper. CSS length applied symmetrically. Emitted as `--rb-page-padding`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "default_max_width": {
+              "description": "Cap on the page wrapper's content width. CSS length (`\"80rem\"`) or `\"100%\"` for no cap. Emitted as `--rb-page-max-width`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Horizontal layout container — either a 12-track CSS grid (the default; cols use `span` to claim cells) or an auto flex row (cols size to content, packed by `justify`). The `layout` field picks the mode.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "row"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "gap": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "layout": {
+              "description": "Layout primitive. `\"grid\"` (default) renders a 12-track CSS grid where children with `type = \"col\"` claim cells via their `span`. `\"auto\"` renders a flex row where children shrink-wrap to their content width — use this when you want widgets to sit next to each other without committing to a column system. Cols inside an `auto` row keep their `span` value (so toggling back to `grid` is non-lossy) but the renderer ignores it.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/RowLayout"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "breakpoints": {
+              "description": "V1.9 responsive behaviour. When `breakpoints.stack_below` is set, the row collapses to a column on viewports narrower than the named breakpoint (`\"sm\"` or `\"md\"`).",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/RowBreakpoints"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "align": {
+              "description": "Cross-axis alignment of children. For a row this is the *vertical* axis. Defaults to `stretch`.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FlexAlign"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "justify": {
+              "description": "Main-axis distribution of children. For a row this is the *horizontal* axis. Defaults to `start`. In `grid` layout this only has visible effect when the cols' spans don't sum to the full 12 tracks.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FlexJustify"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "wrap": {
+              "description": "When `false`, children stay on a single line and overflow. Default `true` (`flex-wrap`). Only meaningful in `auto` layout — grid layout never wraps.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Vertical flex column.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "col"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "gap": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "span": {
+              "description": "12-grid width when this column is a child of a `row`. `1..=12`. Absent = auto sizing.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "align": {
+              "description": "Cross-axis alignment of children. For a col this is the *horizontal* axis. Defaults to `stretch`.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FlexAlign"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "justify": {
+              "description": "Main-axis distribution of children. For a col this is the *vertical* axis. Defaults to `start`.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FlexJustify"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "CSS grid layout.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "grid"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "columns": {
+              "description": "CSS `grid-template-columns` value, e.g. `\"1fr 1fr\"`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Tab container — each tab has a label + child tree.",
+          "type": "object",
+          "required": [
+            "tabs",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "tabs"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "tabs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Tab"
+              }
+            },
+            "lazy": {
+              "description": "When `true`, a tab's `children` only mount on first activation. Once mounted the tab stays mounted (so SSE subscriptions persist and switching back is instant). Default `false` for backward compatibility — all tabs render eagerly.",
+              "default": false,
+              "type": "boolean"
+            },
+            "url_param": {
+              "description": "When set, the active tab id is mirrored into a query-string param of this name (e.g. `?tab=permissions`). Reading the param on mount selects the tab; switching replaces (not pushes) history.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "default": {
+              "description": "Tab `id` to select when the URL param is absent or unrecognised. Falls back to the first tab when absent (existing behaviour).",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Server-side template expansion. The resolver evaluates `source` (a binding expression yielding an array), then for each item instantiates `template` with `$item.*` and `$index` bound to that item; the result replaces the `Repeat` node in its parent's `children`. The renderer never sees a `Repeat` — by the time the tree leaves the agent, every Repeat has been expanded.\n\nUse cases: - One tab per entry in a slot array: `tabs.children([repeat(...)])` pattern — Tab itself isn't a Component, so wrapper helpers like the builder's `tabs_for_each` produce a `Tabs` whose `tabs` list is filled at expand time. - One card per child node, one row per series, etc. Anywhere a parent's `children` is currently a static `Vec<Component>`.\n\nEmpty source → zero expansions → the Repeat node disappears. Unbound or non-array source → resolver issues a binding error and the Repeat stays in place (the dry-run validator surfaces it).",
+          "type": "object",
+          "required": [
+            "source",
+            "template",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "repeat"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source": {
+              "description": "Binding expression resolving to a JSON array. Same grammar as any other binding: `{{$self.gates}}`, `{{$page.items}}`, `{{$stack.target.children}}`. The surrounding `{{ }}` is optional — bare `$self.gates` is accepted too.",
+              "type": "string"
+            },
+            "alias": {
+              "description": "Optional second binding scope name. When omitted, items are reachable via `{{$item.*}}`. When set (e.g. `\"gate\"`), items are reachable via `{{$gate.*}}` *as well as* `{{$item.*}}` — the alias makes nested repeats readable.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "template": {
+              "description": "The component to instantiate per item. Bindings inside it are evaluated with `$item` and (if set) `$<alias>` populated.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Component"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Plain text span.",
+          "type": "object",
+          "required": [
+            "content",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "text"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "content": {
+              "type": "string"
+            },
+            "intent": {
+              "description": "Semantic intent: `\"info\"`, `\"success\"`, `\"warning\"`, `\"danger\"`, or `null`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Section heading (h1–h6).",
+          "type": "object",
+          "required": [
+            "content",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "heading"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "content": {
+              "type": "string"
+            },
+            "subtitle": {
+              "description": "Optional secondary line rendered below the heading text.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "level": {
+              "description": "1–6, maps to `<h1>`–`<h6>`. Defaults to 2.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Small status pill / tag.",
+          "type": "object",
+          "required": [
+            "label",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "badge"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Unified diff display with optional per-line annotations.",
+          "type": "object",
+          "required": [
+            "new_text",
+            "old_text",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "diff"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "old_text": {
+              "type": "string"
+            },
+            "new_text": {
+              "type": "string"
+            },
+            "language": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "annotations": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DiffAnnotation"
+              }
+            },
+            "line_action": {
+              "description": "Optional per-line action (e.g. inline comment). `$line` placeholder is substituted from the click context.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Horizontal or vertical separator. Replaces the `text(\"---\")` hack that block authors used to fake section breaks. Carries only design tokens — never pixel values — so the renderer owns the visual mapping.\n\nAll fields are optional; the renderer applies defaults (`orientation = \"horizontal\"`, `intent = \"muted\"`, `spacing = \"md\"`).\n\nTokens (V1.6 source of truth, V1.1 consumer): - `orientation`: `\"horizontal\"` | `\"vertical\"` - `intent`: `\"default\" | \"muted\" | \"primary\" | \"danger\" | \"warn\" | \"ok\" | \"info\"` - `spacing`: `\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\"`",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "divider"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "orientation": {
+              "description": "`\"horizontal\"` (default) or `\"vertical\"`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "intent": {
+              "description": "Semantic intent token. Defaults to `\"muted\"` at render time.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "spacing": {
+              "description": "Spacing token (margin around the rule). Defaults to `\"md\"` at render time.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Atomic form unit (V1.3 of SDUI-VISUAL.md): label + required `control` + optional helper text + optional structured error. Decoupled from `form` so authors can interleave fields, headings, dividers, and standalone widgets in a `col`.\n\n`control` is non-optional — a field group without a control is just a `text`. The wire shape mirrors the diagnostics item (`{ severity, message, code? }`) so action responses can map a returned diagnostic into a field's error slot without reshaping.",
+          "type": "object",
+          "required": [
+            "control",
+            "label",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "field_group"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "label": {
+              "description": "Visible field label rendered above the control.",
+              "type": "string"
+            },
+            "control": {
+              "description": "The bound input — typically a `text_field` / `select` / `toggle` / `slider` (V1.4 nodes) or any existing control.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Component"
+                }
+              ]
+            },
+            "helper": {
+              "description": "Helper / caption text rendered below the control in muted foreground (e.g. `\"Enter your 16-digit number\"`).",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "error": {
+              "description": "Structured field error consumed from a diagnostic item.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/FieldError"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "required": {
+              "description": "When true, the renderer marks the label with a required indicator and exposes `aria-required` on the control.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Semantic sub-group — a labelled container with its own heading, optional subtitle, and a child stack with built-in vertical rhythm. Gives the IR a name for \"this is a sub-section inside a card / page\" so the renderer styles consistently and assistive tech can landmark.\n\nV1.2 of SDUI-VISUAL.md. Pure layout sugar with no data bindings — for content with bindings, compose this around a `card` / `col` / `form` subtree.",
+          "type": "object",
+          "required": [
+            "title",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "section"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "description": "Section heading text. Required — a section without a title is just a `col`.",
+              "type": "string"
+            },
+            "subtitle": {
+              "description": "Optional secondary line rendered below the title in muted foreground.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "level": {
+              "description": "Heading level for the title — 1–6, maps to `<h2>`–`<h6>`. Defaults to 3 at render time (sections sit inside pages whose own heading is typically h1/h2).",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "landmark": {
+              "description": "Optional ARIA landmark role: `\"region\"`, `\"form\"`, `\"nav\"`, or `\"complementary\"`. When set, the renderer emits the matching landmark element so screen readers can navigate.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "description": "Section body — any IR subtree.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Time-series chart. Data points are fetched server-side at resolve time against the node+slot addressed by `source`. Zoom / pan gestures write `{from, to}` into `$page[page_state_key]` and re-issue `/ui/resolve`, so the server can return denser data for the focused window. Live ticks come in via the subscription plan — the subject is `node.<id>.slot.<slot>`.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "chart"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "sources": {
+              "description": "One or more typed sources — V3 supports multi-series authoring. V2's single `source` becomes a one-element `sources` vector; the V3→V2 downgrader degrades multi-source charts to [`Component::Dangling`].",
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ChartSource"
+              }
+            },
+            "kind": {
+              "description": "Renderer kind. Now actually consumed by the renderer (V2 silently ignored unrecognised strings).",
+              "default": "line",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/ChartKind"
+                }
+              ]
+            },
+            "agg": {
+              "description": "Page-level default aggregation. Per-source aggregations on [`ChartSource::Rows`] / [`ChartSource::SeriesFromRsql`] win when set; this is only consulted as a fallback.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AggSpec"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "series": {
+              "description": "Server-emitted series payload (one per line / area / bar).",
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ChartSeries"
+              }
+            },
+            "range": {
+              "description": "Current visible window (inclusive ms since epoch). The server fills this from `$page.<page_state_key>` or its own default when the client hasn't zoomed yet.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ChartRange"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "page_state_key": {
+              "description": "Client writes zoom / pan state here on `$page`. Defaults to `\"chart_range\"` when absent.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "history": {
+              "description": "Declarative backfill config: on mount the client fetches the past window then SSE extends the series forward. Absent = today's behaviour (ad-hoc 1h default inside the client). See docs/sessions/DASHBOARD-BUILDER.md § \"Chart history backfill\".",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/ChartHistory"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Compact sparkline — a single line of recent points, no axes, no interaction. Intended for KPI tiles.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "sparkline"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "values": {
+              "description": "Inline values, newest last. Server fills these at resolve.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "number",
+                "format": "double"
+              }
+            },
+            "subscribe": {
+              "description": "Subscription subject for live append (`node.<id>.slot.<s>`).",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "unit_symbol": {
+              "description": "Unit symbol appended to aria-label and tooltip (e.g. `\"°C\"`).",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Server-paginated, sortable table. Rows fetched via `GET /api/v1/ui/table` (S3); S1 emits the schema only.\n\n`row_actions` add per-row buttons in a synthetic last column. `toolbar_actions` add page-level buttons rendered above the table. Both action lists' `args` may contain `{{$row.<path>}}` tokens (row_actions only) which the renderer substitutes from the clicked row before dispatching — handlers receive concrete values, not the binding string.",
+          "type": "object",
+          "required": [
+            "columns",
+            "source",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "table"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source": {
+              "$ref": "#/definitions/TableSource"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TableColumn"
+              }
+            },
+            "row_action": {
+              "description": "Whole-row click — preserved for back-compat (e.g. drilldown to a detail page). Mutually compatible with `row_actions`.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "row_actions": {
+              "description": "Per-row buttons rendered in a synthetic trailing column.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RowAction"
+              }
+            },
+            "toolbar_actions": {
+              "description": "Page-level buttons rendered above the table (e.g. \"Add\").",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/ToolbarAction"
+              }
+            },
+            "searchable": {
+              "description": "When true the renderer shows a search input above the table. The typed query is appended as a wildcard RSQL clause to the source query via the `filter` param.",
+              "type": "boolean"
+            },
+            "page_size": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Client-side table rendered from a JSON array binding.\n\nUnlike [`Component::Table`] (which fetches rows from `GET /api/v1/ui/table` via RSQL), `ArrayTable` receives its data from a binding expression that resolves to a JSON array already present in the page context (e.g. a slot value).\n\nThe renderer parses the array, maps each element through the column definitions, and renders an in-memory table with optional row actions. No server pagination — the full array is rendered client-side.\n\nTypical source: `\"{{$self.slots.services.value}}\"` — a slot containing a JSON-serialised `Vec<ServiceDescriptor>`.",
+          "type": "object",
+          "required": [
+            "columns",
+            "source",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "array_table"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source": {
+              "description": "Binding expression resolving to a JSON array. Same grammar as any read binding (`$self.*`, `$target.*`, `$page.*`).",
+              "type": "string"
+            },
+            "columns": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TableColumn"
+              }
+            },
+            "row_actions": {
+              "description": "Per-row buttons. Args may contain `{{$row.<path>}}` tokens substituted from the current array element.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/RowAction"
+              }
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Client-side searchable table over an inline JSON array.\n\nDistinct from [`Component::Table`] (server-fetched via `GET /api/v1/ui/table`) and [`Component::ArrayTable`] (binding-driven over a slot's JSON value). `JsonTable` carries the rows directly in the IR — used for diagnostic payloads, preview panels, and any data the backend already has in hand when it builds the page.\n\nColumns are derived from row shape when omitted (one level of dot-flattening for nested objects); supply `columns` to pin order, rename headers, or override the format of a single column.\n\nTimestamp columns auto-format: any column whose key matches `*_ms` or `*_at` and whose values look like epoch milliseconds is rendered through the caller's resolved preferences (timezone, locale, date_format, time_format) by the renderer. Override per-column with `format: \"raw\"` to opt out or `format: \"datetime\"` to opt in explicitly.",
+          "type": "object",
+          "required": [
+            "data",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "json_table"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "data": {
+              "description": "The rows. Empty array is legal — the renderer shows a \"No rows\" hint.",
+              "type": "array",
+              "items": true
+            },
+            "columns": {
+              "description": "Optional explicit column list. Omit for auto-derive.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/JsonTableColumn"
+              }
+            },
+            "searchable": {
+              "description": "When true (default), the renderer shows a search input that filters across the formatted form of every cell.",
+              "type": "boolean"
+            },
+            "max_height_class": {
+              "description": "Tailwind class capping the table's vertical scroll. The default is the renderer's choice; provide e.g. `\"max-h-64\"` to override.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "search_placeholder": {
+              "description": "Placeholder text for the search input.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Queryable, SSE-aware linear list with a per-row component template.\n\nRows are fetched via `GET /api/v1/ui/table` (same plumbing as [`Component::Table`] — the source DSL is identical). For each row the renderer substitutes `{{$row.*}}` tokens in the `item` template and renders the result. SSE `slot_changed` events whose node id matches a row's `id` replace that row's rendered subtree without a full re-fetch.\n\n**Token syntax is uniform:** every binding uses `{{ ... }}`. Bare `$row.id` is not valid; use `\"{{$row.id}}\"`.\n\n**Scope:** `$row` is in scope for the entire `item` subtree, including arbitrarily nested components. It resolves to the row's `UiTableRow` object — `{{$row.id}}`, `{{$row.path}}`, `{{$row.slots.settings.title}}`.",
+          "type": "object",
+          "required": [
+            "item",
+            "source",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "list"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "source": {
+              "description": "RSQL data source. Same shape as `TableSource`.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/TableSource"
+                }
+              ]
+            },
+            "item": {
+              "description": "Component template rendered once per row. String fields may contain `{{$row.*}}` substitution tokens.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Component"
+                }
+              ]
+            },
+            "row_action": {
+              "description": "Optional click / tap action fired when the user clicks anywhere on a row (not on an item-level button). `$row` is injected into the action args.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "page_size": {
+              "description": "Number of rows per page (default 20).",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "subscribe": {
+              "description": "When `true`, the renderer invalidates the query on every `node_created` / `node_removed` / `slot_changed` SSE event whose path matches the source query's `kind==` filter. Default `false` (polling / manual refresh only).",
+              "default": false,
+              "type": "boolean"
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Modal dialog container. Rendered as a shadcn `Dialog`.\n\nA `dialog` component can be: - **Static** — authored in the page tree, opened by an `Action` that writes `true` into `$page[page_state_key]`. - **Dynamic** — returned as an `Action` response (`{ \"type\": \"dialog\", \"tree\": ... }`) from a handler. The renderer pushes a new dialog onto the LIFO dialog stack; responding with a non-dialog result pops it.\n\n`page_state_key` is only used for the static form; dynamic dialogs are managed entirely by the dialog stack.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "dialog"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "actions": {
+              "description": "Buttons rendered in the dialog footer, ordered left-to-right.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DialogAction"
+              }
+            },
+            "page_state_key": {
+              "description": "`$page` key that controls open/closed state for **static** dialogs. Omit for dynamic (action-response) dialogs.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Dropdown / context menu with optional trigger component.\n\nWhen `trigger` is set the menu renders as a dropdown button — the trigger component is rendered inline and clicking it opens the popover. When `trigger` is absent the component is invisible and must be opened programmatically (e.g. by a right-click handler on a `list` or `table` row — see docs/design/extensions/RIGHT-CLICK.md).\n\nItems are rendered top-to-bottom. `{ type: \"separator\" }` items render as a thin `<hr>` divider. All other items carry a `label` and `action`. A disabled item has no `action` (or the renderer may add an explicit `disabled: true` field in future — currently absent = enabled).",
+          "type": "object",
+          "required": [
+            "items",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "menu"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "trigger": {
+              "description": "Optional inline component (typically a [`Component::Button`]) that opens the menu on click. When absent the host must call a future `open_menu` action to open it.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Component"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "items": {
+              "description": "Ordered list of menu items.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/MenuItem"
+              }
+            }
+          }
+        },
+        {
+          "description": "Hierarchical tree — the sidebar/file-browser shape. Children arrive pre-expanded; lazy-expand is an S7 refinement.",
+          "type": "object",
+          "required": [
+            "nodes",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "tree"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "nodes": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TreeItem"
+              }
+            },
+            "node_action": {
+              "description": "Optional click action — `$node.id` is substituted at dispatch time.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Chronological event list. When `subscribe` is set and `mode` is `\"append\"`, incoming NATS messages on the subject are appended to `events` client-side without a tree re-resolve — the streaming-text story from SDUI.md § \"Streaming content\".",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "timeline"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "events": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/TimelineEvent"
+              }
+            },
+            "subscribe": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "mode": {
+              "description": "`\"append\"` (default — new messages are added to the list) or `\"replace\"` (each message replaces the list).",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Markdown block. With `subscribe` set, new messages on the subject append (or replace) the content depending on `mode` — the UC2 AI-streaming-output primitive.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "markdown"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "content": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "subscribe": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "mode": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Markdown-aware rich-text editor.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "rich_text"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound markdown editor — view/edit toggle backed by a slot write.  In view mode renders the content as prose; in edit mode shows a textarea.  Write semantics follow [`Component::Toggle`] / [`Component::Slider`]: `bind` maps to a `WritePlanEntry` baked at resolve time; the client sends the slot write on save.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "markdown_editor"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Initial content baked at resolve time.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rows": {
+              "description": "Minimum visible rows in edit mode (default 6).",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        {
+          "description": "Node-graph reference picker — user searches/filters nodes in the graph, picks one; the form stores its id. UC1 alarm rules, UC2 settings forms, UC3 scope target pickers.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "ref_picker"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "query": {
+              "description": "RSQL filter restricting which nodes the picker offers.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Current value — a node id.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Single-choice dropdown. Writes `value` into `$page[page_state_key]` on selection. Values can be any JSON scalar — a `select` over `severity: [low, medium, high]` writes strings; a severity-as-int select writes numbers. Downstream components (table `source.query`, chart source, etc.) reference the same `$page` key via `{{$page.<key>}}` binding substitution.",
+          "type": "object",
+          "required": [
+            "options",
+            "page_state_key",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "select"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "page_state_key": {
+              "type": "string"
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SelectOption"
+              }
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "default": {
+              "description": "Initial option value applied on mount when the key is unset. Must be one of `options[].value` if set."
+            }
+          }
+        },
+        {
+          "description": "Big-number stat tile. Reads the current slot value from the graph at resolve time and lives-updates over the same subscription plan that powers charts. `format` controls display: `\"number\"` (default) | `\"percent\"` | `\"bytes\"`.",
+          "type": "object",
+          "required": [
+            "label",
+            "source",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "kpi"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "source": {
+              "$ref": "#/definitions/ChartSource"
+            },
+            "format": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "delta": {
+              "description": "Optional comparison delta rendered as \"↑ +12% vs prior\". Structured so the renderer can format and localise; extensions must not pre-format this into a string.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/KpiDelta"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "unit_symbol": {
+              "description": "Unit symbol to display after the value (e.g. `\"°C\"`, `\"kPa\"`, `\"%\"`). Set by the resolver from the slot's quantity + caller unit prefs. Block authors may also set this statically in a view template; the resolver overwrites it when the slot has a known quantity.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Responsive grid of static KPI tiles. `columns` is the number of columns at \"desktop\" breakpoint; the renderer collapses to fewer on smaller viewports. Use `kpi_grid` instead of a hand-rolled `grid` of `kpi` items to get consistent responsive behaviour.",
+          "type": "object",
+          "required": [
+            "items",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "kpi_grid"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "columns": {
+              "description": "Number of columns at the desktop breakpoint (default 4).",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint8",
+              "minimum": 0.0
+            },
+            "items": {
+              "description": "Inline KPI tiles — pre-resolved at server resolve time.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/KpiGridItem"
+              }
+            },
+            "on_tile_click": {
+              "description": "Optional action fired when the user clicks any tile. The action context receives `tile_id` (the tile's `id` field) and `tile_label` so the handler can branch on which tile was clicked. Use `set_state` with `value_from: \"tile_id\"` to drive a page-level filter without custom JS.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Property-sheet / label-value detail display. Renders as a `dl` (or shadcn `Card` rows on web). Each row can carry an optional inline action (e.g. \"Edit\", \"Reassign…\").",
+          "type": "object",
+          "required": [
+            "items",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "detail"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DetailItem"
+              }
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Titled container — closed slot set per V1.5 of SDUI-VISUAL.md: `title` / `lead` / `content` / `trailing`. `title` and `subtitle` are strings; `lead` and `trailing` each carry a single component (typically an icon, avatar, badge, or status pill); `content` is the existing `children` body.\n\nBackwards-compatible: pre-V1.5 cards with bare `children` and `actions` continue to work unchanged. `actions` renders next to `trailing` in the card header.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "card"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "subtitle": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "intent": {
+              "description": "Semantic intent: `\"info\"`, `\"success\"`, `\"warning\"`, `\"danger\"`, or `null`. Controls the card's accent colour.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "lead": {
+              "description": "Single component rendered to the left of the title (icon, avatar, leading visual). V1.5: requires `title` to be set — enforced by the builder; on the wire, a `lead` without a `title` falls back to rendering as a top-row prefix.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Component"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "trailing": {
+              "description": "Single component rendered at the top-right of the header (status badge, metadata pill). Sits alongside `actions`.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Component"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "actions": {
+              "description": "Action buttons rendered in the card header.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/CardAction"
+              }
+            },
+            "children": {
+              "description": "Body content — the `content` slot. Any IR subtree.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Time-range picker with preset buttons. Writes `{from, to}` (Unix ms) into `$page[page_state_key]` on every click. `to` is \"now\" at click time for presets; `null/null` means \"all time\". Any component reading the same `page_state_key` (typically a `chart`) automatically retunes.\n\nA preset with `duration_ms: null` is \"all\" / unbounded — the component writes `null` for `from` (and `to`) so the consumer understands \"no window clamp.\"",
+          "type": "object",
+          "required": [
+            "page_state_key",
+            "presets",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "date_range"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "page_state_key": {
+              "description": "`$page` key to write `{from, to}` into. Consumers read the same key. No default — authors must name it explicitly to avoid accidental cross-widget coupling on shared pages.",
+              "type": "string"
+            },
+            "presets": {
+              "description": "Ordered preset buttons; the first one is applied on mount when `$page[page_state_key]` is unset.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DateRangePreset"
+              }
+            }
+          }
+        },
+        {
+          "description": "Multi-step form. Each step has a nested child tree rendered one at a time; `submit` fires when the last step is confirmed.",
+          "type": "object",
+          "required": [
+            "steps",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "wizard"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "steps": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/WizardStep"
+              }
+            },
+            "submit": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Off-canvas slide-over panel. `open` is bound from `$page`; the close gesture writes `false` back.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "drawer"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "title": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "open": {
+              "default": false,
+              "type": "boolean"
+            },
+            "page_state_key": {
+              "description": "`$page` key that owns the open state. Defaults to `drawer_<id>`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "children": {
+              "default": [],
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Component"
+              }
+            }
+          }
+        },
+        {
+          "description": "A button that fires an action on click.",
+          "type": "object",
+          "required": [
+            "label",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "button"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "disabled": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "action": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound boolean toggle (on/off switch). Reads its initial value from the slot addressed by `bind`; writes back on click via `POST /api/v1/slots`; reconciles via SSE echo. No `HandlerRegistry` entry required.\n\nRenders disabled when no matching `WritePlan` entry exists for the caller (ACL-denied write, binding error, etc.); the current slot value remains visible.\n\nDefault concurrency: `lww`. Default debounce: none (fires immediately on click).",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "toggle"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "description": "Binding expression resolving to a boolean slot. Sugar form or full `BindingSpec`.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Resolved slot value baked in at resolve time. `null` when the slot is unset.",
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound numeric slider. Reads its initial value from the slot addressed by `bind`; debounces writes on drag and fires once on pointer release. Same write + SSE-echo path as [`Component::Toggle`].\n\n`min`, `max`, `step` are **rendering hints only** — they shape the widget; the slot schema is the authoritative constraint.\n\nDefault concurrency: `lww`. Default debounce: 150 ms trailing + always fire on pointer release.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "slider"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "description": "Binding expression resolving to a numeric slot.",
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Resolved slot value baked in at resolve time.",
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "double"
+            },
+            "min": {
+              "description": "Rendering hint — minimum value. Default: 0.",
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "double"
+            },
+            "max": {
+              "description": "Rendering hint — maximum value. Default: 100.",
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "double"
+            },
+            "step": {
+              "description": "Rendering hint — step size. Default: 1.",
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "double"
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound text input. Same write plumbing as [`Component::Toggle`] / [`Component::Slider`] — value is resolved server-side; client writes via `POST /api/v1/slots` and reconciles via SSE.\n\n`format` declares masking the renderer should apply (`credit_card | phone | postcode | iban | none`). `validate` is the local validation contract; async / server-side validation is V2.\n\n`form_id` ties this field to a `Component::Form` coordinator (V1.4b). Optional in V1; planned to become required-by- typestate in V3.3.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "text_field"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Resolved slot value baked at resolve time.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "format": {
+              "description": "Masking hint — closed enum: `\"credit_card\" | \"phone\" | \"postcode\" | \"iban\" | \"none\"`. Defaults to `\"none\"`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "validate": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/TextValidate"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound numeric input. Same plumbing as `text_field`; the renderer enforces numeric IME / step at the input level.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "number_field"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "type": [
+                "number",
+                "null"
+              ],
+              "format": "double"
+            },
+            "format": {
+              "description": "Masking hint — same closed enum as `text_field`.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "validate": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NumberValidate"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Multi-line text area. Same plumbing as `text_field` minus `format` (no masking on multi-line).",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "textarea"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "rows": {
+              "description": "Visible row count hint. Defaults to 3.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            },
+            "validate": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/TextValidate"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound single-choice select. Same plumbing as [`Component::TextField`] but the bound slot is the chosen option's `value`. Distinct from [`Component::Select`] which writes to page-state — `SelectField` writes to a slot via the standard binding pipeline, so it composes with `field_group`, validation, and the future form coordinator.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "options",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "select_field"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SelectOption"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Resolved slot value baked at resolve time."
+            },
+            "required": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound radio group. Same shape as `select_field` but renders as a vertical list of radio inputs — useful when the option count is small (≤5) and the choices benefit from always-visible labels.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "options",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "radio_group"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SelectOption"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": true,
+            "required": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Segmented control — a horizontally-arranged single-choice picker (think iOS UISegmentedControl). Same wire shape as `radio_group`; the renderer styles them differently.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "options",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "segmented"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "options": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/SelectOption"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": true,
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound date field. The wire value is an ISO `YYYY-MM-DD` string regardless of how the renderer displays it (locale / `prefs.date_format` is render-time concern only). For datetime values use a string slot with `format` set on the slot schema — `date_field` is calendar-only.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "date_field"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "placeholder": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "description": "Resolved slot value baked at resolve time — always `YYYY-MM-DD`, never a localised string.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "min": {
+              "description": "Earliest selectable date as `YYYY-MM-DD`. Inclusive.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "max": {
+              "description": "Latest selectable date as `YYYY-MM-DD`. Inclusive.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "required": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Two-way bound boolean checkbox. Distinct from `Toggle` — a checkbox is a form input with an inline label, while `Toggle` is a switch widget with separate label semantics.",
+          "type": "object",
+          "required": [
+            "bind",
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "checkbox"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "bind": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/BindingSpec"
+              }
+            },
+            "label": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "value": {
+              "type": [
+                "boolean",
+                "null"
+              ]
+            },
+            "form_id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "style": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/NodeStyle"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "JSON-Schema-driven form. `schema_ref` is resolved from bindings; `submit` fires on form submission.",
+          "type": "object",
+          "required": [
+            "schema_ref",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "form"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "schema_ref": {
+              "description": "JSON-Schema reference or inline schema.\n\nThe wire type is `String`. When the value is a binding expression (e.g. `\"$target.settings_schema\"`), the server resolves it before emission. When the value is an inline JSON Schema, it must be serialised with `serde_json::to_string` — the renderer's `parseSchema()` calls `JSON.parse()` to recover the object.",
+              "type": "string"
+            },
+            "bindings": {
+              "description": "Current form values — resolved from bindings."
+            },
+            "submit": {
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/Action"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "submit_label": {
+              "description": "Override label for the submit button. When absent the renderer uses its default (\"Submit\").",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "ACL-redacted widget — the caller lacks permission to see the bound data. Renderer shows a neutral stub.",
+          "type": "object",
+          "required": [
+            "id",
+            "reason",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "forbidden"
+              ]
+            },
+            "id": {
+              "type": "string"
+            },
+            "reason": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Widget whose bound node has been deleted. Renderer shows a neutral \"missing\" stub.",
+          "type": "object",
+          "required": [
+            "id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "dangling"
+              ]
+            },
+            "id": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Embeddable kind-action card. The renderer resolves `action_ref` against `GET /api/v1/node/actions?path=<target>` for the given target node, picks the action with that id, and renders the form (when `args_schema` is present) or a confirm/fire button (no-args). Submit calls `POST /api/v1/ui/action` and replaces the widget content area with the response (`patch` / `full_render` / `toast`).\n\nSee `rubix-agent/docs/design/node/NODE-ACTIONS.md` § Widget surface — the manifest entry must declare `surfaces: [widget]` for this to resolve.",
+          "type": "object",
+          "required": [
+            "action_ref",
+            "target",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "action_widget"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "action_ref": {
+              "description": "Globally-namespaced action id: `<kind>.<action_id>`. Same shape returned by the resolve endpoint's `id` field.",
+              "type": "string"
+            },
+            "target": {
+              "description": "Target node path. Bindings (`$target.id`) resolve before this reaches the renderer.",
+              "type": "string"
+            },
+            "title": {
+              "description": "Optional title override. Falls back to the action's `display_name` when omitted.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "description": {
+              "description": "Optional description override. Falls back to the action's `description` when omitted.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Opaque custom component rendered by a block-registered client-side renderer. The server emits `props` verbatim; the React app looks up `renderer_id` in its component registry and delegates. Falls back to a neutral stub when the renderer is not installed.\n\nShips in S3 — unblocks UC1 floor-plan, UC2 flow canvas, UC3 state-machine diagram screens before the S4 acceptance demo.",
+          "type": "object",
+          "required": [
+            "renderer_id",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "custom"
+              ]
+            },
+            "id": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "renderer_id": {
+              "description": "Unique renderer identifier, e.g. `\"acme.floorplan\"`.",
+              "type": "string"
+            },
+            "props": {
+              "description": "Opaque props forwarded verbatim to the renderer."
+            },
+            "subscribe": {
+              "description": "Subscription subjects the renderer wants to watch for live updates. Mirrors the resolver's subscription plan shape.",
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "ToolbarAction": {
+      "description": "Page-level button rendered above a [`Component::Table`] (e.g. an \"Add Project\" or \"Export\" button). Unlike [`RowAction`], `args` here cannot reference `$row` — there is no row context.",
+      "type": "object",
+      "required": [
+        "action",
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        }
+      }
+    },
+    "Action": {
+      "description": "An action reference carried by interactive components.",
+      "type": "object",
+      "required": [
+        "handler"
+      ],
+      "properties": {
+        "handler": {
+          "description": "Handler name registered in the handler registry, e.g. `\"node.update_settings\"`.",
+          "type": "string"
+        },
+        "args": {
+          "description": "Opaque arguments forwarded to the handler."
+        },
+        "optimistic": {
+          "description": "Client-side hint for making the UI feel instant: apply this patch to the tree immediately on click; when the server responds, either it confirms (no-op) or it returns an authoritative Patch/FullRender that replaces the optimistic one.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/OptimisticHint"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "OptimisticHint": {
+      "description": "Client-side optimistic-update hint — see SDUI.md § \"Optimistic hints\". Applied before the round-trip fires; the server's response overrides.",
+      "type": "object",
+      "required": [
+        "fields",
+        "target_component_id"
+      ],
+      "properties": {
+        "target_component_id": {
+          "description": "Target IR component id to patch. The client walks the current tree, finds the node with this id, and shallow-merges `fields` into it.",
+          "type": "string"
+        },
+        "fields": {
+          "description": "Object of field-name → value pairs to merge into the target component. `serde_json::Value` so any typed field can be updated."
+        }
+      }
+    },
+    "NodeStyle": {
+      "description": "Optional rendering-hint triplet for any component node.\n\nAll three fields are optional; the renderer substitutes the component's own context-default when a field is absent.\n\nThese map to design tokens in `@rubix/ui-kit`; extensions must not embed raw hex colors here — use the semantic token names.",
+      "type": "object",
+      "properties": {
+        "intent": {
+          "description": "Semantic intent colour: `\"info\"` | `\"success\"` | `\"warning\"` | `\"danger\"` | `\"muted\"`. Absent = component default.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "density": {
+          "description": "Spacing density: `\"compact\"` | `\"normal\"` | `\"comfortable\"`. Absent = component default (usually `\"normal\"`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "surface": {
+          "description": "Visual surface elevation: `\"default\"` | `\"raised\"` | `\"subtle\"` | `\"transparent\"`. Absent = component default.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "radius": {
+          "description": "V1.6 radius token — `\"none\" | \"sm\" | \"md\" | \"lg\" | \"full\"`. Closed set; pixel values must not appear here.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "spacing": {
+          "description": "V1.6 spacing token — `\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\"`. Applies as the node's outer breathing room (padding on cards/sections, margin on standalone primitives). Closed set.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "semantic_label": {
+          "description": "V1.8 a11y — accessible label for interactive nodes (button, toggle, slider, select, ref_picker, date_range). Renders as the element's `aria-label`. Optional in V1; planned to become a typestate-required field in V3.3 once authoring ergonomics are reworked.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "show_when": {
+          "description": "V1.7 conditional visibility — when set, the renderer evaluates this predicate every time a binding it reads changes; a false outcome **unmounts** the node.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ShowWhen"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "flex": {
+          "description": "V1.9 layout constraint — flex behaviour when this node is a child of a `row` or `col`. `\"auto\"` keeps intrinsic size, `\"0\"` disables grow/shrink, `\"1\"`–`\"5\"` distribute remaining space proportionally. Ignored outside row/col parents.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "min_width": {
+          "description": "V1.9 layout constraint — minimum width as a token (`\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"2xl\"`) or `\"auto\"`. Pixel values must not appear here.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "max_width": {
+          "description": "V1.9 layout constraint — maximum width, token or `\"auto\"`. Same scale as `min_width`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "align_self": {
+          "description": "Per-node override for the parent `row`/`col`'s cross-axis `align`. Ignored outside row/col parents.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/FlexAlign"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "width": {
+          "description": "Explicit width for this node. Token set: `\"auto\"` (intrinsic) | `\"fit\"` (shrink-wrap content) | `\"full\"` (fill parent) | `\"xs\" | \"sm\" | \"md\" | \"lg\" | \"xl\" | \"2xl\"`. Pixel values must not appear here — use a token. Useful when you want a button or input narrower than its parent col.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "height": {
+          "description": "Explicit height. Same token scale as `width` (auto/fit/full plus the size tokens). Most widgets size to content; this is for the rare \"this card must be 24rem tall\" case.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ShowWhen": {
+      "description": "Conditional-visibility predicate for any node. The renderer evaluates this against the page state on every relevant change; when the predicate is false the node is **unmounted** (not hidden).\n\nV1.7 of SDUI-VISUAL.md. Op set is closed: - `\"eq\"`, `\"ne\"` — equality - `\"in\"`, `\"not_in\"` — value ∈ array - `\"gt\"`, `\"lt\"` — numeric ordering - `\"truthy\"` — JS-truthy on `binding`; `value` ignored - `\"matches\"` — `value` is a regex string",
+      "type": "object",
+      "required": [
+        "binding",
+        "op"
+      ],
+      "properties": {
+        "binding": {
+          "description": "Binding expression (e.g. `\"$page.advanced\"`) or literal string the renderer reads. The page-state bag is the only source — other binding scopes are not evaluated client-side.",
+          "type": "string"
+        },
+        "op": {
+          "description": "Comparison op — see struct docs for the closed set.",
+          "type": "string"
+        },
+        "value": {
+          "description": "Comparison value. Required for every op except `\"truthy\"`."
+        }
+      }
+    },
+    "FlexAlign": {
+      "description": "Cross-axis alignment shared by `row`, `col`, and `align_self`.",
+      "type": "string",
+      "enum": [
+        "start",
+        "center",
+        "end",
+        "stretch"
+      ]
+    },
+    "RowLayout": {
+      "description": "Layout primitive for a [`Component::Row`]. Controls whether the row renders as a 12-track column grid or a content-sized flex strip.\n\n`Grid` is the default and what most authored layouts want — a stable column system where children claim N of 12 tracks.\n\n`Auto` is for \"I just want these widgets next to each other\" cases where the column system is overkill and visually misleading (cols allocating empty whitespace for shrink-wrap content).",
+      "type": "string",
+      "enum": [
+        "grid",
+        "auto"
+      ]
+    },
+    "RowBreakpoints": {
+      "description": "Responsive layout hints for a [`Component::Row`]. The IR carries only token names; the renderer maps them to its breakpoint system.",
+      "type": "object",
+      "properties": {
+        "stack_below": {
+          "description": "Collapse the row to a column below this breakpoint — `\"sm\"` (~640 logical px) or `\"md\"` (~768 logical px). Above the breakpoint the row stays horizontal.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "FlexJustify": {
+      "description": "Main-axis distribution.",
+      "type": "string",
+      "enum": [
+        "start",
+        "center",
+        "end",
+        "between",
+        "around",
+        "evenly"
+      ]
+    },
+    "Tab": {
+      "description": "A single tab inside a [`Component::Tabs`].",
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "icon": {
+          "description": "Optional icon rendered before the label. Value is a lucide-react icon name in PascalCase (e.g. `\"LayoutGrid\"`, `\"Workflow\"`); the renderer maps unknown names to no icon.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "children": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Component"
+          }
+        }
+      }
+    },
+    "DiffAnnotation": {
+      "description": "Per-line annotation on a [`Component::Diff`].",
+      "type": "object",
+      "required": [
+        "line",
+        "text"
+      ],
+      "properties": {
+        "line": {
+          "type": "integer",
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "text": {
+          "type": "string"
+        },
+        "author": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "created_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "FieldError": {
+      "description": "Structured field-level error consumed by [`Component::FieldGroup`]. Mirrors the diagnostics-item wire shape (severity / message / optional stable code) so a returned diagnostic for a given `field` can drop straight into a field group's `error` slot.",
+      "type": "object",
+      "required": [
+        "message"
+      ],
+      "properties": {
+        "severity": {
+          "description": "`\"error\"` | `\"warning\"` | `\"info\"`. The renderer picks the matching colour and icon. Defaults to `\"error\"` when the server omits the field.",
+          "default": "error",
+          "type": "string"
+        },
+        "message": {
+          "description": "Human, already-localized message rendered verbatim.",
+          "type": "string"
+        },
+        "code": {
+          "description": "Optional stable diagnostic code (`block.<id>.<...>`). The renderer never parses it — it's surfaced only via the DOM `data-field-error-code` attribute for tests / telemetry.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "ChartSource": {
+      "description": "Where a chart or KPI gets its numbers.\n\nThe five non-fallback variants cover the resolver's data paths: single-node telemetry ([`Series`](Self::Series)), kind-fanned telemetry ([`SeriesByKind`](Self::SeriesByKind)), categorical RSQL state ([`Rows`](Self::Rows)), bucket-stitched RSQL time-series ([`SeriesFromRsql`](Self::SeriesFromRsql)), and author-emitted static points ([`Static`](Self::Static)).\n\nWire grammar: internally-tagged on `\"type\"` with `snake_case` variant names. `Series` keeps the V2 field set (`node_id`, `slot`, `field`) plus the new `\"type\": \"series\"` discriminator — a V2 client reading the V3 emission ignores the unknown field and renders as before, which is what enables the surgical V3→V2 downgrade in the resolver (only V3-only variants degrade to `Dangling`).",
+      "oneOf": [
+        {
+          "description": "Time-series over a single node's slot — the V2 default. Live updates ride `node.<id>.slot.<slot>`.",
+          "type": "object",
+          "required": [
+            "node_id",
+            "slot",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "series"
+              ]
+            },
+            "node_id": {
+              "description": "Node id (UUID as string).",
+              "type": "string"
+            },
+            "slot": {
+              "description": "Slot name on the node.",
+              "type": "string"
+            },
+            "field": {
+              "description": "Optional dot-path into the slot value (`payload.count` for the conventional `Msg` envelope).",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Time-series fanned out across every node of a given kind. Backed by `domain_history::grouped_telemetry`.",
+          "type": "object",
+          "required": [
+            "kind",
+            "slot",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "series_by_kind"
+              ]
+            },
+            "kind": {
+              "description": "Kind id, e.g. `\"com.nube.plm.task\"`.",
+              "type": "string"
+            },
+            "slot": {
+              "description": "Slot name shared across the kind's instances.",
+              "type": "string"
+            },
+            "field": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "top_n": {
+              "description": "Cap on the number of series emitted (top-N by value).",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        {
+          "description": "Relational query backed by RSQL. Counts rows, groups by a slot field, or aggregates a numeric field. Powers bar / pie / donut over current state and KPIs that count. Phase 3 ships the resolver; until then the resolver returns a `NotImplemented` payload and the client renders an empty placeholder.",
+          "type": "object",
+          "required": [
+            "agg",
+            "rsql",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "rows"
+              ]
+            },
+            "rsql": {
+              "description": "RSQL filter expression.",
+              "type": "string"
+            },
+            "group_by": {
+              "description": "Slot dot-path to group by. Required for bar/pie/donut.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "agg": {
+              "description": "Aggregation applied to each group.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/AggSpec"
+                }
+              ]
+            },
+            "order": {
+              "description": "Optional ordering for top-N.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/RowsOrder"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "limit": {
+              "description": "Optional cap on result rows. The resolver enforces a server ceiling regardless of the authored value.",
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        },
+        {
+          "description": "Time-series of an RSQL aggregation. The resolver materialises this by issuing one [`Rows`](Self::Rows) query per bucket boundary in the requested range and stitching the results into a `(ts_ms, value)` series — eliminates the write-time rollup pattern. Phase 3 ships the resolver.",
+          "type": "object",
+          "required": [
+            "agg",
+            "bucket_ms",
+            "rsql",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "series_from_rsql"
+              ]
+            },
+            "rsql": {
+              "type": "string"
+            },
+            "agg": {
+              "$ref": "#/definitions/AggSpec"
+            },
+            "bucket_ms": {
+              "description": "Bucket size in milliseconds.",
+              "type": "integer",
+              "format": "int64"
+            },
+            "group_by": {
+              "description": "Group by a slot dot-path to emit multi-series. `None` = single series over the filtered rows.",
+              "type": [
+                "string",
+                "null"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Author-emitted static points. The resolver passes these through verbatim — useful for fixtures, doc charts, demos.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "static"
+              ]
+            },
+            "points": {
+              "description": "`[ts_ms, value]` tuples, oldest first.",
+              "default": [],
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "integer",
+                    "format": "int64"
+                  },
+                  {
+                    "type": "number",
+                    "format": "double"
+                  }
+                ],
+                "maxItems": 2,
+                "minItems": 2
+              }
+            }
+          }
+        },
+        {
+          "description": "Forward-compat fallback for variants this client doesn't know.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "unknown"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "AggSpec": {
+      "description": "Aggregation operation applied to a [`ChartSource::Rows`] or [`ChartSource::SeriesFromRsql`] payload.\n\nPhase 6 variants (`Percentile`, `Rate`, `Delta`, `Stddev`) are wire- reserved here so v3 clients can deserialise future trees that use them. The resolver returns `UnsupportedAgg` if a tree uses one before Phase 6 lands.",
+      "oneOf": [
+        {
+          "description": "Count rows in the result set.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "count"
+              ]
+            }
+          }
+        },
+        {
+          "description": "Sum a numeric field across rows.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "sum"
+              ]
+            },
+            "field": {
+              "description": "Slot dot-path (e.g. `\"settings.duration_ms\"`).",
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Arithmetic mean of a numeric field.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "avg"
+              ]
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Minimum of a numeric field.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "min"
+              ]
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Maximum of a numeric field.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "max"
+              ]
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "p-th percentile of a numeric field. Phase 6 — resolver returns `UnsupportedAgg` until then.",
+          "type": "object",
+          "required": [
+            "field",
+            "p",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "percentile"
+              ]
+            },
+            "field": {
+              "type": "string"
+            },
+            "p": {
+              "description": "0.0–1.0 (e.g. 0.95 = p95). `f64` for clean JSON round-trip (`f32` loses precision on common percentile values like 0.95).",
+              "type": "number",
+              "format": "double"
+            }
+          }
+        },
+        {
+          "description": "Per-second rate (delta over time window). Phase 6.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "rate"
+              ]
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Last-minus-first delta over the window. Phase 6.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "delta"
+              ]
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Sample standard deviation. Phase 6.",
+          "type": "object",
+          "required": [
+            "field",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "stddev"
+              ]
+            },
+            "field": {
+              "type": "string"
+            }
+          }
+        },
+        {
+          "description": "Forward-compat fallback for aggregations this client doesn't know about.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "unknown"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "RowsOrder": {
+      "description": "Ordering applied to a [`ChartSource::Rows`] result before `limit` is enforced. Used for top-N bar charts.",
+      "oneOf": [
+        {
+          "description": "Order by the aggregation result. `Desc` for \"top N\", `Asc` for \"bottom N\".",
+          "type": "object",
+          "required": [
+            "by",
+            "direction"
+          ],
+          "properties": {
+            "by": {
+              "type": "string",
+              "enum": [
+                "value"
+              ]
+            },
+            "direction": {
+              "description": "`\"asc\"` or `\"desc\"`.",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/OrderDirection"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "description": "Order by the group-by key (alphabetical).",
+          "type": "object",
+          "required": [
+            "by",
+            "direction"
+          ],
+          "properties": {
+            "by": {
+              "type": "string",
+              "enum": [
+                "key"
+              ]
+            },
+            "direction": {
+              "$ref": "#/definitions/OrderDirection"
+            }
+          }
+        }
+      ]
+    },
+    "OrderDirection": {
+      "description": "Sort direction for [`RowsOrder`].",
+      "type": "string",
+      "enum": [
+        "asc",
+        "desc"
+      ]
+    },
+    "ChartKind": {
+      "description": "What renderer to draw a [`Component::Chart`](crate::Component::Chart) with. The renderer reads this; the resolver uses it to pick the validation rules in [`ChartSource`] (see SDUI.md § \"Chart kind ↔ source compatibility\").\n\nWire shape: bare snake_case string (`\"line\"`, `\"stacked_bar\"`, …). `Custom(name)` carries the renderer-registry id verbatim. `Unknown` is the forward-compat fallback when a v4+ kind reaches a v3 client.\n\n`Heatmap` is reserved so we don't bump the IR version again later; the renderer and the source-compat rules for it are deferred.",
+      "oneOf": [
+        {
+          "description": "Time-series line chart (default).",
+          "type": "string",
+          "enum": [
+            "Line"
+          ]
+        },
+        {
+          "description": "Filled-area time-series chart.",
+          "type": "string",
+          "enum": [
+            "Area"
+          ]
+        },
+        {
+          "description": "Categorical bar chart.",
+          "type": "string",
+          "enum": [
+            "Bar"
+          ]
+        },
+        {
+          "description": "Stacked categorical bar chart.",
+          "type": "string",
+          "enum": [
+            "StackedBar"
+          ]
+        },
+        {
+          "description": "Pie chart over categorical buckets.",
+          "type": "string",
+          "enum": [
+            "Pie"
+          ]
+        },
+        {
+          "description": "Donut chart over categorical buckets.",
+          "type": "string",
+          "enum": [
+            "Donut"
+          ]
+        },
+        {
+          "description": "Single-value gauge.",
+          "type": "string",
+          "enum": [
+            "Gauge"
+          ]
+        },
+        {
+          "description": "Reserved — renderer + source rules deferred (see module doc).",
+          "type": "string",
+          "enum": [
+            "Heatmap"
+          ]
+        },
+        {
+          "description": "Block-registered custom renderer; the inner string is the renderer registry id (e.g. `\"acme.flow_canvas\"`).",
+          "type": "object",
+          "required": [
+            "Custom"
+          ],
+          "properties": {
+            "Custom": {
+              "type": "string"
+            }
+          },
+          "additionalProperties": false
+        },
+        {
+          "description": "Forward-compat fallback for kinds this client doesn't recognise.",
+          "type": "string",
+          "enum": [
+            "Unknown"
+          ]
+        }
+      ]
+    },
+    "ChartSeries": {
+      "description": "One series in a [`Component::Chart`](crate::Component::Chart) result.",
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "description": "Display label.",
+          "type": "string"
+        },
+        "points": {
+          "description": "`[ts_ms, value]` pairs, oldest first.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "array",
+            "items": [
+              {
+                "type": "integer",
+                "format": "int64"
+              },
+              {
+                "type": "number",
+                "format": "double"
+              }
+            ],
+            "maxItems": 2,
+            "minItems": 2
+          }
+        }
+      }
+    },
+    "ChartRange": {
+      "description": "Inclusive time window (ms since epoch) for a chart.",
+      "type": "object",
+      "required": [
+        "from",
+        "to"
+      ],
+      "properties": {
+        "from": {
+          "type": "integer",
+          "format": "int64"
+        },
+        "to": {
+          "type": "integer",
+          "format": "int64"
+        }
+      }
+    },
+    "ChartHistory": {
+      "description": "Declarative history-backfill config — `range_ms` is rolling from \"now\" so a `last_1h` dashboard stays current every mount.",
+      "type": "object",
+      "properties": {
+        "range_ms": {
+          "description": "Rolling window in ms from \"now\". `None` = \"all time\".",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        },
+        "user_selectable": {
+          "description": "Render a preset picker above the chart.",
+          "type": "boolean"
+        },
+        "presets": {
+          "description": "Preset options; empty → renderer default set.",
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/ChartHistoryPreset"
+          }
+        }
+      }
+    },
+    "ChartHistoryPreset": {
+      "description": "One row in [`ChartHistory::presets`].",
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "description": "Rolling window in ms; `None` = \"all time\".",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        }
+      }
+    },
+    "TableSource": {
+      "description": "Data source for a [`Component::Table`].",
+      "type": "object",
+      "required": [
+        "query"
+      ],
+      "properties": {
+        "query": {
+          "description": "RSQL query string.",
+          "type": "string"
+        },
+        "subscribe": {
+          "description": "Whether the client should subscribe to live updates.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      }
+    },
+    "TableColumn": {
+      "description": "Column definition for a [`Component::Table`].",
+      "type": "object",
+      "required": [
+        "field",
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "field": {
+          "description": "Dot-path into the row object, e.g. `\"slots.present_value.value\"`.",
+          "type": "string"
+        },
+        "sortable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "render": {
+          "description": "Optional renderer applied to each cell value before display. Allows extensions to request semantic formatting without per-block React.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ColumnRender"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "ColumnRender": {
+      "description": "Cell-level renderer hint for [`TableColumn`].\n\nThe SDUI renderer maps each value through a small fixed table so extensions never need custom React to display coloured pills, currencies, or dates.",
+      "oneOf": [
+        {
+          "description": "Render the string as an intent-coloured pill (maps common status words to `default | info | success | warning | danger`).",
+          "type": "string",
+          "enum": [
+            "intent_pill"
+          ]
+        },
+        {
+          "description": "Render using the `Badge` visual primitive.",
+          "type": "string",
+          "enum": [
+            "badge"
+          ]
+        },
+        {
+          "description": "Format as localised currency (USD by default; use `x-currency` header annotation to override).",
+          "type": "string",
+          "enum": [
+            "currency"
+          ]
+        },
+        {
+          "description": "Format as a percentage, e.g. `0.42` → `\"42 %\"`.",
+          "type": "string",
+          "enum": [
+            "percent"
+          ]
+        },
+        {
+          "description": "Render a horizontal progress bar (value expected in `[0, 1]`).",
+          "type": "string",
+          "enum": [
+            "progress"
+          ]
+        },
+        {
+          "description": "Format as a locale date string (ISO 8601 source accepted).",
+          "type": "string",
+          "enum": [
+            "date"
+          ]
+        },
+        {
+          "description": "Format as a relative time string, e.g. `\"3 days ago\"`.",
+          "type": "string",
+          "enum": [
+            "relative_time"
+          ]
+        },
+        {
+          "description": "Render an interactive boolean Switch widget bound to the row's slot. The column `field` must point to a boolean slot value (e.g. `slots.config.enabled.value`); the cell derives the slot path from the field and writes back via `POST /api/v1/slots` on toggle.",
+          "type": "string",
+          "enum": [
+            "toggle"
+          ]
+        },
+        {
+          "description": "Render an interactive Slider widget bound to the row's slot. The column `field` must point to a numeric slot value (e.g. `slots.config.value.value`); the cell derives the slot path from the field and writes back on drag release.",
+          "type": "string",
+          "enum": [
+            "slider"
+          ]
+        }
+      ]
+    },
+    "RowAction": {
+      "description": "Per-row button rendered in a [`Component::Table`]'s synthetic trailing \"Actions\" column. Clicking the button dispatches `action`; if `confirm` is set the renderer first shows a confirmation dialog.\n\n`action.args` may contain `{{$row.<path>}}` tokens (e.g. `{ \"path\": \"{{$row.path}}\" }`) which the renderer substitutes from the clicked row before dispatch.",
+      "type": "object",
+      "required": [
+        "action",
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "description": "Stable id used for keys / telemetry.",
+          "type": "string"
+        },
+        "label": {
+          "description": "Visible button label.",
+          "type": "string"
+        },
+        "icon": {
+          "description": "Optional icon name (lucide on web; material on Flutter — the renderer maps the canonical name to its toolkit's icon).",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intent": {
+          "description": "Visual intent: `\"primary\"` | `\"danger\"` | `\"warning\"` | … Renderers map to button variant.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confirm": {
+          "description": "Optional confirm dialog shown before dispatching `action`.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/ConfirmDialog"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        }
+      }
+    },
+    "ConfirmDialog": {
+      "description": "Confirm dialog declared by a [`RowAction`]. The renderer shows it before dispatching the action; clicking the cancel button is a no-op, the confirm button fires `action`.",
+      "type": "object",
+      "required": [
+        "title"
+      ],
+      "properties": {
+        "title": {
+          "type": "string"
+        },
+        "description": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "confirm_label": {
+          "description": "Confirm button label. Defaults to `\"Confirm\"`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "cancel_label": {
+          "description": "Cancel button label. Defaults to `\"Cancel\"`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "JsonTableColumn": {
+      "description": "Column definition for [`Component::JsonTable`].\n\nLighter than [`TableColumn`] because the JsonTable is in-memory and has no sort hint or per-cell render registry — formatting is driven by the column key's shape (the `*_ms` / `*_at` heuristic) plus an optional explicit override.",
+      "type": "object",
+      "required": [
+        "key"
+      ],
+      "properties": {
+        "key": {
+          "description": "The (possibly dot-flattened) row key, e.g. `\"payload.ts_ms\"`.",
+          "type": "string"
+        },
+        "label": {
+          "description": "Header text. Defaults to `key` when omitted.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "format": {
+          "description": "Format hint. `\"datetime\"` formats epoch-ms through user prefs; `\"raw\"` skips the timestamp heuristic. Omit to inherit.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/JsonTableColumnFormat"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      }
+    },
+    "JsonTableColumnFormat": {
+      "oneOf": [
+        {
+          "description": "Render an epoch-ms integer through the caller's date/time prefs.",
+          "type": "string",
+          "enum": [
+            "datetime"
+          ]
+        },
+        {
+          "description": "Print the cell value as-is, suppressing the timestamp heuristic.",
+          "type": "string",
+          "enum": [
+            "raw"
+          ]
+        }
+      ]
+    },
+    "DialogAction": {
+      "description": "One button in a `dialog` footer.\n\n`action` follows the same dispatch path as `Component::Button`. An `Action` with an empty handler (`handler: \"\"`) closes the dialog without dispatching — equivalent to \"Cancel\".",
+      "type": "object",
+      "required": [
+        "action",
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "intent": {
+          "description": "Semantic intent: `\"default\"`, `\"secondary\"`, `\"danger\"`, or `null`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        }
+      }
+    },
+    "MenuItem": {
+      "description": "One item in a [`Component::Menu`] items list.\n\nUse `type: \"separator\"` for a visual divider. All other items carry a `label` and `action`. `intent` maps to the same tokens as `CardAction`.",
+      "oneOf": [
+        {
+          "description": "A clickable item with a label and action.",
+          "type": "object",
+          "required": [
+            "action",
+            "label",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "item"
+              ]
+            },
+            "label": {
+              "type": "string"
+            },
+            "intent": {
+              "type": [
+                "string",
+                "null"
+              ]
+            },
+            "action": {
+              "$ref": "#/definitions/Action"
+            }
+          }
+        },
+        {
+          "description": "A non-interactive horizontal divider line.",
+          "type": "object",
+          "required": [
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "separator"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    "TreeItem": {
+      "description": "One node inside a [`Component::Tree`].",
+      "type": "object",
+      "required": [
+        "id",
+        "label"
+      ],
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "label": {
+          "type": "string"
+        },
+        "children": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/TreeItem"
+          }
+        },
+        "icon": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "TimelineEvent": {
+      "description": "One event inside a [`Component::Timeline`].",
+      "type": "object",
+      "required": [
+        "text",
+        "ts"
+      ],
+      "properties": {
+        "ts": {
+          "description": "RFC 3339 timestamp or raw ms-since-epoch string.",
+          "type": "string"
+        },
+        "text": {
+          "type": "string"
+        },
+        "intent": {
+          "description": "`\"info\"` | `\"ok\"` | `\"warn\"` | `\"danger\"`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "BindingSpec": {
+      "description": "Slot binding for a two-way bound control (toggle, slider, …).\n\nShort form is sugar: `\"$target.enabled\"` is equivalent to `{ slot: \"$target.enabled\", concurrency: \"lww\" }`. The binding expression grammar is the same as read bindings (DASHBOARD.md § Bindings) — `$target.*`, `$self.*`, `$stack.*`, child-walk `/`. Must resolve to a concrete slot at resolve time.",
+      "anyOf": [
+        {
+          "description": "Sugar: just the binding expression string.",
+          "type": "string"
+        },
+        {
+          "description": "Full form — allows overriding concurrency and debounce per control.",
+          "type": "object",
+          "required": [
+            "slot"
+          ],
+          "properties": {
+            "slot": {
+              "type": "string"
+            },
+            "concurrency": {
+              "default": "lww",
+              "allOf": [
+                {
+                  "$ref": "#/definitions/Concurrency"
+                }
+              ]
+            },
+            "debounce_ms": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "format": "uint32",
+              "minimum": 0.0
+            }
+          }
+        }
+      ]
+    },
+    "Concurrency": {
+      "description": "Concurrency mode for two-way bound controls.\n\n- `Lww` (last-write-wins, default): no `expected_generation` sent. Appropriate for continuous controls like sliders and most toggles. - `Occ` (optimistic concurrency): sends `expected_generation`; the server 409s on mismatch — shows a conflict banner + re-resolve. Appropriate when two simultaneous editors overwriting the same slot silently is unacceptable.",
+      "oneOf": [
+        {
+          "description": "Last-write-wins. No generation guard. Default.",
+          "type": "string",
+          "enum": [
+            "lww"
+          ]
+        },
+        {
+          "description": "Optimistic concurrency check. Server 409s on mismatch.",
+          "type": "string",
+          "enum": [
+            "occ"
+          ]
+        }
+      ]
+    },
+    "SelectOption": {
+      "description": "One entry in a [`Component::Select`].",
+      "type": "object",
+      "required": [
+        "label",
+        "value"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": true
+      }
+    },
+    "KpiDelta": {
+      "description": "Comparison delta for a KPI tile — \"↑ +12% vs prior period\".\n\nStructured so the renderer formats and localises; extensions must not pre-format this into a string.",
+      "type": "object",
+      "required": [
+        "amount",
+        "direction",
+        "unit"
+      ],
+      "properties": {
+        "amount": {
+          "description": "Numeric magnitude (always non-negative; `direction` encodes sign).",
+          "type": "number",
+          "format": "double"
+        },
+        "unit": {
+          "description": "`\"percent\"` or `\"absolute\"` (raw unit value).",
+          "type": "string"
+        },
+        "direction": {
+          "description": "`\"up\"`, `\"down\"`, or `\"flat\"`.",
+          "type": "string"
+        },
+        "intent": {
+          "description": "Optional intent (`\"success\"`, `\"danger\"`, …) — when omitted, the renderer derives it from direction (up → success, down → danger, flat → neutral).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "KpiGridItem": {
+      "description": "One tile in a `kpi_grid`. Equivalent to the fields on `Kpi` but inlined so the whole grid serialises as a single node.",
+      "type": "object",
+      "required": [
+        "label",
+        "value"
+      ],
+      "properties": {
+        "id": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "description": "Pre-resolved numeric value baked in at resolve time."
+        },
+        "format": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "intent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "delta": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/KpiDelta"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "on_click": {
+          "description": "Per-tile click action. Overrides the `kpi_grid`-level `on_tile_click` when set. The action context receives `tile_id` and `tile_label`.",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Action"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unit_symbol": {
+          "description": "Unit symbol displayed after the value (e.g. `\"°C\"`, `\"kPa\"`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "DetailItem": {
+      "description": "One row in a `detail` property sheet.",
+      "type": "object",
+      "required": [
+        "label",
+        "value"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "value": {
+          "description": "Pre-resolved string value baked in at resolve time.",
+          "type": "string"
+        },
+        "intent": {
+          "description": "Optional semantic intent (`\"info\"`, `\"success\"`, `\"warning\"`, `\"danger\"`). Controls the value text colour.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "action": {
+          "description": "Optional inline action (e.g. a navigation link or dialog open).",
+          "anyOf": [
+            {
+              "$ref": "#/definitions/Action"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "unit_symbol": {
+          "description": "Unit symbol appended after the value string (e.g. `\"°C\"`).",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "CardAction": {
+      "description": "One action button in a `card` header.",
+      "type": "object",
+      "required": [
+        "action",
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "intent": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "action": {
+          "$ref": "#/definitions/Action"
+        }
+      }
+    },
+    "DateRangePreset": {
+      "description": "One preset button on a [`Component::DateRange`]. `duration_ms` of `None` means \"unbounded / all time\" — consumers should drop any time clamp when this preset is selected.",
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "duration_ms": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "int64"
+        }
+      }
+    },
+    "WizardStep": {
+      "description": "One step of a [`Component::Wizard`].",
+      "type": "object",
+      "required": [
+        "label"
+      ],
+      "properties": {
+        "label": {
+          "type": "string"
+        },
+        "children": {
+          "default": [],
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/Component"
+          }
+        }
+      }
+    },
+    "TextValidate": {
+      "description": "V1.4 local validation contract for `text_field` / `textarea`. Async / server-side validation is V2.3 — `regex` is the only pattern hook today; mismatches produce a client-side error without a round-trip.",
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "regex": {
+          "description": "JS regex source (no flags, no slashes). Anchored implicitly — the renderer wraps with `^…$`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "min_length": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        },
+        "max_length": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    },
+    "NumberValidate": {
+      "description": "V1.4 local validation contract for `number_field`.",
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "min": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "max": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "format": "double"
+        },
+        "precision": {
+          "description": "Number of decimal places permitted. `0` = integers only.",
+          "type": [
+            "integer",
+            "null"
+          ],
+          "format": "uint32",
+          "minimum": 0.0
+        }
+      }
+    }
+  }
+}

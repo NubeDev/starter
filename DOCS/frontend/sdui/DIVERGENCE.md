@@ -82,6 +82,24 @@ underlying crates from being built; the only honest opt-out is a
 separate crate. See [SCOPE.md § Surface — Rust (HTTP
 routes)](./SCOPE.md#surface--rust-http-routes-opt-in).
 
+**Phase 5 landing.** The crate ships as `crates/starter-sdui-routes`
+with three routes — `POST /api/v1/ui/resolve`, `POST
+/api/v1/ui/action`, `GET /api/v1/ui/table` — mounted by a single
+`sdui_router(SduiState)` builder. `SduiState::builder()` wires four
+pieces: a `PageProvider` for `/resolve`, an `EntityGraph` (from
+`starter-ui-bindings`) for binding substitution, a
+`HandlerRegistry` for `/action` dispatch, and a `QueryEngine` (with
+an in-memory reference impl) for `/table`. **`starter-server` does
+not depend on this crate** — the boundary is enforced by Cargo.toml,
+not a feature flag. R8 size / DoS limits land here with stable
+`what:` tags (`page_state_bytes`, `render_tree_bytes`, `tree_nodes`,
+`tree_depth`, `component_types`, `handler_timeout`,
+`table_rows_per_page`) and one integration test per tag pins both
+the 413 status and the wire string. The R7 capability handshake
+(unknown `renderer_id` → `Dangling`) treats `renderer_id` as
+public and runs as a vocabulary filter — `custom.props`
+authorisation stays at the handler / resolve boundary, per R5.
+
 ### D5 — `EntityGraph` trait, not Rubix's node graph
 
 Rubix's binding engine resolves against Rubix's specific node-graph
@@ -96,6 +114,40 @@ would defeat the point.
 **Migration.** Ports of Rubix's grammar verbatim; only the source
 of children/slots is abstracted. The `$target/child.slot` syntax is
 unchanged.
+
+**Phase 2 landing.** The trait ships in `starter-ui-bindings`
+(per SCOPE.md § Decisions, S-D1) with three methods: `read_slot`,
+`read_children`, and an optional `entity_id_regex` (returns `None`
+for hosts without a stable id format — consumed by ai-builder R7).
+A `NullGraph` impl exists for tests / `$user`-only resolves.
+Promotion to `starter-spi` waits on a second consumer (S-D1
+revisit trigger).
+
+### D7 — `seed_page()` uses a `PageStore` trait, not `block_client::GraphClient`
+
+Rubix's `seed_page()` lives in `extension-sdk/sdui-builder/src/seed.rs`
+and dispatches against `block_client::GraphClient` directly — an
+async client tied to Rubix's agent-side node graph. Starter has no
+`block_client` equivalent (and shouldn't — the builder crate is
+zero-I/O by contract), so the port abstracts the two operations
+`seed_page` needs (`find_or_create_node`, `write_slot`) behind a
+[`PageStore`](crate::seed::PageStore) trait the host implements.
+
+**Signature change.** `seed_page` is **synchronous** on starter;
+Rubix's was `async`. The host wraps an async store at the call site
+(`block_on`, dispatcher, etc.). The synchronous signature keeps the
+builder crate's transitive dep surface to `serde`, `serde_json`,
+`thiserror`, and `starter-ui-ir` — no `tokio` / `async-trait` /
+runtime crate sneaks in via the seeding API.
+
+**Idempotency contract is unchanged.** Implementations of
+`PageStore::find_or_create_node` must remain atomic under the host's
+write lock — a second call with the same `(parent_path, kind, name)`
+triple returns the existing node, not a sibling. This is the bug
+Rubix's [docs/design/extensions/SEED-RECONCILE.md][rubix-seed-recon]
+catalogued; starter's port preserves the contract verbatim.
+
+[rubix-seed-recon]: file:///home/user/code/rubix-workspace/rubix-agent/docs/design/extensions/SEED-RECONCILE.md
 
 ### D6 — `cost_cap`, `session_policy`, and other flow node config
 

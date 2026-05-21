@@ -692,6 +692,28 @@ blocked on Phase 5 here landing.
   `ComponentTree` deltas instead of inventing a `UiTree` /
   `BuilderEvent` wire format.
 
+## Decisions
+
+The five questions under [Open questions](#open-questions) are
+pinned here with the working decision and the signal that should
+re-open them. The Open questions section below remains as the
+narrative rationale; this section is the load-bearing record. If
+this section and the Open questions section disagree, this
+section wins.
+
+| ID | Decision | Revisit trigger |
+|---|---|---|
+| **S-D1** | `EntityGraph` trait lives in `starter-ui-bindings`. Consumers implement against their own graph; no SPI promotion in v1. | A **second** consumer (beyond the first SDUI adopter) asks for the trait, or a non-bindings crate needs to name the trait in its public API. Promotion to `starter-spi` is mechanical; demotion isn't, so we wait for the second use. |
+| **S-D2** | RSQL query engine is a **trait + in-memory reference impl** in v1, shipped in `starter-sdui-routes` (or a sibling) for examples and tests. Production consumers wire their own backend against the trait. No port of Rubix's `crates/query`. | First production consumer hits the in-memory impl's limits (dataset size, push-down requirements, transactional reads), **or** a second consumer would otherwise reimplement the same backend adapter. Either signal promotes the engine to its own crate. |
+| **S-D3** | Visual drag-drop page editor is **deferred**. Builder DSL + AI authoring + hand-written JSON cover v1 authoring. Lands as a `starter-extension` (separate repo / MF bundle) when demanded. | A consumer explicitly requests end-user-driven page authoring inside a running product (not power-user JSON editing, not AI prompt-driven). At that point, scope a starter-extension; do not absorb into the SDUI core crates. |
+| **S-D4** | `oneOf` server-resolved variant sub-form helper lives on the **renderer side** (`@nube/starter-sdui-react`). The server emits the active variant; the renderer renders it like any other sub-form. No `oneOf` resolution logic in `starter-ui-builder`. | The renderer-side helper grows past ~200 LoC, **or** a non-React renderer (Flutter port) needs to re-implement the same variant-selection logic. Either signal pushes the helper down to `starter-ui-bindings` or `starter-ui-ir`. |
+| **S-D5** | Stream end-of-stream sentinel inherits Rubix verbatim: `{ "type": "stream_end", "channel": "...", "reason": "done"\|"error"\|"timeout"\|"gone" }`. Same field names, same reason values, no rename. | A reason value Rubix didn't define is needed (e.g. `"cancelled"`, `"backpressure"`), **or** the wire shape needs to carry per-stream diagnostics. Extending the `reason` enum is additive; reshaping the sentinel is a major IR bump per R2. |
+
+These decisions block code: Phase 1 lands assuming S-D1 placement,
+Phase 5 lands assuming S-D2 shape, and Phases 4 / 6 lands assuming
+S-D4 / S-D5. A revisit trigger firing is a scope change, not a
+silent refactor — update this table in the same PR.
+
 ## Open questions
 
 ### S-D1 — Where the entity graph trait lives

@@ -1,0 +1,23 @@
+[package]
+name        = "starter-ui-bindings"
+description = "SDUI binding grammar + EvalContext + subscription-plan derivation. Ported from rubix-agent/crates/dashboard-runtime; see DOCS/frontend/sdui/SCOPE.md and DIVERGENCE.md (D5)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+rust-version.workspace = true
+
+# Depends only on starter-ui-ir per Phase 2 of the SDUI port
+# (DOCS/frontend/sdui/SCOPE.md). Inherits R1's no-I/O posture
+# transitively: this crate adds the binding grammar, an EntityGraph
+# trait (S-D1 lives here until promoted to SPI), and the
+# subscription-plan emitter — none of which need axum / tokio /
+# reqwest. The cargo-tree denylist enforced on starter-ui-ir is
+# kept honest by giving this crate the same dep surface.
+
+[dependencies]
+starter-ui-ir = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
