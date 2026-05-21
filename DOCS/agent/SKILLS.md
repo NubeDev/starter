@@ -165,3 +165,51 @@ This protocol exists so that future agents reading the codebase
 can trust that the trust matrix, URI scheme, model-hint
 semantics, and hash algorithm have not quietly diverged from
 what this file records.
+
+## Smoke matrix (CI-pinned)
+
+The nine smokes the per-job SCOPE Stage 12 enumerates are each
+pinned by a concrete test. The CI workflow runs them on every PR
+via the steps named below. Adding a tenth smoke is a SCOPE edit,
+not a drive-by; deleting one is a stop-and-write-up moment.
+
+| # | Smoke (normative) | Test |
+| - | ----------------- | ---- |
+| 1 | Bundle hash is stable across line endings | `crates/starter-skills/src/approval.rs::tests::line_ending_normalisation_is_stable` |
+| 2 | Extension-contributed skill is quarantined regardless of frontmatter | `crates/starter-skills/src/registry.rs::tests::extension_contributed_skill_is_quarantined_regardless_of_frontmatter` |
+| 3 | Hash mismatch re-quarantines | `crates/starter-skills/src/registry.rs::tests::hash_mismatch_re_quarantines_and_keeps_prior_row_inert` |
+| 4 | Selection is frozen per run (real registry-backed selector) | `crates/starter-skills/tests/stage6_phase4_selectors.rs::selection_is_frozen_per_run_against_the_real_registry` |
+| 5 | Quarantined skill never reaches the selector strategy | `crates/starter-skills/tests/stage6_phase4_selectors.rs::quarantined_skill_never_reaches_selector_strategy` |
+| 6 | No I/O on `select()` | `crates/starter-skills/tests/stage7_phase4b_mount.rs::select_does_no_io_on_a_built_registry` |
+| 7 | Resource hash mismatch aborts the run | `crates/starter-skills/tests/stage7_phase4b_mount.rs::mount_verification_round_trips_then_aborts_on_drift` + `crates/starter-flow-nodes/tests/stage7_ai_agent_mount.rs::resource_hash_mismatch_aborts_the_run_then_reload_proceeds` (feature `ai-agent`) |
+| 8 | Path framing prevents collision | `crates/starter-skills/src/approval.rs::tests::path_framing_prevents_collision` |
+| 9 | Line-ending normalisation is stable | `crates/starter-skills/src/approval.rs::tests::line_ending_normalisation_is_stable` |
+
+Rows 1 and 9 share a test: the per-job SCOPE enumerates them
+separately, but the byte-exact CRLF→LF and lone-CR→LF transform
+is a single invariant whose test fixture covers both phrasings.
+
+The `ai-agent` feature is default-off in `starter-flow-nodes`, so
+smoke #7's node-side half would otherwise be skipped by the
+default `cargo test --workspace` invocation. CI pins it with an
+explicit `cargo test -p starter-flow-nodes --features ai-agent`
+step in `.github/workflows/ci.yml`.
+
+### Dep-tree isolation gate
+
+`scripts/check-skills-dep-isolation.sh` runs `cargo tree -p
+starter-skills --edges normal` and fails the build if any of the
+banned provider-SDK crate names appear in the normal-deps closure.
+The banned list — `async-openai`, `anthropic-ai-sdk`,
+`anthropic-sdk`, `google-genai`, `aws-sdk-bedrockruntime`,
+`mistralai`, `ollama-rs` — is enforced as a CI gate (the
+`skills-dep-isolation` job in `.github/workflows/ci.yml`), not an
+after-the-fact audit. `LlmSkillSelector` talks to providers only
+through the `AiRunner` trait that lives in `starter-spi`; adding a
+provider SDK to `starter-skills`'s normal deps would breach agent
+R2 and spread provider deps to every downstream consumer.
+
+Adding a new banned crate to the gate is a one-line script edit
+plus this paragraph. Removing one is a SCOPE-level conversation —
+narrowing the isolation contract requires re-opening the R2
+decision in [`DOCS/agent/SCOPE.md`](./SCOPE.md).
