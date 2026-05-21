@@ -335,6 +335,36 @@ pub struct Contributes {
     /// extension id (`com.nube.hello.greeting`, never bare `greeting`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub i18n: Option<ContributeI18n>,
+    /// `SKILL.md` bundle directories the extension ships
+    /// (DOCS/agent/SCOPE.md R-agent-4). Each entry names a bundle
+    /// root directory (relative to the extension's bundle root) that
+    /// contains one or more `<id>/SKILL.md` bundles. The
+    /// `starter-ext-flow` adapter walks each `dir:` and feeds the
+    /// discovered bundles into `SkillRegistry::extend(...)` so they
+    /// land **quarantined regardless of frontmatter trust**
+    /// (DOCS/agent/SKILLS.md R-skills-3 row 3): an extension cannot
+    /// self-approve a skill.
+    #[serde(default)]
+    pub skills: Vec<ContributeSkillsDir>,
+}
+
+/// One `contributes.skills[]` entry — a directory of `SKILL.md`
+/// bundles the extension ships.
+///
+/// The on-disk layout under `dir` is one subdirectory per skill,
+/// each containing a `SKILL.md` plus any resource files listed in
+/// the frontmatter (same shape as the host's own
+/// `<XDG_DATA>/<binary>/skills/` directory). The
+/// `starter-ext-flow` adapter passes each bundle root to
+/// `starter_skills::ContributedSkill::new(bundle_root)` and then to
+/// `SkillRegistry::extend(...)`.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeSkillsDir {
+    /// Bundle-relative path to the skills root directory
+    /// (e.g. `"skills/"`). The adapter resolves this against the
+    /// extension's installed bundle root before walking.
+    pub dir: String,
 }
 
 /// The extension's i18n block.
@@ -970,6 +1000,28 @@ contributes:
         let i18n = m.contributes.i18n.as_ref().expect("i18n block parsed");
         assert_eq!(i18n.catalogs.get("en").map(String::as_str), Some("i18n/en.json"));
         assert_eq!(i18n.catalogs.get("es").map(String::as_str), Some("i18n/es.json"));
+    }
+
+    #[test]
+    fn contributes_skills_dir_parses() {
+        // R-agent-4 + Phase 6: a manifest may declare one or more
+        // `skills: [{ dir: ... }]` entries that the `starter-ext-flow`
+        // adapter walks and feeds into `SkillRegistry::extend(...)`.
+        let yaml = r#"
+v: 1
+id: com.acme.skilled
+version: 0.0.1
+display_name: "Skilled"
+runtime: { kind: builtin, crate_name: skilled }
+contributes:
+  skills:
+    - dir: skills/
+    - dir: more-skills/
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.skills.len(), 2);
+        assert_eq!(m.contributes.skills[0].dir, "skills/");
+        assert_eq!(m.contributes.skills[1].dir, "more-skills/");
     }
 
     #[test]

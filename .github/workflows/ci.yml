@@ -68,6 +68,18 @@ jobs:
       - name: test (starter-mcp, http feature)
         run: cargo test -p starter-mcp --features http --no-fail-fast
 
+      # The `ai-agent` node-kind body is default-off in
+      # starter-flow-nodes (per the workspace policy: a consumer
+      # enables only the kinds it needs). Its on-mount
+      # resource-hash-mismatch smoke (Phase 4b stage 7 of the
+      # starter-skills job) lives behind that feature flag, so it
+      # would otherwise never run in the default `cargo test
+      # --workspace` invocation. Pin it here so DOCS/agent/SKILLS.md
+      # smoke #7 ("Resource hash mismatch aborts the run") is a
+      # PR-blocking signal.
+      - name: test (starter-flow-nodes, ai-agent feature)
+        run: cargo test -p starter-flow-nodes --features ai-agent --no-fail-fast
+
       # Postgres testcontainers run is a separate job (needs Docker on
       # the runner — GitHub-hosted ubuntu-latest has it by default).
       # Marked `--ignored` so it never runs accidentally in
@@ -162,6 +174,34 @@ jobs:
         run: scripts/check-sdui-routes-isolation.sh
       - name: size budget — Renderer.tsx + components total
         run: scripts/check-sdui-size-budget.sh
+
+  skills-dep-isolation:
+    # Stage 12 of the starter-skills job (DOCS/agent/SKILLS.md +
+    # per-job SCOPE.md): `cargo tree -p starter-skills --edges
+    # normal` must not pull in any provider SDK. LlmSkillSelector
+    # talks to providers only through `AiRunner`, which lives in
+    # `starter-spi`; a provider SDK landing in starter-skills's
+    # normal-deps closure would breach agent R2 and silently spread
+    # provider deps to every downstream consumer.
+    #
+    # This is a CI gate, not an after-the-fact audit — the offending
+    # PR is the one that turns red, before the dep tree ever reaches
+    # the broader workspace.
+    name: starter-skills dep isolation
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+
+      - name: check skills dep isolation
+        run: scripts/check-skills-dep-isolation.sh
 
   audit:
     name: cargo audit

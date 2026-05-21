@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "starter.ai-builder.dashboards/schema.json",
+  "title": "AI-builder dashboard draft",
+  "type": "object",
+  "required": ["id", "title", "panels"],
+  "properties": {
+    "id": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 },
+    "panels": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "binding", "layout"],
+        "properties": {
+          "id": { "type": "string" },
+          "kind": {
+            "type": "string",
+            "enum": ["table", "line", "bar", "stat", "markdown"]
+          },
+          "binding": {
+            "type": "object",
+            "required": ["source"],
+            "properties": {
+              "source": { "type": "string" },
+              "query": { "type": "string" }
+            }
+          },
+          "layout": {
+            "type": "object",
+            "required": ["x", "y", "w", "h"],
+            "properties": {
+              "x": { "type": "integer", "minimum": 0 },
+              "y": { "type": "integer", "minimum": 0 },
+              "w": { "type": "integer", "minimum": 1 },
+              "h": { "type": "integer", "minimum": 1 }
+            }
+          }
+        }
+      }
+    }
+  }
+}

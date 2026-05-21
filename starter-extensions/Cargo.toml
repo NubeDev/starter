@@ -11,6 +11,7 @@ members = [
     "crates/starter-ext-wasm",
     "crates/starter-ext-cli",
     "crates/starter-ext-grpc",
+    "crates/starter-ext-flow",
     "crates/starter-ext-workers",
     "crates/starter-ext-smoke",
     "examples/hello-builtin",
@@ -50,6 +51,7 @@ starter-ext-supervisor  = { path = "crates/starter-ext-supervisor", version = "0
 starter-ext-wasm        = { path = "crates/starter-ext-wasm", version = "0.1.0" }
 starter-ext-grpc        = { path = "crates/starter-ext-grpc", version = "0.1.0" }
 starter-ext-cli         = { path = "crates/starter-ext-cli", version = "0.1.0" }
+starter-ext-flow        = { path = "crates/starter-ext-flow", version = "0.1.0" }
 starter-ext-workers     = { path = "crates/starter-ext-workers", version = "0.1.0" }
 
 # Parent-workspace crates the MCP and server adapters consume. Pulled in via
