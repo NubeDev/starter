@@ -232,6 +232,22 @@ fn is_excluded(name: &str) -> bool {
     false
 }
 
+/// Public alias for [`is_text`] used by the registry to compute
+/// per-resource [`starter_flow_spi::skill::ResourceRef::content_hash`]
+/// with the same text/binary classification as `hash_bundle` (so the
+/// Phase 4b on-mount check sees a byte-equal hash).
+pub(crate) fn is_text_path(rel: &str) -> bool {
+    is_text(rel)
+}
+
+/// Public-in-crate accessor for [`normalise_line_endings`] — kept
+/// separate from the private function so the algorithmic core stays
+/// `fn` (no trait, no allocator churn) while consumers go through
+/// this stable name.
+pub(crate) fn normalise_line_endings_pub(input: &[u8]) -> Vec<u8> {
+    normalise_line_endings(input)
+}
+
 /// Is this relative path a text-classified file per
 /// [`TEXT_EXTENSIONS`]? Extension match is case-sensitive and
 /// matches the last `.`-separated suffix.

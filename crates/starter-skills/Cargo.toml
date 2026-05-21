@@ -20,3 +20,13 @@ thiserror        = { workspace = true }
 async-trait      = { workspace = true }
 blake3           = { workspace = true }
 tracing          = { workspace = true }
+
+# Dev-only: smoke tests for the async `ApprovalStore` trait + the
+# (Phase 4) `SkillSelector` impl need an async runtime. tokio is
+# already the workspace runtime; pulling it in as a `dev-dependency`
+# keeps it out of the dep-tree CI gate that R-skills constraints
+# (no provider SDK, no extra normal deps) target.
+[dev-dependencies]
+tokio       = { workspace = true }
+starter-spi = { workspace = true }
+serde_json  = { workspace = true }

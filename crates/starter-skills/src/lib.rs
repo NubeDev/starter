@@ -28,9 +28,13 @@ pub mod approval;
 pub mod bundle;
 pub mod error;
 pub mod parser;
+pub mod registry;
+pub mod store;
 
 pub use bundle::{load_bundle, Bundle, Resource};
 pub use error::SkillParseError;
 pub use parser::{
     parse_skill_md, Frontmatter, ParsedSkill, Trust, SUPPORTED_RESOURCE_SCHEMES,
 };
+pub use registry::{ContributedSkill, LoadError, Skill, SkillRegistry, SkillRegistryBuilder};
+pub use store::{ApprovalRow, ApprovalStore, ApprovalStoreError, InMemoryApprovalStore};
