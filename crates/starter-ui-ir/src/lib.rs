@@ -40,7 +40,7 @@ pub use chart::{
 pub use component::{
     Action, BindingSpec, Bindings, ColumnRender, Component, Concurrency, ConfirmDialog, DateRangePreset,
     DiffAnnotation, FieldError, FlexAlign, FlexJustify, JsonTableColumn, JsonTableColumnFormat,
-    KpiDelta, KpiGridItem, NodeStyle, NumberValidate, RowAction, RowBreakpoints, RowLayout,
+    KpiDelta, KpiGridItem, NodeStyle, NumberValidate, OptimisticHint, RowAction, RowBreakpoints, RowLayout,
     SelectOption, ShowWhen, Tab, TableColumn, TableSource, TextValidate, TimelineEvent,
     ToolbarAction, TreeItem,
 };

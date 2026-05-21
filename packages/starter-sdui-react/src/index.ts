@@ -27,6 +27,8 @@ export {
 } from "./dialog-bus.js";
 
 export { useActionResponse } from "./useActionResponse.js";
+export { useOptimisticAction } from "./useOptimisticAction.js";
+export type { OptimisticDispatch } from "./useOptimisticAction.js";
 export { useSubscriptions } from "./useSubscriptions.js";
 export type { SubscriptionTransport } from "./useSubscriptions.js";
 export { useBoundWrite } from "./useBoundWrite.js";
@@ -69,6 +71,7 @@ export type {
   SubscriptionPlan,
   SubscriptionSubject,
   Diagnostic,
+  OptimisticHint,
   NodeStyle,
   ShowWhen,
 } from "./types.js";

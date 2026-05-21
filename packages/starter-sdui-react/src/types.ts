@@ -130,6 +130,23 @@ export interface Diagnostic {
   field?: string;
 }
 
+/**
+ * Optimistic-update hint carried on `Action`s — see SCOPE.md § R9.
+ *
+ * Applied to the cached tree via React-Query `setQueryData` **before**
+ * the round-trip fires; the server's authoritative `patch` /
+ * `full_render` reply replaces it through the same `applyPatch`
+ * helpers. On round-trip error the pre-dispatch snapshot is restored
+ * — there is no client-side reconciliation logic past "snapshot,
+ * apply, swap-or-restore" (R9: the renderer is a projector).
+ *
+ * Wire shape mirrors `starter_ui_ir::OptimisticHint` verbatim.
+ */
+export interface OptimisticHint {
+  target_component_id: string;
+  fields: Record<string, unknown>;
+}
+
 export type UiActionResponse =
   | { type: "noop" }
   | { type: "toast"; intent?: "info" | "success" | "warning" | "danger"; message: string }

@@ -13,9 +13,8 @@
 import { useState } from "react";
 import { Button } from "@nube/starter-ui-kit";
 import type { ComponentSpec } from "../registry/types.js";
-import { useSdui } from "../context.js";
-import { useActionResponse } from "../useActionResponse.js";
-import type { UiComponent, UiActionResponse } from "../types.js";
+import { useOptimisticAction } from "../useOptimisticAction.js";
+import type { OptimisticHint, UiComponent } from "../types.js";
 
 type BtnVariant =
   | "default"
@@ -38,13 +37,20 @@ export interface ButtonNode extends UiComponent {
    *  the AlertDialog primitive lands with the dialog component in a
    *  follow-up batch. */
   confirm?: string;
+  /**
+   * Optional optimistic-update hint. Applied to the cached tree
+   * (via React-Query `setQueryData` + `mergeAt`) **before** the
+   * round-trip fires. The server's authoritative reply replaces
+   * through the same helpers; a thrown dispatch error rolls back
+   * to the pre-dispatch snapshot. See SCOPE.md § R9.
+   */
+  optimistic?: OptimisticHint;
 }
 
 export const buttonSpec: ComponentSpec<ButtonNode> = {
   kind: "button",
   Component: ({ node }) => {
-    const { dispatchAction } = useSdui();
-    const interpret = useActionResponse();
+    const dispatch = useOptimisticAction();
     const [pending, setPending] = useState(false);
 
     const onClick = async () => {
@@ -52,11 +58,7 @@ export const buttonSpec: ComponentSpec<ButtonNode> = {
       if (node.confirm && !window.confirm(node.confirm)) return;
       setPending(true);
       try {
-        const res: UiActionResponse = await dispatchAction(
-          node.on_click,
-          node.args,
-        );
-        interpret(res);
+        await dispatch(node.on_click, node.args, node.optimistic ?? null);
       } finally {
         setPending(false);
       }
