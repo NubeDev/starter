@@ -6958,6 +6958,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ui-builder"
+version = "0.1.0"
+dependencies = [
+ "jsonschema",
+ "serde",
+ "serde_json",
+ "starter-ui-bindings",
+ "starter-ui-ir",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "starter-ui-ir"
 version = "0.1.0"
 dependencies = [

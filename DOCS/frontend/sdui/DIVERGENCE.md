@@ -105,6 +105,32 @@ A `NullGraph` impl exists for tests / `$user`-only resolves.
 Promotion to `starter-spi` waits on a second consumer (S-D1
 revisit trigger).
 
+### D7 — `seed_page()` uses a `PageStore` trait, not `block_client::GraphClient`
+
+Rubix's `seed_page()` lives in `extension-sdk/sdui-builder/src/seed.rs`
+and dispatches against `block_client::GraphClient` directly — an
+async client tied to Rubix's agent-side node graph. Starter has no
+`block_client` equivalent (and shouldn't — the builder crate is
+zero-I/O by contract), so the port abstracts the two operations
+`seed_page` needs (`find_or_create_node`, `write_slot`) behind a
+[`PageStore`](crate::seed::PageStore) trait the host implements.
+
+**Signature change.** `seed_page` is **synchronous** on starter;
+Rubix's was `async`. The host wraps an async store at the call site
+(`block_on`, dispatcher, etc.). The synchronous signature keeps the
+builder crate's transitive dep surface to `serde`, `serde_json`,
+`thiserror`, and `starter-ui-ir` — no `tokio` / `async-trait` /
+runtime crate sneaks in via the seeding API.
+
+**Idempotency contract is unchanged.** Implementations of
+`PageStore::find_or_create_node` must remain atomic under the host's
+write lock — a second call with the same `(parent_path, kind, name)`
+triple returns the existing node, not a sibling. This is the bug
+Rubix's [docs/design/extensions/SEED-RECONCILE.md][rubix-seed-recon]
+catalogued; starter's port preserves the contract verbatim.
+
+[rubix-seed-recon]: file:///home/user/code/rubix-workspace/rubix-agent/docs/design/extensions/SEED-RECONCILE.md
+
 ### D6 — `cost_cap`, `session_policy`, and other flow node config
 
 Not an SDUI divergence per se, but ai-builder flows reference

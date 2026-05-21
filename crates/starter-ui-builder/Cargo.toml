@@ -1,0 +1,31 @@
+[package]
+name        = "starter-ui-builder"
+description = "Typed Rust constructors for authoring SDUI ComponentTrees from main.rs. Ported from extension-sdk/sdui-builder. See DOCS/frontend/sdui/SCOPE.md."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+rust-version.workspace = true
+
+# Phase 3 of the SDUI port (DOCS/frontend/sdui/SCOPE.md).
+#
+# `starter-ui-builder` depends on `starter-ui-ir` **only**. It does
+# NOT depend on `starter-ui-bindings` — per the M4 fix in SCOPE.md
+# (§ Surface — Rust (builder DSL)) the dependency split keeps the
+# binding-engine off the build path for consumers authoring pages
+# as code from `main.rs`. The trade is intentional: source/kind
+# pairings get compile-time safety via the `TimeSeriesSource` /
+# `RowsSource` newtypes; binding strings get resolve-time errors
+# with line-numbered diagnostics from `starter-ui-bindings` at
+# request time on the server.
+
+[dependencies]
+starter-ui-ir = { workspace = true }
+
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+
+[dev-dependencies]
+starter-ui-bindings = { workspace = true }
+jsonschema          = { workspace = true }
+serde_json          = { workspace = true }
