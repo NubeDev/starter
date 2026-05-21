@@ -7,6 +7,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { IconPlus, IconLayoutDashboard } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
+import { PageHero } from "@/components/page-hero"
 import {
   Card,
   CardContent,
@@ -62,21 +63,21 @@ export function PagesList() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-6 lg:px-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Pages</h2>
-          <p className="text-sm text-muted-foreground">
-            AI-built dashboards rendered with SDUI.
-          </p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Badge variant="secondary">{total} total</Badge>
-          <Button onClick={() => navigate("/pages/new")}>
-            <IconPlus className="size-4" />
-            New page
-          </Button>
-        </div>
-      </div>
+      <PageHero
+        icon={IconLayoutDashboard}
+        accent="var(--accent-info)"
+        title="Pages"
+        description="AI-built dashboards rendered with SDUI."
+        actions={
+          <>
+            <Badge variant="secondary">{total} total</Badge>
+            <Button onClick={() => navigate("/pages/new")}>
+              <IconPlus className="size-4" />
+              New page
+            </Button>
+          </>
+        }
+      />
 
       {isEmpty ? (
         <Empty className="border border-dashed bg-card/30">
@@ -99,7 +100,7 @@ export function PagesList() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {pages.map((p) => (
-            <Card key={p.id} className="flex flex-col">
+            <Card key={p.id} className="card-lift flex flex-col">
               <CardHeader>
                 <CardTitle className="text-base">
                   <Link to={`/pages/${p.id}`} className="hover:underline">

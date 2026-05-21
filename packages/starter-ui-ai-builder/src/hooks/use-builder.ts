@@ -3,6 +3,7 @@ import { replaceAt, type UiComponentTree } from "@nube/starter-sdui-react";
 import type {
   BuilderAdapter,
   BuilderEvent,
+  BuilderMode,
   BuilderPhase,
   BuilderSendInput,
   ShellPatch,
@@ -10,14 +11,20 @@ import type {
 } from "../types/index.js";
 import { makeId, treeHasId } from "../lib/utils.js";
 
-/** A user prompt or status frame, in chronological order, for the
- *  transcript pane. The library never invents AI bubbles — assistant
- *  output IS the canvas. */
+/** A user prompt, status frame, or assistant prose reply (Ask
+ *  mode), in chronological order, for the transcript pane. The
+ *  library never invents AI bubbles for Build turns — assistant
+ *  output IS the canvas there. Ask turns are the only path that
+ *  populates an `"assistant"` entry. */
 export interface BuilderTranscriptEntry {
   id: string;
-  kind: "user" | "status";
+  kind: "user" | "assistant" | "status";
   text: string;
   phase?: BuilderPhase;
+  /** Set on `kind: "user"` entries to indicate which lane the
+   *  prompt was sent on. UI surfaces use this to colour the
+   *  bubble (e.g. a subtle "Ask" tag). */
+  mode?: BuilderMode;
   createdAt: number;
 }
 
@@ -25,6 +32,9 @@ export interface UseBuilderOptions {
   adapter: BuilderAdapter;
   /** Initial tree to show before the first stream lands. */
   initialTree?: UiComponentTree | null;
+  /** Initial conversation lane. Defaults to `"build"`. The hook
+   *  also exposes `mode` + `setMode` so the surface can toggle. */
+  defaultMode?: BuilderMode;
   /** R1 — buffer `patch` events whose target isn't in the tree yet
    *  for this many ms. Default: 2000 (the SCOPE-mandated window). */
   patchBufferMs?: number;
@@ -52,6 +62,10 @@ export interface UseBuilderReturn {
   transcript: BuilderTranscriptEntry[];
   phase: BuilderPhase;
   error: string | null;
+  /** Current conversation lane. Used by the composer to pick the
+   *  Build/Ask toggle state. */
+  mode: BuilderMode;
+  setMode: (mode: BuilderMode) => void;
   send: (input: BuilderSendInput | string) => Promise<void>;
   cancel: () => void;
   /** Re-run the last user prompt (drops the trailing transcript
@@ -64,6 +78,12 @@ export interface UseBuilderReturn {
    *  version via the artifact-versions endpoint. Does not record
    *  anything — the store sees only what the model writes. */
   setTree: (tree: UiComponentTree | null) => void;
+  /** Imperatively replace the transcript outside a streaming turn.
+   *  Surfaces use this to rehydrate the chat history from
+   *  persisted turns on mount. The hook makes no attempt to
+   *  reconcile a partial overlap with in-flight state — callers
+   *  should only call this when `phase === "idle"`. */
+  setTranscript: (entries: BuilderTranscriptEntry[]) => void;
   /** Count of `patch` events currently held in the R1 buffer. */
   bufferedPatches: number;
 }
@@ -87,6 +107,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
   const {
     adapter,
     initialTree = null,
+    defaultMode = "build",
     patchBufferMs = 2000,
     onTokenPatch,
     onShellPatch,
@@ -99,6 +120,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
   const [transcript, setTranscript] = useState<BuilderTranscriptEntry[]>([]);
   const [phase, setPhase] = useState<BuilderPhase>("idle");
   const [error, setError] = useState<string | null>(null);
+  const [mode, setMode] = useState<BuilderMode>(defaultMode);
   const [bufferedPatches, setBufferedPatches] = useState(0);
   const abortRef = useRef<AbortController | null>(null);
   const lastPromptRef = useRef<BuilderSendInput | null>(null);
@@ -189,11 +211,13 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
     setTranscript([]);
     setPhase("idle");
     setError(null);
+    setMode(defaultMode);
     lastPromptRef.current = null;
-  }, [initialTree]);
+  }, [defaultMode, initialTree]);
 
   const runTurn = useCallback(
     async (input: BuilderSendInput) => {
+      const turnMode: BuilderMode = input.mode ?? "build";
       lastPromptRef.current = input;
       setTranscript((prev) => [
         ...prev,
@@ -201,6 +225,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
           id: makeId("u"),
           kind: "user",
           text: input.text,
+          mode: turnMode,
           createdAt: Date.now(),
         },
       ]);
@@ -241,6 +266,22 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
             }
             case "shell-patch": {
               onShellPatch?.(ev.patch);
+              setPhase((p) => (p === "thinking" ? "writing" : p));
+              break;
+            }
+            case "message": {
+              // Ask-mode reply — surface the assistant's prose as a
+              // transcript bubble. The canvas is intentionally not
+              // touched here; build turns own the tree.
+              setTranscript((prev) => [
+                ...prev,
+                {
+                  id: makeId("a"),
+                  kind: "assistant",
+                  text: ev.text,
+                  createdAt: Date.now(),
+                },
+              ]);
               setPhase((p) => (p === "thinking" ? "writing" : p));
               break;
             }
@@ -322,11 +363,11 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
   const send = useCallback(
     async (raw: BuilderSendInput | string) => {
       const input: BuilderSendInput =
-        typeof raw === "string" ? { text: raw } : raw;
+        typeof raw === "string" ? { text: raw, mode } : { mode, ...raw };
       if (!input.text.trim() && !input.slots) return;
       await runTurn(input);
     },
-    [runTurn],
+    [mode, runTurn],
   );
 
   const retry = useCallback(async () => {
@@ -350,11 +391,14 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
       transcript,
       phase,
       error,
+      mode,
+      setMode,
       send,
       cancel,
       retry,
       reset,
       setTree,
+      setTranscript,
       bufferedPatches,
     }),
     [
@@ -362,6 +406,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
       transcript,
       phase,
       error,
+      mode,
       send,
       cancel,
       retry,

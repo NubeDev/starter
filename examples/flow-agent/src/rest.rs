@@ -52,6 +52,7 @@ pub struct RestState {
         crate::builder_stream::builder_stream,
         create_session, get_latest_artifact,
         list_artifact_versions, get_artifact_version,
+        list_session_turns,
     ),
     components(schemas(
         Flow, FlowSummary, CreateFlow, UpdateFlow,
@@ -61,6 +62,7 @@ pub struct RestState {
         ProviderStatusDto,
         crate::builder_stream::BuilderRequest,
         CreateSession, SessionCreated, ArtifactDto, ArtifactMetaDto,
+        TurnDto,
     ))
 )]
 pub struct FlowAgentApi;
@@ -112,6 +114,7 @@ where
             "/api/sessions/{id}/artifacts/{key}/versions/{version}",
             get(get_artifact_version),
         )
+        .route("/api/sessions/{id}/turns", get(list_session_turns))
         // SSE
         .route("/api/events", get(sidebar_events))
         .route("/api/flows/{id}/events", get(flow_events))
@@ -753,6 +756,52 @@ fn meta_to_dto(m: starter_flow_spi::agent_session::ArtifactMeta) -> ArtifactMeta
         value_bytes: m.value_bytes,
         produced_by_seq: m.produced_by_seq,
         updated_at: m.updated_at.to_rfc3339(),
+    }
+}
+
+/// One persisted turn surfaced to the client. The `role` mirrors
+/// the SPI's `TurnRole` (`user` / `assistant` / `tool`); the
+/// `content` is whatever the producer stored (a JSON string for
+/// user prompts and Ask assistant replies; an empty string for
+/// Build assistant turns where the tree lives in an artifact).
+#[derive(serde::Serialize, utoipa::ToSchema)]
+pub struct TurnDto {
+    pub seq: u32,
+    pub role: String,
+    pub content: serde_json::Value,
+    pub content_bytes: u32,
+    pub created_at: String,
+}
+
+#[utoipa::path(get, path = "/api/sessions/{id}/turns", tag = "sessions",
+    params(
+        ("id" = String, Path, description = "Session id"),
+    ),
+    responses(
+        (status = 200, description = "All persisted turns, oldest first", body = [TurnDto]),
+    ))]
+async fn list_session_turns(
+    State(s): State<RestState>,
+    Path(id): Path<String>,
+) -> Result<Json<Vec<TurnDto>>, ApiError> {
+    let session_id = parse_session_id(&id)?;
+    let turns = s.agent_sessions.list_turns(session_id, None, None).await?;
+    Ok(Json(turns.into_iter().map(turn_to_dto).collect()))
+}
+
+fn turn_to_dto(t: starter_flow_spi::agent_session::Turn) -> TurnDto {
+    let role = match t.role {
+        starter_flow_spi::agent_session::TurnRole::User => "user",
+        starter_flow_spi::agent_session::TurnRole::Assistant => "assistant",
+        starter_flow_spi::agent_session::TurnRole::Tool => "tool",
+        _ => "unknown",
+    };
+    TurnDto {
+        seq: t.seq,
+        role: role.to_owned(),
+        content: t.content,
+        content_bytes: t.content_bytes,
+        created_at: t.created_at.to_rfc3339(),
     }
 }
 

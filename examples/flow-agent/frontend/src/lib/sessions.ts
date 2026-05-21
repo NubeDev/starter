@@ -158,3 +158,31 @@ export function asTree(artifact: SessionArtifact | null): UiComponentTree | null
   // the SDUI renderer will surface that itself.
   return artifact.value as UiComponentTree;
 }
+
+/** One persisted turn as returned by `GET /api/sessions/:id/turns`.
+ *  `content` is whatever the producer stored \u2014 a JSON string for
+ *  user prompts and Ask assistant replies; an empty string for
+ *  Build assistant turns (the tree lives in an artifact). */
+export interface PersistedTurn {
+  seq: number;
+  role: "user" | "assistant" | "tool" | "unknown";
+  content: unknown;
+  content_bytes: number;
+  created_at: string;
+}
+
+/** `GET /api/sessions/:id/turns` \u2014 every persisted turn, oldest
+ *  first. Used to rehydrate the transcript on page reload. */
+export async function listTurns(
+  sessionId: string,
+  signal?: AbortSignal,
+): Promise<PersistedTurn[]> {
+  const res = await fetch(
+    `/api/sessions/${encodeURIComponent(sessionId)}/turns`,
+    { signal },
+  );
+  if (!res.ok) {
+    throw new Error(`GET turns: HTTP ${res.status}`);
+  }
+  return (await res.json()) as PersistedTurn[];
+}

@@ -4,6 +4,7 @@ import { Link } from "react-router-dom"
 import { IconPlus, IconTrash, IconSitemap } from "@tabler/icons-react"
 
 import { Button } from "@/components/ui/button"
+import { PageHero } from "@/components/page-hero"
 import {
   Card,
   CardContent,
@@ -54,17 +55,15 @@ export function FlowsList() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-6 lg:px-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-semibold tracking-tight">Flows</h2>
-          <p className="text-sm text-muted-foreground">
-            Compose node graphs and fire them on demand.
-          </p>
-        </div>
-        <Badge variant="secondary">{total} total</Badge>
-      </div>
+      <PageHero
+        icon={IconSitemap}
+        accent="var(--accent-flows)"
+        title="Flows"
+        description="Compose node graphs and fire them on demand."
+        actions={<Badge variant="secondary">{total} total</Badge>}
+      />
 
-      <Card>
+      <Card className="card-lift">
         <CardHeader>
           <CardTitle className="text-base">New flow</CardTitle>
           <CardDescription>

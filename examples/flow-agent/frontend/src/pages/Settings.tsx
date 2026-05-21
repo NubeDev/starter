@@ -1,10 +1,11 @@
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { IconCheck, IconX } from "@tabler/icons-react"
+import { IconCheck, IconX, IconSettings } from "@tabler/icons-react"
 import { ThemeEditorPage } from "@kit/theme-editor"
 import { localStorageThemeTransport } from "@nube/starter-ui-core/theme-editor"
 
 import { Badge } from "@/components/ui/badge"
+import { PageHero } from "@/components/page-hero"
 import {
   Card,
   CardContent,
@@ -29,12 +30,12 @@ export function Settings() {
 
   return (
     <div className="flex flex-col gap-6 px-4 py-6 lg:px-6">
-      <div>
-        <h2 className="text-2xl font-semibold tracking-tight">Settings</h2>
-        <p className="text-sm text-muted-foreground">
-          Providers status and theme customisation.
-        </p>
-      </div>
+      <PageHero
+        icon={IconSettings}
+        accent="var(--accent-settings)"
+        title="Settings"
+        description="Providers status and theme customisation."
+      />
 
       <Tabs defaultValue="providers">
         <TabsList>

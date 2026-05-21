@@ -36,8 +36,8 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use starter_ai::{Registry, TokenCancel};
 use starter_spi::ai::{
-    CliCfg, Event as AiEvent, EventKind, Provider, RestCfg, RunnerInput,
-    SessionId, ToolChoice, ToolDef,
+    CliCfg, Event as AiEvent, EventKind, HistoryMessage, Provider, RestCfg,
+    RunnerInput, SessionId, ToolChoice, ToolDef,
 };
 
 use crate::rest::RestState;
@@ -92,8 +92,23 @@ const MAX_TOKENS: u32 = 8192;
 /// headroom without making errors invisible.
 const WALL_CLOCK: Duration = Duration::from_secs(60);
 const TOOL_NAME: &str = "emit_ui_tree";
+/// Transcript replay tail (MEMORY.md M-C). The builder route
+/// pre-fetches the last N turns of the session and hands them to the
+/// runner as conversation history so follow-up prompts like "undo
+/// that" or "make the button blue instead" land in context. Snapshot
+/// alone is not enough — it tells the model what the page looks like,
+/// not what the user previously asked. 20 turns ≈ 10 exchanges,
+/// comfortably under the model context budget for haiku/sonnet.
+const TRANSCRIPT_REPLAY_LIMIT: usize = 20;
 
 const SYSTEM_PROMPT: &str = include_str!("builder_system_prompt.txt");
+
+/// System prompt for `mode="ask"`. The model answers the user's
+/// question conversationally. It must NOT emit a tree or JSON — the
+/// frontend renders the reply as a chat bubble. Kept short so the
+/// build-prompt's schema bias doesn't leak in (we don't include
+/// `SYSTEM_PROMPT` here).
+const ASK_SYSTEM_PROMPT: &str = include_str!("builder_ask_prompt.txt");
 
 #[derive(Debug, Deserialize, utoipa::ToSchema)]
 pub struct BuilderRequest {
@@ -107,6 +122,13 @@ pub struct BuilderRequest {
     /// `ANTHROPIC_API_KEY` is set, falling back to CLI.
     #[serde(default = "default_provider")]
     pub provider: String,
+    /// Conversation mode. `"build"` (default) generates / edits the
+    /// SDUI tree and emits a `full-render` frame. `"ask"` answers a
+    /// question conversationally and emits a single `message` frame
+    /// without touching the tree — use this for clarifying questions
+    /// like "can we add fake data?" or "what does this component do?".
+    #[serde(default = "default_mode")]
+    pub mode: String,
     /// Optional agent-session id (UUIDv7 string). When provided, the
     /// generated tree is persisted as an artifact under this session
     /// (MEMORY.md Phase M-D). When absent, the request stays
@@ -124,6 +146,29 @@ pub struct BuilderRequest {
 
 fn default_provider() -> String {
     "claude".to_owned()
+}
+
+fn default_mode() -> String {
+    "build".to_owned()
+}
+
+/// Which conversational lane this turn is on. `Build` runs the tree
+/// generator and validator. `Ask` runs a Q&A turn — no tree, no
+/// validator, one `message` frame back to the client.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum BuilderMode {
+    Build,
+    Ask,
+}
+
+impl BuilderMode {
+    fn parse(s: &str) -> Option<Self> {
+        match s {
+            "build" | "edit" => Some(Self::Build),
+            "ask" => Some(Self::Ask),
+            _ => None,
+        }
+    }
 }
 
 /// `POST /api/builder/stream`. Returns either:
@@ -150,6 +195,15 @@ pub async fn builder_stream(
     if req.provider != "claude" && req.provider != "anthropic" {
         return bad_request(&format!("unknown provider `{}`", req.provider));
     }
+    let builder_mode = match BuilderMode::parse(req.mode.trim()) {
+        Some(m) => m,
+        None => {
+            return bad_request(&format!(
+                "unknown mode `{}` (expected `build` or `ask`)",
+                req.mode
+            ));
+        }
+    };
 
     // Parse session id up front so a malformed value becomes 400
     // (not a silent stateless fallback). The empty string `""` is
@@ -190,6 +244,22 @@ pub async fn builder_stream(
         None => None,
     };
 
+    // Transcript replay (MEMORY.md M-C). Pull the tail of the prior
+    // turns so the model has conversational context for follow-ups.
+    // Persist failures here are non-fatal: snapshot + system prompt
+    // still produce a usable single-shot response, and an error
+    // crossing the wire would mask the actual failure mode.
+    let history = match session_id {
+        Some(id) => match fetch_history(&state.agent_sessions, id, TRANSCRIPT_REPLAY_LIMIT).await {
+            Ok(h) => h,
+            Err(e) => {
+                tracing::warn!(error = %e, "transcript replay fetch failed, continuing without");
+                Vec::new()
+            }
+        },
+        None => Vec::new(),
+    };
+
     // Prefer the REST runner (`Provider::Anthropic`) when an API key
     // is set: the CLI runner (`Provider::Claude`) does not surface
     // tools through CliCfg, so the model cannot emit a structured
@@ -226,8 +296,10 @@ pub async fn builder_stream(
     tokio::spawn(run_builder(
         resolved,
         mode,
+        builder_mode,
         prompt,
         snapshot,
+        history,
         persist,
         frame_tx,
         cancel.clone(),
@@ -321,11 +393,17 @@ struct PersistCtx {
     user_prompt: String,
 }
 
+// One extra argument (history) over the clippy threshold of 7.
+// Keeping a single fn is clearer than packaging the parameters into
+// a context struct that's only ever constructed and consumed once.
+#[allow(clippy::too_many_arguments)]
 async fn run_builder(
     runner: Arc<dyn starter_spi::ai::AiRunner>,
     mode: RunnerMode,
+    builder_mode: BuilderMode,
     prompt: String,
     snapshot: Option<(String, JsonValue)>,
+    history: Vec<HistoryMessage>,
     persist: Option<PersistCtx>,
     tx: mpsc::Sender<String>,
     cancel: TokenCancel,
@@ -359,13 +437,30 @@ async fn run_builder(
         ),
     };
 
-    let input = match mode {
-        RunnerMode::Rest => {
+    // The Ask lane composes its own system prompt from a different
+    // base; the snapshot (if any) is still useful context but the
+    // build-mode SDUI-builder rules and few-shots aren't relevant.
+    let ask_system_prompt = match snapshot.as_ref() {
+        None => ASK_SYSTEM_PROMPT.to_owned(),
+        Some((key, value)) => format!(
+            "{ASK_SYSTEM_PROMPT}\n\n# Current `{key}` (read-only — you cannot edit it from Ask mode)\n```json\n{}\n```\n",
+            serde_json::to_string_pretty(value).unwrap_or_else(|_| value.to_string())
+        ),
+    };
+
+    let input = match (mode, builder_mode) {
+        (RunnerMode::Rest, BuilderMode::Build) => {
             // REST runner — pass the tool def + force the call. This is
             // the path that reliably returns a structured ToolUse.
+            //
+            // `history` carries the prior conversation (MEMORY.md M-C
+            // Transcript replay). The current prompt is sent as the
+            // top-level `prompt` field; the runner appends it as the
+            // final user message after `history`.
             RunnerInput::Rest(RestCfg {
                 prompt: prompt.clone(),
                 system_prompt: Some(system_prompt.clone()),
+                history: history.clone(),
                 tools: vec![tool_def()],
                 tool_choice: Some(ToolChoice::Tool {
                     name: TOOL_NAME.to_owned(),
@@ -374,11 +469,30 @@ async fn run_builder(
                 ..RestCfg::default()
             })
         }
-        RunnerMode::Cli => {
+        (RunnerMode::Rest, BuilderMode::Ask) => {
+            // Ask lane on REST — no tools, plain prose reply. The
+            // model writes one text message; we surface it as a
+            // `message` SSE frame.
+            RunnerInput::Rest(RestCfg {
+                prompt: prompt.clone(),
+                system_prompt: Some(ask_system_prompt.clone()),
+                history: history.clone(),
+                tools: vec![],
+                tool_choice: None,
+                max_tokens: Some(MAX_TOKENS),
+                ..RestCfg::default()
+            })
+        }
+        (RunnerMode::Cli, BuilderMode::Build) => {
             // CLI runners don't surface tools through CliCfg; fold the
             // schema into the system prompt as a best-effort. Per P0
             // the model usually replies with prose JSON on this path,
             // which the resolver catches as a single `error` frame.
+            //
+            // The CLI shape has no native conversation channel either,
+            // so prior turns are inlined into the system prompt under
+            // a fenced section. Keep it short — the CLI lane is the
+            // fallback, not the primary surface.
             //
             // Pin `haiku` (≈3-5× faster than the default opus) so a
             // CLI cold-call comfortably fits inside `WALL_CLOCK`. The
@@ -388,8 +502,18 @@ async fn run_builder(
             RunnerInput::Cli(CliCfg {
                 prompt: prompt.clone(),
                 system_prompt: Some(format!(
-                    "{system_prompt}\n\n# Tool schema (call `{TOOL_NAME}` with these args)\n\
+                    "{system_prompt}{transcript}\n\n\
+                     # CLI lane — no tool API\n\
+                     Your environment has NO tool-calling surface. Do not\n\
+                     attempt to call `{TOOL_NAME}` or any other tool, do not\n\
+                     say the tool is unavailable, do not ask the user for\n\
+                     clarification, and do not emit prose, markdown, or code\n\
+                     fences. Reply with a single JSON object matching the\n\
+                     schema below — the JSON object IS your entire reply.\n\
+                     \n\
+                     # JSON schema (the shape your reply must match)\n\
                      {schema}\n",
+                    transcript = format_history_for_cli(&history),
                     schema = serde_json::to_string_pretty(&tool_def().input_schema)
                         .unwrap_or_default()
                 )),
@@ -402,6 +526,22 @@ async fn run_builder(
                 // CWD. With `tools=""` there is nothing it can call,
                 // so `permission_mode` becomes moot — the wrapper
                 // never reaches the approval gate.
+                tools: Some(String::new()),
+                ..CliCfg::default()
+            })
+        }
+        (RunnerMode::Cli, BuilderMode::Ask) => {
+            // Ask lane on CLI — prose-only reply. Same tool
+            // lockdown as Build (no FS side-effects); different
+            // system prompt that explicitly asks for conversational
+            // text, not JSON.
+            RunnerInput::Cli(CliCfg {
+                prompt: prompt.clone(),
+                system_prompt: Some(format!(
+                    "{ask_system_prompt}{transcript}",
+                    transcript = format_history_for_cli(&history),
+                )),
+                model: Some("haiku".into()),
                 tools: Some(String::new()),
                 ..CliCfg::default()
             })
@@ -458,49 +598,156 @@ async fn run_builder(
     // returns => ai_tx dropped => recv loop exits.
     let (prose, tool_input, runner_error) = pump.await.unwrap_or_default();
 
-    match resolve_outcome(outcome, prose, tool_input, runner_error, mode) {
-        Ok(tree) => {
-            // Persist before announcing success so a caller that
-            // reads the artifact on `phase: "done"` always sees the
-            // tree that produced this frame. A persist failure does
-            // NOT poison the response: the tree is still valid for
-            // this turn, the user just won't have history. We log
-            // and emit an out-of-band `session_error` frame so the
-            // surface can degrade gracefully (stay stateless).
-            if let Some(ctx) = persist {
-                if let Err(e) = persist_turn(&ctx, &tree).await {
-                    tracing::error!(error = %e, "agent-session persist failed");
+    match builder_mode {
+        BuilderMode::Build => {
+            match resolve_outcome(outcome, prose, tool_input, runner_error, mode) {
+                Ok(tree) => {
+                    // Persist before announcing success so a caller
+                    // that reads the artifact on `phase: "done"`
+                    // always sees the tree that produced this frame.
+                    // A persist failure does NOT poison the response:
+                    // the tree is still valid for this turn, the user
+                    // just won't have history. We log and emit an
+                    // out-of-band `session_error` frame so the
+                    // surface can degrade gracefully (stay stateless).
+                    if let Some(ctx) = &persist {
+                        if let Err(e) = persist_turn(ctx, &tree).await {
+                            tracing::error!(error = %e, "agent-session persist failed");
+                            let _ = tx
+                                .send(
+                                    json!({
+                                        "type": "session_error",
+                                        "error": format!("persist failed: {e}"),
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
+                        } else {
+                            let _ = tx
+                                .send(
+                                    json!({
+                                        "type": "session_artifact",
+                                        "session_id": ctx.session_id.to_string(),
+                                        "key": ctx.artifact_key,
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
+                        }
+                    }
                     let _ = tx
-                        .send(
-                            json!({
-                                "type": "session_error",
-                                "error": format!("persist failed: {e}"),
-                            })
-                            .to_string(),
-                        )
+                        .send(json!({ "type": "full-render", "tree": tree }).to_string())
                         .await;
-                } else {
                     let _ = tx
-                        .send(
-                            json!({
-                                "type": "session_artifact",
-                                "session_id": ctx.session_id.to_string(),
-                                "key": ctx.artifact_key,
-                            })
-                            .to_string(),
-                        )
+                        .send(json!({ "type": "status", "phase": "done" }).to_string())
                         .await;
                 }
+                Err(msg) => emit_error(&tx, msg).await,
             }
-            let _ = tx
-                .send(json!({ "type": "full-render", "tree": tree }).to_string())
-                .await;
-            let _ = tx
-                .send(json!({ "type": "status", "phase": "done" }).to_string())
-                .await;
         }
-        Err(msg) => emit_error(&tx, msg).await,
+        BuilderMode::Ask => {
+            match resolve_ask_outcome(outcome, prose, runner_error) {
+                Ok(message) => {
+                    if let Some(ctx) = &persist {
+                        if let Err(e) = persist_ask_turn(ctx, &message).await {
+                            tracing::error!(error = %e, "agent-session persist failed (ask)");
+                            let _ = tx
+                                .send(
+                                    json!({
+                                        "type": "session_error",
+                                        "error": format!("persist failed: {e}"),
+                                    })
+                                    .to_string(),
+                                )
+                                .await;
+                        }
+                    }
+                    let _ = tx
+                        .send(
+                            json!({
+                                "type": "message",
+                                "role": "assistant",
+                                "text": message,
+                            })
+                            .to_string(),
+                        )
+                        .await;
+                    let _ = tx
+                        .send(json!({ "type": "status", "phase": "done" }).to_string())
+                        .await;
+                }
+                Err(msg) => emit_error(&tx, msg).await,
+            }
+        }
     }
+}
+
+/// Ask-mode resolver. The model's prose IS the answer; there is no
+/// tree, no validator. We only need to surface runner-level failures
+/// (timeout, transport error) and reject empty replies as upstream
+/// errors so the client sees a deterministic terminal frame.
+fn resolve_ask_outcome(
+    outcome: Result<
+        Result<starter_spi::ai::RunResult, starter_spi::ai::RunnerError>,
+        tokio::time::error::Elapsed,
+    >,
+    prose: String,
+    runner_error: Option<String>,
+) -> Result<String, String> {
+    let result = match outcome {
+        Err(_elapsed) => {
+            return Err(format!("timeout after {}s", WALL_CLOCK.as_secs()));
+        }
+        Ok(Err(e)) => return Err(format!("runner failed: {e}")),
+        Ok(Ok(r)) => r,
+    };
+    // Combine streamed prose with any final-message text the runner
+    // surfaces only on completion (REST tends to emit text via Text
+    // events during the stream; CLI varies by wrapper, and some
+    // runners only populate `result.text` at the end).
+    let mut text = prose.trim().to_owned();
+    if text.is_empty() && !result.text.trim().is_empty() {
+        text = result.text.trim().to_owned();
+    }
+    if text.is_empty() {
+        if let Some(msg) = result.error.or(runner_error) {
+            return Err(format!("upstream error: {msg}"));
+        }
+        return Err("empty reply".to_owned());
+    }
+    Ok(text)
+}
+
+/// Persist an Ask-mode turn pair: the user question + the
+/// assistant's prose reply. No artifact attaches in this lane — the
+/// reply text lives in the turn body itself. Same atomicity
+/// guarantee as `persist_turn`.
+async fn persist_ask_turn(
+    ctx: &PersistCtx,
+    reply: &str,
+) -> Result<(), starter_flow_spi::agent_session::AgentSessionError> {
+    use starter_flow_spi::agent_session::{TurnInput, TurnRole};
+    ctx.store
+        .append_turn_with_artifacts(
+            ctx.session_id,
+            TurnInput::new(
+                TurnRole::User,
+                JsonValue::String(ctx.user_prompt.clone()),
+            ),
+            &[],
+        )
+        .await?;
+    ctx.store
+        .append_turn_with_artifacts(
+            ctx.session_id,
+            TurnInput::new(
+                TurnRole::Assistant,
+                JsonValue::String(reply.to_owned()),
+            ),
+            &[],
+        )
+        .await?;
+    Ok(())
 }
 
 /// Persist a user turn + an `Assistant` turn carrying the freshly
@@ -539,6 +786,71 @@ async fn persist_turn(
         )
         .await?;
     Ok(())
+}
+
+/// Pull the tail of a session's persisted turns and shape them into
+/// the runner's `HistoryMessage` form (MEMORY.md M-C Transcript
+/// replay). `list_turns` returns oldest-first, so we fetch a soft
+/// cap of `2*tail` rows (one user + one assistant per exchange) and
+/// trim to the last `tail` turns.
+///
+/// Assistant turns persist with empty `content` (the SDUI tree lives
+/// in the artifact, not the turn body); we substitute a short
+/// synthetic marker so the role-alternation the model expects is
+/// preserved. The current snapshot is already in the system prompt,
+/// so we don't need to inline prior trees here.
+async fn fetch_history(
+    store: &Arc<dyn starter_flow_spi::agent_session::AgentSessionStore>,
+    session_id: starter_flow_spi::agent_session::AgentSessionId,
+    tail: usize,
+) -> Result<Vec<HistoryMessage>, starter_flow_spi::agent_session::AgentSessionError> {
+    use starter_flow_spi::agent_session::TurnRole;
+
+    let fetch_cap = u32::try_from(tail.saturating_mul(2)).unwrap_or(u32::MAX);
+    let turns = store.list_turns(session_id, None, Some(fetch_cap)).await?;
+    let start = turns.len().saturating_sub(tail);
+
+    let mut out = Vec::with_capacity(turns.len() - start);
+    for t in turns.into_iter().skip(start) {
+        let role = match t.role {
+            TurnRole::User => "user",
+            TurnRole::Assistant => "assistant",
+            // Tool turns (and any future variant) are not part of
+            // the user-facing conversation thread; skip rather than
+            // confuse the role-alternation expectation.
+            _ => continue,
+        };
+        let raw = t
+            .content
+            .as_str()
+            .map(str::to_owned)
+            .unwrap_or_else(|| t.content.to_string());
+        let content = if role == "assistant" && raw.trim().is_empty() {
+            "(updated the page tree)".to_owned()
+        } else {
+            raw
+        };
+        out.push(HistoryMessage {
+            role: role.to_owned(),
+            content,
+        });
+    }
+    Ok(out)
+}
+
+/// Format the replayed history as a fenced section appended to the
+/// CLI runner's system prompt. CLI runners have no native
+/// conversation channel so the history is inlined; the section is
+/// labelled so the model treats it as context, not instructions.
+fn format_history_for_cli(history: &[HistoryMessage]) -> String {
+    if history.is_empty() {
+        return String::new();
+    }
+    let mut s = String::from("\n\n# Conversation so far\n");
+    for m in history {
+        s.push_str(&format!("- **{}**: {}\n", m.role, m.content));
+    }
+    s
 }
 
 /// Collapse the runner outcome + pump captures into a single
@@ -1119,5 +1431,88 @@ mod tests {
              types.ts = {}",
             ts_path.display(),
         );
+    }
+
+    // ---- BuilderMode + Ask resolver ----
+
+    #[test]
+    fn builder_mode_parse_accepts_known_values() {
+        assert_eq!(BuilderMode::parse("build"), Some(BuilderMode::Build));
+        assert_eq!(BuilderMode::parse("edit"), Some(BuilderMode::Build));
+        assert_eq!(BuilderMode::parse("ask"), Some(BuilderMode::Ask));
+    }
+
+    #[test]
+    fn builder_mode_parse_rejects_unknown() {
+        assert_eq!(BuilderMode::parse(""), None);
+        assert_eq!(BuilderMode::parse("plan"), None);
+        assert_eq!(BuilderMode::parse("BUILD"), None);
+    }
+
+    fn ok_result_with(text: &str) -> Result<
+        Result<starter_spi::ai::RunResult, starter_spi::ai::RunnerError>,
+        tokio::time::error::Elapsed,
+    > {
+        Ok(Ok(starter_spi::ai::RunResult {
+            text: text.to_owned(),
+            ..Default::default()
+        }))
+    }
+
+    #[test]
+    fn ask_resolver_returns_streamed_prose() {
+        let out = resolve_ask_outcome(
+            ok_result_with(""),
+            "Hello there".to_owned(),
+            None,
+        )
+        .unwrap();
+        assert_eq!(out, "Hello there");
+    }
+
+    #[test]
+    fn ask_resolver_falls_back_to_result_text() {
+        // Some runners populate `result.text` only at completion
+        // (no streamed Text events). The resolver should pick it up.
+        let out = resolve_ask_outcome(
+            ok_result_with("final answer"),
+            String::new(),
+            None,
+        )
+        .unwrap();
+        assert_eq!(out, "final answer");
+    }
+
+    #[test]
+    fn ask_resolver_trims_whitespace() {
+        let out = resolve_ask_outcome(
+            ok_result_with(""),
+            "  spaced reply\n\n".to_owned(),
+            None,
+        )
+        .unwrap();
+        assert_eq!(out, "spaced reply");
+    }
+
+    #[test]
+    fn ask_resolver_surfaces_empty_reply_as_error() {
+        let err = resolve_ask_outcome(
+            ok_result_with(""),
+            String::new(),
+            None,
+        )
+        .unwrap_err();
+        assert!(err.contains("empty reply"), "got: {err}");
+    }
+
+    #[test]
+    fn ask_resolver_surfaces_runner_error_when_empty() {
+        let err = resolve_ask_outcome(
+            ok_result_with(""),
+            String::new(),
+            Some("boom".to_owned()),
+        )
+        .unwrap_err();
+        assert!(err.contains("boom"), "got: {err}");
     }
 }

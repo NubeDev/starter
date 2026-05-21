@@ -21,6 +21,21 @@ export type BuilderPhase =
   | "cancelled";
 
 /**
+ * Conversation lane.
+ *
+ * - `"build"` (default): the model generates / edits the SDUI tree;
+ *   the response lands as a `full-render` (or `patch`) event and the
+ *   canvas updates.
+ * - `"ask"`: the model answers conversationally without touching
+ *   the tree; the response lands as a `message` event and the
+ *   transcript shows it as an assistant bubble.
+ *
+ * Backend contract: forwarded as the `mode` field on the
+ * `/api/builder/stream` request body. Unknown values return 400.
+ */
+export type BuilderMode = "build" | "ask";
+
+/**
  * Theme-builder token-patch payload. Shape kept narrow on purpose —
  * `keys` is a flat `{ tokenName: cssValue }` map; the host validates
  * value shapes against the existing theme editor validator before
@@ -47,6 +62,9 @@ export type BuilderEvent =
   | { type: "patch"; targetComponentId: string; subtree: UiComponent }
   | { type: "token-patch"; patch: TokenPatch }
   | { type: "shell-patch"; patch: ShellPatch }
+  /** Ask-mode reply. The assistant's prose answer; render as a chat
+   *  bubble in the transcript. Build-mode turns never emit this. */
+  | { type: "message"; role: "assistant"; text: string }
   | { type: "status"; phase: BuilderPhase; message?: string }
   | { type: "error"; error: string }
   /** MEMORY.md Phase M-D — server confirms the assistant turn's
@@ -68,6 +86,10 @@ export type BuilderEvent =
 export interface BuilderSendInput {
   /** Free-text user prompt. */
   text: string;
+  /** Conversation lane for this turn. Defaults to `"build"` when
+   *  omitted; surfaces that expose a Build/Ask toggle pass the
+   *  current selection here. */
+  mode?: BuilderMode;
   /** Optional structured slot writes, forwarded to the flow input. */
   slots?: Record<string, unknown>;
   /** Optional opaque metadata, passed through unchanged. */

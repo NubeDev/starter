@@ -1,5 +1,4 @@
 import * as React from "react"
-import { IconSitemap } from "@tabler/icons-react"
 
 import { NavMain, type NavMainItem } from "@/components/nav-main"
 import { NavUser, type NavUserProps } from "@/components/nav-user"
@@ -48,12 +47,12 @@ export function AppSidebar({
               asChild
               className="data-[slot=sidebar-menu-button]:p-1.5!"
             >
-              <a href={brand.url} onClick={handleBrand}>
-                <IconSitemap
-                  className="size-5!"
-                  style={{ color: "var(--accent-flows)" }}
+              <a href={brand.url} onClick={handleBrand} aria-label={brand.title}>
+                <img
+                  src="/logo.svg"
+                  alt="nube"
+                  className="h-5 w-auto shrink-0 dark:brightness-110"
                 />
-                <span className="text-base font-semibold">{brand.title}</span>
               </a>
             </SidebarMenuButton>
           </SidebarMenuItem>

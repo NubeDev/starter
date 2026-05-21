@@ -7,12 +7,18 @@ import {
   type ChatStatus,
 } from "@nube/starter-ui-chat";
 import { cn } from "../lib/utils.js";
-import type { BuilderPhase } from "../types/index.js";
+import type { BuilderMode, BuilderPhase } from "../types/index.js";
 import type { BuilderTranscriptEntry } from "../hooks/use-builder.js";
 
 export interface BuilderTranscriptProps {
   entries: BuilderTranscriptEntry[];
   phase: BuilderPhase;
+  /** Current conversation lane. Drives the Build/Ask toggle.
+   *  Omit to hide the toggle entirely (single-mode surfaces). */
+  mode?: BuilderMode;
+  /** Toggle callback. Required when `mode` is set; otherwise the
+   *  toggle stays hidden. */
+  onModeChange?: (mode: BuilderMode) => void;
   /** Streaming label shown while `phase` is "thinking" or "writing". */
   busyLabel?: string;
   /** Allow attachments on the composer. */
@@ -39,6 +45,8 @@ export function BuilderTranscript(
   const {
     entries,
     phase,
+    mode,
+    onModeChange,
     busyLabel = "Working…",
     allowAttachments,
     placeholder = "Describe the UI you want…",
@@ -48,6 +56,12 @@ export function BuilderTranscript(
     canRetry,
     className,
   } = props;
+
+  const showModeToggle = mode !== undefined && onModeChange !== undefined;
+  const effectivePlaceholder =
+    mode === "ask"
+      ? "Ask a question about your page…"
+      : placeholder;
 
   const composerStatus: ChatStatus =
     phase === "thinking"
@@ -103,9 +117,12 @@ export function BuilderTranscript(
         ) : null}
       </ChatMessageList>
       <ChatFooter>
+        {showModeToggle ? (
+          <ModeToggle mode={mode!} onChange={onModeChange!} />
+        ) : null}
         <ChatComposer
           status={composerStatus}
-          placeholder={placeholder}
+          placeholder={effectivePlaceholder}
           allowAttachments={allowAttachments}
           onSend={(input) => onSend(input.text)}
           onCancel={onCancel}
@@ -119,7 +136,21 @@ function TranscriptItem({ entry }: { entry: BuilderTranscriptEntry }) {
   if (entry.kind === "user") {
     return (
       <div className="flex w-full flex-col items-end gap-1">
+        {entry.mode === "ask" ? (
+          <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
+            Ask
+          </span>
+        ) : null}
         <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-sm text-primary-foreground shadow-sm">
+          {entry.text}
+        </div>
+      </div>
+    );
+  }
+  if (entry.kind === "assistant") {
+    return (
+      <div className="flex w-full flex-col items-start gap-1">
+        <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-bl-md border border-border/60 bg-muted/40 px-3.5 py-2 text-sm text-foreground shadow-sm">
           {entry.text}
         </div>
       </div>
@@ -172,5 +203,64 @@ function BusyBubble({ label, phase }: { label: string; phase: BuilderPhase }) {
         </span>
       </div>
     </div>
+  );
+}
+
+function ModeToggle({
+  mode,
+  onChange,
+}: {
+  mode: BuilderMode;
+  onChange: (mode: BuilderMode) => void;
+}) {
+  return (
+    <div
+      role="radiogroup"
+      aria-label="Conversation mode"
+      className="mb-2 inline-flex items-center gap-0.5 rounded-md border border-border/60 bg-background/60 p-0.5 text-xs"
+    >
+      <ModeButton
+        active={mode === "build"}
+        onClick={() => onChange("build")}
+        label="Build"
+        hint="Generate or edit the page"
+      />
+      <ModeButton
+        active={mode === "ask"}
+        onClick={() => onChange("ask")}
+        label="Ask"
+        hint="Chat about the page without changing it"
+      />
+    </div>
+  );
+}
+
+function ModeButton({
+  active,
+  onClick,
+  label,
+  hint,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+  hint: string;
+}) {
+  return (
+    <button
+      type="button"
+      role="radio"
+      aria-checked={active}
+      title={hint}
+      onClick={onClick}
+      className={cn(
+        "rounded px-2.5 py-1 transition-colors",
+        active
+          ? "bg-primary text-primary-foreground shadow-sm"
+          : "text-muted-foreground hover:bg-muted hover:text-foreground",
+      )}
+    >
+      {label}
+    </button>
   );
 }

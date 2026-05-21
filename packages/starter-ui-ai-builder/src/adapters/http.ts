@@ -43,12 +43,16 @@ export function createHttpBuilderAdapter(
         const body: {
           prompt: string;
           provider: string;
+          mode?: string;
           session_id?: string;
           include_artifact?: string;
         } = {
           prompt: input.text,
           provider: "claude",
         };
+        if (input.mode) {
+          body.mode = input.mode;
+        }
         if (input.sessionId) {
           body.session_id = input.sessionId;
           if (input.includeArtifact) {

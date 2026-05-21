@@ -6,6 +6,7 @@ import { ThemeProvider } from "@kit/theme";
 
 import "./globals.css";
 import { App } from "./app";
+import { DefaultThemeBridge } from "@/components/default-theme-bridge";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -19,6 +20,7 @@ if (!root) throw new Error("missing #root in index.html");
 createRoot(root).render(
   <StrictMode>
     <ThemeProvider defaultTheme="system">
+      <DefaultThemeBridge />
       <QueryClientProvider client={queryClient}>
         <BrowserRouter>
           <App />

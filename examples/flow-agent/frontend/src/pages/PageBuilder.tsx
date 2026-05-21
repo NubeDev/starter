@@ -243,10 +243,17 @@ export function PageBuilder(props: PageBuilderProps = {}) {
       // MEMORY.md Phase M-D — pass `sessionId` (when we have one)
       // and ask the backend to seed the prompt with the latest
       // `tree` artifact. Omitted sessionId stays ephemeral (M13).
+      //
+      // `mode` is read from the hook state (toggled by the user via
+      // the segmented Build/Ask control rendered inside
+      // <BuilderTranscript>). Ask-mode requests skip the page-builder
+      // artifact contract and return prose only.
       void builder.send({
         text,
+        mode: builder.mode,
         sessionId: sessionId ?? undefined,
-        includeArtifact: sessionId ? "tree" : undefined,
+        includeArtifact:
+          sessionId && builder.mode === "build" ? "tree" : undefined,
       })
     },
     [builder, sessionId],
@@ -384,6 +391,8 @@ export function PageBuilder(props: PageBuilderProps = {}) {
           <BuilderTranscript
             entries={builder.transcript}
             phase={builder.phase}
+            mode={builder.mode}
+            onModeChange={builder.setMode}
             placeholder="Describe the UI… try: sales · dashboard · onboard · report"
             onSend={(text) => handleSend(text)}
             onCancel={builder.cancel}

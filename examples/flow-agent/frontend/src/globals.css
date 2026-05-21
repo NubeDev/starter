@@ -50,6 +50,34 @@
   html, body, #root {
     height: 100%;
   }
+  /* Ambient living background — derived from the active theme's
+   * primary + accent + flows tokens so it follows whatever preset
+   * the user picks. */
+  body {
+    background-image:
+      radial-gradient(60rem 40rem at 8% -10%,
+        color-mix(in oklab, var(--primary) 18%, transparent), transparent 60%),
+      radial-gradient(50rem 36rem at 108% 8%,
+        color-mix(in oklab, var(--accent-agents) 14%, transparent), transparent 60%),
+      radial-gradient(44rem 32rem at 50% 110%,
+        color-mix(in oklab, var(--accent-flows) 12%, transparent), transparent 60%);
+    background-attachment: fixed;
+  }
+}
+
+@utility glass {
+  background-color: color-mix(in oklab, var(--card) 72%, transparent);
+  backdrop-filter: saturate(160%) blur(14px);
+  -webkit-backdrop-filter: saturate(160%) blur(14px);
+}
+
+@utility card-lift {
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease;
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 40px -16px color-mix(in oklab, var(--primary) 35%, transparent);
+    border-color: color-mix(in oklab, var(--primary) 35%, var(--border));
+  }
 }
 
 ::-webkit-scrollbar {

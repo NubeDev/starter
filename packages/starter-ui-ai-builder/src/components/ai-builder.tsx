@@ -2,13 +2,24 @@ import * as React from "react";
 import type { UiComponentTree } from "@nube/starter-sdui-react";
 import { cn } from "../lib/utils.js";
 import { useBuilder } from "../hooks/use-builder.js";
-import type { BuilderAdapter, ShellPatch, TokenPatch } from "../types/index.js";
+import type {
+  BuilderAdapter,
+  BuilderMode,
+  ShellPatch,
+  TokenPatch,
+} from "../types/index.js";
 import { AiBuilderCanvas } from "./ai-builder-canvas.js";
 import { BuilderTranscript } from "./builder-transcript.js";
 
 export interface AiBuilderProps {
   adapter: BuilderAdapter;
   initialTree?: UiComponentTree | null;
+  /** Initial conversation lane. Defaults to `"build"`. */
+  defaultMode?: BuilderMode;
+  /** Hide the Build/Ask toggle. The conversation stays locked on
+   *  `defaultMode`. Use this for surfaces that don't want to expose
+   *  the Ask lane (e.g. embedded "create page" wizards). */
+  hideModeToggle?: boolean;
   title?: React.ReactNode;
   headerExtras?: React.ReactNode;
   placeholder?: string;
@@ -34,6 +45,8 @@ export function AiBuilder(props: AiBuilderProps): React.ReactElement {
   const {
     adapter,
     initialTree,
+    defaultMode,
+    hideModeToggle,
     title,
     headerExtras,
     placeholder,
@@ -49,6 +62,7 @@ export function AiBuilder(props: AiBuilderProps): React.ReactElement {
   const builder = useBuilder({
     adapter,
     initialTree,
+    defaultMode,
     onTokenPatch,
     onShellPatch,
   });
@@ -90,6 +104,8 @@ export function AiBuilder(props: AiBuilderProps): React.ReactElement {
             <BuilderTranscript
               entries={builder.transcript}
               phase={builder.phase}
+              mode={hideModeToggle ? undefined : builder.mode}
+              onModeChange={hideModeToggle ? undefined : builder.setMode}
               placeholder={placeholder}
               allowAttachments={allowAttachments}
               onSend={(text) => void builder.send(text)}

@@ -229,4 +229,63 @@ describe("createHttpBuilderAdapter", () => {
     expect(out).toEqual([]);
     expect(fetchMock).not.toHaveBeenCalled();
   });
+
+  it("forwards `mode` field on the request body when provided", async () => {
+    const fetchMock = mockFetch(async (_url, _init) =>
+      okSseResponse(
+        streamFromChunks([sseFrame({ type: "status", phase: "done" })]),
+      ),
+    );
+    const adapter = createHttpBuilderAdapter({ url: "/api/x", fetch: fetchMock as never });
+    const ctrl = new AbortController();
+    for await (const _ of adapter.send({ text: "hi", mode: "ask" }, ctrl.signal)) {
+      /* drain */
+    }
+    const call = (fetchMock.mock.calls as unknown as Array<[string, RequestInit]>)[0]!;
+    expect(JSON.parse(String(call[1].body))).toEqual({
+      prompt: "hi",
+      provider: "claude",
+      mode: "ask",
+    });
+  });
+
+  it("omits `mode` from the body when not provided (backend default applies)", async () => {
+    const fetchMock = mockFetch(async (_url, _init) =>
+      okSseResponse(
+        streamFromChunks([sseFrame({ type: "status", phase: "done" })]),
+      ),
+    );
+    const adapter = createHttpBuilderAdapter({ url: "/api/x", fetch: fetchMock as never });
+    const ctrl = new AbortController();
+    for await (const _ of adapter.send({ text: "hi" }, ctrl.signal)) {
+      /* drain */
+    }
+    const call = (fetchMock.mock.calls as unknown as Array<[string, RequestInit]>)[0]!;
+    const body = JSON.parse(String(call[1].body));
+    expect(body).not.toHaveProperty("mode");
+  });
+
+  it("yields ask-mode `message` event verbatim", async () => {
+    const fetchMock = mockFetch(async (_url, _init) =>
+      okSseResponse(
+        streamFromChunks([
+          sseFrame({ type: "status", phase: "thinking" }),
+          sseFrame({ type: "message", role: "assistant", text: "Sure — try a sparkline next to each KPI." }),
+          sseFrame({ type: "status", phase: "done" }),
+        ]),
+      ),
+    );
+    const adapter = createHttpBuilderAdapter({ url: "/api/x", fetch: fetchMock as never });
+    const out: BuilderEvent[] = [];
+    const ctrl = new AbortController();
+    for await (const ev of adapter.send({ text: "any ideas?", mode: "ask" }, ctrl.signal)) {
+      out.push(ev);
+    }
+    const msg = out.find((e) => e.type === "message");
+    expect(msg).toBeDefined();
+    if (msg && msg.type === "message") {
+      expect(msg.role).toBe("assistant");
+      expect(msg.text).toContain("sparkline");
+    }
+  });
 });
