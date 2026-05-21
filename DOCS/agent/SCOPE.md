@@ -10,6 +10,9 @@
 > - **R4** — Skills are static metadata, content-hash quarantined
 >   (load-bearing, unchanged).
 > - The `SKILL.md` format and the skill scope rules.
+>   Implementation of the registry, parser, content-hash + quarantine
+>   state machine, and default selector is carved out in
+>   [DOCS/agent/SKILLS.md](./SKILLS.md) — the `starter-skills` crate.
 > - The end-to-end example of writing an agent on starter.
 >
 > Engine mechanics (graph store, propagator, slot writes, three-level
