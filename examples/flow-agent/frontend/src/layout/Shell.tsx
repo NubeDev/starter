@@ -42,6 +42,7 @@ function titleFor(
   if (pathname.startsWith("/settings")) return "Settings"
   if (pathname.startsWith("/skills")) return "Skills"
   if (pathname.startsWith("/insights/rules")) return "Insights · Rules"
+  if (pathname.startsWith("/insights/pipelines")) return "Insights · Pipelines"
   if (pathname.startsWith("/insights/verdicts/")) return "Insights · Verdict"
   if (pathname.startsWith("/insights/verdicts")) return "Insights · Verdicts"
   if (pathname.startsWith("/insights")) return "Insights"
@@ -72,6 +73,7 @@ function activeUrlFor(pathname: string): string {
   if (pathname.startsWith("/settings")) return "/settings"
   if (pathname.startsWith("/skills")) return "/skills"
   if (pathname.startsWith("/insights/verdicts")) return "/insights/verdicts"
+  if (pathname.startsWith("/insights/pipelines")) return "/insights/pipelines"
   if (pathname.startsWith("/insights/rules")) return "/insights/rules"
   if (pathname.startsWith("/insights")) return "/insights/rules"
   if (pathname === "/pages/new") return "/pages"
@@ -157,6 +159,7 @@ export function Shell() {
         subTestId: "insights-subnav",
         items: [
           { title: "Rules", url: "/insights/rules" },
+          { title: "Pipelines", url: "/insights/pipelines" },
           { title: "Verdicts", url: "/insights/verdicts" },
         ],
       },

@@ -8,6 +8,7 @@ import { FlowsList } from "./pages/FlowsList";
 import { PageBuilder } from "./pages/PageBuilder";
 import { PagesList } from "./pages/PagesList";
 import { PageView } from "./pages/PageView";
+import { PipelineCanvas } from "./pages/PipelineCanvas";
 import { RuleEditor } from "./pages/RuleEditor";
 import { RulesList } from "./pages/RulesList";
 import { Settings } from "./pages/Settings";
@@ -29,6 +30,7 @@ export function App() {
         <Route path="/pages/:id/edit" element={<PageBuilder />} />
         <Route path="/insights/rules" element={<RulesList />} />
         <Route path="/insights/rules/:id" element={<RuleEditor />} />
+        <Route path="/insights/pipelines" element={<PipelineCanvas />} />
         <Route path="/insights/verdicts" element={<VerdictsView />} />
         <Route path="/insights/verdicts/:id" element={<VerdictsView />} />
         <Route path="/skills" element={<Skills />} />

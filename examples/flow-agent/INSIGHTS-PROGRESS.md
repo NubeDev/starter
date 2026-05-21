@@ -20,8 +20,8 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - Register tools with the real `AiRunner`. `propose` returns proposal object (no write); `apply` commits. Diff card in chat (UI half deferred to S9 polish — see D-S6-2).
 - [x] **S7 — Verdict agent tools (Phase 3)**
   - `verdict.query`, `verdict.explain`. Tool defs synthesised in same pass as S6 (rule + verdict + pipeline share one bridge — see D-S6-1). UI agent dock deferred to S9 polish.
-- [ ] **S8 — PipelineCanvas + pipeline tools (Phase 4)**
-  - `PipelineCanvas.tsx` wrapping `starter-ui-flow`. Tools `pipeline.read`, `pipeline.propose-edit`, `pipeline.apply-edit`. Diff overlay.
+- [x] **S8 — PipelineCanvas + pipeline tools (Phase 4)**
+  - `PipelineCanvas.tsx` (custom SVG viewer — see D-S8-1). Pipeline agent tools shipped with S6. Diff overlay deferred to S9 polish.
 - [ ] **S9 — Polish & acceptance checklist**
   - Run through spec §Acceptance checklist. Theme-print sanity, retro-correction flag visibility, audit-trail check.
 
@@ -66,6 +66,20 @@ Each stage commits + pushes at the end.
   page count down and matches the spec's "filterable list + detail"
   framing. Print-only header/footer markup ships now so S4 can
   layer the `@media print` CSS without re-touching the page.
+- **D-S8-1** — `PipelineCanvas.tsx` is a read-only SVG viewer rather
+  than a wrapper around `@nube/starter-ui-flow`'s `FlowCanvas`.
+  Rationale: `FlowCanvas` expects typed slot specs on each node
+  (`SlotSpec` with input/output names) and a `NodeKindSpec`
+  registry per kind; the insights fixture graphs are intentionally
+  simpler (just `{id, kind, x, y, rule_id?}`). Mapping them
+  would require either inventing slot specs for insights node
+  kinds (which the SCOPE hasn't fixed yet) or stripping
+  `FlowCanvas` down to a viewer. A 70-line SVG is honest about
+  the mock-up's read-only nature and ships today. Reopen if the
+  agent gains pipeline-edit-via-drag-and-drop scope.
+- **D-S8-2** — Pipeline list is left-rail + canvas-right rather
+  than a separate detail route. Keeps the URL flat
+  (`/insights/pipelines`) and matches FlowsList's modeless feel.
 - **D-S6-1** — One bridge pass covers all three insights tool
   families (`rule.*`, `verdict.*`, `pipeline.*`). Synthesis lives in
   `agent_bridge::synthesize_insights_tools`; dispatch lives in
@@ -125,6 +139,17 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S8 — 2026-05-22
+- New page `frontend/src/pages/PipelineCanvas.tsx`: pipeline list
+  on the left, SVG graph on the right (nodes as rounded rects with
+  kind + id + optional rule_id, edges as bezier curves with type
+  labels; `Frame` edges dashed). Read-only viewer per D-S8-1.
+- Sidebar gained "Pipelines" entry; title/activeUrl handlers
+  extended.
+- Route `/insights/pipelines` wired in `app.tsx`.
+- `pnpm typecheck` ✓; `pnpm build` ✓.
 - Commit + push.
 
 ### S6 / S7 (folded) — 2026-05-22
