@@ -16,9 +16,11 @@ lands.
 
 ## What it ships
 
-Two new sidebar sections plug into the existing `flow-agent` shell.
-Everything is fixtures + `localStorage`; no new Rust crates, no
-backend changes.
+One new collapsible sidebar section (**Pages**) and one new leaf
+(**Skills**) plug into the existing `flow-agent` shell. Everything is
+fixtures + `localStorage`; no new Rust crates, no backend changes,
+no new workspace dependencies (the four `@nube/*` libs below are
+already in [frontend/package.json](frontend/package.json)).
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -68,11 +70,16 @@ backend changes.
 
 ## 2. `/pages/new` — PageBuilder (the headline screen)
 
-Built from `<AiBuilder>` (`@nube/starter-ui-ai-builder`). Chat on
-left, live `<Renderer>` canvas on right. A scripted `BuilderAdapter`
-streams `BuilderEvent`s so the tree builds progressively:
-`status: thinking` → `full-render` skeleton → 3–5 `patch` events
-filling sections → `status: done`.
+**Composed**, not the opinionated `<AiBuilder>`. The opinionated
+wrapper owns `useBuilder` internally, so the host can't reach the
+current `tree` to wire the 💾 save button. Instead `PageBuilder.tsx`
+calls `useBuilder` itself and lays out `<BuilderTranscript>` +
+`<AiBuilderCanvas>` side-by-side — the `ai-builder.tsx` source
+recommends exactly this for "full control".
+
+A scripted `BuilderAdapter` streams `BuilderEvent`s so the tree
+builds progressively: `status: thinking` → `full_render` skeleton →
+3–5 `patch` events filling sections → `status: done`.
 
 ```
 ┌───────────────────────────────────────────────────────────────────┐
@@ -104,15 +111,20 @@ into `localStorage` under `flow-agent:pages`, then navigates to
 
 | Prefix      | Result                                                       |
 | ----------- | ------------------------------------------------------------ |
-| `sales`     | KPI grid + pipeline table (3 streamed patches)               |
-| `dashboard` | Same as `sales`                                              |
+| `sales`     | Q2 KPI grid + pipeline table (3 streamed patches)            |
+| `dashboard` | Generic 2×2 KPI grid + line chart (distinct from `sales`)    |
 | `onboard`   | Form + checklist + tabs                                      |
 | `report`    | Heading + markdown + chart + table                           |
 | _anything_  | Minimal hello card (never feels broken)                      |
 
-The R1 patch-buffer (per ai-builder SCOPE) is exercised: one fixture
-deliberately fires `patch` before its parent `full-render` to show
-the "2 buffered" badge resolve cleanly.
+The R1 patch-buffer (per ai-builder SCOPE) is exercised: the `sales`
+fixture deliberately fires one `patch` *before* its parent
+`full_render` to show the "buffered" badge resolve cleanly. Timing
+is pinned so the demo is deterministic — `patch` at t=0 ms, parent
+`full_render` at t=80 ms, well inside the default buffer window
+(see [use-builder.ts](../../packages/starter-ui-ai-builder/src/hooks/use-builder.ts)).
+The badge text in the screenshot ("2 buffered") is illustrative; the
+actual count depends on the fixture and is whatever the hook reports.
 
 ## 3. `/pages/:id` — PageView
 
@@ -126,8 +138,12 @@ the "2 buffered" badge resolve cleanly.
 └───────────────────────────────────────────────────────────────────┘
 ```
 
-Same `SduiProvider` shim as the builder canvas (no-op actions) —
-proves the saved tree round-trips through the wire format unchanged.
+Wrapped in a local `<SduiHost>` (`src/lib/sdui-shim.tsx`) — a thin
+wrapper around `SduiProvider` from `@nube/starter-sdui-react` that
+installs a no-op action dispatcher, so Buttons and other
+interactive nodes in saved trees don't blow up at runtime. Same
+shim is reused by the builder canvas, which proves the saved tree
+round-trips through the wire format unchanged.
 
 ## 4. `/skills` — Skills
 
@@ -164,18 +180,30 @@ seeded with the two reference bundles already in the repo
 
 ```
 examples/flow-agent/frontend/
-  package.json                                ✎ +3 workspace deps
   src/app.tsx                                 ✎ +4 routes
-  src/layout/Shell.tsx                        ✎ Pages + Skills nav
+  src/layout/Shell.tsx                        ✎ Pages + Skills nav,
+                                                subscribes to pages-store
   src/lib/
-    pages-store.ts                            + localStorage CRUD
+    pages-store.ts                            + localStorage CRUD +
+                                                useSyncExternalStore hook
+                                                (subscribe + window
+                                                 'storage' listener for
+                                                 cross-tab sync)
     builder-fixture.ts                        + scripted BuilderAdapter
-    sdui-shim.tsx                             + tiny <SduiHost> wrapper
+                                                (deterministic timings)
+    sdui-shim.tsx                             + <SduiHost> = SduiProvider
+                                                + no-op action dispatcher
   src/pages/
-    PagesList.tsx                             +
-    PageBuilder.tsx                           + wraps <AiBuilder/>
+    PagesList.tsx                             + cards + empty state
+    PageBuilder.tsx                           + composes useBuilder +
+                                                <BuilderTranscript> +
+                                                <AiBuilderCanvas> +
+                                                💾 save button
     PageView.tsx                              + wraps <Renderer/>
     Skills.tsx                                + wraps <SkillsManager/>
+
+Note: `frontend/package.json` is unchanged — every `@nube/*` lib
+used here is already a dependency.
 ```
 
 ## Reusable libs exercised
@@ -209,13 +237,26 @@ examples/flow-agent/frontend/
 
 ## Acceptance ("works fucking amazing")
 
-1. `pnpm --filter flow-agent-frontend dev` → `/pages` loads.
-2. `+ New page` → type `sales` → tree streams in, "2 buffered" badge
-   briefly visible, lands at done in <2s.
+1. `pnpm --filter flow-agent-frontend dev` → `/pages` loads. First
+   visit shows an empty state ("No pages yet — hit **+ New page**
+   to start"); not the three-card screenshot.
+2. `+ New page` → type `sales` → tree streams in, the buffered-patch
+   badge is briefly visible, phase lands at `done` in <2 s.
 3. 💾 Save → redirected to `/pages/:id` → same tree renders, no
-   layout shift.
-4. Sidebar updates live (new page appears under "Pages").
-5. `/skills` shows two bundles; approving the quarantined one moves
-   it to "Approved" without a refresh.
-6. `pnpm typecheck` is clean.
-7. Lighthouse on `/pages/:id` ≥ 95 performance; no console errors.
+   layout shift, no console errors.
+4. **Round-trip:** click `Edit` on the saved page → builder loads
+   with the saved tree as `initialTree` → no diff vs the rendered
+   `/pages/:id` view (proves the wire format is lossless).
+5. Sidebar "Pages" section updates live the moment a page is saved
+   or deleted, in the same tab and across tabs (Shell subscribes to
+   `pages-store` via `useSyncExternalStore` + a `window.storage`
+   listener).
+6. `/skills` shows two bundles; approving the quarantined one moves
+   it to "Approved" without a manual reload (the manager refetches
+   on mutation success).
+7. `pnpm --filter flow-agent-frontend typecheck` is clean.
+8. `pnpm --filter flow-agent-frontend build` succeeds; running
+   Lighthouse against `vite preview` of that build on `/pages/:id`
+   reports no console errors and no layout-shift warnings.
+   (Performance scoring is not gated — Lighthouse against `vite dev`
+   is meaningless and `vite preview` numbers vary by host.)
