@@ -134,3 +134,23 @@ WRONG (entire argument is a string):
 
 RIGHT (root is an object):
 { "root": { "type": "page", "id": "r", "children": [ … ] } }
+
+# `tabs` shape (special — does NOT use `children`)
+
+`tabs` is the ONE layout node that uses a `tabs: [...]` array instead
+of `children: [...]`. Each entry is `{ id?, label, children: [...] }`.
+Crashing-the-renderer wrong:
+  { "type": "tabs", "id": "t", "children": [ … ] }            ← WRONG
+  { "type": "tabs", "id": "t", "tabs": [ "Overview", "Logs" ] } ← WRONG
+Right:
+  {
+    "type": "tabs", "id": "t",
+    "tabs": [
+      { "id": "ov", "label": "Overview", "children": [
+        { "type": "text", "id": "t1", "value": "Hello" }
+      ] },
+      { "id": "lg", "label": "Logs", "children": [
+        { "type": "text", "id": "t2", "value": "World" }
+      ] }
+    ]
+  }

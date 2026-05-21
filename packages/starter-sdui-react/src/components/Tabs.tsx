@@ -22,7 +22,26 @@ export const tabsSpec: ComponentSpec<TabsNode> = {
   kind: "tabs",
   Component: ({ node }) => {
     const { pageState, setPageState } = useSdui();
-    const ids = node.tabs.map((t, i) => t.id ?? `${node.id ?? "tabs"}-${i}`);
+    // Be tolerant: the model occasionally emits `children: []` (the
+    // layout shape it uses everywhere else) instead of the required
+    // `tabs: [{ label, children }]` array. Coerce both shapes into
+    // one structure, and fall back to a single "Tab 1" if neither is
+    // usable, so a malformed node degrades to a flat render instead
+    // of crashing the whole canvas.
+    const rawTabs = Array.isArray(node.tabs) ? node.tabs : null;
+    const tabs: { id?: string; label: string; children: UiComponent[] }[] =
+      rawTabs && rawTabs.length > 0
+        ? rawTabs
+        : Array.isArray((node as unknown as { children?: UiComponent[] }).children)
+          ? [
+              {
+                label: "Tab 1",
+                children:
+                  (node as unknown as { children: UiComponent[] }).children ?? [],
+              },
+            ]
+          : [{ label: "Tab 1", children: [] }];
+    const ids = tabs.map((t, i) => t.id ?? `${node.id ?? "tabs"}-${i}`);
     const stateKey = node.state_key;
     const stateValue = stateKey
       ? (pageState[stateKey] as string | undefined)
@@ -34,15 +53,15 @@ export const tabsSpec: ComponentSpec<TabsNode> = {
     return (
       <Tabs value={value} onValueChange={onValueChange} className="w-full">
         <TabsList>
-          {node.tabs.map((t, i) => (
+          {tabs.map((t, i) => (
             <TabsTrigger key={ids[i]} value={ids[i]!}>
               {t.label}
             </TabsTrigger>
           ))}
         </TabsList>
-        {node.tabs.map((t, i) => (
+        {tabs.map((t, i) => (
           <TabsContent key={ids[i]} value={ids[i]!}>
-            <RendererList nodes={t.children} parentId={node.id} parentType="tabs" />
+            <RendererList nodes={t.children ?? []} parentId={node.id} parentType="tabs" />
           </TabsContent>
         ))}
       </Tabs>
