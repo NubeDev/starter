@@ -1,6 +1,6 @@
 {
   "name": "@nube/starter-ui-chat",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Reusable React AI-chat components and hooks. Headless transport via a ChatAdapter; styled with @nube/starter-ui-kit. Zero I/O.",
   "license": "MIT OR Apache-2.0",
   "type": "module",

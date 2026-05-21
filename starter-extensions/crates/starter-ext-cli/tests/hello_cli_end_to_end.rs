@@ -196,7 +196,7 @@ async fn cancel_fires_within_a_few_hundred_ms() {
     // Drain whatever's already in the channel; the handler now stops
     // emitting because is_cancelled() returns true between ticks.
     let mut total = 1usize;
-    while let Some(_) = events.next().await {
+    while events.next().await.is_some() {
         total += 1;
         if total > 50 {
             panic!("handler did not honour cancel within 50 ticks");

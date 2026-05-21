@@ -24,6 +24,15 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, SystemTime};
 
+/// Shared per-worker state keyed on the worker's `(ExtensionId, name)`
+/// pair. Wrapped in `Arc<Mutex<...>>` because the scheduler hands the
+/// same map to every per-worker task plus the admin-route surface.
+type WorkerStateMap = Arc<Mutex<HashMap<(ExtensionId, String), WorkerState>>>;
+
+/// Per-worker tick-notify map keyed on `(ExtensionId, name)`. Each
+/// `tokio::sync::Notify` is the `tick_now` testing seam for one worker.
+type WorkerNotifyMap = Arc<Mutex<HashMap<(ExtensionId, String), Arc<Notify>>>>;
+
 use rand::Rng;
 use starter_ext_host::ExtensionRegistry;
 use starter_ext_spi::{ContributeWorker, ExtensionId, OnErrorPolicy, RetryStrategy};
@@ -113,10 +122,8 @@ impl WorkersScheduler {
     /// cheap-to-clone handle the host uses to observe state and
     /// invoke the [`WorkersSchedulerHandle::tick_now`] testing seam.
     pub fn start(self, options: SchedulerOptions) -> WorkersSchedulerHandle {
-        let states: Arc<Mutex<HashMap<(ExtensionId, String), WorkerState>>> =
-            Arc::new(Mutex::new(HashMap::new()));
-        let notifies: Arc<Mutex<HashMap<(ExtensionId, String), Arc<Notify>>>> =
-            Arc::new(Mutex::new(HashMap::new()));
+        let states: WorkerStateMap = Arc::new(Mutex::new(HashMap::new()));
+        let notifies: WorkerNotifyMap = Arc::new(Mutex::new(HashMap::new()));
 
         let mut tasks: Vec<JoinHandle<()>> = Vec::new();
 
@@ -187,8 +194,8 @@ pub struct WorkersSchedulerHandle {
 }
 
 struct SchedulerInner {
-    states: Arc<Mutex<HashMap<(ExtensionId, String), WorkerState>>>,
-    notifies: Arc<Mutex<HashMap<(ExtensionId, String), Arc<Notify>>>>,
+    states: WorkerStateMap,
+    notifies: WorkerNotifyMap,
     tasks: Mutex<Vec<JoinHandle<()>>>,
 }
 

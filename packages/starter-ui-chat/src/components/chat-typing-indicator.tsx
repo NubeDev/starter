@@ -16,14 +16,14 @@ export const ChatTypingIndicator = React.forwardRef<
     aria-label={label}
     data-slot="chat-typing-indicator"
     className={cn(
-      "inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground",
+      "inline-flex items-center gap-1.5 rounded-2xl rounded-bl-md border border-border/40 bg-muted/60 px-3.5 py-2.5",
       className,
     )}
     {...props}
   >
-    <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.3s]" />
-    <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.15s]" />
-    <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-current" />
+    <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.3s]" />
+    <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/70 [animation-delay:-0.15s]" />
+    <span className="inline-block h-1.5 w-1.5 animate-bounce rounded-full bg-muted-foreground/70" />
   </div>
 ));
 ChatTypingIndicator.displayName = "ChatTypingIndicator";

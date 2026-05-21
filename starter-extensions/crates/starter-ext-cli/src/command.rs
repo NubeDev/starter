@@ -54,6 +54,13 @@ impl ExtensionSubcommand {
     /// [`Box::leak`]) so it matches the trait surface; CLI commands
     /// are registered exactly once at host startup, so leaking is the
     /// right shape.
+    ///
+    /// The 8-parameter arity matches the manifest entry's required
+    /// context (extension id, contribute id, leaked command name,
+    /// description, args schema, streaming mode, timeout, dispatcher);
+    /// every parameter is consumed and bundling into a struct just to
+    /// satisfy clippy::too_many_arguments would obscure the call site.
+    #[allow(clippy::too_many_arguments)]
     pub fn new(
         extension: ExtensionId,
         contribute_id: String,
@@ -251,7 +258,7 @@ impl Command for ExtensionSubcommand {
 fn dispatch_to_cmd_err(e: DispatchError) -> CommandError {
     match e {
         DispatchError::Substrate(m) => {
-            CommandError::Other(std::io::Error::new(std::io::ErrorKind::Other, m).into())
+            CommandError::Other(std::io::Error::other(m).into())
         }
         other => CommandError::UserFacing(other.to_string()),
     }

@@ -22,7 +22,9 @@ use starter_ui_ir::schema::{
     emit_action_request_schema, emit_action_response_schema, emit_tree_schema,
 };
 
-const ARTIFACTS: &[(&str, fn() -> String)] = &[
+type SchemaEmitter = fn() -> String;
+
+const ARTIFACTS: &[(&str, SchemaEmitter)] = &[
     ("starter-ui-ir.schema.json", emit_tree_schema),
     (
         "starter-ui-ir.action-request.schema.json",

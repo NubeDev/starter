@@ -138,9 +138,7 @@ enum StepOp {
 /// error message ("$stack.", ".", "/") so the diagnostic points at
 /// what was expected.
 fn take_ident<'a>(s: &'a str, label: &'static str) -> Result<(&'a str, &'a str), ParseError> {
-    let end = s
-        .find(|c: char| c == '.' || c == '/')
-        .unwrap_or(s.len());
+    let end = s.find(['.', '/']).unwrap_or(s.len());
     if end == 0 {
         return Err(ParseError::EmptyIdent(label));
     }

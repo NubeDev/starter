@@ -43,24 +43,20 @@ pub const SUPPORTED_RESOURCE_SCHEMES: &[&str] = &["file"];
 /// `extend(...)` is always quarantined regardless of what the
 /// frontmatter says. Future stages enforce that matrix; the parser
 /// only records what the author wrote.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Deserialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Trust {
     /// Author asserts the bundle is safe to run without operator
     /// approval. Only honoured when loaded via `load_dir(...)`.
+    ///
+    /// Default per R-skills-3 row 1 ("load_dir(...) + frontmatter
+    /// approved/absent → approved").
+    #[default]
     Approved,
     /// Author asks the operator to approve before the bundle runs.
     /// The host **may** elevate this to "approved" via an
     /// `ApprovalStore` row; it may not silently downgrade.
     Quarantined,
-}
-
-impl Default for Trust {
-    fn default() -> Self {
-        // Absent `trust:` defaults to `Approved` per R-skills-3 row 1
-        // ("load_dir(...) + frontmatter approved/absent → approved").
-        Trust::Approved
-    }
 }
 
 /// Raw frontmatter as deserialised from the YAML block. Strings stay
@@ -238,7 +234,7 @@ pub(crate) fn validate_resource_scheme(
             });
         }
     };
-    if SUPPORTED_RESOURCE_SCHEMES.iter().any(|s| *s == scheme) {
+    if SUPPORTED_RESOURCE_SCHEMES.contains(&scheme) {
         Ok(())
     } else {
         Err(SkillParseError::UnsupportedResourceScheme {

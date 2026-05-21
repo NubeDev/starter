@@ -40,6 +40,12 @@ use crate::run::RunCancel;
 /// module to keep the manager's surface area small.
 #[derive(Default, Debug)]
 pub struct RunRegistry {
+    // Keyed on the (flow, revision) pair an in-flight run belongs to;
+    // value is the per-run cancel-handle store. The tuple-key + nested
+    // Vec<Weak> shape is the registry's natural representation; a
+    // type alias just to silence clippy::type_complexity would add a
+    // name without adding meaning.
+    #[allow(clippy::type_complexity)]
     inner: Mutex<HashMap<(FlowId, FlowRevisionId), Vec<Weak<RunCancel>>>>,
 }
 

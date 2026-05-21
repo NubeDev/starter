@@ -55,6 +55,7 @@ serde v1.0.228
 serde_core v1.0.228
 serde_derive v1.0.228 (proc-macro)
 serde_json v1.0.149
+sha1_smol v1.0.1
 signal-hook-registry v1.4.8
 smallvec v1.15.1
 starter-spi v0.1.0

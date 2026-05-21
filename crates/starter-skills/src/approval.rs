@@ -212,8 +212,7 @@ fn relative_forward_slash(root: &Path, path: &Path) -> io::Result<String> {
 /// never descended into.
 fn is_excluded(name: &str) -> bool {
     for pat in EXCLUDED {
-        if pat.starts_with('*') {
-            let suffix = &pat[1..];
+        if let Some(suffix) = pat.strip_prefix('*') {
             if name.ends_with(suffix) && name.len() >= suffix.len() {
                 return true;
             }

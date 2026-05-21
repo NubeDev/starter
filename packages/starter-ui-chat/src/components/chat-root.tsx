@@ -11,7 +11,7 @@ export const ChatRoot = React.forwardRef<HTMLDivElement, ChatRootProps>(
       ref={ref}
       data-slot="chat-root"
       className={cn(
-        "flex h-full min-h-0 w-full flex-col bg-background text-foreground",
+        "flex h-full min-h-0 w-full flex-col bg-gradient-to-b from-background to-muted/30 text-foreground",
         className,
       )}
       {...props}
@@ -28,7 +28,7 @@ export const ChatHeader = React.forwardRef<
     ref={ref}
     data-slot="chat-header"
     className={cn(
-      "flex shrink-0 items-center gap-2 border-b px-4 py-2",
+      "flex shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 py-2.5 backdrop-blur",
       className,
     )}
     {...props}
@@ -43,7 +43,10 @@ export const ChatFooter = React.forwardRef<
   <div
     ref={ref}
     data-slot="chat-footer"
-    className={cn("shrink-0 border-t bg-background p-3", className)}
+    className={cn(
+      "shrink-0 border-t border-border/60 bg-background/70 p-3 backdrop-blur",
+      className,
+    )}
     {...props}
   />
 ));

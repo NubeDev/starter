@@ -11,7 +11,15 @@
 //
 // export function Demo() {
 //   const adapter = React.useMemo(() => createEchoAdapter(), []);
-//   return <Chat adapter={adapter} title="Demo" />;
+//   return (
+//     <Chat
+//       adapter={adapter}
+//       title="Demo"
+//       persistence={{ key: "demo-chat" }}
+//       allowAttachments
+//       showClearButton
+//     />
+//   );
 // }
 // ```
 //
@@ -38,6 +46,16 @@ export { ChatMessageList } from "./components/chat-message-list.js";
 export { ChatMessage } from "./components/chat-message.js";
 export { ChatComposer } from "./components/chat-composer.js";
 export { ChatEmpty } from "./components/chat-empty.js";
+export type { ChatEmptySuggestion } from "./components/chat-empty.js";
 export { ChatTypingIndicator } from "./components/chat-typing-indicator.js";
 
 export { cn, makeId, formatTime } from "./lib/utils.js";
+export {
+  fileToAttachment,
+  isImageAttachment,
+  formatBytes,
+} from "./lib/attachments.js";
+export {
+  createLocalStorageStore,
+  type LocalStorageStoreOptions,
+} from "./lib/store.js";

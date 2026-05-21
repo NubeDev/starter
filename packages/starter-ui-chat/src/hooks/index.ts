@@ -1,5 +1,9 @@
 export { useChat } from "./use-chat.js";
-export type { UseChatOptions, UseChatReturn } from "./use-chat.js";
+export type {
+  UseChatOptions,
+  UseChatReturn,
+  UseChatPersistence,
+} from "./use-chat.js";
 export { useAutoScroll } from "./use-auto-scroll.js";
 export type {
   UseAutoScrollOptions,
