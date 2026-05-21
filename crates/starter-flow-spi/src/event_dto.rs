@@ -58,7 +58,7 @@ impl NodeSlotValue {
                 slot,
                 value,
             } => Some(Self {
-                run: run.clone(),
+                run: *run,
                 node: node.clone(),
                 slot: slot.clone(),
                 value: slot_value_to_json(value),
@@ -155,7 +155,7 @@ mod tests {
         let run = RunId::new();
         let node = NodeId::new("dev.starter.agent").expect("valid node id");
         let emitted = FlowEvent::NodeEmitted {
-            run: run.clone(),
+            run,
             node: node.clone(),
             slot: "out".into(),
             value: SlotValue::String("pong".into()),
@@ -167,7 +167,7 @@ mod tests {
         assert_eq!(dto.value, serde_json::json!("pong"));
 
         let started = FlowEvent::RunStarted {
-            run: run.clone(),
+            run,
             flow: FlowId::new("dev.starter.flow").expect("valid flow id"),
         };
         assert!(NodeSlotValue::from_event(&started).is_none());
