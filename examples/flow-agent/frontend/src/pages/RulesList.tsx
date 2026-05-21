@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react"
 import { useQuery } from "@tanstack/react-query"
+import { Link } from "react-router-dom"
 import { IconBulb } from "@tabler/icons-react"
 
 import { PageHero } from "@/components/page-hero"
@@ -110,7 +111,14 @@ export function RulesList() {
               <TableBody>
                 {filtered.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="font-mono text-xs">{r.id}</TableCell>
+                    <TableCell className="font-mono text-xs">
+                      <Link
+                        to={`/insights/rules/${encodeURIComponent(r.id)}`}
+                        className="hover:underline"
+                      >
+                        {r.id}
+                      </Link>
+                    </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[10px]">
                         {r.kind}

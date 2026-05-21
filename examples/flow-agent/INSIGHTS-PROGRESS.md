@@ -14,8 +14,8 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - Sidebar Insights section. `RulesList.tsx` + `VerdictsView.tsx` (list + detail) reading the REST. React-query hooks. Routes wired in `app.tsx`.
 - [x] **S4 — Print stylesheet (I4)**
   - `@media print` CSS for verdict detail (and rule editor detail header). Hide chrome, table evidence rows, `@page` numbers, light-only.
-- [ ] **S5 — `RuleEditor.tsx` + dry-run (Phase 2 UI)**
-  - Split-pane page with Monaco editor (MD1), schema panel, dry-run pane. No agent tools yet — just human edit + POST.
+- [x] **S5 — `RuleEditor.tsx` + dry-run (Phase 2 UI)**
+  - Split-pane page with editor (textarea, see D-S5-1), schema panel, dry-run pane. No agent tools yet — just human edit + POST.
 - [ ] **S6 — Agent tools: rule.{list,read,propose,apply,dry-run} (Phase 2 agent)**
   - Register tools with the real `AiRunner`. `propose` returns proposal object (no write); `apply` commits. Diff card in chat.
 - [ ] **S7 — Verdict agent tools (Phase 3)**
@@ -66,6 +66,17 @@ Each stage commits + pushes at the end.
   page count down and matches the spec's "filterable list + detail"
   framing. Print-only header/footer markup ships now so S4 can
   layer the `@media print` CSS without re-touching the page.
+- **D-S5-1** — `RuleEditor.tsx` uses a plain `<Textarea>` instead of
+  Monaco/CodeMirror (MD1 in spec). Rationale: Monaco pulls in
+  ~3 MB of language workers; CodeMirror still adds ~150 KB. For a
+  Phase 2 mock-up whose code may be rewritten when starter-insights
+  lands (I5), the textarea is honest enough. The acceptance
+  checklist doesn't require syntax highlighting. Reopen MD1 if a
+  real user demo asks for it.
+- **D-S5-2** — Dry-run sends `{ body }` in the POST payload even
+  though the mock ignores the input (D-S2-3); the eventual real
+  backend will need the working-copy body to evaluate, so wiring
+  it now keeps the agent-tool contract (S6) shaped right.
 - **D-S4-1** — Print CSS lives in `globals.css` (not lifted into
   `starter-ui-kit`) — defers MD4 until Phase 1 ships and other
   detail pages prove the layout is reusable. Locality + zero
@@ -93,6 +104,16 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S5 — 2026-05-22
+- New page `frontend/src/pages/RuleEditor.tsx`: split-pane with body
+  (textarea) + schema tabs on the left, dry-run pane on the right;
+  summary/tags inputs; Save (PATCH) and Dry-run (POST) actions.
+- Extended `api.insights.*` with `updateRule` and `dryRunRule`.
+- `RulesList` ID column linkified to `/insights/rules/:id`; new route
+  added in `app.tsx`.
+- `pnpm typecheck` ✓; `pnpm build` ✓.
 - Commit + push.
 
 ### S4 — 2026-05-22

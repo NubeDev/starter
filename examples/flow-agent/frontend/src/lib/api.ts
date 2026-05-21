@@ -164,6 +164,18 @@ export const api = {
       ),
     listPipelines: () =>
       req<InsightsPipeline[]>("GET", "/api/insights/pipelines"),
+    updateRule: (id: string, patch: Partial<InsightsRule>) =>
+      req<InsightsRule>(
+        "PATCH",
+        `/api/insights/rules/${encodeURIComponent(id)}`,
+        patch,
+      ),
+    dryRunRule: (id: string, input: unknown = {}) =>
+      req<InsightsVerdict & { dry_run: true }>(
+        "POST",
+        `/api/insights/rules/${encodeURIComponent(id)}/dry-run`,
+        input,
+      ),
   },
 };
 
