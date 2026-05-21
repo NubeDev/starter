@@ -18,7 +18,7 @@ path = "src/lib.rs"
 [dependencies]
 starter-spi           = { workspace = true }
 starter-server        = { workspace = true }
-starter-store-sqlite  = { workspace = true }
+starter-store-sqlite  = { workspace = true, features = ["flow"] }
 starter-observability = { workspace = true }
 
 # Flow engine + nodes (Phase 3+).
@@ -27,7 +27,7 @@ starter-flow-spi   = { workspace = true }
 starter-flow-nodes = { workspace = true, features = ["ai-agent", "trigger-explicit", "log"] }
 
 # AI providers (Phase 4+).
-starter-ai = { workspace = true, features = ["provider-claude"] }
+starter-ai = { workspace = true, features = ["provider-claude", "provider-anthropic"] }
 
 # Web stack.
 axum         = { workspace = true }
@@ -48,4 +48,4 @@ uuid         = { workspace = true }
 
 [dev-dependencies]
 starter-server = { workspace = true, features = ["testing"] }
-starter-ai     = { workspace = true, features = ["provider-claude", "testing"] }
+starter-ai     = { workspace = true, features = ["provider-claude", "provider-anthropic", "testing"] }

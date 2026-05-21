@@ -11,24 +11,20 @@ export interface SkillsManagerProps {
   adapter: SkillsAdapter;
   className?: string;
   title?: React.ReactNode;
+  description?: React.ReactNode;
   headerExtras?: React.ReactNode;
-  /** Plug your markdown renderer for the body (defaults to <pre>). */
   renderBody?: (body: string) => React.ReactNode;
-  /** Custom confirmation copy. Set `null` to disable the prompt. */
   revokeConfirm?: string | null;
-  /** Default: 10000ms. Set 0 to disable. */
   refreshIntervalMs?: number;
   onSelect?: (skill: SkillSummary | null) => void;
 }
 
-// Opinionated end-to-end skills manager. For full control compose
-// `<SkillList>` + `<SkillFilterBar>` + `<SkillDetail>` with the
-// `useSkills` / `useSkill` hooks.
 export function SkillsManager(props: SkillsManagerProps): React.ReactElement {
   const {
     adapter,
     className,
     title = "Skills",
+    description = "Bundles the AI can load. Approve trusted ones; quarantine the rest.",
     headerExtras,
     renderBody,
     revokeConfirm = "Revoke approval for this bundle hash? Future runs will skip this skill until it is re-approved.",
@@ -50,27 +46,8 @@ export function SkillsManager(props: SkillsManagerProps): React.ReactElement {
     reload,
   } = useSkills({ adapter, refreshIntervalMs });
 
-  const [selectedId, setSelectedId] = React.useState<string | null>(null);
-  const detail = useSkill({ adapter, id: selectedId });
-
-  // Auto-select the first visible skill (and revise when filters drop it).
-  React.useEffect(() => {
-    if (!visible.length) {
-      if (selectedId !== null) {
-        setSelectedId(null);
-        onSelect?.(null);
-      }
-      return;
-    }
-    const stillVisible = selectedId && visible.some((s) => s.id === selectedId);
-    if (!stillVisible) {
-      const first = visible[0]!;
-      setSelectedId(first.id);
-      onSelect?.(first);
-    }
-    // intentional: avoid re-firing when onSelect identity changes
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [visible, selectedId]);
+  const [inspectId, setInspectId] = React.useState<string | null>(null);
+  const detail = useSkill({ adapter, id: inspectId });
 
   const counts = React.useMemo(
     () => ({
@@ -82,173 +59,249 @@ export function SkillsManager(props: SkillsManagerProps): React.ReactElement {
   );
 
   const [busyId, setBusyId] = React.useState<string | null>(null);
-  const doApprove = async (s: Skill) => {
+  const doApprove = async (s: { id: string; bundleHash: string }) => {
     setBusyId(s.id);
     try {
       await approve(s.id, s.bundleHash);
-      await detail.refresh();
+      if (inspectId === s.id) await detail.refresh();
     } finally {
       setBusyId(null);
     }
   };
-  const doRevoke = async (s: Skill) => {
+  const doRevoke = async (s: { id: string; bundleHash: string }) => {
+    if (
+      revokeConfirm &&
+      typeof window !== "undefined" &&
+      !window.confirm(revokeConfirm)
+    ) {
+      return;
+    }
     setBusyId(s.id);
     try {
       await revoke(s.id, s.bundleHash);
-      await detail.refresh();
+      if (inspectId === s.id) await detail.refresh();
     } finally {
       setBusyId(null);
     }
+  };
+
+  const handleInspect = (s: SkillSummary) => {
+    setInspectId(s.id);
+    onSelect?.(s);
   };
 
   return (
     <div
       data-slot="skills-manager"
       className={cn(
-        "flex h-full min-h-0 w-full flex-col bg-gradient-to-b from-background to-muted/30 text-foreground",
+        "h-full min-h-0 w-full overflow-y-auto bg-background text-foreground",
         className,
       )}
     >
-      <header className="flex flex-col gap-3 border-b border-border/60 bg-background/70 px-4 py-3 backdrop-blur">
-        <div className="flex items-center gap-2">
-          <div className="text-sm font-semibold">{title}</div>
-          <div className="ml-auto flex items-center gap-2">
-            {headerExtras}
-            <SkillActionButton
-              variant="ghost"
-              loading={loading}
-              onClick={() => void reload()}
-              aria-label="Reload from disk"
-            >
-              <svg
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-3.5 w-3.5"
-                aria-hidden
-              >
-                <path d="M21 12a9 9 0 11-3-6.7L21 8" />
-                <path d="M21 3v5h-5" />
-              </svg>
-              Reload
-            </SkillActionButton>
-          </div>
-        </div>
-        <SkillFilterBar
-          filter={filter}
-          onFilterChange={setFilter}
-          search={search}
-          onSearchChange={setSearch}
-          counts={counts}
-        />
-        {error ? (
-          <div
-            role="alert"
-            className="rounded-md border border-destructive/40 bg-destructive/10 px-3 py-1.5 text-xs text-destructive"
-          >
-            {error}
-          </div>
-        ) : null}
-      </header>
+      <div className="mx-auto flex w-full max-w-2xl flex-col gap-7 px-6 py-7">
+        <header className="flex flex-col gap-1">
+          <h2 className="text-[15px] font-semibold tracking-tight">{title}</h2>
+          {description ? (
+            <p className="text-[11.5px] text-muted-foreground">{description}</p>
+          ) : null}
+        </header>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-0 md:grid-cols-[minmax(18rem,22rem)_1fr]">
-        <aside className="min-h-0 overflow-y-auto border-border/40 p-3 md:border-r">
+        <section className="flex flex-col gap-2">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <span className="text-[11.5px] font-medium text-foreground/90">
+              Skills
+            </span>
+            <div className="flex items-center gap-1.5">
+              {headerExtras}
+              <SkillActionButton
+                variant="outline"
+                size="xs"
+                loading={loading}
+                onClick={() => void reload()}
+                aria-label="Reload from disk"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="12"
+                  height="12"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.75"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden
+                >
+                  <path d="M21 12a9 9 0 11-3-6.7L21 8" />
+                  <path d="M21 3v5h-5" />
+                </svg>
+                Reload
+              </SkillActionButton>
+            </div>
+          </div>
+
+          <SkillFilterBar
+            filter={filter}
+            onFilterChange={setFilter}
+            search={search}
+            onSearchChange={setSearch}
+            counts={counts}
+          />
+
+          {error ? (
+            <div
+              role="alert"
+              className="rounded-md border border-destructive/40 bg-destructive/10 px-2.5 py-1.5 text-[11px] text-destructive"
+            >
+              {error}
+            </div>
+          ) : null}
+
           {loading && skills.length === 0 ? (
-            <ListSkeleton />
+            <GridSkeleton />
           ) : (
             <SkillList
               skills={visible}
-              selectedId={selectedId}
-              onSelect={(s) => {
-                setSelectedId(s.id);
-                onSelect?.(s);
-              }}
+              busyId={busyId}
+              onSelect={handleInspect}
+              onInspect={handleInspect}
+              onApprove={(s) => void doApprove(s)}
+              onRevoke={(s) => void doRevoke(s)}
               emptyMessage={
                 skills.length === 0
-                  ? "No skills are registered."
+                  ? "No skills are registered yet."
                   : "No skills match the current filter."
               }
             />
           )}
-        </aside>
+        </section>
+      </div>
 
-        <main className="min-h-0 overflow-hidden">
-          {detail.loading && !detail.skill ? (
-            <DetailSkeleton />
-          ) : detail.skill ? (
-            <SkillDetail
-              skill={detail.skill}
-              renderBody={renderBody}
-              actions={
-                <DetailActions
-                  skill={detail.skill}
-                  busy={busyId === detail.skill.id}
-                  onApprove={() => void doApprove(detail.skill!)}
-                  onRevoke={() => {
-                    if (
-                      revokeConfirm &&
-                      typeof window !== "undefined" &&
-                      !window.confirm(revokeConfirm)
-                    ) {
-                      return;
-                    }
-                    void doRevoke(detail.skill!);
-                  }}
-                />
-              }
-            />
-          ) : (
-            <div className="flex h-full items-center justify-center p-8 text-sm text-muted-foreground">
-              {skills.length === 0
-                ? "Load a skills directory to get started."
-                : "Select a skill to inspect."}
-            </div>
-          )}
-        </main>
+      <SkillInspectorModal
+        open={inspectId !== null}
+        onClose={() => setInspectId(null)}
+        loading={detail.loading}
+        skill={detail.skill}
+        renderBody={renderBody}
+        busy={detail.skill ? busyId === detail.skill.id : false}
+        onApprove={(s) => void doApprove(s)}
+        onRevoke={(s) => void doRevoke(s)}
+      />
+    </div>
+  );
+}
+
+function SkillInspectorModal({
+  open,
+  onClose,
+  loading,
+  skill,
+  renderBody,
+  busy,
+  onApprove,
+  onRevoke,
+}: {
+  open: boolean;
+  onClose: () => void;
+  loading: boolean;
+  skill: Skill | null;
+  renderBody?: (body: string) => React.ReactNode;
+  busy: boolean;
+  onApprove: (s: Skill) => void;
+  onRevoke: (s: Skill) => void;
+}) {
+  React.useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      window.removeEventListener("keydown", onKey);
+      document.body.style.overflow = prev;
+    };
+  }, [open, onClose]);
+
+  if (!open) return null;
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        aria-hidden
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <div className="relative flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl border bg-background shadow-2xl">
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          className="absolute right-2 top-2 z-10 inline-flex size-7 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="14"
+            height="14"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M6 6l12 12" />
+            <path d="M18 6L6 18" />
+          </svg>
+        </button>
+        {loading && !skill ? (
+          <DetailSkeleton />
+        ) : skill ? (
+          <SkillDetail
+            skill={skill}
+            renderBody={renderBody}
+            actions={
+              skill.trust === "approved" ? (
+                <SkillActionButton
+                  variant="destructive"
+                  size="xs"
+                  loading={busy}
+                  onClick={() => onRevoke(skill)}
+                >
+                  Revoke
+                </SkillActionButton>
+              ) : (
+                <SkillActionButton
+                  variant="default"
+                  size="xs"
+                  loading={busy}
+                  onClick={() => onApprove(skill)}
+                >
+                  Approve
+                </SkillActionButton>
+              )
+            }
+          />
+        ) : (
+          <div className="flex h-40 items-center justify-center text-[11.5px] text-muted-foreground">
+            Skill not found.
+          </div>
+        )}
       </div>
     </div>
   );
 }
 
-function DetailActions({
-  skill,
-  busy,
-  onApprove,
-  onRevoke,
-}: {
-  skill: Skill;
-  busy: boolean;
-  onApprove: () => void;
-  onRevoke: () => void;
-}) {
-  if (skill.trust === "approved") {
-    return (
-      <SkillActionButton
-        variant="destructive"
-        loading={busy}
-        onClick={onRevoke}
-      >
-        Revoke
-      </SkillActionButton>
-    );
-  }
+function GridSkeleton() {
   return (
-    <SkillActionButton variant="primary" loading={busy} onClick={onApprove}>
-      Approve
-    </SkillActionButton>
-  );
-}
-
-function ListSkeleton() {
-  return (
-    <div className="flex flex-col gap-2">
+    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
       {Array.from({ length: 4 }).map((_, i) => (
         <div
           key={i}
-          className="h-20 animate-pulse rounded-lg border border-border/40 bg-muted/40"
+          className="h-[78px] animate-pulse rounded-lg border border-border/40 bg-muted/30"
         />
       ))}
     </div>
@@ -257,10 +310,10 @@ function ListSkeleton() {
 
 function DetailSkeleton() {
   return (
-    <div className="flex h-full flex-col gap-3 p-4">
-      <div className="h-6 w-1/3 animate-pulse rounded bg-muted/50" />
-      <div className="h-4 w-2/3 animate-pulse rounded bg-muted/40" />
-      <div className="mt-4 h-64 animate-pulse rounded bg-muted/30" />
+    <div className="flex flex-col gap-3 p-4">
+      <div className="h-5 w-1/3 animate-pulse rounded bg-muted/40" />
+      <div className="h-3.5 w-2/3 animate-pulse rounded bg-muted/30" />
+      <div className="mt-4 h-64 animate-pulse rounded bg-muted/20" />
     </div>
   );
 }

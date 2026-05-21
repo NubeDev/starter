@@ -8,6 +8,15 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │       ├── proc-macro2 v1.0.106 (*)
 │       ├── quote v1.0.45 (*)
 │       └── unicode-ident v1.0.24
+├── chrono v0.4.44
+│   ├── iana-time-zone v0.1.65
+│   ├── num-traits v0.2.19
+│   └── serde v1.0.228
+│       ├── serde_core v1.0.228
+│       └── serde_derive v1.0.228 (proc-macro)
+│           ├── proc-macro2 v1.0.106 (*)
+│           ├── quote v1.0.45 (*)
+│           └── syn v2.0.117 (*)
 ├── futures v0.3.32
 │   ├── futures-channel v0.3.32
 │   │   ├── futures-core v0.3.32
@@ -40,12 +49,7 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 │   │   │   ├── cfg-if v1.0.4
 │   │   │   └── libc v0.2.186
 │   │   ├── once_cell v1.21.4
-│   │   ├── serde v1.0.228
-│   │   │   ├── serde_core v1.0.228
-│   │   │   └── serde_derive v1.0.228 (proc-macro)
-│   │   │       ├── proc-macro2 v1.0.106 (*)
-│   │   │       ├── quote v1.0.45 (*)
-│   │   │       └── syn v2.0.117 (*)
+│   │   ├── serde v1.0.228 (*)
 │   │   └── zerocopy v0.8.48
 │   ├── anyhow v1.0.102
 │   ├── base64 v0.22.1
@@ -206,10 +210,7 @@ starter-flow-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-flow-spi)
 ├── serde_json v1.0.149 (*)
 ├── starter-spi v0.1.0 (/home/user/code/rust/starter/crates/starter-spi)
 │   ├── async-trait v0.1.89 (proc-macro) (*)
-│   ├── chrono v0.4.44
-│   │   ├── iana-time-zone v0.1.65
-│   │   ├── num-traits v0.2.19
-│   │   └── serde v1.0.228 (*)
+│   ├── chrono v0.4.44 (*)
 │   ├── prometheus v0.14.0
 │   │   ├── cfg-if v1.0.4
 │   │   ├── fnv v1.0.7

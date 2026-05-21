@@ -60,3 +60,12 @@ pub mod metrics;
 /// swap, classifier, `apply_policy`, observability, boot resume,
 /// file-watch, and the kind revoke walk land in HR-2..HR-6.
 pub mod definition;
+
+/// Agent-session replay strategies (DOCS/agent/MEMORY.md Phase M-C).
+/// Pure read-side logic over the
+/// [`AgentSessionStore`](starter_flow_spi::agent_session::AgentSessionStore)
+/// trait — the four strategies (`none`, `snapshot`,
+/// `summary_plus_tail`, `full`) that build the input the model
+/// sees on the next turn. Storage and replay stay separate
+/// decisions per MEMORY.md §3 M3 + M4.
+pub mod replay;

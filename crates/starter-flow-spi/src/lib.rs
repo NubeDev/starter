@@ -19,6 +19,7 @@
 #![warn(missing_docs)]
 
 pub mod ai_runner;
+pub mod agent_session;
 pub mod definition;
 pub mod event_dto;
 pub mod flow;

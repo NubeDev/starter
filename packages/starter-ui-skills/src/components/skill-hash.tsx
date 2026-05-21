@@ -21,7 +21,7 @@ export function SkillHash({
       data-slot="skill-hash"
       title={tooltip ? hash : undefined}
       className={cn(
-        "inline-flex items-center gap-1 rounded-md bg-muted/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground",
+        "inline-flex items-center gap-1 rounded-md bg-muted px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground",
         className,
       )}
       {...props}

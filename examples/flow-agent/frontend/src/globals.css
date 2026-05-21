@@ -1,16 +1,18 @@
 /* flow-agent host stylesheet.
  *
- * Consumes the shared kit stylesheet (Tailwind v4 + shadcn tokens +
- * sidebar tokens + dark variant) and layers on top:
- *   - the @xyflow/react base layer and starter-ui-flow overrides
- *   - flow-agent-specific section accents (Flows / Agents / Settings)
- *   - scrollbar polish and a small-viewport table fallback
- *
- * Local shadcn primitives in src/components/ui/ pick up the kit's
- * tokens via the @theme inline block defined in the kit's globals.
+ * Each shared package owns its own `styles.css` shim that emits an
+ * `@source` so Tailwind v4 scans the package's components (v4 skips
+ * node_modules by default). The host only needs to `@import` them and
+ * `@source` its own `src`. The kit ships the theme tokens, font and
+ * base layer; we only add app-specific section accents below.
  */
 
 @import "@nube/starter-ui-kit/styles.css";
+@import "@nube/starter-ui-core/styles.css";
+@import "@nube/starter-ui-chat/styles.css";
+@import "@nube/starter-ui-ai-builder/styles.css";
+@import "@nube/starter-ui-skills/styles.css";
+@import "@nube/starter-sdui-react/styles.css";
 @import "@xyflow/react/dist/style.css";
 @import "@nube/starter-ui-flow/styles.css";
 
@@ -45,12 +47,6 @@
 }
 
 @layer base {
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro",
-      "Inter", "Segoe UI", Roboto, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-  }
   html, body, #root {
     height: 100%;
   }

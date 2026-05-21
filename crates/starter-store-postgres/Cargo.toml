@@ -16,6 +16,11 @@ async-trait = { workspace = true }
 serde       = { workspace = true }
 thiserror   = { workspace = true }
 tracing     = { workspace = true }
+# MEMORY.md Phase M-B — agent-session timestamps surface as
+# `chrono::DateTime<Utc>` on the SPI types. Pulled in unconditionally
+# (small, leaf-level) so the optional `agent-session` feature does
+# not have to re-export the sqlx chrono feature itself.
+chrono      = { workspace = true }
 
 # `testing` feature pulls testcontainers + the postgres module so a
 # call to `testing::with_database()` spins up an ephemeral container,
@@ -45,6 +50,12 @@ testing = ["dep:testcontainers", "dep:testcontainers-modules", "dep:tokio"]
 # `--no-default-features` to skip the table + the `starter-skills`
 # dep entirely.
 skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
+# MEMORY.md Phase M-B — Postgres-backed `AgentSessionStore` impl.
+# Default-off so consumers that don't need agent surfaces (the
+# common minimal binary) carry zero cost. Pulls
+# `starter-flow-spi` for the trait + types, plus the sqlx
+# `chrono` + `json` features for `TIMESTAMPTZ` / `JSONB` binding.
+agent-session = ["dep:starter-flow-spi", "sqlx/chrono", "sqlx/json"]
 
 [dev-dependencies]
 sqlx  = { workspace = true, features = ["postgres", "macros", "migrate", "runtime-tokio"] }

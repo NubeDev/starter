@@ -10,6 +10,10 @@
  *   --sf-font
  */
 
+/* Ensure Tailwind v4 scans this package's components when the host
+ * imports this stylesheet (v4 skips node_modules). */
+@source "../..";
+
 :root {
   --sf-node-bg: #ffffff;
   --sf-node-border: #e2e8f0;

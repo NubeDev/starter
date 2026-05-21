@@ -11,9 +11,14 @@
     "./components/*": "./src/components/*.tsx",
     "./hooks": "./src/hooks/index.ts",
     "./types": "./src/types/index.ts",
-    "./adapters": "./src/adapters/index.ts"
+    "./adapters": "./src/adapters/index.ts",
+    "./styles.css": "./styles.css"
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "README.md",
+    "src",
+    "styles.css"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
     "typecheck": "tsc -p tsconfig.json --noEmit"

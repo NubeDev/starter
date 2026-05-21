@@ -18,6 +18,7 @@ serde_json  = { workspace = true }
 thiserror   = { workspace = true }
 async-trait = { workspace = true }
 uuid        = { workspace = true }
+chrono      = { workspace = true }
 futures     = { workspace = true }
 # DOCS/flow/scope/settings.md Phase S-1: per-kind `Settings` structs
 # derive `JsonSchema`; the trait's default `validate_settings` runs

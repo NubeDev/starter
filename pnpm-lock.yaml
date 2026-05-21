@@ -13,6 +13,12 @@ importers:
       '@nube/starter-client-ts':
         specifier: workspace:*
         version: link:../../../packages/starter-client-ts
+      '@nube/starter-sdui-react':
+        specifier: workspace:*
+        version: link:../../../packages/starter-sdui-react
+      '@nube/starter-ui-ai-builder':
+        specifier: workspace:*
+        version: link:../../../packages/starter-ui-ai-builder
       '@nube/starter-ui-chat':
         specifier: workspace:*
         version: link:../../../packages/starter-ui-chat
@@ -25,6 +31,9 @@ importers:
       '@nube/starter-ui-kit':
         specifier: workspace:*
         version: link:../../../packages/starter-ui-kit
+      '@nube/starter-ui-skills':
+        specifier: workspace:*
+        version: link:../../../packages/starter-ui-skills
       '@tabler/icons-react':
         specifier: ^3.44.0
         version: 3.44.0(react@19.2.6)
@@ -65,6 +74,9 @@ importers:
         specifier: ^4.5.0
         version: 4.5.7(@types/react@19.2.14)(react@19.2.6)
     devDependencies:
+      '@playwright/test':
+        specifier: ^1.60.0
+        version: 1.60.0
       '@tailwindcss/vite':
         specifier: ^4.0.0
         version: 4.3.0(vite@5.4.21(@types/node@22.19.19)(lightningcss@1.32.0))
@@ -243,6 +255,9 @@ importers:
       typescript:
         specifier: ^5.4
         version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)
 
   packages/starter-ui-chat:
     dependencies:
@@ -342,6 +357,9 @@ importers:
 
   packages/starter-ui-kit:
     dependencies:
+      '@fontsource-variable/inter':
+        specifier: ^5.2.8
+        version: 5.2.8
       '@hugeicons/core-free-icons':
         specifier: ^4.1.1
         version: 4.1.4
@@ -810,6 +828,9 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fontsource-variable/inter@5.2.8':
+    resolution: {integrity: sha512-kOfP2D+ykbcX/P3IFnokOhVRNoTozo5/JxhAIVYLpea/UBmCQ/YWPBfWIDuBImXX/15KH+eKh4xpEUyS2sQQGQ==}
 
   '@formatjs/ecma402-abstract@2.3.6':
     resolution: {integrity: sha512-HJnTFeRM2kVFVr5gr5kH1XP6K0JcJtE7Lzvtr3FS/so5f1kpsqqqxy5JF+FRaO6H2qmcMfAUIox7AJteieRtVw==}
@@ -3120,6 +3141,8 @@ snapshots:
       react-dom: 19.2.6(react@19.2.6)
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fontsource-variable/inter@5.2.8': {}
 
   '@formatjs/ecma402-abstract@2.3.6':
     dependencies:

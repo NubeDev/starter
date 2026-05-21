@@ -1,0 +1,4 @@
+/* Ensures Tailwind v4 scans this package's components when the host
+   imports this file. Avoids missing utility classes when the host's
+   `@source` directive only points at its own src directory. */
+@source "./src";

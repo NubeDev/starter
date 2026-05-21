@@ -5,6 +5,7 @@
  * `danger` / `success`). `heading` picks an `h1`–`h6` via `level`.
  * `badge` projects against the shadcn Badge primitive.
  */
+import type { JSX } from "react";
 import { Badge } from "@nube/starter-ui-kit";
 import type { ComponentSpec } from "../registry/types.js";
 import type { UiComponent } from "../types.js";

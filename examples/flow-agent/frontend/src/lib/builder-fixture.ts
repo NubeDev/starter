@@ -59,86 +59,86 @@ export const FIXTURE_DELAY_MS = 80;
 
 function placeholder(id: string, label: string): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id,
     style: { className: "rounded-lg border border-border/60 p-4" },
-    children: [{ type: "text", text: label }],
-  };
+    children: [{ type: "text", value: label }],
+  } as UiComponent;
 }
 
 function kpiCard(id: string, label: string, value: string): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id,
+    gap: "xs",
     style: {
       className:
-        "rounded-xl border border-border/60 bg-card p-4 shadow-sm flex flex-col gap-1",
+        "rounded-xl border border-border/60 bg-card p-4 shadow-sm",
     },
     children: [
       {
         type: "text",
-        text: label,
-        style: { className: "text-xs uppercase text-muted-foreground" },
+        value: label,
+        tone: "muted",
+        style: { className: "text-xs uppercase" },
       },
       {
         type: "text",
-        text: value,
+        value,
         style: { className: "text-2xl font-semibold" },
       },
     ],
-  };
+  } as UiComponent;
 }
 
 function salesSkeleton(): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id: "root",
-    style: { className: "flex flex-col gap-6 p-6" },
+    gap: "lg",
+    style: { className: "p-6" },
     children: [
       {
-        type: "container",
+        type: "heading",
         id: "root.title",
-        children: [
-          {
-            type: "text",
-            text: "Sales · Q2",
-            style: { className: "text-xl font-semibold" },
-          },
-        ],
+        value: "Sales · Q2",
+        level: 2,
       },
       placeholder("root.kpis", "Loading KPIs…"),
       placeholder("root.pipeline", "Loading pipeline…"),
     ],
-  };
+  } as UiComponent;
 }
 
 function salesKpis(): UiComponent {
   return {
-    type: "container",
+    type: "grid",
     id: "root.kpis",
-    style: { className: "grid grid-cols-4 gap-3" },
+    cols: 4,
+    gap: "sm",
     children: [
       kpiCard("root.kpis.mrr", "MRR", "$42k"),
       kpiCard("root.kpis.arr", "ARR", "$508k"),
       kpiCard("root.kpis.win", "Win rate", "31%"),
       kpiCard("root.kpis.nps", "NPS", "62"),
     ],
-  };
+  } as UiComponent;
 }
 
 function salesPipeline(): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id: "root.pipeline",
+    gap: "sm",
     style: {
       className:
-        "rounded-xl border border-border/60 bg-card p-4 shadow-sm flex flex-col gap-2",
+        "rounded-xl border border-border/60 bg-card p-4 shadow-sm",
     },
     children: [
       {
-        type: "text",
-        text: "Pipeline",
-        style: { className: "text-sm font-medium" },
+        type: "heading",
+        value: "Pipeline",
+        level: 4,
       },
       {
         type: "table",
@@ -149,60 +149,63 @@ function salesPipeline(): UiComponent {
           { key: "value", label: "Value" },
         ],
         rows: [
-          { stage: "Qualified", deals: 12, value: "$84k" },
-          { stage: "Demo", deals: 8, value: "$112k" },
-          { stage: "Close", deals: 3, value: "$96k" },
+          { id: "qual", slots: { stage: "Qualified", deals: 12, value: "$84k" } },
+          { id: "demo", slots: { stage: "Demo", deals: 8, value: "$112k" } },
+          { id: "close", slots: { stage: "Close", deals: 3, value: "$96k" } },
         ],
       } as UiComponent,
     ],
-  };
+  } as UiComponent;
 }
 
 function onboardSkeleton(): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id: "root",
-    style: { className: "flex flex-col gap-6 p-6" },
+    gap: "lg",
+    style: { className: "p-6" },
     children: [
       {
-        type: "text",
-        text: "Onboarding",
-        style: { className: "text-xl font-semibold" },
+        type: "heading",
+        value: "Onboarding",
+        level: 2,
       },
       placeholder("root.form", "Loading form…"),
       placeholder("root.checklist", "Loading checklist…"),
       placeholder("root.tabs", "Loading tabs…"),
     ],
-  };
+  } as UiComponent;
 }
 
 function reportSkeleton(): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id: "root",
-    style: { className: "flex flex-col gap-6 p-6" },
+    gap: "lg",
+    style: { className: "p-6" },
     children: [
       {
-        type: "text",
-        text: "Daily report",
-        style: { className: "text-xl font-semibold" },
+        type: "heading",
+        value: "Daily report",
+        level: 2,
       },
       placeholder("root.summary", "Loading summary…"),
       placeholder("root.chart", "Loading chart…"),
       placeholder("root.table", "Loading table…"),
     ],
-  };
+  } as UiComponent;
 }
 
 function helloTree(): UiComponent {
   return {
-    type: "container",
+    type: "stack",
     id: "root",
     style: { className: "p-6" },
     children: [
       {
-        type: "container",
+        type: "stack",
         id: "root.card",
+        gap: "sm",
         style: {
           className:
             "rounded-xl border border-border/60 bg-card p-6 shadow-sm",
@@ -210,18 +213,18 @@ function helloTree(): UiComponent {
         children: [
           {
             type: "text",
-            text: "Hello — describe a dashboard to get started.",
+            value: "Hello — describe a dashboard to get started.",
             style: { className: "text-base" },
           },
           {
             type: "text",
-            text: "Try: sales · dashboard · onboard · report",
-            style: { className: "text-sm text-muted-foreground mt-2" },
+            value: "Try: sales · dashboard · onboard · report",
+            tone: "muted",
           },
         ],
-      },
+      } as UiComponent,
     ],
-  };
+  } as UiComponent;
 }
 
 // ── Scripts ────────────────────────────────────────────────────────
@@ -268,37 +271,39 @@ function salesScript(): BuilderEvent[] {
 
 function onboardScript(): BuilderEvent[] {
   const form: UiComponent = {
-    type: "container",
+    type: "stack",
     id: "root.form",
+    gap: "sm",
     style: { className: "rounded-xl border border-border/60 p-4 shadow-sm" },
     children: [
       {
-        type: "text",
-        text: "Account details",
-        style: { className: "text-sm font-medium mb-2" },
+        type: "heading",
+        value: "Account details",
+        level: 4,
       },
-      { type: "text", text: "Name · Email · Company" },
+      { type: "text", value: "Name · Email · Company" },
     ],
-  };
+  } as UiComponent;
   const checklist: UiComponent = {
-    type: "container",
+    type: "stack",
     id: "root.checklist",
+    gap: "xs",
     style: { className: "rounded-xl border border-border/60 p-4 shadow-sm" },
     children: [
-      { type: "text", text: "✓ Create account" },
-      { type: "text", text: "✓ Verify email" },
-      { type: "text", text: "○ Invite teammates" },
-      { type: "text", text: "○ Connect a data source" },
+      { type: "text", value: "✓ Create account" },
+      { type: "text", value: "✓ Verify email" },
+      { type: "text", value: "○ Invite teammates" },
+      { type: "text", value: "○ Connect a data source" },
     ],
-  };
+  } as UiComponent;
   const tabs: UiComponent = {
-    type: "container",
+    type: "stack",
     id: "root.tabs",
     style: { className: "rounded-xl border border-border/60 p-4 shadow-sm" },
     children: [
-      { type: "text", text: "[ Profile ] [ Team ] [ Billing ]" },
+      { type: "text", value: "[ Profile ] [ Team ] [ Billing ]" },
     ],
-  };
+  } as UiComponent;
   return [
     { type: "status", phase: "thinking" },
     { type: "patch", targetComponentId: "root.form", subtree: form },
@@ -318,17 +323,17 @@ function reportScript(): BuilderEvent[] {
   const summary: UiComponent = {
     type: "markdown",
     id: "root.summary",
-    text: "**Today:** 1,284 events · 41 errors · 99.97% uptime.",
-  };
+    content: "**Today:** 1,284 events · 41 errors · 99.97% uptime.",
+  } as UiComponent;
   const chart: UiComponent = {
-    type: "container",
+    type: "stack",
     id: "root.chart",
     style: {
       className:
         "rounded-xl border border-border/60 p-4 shadow-sm h-40 flex items-center justify-center text-muted-foreground",
     },
-    children: [{ type: "text", text: "▁▂▄▆█▆▄▃▅▇█ (chart placeholder)" }],
-  };
+    children: [{ type: "text", value: "▁▂▄▆█▆▄▃▅▇█ (chart placeholder)" }],
+  } as UiComponent;
   const table: UiComponent = {
     type: "table",
     id: "root.table",
@@ -338,10 +343,10 @@ function reportScript(): BuilderEvent[] {
       { key: "errors", label: "Errors" },
     ],
     rows: [
-      { hour: "00:00", events: 81, errors: 0 },
-      { hour: "06:00", events: 144, errors: 2 },
-      { hour: "12:00", events: 412, errors: 12 },
-      { hour: "18:00", events: 647, errors: 27 },
+      { id: "00", slots: { hour: "00:00", events: 81, errors: 0 } },
+      { id: "06", slots: { hour: "06:00", events: 144, errors: 2 } },
+      { id: "12", slots: { hour: "12:00", events: 412, errors: 12 } },
+      { id: "18", slots: { hour: "18:00", events: 647, errors: 27 } },
     ],
   } as UiComponent;
   return [

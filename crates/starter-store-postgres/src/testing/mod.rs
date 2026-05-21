@@ -2,4 +2,4 @@
 
 mod with_database;
 
-pub use with_database::with_database;
+pub use with_database::{with_database, ContainerGuard};

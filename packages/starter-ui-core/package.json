@@ -13,11 +13,13 @@
     "./testing": "./src/testing/index.ts",
     "./theme-editor": "./src/theme-editor/index.ts",
     "./preferences": "./src/preferences/index.ts",
-    "./i18n": "./src/i18n/index.ts"
+    "./i18n": "./src/i18n/index.ts",
+    "./styles.css": "./styles.css"
   },
   "files": [
+    "README.md",
     "src",
-    "README.md"
+    "styles.css"
   ],
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",

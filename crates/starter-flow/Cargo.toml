@@ -51,6 +51,11 @@ thiserror        = { workspace = true }
 blake3           = { workspace = true }
 arc-swap         = { workspace = true }
 serde            = { workspace = true }
+# MEMORY.md §M9 / Phase M-E: the `Engine::sweep_agent_session_retention`
+# entry-point takes a `chrono::DateTime<Utc>` cutoff so hosts can pin
+# a deterministic clock; the SPI `RetentionPolicy` types embed
+# `chrono::Duration`. Replay-module dev tests already used chrono.
+chrono           = { workspace = true }
 
 [dev-dependencies]
 # Pull `macros` for `#[tokio::test]` and `time` for the lag/yield
@@ -67,6 +72,10 @@ tracing-subscriber = { workspace = true }
 # `validate_settings` is invoked through the publish chokepoint.
 schemars         = { workspace = true }
 serde            = { workspace = true }
-
-[features]
-default = []
+# Replay-module unit tests construct in-memory `Turn` / `Artifact`
+# fixtures, which need `chrono::Utc::now()` timestamps. Dev-only —
+# the production replay code carries timestamps through, never
+# manufactures them.
+chrono           = { workspace = true }
+# Replay-module fake-store impl is `#[async_trait]`.
+async-trait      = { workspace = true }

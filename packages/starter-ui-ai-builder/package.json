@@ -11,12 +11,18 @@
     "./components/*": "./src/components/*.tsx",
     "./hooks": "./src/hooks/index.ts",
     "./types": "./src/types/index.ts",
-    "./adapters": "./src/adapters/index.ts"
+    "./adapters": "./src/adapters/index.ts",
+    "./styles.css": "./styles.css"
   },
-  "files": ["src", "README.md"],
+  "files": [
+    "README.md",
+    "src",
+    "styles.css"
+  ],
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
   },
   "peerDependencies": {
     "@nube/starter-sdui-react": "workspace:*",
@@ -37,6 +43,7 @@
     "@types/react-dom": "^19",
     "react": "^19",
     "react-dom": "^19",
-    "typescript": "^5.4"
+    "typescript": "^5.4",
+    "vitest": "^2.1.0"
   }
 }

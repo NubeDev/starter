@@ -48,7 +48,22 @@ export type BuilderEvent =
   | { type: "token-patch"; patch: TokenPatch }
   | { type: "shell-patch"; patch: ShellPatch }
   | { type: "status"; phase: BuilderPhase; message?: string }
-  | { type: "error"; error: string };
+  | { type: "error"; error: string }
+  /** MEMORY.md Phase M-D — server confirms the assistant turn's
+   *  output was persisted as a versioned artifact under this
+   *  session. Surface uses this to refresh undo state. */
+  | {
+      type: "session_artifact";
+      session_id: string;
+      key: string;
+      /** May be absent on backends that don't echo the assigned
+       *  version in-band — surface should refetch on demand. */
+      version?: number;
+    }
+  /** MEMORY.md Phase M-D — server kept the response intact but the
+   *  session-store write failed. The request still completed; the
+   *  surface should degrade gracefully and stay stateless. */
+  | { type: "session_error"; error: string };
 
 export interface BuilderSendInput {
   /** Free-text user prompt. */
@@ -57,6 +72,15 @@ export interface BuilderSendInput {
   slots?: Record<string, unknown>;
   /** Optional opaque metadata, passed through unchanged. */
   meta?: Record<string, unknown>;
+  /** MEMORY.md Phase M-D — opt into session persistence. When set,
+   *  the adapter forwards the id as `session_id` and the backend
+   *  persists this turn + the produced artifact. Omitting it keeps
+   *  the call ephemeral per M13. */
+  sessionId?: string;
+  /** MEMORY.md Phase M-D — artifact key (e.g. `"tree"`) to seed
+   *  the prompt with from the session's latest snapshot. Honored
+   *  only when `sessionId` is set. */
+  includeArtifact?: string;
 }
 
 /**

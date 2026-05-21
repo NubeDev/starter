@@ -1,21 +1,29 @@
 import * as React from "react";
 import { cn } from "../lib/utils.js";
 
-type Variant = "primary" | "destructive" | "ghost";
+type Variant = "default" | "destructive" | "outline" | "secondary" | "ghost";
+type Size = "default" | "sm" | "xs";
 
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    "bg-primary text-primary-foreground hover:enabled:opacity-90 disabled:opacity-40",
-  destructive:
-    "bg-destructive text-destructive-foreground hover:enabled:opacity-90 disabled:opacity-40",
-  ghost:
-    "bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40",
+  default: "bg-primary text-primary-foreground hover:bg-primary/90",
+  destructive: "bg-destructive text-white hover:bg-destructive/90",
+  outline:
+    "border bg-background shadow-xs hover:bg-accent hover:text-accent-foreground dark:border-input dark:bg-input/30 dark:hover:bg-input/50",
+  secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
+  ghost: "hover:bg-accent hover:text-accent-foreground",
+};
+
+const SIZES: Record<Size, string> = {
+  default: "h-9 px-4 py-2 [&>svg]:size-4",
+  sm: "h-8 gap-1.5 rounded-md px-3 [&>svg]:size-3.5",
+  xs: "h-7 gap-1 rounded-md px-2 text-[11px] [&>svg]:size-3",
 };
 
 export interface SkillActionButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   loading?: boolean;
   variant?: Variant;
+  size?: Size;
   confirmMessage?: string;
 }
 
@@ -26,7 +34,8 @@ export const SkillActionButton = React.forwardRef<
   {
     className,
     loading,
-    variant = "ghost",
+    variant = "default",
+    size = "default",
     confirmMessage,
     onClick,
     children,
@@ -50,12 +59,16 @@ export const SkillActionButton = React.forwardRef<
     <button
       ref={ref}
       type="button"
+      data-slot="button"
       data-loading={loading ? "" : undefined}
+      data-variant={variant}
+      data-size={size}
       disabled={disabled || loading}
       onClick={handleClick}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium transition disabled:cursor-not-allowed",
+        "inline-flex shrink-0 items-center justify-center gap-1.5 rounded-md font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring/40 disabled:pointer-events-none disabled:opacity-50 [&>svg]:shrink-0",
         VARIANTS[variant],
+        SIZES[size],
         className,
       )}
       {...props}
@@ -63,7 +76,7 @@ export const SkillActionButton = React.forwardRef<
       {loading ? (
         <span
           aria-hidden
-          className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-current border-r-transparent"
+          className="inline-block size-3 animate-spin rounded-full border-2 border-current border-r-transparent"
         />
       ) : null}
       {children}

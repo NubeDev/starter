@@ -1,0 +1,479 @@
+{
+  "description": "Complete IoT Dashboard SDUI Tree (JSON representation)",
+  "root": {
+    "type": "stack",
+    "id": "root",
+    "gap": "lg",
+    "style": {
+      "className": "p-6 bg-background min-h-screen"
+    },
+    "children": [
+      {
+        "description": "Header Section",
+        "type": "stack",
+        "id": "root.header",
+        "gap": "xs",
+        "children": [
+          {
+            "type": "heading",
+            "value": "IoT Dashboard",
+            "level": 1,
+            "style": {
+              "className": "text-3xl font-bold tracking-tight text-foreground"
+            }
+          },
+          {
+            "type": "text",
+            "value": "Real-time monitoring and analytics for connected IoT devices",
+            "tone": "muted",
+            "style": {
+              "className": "text-sm"
+            }
+          }
+        ]
+      },
+      {
+        "description": "KPI Section with 4-column grid",
+        "type": "stack",
+        "id": "root.kpi-section",
+        "gap": "sm",
+        "children": [
+          {
+            "type": "text",
+            "value": "Key Metrics",
+            "style": {
+              "className": "text-sm font-semibold uppercase tracking-wider text-muted-foreground"
+            }
+          },
+          {
+            "type": "grid",
+            "id": "root.kpis",
+            "cols": 4,
+            "gap": "sm",
+            "children": [
+              {
+                "description": "Total Devices KPI Card",
+                "type": "stack",
+                "id": "root.kpis.total",
+                "gap": "xs",
+                "style": {
+                  "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "value": "Total Devices",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs font-medium uppercase tracking-wider"
+                    }
+                  },
+                  {
+                    "type": "stack",
+                    "gap": "xs",
+                    "style": {
+                      "className": "flex items-baseline justify-between"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "24",
+                        "style": {
+                          "className": "text-3xl font-bold"
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": "→",
+                        "style": {
+                          "className": "text-lg font-semibold text-slate-400"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "value": "Online",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs"
+                    }
+                  }
+                ]
+              },
+              {
+                "description": "Active Devices KPI Card",
+                "type": "stack",
+                "id": "root.kpis.active",
+                "gap": "xs",
+                "style": {
+                  "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "value": "Active Devices",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs font-medium uppercase tracking-wider"
+                    }
+                  },
+                  {
+                    "type": "stack",
+                    "gap": "xs",
+                    "style": {
+                      "className": "flex items-baseline justify-between"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "18",
+                        "style": {
+                          "className": "text-3xl font-bold"
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": "↑",
+                        "style": {
+                          "className": "text-lg font-semibold text-emerald-600"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "value": "75% utilization",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs"
+                    }
+                  }
+                ]
+              },
+              {
+                "description": "Average Temperature KPI Card",
+                "type": "stack",
+                "id": "root.kpis.temp",
+                "gap": "xs",
+                "style": {
+                  "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "value": "Avg Temperature",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs font-medium uppercase tracking-wider"
+                    }
+                  },
+                  {
+                    "type": "stack",
+                    "gap": "xs",
+                    "style": {
+                      "className": "flex items-baseline justify-between"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "72°F",
+                        "style": {
+                          "className": "text-3xl font-bold"
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": "→",
+                        "style": {
+                          "className": "text-lg font-semibold text-slate-400"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "value": "21.1°C",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs"
+                    }
+                  }
+                ]
+              },
+              {
+                "description": "Average Humidity KPI Card",
+                "type": "stack",
+                "id": "root.kpis.humidity",
+                "gap": "xs",
+                "style": {
+                  "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm hover:shadow-md transition-shadow"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "value": "Avg Humidity",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs font-medium uppercase tracking-wider"
+                    }
+                  },
+                  {
+                    "type": "stack",
+                    "gap": "xs",
+                    "style": {
+                      "className": "flex items-baseline justify-between"
+                    },
+                    "children": [
+                      {
+                        "type": "text",
+                        "value": "45%",
+                        "style": {
+                          "className": "text-3xl font-bold"
+                        }
+                      },
+                      {
+                        "type": "text",
+                        "value": "↓",
+                        "style": {
+                          "className": "text-lg font-semibold text-red-600"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "type": "text",
+                    "value": "Optimal",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Trends Section with 24-hour sparklines",
+        "type": "stack",
+        "id": "root.trends-section",
+        "gap": "sm",
+        "children": [
+          {
+            "type": "text",
+            "value": "24-Hour Trends",
+            "style": {
+              "className": "text-sm font-semibold uppercase tracking-wider text-muted-foreground"
+            }
+          },
+          {
+            "type": "grid",
+            "id": "root.trends",
+            "cols": 2,
+            "gap": "sm",
+            "children": [
+              {
+                "description": "Temperature Trend Sparkline",
+                "type": "stack",
+                "id": "root.trends.temp",
+                "gap": "sm",
+                "style": {
+                  "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "value": "Temperature Trend",
+                    "style": {
+                      "className": "text-sm font-semibold"
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "value": "▁▂▃▄▅▆▇█▆▇▆▅▄▃▂▁",
+                    "style": {
+                      "className": "font-mono text-lg tracking-tight text-primary/80"
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "value": "Unit: °F · Last 24 hours",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs"
+                    }
+                  }
+                ]
+              },
+              {
+                "description": "Humidity Trend Sparkline",
+                "type": "stack",
+                "id": "root.trends.humidity",
+                "gap": "sm",
+                "style": {
+                  "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm"
+                },
+                "children": [
+                  {
+                    "type": "text",
+                    "value": "Humidity Trend",
+                    "style": {
+                      "className": "text-sm font-semibold"
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "value": "▄▅▆▇█▆▅▄▃▂▃▄▅▆▇█",
+                    "style": {
+                      "className": "font-mono text-lg tracking-tight text-primary/80"
+                    }
+                  },
+                  {
+                    "type": "text",
+                    "value": "Unit: % · Last 24 hours",
+                    "tone": "muted",
+                    "style": {
+                      "className": "text-xs"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Device Status Table Section",
+        "type": "stack",
+        "id": "root.table-section",
+        "gap": "sm",
+        "style": {
+          "className": "rounded-lg border border-border/40 bg-card p-4 shadow-sm"
+        },
+        "children": [
+          {
+            "type": "heading",
+            "value": "Connected Devices",
+            "level": 3,
+            "style": {
+              "className": "text-lg font-semibold"
+            }
+          },
+          {
+            "type": "text",
+            "value": "Real-time status and environmental readings from all active IoT devices",
+            "tone": "muted",
+            "style": {
+              "className": "text-sm mb-2"
+            }
+          },
+          {
+            "type": "table",
+            "id": "root.devices-table",
+            "columns": [
+              {
+                "key": "name",
+                "label": "Device Name"
+              },
+              {
+                "key": "status",
+                "label": "Status"
+              },
+              {
+                "key": "temperature",
+                "label": "Temperature"
+              },
+              {
+                "key": "humidity",
+                "label": "Humidity"
+              },
+              {
+                "key": "lastUpdated",
+                "label": "Last Updated"
+              }
+            ],
+            "rows": [
+              {
+                "id": "device-001",
+                "slots": {
+                  "name": "Office Climate - Zone A",
+                  "status": "● Online",
+                  "temperature": "72°F / 22.2°C",
+                  "humidity": "42%",
+                  "lastUpdated": "2 mins ago"
+                }
+              },
+              {
+                "id": "device-002",
+                "slots": {
+                  "name": "Server Room Monitor",
+                  "status": "● Online",
+                  "temperature": "68°F / 20.0°C",
+                  "humidity": "35%",
+                  "lastUpdated": "1 min ago"
+                }
+              },
+              {
+                "id": "device-003",
+                "slots": {
+                  "name": "Warehouse Temperature",
+                  "status": "● Online",
+                  "temperature": "75°F / 23.9°C",
+                  "humidity": "55%",
+                  "lastUpdated": "3 mins ago"
+                }
+              },
+              {
+                "id": "device-004",
+                "slots": {
+                  "name": "Office Climate - Zone B",
+                  "status": "● Online",
+                  "temperature": "71°F / 21.7°C",
+                  "humidity": "48%",
+                  "lastUpdated": "2 mins ago"
+                }
+              },
+              {
+                "id": "device-005",
+                "slots": {
+                  "name": "Plant Storage Room",
+                  "status": "● Online",
+                  "temperature": "70°F / 21.1°C",
+                  "humidity": "60%",
+                  "lastUpdated": "1 min ago"
+                }
+              },
+              {
+                "id": "device-006",
+                "slots": {
+                  "name": "Parking Lot Sensor",
+                  "status": "● Offline",
+                  "temperature": "N/A",
+                  "humidity": "N/A",
+                  "lastUpdated": "47 mins ago"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "description": "Footer with refresh information",
+        "type": "stack",
+        "id": "root.footer",
+        "gap": "xs",
+        "style": {
+          "className": "rounded-lg border border-border/40 bg-muted/20 p-4 mt-4 text-xs text-muted-foreground"
+        },
+        "children": [
+          {
+            "type": "text",
+            "value": "Last dashboard refresh: Just now · Data updates every 30 seconds"
+          }
+        ]
+      }
+    ]
+  }
+}

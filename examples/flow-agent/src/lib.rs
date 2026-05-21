@@ -5,6 +5,7 @@
 
 pub mod agent_bridge;
 pub mod ai_runtime;
+pub mod builder_stream;
 pub mod domain;
 pub mod flow_engine;
 pub mod migrations;

@@ -22,6 +22,7 @@ use crate::domain::{
 use crate::flow_engine::{FireOutcome, FlowEngine, FlowEngineError};
 use crate::sse::{EventHub, FlowEvent, RunEvent};
 use crate::store::{AgentStore, FlowStore, RunStore};
+use starter_flow_spi::agent_session::AgentSessionStore;
 use starter_flow_spi::event_dto::{slot_value_to_json, NodeSlotValue};
 use starter_flow_spi::flow::FlowEvent as EngineFlowEvent;
 use starter_spi::ai::HistoryMessage;
@@ -34,6 +35,10 @@ pub struct RestState {
     pub hub: Arc<EventHub>,
     pub engine: FlowEngine,
     pub ai: AiRuntime,
+    /// MEMORY.md Phase M-D — page-builder persistence. Reused by
+    /// the builder stream (to persist turns + tree artifacts) and
+    /// by the artifact GET endpoint (zero-token page reload).
+    pub agent_sessions: Arc<dyn AgentSessionStore>,
 }
 
 #[derive(OpenApi)]
@@ -44,6 +49,9 @@ pub struct RestState {
         list_agents, create_agent, get_agent, update_agent, delete_agent,
         run_agent, list_providers,
         sidebar_events, flow_events,
+        crate::builder_stream::builder_stream,
+        create_session, get_latest_artifact,
+        list_artifact_versions, get_artifact_version,
     ),
     components(schemas(
         Flow, FlowSummary, CreateFlow, UpdateFlow,
@@ -51,6 +59,8 @@ pub struct RestState {
         Run, FirePayload, FireResponse,
         FlowEvent, RunEvent,
         ProviderStatusDto,
+        crate::builder_stream::BuilderRequest,
+        CreateSession, SessionCreated, ArtifactDto, ArtifactMetaDto,
     ))
 )]
 pub struct FlowAgentApi;
@@ -77,6 +87,31 @@ where
         .route("/api/agents/{id}/run", post(run_agent))
         // Providers (Settings page surfaces this read-only).
         .route("/api/providers", get(list_providers))
+        // Live page builder (SSE). No compression layer is mounted
+        // on this app, so no exclusion is required; the headers
+        // applied inside `builder_stream` still defeat proxy-level
+        // buffering (Vite dev, nginx).
+        .route(
+            "/api/builder/stream",
+            post(crate::builder_stream::builder_stream),
+        )
+        // Agent sessions — page-builder persistence (MEMORY.md
+        // Phase M-D). The artifact GET endpoints are zero-token
+        // page-reload paths; sessions are surface-owned UUIDv7s
+        // returned by `POST /api/sessions`.
+        .route("/api/sessions", post(create_session))
+        .route(
+            "/api/sessions/{id}/artifacts/{key}",
+            get(get_latest_artifact),
+        )
+        .route(
+            "/api/sessions/{id}/artifacts/{key}/versions",
+            get(list_artifact_versions),
+        )
+        .route(
+            "/api/sessions/{id}/artifacts/{key}/versions/{version}",
+            get(get_artifact_version),
+        )
         // SSE
         .route("/api/events", get(sidebar_events))
         .route("/api/flows/{id}/events", get(flow_events))
@@ -539,6 +574,189 @@ async fn flow_events(
 }
 
 // ---------------------------------------------------------------------
+// Agent sessions (MEMORY.md Phase M-D)
+//
+// `POST /api/sessions` — create a session up front so the surface
+// can echo the id back to the user. Optional; the builder route
+// also creates one implicitly when a request arrives with no
+// `session_id` (and persistence enabled).
+//
+// `GET  /api/sessions/{id}/artifacts/{key}` — zero-token page-reload
+// path. Frontend on mount fetches the latest tree to render the
+// canvas without spending model budget. (MEMORY.md M4.)
+//
+// `GET  /api/sessions/{id}/artifacts/{key}/versions` — undo/version
+// picker; lists metadata only (cheap), bodies live behind the
+// version-specific endpoint below.
+//
+// `GET  /api/sessions/{id}/artifacts/{key}/versions/{version}` —
+// fetch a specific historical body (undo target).
+// ---------------------------------------------------------------------
+
+#[derive(serde::Deserialize, utoipa::ToSchema)]
+pub struct CreateSession {
+    /// Surface-defined kind (`"page-builder"`, `"chat"`, ...).
+    /// Defaults to `"page-builder"` to fit this example's UX.
+    #[serde(default = "default_session_kind")]
+    pub kind: String,
+    /// Optional principal subject. Defaults to `"system"` —
+    /// flow-agent has no auth (SCOPE F4), so every session is
+    /// effectively unowned per MEMORY.md "Decisions made".
+    #[serde(default)]
+    pub owner: Option<String>,
+}
+
+fn default_session_kind() -> String {
+    "page-builder".to_owned()
+}
+
+#[derive(serde::Serialize, utoipa::ToSchema)]
+pub struct SessionCreated {
+    pub session_id: String,
+}
+
+#[utoipa::path(post, path = "/api/sessions", tag = "sessions",
+    request_body = CreateSession,
+    responses(
+        (status = 201, description = "Session created", body = SessionCreated),
+    ))]
+async fn create_session(
+    State(s): State<RestState>,
+    Json(req): Json<CreateSession>,
+) -> Result<(StatusCode, Json<SessionCreated>), ApiError> {
+    use starter_flow_spi::agent_session::AgentSessionId;
+    let id = AgentSessionId::new();
+    let owner = req.owner.unwrap_or_else(|| "system".to_owned());
+    s.agent_sessions
+        .create(id, &req.kind, &owner, serde_json::json!({}))
+        .await?;
+    Ok((
+        StatusCode::CREATED,
+        Json(SessionCreated {
+            session_id: id.to_string(),
+        }),
+    ))
+}
+
+#[derive(serde::Serialize, utoipa::ToSchema)]
+pub struct ArtifactDto {
+    pub session_id: String,
+    pub key: String,
+    pub version: u32,
+    pub parent_version: Option<u32>,
+    pub value: serde_json::Value,
+    pub value_bytes: u32,
+    pub produced_by_seq: Option<u32>,
+    pub updated_at: String,
+}
+
+#[derive(serde::Serialize, utoipa::ToSchema)]
+pub struct ArtifactMetaDto {
+    pub version: u32,
+    pub parent_version: Option<u32>,
+    pub value_bytes: u32,
+    pub produced_by_seq: Option<u32>,
+    pub updated_at: String,
+}
+
+fn parse_session_id(raw: &str) -> Result<starter_flow_spi::agent_session::AgentSessionId, ApiError>
+{
+    starter_flow_spi::agent_session::AgentSessionId::parse(raw)
+        .map_err(|_| ApiError::Domain(DomainError::Invalid("invalid session_id".into())))
+}
+
+#[utoipa::path(get, path = "/api/sessions/{id}/artifacts/{key}", tag = "sessions",
+    params(
+        ("id" = String, Path, description = "Session id (UUIDv7 string)"),
+        ("key" = String, Path, description = "Artifact key (e.g. \"tree\")"),
+    ),
+    responses(
+        (status = 200, description = "Latest artifact body", body = ArtifactDto),
+        (status = 404, description = "No artifact for this key"),
+    ))]
+async fn get_latest_artifact(
+    State(s): State<RestState>,
+    Path((id, key)): Path<(String, String)>,
+) -> Result<Json<ArtifactDto>, ApiError> {
+    let session_id = parse_session_id(&id)?;
+    let artifact = s
+        .agent_sessions
+        .latest_artifact(session_id, &key)
+        .await?
+        .ok_or_else(|| ApiError::Domain(DomainError::NotFound(format!("artifact {key}"))))?;
+    Ok(Json(artifact_to_dto(artifact)))
+}
+
+#[utoipa::path(get, path = "/api/sessions/{id}/artifacts/{key}/versions", tag = "sessions",
+    params(
+        ("id" = String, Path, description = "Session id"),
+        ("key" = String, Path, description = "Artifact key"),
+    ),
+    responses(
+        (status = 200, description = "Every version newest first", body = [ArtifactMetaDto]),
+    ))]
+async fn list_artifact_versions(
+    State(s): State<RestState>,
+    Path((id, key)): Path<(String, String)>,
+) -> Result<Json<Vec<ArtifactMetaDto>>, ApiError> {
+    let session_id = parse_session_id(&id)?;
+    let metas = s
+        .agent_sessions
+        .list_artifact_versions(session_id, &key)
+        .await?;
+    Ok(Json(metas.into_iter().map(meta_to_dto).collect()))
+}
+
+#[utoipa::path(get, path = "/api/sessions/{id}/artifacts/{key}/versions/{version}",
+    tag = "sessions",
+    params(
+        ("id" = String, Path, description = "Session id"),
+        ("key" = String, Path, description = "Artifact key"),
+        ("version" = u32, Path, description = "Artifact version"),
+    ),
+    responses(
+        (status = 200, description = "Historical artifact body", body = ArtifactDto),
+        (status = 404, description = "No such version"),
+    ))]
+async fn get_artifact_version(
+    State(s): State<RestState>,
+    Path((id, key, version)): Path<(String, String, u32)>,
+) -> Result<Json<ArtifactDto>, ApiError> {
+    let session_id = parse_session_id(&id)?;
+    let artifact = s
+        .agent_sessions
+        .artifact_at(session_id, &key, version)
+        .await?
+        .ok_or_else(|| {
+            ApiError::Domain(DomainError::NotFound(format!("{key} v{version}")))
+        })?;
+    Ok(Json(artifact_to_dto(artifact)))
+}
+
+fn artifact_to_dto(a: starter_flow_spi::agent_session::Artifact) -> ArtifactDto {
+    ArtifactDto {
+        session_id: a.session_id.to_string(),
+        key: a.key,
+        version: a.version,
+        parent_version: a.parent_version,
+        value: a.value,
+        value_bytes: a.value_bytes,
+        produced_by_seq: a.produced_by_seq,
+        updated_at: a.updated_at.to_rfc3339(),
+    }
+}
+
+fn meta_to_dto(m: starter_flow_spi::agent_session::ArtifactMeta) -> ArtifactMetaDto {
+    ArtifactMetaDto {
+        version: m.version,
+        parent_version: m.parent_version,
+        value_bytes: m.value_bytes,
+        produced_by_seq: m.produced_by_seq,
+        updated_at: m.updated_at.to_rfc3339(),
+    }
+}
+
+// ---------------------------------------------------------------------
 // Error mapping
 // ---------------------------------------------------------------------
 
@@ -546,6 +764,10 @@ pub enum ApiError {
     Domain(DomainError),
     Engine(FlowEngineError),
     Agent(AgentRunError),
+    /// MEMORY.md Phase M-D — agent-session store surfaced an
+    /// error (size cap, backend, missing session). Mapped to
+    /// 4xx/5xx by [`ApiError::into_response`].
+    AgentSession(starter_flow_spi::agent_session::AgentSessionError),
 }
 
 impl From<DomainError> for ApiError {
@@ -563,6 +785,12 @@ impl From<FlowEngineError> for ApiError {
 impl From<AgentRunError> for ApiError {
     fn from(e: AgentRunError) -> Self {
         Self::Agent(e)
+    }
+}
+
+impl From<starter_flow_spi::agent_session::AgentSessionError> for ApiError {
+    fn from(e: starter_flow_spi::agent_session::AgentSessionError) -> Self {
+        Self::AgentSession(e)
     }
 }
 
@@ -596,6 +824,31 @@ impl IntoResponse for ApiError {
                     (StatusCode::INTERNAL_SERVER_ERROR, e.to_string())
                 }
             },
+            ApiError::AgentSession(e) => {
+                use starter_flow_spi::agent_session::AgentSessionError;
+                match e {
+                    AgentSessionError::SessionNotFound(_) => {
+                        (StatusCode::NOT_FOUND, e.to_string())
+                    }
+                    AgentSessionError::TurnTooLarge { .. }
+                    | AgentSessionError::ArtifactTooLarge { .. } => {
+                        // M8 / M12 cap surfaces — payload-too-large
+                        // is the precise status; clients shrink the
+                        // body and retry.
+                        (StatusCode::PAYLOAD_TOO_LARGE, e.to_string())
+                    }
+                    AgentSessionError::Backend(_) => {
+                        tracing::error!(error = %e, "agent-session backend error");
+                        (StatusCode::INTERNAL_SERVER_ERROR, "internal".into())
+                    }
+                    // `#[non_exhaustive]` future variants — surface
+                    // as 500 with the Display impl; refine when added.
+                    _ => {
+                        tracing::error!(error = %e, "unhandled agent-session error");
+                        (StatusCode::INTERNAL_SERVER_ERROR, "internal".into())
+                    }
+                }
+            }
         };
         (status, Json(serde_json::json!({ "error": msg }))).into_response()
     }

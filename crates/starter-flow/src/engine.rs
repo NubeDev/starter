@@ -23,6 +23,7 @@ use std::sync::Arc;
 use thiserror::Error;
 use tokio::sync::{watch, Mutex, RwLock};
 
+use starter_flow_spi::agent_session::AgentSessionStore as SpiAgentSessionStore;
 use starter_flow_spi::flow::{EngineHealth, RunStore as SpiRunStore};
 use starter_flow_spi::graph::{GraphStore, WriteSlotOpts};
 use starter_flow_spi::node::{SlotRef, SlotValue};
@@ -207,6 +208,25 @@ pub struct Engine {
     /// [`Self::run_store`] and thread it into the run. `None` means
     /// the engine runs Phase-2-style in-memory only.
     run_store: Option<Arc<dyn SpiRunStore>>,
+    /// MEMORY.md M1 [`SpiAgentSessionStore`] for agent turn /
+    /// artifact persistence. Separate from
+    /// [`Self::run_store`] (flow runs) and from the legacy
+    /// `SessionStore` key/value seam; this one backs the
+    /// `ai-agent` loop and surface artifacts (page-builder trees,
+    /// chat summaries, ...). `None` means agent surfaces fall
+    /// back to today's ephemeral / stateless behaviour (M13).
+    agent_session_store: Option<Arc<dyn SpiAgentSessionStore>>,
+    /// MEMORY.md §M9 / Phase M-E retention policies, keyed by
+    /// session `kind` (e.g. `"page-builder"`, `"chat"`). Empty
+    /// (default) means
+    /// [`starter_flow_spi::agent_session::RetentionPolicy::KeepForever`]
+    /// for every kind. Hosts run the sweep via
+    /// [`Self::sweep_agent_session_retention`] from their own
+    /// scheduled task; the engine does not own the clock.
+    agent_session_retention: std::collections::HashMap<
+        String,
+        starter_flow_spi::agent_session::RetentionPolicy,
+    >,
     /// Engine-level health flag (D-F3.11). Backed by an `AtomicU8`
     /// so [`Self::health`] is lock-free. Shared with every
     /// [`crate::run::FlowRunner`] launched off this engine via
@@ -251,6 +271,8 @@ impl Engine {
             propagator: Mutex::new(None),
             writables: RwLock::new(Vec::new()),
             run_store: None,
+            agent_session_store: None,
+            agent_session_retention: std::collections::HashMap::new(),
             health: HealthHandle::new(),
             ai_runners: None,
             skill_selector: Arc::new(starter_flow_spi::skill::NullSkillSelector),
@@ -326,6 +348,92 @@ impl Engine {
     /// this `Arc` into the run.
     pub fn run_store(&self) -> Option<&Arc<dyn SpiRunStore>> {
         self.run_store.as_ref()
+    }
+
+    /// Attach an [`SpiAgentSessionStore`] (DOCS/agent/MEMORY.md
+    /// M1) for agent conversation + artifact persistence. The
+    /// engine itself does not call this; surfaces (the page
+    /// builder, chat routes, etc.) pull it via
+    /// [`Self::agent_session_store`] to persist turns and fetch
+    /// the latest artifact on page reload. `None` (default)
+    /// preserves today's stateless `/api/builder/stream`
+    /// behaviour per MEMORY.md M13.
+    pub fn with_agent_session_store(
+        mut self,
+        store: Arc<dyn SpiAgentSessionStore>,
+    ) -> Self {
+        self.agent_session_store = Some(store);
+        self
+    }
+
+    /// Borrow the attached [`SpiAgentSessionStore`] if any.
+    pub fn agent_session_store(&self) -> Option<&Arc<dyn SpiAgentSessionStore>> {
+        self.agent_session_store.as_ref()
+    }
+
+    /// Register a [`RetentionPolicy`] for one session `kind`
+    /// (DOCS/agent/MEMORY.md §M9 / Phase M-E). Re-attaching the
+    /// same `kind` replaces the prior policy. Self-by-value
+    /// mirrors the other `with_*` hooks.
+    ///
+    /// The engine does **not** spawn a sweep task on its own —
+    /// hosts call [`Self::sweep_agent_session_retention`] from
+    /// whichever scheduler they already run (a `tokio::interval`
+    /// in `main.rs`, a cron, a maintenance command). This keeps
+    /// the engine free of an opinionated runtime dependency and
+    /// makes the sweep trivial to drive in tests.
+    ///
+    /// [`RetentionPolicy`]: starter_flow_spi::agent_session::RetentionPolicy
+    pub fn with_agent_session_retention(
+        mut self,
+        kind: impl Into<String>,
+        policy: starter_flow_spi::agent_session::RetentionPolicy,
+    ) -> Self {
+        self.agent_session_retention.insert(kind.into(), policy);
+        self
+    }
+
+    /// Borrow the configured retention policies, keyed by
+    /// session `kind`.
+    pub fn agent_session_retention(
+        &self,
+    ) -> &std::collections::HashMap<
+        String,
+        starter_flow_spi::agent_session::RetentionPolicy,
+    > {
+        &self.agent_session_retention
+    }
+
+    /// Run one retention sweep across every configured `(kind,
+    /// policy)` pair against the attached agent-session store.
+    /// Returns the merged [`RetentionSweepReport`].
+    ///
+    /// `now` is supplied so deterministic tests pin a cutoff;
+    /// production callers pass [`chrono::Utc::now`]. Returns
+    /// [`Ok(None)`] when no agent-session store is attached or
+    /// no policies are registered (callers can no-op without
+    /// branching on configuration).
+    ///
+    /// [`RetentionSweepReport`]: starter_flow_spi::agent_session::RetentionSweepReport
+    pub async fn sweep_agent_session_retention(
+        &self,
+        now: chrono::DateTime<chrono::Utc>,
+    ) -> Result<
+        Option<starter_flow_spi::agent_session::RetentionSweepReport>,
+        starter_flow_spi::agent_session::AgentSessionError,
+    > {
+        let Some(store) = self.agent_session_store.as_ref() else {
+            return Ok(None);
+        };
+        if self.agent_session_retention.is_empty() {
+            return Ok(None);
+        }
+        let mut total = starter_flow_spi::agent_session::RetentionSweepReport::default();
+        for (kind, policy) in &self.agent_session_retention {
+            let report = store.sweep_retention(kind, policy, now).await?;
+            total = total.merge(report);
+        }
+        Ok(Some(total))
     }
 
     /// Attach the hot-reload [`crate::definition::DefinitionManager`]
@@ -849,5 +957,158 @@ mod tests {
         engine.stop().await.unwrap();
 
         assert_eq!(*rx.borrow(), EngineState::Stopped);
+    }
+
+    // ---------------------------------------------------------
+    // MEMORY.md §M9 / Phase M-E retention wiring
+    // ---------------------------------------------------------
+
+    /// `sweep_agent_session_retention` is a no-op when nothing is
+    /// configured — both the store-missing and the policies-empty
+    /// branches return `Ok(None)` without errors. This keeps host
+    /// schedulers branch-free.
+    #[tokio::test]
+    async fn sweep_retention_returns_none_without_store_or_policy() {
+        let store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
+        let engine = Engine::new(store);
+        let report = engine
+            .sweep_agent_session_retention(chrono::Utc::now())
+            .await
+            .unwrap();
+        assert!(report.is_none(), "no store + no policy ⇒ no sweep");
+    }
+
+    /// Calling the sweeper through the engine dispatches to the
+    /// store once per configured `(kind, policy)` pair and merges
+    /// the per-kind reports. A tiny in-test fake counts invocations
+    /// — exhaustive store-level behaviour is tested in
+    /// `crates/starter-store-sqlite/tests/agent_sessions.rs`.
+    #[tokio::test]
+    async fn sweep_retention_dispatches_per_kind() {
+        use starter_flow_spi::agent_session::{
+            AgentSession, AgentSessionId, AgentSessionResult, AgentSessionStore, Artifact,
+            ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy,
+            RetentionSweepReport, Turn, TurnInput, TurnReceipt,
+        };
+
+        struct FakeStore {
+            calls: std::sync::Mutex<Vec<String>>,
+        }
+        #[async_trait::async_trait]
+        impl AgentSessionStore for FakeStore {
+            async fn create(
+                &self,
+                _id: AgentSessionId,
+                _kind: &str,
+                _owner: &str,
+                _metadata: serde_json::Value,
+            ) -> AgentSessionResult<()> {
+                Ok(())
+            }
+            async fn get(
+                &self,
+                _id: AgentSessionId,
+            ) -> AgentSessionResult<Option<AgentSession>> {
+                Ok(None)
+            }
+            async fn delete(&self, _id: AgentSessionId) -> AgentSessionResult<()> {
+                Ok(())
+            }
+            async fn append_turn_with_artifacts(
+                &self,
+                _id: AgentSessionId,
+                _turn: TurnInput,
+                _artifacts: &[ArtifactWrite],
+            ) -> AgentSessionResult<TurnReceipt> {
+                Ok(TurnReceipt::new(1, vec![]))
+            }
+            async fn put_artifact_direct(
+                &self,
+                _id: AgentSessionId,
+                _key: &str,
+                _value: serde_json::Value,
+                _expected_prev_version: Option<u32>,
+            ) -> Result<u32, PutArtifactError> {
+                Ok(1)
+            }
+            async fn list_turns(
+                &self,
+                _id: AgentSessionId,
+                _since_seq: Option<u32>,
+                _limit: Option<u32>,
+            ) -> AgentSessionResult<Vec<Turn>> {
+                Ok(vec![])
+            }
+            async fn latest_artifact(
+                &self,
+                _id: AgentSessionId,
+                _key: &str,
+            ) -> AgentSessionResult<Option<Artifact>> {
+                Ok(None)
+            }
+            async fn artifact_at(
+                &self,
+                _id: AgentSessionId,
+                _key: &str,
+                _version: u32,
+            ) -> AgentSessionResult<Option<Artifact>> {
+                Ok(None)
+            }
+            async fn list_artifact_versions(
+                &self,
+                _id: AgentSessionId,
+                _key: &str,
+            ) -> AgentSessionResult<Vec<ArtifactMeta>> {
+                Ok(vec![])
+            }
+            async fn sweep_retention(
+                &self,
+                kind: &str,
+                _policy: &RetentionPolicy,
+                _now: chrono::DateTime<chrono::Utc>,
+            ) -> AgentSessionResult<RetentionSweepReport> {
+                self.calls.lock().unwrap().push(kind.to_owned());
+                Ok(RetentionSweepReport {
+                    sessions_deleted: 1,
+                    turns_deleted: 2,
+                    artifacts_deleted: 3,
+                })
+            }
+        }
+
+        let fake = Arc::new(FakeStore {
+            calls: std::sync::Mutex::new(Vec::new()),
+        });
+        let store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
+        let engine = Engine::new(store)
+            .with_agent_session_store(
+                fake.clone() as Arc<dyn starter_flow_spi::agent_session::AgentSessionStore>,
+            )
+            .with_agent_session_retention(
+                "page-builder",
+                RetentionPolicy::DeleteAfter {
+                    ttl: chrono::Duration::hours(1),
+                },
+            )
+            .with_agent_session_retention(
+                "chat",
+                RetentionPolicy::DeleteTurnsAfter {
+                    ttl: chrono::Duration::days(7),
+                    keep_latest_artifact: false,
+                },
+            );
+
+        let report = engine
+            .sweep_agent_session_retention(chrono::Utc::now())
+            .await
+            .unwrap()
+            .expect("two policies configured");
+        assert_eq!(report.sessions_deleted, 2);
+        assert_eq!(report.turns_deleted, 4);
+        assert_eq!(report.artifacts_deleted, 6);
+
+        let mut calls = fake.calls.lock().unwrap().clone();
+        calls.sort();
+        assert_eq!(calls, vec!["chat".to_owned(), "page-builder".to_owned()]);
     }
 }

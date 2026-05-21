@@ -7,19 +7,36 @@ export interface SkillListProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, "onSelect"> {
   skills: SkillSummary[];
   selectedId?: string | null;
+  busyId?: string | null;
   onSelect?: (skill: SkillSummary) => void;
+  onApprove?: (skill: SkillSummary) => void;
+  onRevoke?: (skill: SkillSummary) => void;
+  onInspect?: (skill: SkillSummary) => void;
   emptyMessage?: React.ReactNode;
 }
 
 export const SkillList = React.forwardRef<HTMLDivElement, SkillListProps>(
-  ({ skills, selectedId, onSelect, emptyMessage, className, ...props }, ref) => {
+  function SkillList(
+    {
+      skills,
+      selectedId,
+      busyId,
+      onSelect,
+      onApprove,
+      onRevoke,
+      onInspect,
+      emptyMessage,
+      className,
+      ...props
+    },
+    ref,
+  ) {
     if (!skills.length) {
       return (
         <div
           ref={ref}
-          data-slot="skill-list-empty"
           className={cn(
-            "flex h-full min-h-[8rem] items-center justify-center rounded-lg border border-dashed border-border/60 p-4 text-sm text-muted-foreground",
+            "rounded-lg border border-dashed border-border/60 bg-card/30 px-4 py-6 text-center text-[11px] text-muted-foreground",
             className,
           )}
           {...props}
@@ -32,8 +49,10 @@ export const SkillList = React.forwardRef<HTMLDivElement, SkillListProps>(
       <div
         ref={ref}
         data-slot="skill-list"
-        className={cn("flex flex-col gap-2", className)}
-        role="listbox"
+        className={cn(
+          "grid grid-cols-1 gap-2 sm:grid-cols-2",
+          className,
+        )}
         {...props}
       >
         {skills.map((s) => (
@@ -41,7 +60,11 @@ export const SkillList = React.forwardRef<HTMLDivElement, SkillListProps>(
             key={s.id}
             skill={s}
             selected={s.id === selectedId}
+            busy={busyId === s.id}
             onSelect={onSelect}
+            onApprove={onApprove}
+            onRevoke={onRevoke}
+            onInspect={onInspect}
           />
         ))}
       </div>

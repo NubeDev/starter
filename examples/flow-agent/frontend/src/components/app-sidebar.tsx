@@ -63,7 +63,7 @@ export function AppSidebar({
         <NavMain items={navMain} activeUrl={activeUrl} onNavigate={onNavigate} />
         {extraContent}
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="pb-10">
         <NavUser user={user} onLogout={onLogout} />
       </SidebarFooter>
     </Sidebar>

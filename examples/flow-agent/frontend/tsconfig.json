@@ -11,7 +11,7 @@
     "lib": ["ES2022", "DOM"],
     "types": ["vite/client", "node"],
     "paths": {
-      "@/*": ["./src/*"],
+      "@/*": ["./src/*", "../../../packages/starter-ui-kit/src/*"],
       "@kit/*": ["../../../packages/starter-ui-kit/src/*"],
       "react": ["./node_modules/@types/react"],
       "react/*": ["./node_modules/@types/react/*"],

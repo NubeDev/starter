@@ -8,6 +8,7 @@ use axum::Router;
 use prometheus::Registry;
 use starter_observability::metrics::StandardMetrics;
 use starter_server::ServerBuilder;
+use starter_store_sqlite::flow::SqliteAgentSessionStore;
 use starter_store_sqlite::Pool;
 use utoipa::OpenApi;
 
@@ -36,6 +37,12 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let hub = Arc::new(EventHub::new());
     let engine = FlowEngine::new();
     let ai = AiRuntime::new(flows.clone(), engine.clone(), runs.clone(), hub.clone());
+    // MEMORY.md Phase M-D — page-builder persistence. SQLite-backed
+    // `AgentSessionStore` shares the connection pool with the rest
+    // of the example; the schema ships with starter-flow's
+    // `FLOW_MIGRATION_SOURCE` (wired in `migrations::sources`).
+    let agent_sessions: Arc<dyn starter_flow_spi::agent_session::AgentSessionStore> =
+        Arc::new(SqliteAgentSessionStore::new(pool.clone()));
 
     let rest_state = RestState {
         flows: flows.clone(),
@@ -44,6 +51,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         hub: hub.clone(),
         engine,
         ai,
+        agent_sessions,
     };
 
     let router = ServerBuilder::<AppState>::new(AppState)

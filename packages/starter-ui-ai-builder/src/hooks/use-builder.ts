@@ -32,6 +32,18 @@ export interface UseBuilderOptions {
    *  ignores these by default. */
   onTokenPatch?: (patch: TokenPatch) => void;
   onShellPatch?: (patch: ShellPatch) => void;
+  /** MEMORY.md Phase M-D — invoked when the server confirms the
+   *  assistant turn was persisted as a versioned artifact. Surfaces
+   *  use this to refresh a version picker / undo state. */
+  onSessionArtifact?: (info: {
+    sessionId: string;
+    key: string;
+    version?: number;
+  }) => void;
+  /** MEMORY.md Phase M-D — invoked when the server completed the
+   *  turn but the session-store write failed. The response is still
+   *  valid; surfaces should degrade gracefully (stay stateless). */
+  onSessionError?: (error: string) => void;
   onError?: (err: unknown) => void;
 }
 
@@ -46,6 +58,12 @@ export interface UseBuilderReturn {
    *  status frames). No-op if there's no prior prompt. */
   retry: () => Promise<void>;
   reset: () => void;
+  /** MEMORY.md Phase M-D — imperatively replace the canvas tree
+   *  outside a streaming turn. Surfaces use this to hydrate from a
+   *  persisted artifact on mount, or to jump to a historical
+   *  version via the artifact-versions endpoint. Does not record
+   *  anything — the store sees only what the model writes. */
+  setTree: (tree: UiComponentTree | null) => void;
   /** Count of `patch` events currently held in the R1 buffer. */
   bufferedPatches: number;
 }
@@ -72,6 +90,8 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
     patchBufferMs = 2000,
     onTokenPatch,
     onShellPatch,
+    onSessionArtifact,
+    onSessionError,
     onError,
   } = opts;
 
@@ -224,6 +244,18 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
               setPhase((p) => (p === "thinking" ? "writing" : p));
               break;
             }
+            case "session_artifact": {
+              onSessionArtifact?.({
+                sessionId: ev.session_id,
+                key: ev.key,
+                version: ev.version,
+              });
+              break;
+            }
+            case "session_error": {
+              onSessionError?.(ev.error);
+              break;
+            }
             case "status": {
               setPhase(ev.phase);
               if (ev.message) {
@@ -279,6 +311,8 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
       applyPatchIfPossible,
       flushBuffer,
       onError,
+      onSessionArtifact,
+      onSessionError,
       onShellPatch,
       onTokenPatch,
       patchBufferMs,
@@ -320,6 +354,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
       cancel,
       retry,
       reset,
+      setTree,
       bufferedPatches,
     }),
     [

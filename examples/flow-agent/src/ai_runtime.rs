@@ -133,6 +133,14 @@ impl AiRuntime {
     // constructor surface).
     // -----------------------------------------------------------------
 
+    /// Read-only access to the underlying runner registry. Used by
+    /// the page-builder route to pick a ready provider directly
+    /// (CLI vs REST) without going through `resolve`'s string-id
+    /// lookup.
+    pub fn registry(&self) -> &Registry {
+        &self.registry
+    }
+
     pub(crate) fn flows(&self) -> &FlowStore {
         &self.flows
     }

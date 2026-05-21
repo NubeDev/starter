@@ -11,6 +11,7 @@ import {
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { SiteHeader } from "@/components/site-header"
+import { Footer } from "./Footer"
 import {
   SidebarInset,
   SidebarProvider,
@@ -159,7 +160,7 @@ export function Shell() {
   const activeUrl = activeUrlFor(location.pathname)
 
   return (
-    <div className="min-h-dvh bg-background text-foreground">
+    <div className="min-h-dvh bg-background text-foreground pb-8">
       <SidebarProvider>
         <AppSidebar
           navMain={navMain}
@@ -177,6 +178,9 @@ export function Shell() {
           </div>
         </SidebarInset>
       </SidebarProvider>
+      <div className="fixed inset-x-0 bottom-0 z-30">
+        <Footer flows={flows} agents={agents} pages={pages} />
+      </div>
     </div>
   )
 }

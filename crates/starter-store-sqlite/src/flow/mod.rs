@@ -21,10 +21,12 @@ pub mod flow_store;
 pub mod run_store;
 mod schema;
 pub mod session_store;
+pub mod agent_session_store;
 
 pub use flow_store::SqliteFlowStore;
 pub use run_store::SqliteRunStore;
 pub use session_store::SqliteSessionStore;
+pub use agent_session_store::SqliteAgentSessionStore;
 
 /// `sqlx` migrator for the flow persistence schema. Pair with the
 /// crate's `migrate(pool).with_source(MigrationSource { name:
@@ -37,4 +39,21 @@ pub const FLOW_MIGRATION_SOURCE: crate::migrate::MigrationSource =
     crate::migrate::MigrationSource {
         name: "flow",
         migrator: &FLOW_MIGRATOR,
+    };
+
+/// Migrator for the agent-session persistence schema
+/// (DOCS/agent/MEMORY.md Phase M-A). Ships its own three-table
+/// schema (`agent_sessions`, `agent_session_turns`,
+/// `agent_session_artifacts`) on a dedicated migration table so
+/// consumers can adopt it without pulling the full flow schema
+/// (which owns a `runs` table that conflicts with bespoke
+/// per-app schemas — flow-agent ships its own).
+pub static AGENT_SESSION_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/agent_sessions");
+
+/// Convenience `MigrationSource` for the agent-session schema only.
+pub const AGENT_SESSION_MIGRATION_SOURCE: crate::migrate::MigrationSource =
+    crate::migrate::MigrationSource {
+        name: "agent_sessions",
+        migrator: &AGENT_SESSION_MIGRATOR,
     };
