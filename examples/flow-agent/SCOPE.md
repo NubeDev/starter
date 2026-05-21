@@ -415,3 +415,179 @@ Per workspace rule R1 (≤ 400 lines per file). Expected counts:
 | Any TSX page      | < 300  |
 
 If any file approaches the limit, split by concept (not by `utils`).
+
+---
+
+## Decisions
+
+Resolutions of the four open design points for the
+[Page Builder slice](./PAGE-BUILDER.md). Pinned before any code lands
+so all four files (`pages-store.ts`, `builder-fixture.ts`,
+`sdui-shim.tsx`, `Shell.tsx`) can be built against a fixed contract.
+
+### D1 — Sidebar live-update mechanism: `useSyncExternalStore` + `storage` event
+
+The "Pages" sidebar section must refresh the moment a new page is
+saved (`acceptance #4`) without the consumer remembering to re-fetch,
+and it should also pick up writes from other tabs.
+
+**Pinned:** `pages-store.ts` exposes a tiny pub/sub:
+
+```ts
+// lib/pages-store.ts
+type Listener = () => void;
+const listeners = new Set<Listener>();
+
+function emit() { for (const l of listeners) l(); }
+
+function subscribe(l: Listener) {
+  listeners.add(l);
+  return () => { listeners.delete(l); };
+}
+
+function getSnapshot(): PageRecord[] { /* read localStorage */ }
+
+export function usePages(): PageRecord[] {
+  return React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+}
+
+// On module load:
+if (typeof window !== "undefined") {
+  window.addEventListener("storage", (e) => {
+    if (e.key === "flow-agent:pages") emit();
+  });
+}
+
+// Inside savePage()/deletePage(): write localStorage, then emit().
+```
+
+Why this over alternatives:
+
+- **`useSyncExternalStore`** is the React-blessed primitive for
+  external mutable sources; no tearing under concurrent rendering,
+  no extra dependency (already on React 19).
+- **`window.storage` event** covers cross-tab sync for free — same
+  origin, no broadcast channel required.
+- **Same-tab updates** flow through the in-process `Set<Listener>`
+  because the browser does not fire `storage` for the tab that wrote
+  the value.
+- Rejected: a zustand store (`flow-agent:fa-ui` already exists for UI
+  state — adding pages there couples persistence to that store and
+  forces a JSON round-trip on every render). Rejected: react-query
+  with a polling key (wastes a timer for a localStorage source).
+
+### D2 — Buffered-patch fixture timings
+
+Acceptance #2 requires the `"2 buffered"` badge to flash and the
+phase to reach `done` in **< 2 s**. `useBuilder`'s default buffer
+window is generous (1 s), so the fixture only needs to deliberately
+land **one** patch before its `full_render` parent and let the
+buffer drain when the parent arrives.
+
+**Pinned timeline (sales/dashboard fixture):**
+
+| t (ms) | Event                                                          | Why                                          |
+| -----: | -------------------------------------------------------------- | -------------------------------------------- |
+|      0 | `status: { phase: "thinking" }`                                | initial badge                                |
+|     50 | `patch` targeting `root.children.0` (KPI grid cell)            | arrives **before** parent → buffered         |
+|     60 | `patch` targeting `root.children.1` (pipeline table row)       | also buffered → "2 buffered" badge visible   |
+|     80 | `full_render` for `root` (skeleton with empty `children`)      | drains both buffered patches in one tick     |
+|    140 | `status: { phase: "writing" }`                                 | transcript ticks "Writing layout…"           |
+|    200 | `patch` filling KPI #1                                         | streamed-in normally                         |
+|    320 | `patch` filling KPI #2                                         |                                              |
+|    440 | `patch` filling KPI #3 + #4                                    |                                              |
+|    600 | `patch` filling pipeline rows                                  |                                              |
+|    780 | `status: { phase: "done" }`                                    | phase reaches `done` at ~0.8 s (< 2 s)       |
+
+Total wall-clock is comfortably inside the 2 s budget and well
+inside the 1 s default `bufferMs`, so the patches at t=50/60 are
+guaranteed to still be buffered when the parent lands at t=80. Other
+fixtures (`onboard`, `report`, fallback) follow the same shape with
+section-appropriate payloads but the same `t=0/50/60/80` opening
+beat so the badge demo is reproducible regardless of prompt.
+
+### D3 — `<SduiHost>` shape: thin no-op wrapper around `SduiProvider`
+
+Both the builder canvas and `/pages/:id` need to render an SDUI tree
+in **view-only** mode (no real backend to dispatch actions to). The
+spec calls for one shim used by both, and that shim should not
+hand-roll context.
+
+**Pinned:** `lib/sdui-shim.tsx`:
+
+```tsx
+import { SduiProvider, type SduiAction } from "@nube/starter-sdui-react";
+import type { ReactNode } from "react";
+
+const noopDispatcher = {
+  async dispatch(_action: SduiAction): Promise<void> {
+    // Page Builder slice is read-only / fixture-driven; no real
+    // backend exists yet. Log so developers notice if a saved tree
+    // wires an action they expect to fire.
+    if (import.meta.env.DEV) {
+      console.debug("[SduiHost] dispatch ignored", _action);
+    }
+  },
+};
+
+export function SduiHost({ children }: { children: ReactNode }) {
+  return (
+    <SduiProvider dispatcher={noopDispatcher}>
+      {children}
+    </SduiProvider>
+  );
+}
+```
+
+Why:
+
+- Re-uses `SduiProvider` verbatim (workspace rule F2 — no copies of
+  starter source).
+- One component, one import, used by both `PageBuilder.tsx` (wraps
+  the live `<Renderer>` next to the chat) and `PageView.tsx` (wraps
+  the saved tree). Guarantees the saved tree round-trips through the
+  exact same provider it was built under.
+- `noopDispatcher` is a module-level constant — referentially stable
+  so `SduiProvider` does not invalidate its consumers on re-render.
+- DEV-only `console.debug` keeps the seam discoverable without
+  spamming production builds.
+
+(`SduiAction` is imported as the action shape; the precise field
+names are deferred to the implementation stage, which will read the
+exact `SduiProvider` props from `@nube/starter-sdui-react`.)
+
+### D4 — `frontend/package.json` requires no edits
+
+PAGE-BUILDER.md lists `✎ +3 workspace deps` next to `package.json`,
+but `examples/flow-agent/frontend/package.json` was upgraded earlier
+and **already lists every `@nube/*` package the slice touches**:
+
+| Lib needed by slice            | In `dependencies`? |
+| ------------------------------ | ------------------ |
+| `@nube/starter-ui-ai-builder`  | ✅ `workspace:*`    |
+| `@nube/starter-sdui-react`     | ✅ `workspace:*`    |
+| `@nube/starter-ui-skills`      | ✅ `workspace:*`    |
+| `@nube/starter-ui-chat`        | ✅ `workspace:*` (transitive composer use) |
+| `@nube/starter-ui-kit`         | ✅ `workspace:*`    |
+
+No new third-party deps either: `react-router-dom`, `zustand`, and
+`@tanstack/react-query` are already present. **`package.json` is
+not modified by this slice** — the PAGE-BUILDER.md file tree's
+`✎ +3 workspace deps` annotation is now stale and is superseded by
+this decision.
+
+---
+
+## Decisions log
+
+- **D1** — Sidebar live-update: `useSyncExternalStore` over the
+  pages-store with a `window.storage` listener for cross-tab sync.
+- **D2** — Buffered-patch fixture timings: patches at `t=50/60 ms`,
+  parent `full_render` at `t=80 ms`, phase `done` ≈ `t=780 ms`
+  (well inside `useBuilder`'s default 1 s buffer window and the
+  2 s acceptance budget).
+- **D3** — `<SduiHost>`: thin wrapper around `SduiProvider` from
+  `@nube/starter-sdui-react` with a module-level no-op dispatcher,
+  re-used by both the builder canvas and `/pages/:id`.
+- **D4** — `frontend/package.json` is untouched; every `@nube/*`
+  library the slice needs is already a `workspace:*` dependency.
