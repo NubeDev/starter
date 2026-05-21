@@ -240,11 +240,21 @@ pub(crate) fn is_text_path(rel: &str) -> bool {
     is_text(rel)
 }
 
+/// Public accessor for the same text/binary classifier the registry
+/// and the Phase 4b on-mount check use. Exposed so external callers
+/// (the `ai-agent` body via [`crate::mount`]) classify a URI exactly
+/// the way the registry classified it at selection time — drift here
+/// would let a text resource hash one way at selection and another at
+/// mount.
+pub fn is_text_path_pub(rel: &str) -> bool {
+    is_text(rel)
+}
+
 /// Public-in-crate accessor for [`normalise_line_endings`] — kept
 /// separate from the private function so the algorithmic core stays
 /// `fn` (no trait, no allocator churn) while consumers go through
 /// this stable name.
-pub(crate) fn normalise_line_endings_pub(input: &[u8]) -> Vec<u8> {
+pub fn normalise_line_endings_pub(input: &[u8]) -> Vec<u8> {
     normalise_line_endings(input)
 }
 

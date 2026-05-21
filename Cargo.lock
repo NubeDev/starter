@@ -6432,6 +6432,7 @@ dependencies = [
  "serde_json",
  "starter-flow",
  "starter-flow-spi",
+ "starter-skills",
  "starter-spi",
  "thiserror 1.0.69",
  "tokio",

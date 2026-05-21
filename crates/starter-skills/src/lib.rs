@@ -27,6 +27,7 @@
 pub mod approval;
 pub mod bundle;
 pub mod error;
+pub mod mount;
 pub mod parser;
 pub mod registry;
 pub mod selector;
@@ -42,4 +43,5 @@ pub use selector::{
     FirstSkillSelector, KeywordSkillSelector, LlmSkillSelector, LlmSkillSelectorBuilder,
     SelectorStrategy, DEFAULT_LLM_SELECTOR_MODEL, DEFAULT_LLM_SELECTOR_TIMEOUT,
 };
+pub use mount::{read_and_verify, ResourceMountError};
 pub use store::{ApprovalRow, ApprovalStore, ApprovalStoreError, InMemoryApprovalStore};

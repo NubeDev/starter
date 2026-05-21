@@ -45,6 +45,12 @@ tokio = { workspace = true, optional = true, features = ["macros", "sync", "rt",
 # `http-out` builds outbound HTTP requests via reqwest. Optional so
 # consumers that don't enable the feature pay no reqwest / TLS cost.
 reqwest = { workspace = true, optional = true }
+# Phase 4b: the `ai-agent` body calls `starter_skills::mount::read_and_verify`
+# to verify each `ResourceRef.content_hash` against the bytes on disk
+# at mount time (R-skills-7). Optional + gated behind the `ai-agent`
+# feature so consumers that do not pull in the kind do not also pull
+# in the skill loader's dep tree.
+starter-skills = { workspace = true, optional = true }
 
 [dev-dependencies]
 # `#[tokio::test]` for the async unit tests + the engine crate for the
@@ -57,6 +63,12 @@ starter-flow = { workspace = true }
 # captures emitted events under the `starter.flow.log` target and
 # asserts the (level, value-debug) shape.
 tracing-subscriber = { workspace = true }
+# Stage 7 (Phase 4b): the `resource_hash_mismatch_aborts_the_run_then_reload_proceeds`
+# integration test drives the `ai-agent` body against a real
+# `SkillRegistry` so the assertion is on the typed
+# `NodeError::Domain` the on-mount check surfaces, not on the
+# `read_and_verify` seam in isolation.
+starter-skills = { workspace = true }
 
 [features]
 # Default-off per the workspace policy: a consumer enables only the
@@ -68,7 +80,7 @@ default = []
 
 transform         = []
 tool-call         = ["dep:tokio"]
-ai-agent          = ["dep:tokio"]
+ai-agent          = ["dep:tokio", "dep:starter-skills"]
 branch            = []
 merge             = []
 gate              = []

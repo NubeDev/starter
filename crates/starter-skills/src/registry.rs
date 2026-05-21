@@ -635,7 +635,24 @@ impl SkillRegistry {
 /// [`hash_bundle`][crate::approval::hash_bundle] so the Phase 4b
 /// on-mount check (which reads the bytes off disk and rehashes) can
 /// compare against this frozen value byte-for-byte.
+///
+/// The [`ResourceRef::uri`] is rewritten from the frontmatter's
+/// bundle-relative form (e.g. `file://greeting.txt`) into a
+/// fully-qualified `file:///abs/.../bundle/greeting.txt` URI so the
+/// `ai-agent` body — which only sees the
+/// [`starter_flow_spi::skill::SkillSelection`], never the registry —
+/// can resolve the URI to disk bytes at mount time without
+/// re-consulting the registry for the bundle root.
 fn resource_refs(bundle: &Bundle) -> Vec<ResourceRef> {
+    // Canonicalise once per bundle so the URI is a stable absolute
+    // path on whichever filesystem ai-agent eventually mounts from.
+    // `canonicalize` requires the path to exist; we just hashed the
+    // bundle, so it does. Fall back to the original `bundle.root`
+    // (which may already be absolute) if canonicalisation fails for
+    // a reason we cannot recover from — the on-mount hash check will
+    // surface the drift either way.
+    let bundle_root_abs =
+        fs::canonicalize(&bundle.root).unwrap_or_else(|_| bundle.root.clone());
     let mut out = Vec::with_capacity(bundle.resources.len());
     for r in &bundle.resources {
         let bytes = if crate::approval::is_text_path(&r.relative_path) {
@@ -644,7 +661,12 @@ fn resource_refs(bundle: &Bundle) -> Vec<ResourceRef> {
             r.bytes.to_vec()
         };
         let content_hash = blake3::hash(&bytes).to_hex().to_string();
-        out.push(ResourceRef::new(r.uri.clone(), content_hash));
+        let abs = bundle_root_abs.join(&r.relative_path);
+        // `display()` is sufficient here because the load-time walker
+        // already rejected non-UTF-8 path components (see
+        // `relative_forward_slash` in approval.rs).
+        let uri = format!("file://{}", abs.display());
+        out.push(ResourceRef::new(uri, content_hash));
     }
     out
 }

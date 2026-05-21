@@ -351,6 +351,24 @@ impl NodeBehavior for AiAgent {
             );
         }
 
+        // Phase 4b on-mount verification (R-skills-7). Before the body
+        // does anything else with the frozen `SkillSelection`, read
+        // every mounted resource off disk and rehash it against the
+        // `ResourceRef.content_hash` captured at selection time. A
+        // racing `SkillRegistry::reload()` can swap the on-disk bytes
+        // underneath an in-flight run; without this check the model
+        // would silently see the drifted bytes. The mismatch arm
+        // surfaces a typed `Domain { code: "skill_resource_hash_mismatch" }`
+        // so run telemetry shows a structured node failure rather than
+        // an opaque backend error.
+        if let SkillSelection::Selected { resources, skill_id, .. } = ctx.skill {
+            for resource in resources {
+                if let Err(err) = starter_skills::read_and_verify(resource) {
+                    return Err(map_resource_mount_error(skill_id.as_str(), err));
+                }
+            }
+        }
+
         let effective_tools = compute_visible_tools(&*self.tools, ctx.skill, &cfg.allowed_tools)?;
         let session_id = SessionId::for_ai_agent_node(
             cfg.session_mode,
@@ -440,6 +458,51 @@ impl NodeBehavior for AiAgent {
 // ---------------------------------------------------------------------
 // Internals
 // ---------------------------------------------------------------------
+
+/// Translate a [`starter_skills::ResourceMountError`] surfaced by the
+/// Phase 4b on-mount check into a typed [`NodeError`] the run telemetry
+/// surface can render.
+///
+/// Hash-mismatch is the load-bearing case: it surfaces under the
+/// reverse-DNS code `skill_resource_hash_mismatch` so operators can
+/// alert on it specifically. The other two variants
+/// (`UnsupportedScheme`, `Io`) bucket into distinct codes so the
+/// failure mode is still legible at the telemetry layer.
+fn map_resource_mount_error(
+    skill_id: &str,
+    err: starter_skills::ResourceMountError,
+) -> NodeError {
+    use starter_skills::ResourceMountError as E;
+    match err {
+        E::HashMismatch { uri, expected, actual } => NodeError::Domain {
+            code: "skill_resource_hash_mismatch",
+            message: format!(
+                "skill `{skill_id}` resource `{uri}` hash drifted between selection and mount: \
+                 expected {expected}, got {actual}"
+            ),
+        },
+        E::UnsupportedScheme { uri } => NodeError::Domain {
+            code: "skill_resource_unsupported_scheme",
+            message: format!(
+                "skill `{skill_id}` resource `{uri}` uses an unsupported URI scheme \
+                 (v1 supports file:// only)"
+            ),
+        },
+        E::Io { path, source } => NodeError::Domain {
+            code: "skill_resource_io",
+            message: format!(
+                "skill `{skill_id}` resource `{}` failed to read at mount: {source}",
+                path.display()
+            ),
+        },
+        // `ResourceMountError` is `#[non_exhaustive]` upstream. Future
+        // variants surface here as a generic backend error until a
+        // typed mapping is added; the run still fails closed.
+        other => NodeError::Backend(format!(
+            "skill `{skill_id}` resource mount: {other}"
+        )),
+    }
+}
 
 struct AgentConfig {
     provider_id: KindId,
