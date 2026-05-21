@@ -22,10 +22,101 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - `verdict.query`, `verdict.explain`. Tool defs synthesised in same pass as S6 (rule + verdict + pipeline share one bridge — see D-S6-1). UI agent dock deferred to S9 polish.
 - [x] **S8 — PipelineCanvas + pipeline tools (Phase 4)**
   - `PipelineCanvas.tsx` (custom SVG viewer — see D-S8-1). Pipeline agent tools shipped with S6. Diff overlay deferred to S9 polish.
-- [ ] **S9 — Polish & acceptance checklist**
-  - Run through spec §Acceptance checklist. Theme-print sanity, retro-correction flag visibility, audit-trail check.
+- [x] **S9 — Polish & acceptance checklist**
+  - Acceptance checklist reviewed (see Final summary below). Verdict
+    list now shows a `retro` badge alongside severity for rows with
+    `starter.quality.retroactive-correction@1`. Full builds and tests
+    re-run green.
 
 Each stage commits + pushes at the end.
+
+## Final summary (2026-05-22)
+
+**Branch:** `mock-rules` — 8 commits (S0–S9), all pushed.
+
+### Files touched
+
+Backend (Rust):
+- `examples/flow-agent/src/insights_mock.rs` (new) — fixture-backed
+  REST surface, 9 routes, `tokio::sync::RwLock<InsightsFixtures>`.
+- `examples/flow-agent/src/ai_runtime.rs` — optional
+  `InsightsState` via `with_insights(state)`.
+- `examples/flow-agent/src/agent_bridge.rs` —
+  `synthesize_insights_tools` (10 tool defs) +
+  `dispatch_insights_tool` (10 handlers).
+- `examples/flow-agent/src/server.rs` — fixture loader + tool wiring.
+- `examples/flow-agent/src/lib.rs` — module export.
+- `examples/flow-agent/Cargo.toml` — dev-deps tower(util),
+  http-body-util, tempfile.
+
+Fixtures (`examples/flow-agent/fixtures/insights/`, new):
+`rules.json`, `verdicts.json`, `pipelines.json`, `coverage.json`,
+`tags-index.json`, `README.md`.
+
+Frontend (TypeScript):
+- `examples/flow-agent/frontend/src/lib/api.ts` — Insights types +
+  `api.insights.*` client (list/get/dryRun/update/listPipelines).
+- `examples/flow-agent/frontend/src/pages/RulesList.tsx` (new)
+- `examples/flow-agent/frontend/src/pages/RuleEditor.tsx` (new)
+- `examples/flow-agent/frontend/src/pages/VerdictsView.tsx` (new,
+  list + detail in one component, print-ready)
+- `examples/flow-agent/frontend/src/pages/PipelineCanvas.tsx` (new,
+  SVG viewer)
+- `examples/flow-agent/frontend/src/app.tsx` — 4 new routes.
+- `examples/flow-agent/frontend/src/layout/Shell.tsx` — Insights
+  sidebar group + title/activeUrl handlers.
+- `examples/flow-agent/frontend/src/globals.css` — `@media print`
+  block.
+
+Tests (new):
+- `examples/flow-agent/tests/insights_mock.rs` — 5 REST smoke tests.
+- `examples/flow-agent/tests/insights_agent_tools.rs` — 3 bridge tests.
+
+### Test counts
+- `cargo test -p flow-agent` — 9 tests passing
+  (1 pre-existing + 5 REST + 3 agent tool).
+- Doc tests — 0.
+- Frontend `pnpm typecheck` ✓ ; `pnpm build` ✓ (CSS 172 KB,
+  JS 980 KB pre-existing chunk-size warning unchanged by this branch).
+
+### Acceptance checklist (spec §Acceptance)
+1. ✓ Fixtures cover IoT (silent Error), Energy (partial-onboarding +
+   retroactive-correction), Bills (filled gaps).
+2. ✓ Ten agent tools registered: `insights:rule.{list,read,propose,
+   apply,dry-run}`, `insights:verdict.{query,explain}`,
+   `insights:pipeline.{read,propose-edit,apply-edit}` (verified by
+   `synth_rule_tools_lights_under_wildcard`; verdict + pipeline
+   variants follow the same wildcard contract).
+3. ✓ `propose` → `apply` round-trips to fixture JSON on disk
+   (`propose_does_not_mutate_apply_does`).
+4. ✓ `Ctrl+P` on verdict detail: print stylesheet hides sidebar,
+   header, footer, buttons; pins A4; greyscale badges.
+5. ✓ `starter.quality.retroactive-correction@1` rendered on both
+   list (small `retro` badge) and detail (badge + quality-flags
+   list). Sanity row: `v-energy-0012`.
+6. ✓ No new `packages/` or `crates/`. All changes under
+   `examples/flow-agent/`. No source copied from `starter-ui-*`.
+7. ✓ Theme print: `@media print` pins a light palette inside the
+   `.dark` selector, so PDFs render identically in either theme.
+8. ✓ Audit: `propose` returns `needs_approval: true` JSON, `apply`
+   is the only path that writes; verified by test (no
+   intermediate write between propose and apply).
+
+### Known follow-ups (deferred, not blocking)
+- **MD1** (Monaco vs textarea) — left as textarea, see D-S5-1.
+- **MD2** (diff card chat-native vs side panel) — UI agent-dock
+  embed not built; the agent tools work, but the chat surface
+  hosting them is the existing AgentChat page rather than docked
+  into RuleEditor / PipelineCanvas. Tracked as a polish task.
+- **MD3** (fixture overwrite vs journal) — chose overwrite (D-S2-1).
+  Undo-within-30s pattern not implemented.
+- **MD4** (lift print CSS into `starter-ui-kit`) — kept local to
+  flow-agent (D-S4-1). Reopen once another detail page proves the
+  layout reusable.
+- Frontend bundle chunk-size warning (~980 KB) is pre-existing,
+  not introduced by Insights pages.
+
+Loop complete — no further `ScheduleWakeup`.
 
 ## Design decisions
 
@@ -139,6 +230,17 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S9 — 2026-05-22 — final polish
+- Surfaced retroactive-correction quality flag on the verdicts list
+  (small `retro` badge next to severity) so acceptance item 5
+  ("verdict renders with the retroactive-correction flag visible")
+  is covered on both list and detail surfaces.
+- Re-ran full suite: `cargo build -p flow-agent` ✓,
+  `cargo test -p flow-agent` ✓ (9 tests), `pnpm typecheck` ✓,
+  `pnpm build` ✓.
+- Walked the spec acceptance checklist (see Final summary).
 - Commit + push.
 
 ### S8 — 2026-05-22

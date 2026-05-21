@@ -133,9 +133,22 @@ function VerdictsListPanel() {
                     {new Date(v.at).toLocaleString()}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={severityVariant(v.severity)}>
-                      {v.severity}
-                    </Badge>
+                    <div className="flex items-center gap-1">
+                      <Badge variant={severityVariant(v.severity)}>
+                        {v.severity}
+                      </Badge>
+                      {v.coverage.quality_flags.some((f) =>
+                        f.id.includes("retroactive-correction"),
+                      ) && (
+                        <Badge
+                          variant="outline"
+                          className="text-[10px]"
+                          title="starter.quality.retroactive-correction@1"
+                        >
+                          retro
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell className="text-xs">
                     {(v.coverage.effective.confidence * 100).toFixed(0)}%
