@@ -10,7 +10,7 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - Author `fixtures/insights/{rules,verdicts,pipelines,coverage,tags-index}.json` covering IoT, Energy, Bills scenarios per spec §Fixtures. Write `fixtures/insights/README.md`.
 - [x] **S2 — Backend `insights_mock.rs` (Phase 1 backend)**
   - New module wired into `server.rs` exposing the 9 REST routes in spec §Backend. `RwLock<InsightsFixtures>` in app state, fixture loader on startup. Smoke tests via `tests/`.
-- [ ] **S3 — Frontend Phase 1 surfaces**
+- [x] **S3 — Frontend Phase 1 surfaces**
   - Sidebar Insights section. `RulesList.tsx` + `VerdictsView.tsx` (list + detail) reading the REST. React-query hooks. Routes wired in `app.tsx`.
 - [ ] **S4 — Print stylesheet (I4)**
   - `@media print` CSS for verdict detail (and rule editor detail header). Hide chrome, table evidence rows, `@page` numbers, light-only.
@@ -61,6 +61,15 @@ Each stage commits + pushes at the end.
   warn-level log if files are missing. Keeps `cargo run -p flow-agent`
   bootable from any CWD even when the bin is launched outside the
   workspace.
+- **D-S3-1** — `VerdictsView.tsx` handles both list and detail
+  routes via a single component switching on `:id`. Keeps the
+  page count down and matches the spec's "filterable list + detail"
+  framing. Print-only header/footer markup ships now so S4 can
+  layer the `@media print` CSS without re-touching the page.
+- **D-S3-2** — Sidebar "Insights" entry sits *above* Skills/Settings
+  (per spec §Sidebar additions: above Pages — but flow-agent's
+  Pages sits high in the nav, so above Skills is the closest
+  practical match without reordering existing items).
 
 ## Run log
 
@@ -76,6 +85,18 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S3 — 2026-05-22
+- Extended `frontend/src/lib/api.ts` with Insights types
+  (`InsightsRule`, `InsightsVerdict`, `InsightsPipeline`, `InsightsSeverity`,
+  `InsightsCoverage`, `InsightsVerdictFilter`) and `api.insights.*` client.
+- New pages: `RulesList.tsx` (filter + table) and `VerdictsView.tsx`
+  (list + detail with severity badges, coverage %, evidence table,
+  quality flags, AI explanation, print actions/header/footer scaffolding).
+- Sidebar: added Insights group (Rules + Verdicts) in `Shell.tsx`,
+  title/activeUrl handlers updated, routes wired in `app.tsx`.
+- `pnpm typecheck` ✓; `pnpm build` ✓ (frontend bundle clean).
 - Commit + push.
 
 ### S2 — 2026-05-22

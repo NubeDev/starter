@@ -7,6 +7,8 @@ import {
   IconSettings,
   IconLayoutDashboard,
   IconSparkles,
+  IconBulb,
+  IconReportAnalytics,
 } from "@tabler/icons-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -39,6 +41,10 @@ function titleFor(
 ): string {
   if (pathname.startsWith("/settings")) return "Settings"
   if (pathname.startsWith("/skills")) return "Skills"
+  if (pathname.startsWith("/insights/rules")) return "Insights · Rules"
+  if (pathname.startsWith("/insights/verdicts/")) return "Insights · Verdict"
+  if (pathname.startsWith("/insights/verdicts")) return "Insights · Verdicts"
+  if (pathname.startsWith("/insights")) return "Insights"
   if (pathname === "/pages/new") return "Pages · New page"
   if (pathname.startsWith("/pages/")) {
     const rest = pathname.slice("/pages/".length)
@@ -65,6 +71,9 @@ function titleFor(
 function activeUrlFor(pathname: string): string {
   if (pathname.startsWith("/settings")) return "/settings"
   if (pathname.startsWith("/skills")) return "/skills"
+  if (pathname.startsWith("/insights/verdicts")) return "/insights/verdicts"
+  if (pathname.startsWith("/insights/rules")) return "/insights/rules"
+  if (pathname.startsWith("/insights")) return "/insights/rules"
   if (pathname === "/pages/new") return "/pages"
   if (pathname.startsWith("/pages/")) {
     const rest = pathname.slice("/pages/".length).replace(/\/edit$/, "")
@@ -139,6 +148,17 @@ export function Shell() {
           title: p.name,
           url: `/pages/${p.id}`,
         })),
+      },
+      {
+        title: "Insights",
+        url: "/insights/rules",
+        icon: IconBulb,
+        accent: "var(--accent-success)",
+        subTestId: "insights-subnav",
+        items: [
+          { title: "Rules", url: "/insights/rules" },
+          { title: "Verdicts", url: "/insights/verdicts" },
+        ],
       },
       {
         title: "Skills",

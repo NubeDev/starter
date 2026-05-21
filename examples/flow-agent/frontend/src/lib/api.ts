@@ -140,4 +140,113 @@ export const api = {
   providers: {
     list: () => req<ProviderStatus[]>("GET", "/api/providers"),
   },
+  insights: {
+    listRules: () => req<InsightsRule[]>("GET", "/api/insights/rules"),
+    getRule: (id: string) =>
+      req<InsightsRule>("GET", `/api/insights/rules/${encodeURIComponent(id)}`),
+    listVerdicts: (q: InsightsVerdictFilter = {}) => {
+      const params = new URLSearchParams();
+      if (q.rule_id) params.set("rule_id", q.rule_id);
+      if (q.tag) params.set("tag", q.tag);
+      if (q.severity) params.set("severity", q.severity);
+      if (q.since) params.set("since", q.since);
+      if (q.until) params.set("until", q.until);
+      const qs = params.toString();
+      return req<InsightsVerdict[]>(
+        "GET",
+        `/api/insights/verdicts${qs ? `?${qs}` : ""}`,
+      );
+    },
+    getVerdict: (id: string) =>
+      req<InsightsVerdict>(
+        "GET",
+        `/api/insights/verdicts/${encodeURIComponent(id)}`,
+      ),
+    listPipelines: () =>
+      req<InsightsPipeline[]>("GET", "/api/insights/pipelines"),
+  },
+};
+
+// ---------------------------------------------------------------------
+// Insights mock-up types — shapes mirror the eventual `starter-insights`
+// schema (see DOCS/Insights/SCOPE.md). Kept structural here because the
+// backend is still untyped serde_json::Value.
+// ---------------------------------------------------------------------
+
+export type InsightsSeverity =
+  | "Healthy"
+  | "Info"
+  | "Warn"
+  | "Critical"
+  | "Error";
+
+export type InsightsRule = {
+  id: string;
+  kind: string;
+  namespace: string;
+  severity_default: InsightsSeverity;
+  tags: string[];
+  summary: string;
+  body: string;
+  schema: Record<string, unknown>;
+  created_at: string;
+  updated_at: string;
+};
+
+export type InsightsCoverage = {
+  raw: {
+    samples_expected: number;
+    samples_present: number;
+    confidence: number;
+  };
+  effective: {
+    confidence: number;
+    penalty_chain: Array<[string, number]>;
+  };
+  quality_flags: Array<{
+    id: string;
+    severity: "Info" | "Warn" | "Critical";
+    detail?: string;
+  }>;
+};
+
+export type InsightsVerdict = {
+  id: string;
+  rule_id: string;
+  at: string;
+  tz: string;
+  window: { start: string; end: string };
+  severity: InsightsSeverity;
+  coverage: InsightsCoverage;
+  tags: string[];
+  summary: string;
+  evidence: Array<Record<string, unknown>>;
+  ai_explanation?: string;
+  correlation_id?: string;
+};
+
+export type InsightsVerdictFilter = {
+  rule_id?: string;
+  tag?: string;
+  severity?: InsightsSeverity;
+  since?: string;
+  until?: string;
+};
+
+export type InsightsPipeline = {
+  id: string;
+  name: string;
+  description?: string;
+  tags: string[];
+  graph: {
+    nodes: Array<{
+      id: string;
+      kind: string;
+      x: number;
+      y: number;
+      rule_id?: string;
+    }>;
+    edges: Array<{ from: string; to: string; type: string }>;
+  };
+  updated_at: string;
 };

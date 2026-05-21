@@ -8,8 +8,10 @@ import { FlowsList } from "./pages/FlowsList";
 import { PageBuilder } from "./pages/PageBuilder";
 import { PagesList } from "./pages/PagesList";
 import { PageView } from "./pages/PageView";
+import { RulesList } from "./pages/RulesList";
 import { Settings } from "./pages/Settings";
 import { Skills } from "./pages/Skills";
+import { VerdictsView } from "./pages/VerdictsView";
 
 export function App() {
   return (
@@ -24,6 +26,9 @@ export function App() {
         <Route path="/pages/new" element={<PageBuilder />} />
         <Route path="/pages/:id" element={<PageView />} />
         <Route path="/pages/:id/edit" element={<PageBuilder />} />
+        <Route path="/insights/rules" element={<RulesList />} />
+        <Route path="/insights/verdicts" element={<VerdictsView />} />
+        <Route path="/insights/verdicts/:id" element={<VerdictsView />} />
         <Route path="/skills" element={<Skills />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/flows" replace />} />
