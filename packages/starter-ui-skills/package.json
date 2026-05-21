@@ -1,7 +1,7 @@
 {
-  "name": "@nube/starter-ui-chat",
-  "version": "0.2.0",
-  "description": "Reusable React AI-chat components and hooks. Headless transport via a ChatAdapter; styled with @nube/starter-ui-kit. Zero I/O.",
+  "name": "@nube/starter-ui-skills",
+  "version": "0.1.0",
+  "description": "Reusable React components and hooks to manage a starter-skills registry (list, inspect, approve, revoke quarantined SKILL.md bundles). Transport-agnostic via a SkillsAdapter; zero I/O.",
   "license": "MIT OR Apache-2.0",
   "type": "module",
   "main": "./src/index.ts",

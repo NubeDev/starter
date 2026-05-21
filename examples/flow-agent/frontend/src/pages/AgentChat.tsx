@@ -6,8 +6,8 @@
 // `{type:"error",error}` / `[DONE]` — which is exactly what the default
 // adapter parser understands, so no custom `parse` callback is needed.
 //
-// Conversations are not persisted; we wrap the adapter in `useMemo`
-// keyed on `id` so navigating between agents starts a fresh history.
+// Conversations persist per-agent via `persistence={{ key }}` (localStorage),
+// and the composer accepts file attachments / paste / drag-drop.
 
 import { useMemo } from "react";
 import { useParams } from "react-router-dom";
@@ -42,10 +42,13 @@ export function AgentChat() {
             : "Loading agent…"
         }
         suggestions={[
-          { label: "Say hi" },
-          { label: "List my flows" },
-          { label: "What can you do?" },
+          { label: "Say hi", description: "Quick warm-up message." },
+          { label: "List my flows", description: "See what's wired up." },
+          { label: "What can you do?", description: "Capabilities overview." },
         ]}
+        persistence={{ key: `flow-agent:chat:${id}` }}
+        allowAttachments
+        showClearButton
         className="h-full"
       />
     </div>

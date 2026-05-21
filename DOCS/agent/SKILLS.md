@@ -405,9 +405,13 @@ skills/
 │   ├── refund-policy.md
 │   └── examples.md
 ├── starter.ai-builder.dashboards/
-│   └── SKILL.md
+│   ├── SKILL.md
+│   ├── prompt.md
+│   └── schema.json
 └── starter.ai-builder.themes/
-    └── SKILL.md
+    ├── SKILL.md
+    ├── prompt.md
+    └── tokens.json
 ```
 
 The directory name **must equal** the `id:` in the frontmatter.
@@ -416,6 +420,63 @@ Mismatch fails `load_dir` with a structured error.
 Bundles without resources (single-file `SKILL.md` in a directory)
 are valid; the `resources:` frontmatter field is optional and
 defaults to empty.
+
+## Reference skills shipped in-tree
+
+Two skill bundles ship under [`skills/`](../../skills/) in the
+workspace root. They are the canonical worked examples for both the
+`SKILL.md` format and the `starter-skills` registry, and they are
+the first non-test consumers of `SkillRegistry::load_dir(...)`.
+Both target the [ai-builder](../frontend/ai-builder/SCOPE.md)
+authoring mode over [SDUI](../frontend/sdui/SCOPE.md); the
+[`examples/flow-agent`](../../examples/flow-agent/SCOPE.md) demo is
+the host that wires them into a running flow.
+
+### `starter.ai-builder.dashboards`
+
+- Path: [`skills/starter.ai-builder.dashboards/`](../../skills/starter.ai-builder.dashboards/)
+- Files: [`SKILL.md`](../../skills/starter.ai-builder.dashboards/SKILL.md),
+  [`prompt.md`](../../skills/starter.ai-builder.dashboards/prompt.md),
+  [`schema.json`](../../skills/starter.ai-builder.dashboards/schema.json)
+- `allowed_tools`: `starter.mcp.call`, `starter.flow.transform`
+- `trust`: `approved` (host-dir load path; see R-skills-3)
+- Purpose: drafts, edits, and publishes ai-builder dashboards
+  (pages, panels, layout grids, widget bindings) by driving the
+  editor transport through the MCP tool surface. Selected when the
+  user's request mentions panels, charts, layout, or publishing a
+  page.
+- `schema.json` is the source of truth for which panel kinds and
+  binding shapes the agent may emit; `prompt.md` is the verbatim
+  system prompt the `ai-agent` node feeds the runner.
+
+### `starter.ai-builder.themes`
+
+- Path: [`skills/starter.ai-builder.themes/`](../../skills/starter.ai-builder.themes/)
+- Files: [`SKILL.md`](../../skills/starter.ai-builder.themes/SKILL.md),
+  [`prompt.md`](../../skills/starter.ai-builder.themes/prompt.md),
+  [`tokens.json`](../../skills/starter.ai-builder.themes/tokens.json)
+- `allowed_tools`: `starter.mcp.call`, `starter.flow.transform`
+- `trust`: `approved` (host-dir load path; see R-skills-3)
+- Purpose: edits ai-builder theme tokens (colour, typography,
+  spacing, radius, shadow) and component styles through the same
+  MCP editor transport. Selected when the user's request mentions
+  palette, dark mode, typography, or restyling.
+- `tokens.json` is the canonical token-name list — the skill body
+  forbids inventing tokens outside that set; `prompt.md` is the
+  verbatim system prompt.
+
+Both bundles are deliberately scoped narrowly so the default
+`LlmSelector` (R-skills-5) can disambiguate them by description
+alone: dashboards = structure, themes = styling. Adding a third
+ai-builder skill that overlaps either domain is a signal the
+selection prompt needs to be revisited, not that a new skill is
+free.
+
+> The dashboard builder itself (the surface that consumes
+> `starter.ai-builder.dashboards`) is the next deliverable on top
+> of this crate; see [DOCS/frontend/ai-builder/SCOPE.md](../frontend/ai-builder/SCOPE.md)
+> Phase 5 and the [`examples/flow-agent`](../../examples/flow-agent/SCOPE.md)
+> host for the integration target.
 
 ## What does NOT land in v1
 
@@ -525,7 +586,7 @@ also produces the same hash. (Pins R-skills-2 step 3.)
 | 4 | Default `LlmSelector` + `KeywordSelector` + `FirstSelector` | M | Engine `with_skill_selector(registry)` end-to-end; smoke "Selection is frozen per run" passes against a real registry; smoke "Quarantined skill never reaches strategy" passes. |
 | 5 | `starter-store-sqlite` + `starter-store-postgres` ApprovalStore impls | S | Approval rows persist across process restart; existing store smokes extended with one more table. |
 | 6 | `starter-ext-flow` wires `contributes.skills` (specified in agent R-agent-4, not yet implemented) through `extend(...)` | S | An extension's `skills/` dir lands quarantined; operator-approval CLI surfacing is the host's job, not this crate's. |
-| 7 | ai-builder reference skills + end-to-end smoke | S | `skills/starter.ai-builder.dashboards/SKILL.md` and `skills/starter.ai-builder.themes/SKILL.md` ship; ai-builder Phase 5 unblocked. |
+| 7 | ai-builder reference skills + end-to-end smoke | S | [`skills/starter.ai-builder.dashboards/`](../../skills/starter.ai-builder.dashboards/) and [`skills/starter.ai-builder.themes/`](../../skills/starter.ai-builder.themes/) already ship on disk (see ["Reference skills shipped in-tree"](#reference-skills-shipped-in-tree)); this phase loads them through `SkillRegistry::load_dir(...)` from [`examples/flow-agent`](../../examples/flow-agent/SCOPE.md), runs the end-to-end smoke, and unblocks ai-builder Phase 5. |
 
 Phases 1–4 are the MVP. Phase 5 closes durability. Phase 6 closes
 the extension story. Phase 7 closes the loop with the first
@@ -554,13 +615,29 @@ non-test consumer.
 
 ## Open questions
 
-### S-D1 — Approval CLI surface
+### S-D1 — Approval surfaces (CLI + HTTP + UI)
 
-The crate exposes `registry.approve(...)`. The actual operator
-command — `starter skills list --quarantined`, `starter skills
-approve <id> --hash <h>` — is `starter-cli`'s concern, not this
-crate's. Worth a short pass on the CLI shape once the crate lands;
-not blocking.
+The crate exposes `registry.approve(...)`. The user-facing surfaces
+that drive it are out of scope for this crate but in scope for the
+agent SCOPE to coordinate:
+
+- **CLI** — `starter skills list --quarantined`, `starter skills
+  approve <id> --hash <h>`. Lives in `starter-cli`.
+- **HTTP** — `GET /api/v1/skills`, `GET /api/v1/skills/{id}`,
+  `POST /api/v1/skills/{id}/approve { bundleHash }`,
+  `DELETE /api/v1/skills/{id}/approve { bundleHash }`. Lives in
+  `starter-server`, mirrored in `openapi.json` and
+  `starter-client-ts`. Not implemented in v1.
+- **UI** — [`@nube/starter-ui-skills`](../../packages/starter-ui-skills/README.md)
+  consumes the HTTP surface via a `SkillsAdapter`. Until the HTTP
+  routes land it ships only an in-memory adapter; consumers
+  hand-roll one against whatever transport they have (REST, Tauri
+  command, GraphQL).
+
+The shapes are aligned: the HTTP body matches `SkillsAdapter` in
+the UI package, which matches `registry.approve(id, hash)` here.
+Adding the HTTP layer is mechanical; gating on a real operator
+need.
 
 ### S-D2 — Resource URI scheme broadening (post-v1)
 

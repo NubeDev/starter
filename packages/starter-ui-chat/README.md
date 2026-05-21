@@ -8,6 +8,14 @@ Reusable React AI-chat components and hooks for starter-based apps.
 - **Composable** — drop-in `<Chat />` for the easy path, or compose
   `ChatRoot` + `ChatMessageList` + `ChatMessage` + `ChatComposer` for
   full control.
+- **File attachments** — paperclip button, drag-and-drop, paste from
+  clipboard. Files round-trip on the message as `ChatAttachment[]` so
+  your adapter can upload them however it likes.
+- **Persistence** — `persistence={{ key }}` round-trips history through
+  `localStorage` (SSR-safe). Swap in `sessionStorage` or any
+  `ChatStore` for IndexedDB / server sync.
+- **Retry** — `retry()` from `useChat` re-runs the last user turn;
+  errored assistant messages show a built-in retry action.
 - **Zero I/O in the library** — no fetches, no stores, no globals.
   Same rule as `starter-ui-kit`.
 - **Tailwind v4 / shadcn tokens** — assumes the consumer loaded
@@ -30,8 +38,70 @@ import "@nube/starter-ui-kit/styles.css";
 
 export function Demo() {
   const adapter = React.useMemo(() => createEchoAdapter(), []);
-  return <Chat adapter={adapter} title="Assistant" />;
+  return (
+    <Chat
+      adapter={adapter}
+      title="Assistant"
+      persistence={{ key: "demo-chat" }}
+      allowAttachments
+      showClearButton
+    />
+  );
 }
+```
+
+## File attachments
+
+```tsx
+<Chat
+  adapter={adapter}
+  allowAttachments
+  acceptAttachments="image/*,.pdf"
+  maxAttachments={5}
+  maxAttachmentBytes={10 * 1024 * 1024}
+/>;
+```
+
+Pasting images or drag-dropping files into the composer also works.
+Each attachment surfaces on the user message as a `ChatAttachment` —
+including the raw `File` blob — so your adapter can `fetch()` with
+`multipart/form-data`, base64-encode it, or upload separately and
+attach the URL.
+
+## Persistence
+
+```tsx
+// localStorage shorthand
+<Chat adapter={adapter} persistence={{ key: `agent:${id}` }} />;
+
+// sessionStorage
+<Chat
+  adapter={adapter}
+  persistence={{ key: "demo", storage: sessionStorage }}
+/>;
+
+// Custom store (IndexedDB, server, encrypted, …)
+const myStore: ChatStore = {
+  load: () => /* … */ null,
+  save: (msgs) => { /* … */ },
+  clear: () => { /* … */ },
+};
+<Chat adapter={adapter} persistence={myStore} />;
+```
+
+The library never touches `window` directly — `createLocalStorageStore`
+no-ops on the server, so SSR keeps working.
+
+## Retry
+
+`useChat().retry()` re-runs the last user turn, dropping any trailing
+(typically errored or cancelled) assistant message. The default
+`<ChatMessage>` shows a retry icon on hover for assistant messages and
+prominently for errored ones — both wired into `<Chat>` automatically.
+
+```tsx
+const { retry } = useChat({ adapter });
+<ChatMessage message={m} onRetry={() => retry()} />;
 ```
 
 ## Wiring a real backend (SSE)
