@@ -22,5 +22,8 @@ pub mod pool;
 #[cfg(feature = "testing")]
 pub mod testing;
 
+#[cfg(feature = "skill-approvals")]
+pub mod skills;
+
 pub use migrate::{migrate, MigrationSource};
 pub use pool::Pool;

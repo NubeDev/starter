@@ -28,9 +28,23 @@ testcontainers         = { version = "0.23", optional = true }
 testcontainers-modules = { version = "0.11", features = ["postgres"], optional = true }
 tokio                  = { workspace = true, optional = true }
 
+# `skill-approvals` feature deps. Phase 5 of the starter-skills
+# rollout: a Postgres-backed `ApprovalStore` impl. Default-on so the
+# common operator path needs no extra `--features` invocation;
+# consumers that don't need skills disable with
+# `--no-default-features` to skip both the dep and the migration.
+starter-skills   = { workspace = true, optional = true }
+starter-flow-spi = { workspace = true, optional = true }
+
 [features]
-default = []
+default = ["skill-approvals"]
 testing = ["dep:testcontainers", "dep:testcontainers-modules", "dep:tokio"]
+# Compiles the `skills` module with a Postgres-backed
+# `SkillApprovalStore` implementation of the `starter-skills`
+# `ApprovalStore` trait. Default-on per stage 9 spec; flip off with
+# `--no-default-features` to skip the table + the `starter-skills`
+# dep entirely.
+skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
 
 [dev-dependencies]
 sqlx  = { workspace = true, features = ["postgres", "macros", "migrate", "runtime-tokio"] }
