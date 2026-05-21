@@ -82,6 +82,24 @@ underlying crates from being built; the only honest opt-out is a
 separate crate. See [SCOPE.md § Surface — Rust (HTTP
 routes)](./SCOPE.md#surface--rust-http-routes-opt-in).
 
+**Phase 5 landing.** The crate ships as `crates/starter-sdui-routes`
+with three routes — `POST /api/v1/ui/resolve`, `POST
+/api/v1/ui/action`, `GET /api/v1/ui/table` — mounted by a single
+`sdui_router(SduiState)` builder. `SduiState::builder()` wires four
+pieces: a `PageProvider` for `/resolve`, an `EntityGraph` (from
+`starter-ui-bindings`) for binding substitution, a
+`HandlerRegistry` for `/action` dispatch, and a `QueryEngine` (with
+an in-memory reference impl) for `/table`. **`starter-server` does
+not depend on this crate** — the boundary is enforced by Cargo.toml,
+not a feature flag. R8 size / DoS limits land here with stable
+`what:` tags (`page_state_bytes`, `render_tree_bytes`, `tree_nodes`,
+`tree_depth`, `component_types`, `handler_timeout`,
+`table_rows_per_page`) and one integration test per tag pins both
+the 413 status and the wire string. The R7 capability handshake
+(unknown `renderer_id` → `Dangling`) treats `renderer_id` as
+public and runs as a vocabulary filter — `custom.props`
+authorisation stays at the handler / resolve boundary, per R5.
+
 ### D5 — `EntityGraph` trait, not Rubix's node graph
 
 Rubix's binding engine resolves against Rubix's specific node-graph

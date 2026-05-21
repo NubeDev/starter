@@ -36,6 +36,7 @@ members = [
     "crates/starter-ui-ir",
     "crates/starter-ui-bindings",
     "crates/starter-ui-builder",
+    "crates/starter-sdui-routes",
     "crates/starter-ui-theme",
     "crates/starter-port",
     "crates/smoke-tests",
@@ -92,6 +93,7 @@ starter-service-telegram = { path = "crates/starter-service-telegram", version =
 starter-ui-ir            = { path = "crates/starter-ui-ir",            version = "0.1.0" }
 starter-ui-bindings      = { path = "crates/starter-ui-bindings",      version = "0.1.0" }
 starter-ui-builder       = { path = "crates/starter-ui-builder",       version = "0.1.0" }
+starter-sdui-routes      = { path = "crates/starter-sdui-routes",      version = "0.1.0" }
 starter-ui-theme         = { path = "crates/starter-ui-theme",         version = "0.1.0" }
 starter-tool-gmail       = { path = "crates/starter-tool-gmail",       version = "0.1.0" }
 starter-port             = { path = "crates/starter-port",             version = "0.1.0" }

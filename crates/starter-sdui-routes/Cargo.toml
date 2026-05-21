@@ -1,0 +1,35 @@
+[package]
+name        = "starter-sdui-routes"
+description = "Opt-in axum routes for SDUI: POST /api/v1/ui/resolve, POST /api/v1/ui/action, GET /api/v1/ui/table. See DOCS/frontend/sdui/SCOPE.md and DIVERGENCE.md (D4)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+rust-version.workspace = true
+
+# Phase 5 of the SDUI port (DOCS/frontend/sdui/SCOPE.md).
+#
+# **D4** — separate crate, not a feature flag on `starter-server`.
+# Per M6 in SCOPE.md, Cargo features cannot prevent transitive
+# compilation of `starter-ui-ir` / `starter-ui-bindings`; the only
+# honest opt-out is a separate crate the consumer pulls in via their
+# own Cargo.toml. `starter-server` itself MUST NOT depend on this
+# crate — adding such a dep forces every starter-server consumer to
+# compile the SDUI dep graph, which is the wrong default.
+
+[dependencies]
+starter-ui-ir       = { workspace = true }
+starter-ui-bindings = { workspace = true }
+
+axum        = { workspace = true }
+http        = { workspace = true }
+tokio       = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+async-trait = { workspace = true }
+
+[dev-dependencies]
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread", "test-util"] }
+tower          = { workspace = true, features = ["util"] }
+http-body-util = "0.1"
