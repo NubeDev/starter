@@ -1,0 +1,11 @@
+{
+  "domain:iot": ["device.online@1", "sensor.has-recent-data@1", "sensor.in-range@1"],
+  "domain:energy": ["meter.baseline-deviation@1", "meter.weather-normalised-overrun@1"],
+  "domain:finance": ["bills.reconcile@1", "bills.ai-judge@1"],
+  "building:hq-london": ["meter.baseline-deviation@1", "meter.weather-normalised-overrun@1", "bills.reconcile@1", "bills.ai-judge@1"],
+  "category:threshold": ["sensor.in-range@1"],
+  "category:data-quality": ["sensor.has-recent-data@1"],
+  "category:reconciliation": ["bills.reconcile@1"],
+  "ai-judge": ["bills.ai-judge@1"],
+  "weather-normalised": ["meter.weather-normalised-overrun@1"]
+}
