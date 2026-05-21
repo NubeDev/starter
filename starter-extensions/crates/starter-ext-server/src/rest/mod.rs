@@ -5,7 +5,7 @@
 //! manifest:
 //!
 //! - `contributes.rest[]` — per-extension route fragments at the method
-//!   + path the manifest declares. Adapters from different extensions
+//!   and path the manifest declares. Adapters from different extensions
 //!   are merged into one [`axum::Router`]; a path/method collision
 //!   between two extensions is a **load-time error** (returned from
 //!   [`rest_router`]), never a silent route shadowing.

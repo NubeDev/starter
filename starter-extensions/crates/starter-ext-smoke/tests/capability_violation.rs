@@ -9,7 +9,7 @@
 //! The supervisor's `SupervisorTask` wires `CapabilityGate::check`
 //! directly into the inbound frame path and increments
 //! `CapabilityViolationCounter` on every refusal. Exercising the gate
-//! + counter together against an extension that declared exactly
+//! and the counter together against an extension that declared exactly
 //! `secrets` proves R8 holds without spawning a real child.
 
 use starter_ext_spi::{Capability, Error};

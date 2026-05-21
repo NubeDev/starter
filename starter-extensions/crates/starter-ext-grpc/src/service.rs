@@ -71,6 +71,13 @@ impl ExtensionGrpcService {
 
     /// Resolve a `(service, method)` pair to the manifest entry or
     /// return a tonic `NOT_FOUND` status.
+    //
+    // `tonic::Status` is ~176 bytes; clippy::result_large_err flags
+    // any `Result<_, Status>` it can see. These are private helpers
+    // feeding straight into tonic's outer surface which takes Status
+    // by value — boxing here would force unboxing at every call site
+    // without changing the wire shape.
+    #[allow(clippy::result_large_err)]
     fn resolve(&self, service: &str, method: &str) -> Result<&GrpcMethod, Status> {
         self.by_pair
             .get(&(service.to_owned(), method.to_owned()))
@@ -81,6 +88,7 @@ impl ExtensionGrpcService {
             })
     }
 
+    #[allow(clippy::result_large_err)]
     fn parse_input(args_proto_json: &str) -> Result<serde_json::Value, Status> {
         if args_proto_json.is_empty() {
             Ok(serde_json::Value::Null)

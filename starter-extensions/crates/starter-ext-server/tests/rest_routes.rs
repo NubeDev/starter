@@ -370,16 +370,15 @@ async fn streaming_response_cancels_promptly() {
     let deadline = tokio::time::Instant::now() + Duration::from_secs(2);
     let mut got_one = false;
     while tokio::time::Instant::now() < deadline && !got_one {
-        match tokio::time::timeout(Duration::from_millis(500), body.next()).await {
-            Ok(Some(Ok(frame))) => {
-                if let Some(data) = frame.data_ref() {
-                    let s = String::from_utf8_lossy(data);
-                    if s.contains("\"n\":") {
-                        got_one = true;
-                    }
+        if let Ok(Some(Ok(frame))) =
+            tokio::time::timeout(Duration::from_millis(500), body.next()).await
+        {
+            if let Some(data) = frame.data_ref() {
+                let s = String::from_utf8_lossy(data);
+                if s.contains("\"n\":") {
+                    got_one = true;
                 }
             }
-            _ => {}
         }
     }
     assert!(got_one, "expected at least one SSE data frame");

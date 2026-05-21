@@ -68,7 +68,7 @@ impl SupervisorFactory for DefaultSupervisorFactory {
         match manifest.runtime.kind {
             RuntimeKind::Process => Supervisor::start(record)
                 .map(Some)
-                .map_err(|e| SupervisorFactoryError::new(e)),
+                .map_err(SupervisorFactoryError::new),
             RuntimeKind::Builtin | RuntimeKind::Wasm => Ok(None),
         }
     }
