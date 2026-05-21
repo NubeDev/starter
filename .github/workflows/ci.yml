@@ -124,6 +124,45 @@ jobs:
       - name: check baseline
         run: scripts/check-spi-dep-baseline.sh
 
+  sdui-gates:
+    # Stage 12 of DOCS/frontend/sdui/SCOPE.md — the SDUI merge gate.
+    # Five structural checks that the SCOPE pins as load-bearing:
+    #
+    #   1. R3 allowlist (scripts/check-sdui-domain-leak.sh) — every
+    #      identifier in the three renderer-side / contract-side
+    #      crates must appear in the per-crate words.txt allowlist.
+    #      The allowlist is the contract; the in-repo r3-no-domain-leak
+    #      vitest is the defence-in-depth keyword denylist.
+    #
+    #   2. R1 dep-tree (scripts/check-sdui-ir-deps.sh) — starter-ui-ir's
+    #      transitive normal closure must not pull I/O / runtime crates
+    #      (axum, reqwest, hyper, tokio, tower, h2, http-body, ...).
+    #
+    #   3. Consumer-opt-in (scripts/check-sdui-routes-isolation.sh) —
+    #      starter-server must not transitively depend on
+    #      starter-sdui-routes / starter-ui-* (M6 / D4).
+    #
+    #   4. Size budget (scripts/check-sdui-size-budget.sh) —
+    #      Renderer.tsx ≤ 800 lines, total components ≤ 4000 lines.
+    name: sdui structural gates
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+      - name: R3 — words.txt allowlist
+        run: scripts/check-sdui-domain-leak.sh
+      - name: R1 — starter-ui-ir transitive dep gate
+        run: scripts/check-sdui-ir-deps.sh
+      - name: M6 / D4 — starter-server has no SDUI deps
+        run: scripts/check-sdui-routes-isolation.sh
+      - name: size budget — Renderer.tsx + components total
+        run: scripts/check-sdui-size-budget.sh
+
   audit:
     name: cargo audit
     runs-on: ubuntu-latest
