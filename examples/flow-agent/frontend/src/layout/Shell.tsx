@@ -5,6 +5,8 @@ import {
   IconSitemap,
   IconRobot,
   IconSettings,
+  IconLayoutDashboard,
+  IconSparkles,
 } from "@tabler/icons-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -18,6 +20,7 @@ import { Badge } from "@/components/ui/badge"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { api, type AgentSummary, type FlowSummary } from "@/lib/api"
 import { useSse } from "@/lib/sse"
+import { usePages, type PageRecord } from "@/lib/pages-store"
 
 type SidebarEvent =
   | { type: "flow-created"; id: string; name: string }
@@ -27,8 +30,23 @@ type SidebarEvent =
   | { type: "agent-renamed"; id: string; name: string }
   | { type: "agent-deleted"; id: string }
 
-function titleFor(pathname: string, flows: FlowSummary[], agents: AgentSummary[]): string {
+function titleFor(
+  pathname: string,
+  flows: FlowSummary[],
+  agents: AgentSummary[],
+  pages: PageRecord[],
+): string {
   if (pathname.startsWith("/settings")) return "Settings"
+  if (pathname.startsWith("/skills")) return "Skills"
+  if (pathname === "/pages/new") return "Pages · New page"
+  if (pathname.startsWith("/pages/")) {
+    const rest = pathname.slice("/pages/".length)
+    const id = rest.replace(/\/edit$/, "")
+    const p = pages.find((x) => x.id === id)
+    const suffix = rest.endsWith("/edit") ? " · Edit" : ""
+    return p ? `Pages · ${p.name}${suffix}` : "Pages"
+  }
+  if (pathname.startsWith("/pages")) return "Pages"
   if (pathname.startsWith("/agents/")) {
     const id = pathname.slice("/agents/".length)
     const a = agents.find((x) => x.id === id)
@@ -45,6 +63,13 @@ function titleFor(pathname: string, flows: FlowSummary[], agents: AgentSummary[]
 
 function activeUrlFor(pathname: string): string {
   if (pathname.startsWith("/settings")) return "/settings"
+  if (pathname.startsWith("/skills")) return "/skills"
+  if (pathname === "/pages/new") return "/pages"
+  if (pathname.startsWith("/pages/")) {
+    const rest = pathname.slice("/pages/".length).replace(/\/edit$/, "")
+    return `/pages/${rest}`
+  }
+  if (pathname.startsWith("/pages")) return "/pages"
   if (pathname.startsWith("/agents/")) return pathname
   if (pathname.startsWith("/agents")) return "/agents"
   if (pathname.startsWith("/flows/")) return pathname
@@ -69,6 +94,7 @@ export function Shell() {
 
   const flows = flowsQ.data ?? []
   const agents = agentsQ.data ?? []
+  const pages = usePages()
 
   const navMain = useMemo<NavMainItem[]>(
     () => [
@@ -103,16 +129,33 @@ export function Shell() {
         })),
       },
       {
+        title: "Pages",
+        url: "/pages",
+        icon: IconLayoutDashboard,
+        accent: "var(--accent-info)",
+        subTestId: "pages-subnav",
+        items: pages.slice(0, 12).map((p) => ({
+          title: p.name,
+          url: `/pages/${p.id}`,
+        })),
+      },
+      {
+        title: "Skills",
+        url: "/skills",
+        icon: IconSparkles,
+        accent: "var(--accent-success)",
+      },
+      {
         title: "Settings",
         url: "/settings",
         icon: IconSettings,
         accent: "var(--accent-settings)",
       },
     ],
-    [flows, agents],
+    [flows, agents, pages],
   )
 
-  const title = titleFor(location.pathname, flows, agents)
+  const title = titleFor(location.pathname, flows, agents, pages)
   const activeUrl = activeUrlFor(location.pathname)
 
   return (
