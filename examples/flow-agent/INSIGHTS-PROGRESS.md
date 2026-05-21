@@ -16,10 +16,10 @@ Tracking implementation of [INSIGHTS-MOCKUP.md](./INSIGHTS-MOCKUP.md).
   - `@media print` CSS for verdict detail (and rule editor detail header). Hide chrome, table evidence rows, `@page` numbers, light-only.
 - [x] **S5 — `RuleEditor.tsx` + dry-run (Phase 2 UI)**
   - Split-pane page with editor (textarea, see D-S5-1), schema panel, dry-run pane. No agent tools yet — just human edit + POST.
-- [ ] **S6 — Agent tools: rule.{list,read,propose,apply,dry-run} (Phase 2 agent)**
-  - Register tools with the real `AiRunner`. `propose` returns proposal object (no write); `apply` commits. Diff card in chat.
-- [ ] **S7 — Verdict agent tools (Phase 3)**
-  - `verdict.query`, `verdict.explain`. Agent dock on VerdictsView.
+- [x] **S6 — Agent tools: rule.{list,read,propose,apply,dry-run} (Phase 2 agent)**
+  - Register tools with the real `AiRunner`. `propose` returns proposal object (no write); `apply` commits. Diff card in chat (UI half deferred to S9 polish — see D-S6-2).
+- [x] **S7 — Verdict agent tools (Phase 3)**
+  - `verdict.query`, `verdict.explain`. Tool defs synthesised in same pass as S6 (rule + verdict + pipeline share one bridge — see D-S6-1). UI agent dock deferred to S9 polish.
 - [ ] **S8 — PipelineCanvas + pipeline tools (Phase 4)**
   - `PipelineCanvas.tsx` wrapping `starter-ui-flow`. Tools `pipeline.read`, `pipeline.propose-edit`, `pipeline.apply-edit`. Diff overlay.
 - [ ] **S9 — Polish & acceptance checklist**
@@ -66,6 +66,27 @@ Each stage commits + pushes at the end.
   page count down and matches the spec's "filterable list + detail"
   framing. Print-only header/footer markup ships now so S4 can
   layer the `@media print` CSS without re-touching the page.
+- **D-S6-1** — One bridge pass covers all three insights tool
+  families (`rule.*`, `verdict.*`, `pipeline.*`). Synthesis lives in
+  `agent_bridge::synthesize_insights_tools`; dispatch lives in
+  `dispatch_insights_tool`. Cheaper than three iterations of the
+  same scaffolding; the verdict + pipeline backends (S7 + S8 in
+  the original plan) collapse to "register the tool name + write
+  the match arm." So S7 ships with S6; the remaining S7/S8 frontend
+  work (agent dock UI) is folded into S9 polish.
+- **D-S6-2** — Tool wildcards: agents opt in via `insights:*`,
+  `insights:rule.*`, `insights:verdict.*`, `insights:pipeline.*`, or
+  individual tool names. Matches the `flow:*` convention already in
+  the runtime so operators don't learn a new syntax.
+- **D-S6-3** — `propose` is non-mutating by design: returns a JSON
+  proposal blob the UI / operator inspects before calling `apply`.
+  Spec §Agent tools: "the agent never silently mutates." Verified
+  by `propose_does_not_mutate_apply_does` test.
+- **D-S6-4** — `AiRuntime` gains an optional `insights:
+  Option<InsightsState>` field via a builder `with_insights(state)`.
+  Keeping it `Option` means existing call-sites (tests, alternate
+  bootstraps) don't have to pass an insights handle they don't
+  need. `synthesize_insights_tools` no-ops when `None`.
 - **D-S5-1** — `RuleEditor.tsx` uses a plain `<Textarea>` instead of
   Monaco/CodeMirror (MD1 in spec). Rationale: Monaco pulls in
   ~3 MB of language workers; CodeMirror still adds ~150 KB. For a
@@ -104,6 +125,27 @@ Each stage commits + pushes at the end.
   `coverage.json`, `tags-index.json`, and `README.md`.
 - Validated all JSON with `python3 -m json.tool`. No Rust/TS code yet,
   so no build to run.
+- Commit + push.
+
+### S6 / S7 (folded) — 2026-05-22
+- `AiRuntime` gains optional `insights: InsightsState` via
+  `with_insights(state)`.
+- `agent_bridge`:
+  - new `synthesize_insights_tools(agent_tools)` returns 5 rule +
+    2 verdict + 3 pipeline `ToolDef`s, filtered by wildcards.
+  - new `dispatch_insights_tool(tu)` handles all 10 tool calls;
+    `propose` returns a `needs_approval: true` proposal, `apply`
+    writes through `InsightsFixtures::persist_array`.
+  - `drive_chat` now appends insights tools to the per-turn tool
+    list; `dispatch_tool_use` routes `insights:*` calls to the new
+    dispatcher and emits the same `tool-call` / `tool-result` SSE
+    frame pair as flow tools.
+- `server::build` constructs the runtime with `with_insights(...)`
+  after loading fixtures so every agent on the system can opt in.
+- New `tests/insights_agent_tools.rs`: 3 tests (synth wildcard, read
+  round-trip, propose-doesn't-mutate-apply-does).
+- `cargo build -p flow-agent` ✓; `cargo test -p flow-agent` ✓
+  (9 tests passing: 1 existing + 5 backend + 3 agent-tool).
 - Commit + push.
 
 ### S5 — 2026-05-22

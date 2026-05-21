@@ -94,6 +94,10 @@ pub struct AiRuntime {
     engine: FlowEngine,
     runs: Arc<RunStore>,
     hub: Arc<EventHub>,
+    /// Optional handle on the insights mock-up fixtures. When `Some`,
+    /// agents whose `tools` array contains `insights:*` entries get
+    /// the corresponding `ToolDef`s synthesised in their tool list.
+    insights: Option<crate::insights_mock::InsightsState>,
 }
 
 impl AiRuntime {
@@ -123,7 +127,19 @@ impl AiRuntime {
             engine,
             runs,
             hub,
+            insights: None,
         }
+    }
+
+    /// Attach an `InsightsState` so the agent-as-tool bridge can
+    /// synthesise `insights:*` tools and read/write fixture data.
+    pub fn with_insights(mut self, insights: crate::insights_mock::InsightsState) -> Self {
+        self.insights = Some(insights);
+        self
+    }
+
+    pub(crate) fn insights(&self) -> Option<&crate::insights_mock::InsightsState> {
+        self.insights.as_ref()
     }
 
     // -----------------------------------------------------------------

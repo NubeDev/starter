@@ -39,23 +39,12 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let runs = Arc::new(RunStore::new(sqlx));
     let hub = Arc::new(EventHub::new());
     let engine = FlowEngine::new();
-    let ai = AiRuntime::new(flows.clone(), engine.clone(), runs.clone(), hub.clone());
     // MEMORY.md Phase M-D — page-builder persistence. SQLite-backed
     // `AgentSessionStore` shares the connection pool with the rest
     // of the example; the schema ships with starter-flow's
     // `FLOW_MIGRATION_SOURCE` (wired in `migrations::sources`).
     let agent_sessions: Arc<dyn starter_flow_spi::agent_session::AgentSessionStore> =
         Arc::new(SqliteAgentSessionStore::new(pool.clone()));
-
-    let rest_state = RestState {
-        flows: flows.clone(),
-        agents: agents.clone(),
-        runs: runs.clone(),
-        hub: hub.clone(),
-        engine,
-        ai,
-        agent_sessions,
-    };
 
     // Insights mock-up surface (INSIGHTS-MOCKUP.md). Fixture files
     // are loaded on startup; missing fixtures degrade to an empty
@@ -74,6 +63,18 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         }
     });
     let insights_state = InsightsState::new(insights_data);
+    let ai = AiRuntime::new(flows.clone(), engine.clone(), runs.clone(), hub.clone())
+        .with_insights(insights_state.clone());
+
+    let rest_state = RestState {
+        flows: flows.clone(),
+        agents: agents.clone(),
+        runs: runs.clone(),
+        hub: hub.clone(),
+        engine,
+        ai,
+        agent_sessions,
+    };
 
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(rest_router(rest_state))

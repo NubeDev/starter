@@ -58,7 +58,7 @@ impl InsightsFixtures {
         })
     }
 
-    fn persist_array(&self, name: &str, rows: &[Value]) -> std::io::Result<()> {
+    pub(crate) fn persist_array(&self, name: &str, rows: &[Value]) -> std::io::Result<()> {
         write_pretty(&self.root.join(name), &Value::Array(rows.to_vec()))
     }
 }
