@@ -20,6 +20,7 @@ members = [
     "crates/starter-secrets-file",
     "crates/starter-ai",
     "crates/starter-flow-spi",
+    "crates/starter-skills",
     "crates/starter-flow",
     "crates/starter-flow-nodes",
     "crates/starter-flow-surfaces",
@@ -77,6 +78,7 @@ starter-secrets-file     = { path = "crates/starter-secrets-file",     version =
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-flow-spi         = { path = "crates/starter-flow-spi",         version = "0.1.0" }
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }
+starter-skills           = { path = "crates/starter-skills",           version = "0.1.0" }
 starter-flow-nodes       = { path = "crates/starter-flow-nodes",       version = "0.1.0" }
 starter-flow-surfaces    = { path = "crates/starter-flow-surfaces",    version = "0.1.0" }
 starter-flow-watch       = { path = "crates/starter-flow-watch",       version = "0.1.0" }

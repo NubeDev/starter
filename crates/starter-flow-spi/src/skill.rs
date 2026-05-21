@@ -78,6 +78,19 @@ pub struct ResourceRef {
     pub content_hash: String,
 }
 
+impl ResourceRef {
+    /// Construct a [`ResourceRef`]. Required because the struct is
+    /// `#[non_exhaustive]` for forward-compatibility, which forbids
+    /// struct-literal construction from outside this crate (the
+    /// `starter-skills` registry consumes this constructor).
+    pub fn new(uri: impl Into<String>, content_hash: impl Into<String>) -> Self {
+        Self {
+            uri: uri.into(),
+            content_hash: content_hash.into(),
+        }
+    }
+}
+
 /// One skill selection threaded through every `ai-agent` node in a run.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 #[non_exhaustive]

@@ -1,0 +1,26 @@
+[package]
+name        = "starter-ext-flow"
+description = "starter-extensions — adapter that surfaces extension-contributed flows, skills, and flow nodes into the host's flow runtime (DOCS/agent/SCOPE.md R-agent-4)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Adapter crate per DOCS/extensions/scope/SCOPE.md R13: depends on the
+# contracts crate (`starter-ext-spi`) and on the parent-workspace crates
+# whose seams it wires through. For Phase 6 (this stage) the only seam
+# wired is `SkillRegistry::extend(...)` for `contributes.skills`; the
+# `contributes.flows` and `contributes.nodes` branches land in later
+# stages of the flow track.
+[dependencies]
+starter-ext-spi = { workspace = true }
+starter-skills  = { path = "../../../crates/starter-skills", version = "0.1.0" }
+
+thiserror = { workspace = true }
+tracing   = { workspace = true }
+
+[dev-dependencies]
+starter-skills = { path = "../../../crates/starter-skills", version = "0.1.0" }
+serde_yaml     = { workspace = true }
+tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }

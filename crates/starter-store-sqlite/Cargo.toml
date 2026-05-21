@@ -24,8 +24,16 @@ starter-flow-spi = { workspace = true, optional = true }
 chrono           = { workspace = true, optional = true }
 uuid             = { workspace = true, optional = true }
 
+# `skill-approvals` feature deps. Phase 5 of the starter-skills
+# rollout: a SQLite-backed `ApprovalStore` impl for the
+# `starter-skills` trait. Default-on so the common operator path
+# (skills enabled) needs no extra `--features` invocation; consumers
+# that do not run the ai-agent / skills stack disable it with
+# `--no-default-features` to skip both the dep and the migration.
+starter-skills = { workspace = true, optional = true }
+
 [features]
-default = []
+default = ["skill-approvals"]
 # Exposes `starter_store_sqlite::testing` with an in-memory pool
 # factory. Opt-in so production builds skip the harness.
 testing = []
@@ -35,6 +43,15 @@ testing = []
 # the starter-store-sqlite dependency baseline is unchanged for
 # every existing consumer.
 flow = ["dep:starter-flow-spi", "dep:chrono", "dep:uuid"]
+# Compiles the `skills` module with a SQLite-backed
+# `SkillApprovalStore` implementation of the `starter-skills`
+# `ApprovalStore` trait. Default-on (Phase 5 stage spec); flip off
+# with `--no-default-features` to skip the table + the
+# `starter-skills` dep entirely. `dep:starter-flow-spi` is pulled
+# in transitively because `starter-skills` already depends on it,
+# but we declare it explicitly here too so the impl module compiles
+# without the `flow` feature being on.
+skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
 
 [dev-dependencies]
 tokio    = { workspace = true }
