@@ -43,10 +43,11 @@ use serde::{Deserialize, Deserializer, Serialize, Serializer};
 ///
 /// `Heatmap` is reserved so we don't bump the IR version again later;
 /// the renderer and the source-compat rules for it are deferred.
-#[derive(Debug, Clone, PartialEq, Eq, JsonSchema)]
+#[derive(Debug, Clone, Default, PartialEq, Eq, JsonSchema)]
 #[schemars(with = "String")]
 pub enum ChartKind {
     /// Time-series line chart (default).
+    #[default]
     Line,
     /// Filled-area time-series chart.
     Area,
@@ -67,12 +68,6 @@ pub enum ChartKind {
     Custom(String),
     /// Forward-compat fallback for kinds this client doesn't recognise.
     Unknown,
-}
-
-impl Default for ChartKind {
-    fn default() -> Self {
-        ChartKind::Line
-    }
 }
 
 impl ChartKind {
