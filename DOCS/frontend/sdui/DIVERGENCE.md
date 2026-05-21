@@ -97,6 +97,14 @@ would defeat the point.
 of children/slots is abstracted. The `$target/child.slot` syntax is
 unchanged.
 
+**Phase 2 landing.** The trait ships in `starter-ui-bindings`
+(per SCOPE.md § Decisions, S-D1) with three methods: `read_slot`,
+`read_children`, and an optional `entity_id_regex` (returns `None`
+for hosts without a stable id format — consumed by ai-builder R7).
+A `NullGraph` impl exists for tests / `$user`-only resolves.
+Promotion to `starter-spi` waits on a second consumer (S-D1
+revisit trigger).
+
 ### D6 — `cost_cap`, `session_policy`, and other flow node config
 
 Not an SDUI divergence per se, but ai-builder flows reference
