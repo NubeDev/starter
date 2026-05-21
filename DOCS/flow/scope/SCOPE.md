@@ -8,7 +8,10 @@ are nodes. Extensions contribute node kinds. Flows are graphs of nodes
 wired by typed slots; the engine reacts to slot changes through a
 single write chokepoint and propagates downstream. The AI agent
 foundation ([`DOCS/agent/SCOPE.md`](../../agent/SCOPE.md)) folds into
-this design as the `ai-agent` node kind; tools
+this design as the `ai-agent` node kind; skills bind to flow runs via
+the `SkillSelector` seam in `starter-flow-spi`, with the registry and
+quarantine state machine carved out in
+[`DOCS/agent/SKILLS.md`](../../agent/SKILLS.md); tools
 ([`DOCS/tools/scope/SCOPE.md`](../../tools/scope/SCOPE.md)) remain
 unchanged as the request/response primitive and surface as the
 `tool-call` node kind; extensions
