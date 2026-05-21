@@ -29,6 +29,7 @@ pub mod bundle;
 pub mod error;
 pub mod parser;
 pub mod registry;
+pub mod selector;
 pub mod store;
 
 pub use bundle::{load_bundle, Bundle, Resource};
@@ -37,4 +38,8 @@ pub use parser::{
     parse_skill_md, Frontmatter, ParsedSkill, Trust, SUPPORTED_RESOURCE_SCHEMES,
 };
 pub use registry::{ContributedSkill, LoadError, Skill, SkillRegistry, SkillRegistryBuilder};
+pub use selector::{
+    FirstSkillSelector, KeywordSkillSelector, LlmSkillSelector, LlmSkillSelectorBuilder,
+    SelectorStrategy, DEFAULT_LLM_SELECTOR_MODEL, DEFAULT_LLM_SELECTOR_TIMEOUT,
+};
 pub use store::{ApprovalRow, ApprovalStore, ApprovalStoreError, InMemoryApprovalStore};

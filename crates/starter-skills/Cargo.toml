@@ -7,26 +7,37 @@ license.workspace      = true
 repository.workspace   = true
 rust-version.workspace = true
 
-# Phase 1 of the starter-skills job (.codeless/jobs/starter-skills/SCOPE.md):
-# crate skeleton + SKILL.md parser. The crate's dep tree is locked to
+# The crate's dep tree is locked to
 # `starter-flow-spi + serde + serde_yaml + thiserror + async-trait +
-# blake3 + tracing` per the SCOPE constraints — no provider SDKs, no
-# tokio runtime beyond what `async-trait` needs, no I/O crates yet.
+# blake3 + tracing + tokio (minimal)` per the SCOPE constraints — no
+# provider SDKs, no I/O crates beyond what the stdlib + tokio bring.
+#
+# Phase 4 (selectors) adds `tokio` as a *normal* dep for the
+# `time::timeout` + `sync::mpsc` the
+# [`crate::selector::LlmSkillSelector`] uses to bound the AI runner
+# call. Features are kept minimal (`sync`, `time`, `rt`) so the dep
+# tree does not pick up the full multi-thread runtime — the selector
+# itself runs on whatever runtime the host has already started.
 [dependencies]
 starter-flow-spi = { workspace = true }
+# starter-spi is already in the dep tree (starter-flow-spi pulls it),
+# but Phase 4's `selector` module names `starter_spi::ai::AiRunner`
+# directly, which Rust requires us to declare. No new transitive
+# crates land — the dep graph footprint is unchanged.
+starter-spi      = { workspace = true }
 serde            = { workspace = true }
 serde_yaml       = "0.9"
 thiserror        = { workspace = true }
 async-trait      = { workspace = true }
 blake3           = { workspace = true }
 tracing          = { workspace = true }
+tokio            = { workspace = true, features = ["sync", "time", "rt"] }
 
 # Dev-only: smoke tests for the async `ApprovalStore` trait + the
-# (Phase 4) `SkillSelector` impl need an async runtime. tokio is
-# already the workspace runtime; pulling it in as a `dev-dependency`
-# keeps it out of the dep-tree CI gate that R-skills constraints
-# (no provider SDK, no extra normal deps) target.
+# `SkillSelector` impl need the multi-thread runtime macros. Pulling
+# `starter-spi` in here too gives the selector smokes access to the
+# raw `AiRunner` trait + `Provider` enum for the in-test fake.
 [dev-dependencies]
-tokio       = { workspace = true }
+tokio       = { workspace = true, features = ["macros", "rt-multi-thread"] }
 starter-spi = { workspace = true }
 serde_json  = { workspace = true }

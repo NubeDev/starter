@@ -37,12 +37,14 @@ use std::sync::{Arc, RwLock};
 use starter_flow_spi::node::KindId;
 use starter_flow_spi::skill::{ResourceRef, SkillId};
 use starter_flow_spi::Principal;
+use starter_spi::ai::AiRunner;
 use thiserror::Error;
 
 use crate::approval::hash_bundle;
 use crate::bundle::{load_bundle, Bundle};
 use crate::error::SkillParseError;
 use crate::parser::Trust;
+use crate::selector::{KeywordSkillSelector, LlmSkillSelector, SelectorStrategy};
 use crate::store::{ApprovalRow, ApprovalStore, ApprovalStoreError, InMemoryApprovalStore};
 
 /// A loaded skill the registry serves to selectors.
@@ -193,6 +195,13 @@ struct State {
 pub struct SkillRegistryBuilder {
     approval_store: Option<Arc<dyn ApprovalStore>>,
     sources: Vec<Source>,
+    /// Explicit strategy override. When `None`, the builder picks
+    /// `LlmSkillSelector` (if `ai_runner` is set) or
+    /// `KeywordSkillSelector` (otherwise).
+    strategy: Option<Arc<dyn SelectorStrategy>>,
+    /// Optional `AiRunner` used to construct the default
+    /// `LlmSkillSelector` when no explicit strategy is configured.
+    ai_runner: Option<Arc<dyn AiRunner>>,
 }
 
 impl SkillRegistryBuilder {
@@ -202,6 +211,8 @@ impl SkillRegistryBuilder {
         Self {
             approval_store: None,
             sources: Vec::new(),
+            strategy: None,
+            ai_runner: None,
         }
     }
 
@@ -224,17 +235,31 @@ impl SkillRegistryBuilder {
         self
     }
 
-    /// Optional default selector hook. Phase 3 stores it on the
-    /// registry but doesn't dispatch yet; Phase 4 will route
-    /// `SkillRegistry::select` through it.
-    pub fn with_default_selector<S>(self, _selector: S) -> Self
+    /// Explicit selector strategy. Overrides the
+    /// `ai_runner` + default-resolution path described on
+    /// [`crate::selector`]. Hosts that want a custom strategy (for
+    /// example, the "record candidates" wrapper used by the
+    /// quarantine smoke) wire one in this way.
+    pub fn with_default_selector<S>(mut self, strategy: S) -> Self
     where
-        S: starter_flow_spi::skill::SkillSelector,
+        S: SelectorStrategy,
     {
-        // Phase 3 keeps the registry selector-less; the builder
-        // accepts the call so callers can wire it up today and pick
-        // up dispatch transparently in Phase 4. Once Phase 4 lands,
-        // this method stores the selector on a private field.
+        self.strategy = Some(Arc::new(strategy));
+        self
+    }
+
+    /// Variant of [`Self::with_default_selector`] that accepts an
+    /// already-shared `Arc<dyn SelectorStrategy>`.
+    pub fn with_default_selector_arc(mut self, strategy: Arc<dyn SelectorStrategy>) -> Self {
+        self.strategy = Some(strategy);
+        self
+    }
+
+    /// Wire an [`AiRunner`] used to build the default
+    /// [`LlmSkillSelector`] when no explicit strategy is configured.
+    /// Ignored when [`Self::with_default_selector`] is also called.
+    pub fn with_ai_runner(mut self, runner: Arc<dyn AiRunner>) -> Self {
+        self.ai_runner = Some(runner);
         self
     }
 
@@ -269,10 +294,19 @@ impl SkillRegistryBuilder {
             .approval_store
             .unwrap_or_else(|| Arc::new(InMemoryApprovalStore::new()));
 
+        // Default-strategy resolution per `crate::selector` module
+        // docs: explicit override > AiRunner-backed Llm > Keyword.
+        let strategy: Arc<dyn SelectorStrategy> = match (self.strategy, self.ai_runner) {
+            (Some(s), _) => s,
+            (None, Some(runner)) => Arc::new(LlmSkillSelector::new(runner)),
+            (None, None) => Arc::new(KeywordSkillSelector::new()),
+        };
+
         let registry = SkillRegistry {
             inner: Arc::new(RwLock::new(State::default())),
             approval_store,
             sources: Arc::new(self.sources),
+            strategy,
         };
         registry.reload().await?;
         Ok(registry)
@@ -301,6 +335,13 @@ pub struct SkillRegistry {
     inner: Arc<RwLock<State>>,
     approval_store: Arc<dyn ApprovalStore>,
     sources: Arc<Vec<Source>>,
+    /// Selector strategy the [`starter_flow_spi::skill::SkillSelector`]
+    /// impl dispatches to after filtering quarantined bundles out
+    /// (R-skills-3). Frozen at `build()` time; not swappable at
+    /// runtime by design — the engine pins one selector per run, so
+    /// hot-swapping a strategy mid-run would break the
+    /// once-per-run-selection contract.
+    strategy: Arc<dyn SelectorStrategy>,
 }
 
 impl std::fmt::Debug for SkillRegistry {
@@ -324,6 +365,13 @@ impl SkillRegistry {
     /// share the same store across registries.
     pub fn approval_store(&self) -> Arc<dyn ApprovalStore> {
         Arc::clone(&self.approval_store)
+    }
+
+    /// Borrow the configured [`SelectorStrategy`]. Exposed so the
+    /// `SkillSelector` impl in [`crate::selector`] can dispatch
+    /// without re-resolving the default strategy.
+    pub fn strategy(&self) -> Arc<dyn SelectorStrategy> {
+        Arc::clone(&self.strategy)
     }
 
     /// Every approved skill, in deterministic (`BTreeMap`) order.
