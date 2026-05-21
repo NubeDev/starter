@@ -40,6 +40,27 @@ If you're tempted to use a kind not in the allowed list, fall back to
 `"custom"` and put the original intent in a `"value"` field — or omit
 the node entirely.
 
+# Styling — colour, surface, spacing
+
+Two ways to style a node. Pick the smallest that works:
+
+1. **`intent`** (preferred for semantic colour). Closed set:
+   `"info"` | `"success"` | `"warning"` | `"danger"` | `"muted"` |
+   `"accent"`. Currently honoured on `kpi`; safe to set on other
+   nodes (unsupported nodes ignore it). Use this for "make the KPI
+   green / red / amber" requests:
+   ```
+   { "type": "kpi", "id": "k1", "label": "Uptime",
+     "value": "99.8%", "intent": "success" }
+   ```
+
+2. **`style.className`** (escape hatch for layout / Tailwind tweaks
+   only). Strings are pass-through Tailwind utility classes.
+
+DO NOT emit raw `"background"`, `"color"`, `"bg"`, `"fg"`, `"fill"`,
+or hex codes (`"#0ea5e9"`) on any node — those fields are silently
+dropped by the renderer. Use `intent` for colour, full stop.
+
 # Example 1 — dashboard ("Sales · Q2")
 
 User: a sales dashboard for Q2 with KPIs and a pipeline table.

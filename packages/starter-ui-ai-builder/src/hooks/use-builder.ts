@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type Dispatch, type SetStateAction } from "react";
 import { replaceAt, type UiComponentTree } from "@nube/starter-sdui-react";
 import type {
   BuilderAdapter,
@@ -234,6 +234,13 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
 
       const ctrl = new AbortController();
       abortRef.current = ctrl;
+      // Track whether this turn produced a visible chat reply so we
+      // can synthesise a Build-mode acknowledgement on `done` if
+      // nothing else landed. Without this, Build turns look stuck on
+      // "Asking Claude…" — the canvas updates silently and the
+      // chat gives no closure.
+      let sawCanvasUpdate = false;
+      let sawAssistantMessage = false;
 
       try {
         for await (const ev of adapter.send(input, ctrl.signal)) {
@@ -242,6 +249,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
             case "full-render": {
               setTree(() => flushBuffer(ev.tree));
               setPhase((p) => (p === "thinking" ? "writing" : p));
+              sawCanvasUpdate = true;
               break;
             }
             case "patch": {
@@ -283,6 +291,7 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
                 },
               ]);
               setPhase((p) => (p === "thinking" ? "writing" : p));
+              sawAssistantMessage = true;
               break;
             }
             case "session_artifact": {
@@ -314,6 +323,13 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
               if (ev.phase === "done" || ev.phase === "error") {
                 // Server says we're done; stop reading even if the
                 // adapter is generous with trailing frames.
+                finalizeTurnTranscript({
+                  setTranscript,
+                  turnMode,
+                  sawCanvasUpdate,
+                  sawAssistantMessage,
+                  errored: ev.phase === "error",
+                });
                 return;
               }
               break;
@@ -324,6 +340,13 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
           }
         }
         setPhase("done");
+        finalizeTurnTranscript({
+          setTranscript,
+          turnMode,
+          sawCanvasUpdate,
+          sawAssistantMessage,
+          errored: false,
+        });
       } catch (err) {
         if (ctrl.signal.aborted) {
           setPhase("cancelled");
@@ -373,17 +396,28 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
   const retry = useCallback(async () => {
     const last = lastPromptRef.current;
     if (!last) return;
-    // Strip the trailing status frames from the prior turn so the
-    // transcript doesn't accumulate retried noise.
+    // Strip the trailing turn so the transcript doesn't accumulate
+    // retried noise. A "turn" here is the most recent `user` entry
+    // plus any `status`/`assistant` entries that followed it.
     setTranscript((prev) => {
       let i = prev.length;
-      while (i > 0 && prev[i - 1]?.kind === "status") i--;
-      // Drop the most recent user entry too — runTurn re-appends it.
+      while (
+        i > 0 &&
+        (prev[i - 1]?.kind === "status" ||
+          prev[i - 1]?.kind === "assistant")
+      ) {
+        i--;
+      }
+      // Drop the user entry too — runTurn re-appends it.
       if (i > 0 && prev[i - 1]?.kind === "user") i--;
       return prev.slice(0, i);
     });
-    await runTurn(last);
-  }, [runTurn]);
+    // Re-run with the CURRENT mode (not the lane the user was on
+    // when they originally sent the prompt). Otherwise toggling
+    // Build/Ask then hitting Regenerate would silently re-run on
+    // the old lane and the user would see no reply.
+    await runTurn({ ...last, mode });
+  }, [mode, runTurn]);
 
   return useMemo(
     () => ({
@@ -414,4 +448,56 @@ export function useBuilder(opts: UseBuilderOptions): UseBuilderReturn {
       bufferedPatches,
     ],
   );
+}
+
+// Tidy the transcript at end of turn:
+//   - Drop the transient "Asking Claude…" / "Working…" status entries
+//     for the turn that just completed. They served their purpose
+//     during streaming; left in place, they make completed turns look
+//     stuck.
+//   - In Build mode, if the turn produced a canvas update but no
+//     assistant prose (the normal case for Build), synthesise a
+//     short "✓ Updated the page" assistant entry so the chat tells
+//     a complete story instead of looking dead.
+function finalizeTurnTranscript(args: {
+  setTranscript: Dispatch<SetStateAction<BuilderTranscriptEntry[]>>;
+  turnMode: BuilderMode;
+  sawCanvasUpdate: boolean;
+  sawAssistantMessage: boolean;
+  errored: boolean;
+}): void {
+  const {
+    setTranscript,
+    turnMode,
+    sawCanvasUpdate,
+    sawAssistantMessage,
+    errored,
+  } = args;
+  setTranscript((prev) => {
+    // Walk backwards past the trailing turn (status / assistant
+    // entries that landed after the last user bubble), stripping any
+    // transient `thinking` / `writing` status frames. We keep error
+    // statuses (the user needs to see them) and assistant bubbles.
+    const next = [...prev];
+    for (let i = next.length - 1; i >= 0; i--) {
+      const e = next[i]!;
+      if (e.kind === "user") break;
+      if (
+        e.kind === "status" &&
+        (e.phase === "thinking" || e.phase === "writing")
+      ) {
+        next.splice(i, 1);
+      }
+    }
+    if (errored) return next;
+    if (turnMode === "build" && sawCanvasUpdate && !sawAssistantMessage) {
+      next.push({
+        id: `done_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        kind: "assistant",
+        text: "✓ Updated the page.",
+        createdAt: Date.now(),
+      });
+    }
+    return next;
+  });
 }

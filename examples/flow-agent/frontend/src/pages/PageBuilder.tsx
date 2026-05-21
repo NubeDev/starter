@@ -41,9 +41,11 @@ import {
   getArtifactVersion,
   getLatestArtifact,
   listArtifactVersions,
+  listTurns,
   loadSessionId,
   saveSessionId,
   type ArtifactVersionMeta,
+  type PersistedTurn,
 } from "@/lib/sessions"
 
 /** URL of the live builder SSE route (proxied by Vite to the
@@ -182,15 +184,26 @@ export function PageBuilder(props: PageBuilderProps = {}) {
             const tree = asTree(art)
             if (tree) {
               builder.setTree(tree)
-              // Refresh version list for the badge / picker.
-              try {
-                const vs = await listArtifactVersions(id, "tree", ctrl.signal)
-                if (!cancelled) setVersions(vs)
-              } catch {
-                /* non-fatal */
-              }
-              return
             }
+            // Rehydrate the chat transcript regardless of whether
+            // a tree exists — Ask-mode sessions may have turns
+            // without ever producing an artifact.
+            try {
+              const turns = await listTurns(id, ctrl.signal)
+              if (!cancelled && turns.length > 0) {
+                builder.setTranscript(turnsToTranscript(turns))
+              }
+            } catch {
+              /* non-fatal — transcript stays empty */
+            }
+            // Refresh version list for the badge / picker.
+            try {
+              const vs = await listArtifactVersions(id, "tree", ctrl.signal)
+              if (!cancelled) setVersions(vs)
+            } catch {
+              /* non-fatal */
+            }
+            return
           } catch (e) {
             // 4xx/5xx (likely 400 "invalid session_id" or backend
             // restart that lost in-memory state): forget the id
@@ -430,4 +443,50 @@ function PhaseBadge({
       {phase}
     </span>
   )
+}
+
+// Persisted turns → transcript entries. The backend stores
+// content as a JSON string for user prompts and Ask-mode assistant
+// replies; Build-mode assistant turns persist with an empty string
+// (the SDUI tree lives in an artifact, which the canvas already
+// renders). We pair each User turn with the *next* turn so we can
+// tag the bubble with the lane it ran on.
+function turnsToTranscript(
+  turns: PersistedTurn[],
+): Parameters<ReturnType<typeof useBuilder>["setTranscript"]>[0] {
+  const out: Parameters<ReturnType<typeof useBuilder>["setTranscript"]>[0] = []
+  const asText = (v: unknown) => (typeof v === "string" ? v : "")
+  for (let i = 0; i < turns.length; i++) {
+    const t = turns[i]!
+    if (t.role === "user") {
+      const next = turns[i + 1]
+      const nextText = next?.role === "assistant" ? asText(next.content) : ""
+      // Empty assistant content == Build (tree went to an artifact);
+      // non-empty == Ask (the prose IS the reply).
+      const mode: "build" | "ask" =
+        next?.role === "assistant" && nextText.length > 0 ? "ask" : "build"
+      out.push({
+        id: `turn-${t.seq}`,
+        kind: "user",
+        text: asText(t.content),
+        mode,
+        createdAt: Date.parse(t.created_at) || Date.now(),
+      })
+    } else if (t.role === "assistant") {
+      const text = asText(t.content)
+      if (text.length === 0) {
+        // Build turn: nothing to show in the chat; the artifact
+        // already populated the canvas via getLatestArtifact.
+        continue
+      }
+      out.push({
+        id: `turn-${t.seq}`,
+        kind: "assistant",
+        text,
+        createdAt: Date.parse(t.created_at) || Date.now(),
+      })
+    }
+    // tool turns are not surfaced in the chat.
+  }
+  return out
 }

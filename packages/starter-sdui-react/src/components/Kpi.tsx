@@ -20,7 +20,27 @@ export interface KpiNode extends UiComponent {
   delta?: number;
   /** Optional action handler — fires on tile click. */
   on_click?: string;
+  /** Closed-set semantic colour. Applied to the card surface using
+   *  theme-aware utility classes so light/dark both look right.
+   *  Prefer this over `style.className` for colouring KPIs — it's the
+   *  contract the prompt teaches the model and the only field the
+   *  model is allowed to emit for colour. Free-form
+   *  `style.className` is still honoured for edge cases. */
+  intent?: "info" | "success" | "warning" | "danger" | "muted" | "accent";
 }
+
+/** Map closed-set `intent` token → Tailwind utility classes for the
+ *  card surface. Foreground colour is left to the existing typography
+ *  utilities (the label stays muted, the value stays the card's
+ *  default text colour) so we don't fight contrast. */
+const KPI_INTENT_CLASSES: Record<NonNullable<KpiNode["intent"]>, string> = {
+  info: "border-sky-500/40 bg-sky-500/10",
+  success: "border-emerald-500/40 bg-emerald-500/10",
+  warning: "border-amber-500/40 bg-amber-500/10",
+  danger: "border-rose-500/40 bg-rose-500/10",
+  muted: "border-muted-foreground/20 bg-muted/40",
+  accent: "border-violet-500/40 bg-violet-500/10",
+};
 
 export const kpiSpec: ComponentSpec<KpiNode> = {
   kind: "kpi",
@@ -32,10 +52,11 @@ export const kpiSpec: ComponentSpec<KpiNode> = {
           void dispatchAction(node.on_click!);
         }
       : undefined;
+    const intentClass = node.intent ? KPI_INTENT_CLASSES[node.intent] : "";
     return (
       <Card
         onClick={onClick}
-        className={`${onClick ? "cursor-pointer transition hover:bg-accent" : ""} ${
+        className={`${onClick ? "cursor-pointer transition hover:bg-accent" : ""} ${intentClass} ${
           node.style?.className ?? ""
         }`}
       >
