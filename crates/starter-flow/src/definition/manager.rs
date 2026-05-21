@@ -135,7 +135,7 @@ pub struct BootResumeReport {
 /// The HR1 publish chokepoint.
 ///
 /// Owns the dependencies the chokepoint needs (the persistence seam
-/// + the kind registry) and the broadcast bus consumers subscribe to
+/// and the kind registry) and the broadcast bus consumers subscribe to
 /// for [`FlowDefinitionEvent`] notifications. Constructed by the
 /// host binary at engine wire-up time and stored on the `Engine`
 /// (the wire-up is Phase HR-2 work; HR-1 ships the manager as a
@@ -374,7 +374,7 @@ impl DefinitionManager {
             let head_hash = body_hash(&prev.body);
             if head_hash == draft_hash {
                 span.record("outcome", "short_circuited");
-                span.record("revision", &tracing::field::display(&prev.revision_id));
+                span.record("revision", tracing::field::display(&prev.revision_id));
                 self.metrics.add_short_circuited();
                 debug!(
                     target: "starter_flow::definition",
@@ -417,9 +417,9 @@ impl DefinitionManager {
         let revision = FlowRevision::new(flow_id.clone(), revision_id, body)
             .with_source(source.audit_tag());
         let written = self.store.put(revision).await?;
-        span.record("revision", &tracing::field::display(&written));
+        span.record("revision", tracing::field::display(&written));
         if let Some(prev) = prev_head.as_ref() {
-            span.record("prev_head", &tracing::field::display(prev));
+            span.record("prev_head", tracing::field::display(prev));
         }
 
         // Emit RevisionPublished FIRST so consumers observe the
@@ -576,6 +576,13 @@ impl DefinitionManager {
     /// Install a freshly-resolved topology and emit the swap event.
     /// Initial mounts also emit a `Mounted` event so consumers can
     /// distinguish first-time mount from subsequent swaps.
+    ///
+    /// The arity matches the publish-pipeline's bound context (flow,
+    /// resolved topology, new + prev revision, apply policy, source,
+    /// edit kind) — every parameter is consumed and grouping them
+    /// into a struct just to satisfy clippy::too_many_arguments
+    /// would obscure the call site without removing information.
+    #[allow(clippy::too_many_arguments)]
     async fn swap_topology(
         &self,
         flow_id: FlowId,
@@ -1665,11 +1672,11 @@ mod tests {
         // SwapApplied event carries the policy that governed the swap.
         let mut saw_swap_with_restart = false;
         for _ in 0..3 {
-            if let Ok(ev) = timeout(Duration::from_millis(100), def_rx.recv()).await {
-                if let Ok(FlowDefinitionEvent::SwapApplied { apply_policy, .. }) = ev {
-                    if matches!(apply_policy, ApplyPolicy::Restart) {
-                        saw_swap_with_restart = true;
-                    }
+            if let Ok(Ok(FlowDefinitionEvent::SwapApplied { apply_policy, .. })) =
+                timeout(Duration::from_millis(100), def_rx.recv()).await
+            {
+                if matches!(apply_policy, ApplyPolicy::Restart) {
+                    saw_swap_with_restart = true;
                 }
             }
         }

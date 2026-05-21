@@ -469,6 +469,8 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::approx_constant)]
+    // 3.14 is a generic float fixture for the f64 branch — not π.
     fn json_conversion_maps_primitives() {
         assert!(matches!(json_to_slot_value(serde_json::json!(null)), SlotValue::Null));
         assert!(matches!(json_to_slot_value(serde_json::json!(true)), SlotValue::Bool(true)));
