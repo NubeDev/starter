@@ -26,6 +26,8 @@ import { Card } from "@/components/ui/card";
 
 import { ApiError, api, type Flow, type Run } from "@/lib/api";
 import { useSse } from "@/lib/sse";
+import { useDateFormatters } from "@/hooks/use-date-formatters";
+import { useTranslate } from "@nube/starter-ui-core/i18n";
 
 // SSE payloads emitted by `GET /api/flows/{id}/events`. Mirrors the
 // `RunEvent` enum in `src/sse.rs`. Kept narrow — only the variants the
@@ -121,6 +123,7 @@ function makeNodeId(kind: string): string {
 export function FlowEditor() {
   const { id = "" } = useParams();
   const qc = useQueryClient();
+  const t = useTranslate();
 
   const flowQuery = useQuery<Flow>({
     queryKey: ["flow", id],
@@ -370,7 +373,7 @@ export function FlowEditor() {
           <h1 className="text-lg font-semibold tracking-tight">{flow.name}</h1>
           <p className="text-xs text-muted-foreground">
             {id} · v{flow.version}
-            {dirty ? " · unsaved changes" : ""}
+            {dirty ? t("flow_agent.flow_editor.unsaved") : ""}
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -380,14 +383,16 @@ export function FlowEditor() {
             onClick={() => flowQuery.refetch()}
             disabled={flowQuery.isFetching}
           >
-            Refresh
+            {t("flow_agent.flow_editor.refresh")}
           </Button>
           <Button
             size="sm"
             onClick={() => save.mutate()}
             disabled={!dirty || save.isPending}
           >
-            {save.isPending ? "Saving…" : "Save"}
+            {save.isPending
+              ? t("flow_agent.flow_editor.saving")
+              : t("flow_agent.flow_editor.save")}
           </Button>
           <Button
             size="sm"
@@ -396,39 +401,40 @@ export function FlowEditor() {
             disabled={fire.isPending || dirty || activeRunId !== null}
             title={
               dirty
-                ? "Save before running"
+                ? t("flow_agent.flow_editor.tooltip.save_first")
                 : activeRunId !== null
-                  ? "A run is already in progress"
-                  : "Fire the flow"
+                  ? t("flow_agent.flow_editor.tooltip.run_in_progress")
+                  : t("flow_agent.flow_editor.tooltip.fire")
             }
           >
             {fire.isPending
-              ? "Firing…"
+              ? t("flow_agent.flow_editor.firing")
               : activeRunId !== null
-                ? "Running…"
-                : "Run"}
+                ? t("flow_agent.flow_editor.running")
+                : t("flow_agent.flow_editor.run")}
           </Button>
         </div>
       </header>
 
       {conflict ? (
         <Alert className="mx-6 mt-3 border-amber-500/60 bg-amber-500/5">
-          <AlertTitle>Server has a newer version (v{conflict.version})</AlertTitle>
+          <AlertTitle>
+            {t("flow_agent.flow_editor.conflict.title", {
+              version: conflict.version,
+            })}
+          </AlertTitle>
           <AlertDescription className="flex items-center justify-between gap-3">
-            <span>
-              Your edits are still in the canvas. Save again to keep working
-              from the server graph, or reload to discard your changes.
-            </span>
+            <span>{t("flow_agent.flow_editor.conflict.description")}</span>
             <div className="flex gap-2">
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => setConflict(null)}
               >
-                Keep editing
+                {t("flow_agent.flow_editor.conflict.keep_editing")}
               </Button>
               <Button size="sm" variant="outline" onClick={discardAndReload}>
-                Reload server graph
+                {t("flow_agent.flow_editor.conflict.reload")}
               </Button>
             </div>
           </AlertDescription>
@@ -437,14 +443,14 @@ export function FlowEditor() {
 
       {saveError ? (
         <Alert className="mx-6 mt-3 border-destructive/60 bg-destructive/5">
-          <AlertTitle>Save failed</AlertTitle>
+          <AlertTitle>{t("flow_agent.flow_editor.save_failed")}</AlertTitle>
           <AlertDescription>{saveError}</AlertDescription>
         </Alert>
       ) : null}
 
       <div className="flex items-center gap-2 border-b border-border/60 bg-muted/30 px-4 py-2">
         <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-          Insert
+          {t("flow_agent.flow_editor.insert")}
         </span>
         <div className="flex flex-wrap gap-1.5">
           {palettePicks.map((spec) => (
@@ -467,7 +473,7 @@ export function FlowEditor() {
 
       {fire.isError ? (
         <Alert className="mx-6 mt-3 border-destructive/60 bg-destructive/5">
-          <AlertTitle>Run failed to start</AlertTitle>
+          <AlertTitle>{t("flow_agent.flow_editor.run_failed")}</AlertTitle>
           <AlertDescription>
             {fire.error instanceof Error
               ? fire.error.message
@@ -513,19 +519,23 @@ function RecentRunsPanel({
   activeRunId: string | null;
 }) {
   const recent = runs.slice(0, 10);
+  const dates = useDateFormatters();
+  const t = useTranslate();
   return (
     <aside className="border-t border-border/60 bg-muted/20 px-6 py-3">
       <div className="mb-2 flex items-center justify-between">
         <h2 className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-          Recent runs
+          {t("flow_agent.flow_editor.recent_runs")}
         </h2>
         <span className="text-[10px] text-muted-foreground">
-          {loading ? "Loading…" : `${recent.length} shown`}
+          {loading
+            ? t("flow_agent.flow_editor.loading")
+            : t("flow_agent.flow_editor.runs_shown", { n: recent.length })}
         </span>
       </div>
       {recent.length === 0 ? (
         <p className="text-xs text-muted-foreground">
-          No runs yet. Hit Run to fire this flow.
+          {t("flow_agent.flow_editor.no_runs")}
         </p>
       ) : (
         <ul className="flex flex-col gap-1.5">
@@ -546,7 +556,7 @@ function RecentRunsPanel({
                   </code>
                 </div>
                 <span className="text-[11px] text-muted-foreground">
-                  {formatTimestamp(run.finished_at ?? run.started_at)}
+                  {dates.dateTime(run.finished_at ?? run.started_at)}
                 </span>
               </li>
             );
@@ -557,8 +567,11 @@ function RecentRunsPanel({
   );
 }
 
-function formatTimestamp(iso: string): string {
-  const d = new Date(iso);
-  if (Number.isNaN(d.getTime())) return iso;
-  return d.toLocaleString();
+function formatTimestamp(_iso: string): string {
+  // Deprecated. Use `useDateFormatters()` for preference-aware
+  // (locale, timezone, date_format, time_format) rendering. Kept as
+  // a function shape so any out-of-tree caller surfaces a clear
+  // compile error rather than a runtime miss.
+  throw new Error("formatTimestamp is deprecated; call useDateFormatters().dateTime");
 }
+void formatTimestamp;

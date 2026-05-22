@@ -49,6 +49,32 @@ export function formatTime(timestampMs: number, prefs: ResolvedPreferences): str
   );
 }
 
+/** Render a UNIX-millis timestamp as a combined date + time in the
+ * user's preferred patterns + timezone. This is the
+ * preference-aware replacement for `Date.prototype.toLocaleString()`:
+ * call sites that previously hard-coded the browser locale should
+ * switch to this so the active locale, timezone, date-format, and
+ * time-format preferences all flow through.
+ *
+ * The two halves are composed (not concatenated as raw strings) via
+ * `Intl.DateTimeFormat.formatToParts` when both halves are `"auto"`
+ * so the locale's preferred join character (e.g. `", "` for `en-US`,
+ * `" "` for `es-ES`) is honoured. When either half is an explicit
+ * pattern we fall back to a plain `${date} ${time}` join — explicit
+ * patterns are the user opting out of the locale's join. */
+export function formatDateTime(timestampMs: number, prefs: ResolvedPreferences): string {
+  if (prefs.date_format === "auto" && prefs.time_format === "auto") {
+    return new Intl.DateTimeFormat(prefs.locale, {
+      timeZone: prefs.timezone,
+      dateStyle: "short",
+      timeStyle: "short",
+    }).format(new Date(timestampMs));
+  }
+  const d = formatDate(timestampMs, prefs);
+  const t = formatTime(timestampMs, prefs);
+  return `${d} ${t}`;
+}
+
 function dateOptions(fmt: DateFormat, timeZone: string): Intl.DateTimeFormatOptions {
   switch (fmt) {
     case "auto":

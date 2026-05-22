@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import {
   formatCurrency,
   formatDate,
+  formatDateTime,
   formatNumber,
   formatQuantity,
   formatTime,
@@ -76,6 +77,38 @@ describe("formatTime", () => {
 
   it("auto defers to locale", () => {
     expect(formatTime(TS, basePrefs({ locale: "en-GB", time_format: "auto" }))).toMatch(/14:30|15:30/);
+  });
+});
+
+describe("formatDateTime", () => {
+  it("auto/auto uses locale-joined short date + time", () => {
+    // en-US Intl returns e.g. "6/15/24, 2:30 PM" — exact spacing
+    // depends on Intl impl, but the date + time parts always appear.
+    const out = formatDateTime(TS, basePrefs());
+    expect(out).toMatch(/6\/15\/24/);
+    expect(out).toMatch(/2:30/);
+  });
+
+  it("falls through to date + ' ' + time when either side is explicit", () => {
+    const out = formatDateTime(
+      TS,
+      basePrefs({ date_format: "YYYY-MM-DD", time_format: "24h" }),
+    );
+    expect(out).toMatch(/^[\d/]+ 14:30$/);
+    expect(out).toContain("14:30");
+    expect(out).toContain("2024");
+  });
+
+  it("honours timezone for both halves", () => {
+    // 2024-06-16 03:30 UTC == 2024-06-15 23:30 in NYC.
+    const lateNYC = Date.UTC(2024, 5, 16, 3, 30, 0);
+    const out = formatDateTime(
+      lateNYC,
+      basePrefs({ timezone: "America/New_York", date_format: "YYYY-MM-DD", time_format: "24h" }),
+    );
+    expect(out).toMatch(/2024/);
+    expect(out).toMatch(/06\/15|15\/06|06-15/);
+    expect(out).toContain("23:30");
   });
 });
 

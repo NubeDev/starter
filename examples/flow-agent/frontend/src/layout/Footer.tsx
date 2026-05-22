@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom"
 import { IconChevronRight } from "@tabler/icons-react"
+import { useTranslate, type TranslateFn } from "@nube/starter-ui-core/i18n"
 
 import type { AgentSummary, FlowSummary } from "@/lib/api"
 import type { PageRecord } from "@/lib/pages-store"
@@ -11,32 +12,43 @@ function crumbsFor(
   flows: FlowSummary[],
   agents: AgentSummary[],
   pages: PageRecord[],
+  t: TranslateFn,
 ): Crumb[] {
-  if (pathname.startsWith("/settings")) return [{ label: "Settings" }]
-  if (pathname.startsWith("/skills")) return [{ label: "Skills" }]
+  const flowsLabel = t("flow_agent.nav.flows")
+  const agentsLabel = t("flow_agent.nav.agents")
+  const pagesLabel = t("flow_agent.nav.pages")
+
+  if (pathname.startsWith("/settings"))
+    return [{ label: t("flow_agent.nav.settings") }]
+  if (pathname.startsWith("/skills"))
+    return [{ label: t("flow_agent.nav.skills") }]
 
   if (pathname.startsWith("/pages")) {
-    const base: Crumb = { label: "Pages", href: "/pages" }
+    const base: Crumb = { label: pagesLabel, href: "/pages" }
     if (pathname === "/pages" || pathname === "/pages/") {
-      return [{ label: "Pages" }]
+      return [{ label: pagesLabel }]
     }
     if (pathname === "/pages/new") {
-      return [base, { label: "New page" }]
+      return [base, { label: t("flow_agent.breadcrumb.new_page") }]
     }
     const rest = pathname.slice("/pages/".length)
     const id = rest.replace(/\/edit$/, "")
     const p = pages.find((x) => x.id === id)
     const name = p ? p.name : id
     if (rest.endsWith("/edit")) {
-      return [base, { label: name, href: `/pages/${id}` }, { label: "Edit" }]
+      return [
+        base,
+        { label: name, href: `/pages/${id}` },
+        { label: t("flow_agent.breadcrumb.edit") },
+      ]
     }
     return [base, { label: name }]
   }
 
   if (pathname.startsWith("/agents")) {
-    const base: Crumb = { label: "Agents", href: "/agents" }
+    const base: Crumb = { label: agentsLabel, href: "/agents" }
     if (pathname === "/agents" || pathname === "/agents/") {
-      return [{ label: "Agents" }]
+      return [{ label: agentsLabel }]
     }
     const id = pathname.slice("/agents/".length)
     const a = agents.find((x) => x.id === id)
@@ -44,16 +56,16 @@ function crumbsFor(
   }
 
   // /flows and default
-  const base: Crumb = { label: "Flows", href: "/flows" }
+  const base: Crumb = { label: flowsLabel, href: "/flows" }
   if (pathname === "/" || pathname === "/flows" || pathname === "/flows/") {
-    return [{ label: "Flows" }]
+    return [{ label: flowsLabel }]
   }
   if (pathname.startsWith("/flows/")) {
     const id = pathname.slice("/flows/".length)
     const f = flows.find((x) => x.id === id)
     return [base, { label: f ? f.name : id }]
   }
-  return [{ label: "Flows" }]
+  return [{ label: flowsLabel }]
 }
 
 export function Footer({
@@ -66,7 +78,8 @@ export function Footer({
   pages: PageRecord[]
 }) {
   const location = useLocation()
-  const crumbs = crumbsFor(location.pathname, flows, agents, pages)
+  const t = useTranslate()
+  const crumbs = crumbsFor(location.pathname, flows, agents, pages, t)
 
   return (
     <footer

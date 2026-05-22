@@ -3,6 +3,8 @@ import { useQuery } from "@tanstack/react-query"
 import { IconCheck, IconX, IconSettings } from "@tabler/icons-react"
 import { ThemeEditorPage } from "@kit/theme-editor"
 import { localStorageThemeTransport } from "@nube/starter-ui-core/theme-editor"
+import { SettingsPage as PreferencesSettingsPage } from "@nube/starter-ui-core/preferences"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 import { Badge } from "@/components/ui/badge"
 import { PageHero } from "@/components/page-hero"
@@ -27,21 +29,51 @@ export function Settings() {
     () => localStorageThemeTransport({ key: "fa-theme" }),
     [],
   )
+  const t = useTranslate()
 
   return (
     <div className="flex flex-col gap-6 px-4 py-6 lg:px-6">
       <PageHero
         icon={IconSettings}
         accent="var(--accent-settings)"
-        title="Settings"
-        description="Providers status and theme customisation."
+        title={t("flow_agent.page.settings.title")}
+        description={t("flow_agent.page.settings.description")}
       />
 
-      <Tabs defaultValue="providers">
+      <Tabs defaultValue="preferences">
         <TabsList>
-          <TabsTrigger value="providers">Providers</TabsTrigger>
-          <TabsTrigger value="theme">Theme</TabsTrigger>
+          <TabsTrigger value="preferences">
+            {t("flow_agent.page.settings.tab.preferences")}
+          </TabsTrigger>
+          <TabsTrigger value="providers">
+            {t("flow_agent.page.settings.tab.providers")}
+          </TabsTrigger>
+          <TabsTrigger value="theme">
+            {t("flow_agent.page.settings.tab.theme")}
+          </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="preferences" className="pt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">
+                {t("flow_agent.page.settings.preferences.title")}
+              </CardTitle>
+              <CardDescription>
+                {t("flow_agent.page.settings.preferences.description")}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <PreferencesSettingsPage
+                onToast={({ kind, message }) => {
+                  if (typeof console !== "undefined") {
+                    console.info(`[prefs] ${kind}: ${message}`)
+                  }
+                }}
+              />
+            </CardContent>
+          </Card>
+        </TabsContent>
 
         <TabsContent value="providers" className="pt-4">
           <ProvidersPanel />

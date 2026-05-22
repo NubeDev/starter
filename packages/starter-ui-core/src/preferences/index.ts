@@ -29,6 +29,7 @@ export type { UnitsResponse } from "./units.js";
 export {
   formatCurrency,
   formatDate,
+  formatDateTime,
   formatNumber,
   formatQuantity,
   formatTime,

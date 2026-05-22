@@ -7,6 +7,7 @@ import { ThemeProvider } from "@kit/theme";
 import "./globals.css";
 import { App } from "./app";
 import { DefaultThemeBridge } from "@/components/default-theme-bridge";
+import { PrefsHostShell } from "./prefs-host";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -22,9 +23,11 @@ createRoot(root).render(
     <ThemeProvider defaultTheme="system">
       <DefaultThemeBridge />
       <QueryClientProvider client={queryClient}>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
+        <PrefsHostShell queryClient={queryClient}>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </PrefsHostShell>
       </QueryClientProvider>
     </ThemeProvider>
   </StrictMode>,

@@ -86,6 +86,11 @@ export default defineConfig({
     port: 9742,
     proxy: {
       "/api": sseSafeProxy,
+      // starter-prefs + starter-i18n REST surface served by the
+      // flow-agent backend. Proxying here lets the SPA hit
+      // `/v1/me/preferences`, `/v1/units`, `/v1/i18n/manifest`, and
+      // `/v1/i18n/catalogs/...` without CORS configuration.
+      "/v1": "http://localhost:9741",
       "/health": "http://localhost:9741",
       "/openapi.json": "http://localhost:9741",
     },

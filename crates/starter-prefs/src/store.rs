@@ -23,6 +23,23 @@ use crate::resolver::{OrgPrefsRow, StringPref, UnitPref, UserPrefsRow};
 
 /// Embedded migrations for the sqlite backend. Apply via
 /// [`SqlitePrefsStore::migrate`] before any other call.
+///
+/// Composing with `starter-store-sqlite`'s namespaced
+/// migration runner is one struct literal away:
+///
+/// ```ignore
+/// use starter_store_sqlite::MigrationSource;
+///
+/// const PREFS_SOURCE: MigrationSource = MigrationSource {
+///     name: "starter_prefs",
+///     migrator: &starter_prefs::store::MIGRATIONS,
+/// };
+/// ```
+///
+/// We intentionally do NOT export the `MigrationSource` constant
+/// from this crate — that would invert the dependency direction
+/// (starter-prefs would have to know about starter-store-sqlite,
+/// which already depends only on `starter-spi`).
 #[cfg(feature = "sqlite")]
 pub static MIGRATIONS: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 

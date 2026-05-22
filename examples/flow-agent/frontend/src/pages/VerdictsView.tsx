@@ -27,6 +27,8 @@ import {
   type InsightsSeverity,
   type InsightsVerdict,
 } from "@/lib/api"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 function severityVariant(
   s: InsightsSeverity,
@@ -55,6 +57,8 @@ function VerdictsListPanel() {
     queryFn: () => api.insights.listVerdicts(),
   })
   const [filter, setFilter] = useState("")
+  const dates = useDateFormatters()
+  const tr = useTranslate()
 
   const filtered = useMemo<InsightsVerdict[]>(() => {
     const all = verdicts.data ?? []
@@ -77,13 +81,13 @@ function VerdictsListPanel() {
       <PageHero
         icon={IconReportAnalytics}
         accent="var(--accent-info)"
-        title="Insights · Verdicts"
-        description="Filterable list of rule outputs. Click a row for a printable detail page."
+        title={tr("flow_agent.page.insights.verdicts.title")}
+        description={tr("flow_agent.page.insights.verdicts.description")}
         actions={<Badge variant="secondary">{total} total</Badge>}
       />
 
       <Input
-        placeholder="Filter by rule id, severity, tag, or summary…"
+        placeholder={tr("flow_agent.page.insights.verdicts.filter.placeholder")}
         value={filter}
         onChange={(e) => setFilter(e.target.value)}
         className="max-w-md"
@@ -130,7 +134,7 @@ function VerdictsListPanel() {
                     {v.rule_id}
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
-                    {new Date(v.at).toLocaleString()}
+                    {dates.dateTime(v.at)}
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1">
@@ -171,6 +175,7 @@ function VerdictDetail({ id }: { id: string }) {
     queryKey: ["insights", "verdict", id],
     queryFn: () => api.insights.getVerdict(id),
   })
+  const dates = useDateFormatters()
 
   if (verdict.isLoading) {
     return <div className="px-4 py-6 lg:px-6">Loading…</div>
@@ -236,13 +241,11 @@ function VerdictDetail({ id }: { id: string }) {
         <Field label="Rule" value={v.rule_id} mono />
         <Field
           label="At"
-          value={`${new Date(v.at).toLocaleString()} (${v.tz})`}
+          value={`${dates.dateTime(v.at)} (${v.tz})`}
         />
         <Field
           label="Window"
-          value={`${new Date(v.window.start).toLocaleString()} → ${new Date(
-            v.window.end,
-          ).toLocaleString()}`}
+          value={`${dates.dateTime(v.window.start)} → ${dates.dateTime(v.window.end)}`}
         />
         <Field
           label="Confidence (raw / effective)"

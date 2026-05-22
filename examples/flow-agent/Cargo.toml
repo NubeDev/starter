@@ -22,6 +22,13 @@ starter-store-sqlite  = { workspace = true, features = ["flow"] }
 starter-observability = { workspace = true }
 starter-cache         = { workspace = true }
 
+# Prefs + i18n (US English + Spanish, US/metric/imperial units,
+# timezone-aware date/time). flow-agent has no real auth so we mount
+# these behind `starter_server::auth::with_anonymous_principal` —
+# every request resolves to the same local-operator principal.
+starter-prefs         = { workspace = true, features = ["routes", "sqlite"] }
+starter-i18n          = { workspace = true, features = ["routes"] }
+
 # Flow engine + nodes (Phase 3+).
 starter-flow       = { workspace = true }
 starter-flow-spi   = { workspace = true }

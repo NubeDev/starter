@@ -141,7 +141,7 @@ async fn get_series(
     Query(q): Query<SeriesQuery>,
 ) -> Json<SeriesResponse> {
     let bucket_minutes = parse_bucket(q.bucket.as_deref()).unwrap_or(5);
-    let points = q.points.unwrap_or(DEFAULT_POINTS).min(MAX_POINTS).max(1);
+    let points = q.points.unwrap_or(DEFAULT_POINTS).clamp(1, MAX_POINTS);
     let key = format!("series|bucket={bucket_minutes}m|points={points}");
 
     let started = Instant::now();

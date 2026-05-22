@@ -36,10 +36,12 @@ import {
 } from "@/components/ui/empty"
 import { SduiHost } from "@/lib/sdui-shim"
 import { deletePage, getPage, savePage } from "@/lib/pages-store"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
 
 export function PageView() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const dates = useDateFormatters()
   const page = id ? getPage(id) : undefined
 
   if (!page) {
@@ -84,7 +86,7 @@ export function PageView() {
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">{page.name}</h2>
           <p className="text-xs text-muted-foreground">
-            Saved {new Date(page.updatedAt).toLocaleString()}
+            Saved {dates.dateTime(page.updatedAt)}
           </p>
         </div>
         <div className="flex items-center gap-2">

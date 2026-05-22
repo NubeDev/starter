@@ -31,6 +31,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { api, type AgentSummary, type FlowSummary } from "@/lib/api"
 import { useSse } from "@/lib/sse"
 import { usePages, type PageRecord } from "@/lib/pages-store"
+import { useTranslate, type TranslateFn } from "@nube/starter-ui-core/i18n"
 
 type SidebarEvent =
   | { type: "flow-created"; id: string; name: string }
@@ -45,36 +46,44 @@ function titleFor(
   flows: FlowSummary[],
   agents: AgentSummary[],
   pages: PageRecord[],
+  t: TranslateFn,
 ): string {
-  if (pathname.startsWith("/settings")) return "Settings"
-  if (pathname.startsWith("/skills")) return "Skills"
-  if (pathname.startsWith("/cache-demo")) return "Cache demo"
-  if (pathname.startsWith("/insights/rules")) return "Insights · Rules"
-  if (pathname.startsWith("/insights/pipelines")) return "Insights · Pipelines"
-  if (pathname.startsWith("/insights/verdicts/")) return "Insights · Verdict"
-  if (pathname.startsWith("/insights/verdicts")) return "Insights · Verdicts"
-  if (pathname.startsWith("/insights")) return "Insights"
-  if (pathname === "/pages/new") return "Pages · New page"
+  const flowsLabel = t("flow_agent.nav.flows")
+  const agentsLabel = t("flow_agent.nav.agents")
+  const pagesLabel = t("flow_agent.nav.pages")
+  if (pathname.startsWith("/settings")) return t("flow_agent.nav.settings")
+  if (pathname.startsWith("/skills")) return t("flow_agent.nav.skills")
+  if (pathname.startsWith("/cache-demo")) return t("flow_agent.nav.cache_demo")
+  if (pathname.startsWith("/insights/rules"))
+    return t("flow_agent.page.insights.rules.title")
+  if (pathname.startsWith("/insights/pipelines"))
+    return t("flow_agent.page.insights.pipelines.title")
+  if (pathname.startsWith("/insights/verdicts/"))
+    return t("flow_agent.page.insights.verdicts.title")
+  if (pathname.startsWith("/insights/verdicts"))
+    return t("flow_agent.page.insights.verdicts.title")
+  if (pathname.startsWith("/insights")) return t("flow_agent.nav.insights")
+  if (pathname === "/pages/new") return `${pagesLabel} · New page`
   if (pathname.startsWith("/pages/")) {
     const rest = pathname.slice("/pages/".length)
     const id = rest.replace(/\/edit$/, "")
     const p = pages.find((x) => x.id === id)
     const suffix = rest.endsWith("/edit") ? " · Edit" : ""
-    return p ? `Pages · ${p.name}${suffix}` : "Pages"
+    return p ? `${pagesLabel} · ${p.name}${suffix}` : pagesLabel
   }
-  if (pathname.startsWith("/pages")) return "Pages"
+  if (pathname.startsWith("/pages")) return pagesLabel
   if (pathname.startsWith("/agents/")) {
     const id = pathname.slice("/agents/".length)
     const a = agents.find((x) => x.id === id)
-    return a ? `Agents · ${a.name}` : "Agents"
+    return a ? `${agentsLabel} · ${a.name}` : agentsLabel
   }
-  if (pathname.startsWith("/agents")) return "Agents"
+  if (pathname.startsWith("/agents")) return agentsLabel
   if (pathname.startsWith("/flows/")) {
     const id = pathname.slice("/flows/".length)
     const f = flows.find((x) => x.id === id)
-    return f ? `Flows · ${f.name}` : "Flows"
+    return f ? `${flowsLabel} · ${f.name}` : flowsLabel
   }
-  return "Flows"
+  return flowsLabel
 }
 
 function activeUrlFor(pathname: string): string {
@@ -116,11 +125,12 @@ export function Shell() {
   const flows = flowsQ.data ?? []
   const agents = agentsQ.data ?? []
   const pages = usePages()
+  const t = useTranslate()
 
   const navMain = useMemo<NavMainItem[]>(
     () => [
       {
-        title: "Flows",
+        title: t("flow_agent.nav.flows"),
         url: "/flows",
         icon: IconSitemap,
         accent: "var(--accent-flows)",
@@ -140,7 +150,7 @@ export function Shell() {
         })),
       },
       {
-        title: "Agents",
+        title: t("flow_agent.nav.agents"),
         url: "/agents",
         icon: IconRobot,
         accent: "var(--accent-agents)",
@@ -152,7 +162,7 @@ export function Shell() {
         })),
       },
       {
-        title: "Pages",
+        title: t("flow_agent.nav.pages"),
         url: "/pages",
         icon: IconLayoutDashboard,
         accent: "var(--accent-info)",
@@ -164,40 +174,40 @@ export function Shell() {
         })),
       },
       {
-        title: "Insights",
+        title: t("flow_agent.nav.insights"),
         url: "/insights/rules",
         icon: IconBulb,
         accent: "var(--accent-success)",
         subTestId: "insights-subnav",
         items: [
-          { title: "Rules", url: "/insights/rules", icon: IconFilter },
-          { title: "Pipelines", url: "/insights/pipelines", icon: IconPipeline },
-          { title: "Verdicts", url: "/insights/verdicts", icon: IconGavel },
+          { title: t("flow_agent.nav.insights.rules"), url: "/insights/rules", icon: IconFilter },
+          { title: t("flow_agent.nav.insights.pipelines"), url: "/insights/pipelines", icon: IconPipeline },
+          { title: t("flow_agent.nav.insights.verdicts"), url: "/insights/verdicts", icon: IconGavel },
         ],
       },
       {
-        title: "Skills",
+        title: t("flow_agent.nav.skills"),
         url: "/skills",
         icon: IconSparkles,
         accent: "var(--accent-success)",
       },
       {
-        title: "Cache demo",
+        title: t("flow_agent.nav.cache_demo"),
         url: "/cache-demo",
         icon: IconBolt,
         accent: "var(--accent-info)",
       },
       {
-        title: "Settings",
+        title: t("flow_agent.nav.settings"),
         url: "/settings",
         icon: IconSettings,
         accent: "var(--accent-settings)",
       },
     ],
-    [flows, agents, pages],
+    [flows, agents, pages, t],
   )
 
-  const title = titleFor(location.pathname, flows, agents, pages)
+  const title = titleFor(location.pathname, flows, agents, pages, t)
   const activeUrl = activeUrlFor(location.pathname)
 
   return (

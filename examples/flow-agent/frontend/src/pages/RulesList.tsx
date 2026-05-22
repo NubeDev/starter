@@ -23,6 +23,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { api, type InsightsRule, type InsightsSeverity } from "@/lib/api"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 function severityVariant(
   s: InsightsSeverity,
@@ -46,6 +48,8 @@ export function RulesList() {
     queryFn: api.insights.listRules,
   })
   const [filter, setFilter] = useState("")
+  const dates = useDateFormatters()
+  const tr = useTranslate()
 
   const filtered = useMemo<InsightsRule[]>(() => {
     const all = rules.data ?? []
@@ -68,14 +72,14 @@ export function RulesList() {
       <PageHero
         icon={IconBulb}
         accent="var(--accent-success)"
-        title="Insights · Rules"
-        description="Mock-up of the rule registry. Fixtures preview the eventual starter-insights schema."
+        title={tr("flow_agent.page.insights.rules.title")}
+        description={tr("flow_agent.page.insights.rules.description")}
         actions={<Badge variant="secondary">{total} total</Badge>}
       />
 
       <div className="flex flex-col gap-3">
         <Input
-          placeholder="Filter by id, namespace, tag, or summary…"
+          placeholder={tr("flow_agent.page.insights.rules.filter.placeholder")}
           value={filter}
           onChange={(e) => setFilter(e.target.value)}
           className="max-w-md"
@@ -149,7 +153,7 @@ export function RulesList() {
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
-                      {new Date(r.updated_at).toLocaleDateString()}
+                      {dates.date(r.updated_at)}
                     </TableCell>
                   </TableRow>
                 ))}
