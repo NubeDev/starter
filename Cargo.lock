@@ -7109,6 +7109,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-blob-compose"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "futures",
+ "serde",
+ "serde_json",
+ "starter-blob-fs",
+ "starter-blob-memory",
+ "starter-spi",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "starter-blob-fs"
 version = "0.1.0"
 dependencies = [

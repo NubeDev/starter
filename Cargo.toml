@@ -55,6 +55,7 @@ members = [
     "crates/starter-blob-fs",
     "crates/starter-blob-s3",
     "crates/starter-blob-garage",
+    "crates/starter-blob-compose",
     "crates/smoke-tests",
     "examples/minimal",
     "examples/gh-report",
@@ -130,6 +131,7 @@ starter-blob-memory      = { path = "crates/starter-blob-memory",      version =
 starter-blob-fs          = { path = "crates/starter-blob-fs",          version = "0.1.0" }
 starter-blob-s3          = { path = "crates/starter-blob-s3",          version = "0.1.0" }
 starter-blob-garage      = { path = "crates/starter-blob-garage",      version = "0.1.0" }
+starter-blob-compose     = { path = "crates/starter-blob-compose",     version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.

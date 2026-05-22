@@ -32,9 +32,9 @@ async fn fs_engine_behind_arc_dyn_blob_store() {
     put_then_read(store, "scratch/x.bin", b"on-disk-bytes").await;
 }
 
-// TODO(stage 4): compose-test — wrap FsBlobStore in
-//   Namespaced { prefix: "tenant-7/" } and Tiered { hot: fs,
-//   cold: another-fs-or-memory } from `starter-blob-compose`,
-//   re-run `put_then_read` against the wrapped store, and assert
-//   no consumer signature changes. The combinator crate does not
-//   exist yet at stage 2, so this is a deliberate marker.
+// The compose-test fixture lives in
+// `crates/starter-blob-compose/tests/compose_test.rs` so this
+// crate keeps a slim dep tree (a consumer who only wants the fs
+// engine never picks up the combinator crate). Stage 5 hoists it
+// into the workspace-level `smoke-tests` crate alongside the rest
+// of the SCOPE smoke fixtures.
