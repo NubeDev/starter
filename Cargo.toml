@@ -19,6 +19,13 @@ members = [
     "crates/starter-secrets-keyring",
     "crates/starter-secrets-file",
     "crates/starter-cache",
+    "crates/starter-changelog",
+    "crates/starter-changelog-sqlite",
+    "crates/starter-changelog-postgres",
+    "crates/starter-undo",
+    "crates/starter-audit",
+    "crates/starter-agent-log",
+    "crates/starter-clipboard",
     "crates/starter-ai",
     "crates/starter-flow-spi",
     "crates/starter-skills",
@@ -81,6 +88,13 @@ starter-authz            = { path = "crates/starter-authz",            version =
 starter-secrets-keyring  = { path = "crates/starter-secrets-keyring",  version = "0.1.0" }
 starter-secrets-file     = { path = "crates/starter-secrets-file",     version = "0.1.0" }
 starter-cache            = { path = "crates/starter-cache",            version = "0.1.0" }
+starter-changelog        = { path = "crates/starter-changelog",        version = "0.1.0" }
+starter-changelog-sqlite = { path = "crates/starter-changelog-sqlite", version = "0.1.0" }
+starter-changelog-postgres = { path = "crates/starter-changelog-postgres", version = "0.1.0" }
+starter-undo            = { path = "crates/starter-undo",               version = "0.1.0" }
+starter-audit           = { path = "crates/starter-audit",              version = "0.1.0" }
+starter-agent-log       = { path = "crates/starter-agent-log",          version = "0.1.0" }
+starter-clipboard       = { path = "crates/starter-clipboard",          version = "0.1.0" }
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-flow-spi         = { path = "crates/starter-flow-spi",         version = "0.1.0" }
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }

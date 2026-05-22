@@ -1,0 +1,24 @@
+[package]
+name        = "starter-changelog-postgres"
+description = "starter — Postgres backend for the append-only changelog. Owns the `starter_changes` table."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi           = { workspace = true, features = ["changelog"] }
+starter-changelog     = { workspace = true }
+starter-store-postgres = { workspace = true }
+
+sqlx        = { workspace = true, features = ["postgres", "macros", "migrate", "chrono", "json"] }
+async-trait = { workspace = true }
+chrono      = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+uuid        = { workspace = true }
+base64      = { workspace = true }
+tokio       = { workspace = true, features = ["sync", "time", "rt", "macros"] }

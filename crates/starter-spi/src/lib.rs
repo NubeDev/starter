@@ -16,6 +16,8 @@
 pub mod ai;
 pub mod auth;
 pub mod authz;
+#[cfg(feature = "changelog")]
+pub mod changelog;
 pub mod dto;
 pub mod error;
 pub mod filter;

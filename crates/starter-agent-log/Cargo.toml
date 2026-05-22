@@ -1,0 +1,19 @@
+[package]
+name        = "starter-agent-log"
+description = "starter — read-only AI-agent projection over the changelog, gated by ChangelogVisibility."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi       = { workspace = true, features = ["changelog"] }
+starter-changelog = { workspace = true }
+
+async-trait = { workspace = true }
+serde       = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+axum           = { workspace = true }
+starter-server = { workspace = true }

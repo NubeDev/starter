@@ -73,3 +73,8 @@ broadcast = []
 units       = ["dep:uom"]
 i18n        = ["dep:icu_locale_core"]
 preferences = ["units"]
+
+# Gates `starter_spi::changelog`. Off by default so consumers that
+# don't use audit / undo / clipboard pay nothing for the seam.
+# See `DOCS/backend/undo-redo/SCOPE.md`.
+changelog   = []

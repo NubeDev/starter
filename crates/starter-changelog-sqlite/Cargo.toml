@@ -1,0 +1,34 @@
+[package]
+name        = "starter-changelog-sqlite"
+description = "starter — SQLite backend for the append-only changelog. Owns the `starter_changes` table."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi        = { workspace = true, features = ["changelog"] }
+starter-changelog  = { workspace = true }
+starter-store-sqlite = { workspace = true }
+
+sqlx        = { workspace = true, features = ["sqlite", "macros", "migrate"] }
+async-trait = { workspace = true }
+chrono      = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+uuid        = { workspace = true }
+base64      = { workspace = true }
+tokio       = { workspace = true, features = ["sync", "time", "rt", "macros"] }
+
+[dev-dependencies]
+starter-store-sqlite = { workspace = true, features = ["testing"] }
+starter-changelog    = { workspace = true }
+starter-undo         = { workspace = true }
+starter-spi          = { workspace = true, features = ["changelog"] }
+tokio        = { workspace = true, features = ["macros", "rt-multi-thread", "sync"] }
+async-trait  = { workspace = true }
+serde_json   = { workspace = true }
+chrono       = { workspace = true }

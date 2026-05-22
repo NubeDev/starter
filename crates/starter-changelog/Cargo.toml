@@ -1,0 +1,22 @@
+[package]
+name        = "starter-changelog"
+description = "starter — append-only change envelope. Query API, visibility registry, prune surface. No SQL."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R1 of `DOCS/backend/undo-redo/SCOPE.md`: this crate owns the
+# `ChangeLog` query API and the default `ChangelogVisibility` registry.
+# No SQL — backends live in `starter-changelog-{sqlite,postgres}`.
+[dependencies]
+starter-spi = { workspace = true, features = ["changelog"] }
+
+async-trait = { workspace = true }
+chrono      = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+tokio       = { workspace = true, features = ["sync"] }
