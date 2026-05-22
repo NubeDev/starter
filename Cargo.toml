@@ -61,6 +61,7 @@ members = [
     "examples/gh-report",
     "examples/notes",
     "examples/flow-agent",
+    "examples/blobs",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
 # `examples/notes` pulls a handful of its crates in via path dependencies

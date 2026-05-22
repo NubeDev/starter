@@ -7220,6 +7220,28 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-blobs-example"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "axum 0.8.9",
+ "bytes",
+ "futures",
+ "http 1.4.0",
+ "http-body-util",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "sqlx",
+ "starter-blob-memory",
+ "starter-spi",
+ "starter-store-sqlite",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+]
+
+[[package]]
 name = "starter-cache"
 version = "0.1.0"
 dependencies = [
@@ -7953,6 +7975,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
+ "bytes",
  "futures",
  "http-body-util",
  "prometheus",
@@ -7961,6 +7984,9 @@ dependencies = [
  "starter-agent-log",
  "starter-ai",
  "starter-audit",
+ "starter-blob-compose",
+ "starter-blob-fs",
+ "starter-blob-memory",
  "starter-clipboard",
  "starter-flow",
  "starter-flow-nodes",

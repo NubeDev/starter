@@ -1,0 +1,38 @@
+[package]
+name        = "starter-blobs-example"
+description = "starter — minimal axum app that uploads bytes through a BlobStore, persists the BlobRef in SQLite, and serves a presigned GET. Wires the SCOPE rule that BlobRef is the only durable handle a domain row keeps."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+# Single binary, no library surface — the example is the wiring.
+[[bin]]
+name = "starter-blobs-example"
+path = "src/main.rs"
+
+[dependencies]
+# We deliberately wire against the SPI trait through Arc<dyn BlobStore>;
+# the engine choice (memory) is a one-line construction call, so the
+# SwapTest smoke fixture re-uses this code path against starter-blob-fs.
+starter-spi          = { workspace = true }
+starter-blob-memory  = { workspace = true, features = ["axum"] }
+starter-store-sqlite = { workspace = true }
+
+axum         = { workspace = true }
+bytes        = { workspace = true }
+futures      = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+sqlx         = { workspace = true, features = ["sqlite", "macros", "runtime-tokio"] }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "signal", "net"] }
+tracing      = { workspace = true }
+anyhow       = { workspace = true }
+
+[dev-dependencies]
+http           = { workspace = true }
+http-body-util = "0.1"
+tower          = { workspace = true }
+reqwest        = { workspace = true, features = ["json"] }
