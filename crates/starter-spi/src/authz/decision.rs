@@ -3,6 +3,7 @@
 //! and emit a [`Decision`].
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 /// Reference to the object an authorization check is being made
 /// against. `id == None` is a collection-level / route-level check
@@ -13,7 +14,7 @@ use serde::{Deserialize, Serialize};
 /// ownership matters — the engine can match
 /// `principal.subject == object.owner` without a DB round-trip from
 /// inside the engine. See SCOPE.md R5.
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq, ToSchema)]
 pub struct ResourceRef {
     /// Resource kind. Must be registered in the
     /// [`super::ResourceRegistry`] (e.g. `"flows"`, `"users"`,

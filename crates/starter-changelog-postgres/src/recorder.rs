@@ -2,6 +2,7 @@
 
 use async_trait::async_trait;
 use chrono::Utc;
+use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::{Change, ChangeId, ChangeRecorder, ChangeTx, GroupId};
 use starter_spi::{Error, Result};
 use starter_store_postgres::Pool;
@@ -118,6 +119,30 @@ impl ChangeRecorder for PgChangeRecorder {
             }
         }
         Ok(())
+    }
+
+    async fn forget(&self, resource: &ResourceRef) -> Result<u64> {
+        let result = if let Some(id) = &resource.id {
+            sqlx::query(
+                r#"UPDATE starter_changes
+                      SET before = NULL, after = NULL, patch = NULL
+                    WHERE resource_kind = $1 AND resource_id = $2"#,
+            )
+            .bind(&resource.kind)
+            .bind(id)
+            .execute(self.pool.sqlx())
+            .await
+        } else {
+            sqlx::query(
+                r#"UPDATE starter_changes
+                      SET before = NULL, after = NULL, patch = NULL
+                    WHERE resource_kind = $1"#,
+            )
+            .bind(&resource.kind)
+            .execute(self.pool.sqlx())
+            .await
+        };
+        Ok(result.map_err(internal)?.rows_affected())
     }
 }
 

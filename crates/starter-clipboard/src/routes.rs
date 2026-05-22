@@ -17,6 +17,7 @@ use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::ChangeRecorder;
 use starter_spi::Error;
 use starter_undo::ReversibleRegistry;
+use utoipa::ToSchema;
 
 use crate::ClipboardService;
 
@@ -43,39 +44,54 @@ where
 }
 
 /// `POST /v1/clipboard/copy` body.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct CopyRequest {
     /// `ResourceRef::kind` of the source.
     pub kind: String,
     /// `after` snapshot of the source resource. Opaque to starter.
+    #[schema(value_type = Object)]
     pub payload: serde_json::Value,
 }
 
 /// `POST /v1/clipboard/copy` response.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct CopyResponse {
     /// Server-assigned clipboard entry id.
     pub id: String,
 }
 
 /// `POST /v1/clipboard/paste` body.
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, ToSchema)]
 pub struct PasteRequest {
     /// Clipboard entry to paste.
     pub entry_id: String,
     /// Fields to override on top of the clipboard payload (merged
     /// shallow; override keys win).
     #[serde(default)]
+    #[schema(value_type = Object)]
     pub overrides: serde_json::Value,
 }
 
 /// `POST /v1/clipboard/paste` response.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct PasteResponse {
     /// Newly created resources.
     pub created: Vec<ResourceRef>,
 }
 
+/// `POST /v1/clipboard/copy` — persist a resource snapshot to
+/// the principal-scoped clipboard.
+#[utoipa::path(
+    post,
+    path = "/v1/clipboard/copy",
+    tag = "clipboard",
+    request_body = CopyRequest,
+    responses(
+        (status = 200, description = "Clipboard entry id", body = CopyResponse),
+        (status = 401, description = "Unauthenticated"),
+        (status = 400, description = "Invalid request body"),
+    ),
+)]
 async fn copy(
     Extension(state): Extension<ClipboardRoutesState>,
     req: axum::extract::Request,
@@ -103,6 +119,20 @@ async fn copy(
     Ok(Json(CopyResponse { id }))
 }
 
+/// `POST /v1/clipboard/paste` — paste a clipboard entry via the
+/// per-kind [`starter_undo::ReversibleRegistry`].
+#[utoipa::path(
+    post,
+    path = "/v1/clipboard/paste",
+    tag = "clipboard",
+    request_body = PasteRequest,
+    responses(
+        (status = 200, description = "Newly-created resources", body = PasteResponse),
+        (status = 401, description = "Unauthenticated"),
+        (status = 404, description = "Clipboard entry not found / expired"),
+        (status = 400, description = "Unknown resource kind or invalid body"),
+    ),
+)]
 async fn paste(
     Extension(state): Extension<ClipboardRoutesState>,
     req: axum::extract::Request,
@@ -182,3 +212,18 @@ async fn paste(
 
 // `Json::from_request` needs `FromRequest` in scope.
 use axum::extract::FromRequest;
+
+/// OpenAPI document fragment for the clipboard router.
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    paths(copy, paste),
+    components(schemas(
+        CopyRequest,
+        CopyResponse,
+        PasteRequest,
+        PasteResponse,
+        starter_spi::authz::ResourceRef,
+    )),
+    tags((name = "clipboard", description = "Server-side copy / paste / duplicate"))
+)]
+pub struct ClipboardApi;

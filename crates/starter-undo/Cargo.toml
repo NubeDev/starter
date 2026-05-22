@@ -18,3 +18,4 @@ tokio       = { workspace = true, features = ["sync"] }
 tracing     = { workspace = true }
 axum           = { workspace = true }
 starter-server = { workspace = true }
+utoipa         = { workspace = true }

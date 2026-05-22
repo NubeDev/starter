@@ -15,5 +15,5 @@ pub mod routes;
 mod service;
 
 pub use registry::ReversibleRegistry;
-pub use routes::{undo_router, UndoResponse};
+pub use routes::{undo_router, UndoApi, UndoResponse};
 pub use service::{InMemoryUndoCursor, UndoCursor, UndoService};

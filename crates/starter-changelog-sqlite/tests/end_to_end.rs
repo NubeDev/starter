@@ -189,3 +189,102 @@ async fn record_list_undo_redo() {
     let err = undo.undo(&actor).await.expect_err("third undo has no target");
     assert!(matches!(err, Error::NotFound { .. }), "got {err:?}");
 }
+
+/// `ChangeRecorder::forget` tombstones payloads but preserves the
+/// row identity required for replay integrity (SCOPE §"Security &
+/// privacy").
+#[tokio::test]
+async fn forget_tombstones_payloads_but_keeps_skeleton() {
+    let pool = ephemeral().await;
+    migrate(&pool)
+        .with_source(migration_source())
+        .run()
+        .await
+        .expect("migration");
+
+    let recorder = SqliteChangeRecorder::new(pool.clone());
+    let log: Arc<dyn ChangeLog> = Arc::new(SqliteChangeLog::new(pool.clone()));
+
+    recorder
+        .transaction(Box::new(move |tx| {
+            Box::pin(async move {
+                tx.record(note_change(
+                    Op::Create,
+                    None,
+                    Some(serde_json::json!({"text": "PII"})),
+                ))
+                .await?;
+                tx.record(note_change(
+                    Op::Update,
+                    Some(serde_json::json!({"text": "PII"})),
+                    Some(serde_json::json!({"text": "more PII"})),
+                ))
+                .await?;
+                Ok(())
+            })
+        }))
+        .await
+        .expect("seed");
+
+    // Record a row on a *different* resource id so we can prove the
+    // forget call is scoped.
+    recorder
+        .transaction(Box::new(move |tx| {
+            Box::pin(async move {
+                let mut other = note_change(
+                    Op::Create,
+                    None,
+                    Some(serde_json::json!({"text": "untouched"})),
+                );
+                other.resource = ResourceRef::row("note", "n2");
+                tx.record(other).await?;
+                Ok(())
+            })
+        }))
+        .await
+        .expect("seed other");
+
+    let rows = recorder
+        .forget(&ResourceRef::row("note", "n1"))
+        .await
+        .expect("forget");
+    assert_eq!(rows, 2, "two n1 rows tombstoned");
+
+    let page = log
+        .list(&ChangeFilter {
+            resource_kind: Some("note".into()),
+            resource_id: Some("n1".into()),
+            ..Default::default()
+        })
+        .await
+        .expect("list n1");
+    assert_eq!(page.items.len(), 2, "rows preserved");
+    for ch in &page.items {
+        assert!(ch.before.is_none(), "before nulled");
+        assert!(ch.after.is_none(), "after nulled");
+        assert!(ch.patch.is_none(), "patch nulled");
+        // Skeleton survives.
+        assert!(!ch.id.0.is_empty());
+        assert!(!ch.group_id.0.is_empty());
+        assert!(matches!(ch.actor, Actor::User { .. }));
+    }
+
+    // The other resource is untouched.
+    let page = log
+        .list(&ChangeFilter {
+            resource_kind: Some("note".into()),
+            resource_id: Some("n2".into()),
+            ..Default::default()
+        })
+        .await
+        .expect("list n2");
+    assert_eq!(page.items.len(), 1);
+    assert!(page.items[0].after.is_some(), "n2 payload preserved");
+
+    // Tombstoning is idempotent.
+    let rows_again = recorder
+        .forget(&ResourceRef::row("note", "n1"))
+        .await
+        .expect("forget again");
+    assert_eq!(rows_again, 2, "still matches by id");
+}

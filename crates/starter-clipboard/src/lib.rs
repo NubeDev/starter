@@ -16,7 +16,8 @@ mod service;
 mod store;
 
 pub use routes::{
-    clipboard_router, ClipboardRoutesState, CopyRequest, CopyResponse, PasteRequest, PasteResponse,
+    clipboard_router, ClipboardApi, ClipboardRoutesState, CopyRequest, CopyResponse, PasteRequest,
+    PasteResponse,
 };
 pub use service::{ClipboardService, DEFAULT_TTL_SECS};
 pub use store::{new_entry, ClipboardEntry, ClipboardStore, InMemoryClipboard};

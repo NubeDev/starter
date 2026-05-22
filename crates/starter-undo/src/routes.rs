@@ -15,6 +15,7 @@ use starter_server::error::IntoResponse;
 use starter_spi::auth::Principal;
 use starter_spi::changelog::Actor;
 use starter_spi::Error;
+use utoipa::ToSchema;
 
 use crate::UndoService;
 
@@ -30,12 +31,25 @@ where
 }
 
 /// Response body of `/v1/undo` and `/v1/redo`.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, ToSchema)]
 pub struct UndoResponse {
     /// The `group_id` that was applied.
     pub group_id: String,
 }
 
+/// `POST /v1/undo` — undo the most recent group for the
+/// authenticated principal.
+#[utoipa::path(
+    post,
+    path = "/v1/undo",
+    tag = "undo",
+    responses(
+        (status = 200, description = "Group that was undone", body = UndoResponse),
+        (status = 401, description = "Unauthenticated"),
+        (status = 404, description = "No undoable group for this actor"),
+        (status = 409, description = "Stale `resource_version` — refuse"),
+    ),
+)]
 async fn undo(
     Extension(service): Extension<Arc<UndoService>>,
     req: axum::extract::Request,
@@ -45,6 +59,18 @@ async fn undo(
     Ok(Json(UndoResponse { group_id: group.0 }))
 }
 
+/// `POST /v1/redo` — redo the most recently undone group.
+#[utoipa::path(
+    post,
+    path = "/v1/redo",
+    tag = "undo",
+    responses(
+        (status = 200, description = "Group that was redone", body = UndoResponse),
+        (status = 401, description = "Unauthenticated"),
+        (status = 404, description = "Redo stack empty"),
+        (status = 409, description = "Stale `resource_version` — refuse"),
+    ),
+)]
 async fn redo(
     Extension(service): Extension<Arc<UndoService>>,
     req: axum::extract::Request,
@@ -53,6 +79,15 @@ async fn redo(
     let group = service.redo(&actor).await.map_err(IntoResponse)?;
     Ok(Json(UndoResponse { group_id: group.0 }))
 }
+
+/// OpenAPI document fragment for the undo / redo router.
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    paths(undo, redo),
+    components(schemas(UndoResponse)),
+    tags((name = "undo", description = "Per-actor undo / redo"))
+)]
+pub struct UndoApi;
 
 fn actor_from_request(req: &axum::extract::Request) -> Result<Actor, IntoResponse> {
     let principal = req

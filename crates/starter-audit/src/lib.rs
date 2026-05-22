@@ -11,6 +11,7 @@
 
 pub mod routes;
 pub use routes::audit_router;
+pub use routes::AuditApi;
 
 use std::sync::Arc;
 

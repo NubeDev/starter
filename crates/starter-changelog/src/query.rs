@@ -7,13 +7,15 @@
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::{IntoParams, ToSchema};
 
 use starter_spi::changelog::{Actor, Change, ChangeId, GroupId};
 use starter_spi::Result;
 
 /// Filter for [`ChangeLog::list`]. Every field is optional; unset
 /// fields mean "no constraint".
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize, ToSchema, IntoParams)]
+#[into_params(parameter_in = Query)]
 pub struct ChangeFilter {
     /// Filter by actor kind (`"user"`, `"agent"`, `"system"`).
     pub actor_kind: Option<String>,
@@ -38,7 +40,7 @@ pub struct ChangeFilter {
 }
 
 /// One page of changes plus the cursor for the next page.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct ChangePage {
     /// Rows in descending `at` order.
     pub items: Vec<Change>,

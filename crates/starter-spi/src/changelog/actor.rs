@@ -4,9 +4,10 @@
 //! — there is no parallel `principal_id` field. See SCOPE §"The seam".
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 /// Origin of a recorded change.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Actor {
     /// A signed-in user. `subject` matches `Principal::subject`.

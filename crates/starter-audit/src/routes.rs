@@ -4,10 +4,6 @@
 //! extension (`with_principal` middleware installed it), forwards
 //! the query string as a [`ChangeFilter`], and returns whatever
 //! [`AuditService::list`] yields after the visibility gate.
-//!
-//! OpenAPI registration is deferred — adding `utoipa::ToSchema` to
-//! `Change` requires touching `starter-spi`. TODO: wire `AuditApi`
-//! once spi schemas land.
 
 use std::sync::Arc;
 
@@ -32,6 +28,17 @@ where
         .layer(Extension(service))
 }
 
+/// `GET /v1/audit` — paged list of user-authored changes.
+#[utoipa::path(
+    get,
+    path = "/v1/audit",
+    tag = "audit",
+    params(ChangeFilter),
+    responses(
+        (status = 200, description = "Page of user-authored changes", body = ChangePage),
+        (status = 401, description = "Unauthenticated"),
+    ),
+)]
 async fn list(
     Extension(service): Extension<Arc<AuditService>>,
     Query(filter): Query<ChangeFilter>,
@@ -48,6 +55,27 @@ async fn list(
         .map_err(IntoResponse)?;
     Ok(Json(page))
 }
+
+/// OpenAPI document fragment for the audit router. Consumers merge
+/// this into their own `OpenApi` so `/v1/audit` shows up in
+/// `/openapi.json` and the generated client.
+#[derive(utoipa::OpenApi)]
+#[openapi(
+    paths(list),
+    components(schemas(
+        ChangeFilter,
+        ChangePage,
+        starter_spi::changelog::Change,
+        starter_spi::changelog::ChangeId,
+        starter_spi::changelog::GroupId,
+        starter_spi::changelog::TraceId,
+        starter_spi::changelog::Actor,
+        starter_spi::changelog::Op,
+        starter_spi::authz::ResourceRef,
+    )),
+    tags((name = "audit", description = "User audit log"))
+)]
+pub struct AuditApi;
 
 // Quieten the unused-import lint when `Response` is needed only by
 // `IntoResponse`'s axum impl — kept explicit so the file documents

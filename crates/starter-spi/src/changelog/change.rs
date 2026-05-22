@@ -2,6 +2,7 @@
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 use crate::authz::ResourceRef;
 
@@ -12,7 +13,7 @@ use super::{Actor, ChangeId, GroupId, Op, TraceId};
 /// Five product features collapse onto this primitive: user audit log,
 /// AI-agent log, undo/redo, duplicate, and copy/paste. See
 /// `DOCS/backend/undo-redo/SCOPE.md`.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 pub struct Change {
     /// ULID, monotonic per recorder.
     pub id: ChangeId,
@@ -33,15 +34,18 @@ pub struct Change {
     pub op: Op,
     /// Snapshot of the row *before* the mutation. Used for undo.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<Object>)]
     pub before: Option<serde_json::Value>,
     /// Snapshot of the row *after* the mutation. Used for redo,
     /// duplicate, and paste.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<Object>)]
     pub after: Option<serde_json::Value>,
     /// Optional RFC 6902 patch document, as raw JSON. Kept as
     /// [`serde_json::Value`] so this crate does not depend on a
     /// patch-library crate — the backend picks one.
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    #[schema(value_type = Option<Object>)]
     pub patch: Option<serde_json::Value>,
     /// Every change belongs to a group. Single-row mutations get a
     /// fresh `GroupId`; multi-row transactions share one. Undo

@@ -1,9 +1,10 @@
 //! Mutation kind recorded for a [`super::Change`].
 
 use serde::{Deserialize, Serialize};
+use utoipa::ToSchema;
 
 /// The operation a [`super::Change`] represents.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, ToSchema)]
 #[serde(rename_all = "snake_case")]
 pub enum Op {
     /// New row created.

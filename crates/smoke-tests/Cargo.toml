@@ -29,6 +29,16 @@ starter-tool-telegram    = { workspace = true }
 starter-service-telegram = { workspace = true }
 starter-tool-gmail       = { workspace = true }
 
+# Phase 1 stage 3 — OpenAPI fragments emitted by the
+# changelog projection crates (audit / agent-log / undo /
+# clipboard). The smoke test just checks each `*Api::openapi()`
+# emits the expected paths so a consumer can merge them.
+starter-audit            = { workspace = true }
+starter-agent-log        = { workspace = true }
+starter-undo             = { workspace = true }
+starter-clipboard        = { workspace = true }
+utoipa                   = { workspace = true }
+
 # Phase 3 stage 9 — Flow SCOPE smokes. The four smokes wire together
 # the Phase 3 surface (`FlowAsTool` / `FlowAsService`), the engine,
 # the SQLite SPI store (real, behind the default-off `flow` feature),

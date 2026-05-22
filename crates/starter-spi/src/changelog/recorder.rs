@@ -7,6 +7,7 @@
 
 use async_trait::async_trait;
 
+use crate::authz::ResourceRef;
 use crate::Result;
 
 use super::{Change, ChangeId, GroupId};
@@ -32,6 +33,20 @@ pub trait ChangeRecorder: Send + Sync {
                 + 'a,
         >,
     ) -> Result<()>;
+
+    /// Right-to-erasure tombstoning. Nulls `before` / `after` /
+    /// `patch` on every row matching `resource` while preserving
+    /// `(id, at, actor, op, group_id)` so replay integrity (row
+    /// counts, ordering, undo grouping) survives.
+    ///
+    /// Matches by `resource.kind` plus, if `resource.id` is `Some`,
+    /// `resource.id`. A `None` id forgets every row of the kind —
+    /// callers should guard against that (e.g. a CLI confirmation)
+    /// because there is no "unforget".
+    ///
+    /// Returns the number of rows tombstoned. See SCOPE
+    /// §"Security & privacy".
+    async fn forget(&self, resource: &ResourceRef) -> Result<u64>;
 }
 
 /// Transaction handle passed to the closure given to

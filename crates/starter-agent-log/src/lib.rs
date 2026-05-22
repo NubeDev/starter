@@ -10,6 +10,7 @@
 
 pub mod routes;
 pub use routes::agent_log_router;
+pub use routes::AgentLogApi;
 
 use std::sync::Arc;
 

@@ -6149,6 +6149,7 @@ dependencies = [
  "starter-spi",
  "thiserror 1.0.69",
  "tracing",
+ "utoipa",
 ]
 
 [[package]]
@@ -6181,6 +6182,7 @@ dependencies = [
  "starter-spi",
  "thiserror 1.0.69",
  "tracing",
+ "utoipa",
 ]
 
 [[package]]
@@ -6311,6 +6313,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "utoipa",
 ]
 
 [[package]]
@@ -6407,6 +6410,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "utoipa",
  "uuid",
 ]
 
@@ -6968,7 +6972,10 @@ dependencies = [
  "prometheus",
  "serde_json",
  "sqlx",
+ "starter-agent-log",
  "starter-ai",
+ "starter-audit",
+ "starter-clipboard",
  "starter-flow",
  "starter-flow-nodes",
  "starter-flow-spi",
@@ -6987,6 +6994,7 @@ dependencies = [
  "starter-tool-gmail",
  "starter-tool-slack",
  "starter-tool-telegram",
+ "starter-undo",
  "tempfile",
  "tokio",
  "tokio-stream",
@@ -6994,6 +7002,7 @@ dependencies = [
  "tower 0.5.3",
  "tracing",
  "tracing-subscriber",
+ "utoipa",
 ]
 
 [[package]]
@@ -7210,6 +7219,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "utoipa",
 ]
 
 [[package]]
