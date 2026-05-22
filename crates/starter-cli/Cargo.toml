@@ -19,10 +19,23 @@ thiserror         = { workspace = true }
 tokio             = { workspace = true }
 tracing           = { workspace = true }
 
+# Optional — pulled in only when the consumer wires the `prune`
+# subcommand. SCOPE §"Open questions" item 2: retention pruning is
+# opt-in and scheduled by the consumer.
+starter-changelog = { workspace = true, optional = true }
+chrono            = { workspace = true, optional = true }
+
+[features]
+default = []
+# Opt-in to the `starter prune` subcommand (wraps a
+# `starter_changelog::Prune` impl supplied by the consumer).
+prune = ["dep:starter-changelog", "dep:chrono"]
+
 [dev-dependencies]
 starter-server        = { workspace = true, features = ["testing"] }
 starter-observability = { workspace = true }
 starter-prefs         = { workspace = true, features = ["routes", "sqlite"] }
+starter-changelog     = { workspace = true }
 tokio                 = { workspace = true, features = ["macros", "rt-multi-thread"] }
 prometheus            = { workspace = true }
 utoipa                = { workspace = true }
@@ -30,3 +43,9 @@ axum                  = { workspace = true }
 sqlx                  = { workspace = true, features = ["sqlite", "runtime-tokio", "migrate"] }
 serde_json            = { workspace = true }
 tower                 = { workspace = true }
+chrono                = { workspace = true }
+async-trait           = { workspace = true }
+
+[[test]]
+name              = "prune"
+required-features = ["prune"]
