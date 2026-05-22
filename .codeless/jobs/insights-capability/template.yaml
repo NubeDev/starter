@@ -1,0 +1,25 @@
+name: insights-capability
+goal: |
+  Land the Insights capability described in starter/DOCS/Insights/SCOPE.md
+  end-to-end: a new starter-insights crate plus four domain extension
+  packs (iot, energy, hvac, finance), with the Rule trait and value
+  types lifted into starter-spi, six rule node kinds contributed to
+  starter-flow-nodes (rule.sql / rule.rhai / rule.rust / rule.derive /
+  rule.ai-check / rule.ai-debug), tumble/slide windowing, align +
+  verdict.join fan-in, the locked Rhai sandbox profile (R-ins-4), the
+  three skill bundles (rule-author / explain / tuner), retroactive
+  correction semantics (D5), the extensible QualityFlag registry
+  (R-ins-11), and SQLite-feature-gated persistence for verdict log,
+  tag index, rollups, and derivation cache. The four phases in the
+  SCOPE map to stages 1-4 below; this is one job because the SCOPE
+  asks for one cohesive capability and the consumer-facing seam is a
+  single feature flag.
+
+stages:
+  - "stage 1 — Phase 1 foundation: starter-insights crate skeleton; lift Rule + Verdict + Severity (incl. Error) + Coverage (raw + effective) + Dataset (+ VecDatasetRows) + RuleOutput + Tags + QualityFlag/QualityFlagId into starter-spi per D1; implement rule.rust + verdict.join node kinds (incl. all-Error degenerate case) on starter-flow-nodes; ship RuleRegistry + QualityFlagRegistry; sqlite persistence behind a single insights feature flag (verdict log + tag index only, no rollups, no derivation cache); ship starter-ext-insights-iot with device.online@1 + sensor.has-recent-data@1 + sensor.in-range@1 plus iot.quality.* flags; smoke test reproduces the IoT row end-to-end including the Severity::Error → branch → notify(ops) path with a forced rule failure"
+  - REVIEW Phase 1 — point-in-time rules + iot pack landed; no windowing, no AI; confirm dep arrows match D1, confirm flow-engine R-ins-9 invariant holds (no parallel orchestrator), confirm extension pack registers via contributes.tools per R-ins-1
+  - "stage 2 — Phase 2 (rhai + sql + windowing + rollups + energy pack): land rule.rhai with the locked sandbox profile from R-ins-4; ship window.tumble + window.slide with tz config; add rule.sql against the host store (D2 Phase 1 shape — primary store only); backfill machinery with the D3 100k-row cap and BackfillTruncated event; verdict rollups at materialisation tier 2, incremental by default, with the per-window watermark from D5 and the rollup_invalidation table; tag-grouped rollup aggregates per R-ins-8; confidence_penalty enforcement in the engine for derivation rules; ship starter-ext-insights-energy with the derivation rules and energy.quality.* flags; reproduces the Energy row in the SCOPE use-case sanity-check"
+  - REVIEW Phase 2 — rhai sandbox + windowing + rollups + energy pack landed; verify D5 retroactive flag emission on mutated-input windows, confirm rollup checkpoint is per-window not single last_at, confirm Rhai sandbox locked-down profile rejects everything called out in R-ins-4
+  - "stage 3 — Phase 3 (derivation + align + AI rule kinds + skill bundles + onboarding): land rule.derive + align node (with NodeId audit identity) + derivation cache as materialisation tier 3 + StreamingDatasetRows impl; land rule.ai-check + rule.ai-debug per R-ins-10 (both route through AiRunner per R-ins-5); ship the three skill bundles at skills/starter.insights.{rule-author,explain,tuner}/SKILL.md per agent R4 quarantine rules; model-family pinning + per-Verdict exact-model evidence; CI dep-tree gate per R-ins-5; auto-tagging (starter.ai-check, starter.ai-debug, starter.ai-model:*); onboarding-backfill cache-warming contract; ship starter-ext-insights-hvac with pmv-comfort + setpoint-drift + short-cycle; smoke reproduces the HVAC row AND the bills-reconciliation row end-to-end (custom Rhai rule + derivation chain + AI judge + explainer agent + coverage-gated notification + AI debugger on the error edge)"
+  - REVIEW Phase 3 — derivation + AI rule kinds + skill bundles landed; confirm every LLM call routes through AiRunner (R2), confirm CI dep-tree gate fails a synthetic violator, confirm bills row passes including retroactive correction flagging on tariff fixup
+  - "stage 4 — Phase 4 (finance pack + performance pass): ship starter-ext-insights-finance with z-score + isolation-forest-light + duplicate-tx + finance.quality.* flags; performance pass on verdict.join and derivation cache against the D9 SLO table (verdict list 50ms p95, rollup timeseries 100ms p95, tag-grouped rollup 250ms p95, derivation cache fetch 50ms p95) enforced by a CI smoke running the IoT + Energy + HVAC reference pipelines against a synthetic 90-day dataset; do NOT ship operator UI here — consumer-owned UI is out of scope per the SCOPE 'Non-goals' section"
