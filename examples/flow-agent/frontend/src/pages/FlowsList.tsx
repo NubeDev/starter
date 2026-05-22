@@ -2,6 +2,7 @@ import { useState } from "react"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { Link } from "react-router-dom"
 import { IconPlus, IconTrash, IconSitemap } from "@tabler/icons-react"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 import { Button } from "@/components/ui/button"
 import { PageHero } from "@/components/page-hero"
@@ -31,11 +32,14 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { api } from "@/lib/api"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
 
 export function FlowsList() {
   const qc = useQueryClient()
   const flows = useQuery({ queryKey: ["flows"], queryFn: api.flows.list })
   const [name, setName] = useState("")
+  const dates = useDateFormatters()
+  const t = useTranslate()
 
   const create = useMutation({
     mutationFn: () => api.flows.create({ name: name.trim() }),
@@ -58,16 +62,18 @@ export function FlowsList() {
       <PageHero
         icon={IconSitemap}
         accent="var(--accent-flows)"
-        title="Flows"
-        description="Compose node graphs and fire them on demand."
+        title={t("flow_agent.page.flows.title")}
+        description={t("flow_agent.page.flows.description")}
         actions={<Badge variant="secondary">{total} total</Badge>}
       />
 
       <Card className="card-lift">
         <CardHeader>
-          <CardTitle className="text-base">New flow</CardTitle>
+          <CardTitle className="text-base">
+            {t("flow_agent.page.flows.new.title")}
+          </CardTitle>
           <CardDescription>
-            Give the flow a short, descriptive name.
+            {t("flow_agent.page.flows.new.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -82,12 +88,12 @@ export function FlowsList() {
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Customer onboarding"
+              placeholder={t("flow_agent.page.flows.new.placeholder")}
               className="flex-1"
             />
             <Button type="submit" disabled={!name.trim() || create.isPending}>
               <IconPlus className="size-4" />
-              Create
+              {t("flow_agent.action.create")}
             </Button>
           </form>
         </CardContent>
@@ -99,9 +105,9 @@ export function FlowsList() {
             <EmptyMedia variant="icon" aria-hidden>
               <IconSitemap className="size-5" />
             </EmptyMedia>
-            <EmptyTitle>No flows yet</EmptyTitle>
+            <EmptyTitle>{t("flow_agent.page.flows.empty.title")}</EmptyTitle>
             <EmptyDescription>
-              Create a flow above to start wiring nodes together.
+              {t("flow_agent.page.flows.empty.description")}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent />
@@ -111,9 +117,9 @@ export function FlowsList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead className="w-24">Version</TableHead>
-                <TableHead className="w-56">Updated</TableHead>
+                <TableHead>{t("flow_agent.table.name")}</TableHead>
+                <TableHead className="w-24">{t("flow_agent.table.version")}</TableHead>
+                <TableHead className="w-56">{t("flow_agent.table.updated")}</TableHead>
                 <TableHead className="w-16" />
               </TableRow>
             </TableHeader>
@@ -137,14 +143,14 @@ export function FlowsList() {
                     <Badge variant="outline">v{f.version}</Badge>
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {new Date(f.updated_at).toLocaleString()}
+                    {dates.dateTime(f.updated_at)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => del.mutate(f.id)}
-                      aria-label={`Delete ${f.name}`}
+                      aria-label={t("flow_agent.action.delete", { name: f.name })}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <IconTrash className="size-4" />

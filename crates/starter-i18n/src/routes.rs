@@ -64,7 +64,12 @@ const CC_REVALIDATE: &str = "public, max-age=0, must-revalidate";
 /// [`MessageBundle`]. Mount under whatever prefix the host server
 /// wants; the SCOPE-documented paths are bare (`/v1/i18n/manifest` and
 /// `/v1/i18n/catalogs/...`) so callers typically mount this at `/`.
-pub fn router(bundle: Arc<MessageBundle>) -> Router {
+///
+/// Generic over the consumer's `AppState` so the router merges
+/// cleanly into the surrounding axum stack (same pattern as
+/// `starter_prefs::routes::prefs_router` and
+/// `starter_ui_theme::theme_router`).
+pub fn router<S: Clone + Send + Sync + 'static>(bundle: Arc<MessageBundle>) -> Router<S> {
     Router::new()
         .route("/v1/i18n/manifest", get(get_manifest))
         .route("/v1/i18n/catalogs/{spec}", get(get_catalog))

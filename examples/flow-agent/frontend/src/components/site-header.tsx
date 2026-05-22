@@ -11,6 +11,7 @@ import {
 
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 type SectionMeta = {
   icon: React.ComponentType<{ className?: string }>
@@ -38,6 +39,7 @@ export function SiteHeader({
 }) {
   const { pathname } = useLocation()
   const { icon: Icon, accent } = sectionFor(pathname)
+  const t = useTranslate()
 
   return (
     <header
@@ -69,10 +71,10 @@ export function SiteHeader({
           <button
             type="button"
             className="hidden h-8 items-center gap-2 rounded-md border border-border/60 bg-background/60 px-2.5 text-xs text-muted-foreground shadow-xs transition-colors hover:text-foreground md:flex"
-            title="Search (coming soon)"
+            title={t("flow_agent.header.search_tooltip")}
           >
             <IconCommand className="size-3.5" />
-            <span>Search</span>
+            <span>{t("flow_agent.header.search")}</span>
             <kbd className="rounded border border-border/60 bg-muted/60 px-1 text-[10px] font-medium">
               ⌘K
             </kbd>

@@ -23,10 +23,12 @@
 //! Reading the wrap order outside-in matches the request flow:
 //! `with_principal` → `with_role` → the inner route.
 
+mod anonymous_layer;
 mod principal_layer;
 mod require_role;
 mod require_scope;
 
+pub use anonymous_layer::{local_operator, with_anonymous_principal};
 pub use principal_layer::with_principal;
 pub use require_role::with_role;
 pub use require_scope::with_scope;

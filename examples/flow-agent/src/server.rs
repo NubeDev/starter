@@ -1,12 +1,26 @@
 //! Compose the axum router. No auth: every route is open. The example
 //! binds to 127.0.0.1 by default and trusts the OS-level boundary
 //! (per SCOPE F4).
+//!
+//! Prefs + i18n are mounted here too. flow-agent has no real auth,
+//! so the prefs routes (which require a `Principal`) sit behind
+//! `starter_server::auth::with_anonymous_principal` — every request
+//! resolves to the same fixed `local-operator` admin principal.
+//! Real-product binaries would replace that with `with_principal`
+//! + a real `Authenticator`.
 
 use std::sync::Arc;
 
 use axum::Router;
 use prometheus::Registry;
+use starter_i18n::middleware::accept_language_layer;
+use starter_i18n::platform::starter_bundle;
+use starter_i18n::routes::router as i18n_router;
 use starter_observability::metrics::StandardMetrics;
+use starter_prefs::resolver::SystemDefaults;
+use starter_prefs::routes::{prefs_router, PrefsRoutesState};
+use starter_prefs::store::SqlitePrefsStore;
+use starter_server::auth::{local_operator, with_anonymous_principal};
 use starter_server::ServerBuilder;
 use starter_store_sqlite::flow::SqliteAgentSessionStore;
 use starter_store_sqlite::Pool;
@@ -100,12 +114,53 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let extensions_mgr =
         ExtensionManager::bootstrap(extensions_root, node_kinds_state.clone(), hub.clone());
 
+    // Prefs surface: SQLite-backed PrefsStore + starter defaults
+    // (en-US, UTC, metric). The router is wrapped with
+    // `with_anonymous_principal` since flow-agent has no real auth;
+    // every request resolves to the same local-operator principal so
+    // `/v1/me/preferences` has a stable subject.
+    let prefs_store = Arc::new(SqlitePrefsStore::new(pool.sqlx().clone()));
+    let prefs_state = PrefsRoutesState::new(prefs_store, SystemDefaults::starter());
+    let prefs = with_anonymous_principal::<AppState>(
+        prefs_router::<AppState>(prefs_state),
+        local_operator("local-operator"),
+    );
+
+    // i18n surface: serve the starter-owned catalogs (en + es)
+    // layered with the flow-agent-owned chrome (page titles, nav
+    // labels) so the React UI can call `useTranslate` for both
+    // platform and application strings against the same bundle.
+    // The fallback header is enabled in dev so missing translations
+    // surface without breaking the no-error guarantee.
+    let bundle = {
+        let mut b = starter_bundle();
+        let en_tag = starter_spi::i18n::LanguageTag::parse("en")
+            .expect("'en' is a valid BCP-47 tag");
+        let es_tag = starter_spi::i18n::LanguageTag::parse("es")
+            .expect("'es' is a valid BCP-47 tag");
+        let en_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!(
+            "../i18n/en.json"
+        ))
+        .expect("embedded flow-agent en.json must be valid");
+        let es_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!(
+            "../i18n/es.json"
+        ))
+        .expect("embedded flow-agent es.json must be valid");
+        b.extend(en_tag, en_cat);
+        b.extend(es_tag, es_cat);
+        Arc::new(b)
+    };
+    let i18n = i18n_router::<AppState>(bundle.clone())
+        .layer(accept_language_layer(bundle).with_fallback_header(true));
+
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(rest_router(rest_state))
         .merge_router(insights_router(insights_state))
         .merge_router(cache_demo_router())
         .merge_router(node_kinds_router::<AppState>(node_kinds_state))
         .merge_router(extensions_router::<AppState>(extensions_mgr))
+        .merge_router(prefs)
+        .merge_router(i18n)
         .with_openapi(FlowAgentApi::openapi())
         .with_metrics(registry, metrics)
         .build();

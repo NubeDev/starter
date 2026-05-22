@@ -60,6 +60,22 @@ impl MessageBundle {
         self.catalogs.insert(lang, catalog);
     }
 
+    /// Merge `catalog` into the catalog already registered for
+    /// `lang`. Existing keys are overwritten by incoming values
+    /// (last-writer-wins); keys that are not yet registered are
+    /// added.
+    ///
+    /// Use this to layer application-specific messages on top of
+    /// a pre-built platform bundle (e.g. compose `flow_agent.*`
+    /// keys on top of [`crate::platform::starter_bundle`] without
+    /// losing the `starter.*` chrome).
+    pub fn extend(&mut self, lang: LanguageTag, catalog: Catalog) {
+        let entry = self.catalogs.entry(lang).or_default();
+        for (key, value) in catalog.messages {
+            entry.messages.insert(key, value);
+        }
+    }
+
     /// The registered tag the bundle falls back to when neither
     /// the requested tag nor its language family is present.
     #[must_use]
@@ -264,5 +280,39 @@ mod tests {
         let mut b = MessageBundle::new(tag("en"));
         b.insert(tag("es"), cat_with(&[("a.b", "spanish-only")]));
         assert_eq!(b.lookup(&tag("en"), &key("a.b")), None);
+    }
+
+    #[test]
+    fn extend_layers_keys_without_dropping_existing() {
+        // The intended consumer pattern: start from a pre-built
+        // platform bundle (e.g. `starter_bundle()`) and layer
+        // application-specific keys on top.
+        let mut b = MessageBundle::new(tag("en"));
+        b.insert(tag("en"), cat_with(&[("starter.a", "platform")]));
+        b.extend(tag("en"), cat_with(&[("app.b", "application")]));
+
+        assert_eq!(b.lookup(&tag("en"), &key("starter.a")), Some("platform"));
+        assert_eq!(b.lookup(&tag("en"), &key("app.b")), Some("application"));
+    }
+
+    #[test]
+    fn extend_overwrites_overlapping_keys() {
+        // Last-writer-wins: extending replaces values for keys that
+        // already exist. Lets an application override a platform string.
+        let mut b = MessageBundle::new(tag("en"));
+        b.insert(tag("en"), cat_with(&[("starter.a", "platform")]));
+        b.extend(tag("en"), cat_with(&[("starter.a", "overridden")]));
+
+        assert_eq!(b.lookup(&tag("en"), &key("starter.a")), Some("overridden"));
+    }
+
+    #[test]
+    fn extend_registers_new_language_when_absent() {
+        // No catalog yet for `es` — `extend` should still install
+        // the keys, behaving like `insert` for the new tag.
+        let mut b = MessageBundle::new(tag("en"));
+        b.extend(tag("es"), cat_with(&[("app.b", "aplicacion")]));
+
+        assert_eq!(b.lookup(&tag("es"), &key("app.b")), Some("aplicacion"));
     }
 }

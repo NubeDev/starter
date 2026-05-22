@@ -31,11 +31,15 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { api } from "@/lib/api"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 export function AgentsList() {
   const qc = useQueryClient()
   const agents = useQuery({ queryKey: ["agents"], queryFn: api.agents.list })
   const [name, setName] = useState("")
+  const dates = useDateFormatters()
+  const t = useTranslate()
 
   const create = useMutation({
     mutationFn: () =>
@@ -63,16 +67,18 @@ export function AgentsList() {
       <PageHero
         icon={IconRobot}
         accent="var(--accent-agents)"
-        title="Agents"
-        description="Chat with a model and let it call flows as tools."
+        title={t("flow_agent.page.agents.title")}
+        description={t("flow_agent.page.agents.description")}
         actions={<Badge variant="secondary">{total} total</Badge>}
       />
 
       <Card className="card-lift">
         <CardHeader>
-          <CardTitle className="text-base">New agent</CardTitle>
+          <CardTitle className="text-base">
+            {t("flow_agent.page.agents.new.title")}
+          </CardTitle>
           <CardDescription>
-            Defaults to anthropic.claude / claude-sonnet-4-6 — edit later.
+            {t("flow_agent.page.agents.new.description")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -87,12 +93,12 @@ export function AgentsList() {
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Assistant"
+              placeholder={t("flow_agent.page.agents.new.placeholder")}
               className="flex-1"
             />
             <Button type="submit" disabled={!name.trim() || create.isPending}>
               <IconPlus className="size-4" />
-              Create
+              {t("flow_agent.action.create")}
             </Button>
           </form>
         </CardContent>
@@ -104,9 +110,9 @@ export function AgentsList() {
             <EmptyMedia variant="icon" aria-hidden>
               <IconRobot className="size-5" />
             </EmptyMedia>
-            <EmptyTitle>No agents yet</EmptyTitle>
+            <EmptyTitle>{t("flow_agent.page.agents.empty.title")}</EmptyTitle>
             <EmptyDescription>
-              Create an agent above to chat with a model.
+              {t("flow_agent.page.agents.empty.description")}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent />
@@ -116,10 +122,10 @@ export function AgentsList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Provider</TableHead>
-                <TableHead>Model</TableHead>
-                <TableHead className="w-56">Updated</TableHead>
+                <TableHead>{t("flow_agent.table.name")}</TableHead>
+                <TableHead>{t("flow_agent.table.provider")}</TableHead>
+                <TableHead>{t("flow_agent.table.model")}</TableHead>
+                <TableHead className="w-56">{t("flow_agent.table.updated")}</TableHead>
                 <TableHead className="w-16" />
               </TableRow>
             </TableHeader>
@@ -141,14 +147,14 @@ export function AgentsList() {
                     {a.model}
                   </TableCell>
                   <TableCell className="text-sm text-muted-foreground">
-                    {new Date(a.updated_at).toLocaleString()}
+                    {dates.dateTime(a.updated_at)}
                   </TableCell>
                   <TableCell className="text-right">
                     <Button
                       variant="ghost"
                       size="icon"
                       onClick={() => del.mutate(a.id)}
-                      aria-label={`Delete ${a.name}`}
+                      aria-label={t("flow_agent.action.delete", { name: a.name })}
                       className="text-muted-foreground hover:text-destructive"
                     >
                       <IconTrash className="size-4" />

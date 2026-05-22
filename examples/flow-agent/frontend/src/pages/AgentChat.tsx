@@ -13,11 +13,13 @@ import { useMemo } from "react";
 import { useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { Chat, createSseAdapter } from "@nube/starter-ui-chat";
+import { useTranslate } from "@nube/starter-ui-core/i18n";
 
 import { api } from "@/lib/api";
 
 export function AgentChat() {
   const { id = "" } = useParams();
+  const t = useTranslate();
   const agent = useQuery({
     queryKey: ["agent", id],
     queryFn: () => api.agents.get(id),
@@ -29,22 +31,33 @@ export function AgentChat() {
     [id],
   );
 
+  const fallbackTitle = t("flow_agent.agent_chat.empty.fallback_title");
+
   return (
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col p-4">
       <Chat
         adapter={adapter}
-        title={agent.data?.name ?? "Agent"}
-        placeholder="Message the agent…"
-        emptyTitle={agent.data?.name ?? "Agent"}
+        title={agent.data?.name ?? fallbackTitle}
+        placeholder={t("flow_agent.agent_chat.placeholder")}
+        emptyTitle={agent.data?.name ?? fallbackTitle}
         emptyDescription={
           agent.data
             ? `${agent.data.provider} · ${agent.data.model}`
-            : "Loading agent…"
+            : t("flow_agent.agent_chat.empty.loading")
         }
         suggestions={[
-          { label: "Say hi", description: "Quick warm-up message." },
-          { label: "List my flows", description: "See what's wired up." },
-          { label: "What can you do?", description: "Capabilities overview." },
+          {
+            label: t("flow_agent.agent_chat.suggestions.say_hi.label"),
+            description: t("flow_agent.agent_chat.suggestions.say_hi.description"),
+          },
+          {
+            label: t("flow_agent.agent_chat.suggestions.list_flows.label"),
+            description: t("flow_agent.agent_chat.suggestions.list_flows.description"),
+          },
+          {
+            label: t("flow_agent.agent_chat.suggestions.capabilities.label"),
+            description: t("flow_agent.agent_chat.suggestions.capabilities.description"),
+          },
         ]}
         persistence={{ key: `flow-agent:chat:${id}` }}
         allowAttachments

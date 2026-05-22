@@ -33,6 +33,8 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { createFlowAgentBuilderFixture } from "@/lib/builder-fixture"
 import { getPage, savePage } from "@/lib/pages-store"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 import {
   asTree,
   builderSurfaceKey,
@@ -63,6 +65,8 @@ export interface PageBuilderProps {
 }
 
 export function PageBuilder(props: PageBuilderProps = {}) {
+  const dates = useDateFormatters()
+  const t = useTranslate()
   // Adapter selection (PAGE-BUILDER-LIVE-FRONTEND.md §4.4):
   //
   //   ?fixture=1 → deterministic scripted fixture (offline e2e).
@@ -320,17 +324,19 @@ export function PageBuilder(props: PageBuilderProps = {}) {
           variant="ghost"
           size="sm"
           onClick={() => navigate("/pages")}
-          aria-label="Back to pages"
+          aria-label={t("flow_agent.page_builder.back_aria")}
         >
           <IconArrowLeft className="size-4" />
         </Button>
         <div className="text-sm font-semibold">
-          {editingId ? "Edit page" : "Page Builder"}
+          {editingId
+            ? t("flow_agent.page_builder.edit_title")
+            : t("flow_agent.page_builder.title")}
         </div>
         <Input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Page name"
+          placeholder={t("flow_agent.page_builder.name_placeholder")}
           className="ml-2 h-8 max-w-xs"
         />
         <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
@@ -340,7 +346,9 @@ export function PageBuilder(props: PageBuilderProps = {}) {
               variant="outline"
               className="border-amber-500/40 bg-amber-500/10 text-amber-700 dark:text-amber-300"
             >
-              {builder.bufferedPatches} buffered
+              {t("flow_agent.page_builder.buffered", {
+                n: builder.bufferedPatches,
+              })}
             </Badge>
           ) : null}
           {versionCount > 0 ? (
@@ -351,13 +359,15 @@ export function PageBuilder(props: PageBuilderProps = {}) {
                   size="sm"
                   className="h-6 gap-1 border-border/60 bg-muted/40 px-2 text-[10px]"
                   title={`Session ${sessionId ?? "(none)"} — ${versionCount} saved version(s)`}
-                  aria-label="Version history"
+                  aria-label={t("flow_agent.page_builder.version_history_aria")}
                 >
                   v{versionCount}
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="min-w-[14rem]">
-                <DropdownMenuLabel>Version history</DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  {t("flow_agent.page_builder.version_history")}
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {versions.map((v, idx) => (
                   <DropdownMenuItem
@@ -366,11 +376,11 @@ export function PageBuilder(props: PageBuilderProps = {}) {
                   >
                     <span className="font-mono text-xs">v{v.version}</span>
                     <span className="ml-2 truncate text-muted-foreground">
-                      {new Date(v.updated_at).toLocaleString()}
+                      {dates.dateTime(v.updated_at)}
                     </span>
                     {idx === 0 ? (
                       <span className="ml-auto text-[10px] uppercase text-muted-foreground">
-                        latest
+                        {t("flow_agent.page_builder.latest")}
                       </span>
                     ) : null}
                   </DropdownMenuItem>
@@ -384,17 +394,17 @@ export function PageBuilder(props: PageBuilderProps = {}) {
               className="border-destructive/40 bg-destructive/10 text-destructive"
               title={sessionWarning}
             >
-              offline
+              {t("flow_agent.page_builder.offline")}
             </Badge>
           ) : null}
           <Button
             size="sm"
             onClick={handleSave}
             disabled={!canSave}
-            aria-label="Save page"
+            aria-label={t("flow_agent.page_builder.save_aria")}
           >
             <IconDeviceFloppy className="size-4" />
-            Save
+            {t("flow_agent.page_builder.save")}
           </Button>
         </div>
       </header>
@@ -406,7 +416,7 @@ export function PageBuilder(props: PageBuilderProps = {}) {
             phase={builder.phase}
             mode={builder.mode}
             onModeChange={builder.setMode}
-            placeholder="Describe the UI… try: sales · dashboard · onboard · report"
+            placeholder={t("flow_agent.page_builder.transcript_placeholder")}
             onSend={(text) => handleSend(text)}
             onCancel={builder.cancel}
             onRetry={() => void builder.retry()}

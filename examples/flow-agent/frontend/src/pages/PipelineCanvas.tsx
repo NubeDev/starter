@@ -13,6 +13,8 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { api, type InsightsPipeline } from "@/lib/api"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
+import { useTranslate } from "@nube/starter-ui-core/i18n"
 
 export function PipelineCanvas() {
   const list = useQuery({
@@ -20,6 +22,7 @@ export function PipelineCanvas() {
     queryFn: api.insights.listPipelines,
   })
   const [selectedId, setSelectedId] = useState<string | null>(null)
+  const t = useTranslate()
 
   const pipelines = list.data ?? []
   const selected =
@@ -30,8 +33,8 @@ export function PipelineCanvas() {
       <PageHero
         icon={IconSitemap}
         accent="var(--accent-flows)"
-        title="Insights · Pipelines"
-        description="Fixture-backed pipeline graphs. Edits land via the agent (insights:pipeline.* tools)."
+        title={t("flow_agent.page.insights.pipelines.title")}
+        description={t("flow_agent.page.insights.pipelines.description")}
         actions={<Badge variant="secondary">{pipelines.length} total</Badge>}
       />
 
@@ -108,6 +111,7 @@ function PipelineList({
 }
 
 function PipelineGraph({ pipeline }: { pipeline: InsightsPipeline }) {
+  const dates = useDateFormatters()
   const { width, height } = useMemo(() => {
     const nodes = pipeline.graph.nodes
     const maxX = nodes.reduce((m, n) => Math.max(m, n.x), 0) + 200
@@ -134,7 +138,7 @@ function PipelineGraph({ pipeline }: { pipeline: InsightsPipeline }) {
             )}
           </div>
           <span className="text-[10px] text-muted-foreground">
-            updated {new Date(pipeline.updated_at).toLocaleDateString()}
+            updated {dates.date(pipeline.updated_at)}
           </span>
         </div>
 

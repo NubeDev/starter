@@ -26,8 +26,10 @@ import {
   EmptyTitle,
 } from "@/components/ui/empty"
 import { usePages, type PageRecord } from "@/lib/pages-store"
+import { useDateFormatters } from "@/hooks/use-date-formatters"
+import { useTranslate, type TranslateFn } from "@nube/starter-ui-core/i18n"
 
-function summary(p: PageRecord): string {
+function summary(p: PageRecord, t: TranslateFn): string {
   // Sniff the first row of children to produce a one-liner blurb. The
   // tree is the wire-format UiComponentTree (root + children), so we
   // walk one level deep — enough for "4 KPIs · table"-style hints
@@ -35,7 +37,7 @@ function summary(p: PageRecord): string {
   const root = (p.tree as { root?: { children?: Array<{ type?: string }> } })
     .root
   const kinds = root?.children?.map((c) => c.type ?? "node") ?? []
-  if (kinds.length === 0) return "Empty page"
+  if (kinds.length === 0) return t("flow_agent.pages.empty_summary")
   const counts = new Map<string, number>()
   for (const k of kinds) counts.set(k, (counts.get(k) ?? 0) + 1)
   return [...counts.entries()]
@@ -43,21 +45,27 @@ function summary(p: PageRecord): string {
     .join(" · ")
 }
 
-function relative(ts: number): string {
+function relative(
+  ts: number,
+  formatDate: (ts: number) => string,
+  t: TranslateFn,
+): string {
   const diff = Date.now() - ts
   const m = Math.floor(diff / 60_000)
-  if (m < 1) return "just now"
-  if (m < 60) return `updated ${m}m ago`
+  if (m < 1) return t("flow_agent.time.just_now")
+  if (m < 60) return t("flow_agent.time.minutes_ago", { n: m })
   const h = Math.floor(m / 60)
-  if (h < 24) return `updated ${h}h ago`
+  if (h < 24) return t("flow_agent.time.hours_ago", { n: h })
   const d = Math.floor(h / 24)
-  if (d < 7) return `updated ${d}d ago`
-  return `updated ${new Date(ts).toLocaleDateString()}`
+  if (d < 7) return t("flow_agent.time.days_ago", { n: d })
+  return t("flow_agent.time.updated_on", { date: formatDate(ts) })
 }
 
 export function PagesList() {
   const pages = usePages()
   const navigate = useNavigate()
+  const dates = useDateFormatters()
+  const t = useTranslate()
   const total = pages.length
   const isEmpty = total === 0
 
@@ -66,14 +74,14 @@ export function PagesList() {
       <PageHero
         icon={IconLayoutDashboard}
         accent="var(--accent-info)"
-        title="Pages"
-        description="AI-built dashboards rendered with SDUI."
+        title={t("flow_agent.page.pages.title")}
+        description={t("flow_agent.page.pages.description")}
         actions={
           <>
             <Badge variant="secondary">{total} total</Badge>
             <Button onClick={() => navigate("/pages/new")}>
               <IconPlus className="size-4" />
-              New page
+              {t("flow_agent.action.new_page")}
             </Button>
           </>
         }
@@ -85,15 +93,15 @@ export function PagesList() {
             <EmptyMedia variant="icon" aria-hidden>
               <IconLayoutDashboard className="size-5" />
             </EmptyMedia>
-            <EmptyTitle>No pages yet</EmptyTitle>
+            <EmptyTitle>{t("flow_agent.page.pages.empty.title")}</EmptyTitle>
             <EmptyDescription>
-              No pages yet — hit + New page to start.
+              {t("flow_agent.page.pages.empty.description")}
             </EmptyDescription>
           </EmptyHeader>
           <EmptyContent>
             <Button onClick={() => navigate("/pages/new")}>
               <IconPlus className="size-4" />
-              New page
+              {t("flow_agent.action.new_page")}
             </Button>
           </EmptyContent>
         </Empty>
@@ -107,17 +115,17 @@ export function PagesList() {
                     {p.name}
                   </Link>
                 </CardTitle>
-                <CardDescription>{summary(p)}</CardDescription>
+                <CardDescription>{summary(p, t)}</CardDescription>
               </CardHeader>
               <CardContent className="flex-1 text-xs text-muted-foreground">
-                {relative(p.updatedAt)}
+                {relative(p.updatedAt, dates.date, t)}
               </CardContent>
               <CardFooter className="gap-2">
                 <Button asChild size="sm" variant="secondary">
-                  <Link to={`/pages/${p.id}`}>View</Link>
+                  <Link to={`/pages/${p.id}`}>{t("flow_agent.action.view")}</Link>
                 </Button>
                 <Button asChild size="sm" variant="outline">
-                  <Link to={`/pages/${p.id}/edit`}>Edit</Link>
+                  <Link to={`/pages/${p.id}/edit`}>{t("flow_agent.action.edit")}</Link>
                 </Button>
               </CardFooter>
             </Card>
