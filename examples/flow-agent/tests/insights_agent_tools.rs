@@ -38,8 +38,7 @@ async fn make_runtime() -> (AiRuntime, tempfile::TempDir) {
         "coverage.json",
         "tags-index.json",
     ] {
-        std::fs::copy(fixtures_dir().join(name), tmp.path().join(name))
-            .expect("copy fixture");
+        std::fs::copy(fixtures_dir().join(name), tmp.path().join(name)).expect("copy fixture");
     }
     let data = InsightsFixtures::load(tmp.path()).expect("load fixtures");
     let state = InsightsState::new(data);

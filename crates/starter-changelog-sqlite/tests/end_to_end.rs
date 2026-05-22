@@ -12,7 +12,9 @@ use chrono::Utc;
 use starter_changelog::{ChangeFilter, ChangeLog};
 use starter_changelog_sqlite::{migration_source, SqliteChangeLog, SqliteChangeRecorder};
 use starter_spi::authz::ResourceRef;
-use starter_spi::changelog::{Actor, Change, ChangeId, ChangeRecorder, ChangeTx, GroupId, Op, Reversible};
+use starter_spi::changelog::{
+    Actor, Change, ChangeId, ChangeRecorder, ChangeTx, GroupId, Op, Reversible,
+};
 use starter_spi::{Error, Result};
 use starter_store_sqlite::{migrate, testing::ephemeral};
 use starter_undo::{ReversibleRegistry, UndoService};
@@ -64,7 +66,11 @@ impl Reversible for FakeNote {
     }
 }
 
-fn note_change(op: Op, before: Option<serde_json::Value>, after: Option<serde_json::Value>) -> Change {
+fn note_change(
+    op: Op,
+    before: Option<serde_json::Value>,
+    after: Option<serde_json::Value>,
+) -> Change {
     Change {
         id: ChangeId(String::new()), // recorder overwrites
         at: Utc::now(),
@@ -147,9 +153,7 @@ async fn record_list_undo_redo() {
 
     // 4. undo through registry + service.
     let note = Arc::new(FakeNote::default());
-    let registry = Arc::new(
-        ReversibleRegistry::new().insert(note.clone() as Arc<dyn Reversible>),
-    );
+    let registry = Arc::new(ReversibleRegistry::new().insert(note.clone() as Arc<dyn Reversible>));
     let undo = UndoService::new(log.clone(), registry);
 
     let actor = Actor::User {
@@ -186,7 +190,10 @@ async fn record_list_undo_redo() {
 
     // A *third* undo finds nothing past the top-of-redo-stack and
     // returns NotFound.
-    let err = undo.undo(&actor).await.expect_err("third undo has no target");
+    let err = undo
+        .undo(&actor)
+        .await
+        .expect_err("third undo has no target");
     assert!(matches!(err, Error::NotFound { .. }), "got {err:?}");
 }
 

@@ -29,10 +29,10 @@ pub use visibility::ChangelogVisibilityRegistry;
 pub use starter_spi::changelog::ChangeRecorder as Recorder;
 /// Re-export of the spi write-side transaction handle.
 pub use starter_spi::changelog::ChangeTx as Tx;
-/// Re-export of the consumer-side extension trait.
-pub use starter_spi::changelog::Reversible;
 /// Re-export of the per-kind ACL trait.
 pub use starter_spi::changelog::ChangelogVisibility;
+/// Re-export of the consumer-side extension trait.
+pub use starter_spi::changelog::Reversible;
 
 /// Re-export of the envelope types.
 pub use starter_spi::changelog::{Actor, Change, ChangeId, GroupId, Op, TraceId};

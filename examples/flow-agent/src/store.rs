@@ -81,15 +81,17 @@ impl FlowStore {
         .fetch_optional(&self.pool)
         .await?;
         match row {
-            Some((id, name, description, graph_json, version, created_at, updated_at)) => Ok(Flow {
-                id,
-                name,
-                description,
-                graph: serde_json::from_str(&graph_json)?,
-                version,
-                created_at: parse_dt(&created_at),
-                updated_at: parse_dt(&updated_at),
-            }),
+            Some((id, name, description, graph_json, version, created_at, updated_at)) => {
+                Ok(Flow {
+                    id,
+                    name,
+                    description,
+                    graph: serde_json::from_str(&graph_json)?,
+                    version,
+                    created_at: parse_dt(&created_at),
+                    updated_at: parse_dt(&updated_at),
+                })
+            }
             None => Err(DomainError::NotFound(id.to_owned())),
         }
     }
@@ -204,18 +206,25 @@ impl AgentStore {
         .fetch_optional(&self.pool)
         .await?;
         match row {
-            Some((id, name, provider, model, system_prompt, tools_json, created_at, updated_at)) => {
-                Ok(Agent {
-                    id,
-                    name,
-                    provider,
-                    model,
-                    system_prompt,
-                    tools: serde_json::from_str(&tools_json)?,
-                    created_at: parse_dt(&created_at),
-                    updated_at: parse_dt(&updated_at),
-                })
-            }
+            Some((
+                id,
+                name,
+                provider,
+                model,
+                system_prompt,
+                tools_json,
+                created_at,
+                updated_at,
+            )) => Ok(Agent {
+                id,
+                name,
+                provider,
+                model,
+                system_prompt,
+                tools: serde_json::from_str(&tools_json)?,
+                created_at: parse_dt(&created_at),
+                updated_at: parse_dt(&updated_at),
+            }),
             None => Err(DomainError::NotFound(id.to_owned())),
         }
     }
@@ -345,19 +354,21 @@ impl RunStore {
         .fetch_all(&self.pool)
         .await?;
         rows.into_iter()
-            .map(|(id, flow_id, status, started_at, finished_at, trace_json)| {
-                Ok(Run {
-                    id,
-                    flow_id,
-                    status,
-                    started_at: parse_dt(&started_at),
-                    finished_at: finished_at.as_deref().map(parse_dt),
-                    trace: trace_json
-                        .as_deref()
-                        .map(serde_json::from_str)
-                        .transpose()?,
-                })
-            })
+            .map(
+                |(id, flow_id, status, started_at, finished_at, trace_json)| {
+                    Ok(Run {
+                        id,
+                        flow_id,
+                        status,
+                        started_at: parse_dt(&started_at),
+                        finished_at: finished_at.as_deref().map(parse_dt),
+                        trace: trace_json
+                            .as_deref()
+                            .map(serde_json::from_str)
+                            .transpose()?,
+                    })
+                },
+            )
             .collect()
     }
 }

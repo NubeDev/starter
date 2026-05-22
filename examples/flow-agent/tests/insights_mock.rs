@@ -28,8 +28,7 @@ fn fresh_state_with_tmp_copy() -> (InsightsState, tempfile::TempDir) {
         "coverage.json",
         "tags-index.json",
     ] {
-        std::fs::copy(fixtures_dir().join(name), tmp.path().join(name))
-            .expect("copy fixture");
+        std::fs::copy(fixtures_dir().join(name), tmp.path().join(name)).expect("copy fixture");
     }
     let data = InsightsFixtures::load(tmp.path()).expect("load fixtures");
     (InsightsState::new(data), tmp)
@@ -58,9 +57,7 @@ async fn list_rules_returns_seed_data() {
     let v = body_json(resp).await;
     let arr = v.as_array().expect("array");
     assert!(arr.len() >= 7, "expected ≥7 seed rules, got {}", arr.len());
-    assert!(arr
-        .iter()
-        .any(|r| r["id"] == "meter.baseline-deviation@1"));
+    assert!(arr.iter().any(|r| r["id"] == "meter.baseline-deviation@1"));
 }
 
 #[tokio::test]
@@ -179,10 +176,8 @@ async fn upsert_pipeline_round_trips_to_disk() {
         .unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
-    let on_disk: Value = serde_json::from_slice(
-        &std::fs::read(tmp.path().join("pipelines.json")).unwrap(),
-    )
-    .unwrap();
+    let on_disk: Value =
+        serde_json::from_slice(&std::fs::read(tmp.path().join("pipelines.json")).unwrap()).unwrap();
     let arr = on_disk.as_array().unwrap();
     assert!(arr.iter().any(|p| p["id"] == "new-iot-thresholds"));
 }

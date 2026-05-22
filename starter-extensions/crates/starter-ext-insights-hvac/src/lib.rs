@@ -26,8 +26,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::Utc;
 use starter_spi::insights::{
-    Coverage, QualityFlag, QualityFlagId, QualityFlagSeverity, Rule, RuleId, RuleInput,
-    RuleOutput, RuleSchema, Severity, Tags, Verdict,
+    Coverage, QualityFlag, QualityFlagId, QualityFlagSeverity, Rule, RuleId, RuleInput, RuleOutput,
+    RuleSchema, Severity, Tags, Verdict,
 };
 
 fn hvac_tags(name: &str) -> Tags {
@@ -147,12 +147,7 @@ impl Rule for SetpointDrift {
         let s = input.param("setpoint_c").and_then(|v| v.as_f64());
         let (m, s) = match (m, s) {
             (Some(a), Some(b)) => (a, b),
-            _ => {
-                return RuleOutput::Assertion(missing(
-                    &self.schema.id,
-                    "measured_c+setpoint_c",
-                ))
-            }
+            _ => return RuleOutput::Assertion(missing(&self.schema.id, "measured_c+setpoint_c")),
         };
         let tol = input
             .param("tolerance_c")

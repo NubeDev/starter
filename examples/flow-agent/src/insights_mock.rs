@@ -92,14 +92,8 @@ where
 {
     Router::new()
         // Rules
-        .route(
-            "/api/insights/rules",
-            get(list_rules).post(create_rule),
-        )
-        .route(
-            "/api/insights/rules/{id}",
-            get(get_rule).patch(update_rule),
-        )
+        .route("/api/insights/rules", get(list_rules).post(create_rule))
+        .route("/api/insights/rules/{id}", get(get_rule).patch(update_rule))
         .route("/api/insights/rules/{id}/dry-run", post(dry_run_rule))
         // Verdicts
         .route("/api/insights/verdicts", get(list_verdicts))
@@ -398,7 +392,13 @@ mod tests {
         let dir = default_fixtures_dir();
         let f = InsightsFixtures::load(&dir).expect("load fixtures");
         assert!(!f.rules.is_empty(), "rules.json should have seed data");
-        assert!(!f.verdicts.is_empty(), "verdicts.json should have seed data");
-        assert!(!f.pipelines.is_empty(), "pipelines.json should have seed data");
+        assert!(
+            !f.verdicts.is_empty(),
+            "verdicts.json should have seed data"
+        );
+        assert!(
+            !f.pipelines.is_empty(),
+            "pipelines.json should have seed data"
+        );
     }
 }

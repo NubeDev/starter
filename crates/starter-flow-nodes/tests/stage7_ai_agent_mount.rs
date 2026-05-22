@@ -35,7 +35,9 @@ use starter_flow_nodes::ai_agent::{
 use starter_flow_nodes::tool_registry::ToolRegistry;
 use starter_flow_spi::ai_runner::AiRunnerRegistry;
 use starter_flow_spi::flow::RunId;
-use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, NodeId, SlotMap, SlotValue};
+use starter_flow_spi::node::{
+    KindId, NodeBehavior, NodeCtx, NodeError, NodeId, SlotMap, SlotValue,
+};
 use starter_flow_spi::skill::{SkillSelection, SkillSelector};
 use starter_flow_spi::{Cancel as FlowCancel, Principal};
 use starter_skills::{FirstSkillSelector, InMemoryApprovalStore, SkillRegistry};

@@ -120,7 +120,10 @@ mod tests {
 
     #[test]
     fn slot_value_to_json_covers_every_known_variant() {
-        assert_eq!(slot_value_to_json(&SlotValue::Null), serde_json::Value::Null);
+        assert_eq!(
+            slot_value_to_json(&SlotValue::Null),
+            serde_json::Value::Null
+        );
         assert_eq!(
             slot_value_to_json(&SlotValue::Bool(true)),
             serde_json::Value::Bool(true)

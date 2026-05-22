@@ -130,11 +130,8 @@ pub trait ApprovalStore: Send + Sync + 'static {
     /// that does not exist is a no-op (no error). This is the only
     /// way to take an approved bundle back to quarantined without
     /// changing its bytes.
-    async fn revoke(
-        &self,
-        skill_id: &SkillId,
-        bundle_hash: &str,
-    ) -> Result<(), ApprovalStoreError>;
+    async fn revoke(&self, skill_id: &SkillId, bundle_hash: &str)
+        -> Result<(), ApprovalStoreError>;
 }
 
 /// In-memory [`ApprovalStore`]. Ships in `starter-skills` so the

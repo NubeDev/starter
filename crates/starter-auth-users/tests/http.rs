@@ -65,9 +65,14 @@ async fn login_logout_round_trip() {
     let sessions = Arc::new(SqliteSessionStore::new(pool.clone()));
     let tokens = Arc::new(SqliteTokenStore::new(pool));
 
-    create_admin(users.as_ref(), "u@example.com", "long-enough-pw", Role::Admin)
-        .await
-        .unwrap();
+    create_admin(
+        users.as_ref(),
+        "u@example.com",
+        "long-enough-pw",
+        Role::Admin,
+    )
+    .await
+    .unwrap();
 
     let auth_state = AuthState::new(
         users.clone() as _,
@@ -266,9 +271,14 @@ async fn reader_blocked_from_admin_route() {
     let sessions = Arc::new(SqliteSessionStore::new(pool.clone()));
     let tokens = Arc::new(SqliteTokenStore::new(pool));
 
-    create_admin(users.as_ref(), "r@example.com", "long-enough-pw", Role::Reader)
-        .await
-        .unwrap();
+    create_admin(
+        users.as_ref(),
+        "r@example.com",
+        "long-enough-pw",
+        Role::Reader,
+    )
+    .await
+    .unwrap();
 
     let auth_state = AuthState::new(
         users.clone() as _,

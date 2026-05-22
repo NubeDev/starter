@@ -71,22 +71,26 @@ pub fn is_free(host: IpAddr, port: u16) -> bool {
 
 /// Pick a free port on `127.0.0.1`, walking forward from `preferred`.
 pub fn pick(preferred: u16) -> Result<u16, PortError> {
-    pick_with(PickOptions { preferred, ..PickOptions::default() })
+    pick_with(PickOptions {
+        preferred,
+        ..PickOptions::default()
+    })
 }
 
 /// Try only `preferred` on `127.0.0.1`; error if it is taken.
 pub fn pick_strict(preferred: u16) -> Result<u16, PortError> {
-    pick_with(PickOptions { preferred, strict: true, ..PickOptions::default() })
+    pick_with(PickOptions {
+        preferred,
+        strict: true,
+        ..PickOptions::default()
+    })
 }
 
 /// Ask the OS for an ephemeral port by binding to port 0. Useful in
 /// tests where you don't care about the number, just that it's free
 /// for the next instant.
 pub fn pick_ephemeral() -> Result<u16, PortError> {
-    let listener = TcpListener::bind(SocketAddr::new(
-        IpAddr::V4(Ipv4Addr::LOCALHOST),
-        0,
-    ))?;
+    let listener = TcpListener::bind(SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 0))?;
     Ok(listener.local_addr()?.port())
 }
 

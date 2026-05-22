@@ -82,7 +82,8 @@ impl DefinitionMetricsCell {
 
     /// `flow_definition_publishes_total{outcome="short_circuited"}`++.
     pub fn add_short_circuited(&self) {
-        self.publishes_short_circuited.fetch_add(1, Ordering::AcqRel);
+        self.publishes_short_circuited
+            .fetch_add(1, Ordering::AcqRel);
     }
 
     /// `flow_definition_publishes_total{outcome="rejected"}`++.

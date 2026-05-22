@@ -18,6 +18,7 @@ use crate::flow_engine::FlowEngine;
 use crate::insights_mock::{
     default_fixtures_dir, router as insights_router, InsightsFixtures, InsightsState,
 };
+use crate::node_kinds::{router as node_kinds_router, NodeKindsState};
 use crate::rest::{router as rest_router, FlowAgentApi, RestState};
 use crate::sse::EventHub;
 use crate::store::{AgentStore, FlowStore, RunStore};
@@ -77,10 +78,17 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         agent_sessions,
     };
 
+    // Slice A of `DOCS/extensions/scope/FLOW-NODES.md`: ship the
+    // descriptor surface. Slice B's `POST /admin/extensions/reload`
+    // will swap the dynamic half through the `ArcSwap` inside this
+    // state.
+    let node_kinds_state = NodeKindsState::with_builtins();
+
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(rest_router(rest_state))
         .merge_router(insights_router(insights_state))
         .merge_router(cache_demo_router())
+        .merge_router(node_kinds_router::<AppState>(node_kinds_state))
         .with_openapi(FlowAgentApi::openapi())
         .with_metrics(registry, metrics)
         .build();

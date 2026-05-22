@@ -32,9 +32,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::Utc;
 use starter_spi::insights::{
-    Coverage, Dataset, DatasetSchema, QualityFlag, QualityFlagId, QualityFlagSeverity,
-    RawCoverage, Rule, RuleId, RuleInput, RuleOutput, RuleSchema, Severity, Tags, TimeZoneId,
-    VecDatasetRows, Verdict,
+    Coverage, Dataset, DatasetSchema, QualityFlag, QualityFlagId, QualityFlagSeverity, RawCoverage,
+    Rule, RuleId, RuleInput, RuleOutput, RuleSchema, Severity, Tags, TimeZoneId, VecDatasetRows,
+    Verdict,
 };
 
 fn energy_tags(kind: &str) -> Tags {
@@ -302,7 +302,11 @@ impl Rule for BaselineDeviation {
                 ));
             }
         };
-        let dev_pct = if b == 0.0 { 0.0 } else { ((m - b).abs() / b) * 100.0 };
+        let dev_pct = if b == 0.0 {
+            0.0
+        } else {
+            ((m - b).abs() / b) * 100.0
+        };
         let now = Utc::now();
         let v = if dev_pct > t {
             Verdict::warn(

@@ -68,8 +68,13 @@ async fn cross_principal_lookups_return_none() {
     let alice = principal("alice");
     let bob = principal("bob");
 
-    let entry = new_entry(&alice, "note", serde_json::json!({"x": 1}), Duration::seconds(60))
-        .expect("entry");
+    let entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"x": 1}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     let id = entry.id.clone();
     store.put(entry).await.expect("put");
 
@@ -85,8 +90,13 @@ async fn expired_entries_return_none() {
     let store = setup().await;
     let alice = principal("alice");
 
-    let mut entry = new_entry(&alice, "note", serde_json::json!({"x": 1}), Duration::seconds(60))
-        .expect("entry");
+    let mut entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"x": 1}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     entry.expires_at = Utc::now() - Duration::seconds(1);
     let id = entry.id.clone();
     store.put(entry).await.expect("put");
@@ -102,12 +112,17 @@ async fn tampered_payload_fails_closed() {
         .run()
         .await
         .expect("migration");
-    let store = SqliteClipboard::new(pool.clone(), b"unit-test-key-please-rotate")
-        .expect("hmac key ok");
+    let store =
+        SqliteClipboard::new(pool.clone(), b"unit-test-key-please-rotate").expect("hmac key ok");
     let alice = principal("alice");
 
-    let entry = new_entry(&alice, "note", serde_json::json!({"text": "ok"}), Duration::seconds(60))
-        .expect("entry");
+    let entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"text": "ok"}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     let id = entry.id.clone();
     store.put(entry).await.expect("put");
 
@@ -142,8 +157,13 @@ async fn rotated_key_invalidates_existing_entries() {
         .expect("migration");
     let alice = principal("alice");
 
-    let entry = new_entry(&alice, "note", serde_json::json!({"x": 1}), Duration::seconds(60))
-        .expect("entry");
+    let entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"x": 1}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     let id = entry.id.clone();
 
     let before = SqliteClipboard::new(pool.clone(), b"old-key").expect("hmac key ok");

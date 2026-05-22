@@ -44,7 +44,7 @@ pub const KIND_ID: &str = "starter.flow.merge";
 
 /// Static metadata for the catalog / discovery surface. Help text is
 /// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
-pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+pub static DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
     starter_flow_spi::node::NodeDescriptor::new(
         KIND_ID,
         "starter.flow.node.merge.label",
@@ -177,7 +177,9 @@ impl NodeBehavior for Merge {
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         let strategy = match input.remove(STRATEGY_SLOT) {
             None => Strategy::Object,
-            Some(SlotValue::String(s)) => Strategy::parse(&s).map_err(MergeError::into_node_error)?,
+            Some(SlotValue::String(s)) => {
+                Strategy::parse(&s).map_err(MergeError::into_node_error)?
+            }
             Some(_) => return Err(MergeError::InvalidStrategyType.into_node_error()),
         };
 

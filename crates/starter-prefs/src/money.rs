@@ -44,7 +44,10 @@ impl Money {
     /// Construct directly. Trivial; lets the field order be obvious
     /// at the call site.
     pub const fn new(amount_minor: i64, currency: Currency) -> Self {
-        Self { amount_minor, currency }
+        Self {
+            amount_minor,
+            currency,
+        }
     }
 
     /// The value as a `f64` in the major unit (`amount_minor /

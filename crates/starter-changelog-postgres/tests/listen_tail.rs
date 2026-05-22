@@ -12,13 +12,9 @@ use std::time::Duration;
 
 use chrono::Utc;
 use starter_changelog::ChangeTail;
-use starter_changelog_postgres::{
-    migration_source, PgChangeRecorder, PgListenTail,
-};
+use starter_changelog_postgres::{migration_source, PgChangeRecorder, PgListenTail};
 use starter_spi::authz::ResourceRef;
-use starter_spi::changelog::{
-    Actor, Change, ChangeId, ChangeRecorder, ChangeTx, GroupId, Op,
-};
+use starter_spi::changelog::{Actor, Change, ChangeId, ChangeRecorder, ChangeTx, GroupId, Op};
 use starter_spi::Result;
 use starter_store_postgres::{migrate, testing::with_database};
 
@@ -40,10 +36,7 @@ fn note_change(after: serde_json::Value) -> Change {
     }
 }
 
-async fn record_one(
-    recorder: &PgChangeRecorder,
-    after: serde_json::Value,
-) -> ChangeId {
+async fn record_one(recorder: &PgChangeRecorder, after: serde_json::Value) -> ChangeId {
     let captured: Arc<Mutex<Option<ChangeId>>> = Arc::new(Mutex::new(None));
     let captured_inner = captured.clone();
     recorder

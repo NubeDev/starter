@@ -65,8 +65,7 @@ mod tests {
 
     #[test]
     fn penalty_lowers_effective_and_appends_chain() {
-        let schema = RuleSchema::derivation(RuleId::new("t", "r", 1))
-            .with_confidence_penalty(0.8);
+        let schema = RuleSchema::derivation(RuleId::new("t", "r", 1)).with_confidence_penalty(0.8);
         let out = apply_derivation_penalty(ds(1.0), &schema);
         assert!((out.coverage.effective.confidence - 0.8).abs() < f32::EPSILON);
         assert_eq!(out.coverage.effective.penalty_chain.len(), 1);

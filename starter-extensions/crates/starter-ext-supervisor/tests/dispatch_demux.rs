@@ -152,11 +152,7 @@ async fn call_unknown_method_returns_kernel_error() {
     // The child's SDK loop responds with a JSON-RPC error envelope for
     // unknown methods; the supervisor must surface that as Err(...).
     let err = handle
-        .call(
-            "tools/does-not-exist",
-            json!({}),
-            Duration::from_secs(5),
-        )
+        .call("tools/does-not-exist", json!({}), Duration::from_secs(5))
         .await
         .expect_err("unknown method must error");
     let msg = format!("{err}");

@@ -96,8 +96,7 @@ async fn hot_reload_file_watch_is_just_another_publisher() {
         "nodes": [{"id": "smoke.n", "kind": "com.acme.smoke.any"}],
         "links": []
     });
-    std::fs::write(&path, serde_json::to_vec_pretty(&body).unwrap())
-        .expect("write flow file");
+    std::fs::write(&path, serde_json::to_vec_pretty(&body).unwrap()).expect("write flow file");
 
     let mut rx = mgr.subscribe();
 

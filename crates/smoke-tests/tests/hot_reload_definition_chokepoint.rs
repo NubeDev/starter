@@ -63,11 +63,7 @@ impl NodeBehavior for AnyKind {
         &self.kind
     }
 
-    async fn invoke(
-        &self,
-        _ctx: NodeCtx<'_>,
-        input: SlotMap,
-    ) -> Result<SlotMap, NodeError> {
+    async fn invoke(&self, _ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError> {
         Ok(input)
     }
 }
@@ -193,7 +189,15 @@ async fn hot_reload_bad_revision_never_goes_live() {
         PublishOutcome::Published { revision, .. } => revision,
         other => panic!("good publish must be Published, got {other:?}"),
     };
-    assert_eq!(engine.definitions().unwrap().active_topologies().len().await, 1);
+    assert_eq!(
+        engine
+            .definitions()
+            .unwrap()
+            .active_topologies()
+            .len()
+            .await,
+        1
+    );
 
     // Draft with an unknown kind.
     let bad = serde_json::json!({
@@ -207,7 +211,9 @@ async fn hot_reload_bad_revision_never_goes_live() {
         .expect_err("bad publish must return typed error");
     let err_s = format!("{err:?}");
     assert!(
-        err_s.contains("Resolve") || err_s.contains("UnknownKind") || err_s.contains("never_registered"),
+        err_s.contains("Resolve")
+            || err_s.contains("UnknownKind")
+            || err_s.contains("never_registered"),
         "expected resolve/unknown-kind error, got {err_s}"
     );
 
@@ -219,7 +225,15 @@ async fn hot_reload_bad_revision_never_goes_live() {
         "FlowStore::head must still point at the good revision"
     );
     // ActiveTopology still mounted at the good revision.
-    assert_eq!(engine.definitions().unwrap().active_topologies().len().await, 1);
+    assert_eq!(
+        engine
+            .definitions()
+            .unwrap()
+            .active_topologies()
+            .len()
+            .await,
+        1
+    );
 }
 
 /// HR8: deregister-then-re-register round-trips the flow's mount

@@ -108,7 +108,13 @@ impl AiRuntime {
         runs: Arc<RunStore>,
         hub: Arc<EventHub>,
     ) -> Self {
-        Self::with_registry(Arc::new(Registry::with_defaults()), flows, engine, runs, hub)
+        Self::with_registry(
+            Arc::new(Registry::with_defaults()),
+            flows,
+            engine,
+            runs,
+            hub,
+        )
     }
 
     /// Construct with a caller-supplied registry. Used by integration

@@ -38,10 +38,42 @@ const SMOOTHING_WINDOW: usize = 32;
 /// Definitions for the metric series returned by `/series`.
 /// `(name, unit, color, base, amplitude, noise, seed)`.
 const SERIES_DEFS: &[(&str, &str, &str, f64, f64, f64, u32)] = &[
-    ("requests_per_sec", "req/s", "#3b82f6", 1200.0, 320.0, 80.0, 0x9e37_79b9),
-    ("p50_latency_ms", "ms", "#22c55e", 42.0, 8.0, 3.0, 0x517c_c1b7),
-    ("p99_latency_ms", "ms", "#ef4444", 180.0, 60.0, 25.0, 0x85eb_ca77),
-    ("error_rate_pct", "%", "#f59e0b", 0.6, 0.45, 0.2, 0x27d4_eb2f),
+    (
+        "requests_per_sec",
+        "req/s",
+        "#3b82f6",
+        1200.0,
+        320.0,
+        80.0,
+        0x9e37_79b9,
+    ),
+    (
+        "p50_latency_ms",
+        "ms",
+        "#22c55e",
+        42.0,
+        8.0,
+        3.0,
+        0x517c_c1b7,
+    ),
+    (
+        "p99_latency_ms",
+        "ms",
+        "#ef4444",
+        180.0,
+        60.0,
+        25.0,
+        0x85eb_ca77,
+    ),
+    (
+        "error_rate_pct",
+        "%",
+        "#f59e0b",
+        0.6,
+        0.45,
+        0.2,
+        0x27d4_eb2f,
+    ),
 ];
 
 /// One bucket in a returned series.
@@ -244,7 +276,11 @@ fn synth_signal(n: usize, base: f64, amp: f64, noise: f64, seed: u32) -> Vec<f64
         let mixed = (i as u32).wrapping_mul(2_654_435_761).wrapping_add(seed);
         let noise_v = (((mixed & 0xff) as f64 / 255.0) - 0.5) * 2.0 * noise;
         // Occasional spike every ~400 samples, sized by amp.
-        let spike = if i % 400 == 0 && i != 0 { amp * 0.6 } else { 0.0 };
+        let spike = if i % 400 == 0 && i != 0 {
+            amp * 0.6
+        } else {
+            0.0
+        };
         out.push(wave + drift + noise_v + spike);
     }
     out

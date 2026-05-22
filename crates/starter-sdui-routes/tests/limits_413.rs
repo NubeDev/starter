@@ -53,12 +53,8 @@ async fn tree_nodes_returns_413_with_tag() {
         default_max_width: None,
     });
     let app = build_app(tree);
-    let (status, body) = post_json(
-        app,
-        "/api/v1/ui/resolve",
-        json!({ "page_ref": "page-1" }),
-    )
-    .await;
+    let (status, body) =
+        post_json(app, "/api/v1/ui/resolve", json!({ "page_ref": "page-1" })).await;
     assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
     assert_eq!(body["what"], "tree_nodes", "body was {body}");
 }
@@ -97,12 +93,8 @@ async fn tree_depth_returns_413_with_tag() {
         default_max_width: None,
     });
     let app = build_app(tree);
-    let (status, body) = post_json(
-        app,
-        "/api/v1/ui/resolve",
-        json!({ "page_ref": "page-1" }),
-    )
-    .await;
+    let (status, body) =
+        post_json(app, "/api/v1/ui/resolve", json!({ "page_ref": "page-1" })).await;
     assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
     assert_eq!(body["what"], "tree_depth", "body was {body}");
 }
@@ -128,12 +120,8 @@ async fn render_tree_bytes_returns_413_with_tag() {
         default_max_width: None,
     });
     let app = build_app(tree);
-    let (status, body) = post_json(
-        app,
-        "/api/v1/ui/resolve",
-        json!({ "page_ref": "page-1" }),
-    )
-    .await;
+    let (status, body) =
+        post_json(app, "/api/v1/ui/resolve", json!({ "page_ref": "page-1" })).await;
     assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
     assert_eq!(body["what"], "render_tree_bytes", "body was {body}");
 }
@@ -141,11 +129,8 @@ async fn render_tree_bytes_returns_413_with_tag() {
 #[tokio::test]
 async fn table_rows_per_page_returns_413_with_tag() {
     let app = build_app(trivial_tree());
-    let (status, body) = common::get_json(
-        app,
-        "/api/v1/ui/table?source_id=source-1&page=1&size=10000",
-    )
-    .await;
+    let (status, body) =
+        common::get_json(app, "/api/v1/ui/table?source_id=source-1&page=1&size=10000").await;
     assert_eq!(status, StatusCode::PAYLOAD_TOO_LARGE);
     assert_eq!(body["what"], "table_rows_per_page", "body was {body}");
 }

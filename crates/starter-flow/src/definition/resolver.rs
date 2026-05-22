@@ -143,11 +143,10 @@ impl TopologyResolver {
         revision: &FlowRevision,
         kinds: &NodeKindRegistry,
     ) -> Result<Arc<FlowTopology>, TopologyResolverError> {
-        let body = body::parse_body(&revision.body).map_err(|e| {
-            TopologyResolverError::BodyShape {
+        let body =
+            body::parse_body(&revision.body).map_err(|e| TopologyResolverError::BodyShape {
                 detail: e.to_string(),
-            }
-        })?;
+            })?;
         Self::resolve_body(&body, &revision.flow_id, kinds).await
     }
 
@@ -183,12 +182,14 @@ impl TopologyResolver {
             if !seen.insert(id.clone()) {
                 return Err(TopologyResolverError::DuplicateNode { node: id.clone() });
             }
-            let behavior = kinds.lookup(kind).await.ok_or_else(|| {
-                TopologyResolverError::UnknownKind {
-                    node: id.clone(),
-                    kind: kind.to_string(),
-                }
-            })?;
+            let behavior =
+                kinds
+                    .lookup(kind)
+                    .await
+                    .ok_or_else(|| TopologyResolverError::UnknownKind {
+                        node: id.clone(),
+                        kind: kind.to_string(),
+                    })?;
             behavior.validate_settings(settings).map_err(|error| {
                 TopologyResolverError::SettingsViolation {
                     node: id.clone(),

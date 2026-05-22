@@ -241,7 +241,9 @@ pub async fn apply_file_event(
                     return Err(e);
                 }
             };
-            let source = DefinitionSource::File { path: parsed.path.clone() };
+            let source = DefinitionSource::File {
+                path: parsed.path.clone(),
+            };
             match manager.publish(parsed.flow_id, parsed.body, source).await {
                 Ok(outcome) => {
                     tracing::info!(
@@ -301,10 +303,7 @@ pub async fn apply_file_event(
 /// re-publishes any file whose on-disk content differs from the
 /// `FlowStore` head; HR1's idempotent short-circuit makes this a
 /// no-op when they match.
-pub async fn boot_walk(
-    manager: &Arc<DefinitionManager>,
-    dir: &Path,
-) -> Vec<(PathBuf, FlowId)> {
+pub async fn boot_walk(manager: &Arc<DefinitionManager>, dir: &Path) -> Vec<(PathBuf, FlowId)> {
     let mut out = Vec::new();
     let read = match std::fs::read_dir(dir) {
         Ok(r) => r,
@@ -325,7 +324,9 @@ pub async fn boot_walk(
         match parse_flow_file(&path) {
             Ok(parsed) => {
                 let flow_id = parsed.flow_id.clone();
-                let source = DefinitionSource::File { path: parsed.path.clone() };
+                let source = DefinitionSource::File {
+                    path: parsed.path.clone(),
+                };
                 if let Err(e) = manager.publish(parsed.flow_id, parsed.body, source).await {
                     tracing::warn!(
                         path = %path.display(),
@@ -401,16 +402,14 @@ pub async fn watch_dir(
     // Background blocking watcher. `notify` calls the handler from a
     // dedicated thread; we forward into the async channel.
     let tx_for_watcher = tx.clone();
-    let mut watcher: RecommendedWatcher = notify::recommended_watcher(
-        move |res: notify::Result<notify::Event>| {
+    let mut watcher: RecommendedWatcher =
+        notify::recommended_watcher(move |res: notify::Result<notify::Event>| {
             let Ok(event) = res else {
                 return;
             };
             for path in event.paths {
                 let emitted = match event.kind {
-                    EventKind::Create(_) | EventKind::Modify(_) => {
-                        Some(FileEvent::Upsert(path))
-                    }
+                    EventKind::Create(_) | EventKind::Modify(_) => Some(FileEvent::Upsert(path)),
                     EventKind::Remove(_) => Some(FileEvent::Remove(path)),
                     _ => None,
                 };
@@ -418,12 +417,11 @@ pub async fn watch_dir(
                     let _ = tx_for_watcher.send(ev);
                 }
             }
-        },
-    )
-    .map_err(|e| WatchError::Io {
-        path: config.dir.clone(),
-        error: e.to_string(),
-    })?;
+        })
+        .map_err(|e| WatchError::Io {
+            path: config.dir.clone(),
+            error: e.to_string(),
+        })?;
 
     watcher
         .watch(&config.dir, RecursiveMode::NonRecursive)
@@ -523,10 +521,7 @@ mod tests {
     fn parses_yaml_file() {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("a.yaml");
-        write(
-            &path,
-            "flow_id: examples.watch.a\nnodes: []\nlinks: []\n",
-        );
+        write(&path, "flow_id: examples.watch.a\nnodes: []\nlinks: []\n");
         let parsed = parse_flow_file(&path).unwrap();
         assert_eq!(parsed.flow_id.as_str(), "examples.watch.a");
     }

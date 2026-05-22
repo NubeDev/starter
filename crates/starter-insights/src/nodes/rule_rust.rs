@@ -17,9 +17,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::Utc;
-use starter_flow_spi::node::{
-    KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
-};
+use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue};
 use starter_spi::insights::{
     rule_error_flag, Coverage, RuleErrorKind, RuleId, RuleInput, RuleOutput, Severity, Tags,
     Verdict,
@@ -164,16 +162,17 @@ impl NodeBehavior for RuleRustNode {
         let (merged, truncated) = static_tags.merge(out_verdict.tags);
         out_verdict.tags = merged;
         if truncated {
-            out_verdict.coverage.quality_flags.push(
-                starter_spi::insights::QualityFlag::new(
+            out_verdict
+                .coverage
+                .quality_flags
+                .push(starter_spi::insights::QualityFlag::new(
                     starter_spi::insights::QualityFlagId::new(
                         "starter.quality",
                         "tags-truncated",
                         1,
                     ),
                     starter_spi::insights::QualityFlagSeverity::Info,
-                ),
-            );
+                ));
         }
 
         Ok(verdict_into_slot_map(&out_verdict))

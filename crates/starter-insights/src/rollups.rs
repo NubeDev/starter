@@ -205,8 +205,18 @@ impl RollupEngine {
     ) -> Result<(), RollupError> {
         let (start, end) = window_class.bucket(tz, v.at);
         // Ungrouped row.
-        self.bump(namespace, name, major, window_class, start, end, None, None, v)
-            .await?;
+        self.bump(
+            namespace,
+            name,
+            major,
+            window_class,
+            start,
+            end,
+            None,
+            None,
+            v,
+        )
+        .await?;
         // Per-tag groups.
         for k in tag_keys {
             if let Some(tv) = v.tags.get(*k) {

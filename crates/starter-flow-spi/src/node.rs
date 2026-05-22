@@ -4,8 +4,10 @@
 //! (node behaviours are stateless — `&self`, never `&mut self`), and
 //! R10 (reverse-DNS ids; namespace ownership enforced).
 
-use std::collections::BTreeMap;
+use std::borrow::Cow;
+use std::collections::{BTreeMap, HashMap};
 use std::fmt;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
@@ -209,30 +211,44 @@ impl From<NodeId> for String {
 /// same shape under their own reverse-DNS prefix.
 ///
 /// The struct is `#[non_exhaustive]` so future additions (icon, input
-/// slot schemas, category) are non-breaking. All fields are
-/// `&'static str` so a descriptor can be a `const` — zero allocation,
-/// embeddable in static slices used by the registry.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// slot schemas, category) are non-breaking. Each `*_key` field is a
+/// [`Cow<'static, str>`] per R-flow-node-2 (`DOCS/extensions/scope/FLOW-NODES.md`):
+/// built-in kinds construct a descriptor as `const`, threading
+/// `&'static str` literals through [`Cow::Borrowed`] (zero allocation,
+/// embeddable in static slices); extension-contributed kinds construct
+/// owned descriptors at load time through [`NodeDescriptor::new_owned`]
+/// without ever resorting to `Box::leak`. The widening keeps both call
+/// sites source-compatible: every existing [`NodeDescriptor::new`]
+/// invocation in `starter-flow-nodes` continues to compile because the
+/// const constructor still takes `&'static str` and wraps each argument
+/// in `Cow::Borrowed` internally.
+#[derive(Debug, Clone, PartialEq, Eq)]
 #[non_exhaustive]
 pub struct NodeDescriptor {
     /// Reverse-DNS kind id (matches the value [`NodeBehavior::kind_id`]
-    /// returns). Stored as `&'static str` rather than [`KindId`] so
-    /// the descriptor can be `const`; validate via
-    /// [`KindId::new`] at use sites that need a typed id.
-    pub kind: &'static str,
+    /// returns). Stored as [`Cow<'static, str>`] so built-in descriptors
+    /// stay zero-allocation while extension-contributed descriptors own
+    /// the string (R-flow-node-2). Validate via [`KindId::new`] at use
+    /// sites that need a typed id.
+    pub kind: Cow<'static, str>,
     /// i18n catalog key for the short label.
-    pub label_key: &'static str,
+    pub label_key: Cow<'static, str>,
     /// i18n catalog key for the one-line summary.
-    pub summary_key: &'static str,
+    pub summary_key: Cow<'static, str>,
     /// i18n catalog key for the long-form help text.
-    pub help_key: &'static str,
+    pub help_key: Cow<'static, str>,
 }
 
 impl NodeDescriptor {
-    /// `const` constructor. External crates use this rather than the
-    /// struct literal because [`NodeDescriptor`] is `#[non_exhaustive]`;
-    /// future field additions stay non-breaking because every existing
-    /// call site goes through here.
+    /// `const` constructor for built-in descriptors. External crates use
+    /// this rather than the struct literal because [`NodeDescriptor`] is
+    /// `#[non_exhaustive]`; future field additions stay non-breaking
+    /// because every existing call site goes through here.
+    ///
+    /// The widening to [`Cow<'static, str>`] in R-flow-node-2 keeps every
+    /// existing built-in call site source-compatible: callers pass
+    /// `&'static str` literals exactly as before and this constructor
+    /// wraps them in [`Cow::Borrowed`].
     pub const fn new(
         kind: &'static str,
         label_key: &'static str,
@@ -240,10 +256,29 @@ impl NodeDescriptor {
         help_key: &'static str,
     ) -> Self {
         Self {
-            kind,
-            label_key,
-            summary_key,
-            help_key,
+            kind: Cow::Borrowed(kind),
+            label_key: Cow::Borrowed(label_key),
+            summary_key: Cow::Borrowed(summary_key),
+            help_key: Cow::Borrowed(help_key),
+        }
+    }
+
+    /// Owned constructor for extension-contributed descriptors.
+    ///
+    /// Extensions read their `block.yaml`, materialise the i18n keys, and
+    /// call this — owned strings live on the [`DynamicNodeKindRegistry`]
+    /// for as long as the registry does (R-flow-node-2: no `Box::leak`).
+    pub fn new_owned(
+        kind: impl Into<String>,
+        label_key: impl Into<String>,
+        summary_key: impl Into<String>,
+        help_key: impl Into<String>,
+    ) -> Self {
+        Self {
+            kind: Cow::Owned(kind.into()),
+            label_key: Cow::Owned(label_key.into()),
+            summary_key: Cow::Owned(summary_key.into()),
+            help_key: Cow::Owned(help_key.into()),
         }
     }
 }
@@ -265,6 +300,200 @@ pub trait NodeKindRegistry: Send + Sync + 'static {
     /// (typically registration order); callers that need a stable sort
     /// should sort by `kind`.
     fn all(&self) -> Vec<&NodeDescriptor>;
+}
+
+/// One entry in a [`DynamicNodeKindRegistry`].
+///
+/// Carries an owned [`NodeDescriptor`] (i18n catalog keys + reverse-DNS
+/// kind id) and a factory that materialises an [`Arc<dyn NodeBehavior>`]
+/// on demand. The factory shape is deliberately closure-typed rather
+/// than `Arc<dyn NodeBehavior>` directly because the extensions adapter
+/// (`starter-ext-flow::contributed_node_kinds`) wants to keep the
+/// behaviour construction lazy: in stage 1 (slice A) every factory
+/// returns the same `UnboundNodeBehavior` instance, in stage 2 (slice B)
+/// the factory closes over the `SupervisorHandle` and constructs a
+/// `ProcessNodeProxy` per call.
+///
+/// R-flow-node-2 ground rule: the descriptor's [`Cow<'static, str>`]
+/// fields hold owned strings whose lifetime tracks the registry's; no
+/// `Box::leak` anywhere.
+pub struct DynamicNodeKindEntry {
+    descriptor: NodeDescriptor,
+    factory: Arc<dyn Fn() -> Arc<dyn NodeBehavior> + Send + Sync + 'static>,
+}
+
+impl DynamicNodeKindEntry {
+    /// Build an entry from an owned descriptor and a factory closure.
+    pub fn new<F>(descriptor: NodeDescriptor, factory: F) -> Self
+    where
+        F: Fn() -> Arc<dyn NodeBehavior> + Send + Sync + 'static,
+    {
+        Self {
+            descriptor,
+            factory: Arc::new(factory),
+        }
+    }
+
+    /// Borrow the descriptor.
+    pub fn descriptor(&self) -> &NodeDescriptor {
+        &self.descriptor
+    }
+
+    /// Materialise the [`NodeBehavior`] implementation for this kind.
+    pub fn behavior(&self) -> Arc<dyn NodeBehavior> {
+        (self.factory)()
+    }
+}
+
+impl fmt::Debug for DynamicNodeKindEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("DynamicNodeKindEntry")
+            .field("descriptor", &self.descriptor)
+            .finish_non_exhaustive()
+    }
+}
+
+/// In-memory [`NodeKindRegistry`] populated from owned
+/// [`DynamicNodeKindEntry`] values.
+///
+/// Per R-flow-node-6 the dynamic registry's contents are *not* `static`
+/// — they live until the registry is dropped by the hot-reload algorithm
+/// in slice B. Stage 1 (slice A) ships the registry shape + the
+/// composition seam; the reload algorithm lands later.
+pub struct DynamicNodeKindRegistry {
+    entries: Vec<DynamicNodeKindEntry>,
+    by_kind: HashMap<String, usize>,
+}
+
+impl DynamicNodeKindRegistry {
+    /// Construct an empty registry.
+    pub fn new() -> Self {
+        Self {
+            entries: Vec::new(),
+            by_kind: HashMap::new(),
+        }
+    }
+
+    /// Build a registry from an iterator of entries. The last entry
+    /// under a given kind id wins; collisions are tolerated so a host
+    /// can swap an extension's contribution in place during hot reload
+    /// without an intermediate empty state.
+    pub fn from_entries<I>(entries: I) -> Self
+    where
+        I: IntoIterator<Item = DynamicNodeKindEntry>,
+    {
+        let mut reg = Self::new();
+        for entry in entries {
+            reg.insert(entry);
+        }
+        reg
+    }
+
+    /// Insert (or replace) one entry. Returns the previous entry under
+    /// the same kind id, if any.
+    pub fn insert(&mut self, entry: DynamicNodeKindEntry) -> Option<DynamicNodeKindEntry> {
+        let kind = entry.descriptor.kind.clone().into_owned();
+        if let Some(&idx) = self.by_kind.get(&kind) {
+            let prev = std::mem::replace(&mut self.entries[idx], entry);
+            return Some(prev);
+        }
+        self.by_kind.insert(kind, self.entries.len());
+        self.entries.push(entry);
+        None
+    }
+
+    /// Look up an entry by kind id.
+    pub fn entry(&self, kind: &KindId) -> Option<&DynamicNodeKindEntry> {
+        self.by_kind
+            .get(kind.as_str())
+            .and_then(|&idx| self.entries.get(idx))
+    }
+
+    /// Borrow every entry. Order is insertion order; for stable
+    /// presentation surfaces, sort by `entry.descriptor().kind`.
+    pub fn entries(&self) -> &[DynamicNodeKindEntry] {
+        &self.entries
+    }
+
+    /// `true` if the registry holds no entries.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+
+    /// Number of entries.
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+}
+
+impl Default for DynamicNodeKindRegistry {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl NodeKindRegistry for DynamicNodeKindRegistry {
+    fn lookup(&self, kind: &KindId) -> Option<&NodeDescriptor> {
+        self.entry(kind).map(|e| &e.descriptor)
+    }
+
+    fn all(&self) -> Vec<&NodeDescriptor> {
+        self.entries.iter().map(|e| &e.descriptor).collect()
+    }
+}
+
+/// Composition of a static built-in registry and a dynamic
+/// extension-contributed registry.
+///
+/// Lookup order is **static first**, then dynamic — built-in kinds
+/// always win on a collision so an extension cannot shadow
+/// `starter.flow.*` (R-flow-node-3 forbids the manifest from declaring
+/// such a kind in the first place; the lookup precedence is a
+/// belt-and-braces guard against a registry built outside the normal
+/// loader path).
+pub struct CompositeNodeKindRegistry {
+    static_reg: Arc<dyn NodeKindRegistry>,
+    dynamic_reg: Arc<DynamicNodeKindRegistry>,
+}
+
+impl CompositeNodeKindRegistry {
+    /// Construct a composite from a built-in registry and the
+    /// extension-contributed registry.
+    pub fn new(
+        static_reg: Arc<dyn NodeKindRegistry>,
+        dynamic_reg: Arc<DynamicNodeKindRegistry>,
+    ) -> Self {
+        Self {
+            static_reg,
+            dynamic_reg,
+        }
+    }
+
+    /// Borrow the dynamic half. Slice B's
+    /// `POST /admin/extensions/reload` swaps this through an
+    /// `ArcSwap<CompositeNodeKindRegistry>` (R-flow-node-6).
+    pub fn dynamic(&self) -> &Arc<DynamicNodeKindRegistry> {
+        &self.dynamic_reg
+    }
+
+    /// Borrow the static half.
+    pub fn statics(&self) -> &Arc<dyn NodeKindRegistry> {
+        &self.static_reg
+    }
+}
+
+impl NodeKindRegistry for CompositeNodeKindRegistry {
+    fn lookup(&self, kind: &KindId) -> Option<&NodeDescriptor> {
+        self.static_reg
+            .lookup(kind)
+            .or_else(|| self.dynamic_reg.lookup(kind))
+    }
+
+    fn all(&self) -> Vec<&NodeDescriptor> {
+        let mut out = self.static_reg.all();
+        out.extend(self.dynamic_reg.all());
+        out
+    }
 }
 
 /// Reverse-DNS node-kind identifier (SCOPE R10).
@@ -502,7 +731,7 @@ mod tests {
             "starter.flow.node.log.help",
         );
         assert_eq!(D.kind, "starter.flow.log");
-        KindId::new(D.kind).expect("descriptor.kind parses as KindId");
+        KindId::new(D.kind.clone()).expect("descriptor.kind parses as KindId");
     }
 
     #[test]

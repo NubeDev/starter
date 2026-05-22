@@ -2,7 +2,7 @@
 //! [`action_form`] sugar) and a thin [`form()`] constructor over the
 //! IR's [`Component::Form`] variant.
 
-use serde_json::{Value as JsonValue, json};
+use serde_json::{json, Value as JsonValue};
 use starter_ui_ir::{Action, Component};
 
 // =====================================================================
@@ -49,8 +49,7 @@ impl FormBuilder {
 
     /// Materialise.
     pub fn build(self) -> Component {
-        let schema_ref =
-            serde_json::to_string(&self.schema).expect("form schema must serialise");
+        let schema_ref = serde_json::to_string(&self.schema).expect("form schema must serialise");
         Component::Form {
             id: Some(self.id),
             schema_ref,

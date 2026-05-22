@@ -27,6 +27,23 @@ starter-flow       = { workspace = true }
 starter-flow-spi   = { workspace = true }
 starter-flow-nodes = { workspace = true, features = ["ai-agent", "trigger-explicit", "log"] }
 
+# Hot-reloadable node-kind registry per
+# `DOCS/extensions/scope/FLOW-NODES.md` slice A: the composite
+# `Static + Dynamic` registry is published behind an `ArcSwap` so
+# slice B's `POST /admin/extensions/reload` can swap the dynamic half
+# in place without disrupting `GET /api/node-kinds` readers.
+arc-swap = { version = "1" }
+schemars = { workspace = true }
+
+# Extension-contributed flow node-kind adapter
+# (`DOCS/extensions/scope/FLOW-NODES.md` slice A): brings the
+# `contributed_node_kinds` walker + `UnboundNodeBehavior` placeholder
+# the dynamic-registry seam plugs into. Path-dep across the
+# `starter` ↔ `starter-extensions` workspace boundary mirrors the
+# `starter-insights` ↔ `starter-ext-insights-*` arrows.
+starter-ext-flow = { path = "../../starter-extensions/crates/starter-ext-flow", version = "0.1.0" }
+starter-ext-spi  = { path = "../../starter-extensions/crates/starter-ext-spi", version = "0.1.0" }
+
 # AI providers (Phase 4+).
 starter-ai = { workspace = true, features = ["provider-claude", "provider-anthropic"] }
 

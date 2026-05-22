@@ -67,13 +67,21 @@ async fn cross_principal_lookups_return_none() {
     let alice = principal("alice");
     let bob = principal("bob");
 
-    let entry = new_entry(&alice, "note", serde_json::json!({"x": 1}), Duration::seconds(60))
-        .expect("entry");
+    let entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"x": 1}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     let id = entry.id.clone();
     store.put(entry).await.expect("put");
 
     let bob_lookup = store.get(&bob.subject, &id).await.expect("get");
-    assert!(bob_lookup.is_none(), "bob must not learn alice's entry exists");
+    assert!(
+        bob_lookup.is_none(),
+        "bob must not learn alice's entry exists"
+    );
 }
 
 #[tokio::test]
@@ -83,9 +91,13 @@ async fn expired_entries_return_none() {
     let store = Arc::new(PgClipboard::new(pool, b"unit-test-key-please-rotate").expect("key"));
     let alice = principal("alice");
 
-    let mut entry =
-        new_entry(&alice, "note", serde_json::json!({"x": 1}), Duration::seconds(60))
-            .expect("entry");
+    let mut entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"x": 1}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     entry.expires_at = Utc::now() - Duration::seconds(1);
     let id = entry.id.clone();
     store.put(entry).await.expect("put");
@@ -100,8 +112,13 @@ async fn tampered_payload_fails_closed() {
     let store = PgClipboard::new(pool.clone(), b"unit-test-key-please-rotate").expect("key");
     let alice = principal("alice");
 
-    let entry = new_entry(&alice, "note", serde_json::json!({"text": "ok"}), Duration::seconds(60))
-        .expect("entry");
+    let entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"text": "ok"}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     let id = entry.id.clone();
     store.put(entry).await.expect("put");
 
@@ -125,8 +142,13 @@ async fn rotated_key_invalidates_existing_entries() {
     let (pool, _guard) = fresh_pool().await;
     let alice = principal("alice");
 
-    let entry = new_entry(&alice, "note", serde_json::json!({"x": 1}), Duration::seconds(60))
-        .expect("entry");
+    let entry = new_entry(
+        &alice,
+        "note",
+        serde_json::json!({"x": 1}),
+        Duration::seconds(60),
+    )
+    .expect("entry");
     let id = entry.id.clone();
 
     let before = PgClipboard::new(pool.clone(), b"old-key").expect("key");

@@ -81,20 +81,19 @@ pub mod prelude {
 
     pub use crate::bindings::{page_state, self_, stack, target, user, vars};
     pub use crate::charts::{
-        RowsSource, TimeSeriesSource, bar_chart, gauge, kpi, line_chart, rows, series,
-        sparkline,
+        bar_chart, gauge, kpi, line_chart, rows, series, sparkline, RowsSource, TimeSeriesSource,
     };
     pub use crate::dashboard::{dashboard, kpi_grid};
     pub use crate::data::table;
     pub use crate::display::{badge, heading, text};
-    pub use crate::forms::{ActionForm, action_form, form};
+    pub use crate::forms::{action_form, form, ActionForm};
     pub use crate::inputs::{date_range, ref_picker, select, slider, toggle};
     pub use crate::layout::{card, col, grid, page, row, tabs};
-    pub use crate::rsql::{RsqlBuilder, rsql};
-    pub use crate::seed::{PageStore, SeedError, seed_page};
-    pub use serde_json::{Value as JsonValue, json};
+    pub use crate::rsql::{rsql, RsqlBuilder};
+    pub use crate::seed::{seed_page, PageStore, SeedError};
+    pub use serde_json::{json, Value as JsonValue};
     pub use starter_ui_ir::{
-        Action, ColumnRender, Component, ComponentTree, ConfirmDialog, IR_VERSION, RowAction,
-        ToolbarAction,
+        Action, ColumnRender, Component, ComponentTree, ConfirmDialog, RowAction, ToolbarAction,
+        IR_VERSION,
     };
 }

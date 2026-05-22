@@ -42,13 +42,11 @@ impl Prune for PgChangePrune {
         }
 
         let result = if let Some(kind) = &req.resource_kind {
-            sqlx::query(
-                "DELETE FROM starter_changes WHERE at < $1 AND resource_kind = $2",
-            )
-            .bind(req.before)
-            .bind(kind.clone())
-            .execute(self.pool.sqlx())
-            .await
+            sqlx::query("DELETE FROM starter_changes WHERE at < $1 AND resource_kind = $2")
+                .bind(req.before)
+                .bind(kind.clone())
+                .execute(self.pool.sqlx())
+                .await
         } else {
             sqlx::query("DELETE FROM starter_changes WHERE at < $1")
                 .bind(req.before)

@@ -158,10 +158,7 @@ fn write_string(s: &str, out: &mut Vec<u8>) {
             '\t' => out.extend_from_slice(b"\\t"),
             c if (c as u32) < 0x20 => {
                 // Other control characters: \u00XX.
-                let _ = std::io::Write::write_fmt(
-                    &mut *out,
-                    format_args!("\\u{:04x}", c as u32),
-                );
+                let _ = std::io::Write::write_fmt(&mut *out, format_args!("\\u{:04x}", c as u32));
             }
             c => {
                 // RFC 8785 §3.2.2.2: non-ASCII characters are
@@ -228,7 +225,10 @@ mod tests {
     fn body_hash_is_lowercase_hex_64_chars() {
         let h = body_hash(&serde_json::json!({}));
         assert_eq!(h.as_str().len(), 64);
-        assert!(h.as_str().chars().all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
+        assert!(h
+            .as_str()
+            .chars()
+            .all(|c| c.is_ascii_hexdigit() && !c.is_ascii_uppercase()));
     }
 
     #[test]

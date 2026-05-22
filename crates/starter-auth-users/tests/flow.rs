@@ -58,9 +58,14 @@ async fn create_admin_then_login_through_session() {
     let pool = fresh_pool().await;
     let (users, sessions, _tokens) = stores(pool);
 
-    let id = create_admin(users.as_ref(), "a@example.com", "hunter22hunter", Role::Admin)
-        .await
-        .expect("create admin");
+    let id = create_admin(
+        users.as_ref(),
+        "a@example.com",
+        "hunter22hunter",
+        Role::Admin,
+    )
+    .await
+    .expect("create admin");
     assert!(!id.is_empty());
 
     // Look up the user record so we have something to issue a session for.
@@ -86,12 +91,22 @@ async fn duplicate_admin_email_conflict() {
     let pool = fresh_pool().await;
     let (users, _sessions, _tokens) = stores(pool);
 
-    create_admin(users.as_ref(), "dup@example.com", "password-one1", Role::Admin)
-        .await
-        .unwrap();
-    let err = create_admin(users.as_ref(), "dup@example.com", "password-two2", Role::Admin)
-        .await
-        .unwrap_err();
+    create_admin(
+        users.as_ref(),
+        "dup@example.com",
+        "password-one1",
+        Role::Admin,
+    )
+    .await
+    .unwrap();
+    let err = create_admin(
+        users.as_ref(),
+        "dup@example.com",
+        "password-two2",
+        Role::Admin,
+    )
+    .await
+    .unwrap_err();
     assert!(matches!(err, AdminError::Conflict));
 }
 
@@ -100,9 +115,14 @@ async fn revoked_session_no_longer_verifies() {
     let pool = fresh_pool().await;
     let (users, sessions, _tokens) = stores(pool);
 
-    create_admin(users.as_ref(), "r@example.com", "long-enough-pw", Role::Writer)
-        .await
-        .unwrap();
+    create_admin(
+        users.as_ref(),
+        "r@example.com",
+        "long-enough-pw",
+        Role::Writer,
+    )
+    .await
+    .unwrap();
     let user = users.find_by_email("r@example.com").await.unwrap().unwrap();
     let issued = starter_auth_users::session::issue(sessions.as_ref(), &user.id)
         .await
@@ -130,9 +150,14 @@ async fn api_token_round_trip() {
     let pool = fresh_pool().await;
     let (users, _sessions, tokens) = stores(pool);
 
-    create_admin(users.as_ref(), "t@example.com", "long-enough-pw", Role::Reader)
-        .await
-        .unwrap();
+    create_admin(
+        users.as_ref(),
+        "t@example.com",
+        "long-enough-pw",
+        Role::Reader,
+    )
+    .await
+    .unwrap();
     let user = users.find_by_email("t@example.com").await.unwrap().unwrap();
 
     let issued = token::issue(tokens.as_ref(), &user.id, &[], None)
@@ -157,9 +182,14 @@ async fn api_token_round_trip() {
 async fn wrong_secret_after_correct_prefix_is_invalid() {
     let pool = fresh_pool().await;
     let (users, _sessions, tokens) = stores(pool);
-    create_admin(users.as_ref(), "w@example.com", "long-enough-pw", Role::Reader)
-        .await
-        .unwrap();
+    create_admin(
+        users.as_ref(),
+        "w@example.com",
+        "long-enough-pw",
+        Role::Reader,
+    )
+    .await
+    .unwrap();
     let user = users.find_by_email("w@example.com").await.unwrap().unwrap();
     let issued = token::issue(tokens.as_ref(), &user.id, &[], None)
         .await
@@ -197,9 +227,14 @@ async fn user_with_null_password_hash_round_trips() {
 async fn authenticator_dispatches_by_prefix() {
     let pool = fresh_pool().await;
     let (users, sessions, tokens) = stores(pool);
-    create_admin(users.as_ref(), "d@example.com", "long-enough-pw", Role::Admin)
-        .await
-        .unwrap();
+    create_admin(
+        users.as_ref(),
+        "d@example.com",
+        "long-enough-pw",
+        Role::Admin,
+    )
+    .await
+    .unwrap();
     let user = users.find_by_email("d@example.com").await.unwrap().unwrap();
     let session = starter_auth_users::session::issue(sessions.as_ref(), &user.id)
         .await

@@ -55,7 +55,8 @@ const DISPATCH_ID_FLOOR: i64 = 1_000_000;
 /// Shared by [`SupervisorHandle`] (inserts on send) and the supervisor
 /// task (removes on response, or drains on task exit so callers see a
 /// transport error instead of hanging on `recv`).
-type PendingMap = Arc<Mutex<HashMap<i64, oneshot::Sender<core::result::Result<serde_json::Value, Error>>>>>;
+type PendingMap =
+    Arc<Mutex<HashMap<i64, oneshot::Sender<core::result::Result<serde_json::Value, Error>>>>>;
 
 use crate::backoff::BackoffSchedule;
 use crate::capability::{CapabilityGate, CapabilityViolationCounter};

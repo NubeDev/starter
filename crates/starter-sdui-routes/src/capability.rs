@@ -87,7 +87,9 @@ impl<'a> CapabilityFilter<'a> {
     /// The rest of the tree is unchanged.
     pub fn rewrite_unknown_custom(&self, node: &mut Component) {
         match node {
-            Component::Custom { id, renderer_id, .. } => {
+            Component::Custom {
+                id, renderer_id, ..
+            } => {
                 if !self.caps.custom_renderers.is_empty()
                     && !self.caps.custom_renderers.iter().any(|s| s == renderer_id)
                 {

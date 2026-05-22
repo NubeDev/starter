@@ -20,9 +20,7 @@ use std::collections::HashMap;
 use serde_json::json;
 use serde_json::Value as JsonValue;
 
-use starter_ui_bindings::{
-    ChildLink, EntityGraph, EvalContext, SubscriptionPlan, substitute_tree,
-};
+use starter_ui_bindings::{substitute_tree, ChildLink, EntityGraph, EvalContext, SubscriptionPlan};
 use starter_ui_ir::{Component, ComponentTree};
 
 #[derive(Default)]
@@ -86,10 +84,7 @@ fn authored_page() -> ComponentTree {
     })
 }
 
-fn resolve_against(
-    graph: &FixtureGraph,
-    target: &str,
-) -> (ComponentTree, SubscriptionPlan) {
+fn resolve_against(graph: &FixtureGraph, target: &str) -> (ComponentTree, SubscriptionPlan) {
     let stack: HashMap<String, String> = HashMap::new();
     let user = serde_json::Map::new();
     let page = serde_json::Map::new();

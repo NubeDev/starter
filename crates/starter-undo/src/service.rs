@@ -81,7 +81,9 @@ impl InMemoryUndoCursor {
 impl UndoCursor for InMemoryUndoCursor {
     async fn peek_redo(&self, actor: &Actor) -> Result<Option<GroupId>> {
         let stacks = self.stacks.lock().await;
-        Ok(stacks.get(&Self::key(actor)).and_then(|s| s.last().cloned()))
+        Ok(stacks
+            .get(&Self::key(actor))
+            .and_then(|s| s.last().cloned()))
     }
 
     async fn push_redo(&self, actor: &Actor, group: GroupId) -> Result<()> {
@@ -169,11 +171,13 @@ impl UndoService {
 
     /// Redo the most recently undone group for `actor`.
     pub async fn redo(&self, actor: &Actor) -> Result<GroupId> {
-        let group = self.cursor.pop_redo(actor).await?.ok_or_else(|| {
-            Error::NotFound {
+        let group = self
+            .cursor
+            .pop_redo(actor)
+            .await?
+            .ok_or_else(|| Error::NotFound {
                 what: format!("redo target for {actor:?}"),
-            }
-        })?;
+            })?;
 
         let mut rows = self.log.group(&group).await?;
         rows.sort_by(|a, b| a.at.cmp(&b.at).then(a.id.0.cmp(&b.id.0)));

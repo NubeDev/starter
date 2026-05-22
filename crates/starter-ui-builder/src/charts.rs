@@ -304,11 +304,7 @@ pub fn sparkline(id: impl Into<String>, subscribe: impl Into<String>) -> Compone
 /// Construct a [`Component::Kpi`] — a big-number tile fed by a
 /// [`TimeSeriesSource`]. KPIs use the singular `source` (not
 /// `sources`) per IR; the typed builder normalises that.
-pub fn kpi(
-    id: impl Into<String>,
-    label: impl Into<String>,
-    source: TimeSeriesSource,
-) -> Component {
+pub fn kpi(id: impl Into<String>, label: impl Into<String>, source: TimeSeriesSource) -> Component {
     Component::Kpi {
         id: Some(id.into()),
         label: label.into(),

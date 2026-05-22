@@ -223,4 +223,3 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         extension_grpc,
     }
 }
-

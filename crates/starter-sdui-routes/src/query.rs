@@ -128,7 +128,12 @@ impl QueryEngine for InMemoryQueryEngine {
         };
         Ok(QueryResponse {
             data: slice,
-            meta: QueryMeta { total, page, size, pages },
+            meta: QueryMeta {
+                total,
+                page,
+                size,
+                pages,
+            },
         })
     }
 }

@@ -102,8 +102,7 @@ contributes:
     write_file(ext_root, "skills/not-a-bundle/sub/README.md", "noise\n");
 
     // 3. Run the adapter against the parsed manifest + bundle root.
-    let contributed =
-        contributed_skills(&manifest, ext_root).expect("walk contributes.skills");
+    let contributed = contributed_skills(&manifest, ext_root).expect("walk contributes.skills");
     assert_eq!(
         contributed.len(),
         1,
@@ -120,8 +119,7 @@ contributes:
         .await
         .expect("registry builds");
 
-    let approved_ids: Vec<String> =
-        registry.list().iter().map(|s| s.id.to_string()).collect();
+    let approved_ids: Vec<String> = registry.list().iter().map(|s| s.id.to_string()).collect();
     let quarantined_ids: Vec<String> = registry
         .list_quarantined()
         .iter()

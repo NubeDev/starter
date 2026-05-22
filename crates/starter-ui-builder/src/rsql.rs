@@ -99,8 +99,7 @@ impl RsqlBuilder {
     /// a target that owns a sub-tree (e.g. alarms hanging off a
     /// building).
     pub fn parent_path_prefix(mut self, prefix: impl Into<String>) -> Self {
-        self.parts
-            .push(format!("parent_path=={}", prefix.into()));
+        self.parts.push(format!("parent_path=={}", prefix.into()));
         self
     }
 

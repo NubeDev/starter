@@ -38,8 +38,7 @@ use starter_ai::runners::claude::ClaudeRunner;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::propagator::FlowTopology;
 use starter_flow::run::{
-    FlowRunner, FlowRunnerConfig, InMemoryRunStore, RunHandle, RunSpec,
-    RunStore as EngineRunStore,
+    FlowRunner, FlowRunnerConfig, InMemoryRunStore, RunHandle, RunSpec, RunStore as EngineRunStore,
 };
 use starter_flow_nodes::ai_agent::{AgentInputKind, AiAgent, StaticAiRunnerRegistry};
 use starter_flow_nodes::log::Log;
@@ -160,8 +159,11 @@ impl FlowEngine {
         // -----------------------------------------------------------
         // Identify the trigger node (and reject graphs without one).
         // -----------------------------------------------------------
-        let trigger_nodes: Vec<&UiFlowNode> =
-            parsed.nodes.iter().filter(|n| n.kind == "trigger").collect();
+        let trigger_nodes: Vec<&UiFlowNode> = parsed
+            .nodes
+            .iter()
+            .filter(|n| n.kind == "trigger")
+            .collect();
         if trigger_nodes.is_empty() {
             return Err(FlowEngineError::Invalid(
                 "graph has no trigger node".to_owned(),
@@ -233,10 +235,16 @@ impl FlowEngine {
         let mut edge_index: HashMap<(NodeId, String), Vec<String>> = HashMap::new();
         for e in &parsed.edges {
             let src_kind = node_kinds.get(&e.source).ok_or_else(|| {
-                FlowEngineError::Invalid(format!("edge `{}` references unknown source node `{}`", e.id, e.source))
+                FlowEngineError::Invalid(format!(
+                    "edge `{}` references unknown source node `{}`",
+                    e.id, e.source
+                ))
             })?;
             let tgt_kind = node_kinds.get(&e.target).ok_or_else(|| {
-                FlowEngineError::Invalid(format!("edge `{}` references unknown target node `{}`", e.id, e.target))
+                FlowEngineError::Invalid(format!(
+                    "edge `{}` references unknown target node `{}`",
+                    e.id, e.target
+                ))
             })?;
             let src_slot = map_slot(src_kind, &e.source_slot, SlotDirection::Output);
             let tgt_slot = map_slot(tgt_kind, &e.target_slot, SlotDirection::Input);

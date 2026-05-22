@@ -36,8 +36,8 @@ use tokio_stream::wrappers::ReceiverStream;
 
 use starter_ai::{Registry, TokenCancel};
 use starter_spi::ai::{
-    CliCfg, Event as AiEvent, EventKind, HistoryMessage, Provider, RestCfg,
-    RunnerInput, SessionId, ToolChoice, ToolDef,
+    CliCfg, Event as AiEvent, EventKind, HistoryMessage, Provider, RestCfg, RunnerInput, SessionId,
+    ToolChoice, ToolDef,
 };
 
 use crate::rest::RestState;
@@ -514,8 +514,8 @@ async fn run_builder(
                      # JSON schema (the shape your reply must match)\n\
                      {schema}\n",
                     transcript = format_history_for_cli(&history),
-                    schema = serde_json::to_string_pretty(&tool_def().input_schema)
-                        .unwrap_or_default()
+                    schema =
+                        serde_json::to_string_pretty(&tool_def().input_schema).unwrap_or_default()
                 )),
                 model: Some("haiku".into()),
                 // Disable every built-in tool (Bash, Read, Write,
@@ -645,40 +645,38 @@ async fn run_builder(
                 Err(msg) => emit_error(&tx, msg).await,
             }
         }
-        BuilderMode::Ask => {
-            match resolve_ask_outcome(outcome, prose, runner_error) {
-                Ok(message) => {
-                    if let Some(ctx) = &persist {
-                        if let Err(e) = persist_ask_turn(ctx, &message).await {
-                            tracing::error!(error = %e, "agent-session persist failed (ask)");
-                            let _ = tx
-                                .send(
-                                    json!({
-                                        "type": "session_error",
-                                        "error": format!("persist failed: {e}"),
-                                    })
-                                    .to_string(),
-                                )
-                                .await;
-                        }
+        BuilderMode::Ask => match resolve_ask_outcome(outcome, prose, runner_error) {
+            Ok(message) => {
+                if let Some(ctx) = &persist {
+                    if let Err(e) = persist_ask_turn(ctx, &message).await {
+                        tracing::error!(error = %e, "agent-session persist failed (ask)");
+                        let _ = tx
+                            .send(
+                                json!({
+                                    "type": "session_error",
+                                    "error": format!("persist failed: {e}"),
+                                })
+                                .to_string(),
+                            )
+                            .await;
                     }
-                    let _ = tx
-                        .send(
-                            json!({
-                                "type": "message",
-                                "role": "assistant",
-                                "text": message,
-                            })
-                            .to_string(),
-                        )
-                        .await;
-                    let _ = tx
-                        .send(json!({ "type": "status", "phase": "done" }).to_string())
-                        .await;
                 }
-                Err(msg) => emit_error(&tx, msg).await,
+                let _ = tx
+                    .send(
+                        json!({
+                            "type": "message",
+                            "role": "assistant",
+                            "text": message,
+                        })
+                        .to_string(),
+                    )
+                    .await;
+                let _ = tx
+                    .send(json!({ "type": "status", "phase": "done" }).to_string())
+                    .await;
             }
-        }
+            Err(msg) => emit_error(&tx, msg).await,
+        },
     }
 }
 
@@ -730,20 +728,14 @@ async fn persist_ask_turn(
     ctx.store
         .append_turn_with_artifacts(
             ctx.session_id,
-            TurnInput::new(
-                TurnRole::User,
-                JsonValue::String(ctx.user_prompt.clone()),
-            ),
+            TurnInput::new(TurnRole::User, JsonValue::String(ctx.user_prompt.clone())),
             &[],
         )
         .await?;
     ctx.store
         .append_turn_with_artifacts(
             ctx.session_id,
-            TurnInput::new(
-                TurnRole::Assistant,
-                JsonValue::String(reply.to_owned()),
-            ),
+            TurnInput::new(TurnRole::Assistant, JsonValue::String(reply.to_owned())),
             &[],
         )
         .await?;
@@ -757,19 +749,14 @@ async fn persist_turn(
     ctx: &PersistCtx,
     tree: &JsonValue,
 ) -> Result<(), starter_flow_spi::agent_session::AgentSessionError> {
-    use starter_flow_spi::agent_session::{
-        ArtifactWrite, TurnInput, TurnRole,
-    };
+    use starter_flow_spi::agent_session::{ArtifactWrite, TurnInput, TurnRole};
     // User turn — record the prompt so SummaryPlusTail replay can
     // reconstruct the conversation later (MEMORY.md M-C). No
     // artifacts attach to the user turn; pass an empty slice.
     ctx.store
         .append_turn_with_artifacts(
             ctx.session_id,
-            TurnInput::new(
-                TurnRole::User,
-                JsonValue::String(ctx.user_prompt.clone()),
-            ),
+            TurnInput::new(TurnRole::User, JsonValue::String(ctx.user_prompt.clone())),
             &[],
         )
         .await?;
@@ -778,10 +765,7 @@ async fn persist_turn(
     ctx.store
         .append_turn_with_artifacts(
             ctx.session_id,
-            TurnInput::new(
-                TurnRole::Assistant,
-                JsonValue::String(String::new()),
-            ),
+            TurnInput::new(TurnRole::Assistant, JsonValue::String(String::new())),
             &[ArtifactWrite::new(&ctx.artifact_key, tree.clone())],
         )
         .await?;
@@ -889,8 +873,7 @@ fn resolve_outcome(
     });
 
     if let Some(args) = tool_input {
-        return parse_and_validate(args)
-            .map_err(|reason| format!("invalid tree: {reason}"));
+        return parse_and_validate(args).map_err(|reason| format!("invalid tree: {reason}"));
     }
 
     if let Some(upstream) = result.error.or(runner_error.clone()) {
@@ -996,11 +979,7 @@ fn short_id() -> String {
 // ---------------------------------------------------------------------
 
 fn bad_request(msg: &str) -> Response {
-    (
-        StatusCode::BAD_REQUEST,
-        Json(json!({ "error": msg })),
-    )
-        .into_response()
+    (StatusCode::BAD_REQUEST, Json(json!({ "error": msg }))).into_response()
 }
 
 fn provider_unavailable(hint: &str) -> Response {
@@ -1083,7 +1062,9 @@ fn parse_and_validate(args: JsonValue) -> Result<JsonValue, String> {
 /// Map common LLM kind synonyms to allowed kinds and drop non-object
 /// children. Recursive; idempotent.
 fn normalize_tree(node: &mut JsonValue) {
-    let Some(obj) = node.as_object_mut() else { return };
+    let Some(obj) = node.as_object_mut() else {
+        return;
+    };
     // 1) Coerce well-known synonyms on `type`.
     if let Some(JsonValue::String(t)) = obj.get_mut("type") {
         let mapped = match t.as_str() {
@@ -1109,8 +1090,7 @@ fn normalize_tree(node: &mut JsonValue) {
         if let Some((new_kind, variant)) = mapped {
             *t = new_kind.to_owned();
             if let Some(v) = variant {
-                obj.entry("variant")
-                    .or_insert_with(|| JsonValue::String(v));
+                obj.entry("variant").or_insert_with(|| JsonValue::String(v));
             }
         }
     }
@@ -1303,7 +1283,8 @@ mod tests {
     fn coerces_stringified_root() {
         // Model wraps the tree in a JSON string (observed with the
         // haiku CLI runner). Validator should decode + accept.
-        let inner = r#"{"id":"r","type":"page","children":[{"id":"h","type":"heading","value":"Hi"}]}"#;
+        let inner =
+            r#"{"id":"r","type":"page","children":[{"id":"h","type":"heading","value":"Hi"}]}"#;
         let args = json!({ "root": inner });
         let out = parse_and_validate(args).unwrap();
         assert_eq!(out["root"]["type"], "page");
@@ -1419,10 +1400,8 @@ mod tests {
         allow.sort_unstable();
         allow.dedup();
 
-        let missing_in_ts: Vec<&&str> =
-            allow.iter().filter(|k| !ts_kinds.contains(k)).collect();
-        let missing_in_allow: Vec<&&str> =
-            ts_kinds.iter().filter(|k| !allow.contains(k)).collect();
+        let missing_in_ts: Vec<&&str> = allow.iter().filter(|k| !ts_kinds.contains(k)).collect();
+        let missing_in_allow: Vec<&&str> = ts_kinds.iter().filter(|k| !allow.contains(k)).collect();
 
         assert!(
             missing_in_ts.is_empty() && missing_in_allow.is_empty(),
@@ -1449,7 +1428,9 @@ mod tests {
         assert_eq!(BuilderMode::parse("BUILD"), None);
     }
 
-    fn ok_result_with(text: &str) -> Result<
+    fn ok_result_with(
+        text: &str,
+    ) -> Result<
         Result<starter_spi::ai::RunResult, starter_spi::ai::RunnerError>,
         tokio::time::error::Elapsed,
     > {
@@ -1461,12 +1442,7 @@ mod tests {
 
     #[test]
     fn ask_resolver_returns_streamed_prose() {
-        let out = resolve_ask_outcome(
-            ok_result_with(""),
-            "Hello there".to_owned(),
-            None,
-        )
-        .unwrap();
+        let out = resolve_ask_outcome(ok_result_with(""), "Hello there".to_owned(), None).unwrap();
         assert_eq!(out, "Hello there");
     }
 
@@ -1474,45 +1450,27 @@ mod tests {
     fn ask_resolver_falls_back_to_result_text() {
         // Some runners populate `result.text` only at completion
         // (no streamed Text events). The resolver should pick it up.
-        let out = resolve_ask_outcome(
-            ok_result_with("final answer"),
-            String::new(),
-            None,
-        )
-        .unwrap();
+        let out = resolve_ask_outcome(ok_result_with("final answer"), String::new(), None).unwrap();
         assert_eq!(out, "final answer");
     }
 
     #[test]
     fn ask_resolver_trims_whitespace() {
-        let out = resolve_ask_outcome(
-            ok_result_with(""),
-            "  spaced reply\n\n".to_owned(),
-            None,
-        )
-        .unwrap();
+        let out =
+            resolve_ask_outcome(ok_result_with(""), "  spaced reply\n\n".to_owned(), None).unwrap();
         assert_eq!(out, "spaced reply");
     }
 
     #[test]
     fn ask_resolver_surfaces_empty_reply_as_error() {
-        let err = resolve_ask_outcome(
-            ok_result_with(""),
-            String::new(),
-            None,
-        )
-        .unwrap_err();
+        let err = resolve_ask_outcome(ok_result_with(""), String::new(), None).unwrap_err();
         assert!(err.contains("empty reply"), "got: {err}");
     }
 
     #[test]
     fn ask_resolver_surfaces_runner_error_when_empty() {
-        let err = resolve_ask_outcome(
-            ok_result_with(""),
-            String::new(),
-            Some("boom".to_owned()),
-        )
-        .unwrap_err();
+        let err = resolve_ask_outcome(ok_result_with(""), String::new(), Some("boom".to_owned()))
+            .unwrap_err();
         assert!(err.contains("boom"), "got: {err}");
     }
 }

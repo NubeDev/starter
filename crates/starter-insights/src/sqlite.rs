@@ -22,8 +22,7 @@ use starter_store_sqlite::pool::Pool;
 use thiserror::Error;
 
 /// SQL migrator for the Phase 1 insights schema.
-pub static INSIGHTS_MIGRATOR: sqlx::migrate::Migrator =
-    sqlx::migrate!("./migrations/insights");
+pub static INSIGHTS_MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/insights");
 
 /// `MigrationSource` consumers chain into `migrate(pool)` on boot.
 pub const INSIGHTS_MIGRATION_SOURCE: starter_store_sqlite::migrate::MigrationSource =
@@ -58,8 +57,8 @@ impl VerdictStore {
 
     /// Append a verdict + its tag index entries.
     pub async fn append(&self, verdict: &Verdict) -> Result<i64, VerdictStoreError> {
-        let body = serde_json::to_string(verdict)
-            .map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
+        let body =
+            serde_json::to_string(verdict).map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
         let severity = format!("{:?}", verdict.severity).to_lowercase();
         let at_ms = verdict.at.timestamp_millis();
 
@@ -144,8 +143,8 @@ impl VerdictStore {
         let mut out = Vec::with_capacity(rows.len());
         for r in rows {
             let body: String = r.get("body_json");
-            let v: Verdict = serde_json::from_str(&body)
-                .map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
+            let v: Verdict =
+                serde_json::from_str(&body).map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
             out.push(v);
         }
         Ok(out)
@@ -188,8 +187,8 @@ impl VerdictStore {
         let mut out = Vec::with_capacity(rows.len());
         for r in rows {
             let body: String = r.get("body_json");
-            let v: Verdict = serde_json::from_str(&body)
-                .map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
+            let v: Verdict =
+                serde_json::from_str(&body).map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
             out.push(v);
         }
         Ok(out)
@@ -219,6 +218,9 @@ impl VerdictStore {
             .await
         }
         .map_err(|e| VerdictStoreError::Backend(e.to_string()))?;
-        Ok(rows.into_iter().map(|r| r.get::<i64, _>("verdict_id")).collect())
+        Ok(rows
+            .into_iter()
+            .map(|r| r.get::<i64, _>("verdict_id"))
+            .collect())
     }
 }

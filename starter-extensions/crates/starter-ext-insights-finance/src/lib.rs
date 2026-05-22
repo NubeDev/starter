@@ -32,8 +32,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::Utc;
 use starter_spi::insights::{
-    Coverage, QualityFlag, QualityFlagId, QualityFlagSeverity, Rule, RuleId, RuleInput,
-    RuleOutput, RuleSchema, Severity, Tags, Verdict,
+    Coverage, QualityFlag, QualityFlagId, QualityFlagSeverity, Rule, RuleId, RuleInput, RuleOutput,
+    RuleSchema, Severity, Tags, Verdict,
 };
 
 fn finance_tags(name: &str) -> Tags {
@@ -266,10 +266,12 @@ impl Rule for IsolationForestLight {
         let mut state = seed;
         let mut depth: u32 = 0;
         while depth < max_depth && bucket.len() > 1 {
-            let (lo, hi) = bucket.iter().copied().fold(
-                (f64::INFINITY, f64::NEG_INFINITY),
-                |(a, b), x| (a.min(x), b.max(x)),
-            );
+            let (lo, hi) = bucket
+                .iter()
+                .copied()
+                .fold((f64::INFINITY, f64::NEG_INFINITY), |(a, b), x| {
+                    (a.min(x), b.max(x))
+                });
             if !(hi > lo) {
                 break;
             }
@@ -285,17 +287,13 @@ impl Rule for IsolationForestLight {
             Verdict::warn(
                 self.schema.id.clone(),
                 now,
-                format!(
-                    "iforest-light: isolated at depth {depth} < threshold {threshold_depth}"
-                ),
+                format!("iforest-light: isolated at depth {depth} < threshold {threshold_depth}"),
             )
         } else {
             Verdict::healthy(
                 self.schema.id.clone(),
                 now,
-                format!(
-                    "iforest-light: isolated at depth {depth} >= threshold {threshold_depth}"
-                ),
+                format!("iforest-light: isolated at depth {depth} >= threshold {threshold_depth}"),
             )
         };
         RuleOutput::Assertion(v)
@@ -375,7 +373,11 @@ impl Rule for DuplicateTx {
         // Group by (account, amount-cents, ts/bucket_secs).
         let mut groups: BTreeMap<(String, i64, i64), Vec<i64>> = BTreeMap::new();
         for t in &txs {
-            let account = t.get("account").and_then(|v| v.as_str()).unwrap_or("").to_owned();
+            let account = t
+                .get("account")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .to_owned();
             let amount = t.get("amount").and_then(|v| v.as_f64()).unwrap_or(f64::NAN);
             let ts = t.get("ts").and_then(|v| v.as_i64()).unwrap_or(0);
             if amount.is_nan() || account.is_empty() {
@@ -386,10 +388,7 @@ impl Rule for DuplicateTx {
             // `bucket_secs`.
             let cents = (amount * 100.0).round() as i64;
             let bucket = ts.div_euclid(bucket_secs);
-            groups
-                .entry((account, cents, bucket))
-                .or_default()
-                .push(ts);
+            groups.entry((account, cents, bucket)).or_default().push(ts);
         }
         let dup = groups
             .iter()

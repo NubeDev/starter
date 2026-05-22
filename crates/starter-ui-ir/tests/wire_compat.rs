@@ -11,9 +11,7 @@
 //! properties so a future contributor can't regress them quietly.
 
 use serde_json::json;
-use starter_ui_ir::{
-    ChartKind, ChartSource, Component, ComponentTree, IR_VERSION,
-};
+use starter_ui_ir::{ChartKind, ChartSource, Component, ComponentTree, IR_VERSION};
 
 #[test]
 fn ir_version_stamp_is_v5() {
@@ -63,7 +61,11 @@ fn chart_series_keeps_v2_field_names() {
     });
     let s: ChartSource = serde_json::from_value(v.clone()).unwrap();
     match &s {
-        ChartSource::Series { node_id, slot, field } => {
+        ChartSource::Series {
+            node_id,
+            slot,
+            field,
+        } => {
             assert_eq!(node_id, "abc");
             assert_eq!(slot, "out");
             assert_eq!(field.as_deref(), Some("payload.count"));

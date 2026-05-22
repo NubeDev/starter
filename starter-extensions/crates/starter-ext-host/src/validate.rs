@@ -17,6 +17,7 @@
 //! Both checks return [`starter_ext_spi::Error::Validation`] with a concrete
 //! reason so the registry's failed-record `failure` field is human-readable.
 
+use starter_ext_spi::id::RESERVED_PREFIXES;
 use starter_ext_spi::{Capability, Error, Manifest, Result};
 
 /// Run every semantic check against one parsed manifest. Returns the first
@@ -76,7 +77,48 @@ fn check_namespace(m: &Manifest) -> Result<()> {
             )));
         }
     }
+    // `contributes.nodes[].kind` per
+    // `DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-3. Two
+    // failure modes that must be reported distinctly so an operator
+    // can act on the message:
+    //
+    //  1. Host-reserved prefix (`starter.*`, `sys.*`) — the kernel
+    //     reserves these for built-in kinds; an extension can never
+    //     claim one. This case is reported even when the
+    //     extension's own id is namespace-disjoint from the kind
+    //     (e.g. `com.nube.foo` trying to claim `starter.flow.mqtt`).
+    //  2. Namespace mismatch — the kind does not start with a
+    //     reserved prefix but still escapes the extension's
+    //     subtree (`com.nube.foo` trying to claim `com.other.bar`).
+    for e in &m.contributes.nodes {
+        if let Some(prefix) = first_reserved_prefix(&e.kind) {
+            return Err(Error::validation(format!(
+                "contributes.nodes[].kind {:?} begins with host-reserved prefix {:?} \
+                 (FLOW-NODES.md R-flow-node-3)",
+                e.kind, prefix
+            )));
+        }
+        if !owner.owns(&e.kind) {
+            return Err(Error::validation(format!(
+                "contributes.nodes[].kind {:?} escapes the extension's namespace {:?} \
+                 (FLOW-NODES.md R-flow-node-3)",
+                e.kind,
+                owner.as_str()
+            )));
+        }
+    }
     Ok(())
+}
+
+/// Return the first host-reserved prefix `kind` matches against, if
+/// any. Matching is on the first dot-segment so `starter.flow.mqtt`
+/// matches `starter` but `starterly.weather` does not.
+fn first_reserved_prefix(kind: &str) -> Option<&'static str> {
+    let first_segment = kind.split('.').next()?;
+    RESERVED_PREFIXES
+        .iter()
+        .find(|&&prefix| first_segment == prefix)
+        .copied()
 }
 
 fn check_capability_compatibility(m: &Manifest) -> Result<()> {
@@ -208,6 +250,80 @@ capabilities:
         );
         // R6: empty allowlist is the legal neutralised form; not a load error.
         validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn nodes_namespace_ok_for_dotted_descendants() {
+        let m = parse(
+            r#"
+v: 1
+id: com.nube.mqtt
+version: 0.1.0
+display_name: "MQTT"
+runtime: { kind: process, bin: ./bin/mqtt-driver }
+contributes:
+  nodes:
+    - kind: com.nube.mqtt.publish
+      settings_schema: schemas/publish.json
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn nodes_namespace_rejects_reserved_prefix() {
+        // R-flow-node-3: a fixture extension contributing
+        // `starter.flow.mqtt` is rejected with the reserved-prefix
+        // error path (distinct from the namespace-mismatch path).
+        let m = parse(
+            r#"
+v: 1
+id: com.nube.foo
+version: 0.1.0
+display_name: "F"
+runtime: { kind: process, bin: ./bin/x }
+contributes:
+  nodes:
+    - kind: starter.flow.mqtt
+      settings_schema: a.json
+"#,
+        );
+        let err = validate_manifest(&m).unwrap_err();
+        let Error::Validation(msg) = err else {
+            panic!("expected Validation error");
+        };
+        assert!(
+            msg.contains("host-reserved prefix") && msg.contains("starter"),
+            "unexpected error: {msg}"
+        );
+    }
+
+    #[test]
+    fn nodes_namespace_rejects_non_descendant() {
+        // R-flow-node-3: a fixture extension contributing
+        // `com.other.mqtt` under an extension id of `com.nube.foo`
+        // is rejected with the namespace-mismatch error path.
+        let m = parse(
+            r#"
+v: 1
+id: com.nube.foo
+version: 0.1.0
+display_name: "F"
+runtime: { kind: process, bin: ./bin/x }
+contributes:
+  nodes:
+    - kind: com.other.mqtt
+      settings_schema: a.json
+"#,
+        );
+        let err = validate_manifest(&m).unwrap_err();
+        let Error::Validation(msg) = err else {
+            panic!("expected Validation error");
+        };
+        assert!(
+            msg.contains("escapes the extension's namespace"),
+            "unexpected error: {msg}"
+        );
     }
 
     #[test]

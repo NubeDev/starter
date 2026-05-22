@@ -35,8 +35,8 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use chrono::Utc;
 use starter_spi::insights::{
-    Coverage, QualityFlag, QualityFlagId, QualityFlagSeverity, Rule, RuleId, RuleInput,
-    RuleOutput, RuleSchema, Tags, Verdict, OUT_OF_RANGE, STUCK,
+    Coverage, QualityFlag, QualityFlagId, QualityFlagSeverity, Rule, RuleId, RuleInput, RuleOutput,
+    RuleSchema, Tags, Verdict, OUT_OF_RANGE, STUCK,
 };
 
 /// Static rule tags — every IoT rule carries `domain:iot` and
@@ -169,9 +169,7 @@ impl Rule for SensorHasRecentData {
             Verdict::warn(
                 self.schema.id.clone(),
                 now,
-                format!(
-                    "sensor data stale (last sample {last_sample}s ago > window {window}s)"
-                ),
+                format!("sensor data stale (last sample {last_sample}s ago > window {window}s)"),
             )
             .with_coverage(cov)
         };

@@ -31,7 +31,7 @@
 //! page didn't seed. Layout validation, by contrast, is a hard
 //! error: a broken tree is a programming bug.
 
-use serde_json::{Value as JsonValue, json};
+use serde_json::{json, Value as JsonValue};
 use starter_ui_ir::ComponentTree;
 use thiserror::Error;
 
@@ -63,12 +63,7 @@ pub trait PageStore {
 
     /// Write the named slot on the node at `path`. Overwrites any
     /// previous value (slot writes are upserts).
-    fn write_slot(
-        &mut self,
-        path: &str,
-        slot: &str,
-        value: &JsonValue,
-    ) -> Result<(), String>;
+    fn write_slot(&mut self, path: &str, slot: &str, value: &JsonValue) -> Result<(), String>;
 }
 
 /// Idempotently seed a `ui.page` SDUI page.
@@ -106,28 +101,20 @@ pub fn seed_page<S: PageStore + ?Sized>(
     // fail visibly with a clear error, which is the right place for
     // the operator to see the conflict.
     if let Err(e) = store.find_or_create_node(parent_path, "ui.page", page_name) {
-        eprintln!(
-            "[starter-ui-builder] failed to ensure page node {parent_path}/{page_name}: {e}"
-        );
+        eprintln!("[starter-ui-builder] failed to ensure page node {parent_path}/{page_name}: {e}");
     }
 
     let page_path = format!("{}/{}", parent_path.trim_end_matches('/'), page_name);
 
     if let Err(e) = store.write_slot(&page_path, "title", &json!(title)) {
-        eprintln!(
-            "[starter-ui-builder] failed to write title slot at {page_path}: {e}"
-        );
+        eprintln!("[starter-ui-builder] failed to write title slot at {page_path}: {e}");
     }
     if let Err(e) = store.write_slot(&page_path, "layout", &layout) {
-        eprintln!(
-            "[starter-ui-builder] failed to write layout slot at {page_path}: {e}"
-        );
+        eprintln!("[starter-ui-builder] failed to write layout slot at {page_path}: {e}");
     }
     let visible_to_json = json!(visible_to);
     if let Err(e) = store.write_slot(&page_path, "visible_to", &visible_to_json) {
-        eprintln!(
-            "[starter-ui-builder] failed to write visible_to slot at {page_path}: {e}"
-        );
+        eprintln!("[starter-ui-builder] failed to write visible_to slot at {page_path}: {e}");
     }
 
     Ok(())
@@ -183,12 +170,7 @@ mod tests {
             Ok(())
         }
 
-        fn write_slot(
-            &mut self,
-            path: &str,
-            slot: &str,
-            value: &JsonValue,
-        ) -> Result<(), String> {
+        fn write_slot(&mut self, path: &str, slot: &str, value: &JsonValue) -> Result<(), String> {
             self.slots
                 .push((path.to_owned(), slot.to_owned(), value.clone()));
             Ok(())

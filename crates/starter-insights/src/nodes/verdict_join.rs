@@ -23,12 +23,10 @@
 
 use async_trait::async_trait;
 use chrono::Utc;
-use starter_flow_spi::node::{
-    KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
-};
+use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue};
 use starter_spi::insights::{
-    join_all_inputs_errored_flag, Coverage, EffectiveCoverage, RawCoverage, RuleId, Severity,
-    Tags, Verdict,
+    join_all_inputs_errored_flag, Coverage, EffectiveCoverage, RawCoverage, RuleId, Severity, Tags,
+    Verdict,
 };
 
 use super::VERDICT_SLOT;
@@ -118,7 +116,9 @@ impl NodeBehavior for VerdictJoinNode {
         let mut joined_cov = build_joined_coverage(&inputs);
 
         let (severity, summary) = if all_errored {
-            joined_cov.quality_flags.push(join_all_inputs_errored_flag());
+            joined_cov
+                .quality_flags
+                .push(join_all_inputs_errored_flag());
             joined_cov.effective.confidence = 0.0;
             (
                 Severity::Error,
@@ -141,10 +141,16 @@ impl NodeBehavior for VerdictJoinNode {
             truncated_seen |= t;
         }
         if truncated_seen {
-            joined_cov.quality_flags.push(starter_spi::insights::QualityFlag::new(
-                starter_spi::insights::QualityFlagId::new("starter.quality", "tags-truncated", 1),
-                starter_spi::insights::QualityFlagSeverity::Info,
-            ));
+            joined_cov
+                .quality_flags
+                .push(starter_spi::insights::QualityFlag::new(
+                    starter_spi::insights::QualityFlagId::new(
+                        "starter.quality",
+                        "tags-truncated",
+                        1,
+                    ),
+                    starter_spi::insights::QualityFlagSeverity::Info,
+                ));
         }
 
         let verdict = Verdict::new(self.join_id.clone(), now, severity, summary)
@@ -166,7 +172,10 @@ fn sev_all(inputs: &[(String, Verdict)]) -> (Severity, String) {
         .map(|(_, v)| v.severity)
         .max_by_key(|s| s.rank())
         .unwrap_or(Severity::Healthy);
-    (max, format!("verdict.join(all,n={}): {:?}", inputs.len(), max))
+    (
+        max,
+        format!("verdict.join(all,n={}): {:?}", inputs.len(), max),
+    )
 }
 
 fn sev_any(inputs: &[(String, Verdict)]) -> (Severity, String) {

@@ -676,7 +676,11 @@ mod tests {
     #[tokio::test]
     async fn summary_plus_tail_keeps_last_k_when_summary_present() {
         let store = FakeStore::default();
-        store.push_artifact(SUMMARY_ARTIFACT_KEY, serde_json::json!({"text": "so far..."}), 10);
+        store.push_artifact(
+            SUMMARY_ARTIFACT_KEY,
+            serde_json::json!({"text": "so far..."}),
+            10,
+        );
         for i in 1..=5 {
             store.push_turn(i, TurnRole::User, serde_json::json!({"i": i}));
         }

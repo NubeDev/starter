@@ -54,7 +54,9 @@ pub struct Binding {
 pub enum ParseError {
     #[error("empty binding expression")]
     Empty,
-    #[error("binding must start with `$target`, `$self`, `$stack`, `$user`, or `$page` — got `{0}`")]
+    #[error(
+        "binding must start with `$target`, `$self`, `$stack`, `$user`, or `$page` — got `{0}`"
+    )]
     UnknownSource(String),
     #[error("`$stack` must be followed by `.<alias>`")]
     StackNeedsAlias,
@@ -94,12 +96,12 @@ impl Binding {
                 // Required `.alias` segment. We do not allow
                 // `$stack/foo` — `$stack` itself is not a graph
                 // cursor, only its frame is.
-                let alias_rest = rest
-                    .strip_prefix('.')
-                    .ok_or(ParseError::StackNeedsAlias)?;
+                let alias_rest = rest.strip_prefix('.').ok_or(ParseError::StackNeedsAlias)?;
                 let (alias, after) = take_ident(alias_rest, "$stack.")?;
                 rest = after;
-                Source::Stack { alias: alias.to_string() }
+                Source::Stack {
+                    alias: alias.to_string(),
+                }
             }
             other => return Err(ParseError::UnknownSource(other.to_string())),
         };
@@ -160,7 +162,12 @@ mod tests {
     #[test]
     fn parse_stack_alias() {
         let b = Binding::parse("$stack.target").unwrap();
-        assert_eq!(b.source, Source::Stack { alias: "target".into() });
+        assert_eq!(
+            b.source,
+            Source::Stack {
+                alias: "target".into()
+            }
+        );
         assert!(b.steps.is_empty());
     }
 
@@ -169,7 +176,10 @@ mod tests {
         // The worked example from SCOPE.md.
         let b = Binding::parse("$target/temp.value").unwrap();
         assert_eq!(b.source, Source::Target);
-        assert_eq!(b.steps, vec![Step::Child("temp".into()), Step::Slot("value".into())]);
+        assert_eq!(
+            b.steps,
+            vec![Step::Child("temp".into()), Step::Slot("value".into())]
+        );
     }
 
     #[test]
@@ -198,7 +208,10 @@ mod tests {
             Binding::parse("$unknown.x").unwrap_err(),
             ParseError::UnknownSource(_)
         ));
-        assert!(matches!(Binding::parse("foo").unwrap_err(), ParseError::UnknownSource(_)));
+        assert!(matches!(
+            Binding::parse("foo").unwrap_err(),
+            ParseError::UnknownSource(_)
+        ));
         assert_eq!(Binding::parse("").unwrap_err(), ParseError::Empty);
     }
 

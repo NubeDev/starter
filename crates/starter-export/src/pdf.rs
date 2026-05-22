@@ -63,8 +63,7 @@ impl Exporter for PrintpdfExporter {
         let (page_w, page_h) = request.page.dimensions_mm();
         let margins = request.page.margins;
 
-        let (doc, page1, layer1) =
-            PdfDocument::new(&title, Mm(page_w), Mm(page_h), "Layer 1");
+        let (doc, page1, layer1) = PdfDocument::new(&title, Mm(page_w), Mm(page_h), "Layer 1");
         let current_layer = doc.get_page(page1).get_layer(layer1);
 
         let bold = doc
@@ -88,13 +87,7 @@ impl Exporter for PrintpdfExporter {
             if cursor_y < bottom + 10.0 {
                 break;
             }
-            current_layer.use_text(
-                &section.heading,
-                14.0,
-                Mm(left),
-                Mm(cursor_y),
-                &bold,
-            );
+            current_layer.use_text(&section.heading, 14.0, Mm(left), Mm(cursor_y), &bold);
             cursor_y -= 7.0;
 
             for line in section.body.lines() {

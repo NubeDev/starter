@@ -87,8 +87,7 @@ async fn workspace_skills_dir_loads_both_reference_bundles_as_approved() {
             .collect::<Vec<_>>(),
     );
 
-    let approved_ids: Vec<String> =
-        registry.list().iter().map(|s| s.id.to_string()).collect();
+    let approved_ids: Vec<String> = registry.list().iter().map(|s| s.id.to_string()).collect();
     assert!(
         approved_ids.contains(&"starter.ai-builder.dashboards".to_string()),
         "dashboards bundle missing from approved list: {approved_ids:?}",
@@ -100,10 +99,7 @@ async fn workspace_skills_dir_loads_both_reference_bundles_as_approved() {
 
     // Bodies are non-empty (the model eventually sees these bytes —
     // an empty body would be a parser bug or an authoring bug).
-    for id_str in [
-        "starter.ai-builder.dashboards",
-        "starter.ai-builder.themes",
-    ] {
+    for id_str in ["starter.ai-builder.dashboards", "starter.ai-builder.themes"] {
         let id = SkillId::new(id_str).unwrap();
         let s = registry.get(&id).expect("get sees approved");
         assert!(!s.body.is_empty(), "{id_str} body must not be empty");

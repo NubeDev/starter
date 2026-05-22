@@ -21,7 +21,10 @@ pub struct PgChangeLog {
 impl PgChangeLog {
     /// Wrap a pool. Default max page is 200.
     pub fn new(pool: Pool) -> Self {
-        Self { pool, max_page: 200 }
+        Self {
+            pool,
+            max_page: 200,
+        }
     }
 
     /// Override the page-size cap.

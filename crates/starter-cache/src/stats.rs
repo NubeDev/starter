@@ -46,7 +46,11 @@ impl CacheStats {
         let h = self.hits() as f64;
         let m = self.misses() as f64;
         let total = h + m;
-        if total == 0.0 { 0.0 } else { h / total }
+        if total == 0.0 {
+            0.0
+        } else {
+            h / total
+        }
     }
 
     /// Zero the counters. Useful for demos and for tests that want

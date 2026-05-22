@@ -37,10 +37,7 @@ use crate::state::SduiState;
 pub type ActionBody = ActionRequest;
 
 /// Axum handler.
-pub async fn handler(
-    State(state): State<SduiState>,
-    Json(req): Json<ActionBody>,
-) -> Response {
+pub async fn handler(State(state): State<SduiState>, Json(req): Json<ActionBody>) -> Response {
     // R8: page_state byte cap also applies to action requests —
     // the context block carries page_state, and a 64KiB cap
     // upstream of dispatch keeps the limit consistent with

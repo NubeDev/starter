@@ -11,9 +11,9 @@ use async_trait::async_trait;
 use sqlx::Row;
 use starter_flow_spi::agent_session::{
     AgentSession, AgentSessionError, AgentSessionId, AgentSessionResult, AgentSessionStore,
-    Artifact, ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy,
-    RetentionSweepReport, Turn, TurnInput, TurnReceipt, TurnRole, ARTIFACT_VALUE_CAP_BYTES,
-    TURN_CONTENT_CAP_BYTES, TURN_SCHEMA_VERSION,
+    Artifact, ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy, RetentionSweepReport,
+    Turn, TurnInput, TurnReceipt, TurnRole, ARTIFACT_VALUE_CAP_BYTES, TURN_CONTENT_CAP_BYTES,
+    TURN_SCHEMA_VERSION,
 };
 
 use crate::pool::Pool;
@@ -49,8 +49,7 @@ fn put_backend(err: sqlx::Error) -> PutArtifactError {
 /// variant — disk corruption / schema drift are operator-actionable
 /// so the error reaches the caller without a log-line attached.
 fn to_json<T: serde::Serialize>(value: &T) -> Result<String, AgentSessionError> {
-    serde_json::to_string(value)
-        .map_err(|e| AgentSessionError::Backend(format!("serialize: {e}")))
+    serde_json::to_string(value).map_err(|e| AgentSessionError::Backend(format!("serialize: {e}")))
 }
 
 fn from_json<T: serde::de::DeserializeOwned>(
@@ -84,7 +83,10 @@ fn role_from_str(s: &str) -> Result<TurnRole, AgentSessionError> {
 }
 
 /// SQLite stores timestamps as ISO-8601 TEXT; parse to chrono.
-fn parse_ts(column: &'static str, raw: &str) -> Result<chrono::DateTime<chrono::Utc>, AgentSessionError> {
+fn parse_ts(
+    column: &'static str,
+    raw: &str,
+) -> Result<chrono::DateTime<chrono::Utc>, AgentSessionError> {
     // CURRENT_TIMESTAMP in SQLite emits `YYYY-MM-DD HH:MM:SS` (UTC,
     // no offset). Accept both that shape and full RFC 3339 so a
     // future migration that switches to `strftime('%Y-%m-%dT...')`
@@ -202,12 +204,9 @@ impl AgentSessionStore for SqliteAgentSessionStore {
         // state, and the per-session `seq` allocation is race-free
         // (M5 concurrency contract).
         let mut tx = pool.begin().await.map_err(backend)?;
-        sqlx::query("BEGIN IMMEDIATE")
-            .execute(&mut *tx)
-            .await
-            .ok(); // sqlx already wrapped us in a transaction; the
-                   // explicit upgrade is a no-op when already in
-                   // IMMEDIATE — kept as a hint for future maintainers.
+        sqlx::query("BEGIN IMMEDIATE").execute(&mut *tx).await.ok(); // sqlx already wrapped us in a transaction; the
+                                                                     // explicit upgrade is a no-op when already in
+                                                                     // IMMEDIATE — kept as a hint for future maintainers.
 
         let session_id_s = id.0.to_string();
 
@@ -585,8 +584,7 @@ impl AgentSessionStore for SqliteAgentSessionStore {
                 for (id,) in &session_ids {
                     q = q.bind(id);
                 }
-                let artifacts_deleted: i64 =
-                    q.fetch_one(&mut *tx).await.map_err(backend)?;
+                let artifacts_deleted: i64 = q.fetch_one(&mut *tx).await.map_err(backend)?;
 
                 let res = sqlx::query(
                     "DELETE FROM agent_sessions \

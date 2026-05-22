@@ -24,11 +24,9 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
 
-use serde_json::{Value as JsonValue, json};
+use serde_json::{json, Value as JsonValue};
 
-use starter_ui_bindings::{
-    ChildLink, EntityGraph, EvalContext, SubscriptionPlan, substitute_tree,
-};
+use starter_ui_bindings::{substitute_tree, ChildLink, EntityGraph, EvalContext, SubscriptionPlan};
 use starter_ui_builder::prelude::*;
 
 /// The Phase 2 fixture graph, with one `temp` child per target. The
@@ -127,10 +125,7 @@ fn building_overview() -> ComponentTree {
     )
 }
 
-fn resolve_against(
-    graph: &FixtureGraph,
-    target_id: &str,
-) -> (ComponentTree, SubscriptionPlan) {
+fn resolve_against(graph: &FixtureGraph, target_id: &str) -> (ComponentTree, SubscriptionPlan) {
     let stack: HashMap<String, String> = HashMap::new();
     let user = serde_json::Map::new();
     let page = serde_json::Map::new();

@@ -34,8 +34,8 @@ use starter_spi::auth::{Authenticator, Role};
 
 use crate::admin::ExtensionAdmin;
 use crate::events::events;
-use crate::routes::{detail, disable, enable, list};
 use crate::i18n::i18n;
+use crate::routes::{detail, disable, enable, list};
 use crate::ui::ui;
 
 /// Build options. Kept as a struct so future knobs (custom path prefix,

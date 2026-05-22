@@ -223,10 +223,8 @@ pub struct Engine {
     /// for every kind. Hosts run the sweep via
     /// [`Self::sweep_agent_session_retention`] from their own
     /// scheduled task; the engine does not own the clock.
-    agent_session_retention: std::collections::HashMap<
-        String,
-        starter_flow_spi::agent_session::RetentionPolicy,
-    >,
+    agent_session_retention:
+        std::collections::HashMap<String, starter_flow_spi::agent_session::RetentionPolicy>,
     /// Engine-level health flag (D-F3.11). Backed by an `AtomicU8`
     /// so [`Self::health`] is lock-free. Shared with every
     /// [`crate::run::FlowRunner`] launched off this engine via
@@ -358,10 +356,7 @@ impl Engine {
     /// the latest artifact on page reload. `None` (default)
     /// preserves today's stateless `/api/builder/stream`
     /// behaviour per MEMORY.md M13.
-    pub fn with_agent_session_store(
-        mut self,
-        store: Arc<dyn SpiAgentSessionStore>,
-    ) -> Self {
+    pub fn with_agent_session_store(mut self, store: Arc<dyn SpiAgentSessionStore>) -> Self {
         self.agent_session_store = Some(store);
         self
     }
@@ -397,10 +392,7 @@ impl Engine {
     /// session `kind`.
     pub fn agent_session_retention(
         &self,
-    ) -> &std::collections::HashMap<
-        String,
-        starter_flow_spi::agent_session::RetentionPolicy,
-    > {
+    ) -> &std::collections::HashMap<String, starter_flow_spi::agent_session::RetentionPolicy> {
         &self.agent_session_retention
     }
 
@@ -987,8 +979,8 @@ mod tests {
     async fn sweep_retention_dispatches_per_kind() {
         use starter_flow_spi::agent_session::{
             AgentSession, AgentSessionId, AgentSessionResult, AgentSessionStore, Artifact,
-            ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy,
-            RetentionSweepReport, Turn, TurnInput, TurnReceipt,
+            ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy, RetentionSweepReport,
+            Turn, TurnInput, TurnReceipt,
         };
 
         struct FakeStore {
@@ -1005,10 +997,7 @@ mod tests {
             ) -> AgentSessionResult<()> {
                 Ok(())
             }
-            async fn get(
-                &self,
-                _id: AgentSessionId,
-            ) -> AgentSessionResult<Option<AgentSession>> {
+            async fn get(&self, _id: AgentSessionId) -> AgentSessionResult<Option<AgentSession>> {
                 Ok(None)
             }
             async fn delete(&self, _id: AgentSessionId) -> AgentSessionResult<()> {
@@ -1082,7 +1071,7 @@ mod tests {
         let store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
         let engine = Engine::new(store)
             .with_agent_session_store(
-                fake.clone() as Arc<dyn starter_flow_spi::agent_session::AgentSessionStore>,
+                fake.clone() as Arc<dyn starter_flow_spi::agent_session::AgentSessionStore>
             )
             .with_agent_session_retention(
                 "page-builder",

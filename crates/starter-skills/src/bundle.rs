@@ -104,13 +104,17 @@ fn load_resource(
 ) -> Result<Resource, SkillParseError> {
     // The parser already vetted the scheme; double-check here so
     // the walker is independently safe.
-    let rest = uri.strip_prefix("file://").ok_or_else(|| {
-        SkillParseError::UnsupportedResourceScheme {
-            skill_path: skill_path.to_path_buf(),
-            resource_uri: uri.to_owned(),
-            scheme: uri.split_once("://").map(|(s, _)| s).unwrap_or("").to_owned(),
-        }
-    })?;
+    let rest =
+        uri.strip_prefix("file://")
+            .ok_or_else(|| SkillParseError::UnsupportedResourceScheme {
+                skill_path: skill_path.to_path_buf(),
+                resource_uri: uri.to_owned(),
+                scheme: uri
+                    .split_once("://")
+                    .map(|(s, _)| s)
+                    .unwrap_or("")
+                    .to_owned(),
+            })?;
 
     let relative = Path::new(rest);
     if relative.is_absolute() {
@@ -124,9 +128,7 @@ fn load_resource(
         match comp {
             Component::Normal(seg) => normalised.push(seg),
             Component::CurDir => {}
-            Component::ParentDir
-            | Component::RootDir
-            | Component::Prefix(_) => {
+            Component::ParentDir | Component::RootDir | Component::Prefix(_) => {
                 return Err(SkillParseError::ResourcePathEscapesBundle {
                     skill_path: skill_path.to_path_buf(),
                     resource_uri: uri.to_owned(),
@@ -168,10 +170,8 @@ mod tests {
     struct TempDir(PathBuf);
     impl TempDir {
         fn new(tag: &str) -> Self {
-            let base = std::env::temp_dir().join(format!(
-                "starter-skills-{tag}-{}",
-                std::process::id()
-            ));
+            let base =
+                std::env::temp_dir().join(format!("starter-skills-{tag}-{}", std::process::id()));
             let _ = fs::remove_dir_all(&base);
             fs::create_dir_all(&base).unwrap();
             Self(base)

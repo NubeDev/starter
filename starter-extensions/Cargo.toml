@@ -63,6 +63,12 @@ starter-ext-workers     = { path = "crates/starter-ext-workers", version = "0.1.
 starter-mcp             = { path = "../crates/starter-mcp", version = "0.1.0" }
 starter-server          = { path = "../crates/starter-server", version = "0.1.0" }
 
+# Parent-workspace flow SPI — consumed by `starter-ext-flow` to surface
+# extension-contributed node kinds into the engine's
+# `NodeKindRegistry` per `DOCS/extensions/scope/FLOW-NODES.md`
+# R-flow-node-1.
+starter-flow-spi        = { path = "../crates/starter-flow-spi", version = "0.1.0" }
+
 # Parent-workspace gRPC transport — consumed by `starter-ext-grpc`
 # (and only that adapter). Mirrors the `starter-cli` / `starter-mcp`
 # / `starter-server` arrows above.

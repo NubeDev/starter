@@ -24,7 +24,10 @@ pub struct SqliteChangeLog {
 impl SqliteChangeLog {
     /// Wrap a pool. Default max page is 200.
     pub fn new(pool: Pool) -> Self {
-        Self { pool, max_page: 200 }
+        Self {
+            pool,
+            max_page: 200,
+        }
     }
 
     /// Override the page-size cap.
@@ -127,8 +130,7 @@ impl ChangeLog for SqliteChangeLog {
 }
 
 fn encode_cursor(at: &str, id: &str) -> String {
-    base64::engine::general_purpose::URL_SAFE_NO_PAD
-        .encode(format!("{at}|{id}").as_bytes())
+    base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(format!("{at}|{id}").as_bytes())
 }
 
 fn decode_cursor(s: &str) -> Result<(String, String)> {

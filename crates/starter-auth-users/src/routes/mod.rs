@@ -4,8 +4,8 @@
 pub(crate) mod login;
 pub(crate) mod logout;
 pub(crate) mod me;
-pub(crate) mod signup;
 mod router;
+pub(crate) mod signup;
 mod state;
 
 pub use login::{LoginRequest, LoginResponse, PasswordNotSetResponse, CSRF_COOKIE};

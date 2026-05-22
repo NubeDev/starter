@@ -78,9 +78,7 @@ pub enum SkillParseError {
     /// A `resources:` entry used a URI scheme not in
     /// [`crate::SUPPORTED_RESOURCE_SCHEMES`]. V1 supports `file://`
     /// only (S-D2 locked); broadening is a future-version concern.
-    #[error(
-        "unsupported resource URI scheme `{scheme}` in {skill_path} (uri: {resource_uri})"
-    )]
+    #[error("unsupported resource URI scheme `{scheme}` in {skill_path} (uri: {resource_uri})")]
     UnsupportedResourceScheme {
         /// Path of the offending `SKILL.md`.
         skill_path: PathBuf,
