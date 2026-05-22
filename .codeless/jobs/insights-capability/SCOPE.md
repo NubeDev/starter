@@ -135,43 +135,168 @@ read paths.
    flip `[ ] → [x]` (or equivalent) in the same edits that land
    each phase.
 
-## Open questions (resolve in stage 1, before any production code)
+## Open questions — RESOLVED (2026-05-22 by ap@nube-io.com before start)
 
-The SCOPE's **D-list** is already resolved upstream (D1–D9). This
-job inherits those decisions. Three job-specific open questions to
-resolve here:
+The SCOPE's **D-list** is resolved upstream (D1–D9). The three
+job-specific open questions are resolved below with the evidence
+that supports each decision. The runner does **not** need to
+re-litigate these in stage 1; it executes against them.
 
-1. **Scope realism — is this honestly one job?** The source SCOPE
-   describes 4 phases, ~10 new node kinds, 4 extension packs, an
-   `AiRunner` integration, a CI dep-tree gate, a locked Rhai
-   sandbox, materialisation across three tiers, and an SLO suite —
-   that is several weeks of work, not one cost-capped run.
-   Bias: keep as one job per the user's request, but **explicitly
-   raise the cap mismatch at the start of stage 1** and surface
-   any phase as a separable follow-up if the runner's cost cap is
-   hit. Do **not** silently land partial work; mark the stage `[!]`
-   per CLAUDE.md R4 and stop.
-2. **Where do the `rule.*` node kinds physically live?** The SCOPE
-   says they are contributed to `starter-flow-nodes`'s
-   `NodeKindRegistry` but implementations live in `starter-insights`
-   and are registered by the host at boot (lines 162–169). Confirm
-   in stage 1 against the current `starter-flow-nodes` layout that
-   this registration shape works without circular crate deps; if it
-   doesn't, the resolution is a `register_insights_nodes()` function
-   in `starter-insights` that the host binary calls — **not** a new
-   crate, **not** an inversion of the dep arrow.
-3. **`starter-spi` contract churn.** D1 places `Rule`, `Verdict`,
+### Q1 — Scope realism: is this honestly one job?
+
+**Answer: No, it is not one job at the cap originally set, and the
+job is restructured to acknowledge that.**
+
+The source SCOPE describes 4 phases: ~10 new node kinds, 4
+extension packs, an `AiRunner` integration, a CI dep-tree gate, a
+locked Rhai sandbox, three-tier materialisation, and an SLO suite.
+That is several weeks of focused work, not a single capped run.
+Pretending otherwise would land partial work under a `[!]` halt
+midway and waste the runner's budget on context that the next job
+re-pays for.
+
+**Decision.**
+
+1. **Phase 1 is the only phase this job commits to.** Stages 1–2
+   (Phase 1 implementation + Phase 1 REVIEW) are the deliverable.
+   The remaining stages (3–7) stay in `template.yaml` as the
+   **declared follow-up plan**, marked clearly as out-of-cap for
+   this run.
+2. The runner **must stop and request a new job** at the Phase 1
+   REVIEW gate. Phase 2 onward each become their own job
+   (`insights-capability-phase-2`, `-phase-3`, `-phase-4`), each
+   submitted by the operator after the prior phase's REVIEW
+   approval. This is the same pattern the existing
+   `workspace-attach` / `workspace-attach-ui` job split uses.
+3. **Why not just bump the cap to $300 / 4h and let it run?**
+   Because a single cap-bounded run that crosses 3+ REVIEW gates
+   gives the operator no chance to inspect intermediate phase
+   output before the runner barrels into the next. The SCOPE's
+   own phasing exists for this reason — Phase 2 depends on Phase
+   1's *approved* shape, not just compiled shape. REVIEW gates
+   between phases are load-bearing; the runner cannot self-approve
+   them.
+4. **Cap stays at 30000¢ / 4h.** That cap is appropriate for
+   Phase 1 alone; the iot pack is small, the contracts lift is
+   mechanical, the sqlite layer is single-table. If Phase 1
+   genuinely exceeds the cap, that's a signal the contracts lift
+   is more invasive than the audit (Q3) predicts, not a signal to
+   bump the budget.
+
+**How to apply.** The runner reads this resolution at the top of
+stage 1, prints "Phase 1 only; halt at REVIEW gate" to its own
+chat, and does not start any stage past stage 2. The
+template-level stages 3–7 stay in the file as documentation; the
+runner treats them as `[ ]` and unreachable for this job.
+
+### Q2 — `rule.*` node-kind registration shape
+
+**Answer: registration uses the existing `feature` + `builtin_descriptors()` pattern in [`starter-flow-nodes`](/home/user/code/rust/starter/crates/starter-flow-nodes), exactly as the existing built-ins do. The implementations live in `starter-insights`, but the descriptors and `cfg(feature = "...")`-gated module declarations live in `starter-flow-nodes`. No circular dep, no inverted arrow.**
+
+Ground truth from
+[`crates/starter-flow-nodes/src/node_registry.rs`](/home/user/code/rust/starter/crates/starter-flow-nodes/src/node_registry.rs)
+and
+[`crates/starter-flow-nodes/Cargo.toml`](/home/user/code/rust/starter/crates/starter-flow-nodes/Cargo.toml):
+
+- `starter-flow-nodes` already exposes `builtin_descriptors() -> Vec<&'static NodeDescriptor>` which conditionally pushes each kind under `#[cfg(feature = "...")]`. Adding `rule-rust` and `verdict-join` features (Phase 1) is one block of `cfg(feature)` in `lib.rs` plus one push per kind in `node_registry.rs`. Same template the existing `transform`, `branch`, `gate`, `merge`, `subflow` kinds follow.
+- `starter-flow-nodes` already depends on `starter-spi` (line 29 of its `Cargo.toml`). Adding `starter-insights` as an **optional, feature-gated dependency** on `starter-flow-nodes` is the seam: `rule-rust = ["dep:starter-insights"]`, gated module declaration `#[cfg(feature = "rule-rust")] pub mod rule_rust;` whose body calls into a public function exported by `starter-insights` for the rule body.
+- `starter-insights` depends on `starter-flow-spi` (for `NodeBehavior`) and `starter-spi` (for `Rule`, `Verdict`). It does **not** depend on `starter-flow-nodes` — the arrow is `flow-nodes → insights`, not the other way around. No circular dep.
+- For Phase 1, the only nodes contributed are `rule.rust` and `verdict.join`. The other four rule kinds (`rule.sql`, `rule.rhai`, `rule.derive`, `rule.ai-check`, `rule.ai-debug`) and the windowing/align nodes follow the same template in later phases — same `dep:starter-insights` cargo feature gate per kind.
+- **No `register_insights_nodes()` host-call function is needed.** The existing `builtin_descriptors()` slice already handles "consumer opts in via cargo feature"; insights' kinds compose into the same slice. The earlier draft proposed `register_insights_nodes()` as a fallback in case of circular dep — there is no circular dep, so the fallback is moot.
+
+**How to apply.** In stage 1, when adding `rule.rust` and
+`verdict.join`:
+1. Add `rule-rust = ["dep:starter-insights"]` and
+   `verdict-join = ["dep:starter-insights"]` features to
+   `starter-flow-nodes`'s `Cargo.toml`. Add `starter-insights =
+   { workspace = true, optional = true }` under
+   `[dependencies]`.
+2. Add `#[cfg(feature = "rule-rust")] pub mod rule_rust;` and
+   `#[cfg(feature = "verdict-join")] pub mod verdict_join;` to
+   `lib.rs`. Each module exports a `pub static DESCRIPTOR:
+   NodeDescriptor` and a body that calls into
+   `starter_insights::nodes::rule_rust::execute(...)` (or
+   `verdict_join::execute(...)`).
+3. Add the two pushes to `builtin_descriptors()` under matching
+   `#[cfg(feature = "...")]` blocks, in the same place the
+   existing kinds live.
+4. Extend the `all-kinds` aggregate at line 96 to include the
+   two new features so `cargo check --features=all-kinds` covers
+   them.
+
+No SPI change required; `NodeDescriptor` and `NodeBehavior` are
+already the shared seams.
+
+### Q3 — `starter-spi` contract churn from D1's additions
+
+**Answer: the additions are pure additive new modules. No existing public symbol changes shape, no existing trait gains required methods, no downstream public API breaks.**
+
+Ground truth from
+[`crates/starter-spi/src/`](/home/user/code/rust/starter/crates/starter-spi/src/):
+the crate is already module-organised
+(`ai/`, `auth/`, `authz/`, `changelog/`, `dto/`, `error/`,
+`filter/`, `i18n/`, `id/`, `paging/`, `preferences/`,
+`secrets/`, `service/`, `sort/`, `tool/`, `ui/`, `units/`).
+**30+ downstream crates depend on `starter-spi` today**:
+`starter-agent-log`, `smoke-tests`, `starter-auth-token`,
+`starter-cli`, `starter-audit`, `starter-auth-users`,
+`starter-grpc`, `starter-flow-nodes`, `starter-changelog`,
+`starter-auth-oauth`, `starter-changelog-postgres`,
+`starter-export`, `starter-changelog-sqlite`,
+`starter-service-telegram`, `starter-flow-surfaces`,
+`starter-clipboard-postgres`, `starter-client-rs`,
+`starter-authz`, `starter-flow-spi`, `starter-flow`,
+`starter-i18n`, `starter-secrets-keyring`, `starter-prefs`,
+`starter-server`, `starter-skills`, `starter-mcp`,
+`starter-service-slack`, `starter-undo`, `starter-tool-slack`,
+`starter-secrets-file`, and more.
+
+That is a wide blast radius **if** the additions touch existing
+shapes. They do not:
+
+1. **New top-level modules only.** D1's symbols (`Rule`, `Verdict`,
    `Coverage`, `Dataset`, `RuleId`, `RuleSchema`, `RuleError`,
    `Severity`, `QualityFlag`, `QualityFlagId`, `Tags`, `Window`,
-   `TimeZoneId` in `starter-spi`. Confirm at stage-1 start how many
-   downstream crates today depend on `starter-spi` and whether any
-   of them will be broken by additions; bias is yes-they're-additive
-   because everything new is a new symbol, but a wholesale
-   pub-use sweep needs an audit before landing.
+   `TimeZoneId`) all live in **two new modules**: `rule/` (trait,
+   ids, errors, schema, severity) and `verdict/` (verdict, coverage,
+   dataset, dataset-rows trait + `VecDatasetRows`, tags, window,
+   timezone, quality-flag). Both are new files; nothing existing is
+   touched.
+2. **No existing symbol gains a new shape.** `Tool`, `AiRunner`,
+   `Cancel`, `Principal`, `SecretStore`, the `dto` types, the `error`
+   types — none of these change. The existing surface stays
+   byte-for-byte stable.
+3. **No `pub use` sweep.** D1 explicitly says "defined there, not
+   re-exported". The new modules expose their types directly; nothing
+   re-exports from a different crate, nothing in `starter-spi`'s
+   `lib.rs` gets a new wildcard.
+4. **No new trait method on an existing trait.** The new traits
+   (`Rule`, `DatasetRows`) are *new* traits in *new* modules. No
+   existing trait (`Tool`, `AiRunner`, …) gains a required method
+   that would force every downstream impl to add a stub.
 
-Record each chosen answer + a one-line *why* in this file during
-stage 1; no production code in stage 1 before all three are
-resolved.
+**Risk surface.** The only way the additions can break a
+downstream crate is a **name collision** — a downstream that has
+its own `pub struct Verdict` would shadow ours if it `use
+starter_spi::*`. Mitigation:
+- `grep -rln 'starter-spi'` in stage 1 to enumerate the 30+
+  crates, then `rg 'struct (Rule|Verdict|Coverage|Dataset|Tags|Window|Severity|QualityFlag)\b'` in those crates to confirm zero existing collisions.
+- If a collision exists (it almost certainly does not — these are
+  insights-domain names), surface in chat **before** the contracts
+  land; the resolution is to rename the new symbol, not to
+  pre-emptively rename downstream code.
+
+**How to apply.** Stage 1 adds two new files to `starter-spi`:
+- `crates/starter-spi/src/rule/mod.rs` (sub-files: `id.rs`,
+  `trait.rs`, `error.rs`, `schema.rs`, `severity.rs`).
+- `crates/starter-spi/src/verdict/mod.rs` (sub-files: `verdict.rs`,
+  `coverage.rs`, `dataset.rs`, `tags.rs`, `window.rs`,
+  `quality_flag.rs`, `timezone.rs`).
+
+Plus the two `pub mod rule;` and `pub mod verdict;` declarations in
+`lib.rs`. No other change to `starter-spi`. Run `cargo check
+--workspace` after the additions land; the build should be green
+on the first try because nothing existing was touched.
 
 ## References
 
@@ -180,6 +305,10 @@ resolved.
 - Flow engine SCOPE: `starter/DOCS/flow/scope/SCOPE.md`
 - Agent SCOPE: `starter/DOCS/agent/SCOPE.md`
 - Extensions SCOPE: `starter/DOCS/extensions/scope/SCOPE.md`
+- `starter-flow-nodes` registration template (Q2 ground truth):
+  [/home/user/code/rust/starter/crates/starter-flow-nodes/src/node_registry.rs](/home/user/code/rust/starter/crates/starter-flow-nodes/src/node_registry.rs)
+- `starter-spi` module layout (Q3 ground truth):
+  [/home/user/code/rust/starter/crates/starter-spi/src/](/home/user/code/rust/starter/crates/starter-spi/src/)
 - Agent rules: `starter/CLAUDE.md` (if present at root) and the
   workspace-level `codeless-workspace/CLAUDE.md` for mani / commit
   discipline.
