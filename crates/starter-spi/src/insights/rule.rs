@@ -53,9 +53,19 @@ pub enum RuleOutput {
 
 /// Static metadata describing a registered [`Rule`].
 ///
-/// Phase 1 ships a minimal shape — schema details (typed input
-/// columns, derivation `confidence_penalty`, AI model-family pins,
-/// `persist`, `retroactive`, `idempotent`) land in later phases.
+/// Phase 2 widens the schema with the derivation-related knobs the
+/// engine needs to enforce R-ins-6's load-bearing invariants:
+/// `confidence_penalty` (the multiplicative discount applied to
+/// `effective.confidence` whenever a derivation rule emits a
+/// `Dataset`), `retroactive` (whether the rule's inputs may mutate
+/// — drives D5's per-window watermark + the
+/// `starter.quality.retroactive-correction@1` flag), `idempotent`
+/// (D6 idempotence contract for hand-unrolled multi-pass cleaning),
+/// `persist` (derivation cache opt-in — wired in Phase 3), and
+/// `max_operations` (per-rule Rhai operation budget override per
+/// R-ins-4). Defaults are conservative: no penalty (`None`), not
+/// retroactive, not idempotent (must be opted in), no persist, no
+/// budget override.
 #[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct RuleSchema {
@@ -68,6 +78,26 @@ pub struct RuleSchema {
     /// derivation (returns `Dataset`). Pipeline wiring is
     /// type-checked at flow load time against this declaration.
     pub kind: RuleKind,
+    /// Derivation confidence penalty in `[0.0, 1.0]` (R-ins-6).
+    /// Multiplied into `effective.confidence` by the engine when the
+    /// rule emits a `Dataset`. `None` is treated as "no penalty"
+    /// (1.0). A value `> 1.0` is rejected at registry registration
+    /// time — derivations may only lower or preserve confidence,
+    /// never raise it.
+    pub confidence_penalty: Option<f32>,
+    /// Marks the rule's inputs as mutable downstream — drives D5's
+    /// per-window rollup invalidation + the
+    /// `starter.quality.retroactive-correction@1` flag.
+    pub retroactive: bool,
+    /// Declares the rule is idempotent on its own output (D6). The
+    /// determinism smoke runs the rule twice and asserts equality.
+    pub idempotent: bool,
+    /// Opt-in for the derivation cache (Phase 3). Currently honoured
+    /// only as metadata; the cache itself lands later.
+    pub persist: bool,
+    /// Per-rule override of the Rhai sandbox operation budget
+    /// (R-ins-4). `None` means "use the sandbox default".
+    pub max_operations: Option<u64>,
 }
 
 /// Declared output kind of a [`Rule`] — read off [`RuleSchema`] by
@@ -88,6 +118,11 @@ impl RuleSchema {
             id,
             tags: Tags::default(),
             kind: RuleKind::Assertion,
+            confidence_penalty: None,
+            retroactive: false,
+            idempotent: false,
+            persist: false,
+            max_operations: None,
         }
     }
 
@@ -97,12 +132,43 @@ impl RuleSchema {
             id,
             tags: Tags::default(),
             kind: RuleKind::Derivation,
+            confidence_penalty: None,
+            retroactive: false,
+            idempotent: false,
+            persist: false,
+            max_operations: None,
         }
     }
 
     /// Attach static tags. Builder shape.
     pub fn with_tags(mut self, tags: Tags) -> Self {
         self.tags = tags;
+        self
+    }
+
+    /// Set the derivation `confidence_penalty`. Caller is
+    /// responsible for keeping it in `[0.0, 1.0]`; the registry
+    /// validates at registration time.
+    pub fn with_confidence_penalty(mut self, penalty: f32) -> Self {
+        self.confidence_penalty = Some(penalty);
+        self
+    }
+
+    /// Mark the rule as retroactive (D5).
+    pub fn retroactive(mut self) -> Self {
+        self.retroactive = true;
+        self
+    }
+
+    /// Mark the rule as idempotent (D6).
+    pub fn idempotent(mut self) -> Self {
+        self.idempotent = true;
+        self
+    }
+
+    /// Override the Rhai sandbox operation budget (R-ins-4).
+    pub fn with_max_operations(mut self, ops: u64) -> Self {
+        self.max_operations = Some(ops);
         self
     }
 }

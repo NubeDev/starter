@@ -2,35 +2,41 @@
 //!
 //! The Insights capability — one crate per Insights SCOPE R-ins-1.
 //!
-//! Phase 1 (this stage) ships:
+//! Phase 1 shipped: `RuleRegistry`, `QualityFlagRegistry`,
+//! `rule.rust`, `verdict.join`, sqlite verdict-log + tag-index.
 //!
-//! - [`registry::RuleRegistry`] — `(namespace, name, major)`-keyed
-//!   rule registry; rejects duplicate `(namespace, name, major)`.
-//! - [`registry::QualityFlagRegistry`] — same shape for the
-//!   extensible R-ins-11 quality-flag taxonomy.
-//! - [`nodes::rule_rust`] — `starter.flow.rule.rust` node body that
-//!   dispatches a registered [`starter_spi::insights::Rule`] by
-//!   `RuleId` and converts panics / missing inputs into
-//!   `Severity::Error` verdicts (R-ins-6).
-//! - [`nodes::verdict_join`] — `starter.flow.verdict.join` node
-//!   body implementing `all` / `any` / `weighted` modes plus the
-//!   all-Error degenerate case.
-//! - [`prelude`] — re-exports for consumers.
-//! - [`sqlite`] (feature `sqlite`) — verdict log + tag index over
-//!   SQLite.
+//! Phase 2 (this stage) adds:
 //!
-//! Future phases add: `rule.sql`, `rule.rhai`, `rule.derive`,
-//! `rule.ai-check`, `rule.ai-debug`, the Rhai sandbox (R-ins-4),
-//! windowing nodes, `align`, derivation cache, verdict rollups,
-//! skill bundles, and `StreamingDatasetRows`.
+//! - [`rhai_sandbox`] — the R-ins-4 locked Rhai engine profile.
+//! - [`nodes::rule_rhai`] — `starter.flow.rule.rhai` body, with D4
+//!   anonymous-id derivation for inline scripts.
+//! - [`nodes::windowing`] — `starter.flow.window.tumble` and
+//!   `starter.flow.window.slide` with mandatory IANA `tz` config.
+//! - [`nodes::rule_sql`] (feature `sqlite`) — `starter.flow.rule.sql`
+//!   against the host's primary SQLite store (D2 Phase 1 shape).
+//! - [`penalty::apply_derivation_penalty`] — engine-side
+//!   `confidence_penalty` enforcement for derivation rules (R-ins-6).
+//! - [`backfill`] — D3 100k-row cap + `BackfillTruncated` event.
+//! - [`rollups`] (feature `sqlite`) — incremental verdict rollups
+//!   (tier 2 materialisation), tag-grouped aggregates (R-ins-8),
+//!   and the D5 per-window `rollup_invalidation` watermark seam.
+//!
+//! Future phases add: `rule.derive`, `align`, derivation cache,
+//! `rule.ai-check`, `rule.ai-debug`, skill bundles, and
+//! `StreamingDatasetRows`.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod backfill;
 pub mod nodes;
+pub mod penalty;
 pub mod prelude;
 pub mod registry;
+pub mod rhai_sandbox;
 
+#[cfg(feature = "sqlite")]
+pub mod rollups;
 #[cfg(feature = "sqlite")]
 pub mod sqlite;
 

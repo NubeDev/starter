@@ -1,6 +1,6 @@
 [package]
 name        = "starter-insights"
-description = "starter — Insights capability. RuleRegistry, QualityFlagRegistry, rule.rust + verdict.join node bodies. Per DOCS/Insights/SCOPE.md."
+description = "starter — Insights capability. RuleRegistry, QualityFlagRegistry, rule.rust/rule.rhai/rule.sql + verdict.join + window.tumble/window.slide node bodies. Per DOCS/Insights/SCOPE.md."
 version.workspace      = true
 edition.workspace      = true
 license.workspace      = true
@@ -16,25 +16,34 @@ serde_json       = { workspace = true }
 thiserror        = { workspace = true }
 tracing          = { workspace = true }
 chrono           = { workspace = true }
+chrono-tz        = { workspace = true }
 uuid             = { workspace = true }
 tokio            = { workspace = true, features = ["sync", "rt", "macros"] }
+# Phase 2: Rhai sandbox profile (R-ins-4). Sandbox locks
+# eval/import/modules/filesystem in `rhai_sandbox.rs`.
+rhai             = { workspace = true }
+# D4 anonymous-id derivation for inline rule.rhai / rule.sql nodes.
+blake3           = { workspace = true }
 
-# Optional sqlite persistence — verdict log + tag index only (Phase 1).
+# Optional sqlite persistence — verdict log + tag index (Phase 1) and
+# verdict rollups + rollup_invalidation + rule.sql (Phase 2).
 sqlx                 = { workspace = true, features = ["sqlite", "macros", "migrate"], optional = true }
 starter-store-sqlite = { workspace = true, optional = true }
 
 [features]
 default = []
-# Phase 1 persistence: verdict log + tag index only. No rollups, no
-# derivation cache yet (those land in Phase 2+).
+# Persistence: verdict log + tag index (Phase 1), verdict rollups +
+# rollup_invalidation table + tag-grouped aggregates (Phase 2, D5),
+# and `rule.sql` against the host primary store (D2 Phase 1 shape).
+# Derivation cache lands in Phase 3.
 sqlite = ["dep:sqlx", "dep:starter-store-sqlite"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
 sqlx  = { workspace = true, features = ["sqlite", "macros", "migrate"] }
 starter-store-sqlite = { workspace = true, features = ["testing"] }
-# IoT rule pack — used by the Phase 1 smoke test that reproduces
-# the canonical IoT row end-to-end. Imported via path (not
-# workspace dep) because `starter-ext-insights-iot` lives in the
-# sibling `starter-extensions` workspace.
+# IoT rule pack — Phase 1 smoke.
 starter-ext-insights-iot = { path = "../../starter-extensions/crates/starter-ext-insights-iot", version = "0.1.0" }
+# Energy rule pack — Phase 2 smoke reproducing the Energy row of
+# the DOCS/Insights/SCOPE.md use-case sanity check.
+starter-ext-insights-energy = { path = "../../starter-extensions/crates/starter-ext-insights-energy", version = "0.1.0" }

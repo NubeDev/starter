@@ -2897,6 +2897,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ext-insights-energy"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde_json",
+ "starter-spi",
+]
+
+[[package]]
 name = "starter-ext-insights-iot"
 version = "0.1.0"
 dependencies = [

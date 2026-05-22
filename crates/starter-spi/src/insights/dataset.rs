@@ -107,4 +107,24 @@ impl Dataset {
             window: None,
         }
     }
+
+    /// Full constructor — external crates must use this instead of
+    /// struct-expression initialisation because the struct is
+    /// `#[non_exhaustive]`. New fields land as builder methods or
+    /// optional parameters so existing call sites keep compiling.
+    pub fn from_parts(
+        schema: DatasetSchema,
+        rows: Arc<dyn DatasetRows>,
+        coverage: Coverage,
+        tz: TimeZoneId,
+        window: Option<Window>,
+    ) -> Self {
+        Self {
+            schema,
+            rows,
+            coverage,
+            tz,
+            window,
+        }
+    }
 }

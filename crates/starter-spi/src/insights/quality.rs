@@ -113,6 +113,13 @@ pub const RULE_ERROR: &str = "starter.quality.rule-error";
 pub const JOIN_ALL_INPUTS_ERRORED: &str = "starter.quality.join-all-inputs-errored";
 /// `starter.quality.tags-truncated@1` — over the 32-tag cap.
 pub const TAGS_TRUNCATED: &str = "starter.quality.tags-truncated";
+/// `starter.quality.retroactive-correction@1` — an input mutated
+/// after the original verdict landed; rollups for this window have
+/// been re-enqueued (D5).
+pub const RETROACTIVE_CORRECTION: &str = "starter.quality.retroactive-correction";
+/// `starter.quality.partial-onboarding@1` — onboarding backfill was
+/// truncated at the D3 100k-row cap.
+pub const PARTIAL_ONBOARDING: &str = "starter.quality.partial-onboarding";
 
 /// Convenience: built-in `starter.quality.rule-error@1` flag.
 pub fn rule_error_flag(kind: RuleErrorKind) -> QualityFlag {
@@ -128,5 +135,24 @@ pub fn join_all_inputs_errored_flag() -> QualityFlag {
     QualityFlag::new(
         QualityFlagId::new("starter.quality", "join-all-inputs-errored", 1),
         QualityFlagSeverity::Critical,
+    )
+}
+
+/// Convenience: built-in `starter.quality.retroactive-correction@1`
+/// (D5). Attached by the engine when a verdict's window overlaps a
+/// mutated input watermark.
+pub fn retroactive_correction_flag() -> QualityFlag {
+    QualityFlag::new(
+        QualityFlagId::new("starter.quality", "retroactive-correction", 1),
+        QualityFlagSeverity::Info,
+    )
+}
+
+/// Convenience: built-in `starter.quality.partial-onboarding@1` —
+/// attached when an onboarding backfill hit the D3 100k-row cap.
+pub fn partial_onboarding_flag() -> QualityFlag {
+    QualityFlag::new(
+        QualityFlagId::new("starter.quality", "partial-onboarding", 1),
+        QualityFlagSeverity::Info,
     )
 }

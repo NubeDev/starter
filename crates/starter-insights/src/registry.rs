@@ -16,6 +16,19 @@ pub enum RegistryError {
     /// breaking change requires a new major.
     #[error("duplicate registration: {0}")]
     Duplicate(String),
+    /// A derivation rule declared a `confidence_penalty` outside
+    /// `[0.0, 1.0]`. Per R-ins-6 derivations may only lower or
+    /// preserve confidence — a value `> 1.0` is rejected here.
+    #[error(
+        "rule {rule_id}: confidence_penalty {penalty} outside [0.0, 1.0] \
+         (derivations may only lower or preserve confidence)"
+    )]
+    InvalidPenalty {
+        /// The rule whose schema was rejected.
+        rule_id: String,
+        /// The offending penalty value.
+        penalty: f32,
+    },
 }
 
 /// Static description carried alongside a registered
@@ -61,9 +74,18 @@ impl RuleRegistry {
     /// duplicates per R-ins-2; a breaking change requires a new
     /// major.
     pub fn register(&mut self, rule: Arc<dyn Rule>) -> Result<(), RegistryError> {
-        let id = rule.schema().id.clone();
+        let schema = rule.schema();
+        let id = schema.id.clone();
         if self.rules.contains_key(&id) {
             return Err(RegistryError::Duplicate(id.to_string()));
+        }
+        if let Some(p) = schema.confidence_penalty {
+            if !(0.0..=1.0).contains(&p) {
+                return Err(RegistryError::InvalidPenalty {
+                    rule_id: id.to_string(),
+                    penalty: p,
+                });
+            }
         }
         self.rules.insert(id, rule);
         Ok(())

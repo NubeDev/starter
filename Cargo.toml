@@ -137,6 +137,15 @@ futures     = "0.3"
 bytes       = "1"
 uuid        = { version = "1", features = ["v4", "v5", "v7", "serde"] }
 chrono      = { version = "0.4", default-features = false, features = ["serde", "clock"] }
+# Phase 2 insights windowing nodes need IANA timezone awareness for
+# DST-correct boundaries (R-ins-6, "this Tuesday vs last Tuesday").
+chrono-tz   = { version = "0.9", default-features = false }
+# Phase 2 `rule.rhai` body. Locked at the workspace level so every
+# consumer of the insights crate resolves one major (R-ins-4). Heavy
+# default features (`metadata`, `decimal`, `serde`) are kept off; the
+# sandbox profile (locked in `starter-insights::rhai_sandbox`)
+# explicitly denies modules/imports/filesystem regardless.
+rhai        = { version = "1", default-features = false, features = ["std", "sync", "no_optimize"] }
 
 # Hot-reload (DOCS/flow/scope/hot-reload.md):
 # `blake3` hashes the canonicalised body for HR1's idempotent

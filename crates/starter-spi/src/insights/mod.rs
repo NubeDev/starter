@@ -21,8 +21,9 @@ mod verdict;
 pub use coverage::{Coverage, EffectiveCoverage, RawCoverage};
 pub use dataset::{Dataset, DatasetSchema, DatasetRows, VecDatasetRows};
 pub use quality::{
-    join_all_inputs_errored_flag, rule_error_flag, QualityFlag, QualityFlagId,
-    QualityFlagSeverity, RuleErrorKind, GAP, JOIN_ALL_INPUTS_ERRORED, OUT_OF_RANGE,
+    join_all_inputs_errored_flag, partial_onboarding_flag, retroactive_correction_flag,
+    rule_error_flag, QualityFlag, QualityFlagId, QualityFlagSeverity, RuleErrorKind, GAP,
+    JOIN_ALL_INPUTS_ERRORED, OUT_OF_RANGE, PARTIAL_ONBOARDING, RETROACTIVE_CORRECTION,
     RULE_ERROR, STUCK, TAGS_TRUNCATED,
 };
 pub use rule::{Rule, RuleId, RuleInput, RuleKind, RuleOutput, RuleSchema};

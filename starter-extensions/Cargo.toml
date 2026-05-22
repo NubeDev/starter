@@ -15,6 +15,7 @@ members = [
     "crates/starter-ext-workers",
     "crates/starter-ext-smoke",
     "crates/starter-ext-insights-iot",
+    "crates/starter-ext-insights-energy",
     "examples/hello-builtin",
     "examples/hello-process",
     "examples/hello-wasm",
