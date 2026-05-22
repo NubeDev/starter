@@ -1,0 +1,36 @@
+[package]
+name        = "starter-blob-garage"
+description = "starter — Garage-aware BlobStore. Reuses starter-blob-s3 for the data plane; adds bucket lifecycle, per-bucket key minting, cluster health, and layout introspection over Garage's admin API."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[features]
+default = []
+# Opt-in integration tests against a docker-compose Garage cluster.
+# Off by default so the workspace `cargo test` stays hermetic.
+integration-tests = []
+
+[dependencies]
+starter-spi    = { workspace = true }
+starter-blob-s3 = { workspace = true }
+
+async-trait = { workspace = true }
+bytes       = { workspace = true }
+futures     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tracing     = { workspace = true }
+
+# Garage admin API is a small REST surface. Use reqwest with rustls
+# to match the workspace TLS choice. The data plane goes through
+# starter-blob-s3 / aws-sdk-s3 — Garage source is **never** linked.
+reqwest = { workspace = true }
+url     = "2"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
