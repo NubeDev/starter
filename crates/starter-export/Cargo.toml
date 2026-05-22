@@ -1,0 +1,54 @@
+[package]
+name        = "starter-export"
+description = "starter — reusable, extensible export pipeline (PDF / HTML / CSV / JSON) with a transport-agnostic Exporter trait and an optional axum router."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Per SCOPE.md R5: defaults are empty. Consumers opt into the formats
+# they actually want. The crate itself only ships the trait + the
+# page-options vocabulary unless a feature is turned on.
+[features]
+default = []
+
+# Pure-Rust PDF generation via `printpdf`. Suitable for tabular
+# reports, invoices, simple structured documents. For rich,
+# CSS-styled output prefer the frontend path (see README).
+pdf = ["dep:printpdf"]
+
+# Trivial HTML wrapper export — useful as a print-friendly fallback
+# the browser can hand to `window.print()`.
+html = []
+
+# CSV export via the `csv` crate.
+csv = ["dep:csv"]
+
+# JSON export (pretty-printed) via serde_json. Cheap; off by default
+# so the dep tree stays minimal.
+json = []
+
+# `POST /v1/export` axum router and OpenAPI schemas. Pulls in the
+# starter HTTP machinery.
+axum-router = ["dep:axum", "dep:starter-server", "dep:utoipa"]
+
+[dependencies]
+starter-spi = { workspace = true }
+
+async-trait = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+bytes       = { workspace = true }
+
+# Feature-gated.
+printpdf = { version = "0.7", default-features = false, optional = true }
+csv      = { version = "1", optional = true }
+axum     = { workspace = true, optional = true }
+utoipa   = { workspace = true, optional = true }
+starter-server = { workspace = true, optional = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt"] }
