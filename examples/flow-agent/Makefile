@@ -16,7 +16,7 @@ build-backend:
 build-frontend:
 	cd frontend && pnpm install && pnpm build
 
-start: $(PID_DIR)
+start: build-backend stop $(PID_DIR)
 	@echo "Starting backend on :$(BACKEND_PORT)..."
 	HTTP_BIND="127.0.0.1:$(BACKEND_PORT)" \
 	DATABASE_URL="$(DB_URL)" \
@@ -31,13 +31,17 @@ start: $(PID_DIR)
 
 stop:
 	@if [ -f $(PID_DIR)/backend.pid ]; then \
-		kill $$(cat $(PID_DIR)/backend.pid) 2>/dev/null && echo "backend stopped" || echo "backend not running"; \
+		kill $$(cat $(PID_DIR)/backend.pid) 2>/dev/null && echo "backend stopped (pidfile)" || true; \
 		rm -f $(PID_DIR)/backend.pid; \
 	fi
 	@if [ -f $(PID_DIR)/frontend.pid ]; then \
-		kill $$(cat $(PID_DIR)/frontend.pid) 2>/dev/null && echo "frontend stopped" || echo "frontend not running"; \
+		kill $$(cat $(PID_DIR)/frontend.pid) 2>/dev/null && echo "frontend stopped (pidfile)" || true; \
 		rm -f $(PID_DIR)/frontend.pid; \
 	fi
+	@# Fallback: kill orphaned processes (e.g. started from a prior shell
+	@# session where the pidfile was lost) so `make start` can rebind.
+	@pkill -f 'target/release/flow-agent' 2>/dev/null && echo "backend stopped (orphan)" || true
+	@pkill -f 'vite\.js --port $(FRONTEND_PORT)' 2>/dev/null && echo "frontend stopped (orphan)" || true
 
 clean: stop
 	rm -rf $(PID_DIR) frontend/dist flow-agent.db

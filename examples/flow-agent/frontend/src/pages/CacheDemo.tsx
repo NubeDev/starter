@@ -59,9 +59,17 @@ const HISTORY_LIMIT = 50
 /// One recorded load: round-trip wall time, whether the server
 /// served it from cache, server-side cold-gen cost, and response
 /// size. Used by the benchmark widget and the rolling history chart.
+///
+/// For `natural` samples, `ms` is end-to-end — fetch + chart render
+/// — because that’s what the operator actually waits for on the
+/// page. `fetch_ms` and `render_ms` break it down. `bench` samples
+/// are raw fetch only (no render happens) so they leave `render_ms`
+/// unset and `fetch_ms === ms`.
 type LoadSample = {
   i: number
   ms: number
+  fetch_ms?: number
+  render_ms?: number
   from_cache: boolean
   gen_ms: number
   bytes: number
@@ -131,6 +139,24 @@ export function CacheDemo() {
     setRenderTimes({})
   }, [renderer, bucket, points])
 
+  // A natural page-load sample is incomplete until every chart for
+  // the just-fetched data has reported a render time. `queryFn`
+  // stashes the fetch-side fields here; an effect below watches
+  // `renderTimes` and flushes the full sample once all expected
+  // chart names are present. Without this the history bar chart was
+  // misleading — it showed only network time, hiding the SVG
+  // render cliff that’s the whole point of the renderer toggle.
+  const pendingSampleRef = useRef<
+    | null
+    | {
+        fetch_ms: number
+        from_cache: boolean
+        gen_ms: number
+        bytes: number
+        expected: string[]
+      }
+  >(null)
+
   // Persist history across browser reloads so the chart shows the
   // accumulated load timeline, not just the current session.
   useEffect(() => {
@@ -185,15 +211,19 @@ export function CacheDemo() {
       const t0 = performance.now()
       try {
         const data = await api.cacheDemo.series({ bucket, points })
-        const ms = Math.round(performance.now() - t0)
-        setClientFetchMs(ms)
-        pushSample({
-          ms,
+        const fetchMs = Math.round(performance.now() - t0)
+        setClientFetchMs(fetchMs)
+        // Defer the history sample until the charts for THIS data
+        // have rendered. Clear any stale render times from the prior
+        // dataset so the completion check below starts fresh.
+        pendingSampleRef.current = {
+          fetch_ms: fetchMs,
           from_cache: data.from_cache,
           gen_ms: data.generated_in_ms,
           bytes: estimateBytes(data),
-          kind: "natural",
-        })
+          expected: data.series.map((s) => s.name),
+        }
+        setRenderTimes({})
         return data
       } catch (e) {
         setClientFetchMs(Math.round(performance.now() - t0))
@@ -224,6 +254,32 @@ export function CacheDemo() {
       ])
     },
   })
+
+  // Flush the pending natural sample once every expected chart has
+  // reported its render time. Sum of per-chart render times is a
+  // good proxy for the work React does to commit + paint the grid
+  // (charts mount/update in the same commit, sequentially).
+  useEffect(() => {
+    const pending = pendingSampleRef.current
+    if (!pending) return
+    for (const name of pending.expected) {
+      if (!(name in renderTimes)) return
+    }
+    const renderMs = Math.round(
+      Object.values(renderTimes).reduce((a, b) => a + b, 0),
+    )
+    pushSample({
+      ms: pending.fetch_ms + renderMs,
+      fetch_ms: pending.fetch_ms,
+      render_ms: renderMs,
+      from_cache: pending.from_cache,
+      gen_ms: pending.gen_ms,
+      bytes: pending.bytes,
+      kind: "natural",
+    })
+    pendingSampleRef.current = null
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [renderTimes])
 
   /// Run a synchronous N-fetch benchmark that bypasses react-query
   /// (raw `fetch`) so the timings reflect the real network + server
@@ -793,9 +849,21 @@ function BenchmarkCard({
   const chartData = history.map((s) => ({
     label: s.kind === "bench" ? `#${s.i}` : `n${s.i}`,
     ms: s.ms,
+    fetch_ms: s.fetch_ms,
+    render_ms: s.render_ms,
     from_cache: s.from_cache,
     kind: s.kind,
   }))
+
+  // Switch the bar chart’s Y axis to seconds once any sample exceeds
+  // 5 s — a 12 000 ms bar reads as “12 s” a lot more clearly than
+  // “12000 ms”, and keeps tick labels narrow.
+  const maxMs = chartData.reduce((m, r) => Math.max(m, r.ms), 0)
+  const useSeconds = maxMs > 5000
+  const yUnit = useSeconds ? "s" : "ms"
+  const toAxis = (ms: number) => (useSeconds ? ms / 1000 : ms)
+  const formatAxisTick = (v: number) =>
+    useSeconds ? (v >= 10 ? v.toFixed(0) : v.toFixed(1)) : String(v)
 
   return (
     <Card>
@@ -807,7 +875,10 @@ function BenchmarkCard({
             cache, then fires {BENCH_FETCHES} back-to-back requests via
             raw <code className="font-mono">fetch()</code> \u2014 react-query
             is bypassed so you see real round-trips. Fetch #1 is cold;
-            #2\u2013#{BENCH_FETCHES} are warm.
+            #2\u2013#{BENCH_FETCHES} are warm. Bars labelled <code
+            className="font-mono">n*</code> are natural page loads and
+            include chart render time (fetch + render); <code
+            className="font-mono">#*</code> bars are raw fetch only.
           </CardDescription>
         </div>
         <div className="flex gap-2">
@@ -879,7 +950,7 @@ function BenchmarkCard({
           ) : (
             <ResponsiveContainer width="100%" height="100%">
               <BarChart
-                data={chartData}
+                data={chartData.map((r) => ({ ...r, y: toAxis(r.ms) }))}
                 margin={{ top: 8, right: 16, bottom: 8, left: 0 }}
               >
                 <CartesianGrid strokeDasharray="3 3" opacity={0.4} />
@@ -887,18 +958,25 @@ function BenchmarkCard({
                 <YAxis
                   tick={{ fontSize: 10 }}
                   width={48}
+                  tickFormatter={formatAxisTick}
                   label={{
-                    value: "ms",
+                    value: yUnit,
                     angle: -90,
                     position: "insideLeft",
                     style: { fontSize: 10 },
                   }}
                 />
                 <Tooltip
-                  formatter={(v, _name, item) => {
+                  formatter={(_v, _name, item) => {
                     const row = item.payload as (typeof chartData)[number]
+                    const breakdown =
+                      row.kind === "natural" &&
+                      row.fetch_ms != null &&
+                      row.render_ms != null
+                        ? ` (fetch ${formatMs(row.fetch_ms)} + render ${formatMs(row.render_ms)})`
+                        : ""
                     return [
-                      `${typeof v === "number" ? v : Number(v)} ms`,
+                      `${formatMs(row.ms)}${breakdown}`,
                       row.from_cache ? "warm (cached)" : "cold (computed)",
                     ]
                   }}
@@ -907,7 +985,7 @@ function BenchmarkCard({
                 <Legend
                   wrapperStyle={{ fontSize: 11 }}
                 />
-                <Bar dataKey="ms" isAnimationActive={false}>
+                <Bar dataKey="y" isAnimationActive={false}>
                   {chartData.map((row, idx) => (
                     <Cell
                       key={idx}
