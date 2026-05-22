@@ -1,0 +1,24 @@
+[package]
+name        = "starter-ext-insights-iot"
+description = "Insights rule pack — IoT. Ships device.online@1, sensor.has-recent-data@1, sensor.in-range@1 plus the iot.quality.* flags. Per DOCS/Insights/SCOPE.md Phase 1."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Rule packs depend on `starter-spi` only — D1 of the Insights SCOPE:
+# "Phase 1 rule packs ship as extensions that cannot depend on
+# `starter-insights` (it would invert the dep arrow). They depend on
+# `starter-spi` only, exactly as `Tool` impls do today." The
+# `RuleRegistry::register()` seam consumes `Arc<dyn Rule>` whose trait
+# definition lives in `starter-spi`, so the host (which depends on
+# `starter-insights`) wires the registration call.
+[dependencies]
+starter-spi = { workspace = true }
+async-trait = { workspace = true }
+serde_json  = { workspace = true }
+# Phase 1 IoT rules emit verdicts with `Utc::now()`; pinned to the
+# parent workspace major (0.4) so a consumer importing both does
+# not double-up `chrono`.
+chrono      = { version = "0.4", default-features = false, features = ["clock"] }

@@ -24,6 +24,7 @@ pub mod filter;
 #[cfg(feature = "i18n")]
 pub mod i18n;
 pub mod id;
+pub mod insights;
 pub mod paging;
 #[cfg(feature = "preferences")]
 pub mod preferences;
