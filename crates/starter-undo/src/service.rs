@@ -24,6 +24,21 @@ use tokio::sync::Mutex;
 
 use crate::registry::ReversibleRegistry;
 
+/// Canonical string key for an [`Actor`] — used as the row key in
+/// any [`UndoCursor`] backend.
+///
+/// - `User { subject }`  → `"user:{subject}"`
+/// - `Agent { run_id, .. }` → `"agent:{run_id}"` (model deliberately
+///   excluded so a re-attached run resumes its own stack)
+/// - `System` → `"system:_"`
+pub fn actor_key(actor: &Actor) -> String {
+    match actor {
+        Actor::User { subject } => format!("user:{subject}"),
+        Actor::Agent { run_id, .. } => format!("agent:{run_id}"),
+        Actor::System => "system:_".into(),
+    }
+}
+
 /// Cursor backing — pluggable so a future SQL-backed cursor doesn't
 /// require an [`UndoService`] rewrite.
 #[async_trait]
@@ -58,11 +73,7 @@ impl InMemoryUndoCursor {
     }
 
     fn key(actor: &Actor) -> String {
-        match actor {
-            Actor::User { subject } => format!("user:{subject}"),
-            Actor::Agent { run_id, .. } => format!("agent:{run_id}"),
-            Actor::System => "system:_".into(),
-        }
+        actor_key(actor)
     }
 }
 

@@ -7212,10 +7212,13 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "axum 0.8.9",
+ "chrono",
  "serde",
+ "sqlx",
  "starter-changelog",
  "starter-server",
  "starter-spi",
+ "starter-store-sqlite",
  "thiserror 1.0.69",
  "tokio",
  "tracing",

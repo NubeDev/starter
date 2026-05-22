@@ -19,3 +19,23 @@ tracing     = { workspace = true }
 axum           = { workspace = true }
 starter-server = { workspace = true }
 utoipa         = { workspace = true }
+
+# Optional SQLite-backed [`UndoCursor`] persistence — opt-in via
+# the `sqlite` feature. Owns the `starter_undo_cursors` table under
+# its own migration source so cursor schema changes are independent
+# of the changelog migrations.
+starter-store-sqlite = { workspace = true, optional = true }
+sqlx                 = { workspace = true, features = ["sqlite", "macros", "migrate"], optional = true }
+chrono               = { workspace = true, optional = true }
+
+[features]
+default = []
+sqlite  = ["dep:starter-store-sqlite", "dep:sqlx", "dep:chrono"]
+
+[dev-dependencies]
+starter-store-sqlite = { workspace = true, features = ["testing"] }
+tokio                = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[[test]]
+name              = "cursor_sqlite"
+required-features = ["sqlite"]

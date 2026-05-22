@@ -14,6 +14,9 @@ mod registry;
 pub mod routes;
 mod service;
 
+#[cfg(feature = "sqlite")]
+pub mod cursor_sqlite;
+
 pub use registry::ReversibleRegistry;
 pub use routes::{undo_router, UndoApi, UndoResponse};
-pub use service::{InMemoryUndoCursor, UndoCursor, UndoService};
+pub use service::{actor_key, InMemoryUndoCursor, UndoCursor, UndoService};
