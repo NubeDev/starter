@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { Shell } from "./layout/Shell";
 import { AgentChat } from "./pages/AgentChat";
 import { AgentsList } from "./pages/AgentsList";
+import { CacheDemo } from "./pages/CacheDemo";
 import { FlowEditor } from "./pages/FlowEditor";
 import { FlowsList } from "./pages/FlowsList";
 import { PageBuilder } from "./pages/PageBuilder";
@@ -33,6 +34,7 @@ export function App() {
         <Route path="/insights/pipelines" element={<PipelineCanvas />} />
         <Route path="/insights/verdicts" element={<VerdictsView />} />
         <Route path="/insights/verdicts/:id" element={<VerdictsView />} />
+        <Route path="/cache-demo" element={<CacheDemo />} />
         <Route path="/skills" element={<Skills />} />
         <Route path="/settings" element={<Settings />} />
         <Route path="*" element={<Navigate to="/flows" replace />} />

@@ -9,6 +9,13 @@ import {
   IconSparkles,
   IconBulb,
   IconReportAnalytics,
+  IconBinaryTree,
+  IconMessageCircle,
+  IconFile,
+  IconFilter,
+  IconPipeline,
+  IconGavel,
+  IconBolt,
 } from "@tabler/icons-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
@@ -41,6 +48,7 @@ function titleFor(
 ): string {
   if (pathname.startsWith("/settings")) return "Settings"
   if (pathname.startsWith("/skills")) return "Skills"
+  if (pathname.startsWith("/cache-demo")) return "Cache demo"
   if (pathname.startsWith("/insights/rules")) return "Insights · Rules"
   if (pathname.startsWith("/insights/pipelines")) return "Insights · Pipelines"
   if (pathname.startsWith("/insights/verdicts/")) return "Insights · Verdict"
@@ -72,6 +80,7 @@ function titleFor(
 function activeUrlFor(pathname: string): string {
   if (pathname.startsWith("/settings")) return "/settings"
   if (pathname.startsWith("/skills")) return "/skills"
+  if (pathname.startsWith("/cache-demo")) return "/cache-demo"
   if (pathname.startsWith("/insights/verdicts")) return "/insights/verdicts"
   if (pathname.startsWith("/insights/pipelines")) return "/insights/pipelines"
   if (pathname.startsWith("/insights/rules")) return "/insights/rules"
@@ -119,6 +128,7 @@ export function Shell() {
         items: flows.slice(0, 12).map((f) => ({
           title: f.name,
           url: `/flows/${f.id}`,
+          icon: IconBinaryTree,
           badge: (
             <Badge
               variant="outline"
@@ -138,6 +148,7 @@ export function Shell() {
         items: agents.slice(0, 12).map((a) => ({
           title: a.name,
           url: `/agents/${a.id}`,
+          icon: IconMessageCircle,
         })),
       },
       {
@@ -149,6 +160,7 @@ export function Shell() {
         items: pages.slice(0, 12).map((p) => ({
           title: p.name,
           url: `/pages/${p.id}`,
+          icon: IconFile,
         })),
       },
       {
@@ -158,9 +170,9 @@ export function Shell() {
         accent: "var(--accent-success)",
         subTestId: "insights-subnav",
         items: [
-          { title: "Rules", url: "/insights/rules" },
-          { title: "Pipelines", url: "/insights/pipelines" },
-          { title: "Verdicts", url: "/insights/verdicts" },
+          { title: "Rules", url: "/insights/rules", icon: IconFilter },
+          { title: "Pipelines", url: "/insights/pipelines", icon: IconPipeline },
+          { title: "Verdicts", url: "/insights/verdicts", icon: IconGavel },
         ],
       },
       {
@@ -168,6 +180,12 @@ export function Shell() {
         url: "/skills",
         icon: IconSparkles,
         accent: "var(--accent-success)",
+      },
+      {
+        title: "Cache demo",
+        url: "/cache-demo",
+        icon: IconBolt,
+        accent: "var(--accent-info)",
       },
       {
         title: "Settings",

@@ -113,40 +113,40 @@ where
         Fut: Future<Output = Result<V, E>> + Send,
         E: Send + Sync + 'static,
     {
-        // moka's `try_get_with` wants `Arc<E>` on the error path and
-        // does single-flight de-duplication internally.
-        match self.inner.try_get_with(key, async move { init().await }).await {
+        // Flag flipped inside the loader so we can attribute the call
+        // to hit vs miss without a second probe. moka's `try_get_with`
+        // runs `init` at most once per key per process, and only on a
+        // real miss.
+        let miss = Arc::new(std::sync::atomic::AtomicBool::new(false));
+        let miss_writer = Arc::clone(&miss);
+        let result = self
+            .inner
+            .try_get_with(key, async move {
+                miss_writer.store(true, std::sync::atomic::Ordering::Relaxed);
+                init().await
+            })
+            .await;
+
+        match result {
             Ok(v) => {
-                // Can't cheaply distinguish hit from compute here;
-                // count as a hit-or-load (still useful: misses are
-                // recorded by direct `get` calls).
-                self.stats.record_hit();
+                if miss.load(std::sync::atomic::Ordering::Relaxed) {
+                    self.stats.record_miss();
+                } else {
+                    self.stats.record_hit();
+                }
                 Ok(v)
             }
             Err(arc_err) => {
-                // `Arc<E>` -> `E`: try_unwrap is fine because the
-                // loader produced exactly one E; if another waiter
-                // is still holding the Arc, fall back to a clone-less
-                // path by wrapping the Arc itself isn't possible
-                // without `E: Clone`, so we map via Arc::try_unwrap
-                // and otherwise surface a `Loader` carrying the Arc.
+                // Loader failed; count as a miss (we did the work, it
+                // just didn't produce a usable value).
+                self.stats.record_miss();
                 match Arc::try_unwrap(arc_err) {
                     Ok(e) => Err(CacheError::Loader(e)),
                     Err(arc) => {
-                        // Extremely rare: another waiter still holds
-                        // the Arc. We log and surface the error via
-                        // panic-free best effort — at this point the
-                        // caller still needs *something*, so we
-                        // re-attempt the loader once. Cheaper than
-                        // requiring `E: Clone` on every call site.
                         tracing::debug!(
                             "moka try_get_with: shared error Arc still held by {} waiters",
                             Arc::strong_count(&arc)
                         );
-                        // We can't extract the inner E without Clone;
-                        // surface a synthetic message instead.
-                        // Callers that care about the original error
-                        // type should ensure their `E: Clone`.
                         Err(CacheError::Loader(loader_error_placeholder::<E>()))
                     }
                 }
@@ -234,5 +234,11 @@ mod tests {
             assert_eq!(h.await.unwrap(), 99);
         }
         assert_eq!(calls.load(Ordering::SeqCst), 1, "loader must run exactly once");
+
+        // Stats: exactly one miss (the single loader run); the rest
+        // are hits served from the cached value.
+        let s = cache.stats();
+        assert_eq!(s.misses(), 1, "single-flight: only one miss");
+        assert_eq!(s.hits(), 15, "remaining callers must be hits");
     }
 }

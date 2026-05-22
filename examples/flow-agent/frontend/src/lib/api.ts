@@ -177,6 +177,20 @@ export const api = {
         input,
       ),
   },
+  cacheDemo: {
+    series: (q: CacheDemoSeriesQuery = {}) => {
+      const params = new URLSearchParams();
+      if (q.bucket) params.set("bucket", q.bucket);
+      if (q.points != null) params.set("points", String(q.points));
+      const qs = params.toString();
+      return req<CacheDemoSeries>(
+        "GET",
+        `/api/cache-demo/series${qs ? `?${qs}` : ""}`,
+      );
+    },
+    stats: () => req<CacheDemoStats>("GET", "/api/cache-demo/stats"),
+    clear: () => req<CacheDemoStats>("POST", "/api/cache-demo/clear"),
+  },
 };
 
 // ---------------------------------------------------------------------
@@ -261,4 +275,47 @@ export type InsightsPipeline = {
     edges: Array<{ from: string; to: string; type: string }>;
   };
   updated_at: string;
+};
+
+// ---------------------------------------------------------------------
+// Cache demo (/api/cache-demo/*). See `examples/flow-agent/src/cache_demo.rs`.
+// ---------------------------------------------------------------------
+
+export type CacheDemoBucket = "1m" | "5m" | "15m" | "30m" | "60m";
+
+export type CacheDemoSeriesQuery = {
+  bucket?: CacheDemoBucket;
+  points?: number;
+};
+
+export type CacheDemoSample = {
+  t: string;
+  avg: number;
+  min: number;
+  max: number;
+};
+
+export type CacheDemoMetricSeries = {
+  name: string;
+  unit: string;
+  color: string;
+  points: CacheDemoSample[];
+};
+
+export type CacheDemoSeries = {
+  series: CacheDemoMetricSeries[];
+  raw_points: number;
+  bucket_minutes: number;
+  generated_in_ms: number;
+  from_cache: boolean;
+};
+
+export type CacheDemoStats = {
+  hits: number;
+  misses: number;
+  hit_ratio: number;
+  entries: number;
+  last_cold_load_ms: number;
+  last_warm_load_ms: number;
+  backend: string;
 };

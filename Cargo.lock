@@ -2002,6 +2002,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-ai",
+ "starter-cache",
  "starter-flow",
  "starter-flow-nodes",
  "starter-flow-spi",

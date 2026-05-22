@@ -13,6 +13,7 @@ use starter_store_sqlite::Pool;
 use utoipa::OpenApi;
 
 use crate::ai_runtime::AiRuntime;
+use crate::cache_demo::router as cache_demo_router;
 use crate::flow_engine::FlowEngine;
 use crate::insights_mock::{
     default_fixtures_dir, router as insights_router, InsightsFixtures, InsightsState,
@@ -79,6 +80,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(rest_router(rest_state))
         .merge_router(insights_router(insights_state))
+        .merge_router(cache_demo_router())
         .with_openapi(FlowAgentApi::openapi())
         .with_metrics(registry, metrics)
         .build();

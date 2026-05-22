@@ -48,4 +48,11 @@ impl CacheStats {
         let total = h + m;
         if total == 0.0 { 0.0 } else { h / total }
     }
+
+    /// Zero the counters. Useful for demos and for tests that want
+    /// to assert behaviour from a known baseline.
+    pub fn reset(&self) {
+        self.hits.store(0, Ordering::Relaxed);
+        self.misses.store(0, Ordering::Relaxed);
+    }
 }

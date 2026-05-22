@@ -20,6 +20,7 @@ starter-spi           = { workspace = true }
 starter-server        = { workspace = true }
 starter-store-sqlite  = { workspace = true, features = ["flow"] }
 starter-observability = { workspace = true }
+starter-cache         = { workspace = true }
 
 # Flow engine + nodes (Phase 3+).
 starter-flow       = { workspace = true }
