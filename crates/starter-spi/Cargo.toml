@@ -16,6 +16,13 @@ thiserror   = { workspace = true }
 async-trait = { workspace = true }
 uuid        = { workspace = true }
 chrono      = { workspace = true }
+# `bytes::Bytes` and `futures::stream::BoxStream` are the carriers
+# the `BlobStore` trait uses for streaming put/get. Both are tiny
+# and already in the workspace tree via tokio/axum/aws-sdk-s3 down
+# the dep graph; naming them here keeps the spi self-contained
+# rather than relying on a transitive feature.
+bytes       = { workspace = true }
+futures     = { workspace = true }
 # Needed for the `mpsc::Sender<Event>` shape `AiRunner::run` uses to
 # stream events. The `sync` channel module is pure data structures;
 # we just inherit whatever feature set the workspace sets.

@@ -7157,7 +7157,9 @@ name = "starter-spi"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "bytes",
  "chrono",
+ "futures",
  "icu_locale_core",
  "prometheus",
  "secrecy",
