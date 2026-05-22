@@ -11,20 +11,23 @@ use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::{Actor, Change, ChangeId, GroupId, Op, TraceId};
 use starter_spi::{Error, Result};
 
-/// Build the `(kind, id, meta, model)` tuple for INSERT. `model` is
-/// generated server-side in PG; we keep the tuple shape for API
-/// parity with the SQLite backend even though `model` is unused.
+/// Build the `(kind, id, meta, model)` tuple for INSERT. The
+/// recorder writes `actor_model` explicitly so the contract for
+/// every column lives in one place (resolves SCOPE open
+/// question #3 — same shape as the SQLite backend's
+/// `actor_columns`).
 pub(crate) fn actor_columns(
     actor: &Actor,
-) -> Result<(String, Option<String>, Option<serde_json::Value>)> {
+) -> Result<(String, Option<String>, Option<serde_json::Value>, Option<String>)> {
     Ok(match actor {
-        Actor::User { subject } => ("user".into(), Some(subject.clone()), None),
+        Actor::User { subject } => ("user".into(), Some(subject.clone()), None, None),
         Actor::Agent { run_id, model } => (
             "agent".into(),
             Some(run_id.clone()),
             Some(serde_json::json!({ "model": model })),
+            Some(model.clone()),
         ),
-        Actor::System => ("system".into(), None, None),
+        Actor::System => ("system".into(), None, None, None),
     })
 }
 

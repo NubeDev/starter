@@ -14,6 +14,31 @@ use super::{Change, ChangeTx};
 /// Domain glue that lets a single resource kind participate in undo,
 /// redo, duplicate, and paste.
 ///
+/// # Payload contract
+///
+/// A [`Change`] carries three optional payload columns —
+/// [`Change::before`], [`Change::after`], and [`Change::patch`].
+/// Implementations MUST be prepared to handle any of these shapes:
+///
+/// - **Snapshot-only** (`before` + `after` set, `patch` is `None`).
+///   The default shape today. `apply_inverse` writes `before`;
+///   `apply_forward` writes `after`.
+/// - **Patch-only** (`patch` set, `before` / `after` are `None`).
+///   Reserved for a future size optimization once a real consumer
+///   asks for it (see SCOPE §"Open questions" #1). When this lands,
+///   `apply_inverse` reverses the patch and `apply_forward` reapplies
+///   it; reconstructing the absolute state may require walking back
+///   to the previous snapshot row in the changelog.
+/// - **Both** (snapshot **and** patch set). Permitted so a recorder
+///   can opportunistically include a patch alongside the snapshot
+///   without breaking older consumers. Prefer the snapshot if both
+///   are present — it's order-independent.
+///
+/// Today only the first shape is produced by the bundled recorders.
+/// Pinning the contract here means a future
+/// `PatchingChangeRecorder` can land without a trait-level breaking
+/// change.
+///
 /// # Errors
 ///
 /// - Return [`crate::Error::NotFound`] if the target row is gone.

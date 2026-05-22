@@ -44,7 +44,7 @@ impl<'tx> ChangeTx for PgChangeTx<'tx> {
             ch.at = Utc::now();
         }
 
-        let (actor_kind, actor_id, actor_meta) = actor_columns(&ch.actor)?;
+        let (actor_kind, actor_id, actor_meta, actor_model) = actor_columns(&ch.actor)?;
         let resource_id = ch.resource.id.clone().ok_or_else(|| Error::Internal {
             source: "Change::resource.id must be Some for changelog rows".into(),
         })?;
@@ -56,13 +56,13 @@ impl<'tx> ChangeTx for PgChangeTx<'tx> {
         sqlx::query(
             r#"
             INSERT INTO starter_changes (
-                id, at, actor_kind, actor_id, actor_meta,
+                id, at, actor_kind, actor_id, actor_meta, actor_model,
                 resource_kind, resource_id, resource_owner, resource_version,
                 op, before, after, patch, group_id, correlation
             ) VALUES (
-                $1, $2, $3, $4, $5,
-                $6, $7, $8, $9,
-                $10, $11, $12, $13, $14, $15
+                $1, $2, $3, $4, $5, $6,
+                $7, $8, $9, $10,
+                $11, $12, $13, $14, $15, $16
             )
             "#,
         )
@@ -71,6 +71,7 @@ impl<'tx> ChangeTx for PgChangeTx<'tx> {
         .bind(&actor_kind)
         .bind(&actor_id)
         .bind(&actor_meta)
+        .bind(&actor_model)
         .bind(&ch.resource.kind)
         .bind(&resource_id)
         .bind(&ch.resource.owner)
@@ -84,6 +85,24 @@ impl<'tx> ChangeTx for PgChangeTx<'tx> {
         .execute(&mut **guard)
         .await
         .map_err(internal)?;
+
+        // Surface payload size so operators can spot resources that
+        // would benefit from the future patch-format optimization
+        // without profiling (see SCOPE §"Open questions" #1).
+        let before_bytes = json_byte_len(&ch.before);
+        let after_bytes = json_byte_len(&ch.after);
+        let patch_bytes = json_byte_len(&ch.patch);
+        tracing::debug!(
+            target: "starter_changelog::recorder",
+            change_id = %id.0,
+            resource_kind = %ch.resource.kind,
+            op = %op_text,
+            before_bytes,
+            after_bytes,
+            patch_bytes,
+            payload_bytes = before_bytes + after_bytes + patch_bytes,
+            "changelog row recorded",
+        );
 
         Ok(id)
     }
@@ -150,4 +169,15 @@ fn internal(e: sqlx::Error) -> Error {
     Error::Internal {
         source: Box::new(e),
     }
+}
+
+/// Best-effort byte size of a JSONB payload, for the recorder's
+/// size-tracing only. Serialises to a transient `String` — never
+/// hits the database. Falls back to `0` on the serialisation error
+/// path because tracing must not be able to fail a write.
+fn json_byte_len(v: &Option<serde_json::Value>) -> usize {
+    v.as_ref()
+        .and_then(|v| serde_json::to_string(v).ok())
+        .map(|s| s.len())
+        .unwrap_or(0)
 }

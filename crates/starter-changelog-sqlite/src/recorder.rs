@@ -99,6 +99,24 @@ impl<'tx> ChangeTx for SqliteChangeTx<'tx> {
         .await
         .map_err(internal)?;
 
+        // Surface payload size so operators can spot resources that
+        // would benefit from the future patch-format optimization
+        // without profiling (see SCOPE §"Open questions" #1).
+        let before_bytes = before.as_ref().map(|s| s.len()).unwrap_or(0);
+        let after_bytes = after.as_ref().map(|s| s.len()).unwrap_or(0);
+        let patch_bytes = patch.as_ref().map(|s| s.len()).unwrap_or(0);
+        tracing::debug!(
+            target: "starter_changelog::recorder",
+            change_id = %id.0,
+            resource_kind = %ch.resource.kind,
+            op = %op_text,
+            before_bytes,
+            after_bytes,
+            patch_bytes,
+            payload_bytes = before_bytes + after_bytes + patch_bytes,
+            "changelog row recorded",
+        );
+
         Ok(id)
     }
 }

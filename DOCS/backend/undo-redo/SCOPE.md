@@ -307,6 +307,13 @@ Resolved during peer review (see [Peer review log](#peer-review-log)):
 - **Clipboard signing.** Decided: HMAC with a key fetched from
   `SecretStore` under the well-known name `starter.clipboard.hmac`.
   Rotated per-deploy.
+- **`actor_model` column derivation.** Decided: the recorder always
+  writes `actor_model` explicitly so the contract for every column
+  lives in one place. The Postgres backend originally derived it
+  with a `GENERATED` column; migration `0003_actor_model_explicit`
+  drops that and re-adds a regular nullable `TEXT` column, backfilled
+  from `actor_meta->>'model'`. The index on
+  `(actor_kind, actor_model, at DESC)` is recreated unchanged.
 
 Still open:
 
@@ -317,11 +324,6 @@ Still open:
    a `prune` subcommand (owned by the core crate, not each backend)
    that the consumer schedules. Right-to-erasure is separate — see
    `ChangeRecorder::forget` in [Security & privacy](#security--privacy).
-3. **`actor_model` column derivation.** PG can use a generated column
-   over `actor_meta->>'model'`; SQLite needs the recorder to write
-   the column explicitly. Acceptable asymmetry, or align by always
-   writing it explicitly? Lean: always write it explicitly so the
-   recorder owns the contract.
 
 ## Peer review log
 

@@ -1,0 +1,30 @@
+[package]
+name        = "starter-clipboard-sqlite"
+description = "starter — SQLite backend for the principal-scoped, HMAC-signed clipboard."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi        = { workspace = true, features = ["changelog"] }
+starter-clipboard  = { workspace = true }
+starter-store-sqlite = { workspace = true }
+
+sqlx        = { workspace = true, features = ["sqlite", "macros", "migrate"] }
+async-trait = { workspace = true }
+chrono      = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+# HMAC-SHA256 per SCOPE §"Storage shape" — key fetched from the
+# consumer's `SecretStore` under `starter.clipboard.hmac`.
+hmac        = { workspace = true }
+sha2        = { workspace = true }
+subtle      = { workspace = true }
+
+[dev-dependencies]
+starter-store-sqlite = { workspace = true, features = ["testing"] }
+tokio        = { workspace = true, features = ["macros", "rt-multi-thread"] }

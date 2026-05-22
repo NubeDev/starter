@@ -15,9 +15,11 @@ mod prune;
 mod query;
 mod recorder;
 mod tail;
+mod tail_listen;
 
 pub use migration::{migration_source, CHANGELOG_MIGRATOR};
 pub use prune::PgChangePrune;
 pub use query::PgChangeLog;
 pub use recorder::{PgChangeRecorder, PgChangeTx};
 pub use tail::PgPollingTail;
+pub use tail_listen::PgListenTail;

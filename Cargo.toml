@@ -26,6 +26,8 @@ members = [
     "crates/starter-audit",
     "crates/starter-agent-log",
     "crates/starter-clipboard",
+    "crates/starter-clipboard-sqlite",
+    "crates/starter-clipboard-postgres",
     "crates/starter-ai",
     "crates/starter-flow-spi",
     "crates/starter-skills",
@@ -95,6 +97,8 @@ starter-undo            = { path = "crates/starter-undo",               version 
 starter-audit           = { path = "crates/starter-audit",              version = "0.1.0" }
 starter-agent-log       = { path = "crates/starter-agent-log",          version = "0.1.0" }
 starter-clipboard       = { path = "crates/starter-clipboard",          version = "0.1.0" }
+starter-clipboard-sqlite = { path = "crates/starter-clipboard-sqlite",  version = "0.1.0" }
+starter-clipboard-postgres = { path = "crates/starter-clipboard-postgres", version = "0.1.0" }
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-flow-spi         = { path = "crates/starter-flow-spi",         version = "0.1.0" }
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }
@@ -177,6 +181,7 @@ base64      = "0.22"
 # and `starter-auth-users` for password hashing + bearer tokens.
 rand          = "0.8"
 sha2          = "0.10"
+hmac          = "0.12"
 subtle        = "2"
 password-auth = "1"
 
