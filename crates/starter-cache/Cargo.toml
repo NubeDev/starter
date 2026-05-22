@@ -1,0 +1,37 @@
+[package]
+name        = "starter-cache"
+description = "starter — reusable async cache. Thin trait + pluggable backends (moka by default)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[features]
+# moka — in-process TinyLFU cache. The default backend, and the only
+# one that ships today. Future backends (e.g. `valkey` for shared
+# state across server instances) land as additional optional features
+# so adding them never forces existing consumers to pull new deps.
+default = ["moka"]
+moka    = ["dep:moka"]
+# Surfaces a small set of test-helper methods (e.g.
+# `MokaCache::run_pending_tasks`) for downstream crates that want to
+# write deterministic cache tests of their own.
+testing = []
+
+[dependencies]
+async-trait = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+# Optional backends. Each one is gated behind its own feature; the
+# `dep:` prefix keeps the bare crate name out of the public feature
+# namespace.
+moka = { version = "0.12", features = ["future"], optional = true }
+
+[dev-dependencies]
+# Tests need `time` (for `tokio::time::sleep` in the TTL test) and
+# `macros` (for `#[tokio::test]`). Re-declared explicitly so the
+# dev-dep contract survives a future trim of workspace tokio
+# features.
+tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time", "sync"] }

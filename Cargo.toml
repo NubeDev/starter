@@ -18,6 +18,7 @@ members = [
     "crates/starter-authz",
     "crates/starter-secrets-keyring",
     "crates/starter-secrets-file",
+    "crates/starter-cache",
     "crates/starter-ai",
     "crates/starter-flow-spi",
     "crates/starter-skills",
@@ -79,6 +80,7 @@ starter-auth-oauth       = { path = "crates/starter-auth-oauth",       version =
 starter-authz            = { path = "crates/starter-authz",            version = "0.1.0" }
 starter-secrets-keyring  = { path = "crates/starter-secrets-keyring",  version = "0.1.0" }
 starter-secrets-file     = { path = "crates/starter-secrets-file",     version = "0.1.0" }
+starter-cache            = { path = "crates/starter-cache",            version = "0.1.0" }
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-flow-spi         = { path = "crates/starter-flow-spi",         version = "0.1.0" }
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }
