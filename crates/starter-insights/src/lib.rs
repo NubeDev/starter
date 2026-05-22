@@ -28,13 +28,20 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod ai;
 pub mod backfill;
 pub mod nodes;
+pub mod onboarding;
 pub mod penalty;
 pub mod prelude;
 pub mod registry;
+pub mod retroactive;
 pub mod rhai_sandbox;
+pub mod skills;
+pub mod streaming;
 
+#[cfg(feature = "sqlite")]
+pub mod cache;
 #[cfg(feature = "sqlite")]
 pub mod rollups;
 #[cfg(feature = "sqlite")]

@@ -47,3 +47,6 @@ starter-ext-insights-iot = { path = "../../starter-extensions/crates/starter-ext
 # Energy rule pack — Phase 2 smoke reproducing the Energy row of
 # the DOCS/Insights/SCOPE.md use-case sanity check.
 starter-ext-insights-energy = { path = "../../starter-extensions/crates/starter-ext-insights-energy", version = "0.1.0" }
+# HVAC rule pack — Phase 3 smoke reproducing the HVAC and
+# bills-reconciliation rows of the SCOPE use-case sanity-check.
+starter-ext-insights-hvac = { path = "../../starter-extensions/crates/starter-ext-insights-hvac", version = "0.1.0" }

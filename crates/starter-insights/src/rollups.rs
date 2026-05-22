@@ -185,7 +185,10 @@ impl RollupEngine {
         .map_err(|e| RollupError::Backend(e.to_string()))?;
 
         // Drain the D5 invalidation queue for this rule + class.
-        self.drain_invalidations(namespace, name, major, window_class)
+        // Pass `tz` so the re-fold lands in the same bucket the
+        // original incremental tick used — not the per-verdict tz
+        // (which is the analysis tz, not the rollup-grouping tz).
+        self.drain_invalidations(namespace, name, major, window_class, tz)
             .await?;
         Ok(count)
     }
@@ -330,25 +333,161 @@ impl RollupEngine {
         Ok(())
     }
 
+    /// Re-aggregate every queued invalidation for
+    /// `(rule_id, window_class)`. For each invalidated window:
+    ///
+    /// 1. Zero the existing rollup counter row(s) covering the
+    ///    window — both the ungrouped row and any tag-grouped rows.
+    /// 2. Re-fold every `verdict_log` entry whose `at_ms` falls
+    ///    inside `[window_start_ms, window_end_ms)` into the
+    ///    counters.
+    /// 3. Clear the `stale_since_ms` marker.
+    /// 4. Delete the invalidation row.
+    ///
+    /// This is the load-bearing D5 fix: the prior implementation
+    /// merely *deleted* the queue without re-folding, so mutated
+    /// inputs left pre-fixup totals in `verdict_rollup`. The
+    /// per-window re-aggregation is now the watermark — there is no
+    /// per-rule monotonic checkpoint that can paper over a window
+    /// the engine has flagged as stale.
     async fn drain_invalidations(
         &self,
         namespace: &str,
         name: &str,
         major: u32,
         window_class: WindowClass,
+        tz: Tz,
     ) -> Result<(), RollupError> {
-        sqlx::query(
-            "DELETE FROM rollup_invalidation \
+        let class = window_class.as_str();
+        let rows = sqlx::query(
+            "SELECT id, window_start_ms, window_end_ms FROM rollup_invalidation \
+             WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 AND window_class=?4 \
+             ORDER BY id",
+        )
+        .bind(namespace)
+        .bind(name)
+        .bind(major as i64)
+        .bind(class)
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(|e| RollupError::Backend(e.to_string()))?;
+
+        for r in rows {
+            let id: i64 = r.get("id");
+            let window_start_ms: i64 = r.get("window_start_ms");
+            let window_end_ms: i64 = r.get("window_end_ms");
+
+            // (1) Zero the existing counters for every group that
+            //     touches this window (ungrouped + every tag group).
+            sqlx::query(
+                "DELETE FROM verdict_rollup \
+                 WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 \
+                   AND window_class=?4 AND window_start_ms=?5",
+            )
+            .bind(namespace)
+            .bind(name)
+            .bind(major as i64)
+            .bind(class)
+            .bind(window_start_ms)
+            .execute(self.pool.sqlx())
+            .await
+            .map_err(|e| RollupError::Backend(e.to_string()))?;
+
+            // (2) Re-fold every verdict whose at_ms is in
+            //     [window_start_ms, window_end_ms). We deliberately
+            //     read the body_json so we can rebuild the per-tag
+            //     groups too: the set of tag keys present in the
+            //     mutated window is the union of the tag keys on the
+            //     verdicts themselves. The rollup config's
+            //     `tag_keys` filter is applied below.
+            let verdicts = sqlx::query(
+                "SELECT body_json FROM verdict_log \
+                 WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 \
+                   AND at_ms >= ?4 AND at_ms < ?5 \
+                 ORDER BY at_ms",
+            )
+            .bind(namespace)
+            .bind(name)
+            .bind(major as i64)
+            .bind(window_start_ms)
+            .bind(window_end_ms)
+            .fetch_all(self.pool.sqlx())
+            .await
+            .map_err(|e| RollupError::Backend(e.to_string()))?;
+
+            // Collect tag keys to re-fold against from the row set
+            // itself so the drain rebuilds every group that existed
+            // pre-invalidation. The scheduled tick that follows the
+            // drain will re-add any *new* tag-key groups via the
+            // config-driven path.
+            let mut all_keys: std::collections::BTreeSet<String> =
+                std::collections::BTreeSet::new();
+            let mut parsed: Vec<Verdict> = Vec::with_capacity(verdicts.len());
+            for row in verdicts {
+                let body: String = row.get("body_json");
+                if let Ok(v) = serde_json::from_str::<Verdict>(&body) {
+                    for (k, _) in v.tags.iter() {
+                        all_keys.insert(k.clone());
+                    }
+                    parsed.push(v);
+                }
+            }
+            let key_refs: Vec<&str> = all_keys.iter().map(|s| s.as_str()).collect();
+            for v in &parsed {
+                self.fold_one(namespace, name, major, window_class, tz, v, &key_refs)
+                    .await?;
+            }
+
+            // (3) Clear stale marker — `fold_one` -> `bump` already
+            //     does this on every row it inserts, but a window
+            //     with zero verdicts after the drain would otherwise
+            //     leave a dangling stale row. Belt-and-braces.
+            sqlx::query(
+                "UPDATE verdict_rollup SET stale_since_ms = NULL \
+                 WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 \
+                   AND window_class=?4 AND window_start_ms=?5",
+            )
+            .bind(namespace)
+            .bind(name)
+            .bind(major as i64)
+            .bind(class)
+            .bind(window_start_ms)
+            .execute(self.pool.sqlx())
+            .await
+            .map_err(|e| RollupError::Backend(e.to_string()))?;
+
+            // (4) Pop the invalidation row.
+            sqlx::query("DELETE FROM rollup_invalidation WHERE id=?1")
+                .bind(id)
+                .execute(self.pool.sqlx())
+                .await
+                .map_err(|e| RollupError::Backend(e.to_string()))?;
+        }
+        Ok(())
+    }
+
+    /// Test/admin helper: count the unread invalidation rows for a
+    /// `(rule_id, window_class)` pair.
+    pub async fn pending_invalidations(
+        &self,
+        namespace: &str,
+        name: &str,
+        major: u32,
+        window_class: WindowClass,
+    ) -> Result<i64, RollupError> {
+        let n: i64 = sqlx::query(
+            "SELECT COUNT(*) AS n FROM rollup_invalidation \
              WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 AND window_class=?4",
         )
         .bind(namespace)
         .bind(name)
         .bind(major as i64)
         .bind(window_class.as_str())
-        .execute(self.pool.sqlx())
+        .fetch_one(self.pool.sqlx())
         .await
-        .map_err(|e| RollupError::Backend(e.to_string()))?;
-        Ok(())
+        .map_err(|e| RollupError::Backend(e.to_string()))?
+        .get("n");
+        Ok(n)
     }
 
     /// Test helper: read the ungrouped rollup count for a bucket.
