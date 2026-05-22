@@ -1,0 +1,15 @@
+[package]
+name        = "starter-ext-insights-finance"
+description = "Insights rule pack — Finance. finance.tx.z-score@1, finance.tx.isolation-forest-light@1, finance.tx.duplicate@1 + finance.quality.* flags. Per DOCS/Insights/SCOPE.md Phase 4."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Rule packs depend on `starter-spi` only (D1).
+[dependencies]
+starter-spi = { workspace = true }
+async-trait = { workspace = true }
+serde_json  = { workspace = true }
+chrono      = { version = "0.4", default-features = false, features = ["clock"] }

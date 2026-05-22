@@ -1,0 +1,15 @@
+[package]
+name        = "starter-ext-insights-energy"
+description = "Insights rule pack — energy / water baseline. Derivation rules (fill-gaps, despike, resample weather, normalise) + assertion rules (baseline-deviation, peak-detect) + energy.quality.* flags. Per DOCS/Insights/SCOPE.md Phase 2."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Rule packs depend on `starter-spi` only (D1).
+[dependencies]
+starter-spi = { workspace = true }
+async-trait = { workspace = true }
+serde_json  = { workspace = true }
+chrono      = { version = "0.4", default-features = false, features = ["clock"] }
