@@ -14,6 +14,9 @@ use utoipa::OpenApi;
 
 use crate::ai_runtime::AiRuntime;
 use crate::flow_engine::FlowEngine;
+use crate::insights_mock::{
+    default_fixtures_dir, router as insights_router, InsightsFixtures, InsightsState,
+};
 use crate::rest::{router as rest_router, FlowAgentApi, RestState};
 use crate::sse::EventHub;
 use crate::store::{AgentStore, FlowStore, RunStore};
@@ -36,13 +39,32 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let runs = Arc::new(RunStore::new(sqlx));
     let hub = Arc::new(EventHub::new());
     let engine = FlowEngine::new();
-    let ai = AiRuntime::new(flows.clone(), engine.clone(), runs.clone(), hub.clone());
     // MEMORY.md Phase M-D — page-builder persistence. SQLite-backed
     // `AgentSessionStore` shares the connection pool with the rest
     // of the example; the schema ships with starter-flow's
     // `FLOW_MIGRATION_SOURCE` (wired in `migrations::sources`).
     let agent_sessions: Arc<dyn starter_flow_spi::agent_session::AgentSessionStore> =
         Arc::new(SqliteAgentSessionStore::new(pool.clone()));
+
+    // Insights mock-up surface (INSIGHTS-MOCKUP.md). Fixture files
+    // are loaded on startup; missing fixtures degrade to an empty
+    // in-memory store so the rest of the server keeps booting.
+    let insights_dir = default_fixtures_dir();
+    let insights_data = InsightsFixtures::load(&insights_dir).unwrap_or_else(|err| {
+        tracing::warn!(
+            target: "flow_agent::insights_mock",
+            dir = %insights_dir.display(),
+            error = %err,
+            "insights fixtures not loaded; mock surface will return empty arrays",
+        );
+        InsightsFixtures {
+            root: insights_dir.clone(),
+            ..InsightsFixtures::default()
+        }
+    });
+    let insights_state = InsightsState::new(insights_data);
+    let ai = AiRuntime::new(flows.clone(), engine.clone(), runs.clone(), hub.clone())
+        .with_insights(insights_state.clone());
 
     let rest_state = RestState {
         flows: flows.clone(),
@@ -56,6 +78,7 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
 
     let router = ServerBuilder::<AppState>::new(AppState)
         .merge_router(rest_router(rest_state))
+        .merge_router(insights_router(insights_state))
         .with_openapi(FlowAgentApi::openapi())
         .with_metrics(registry, metrics)
         .build();

@@ -1,0 +1,89 @@
+[
+  {
+    "id": "iot-health",
+    "name": "IoT device health",
+    "description": "Per-device online + threshold checks across 12 sensors.",
+    "tags": ["domain:iot"],
+    "graph": {
+      "nodes": [
+        { "id": "src", "kind": "source.devices", "x": 60, "y": 200 },
+        { "id": "align", "kind": "align", "x": 240, "y": 200 },
+        { "id": "r1", "kind": "rule.rust", "rule_id": "device.online@1", "x": 440, "y": 120 },
+        { "id": "r2", "kind": "rule.rust", "rule_id": "sensor.has-recent-data@1", "x": 440, "y": 220 },
+        { "id": "r3", "kind": "rule.rhai", "rule_id": "sensor.in-range@1", "x": 440, "y": 320 },
+        { "id": "join", "kind": "verdict.join", "x": 640, "y": 220 },
+        { "id": "notify", "kind": "action.notify", "x": 840, "y": 220 }
+      ],
+      "edges": [
+        { "from": "src", "to": "align", "type": "Dataset" },
+        { "from": "align", "to": "r1", "type": "Dataset" },
+        { "from": "align", "to": "r2", "type": "Dataset" },
+        { "from": "align", "to": "r3", "type": "Dataset" },
+        { "from": "r1", "to": "join", "type": "Verdict" },
+        { "from": "r2", "to": "join", "type": "Verdict" },
+        { "from": "r3", "to": "join", "type": "Verdict" },
+        { "from": "join", "to": "notify", "type": "Verdict" }
+      ]
+    },
+    "updated_at": "2026-05-15T10:00:00Z"
+  },
+  {
+    "id": "energy-hq-london",
+    "name": "HQ London energy baseline",
+    "description": "Weather-normalised baseline deviation for hq-london.",
+    "tags": ["domain:energy", "building:hq-london"],
+    "graph": {
+      "nodes": [
+        { "id": "meter", "kind": "source.meter", "x": 60, "y": 160 },
+        { "id": "weather", "kind": "source.weather", "x": 60, "y": 280 },
+        { "id": "align", "kind": "align", "x": 260, "y": 220 },
+        { "id": "norm", "kind": "rule.derive", "rule_id": "energy.normalise.weather@2", "x": 460, "y": 220 },
+        { "id": "baseline", "kind": "rule.rhai", "rule_id": "meter.baseline-deviation@1", "x": 660, "y": 160 },
+        { "id": "overrun", "kind": "rule.rhai", "rule_id": "meter.weather-normalised-overrun@1", "x": 660, "y": 280 },
+        { "id": "branch", "kind": "branch", "x": 860, "y": 220 },
+        { "id": "notify", "kind": "action.notify", "x": 1060, "y": 220 }
+      ],
+      "edges": [
+        { "from": "meter", "to": "align", "type": "Dataset" },
+        { "from": "weather", "to": "align", "type": "Dataset" },
+        { "from": "align", "to": "norm", "type": "Dataset" },
+        { "from": "norm", "to": "baseline", "type": "Dataset" },
+        { "from": "norm", "to": "overrun", "type": "Dataset" },
+        { "from": "baseline", "to": "branch", "type": "Verdict" },
+        { "from": "overrun", "to": "branch", "type": "Verdict" },
+        { "from": "branch", "to": "notify", "type": "Verdict" }
+      ]
+    },
+    "updated_at": "2026-05-12T09:00:00Z"
+  },
+  {
+    "id": "bills-reconcile",
+    "name": "Bills reconciliation",
+    "description": "Meter + weather + tariff + occupancy → align → derive → assert → AI judge.",
+    "tags": ["domain:finance", "building:hq-london"],
+    "graph": {
+      "nodes": [
+        { "id": "meter", "kind": "source.meter", "x": 60, "y": 100 },
+        { "id": "weather", "kind": "source.weather", "x": 60, "y": 200 },
+        { "id": "tariff", "kind": "source.tariff", "x": 60, "y": 300 },
+        { "id": "occ", "kind": "source.occupancy", "x": 60, "y": 400 },
+        { "id": "align", "kind": "align", "x": 260, "y": 250 },
+        { "id": "derive", "kind": "rule.derive", "rule_id": "energy.fill-gaps@3", "x": 460, "y": 250 },
+        { "id": "assert", "kind": "rule.sql", "rule_id": "bills.reconcile@1", "x": 660, "y": 250 },
+        { "id": "judge", "kind": "rule.ai-check", "rule_id": "bills.ai-judge@1", "x": 860, "y": 250 },
+        { "id": "explain", "kind": "rule.ai-debug", "rule_id": "bills.ai-explain@1", "x": 1060, "y": 250 }
+      ],
+      "edges": [
+        { "from": "meter", "to": "align", "type": "Dataset" },
+        { "from": "weather", "to": "align", "type": "Dataset" },
+        { "from": "tariff", "to": "align", "type": "Dataset" },
+        { "from": "occ", "to": "align", "type": "Dataset" },
+        { "from": "align", "to": "derive", "type": "Dataset" },
+        { "from": "derive", "to": "assert", "type": "Dataset" },
+        { "from": "assert", "to": "judge", "type": "Verdict" },
+        { "from": "judge", "to": "explain", "type": "Verdict" }
+      ]
+    },
+    "updated_at": "2026-05-05T12:00:00Z"
+  }
+]

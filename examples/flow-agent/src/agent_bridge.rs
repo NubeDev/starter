@@ -77,6 +77,221 @@ impl AiRuntime {
         Ok(out)
     }
 
+    /// Synthesise `insights:*` tools from the agent's `tools` array.
+    /// Returns the 5 Phase-2 rule tools when the agent declares any
+    /// `insights:rule.*` entry (or the wildcards `insights:*` /
+    /// `insights:rule.*`), the 2 Phase-3 verdict tools for
+    /// `insights:verdict.*`, and the 3 Phase-4 pipeline tools for
+    /// `insights:pipeline.*`. No-op when `with_insights` wasn't
+    /// called on the runtime.
+    pub fn synthesize_insights_tools(&self, agent_tools: &[String]) -> Vec<ToolDef> {
+        if self.insights().is_none() || agent_tools.is_empty() {
+            return Vec::new();
+        }
+        let want = |prefix: &str| {
+            agent_tools
+                .iter()
+                .any(|t| t == "insights:*" || t == prefix || t.starts_with(prefix))
+        };
+        let mut out = Vec::new();
+        if want("insights:rule.") {
+            out.extend(rule_tool_defs(agent_tools));
+        }
+        if want("insights:verdict.") {
+            out.extend(verdict_tool_defs(agent_tools));
+        }
+        if want("insights:pipeline.") {
+            out.extend(pipeline_tool_defs(agent_tools));
+        }
+        out
+    }
+
+    /// Dispatch one `insights:*` tool call against fixtures.
+    /// Returns the stringified JSON the agent sees in its next turn.
+    pub async fn dispatch_insights_tool(&self, tu: &ToolUse) -> String {
+        let Some(state) = self.insights() else {
+            return error_string("insights tools unavailable: runtime not bound".into());
+        };
+        let input = tu.input.clone();
+        match tu.name.as_str() {
+            "insights:rule.list" => {
+                let g = state.data.read().await;
+                JsonValue::Array(g.rules.clone()).to_string()
+            }
+            "insights:rule.read" => {
+                let id = input
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default();
+                let g = state.data.read().await;
+                g.rules
+                    .iter()
+                    .find(|r| r.get("id").and_then(|v| v.as_str()) == Some(id))
+                    .map(|v| v.to_string())
+                    .unwrap_or_else(|| error_string(format!("rule `{id}` not found")))
+            }
+            "insights:rule.propose" => {
+                // Per spec §Agent tools, propose returns a *proposal*,
+                // not a write. The operator clicks Approve in the UI;
+                // the agent then calls `rule.apply`.
+                json!({
+                    "type": "proposal",
+                    "action": "create-or-update",
+                    "rule": input,
+                    "needs_approval": true,
+                })
+                .to_string()
+            }
+            "insights:rule.apply" => {
+                let body = input.clone();
+                let id = match body.get("id").and_then(|v| v.as_str()) {
+                    Some(s) if !s.is_empty() => s.to_string(),
+                    _ => return error_string("rule.apply: missing `id` field".into()),
+                };
+                let mut g = state.data.write().await;
+                if let Some(existing) = g
+                    .rules
+                    .iter_mut()
+                    .find(|r| r.get("id").and_then(|v| v.as_str()) == Some(id.as_str()))
+                {
+                    *existing = body.clone();
+                } else {
+                    g.rules.push(body.clone());
+                }
+                let snapshot = g.rules.clone();
+                if let Err(e) = g.persist_array("rules.json", &snapshot) {
+                    return error_string(format!("rule.apply: persist failed: {e}"));
+                }
+                json!({ "ok": true, "id": id }).to_string()
+            }
+            "insights:rule.dry-run" => {
+                let id = input
+                    .get("id")
+                    .and_then(|v| v.as_str())
+                    .unwrap_or_default();
+                let g = state.data.read().await;
+                if !g
+                    .rules
+                    .iter()
+                    .any(|r| r.get("id").and_then(|v| v.as_str()) == Some(id))
+                {
+                    return error_string(format!("rule `{id}` not found"));
+                }
+                let latest = g
+                    .verdicts
+                    .iter()
+                    .filter(|v| v.get("rule_id").and_then(|x| x.as_str()) == Some(id))
+                    .max_by_key(|v| {
+                        v.get("at")
+                            .and_then(|x| x.as_str())
+                            .unwrap_or("")
+                            .to_string()
+                    });
+                match latest {
+                    Some(v) => {
+                        let mut clone = v.clone();
+                        if let Some(obj) = clone.as_object_mut() {
+                            obj.insert("dry_run".into(), JsonValue::Bool(true));
+                        }
+                        clone.to_string()
+                    }
+                    None => json!({
+                        "id": format!("dry-{id}"),
+                        "rule_id": id,
+                        "dry_run": true,
+                        "severity": "Healthy",
+                        "summary": "no historical verdicts for this rule",
+                    })
+                    .to_string(),
+                }
+            }
+            "insights:verdict.query" => {
+                let g = state.data.read().await;
+                let rule_id = input.get("rule_id").and_then(|v| v.as_str());
+                let sev = input.get("severity").and_then(|v| v.as_str());
+                let tag = input.get("tag").and_then(|v| v.as_str());
+                let out: Vec<JsonValue> = g
+                    .verdicts
+                    .iter()
+                    .filter(|v| {
+                        if let Some(r) = rule_id {
+                            if v.get("rule_id").and_then(|x| x.as_str()) != Some(r) {
+                                return false;
+                            }
+                        }
+                        if let Some(s) = sev {
+                            if v.get("severity").and_then(|x| x.as_str()) != Some(s) {
+                                return false;
+                            }
+                        }
+                        if let Some(t) = tag {
+                            let tags = v.get("tags").and_then(|x| x.as_array());
+                            if !tags.is_some_and(|arr| arr.iter().any(|x| x.as_str() == Some(t))) {
+                                return false;
+                            }
+                        }
+                        true
+                    })
+                    .cloned()
+                    .collect();
+                JsonValue::Array(out).to_string()
+            }
+            "insights:verdict.explain" => {
+                let id = input.get("id").and_then(|v| v.as_str()).unwrap_or_default();
+                let g = state.data.read().await;
+                let v = g
+                    .verdicts
+                    .iter()
+                    .find(|v| v.get("id").and_then(|x| x.as_str()) == Some(id));
+                match v {
+                    Some(v) => v.to_string(),
+                    None => error_string(format!("verdict `{id}` not found")),
+                }
+            }
+            "insights:pipeline.read" => {
+                let id = input.get("id").and_then(|v| v.as_str()).unwrap_or_default();
+                let g = state.data.read().await;
+                g.pipelines
+                    .iter()
+                    .find(|p| p.get("id").and_then(|v| v.as_str()) == Some(id))
+                    .map(|v| v.to_string())
+                    .unwrap_or_else(|| error_string(format!("pipeline `{id}` not found")))
+            }
+            "insights:pipeline.propose-edit" => json!({
+                "type": "proposal",
+                "action": "pipeline-edit",
+                "patch": input,
+                "needs_approval": true,
+            })
+            .to_string(),
+            "insights:pipeline.apply-edit" => {
+                let body = input.clone();
+                let id = match body.get("id").and_then(|v| v.as_str()) {
+                    Some(s) if !s.is_empty() => s.to_string(),
+                    _ => {
+                        return error_string("pipeline.apply-edit: missing `id` field".into());
+                    }
+                };
+                let mut g = state.data.write().await;
+                if let Some(existing) = g
+                    .pipelines
+                    .iter_mut()
+                    .find(|p| p.get("id").and_then(|v| v.as_str()) == Some(id.as_str()))
+                {
+                    *existing = body.clone();
+                } else {
+                    g.pipelines.push(body.clone());
+                }
+                let snapshot = g.pipelines.clone();
+                if let Err(e) = g.persist_array("pipelines.json", &snapshot) {
+                    return error_string(format!("pipeline.apply-edit: persist failed: {e}"));
+                }
+                json!({ "ok": true, "id": id }).to_string()
+            }
+            other => error_string(format!("unknown insights tool: `{other}`")),
+        }
+    }
+
     /// Fire a flow as if it were a tool call. Persists a run row,
     /// emits run-events on the shared `EventHub.runs` channel, and
     /// returns the terminal output map as a JSON string (or a
@@ -155,10 +370,12 @@ impl AiRuntime {
         mut history: Vec<HistoryMessage>,
         sse_tx: mpsc::Sender<String>,
     ) -> Result<(), String> {
-        let flow_tools = self
+        let mut tools = self
             .synthesize_flow_tools(&agent.tools)
             .await
             .map_err(|e| e.to_string())?;
+        tools.extend(self.synthesize_insights_tools(&agent.tools));
+        let flow_tools = tools;
         let cli_path =
             matches!(provider, Provider::Claude | Provider::Codex | Provider::Copilot);
         if cli_path || flow_tools.is_empty() {
@@ -237,11 +454,39 @@ impl AiRuntime {
         tu: &ToolUse,
         sse_tx: &mpsc::Sender<String>,
     ) -> String {
+        // Insights tools — fixture-backed dispatch, no engine.
+        if tu.name.starts_with("insights:") {
+            let start_payload = json!({
+                "type": "tool-call",
+                "toolCall": {
+                    "id": tu.id,
+                    "name": tu.name,
+                    "args": tu.input,
+                    "state": "running",
+                },
+            })
+            .to_string();
+            let _ = sse_tx.send(start_payload).await;
+            let reply = self.dispatch_insights_tool(tu).await;
+            let done_payload = json!({
+                "type": "tool-result",
+                "toolCall": {
+                    "id": tu.id,
+                    "name": tu.name,
+                    "result": reply,
+                    "state": "done",
+                },
+            })
+            .to_string();
+            let _ = sse_tx.send(done_payload).await;
+            return format!("tool `{}` (id={}) returned: {}", tu.name, tu.id, reply);
+        }
+
         let flow_id = match tu.name.strip_prefix("flow:") {
             Some(rest) if !rest.is_empty() => rest.to_string(),
             _ => {
                 return format!(
-                    "tool `{}` refused: only `flow:<id>` tools are dispatched by the host runtime",
+                    "tool `{}` refused: only `flow:<id>` and `insights:<name>` tools are dispatched by the host runtime",
                     tu.name
                 );
             }
@@ -377,6 +622,85 @@ fn event_to_payload(ev: &Event) -> Option<String> {
         EventKind::Connected { .. } | EventKind::Done { .. } => return None,
     };
     Some(payload.to_string())
+}
+
+/// `insights:rule.*` tool defs. Filter by the agent's tools array so
+/// an agent can opt into a subset (e.g. read-only).
+fn rule_tool_defs(agent_tools: &[String]) -> Vec<ToolDef> {
+    insights_subset(
+        agent_tools,
+        "insights:rule.",
+        &[
+            ("insights:rule.list", "List rules with their schema and tags."),
+            ("insights:rule.read", "Read a single rule by id."),
+            (
+                "insights:rule.propose",
+                "Propose a new rule or rule edit. Returns a proposal; operator must approve before apply.",
+            ),
+            (
+                "insights:rule.apply",
+                "Apply an approved proposal. Writes the rule to the fixture store.",
+            ),
+            (
+                "insights:rule.dry-run",
+                "Synthesise a verdict for the rule from fixture data (no engine).",
+            ),
+        ],
+    )
+}
+
+fn verdict_tool_defs(agent_tools: &[String]) -> Vec<ToolDef> {
+    insights_subset(
+        agent_tools,
+        "insights:verdict.",
+        &[
+            (
+                "insights:verdict.query",
+                "Filter verdicts by rule_id, tag, severity, since/until.",
+            ),
+            (
+                "insights:verdict.explain",
+                "Return a verdict row for narration; the agent supplies the prose.",
+            ),
+        ],
+    )
+}
+
+fn pipeline_tool_defs(agent_tools: &[String]) -> Vec<ToolDef> {
+    insights_subset(
+        agent_tools,
+        "insights:pipeline.",
+        &[
+            ("insights:pipeline.read", "Read a pipeline graph by id."),
+            (
+                "insights:pipeline.propose-edit",
+                "Propose a pipeline graph edit. Returns a proposal; needs operator approval.",
+            ),
+            (
+                "insights:pipeline.apply-edit",
+                "Apply an approved pipeline edit.",
+            ),
+        ],
+    )
+}
+
+fn insights_subset(
+    agent_tools: &[String],
+    prefix: &str,
+    defs: &[(&str, &str)],
+) -> Vec<ToolDef> {
+    let wildcard_name = format!("{prefix}*"); // e.g. `insights:rule.*`
+    let wildcard = agent_tools
+        .iter()
+        .any(|t| t == "insights:*" || t == prefix || *t == wildcard_name);
+    defs.iter()
+        .filter(|(name, _)| wildcard || agent_tools.iter().any(|t| t == name))
+        .map(|(name, desc)| ToolDef {
+            name: (*name).to_owned(),
+            description: Some((*desc).to_owned()),
+            input_schema: permissive_object_schema(),
+        })
+        .collect()
 }
 
 fn permissive_object_schema() -> JsonValue {
