@@ -16,6 +16,7 @@
 pub mod ai;
 pub mod auth;
 pub mod authz;
+pub mod blob;
 #[cfg(feature = "changelog")]
 pub mod changelog;
 pub mod dto;

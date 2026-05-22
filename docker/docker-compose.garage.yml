@@ -1,0 +1,77 @@
+# Single-node Garage stand-up for starter integration tests + local
+# operator exploration. Brings up:
+#
+#   - Garage v1 with the S3 API on :3900 and admin API on :3903
+#   - A one-shot init container that creates the integration-test
+#     bucket and access-key via the admin API so the test suite has
+#     a known starting point
+#
+# Usage:
+#
+#   docker compose -f docker/docker-compose.garage.yml up -d
+#   # ...integration tests run against http://localhost:3900
+#   docker compose -f docker/docker-compose.garage.yml down -v
+#
+# The `garage.example.toml` next to this file is the reference
+# config. Replace `admin_token` and `rpc_secret` before any non-
+# local deployment.
+
+services:
+  garage:
+    image: dxflrs/garage:v1.0.1
+    container_name: starter-garage
+    restart: unless-stopped
+    ports:
+      - "3900:3900"   # S3 API (data plane — starter-blob-s3 connects here)
+      - "3902:3902"   # Web (unused by starter)
+      - "3903:3903"   # Admin API (starter-blob-garage)
+    volumes:
+      - ./garage.example.toml:/etc/garage.toml:ro
+      - garage-meta:/var/lib/garage/meta
+      - garage-data:/var/lib/garage/data
+    healthcheck:
+      # Garage's admin API exposes a health endpoint we curl into
+      # readiness so dependent services do not race startup.
+      test:
+        - "CMD-SHELL"
+        - "wget -qO- --header='Authorization: Bearer REPLACE_ME_ADMIN_TOKEN_DO_NOT_SHIP' http://localhost:3903/v1/health | grep -q healthy"
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # One-shot bootstrap. Lays out the cluster (Garage refuses to serve
+  # writes until layout is applied), creates the integration-test
+  # bucket, mints a key, and grants it. The starter integration tests
+  # read the printed credentials from the container logs (or you can
+  # `docker exec garage garage key list` to look them up).
+  garage-init:
+    image: dxflrs/garage:v1.0.1
+    container_name: starter-garage-init
+    depends_on:
+      garage:
+        condition: service_healthy
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - |
+        set -euo pipefail
+        export GARAGE_RPC_HOST=garage:3901
+        # Assign the single-node layout — capacity is arbitrary
+        # for tests; pick 1G.
+        NODE_ID=$$(garage -c /etc/garage.toml status | awk 'NR==2 {print $$1}')
+        garage -c /etc/garage.toml layout assign -z dc1 -c 1G "$$NODE_ID" || true
+        garage -c /etc/garage.toml layout apply --version 1 || true
+        # Idempotent bucket + key.
+        garage -c /etc/garage.toml bucket create starter-test || true
+        garage -c /etc/garage.toml key create starter-test-key || true
+        garage -c /etc/garage.toml bucket allow --read --write --owner \
+          starter-test --key starter-test-key
+        # Print credentials so the integration tests / operator can
+        # pluck them out.
+        garage -c /etc/garage.toml key info starter-test-key --show-secret
+    volumes:
+      - ./garage.example.toml:/etc/garage.toml:ro
+
+volumes:
+  garage-meta:
+  garage-data:

@@ -1,0 +1,46 @@
+# Garage v1 reference config for starter integration tests.
+#
+# Copy to `garage.toml` (or mount via docker-compose) for a single-
+# node dev cluster. Production deployments **must** override every
+# token field below — do not ship these values to a public network.
+#
+# See `docker-compose.garage.yml` next to this file for the matching
+# compose stand-up.
+
+metadata_dir   = "/var/lib/garage/meta"
+data_dir       = "/var/lib/garage/data"
+db_engine      = "lmdb"
+
+replication_mode = "1"   # single-node — Garage refuses to start with the default "3"
+
+# Inter-node RPC. The secret is required even on a single-node
+# cluster; rotate before sharing the stand-up with anyone.
+rpc_bind_addr     = "[::]:3901"
+rpc_public_addr   = "127.0.0.1:3901"
+rpc_secret        = "REPLACE_ME_RPC_SECRET_64_HEX_CHARS_LONG_REPLACE_ME_RPC_SECRET_64_HEX"
+
+# S3-compatible data plane. `starter-blob-s3` connects here with
+# `force_path_style = true` (Garage cannot terminate per-bucket TLS).
+[s3_api]
+api_bind_addr = "[::]:3900"
+s3_region     = "garage"
+root_domain   = ".s3.garage.local"
+
+# Admin API. `starter-blob-garage` calls /v1/health, /v1/layout,
+# /v1/bucket, /v1/key, /v1/bucket/allow against this address with the
+# `admin_token` as bearer auth. Keep the token out of source control
+# in production — load via SecretStore at startup.
+[admin]
+api_bind_addr = "[::]:3903"
+admin_token   = "REPLACE_ME_ADMIN_TOKEN_DO_NOT_SHIP"
+metrics_token = "REPLACE_ME_METRICS_TOKEN_DO_NOT_SHIP"
+
+# S3 website serving is not used by starter; left off so the
+# attack surface stays minimal.
+[s3_web]
+bind_addr     = "[::]:3902"
+root_domain   = ".web.garage.local"
+index         = "index.html"
+
+# Tuning knobs left at defaults — see the upstream Garage docs for
+# layout/replication/sharding for a multi-node production cluster.

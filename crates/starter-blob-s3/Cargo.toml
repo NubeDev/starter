@@ -1,0 +1,44 @@
+[package]
+name        = "starter-blob-s3"
+description = "starter — S3-backed BlobStore. Wraps aws-sdk-s3 with force_path_style configurable for MinIO / Garage / on-prem, multipart put_stream, conditional headers wired to BlobError::PreconditionFailed."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[features]
+default = []
+# Opt-in integration tests that talk to a live S3-compatible endpoint
+# (MinIO / Garage / AWS). Off by default so `cargo test --workspace`
+# stays hermetic. The CI workflow flips this on for the
+# docker-compose lane.
+integration-tests = []
+
+[dependencies]
+starter-spi = { workspace = true }
+
+async-trait = { workspace = true }
+bytes       = { workspace = true }
+chrono      = { workspace = true }
+futures     = { workspace = true }
+serde       = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true, features = ["io-util", "macros", "rt-multi-thread"] }
+tracing     = { workspace = true }
+
+# AWS SDK — MIT/Apache-2.0. Garage is reached over its S3-compatible
+# wire protocol via these same clients, so the AGPL boundary is the
+# network, not the source tree (see README).
+#
+# Default features off to avoid pulling native-tls; pick rustls
+# explicitly so the dep tree stays on `rustls` like the rest of the
+# workspace (see workspace `reqwest` feature set).
+aws-sdk-s3 = { version = "1", default-features = false, features = ["rt-tokio", "rustls"] }
+aws-config = { version = "1", default-features = false, features = ["rt-tokio", "rustls", "behavior-version-latest"] }
+aws-credential-types = { version = "1", features = ["hardcoded-credentials"] }
+aws-smithy-types = "1"
+aws-smithy-runtime-api = "1"
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }

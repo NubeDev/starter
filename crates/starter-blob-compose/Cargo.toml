@@ -1,0 +1,28 @@
+[package]
+name        = "starter-blob-compose"
+description = "starter — BlobStore combinators (Namespaced, Tiered, Mirrored, ReadThroughCache). Wraps any starter-spi BlobStore; combinators implement BlobStore so they nest."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+
+async-trait = { workspace = true }
+bytes       = { workspace = true }
+chrono      = { workspace = true }
+futures     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true }
+tracing     = { workspace = true }
+base64      = { workspace = true }
+
+[dev-dependencies]
+starter-blob-memory = { workspace = true }
+starter-blob-fs     = { workspace = true }
+tempfile            = "3"
+tokio               = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
