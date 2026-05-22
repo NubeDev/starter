@@ -118,6 +118,83 @@ impl VerdictStore {
         Ok(n)
     }
 
+    /// D9 read-path: list the recent `limit` verdicts for a single
+    /// `(namespace, name, major)`, newest first. Body is decoded so
+    /// the caller gets a typed `Verdict` — the SLO budget is for the
+    /// full round-trip including JSON decode.
+    pub async fn list_recent_by_rule(
+        &self,
+        namespace: &str,
+        name: &str,
+        major: u32,
+        limit: u32,
+    ) -> Result<Vec<Verdict>, VerdictStoreError> {
+        let rows = sqlx::query(
+            "SELECT body_json FROM verdict_log \
+             WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 \
+             ORDER BY at_ms DESC LIMIT ?4",
+        )
+        .bind(namespace)
+        .bind(name)
+        .bind(major as i64)
+        .bind(limit as i64)
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(|e| VerdictStoreError::Backend(e.to_string()))?;
+        let mut out = Vec::with_capacity(rows.len());
+        for r in rows {
+            let body: String = r.get("body_json");
+            let v: Verdict = serde_json::from_str(&body)
+                .map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
+            out.push(v);
+        }
+        Ok(out)
+    }
+
+    /// D9 read-path: list the recent `limit` verdicts whose tag index
+    /// has `tags[key] = value` (or any value, if `value` is `None`),
+    /// newest first. Drives the frontend tag-filter contract.
+    pub async fn list_recent_by_tag(
+        &self,
+        key: &str,
+        value: Option<&str>,
+        limit: u32,
+    ) -> Result<Vec<Verdict>, VerdictStoreError> {
+        let rows = if let Some(v) = value {
+            sqlx::query(
+                "SELECT vl.body_json AS body_json FROM verdict_log vl \
+                 JOIN verdict_tag vt ON vt.verdict_id = vl.id \
+                 WHERE vt.key = ?1 AND vt.value = ?2 \
+                 ORDER BY vl.at_ms DESC LIMIT ?3",
+            )
+            .bind(key)
+            .bind(v)
+            .bind(limit as i64)
+            .fetch_all(self.pool.sqlx())
+            .await
+        } else {
+            sqlx::query(
+                "SELECT vl.body_json AS body_json FROM verdict_log vl \
+                 JOIN verdict_tag vt ON vt.verdict_id = vl.id \
+                 WHERE vt.key = ?1 \
+                 ORDER BY vl.at_ms DESC LIMIT ?2",
+            )
+            .bind(key)
+            .bind(limit as i64)
+            .fetch_all(self.pool.sqlx())
+            .await
+        }
+        .map_err(|e| VerdictStoreError::Backend(e.to_string()))?;
+        let mut out = Vec::with_capacity(rows.len());
+        for r in rows {
+            let body: String = r.get("body_json");
+            let v: Verdict = serde_json::from_str(&body)
+                .map_err(|e| VerdictStoreError::Serde(e.to_string()))?;
+            out.push(v);
+        }
+        Ok(out)
+    }
+
     /// List verdict ids matching `tags[key] = value`. Phase 1
     /// surface for the frontend tag-filter contract (R-ins-8).
     pub async fn list_ids_by_tag(

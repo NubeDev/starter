@@ -490,6 +490,82 @@ impl RollupEngine {
         Ok(n)
     }
 
+    /// D9 read-path: ungrouped rollup time-series for a single
+    /// `(rule_id, window_class)` between `start..end`. Returns one
+    /// row per bucket ordered by `window_start_ms`.
+    pub async fn read_timeseries_ungrouped(
+        &self,
+        namespace: &str,
+        name: &str,
+        major: u32,
+        window_class: WindowClass,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<RollupBucket>, RollupError> {
+        let rows = sqlx::query(
+            "SELECT window_start_ms, window_end_ms, \
+                    count_healthy, count_info, count_warn, count_critical, count_error, \
+                    coverage_min \
+             FROM verdict_rollup \
+             WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 \
+               AND window_class=?4 AND tag_key IS NULL AND tag_value IS NULL \
+               AND window_start_ms >= ?5 AND window_start_ms < ?6 \
+             ORDER BY window_start_ms",
+        )
+        .bind(namespace)
+        .bind(name)
+        .bind(major as i64)
+        .bind(window_class.as_str())
+        .bind(start.timestamp_millis())
+        .bind(end.timestamp_millis())
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(|e| RollupError::Backend(e.to_string()))?;
+        Ok(rows.into_iter().map(row_to_bucket).collect())
+    }
+
+    /// D9 read-path: tag-grouped rollup time-series — one row per
+    /// `(tag_value, bucket)` for `tag_key`. Drives the rollup-by-tag
+    /// frontend contract per R-ins-8.
+    pub async fn read_timeseries_grouped(
+        &self,
+        namespace: &str,
+        name: &str,
+        major: u32,
+        window_class: WindowClass,
+        tag_key: &str,
+        start: DateTime<Utc>,
+        end: DateTime<Utc>,
+    ) -> Result<Vec<(String, RollupBucket)>, RollupError> {
+        let rows = sqlx::query(
+            "SELECT tag_value, window_start_ms, window_end_ms, \
+                    count_healthy, count_info, count_warn, count_critical, count_error, \
+                    coverage_min \
+             FROM verdict_rollup \
+             WHERE rule_namespace=?1 AND rule_name=?2 AND rule_major=?3 \
+               AND window_class=?4 AND tag_key = ?5 \
+               AND window_start_ms >= ?6 AND window_start_ms < ?7 \
+             ORDER BY tag_value, window_start_ms",
+        )
+        .bind(namespace)
+        .bind(name)
+        .bind(major as i64)
+        .bind(window_class.as_str())
+        .bind(tag_key)
+        .bind(start.timestamp_millis())
+        .bind(end.timestamp_millis())
+        .fetch_all(self.pool.sqlx())
+        .await
+        .map_err(|e| RollupError::Backend(e.to_string()))?;
+        Ok(rows
+            .into_iter()
+            .map(|r| {
+                let tv: String = r.get::<Option<String>, _>("tag_value").unwrap_or_default();
+                (tv, row_to_bucket(r))
+            })
+            .collect())
+    }
+
     /// Test helper: read the ungrouped rollup count for a bucket.
     pub async fn read_ungrouped_count(
         &self,
@@ -524,6 +600,42 @@ impl RollupEngine {
                 r.get("count_error"),
             ),
         })
+    }
+}
+
+/// One row of a rollup time-series. Returned by `read_timeseries_*`.
+#[derive(Debug, Clone)]
+pub struct RollupBucket {
+    /// Inclusive bucket start (UTC ms-epoch on the wire).
+    pub window_start: DateTime<Utc>,
+    /// Exclusive bucket end.
+    pub window_end: DateTime<Utc>,
+    /// Healthy verdict count.
+    pub count_healthy: i64,
+    /// Info verdict count.
+    pub count_info: i64,
+    /// Warn verdict count.
+    pub count_warn: i64,
+    /// Critical verdict count.
+    pub count_critical: i64,
+    /// Error verdict count.
+    pub count_error: i64,
+    /// Minimum coverage confidence observed in the bucket.
+    pub coverage_min: f64,
+}
+
+fn row_to_bucket(r: sqlx::sqlite::SqliteRow) -> RollupBucket {
+    let start_ms: i64 = r.get("window_start_ms");
+    let end_ms: i64 = r.get("window_end_ms");
+    RollupBucket {
+        window_start: DateTime::<Utc>::from_timestamp_millis(start_ms).unwrap_or_default(),
+        window_end: DateTime::<Utc>::from_timestamp_millis(end_ms).unwrap_or_default(),
+        count_healthy: r.get("count_healthy"),
+        count_info: r.get("count_info"),
+        count_warn: r.get("count_warn"),
+        count_critical: r.get("count_critical"),
+        count_error: r.get("count_error"),
+        coverage_min: r.get("coverage_min"),
     }
 }
 

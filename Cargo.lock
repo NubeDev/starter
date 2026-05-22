@@ -6771,6 +6771,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ext-insights-finance"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde_json",
+ "starter-spi",
+]
+
+[[package]]
 name = "starter-ext-insights-hvac"
 version = "0.1.0"
 dependencies = [
@@ -7046,6 +7056,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-ext-insights-energy",
+ "starter-ext-insights-finance",
  "starter-ext-insights-hvac",
  "starter-ext-insights-iot",
  "starter-flow-spi",
