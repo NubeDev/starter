@@ -51,6 +51,8 @@ members = [
     "crates/starter-sdui-routes",
     "crates/starter-ui-theme",
     "crates/starter-port",
+    "crates/starter-blob-memory",
+    "crates/starter-blob-fs",
     "crates/smoke-tests",
     "examples/minimal",
     "examples/gh-report",
@@ -122,6 +124,8 @@ starter-ui-theme         = { path = "crates/starter-ui-theme",         version =
 starter-tool-gmail       = { path = "crates/starter-tool-gmail",       version = "0.1.0" }
 starter-port             = { path = "crates/starter-port",             version = "0.1.0" }
 starter-tool-github      = { path = "crates/starter-tool-github",      version = "0.1.0" }
+starter-blob-memory      = { path = "crates/starter-blob-memory",      version = "0.1.0" }
+starter-blob-fs          = { path = "crates/starter-blob-fs",          version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.

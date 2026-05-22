@@ -1,0 +1,46 @@
+[package]
+name        = "starter-blob-memory"
+description = "starter — in-memory BlobStore impl. Test/dev only. Bytes live for the process lifetime."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[features]
+# The presign axum router is feature-gated so consumers who never need
+# to test a presigned URL do not pull axum into their dep tree.
+default = []
+axum    = ["dep:axum", "dep:tower", "dep:http"]
+
+[dependencies]
+starter-spi = { workspace = true }
+
+async-trait = { workspace = true }
+bytes       = { workspace = true }
+chrono      = { workspace = true }
+futures     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true }
+tracing     = { workspace = true }
+
+# HMAC presign token. base64 is workspace-default URL_SAFE_NO_PAD.
+base64 = { workspace = true }
+hmac   = { workspace = true }
+sha2   = { workspace = true }
+rand   = { workspace = true }
+subtle = { workspace = true }
+
+# Feature-gated router deps.
+axum  = { workspace = true, optional = true }
+http  = { workspace = true, optional = true }
+tower = { workspace = true, optional = true }
+
+[dev-dependencies]
+axum            = { workspace = true }
+http            = { workspace = true }
+http-body-util  = "0.1"
+tower           = { workspace = true }
+tokio           = { workspace = true, features = ["macros", "rt-multi-thread"] }

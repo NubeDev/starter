@@ -6381,6 +6381,59 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-blob-fs"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "futures",
+ "hmac",
+ "http",
+ "http-body-util",
+ "rand 0.8.6",
+ "serde",
+ "serde_json",
+ "sha2",
+ "starter-spi",
+ "subtle",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-util",
+ "tower 0.5.3",
+ "tracing",
+ "walkdir",
+]
+
+[[package]]
+name = "starter-blob-memory"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "base64 0.22.1",
+ "bytes",
+ "chrono",
+ "futures",
+ "hmac",
+ "http",
+ "http-body-util",
+ "rand 0.8.6",
+ "serde",
+ "serde_json",
+ "sha2",
+ "starter-spi",
+ "subtle",
+ "thiserror 1.0.69",
+ "tokio",
+ "tower 0.5.3",
+ "tracing",
+]
+
+[[package]]
 name = "starter-cache"
 version = "0.1.0"
 dependencies = [

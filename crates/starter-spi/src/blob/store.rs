@@ -75,6 +75,20 @@ impl PutOptions {
             ..Self::default()
         }
     }
+
+    /// Set [`PutOptions::cache_control`].
+    pub fn cache_control(mut self, value: impl Into<String>) -> Self {
+        self.cache_control = Some(value.into());
+        self
+    }
+
+    /// Set [`PutOptions::if_absent`]. Engines that honour
+    /// `if_absent` fail with [`BlobError::AlreadyExists`] when the
+    /// key already has bytes.
+    pub fn if_absent(mut self) -> Self {
+        self.if_absent = true;
+        self
+    }
 }
 
 /// One page of a [`BlobStore::list`] result.
@@ -98,6 +112,16 @@ pub struct ListPage {
     /// "no more". Treat as a backend-defined token; do not
     /// inspect.
     pub next_cursor: Option<String>,
+}
+
+impl ListPage {
+    /// Build a page from its parts. Engines reach for this rather
+    /// than a struct literal because `ListPage` is
+    /// `#[non_exhaustive]`: adding (say) a `total_estimate: Option<u64>`
+    /// later must remain semver-additive across the engine crates.
+    pub fn new(items: Vec<(BlobRef, BlobMeta)>, next_cursor: Option<String>) -> Self {
+        Self { items, next_cursor }
+    }
 }
 
 /// The blob-store trait.

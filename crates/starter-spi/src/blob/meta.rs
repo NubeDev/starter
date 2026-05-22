@@ -59,6 +59,54 @@ pub struct BlobMeta {
     pub updated_at: Option<DateTime<Utc>>,
 }
 
+impl BlobMeta {
+    /// Construct a minimal [`BlobMeta`] carrying just the
+    /// always-known fields (`size`, `etag`). Optional fields
+    /// default to `None`; layer them on with the `with_*`
+    /// setters.
+    ///
+    /// `BlobMeta` is `#[non_exhaustive]` so adding a future field
+    /// (say, `checksum_sha256`) is semver-additive. Engines must
+    /// not literal-construct the struct from outside this crate;
+    /// they go through this constructor and the setters below so
+    /// new fields land with sane defaults rather than breaking
+    /// the build.
+    pub fn new(size: u64, etag: Etag) -> Self {
+        Self {
+            size,
+            etag,
+            content_type: None,
+            cache_control: None,
+            created_at: None,
+            updated_at: None,
+        }
+    }
+
+    /// Set [`BlobMeta::content_type`].
+    pub fn with_content_type(mut self, content_type: Option<String>) -> Self {
+        self.content_type = content_type;
+        self
+    }
+
+    /// Set [`BlobMeta::cache_control`].
+    pub fn with_cache_control(mut self, cache_control: Option<String>) -> Self {
+        self.cache_control = cache_control;
+        self
+    }
+
+    /// Set [`BlobMeta::created_at`].
+    pub fn with_created_at(mut self, created_at: Option<DateTime<Utc>>) -> Self {
+        self.created_at = created_at;
+        self
+    }
+
+    /// Set [`BlobMeta::updated_at`].
+    pub fn with_updated_at(mut self, updated_at: Option<DateTime<Utc>>) -> Self {
+        self.updated_at = updated_at;
+        self
+    }
+}
+
 /// Inclusive byte range for a partial [`super::BlobStore::get`].
 ///
 /// Semantics mirror HTTP `Range: bytes=start-end` exactly: both
