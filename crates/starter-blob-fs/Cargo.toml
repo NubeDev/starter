@@ -1,0 +1,54 @@
+[package]
+name        = "starter-blob-fs"
+description = "starter — filesystem-backed BlobStore. Atomic writes via tempfile-rename; presign HMAC over a SecretStore-supplied PresignKey."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[features]
+# The presign axum router is feature-gated so consumers who never
+# need to test a presigned URL do not pull axum into their dep
+# tree. The router lives in the same crate as the engine because
+# only the engine has the PresignKey needed to validate tokens.
+default = []
+axum    = ["dep:axum", "dep:tower", "dep:http", "dep:tokio-util"]
+
+[dependencies]
+starter-spi = { workspace = true }
+
+async-trait = { workspace = true }
+bytes       = { workspace = true }
+chrono      = { workspace = true }
+futures     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tokio       = { workspace = true, features = ["fs", "io-util"] }
+tracing     = { workspace = true }
+
+# Atomic-rename + recursive walk.
+tempfile = "3"
+walkdir  = "2"
+
+# HMAC presign.
+base64 = { workspace = true }
+hmac   = { workspace = true }
+sha2   = { workspace = true }
+rand   = { workspace = true }
+subtle = { workspace = true }
+
+# Feature-gated router deps.
+axum       = { workspace = true, optional = true }
+http       = { workspace = true, optional = true }
+tower      = { workspace = true, optional = true }
+tokio-util = { version = "0.7", optional = true, features = ["io"] }
+
+[dev-dependencies]
+axum            = { workspace = true }
+http            = { workspace = true }
+http-body-util  = "0.1"
+tower           = { workspace = true }
+tempfile        = "3"
+tokio           = { workspace = true, features = ["macros", "rt-multi-thread"] }

@@ -71,3 +71,14 @@ tower       = { workspace = true }
 axum        = { workspace = true }
 tokio-stream = "0.1"
 http-body-util = "0.1"
+
+# Blob-storage SCOPE smoke tests (stage 5 of the blob-storage job).
+# The five tests load every shipped blob engine + the compose
+# combinators against `Arc<dyn BlobStore>` only — that is the SwapTest
+# contract. The CostToSkip smoke deliberately re-runs `cargo tree`
+# against `starter-server` to assert none of these crates leak into a
+# default consumer build.
+starter-blob-memory  = { workspace = true }
+starter-blob-fs      = { workspace = true }
+starter-blob-compose = { workspace = true }
+bytes                = { workspace = true }
