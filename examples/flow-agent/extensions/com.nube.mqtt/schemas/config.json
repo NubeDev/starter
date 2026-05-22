@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MQTTExtensionConfig",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["broker_url"],
+  "properties": {
+    "broker_url": {
+      "type": "string",
+      "description": "MQTT broker URL (tcp://host:port or mqtts://host:port)."
+    },
+    "client_id_prefix": {
+      "type": "string",
+      "description": "Prefix used when constructing per-flow MQTT client ids."
+    }
+  }
+}

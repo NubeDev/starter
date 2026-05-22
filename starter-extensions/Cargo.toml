@@ -107,6 +107,9 @@ tracing     = "0.1"
 sha2        = "0.10"
 hex         = "0.4"
 rand        = "0.8"
+# ULID generator for proxy-owned `invocation_id`s
+# (DOCS/extensions/scope/FLOW-NODES.md R-flow-node-5).
+ulid        = "1"
 
 # Used by adapter / integration tests only.
 async-trait = "0.1"

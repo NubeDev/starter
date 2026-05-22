@@ -46,6 +46,80 @@ pub mod stream_methods {
     pub const CANCEL: &str = "stream.cancel";
 }
 
+/// The one new wire method the FLOW-NODES track contributes
+/// (`DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-1). The host's
+/// [`crate::manifest::ContributeNode`] declares a node kind; the
+/// child process implements the body and the host invokes it through
+/// this method.
+///
+/// Adapters that need to recognise the method on the wire match
+/// against this constant rather than re-typing the string so a typo
+/// can never silently invent a parallel method.
+pub const FLOW_NODE_INVOKE: &str = "flow.node.invoke";
+
+/// JSON-RPC error codes reserved for the flow-node dispatch path
+/// (`DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-1 +
+/// R-flow-node-5).
+///
+/// The JSON-RPC 2.0 spec reserves `-32768..-32000` for protocol-level
+/// errors. The host's flow-node dispatch carves out the
+/// `-32050..-32099` window from the application-level range so a
+/// child can report node-specific failures without colliding with
+/// other adapters' codes (MCP carves out a different window, gRPC
+/// uses its own status enum).
+///
+/// Codes are non-overlapping within the window; adding a code is
+/// additive within the crate major. Adapters that need to recognise
+/// a flow-node error map this enum against the inbound envelope's
+/// `error.code` field; everything outside the window stays opaque so
+/// the kernel never claims ownership of a code another extension
+/// minted.
+pub mod flow_node_error_codes {
+    /// Bottom of the flow-node carve-out (inclusive). Adapters
+    /// validating an inbound code use `code >= RANGE_START` as the
+    /// first half of the window check.
+    pub const RANGE_START: i32 = -32099;
+
+    /// Top of the flow-node carve-out (inclusive). Adapters
+    /// validating an inbound code use `code <= RANGE_END` as the
+    /// second half of the window check.
+    pub const RANGE_END: i32 = -32050;
+
+    /// `flow.node.invoke` was issued against a `kind` the child does
+    /// not implement (or one no longer present after a hot-reload).
+    /// The proxy surfaces this as
+    /// [`crate::Error::ExtensionInternal`] for now; richer mapping
+    /// lands when the engine grows per-code routing.
+    pub const NODE_KIND_NOT_BOUND: i32 = -32050;
+
+    /// The child failed to parse `flow.node.invoke` params (missing
+    /// `invocation_id`, malformed `settings`, …). Distinct from a
+    /// JSON-RPC `Invalid Params` (-32602) so the host can tell
+    /// "child's parser disagrees with the manifest" apart from
+    /// "child crashed parsing JSON".
+    pub const INVALID_INVOCATION_PARAMS: i32 = -32051;
+
+    /// The child's body returned a typed `NodeError::Backend`-shaped
+    /// failure (broker rejected, downstream HTTP 5xx, …). The proxy
+    /// maps this back to
+    /// [`starter_flow_spi::node::NodeError::Backend`] without
+    /// disturbing the surrounding stream notifications.
+    pub const NODE_BACKEND: i32 = -32060;
+
+    /// The child observed its own `stream.cancel` and is shutting
+    /// the invocation down cleanly. The proxy maps this back to
+    /// [`starter_flow_spi::node::NodeError::Cancelled`] so the
+    /// engine emits `NodeCancelled`.
+    pub const NODE_CANCELLED: i32 = -32061;
+
+    /// Returns `true` if `code` falls inside the flow-node carve-out
+    /// window (inclusive both ends).
+    #[inline]
+    pub const fn is_in_range(code: i32) -> bool {
+        code >= RANGE_START && code <= RANGE_END
+    }
+}
+
 /// An opaque stream identifier returned by the initial request and echoed
 /// on every subsequent notification belonging to that stream.
 ///
@@ -261,6 +335,30 @@ mod tests {
         let j = serde_json::to_string(&n).unwrap();
         let back: StreamNotification = serde_json::from_str(&j).unwrap();
         assert_eq!(back, n);
+    }
+
+    #[test]
+    fn flow_node_invoke_method_is_stable() {
+        // If somebody renames this the wire shape moves with it — guard
+        // the value so the typo never escapes review.
+        assert_eq!(FLOW_NODE_INVOKE, "flow.node.invoke");
+    }
+
+    #[test]
+    fn flow_node_error_codes_inside_carve_out() {
+        use flow_node_error_codes::*;
+        assert!(is_in_range(NODE_KIND_NOT_BOUND));
+        assert!(is_in_range(INVALID_INVOCATION_PARAMS));
+        assert!(is_in_range(NODE_BACKEND));
+        assert!(is_in_range(NODE_CANCELLED));
+        assert!(is_in_range(RANGE_START));
+        assert!(is_in_range(RANGE_END));
+        // The window stops at -32050: anything one step warmer is
+        // outside the carve-out so other adapters can claim it.
+        assert!(!is_in_range(-32049));
+        assert!(!is_in_range(-32100));
+        // JSON-RPC's `Invalid Params` is intentionally outside.
+        assert!(!is_in_range(-32602));
     }
 
     #[test]

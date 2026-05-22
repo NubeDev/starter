@@ -29,9 +29,9 @@ pub use capability::{Authority, Capability, PathSpec};
 pub use error::{Error, Result};
 pub use id::ExtensionId;
 pub use jsonrpc::{
-    stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification, JsonRpcRequest,
-    JsonRpcResponse, JsonRpcResponsePayload, StreamEnd, StreamError, StreamEvent, StreamId,
-    StreamNotification, JSONRPC_VERSION,
+    flow_node_error_codes, stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification,
+    JsonRpcRequest, JsonRpcResponse, JsonRpcResponsePayload, StreamCancel, StreamEnd, StreamError,
+    StreamEvent, StreamId, StreamNotification, FLOW_NODE_INVOKE, JSONRPC_VERSION,
 };
 pub use lifecycle::LifecycleState;
 pub use manifest::{

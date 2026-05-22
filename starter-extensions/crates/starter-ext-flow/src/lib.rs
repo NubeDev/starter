@@ -48,6 +48,10 @@
 
 #![deny(missing_docs)]
 
+pub mod process_proxy;
+
+pub use process_proxy::ProcessNodeProxy;
+
 use std::path::{Path, PathBuf};
 use std::sync::Arc;
 

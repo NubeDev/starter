@@ -41,8 +41,10 @@ schemars = { workspace = true }
 # the dynamic-registry seam plugs into. Path-dep across the
 # `starter` ↔ `starter-extensions` workspace boundary mirrors the
 # `starter-insights` ↔ `starter-ext-insights-*` arrows.
-starter-ext-flow = { path = "../../starter-extensions/crates/starter-ext-flow", version = "0.1.0" }
-starter-ext-spi  = { path = "../../starter-extensions/crates/starter-ext-spi", version = "0.1.0" }
+starter-ext-flow       = { path = "../../starter-extensions/crates/starter-ext-flow", version = "0.1.0" }
+starter-ext-spi        = { path = "../../starter-extensions/crates/starter-ext-spi", version = "0.1.0" }
+starter-ext-host       = { path = "../../starter-extensions/crates/starter-ext-host", version = "0.1.0" }
+starter-ext-supervisor = { path = "../../starter-extensions/crates/starter-ext-supervisor", version = "0.1.0" }
 
 # AI providers (Phase 4+).
 starter-ai = { workspace = true, features = ["provider-claude", "provider-anthropic"] }
