@@ -36,11 +36,13 @@ use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::registry::NodeKindRegistry;
 use starter_flow::run::{FlowRunner, InMemoryRunStore, RunSpec, RunStore};
 use starter_flow::state::RunStatus;
-use starter_flow_spi::Cancel;
 use starter_flow_spi::definition::{DefinitionSource, EditKindTag, FlowDefinitionEvent};
 use starter_flow_spi::flow::{FlowId, FlowRevisionId};
 use starter_flow_spi::graph::GraphStore;
-use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotRef, SlotValue};
+use starter_flow_spi::node::{
+    KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotRef, SlotValue,
+};
+use starter_flow_spi::Cancel;
 use starter_store_sqlite::flow::{SqliteFlowStore, FLOW_MIGRATION_SOURCE};
 use starter_store_sqlite::{migrate, testing::ephemeral};
 
@@ -188,10 +190,7 @@ async fn hot_reload_structural_edit_drains_in_flight_runs() {
         vec![(slot("smoke.agent", "in"), SlotValue::Int(1))],
         vec![slot("smoke.log", "out")],
     );
-    let r1 = runner
-        .start(spec1, SlotMap::new())
-        .await
-        .expect("R1 start");
+    let r1 = runner.start(spec1, SlotMap::new()).await.expect("R1 start");
 
     // Wait until the agent has actually entered invoke (so R1 is
     // genuinely mid-flight at the moment of the structural publish).
@@ -294,10 +293,7 @@ async fn hot_reload_structural_edit_drains_in_flight_runs() {
         vec![(slot("smoke.agent", "in"), SlotValue::Int(2))],
         vec![slot("smoke.extra", "out")],
     );
-    let r2 = runner
-        .start(spec2, SlotMap::new())
-        .await
-        .expect("R2 start");
+    let r2 = runner.start(spec2, SlotMap::new()).await.expect("R2 start");
 
     // R2's agent will park on the gate; give it a moment, then open.
     for _ in 0..50 {

@@ -133,17 +133,23 @@ impl ClipboardStore for PgClipboard {
     }
 
     async fn get(&self, principal_id: &str, id: &str) -> Result<Option<ClipboardEntry>> {
-        let row: Option<(String, String, String, Vec<u8>, DateTime<Utc>, DateTime<Utc>)> =
-            sqlx::query_as(
-                r#"SELECT principal_id, resource_kind, payload, signature,
+        let row: Option<(
+            String,
+            String,
+            String,
+            Vec<u8>,
+            DateTime<Utc>,
+            DateTime<Utc>,
+        )> = sqlx::query_as(
+            r#"SELECT principal_id, resource_kind, payload, signature,
                           created_at, expires_at
                      FROM starter_clipboard
                     WHERE id = $1"#,
-            )
-            .bind(id)
-            .fetch_optional(self.pool.sqlx())
-            .await
-            .map_err(internal)?;
+        )
+        .bind(id)
+        .fetch_optional(self.pool.sqlx())
+        .await
+        .map_err(internal)?;
 
         let Some((db_principal, resource_kind, payload, signature, created_at, expires_at)) = row
         else {

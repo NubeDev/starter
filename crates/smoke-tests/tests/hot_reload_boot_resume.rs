@@ -199,10 +199,7 @@ async fn hot_reload_boot_resume_mounts_last_known_good_head() {
         vec![(slot("smoke.head", "in"), SlotValue::Int(7))],
         vec![slot("smoke.tail", "out")],
     );
-    let handle = runner
-        .start(spec, SlotMap::new())
-        .await
-        .expect("run start");
+    let handle = runner.start(spec, SlotMap::new()).await.expect("run start");
     let status = timeout(Duration::from_secs(2), handle.join)
         .await
         .expect("run did not complete")

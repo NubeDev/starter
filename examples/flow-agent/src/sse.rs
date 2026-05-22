@@ -39,28 +39,12 @@ impl Default for EventHub {
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
 #[serde(tag = "type", rename_all = "kebab-case")]
 pub enum FlowEvent {
-    FlowCreated {
-        id: String,
-        name: String,
-    },
-    FlowRenamed {
-        id: String,
-        name: String,
-    },
-    FlowDeleted {
-        id: String,
-    },
-    AgentCreated {
-        id: String,
-        name: String,
-    },
-    AgentRenamed {
-        id: String,
-        name: String,
-    },
-    AgentDeleted {
-        id: String,
-    },
+    FlowCreated { id: String, name: String },
+    FlowRenamed { id: String, name: String },
+    FlowDeleted { id: String },
+    AgentCreated { id: String, name: String },
+    AgentRenamed { id: String, name: String },
+    AgentDeleted { id: String },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]

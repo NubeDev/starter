@@ -131,10 +131,18 @@ pub async fn run_with<W: Write + Send>(
             "before": req.before.to_rfc3339(),
             "resource_kind": req.resource_kind,
         });
-        writeln!(out, "{}", serde_json::to_string_pretty(&body).expect("json"))
-            .map_err(io_err)?;
+        writeln!(
+            out,
+            "{}",
+            serde_json::to_string_pretty(&body).expect("json")
+        )
+        .map_err(io_err)?;
     } else {
-        let verb = if req.dry_run { "would delete" } else { "deleted" };
+        let verb = if req.dry_run {
+            "would delete"
+        } else {
+            "deleted"
+        };
         let kind = req
             .resource_kind
             .as_deref()

@@ -9,6 +9,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  BaseNode,
   FlowCanvas,
   NodePalette,
   NodeKindRegistry,
@@ -19,13 +20,15 @@ import {
   type NodeRunState,
   type RunOverlay,
 } from "@nube/starter-ui-flow";
+import type { NodeProps } from "@xyflow/react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 
-import { ApiError, api, type Flow, type Run } from "@/lib/api";
+import { ApiError, api, type Flow, type NodeKindDto, type Run } from "@/lib/api";
 import { useSse } from "@/lib/sse";
+import { useNodeKinds } from "@/state/node-kinds-store";
 import { useDateFormatters } from "@/hooks/use-date-formatters";
 import { useTranslate } from "@nube/starter-ui-core/i18n";
 
@@ -105,9 +108,51 @@ function runBadgeVariant(
   }
 }
 
-// Module-scope registry: seeded once with the built-in kinds. Future
-// stages add agent-backed kinds via `registry.register(...)` here.
-const nodeRegistry = new NodeKindRegistry().registerAll(BUILTIN_NODE_KINDS);
+// Module-scope registry: seeded once with the built-in kinds bundled
+// with `@nube/starter-ui-flow`. Slice A of
+// `DOCS/extensions/scope/FLOW-NODES.md` extends this at runtime with
+// the descriptors served by `GET /api/node-kinds` (which includes
+// both built-ins and extension-contributed kinds); the merging logic
+// lives in [`useMergedNodeKinds`] below.
+const builtinRegistry = new NodeKindRegistry().registerAll(BUILTIN_NODE_KINDS);
+
+// Generic renderer for dynamic (extension-contributed) kinds. The
+// `@nube/starter-ui-flow` builtin renderer is module-private; this
+// mirrors its shape so extension kinds get the same look-and-feel.
+function genericExtensionRenderer(props: NodeProps) {
+  const data = props.data as unknown as {
+    kindSpec: NodeKindSpec;
+    label: string;
+    state?: NodeRunState;
+    slotValues?: Record<string, unknown>;
+  };
+  return (
+    <BaseNode
+      spec={data.kindSpec}
+      label={data.label}
+      state={data.state}
+      selected={props.selected}
+      slotValues={data.slotValues}
+    />
+  );
+}
+
+// Convert a server-side `NodeKindDto` into the `NodeKindEntry` shape
+// the `@nube/starter-ui-flow` registry understands. Extension-
+// contributed kinds get the i18n-resolved label/summary as their
+// display text. `inputs` / `outputs` slot schemas are not part of the
+// slice A descriptor surface; the canvas falls back to an empty
+// schema while the dedicated editor refactor lands in a later stage
+// (FLOW-NODES.md "Out of scope" — `ui_kind_table.rs` workaround).
+function dtoToEntry(dto: NodeKindDto) {
+  const spec: NodeKindSpec = {
+    kind: dto.kind,
+    label: dto.label || dto.kind,
+    inputs: [],
+    outputs: [],
+  };
+  return { spec, component: genericExtensionRenderer };
+}
 
 const EMPTY_GRAPH: FlowGraph = { nodes: [], edges: [] };
 
@@ -307,7 +352,36 @@ export function FlowEditor() {
     },
   });
 
-  const palettePicks = useMemo(() => nodeRegistry.list().map((e) => e.spec), []);
+  // Merge built-ins with whatever the host's `/api/node-kinds` surface
+  // is currently advertising (slice A: a stable set; slice B: changes
+  // after every `POST /admin/extensions/reload`). The dynamic kinds
+  // are registered onto the same module-scope `NodeKindRegistry` so
+  // <FlowCanvas> renders them the same as built-ins.
+  const nodeKindsQuery = useNodeKinds();
+  const nodeRegistry = useMemo(() => {
+    const reg = new NodeKindRegistry().registerAll(BUILTIN_NODE_KINDS);
+    const dtos = nodeKindsQuery.data ?? [];
+    for (const dto of dtos) {
+      // Skip built-ins so the curated `BUILTIN_NODE_KINDS` shape wins
+      // on collision (icons, default settings, etc.). Extension kinds
+      // never duplicate built-in kind ids per R-flow-node-3.
+      if (dto.extension_id) {
+        try {
+          reg.register(dtoToEntry(dto));
+        } catch (err) {
+          // Duplicate kind id from the server — surface as a console
+          // warning rather than break the editor.
+          console.warn("[node-kinds] failed to register", dto.kind, err);
+        }
+      }
+    }
+    return reg;
+  }, [nodeKindsQuery.data]);
+  void builtinRegistry; // keep symbol live for future fall-back paths
+  const palettePicks = useMemo(
+    () => nodeRegistry.list().map((e) => e.spec),
+    [nodeRegistry],
+  );
 
   function handleCanvasChange(next: FlowGraph) {
     setGraph(next);

@@ -5,11 +5,11 @@ use axum::http::{Request, StatusCode};
 use axum::Router;
 use http_body_util::BodyExt;
 use serde_json::Value;
-use starter_ui_bindings::NullGraph;
-use starter_ui_ir::{ActionResponse, Component, ComponentTree, ToastIntent};
 use starter_sdui_routes::{
     sdui_router, HandlerRegistry, InMemoryPageProvider, InMemoryQueryEngine, SduiState,
 };
+use starter_ui_bindings::NullGraph;
+use starter_ui_ir::{ActionResponse, Component, ComponentTree, ToastIntent};
 use tower::ServiceExt;
 
 pub fn trivial_tree() -> ComponentTree {

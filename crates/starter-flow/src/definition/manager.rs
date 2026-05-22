@@ -27,7 +27,7 @@ use std::sync::Arc;
 
 use thiserror::Error;
 use tokio::sync::broadcast;
-use tracing::{Instrument, debug, info, info_span, warn};
+use tracing::{debug, info, info_span, warn, Instrument};
 
 use starter_flow_spi::definition::{
     ApplyPolicy, DefinitionSource, EditKindTag, FlowDefinitionEvent,
@@ -323,7 +323,9 @@ impl DefinitionManager {
             kind = tracing::field::Empty,
             outcome = tracing::field::Empty,
         );
-        self.publish_inner(flow_id, body, source).instrument(span).await
+        self.publish_inner(flow_id, body, source)
+            .instrument(span)
+            .await
     }
 
     async fn publish_inner(
@@ -382,11 +384,13 @@ impl DefinitionManager {
                     body_hash = %draft_hash,
                     "publish short-circuited: draft body hash matches head"
                 );
-                let _ = self.events.send(FlowDefinitionEvent::PublishShortCircuited {
-                    flow: flow_id.clone(),
-                    head: prev.revision_id,
-                    source,
-                });
+                let _ = self
+                    .events
+                    .send(FlowDefinitionEvent::PublishShortCircuited {
+                        flow: flow_id.clone(),
+                        head: prev.revision_id,
+                        source,
+                    });
                 return Ok(PublishOutcome::ShortCircuited {
                     head: prev.revision_id,
                 });
@@ -414,8 +418,8 @@ impl DefinitionManager {
 
         // Step 5: write a fresh revision BEFORE any side-effects.
         let revision_id = FlowRevisionId::new();
-        let revision = FlowRevision::new(flow_id.clone(), revision_id, body)
-            .with_source(source.audit_tag());
+        let revision =
+            FlowRevision::new(flow_id.clone(), revision_id, body).with_source(source.audit_tag());
         let written = self.store.put(revision).await?;
         span.record("revision", tracing::field::display(&written));
         if let Some(prev) = prev_head.as_ref() {
@@ -841,10 +845,7 @@ impl DefinitionManager {
     ///    [`FlowDefinitionEvent::ResolveFailed`].
     ///
     /// Returns the number of flows revoked.
-    pub async fn on_kind_deregistered(
-        &self,
-        kind: &starter_flow_spi::node::KindId,
-    ) -> usize {
+    pub async fn on_kind_deregistered(&self, kind: &starter_flow_spi::node::KindId) -> usize {
         // Snapshot the flow ids first; releasing the lock keeps
         // the walk lock-free during the async store load below.
         let active_ids = self.active.snapshot_ids().await;
@@ -927,7 +928,10 @@ impl DefinitionManager {
     async fn apply_settings(
         &self,
         flow_id: &FlowId,
-        writes: &[(starter_flow_spi::node::SlotRef, starter_flow_spi::node::SlotValue)],
+        writes: &[(
+            starter_flow_spi::node::SlotRef,
+            starter_flow_spi::node::SlotValue,
+        )],
     ) -> Result<(), PublishError> {
         let Some(graph) = self.graph.as_ref() else {
             debug!(
@@ -1121,7 +1125,10 @@ mod tests {
     async fn build_manager() -> (Arc<DefinitionManager>, Arc<MemStore>) {
         let store = MemStore::new();
         let kinds = Arc::new(NodeKindRegistry::new());
-        kinds.register(AnyKind::arc("com.example.any")).await.unwrap();
+        kinds
+            .register(AnyKind::arc("com.example.any"))
+            .await
+            .unwrap();
         let mgr = Arc::new(DefinitionManager::new(store.clone(), kinds));
         (mgr, store)
     }
@@ -1253,7 +1260,9 @@ mod tests {
             .await
             .expect("structural publish");
         match r {
-            PublishOutcome::Published { kind, prev_head, .. } => {
+            PublishOutcome::Published {
+                kind, prev_head, ..
+            } => {
                 assert_eq!(kind, EditKindTag::Structural);
                 assert!(prev_head.is_some());
             }
@@ -1285,9 +1294,9 @@ mod tests {
     // ===================================================================
 
     use crate::graph::InMemoryGraphStore;
+    use futures::StreamExt;
     use starter_flow_spi::graph::SubscribeOpts;
     use starter_flow_spi::node::SlotValue;
-    use futures::StreamExt;
     use std::time::Duration;
     use tokio::time::timeout;
 
@@ -1398,7 +1407,9 @@ mod tests {
             }
         ));
         // No further definition events for this publish.
-        assert!(timeout(Duration::from_millis(50), def_rx.recv()).await.is_err());
+        assert!(timeout(Duration::from_millis(50), def_rx.recv())
+            .await
+            .is_err());
     }
 
     /// HR2: a structural edit swaps the active topology in place
@@ -1447,7 +1458,9 @@ mod tests {
         );
 
         // No slot writes.
-        assert!(timeout(Duration::from_millis(50), graph_rx.next()).await.is_err());
+        assert!(timeout(Duration::from_millis(50), graph_rx.next())
+            .await
+            .is_err());
 
         // RevisionPublished + SwapApplied (in that order).
         let mut saw_published = false;
@@ -1493,7 +1506,9 @@ mod tests {
             ],
             "links": [{"from": "test.n1.out", "to": "test.n2.in"}]
         });
-        mgr.publish(flow_id(), v1, DefinitionSource::Api).await.unwrap();
+        mgr.publish(flow_id(), v1, DefinitionSource::Api)
+            .await
+            .unwrap();
 
         let mut graph_rx = graph.subscribe(SubscribeOpts::default());
 
@@ -1512,7 +1527,10 @@ mod tests {
                 {"from": "test.n1.out", "to": "test.n3.in"}
             ]
         });
-        let out = mgr.publish(flow_id(), v2, DefinitionSource::Api).await.unwrap();
+        let out = mgr
+            .publish(flow_id(), v2, DefinitionSource::Api)
+            .await
+            .unwrap();
         assert!(matches!(
             out,
             PublishOutcome::Published {
@@ -1621,7 +1639,11 @@ mod tests {
 
         // Structural edit lands a swap. Default policy is drain.
         let _ = mgr
-            .publish(flow.clone(), structural_body_with_policy("drain"), DefinitionSource::Api)
+            .publish(
+                flow.clone(),
+                structural_body_with_policy("drain"),
+                DefinitionSource::Api,
+            )
             .await
             .unwrap();
 
@@ -1643,7 +1665,11 @@ mod tests {
         // structural edit (which is the one that triggers dispatch)
         // is governed by `restart`.
         let first = mgr
-            .publish(flow.clone(), body_with_policy("v1", "restart"), DefinitionSource::Api)
+            .publish(
+                flow.clone(),
+                body_with_policy("v1", "restart"),
+                DefinitionSource::Api,
+            )
             .await
             .unwrap();
         let prev_rev = match first {
@@ -1662,12 +1688,22 @@ mod tests {
         // Structural edit (adds a node) — must trigger Restart
         // dispatch using the OLD revision's policy.
         let _ = mgr
-            .publish(flow.clone(), structural_body_with_policy("restart"), DefinitionSource::Api)
+            .publish(
+                flow.clone(),
+                structural_body_with_policy("restart"),
+                DefinitionSource::Api,
+            )
             .await
             .unwrap();
 
-        assert!(c1.is_cancelled(), "restart must fire RunCancel for in-flight run 1");
-        assert!(c2.is_cancelled(), "restart must fire RunCancel for in-flight run 2");
+        assert!(
+            c1.is_cancelled(),
+            "restart must fire RunCancel for in-flight run 1"
+        );
+        assert!(
+            c2.is_cancelled(),
+            "restart must fire RunCancel for in-flight run 2"
+        );
 
         // SwapApplied event carries the policy that governed the swap.
         let mut saw_swap_with_restart = false;
@@ -1680,7 +1716,10 @@ mod tests {
                 }
             }
         }
-        assert!(saw_swap_with_restart, "SwapApplied must carry the restart policy");
+        assert!(
+            saw_swap_with_restart,
+            "SwapApplied must carry the restart policy"
+        );
     }
 
     /// HR-4: `apply_policy: live-migrate` keeps in-flight runs
@@ -1693,7 +1732,11 @@ mod tests {
 
         // Mount with live-migrate policy.
         let first = mgr
-            .publish(flow.clone(), body_with_policy("v1", "live-migrate"), DefinitionSource::Api)
+            .publish(
+                flow.clone(),
+                body_with_policy("v1", "live-migrate"),
+                DefinitionSource::Api,
+            )
             .await
             .unwrap();
         let rev1 = match first {
@@ -1706,7 +1749,11 @@ mod tests {
         let c_settings = crate::run::RunCancel::new();
         let _rs = mgr.register_run(flow.clone(), rev1, c_settings.clone());
         let _ = mgr
-            .publish(flow.clone(), body_with_policy("v2", "live-migrate"), DefinitionSource::Api)
+            .publish(
+                flow.clone(),
+                body_with_policy("v2", "live-migrate"),
+                DefinitionSource::Api,
+            )
             .await
             .unwrap();
         assert!(
@@ -1720,7 +1767,11 @@ mod tests {
         let c_structural = crate::run::RunCancel::new();
         let _rstruct = mgr.register_run(flow.clone(), head_after_settings, c_structural.clone());
         let _ = mgr
-            .publish(flow.clone(), structural_body_with_policy("live-migrate"), DefinitionSource::Api)
+            .publish(
+                flow.clone(),
+                structural_body_with_policy("live-migrate"),
+                DefinitionSource::Api,
+            )
             .await
             .unwrap();
         assert!(
@@ -1833,7 +1884,10 @@ mod tests {
                 break;
             }
         }
-        assert!(saw_failed, "ResolveFailed must be emitted for unresolvable head");
+        assert!(
+            saw_failed,
+            "ResolveFailed must be emitted for unresolvable head"
+        );
     }
 
     // -------- HR-6 tests --------
@@ -2116,7 +2170,10 @@ mod tests {
                 _ => break,
             }
         }
-        assert!(saw_revoked, "KindRevoked must be emitted by engine.deregister_kind");
+        assert!(
+            saw_revoked,
+            "KindRevoked must be emitted by engine.deregister_kind"
+        );
         assert_eq!(mgr.active_topologies().len().await, 0);
     }
 }

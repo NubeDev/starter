@@ -18,7 +18,12 @@ use starter_spi::{Error, Result};
 /// `actor_columns`).
 pub(crate) fn actor_columns(
     actor: &Actor,
-) -> Result<(String, Option<String>, Option<serde_json::Value>, Option<String>)> {
+) -> Result<(
+    String,
+    Option<String>,
+    Option<serde_json::Value>,
+    Option<String>,
+)> {
     Ok(match actor {
         Actor::User { subject } => ("user".into(), Some(subject.clone()), None, None),
         Actor::Agent { run_id, model } => (

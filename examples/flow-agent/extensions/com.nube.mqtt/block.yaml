@@ -1,0 +1,61 @@
+# Hot-loadable MQTT extension for `flow-agent`
+# (DOCS/extensions/scope/FLOW-NODES.md, slice B acceptance bundle).
+#
+# Two flow node kinds:
+#   * com.nube.mqtt.publish   — non-streaming, fire-and-forget publish
+#   * com.nube.mqtt.subscribe — streaming trigger; emits one
+#                               `stream.event` per inbound message
+#
+# The driver binary lives at `bin/mqtt-driver`. It is the same
+# Rust crate that ships under `src/main.rs`; build with
+# `cargo build -p mqtt-driver --release` and copy the binary into
+# `bin/` for the bundle to be hot-loadable (the demo Makefile wires
+# this).
+v: 1
+id: com.nube.mqtt
+version: 0.1.0
+display_name: "MQTT"
+description_file: docs/extension.md
+authors:
+  - "ap@nube-io.com"
+
+runtime:
+  kind: process
+  bin: bin/mqtt-driver
+
+supervision:
+  restart: on_crash
+  max_restarts: 5
+  within_seconds: 60
+  shutdown_grace_ms: 5000
+
+# `mqtt:*` lets the driver read broker credentials through the
+# host's secret-store gate (parent SCOPE F-NPP). `http_out` carries
+# no authorities so the driver cannot exfiltrate over HTTP — the
+# only outbound connection it opens is the broker TCP socket.
+capabilities:
+  - kind: secrets
+    prefixes: ["mqtt:*"]
+
+config_schema: schemas/config.json
+config:
+  broker_url: "tcp://localhost:1883"
+  client_id_prefix: "flow-agent"
+
+contributes:
+  nodes:
+    - kind: com.nube.mqtt.publish
+      settings_schema: schemas/publish.settings.json
+      description_file: docs/publish.md
+      facets: ["transport", "io"]
+      streaming: false
+    - kind: com.nube.mqtt.subscribe
+      settings_schema: schemas/subscribe.settings.json
+      description_file: docs/subscribe.md
+      facets: ["transport", "io", "trigger"]
+      streaming: true
+
+  i18n:
+    catalogs:
+      en: i18n/en.json
+      es: i18n/es.json

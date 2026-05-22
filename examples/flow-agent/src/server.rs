@@ -28,10 +28,12 @@ use utoipa::OpenApi;
 
 use crate::ai_runtime::AiRuntime;
 use crate::cache_demo::router as cache_demo_router;
+use crate::extensions::{router as extensions_router, ExtensionManager};
 use crate::flow_engine::FlowEngine;
 use crate::insights_mock::{
     default_fixtures_dir, router as insights_router, InsightsFixtures, InsightsState,
 };
+use crate::node_kinds::{router as node_kinds_router, NodeKindsState};
 use crate::rest::{router as rest_router, FlowAgentApi, RestState};
 use crate::sse::EventHub;
 use crate::store::{AgentStore, FlowStore, RunStore};
@@ -91,6 +93,27 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         agent_sessions,
     };
 
+    // Slice A of `DOCS/extensions/scope/FLOW-NODES.md`: ship the
+    // descriptor surface. Slice B's `POST /admin/extensions/reload`
+    // will swap the dynamic half through the `ArcSwap` inside this
+    // state.
+    let node_kinds_state = NodeKindsState::with_builtins();
+
+    // Slice B (`DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-6):
+    // pull the extensions root from the `STARTER_EXTENSIONS_DIR`
+    // env var (the demo's default location is
+    // `examples/flow-agent/extensions/`). The manager scans on
+    // construction and exposes `POST /admin/extensions/reload` so an
+    // operator can hot-load new bundles after edit. If the env var
+    // is unset, fall back to the demo dir alongside the binary.
+    let extensions_root = std::env::var("STARTER_EXTENSIONS_DIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|_| {
+            std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("extensions")
+        });
+    let extensions_mgr =
+        ExtensionManager::bootstrap(extensions_root, node_kinds_state.clone(), hub.clone());
+
     // Prefs surface: SQLite-backed PrefsStore + starter defaults
     // (en-US, UTC, metric). The router is wrapped with
     // `with_anonymous_principal` since flow-agent has no real auth;
@@ -134,6 +157,8 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         .merge_router(rest_router(rest_state))
         .merge_router(insights_router(insights_state))
         .merge_router(cache_demo_router())
+        .merge_router(node_kinds_router::<AppState>(node_kinds_state))
+        .merge_router(extensions_router::<AppState>(extensions_mgr))
         .merge_router(prefs)
         .merge_router(i18n)
         .with_openapi(FlowAgentApi::openapi())

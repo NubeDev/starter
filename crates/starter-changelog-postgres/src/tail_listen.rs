@@ -89,12 +89,11 @@ impl ChangeTail for PgListenTail {
         // trigger a notify that we'll then drain into the empty
         // tail of the SELECT — at worst a redundant query, never a
         // missed row.
-        let cursor: Option<(DateTime<Utc>, String)> = sqlx::query_as(
-            "SELECT at, id FROM starter_changes ORDER BY at DESC, id DESC LIMIT 1",
-        )
-        .fetch_optional(self.pool.sqlx())
-        .await
-        .map_err(internal)?;
+        let cursor: Option<(DateTime<Utc>, String)> =
+            sqlx::query_as("SELECT at, id FROM starter_changes ORDER BY at DESC, id DESC LIMIT 1")
+                .fetch_optional(self.pool.sqlx())
+                .await
+                .map_err(internal)?;
 
         let pool = self.pool.clone();
         let safety_interval = self.safety_interval;

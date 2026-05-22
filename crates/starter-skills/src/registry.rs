@@ -492,10 +492,12 @@ impl SkillRegistry {
                 dir: root.to_path_buf(),
                 source,
             })?;
-            let file_type = entry.file_type().map_err(|source| LoadError::InvalidLoadDir {
-                dir: root.to_path_buf(),
-                source,
-            })?;
+            let file_type = entry
+                .file_type()
+                .map_err(|source| LoadError::InvalidLoadDir {
+                    dir: root.to_path_buf(),
+                    source,
+                })?;
             if !file_type.is_dir() {
                 continue;
             }
@@ -651,8 +653,7 @@ fn resource_refs(bundle: &Bundle) -> Vec<ResourceRef> {
     // (which may already be absolute) if canonicalisation fails for
     // a reason we cannot recover from — the on-mount hash check will
     // surface the drift either way.
-    let bundle_root_abs =
-        fs::canonicalize(&bundle.root).unwrap_or_else(|_| bundle.root.clone());
+    let bundle_root_abs = fs::canonicalize(&bundle.root).unwrap_or_else(|_| bundle.root.clone());
     let mut out = Vec::with_capacity(bundle.resources.len());
     for r in &bundle.resources {
         let bytes = if crate::approval::is_text_path(&r.relative_path) {
@@ -723,15 +724,11 @@ mod tests {
     }
 
     fn approved_skill_md(id: &str) -> String {
-        format!(
-            "---\nid: {id}\ndescription: smoke\ntrust: approved\n---\nbody\n"
-        )
+        format!("---\nid: {id}\ndescription: smoke\ntrust: approved\n---\nbody\n")
     }
 
     fn quarantined_skill_md(id: &str) -> String {
-        format!(
-            "---\nid: {id}\ndescription: smoke\ntrust: quarantined\n---\nbody\n"
-        )
+        format!("---\nid: {id}\ndescription: smoke\ntrust: quarantined\n---\nbody\n")
     }
 
     /// Smoke 1 from the stage brief: "Extension-contributed skill is
@@ -778,8 +775,7 @@ mod tests {
             .expect("approve ok");
 
         assert!(registry.list_quarantined().is_empty());
-        let a_ids: Vec<String> =
-            registry.list().iter().map(|s| s.id.to_string()).collect();
+        let a_ids: Vec<String> = registry.list().iter().map(|s| s.id.to_string()).collect();
         assert_eq!(a_ids, vec!["starter.ext.greet".to_string()]);
         assert_eq!(
             registry.get(&skill_id).unwrap().trust,
@@ -845,10 +841,7 @@ mod tests {
             "no approval row matches H2 — must re-quarantine"
         );
         assert_eq!(registry.list_quarantined().len(), 1);
-        assert_eq!(
-            registry.get(&skill_id).unwrap().trust,
-            Trust::Quarantined
-        );
+        assert_eq!(registry.get(&skill_id).unwrap().trust, Trust::Quarantined);
 
         // The H1 row is **still in the store** (inert) — R-skills-7:
         // drift never mutates the store. Only an explicit revoke
@@ -890,11 +883,7 @@ mod tests {
         let tmp = TempDir::new("fm-quar");
         let bundle = tmp.path().join("bundle");
         fs::create_dir_all(&bundle).unwrap();
-        write(
-            &bundle,
-            "SKILL.md",
-            &quarantined_skill_md("starter.fm.q"),
-        );
+        write(&bundle, "SKILL.md", &quarantined_skill_md("starter.fm.q"));
 
         let registry = SkillRegistry::builder()
             .with_approval_store(InMemoryApprovalStore::new())

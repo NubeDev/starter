@@ -64,7 +64,10 @@ async fn clear_redo_wipes_only_that_actor() {
         subject: "bob".into(),
     };
 
-    cursor.push_redo(&alice, GroupId("a1".into())).await.unwrap();
+    cursor
+        .push_redo(&alice, GroupId("a1".into()))
+        .await
+        .unwrap();
     cursor.push_redo(&bob, GroupId("b1".into())).await.unwrap();
     cursor.clear_redo(&alice).await.unwrap();
 
@@ -120,7 +123,10 @@ async fn agent_actor_keyed_by_run_id_not_model() {
         run_id: "run-42".into(),
         model: "claude-3-opus".into(),
     };
-    cursor.push_redo(&before, GroupId("g".into())).await.unwrap();
+    cursor
+        .push_redo(&before, GroupId("g".into()))
+        .await
+        .unwrap();
 
     let after = Actor::Agent {
         run_id: "run-42".into(),

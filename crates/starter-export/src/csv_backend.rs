@@ -40,7 +40,11 @@ impl Exporter for CsvExporter {
         if let Some(headers) = request.payload.get("headers").and_then(|v| v.as_array()) {
             let row: Vec<String> = headers
                 .iter()
-                .map(|v| v.as_str().map(str::to_string).unwrap_or_else(|| v.to_string()))
+                .map(|v| {
+                    v.as_str()
+                        .map(str::to_string)
+                        .unwrap_or_else(|| v.to_string())
+                })
                 .collect();
             writer
                 .write_record(row)
@@ -56,9 +60,9 @@ impl Exporter for CsvExporter {
             })?;
 
         for (idx, row) in rows.iter().enumerate() {
-            let cells = row.as_array().ok_or_else(|| {
-                ExportError::InvalidPayload(format!("row {idx} is not an array"))
-            })?;
+            let cells = row
+                .as_array()
+                .ok_or_else(|| ExportError::InvalidPayload(format!("row {idx} is not an array")))?;
             let record: Result<Vec<String>, ExportError> = cells
                 .iter()
                 .map(|cell| match cell {

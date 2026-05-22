@@ -42,12 +42,10 @@ impl FlowStore for MemStore {
         revision: Option<FlowRevisionId>,
     ) -> FlowResult<FlowRevision> {
         let g = self.inner.lock().unwrap();
-        let revs = g
-            .get(&flow_id)
-            .ok_or_else(|| FlowError::NotFound {
-                kind: "flow",
-                id: flow_id.to_string(),
-            })?;
+        let revs = g.get(&flow_id).ok_or_else(|| FlowError::NotFound {
+            kind: "flow",
+            id: flow_id.to_string(),
+        })?;
         let rev = match revision {
             None => revs.last().cloned(),
             Some(id) => revs.iter().find(|r| r.revision_id == id).cloned(),
@@ -200,11 +198,9 @@ async fn hr5_remove_event_publishes_delete() {
 
     let mut rx = mgr.subscribe();
 
-    apply_file_event(
-        &mgr,
-        FileEvent::Remove(path.clone()),
-        move |p| mapping.get(p).cloned(),
-    )
+    apply_file_event(&mgr, FileEvent::Remove(path.clone()), move |p| {
+        mapping.get(p).cloned()
+    })
     .await
     .unwrap();
 

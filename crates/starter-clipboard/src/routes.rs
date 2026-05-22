@@ -102,14 +102,14 @@ async fn copy(
         .get::<Principal>()
         .cloned()
         .ok_or(IntoResponse(Error::Unauthenticated))?;
-    let Json(body): Json<CopyRequest> = Json::from_request(
-        axum::extract::Request::from_parts(parts, body),
-        &(),
-    )
-    .await
-    .map_err(|e| IntoResponse(Error::Invalid {
-        message: format!("invalid request body: {e}"),
-    }))?;
+    let Json(body): Json<CopyRequest> =
+        Json::from_request(axum::extract::Request::from_parts(parts, body), &())
+            .await
+            .map_err(|e| {
+                IntoResponse(Error::Invalid {
+                    message: format!("invalid request body: {e}"),
+                })
+            })?;
 
     let id = state
         .service
@@ -143,14 +143,14 @@ async fn paste(
         .get::<Principal>()
         .cloned()
         .ok_or(IntoResponse(Error::Unauthenticated))?;
-    let Json(body): Json<PasteRequest> = Json::from_request(
-        axum::extract::Request::from_parts(parts, body),
-        &(),
-    )
-    .await
-    .map_err(|e| IntoResponse(Error::Invalid {
-        message: format!("invalid request body: {e}"),
-    }))?;
+    let Json(body): Json<PasteRequest> =
+        Json::from_request(axum::extract::Request::from_parts(parts, body), &())
+            .await
+            .map_err(|e| {
+                IntoResponse(Error::Invalid {
+                    message: format!("invalid request body: {e}"),
+                })
+            })?;
 
     // Look up the entry once up front so we can route to the right
     // Reversible impl before opening a transaction.
@@ -168,7 +168,10 @@ async fn paste(
         .get(&entry.resource_kind)
         .cloned()
         .ok_or(IntoResponse(Error::Invalid {
-            message: format!("no Reversible registered for kind {:?}", entry.resource_kind),
+            message: format!(
+                "no Reversible registered for kind {:?}",
+                entry.resource_kind
+            ),
         }))?;
 
     // The recorder's `transaction` is `-> Result<()>`; the
@@ -191,13 +194,7 @@ async fn paste(
             let created = created_inner.clone();
             Box::pin(async move {
                 let refs = svc
-                    .paste(
-                        &principal,
-                        reversible.as_ref(),
-                        tx,
-                        &entry_id,
-                        overrides,
-                    )
+                    .paste(&principal, reversible.as_ref(), tx, &entry_id, overrides)
                     .await?;
                 *created.lock().unwrap() = refs;
                 Ok(())

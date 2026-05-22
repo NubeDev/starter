@@ -38,8 +38,7 @@ use starter_insights::nodes::rule_ai_check::{
     UPSTREAM_SLOT,
 };
 use starter_insights::nodes::rule_ai_debug::{
-    AiDebugPrompt, AiDebugResponse, AiDebugger, RuleAiDebugNode, DIAGNOSIS_SLOT,
-    ERROR_VERDICT_SLOT,
+    AiDebugPrompt, AiDebugResponse, AiDebugger, RuleAiDebugNode, DIAGNOSIS_SLOT, ERROR_VERDICT_SLOT,
 };
 use starter_insights::nodes::rule_derive::{
     RuleDeriveNode, DATASET_SLOT, OUT_DATASET_SLOT, SCRIPT_SLOT as DERIVE_SCRIPT,
@@ -261,10 +260,7 @@ async fn hvac_row_pmv_setpoint_short_cycle_with_ai_judge_and_debug() {
         SlotValue::String("hvac.setpoint.drift@1".into()),
     );
     // Missing measured_c forces a Severity::Error.
-    input.insert(
-        PARAMS_SLOT.into(),
-        SlotValue::Json(serde_json::json!({})),
-    );
+    input.insert(PARAMS_SLOT.into(), SlotValue::Json(serde_json::json!({})));
     let err_v = decode_verdict(&rule_rust.invoke(ctx(&id, &cancel), input).await.unwrap());
     assert_eq!(err_v.severity, Severity::Error);
 
@@ -404,10 +400,7 @@ async fn bills_reconciliation_row_end_to_end() {
     //     starter.ai-check / starter.ai-model:*.
     let join = VerdictJoinNode::new(
         starter_spi::insights::RuleId::new("acme.energy", "bills-pipeline", 1),
-        JoinMode::Weighted(vec![
-            ("custom".into(), 1.0),
-            ("baseline".into(), 2.0),
-        ]),
+        JoinMode::Weighted(vec![("custom".into(), 1.0), ("baseline".into(), 2.0)]),
     );
     let mut join_in = SlotMap::new();
     join_in.insert(
@@ -497,7 +490,10 @@ async fn onboarding_backfill_caps_and_flags_partial() {
     });
     let out = run_onboarding_backfill(plan, stream);
     assert!(
-        matches!(out.event, starter_insights::backfill::BackfillEvent::Truncated { .. }),
+        matches!(
+            out.event,
+            starter_insights::backfill::BackfillEvent::Truncated { .. }
+        ),
         "onboarding backfill truncated at the cap"
     );
     assert!(out.verdicts[0]
@@ -516,8 +512,7 @@ async fn onboarding_backfill_caps_and_flags_partial() {
 fn streaming_dataset_rows_chunks_and_snapshots() {
     use starter_insights::streaming::StreamingDatasetRows;
     use starter_spi::insights::DatasetRows;
-    let rows: Vec<serde_json::Value> =
-        (0..23_000).map(|i| serde_json::json!({"i": i})).collect();
+    let rows: Vec<serde_json::Value> = (0..23_000).map(|i| serde_json::json!({"i": i})).collect();
     let s = StreamingDatasetRows::from_rows(rows);
     assert_eq!(s.len(), 23_000);
     assert_eq!(s.chunk_count(), 3); // 10k + 10k + 3k
@@ -660,7 +655,7 @@ mod cache_tests {
 
 #[cfg(feature = "sqlite")]
 mod d5_durable_fix {
-    
+
     use chrono::{TimeZone, Utc};
     use starter_insights::retroactive::{attach_retroactive_flag, MutationWatermarks};
     use starter_insights::rollups::{RollupEngine, WindowClass};
@@ -735,12 +730,7 @@ mod d5_durable_fix {
             .unwrap();
         assert_eq!(
             engine
-                .pending_invalidations(
-                    "energy",
-                    "usage.baseline-deviation",
-                    1,
-                    WindowClass::Day
-                )
+                .pending_invalidations("energy", "usage.baseline-deviation", 1, WindowClass::Day)
                 .await
                 .unwrap(),
             1,
@@ -777,12 +767,7 @@ mod d5_durable_fix {
         );
         assert_eq!(
             engine
-                .pending_invalidations(
-                    "energy",
-                    "usage.baseline-deviation",
-                    1,
-                    WindowClass::Day
-                )
+                .pending_invalidations("energy", "usage.baseline-deviation", 1, WindowClass::Day)
                 .await
                 .unwrap(),
             0,

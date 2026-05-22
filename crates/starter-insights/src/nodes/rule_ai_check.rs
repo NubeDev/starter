@@ -38,9 +38,7 @@ use async_trait::async_trait;
 use chrono::Utc;
 use serde::{Deserialize, Serialize};
 use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue};
-use starter_spi::insights::{
-    rule_error_flag, Coverage, RuleErrorKind, RuleId, Severity, Verdict,
-};
+use starter_spi::insights::{rule_error_flag, Coverage, RuleErrorKind, RuleId, Severity, Verdict};
 
 use crate::ai::{auto_tag_ai_check, ModelFamily};
 use crate::nodes::VERDICT_SLOT;
@@ -168,12 +166,7 @@ impl NodeBehavior for RuleAiCheckNode {
             }
         };
 
-        let mut v = Verdict::new(
-            rule_id,
-            Utc::now(),
-            judgement.severity,
-            judgement.summary,
-        );
+        let mut v = Verdict::new(rule_id, Utc::now(), judgement.severity, judgement.summary);
         auto_tag_ai_check(&mut v, self.judge.family(), &judgement.exact_model);
 
         let mut out = SlotMap::new();

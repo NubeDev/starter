@@ -57,11 +57,7 @@ impl Diagnostic {
     }
 
     /// Convenience constructor for the most common shape.
-    pub fn new(
-        severity: Severity,
-        code: impl Into<String>,
-        message: impl Into<String>,
-    ) -> Self {
+    pub fn new(severity: Severity, code: impl Into<String>, message: impl Into<String>) -> Self {
         Self {
             severity,
             code: code.into(),
@@ -93,7 +89,10 @@ mod tests {
     fn field_omitted_when_none() {
         let d = Diagnostic::new(Severity::Error, "x.y", "msg");
         let v = serde_json::to_value(&d).unwrap();
-        assert!(v.get("field").is_none(), "global diagnostic must omit `field` key");
+        assert!(
+            v.get("field").is_none(),
+            "global diagnostic must omit `field` key"
+        );
         assert!(d.is_global());
     }
 

@@ -40,8 +40,8 @@ mod parse;
 mod subscription;
 mod substitute;
 
-pub use eval::{BindingError, EvalContext, evaluate};
+pub use eval::{evaluate, BindingError, EvalContext};
 pub use graph::{ChildLink, EntityGraph, EntityId, NullGraph};
 pub use parse::{Binding, ParseError, Source, Step};
-pub use subscription::{SlotAccess, SubscriptionPlan, Subject};
+pub use subscription::{SlotAccess, Subject, SubscriptionPlan};
 pub use substitute::{substitute_text, substitute_tree};

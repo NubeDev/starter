@@ -39,7 +39,7 @@ use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use starter_ui_bindings::{
-    EntityGraph, EntityId, EvalContext, SlotAccess, SubscriptionPlan, Subject, substitute_tree,
+    substitute_tree, EntityGraph, EntityId, EvalContext, SlotAccess, Subject, SubscriptionPlan,
 };
 use starter_ui_ir::ComponentTree;
 

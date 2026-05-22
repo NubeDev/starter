@@ -117,6 +117,27 @@ export type ProviderStatus = {
   hint: string;
 };
 
+// Slice A of `DOCS/extensions/scope/FLOW-NODES.md`: the descriptor
+// surface served by `GET /api/node-kinds`. Each entry is a built-in
+// or extension-contributed flow node kind; `extension_id` is `null`
+// for built-ins. The `*_url` fields are absolute paths into
+// `flow-agent`'s REST surface so the editor never has to know the
+// route shape.
+export type NodeKindDto = {
+  kind: string;
+  extension_id?: string | null;
+  label: string;
+  summary: string;
+  help: string;
+  label_key: string;
+  summary_key: string;
+  help_key: string;
+  settings_schema_url: string;
+  description_url?: string | null;
+  facets: string[];
+  streaming: boolean;
+};
+
 export const api = {
   flows: {
     list: () => req<FlowSummary[]>("GET", "/api/flows"),
@@ -190,6 +211,19 @@ export const api = {
     },
     stats: () => req<CacheDemoStats>("GET", "/api/cache-demo/stats"),
     clear: () => req<CacheDemoStats>("POST", "/api/cache-demo/clear"),
+  },
+  nodeKinds: {
+    list: () => req<NodeKindDto[]>("GET", "/api/node-kinds"),
+    settingsSchema: (kind: string) =>
+      req<unknown>(
+        "GET",
+        `/api/node-kinds/${encodeURIComponent(kind)}/settings-schema`,
+      ),
+    description: (kind: string) =>
+      req<string>(
+        "GET",
+        `/api/node-kinds/${encodeURIComponent(kind)}/description`,
+      ),
   },
 };
 

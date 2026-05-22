@@ -83,7 +83,10 @@ async fn invoke_rule(node: &RuleRustNode, rule_id: &str, params: serde_json::Val
     let id = NodeId::new("iot.test.rule").unwrap();
     let cancel = NoCancel;
     let mut input = SlotMap::new();
-    input.insert(RULE_ID_SLOT.to_owned(), SlotValue::String(rule_id.to_owned()));
+    input.insert(
+        RULE_ID_SLOT.to_owned(),
+        SlotValue::String(rule_id.to_owned()),
+    );
     input.insert(PARAMS_SLOT.to_owned(), SlotValue::Json(params));
     node.invoke(make_ctx(&id, &cancel), input)
         .await
@@ -196,12 +199,7 @@ async fn forced_rule_failure_routes_to_notify_ops_via_severity_error() {
 
     // 1. Unregistered rule id → Severity::Error verdict.
     let err_verdict = decode_verdict(
-        &invoke_rule(
-            &rule_rust,
-            "iot.does-not-exist@1",
-            serde_json::json!({}),
-        )
-        .await,
+        &invoke_rule(&rule_rust, "iot.does-not-exist@1", serde_json::json!({})).await,
     );
     assert_eq!(err_verdict.severity, Severity::Error);
     assert!(err_verdict

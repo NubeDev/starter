@@ -130,11 +130,7 @@ pub fn hash_bundle(bundle_root: impl AsRef<Path>) -> io::Result<String> {
 
 /// Recursive walk that respects [`EXCLUDED`]. Collects
 /// `(relative_path_with_forward_slashes, absolute_path)` pairs.
-fn collect(
-    root: &Path,
-    dir: &Path,
-    out: &mut Vec<(String, PathBuf)>,
-) -> io::Result<()> {
+fn collect(root: &Path, dir: &Path, out: &mut Vec<(String, PathBuf)>) -> io::Result<()> {
     for entry in fs::read_dir(dir)? {
         let entry = entry?;
         let name = entry.file_name();
@@ -440,7 +436,10 @@ mod tests {
         write_bytes(dirty.path(), ".idea/workspace.xml", b"<x/>");
         write_bytes(dirty.path(), "__pycache__/foo.pyc", b"\0\0");
 
-        assert_eq!(hash_bundle(clean.path()).unwrap(), hash_bundle(dirty.path()).unwrap());
+        assert_eq!(
+            hash_bundle(clean.path()).unwrap(),
+            hash_bundle(dirty.path()).unwrap()
+        );
     }
 
     /// Pin a fixture-bundle digest. If a future refactor changes
@@ -473,10 +472,7 @@ mod tests {
     /// the *spec* drifts in addition to the *implementation*.
     fn expected_pinned_digest() -> String {
         let mut h = Hasher::new();
-        let entries: [(&str, &[u8]); 2] = [
-            ("SKILL.md", b"hello\n"),
-            ("docs/a.txt", b"world\n"),
-        ];
+        let entries: [(&str, &[u8]); 2] = [("SKILL.md", b"hello\n"), ("docs/a.txt", b"world\n")];
         for (path, content) in entries {
             h.update(&(path.len() as u64).to_le_bytes());
             h.update(path.as_bytes());

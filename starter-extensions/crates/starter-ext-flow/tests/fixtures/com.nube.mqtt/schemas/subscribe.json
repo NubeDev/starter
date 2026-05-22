@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "com.nube.mqtt.subscribe settings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["broker", "topic"],
+  "properties": {
+    "broker": {
+      "type": "string"
+    },
+    "topic": {
+      "type": "string",
+      "description": "Topic filter; MQTT wildcards (#, +) accepted."
+    },
+    "qos": {
+      "type": "integer",
+      "enum": [0, 1, 2],
+      "default": 0
+    }
+  }
+}

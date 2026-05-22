@@ -167,7 +167,10 @@ async fn hot_reload_mixed_edit_fires_slot_change_for_config_delta() {
             _ => break,
         }
     }
-    assert!(saw_mixed, "mixed publish must emit RevisionPublished(Mixed)");
+    assert!(
+        saw_mixed,
+        "mixed publish must emit RevisionPublished(Mixed)"
+    );
     assert!(saw_swap, "mixed publish must emit SwapApplied");
 
     // Now drive a TRUE mixed where the wiring-stable node carries

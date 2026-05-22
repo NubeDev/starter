@@ -14,7 +14,7 @@ pub const KIND_ID: &str = "starter.flow.trigger.event";
 
 /// Static metadata for the catalog / discovery surface. Help text is
 /// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
-pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+pub static DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
     starter_flow_spi::node::NodeDescriptor::new(
         KIND_ID,
         "starter.flow.node.trigger-event.label",

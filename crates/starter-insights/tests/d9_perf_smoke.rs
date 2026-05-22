@@ -49,8 +49,8 @@ use starter_insights::cache::DerivationCache;
 use starter_insights::rollups::{RollupEngine, WindowClass};
 use starter_insights::sqlite::{VerdictStore, INSIGHTS_MIGRATION_SOURCE};
 use starter_spi::insights::{
-    Coverage, Dataset, DatasetSchema, RuleId, Severity, Tags, TimeZoneId, VecDatasetRows,
-    Verdict, Window,
+    Coverage, Dataset, DatasetSchema, RuleId, Severity, Tags, TimeZoneId, VecDatasetRows, Verdict,
+    Window,
 };
 
 // ----- D9 budgets (DOCS/Insights/SCOPE.md line 1406) -----
@@ -74,9 +74,24 @@ struct Reference {
 }
 
 const REF_RULES: &[Reference] = &[
-    Reference { namespace: "iot",    name: "device.online",             major: 1, domain: "iot"    },
-    Reference { namespace: "energy", name: "usage.baseline-deviation",  major: 1, domain: "energy" },
-    Reference { namespace: "hvac",   name: "pmv.comfort",               major: 1, domain: "hvac"   },
+    Reference {
+        namespace: "iot",
+        name: "device.online",
+        major: 1,
+        domain: "iot",
+    },
+    Reference {
+        namespace: "energy",
+        name: "usage.baseline-deviation",
+        major: 1,
+        domain: "energy",
+    },
+    Reference {
+        namespace: "hvac",
+        name: "pmv.comfort",
+        major: 1,
+        domain: "hvac",
+    },
 ];
 
 /// p95 of an unsorted vector of durations, expressed in ms.
@@ -250,14 +265,7 @@ async fn d9_slo_smoke() {
         let r = &REF_RULES[i % REF_RULES.len()];
         let t0 = Instant::now();
         let series = rollup
-            .read_timeseries_ungrouped(
-                r.namespace,
-                r.name,
-                r.major,
-                WindowClass::Day,
-                start,
-                end,
-            )
+            .read_timeseries_ungrouped(r.namespace, r.name, r.major, WindowClass::Day, start, end)
             .await
             .expect("ungrouped");
         t_rollup_ts.push(t0.elapsed());

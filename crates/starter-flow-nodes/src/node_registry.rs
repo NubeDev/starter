@@ -39,6 +39,7 @@ use starter_flow_spi::node::{KindId, NodeDescriptor, NodeKindRegistry};
 /// that need a stable sort should sort by `descriptor.kind`.
 #[allow(clippy::vec_init_then_push)]
 pub fn builtin_descriptors() -> Vec<&'static NodeDescriptor> {
+    #[allow(unused_mut)]
     let mut out: Vec<&'static NodeDescriptor> = Vec::new();
 
     #[cfg(feature = "transform")]
@@ -107,7 +108,7 @@ impl StaticNodeKindRegistry {
     pub fn register(&mut self, descriptor: &'static NodeDescriptor) {
         if self
             .by_kind
-            .insert(descriptor.kind.to_owned(), descriptor)
+            .insert(descriptor.kind.as_ref().to_owned(), descriptor)
             .is_none()
         {
             self.order.push(descriptor);
@@ -138,7 +139,7 @@ mod tests {
     #[test]
     fn descriptors_are_valid_kind_ids() {
         for d in builtin_descriptors() {
-            KindId::new(d.kind)
+            KindId::new(d.kind.clone())
                 .unwrap_or_else(|e| panic!("descriptor.kind {:?} not a valid KindId: {e}", d.kind));
         }
     }
@@ -161,7 +162,7 @@ mod tests {
     fn registry_lookup_round_trips() {
         let reg = StaticNodeKindRegistry::with_builtins();
         for d in builtin_descriptors() {
-            let kind = KindId::new(d.kind).unwrap();
+            let kind = KindId::new(d.kind.clone()).unwrap();
             let found = reg.lookup(&kind).expect("descriptor registered");
             assert_eq!(found.kind, d.kind);
         }
@@ -171,7 +172,7 @@ mod tests {
     fn all_kinds_unique() {
         let mut seen = std::collections::HashSet::new();
         for d in builtin_descriptors() {
-            assert!(seen.insert(d.kind), "duplicate kind id: {}", d.kind);
+            assert!(seen.insert(d.kind.clone()), "duplicate kind id: {}", d.kind);
         }
     }
 }

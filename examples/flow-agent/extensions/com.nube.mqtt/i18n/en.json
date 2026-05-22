@@ -1,0 +1,8 @@
+{
+  "com.nube.mqtt.publish.label": "MQTT Publish",
+  "com.nube.mqtt.publish.summary": "Publish one message to an MQTT broker.",
+  "com.nube.mqtt.publish.help": "Sends a single MQTT message to the configured broker. Set the topic + QoS in the node settings; route the payload through the input slot.",
+  "com.nube.mqtt.subscribe.label": "MQTT Subscribe",
+  "com.nube.mqtt.subscribe.summary": "Trigger flows on inbound MQTT messages.",
+  "com.nube.mqtt.subscribe.help": "Opens an MQTT subscription on the configured broker and fires the flow once per inbound message until the run is cancelled."
+}

@@ -33,7 +33,11 @@ impl AgentLogService {
     /// Paged list of agent-authored changes. Forces
     /// `actor_kind = "agent"`; the caller may further narrow by
     /// `actor_id` (run id) or `actor_model`.
-    pub async fn list(&self, principal: &Principal, mut filter: ChangeFilter) -> Result<ChangePage> {
+    pub async fn list(
+        &self,
+        principal: &Principal,
+        mut filter: ChangeFilter,
+    ) -> Result<ChangePage> {
         filter.actor_kind = Some("agent".into());
         let page = self.log.list(&filter).await?;
         let items = page

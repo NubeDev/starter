@@ -53,10 +53,7 @@ impl StreamingDatasetRows {
     }
 
     /// Build from a flat row stream with a caller-chosen chunk size.
-    pub fn from_rows_with_chunk<I: IntoIterator<Item = Value>>(
-        rows: I,
-        chunk_rows: usize,
-    ) -> Self {
+    pub fn from_rows_with_chunk<I: IntoIterator<Item = Value>>(rows: I, chunk_rows: usize) -> Self {
         let chunk_rows = chunk_rows.max(1);
         let mut chunks: Vec<Vec<Value>> = Vec::new();
         let mut current: Vec<Value> = Vec::with_capacity(chunk_rows);
@@ -101,10 +98,7 @@ impl StreamingDatasetRows {
 
 impl DatasetRows for StreamingDatasetRows {
     fn snapshot(&self) -> Vec<Value> {
-        let chunks = self
-            .chunks
-            .lock()
-            .expect("StreamingDatasetRows poisoned");
+        let chunks = self.chunks.lock().expect("StreamingDatasetRows poisoned");
         let mut flat = Vec::with_capacity(self.total);
         for c in chunks.iter() {
             flat.extend_from_slice(c);

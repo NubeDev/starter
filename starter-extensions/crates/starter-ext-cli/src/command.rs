@@ -257,9 +257,7 @@ impl Command for ExtensionSubcommand {
 /// backtrace; everything else is a user-facing message.
 fn dispatch_to_cmd_err(e: DispatchError) -> CommandError {
     match e {
-        DispatchError::Substrate(m) => {
-            CommandError::Other(std::io::Error::other(m).into())
-        }
+        DispatchError::Substrate(m) => CommandError::Other(std::io::Error::other(m).into()),
         other => CommandError::UserFacing(other.to_string()),
     }
 }

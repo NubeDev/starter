@@ -57,9 +57,7 @@ pub fn enforce_page_state_bytes(page_state: &JsonValue) -> Result<(), SduiError>
     if bytes > MAX_PAGE_STATE_BYTES {
         return Err(SduiError::PayloadTooLarge {
             what: WhatTag::PageStateBytes,
-            detail: format!(
-                "page_state is {bytes} bytes, cap is {MAX_PAGE_STATE_BYTES}",
-            ),
+            detail: format!("page_state is {bytes} bytes, cap is {MAX_PAGE_STATE_BYTES}",),
         });
     }
     Ok(())
@@ -201,9 +199,7 @@ pub fn enforce_table_page_size(size: usize) -> Result<(), SduiError> {
     if size > MAX_TABLE_ROWS_PER_PAGE {
         return Err(SduiError::PayloadTooLarge {
             what: WhatTag::TableRowsPerPage,
-            detail: format!(
-                "page size {size} > cap {MAX_TABLE_ROWS_PER_PAGE}",
-            ),
+            detail: format!("page size {size} > cap {MAX_TABLE_ROWS_PER_PAGE}",),
         });
     }
     Ok(())

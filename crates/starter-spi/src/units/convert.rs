@@ -9,9 +9,9 @@ use uom::si::angle::{degree as angle_degree, radian};
 use uom::si::area::{acre, hectare, square_foot, square_meter};
 use uom::si::energy::{btu_it as energy_btu, joule, kilojoule, kilowatt_hour};
 use uom::si::f64::{
-    Angle as UomAngle, Area as UomArea, Energy as UomEnergy, Frequency as UomFrequency,
-    Length, Mass, Power as UomPower, Pressure, ThermodynamicTemperature, Time as UomTime,
-    Velocity, Volume as UomVolume,
+    Angle as UomAngle, Area as UomArea, Energy as UomEnergy, Frequency as UomFrequency, Length,
+    Mass, Power as UomPower, Pressure, ThermodynamicTemperature, Time as UomTime, Velocity,
+    Volume as UomVolume,
 };
 use uom::si::frequency::{hertz, kilohertz, megahertz};
 use uom::si::length::{foot, meter};
@@ -96,9 +96,7 @@ pub fn normalize_for_storage(
 
         (Quantity::Power, Unit::Watt) => Ok(UomPower::new::<watt>(value).get::<watt>()),
         (Quantity::Power, Unit::Kilowatt) => Ok(UomPower::new::<kilowatt>(value).get::<watt>()),
-        (Quantity::Power, Unit::Horsepower) => {
-            Ok(UomPower::new::<horsepower>(value).get::<watt>())
-        }
+        (Quantity::Power, Unit::Horsepower) => Ok(UomPower::new::<horsepower>(value).get::<watt>()),
 
         (Quantity::Area, Unit::SquareMeter) => {
             Ok(UomArea::new::<square_meter>(value).get::<square_meter>())
@@ -107,18 +105,12 @@ pub fn normalize_for_storage(
             Ok(UomArea::new::<square_foot>(value).get::<square_meter>())
         }
         (Quantity::Area, Unit::Acre) => Ok(UomArea::new::<acre>(value).get::<square_meter>()),
-        (Quantity::Area, Unit::Hectare) => {
-            Ok(UomArea::new::<hectare>(value).get::<square_meter>())
-        }
+        (Quantity::Area, Unit::Hectare) => Ok(UomArea::new::<hectare>(value).get::<square_meter>()),
 
         (Quantity::Angle, Unit::Radian) => Ok(UomAngle::new::<radian>(value).get::<radian>()),
-        (Quantity::Angle, Unit::Degree) => {
-            Ok(UomAngle::new::<angle_degree>(value).get::<radian>())
-        }
+        (Quantity::Angle, Unit::Degree) => Ok(UomAngle::new::<angle_degree>(value).get::<radian>()),
 
-        (Quantity::Frequency, Unit::Hertz) => {
-            Ok(UomFrequency::new::<hertz>(value).get::<hertz>())
-        }
+        (Quantity::Frequency, Unit::Hertz) => Ok(UomFrequency::new::<hertz>(value).get::<hertz>()),
         (Quantity::Frequency, Unit::Kilohertz) => {
             Ok(UomFrequency::new::<kilohertz>(value).get::<hertz>())
         }
@@ -142,12 +134,13 @@ pub fn from_canonical(
     target_unit: Unit,
 ) -> Result<f64, UnitError> {
     match (quantity, target_unit) {
-        (Quantity::Temperature, Unit::Celsius) => Ok(
-            ThermodynamicTemperature::new::<degree_celsius>(canonical).get::<degree_celsius>()
-        ),
-        (Quantity::Temperature, Unit::Fahrenheit) => Ok(
-            ThermodynamicTemperature::new::<degree_celsius>(canonical).get::<degree_fahrenheit>()
-        ),
+        (Quantity::Temperature, Unit::Celsius) => {
+            Ok(ThermodynamicTemperature::new::<degree_celsius>(canonical).get::<degree_celsius>())
+        }
+        (Quantity::Temperature, Unit::Fahrenheit) => {
+            Ok(ThermodynamicTemperature::new::<degree_celsius>(canonical)
+                .get::<degree_fahrenheit>())
+        }
 
         (Quantity::Pressure, Unit::Kilopascal) => {
             Ok(Pressure::new::<kilopascal>(canonical).get::<kilopascal>())

@@ -256,10 +256,14 @@ async fn mount_verification_round_trips_then_aborts_on_drift() {
     // load-bearing claim is that the *frozen* selection's hash no
     // longer matches what is on disk, so the mount aborts.
     write_file(&bundle, "greeting.md", "Hello, H2 (drifted)!\n");
-    let err = read_and_verify(&resources_h1[0])
-        .expect_err("expected HashMismatch after on-disk edit");
+    let err =
+        read_and_verify(&resources_h1[0]).expect_err("expected HashMismatch after on-disk edit");
     match err {
-        ResourceMountError::HashMismatch { expected, actual, uri } => {
+        ResourceMountError::HashMismatch {
+            expected,
+            actual,
+            uri,
+        } => {
             assert_eq!(expected, resources_h1[0].content_hash);
             assert_ne!(actual, expected, "actual differs from frozen");
             assert!(
@@ -288,4 +292,3 @@ async fn mount_verification_round_trips_then_aborts_on_drift() {
     let bytes_h2 = read_and_verify(&resources_h2[0]).expect("H2 round-trips");
     assert_eq!(bytes_h2, b"Hello, H2 (drifted)!\n");
 }
-

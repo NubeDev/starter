@@ -182,9 +182,10 @@ fn jsonschema_rule(kind: &jsonschema::error::ValidationErrorKind) -> &'static st
         K::Type { .. } => "type",
         K::UniqueItems => "uniqueItems",
         K::Custom { .. } => "custom",
-        K::FileNotFound { .. } | K::JSONParse { .. } | K::InvalidURL { .. } | K::Resolver { .. } => {
-            "resolver"
-        }
+        K::FileNotFound { .. }
+        | K::JSONParse { .. }
+        | K::InvalidURL { .. }
+        | K::Resolver { .. } => "resolver",
         K::Schema => "schema",
         K::Utf8 { .. } => "utf8",
         _ => "unknown",

@@ -95,9 +95,18 @@ mod tests {
     #[test]
     fn dedupes_and_sorts() {
         let plan = SubscriptionPlan::from_log(vec![
-            SlotAccess { entity_id: "b".into(), slot: "y".into() },
-            SlotAccess { entity_id: "a".into(), slot: "x".into() },
-            SlotAccess { entity_id: "a".into(), slot: "x".into() },
+            SlotAccess {
+                entity_id: "b".into(),
+                slot: "y".into(),
+            },
+            SlotAccess {
+                entity_id: "a".into(),
+                slot: "x".into(),
+            },
+            SlotAccess {
+                entity_id: "a".into(),
+                slot: "x".into(),
+            },
         ]);
         assert_eq!(plan.len(), 2);
         assert_eq!(plan.subjects[0].wire(), "a/x");

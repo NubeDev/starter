@@ -77,20 +77,24 @@ impl ChangeTail for SqlitePollingTail {
                 }
 
                 let rows_result = match &cursor {
-                    Some((at, id)) => sqlx::query(
-                        "SELECT * FROM starter_changes \
+                    Some((at, id)) => {
+                        sqlx::query(
+                            "SELECT * FROM starter_changes \
                          WHERE (at, id) > (?1, ?2) \
                          ORDER BY at ASC, id ASC LIMIT 256",
-                    )
-                    .bind(at.clone())
-                    .bind(id.clone())
-                    .fetch_all(pool.sqlx())
-                    .await,
-                    None => sqlx::query(
-                        "SELECT * FROM starter_changes ORDER BY at ASC, id ASC LIMIT 256",
-                    )
-                    .fetch_all(pool.sqlx())
-                    .await,
+                        )
+                        .bind(at.clone())
+                        .bind(id.clone())
+                        .fetch_all(pool.sqlx())
+                        .await
+                    }
+                    None => {
+                        sqlx::query(
+                            "SELECT * FROM starter_changes ORDER BY at ASC, id ASC LIMIT 256",
+                        )
+                        .fetch_all(pool.sqlx())
+                        .await
+                    }
                 };
 
                 let rows = match rows_result {

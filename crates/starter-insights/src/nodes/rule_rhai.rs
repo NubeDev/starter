@@ -101,8 +101,9 @@ impl NodeBehavior for RuleRhaiNode {
         };
 
         let rule_id = match input.remove(RULE_ID_SLOT) {
-            Some(SlotValue::String(s)) => crate::nodes::rule_rust::parse_rule_id(&s)
-                .unwrap_or_else(|| anon_rule_id(&script)),
+            Some(SlotValue::String(s)) => {
+                crate::nodes::rule_rust::parse_rule_id(&s).unwrap_or_else(|| anon_rule_id(&script))
+            }
             _ => anon_rule_id(&script),
         };
 

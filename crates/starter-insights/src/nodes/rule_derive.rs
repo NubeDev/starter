@@ -137,19 +137,28 @@ impl NodeBehavior for RuleDeriveNode {
     async fn invoke(&self, _ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         let script = match input.remove(SCRIPT_SLOT) {
             Some(SlotValue::String(s)) => s,
-            _ => return Err(NodeError::InvalidInput("rule.derive: `script` required".into())),
+            _ => {
+                return Err(NodeError::InvalidInput(
+                    "rule.derive: `script` required".into(),
+                ))
+            }
         };
         let dataset = match input.remove(DATASET_SLOT) {
             Some(SlotValue::Json(j)) => j,
-            _ => return Err(NodeError::InvalidInput("rule.derive: `dataset` required".into())),
+            _ => {
+                return Err(NodeError::InvalidInput(
+                    "rule.derive: `dataset` required".into(),
+                ))
+            }
         };
         let penalty = match input.remove(PENALTY_SLOT) {
             Some(SlotValue::Json(serde_json::Value::Number(n))) => n.as_f64().map(|f| f as f32),
             _ => None,
         };
         let rule_id = match input.remove(RULE_ID_SLOT) {
-            Some(SlotValue::String(s)) => crate::nodes::rule_rust::parse_rule_id(&s)
-                .unwrap_or_else(|| anon_rule_id(&script)),
+            Some(SlotValue::String(s)) => {
+                crate::nodes::rule_rust::parse_rule_id(&s).unwrap_or_else(|| anon_rule_id(&script))
+            }
             _ => anon_rule_id(&script),
         };
 

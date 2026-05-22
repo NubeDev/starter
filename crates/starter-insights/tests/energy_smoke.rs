@@ -79,8 +79,10 @@ async fn energy_row_baseline_deviation_and_peak_detect() {
     let (rules, flags) = build_registries();
     assert_eq!(rules.len(), 5, "energy pack registers five rules");
     assert!(
-        flags.list().iter().any(|f| f.namespace == "energy.quality"
-            && f.name == "unit-changed"),
+        flags
+            .list()
+            .iter()
+            .any(|f| f.namespace == "energy.quality" && f.name == "unit-changed"),
         "energy.quality.unit-changed registered"
     );
 
@@ -102,7 +104,12 @@ async fn energy_row_baseline_deviation_and_peak_detect() {
             "threshold_pct": 20.0,
         })),
     );
-    let dev = decode(&rule_rust.invoke(make_ctx(&id, &cancel), input).await.unwrap());
+    let dev = decode(
+        &rule_rust
+            .invoke(make_ctx(&id, &cancel), input)
+            .await
+            .unwrap(),
+    );
     assert_eq!(dev.severity, Severity::Warn);
     assert!(dev.tags.get("domain").is_some());
 
@@ -116,7 +123,12 @@ async fn energy_row_baseline_deviation_and_peak_detect() {
         PARAMS_SLOT.into(),
         SlotValue::Json(serde_json::json!({"value_kw": 250.0, "peak_kw": 200.0})),
     );
-    let peak = decode(&rule_rust.invoke(make_ctx(&id, &cancel), input).await.unwrap());
+    let peak = decode(
+        &rule_rust
+            .invoke(make_ctx(&id, &cancel), input)
+            .await
+            .unwrap(),
+    );
     assert_eq!(peak.severity, Severity::Critical);
 
     // Fan-in weighted: the joined verdict is at least Warn (mean rank
@@ -134,12 +146,7 @@ async fn energy_row_baseline_deviation_and_peak_detect() {
         "peak".into(),
         SlotValue::Json(serde_json::to_value(&peak).unwrap()),
     );
-    let joined = decode(
-        &join
-            .invoke(make_ctx(&id, &cancel), join_in)
-            .await
-            .unwrap(),
-    );
+    let joined = decode(&join.invoke(make_ctx(&id, &cancel), join_in).await.unwrap());
     assert!(
         joined.severity == Severity::Warn || joined.severity == Severity::Critical,
         "joined severity should reflect the worst input, got {:?}",
@@ -151,13 +158,25 @@ async fn energy_row_baseline_deviation_and_peak_detect() {
 async fn derivation_chain_applies_confidence_penalties() {
     let (rules, _) = build_registries();
     let fill = rules
-        .get(&starter_spi::insights::RuleId::new("energy", "meter.fill-gaps", 2))
+        .get(&starter_spi::insights::RuleId::new(
+            "energy",
+            "meter.fill-gaps",
+            2,
+        ))
         .unwrap();
     let resample = rules
-        .get(&starter_spi::insights::RuleId::new("weather", "resample.15m-to-1m", 1))
+        .get(&starter_spi::insights::RuleId::new(
+            "weather",
+            "resample.15m-to-1m",
+            1,
+        ))
         .unwrap();
     let normalise = rules
-        .get(&starter_spi::insights::RuleId::new("energy", "normalise.weather", 2))
+        .get(&starter_spi::insights::RuleId::new(
+            "energy",
+            "normalise.weather",
+            2,
+        ))
         .unwrap();
 
     let input = starter_spi::insights::RuleInput::from_parts(
@@ -280,10 +299,7 @@ async fn window_slide_emits_tz_aware_windows() {
     );
     input.insert(SIZE_SECS_SLOT.into(), SlotValue::Int(3600));
     input.insert(STEP_SECS_SLOT.into(), SlotValue::Int(1800));
-    input.insert(
-        TZ_SLOT.into(),
-        SlotValue::String("Europe/London".into()),
-    );
+    input.insert(TZ_SLOT.into(), SlotValue::String("Europe/London".into()));
     input.insert(EXPECTED_PER_WINDOW_SLOT.into(), SlotValue::Int(2));
     let out = node.invoke(make_ctx(&id, &cancel), input).await.unwrap();
     let windows = match out.get(WINDOWS_SLOT) {
@@ -319,10 +335,7 @@ mod rollup_tests {
         let rule = RuleId::new("energy", "usage.baseline-deviation", 1);
         let mk = |sev: Severity| {
             Verdict::new(rule.clone(), at, sev, "x")
-                .with_tags(
-                    starter_spi::insights::Tags::empty()
-                        .with_value("building", "hq-london"),
-                )
+                .with_tags(starter_spi::insights::Tags::empty().with_value("building", "hq-london"))
         };
         store.append(&mk(Severity::Healthy)).await.unwrap();
         store.append(&mk(Severity::Warn)).await.unwrap();

@@ -46,11 +46,7 @@ impl ClipboardService {
     /// when the entry is missing or expired. Exposed for transports
     /// that need to inspect `resource_kind` before opening a
     /// recorder transaction (paste dispatches by kind).
-    pub async fn store_get(
-        &self,
-        principal_id: &str,
-        id: &str,
-    ) -> Result<Option<ClipboardEntry>> {
+    pub async fn store_get(&self, principal_id: &str, id: &str) -> Result<Option<ClipboardEntry>> {
         self.store.get(principal_id, id).await
     }
 
@@ -115,7 +111,9 @@ impl ClipboardService {
             owner: None,
         };
 
-        reversible.clone_with(tx, &src, merge_overrides(&entry, overrides)).await
+        reversible
+            .clone_with(tx, &src, merge_overrides(&entry, overrides))
+            .await
     }
 
     /// Convenience: duplicate = copy + paste in one call. The

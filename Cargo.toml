@@ -62,6 +62,7 @@ members = [
     "examples/gh-report",
     "examples/notes",
     "examples/flow-agent",
+    "examples/flow-agent/extensions/com.nube.mqtt",
     "examples/blobs",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).

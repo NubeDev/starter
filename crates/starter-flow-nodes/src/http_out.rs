@@ -48,7 +48,7 @@ use starter_flow_spi::node::{
 pub const KIND_ID: &str = "starter.flow.http-out";
 
 /// Static metadata for the catalog / discovery surface.
-pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+pub static DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
     starter_flow_spi::node::NodeDescriptor::new(
         KIND_ID,
         "starter.flow.node.http-out.label",
@@ -425,8 +425,8 @@ impl NodeBehavior for HttpOut {
                     return Err(NodeError::Cancelled);
                 }
             };
-            let bytes = bytes
-                .map_err(|e| NodeError::Backend(format!("http-out body read failed: {e}")))?;
+            let bytes =
+                bytes.map_err(|e| NodeError::Backend(format!("http-out body read failed: {e}")))?;
             match serde_json::from_slice::<JsonValue>(&bytes) {
                 Ok(j) => SlotValue::Json(j),
                 Err(_) => SlotValue::String(String::from_utf8_lossy(&bytes).into_owned()),
@@ -439,9 +439,9 @@ impl NodeBehavior for HttpOut {
                     return Err(NodeError::Cancelled);
                 }
             };
-            SlotValue::String(text.map_err(|e| {
-                NodeError::Backend(format!("http-out body read failed: {e}"))
-            })?)
+            SlotValue::String(
+                text.map_err(|e| NodeError::Backend(format!("http-out body read failed: {e}")))?,
+            )
         };
 
         span.record("cancel_observed", false);
@@ -643,14 +643,20 @@ mod tests {
 
         let captured = server.await.expect("server task");
         let captured_str = String::from_utf8_lossy(&captured);
-        assert!(captured_str.starts_with("POST /echo HTTP/1.1\r\n"), "{captured_str}");
+        assert!(
+            captured_str.starts_with("POST /echo HTTP/1.1\r\n"),
+            "{captured_str}"
+        );
         assert!(
             captured_str
                 .to_ascii_lowercase()
                 .contains("content-type: application/json"),
             "{captured_str}"
         );
-        assert!(captured_str.contains("\"hello\":\"world\""), "{captured_str}");
+        assert!(
+            captured_str.contains("\"hello\":\"world\""),
+            "{captured_str}"
+        );
     }
 
     #[tokio::test]
@@ -659,7 +665,10 @@ mod tests {
         let node = NodeId::new("test.http-out").unwrap();
         let cancel = NoCancel;
         let ctx = make_ctx(&node, &cancel);
-        let err = body.invoke(ctx, SlotMap::new()).await.expect_err("must error");
+        let err = body
+            .invoke(ctx, SlotMap::new())
+            .await
+            .expect_err("must error");
         let msg = format!("{err}");
         assert!(msg.contains(URL_SLOT), "{msg}");
     }
@@ -703,7 +712,10 @@ mod tests {
         let ctx = make_ctx(&node, &cancel);
 
         let started = std::time::Instant::now();
-        let err = body.invoke(ctx, input_with(&url)).await.expect_err("must cancel");
+        let err = body
+            .invoke(ctx, input_with(&url))
+            .await
+            .expect_err("must cancel");
         assert!(matches!(err, NodeError::Cancelled), "{err}");
         assert!(started.elapsed() < Duration::from_secs(2));
     }

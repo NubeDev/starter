@@ -112,7 +112,12 @@ const POWER: QuantityDef = QuantityDef {
 
 const AREA: QuantityDef = QuantityDef {
     canonical: Unit::SquareMeter,
-    allowed_units: &[Unit::SquareMeter, Unit::SquareFoot, Unit::Acre, Unit::Hectare],
+    allowed_units: &[
+        Unit::SquareMeter,
+        Unit::SquareFoot,
+        Unit::Acre,
+        Unit::Hectare,
+    ],
 };
 
 const ANGLE: QuantityDef = QuantityDef {

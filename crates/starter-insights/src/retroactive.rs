@@ -62,11 +62,7 @@ impl MutationWatermarks {
     /// `[window_start, window_end)` — used by
     /// [`attach_retroactive_flag`] as the "this verdict's window
     /// overlaps a mutated input" predicate.
-    pub fn any_within(
-        &self,
-        window_start: DateTime<Utc>,
-        window_end: DateTime<Utc>,
-    ) -> bool {
+    pub fn any_within(&self, window_start: DateTime<Utc>, window_end: DateTime<Utc>) -> bool {
         let g = self.inner.read().expect("MutationWatermarks poisoned");
         // A watermark at exactly `window_end` is treated as outside —
         // windows are `[start, end)`.
@@ -140,10 +136,7 @@ mod tests {
     #[test]
     fn no_flag_when_rule_is_not_retroactive() {
         let wm = MutationWatermarks::new();
-        wm.record(
-            "src",
-            Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap(),
-        );
+        wm.record("src", Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap());
         let mut v = vw(
             Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
             Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),
@@ -156,10 +149,7 @@ mod tests {
     #[test]
     fn no_flag_when_no_watermark_inside_window() {
         let wm = MutationWatermarks::new();
-        wm.record(
-            "src",
-            Utc.with_ymd_and_hms(2024, 2, 1, 12, 0, 0).unwrap(),
-        );
+        wm.record("src", Utc.with_ymd_and_hms(2024, 2, 1, 12, 0, 0).unwrap());
         let mut v = vw(
             Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
             Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),
@@ -171,10 +161,7 @@ mod tests {
     #[test]
     fn flag_attached_when_retroactive_and_window_overlaps() {
         let wm = MutationWatermarks::new();
-        wm.record(
-            "src",
-            Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap(),
-        );
+        wm.record("src", Utc.with_ymd_and_hms(2024, 1, 1, 12, 0, 0).unwrap());
         let mut v = vw(
             Utc.with_ymd_and_hms(2024, 1, 1, 0, 0, 0).unwrap(),
             Utc.with_ymd_and_hms(2024, 1, 2, 0, 0, 0).unwrap(),

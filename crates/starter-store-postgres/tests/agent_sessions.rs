@@ -193,7 +193,10 @@ async fn artifact_too_large_is_rejected_without_writing() {
         .append_turn_with_artifacts(
             id,
             TurnInput::new(TurnRole::Assistant, serde_json::json!({})),
-            &[ArtifactWrite::new("tree", serde_json::json!({ "blob": big }))],
+            &[ArtifactWrite::new(
+                "tree",
+                serde_json::json!({ "blob": big }),
+            )],
         )
         .await
         .unwrap_err();

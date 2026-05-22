@@ -161,10 +161,16 @@ fn structural_delta(old: &FlowBody, new: &FlowBody) -> bool {
     // body is editorial, not semantic. (A future authoring tool that
     // wants deterministic ordering can sort the body before
     // publishing.)
-    let mut old_links: Vec<(&str, &str)> =
-        old.links.iter().map(|l| (l.from.as_str(), l.to.as_str())).collect();
-    let mut new_links: Vec<(&str, &str)> =
-        new.links.iter().map(|l| (l.from.as_str(), l.to.as_str())).collect();
+    let mut old_links: Vec<(&str, &str)> = old
+        .links
+        .iter()
+        .map(|l| (l.from.as_str(), l.to.as_str()))
+        .collect();
+    let mut new_links: Vec<(&str, &str)> = new
+        .links
+        .iter()
+        .map(|l| (l.from.as_str(), l.to.as_str()))
+        .collect();
     old_links.sort_unstable();
     new_links.sort_unstable();
     old_links != new_links
@@ -176,15 +182,9 @@ fn structural_delta(old: &FlowBody, new: &FlowBody) -> bool {
 /// settings writes are restricted to nodes whose wiring did not
 /// shift (HR4 live-migrate safety bar). When `false`, every node's
 /// settings delta is a candidate write.
-fn settings_writes(
-    old: &FlowBody,
-    new: &FlowBody,
-    structural: bool,
-) -> Vec<(SlotRef, SlotValue)> {
-    let old_by_id: BTreeMap<&NodeId, &NodeDecl> =
-        old.nodes.iter().map(|n| (&n.id, n)).collect();
-    let new_by_id: BTreeMap<&NodeId, &NodeDecl> =
-        new.nodes.iter().map(|n| (&n.id, n)).collect();
+fn settings_writes(old: &FlowBody, new: &FlowBody, structural: bool) -> Vec<(SlotRef, SlotValue)> {
+    let old_by_id: BTreeMap<&NodeId, &NodeDecl> = old.nodes.iter().map(|n| (&n.id, n)).collect();
+    let new_by_id: BTreeMap<&NodeId, &NodeDecl> = new.nodes.iter().map(|n| (&n.id, n)).collect();
 
     let mut out = Vec::new();
     for (id, new_node) in &new_by_id {
@@ -429,7 +429,10 @@ mod tests {
         // emitted regardless. The new logger.alt destination is
         // an inbound for logger \u2014 so logger's wiring also
         // shifted! Therefore no writes should be emitted.
-        assert!(writes.is_empty(), "wiring shifted for both nodes: {writes:?}");
+        assert!(
+            writes.is_empty(),
+            "wiring shifted for both nodes: {writes:?}"
+        );
     }
 
     #[test]
@@ -472,12 +475,33 @@ mod tests {
     #[allow(clippy::approx_constant)]
     // 3.14 is a generic float fixture for the f64 branch — not π.
     fn json_conversion_maps_primitives() {
-        assert!(matches!(json_to_slot_value(serde_json::json!(null)), SlotValue::Null));
-        assert!(matches!(json_to_slot_value(serde_json::json!(true)), SlotValue::Bool(true)));
-        assert!(matches!(json_to_slot_value(serde_json::json!(42)), SlotValue::Int(42)));
-        assert!(matches!(json_to_slot_value(serde_json::json!(3.14)), SlotValue::Float(_)));
-        assert!(matches!(json_to_slot_value(serde_json::json!("hi")), SlotValue::String(_)));
-        assert!(matches!(json_to_slot_value(serde_json::json!([1, 2])), SlotValue::Json(_)));
-        assert!(matches!(json_to_slot_value(serde_json::json!({"k": "v"})), SlotValue::Json(_)));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!(null)),
+            SlotValue::Null
+        ));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!(true)),
+            SlotValue::Bool(true)
+        ));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!(42)),
+            SlotValue::Int(42)
+        ));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!(3.14)),
+            SlotValue::Float(_)
+        ));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!("hi")),
+            SlotValue::String(_)
+        ));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!([1, 2])),
+            SlotValue::Json(_)
+        ));
+        assert!(matches!(
+            json_to_slot_value(serde_json::json!({"k": "v"})),
+            SlotValue::Json(_)
+        ));
     }
 }

@@ -108,10 +108,7 @@ impl RunRegistry {
     /// Number of `(flow, revision)` entries currently tracked. Used
     /// by tests; production code has no use for the global count.
     pub fn len(&self) -> usize {
-        self.inner
-            .lock()
-            .expect("RunRegistry mutex poisoned")
-            .len()
+        self.inner.lock().expect("RunRegistry mutex poisoned").len()
     }
 
     /// Whether the registry is empty.

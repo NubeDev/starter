@@ -28,11 +28,11 @@ use starter_flow::engine::Engine;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::registry::NodeKindRegistry;
 use starter_flow::run::RunCancel;
-use starter_flow_spi::Cancel;
 use starter_flow_spi::definition::DefinitionSource;
 use starter_flow_spi::flow::{FlowId, FlowStore};
 use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap};
+use starter_flow_spi::Cancel;
 use starter_store_sqlite::flow::{SqliteFlowStore, FLOW_MIGRATION_SOURCE};
 use starter_store_sqlite::{migrate, testing::ephemeral};
 
@@ -62,16 +62,10 @@ fn body_with(prompt: &str, structural: bool) -> serde_json::Value {
                            "settings": {"prompt": prompt}}),
         serde_json::json!({"id": "smoke.log", "kind": "com.acme.smoke.any"}),
     ];
-    let mut links = vec![
-        serde_json::json!({"from": "smoke.agent.out", "to": "smoke.log.in"}),
-    ];
+    let mut links = vec![serde_json::json!({"from": "smoke.agent.out", "to": "smoke.log.in"})];
     if structural {
-        nodes.push(
-            serde_json::json!({"id": "smoke.http_out", "kind": "com.acme.smoke.any"}),
-        );
-        links.push(
-            serde_json::json!({"from": "smoke.agent.out", "to": "smoke.http_out.in"}),
-        );
+        nodes.push(serde_json::json!({"id": "smoke.http_out", "kind": "com.acme.smoke.any"}));
+        links.push(serde_json::json!({"from": "smoke.agent.out", "to": "smoke.http_out.in"}));
     }
     serde_json::json!({
         "flow_id": "examples.smoke.live_migrate",
@@ -140,7 +134,10 @@ async fn hot_reload_live_migrate_settings_only_does_not_cancel() {
 
     // Head moved forward — sanity.
     let head = store.head(flow.clone()).await.unwrap().expect("head");
-    assert_ne!(head, rev1, "settings publish must still write a new revision");
+    assert_ne!(
+        head, rev1,
+        "settings publish must still write a new revision"
+    );
 }
 
 /// Sub-case B: wiring shift under `live-migrate` MUST fall back to

@@ -119,10 +119,7 @@ impl AiRuntime {
                 JsonValue::Array(g.rules.clone()).to_string()
             }
             "insights:rule.read" => {
-                let id = input
-                    .get("id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or_default();
+                let id = input.get("id").and_then(|v| v.as_str()).unwrap_or_default();
                 let g = state.data.read().await;
                 g.rules
                     .iter()
@@ -165,10 +162,7 @@ impl AiRuntime {
                 json!({ "ok": true, "id": id }).to_string()
             }
             "insights:rule.dry-run" => {
-                let id = input
-                    .get("id")
-                    .and_then(|v| v.as_str())
-                    .unwrap_or_default();
+                let id = input.get("id").and_then(|v| v.as_str()).unwrap_or_default();
                 let g = state.data.read().await;
                 if !g
                     .rules
@@ -376,8 +370,10 @@ impl AiRuntime {
             .map_err(|e| e.to_string())?;
         tools.extend(self.synthesize_insights_tools(&agent.tools));
         let flow_tools = tools;
-        let cli_path =
-            matches!(provider, Provider::Claude | Provider::Codex | Provider::Copilot);
+        let cli_path = matches!(
+            provider,
+            Provider::Claude | Provider::Codex | Provider::Copilot
+        );
         if cli_path || flow_tools.is_empty() {
             return drive_single_shot(provider, runner, agent, prompt, history, sse_tx).await;
         }
@@ -684,11 +680,7 @@ fn pipeline_tool_defs(agent_tools: &[String]) -> Vec<ToolDef> {
     )
 }
 
-fn insights_subset(
-    agent_tools: &[String],
-    prefix: &str,
-    defs: &[(&str, &str)],
-) -> Vec<ToolDef> {
+fn insights_subset(agent_tools: &[String], prefix: &str, defs: &[(&str, &str)]) -> Vec<ToolDef> {
     let wildcard_name = format!("{prefix}*"); // e.g. `insights:rule.*`
     let wildcard = agent_tools
         .iter()

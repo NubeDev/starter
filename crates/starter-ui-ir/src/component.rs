@@ -727,7 +727,10 @@ pub enum Component {
         columns: Vec<JsonTableColumn>,
         /// When true (default), the renderer shows a search input
         /// that filters across the formatted form of every cell.
-        #[serde(default = "crate::default_true", skip_serializing_if = "crate::is_true")]
+        #[serde(
+            default = "crate::default_true",
+            skip_serializing_if = "crate::is_true"
+        )]
         searchable: bool,
         /// Tailwind class capping the table's vertical scroll. The
         /// default is the renderer's choice; provide e.g. `"max-h-64"`
@@ -1929,7 +1932,6 @@ pub enum FlexJustify {
     Evenly,
 }
 
-
 /// Comparison delta for a KPI tile — "↑ +12% vs prior period".
 ///
 /// Structured so the renderer formats and localises; extensions must not
@@ -2185,9 +2187,7 @@ impl crate::Bindable for Component {
                 )),
             },
             Component::MarkdownEditor { id, value, .. } => match v {
-                serde_json::Value::String(s) => {
-                    *value = ::core::option::Option::Some(s)
-                }
+                serde_json::Value::String(s) => *value = ::core::option::Option::Some(s),
                 serde_json::Value::Null => *value = ::core::option::Option::None,
                 other => issues.push(ResolveIssue::type_mismatch(
                     ::core::option::Option::Some(id.as_str()),
@@ -2197,9 +2197,7 @@ impl crate::Bindable for Component {
             },
 
             Component::TextField { id, value, .. } => match v {
-                serde_json::Value::String(s) => {
-                    *value = ::core::option::Option::Some(s)
-                }
+                serde_json::Value::String(s) => *value = ::core::option::Option::Some(s),
                 serde_json::Value::Null => *value = ::core::option::Option::None,
                 other => issues.push(ResolveIssue::type_mismatch(
                     ::core::option::Option::Some(id.as_str()),
@@ -2228,9 +2226,7 @@ impl crate::Bindable for Component {
             },
 
             Component::Textarea { id, value, .. } => match v {
-                serde_json::Value::String(s) => {
-                    *value = ::core::option::Option::Some(s)
-                }
+                serde_json::Value::String(s) => *value = ::core::option::Option::Some(s),
                 serde_json::Value::Null => *value = ::core::option::Option::None,
                 other => issues.push(ResolveIssue::type_mismatch(
                     ::core::option::Option::Some(id.as_str()),
@@ -2247,9 +2243,7 @@ impl crate::Bindable for Component {
             // month-pickers; the renderer rejects malformed values
             // with its own UI-side hint.
             Component::DateField { id, value, .. } => match v {
-                serde_json::Value::String(s) => {
-                    *value = ::core::option::Option::Some(s)
-                }
+                serde_json::Value::String(s) => *value = ::core::option::Option::Some(s),
                 serde_json::Value::Null => *value = ::core::option::Option::None,
                 other => issues.push(ResolveIssue::type_mismatch(
                     ::core::option::Option::Some(id.as_str()),
@@ -2352,7 +2346,10 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert!(matches!(
             issues[0],
-            crate::ResolveIssue::TypeMismatch { expected: "string", .. }
+            crate::ResolveIssue::TypeMismatch {
+                expected: "string",
+                ..
+            }
         ));
     }
 
@@ -2384,7 +2381,10 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert!(matches!(
             issues[0],
-            crate::ResolveIssue::TypeMismatch { expected: "number", .. }
+            crate::ResolveIssue::TypeMismatch {
+                expected: "number",
+                ..
+            }
         ));
     }
 
@@ -2416,7 +2416,10 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert!(matches!(
             issues[0],
-            crate::ResolveIssue::TypeMismatch { expected: "string", .. }
+            crate::ResolveIssue::TypeMismatch {
+                expected: "string",
+                ..
+            }
         ));
     }
 
@@ -2449,7 +2452,10 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert!(matches!(
             issues[0],
-            crate::ResolveIssue::TypeMismatch { expected: "string", .. }
+            crate::ResolveIssue::TypeMismatch {
+                expected: "string",
+                ..
+            }
         ));
     }
 
@@ -2478,7 +2484,10 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert!(matches!(
             issues[0],
-            crate::ResolveIssue::TypeMismatch { expected: "bool", .. }
+            crate::ResolveIssue::TypeMismatch {
+                expected: "bool",
+                ..
+            }
         ));
     }
 
@@ -2605,7 +2614,10 @@ mod tests {
         assert_eq!(issues.len(), 1);
         assert!(matches!(
             &issues[0],
-            crate::ResolveIssue::TypeMismatch { expected: "bool", .. }
+            crate::ResolveIssue::TypeMismatch {
+                expected: "bool",
+                ..
+            }
         ));
         if let Component::Toggle { value, .. } = &c {
             assert!(value.is_none());
@@ -2769,7 +2781,10 @@ mod tests {
         // Empty defaults must elide on the wire so v3 clients see a v3-shaped table.
         let bare = Component::Table {
             id: None,
-            source: TableSource { query: "k==x".into(), subscribe: None },
+            source: TableSource {
+                query: "k==x".into(),
+                subscribe: None,
+            },
             columns: vec![],
             row_action: None,
             row_actions: vec![],
@@ -2779,8 +2794,14 @@ mod tests {
             style: None,
         };
         let bare_v = serde_json::to_value(&bare).unwrap();
-        assert!(bare_v.get("row_actions").is_none(), "empty row_actions must elide");
-        assert!(bare_v.get("toolbar_actions").is_none(), "empty toolbar_actions must elide");
+        assert!(
+            bare_v.get("row_actions").is_none(),
+            "empty row_actions must elide"
+        );
+        assert!(
+            bare_v.get("toolbar_actions").is_none(),
+            "empty toolbar_actions must elide"
+        );
         // Round-trip.
         let _back: Component = serde_json::from_value(v).unwrap();
     }

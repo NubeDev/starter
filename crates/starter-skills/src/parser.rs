@@ -180,12 +180,11 @@ fn split_frontmatter<'a>(
 pub fn parse_skill_md(skill_path: &Path, src: &str) -> Result<ParsedSkill, SkillParseError> {
     let (yaml, body) = split_frontmatter(skill_path, src)?;
 
-    let raw: Frontmatter = serde_yaml::from_str(yaml).map_err(|source| {
-        SkillParseError::InvalidFrontmatter {
+    let raw: Frontmatter =
+        serde_yaml::from_str(yaml).map_err(|source| SkillParseError::InvalidFrontmatter {
             skill_path: skill_path.to_path_buf(),
             source,
-        }
-    })?;
+        })?;
 
     let id = SkillId::new(raw.id.clone()).map_err(|e| SkillParseError::InvalidSkillId {
         skill_path: skill_path.to_path_buf(),

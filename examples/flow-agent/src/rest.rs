@@ -44,24 +44,49 @@ pub struct RestState {
 #[derive(OpenApi)]
 #[openapi(
     paths(
-        list_flows, create_flow, get_flow, update_flow, delete_flow,
-        fire_flow, list_runs,
-        list_agents, create_agent, get_agent, update_agent, delete_agent,
-        run_agent, list_providers,
-        sidebar_events, flow_events,
+        list_flows,
+        create_flow,
+        get_flow,
+        update_flow,
+        delete_flow,
+        fire_flow,
+        list_runs,
+        list_agents,
+        create_agent,
+        get_agent,
+        update_agent,
+        delete_agent,
+        run_agent,
+        list_providers,
+        sidebar_events,
+        flow_events,
         crate::builder_stream::builder_stream,
-        create_session, get_latest_artifact,
-        list_artifact_versions, get_artifact_version,
+        create_session,
+        get_latest_artifact,
+        list_artifact_versions,
+        get_artifact_version,
         list_session_turns,
     ),
     components(schemas(
-        Flow, FlowSummary, CreateFlow, UpdateFlow,
-        Agent, AgentSummary, CreateAgent, UpdateAgent,
-        Run, FirePayload, FireResponse,
-        FlowEvent, RunEvent,
+        Flow,
+        FlowSummary,
+        CreateFlow,
+        UpdateFlow,
+        Agent,
+        AgentSummary,
+        CreateAgent,
+        UpdateAgent,
+        Run,
+        FirePayload,
+        FireResponse,
+        FlowEvent,
+        RunEvent,
         ProviderStatusDto,
         crate::builder_stream::BuilderRequest,
-        CreateSession, SessionCreated, ArtifactDto, ArtifactMetaDto,
+        CreateSession,
+        SessionCreated,
+        ArtifactDto,
+        ArtifactMetaDto,
         TurnDto,
     ))
 )]
@@ -506,10 +531,9 @@ async fn run_agent(
         })
         .collect();
 
-    let stream = s
-        .ai
-        .run_agent(&agent, body.input.text, history)
-        .map_err(ApiError::from)?;
+    let stream =
+        s.ai.run_agent(&agent, body.input.text, history)
+            .map_err(ApiError::from)?;
 
     let sse = Sse::new(stream).keep_alive(
         axum::response::sse::KeepAlive::new()
@@ -546,10 +570,7 @@ async fn sidebar_events(State(s): State<RestState>) -> impl IntoResponse {
 #[utoipa::path(get, path = "/api/flows/{id}/events", tag = "flows",
     params(("id" = String, Path, description = "Flow id")),
     responses((status = 200, description = "SSE run events", content_type = "text/event-stream")))]
-async fn flow_events(
-    State(s): State<RestState>,
-    Path(id): Path<String>,
-) -> impl IntoResponse {
+async fn flow_events(State(s): State<RestState>, Path(id): Path<String>) -> impl IntoResponse {
     let rx = s.hub.runs.subscribe();
     let stream = BroadcastStream::new(rx).filter_map(move |r| {
         let want = id.clone();
@@ -662,8 +683,9 @@ pub struct ArtifactMetaDto {
     pub updated_at: String,
 }
 
-fn parse_session_id(raw: &str) -> Result<starter_flow_spi::agent_session::AgentSessionId, ApiError>
-{
+fn parse_session_id(
+    raw: &str,
+) -> Result<starter_flow_spi::agent_session::AgentSessionId, ApiError> {
     starter_flow_spi::agent_session::AgentSessionId::parse(raw)
         .map_err(|_| ApiError::Domain(DomainError::Invalid("invalid session_id".into())))
 }
@@ -730,9 +752,7 @@ async fn get_artifact_version(
         .agent_sessions
         .artifact_at(session_id, &key, version)
         .await?
-        .ok_or_else(|| {
-            ApiError::Domain(DomainError::NotFound(format!("{key} v{version}")))
-        })?;
+        .ok_or_else(|| ApiError::Domain(DomainError::NotFound(format!("{key} v{version}"))))?;
     Ok(Json(artifact_to_dto(artifact)))
 }
 
@@ -876,9 +896,7 @@ impl IntoResponse for ApiError {
             ApiError::AgentSession(e) => {
                 use starter_flow_spi::agent_session::AgentSessionError;
                 match e {
-                    AgentSessionError::SessionNotFound(_) => {
-                        (StatusCode::NOT_FOUND, e.to_string())
-                    }
+                    AgentSessionError::SessionNotFound(_) => (StatusCode::NOT_FOUND, e.to_string()),
                     AgentSessionError::TurnTooLarge { .. }
                     | AgentSessionError::ArtifactTooLarge { .. } => {
                         // M8 / M12 cap surfaces — payload-too-large

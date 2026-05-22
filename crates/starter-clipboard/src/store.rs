@@ -73,7 +73,9 @@ impl ClipboardStore for InMemoryClipboard {
 
     async fn get(&self, principal_id: &str, id: &str) -> Result<Option<ClipboardEntry>> {
         let entries = self.entries.lock().await;
-        let Some(entry) = entries.get(id) else { return Ok(None) };
+        let Some(entry) = entries.get(id) else {
+            return Ok(None);
+        };
         if entry.principal_id != principal_id {
             // Treat cross-principal lookups as not-found so we don't
             // leak entry existence to other principals.

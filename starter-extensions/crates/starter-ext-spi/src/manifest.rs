@@ -335,6 +335,19 @@ pub struct Contributes {
     /// extension id (`com.nube.hello.greeting`, never bare `greeting`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub i18n: Option<ContributeI18n>,
+    /// Flow node-kind contributions. Consumed by
+    /// `starter-ext-flow::contributed_node_kinds`.
+    ///
+    /// Per `DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-1 this is
+    /// the *one* new contribution kind the flow-node track adds — there
+    /// is no second adapter, no second wire method beyond
+    /// `flow.node.invoke`, no parallel streaming shape. R-flow-node-3
+    /// constrains every entry's `kind` to live under the extension's
+    /// reverse-DNS namespace (host-reserved `starter.*` and
+    /// non-descendant ids are rejected at load time by
+    /// `starter-ext-host::validate`).
+    #[serde(default)]
+    pub nodes: Vec<ContributeNode>,
     /// `SKILL.md` bundle directories the extension ships
     /// (DOCS/agent/SCOPE.md R-agent-4). Each entry names a bundle
     /// root directory (relative to the extension's bundle root) that
@@ -402,6 +415,68 @@ pub struct AuthGate {
     /// Required scope (e.g. `"extension:weather"`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub require_scope: Option<String>,
+}
+
+/// One flow node-kind the extension contributes.
+///
+/// Per `DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-1 / R-flow-node-4:
+///
+/// - The manifest *declares* a kind (its reverse-DNS id, JSON Schema for
+///   `settings:`, optional human description file, optional facet tags,
+///   advisory `streaming` flag, optional per-entry auth gate).
+/// - The extension's child process *implements* the kind's body. The
+///   kernel invokes the body through the single new wire method
+///   `flow.node.invoke` (slice B; stage 1 hands the descriptor through
+///   the dynamic registry alongside a placeholder behaviour that
+///   returns the typed "no behaviour bound" error).
+///
+/// `deny_unknown_fields` matches every other contribution kind so a
+/// manifest typo is a load-time error, never a silent ignore (parent
+/// SCOPE R3).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeNode {
+    /// Reverse-DNS kind id. Must be the extension id or a dotted
+    /// descendant (R-flow-node-3). The loader rejects ids starting with
+    /// the host-reserved `starter.` / `sys.` prefixes outright.
+    pub kind: String,
+
+    /// Path (relative to bundle root) to the JSON Schema that validates
+    /// a node-instance's `settings:` body. Required: every kind ships a
+    /// schema so the engine can gate publication via
+    /// `DefinitionManager::publish` (R-flow-node-7). The host serves the
+    /// schema file at `GET /api/node-kinds/<kind>/settings-schema`.
+    pub settings_schema: String,
+
+    /// Path (relative to bundle root) to a static markdown file
+    /// describing the kind. Optional — kinds with no extra prose simply
+    /// omit it; the host returns 404 from
+    /// `GET /api/node-kinds/<kind>/description` in that case. R7: never
+    /// templated at runtime.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub description_file: Option<String>,
+
+    /// Optional palette facet tags (`"trigger"`, `"transport"`, …).
+    /// Free-form; the editor surface filters by these without the host
+    /// imposing a vocabulary.
+    #[serde(default)]
+    pub facets: Vec<String>,
+
+    /// Advisory flag: `true` if this kind's `invoke` produces a
+    /// `Stream<Item = Event>` rather than a single response. The proxy
+    /// in slice B reads this to size internal channels; it is *not* a
+    /// kernel-level mode switch (R-flow-node-1 forbids inventing a new
+    /// streaming shape — the existing `stream.event/end/error/cancel`
+    /// notifications carry the events).
+    #[serde(default)]
+    pub streaming: bool,
+
+    /// Optional per-entry auth gate. Re-uses the same [`AuthGate`] type
+    /// every other contribution kind uses (R-flow-node-1: one trait,
+    /// one gate vocabulary across `tools`, `cli`, `rest`, `grpc`,
+    /// `workers`, `ui`, `nodes`).
+    #[serde(default)]
+    pub auth: AuthGate,
 }
 
 /// One MCP-style tool the extension provides.
@@ -998,8 +1073,14 @@ contributes:
 "#;
         let m: Manifest = serde_yaml::from_str(yaml).unwrap();
         let i18n = m.contributes.i18n.as_ref().expect("i18n block parsed");
-        assert_eq!(i18n.catalogs.get("en").map(String::as_str), Some("i18n/en.json"));
-        assert_eq!(i18n.catalogs.get("es").map(String::as_str), Some("i18n/es.json"));
+        assert_eq!(
+            i18n.catalogs.get("en").map(String::as_str),
+            Some("i18n/en.json")
+        );
+        assert_eq!(
+            i18n.catalogs.get("es").map(String::as_str),
+            Some("i18n/es.json")
+        );
     }
 
     #[test]
@@ -1022,6 +1103,66 @@ contributes:
         assert_eq!(m.contributes.skills.len(), 2);
         assert_eq!(m.contributes.skills[0].dir, "skills/");
         assert_eq!(m.contributes.skills[1].dir, "more-skills/");
+    }
+
+    #[test]
+    fn contributes_nodes_parses() {
+        // R-flow-node-1: `contributes.nodes` is the one new contribution
+        // kind the flow-node track adds. `description_file`, `facets`,
+        // `streaming`, and `auth` are `#[serde(default)]`; `kind` and
+        // `settings_schema` are required.
+        let yaml = r#"
+v: 1
+id: com.nube.mqtt
+version: 0.1.0
+display_name: "MQTT"
+runtime: { kind: process, bin: ./bin/mqtt-driver }
+contributes:
+  nodes:
+    - kind: com.nube.mqtt.publish
+      settings_schema: schemas/publish.json
+      description_file: docs/publish.md
+      facets: ["transport", "io"]
+      streaming: false
+    - kind: com.nube.mqtt.subscribe
+      settings_schema: schemas/subscribe.json
+      streaming: true
+      auth: { require_role: admin }
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.nodes.len(), 2);
+        let pub_ = &m.contributes.nodes[0];
+        assert_eq!(pub_.kind, "com.nube.mqtt.publish");
+        assert_eq!(pub_.settings_schema, "schemas/publish.json");
+        assert_eq!(pub_.description_file.as_deref(), Some("docs/publish.md"));
+        assert_eq!(pub_.facets, vec!["transport", "io"]);
+        assert!(!pub_.streaming);
+        assert!(pub_.auth.require_role.is_none());
+
+        let sub = &m.contributes.nodes[1];
+        assert_eq!(sub.kind, "com.nube.mqtt.subscribe");
+        assert!(sub.description_file.is_none());
+        assert!(sub.facets.is_empty());
+        assert!(sub.streaming);
+        assert_eq!(sub.auth.require_role.as_deref(), Some("admin"));
+    }
+
+    #[test]
+    fn contributes_nodes_rejects_unknown_field() {
+        // `deny_unknown_fields` mirrors every other contribution kind.
+        let yaml = r#"
+v: 1
+id: com.nube.mqtt
+version: 0.1.0
+display_name: "MQTT"
+runtime: { kind: process, bin: ./bin/mqtt-driver }
+contributes:
+  nodes:
+    - kind: com.nube.mqtt.publish
+      settings_schema: schemas/publish.json
+      unexpected_field: 1
+"#;
+        assert!(serde_yaml::from_str::<Manifest>(yaml).is_err());
     }
 
     #[test]

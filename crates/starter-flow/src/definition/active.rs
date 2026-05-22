@@ -93,11 +93,7 @@ impl ActiveTopologies {
     /// existing handle (callers receive the same `Arc` so any
     /// previous `get` clone stays valid). If it's a fresh mount,
     /// install a new entry and return that.
-    pub async fn install(
-        &self,
-        flow_id: FlowId,
-        topology: Arc<FlowTopology>,
-    ) -> ActiveTopology {
+    pub async fn install(&self, flow_id: FlowId, topology: Arc<FlowTopology>) -> ActiveTopology {
         let mut guard = self.inner.write().await;
         if let Some(existing) = guard.get(&flow_id) {
             existing.store(topology);

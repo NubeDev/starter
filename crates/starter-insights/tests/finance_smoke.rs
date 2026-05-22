@@ -60,7 +60,10 @@ async fn invoke(reg: Arc<RuleRegistry>, rule_id: &str, params: serde_json::Value
     let nid = NodeId::new("finance.test.rule").expect("valid node id");
     let cancel = NoCancel;
     let mut input = SlotMap::new();
-    input.insert(RULE_ID_SLOT.to_owned(), SlotValue::String(rule_id.to_owned()));
+    input.insert(
+        RULE_ID_SLOT.to_owned(),
+        SlotValue::String(rule_id.to_owned()),
+    );
     input.insert(PARAMS_SLOT.to_owned(), SlotValue::Json(params));
     let out = node
         .invoke(make_ctx(&nid, &cancel), input)

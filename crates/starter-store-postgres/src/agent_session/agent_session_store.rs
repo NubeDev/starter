@@ -10,9 +10,9 @@ use chrono::{DateTime, Utc};
 use sqlx::Row;
 use starter_flow_spi::agent_session::{
     AgentSession, AgentSessionError, AgentSessionId, AgentSessionResult, AgentSessionStore,
-    Artifact, ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy,
-    RetentionSweepReport, Turn, TurnInput, TurnReceipt, TurnRole, ARTIFACT_VALUE_CAP_BYTES,
-    TURN_CONTENT_CAP_BYTES, TURN_SCHEMA_VERSION,
+    Artifact, ArtifactMeta, ArtifactWrite, PutArtifactError, RetentionPolicy, RetentionSweepReport,
+    Turn, TurnInput, TurnReceipt, TurnRole, ARTIFACT_VALUE_CAP_BYTES, TURN_CONTENT_CAP_BYTES,
+    TURN_SCHEMA_VERSION,
 };
 
 use crate::pool::Pool;
@@ -110,8 +110,10 @@ impl AgentSessionStore for PostgresAgentSessionStore {
             id,
             row.try_get::<String, _>("kind").map_err(backend)?,
             row.try_get::<String, _>("owner").map_err(backend)?,
-            row.try_get::<DateTime<Utc>, _>("created_at").map_err(backend)?,
-            row.try_get::<DateTime<Utc>, _>("updated_at").map_err(backend)?,
+            row.try_get::<DateTime<Utc>, _>("created_at")
+                .map_err(backend)?,
+            row.try_get::<DateTime<Utc>, _>("updated_at")
+                .map_err(backend)?,
             row.try_get::<serde_json::Value, _>("metadata_json")
                 .map_err(backend)?,
         )))
@@ -356,8 +358,7 @@ impl AgentSessionStore for PostgresAgentSessionStore {
         for row in rows {
             let seq: i32 = row.try_get("seq").map_err(backend)?;
             let role_s: String = row.try_get("role").map_err(backend)?;
-            let content_json: serde_json::Value =
-                row.try_get("content_json").map_err(backend)?;
+            let content_json: serde_json::Value = row.try_get("content_json").map_err(backend)?;
             let schema_version: i32 = row.try_get("schema_version").map_err(backend)?;
             let content_bytes: i32 = row.try_get("content_bytes").map_err(backend)?;
             let tokens_in: Option<i32> = row.try_get("tokens_in").map_err(backend)?;

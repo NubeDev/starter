@@ -109,15 +109,27 @@ impl NodeBehavior for AlignNode {
     async fn invoke(&self, _ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         let sources = match input.remove(SOURCES_SLOT) {
             Some(SlotValue::Json(serde_json::Value::Object(m))) => m,
-            _ => return Err(NodeError::InvalidInput("align: `sources` slot must be a JSON object".into())),
+            _ => {
+                return Err(NodeError::InvalidInput(
+                    "align: `sources` slot must be a JSON object".into(),
+                ))
+            }
         };
         let frame_secs = match input.remove(FRAME_SECS_SLOT) {
             Some(SlotValue::Int(n)) if n > 0 => n,
-            _ => return Err(NodeError::InvalidInput("align: `frame_secs` must be a positive Int".into())),
+            _ => {
+                return Err(NodeError::InvalidInput(
+                    "align: `frame_secs` must be a positive Int".into(),
+                ))
+            }
         };
         let tz_str = match input.remove(TZ_SLOT) {
             Some(SlotValue::String(s)) => s,
-            _ => return Err(NodeError::InvalidInput("align: `tz` must be an IANA string".into())),
+            _ => {
+                return Err(NodeError::InvalidInput(
+                    "align: `tz` must be an IANA string".into(),
+                ))
+            }
         };
         let gap_policy = match input.remove(GAP_POLICY_SLOT) {
             Some(SlotValue::String(s)) => s,

@@ -2,9 +2,7 @@
 //! `date_range()`, `ref_picker()`.
 
 use serde_json::Value as JsonValue;
-use starter_ui_ir::{
-    BindingSpec, Bindings, Component, Concurrency, DateRangePreset, SelectOption,
-};
+use starter_ui_ir::{BindingSpec, Bindings, Component, Concurrency, DateRangePreset, SelectOption};
 
 use crate::rsql::RsqlBuilder;
 
@@ -214,10 +212,7 @@ impl SliderBuilder {
 /// Construct a [`Component::DateRange`] with preset buttons. The
 /// component writes `{from, to}` (Unix ms) into
 /// `$page[<page_state_key>]`.
-pub fn date_range(
-    id: impl Into<String>,
-    page_state_key: impl Into<String>,
-) -> DateRangeBuilder {
+pub fn date_range(id: impl Into<String>, page_state_key: impl Into<String>) -> DateRangeBuilder {
     DateRangeBuilder {
         id: id.into(),
         page_state_key: page_state_key.into(),

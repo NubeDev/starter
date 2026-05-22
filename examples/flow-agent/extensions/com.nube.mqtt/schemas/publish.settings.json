@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MqttPublishSettings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["topic"],
+  "properties": {
+    "topic": {
+      "type": "string",
+      "description": "MQTT topic to publish to.",
+      "minLength": 1
+    },
+    "qos": {
+      "type": "integer",
+      "enum": [0, 1, 2],
+      "default": 0,
+      "description": "MQTT QoS level."
+    },
+    "retain": {
+      "type": "boolean",
+      "default": false,
+      "description": "Retain flag set on the published message."
+    }
+  }
+}

@@ -88,15 +88,11 @@ fn principal() -> Principal {
 }
 
 fn approved_skill_md(id: &str, desc: &str) -> String {
-    format!(
-        "---\nid: {id}\ndescription: {desc}\ntrust: approved\n---\nbody for {id}\n"
-    )
+    format!("---\nid: {id}\ndescription: {desc}\ntrust: approved\n---\nbody for {id}\n")
 }
 
 fn quarantined_skill_md(id: &str, desc: &str) -> String {
-    format!(
-        "---\nid: {id}\ndescription: {desc}\ntrust: quarantined\n---\nbody for {id}\n"
-    )
+    format!("---\nid: {id}\ndescription: {desc}\ntrust: quarantined\n---\nbody for {id}\n")
 }
 
 // ---------------------------------------------------------------------
@@ -191,8 +187,7 @@ async fn selection_is_frozen_per_run_against_the_real_registry() {
     write_file(
         &bundle,
         "SKILL.md",
-        &(approved_skill_md("starter.frozen.greet", "Greets the user.")
-            + "\nADDED LINE\n"),
+        &(approved_skill_md("starter.frozen.greet", "Greets the user.") + "\nADDED LINE\n"),
     );
     registry.reload().await.expect("reload ok");
 

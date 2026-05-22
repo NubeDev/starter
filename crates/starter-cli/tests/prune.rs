@@ -131,7 +131,9 @@ async fn prune_text_output_mentions_cutoff_and_count() {
     let (_, sub) = matches.subcommand().unwrap();
 
     let mut out = Vec::new();
-    run_prune_with(&mut out, &*backend, sub).await.expect("run ok");
+    run_prune_with(&mut out, &*backend, sub)
+        .await
+        .expect("run ok");
     let text = String::from_utf8(out).unwrap();
     assert!(text.contains("deleted 42 rows"), "text output: {text}");
     assert!(text.contains("2025-06-01"), "text output: {text}");

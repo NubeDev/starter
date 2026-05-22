@@ -144,9 +144,7 @@ impl HandlerRegistry {
         let f = match self.by_name.get(&ctx.name) {
             Some(f) => f.clone(),
             None => {
-                return Err(HandlerNotFound {
-                    handler: ctx.name,
-                });
+                return Err(HandlerNotFound { handler: ctx.name });
             }
         };
 
@@ -160,10 +158,7 @@ impl HandlerRegistry {
             Ok(res) => Ok(res),
             Err(_) => Ok(Err(SduiError::PayloadTooLarge {
                 what: crate::error::WhatTag::HandlerTimeout,
-                detail: format!(
-                    "handler exceeded {:?}",
-                    crate::limits::MAX_HANDLER_TIMEOUT,
-                ),
+                detail: format!("handler exceeded {:?}", crate::limits::MAX_HANDLER_TIMEOUT,),
             })),
         }
     }

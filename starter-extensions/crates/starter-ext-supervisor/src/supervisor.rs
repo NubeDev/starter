@@ -35,7 +35,10 @@ use std::time::Duration;
 
 use serde_json::json;
 use starter_ext_host::ExtensionRecord;
-use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Error, ExtensionId, LifecycleState, Result};
+use starter_ext_spi::{
+    jsonrpc::{stream_methods, JSONRPC_VERSION},
+    Error, ExtensionId, LifecycleState, Result, StreamCancel, StreamId, StreamNotification,
+};
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
 use tokio::sync::{mpsc, oneshot, watch};
@@ -55,7 +58,15 @@ const DISPATCH_ID_FLOOR: i64 = 1_000_000;
 /// Shared by [`SupervisorHandle`] (inserts on send) and the supervisor
 /// task (removes on response, or drains on task exit so callers see a
 /// transport error instead of hanging on `recv`).
-type PendingMap = Arc<Mutex<HashMap<i64, oneshot::Sender<core::result::Result<serde_json::Value, Error>>>>>;
+type PendingMap =
+    Arc<Mutex<HashMap<i64, oneshot::Sender<core::result::Result<serde_json::Value, Error>>>>>;
+
+/// In-flight stream subscriptions keyed by `stream_id`. Owned jointly
+/// by [`SupervisorHandle::subscribe_stream`] (inserts) and the
+/// supervisor task (looks up + forwards on every `stream.*`
+/// notification). Cleared on task exit so dangling subscribers see
+/// the channel close instead of hanging.
+type StreamSubscribers = Arc<Mutex<HashMap<String, mpsc::UnboundedSender<StreamNotification>>>>;
 
 use crate::backoff::BackoffSchedule;
 use crate::capability::{CapabilityGate, CapabilityViolationCounter};
@@ -89,6 +100,7 @@ pub struct SupervisorHandle {
     inbound: mpsc::UnboundedSender<serde_json::Value>,
     pending: PendingMap,
     next_request_id: Arc<AtomicI64>,
+    stream_subscribers: StreamSubscribers,
 }
 
 impl SupervisorHandle {
@@ -128,6 +140,71 @@ impl SupervisorHandle {
     /// the manifest's grace window, then `SIGKILL` if needed.
     pub async fn shutdown(&self) {
         let _ = self.shutdown_tx.send(()).await;
+    }
+
+    /// Send a `stream.cancel { stream_id, reason }` notification to
+    /// the child as the canonical way to cancel an in-flight
+    /// streaming invocation (or any other open `stream_id`).
+    ///
+    /// Proxies (`ProcessNodeProxy`, future per-transport adapters)
+    /// route their cancellation through this helper rather than
+    /// hand-rolling the envelope so the wire shape stays in one
+    /// place (`DOCS/extensions/scope/FLOW-NODES.md` R-flow-node-5:
+    /// `stream.cancel { stream_id: invocation_id }` for both
+    /// streaming and non-streaming invocations).
+    pub fn stream_cancel(
+        &self,
+        stream_id: &StreamId,
+        reason: Option<impl Into<String>>,
+    ) -> Result<()> {
+        let envelope = json!({
+            "jsonrpc": JSONRPC_VERSION,
+            "method": stream_methods::CANCEL,
+            "params": StreamCancel {
+                stream_id: stream_id.clone(),
+                reason: reason.map(Into::into),
+            },
+        });
+        self.send(envelope)
+    }
+
+    /// Subscribe to every `stream.*` notification whose `stream_id`
+    /// equals `stream_id`. Returns the receiving half of an unbounded
+    /// MPSC; the sending half lives on the supervisor task and is
+    /// dropped when the task exits (handle holders observe a closed
+    /// channel instead of hanging on `recv`).
+    ///
+    /// The proxy registers a subscription *before* it issues the
+    /// matching `flow.node.invoke` so a fast child cannot emit a
+    /// `stream.event` before the proxy is listening (the supervisor
+    /// otherwise drops the notification on the floor — there is no
+    /// per-stream buffering in v0.1).
+    ///
+    /// Inserting twice under the same `stream_id` replaces the prior
+    /// sender and returns a fresh receiver; the orphaned sender's
+    /// receiver will observe channel-closed on the next recv. v0.1
+    /// callers (`ProcessNodeProxy`) never share a stream id between
+    /// invocations.
+    pub fn subscribe_stream(
+        &self,
+        stream_id: &StreamId,
+    ) -> mpsc::UnboundedReceiver<StreamNotification> {
+        let (tx, rx) = mpsc::unbounded_channel();
+        if let Ok(mut g) = self.stream_subscribers.lock() {
+            g.insert(stream_id.0.clone(), tx);
+        }
+        rx
+    }
+
+    /// Cancel a stream subscription previously registered through
+    /// [`Self::subscribe_stream`]. Used by the proxy's drop guard so a
+    /// subscription whose invocation completed (normal response,
+    /// timeout, cancel-forwarder trip) does not leak in the supervisor's
+    /// map.
+    pub fn unsubscribe_stream(&self, stream_id: &StreamId) {
+        if let Ok(mut g) = self.stream_subscribers.lock() {
+            g.remove(&stream_id.0);
+        }
     }
 
     /// Synchronous JSON-RPC call against the child.
@@ -260,6 +337,7 @@ impl Supervisor {
         let violations = Arc::new(CapabilityViolationCounter::default());
         let pending: PendingMap = Arc::new(Mutex::new(HashMap::new()));
         let next_request_id = Arc::new(AtomicI64::new(DISPATCH_ID_FLOOR));
+        let stream_subscribers: StreamSubscribers = Arc::new(Mutex::new(HashMap::new()));
 
         let task = SupervisorTask {
             id: id.clone(),
@@ -277,6 +355,7 @@ impl Supervisor {
             events: events.clone(),
             violations: violations.clone(),
             pending: pending.clone(),
+            stream_subscribers: stream_subscribers.clone(),
         };
         tokio::spawn(task.run());
 
@@ -289,6 +368,7 @@ impl Supervisor {
             inbound: inbound_tx,
             pending,
             next_request_id,
+            stream_subscribers,
         })
     }
 }
@@ -317,6 +397,10 @@ struct SupervisorTask {
     /// in-flight [`SupervisorHandle::call`] returns a transport error
     /// instead of hanging.
     pending: PendingMap,
+    /// In-flight stream subscribers keyed by `stream_id`. Drained on
+    /// task exit so dangling proxies observe channel-closed instead
+    /// of hanging on `recv`.
+    stream_subscribers: StreamSubscribers,
 }
 
 impl Drop for SupervisorTask {
@@ -326,6 +410,12 @@ impl Drop for SupervisorTask {
         // `call` translates into `Error::Transport("... child likely
         // crashed")`.
         if let Ok(mut g) = self.pending.lock() {
+            g.clear();
+        }
+        // Drop every subscriber sender; receivers see a closed
+        // channel and their owning proxies return a transport error
+        // instead of hanging.
+        if let Ok(mut g) = self.stream_subscribers.lock() {
             g.clear();
         }
     }
@@ -716,10 +806,46 @@ impl SupervisorTask {
         if value.get("id").is_none() {
             if let Some(method) = value.get("method").and_then(|m| m.as_str()) {
                 if is_streaming_notification(method) {
-                    // Forward verbatim; adapters consume from the ring.
-                    // Stream payloads themselves aren't worth a ring entry
-                    // each (the ring is for diagnostics) — log at debug.
-                    debug!(ext = %self.id.as_str(), method, "stream notification");
+                    // Decode into the typed view so the per-stream
+                    // dispatch can key by `stream_id` without a second
+                    // round of string-matching. Malformed `stream.*`
+                    // notifications are dropped with a debug log —
+                    // the supervisor never crashes the child for a
+                    // bad envelope.
+                    match serde_json::from_value::<StreamNotification>(value.clone()) {
+                        Ok(notif) => {
+                            let stream_id = match &notif {
+                                StreamNotification::Event(e) => e.stream_id.0.clone(),
+                                StreamNotification::End(e) => e.stream_id.0.clone(),
+                                StreamNotification::Error(e) => e.stream_id.0.clone(),
+                                StreamNotification::Cancel(c) => c.stream_id.0.clone(),
+                            };
+                            let sender = {
+                                match self.stream_subscribers.lock() {
+                                    Ok(g) => g.get(&stream_id).cloned(),
+                                    Err(_) => None,
+                                }
+                            };
+                            if let Some(tx) = sender {
+                                let _ = tx.send(notif);
+                            } else {
+                                debug!(
+                                    ext = %self.id.as_str(),
+                                    method,
+                                    stream_id,
+                                    "stream notification for unsubscribed stream id (dropped)",
+                                );
+                            }
+                        }
+                        Err(e) => {
+                            debug!(
+                                ext = %self.id.as_str(),
+                                method,
+                                err = %e,
+                                "malformed stream.* notification",
+                            );
+                        }
+                    }
                 }
             }
             return;

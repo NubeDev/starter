@@ -42,7 +42,7 @@ pub mod resolver;
 pub mod runs;
 
 pub use active::ActiveTopologies;
-pub use classifier::{EditKind, classify};
+pub use classifier::{classify, EditKind};
 pub use manager::{BootResumeReport, DefinitionManager, PublishError, PublishOutcome};
 pub use metrics::{DefinitionMetrics, DefinitionMetricsCell};
 pub use resolver::{TopologyResolver, TopologyResolverError};

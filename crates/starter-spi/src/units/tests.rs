@@ -85,7 +85,12 @@ fn supports_matrix_covers_every_scope_pair() {
         ),
         (
             Quantity::Area,
-            &[Unit::SquareMeter, Unit::SquareFoot, Unit::Acre, Unit::Hectare][..],
+            &[
+                Unit::SquareMeter,
+                Unit::SquareFoot,
+                Unit::Acre,
+                Unit::Hectare,
+            ][..],
         ),
         (Quantity::Angle, &[Unit::Radian, Unit::Degree][..]),
         (

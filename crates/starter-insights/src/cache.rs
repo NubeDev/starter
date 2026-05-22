@@ -62,9 +62,7 @@ impl CachePayload {
     }
 
     fn into_dataset(self) -> Dataset {
-        use starter_spi::insights::{
-            DatasetSchema, TimeZoneId, VecDatasetRows, Window,
-        };
+        use starter_spi::insights::{DatasetSchema, TimeZoneId, VecDatasetRows, Window};
         use std::sync::Arc;
         let window = match (self.window_start_ms, self.window_end_ms) {
             (Some(s), Some(e)) => Some(Window::new(
@@ -161,8 +159,8 @@ impl DerivationCache {
         .map_err(|e| DerivationCacheError::Backend(e.to_string()))?;
         let Some(row) = row else { return Ok(None) };
         let body: String = row.get("payload_json");
-        let payload: CachePayload = serde_json::from_str(&body)
-            .map_err(|e| DerivationCacheError::Serde(e.to_string()))?;
+        let payload: CachePayload =
+            serde_json::from_str(&body).map_err(|e| DerivationCacheError::Serde(e.to_string()))?;
         Ok(Some(payload.into_dataset()))
     }
 

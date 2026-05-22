@@ -1,0 +1,45 @@
+# Slice A fixture exercising `contributes.nodes`.
+#
+# Per `DOCS/extensions/scope/FLOW-NODES.md` (R-flow-node-1) the manifest
+# adds exactly one new contribution kind — `contributes.nodes` — and
+# the loader threads it through the same R3 / R4 / R13 machinery every
+# other contribution kind uses. The slice A test loads this manifest,
+# walks it with `contributed_node_kinds(...)`, and proves the
+# descriptor surface compiles end-to-end without the slice B
+# `ProcessNodeProxy` (every kind binds to the placeholder
+# `UnboundNodeBehavior`).
+v: 1
+id: com.nube.mqtt
+version: 0.1.0
+display_name: "MQTT"
+description_file: docs/README.md
+authors:
+  - "ap@nube-io.com"
+
+runtime:
+  kind: process
+  bin: bin/mqtt-driver
+
+supervision:
+  restart: on_crash
+  max_restarts: 5
+  within_seconds: 60
+
+capabilities:
+  - kind: secrets
+    prefixes: ["mqtt:*"]
+  - kind: http_out
+    authorities: []
+
+contributes:
+  nodes:
+    - kind: com.nube.mqtt.publish
+      settings_schema: schemas/publish.json
+      description_file: docs/publish.md
+      facets: ["transport", "io"]
+      streaming: false
+    - kind: com.nube.mqtt.subscribe
+      settings_schema: schemas/subscribe.json
+      description_file: docs/subscribe.md
+      facets: ["transport", "io", "trigger"]
+      streaming: true

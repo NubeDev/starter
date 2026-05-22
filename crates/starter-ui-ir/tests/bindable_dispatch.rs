@@ -17,7 +17,10 @@ fn required_id_string_variant_returns_some() {
         style: None,
     };
     assert_eq!(c.id(), Some("switch-1"));
-    assert_eq!(c.read_binding().map(BindingSpec::slot_expr), Some("$target.enabled"));
+    assert_eq!(
+        c.read_binding().map(BindingSpec::slot_expr),
+        Some("$target.enabled")
+    );
     assert_eq!(c.write_bindings().len(), 1);
 }
 
@@ -58,5 +61,8 @@ fn multi_write_fanout_preserves_declaration_order() {
     assert_eq!(writes[0].slot_expr(), "$target.enabled");
     assert_eq!(writes[1].slot_expr(), "$mirror.enabled");
     // Read is the first entry by convention.
-    assert_eq!(c.read_binding().map(BindingSpec::slot_expr), Some("$target.enabled"));
+    assert_eq!(
+        c.read_binding().map(BindingSpec::slot_expr),
+        Some("$target.enabled")
+    );
 }

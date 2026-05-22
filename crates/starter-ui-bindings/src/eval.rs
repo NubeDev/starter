@@ -119,13 +119,12 @@ pub fn evaluate<G: EntityGraph + ?Sized>(
         match step {
             Step::Slot(slot) => {
                 if let Some(entity) = cursor.as_ref() {
-                    let v = ctx
-                        .graph
-                        .read_slot(entity, slot)
-                        .ok_or_else(|| BindingError::UnknownSlot {
+                    let v = ctx.graph.read_slot(entity, slot).ok_or_else(|| {
+                        BindingError::UnknownSlot {
                             entity: entity.clone(),
                             slot: slot.clone(),
-                        })?;
+                        }
+                    })?;
                     ctx.record(entity, slot);
                     // A slot read consumes the cursor: further `.ident`
                     // steps are field accesses on the returned JSON
@@ -231,7 +230,10 @@ mod tests {
             self.children
                 .entry(parent.into())
                 .or_default()
-                .push(ChildLink { name: name.into(), id: id.into() });
+                .push(ChildLink {
+                    name: name.into(),
+                    id: id.into(),
+                });
             self
         }
     }
@@ -246,9 +248,10 @@ mod tests {
 
     #[test]
     fn target_child_slot_resolves() {
-        let g = Fixture::default()
-            .child("t1", "temp", "t1.temp")
-            .slot("t1.temp", "value", json!(21.5));
+        let g =
+            Fixture::default()
+                .child("t1", "temp", "t1.temp")
+                .slot("t1.temp", "value", json!(21.5));
         let stack = HashMap::new();
         let user = serde_json::Map::new();
         let page = serde_json::Map::new();
@@ -306,9 +309,10 @@ mod tests {
 
     #[test]
     fn access_log_records_only_slot_reads() {
-        let g = Fixture::default()
-            .child("t1", "temp", "t1.temp")
-            .slot("t1.temp", "value", json!(1));
+        let g =
+            Fixture::default()
+                .child("t1", "temp", "t1.temp")
+                .slot("t1.temp", "value", json!(1));
         let stack = HashMap::new();
         let user = serde_json::Map::new();
         let page = serde_json::Map::new();

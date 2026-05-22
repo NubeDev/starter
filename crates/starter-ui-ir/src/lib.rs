@@ -30,7 +30,7 @@ mod diagnostic;
 pub mod schema;
 
 pub use action::{ActionContext, ActionRequest, ActionResponse, NavigateTo, ToastIntent};
-pub use bindable::{Bindable, ResolveIssue, expected_shape, json_shape};
+pub use bindable::{expected_shape, json_shape, Bindable, ResolveIssue};
 pub use diagnostic::{Diagnostic, Severity};
 
 pub use chart::{
@@ -38,11 +38,11 @@ pub use chart::{
     DataPoint, OrderDirection, RowsOrder,
 };
 pub use component::{
-    Action, BindingSpec, Bindings, ColumnRender, Component, Concurrency, ConfirmDialog, DateRangePreset,
-    DiffAnnotation, FieldError, FlexAlign, FlexJustify, JsonTableColumn, JsonTableColumnFormat,
-    KpiDelta, KpiGridItem, NodeStyle, NumberValidate, OptimisticHint, RowAction, RowBreakpoints, RowLayout,
-    SelectOption, ShowWhen, Tab, TableColumn, TableSource, TextValidate, TimelineEvent,
-    ToolbarAction, TreeItem,
+    Action, BindingSpec, Bindings, ColumnRender, Component, Concurrency, ConfirmDialog,
+    DateRangePreset, DiffAnnotation, FieldError, FlexAlign, FlexJustify, JsonTableColumn,
+    JsonTableColumnFormat, KpiDelta, KpiGridItem, NodeStyle, NumberValidate, OptimisticHint,
+    RowAction, RowBreakpoints, RowLayout, SelectOption, ShowWhen, Tab, TableColumn, TableSource,
+    TextValidate, TimelineEvent, ToolbarAction, TreeItem,
 };
 
 use schemars::JsonSchema;
@@ -218,7 +218,10 @@ mod tests {
         assert_eq!(json["action_ref"], "com.acme.weather.fetch");
         assert_eq!(json["target"], "/devices/weather-1");
         assert_eq!(json["title"], "Get Weather");
-        assert!(json.get("description").is_none(), "absent fields elided: {json}");
+        assert!(
+            json.get("description").is_none(),
+            "absent fields elided: {json}"
+        );
         let _back: Component = serde_json::from_value(json).unwrap();
     }
 

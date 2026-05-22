@@ -31,8 +31,8 @@ use starter_spi::insights::{
 };
 use starter_store_sqlite::pool::Pool;
 
-use crate::nodes::rule_rhai::anon_rule_id;
 use super::VERDICT_SLOT;
+use crate::nodes::rule_rhai::anon_rule_id;
 
 /// Reverse-DNS kind id.
 pub const KIND_ID: &str = "starter.flow.rule.sql";

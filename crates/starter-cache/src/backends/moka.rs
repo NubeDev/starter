@@ -233,7 +233,11 @@ mod tests {
         for h in handles {
             assert_eq!(h.await.unwrap(), 99);
         }
-        assert_eq!(calls.load(Ordering::SeqCst), 1, "loader must run exactly once");
+        assert_eq!(
+            calls.load(Ordering::SeqCst),
+            1,
+            "loader must run exactly once"
+        );
 
         // Stats: exactly one miss (the single loader run); the rest
         // are hits served from the cached value.

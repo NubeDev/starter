@@ -349,9 +349,11 @@ fn slot_to_json(v: &SlotValue) -> serde_json::Value {
             .map(serde_json::Value::Number)
             .unwrap_or(serde_json::Value::Null),
         SlotValue::String(s) => serde_json::Value::String(s.clone()),
-        SlotValue::Bytes(b) => {
-            serde_json::Value::Array(b.iter().map(|byte| serde_json::Value::from(*byte)).collect())
-        }
+        SlotValue::Bytes(b) => serde_json::Value::Array(
+            b.iter()
+                .map(|byte| serde_json::Value::from(*byte))
+                .collect(),
+        ),
         SlotValue::Json(j) => j.clone(),
         other => serde_json::json!({
             "unknown_slot_variant": format!("{other:?}")

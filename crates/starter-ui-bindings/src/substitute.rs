@@ -13,7 +13,7 @@
 
 use starter_ui_ir::{Component, ComponentTree};
 
-use crate::eval::{BindingError, EvalContext, evaluate};
+use crate::eval::{evaluate, BindingError, EvalContext};
 use crate::graph::EntityGraph;
 use crate::parse::{Binding, ParseError};
 

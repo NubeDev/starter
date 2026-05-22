@@ -6,9 +6,7 @@
 //! types all accept their children via `.children([...])` so the call
 //! shape reads naturally.
 
-use starter_ui_ir::{
-    Component, FlexAlign, FlexJustify, NodeStyle, RowBreakpoints, RowLayout, Tab,
-};
+use starter_ui_ir::{Component, FlexAlign, FlexJustify, NodeStyle, RowBreakpoints, RowLayout, Tab};
 
 // =====================================================================
 // Page

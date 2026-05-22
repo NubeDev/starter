@@ -17,16 +17,16 @@
 //! - [`session_store::SqliteSessionStore`] — session records,
 //!   principal-scoped listing.
 
+pub mod agent_session_store;
 pub mod flow_store;
 pub mod run_store;
 mod schema;
 pub mod session_store;
-pub mod agent_session_store;
 
+pub use agent_session_store::SqliteAgentSessionStore;
 pub use flow_store::SqliteFlowStore;
 pub use run_store::SqliteRunStore;
 pub use session_store::SqliteSessionStore;
-pub use agent_session_store::SqliteAgentSessionStore;
 
 /// `sqlx` migrator for the flow persistence schema. Pair with the
 /// crate's `migrate(pool).with_source(MigrationSource { name:

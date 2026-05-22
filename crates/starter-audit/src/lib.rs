@@ -34,7 +34,11 @@ impl AuditService {
     /// Paged list of user-authored changes. The caller's filter is
     /// merged with a forced `actor_kind = "user"` constraint; any
     /// `actor_kind` set by the caller is overwritten.
-    pub async fn list(&self, principal: &Principal, mut filter: ChangeFilter) -> Result<ChangePage> {
+    pub async fn list(
+        &self,
+        principal: &Principal,
+        mut filter: ChangeFilter,
+    ) -> Result<ChangePage> {
         filter.actor_kind = Some("user".into());
         let page = self.log.list(&filter).await?;
         let items = page

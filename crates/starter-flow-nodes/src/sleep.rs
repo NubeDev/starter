@@ -41,7 +41,7 @@ pub const KIND_ID: &str = "starter.flow.sleep";
 
 /// Static metadata for the catalog / discovery surface. Help text is
 /// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
-pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+pub static DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
     starter_flow_spi::node::NodeDescriptor::new(
         KIND_ID,
         "starter.flow.node.sleep.label",
@@ -274,7 +274,10 @@ mod tests {
         });
 
         let started = Instant::now();
-        let err = body.invoke(ctx, input).await.expect_err("must be cancelled");
+        let err = body
+            .invoke(ctx, input)
+            .await
+            .expect_err("must be cancelled");
         assert!(matches!(err, NodeError::Cancelled));
         assert!(started.elapsed() < Duration::from_secs(1));
     }

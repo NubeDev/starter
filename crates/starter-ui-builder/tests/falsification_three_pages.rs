@@ -49,23 +49,18 @@ fn crud_device_list() -> ComponentTree {
     dashboard(
         "list",
         "Items",
-        [
-            row("toolbar")
-                .child(heading("All items").build())
-                .child(
-                    table(
-                        "items-table",
-                        rsql().kind("inventory.item"),
-                    )
+        [row("toolbar")
+            .child(heading("All items").build())
+            .child(
+                table("items-table", rsql().kind("inventory.item"))
                     .live()
                     .searchable()
                     .page_size(50)
                     .column("Name", "slots.name.value")
                     .column("Status", "slots.status.value")
                     .build(),
-                )
-                .build(),
-        ],
+            )
+            .build()],
     )
 }
 
@@ -129,18 +124,15 @@ fn review_card() -> ComponentTree {
     dashboard(
         "review",
         "{{$target.title}}",
-        [
-            col("review-col")
-                .child(heading("Proposed change").subtitle("by {{$target.author}}").build())
-                .child(diff)
-                .child(
-                    row("actions")
-                        .child(approve)
-                        .child(request_changes)
-                        .build(),
-                )
-                .build(),
-        ],
+        [col("review-col")
+            .child(
+                heading("Proposed change")
+                    .subtitle("by {{$target.author}}")
+                    .build(),
+            )
+            .child(diff)
+            .child(row("actions").child(approve).child(request_changes).build())
+            .build()],
     )
 }
 
@@ -168,21 +160,13 @@ fn scope_board() -> ComponentTree {
                 "kpis",
                 "1fr 1fr 1fr",
                 [
-                    kpi(
-                        "open-count",
-                        "Open",
-                        series("board-stats", "open_count"),
-                    ),
+                    kpi("open-count", "Open", series("board-stats", "open_count")),
                     kpi(
                         "in-progress-count",
                         "In progress",
                         series("board-stats", "in_progress_count"),
                     ),
-                    kpi(
-                        "done-count",
-                        "Done",
-                        series("board-stats", "done_count"),
-                    ),
+                    kpi("done-count", "Done", series("board-stats", "done_count")),
                 ],
             ),
             row("status-row")
@@ -211,13 +195,46 @@ fn scope_board() -> ComponentTree {
 /// suite forbids that.
 fn builtin_kinds() -> HashSet<&'static str> {
     [
-        "page", "row", "col", "grid", "stack", "tabs", "card", "section",
-        "text", "heading", "badge", "kpi", "kpi_grid", "button", "link",
-        "table", "form", "field", "field_group", "select", "toggle",
-        "chart", "sparkline", "tree", "timeline", "markdown", "code",
-        "wizard", "drawer", "rich_text", "diff", "ref_picker",
-        "date_range", "divider", "slider", "detail", "json_table",
-        "gauge", "action_form", "dashboard",
+        "page",
+        "row",
+        "col",
+        "grid",
+        "stack",
+        "tabs",
+        "card",
+        "section",
+        "text",
+        "heading",
+        "badge",
+        "kpi",
+        "kpi_grid",
+        "button",
+        "link",
+        "table",
+        "form",
+        "field",
+        "field_group",
+        "select",
+        "toggle",
+        "chart",
+        "sparkline",
+        "tree",
+        "timeline",
+        "markdown",
+        "code",
+        "wizard",
+        "drawer",
+        "rich_text",
+        "diff",
+        "ref_picker",
+        "date_range",
+        "divider",
+        "slider",
+        "detail",
+        "json_table",
+        "gauge",
+        "action_form",
+        "dashboard",
     ]
     .into_iter()
     .collect()
@@ -261,8 +278,7 @@ fn assert_fixture(name: &str, tree: ComponentTree) {
     assert_eq!(json["root"]["type"], "page", "{name}: root must be page");
 
     // Typed round-trip — the wire-shape validator of record.
-    let _back: ComponentTree =
-        serde_json::from_value(json.clone()).expect("typed round-trip");
+    let _back: ComponentTree = serde_json::from_value(json.clone()).expect("typed round-trip");
 
     // Every emitted node type lives in the renderer's dispatch
     // table (no implicit `custom` fallbacks in the falsification
@@ -293,7 +309,10 @@ fn review_card_renders_through_one_renderer() {
     let actions = &json["root"]["children"][0]["children"][2]["children"];
     let approve = &actions[0];
     assert_eq!(approve["type"], "button");
-    assert_eq!(approve["action"]["optimistic"]["target_component_id"], "approve-btn");
+    assert_eq!(
+        approve["action"]["optimistic"]["target_component_id"],
+        "approve-btn"
+    );
     assert_eq!(approve["action"]["optimistic"]["fields"]["disabled"], true);
     assert_fixture("review_card", tree);
 }

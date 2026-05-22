@@ -191,7 +191,10 @@ async fn artifact_too_large_is_rejected_without_writing() {
         .append_turn_with_artifacts(
             id,
             TurnInput::new(TurnRole::Assistant, serde_json::json!({})),
-            &[ArtifactWrite::new("tree", serde_json::json!({ "blob": big }))],
+            &[ArtifactWrite::new(
+                "tree",
+                serde_json::json!({ "blob": big }),
+            )],
         )
         .await
         .unwrap_err();
@@ -200,11 +203,7 @@ async fn artifact_too_large_is_rejected_without_writing() {
     // M10/M11: turn must not be persisted either — caps are pre-flight.
     let turns = store.list_turns(id, None, None).await.unwrap();
     assert!(turns.is_empty());
-    assert!(store
-        .latest_artifact(id, "tree")
-        .await
-        .unwrap()
-        .is_none());
+    assert!(store.latest_artifact(id, "tree").await.unwrap().is_none());
 }
 
 #[tokio::test]
@@ -274,11 +273,7 @@ async fn delete_cascades_through_turns_and_artifacts() {
 
     store.delete(id).await.unwrap();
     assert!(store.get(id).await.unwrap().is_none());
-    assert!(store
-        .latest_artifact(id, "tree")
-        .await
-        .unwrap()
-        .is_none());
+    assert!(store.latest_artifact(id, "tree").await.unwrap().is_none());
     let turns = store.list_turns(id, None, None).await.unwrap();
     assert!(turns.is_empty());
 }
@@ -379,12 +374,10 @@ async fn retention_delete_after_cascades_turns_and_artifacts() {
         .append_turn_with_artifacts(
             id,
             TurnInput::new(TurnRole::Assistant, serde_json::json!({"text": "out"})),
-            &[
-                starter_flow_spi::agent_session::ArtifactWrite::new(
-                    "tree",
-                    serde_json::json!({"root": {}}),
-                ),
-            ],
+            &[starter_flow_spi::agent_session::ArtifactWrite::new(
+                "tree",
+                serde_json::json!({"root": {}}),
+            )],
         )
         .await
         .unwrap();
@@ -437,20 +430,15 @@ async fn retention_delete_turns_after_keeps_latest_artifact() {
             .append_turn_with_artifacts(
                 id,
                 TurnInput::new(TurnRole::Assistant, serde_json::json!({"i": i})),
-                &[
-                    starter_flow_spi::agent_session::ArtifactWrite::new(
-                        "tree",
-                        serde_json::json!({"v": i}),
-                    ),
-                ],
+                &[starter_flow_spi::agent_session::ArtifactWrite::new(
+                    "tree",
+                    serde_json::json!({"v": i}),
+                )],
             )
             .await
             .unwrap();
     }
-    let versions_before = store
-        .list_artifact_versions(id, "tree")
-        .await
-        .unwrap();
+    let versions_before = store.list_artifact_versions(id, "tree").await.unwrap();
     assert_eq!(versions_before.len(), 2);
 
     let report = store
@@ -487,12 +475,10 @@ async fn retention_delete_turns_after_without_keep_leaves_artifacts() {
             .append_turn_with_artifacts(
                 id,
                 TurnInput::new(TurnRole::Assistant, serde_json::json!({"i": i})),
-                &[
-                    starter_flow_spi::agent_session::ArtifactWrite::new(
-                        "tree",
-                        serde_json::json!({"v": i}),
-                    ),
-                ],
+                &[starter_flow_spi::agent_session::ArtifactWrite::new(
+                    "tree",
+                    serde_json::json!({"v": i}),
+                )],
             )
             .await
             .unwrap();

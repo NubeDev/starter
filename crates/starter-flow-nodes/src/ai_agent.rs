@@ -70,7 +70,7 @@ pub const KIND_ID: &str = "starter.flow.ai-agent";
 
 /// Static metadata for the catalog / discovery surface. Help text is
 /// resolved through `starter-i18n`; see `crates/starter-i18n/catalogs/`.
-pub const DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
+pub static DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
     starter_flow_spi::node::NodeDescriptor::new(
         KIND_ID,
         "starter.flow.node.ai-agent.label",
@@ -361,7 +361,12 @@ impl NodeBehavior for AiAgent {
         // surfaces a typed `Domain { code: "skill_resource_hash_mismatch" }`
         // so run telemetry shows a structured node failure rather than
         // an opaque backend error.
-        if let SkillSelection::Selected { resources, skill_id, .. } = ctx.skill {
+        if let SkillSelection::Selected {
+            resources,
+            skill_id,
+            ..
+        } = ctx.skill
+        {
             for resource in resources {
                 if let Err(err) = starter_skills::read_and_verify(resource) {
                     return Err(map_resource_mount_error(skill_id.as_str(), err));
@@ -468,13 +473,14 @@ impl NodeBehavior for AiAgent {
 /// alert on it specifically. The other two variants
 /// (`UnsupportedScheme`, `Io`) bucket into distinct codes so the
 /// failure mode is still legible at the telemetry layer.
-fn map_resource_mount_error(
-    skill_id: &str,
-    err: starter_skills::ResourceMountError,
-) -> NodeError {
+fn map_resource_mount_error(skill_id: &str, err: starter_skills::ResourceMountError) -> NodeError {
     use starter_skills::ResourceMountError as E;
     match err {
-        E::HashMismatch { uri, expected, actual } => NodeError::Domain {
+        E::HashMismatch {
+            uri,
+            expected,
+            actual,
+        } => NodeError::Domain {
             code: "skill_resource_hash_mismatch",
             message: format!(
                 "skill `{skill_id}` resource `{uri}` hash drifted between selection and mount: \
@@ -498,9 +504,7 @@ fn map_resource_mount_error(
         // `ResourceMountError` is `#[non_exhaustive]` upstream. Future
         // variants surface here as a generic backend error until a
         // typed mapping is added; the run still fails closed.
-        other => NodeError::Backend(format!(
-            "skill `{skill_id}` resource mount: {other}"
-        )),
+        other => NodeError::Backend(format!("skill `{skill_id}` resource mount: {other}")),
     }
 }
 

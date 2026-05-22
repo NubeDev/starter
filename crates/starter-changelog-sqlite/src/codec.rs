@@ -6,8 +6,8 @@
 
 use chrono::{DateTime, Utc};
 use sqlx::Row;
-use starter_spi::changelog::{Actor, Change, ChangeId, GroupId, Op, TraceId};
 use starter_spi::authz::ResourceRef;
+use starter_spi::changelog::{Actor, Change, ChangeId, GroupId, Op, TraceId};
 use starter_spi::{Error, Result};
 
 /// Serialize a JSON value to TEXT or return `Error::Internal`.
@@ -33,7 +33,9 @@ pub(crate) fn text_to_json(s: Option<String>) -> Result<Option<serde_json::Value
 
 /// `(actor_kind, actor_id, actor_meta_json, actor_model)` tuple for
 /// the recorder's INSERT.
-pub(crate) fn actor_columns(actor: &Actor) -> Result<(String, Option<String>, Option<String>, Option<String>)> {
+pub(crate) fn actor_columns(
+    actor: &Actor,
+) -> Result<(String, Option<String>, Option<String>, Option<String>)> {
     Ok(match actor {
         Actor::User { subject } => ("user".into(), Some(subject.clone()), None, None),
         Actor::Agent { run_id, model } => {
@@ -125,9 +127,11 @@ pub(crate) fn row_to_change(row: &sqlx::sqlite::SqliteRow) -> Result<Change> {
     let group_id: String = row.try_get("group_id").map_err(internal)?;
     let correlation: Option<String> = row.try_get("correlation").map_err(internal)?;
 
-    let at: DateTime<Utc> = at.parse().map_err(|e: chrono::ParseError| Error::Internal {
-        source: Box::new(e),
-    })?;
+    let at: DateTime<Utc> = at
+        .parse()
+        .map_err(|e: chrono::ParseError| Error::Internal {
+            source: Box::new(e),
+        })?;
 
     Ok(Change {
         id: ChangeId(id),

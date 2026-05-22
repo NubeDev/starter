@@ -9,12 +9,8 @@ use serde_json::json;
 #[tokio::test]
 async fn resolve_returns_render_and_subscriptions_keys() {
     let app = build_app(trivial_tree());
-    let (status, body) = post_json(
-        app,
-        "/api/v1/ui/resolve",
-        json!({ "page_ref": "page-1" }),
-    )
-    .await;
+    let (status, body) =
+        post_json(app, "/api/v1/ui/resolve", json!({ "page_ref": "page-1" })).await;
     assert_eq!(status, StatusCode::OK, "body was {body}");
     assert!(body.get("render").is_some(), "no render: {body}");
     assert!(
@@ -41,11 +37,7 @@ async fn resolve_unknown_page_is_diagnostics_404() {
 #[tokio::test]
 async fn table_paginates_in_memory_engine() {
     let app = build_app(trivial_tree());
-    let (status, body) = get_json(
-        app,
-        "/api/v1/ui/table?source_id=source-1&page=1&size=2",
-    )
-    .await;
+    let (status, body) = get_json(app, "/api/v1/ui/table?source_id=source-1&page=1&size=2").await;
     assert_eq!(status, StatusCode::OK, "body was {body}");
     assert_eq!(body["data"].as_array().unwrap().len(), 2);
     assert_eq!(body["meta"]["total"], 3);

@@ -83,9 +83,7 @@ pub enum ResourceMountError {
     /// This is the load-bearing arm of R-skills-7. Subsequent runs
     /// against the edited bundle see the registry's new selection
     /// (after `reload`) and proceed normally.
-    #[error(
-        "skill resource hash mismatch for `{uri}`: expected {expected}, got {actual}"
-    )]
+    #[error("skill resource hash mismatch for `{uri}`: expected {expected}, got {actual}")]
     HashMismatch {
         /// URI of the offending resource.
         uri: String,
@@ -132,11 +130,11 @@ pub fn read_and_verify(resource: &ResourceRef) -> Result<Vec<u8>, ResourceMountE
 /// taken verbatim as a filesystem path. Empty / non-`file://` URIs
 /// surface [`ResourceMountError::UnsupportedScheme`].
 fn uri_to_path(uri: &str) -> Result<PathBuf, ResourceMountError> {
-    let rest = uri.strip_prefix("file://").ok_or_else(|| {
-        ResourceMountError::UnsupportedScheme {
-            uri: uri.to_owned(),
-        }
-    })?;
+    let rest =
+        uri.strip_prefix("file://")
+            .ok_or_else(|| ResourceMountError::UnsupportedScheme {
+                uri: uri.to_owned(),
+            })?;
     Ok(Path::new(rest).to_path_buf())
 }
 
@@ -208,7 +206,9 @@ mod tests {
         let resource = ResourceRef::new(uri.clone(), h1.clone());
         let err = read_and_verify(&resource).expect_err("expected mismatch");
         match err {
-            ResourceMountError::HashMismatch { expected, actual, .. } => {
+            ResourceMountError::HashMismatch {
+                expected, actual, ..
+            } => {
                 assert_eq!(expected, h1);
                 assert_ne!(actual, h1);
             }

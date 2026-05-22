@@ -29,11 +29,7 @@ impl ChangelogVisibilityRegistry {
 
     /// Register a visibility rule for `kind`. Replaces any prior rule
     /// for the same kind.
-    pub fn insert(
-        mut self,
-        kind: impl Into<String>,
-        rule: Arc<dyn ChangelogVisibility>,
-    ) -> Self {
+    pub fn insert(mut self, kind: impl Into<String>, rule: Arc<dyn ChangelogVisibility>) -> Self {
         self.rules.insert(kind.into(), rule);
         self
     }

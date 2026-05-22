@@ -183,7 +183,10 @@ async fn agent_invokes_flow_tool_and_receives_log_output() {
         "expected exactly one tool-result frame, got {tool_results:#?}"
     );
     let tr = tool_results[0];
-    assert_eq!(tr["toolCall"]["name"].as_str(), Some(flow_tool_name.as_str()));
+    assert_eq!(
+        tr["toolCall"]["name"].as_str(),
+        Some(flow_tool_name.as_str())
+    );
     assert_eq!(tr["toolCall"]["state"].as_str(), Some("done"));
     let result_str = tr["toolCall"]["result"]
         .as_str()
@@ -233,8 +236,10 @@ async fn agent_invokes_flow_tool_and_receives_log_output() {
     // 7. A `runs` row should exist for the flow (the agent fired it).
     // -----------------------------------------------------------
     let flow_runs = runs.list_for_flow(&flow.id).await.expect("list runs");
-    assert_eq!(flow_runs.len(), 1, "expected one recorded run, got {flow_runs:?}");
+    assert_eq!(
+        flow_runs.len(),
+        1,
+        "expected one recorded run, got {flow_runs:?}"
+    );
     assert_eq!(flow_runs[0].status, "ok");
-
 }
-

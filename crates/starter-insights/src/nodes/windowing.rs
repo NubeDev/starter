@@ -152,9 +152,11 @@ fn parse_cfg(input: &SlotMap, slide: bool) -> Result<Cfg, String> {
     let step_secs = if slide {
         match input.get(STEP_SECS_SLOT) {
             Some(SlotValue::Int(n)) if *n > 0 && *n <= size_secs => *n,
-            _ => return Err(format!(
-                "window.slide: missing `{STEP_SECS_SLOT}` in (0, size_secs]"
-            )),
+            _ => {
+                return Err(format!(
+                    "window.slide: missing `{STEP_SECS_SLOT}` in (0, size_secs]"
+                ))
+            }
         }
     } else {
         size_secs

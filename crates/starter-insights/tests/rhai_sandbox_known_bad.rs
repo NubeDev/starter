@@ -25,8 +25,7 @@ fn fixtures_dir() -> PathBuf {
 
 fn load_scripts() -> Vec<(String, String)> {
     let dir = fixtures_dir();
-    let entries = fs::read_dir(&dir)
-        .unwrap_or_else(|e| panic!("read fixtures dir {dir:?}: {e}"));
+    let entries = fs::read_dir(&dir).unwrap_or_else(|e| panic!("read fixtures dir {dir:?}: {e}"));
     let mut out = Vec::new();
     for e in entries {
         let e = e.unwrap();
@@ -34,13 +33,8 @@ fn load_scripts() -> Vec<(String, String)> {
         if path.extension().and_then(|s| s.to_str()) != Some("rhai") {
             continue;
         }
-        let name = path
-            .file_name()
-            .unwrap()
-            .to_string_lossy()
-            .to_string();
-        let body = fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("read {path:?}: {e}"));
+        let name = path.file_name().unwrap().to_string_lossy().to_string();
+        let body = fs::read_to_string(&path).unwrap_or_else(|e| panic!("read {path:?}: {e}"));
         out.push((name, body));
     }
     // Stable iteration order for diagnosable CI output.

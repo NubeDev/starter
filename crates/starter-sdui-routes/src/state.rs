@@ -92,15 +92,11 @@ impl SduiStateBuilder {
     pub fn build(self) -> Result<SduiState, &'static str> {
         Ok(SduiState {
             pages: self.pages.ok_or("SduiState requires a PageProvider")?,
-            graph: self
-                .graph
-                .ok_or("SduiState requires an EntityGraph")?,
+            graph: self.graph.ok_or("SduiState requires an EntityGraph")?,
             handlers: self
                 .handlers
                 .ok_or("SduiState requires a HandlerRegistry")?,
-            query: self
-                .query
-                .ok_or("SduiState requires a QueryEngine")?,
+            query: self.query.ok_or("SduiState requires a QueryEngine")?,
         })
     }
 }

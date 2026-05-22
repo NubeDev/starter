@@ -282,7 +282,9 @@ impl SelectorStrategy for LlmSkillSelector {
         let session_id: SessionId = "skill-selector".into();
         let cancel = NoOpCancel;
 
-        let run = self.runner.run(RunnerInput::Rest(cfg), session_id, tx, &cancel);
+        let run = self
+            .runner
+            .run(RunnerInput::Rest(cfg), session_id, tx, &cancel);
         let outcome = tokio::time::timeout(self.timeout, run).await;
         drain.abort();
 
