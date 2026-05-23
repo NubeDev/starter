@@ -1,0 +1,11 @@
+[package]
+name        = "rubix-kinds-registry"
+description = "rubix agent — kinds registry. Phase-0 skeleton; registers zero kinds until Phase 1."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+rubix-spi = { workspace = true }

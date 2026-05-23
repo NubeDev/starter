@@ -1,0 +1,14 @@
+[package]
+name        = "rubix-agent"
+description = "rubix agent — main binary. Phase-0 skeleton; prints version and exits 0."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[[bin]]
+name = "rubix-agent"
+path = "src/main.rs"
+
+[dependencies]

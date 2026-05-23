@@ -1,0 +1,11 @@
+[package]
+name        = "rubix-engine"
+description = "rubix agent — execution engine. Phase-0 skeleton; depends only on rubix-spi (R4)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+rubix-spi = { workspace = true }

@@ -1,0 +1,16 @@
+[package]
+name        = "rubix-spi"
+description = "rubix — service provider interface. Wire types, errors, traits. Depends only on starter-spi (R5)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R5: zero internal deps other than starter-spi. The module slots
+# reserved in lib.rs (KindManifest / Msg / slot_schema / dto /
+# artifacts) get fleshed out from Phase 1 onward; Phase 0 only
+# reserves the names so downstream crates can `use` the path
+# without import churn later.
+[dependencies]
+starter-spi = { workspace = true }

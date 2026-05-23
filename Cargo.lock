@@ -6314,6 +6314,71 @@ dependencies = [
 ]
 
 [[package]]
+name = "rubix-agent"
+version = "0.1.0"
+
+[[package]]
+name = "rubix-agent-client-rs"
+version = "0.1.0"
+dependencies = [
+ "rubix-spi",
+]
+
+[[package]]
+name = "rubix-agent-sdk"
+version = "0.1.0"
+dependencies = [
+ "rubix-spi",
+]
+
+[[package]]
+name = "rubix-data-clickhouse"
+version = "0.1.0"
+dependencies = [
+ "clickhouse",
+ "serde",
+ "starter-store-clickhouse",
+ "tokio",
+]
+
+[[package]]
+name = "rubix-data-postgres"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
+ "starter-store-postgres",
+ "tokio",
+]
+
+[[package]]
+name = "rubix-engine"
+version = "0.1.0"
+dependencies = [
+ "rubix-spi",
+]
+
+[[package]]
+name = "rubix-graph"
+version = "0.1.0"
+dependencies = [
+ "rubix-spi",
+]
+
+[[package]]
+name = "rubix-kinds-registry"
+version = "0.1.0"
+dependencies = [
+ "rubix-spi",
+]
+
+[[package]]
+name = "rubix-spi"
+version = "0.1.0"
+dependencies = [
+ "starter-spi",
+]
+
+[[package]]
 name = "rumqttc"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

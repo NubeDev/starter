@@ -1,0 +1,10 @@
+# rubix TS workspace. Scoped to the rubix subtree so the
+# starter-side pnpm workspace at the repo root is unaffected
+# (see rubix-phase-0 SCOPE Q2).
+packages:
+  - "agent-client-ts"
+  - "ui-core"
+  - "ui-kit"
+  - "extension-ui-sdk"
+  - "studio"
+  - "desktop"
