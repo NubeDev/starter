@@ -35,10 +35,14 @@ factors that flipped the call:
   insisted on, see retired W8) does not include it. ClickHouse ships
   `TTL ... TO VOLUME 's3_cold'` in the Apache-2 OSS build.
 - **Read latency at scale.** ClickHouse `AggregatingMergeTree` marts
-  are kept current *per insert* (the MV fires synchronously on the
-  inserting block). Timescale continuous aggregates refresh on a
-  policy (default minutes). At dashboard read time, ClickHouse is
-  fresher *and* faster on the rollup path.
+  are kept current **per flushed block** (the MV fires synchronously
+  on each block written to the source table, which under our
+  `async_insert=1` regime is ≤1 s after the row write — see
+  [Warehouse W16](../Warehouse/SCOPE.md#w16--read-after-write-boundary)
+  for the read-after-write contract). Timescale continuous
+  aggregates refresh on a policy (default minutes — bounded above by
+  the refresh window, not by the block flush). At dashboard read
+  time, ClickHouse is fresher *and* faster on the rollup path.
 - **Compression.** ZSTD on cold parts typically gives 5–10× on
   telemetry-shaped data, often 10×+ with low-cardinality tag values.
 - **Headroom.** A single ClickHouse node comfortably handles 10s of
@@ -94,7 +98,7 @@ Concretely:
 - Tags storage on ClickHouse history tables is `Map(String, String)`
   with a `bloom_filter` skip index. The Postgres dimension tables
   keep `JSONB` + GIN as today. See updated
-  [Tags SCOPE T8](../Tags/SCOPE.md#t8--two-canonical-compilation-targets).
+  [Tags SCOPE T8](../Tags/SCOPE.md#t8--two-sql-compilation-targets-plus-an-in-process-matcher).
 
 ## Consequences
 
@@ -103,9 +107,14 @@ Concretely:
 - **<50 ms dashboard reads.** Pre-aggregated `AggregatingMergeTree`
   rollups, ordered by the dimensions dashboards filter on, hit this
   trivially on a single node with hot data on NVMe.
-- **Per-insert MV freshness.** ClickHouse incremental MVs fire on the
-  inserting block. There is no refresh policy to schedule, no
-  backfill catch-up window, no missed chunks.
+- **Per-flushed-block MV freshness.** ClickHouse incremental MVs
+  fire on every block written to the source table. Under our
+  `async_insert=1` regime, that flush happens ≤1 s after the row
+  write; the MV then materialises into the target synchronously
+  with the flush. There is no refresh policy to schedule, no
+  backfill catch-up window, no missed chunks. See
+  [Warehouse W16](../Warehouse/SCOPE.md#w16--read-after-write-boundary)
+  for the read-after-write bound this implies.
 - **Cold S3 tiering in OSS.** `TTL ts + INTERVAL 90 DAY TO VOLUME
   's3_cold'` moves old parts to object storage transparently.
   Apache-2.0, no commercial tier needed.
@@ -128,9 +137,11 @@ Concretely:
   ClickHouse) — but it is real.
 - **No `sqlx` on the ClickHouse side.** ClickHouse's Postgres-wire
   compatibility is not sufficient for `sqlx`'s codegen and feature
-  use. The warehouse store crate uses the official `clickhouse` Rust
-  crate (HTTP + RowBinary) or `klickhouse` (native protocol). Two
-  Rust DB ecosystems live in the workspace.
+  use. The warehouse store crate pins the official `clickhouse`
+  Rust crate (HTTP + RowBinary) — chosen over `klickhouse` for
+  closer alignment with ClickHouse's documented protocol and a
+  smaller surface area. Two Rust DB ecosystems live in the
+  workspace; the second one is bounded to one crate.
 - **Insert discipline is non-optional.** ClickHouse hates
   row-at-a-time INSERTs. The store crate enforces `async_insert=1`
   on every write connection. A flow node that bypasses the store

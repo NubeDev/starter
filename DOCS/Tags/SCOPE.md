@@ -80,6 +80,23 @@ for ClickHouse storage is defined. Both `compile_ch.rs` (when binding
 query literals) and `starter-store-clickhouse` (when writing rows)
 call this function — never inline their own conversion.
 
+**Bool / Str reserved-string rule.** ClickHouse stores both
+`Bool(true)` and a hypothetical `Str("true")` as the byte string
+`"true"`, so a `tags['k'] = 'true'` query would match both. The
+in-process matcher T8c distinguishes them by enum variant. To keep
+D6 semantic parity holding, `TagSet` construction **rejects**
+`Str("true")`, `Str("false")`, `Str("True")`, `Str("FALSE")` and
+any other ASCII-case variant whose lowercase normalisation matches
+`"true"` or `"false"`. A writer who meant the boolean uses
+`Bool(true)`; a writer who genuinely needs the literal string
+`"true"` is asked to namespace it (`"true:literal"` or similar) —
+in practice nobody needs this, and the type error at write time is
+preferable to the silent semantic mismatch at read time.
+
+This is enforced in `TagSet::insert`, `TagSet::extend`, and the
+`Deserialize` impl for `TagValue`. Tests in `tests/parser.rs` and
+`tests/semantic_parity.rs` cover the rejected cases.
+
 **Inputs that look like numbers.** If a tag write arrives over the
 wire as `{"port": 8080}`, the tag layer parses the JSON number, then
 either (a) the key has a `TagDefinition` with `kind='str'` and the
@@ -130,7 +147,7 @@ Known tags register in a `tag_definitions` table:
 ```sql
 CREATE TABLE tag_definitions (
   key         TEXT PRIMARY KEY,
-  kind        TEXT NOT NULL,                  -- 'bool' | 'num' | 'str' | 'ref'
+  kind        TEXT NOT NULL,                  -- 'bool' | 'str' | 'ref' | 'num_discriminant'
   description TEXT,
   enum_values JSONB,                          -- optional canonical value set
   ref_kind    TEXT,                           -- when kind='ref', the target entity kind
@@ -138,6 +155,16 @@ CREATE TABLE tag_definitions (
   created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ```
+
+The `kind` enum no longer includes a generic `'num'` — there is no
+`TagValue::Num` for it to describe (T2). `'num_discriminant'`
+declares "this key's `TagValue::Str` is canonically an integer
+discriminant" (port numbers, building IDs, firmware-major
+versions). The UI renders typed inputs; the writer validates that
+the inbound JSON number coerces to an exact integer string; the
+tag itself is still stored and queried as `Str`. Floating-point
+measurements have no `TagDefinition` kind because they don't live
+in the tag bag at all — see [T2](#t2--tags-are-a-flat-mapstring-tagvalue-tag-values-are-bool--str).
 
 Writes to a tagged entity **consult definitions but do not require
 them**. An unknown tag passes through with a `kind=str` default and a
@@ -175,13 +202,24 @@ Domain packs MAY define their own reserved keys under a prefix
 *except* for the table above.
 
 **Prefix registry.** Two packs both claiming `energy.*` is a failure
-mode discovered at install time. To prevent it, each pack-owned prefix
-registers as a row in `tag_definitions` with `key = '<prefix>.*'`,
-`kind = 'reserved'`, and `source = 'pack:<id>'`. The `tag_definitions`
-table has a partial unique index on `(key)` where `kind = 'reserved'`
-so a second pack claiming the same prefix fails the install
-transaction. The dimensions migration that creates the table also
-seeds the workspace-owned prefixes (none on day one — packs ship
+mode discovered at install time. To prevent it, prefix ownership
+lives in its own table — **not** as overloaded rows in
+`tag_definitions` (which is per-key advisory metadata; a prefix is
+a per-glob ownership claim, structurally different):
+
+```sql
+CREATE TABLE tag_prefix_registry (
+  prefix      TEXT PRIMARY KEY,        -- e.g. 'energy.', 'hvac.' — trailing dot required
+  owner       TEXT NOT NULL,           -- 'pack:<id>' | 'builtin'
+  claimed_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+```
+
+The pack installer inserts one row per declared prefix in the same
+transaction as the pack's other catalog rows; a second pack
+claiming the same prefix fails the `PRIMARY KEY` constraint and
+the install rolls back. The dimensions migration that creates the
+table seeds workspace-owned prefixes (none on day one — packs ship
 their own prefix rows). The registry is consulted by:
 
 - The pack installer, before activating the pack.
@@ -194,6 +232,13 @@ A pack uninstall MAY leave its prefix row in place (orphan); the
 operator chooses between reclaiming the prefix and locking out a
 future pack reinstall. The doc does not pick the default — that is
 an operator policy decision, not a tag-language decision.
+
+`tag_definitions` continues to carry per-key metadata only
+(`kind`, `description`, `enum_values`, `ref_kind`). The prefix
+table is the only authority for who owns `energy.*`; per-key rows
+under that prefix (e.g. `energy.kWh`) live in `tag_definitions`
+with `source = 'pack:energy'` and inherit the prefix claim
+transitively.
 
 ### T7 — Query grammar is small and total
 
@@ -235,9 +280,10 @@ building:"warehouse"` is the intended form. T2 forbids array values
 inside a `TagSet`; this idiom is how you get the equivalent of `IN`
 without breaking GIN containment.
 
-### T8 — Two canonical compilation targets
+### T8 — Two SQL compilation targets plus an in-process matcher
 
-The crate exposes **three** total ways to evaluate a `TagQuery`. Each
+The crate exposes three total ways to evaluate a `TagQuery`: two
+SQL targets (Postgres, ClickHouse) and one in-process matcher. Each
 is a pure function; none touches a database directly.
 
 #### T8a — Postgres (dimensions, authz, GIN-indexed)
@@ -456,9 +502,12 @@ performance win.
   with any other string (`"8081"`, `" 8080"`, `"8080.0"`) must not
   match — exact string equality, no whitespace or numeric
   normalisation.
-- Boolean: `flag:true` against `Bool(true)` and `Str("true")`. Only
-  `Bool(true)` must match on all three targets (no implicit
-  string-to-bool coercion).
+- Boolean: `flag:true` against `Bool(true)` matches on all three
+  targets. **Constructing `TagSet { flag: Str("true") }` is a typed
+  error** per T2's Bool/Str reserved-string rule; the fixture
+  asserts that `TagValue::try_from(json!({"flag": "true"}))`
+  returns `Err`, so the silent ClickHouse encoding collision is
+  unreachable.
 - Bare-tag sugar: `sensor` (no value) against `Bool(true)`,
   `Bool(false)`, and an absent key. Only `Bool(true)` matches.
 - Float-literal rejection at parse time: `value:42.3` must fail to

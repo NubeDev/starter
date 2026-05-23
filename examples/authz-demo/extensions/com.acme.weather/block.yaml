@@ -1,0 +1,29 @@
+v: 1
+id: com.acme.weather
+version: 0.1.0
+display_name: "Weather"
+description_file: docs/README.md
+authors: ["authz-demo"]
+
+# Builtin runtime: the host's `server.rs` registers a `BuiltinTable`
+# entry for `com.acme.weather` with one closure that handles both
+# the forecast read and the refresh write.
+runtime:
+  kind: builtin
+  crate_name: authz_demo_weather
+
+contributes:
+  rest:
+    # READ endpoint — gated host-side by ("weather", "read").
+    - id: com.acme.weather.forecast
+      method: GET
+      path: /weather/forecast
+      description_file: docs/forecast.md
+      response_schema: schemas/forecast_out.json
+
+    # READ/WRITE endpoint — gated host-side by ("weather", "refresh").
+    - id: com.acme.weather.refresh
+      method: POST
+      path: /weather/refresh
+      description_file: docs/refresh.md
+      response_schema: schemas/refresh_out.json

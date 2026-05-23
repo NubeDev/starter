@@ -1,0 +1,42 @@
+[package]
+name        = "starter-authz-demo"
+description = "Demo: user creation + per-user authorization over a built-in REST endpoint and an extension-contributed REST endpoint."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+[[bin]]
+name = "authz-demo"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
+
+[dependencies]
+starter-spi          = { workspace = true }
+starter-server       = { workspace = true }
+starter-store-sqlite = { workspace = true }
+starter-auth-users   = { workspace = true, features = ["sqlite"] }
+starter-authz        = { workspace = true, features = ["sqlite"] }
+starter-observability = { workspace = true }
+
+# Extension hosting — same path-dep pattern as examples/notes.
+starter-ext-host   = { path = "../../starter-extensions/crates/starter-ext-host", version = "0.1.0" }
+starter-ext-server = { path = "../../starter-extensions/crates/starter-ext-server", version = "0.1.0" }
+starter-ext-sdk    = { path = "../../starter-extensions/crates/starter-ext-sdk", version = "0.1.0", features = ["builtin"] }
+
+axum         = { workspace = true }
+clap         = { workspace = true }
+prometheus   = { workspace = true }
+serde        = { workspace = true }
+serde_json   = { workspace = true }
+sqlx         = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
+tracing      = { workspace = true }
+anyhow       = { workspace = true }
+async-trait  = { workspace = true }
+chrono       = { workspace = true }
+uuid         = { workspace = true }

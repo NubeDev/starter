@@ -35,9 +35,15 @@ SQL the renderer has to trust.
 crates:
 
 - `starter-store-postgres["dimensions"]` — adds the `entities`,
-  `entity_refs`, `marts`, `tag_definitions` tables to the existing
-  Postgres schema. FKs enforced. `_sqlx_migrations_dimensions`
-  version table.
+  `entity_refs`, `tag_definitions`, `tag_prefix_registry`, `marts`,
+  `cleaners`, `sandboxes`, and `ext_manifest_approvals` tables to
+  the existing Postgres schema. FKs enforced. Uses a dedicated
+  `_sqlx_migrations_dimensions` version table (non-default sqlx
+  convention) so the warehouse's migration namespace runs
+  independently of the OLTP store's `_sqlx_migrations`. Both
+  namespaces share the same Postgres database; the separation is
+  about ownership and rollback isolation, not isolation at the
+  database level.
 - `starter-store-clickhouse` — new crate. Owns `raw_events`,
   `samples`, `events`, `documents`, and the generated `mart_*`
   materialized views. ClickHouse over HTTP via the official
@@ -101,6 +107,7 @@ CREATE TABLE marts (
   time_bucket      INTERVAL NOT NULL,       -- '1 hour'
   group_by         TEXT[] NOT NULL,         -- promoted tag keys; first entry leads ORDER BY
   aggregations     JSONB NOT NULL,          -- [{"fn":"sum","col":"value_num","as":"kwh"}]
+  promoted_columns TEXT[],                  -- written by mart.define after DDL succeeds; NULL while pending/failed
   definition_hash  TEXT NOT NULL,           -- SHA-256 of (filter,time_bucket,group_by,aggregations)
   created_by       TEXT NOT NULL,           -- 'user:…' | 'agent:…' | 'ext:<id>'
   created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -144,6 +151,28 @@ an ambiguous state. The operator must inspect the error, drop any
 leaked `mart_<name>_state` table manually, and rerun `mart.define`
 after correction.
 
+**`promoted_columns` is the source of truth for W14.** After the
+target-table DDL succeeds, `mart.define` writes the actual column
+set (derived from `group_by` ∪ the `aggregations[].as` aliases ∪
+the implicit `bucket` column) into `promoted_columns` on the catalog
+row. [W14](#w14--martread-filters-must-reference-only-promoted-columns)
+validates incoming `filter` keys against this field, not against
+`group_by`, so a filter on an aggregation alias is correctly
+accepted and the W14 error body names the full set of filterable
+columns. A NULL `promoted_columns` (status ≠ `live`) is treated as
+"no columns are filterable" — `mart.read` against a non-live mart
+already errors at the status check (W12), this is belt-and-braces.
+
+A startup catalog-audit job (run by `starter-warehouse` at boot, on
+demand via `POST /api/warehouse/audit`) computes the expected
+columns from each live mart's catalog row and compares against
+ClickHouse `system.columns` for the target table. Mismatches log a
+`warehouse.catalog_drift` event and move the row to `status='failed'`
+so subsequent reads error loudly rather than producing confusing
+"unknown identifier" errors at query time. Drift should be
+impossible under normal operation; the audit exists for in-place
+migration emergencies and for catching DDL-builder bugs early.
+
 The mart name regex is enforced at catalog INSERT time and again at
 DDL generation time. The DDL builder quotes identifiers; user input
 never reaches the SQL string raw.
@@ -156,6 +185,30 @@ Per [Tags T4](../Tags/SCOPE.md#t4--refs-are-not-tags). The Postgres
 `entities(id)`. Tag-shaped refs on ClickHouse rows
 (`tags['equipRef'] = 'equip_…'`) are an optimisation for fast tag
 filtering inside ClickHouse; they are not enforced.
+
+**`entity_refs` is not exposed on the ClickHouse side.** Only
+`entities_dict` (single-entity lookups) crosses the seam. Queries
+that need ref-graph traversal (`samples for entities that have an
+equipRef to a specific equip`) have two paths:
+
+- **Tag-bag optimisation.** If `curate.write` denormalised the ref
+  onto each sample (`tags['equipRef'] = 'equip_…'`), the query is a
+  pure-ClickHouse tag filter. This is the dominant case and is what
+  W6 is set up for.
+- **Postgres-first.** When the tag-bag denormalisation is wrong or
+  missing, the query starts in Postgres
+  (`GET /api/entities?query=…` returns the matching entity IDs),
+  then a second call queries ClickHouse for samples with
+  `entity_id IN (…)`. The caller composes the two; there is no
+  single-query path. The MCP tool surface offers
+  `query_entities(...)` + `read_mart(filter: 'entity_id:…')` as
+  separate calls for exactly this pattern.
+
+There is **no `entity_refs_dict`** on the day-one path. A future
+ref-graph dictionary is possible (`Dictionary(SOURCE(POSTGRESQL(...))
+LAYOUT(COMPLEX_KEY_HASHED())`) but is its own design — multi-key
+dictionaries have different freshness behaviour and would need a W11
+peer rule. The doc does not preemptively add it.
 
 ### W7 — Ingestion never refuses
 
@@ -236,14 +289,26 @@ dimensions carries a `dimension_freshness` block:
     "entities_dict": {
       "loaded_at":   "2026-05-23T09:04:17Z",
       "age_seconds": 612,
-      "lifetime_max_seconds": 600
+      "lifetime_max_seconds": 600,
+      "status":      "stale_within_bound",
+      "last_error":  null
     }
   }
 }
 ```
 
-Populated from `SELECT name, loading_start_time, last_successful_update_time,
-lifetime_min, lifetime_max FROM system.dictionaries WHERE name='entities_dict'`,
+`status` is a four-state enum that tells the caller what to do:
+
+| `status` value           | Meaning                                                                  | What the caller should do                                  |
+|--------------------------|--------------------------------------------------------------------------|------------------------------------------------------------|
+| `fresh`                  | `age_seconds ≤ lifetime_min_seconds`. Dictionary is well within its refresh window. | Trust the data; no badge needed.                            |
+| `stale_within_bound`     | `lifetime_min_seconds < age_seconds ≤ lifetime_max_seconds`. Refresh due soon. | Render an informational "as of HH:MM" badge.                |
+| `stale_beyond_bound`     | `age_seconds > lifetime_max_seconds` but the dictionary has not failed. ClickHouse is overdue and probably retrying. | Render a warning badge; agent should defer dimension-dependent decisions for ≤ 60 s. |
+| `failed_refresh`         | The last `invalidate_query` or source reload failed. `last_error` holds the message. | Surface as an error. `/api/warehouse/status` returns HTTP 503 in this state. |
+
+Populated from `SELECT name, loading_start_time,
+last_successful_update_time, last_exception, lifetime_min,
+lifetime_max FROM system.dictionaries WHERE name='entities_dict'`,
 cached on the server side for ≤ 5 s so that a burst of `mart.read`
 calls does not re-query `system.dictionaries` per request.
 
@@ -252,14 +317,27 @@ Returned by:
 - `GET /api/marts/:name/data` (the `mart.read` HTTP surface) — top
   level of the JSON envelope.
 - `GET /api/warehouse/status` — under a `dimensions` key, alongside
-  ingest lag and async-insert backlog.
+  ingest lag and async-insert backlog. **Returns HTTP 503 when any
+  dictionary's `status` is `failed_refresh`**, so liveness/readiness
+  probes detect silent staleness without operators having to write
+  custom health logic.
 - The `read_mart` MCP tool result — same shape as the HTTP envelope.
 
-SDUI binds an optional "as of HH:MM" badge to `dimension_freshness`;
-the agent reads `age_seconds > lifetime_max_seconds` as the signal
-that a recent entity rename or delete may not yet be visible. This
-is the contract; W13's `dictGetOrNull` rule is the floor that
-prevents corrupted output during the lag window.
+SDUI binds the badge to `status` (no badge for `fresh`, info for
+`stale_within_bound`, warning for `stale_beyond_bound`, error for
+`failed_refresh`); the agent reads `status` directly. This is the
+contract; W13's `dictGetOrNull` rule is the floor that prevents
+corrupted output during the lag window.
+
+**Multi-replica note.** Under a future `ReplicatedMergeTree` +
+`clickhouse-keeper` deployment (W10), each replica reloads
+`entities_dict` independently and the Postgres dimensions table
+receives N× the reload traffic. The `LIFETIME(MIN/MAX)` values are
+per-deployment and should be widened for multi-replica fleets;
+`/api/warehouse/status.dimensions.entities_dict` is per-replica and
+operators should aggregate across replicas at the load-balancer or
+monitoring layer. The day-one single-node case has no aggregation
+concern.
 
 **Dictionary refresh and deletes.** `invalidate_query` polls
 `max(updated_at)` — it detects updates but not deletes. An entity
@@ -322,18 +400,42 @@ CREATE TABLE ext_manifest_approvals (
 
 The extension installer seeds a row with `approved_by =
 'install:initial'` for the manifest the operator approved at install
-time. When the extension later ships an update, the new manifest hash
-is *not* in the table; any mart the upgraded extension defines lands
-`quarantined` until the operator runs `mart.promote` (which also
-inserts an approval row for the new hash). The operator UI surfaces
-"this extension's manifest changed; review N pending mart definitions
-before promoting" as a single workflow.
+time.
 
-This closes a real asymmetry: `agent:` is quarantined because the
-LLM is untrusted; `ext:` was previously auto-live on the assumption
-the manifest was reviewed at install and never again. In practice
-extensions ship updates, so the re-approval gate brings `ext:`
-in line with how operators actually think about extension trust.
+**On manifest-hash change for an extension that has any `live`
+warehouse rows, all of that extension's rows in `marts` and
+`cleaners` transition from `live` to `quarantined` in the same
+Postgres transaction as the new install/upgrade.** Reads against
+quarantined marts error loudly (W12) and dashboards bound to them
+show the W14-style error path; this is intentional. The operator
+re-approves the new manifest through a single UI flow that lists
+*all* of the extension's pending items — new marts/cleaners
+introduced by the upgrade, plus the existing ones the previous
+manifest already shipped. `mart.promote` and `cleaner.promote` move
+each row back to `live` and insert an approval row for the new hash.
+
+This is the design's answer to "an extension update changes the
+semantics of an existing mart" — by re-quarantining all of the
+extension's outputs, the upgrade is forced to be reviewed as a
+whole rather than piecemeal. The extension cannot silently rewire
+how an existing live mart behaves while the operator only sees the
+new ones.
+
+An extension that wants to ship a no-op manifest bump (CSS tweak,
+README change) accepts the cost of a re-approval prompt; the
+alternative — content-aware diffing of "which contributions
+actually changed" — is far more error-prone and would create
+exactly the silent-semantics-change vector this rule closes.
+
+Operators who want to skip the prompt for trusted publishers can
+auto-approve a manifest hash by inserting an `ext_manifest_approvals`
+row in advance (deployment-tooling territory; not a runtime feature).
+
+This closes the asymmetry: `agent:` is quarantined because the LLM
+is untrusted; `ext:` was previously auto-live on the assumption the
+manifest was reviewed at install and never again. In practice
+extensions ship updates and update semantics, so the re-approval
+gate covers both new and existing outputs.
 
 **Extension-authored marts do not touch the `status` field directly.**
 `starter-ext-warehouse` calls `mart.promote` via the warehouse
@@ -377,10 +479,10 @@ literally not there.
 
 The rule:
 
-- Every key referenced by `mart.read`'s `filter` MUST be a column on
-  the mart's target table — i.e., an entry in the catalog row's
-  `group_by` list, or a column the catalog row's `aggregations`
-  produced.
+- Every key referenced by `mart.read`'s `filter` MUST appear in the
+  catalog row's `promoted_columns` field (written by `mart.define`
+  after DDL succeeds — see W5). This is the live shape, not what
+  `group_by` claimed.
 - Filters referencing keys outside that set are rejected with HTTP
   400 and a structured body naming the unsupported keys:
 
@@ -389,8 +491,8 @@ The rule:
     "error": "mart_filter_unsupported_keys",
     "mart": "mart_energy_hourly",
     "unsupported_keys": ["floor"],
-    "promoted_keys": ["building", "tenant"],
-    "hint": "To filter by `floor`, redefine the mart with `floor` in `group_by`, or query `GET /api/entities/:id/history` for single-entity sample-level reads."
+    "promoted_columns": ["bucket", "building", "tenant", "kwh_sum", "kwh_peak", "kwh_avg", "samples"],
+    "hint": "To filter by `floor`, drop and redefine this mart with `floor` in `group_by`, or query `GET /api/entities/:id/history` for single-entity sample-level reads."
   }
   ```
 - There is **no transparent fallback** to a `samples` scan. A
@@ -423,19 +525,77 @@ runnable manually via `POST /api/warehouse/gc`) deletes catalog
 rows matching:
 
 ```sql
+-- marts, cleaners: 90 days
 WHERE status IN ('quarantined','failed')
   AND created_at < now() - INTERVAL '90 days'
+
+-- sandboxes: same 90 days for quarantined/failed,
+-- plus a longer 365-day window for promoted rows
+WHERE status = 'promoted'
+  AND created_at < now() - INTERVAL '365 days'
 ```
 
-The interval is configurable per deployment via the
-`warehouse.catalog_gc_age_days` config key. A deployment that wants
-to keep agent experiments forever sets this to a large value or
-disables the job entirely. `live` and `pending` rows are never
-auto-pruned — they require an explicit `mart.drop` /
-`cleaner.drop` / `sandbox.drop`.
+The intervals are configurable per deployment via
+`warehouse.catalog_gc_age_days` (for quarantined/failed) and
+`warehouse.sandbox_promoted_retention_days` (for promoted
+sandboxes). Promoted sandboxes are kept longer because they
+document a successful analyst workflow — useful for "where did
+this samples data originally come from?" audits even after the
+sandbox table itself has been dropped. A deployment that wants
+indefinite traceability sets `sandbox_promoted_retention_days` to a
+very large value or disables sandbox GC entirely. `live` and
+`pending` rows are never auto-pruned — they require an explicit
+`mart.drop` / `cleaner.drop` / `sandbox.drop`.
 
 GC emits a `warehouse.gc.completed` flow event with counts per
 status so operators can see what was reaped.
+
+### W16 — Read-after-write boundary
+
+A `tap.write` or `curate.write` that returns success does **not**
+imply that a subsequent `mart.read` against a mart fed by the same
+row will see it. The chain has two asynchronous steps:
+
+1. **Server-side async-insert flush.** Under `async_insert=1,
+   wait_for_async_insert=1`, the write is acked after the server
+   commits the *block* (not the row) to the source table. The block
+   flushes when the server buffer reaches ~1 s / 1 MB / 450 queries
+   — whichever comes first.
+2. **Incremental MV materialisation.** ClickHouse MVs fire
+   synchronously when a block is written to the source table, so
+   the mart sees the data at the same instant as the source table.
+   No additional lag.
+
+The bound is therefore the flush deadline of step 1: **mart.read
+sees the row at most `async_insert_busy_timeout_ms` (server config,
+default 1000 ms) after `tap.write` / `curate.write` returns**, plus
+a small constant for the ClickHouse merge buffer. For practical
+purposes, callers should treat the read-after-write boundary as
+**≤ 1.5 s**.
+
+`GET /api/warehouse/status` returns the current async-insert backlog
+under `ingest.async_insert_oldest_age_ms` so integration tests can
+poll until the buffer flushes rather than sleeping a fixed
+duration. A test pattern:
+
+```text
+1. POST tap.write { … }                                  → returns event_id
+2. Poll GET /api/warehouse/status until
+   ingest.async_insert_oldest_age_ms == 0                → flush observed
+3. GET /api/marts/<mart>/data?…                          → row visible
+```
+
+`bulk.import` with `async_insert=0` (per W8a) bypasses step 1: the
+write returns after the block is committed, so the MV sees the rows
+at the moment `bulk.import` returns. Read-after-write for bulk paths
+is immediate (modulo merge-buffer latency, sub-100ms).
+
+`cleaner.define { backfill: 'sync' }` likewise commits its
+`INSERT … SELECT` synchronously; the MV writes derived rows during
+the same statement.
+
+The W16 contract does not apply to the dimension dictionary on the
+ClickHouse side — that is bounded separately by W11.
 
 ## Data model
 
@@ -443,7 +603,7 @@ status so operators can see what was reaped.
 
 ```sql
 CREATE TABLE raw_events (
-  id           UInt64,
+  id           UInt64 DEFAULT generateSnowflakeID(),
   source       LowCardinality(String),       -- 'mqtt' | 'bacnet' | 'webhook:…' | 'flow:…'
   received_at  DateTime64(3) DEFAULT now64(3),
   payload      String,                        -- JSON text
@@ -455,6 +615,24 @@ PARTITION BY toYYYYMMDD(received_at)
 ORDER BY (source, received_at)
 TTL received_at + INTERVAL 14 DAY;
 ```
+
+**ID generation is server-side.** `id` defaults to
+`generateSnowflakeID()` (ClickHouse 24.6+), which is monotonically
+increasing per node and globally unique under a single ClickHouse
+deployment. The client (`tap.write` and friends) never sends `id`
+in the column list. Two consequences:
+
+- The returned `event_id` is the server-assigned value, read back
+  via `INSERT … SELECT id FROM <returning>` (the official
+  `clickhouse` Rust crate's `insert` API surfaces this).
+- In a future multi-node setup, `generateSnowflakeID()` includes a
+  machine ID; collision-freedom holds across nodes without
+  coordination.
+
+`events.id` uses the same default. `documents.id` is a `String`
+declared explicitly by the caller (it carries semantic meaning —
+e.g. a UUID stored alongside the blob in the `BlobStore`) and is
+not server-generated.
 
 L1 is a buffer, not a museum. Default retention 14 days. Compression
 is ZSTD on parts older than 3 days (set via column codecs in the
@@ -481,7 +659,7 @@ TTL ts + INTERVAL 90 DAY TO VOLUME 's3_cold',
     ts + INTERVAL 2 YEAR DELETE;
 
 CREATE TABLE events (
-  id           UInt64,
+  id           UInt64 DEFAULT generateSnowflakeID(),
   entity_id    String,
   ts           DateTime64(3),
   kind         LowCardinality(String),        -- 'alarm' | 'state-change' | 'note' | …
@@ -493,14 +671,20 @@ ENGINE = MergeTree
 PARTITION BY toYYYYMM(ts)
 ORDER BY (kind, entity_id, ts)
 TTL ts + INTERVAL 1 YEAR;
+-- NOTE: `kind` is LowCardinality(String). The implicit cardinality
+-- cap is ~10k distinct values per part before LC compression
+-- degrades. Deployments emitting per-event-type kind strings
+-- ('ext:foo:event:bar', …) at scale should drop LC or split kind
+-- into namespace + name columns. Writes still succeed; only
+-- compression degrades.
 
 -- documents: blob index rows. The blob itself lives in BlobStore.
 CREATE TABLE documents (
-  id           String,
+  id           String,                        -- caller-supplied; deterministic per W9 cleaner rule
   entity_id    String,
   ts           DateTime64(3) DEFAULT now64(3),
   blob_ref     String,
-  mime         LowCardinality(String),
+  mime         LowCardinality(String),        -- see kind LC note on `events`; same caveat applies
   tags         Map(String, String) DEFAULT map(),
   INDEX tags_bloom tags TYPE bloom_filter GRANULARITY 1
 )
@@ -696,6 +880,8 @@ CREATE TABLE sandboxes (
   description           TEXT,
   owner                 TEXT NOT NULL,       -- 'user:<id>' | 'agent:<id>'
   columns               JSONB NOT NULL,      -- inferred or declared schema
+  columns_revision      INT  NOT NULL DEFAULT 1,  -- incremented on every sandbox.redefine
+  frozen_at_revision    INT,                 -- non-NULL once a cleaner.define has read this sandbox; pins the schema
   ttl_days              INT  NOT NULL DEFAULT 30 CHECK (ttl_days BETWEEN 1 AND 365),
   promoted_to_cleaner   TEXT,                -- nullable; FK-like ref to cleaners(name)
   created_at            TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -724,18 +910,26 @@ TTL ts + INTERVAL <ttl_days> DAY;
 Workflow (the named analyst-CSV story):
 
 1. `sandbox.define { name: 'utility_bills_2025', ttl_days: 60 }`
-   creates an empty table.
+   creates an empty table with `columns_revision = 1`.
 2. `bulk.import { target: 'sandbox:utility_bills_2025', file: '…' }`
-   lands the CSV. Schema is inferred and recorded on the catalog row.
+   lands the first batch. Schema is inferred and recorded on the
+   catalog row.
 3. The analyst queries the sandbox via the
    `GET /api/sandboxes/:name/peek` endpoint (returns up to 1000
    rows; not a dashboard surface — explicitly an exploration tool).
-4. Once the analyst knows the target shape:
+4. The analyst discovers row 5000 has `"N/A"` in a column the first
+   batch inferred as `Int64`. They call **`sandbox.redefine {
+   name, columns: <new schema> }`** (see below) which drops and
+   recreates the sandbox table with the new schema and increments
+   `columns_revision`. They re-run `bulk.import`. Iterate until the
+   schema is right.
+5. Once the analyst knows the target shape:
    `cleaner.define { source: 'sandbox:utility_bills_2025',
    target: 'samples', backfill: 'sync', … }` promotes the data.
-   The sandbox catalog row's `status` moves to `promoted` and
-   `promoted_to_cleaner` is set.
-5. `sandbox.drop` removes the sandbox once the promotion is
+   The sandbox catalog row's `status` moves to `promoted`,
+   `promoted_to_cleaner` is set, and `frozen_at_revision` is set
+   to the current `columns_revision`.
+6. `sandbox.drop` removes the sandbox once the promotion is
    verified (the catalog row is retained with `status = 'promoted'`
    for traceability, but the ClickHouse table is dropped to reclaim
    storage).
@@ -744,6 +938,30 @@ A sandbox is **not** the read seam for dashboards. The W4 rule still
 holds: dashboards bind to marts on L3, not to L1.5. A sandbox that
 never promotes expires with its TTL and the catalog row is GC'd by
 W15 once `status = 'failed'` or after the operator manually drops it.
+
+### `sandbox.redefine`
+
+Drops the sandbox's ClickHouse table and recreates it with a new
+column set; increments `columns_revision` on the catalog row;
+preserves the catalog row's `name`, `owner`, `ttl_days`, and
+`description`. The operator confirms the destructive nature
+explicitly — the node requires `confirm: true` and refuses
+otherwise. Idempotent only at the level of "same columns produce
+the same table"; calling `sandbox.redefine` with the same `columns`
+that already match the live table is a no-op that does not
+increment the revision.
+
+**Refused if `frozen_at_revision` is set** — once a cleaner has
+been defined against this sandbox, its schema is pinned. To change
+schema after promotion, drop the cleaner first; this makes the
+"sandbox schema mutated while a cleaner was reading it" failure
+mode impossible.
+
+This operation is the realistic shape of the analyst-CSV iteration
+loop. ClickHouse `ALTER TABLE` cannot change a column from `Int64`
+to `String`, so a wrong-type inference is unrecoverable without a
+drop-and-recreate. `sandbox.redefine` is that operation, made
+explicit and catalog-tracked instead of left as folklore.
 
 ### `sandbox.drop`
 
@@ -768,17 +986,51 @@ start in `quarantined` per W12 — admin promotion is a separate node
 
 ### `mart.read`
 
-Reads from a `live` mart by name. Input: `name`, `filter` (TagQuery),
-`range`, optional `group_by` override (must be a subset of the
-catalog row's `group_by`). Output: a `Dataset` with a top-level
-`dimension_freshness` block per [W11](#w11--dimension-staleness-is-bounded-documented-and-surfaced).
+Reads from a `live` mart by name. Input: `name`, `filter`
+(TagQuery), `range` (see below), optional `group_by` override (must
+be a subset of the catalog row's `group_by`), optional
+`hide_unknown` (default `false`, per W13). Output: a `Dataset` with
+a top-level `dimension_freshness` block per
+[W11](#w11--dimension-staleness-is-bounded-documented-and-surfaced).
+
+**`range` is `{ from: Timestamp, to: Timestamp }`** with both ends
+required. Either side may be a relative expression
+(`now-24h`, `now`) or an absolute RFC 3339 timestamp. The range is
+bounded by a per-deployment cap on the **number of buckets** the
+query would touch:
+
+```text
+buckets = duration(to - from) / mart.time_bucket
+```
+
+If `buckets > mart.read.max_buckets` (deployment config, default
+20_000 — comfortably covers 2 years of 1-hour buckets or 14 days of
+1-minute buckets), the request is rejected with HTTP 400:
+
+```json
+{
+  "error": "mart_range_too_wide",
+  "mart": "mart_energy_hourly",
+  "requested_buckets": 175680,
+  "max_buckets": 20000,
+  "hint": "Either narrow the range, or read from a coarser mart (e.g. mart_energy_daily)."
+}
+```
+
+The agent's MCP `read_mart` tool can recover from this by reading
+the mart catalog (`GET /api/marts`) for a coarser mart and
+retrying. Operators who need a one-off wide read use
+`POST /api/warehouse/admin_read` (admin-gated, no bucket cap, logs
+the query) — not on the day-one surface, but called out so the
+escape hatch exists if needed.
 
 Filter validation: every key referenced by `filter` MUST be either
 (a) a column promoted into the mart target (`group_by` entry or a
-column produced by an aggregation), or (b) already pre-applied by the
-catalog row's `filter`. Filters referencing tag keys that the mart
-did not promote are rejected with HTTP 400 and a message naming the
-unsupported keys — see [W14](#w14--martread-filters-must-reference-only-promoted-columns).
+column produced by an aggregation — recorded on `promoted_columns`
+per W5), or (b) already pre-applied by the catalog row's `filter`.
+Filters referencing tag keys that the mart did not promote are
+rejected with HTTP 400 and a message naming the unsupported keys —
+see [W14](#w14--martread-filters-must-reference-only-promoted-columns).
 
 Settings include `materialise_if_missing: false` (W12). A read of a
 non-`live` mart errors loudly. Mart creation never happens on the
@@ -789,6 +1041,30 @@ read path.
 Marks the catalog row `quarantined`, drops the ClickHouse view +
 target table, emits `mart.dropped`. Required for AI experiment
 cleanup.
+
+### `mart.promote`
+
+Admin-only. Moves a `quarantined` mart catalog row to `live` after
+verifying the target table and MV exist on ClickHouse. Inserts an
+approval row into `ext_manifest_approvals` when promoting an
+ext-authored mart (per W12). Emits `mart.promoted`.
+
+### `cleaner.drop`
+
+Marks the cleaner catalog row `quarantined`, drops the ClickHouse
+MV (the `_orphans` / `_rejects` sibling tables, if any, are
+retained — the rows in them are real data the operator may still
+want), emits `cleaner.dropped`. Clears `frozen_at_revision` on the
+source sandbox catalog row (if the cleaner's source was a sandbox)
+so the sandbox becomes redefinable again.
+
+### `cleaner.promote`
+
+Admin-only. Moves a `quarantined` cleaner catalog row to `live`
+after verifying the MV (or, for `validate_entity='strict_via_postgres'`
+cleaners, the scheduled flow run) exists. Inserts an
+`ext_manifest_approvals` row for ext-authored cleaners. Emits
+`cleaner.promoted`.
 
 ### `cleaner.define`
 
@@ -822,43 +1098,118 @@ The catalog row carries a `backfill` field:
 | `backfill` value | Behaviour                                                                                              |
 |------------------|---------------------------------------------------------------------------------------------------------|
 | `'none'` (default) | Create MV only. No historical processing. Safe for cleaners on streams where pre-existing rows are intentionally ignored. |
-| `'sync'`           | Create MV, then run `INSERT INTO <target> SELECT … FROM <source> WHERE <source.ts column> < now()` in the same transaction as DDL success. Blocks the node until backfill completes. Use for analyst CSV imports where the source is bounded. |
-| `'async'`          | Create MV, then enqueue the same `INSERT … SELECT` as a background flow run. Status visible on `GET /api/cleaners/:name`. Use when the source is large enough that synchronous wait is impractical. |
+| `'sync'`           | Create MV, then run a bounded `INSERT … SELECT` in the same flow run. See **Sync backfill bounds** below. Use for analyst CSV imports where the source row count is known to be small. |
+| `'async'`          | Create MV, then enqueue the same `INSERT … SELECT` as a background flow run. Status visible on `GET /api/cleaners/:name`. Use for large sources (most non-trivial CSV imports). |
 
 `POPULATE` (ClickHouse's built-in MV backfill keyword) is **not
 used**: it inserts during DDL with the inserting block locked, which
 under our `async_insert=1` regime blocks ingest for the duration of
-the backfill and can mask new rows that arrive mid-backfill. The
-explicit `INSERT … SELECT` path is bounded by a `WHERE ts < now()`
-predicate and runs after the MV is live, so the MV catches anything
-that arrives during the backfill window without double-counting
-(idempotency relies on the cleaner's `INSERT` selecting deterministic
-target keys; cleaners that produce non-deterministic IDs must declare
-`backfill='none'`).
+the backfill and can mask new rows that arrive mid-backfill.
 
-**Entity-integrity caveat.** `curate.write` resolves `entity_id`
-against Postgres before inserting into `samples` / `events` /
-`documents`, so it can reject unknown entities at write time. A
-cleaner MV cannot do this — it is pure ClickHouse SQL and the
-Postgres `entities` table is reachable only through the
-`entities_dict` dictionary, which lags by up to 10 minutes (W11)
-and is by design unreliable for "does this entity exist *right
-now*" checks.
+**Backfill bounds and idempotency.** The cleaner records two
+timestamps on the catalog row: `mv_live_at` (set when the MV DDL
+succeeds) and `backfill_window_end` (computed once at
+`cleaner.define` time as `now() - <small_skew>` where `small_skew`
+defaults to 5 s — wider than the W16 read-after-write boundary).
+The backfill `INSERT … SELECT` is range-bounded:
 
-The consequence: a cleaner that promotes `raw_events.tags['entityRef']`
-into `samples.entity_id` *will* produce dangling `entity_id`s when
-ingest races entity creation, when an entity is deleted, or when
-the source row carries a typo. The W13 `dictGetOrNull` rule
-guarantees those rows surface as `[unknown entity]` rather than
-silent empty-string joins, and the orphan audit query in the
-operator primer finds them after the fact.
+```sql
+INSERT INTO <target>
+SELECT <projection> FROM <source>
+WHERE <source.ts> < <backfill_window_end>
+```
 
-If a deployment needs strict pre-write entity validation, use
-`curate.write` (one row per call, Postgres roundtrip in the path)
-instead of `cleaner.define`. The two paths are deliberately
-asymmetric: `curate.write` trades throughput for integrity;
-`cleaner.define` trades integrity for throughput. The doc names the
-trade rather than papering over it.
+The MV (live since `mv_live_at`) processes everything new that
+arrives after `mv_live_at`. As long as `mv_live_at <
+backfill_window_end` and the source's `ts` column reflects when the
+row should have been processed (not when it was inserted), there is
+a small overlap window where the MV may process rows that the
+backfill `INSERT … SELECT` also picks up. **Deduplication is by
+target-table key, not by row ID**:
+
+- For `samples` / `events` cleaners, the target should declare
+  `ENGINE = ReplacingMergeTree(version)` or the cleaner's
+  `projection` should generate a deterministic primary key from
+  `(entity_id, ts, metric)` so duplicate inserts merge on the next
+  background compaction. Cleaners targeting `MergeTree` directly
+  without a deterministic key declare `backfill='none'` and accept
+  that historical data is the analyst's responsibility to migrate
+  via a separate one-shot import.
+- For `documents`, the `id` column is the dedup key; cleaners must
+  derive `id` deterministically from `(entity_id, blob_ref, ts)`.
+
+This replaces the "deterministic target keys" rule with concrete
+schema requirements that most cleaners can meet.
+
+**Sync backfill bounds.** `'sync'` mode runs the `INSERT … SELECT`
+inline in the `cleaner.define` flow run and is bounded by:
+
+- **Row count.** The cleaner first runs `SELECT count() FROM
+  <source> WHERE <source.ts> < <backfill_window_end>`. If the count
+  exceeds `cleaner.sync_backfill_max_rows` (deployment config,
+  default 1_000_000), the node **automatically promotes to `'async'`
+  mode**, returns a structured note (`{"backfill_mode": "async",
+  "reason": "row_count_exceeded", "rows": N, "limit": M}`), and the
+  caller polls `GET /api/cleaners/:name` for progress.
+- **Wall-clock time.** A hard 5-minute deadline on the synchronous
+  `INSERT … SELECT`. If exceeded, the partial backfill is rolled
+  back (`ALTER TABLE <target> DROP PARTITION` for any partitions
+  the backfill wrote), the cleaner row's `status` stays `live` (the
+  MV is fine), and the backfill is re-enqueued as `'async'`. The
+  rollback uses partition-level operations because per-row deletes
+  on ClickHouse are slow; this requires the target's `PARTITION
+  BY` to be coarse enough that the backfill's wall-clock range fits
+  in a small number of partitions (true for `toYYYYMM(ts)` on
+  multi-year sources).
+
+The honest framing: `'sync'` is for sub-million-row promotions
+where the analyst wants a single-call workflow; `'async'` is the
+real-world path for anything larger. The doc names the cliff and
+makes the fall-through automatic so the caller doesn't have to
+guess.
+
+**Sandbox-source schema freeze.** When `cleaner.define`'s `source`
+is `sandbox:<name>`, the node reads the sandbox catalog row's
+current `columns` and `columns_revision`, then sets
+`sandboxes.frozen_at_revision = <revision>` in the same Postgres
+transaction as the cleaner row insert. Subsequent
+`sandbox.redefine` calls against that sandbox are refused (see
+[`sandbox.redefine`](#sandboxredefine)). If the operator needs to
+re-iterate on the schema, they must `cleaner.drop` first, which
+clears `frozen_at_revision` and re-enables `sandbox.redefine`.
+
+This eliminates a race: without the freeze, an analyst could
+`sandbox.redefine` mid-promotion and produce a cleaner row whose
+`projection` references columns that no longer exist on the live
+sandbox table.
+
+**Entity-integrity.** Cleaners pick one of three validation modes
+via the `validate_entity` field on the catalog row:
+
+| `validate_entity` value | Behaviour                                                                                                | When to use                                                                  |
+|-------------------------|----------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------|
+| `'none'` (default)      | No entity lookup. Cleaner writes whatever `entity_id` the projection produces. Orphans surface via W13. | Streams where the cleaner's `entity_id` is known by construction to be valid. |
+| `'best_effort'`         | The MV joins to `entities_dict` and writes rows where `dictGetOrNull(...)` returns non-NULL straight into the target; rows where it returns NULL go into `<target>_orphans` (a sibling table created automatically with the same schema + a `received_at` column). Sees rows the dictionary sees, so subject to W11's 10-min lag.  | Cleaners on data sources where the analyst knows orphans will exist transiently and wants them surfaced separately rather than mixed into reads. |
+| `'strict_via_postgres'` | The cleaner runs as a flow-orchestrated micro-batch (default 5 s windows) instead of a CH MV. Each batch queries Postgres `entities` over the connection pool, partitions rows into "validated" (written to target) and "rejected" (written to `<target>_rejects` with an error code), and acks. No CH MV is created. | Deployments where pre-write integrity is non-negotiable and the throughput cost of a Postgres roundtrip per batch is acceptable. |
+
+`'strict_via_postgres'` cleaners are **not** ClickHouse incremental
+MVs — they are scheduled flow runs that look like cleaners from the
+catalog perspective but execute as periodic SQL. The `cleaner.define`
+DDL builder picks the implementation strategy based on
+`validate_entity`; the catalog row and lifecycle (`pending` →
+`live` → `quarantined`) are identical across all three modes so the
+operator surface stays uniform.
+
+The W13 `dictGetOrNull` rule still applies on the read side
+regardless of validation mode: any orphan that does slip through —
+including transient ones during the W11 dictionary lag — surfaces
+as `[unknown entity]` rather than corrupting joins.
+
+`curate.write` remains the right tool for one-off writes where the
+caller is already holding the entity ID and wants per-row Postgres
+validation without spinning up a cleaner. The two surfaces
+co-exist: `cleaner.define { validate_entity: 'strict_via_postgres' }`
+is the bulk path; `curate.write` is the per-event path.
 
 ## REST and SSE surface
 
@@ -877,7 +1228,7 @@ REST (mounted under `/api`):
 | POST   | `/api/marts`                      | Insert catalog row, fire `mart.define`                             |
 | DELETE | `/api/marts/:name`                | Fire `mart.drop`                                                   |
 | POST   | `/api/marts/:name/promote`        | Move quarantined → live (admin only)                               |
-| GET    | `/api/marts/:name/data`           | `?filter=<TagQuery>&from&to&group_by=…&hide_unknown=` → ClickHouse rollup |
+| GET    | `/api/marts/:name/data`           | `?filter=<TagQuery>&from&to&group_by=…&hide_unknown=true|false` (default `false`, per W13) → ClickHouse rollup |
 | GET    | `/api/cleaners`                   | List cleaners catalog (Postgres)                                   |
 | GET    | `/api/cleaners/:name`             | Catalog row + backfill status (`pending` / `running` / `complete` / `failed`) |
 | POST   | `/api/cleaners`                   | Insert catalog row, fire `cleaner.define`                          |
@@ -886,9 +1237,11 @@ REST (mounted under `/api`):
 | GET    | `/api/sandboxes`                  | List sandbox catalog (Postgres)                                    |
 | GET    | `/api/sandboxes/:name`            | Catalog row + row count + last write timestamp                     |
 | POST   | `/api/sandboxes`                  | Create a sandbox table                                             |
+| PUT    | `/api/sandboxes/:name/columns`    | `sandbox.redefine`; body `{ columns, confirm }`; refused if `frozen_at_revision IS NOT NULL` |
 | GET    | `/api/sandboxes/:name/peek`       | `?limit=` (≤ 1000) → recent rows. **Not a dashboard surface.**     |
 | DELETE | `/api/sandboxes/:name`            | Drop the sandbox table; retain catalog row for traceability        |
 | POST   | `/api/warehouse/gc`               | Run catalog GC immediately (W15); admin only                       |
+| POST   | `/api/warehouse/audit`            | Run catalog-vs-live audit (W5); admin only                         |
 
 SSE (event push — use for things that happen, not for polled scalars):
 
@@ -903,7 +1256,7 @@ Pull (poll at dashboard cadence — use for slowly-changing scalars):
 
 | Path                          | Response                                                            |
 |-------------------------------|---------------------------------------------------------------------|
-| `GET /api/warehouse/status`   | JSON: ingest lag, async-insert backlog, `dimensions` block per W11   |
+| `GET /api/warehouse/status`   | JSON: `ingest` block (`async_insert_oldest_age_ms` per W16), `dimensions` block per W11. Returns HTTP 503 when `dimensions.entities_dict.status = 'failed_refresh'` so health checks catch silent staleness. |
 
 `/api/warehouse/status` is a plain JSON GET, not SSE. Ingest lag and
 dictionary staleness change on the order of seconds to minutes; a
@@ -933,7 +1286,7 @@ predicates per principal. The authz layer evaluates the tag query
 against the entity row's tag set (Postgres, GIN). For history-level
 authz (rare — most reads go through marts), the same tag query
 compiles to the ClickHouse target via
-[Tags T8b](../Tags/SCOPE.md#t8--two-canonical-compilation-targets).
+[Tags T8b](../Tags/SCOPE.md#t8--two-sql-compilation-targets-plus-an-in-process-matcher).
 
 ### AI agent / MCP
 
@@ -959,10 +1312,11 @@ crates/starter-store-postgres/migrations/
     0001_entities.sql
     0002_entity_refs.sql
     0003_tag_definitions.sql
-    0004_marts_catalog.sql
-    0005_cleaners_catalog.sql
-    0006_sandboxes_catalog.sql
-    0007_ext_manifest_approvals.sql
+    0004_tag_prefix_registry.sql
+    0005_marts_catalog.sql
+    0006_cleaners_catalog.sql
+    0007_sandboxes_catalog.sql
+    0008_ext_manifest_approvals.sql
 
 crates/starter-store-clickhouse/migrations/
   0001_raw_events.sql

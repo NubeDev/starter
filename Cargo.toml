@@ -65,6 +65,7 @@ members = [
     "examples/flow-agent/extensions/com.nube.mqtt",
     "examples/blobs",
     "examples/iot-anomaly-detector",
+    "examples/authz-demo",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
 # `examples/notes` pulls a handful of its crates in via path dependencies
