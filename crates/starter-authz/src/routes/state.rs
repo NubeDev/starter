@@ -6,6 +6,7 @@ use std::sync::Arc;
 
 use starter_spi::authz::ResourceRegistry;
 
+use crate::audit::DbDecisionSink;
 use crate::db_engine::DbPolicyEngine;
 
 /// Bundle passed to every `/v1/authz/*` handler. Cheap to clone.
@@ -19,4 +20,27 @@ pub struct AuthzRoutesState {
     /// this so the admin UI knows what (resource, action) pairs
     /// are valid targets for new rules.
     pub registry: Arc<dyn ResourceRegistry>,
+    /// Phase 7c — decision audit sink. When `Some`, the
+    /// `GET /v1/authz/decisions` route is mounted; otherwise it
+    /// returns `404`.
+    pub decision_sink: Option<Arc<DbDecisionSink>>,
+}
+
+impl AuthzRoutesState {
+    /// Construct with no audit sink — preserves the pre-Phase-7c
+    /// router shape.
+    pub fn new(engine: Arc<DbPolicyEngine>, registry: Arc<dyn ResourceRegistry>) -> Self {
+        Self {
+            engine,
+            registry,
+            decision_sink: None,
+        }
+    }
+
+    /// Attach an audit sink so `GET /v1/authz/decisions` can read
+    /// the table.
+    pub fn with_decision_sink(mut self, sink: Arc<DbDecisionSink>) -> Self {
+        self.decision_sink = Some(sink);
+        self
+    }
 }

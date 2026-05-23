@@ -18,6 +18,7 @@ use async_trait::async_trait;
 use starter_spi::auth::Principal;
 use starter_spi::authz::{Decision, PolicyEngine, ResourceRef, ResourceRegistry};
 
+use crate::audit::{DecisionSink, NoopDecisionSink};
 use crate::config::AuthzConfig;
 use crate::engine::StaticRbacEngine;
 use crate::error::{Error, Result};
@@ -33,6 +34,8 @@ pub struct DbPolicyEngine {
     /// when this is true. Mirrors
     /// [`AuthzConfig::default_policy`].
     default_policy: bool,
+    /// Phase 7c — sink propagated across every cache reload.
+    sink: Arc<dyn DecisionSink>,
     inner: RwLock<Arc<StaticRbacEngine>>,
 }
 
@@ -46,13 +49,22 @@ impl DbPolicyEngine {
         registry: Arc<dyn ResourceRegistry>,
         default_policy: bool,
     ) -> Result<Self> {
-        let inner = Self::compile(&*store, registry.clone(), default_policy).await?;
+        let sink: Arc<dyn DecisionSink> = Arc::new(NoopDecisionSink);
+        let inner = Self::compile(&*store, registry.clone(), default_policy, sink.clone()).await?;
         Ok(Self {
             store,
             registry,
             default_policy,
+            sink,
             inner: RwLock::new(Arc::new(inner)),
         })
+    }
+
+    /// Replace the audit sink. Recompiles the cache so the new
+    /// sink takes effect immediately.
+    pub async fn set_sink(&mut self, sink: Arc<dyn DecisionSink>) -> Result<()> {
+        self.sink = sink;
+        self.reload().await
     }
 
     /// Re-snapshot the store and swap the cached engine. Called
@@ -62,7 +74,13 @@ impl DbPolicyEngine {
     /// very next call (the read-side never blocks because we swap
     /// an `Arc`).
     pub async fn reload(&self) -> Result<()> {
-        let fresh = Self::compile(&*self.store, self.registry.clone(), self.default_policy).await?;
+        let fresh = Self::compile(
+            &*self.store,
+            self.registry.clone(),
+            self.default_policy,
+            self.sink.clone(),
+        )
+        .await?;
         *self.inner.write().expect("authz cache lock poisoned") = Arc::new(fresh);
         Ok(())
     }
@@ -77,6 +95,7 @@ impl DbPolicyEngine {
         store: &dyn PolicyStore,
         registry: Arc<dyn ResourceRegistry>,
         default_policy: bool,
+        sink: Arc<dyn DecisionSink>,
     ) -> Result<StaticRbacEngine> {
         let stored_rules = store.list_rules().await.map_err(map_store_err)?;
         let stored_assignments = store.list_assignments().await.map_err(map_store_err)?;
@@ -92,7 +111,8 @@ impl DbPolicyEngine {
             assignments: cfg_assignments,
             rules: cfg_rules,
         };
-        StaticRbacEngine::from_config(cfg, registry)
+        let engine = StaticRbacEngine::from_config(cfg, registry)?;
+        Ok(engine.with_sink(sink))
     }
 }
 

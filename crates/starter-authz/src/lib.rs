@@ -37,6 +37,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod audit;
 pub mod condition;
 pub mod config;
 pub mod defaults;
@@ -45,6 +46,11 @@ pub mod error;
 pub mod middleware;
 pub mod registry;
 pub mod testing;
+
+pub use audit::{DecisionEntry, DecisionSink, NoopDecisionSink};
+
+#[cfg(any(feature = "sqlite", feature = "postgres"))]
+pub use audit::{DbDecisionSink, DecisionSinkConfig, RetentionConfig};
 
 #[cfg(any(feature = "sqlite", feature = "postgres"))]
 pub mod db_engine;

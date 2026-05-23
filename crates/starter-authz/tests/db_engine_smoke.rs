@@ -109,6 +109,7 @@ async fn admin_app() -> (Router, Arc<DbPolicyEngine>) {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry: registry(),
+        decision_sink: None,
     });
     (with_admin_extension(router), engine)
 }
@@ -165,6 +166,7 @@ async fn admin_routes_require_admin() {
     let router: Router = authz_router(AuthzRoutesState {
         engine,
         registry: registry(),
+        decision_sink: None,
     });
     let app = with_role_extension(router, Role::Writer);
     let resp = app
@@ -187,6 +189,7 @@ async fn rule_write_invalidates_cache() {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry,
+        decision_sink: None,
     });
     let app = with_admin_extension(router);
 
@@ -236,6 +239,7 @@ async fn dry_run_matches_real_check() {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry,
+        decision_sink: None,
     });
     let app = with_admin_extension(router);
 
@@ -294,6 +298,7 @@ async fn admin_cannot_lock_themselves_out() {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry,
+        decision_sink: None,
     });
     let app = with_admin_extension(router);
 

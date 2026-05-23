@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 use starter_spi::auth::{Principal, Role};
 use starter_spi::authz::{Decision, PolicyEngine, ResourceRef, ResourceRegistry};
 
+use crate::audit::{DecisionEntry, DecisionSink, NoopDecisionSink};
 use crate::condition::{Context, Expr};
 use crate::config::{Assignment, AuthzConfig, Effect, Rule};
 use crate::defaults;
@@ -20,6 +21,7 @@ pub struct StaticRbacEngine {
     rules: Vec<CompiledRule>,
     assignments: Vec<Assignment>,
     registry: Arc<dyn ResourceRegistry>,
+    sink: Arc<dyn DecisionSink>,
 }
 
 #[derive(Debug, Clone)]
@@ -82,7 +84,22 @@ impl StaticRbacEngine {
             rules: compiled,
             assignments: cfg.assignments,
             registry,
+            sink: Arc::new(NoopDecisionSink),
         })
+    }
+
+    /// Replace the audit sink. Default is [`NoopDecisionSink`]
+    /// (silent drop, zero overhead). Wire a [`crate::DbDecisionSink`]
+    /// here to persist decisions. SCOPE-EXT.md R14.
+    pub fn with_sink(mut self, sink: Arc<dyn DecisionSink>) -> Self {
+        self.sink = sink;
+        self
+    }
+
+    /// Borrow the configured sink — used by `DbPolicyEngine` to
+    /// propagate the sink across cache reloads.
+    pub fn sink(&self) -> &Arc<dyn DecisionSink> {
+        &self.sink
     }
 
     /// Resolve every role the principal carries: the built-in
@@ -187,7 +204,9 @@ impl PolicyEngine for StaticRbacEngine {
                     reason = "unknown_resource",
                     "authz deny"
                 );
-                return Decision::deny("unknown_resource");
+                let decision = Decision::deny("unknown_resource");
+                self.audit(principal, action, object, &decision).await;
+                return decision;
             }
         };
 
@@ -207,7 +226,9 @@ impl PolicyEngine for StaticRbacEngine {
                         reason = "no_tenant_binding",
                         "authz deny"
                     );
-                    return Decision::deny("no_tenant_binding");
+                    let decision = Decision::deny("no_tenant_binding");
+                    self.audit(principal, action, object, &decision).await;
+                    return decision;
                 }
                 (Some(pt), Some(ot)) if pt == ot => { /* fall through */ }
                 _ => {
@@ -220,7 +241,9 @@ impl PolicyEngine for StaticRbacEngine {
                         reason = "cross_tenant",
                         "authz deny"
                     );
-                    return Decision::deny("cross_tenant");
+                    let decision = Decision::deny("cross_tenant");
+                    self.audit(principal, action, object, &decision).await;
+                    return decision;
                 }
             }
         }
@@ -273,10 +296,12 @@ impl PolicyEngine for StaticRbacEngine {
                             error = %err,
                             "authz rule evaluation error"
                         );
-                        return Decision::deny_by(
+                        let decision = Decision::deny_by(
                             "condition_invalid",
                             rule.id.clone(),
                         );
+                        self.audit(principal, action, object, &decision).await;
+                        return decision;
                     }
                 },
             };
@@ -338,6 +363,42 @@ impl PolicyEngine for StaticRbacEngine {
             }
         }
 
+        self.audit(principal, action, object, &decision).await;
         decision
+    }
+}
+
+impl StaticRbacEngine {
+    /// Build a [`DecisionEntry`] from the decision and push it
+    /// through the configured sink. Default sink is the
+    /// [`NoopDecisionSink`] silent-drop; a `DbDecisionSink` does a
+    /// non-blocking `try_send` so this never blocks `check()`.
+    async fn audit(
+        &self,
+        principal: &Principal,
+        action: &str,
+        object: &ResourceRef,
+        decision: &Decision,
+    ) {
+        let (effect, rule_id, reason) = match decision {
+            Decision::Allow { matched_rule } => (Effect::Allow, matched_rule.clone(), None),
+            Decision::Deny {
+                reason,
+                matched_rule,
+            } => (Effect::Deny, matched_rule.clone(), Some(reason.clone())),
+        };
+        let entry = DecisionEntry {
+            at: chrono::Utc::now(),
+            tenant: principal.tenant_id.clone(),
+            subject: principal.subject.clone(),
+            principal_role: role_name(principal.role).to_string(),
+            action: action.to_string(),
+            kind: object.kind.clone(),
+            id: object.id.clone(),
+            effect,
+            rule_id,
+            reason,
+        };
+        self.sink.record(entry).await;
     }
 }

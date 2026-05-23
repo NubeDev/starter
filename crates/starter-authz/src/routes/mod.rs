@@ -12,6 +12,7 @@
 
 mod assignments;
 mod check;
+mod decisions;
 mod resources;
 mod router;
 mod rules;

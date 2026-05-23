@@ -15,6 +15,7 @@ use starter_spi::auth::{Principal, Role};
 
 use super::assignments::{create_assignment, delete_assignment, list_assignments};
 use super::check::check_handler;
+use super::decisions::list_decisions;
 use super::resources::list_resources;
 use super::rules::{create_rule, delete_rule, list_rules, update_rule};
 use super::state::AuthzRoutesState;
@@ -37,6 +38,7 @@ where
         .route("/v1/authz/assignments/{id}", delete(delete_assignment))
         .route("/v1/authz/resources", get(list_resources))
         .route("/v1/authz/check", post(check_handler))
+        .route("/v1/authz/decisions", get(list_decisions))
         .layer(Extension(state))
         .layer(from_fn(admin_gate))
 }
