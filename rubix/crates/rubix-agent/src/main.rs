@@ -1,23 +1,26 @@
 //! Rubix backend binary.
 //!
-//! Boots `starter-observability`, serves `/healthz` via
-//! `starter-server`, and logs a structured startup line announcing
-//! the tool / skill / flow registry sizes.
+//! Boots `starter-observability`, mounts the per-verb REST routers
+//! under [`crate::routes`] alongside the `/healthz` probe, and logs
+//! a structured startup line announcing the tool / skill / flow
+//! registry sizes.
 //!
 //! This file *wires only*. Any logic that isn't pure glue belongs in
 //! `rubix-tools` or upstream in starter. See
 //! [docs/design/agent/](../../docs/design/agent/README.md).
 
+use std::sync::Arc;
+
 use anyhow::Result;
 use tracing::info;
 
-use rubix_agent::{boot, health, registry};
+use rubix_agent::{boot, health, registry, routes};
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let _guard = boot::init_tracing()?;
 
-    let bundle = rubix_spi::i18n::rubix_bundle()?;
+    let bundle = Arc::new(rubix_spi::i18n::rubix_bundle()?);
     let catalogue_size: usize = bundle
         .languages()
         .filter_map(|tag| bundle.catalog(tag))
@@ -51,6 +54,9 @@ async fn main() -> Result<()> {
     // and through the binary's `boot::mcp` module in process.
     let _mcp_router = mcp.router;
 
+    let tools_state = routes::tools::ToolsState::new(tools, bundle);
+    let app = health::healthz_router().merge(routes::tools::router(tools_state));
+
     let bind = std::env::var("RUBIX_BIND").unwrap_or_else(|_| "127.0.0.1:8088".into());
-    health::serve(&bind).await
+    health::serve(&bind, app).await
 }

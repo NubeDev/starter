@@ -34,7 +34,7 @@ starter-server           = { workspace = true }
 starter-store-postgres   = { workspace = true }
 starter-changelog-postgres = { workspace = true }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
-starter-i18n              = { workspace = true, features = ["units", "preferences"] }
+starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
 starter-mcp               = { workspace = true, features = ["http"] }
 starter-store-clickhouse  = { workspace = true }
 starter-flow              = { workspace = true }
@@ -44,6 +44,7 @@ starter-flow-surfaces     = { workspace = true }
 axum    = { workspace = true }
 clap    = { workspace = true }
 async-trait = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
 
 # Async + utility
@@ -54,3 +55,4 @@ anyhow  = { workspace = true }
 [dev-dependencies]
 starter-mcp  = { workspace = true, features = ["http", "testing"] }
 tokio        = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower            = { workspace = true }

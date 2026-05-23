@@ -6354,6 +6354,7 @@ dependencies = [
  "rubix-skills",
  "rubix-spi",
  "rubix-tools",
+ "serde",
  "serde_json",
  "starter-auth-users",
  "starter-changelog-postgres",
@@ -6369,6 +6370,7 @@ dependencies = [
  "starter-store-clickhouse",
  "starter-store-postgres",
  "tokio",
+ "tower 0.5.3",
  "tracing",
 ]
 

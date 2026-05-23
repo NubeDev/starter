@@ -11,6 +11,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 mod bootstrap_user;
+mod system;
 
 #[derive(Debug, Parser)]
 #[command(
@@ -28,6 +29,10 @@ enum Command {
     /// Create (or confirm) the first admin user against the
     /// Postgres instance pointed at by `RUBIX_DSN`.
     BootstrapUser(bootstrap_user::Args),
+    /// In-process system probes (disk, …) — share the same
+    /// `probe()` the REST handler dispatches.
+    #[command(subcommand)]
+    System(system::SystemCommand),
 }
 
 #[tokio::main]
@@ -45,5 +50,6 @@ async fn main() -> Result<()> {
     let cli = Cli::parse();
     match cli.command {
         Command::BootstrapUser(args) => bootstrap_user::run(args).await,
+        Command::System(cmd) => system::run(cmd).await,
     }
 }

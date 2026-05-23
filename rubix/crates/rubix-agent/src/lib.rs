@@ -12,3 +12,4 @@
 pub mod boot;
 pub mod health;
 pub mod registry;
+pub mod routes;
