@@ -336,6 +336,41 @@ Any gRPC/CLI rough edges. Expect:
 - Possible missing `starter-grpc` helpers for streaming the R13
   event taxonomy.
 
+#### `starter-i18n` interpolate feature-gate mismatch (latent)
+
+`starter-i18n` fix · surfaced during U1 · planned, ~5 LOC + test.
+
+*Bug.* `crates/starter-i18n/src/interpolate.rs:80` gates the
+`DiagnosticParam::Quantity` match arm on `starter-i18n`'s own
+`units` feature, but the variant itself
+(`crates/starter-spi/src/i18n/diagnostic.rs:49`) is gated on
+`starter-spi/units` — which `starter-spi/preferences` transitively
+enables (`crates/starter-spi/Cargo.toml:82`). Any test graph that
+unifies `starter-spi/preferences` from one consumer with
+`starter-i18n` from another (no `starter-i18n/units` or
+`/preferences`) yields a non-exhaustive match → compile error in
+`write_param`. U1 surfaced this when `starter-mcp` took a dev-dep
+on `starter-i18n` alongside `starter-server`'s `testing` feature
+(which pulls `starter-spi/preferences`).
+
+*Workaround in tree.* `crates/starter-mcp/Cargo.toml:37-42` pins
+`starter-i18n = { features = ["preferences"] }` under
+`[dev-dependencies]`. Remove that pin once the upstream fix lands.
+
+*Shape.* Either handle `Quantity` unconditionally in `write_param`
+(canonical render needs no `uom` types beyond what the variant
+already carries), or align the `#[cfg]` so the arm is present
+whenever the variant is — i.e. `#[cfg(feature = "units")]` on the
+arm must track the same condition as the variant in
+`starter-spi`. Unconditional is simpler; the arm only formats
+`canonical: f64` and reads `quantity` by reference.
+
+*Test.* `cargo test -p starter-mcp --all-features` (and
+`-p starter-mcp` with the dev-dep pin removed) must build and
+pass. Add a regression test in `starter-i18n` that enables
+`starter-spi/preferences` without `starter-i18n/units` and
+interpolates a `Quantity` param.
+
 ### Phase 3 (gates)
 
 #### `starter-tool-sdui` — page-builder primitives
