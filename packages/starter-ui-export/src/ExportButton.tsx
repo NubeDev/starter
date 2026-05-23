@@ -56,14 +56,14 @@ export function ExportButton({
       setError("nothing to export");
       return;
     }
-    if (mode === "print") {
-      printNode(node, options);
-      return;
-    }
     setBusy(true);
     try {
-      const blob = await exportNodeToPdf(node, options);
-      triggerDownload(blob, `${filename}.pdf`);
+      if (mode === "print") {
+        await printNode(node, options);
+      } else {
+        const blob = await exportNodeToPdf(node, options);
+        triggerDownload(blob, `${filename}.pdf`);
+      }
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {

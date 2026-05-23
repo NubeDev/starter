@@ -8,6 +8,9 @@ import { dimensionsMm, type PageOptions } from "./types";
  * the print dialog to get a real PDF — modern Chrome/Edge/Safari/
  * Firefox all support this.
  *
+ * Awaits font loading and inline `<img>` decoding before opening the
+ * dialog so the first preview isn't missing glyphs or image data.
+ *
  * Trade-off: the user sees the OS print dialog. If you want a
  * silent, programmatic PDF without that dialog, use
  * {@link exportNodeToPdf} instead (it requires `html2canvas` + `jspdf`).
@@ -16,7 +19,10 @@ import { dimensionsMm, type PageOptions } from "./types";
  *             else on the page is hidden via a print-only stylesheet.
  * @param options Page size / orientation / margins.
  */
-export function printNode(node: HTMLElement, options: PageOptions): void {
+export async function printNode(
+  node: HTMLElement,
+  options: PageOptions,
+): Promise<void> {
   const [w, h] = dimensionsMm(options);
   const m = options.margins;
 
@@ -43,9 +49,30 @@ export function printNode(node: HTMLElement, options: PageOptions): void {
   window.addEventListener("afterprint", cleanup);
 
   try {
+    await waitForReady(node);
     window.print();
   } catch (err) {
     cleanup();
     throw err;
   }
+}
+
+async function waitForReady(node: HTMLElement): Promise<void> {
+  // Custom fonts are async-loaded; without this the first preview can
+  // render with a fallback face and visibly re-flow on the second.
+  const fontsReady =
+    typeof document !== "undefined" && "fonts" in document
+      ? (document as Document & { fonts: { ready: Promise<unknown> } }).fonts
+          .ready
+      : Promise.resolve();
+
+  // `img.decode()` resolves once the bitmap is decoded and ready to
+  // paint; `.catch(() => {})` so a single broken image can't block the
+  // whole print.
+  const imgs = Array.from(node.querySelectorAll("img"));
+  const decoded = imgs.map((img) =>
+    img.decode ? img.decode().catch(() => {}) : Promise.resolve(),
+  );
+
+  await Promise.all([fontsReady, ...decoded]);
 }

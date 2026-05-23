@@ -29,7 +29,40 @@ This package gives you that path without locking you into a specific
 PDF library: pick `printNode` (zero deps, native browser print) or
 `exportNodeToPdf` (silent, optional `html2canvas` + `jspdf`).
 
-## The three building blocks
+## Recommended: `usePrint` + `<PrintableContent>`
+
+For most apps you want the print view rendered *off-screen* (so it
+doesn't pollute the visible page) and triggered by your own styled
+button. The `usePrint` hook + `PrintableContent` portal handle both:
+
+```tsx
+import {
+  PrintableContent,
+  usePrint,
+  DEFAULT_PAGE_OPTIONS,
+} from "@nube/starter-ui-export";
+
+export function Report() {
+  const { hostRef, print, printing } = usePrint(DEFAULT_PAGE_OPTIONS);
+
+  return (
+    <>
+      <button onClick={print} disabled={printing}>
+        {printing ? "Preparing…" : "Print / Save as PDF"}
+      </button>
+      <PrintableContent hostRef={hostRef}>
+        <MyReport />
+      </PrintableContent>
+    </>
+  );
+}
+```
+
+`PrintableContent` mounts its children into a hidden 210 mm-wide
+container on `document.body`. `print()` waits for `document.fonts.ready`
+and `img.decode()` to settle, then opens the native print dialog.
+
+## Lower-level building blocks
 
 ```tsx
 import {
@@ -79,13 +112,21 @@ Opens the browser's native print dialog with an injected `@page` rule
 matching the supplied size / orientation / margins. The user picks
 "Save as PDF" if they want a file. Zero dependencies.
 
+Returns a `Promise<void>` that resolves once fonts and inline images
+are ready and the print dialog has been requested.
+
 ### `exportNodeToPdf(node, options)`
 
 Captures the subtree with `html2canvas` and embeds the PNG in a
-single-page PDF via `jspdf`. Returns a `Blob` so the caller decides
-what to do with it: download, `POST` to your server, preview in an
-`<iframe>`. Both libraries are declared as **optional peer deps** so
-consumers who only want `printNode` don't pay for them.
+**single-page** PDF via `jspdf`, letterboxed into the configured page
+size. Returns a `Blob` so the caller decides what to do with it:
+download, `POST` to your server, preview in an `<iframe>`. Both
+libraries are declared as **optional peer deps** so consumers who only
+want `printNode` don't pay for them.
+
+> **Note:** this path is single-page only — tall content is scaled
+> down to fit. For multi-page documents use `printNode` (the browser
+> handles pagination natively).
 
 ### `ExportButton`
 

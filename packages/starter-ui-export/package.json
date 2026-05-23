@@ -11,6 +11,8 @@
     "./types": "./src/types.ts",
     "./PageOptionsForm": "./src/PageOptionsForm.tsx",
     "./ExportButton": "./src/ExportButton.tsx",
+    "./PrintableContent": "./src/PrintableContent.tsx",
+    "./usePrint": "./src/usePrint.ts",
     "./printNode": "./src/printNode.ts",
     "./exportNodeToPdf": "./src/exportNodeToPdf.ts"
   },
