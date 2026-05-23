@@ -48,6 +48,12 @@ starter-flow-spi = { workspace = true, optional = true }
 # the `sqlx/chrono` feature flag is enough — no extra dep here.
 uuid = { workspace = true, optional = true }
 
+# `dimensions` feature dep. Pulls the `TagDefinition` / `TagKind`
+# types whose `as_str` values must match the `tag_definitions.kind`
+# CHECK constraint exactly. Default-off so consumers that don't
+# need the warehouse catalog pay no cost.
+starter-tags = { workspace = true, optional = true }
+
 [features]
 default = ["skill-approvals"]
 testing = ["dep:testcontainers", "dep:testcontainers-modules", "dep:tokio"]
@@ -77,6 +83,15 @@ agent-session = ["flow", "dep:starter-flow-spi", "sqlx/chrono", "sqlx/json"]
 # parity with the SQLite crate even though the schema stores ids
 # as `TEXT`).
 flow = ["dep:starter-flow-spi", "dep:uuid", "sqlx/chrono", "sqlx/json", "sqlx/uuid"]
+# Warehouse dimensions catalog (W1, W5, W12). Owns the eight tables
+# under `migrations/dimensions/` (recorded in
+# `_sqlx_migrations_dimensions`) plus the typed CRUD modules under
+# `src/dimensions/`. Default-off so non-warehouse consumers stay
+# slim. Pulls `starter-tags` for the `TagDefinition` / `TagKind`
+# bridge, sqlx `chrono` + `json` for `TIMESTAMPTZ` / `JSONB`
+# binding, and `serde_json` (already unconditional) for the JSONB
+# columns.
+dimensions = ["dep:starter-tags", "sqlx/chrono", "sqlx/json"]
 
 [dev-dependencies]
 sqlx  = { workspace = true, features = ["postgres", "macros", "migrate", "runtime-tokio"] }

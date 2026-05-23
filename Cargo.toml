@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/starter-spi",
+    "crates/starter-tags",
     "crates/starter-config",
     "crates/starter-observability",
     "crates/starter-prefs",
@@ -9,6 +10,8 @@ members = [
     "crates/starter-server",
     "crates/starter-store-sqlite",
     "crates/starter-store-postgres",
+    "crates/starter-store-clickhouse",
+    "crates/starter-warehouse",
     "crates/starter-mcp",
     "crates/starter-grpc",
     "crates/starter-jsonrpc-stdio",
@@ -85,6 +88,7 @@ rust-version = "1.80"
 [workspace.dependencies]
 # Internal crates — every consumer crate picks what it needs.
 starter-spi              = { path = "crates/starter-spi",              version = "0.1.0" }
+starter-tags             = { path = "crates/starter-tags",             version = "0.1.0" }
 starter-config           = { path = "crates/starter-config",           version = "0.1.0" }
 starter-observability    = { path = "crates/starter-observability",    version = "0.1.0" }
 starter-prefs            = { path = "crates/starter-prefs",            version = "0.1.0" }
@@ -92,6 +96,8 @@ starter-i18n             = { path = "crates/starter-i18n",             version =
 starter-server           = { path = "crates/starter-server",           version = "0.1.0" }
 starter-store-sqlite     = { path = "crates/starter-store-sqlite",     version = "0.1.0" }
 starter-store-postgres   = { path = "crates/starter-store-postgres",   version = "0.1.0" }
+starter-store-clickhouse = { path = "crates/starter-store-clickhouse", version = "0.1.0" }
+starter-warehouse        = { path = "crates/starter-warehouse",        version = "0.1.0" }
 starter-mcp              = { path = "crates/starter-mcp",              version = "0.1.0" }
 starter-grpc             = { path = "crates/starter-grpc",             version = "0.1.0" }
 starter-jsonrpc-stdio    = { path = "crates/starter-jsonrpc-stdio",    version = "0.1.0" }
