@@ -1,0 +1,35 @@
+{
+  "name": "@nube/starter-ui-blobs",
+  "version": "0.1.0",
+  "description": "React hooks for starter blob uploads: useBlobUpload + markdown-editor adapter. Speaks the presign/PUT contract from the starter-blob-* Rust crates.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./markdown": "./src/markdown.ts"
+  },
+  "files": [
+    "README.md",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "jsdom": "^25.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}

@@ -57,6 +57,7 @@ members = [
     "crates/starter-blob-s3",
     "crates/starter-blob-garage",
     "crates/starter-blob-compose",
+    "crates/starter-blob-axum",
     "crates/smoke-tests",
     "examples/minimal",
     "examples/gh-report",

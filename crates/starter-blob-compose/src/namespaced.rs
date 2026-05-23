@@ -8,8 +8,8 @@ use bytes::Bytes;
 use futures::stream::BoxStream;
 use serde::{Deserialize, Serialize};
 use starter_spi::blob::{
-    BackendId, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal, BlobStore,
-    ListPage, PresignOp, PresignedUrl, PutOptions,
+    BackendId, BlobContext, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal,
+    BlobStore, ListPage, PresignOp, PresignedUrl, PutOptions,
 };
 
 use crate::codec;
@@ -107,6 +107,24 @@ impl Namespaced {
 impl BlobStore for Namespaced {
     fn backend_id(&self) -> &BackendId {
         &self.backend_id
+    }
+
+    fn context_for(&self, blob_ref: &BlobRef) -> BlobContext {
+        // Unwrap to the inner ref; if decoding fails (e.g. a
+        // caller passed us a ref minted by a different combinator
+        // stack), fall back to a context carrying just our prefix
+        // rather than panicking — the proxy handler will reject
+        // the request downstream when `get`/`head` returns an
+        // error.
+        match self.unwrap_ref(blob_ref) {
+            Ok(inner) => self
+                .inner
+                .context_for(&inner)
+                .prepend_namespace(self.prefix.clone()),
+            Err(_) => BlobContext::empty()
+                .with_backend_id(self.backend_id.clone())
+                .prepend_namespace(self.prefix.clone()),
+        }
     }
 
     async fn put_bytes(

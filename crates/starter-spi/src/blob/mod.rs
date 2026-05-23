@@ -61,13 +61,16 @@
 //! re-export barrel.
 
 mod blob_ref;
+mod context;
 mod error;
 mod key;
 mod meta;
+pub mod meta_keys;
 mod presigned;
 mod store;
 
 pub use blob_ref::{BackendId, BlobRef, BlobRefInternal, Etag};
+pub use context::BlobContext;
 pub use error::{BlobError, BoxError};
 pub use key::{BlobKey, BlobKeyError, MAX_BLOB_KEY_LEN};
 pub use meta::{BlobMeta, BlobRange};

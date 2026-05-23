@@ -1,0 +1,32 @@
+[package]
+name        = "starter-blob-axum"
+description = "starter — authenticated GET proxy for any BlobStore. Maps BlobError→HTTP, forwards Range/If-None-Match, reads `filename` user-metadata for Content-Disposition."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+
+async-trait = { workspace = true }
+bytes       = { workspace = true }
+futures     = { workspace = true }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+
+axum       = { workspace = true }
+http       = { workspace = true }
+tower      = { workspace = true }
+tokio-util = { version = "0.7", features = ["io"] }
+base64     = { workspace = true }
+
+[dev-dependencies]
+http-body-util  = "0.1"
+starter-blob-memory = { path = "../starter-blob-memory" }
+starter-blob-compose = { path = "../starter-blob-compose" }
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower = { workspace = true }

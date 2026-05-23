@@ -7392,6 +7392,29 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-blob-axum"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "base64 0.22.1",
+ "bytes",
+ "futures",
+ "http 1.4.0",
+ "http-body-util",
+ "serde",
+ "serde_json",
+ "starter-blob-compose",
+ "starter-blob-memory",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-util",
+ "tower 0.5.3",
+ "tracing",
+]
+
+[[package]]
 name = "starter-blob-compose"
 version = "0.1.0"
 dependencies = [

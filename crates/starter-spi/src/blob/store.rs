@@ -28,6 +28,7 @@
 //!   `Body::data_stream`). Threading a different shape through
 //!   would mean a copy at every engine boundary.
 
+use std::collections::BTreeMap;
 use std::time::Duration;
 
 use async_trait::async_trait;
@@ -36,6 +37,7 @@ use futures::stream::BoxStream;
 use serde::{Deserialize, Serialize};
 
 use super::blob_ref::BlobRef;
+use super::context::BlobContext;
 use super::error::BlobError;
 use super::key::BlobKey;
 use super::meta::{BlobMeta, BlobRange};
@@ -65,6 +67,13 @@ pub struct PutOptions {
     /// If `Some`, fail with [`BlobError::AlreadyExists`] when the
     /// key already has bytes — `If-None-Match: *` semantics.
     pub if_absent: bool,
+
+    /// Free-form user metadata to attach to the stored blob. Round-tripped
+    /// unchanged on [`BlobStore::head`] under
+    /// [`BlobMeta::user_metadata`]. Use the constants in
+    /// [`crate::blob::meta_keys`] for portable spellings of reserved
+    /// keys (`filename`, `uploaded_by`, `uploaded_at`).
+    pub user_metadata: BTreeMap<String, String>,
 }
 
 impl PutOptions {
@@ -87,6 +96,13 @@ impl PutOptions {
     /// key already has bytes.
     pub fn if_absent(mut self) -> Self {
         self.if_absent = true;
+        self
+    }
+
+    /// Insert one user-metadata entry. Chainable with the other
+    /// setters: `PutOptions::with_content_type("image/png").user_meta(meta_keys::FILENAME, "logo.png")`.
+    pub fn user_meta(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.user_metadata.insert(key.into(), value.into());
         self
     }
 }
@@ -144,6 +160,24 @@ pub trait BlobStore: Send + Sync + 'static {
     /// [`BlobRef`]. Useful for combinators that route on
     /// `backend_id`, and for operator-facing diagnostics.
     fn backend_id(&self) -> &super::blob_ref::BackendId;
+
+    /// Return the structured [`BlobContext`] for a given
+    /// [`BlobRef`], used by `starter-blob-axum`'s proxy handler to
+    /// give consumer authz closures a parsed view of the namespace
+    /// stack rather than an opaque ref.
+    ///
+    /// **Engines** (memory, fs, s3, garage) keep the default impl
+    /// below — they hold bytes and have no domain prefix to
+    /// contribute. **Combinators** that transform keys (today
+    /// `Namespaced`) override this to fold in their own prefix
+    /// before delegating to the inner store.
+    ///
+    /// The default returns a context carrying just this engine's
+    /// `backend_id` so the consumer's authz closure always has
+    /// *something* to discriminate on, even without combinators.
+    fn context_for(&self, _blob_ref: &BlobRef) -> BlobContext {
+        BlobContext::empty().with_backend_id(self.backend_id().clone())
+    }
 
     /// Store `bytes` under `key`. Returns the minted
     /// [`BlobRef`] which the consumer persists.
@@ -262,6 +296,7 @@ pub async fn copy_via_client(
         content_type: meta.content_type,
         cache_control: meta.cache_control,
         if_absent: false,
+        user_metadata: meta.user_metadata,
     };
     dst_store.put_stream(dst_key, stream, opts).await
 }

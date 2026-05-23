@@ -128,6 +128,7 @@ fn meta_from(bytes: &Bytes, opts: &PutOptions, prior: Option<&BlobMeta>) -> Blob
         .with_cache_control(opts.cache_control.clone())
         .with_created_at(prior.and_then(|m| m.created_at).or(now))
         .with_updated_at(now)
+        .with_user_metadata(opts.user_metadata.clone())
 }
 
 fn slice_range(bytes: &Bytes, range: BlobRange) -> Bytes {

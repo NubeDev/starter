@@ -17,6 +17,8 @@
 //! call `head(blob_ref).key` and route around the store. The key
 //! lives only on the input side of `put` / `list`.
 
+use std::collections::BTreeMap;
+
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 
@@ -57,6 +59,22 @@ pub struct BlobMeta {
 
     /// Last-write timestamp. Same engine-honesty caveat.
     pub updated_at: Option<DateTime<Utc>>,
+
+    /// Free-form, consumer-defined string→string metadata that
+    /// engines round-trip unchanged. Use the constants in
+    /// [`super::meta_keys`] for portable spellings of reserved keys
+    /// (`filename`, `uploaded_by`, `uploaded_at`). A `BTreeMap` is
+    /// chosen over `HashMap` so the on-disk serialization is stable
+    /// across processes — useful for etag/content-hash
+    /// comparisons and for snapshot tests that diff meta.
+    ///
+    /// Engines must enforce sane caps (key length, value length,
+    /// total count) per their own contract; the trait does not
+    /// pretend to a universal limit because every backend's limit
+    /// differs (S3 caps at 2 KiB total, fs is bounded only by
+    /// disk).
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub user_metadata: BTreeMap<String, String>,
 }
 
 impl BlobMeta {
@@ -79,6 +97,7 @@ impl BlobMeta {
             cache_control: None,
             created_at: None,
             updated_at: None,
+            user_metadata: BTreeMap::new(),
         }
     }
 
@@ -103,6 +122,20 @@ impl BlobMeta {
     /// Set [`BlobMeta::updated_at`].
     pub fn with_updated_at(mut self, updated_at: Option<DateTime<Utc>>) -> Self {
         self.updated_at = updated_at;
+        self
+    }
+
+    /// Replace [`BlobMeta::user_metadata`] wholesale.
+    pub fn with_user_metadata(mut self, user_metadata: BTreeMap<String, String>) -> Self {
+        self.user_metadata = user_metadata;
+        self
+    }
+
+    /// Insert one user-metadata entry, returning the modified
+    /// [`BlobMeta`]. Useful in builder chains:
+    /// `BlobMeta::new(size, etag).with_user_meta(meta_keys::FILENAME, name)`.
+    pub fn with_user_meta(mut self, key: impl Into<String>, value: impl Into<String>) -> Self {
+        self.user_metadata.insert(key.into(), value.into());
         self
     }
 }
