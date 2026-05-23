@@ -11,6 +11,7 @@ members = [
     "crates/starter-store-sqlite",
     "crates/starter-store-postgres",
     "crates/starter-store-clickhouse",
+    "crates/starter-warehouse",
     "crates/starter-mcp",
     "crates/starter-grpc",
     "crates/starter-jsonrpc-stdio",
@@ -94,6 +95,7 @@ starter-server           = { path = "crates/starter-server",           version =
 starter-store-sqlite     = { path = "crates/starter-store-sqlite",     version = "0.1.0" }
 starter-store-postgres   = { path = "crates/starter-store-postgres",   version = "0.1.0" }
 starter-store-clickhouse = { path = "crates/starter-store-clickhouse", version = "0.1.0" }
+starter-warehouse        = { path = "crates/starter-warehouse",        version = "0.1.0" }
 starter-mcp              = { path = "crates/starter-mcp",              version = "0.1.0" }
 starter-grpc             = { path = "crates/starter-grpc",             version = "0.1.0" }
 starter-jsonrpc-stdio    = { path = "crates/starter-jsonrpc-stdio",    version = "0.1.0" }

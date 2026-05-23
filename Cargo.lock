@@ -8764,6 +8764,35 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-warehouse"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "axum 0.8.9",
+ "chrono",
+ "clickhouse",
+ "futures",
+ "hex",
+ "http 1.4.0",
+ "serde",
+ "serde_json",
+ "sha2 0.10.9",
+ "sqlx",
+ "starter-flow-nodes",
+ "starter-flow-spi",
+ "starter-server",
+ "starter-store-clickhouse",
+ "starter-store-postgres",
+ "starter-tags",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-stream",
+ "tower 0.5.3",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
 name = "static_assertions"
 version = "1.1.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
