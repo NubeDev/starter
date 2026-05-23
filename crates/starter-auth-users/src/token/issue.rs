@@ -25,12 +25,26 @@ pub struct IssuedToken {
     pub plaintext: String,
 }
 
-/// Issue a new token for `user_id` with the given scopes and optional
-/// absolute expiry.
+/// The super-admin sentinel `Principal.tenant_id` / token tenant
+/// binding (Phase 7a — R11). Tokens minted with this value bypass
+/// the cross-tenant predicate and are only allowed for users with
+/// the global Admin role.
+pub const SUPER_ADMIN_TENANT: &str = "*";
+
+/// Issue a new token for `(user_id, tenant_id)` with the given
+/// scopes and optional absolute expiry.
+///
+/// Phase 7a (R11): every token is bound to exactly one tenant.
+/// Pass `tenant_id = "*"` (the [`SUPER_ADMIN_TENANT`] sentinel)
+/// only for users your caller has verified hold the global Admin
+/// role — that binding bypasses the cross-tenant predicate. The
+/// callers in `routes/tokens.rs` perform that check before
+/// calling.
 pub async fn issue<S: TokenStore + ?Sized>(
     store: &S,
     user_id: &str,
     scopes: &[Scope],
+    tenant_id: &str,
     expires_at: Option<DateTime<Utc>>,
 ) -> Result<IssuedToken, TokenError> {
     let mut id_bytes = [0u8; 12];
@@ -45,7 +59,7 @@ pub async fn issue<S: TokenStore + ?Sized>(
     let hashed = hash(&secret).map_err(|_: PasswordError| TokenError::Internal)?;
 
     store
-        .create(&id, user_id, &hashed, scopes, expires_at)
+        .create(&id, user_id, &hashed, scopes, tenant_id, expires_at)
         .await
         .map_err(map_store_err)?;
 

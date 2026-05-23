@@ -35,6 +35,9 @@ pub struct RuleBody {
     /// Higher first; defaults to `0`.
     #[serde(default)]
     pub priority: i32,
+    /// Phase 7a — tenant scope; `None` is a global rule.
+    #[serde(default)]
+    pub tenant_id: Option<String>,
 }
 
 /// JSON view of a stored rule.
@@ -56,6 +59,8 @@ pub struct RuleView {
     pub priority: i32,
     /// Subject id of the admin who created the row.
     pub created_by: String,
+    /// Tenant scope; `None` for global rules.
+    pub tenant_id: Option<String>,
 }
 
 impl From<StoredRule> for RuleView {
@@ -69,6 +74,7 @@ impl From<StoredRule> for RuleView {
             effect: s.effect,
             priority: s.priority,
             created_by: s.created_by,
+            tenant_id: s.tenant_id,
         }
     }
 }
@@ -105,6 +111,7 @@ pub(super) async fn create_rule(
         effect: body.effect,
         priority: body.priority,
         created_by: creator,
+        tenant_id: body.tenant_id,
     };
     match state.engine.store().insert_rule(&row).await {
         Ok(()) => {
@@ -147,6 +154,7 @@ pub(super) async fn update_rule(
         effect: body.effect,
         priority: body.priority,
         created_by: creator,
+        tenant_id: body.tenant_id,
     };
     match state.engine.store().update_rule(&row).await {
         Ok(()) => {

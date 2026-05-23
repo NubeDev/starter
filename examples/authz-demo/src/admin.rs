@@ -38,7 +38,10 @@ pub async fn create_user(
 pub async fn issue_token(tokens: &Arc<dyn TokenStore>, user_id: &str) -> Result<IssuedToken> {
     // No scopes attached — authz decisions are by policy engine + role,
     // not by token scopes, in this demo.
-    let t = issue(tokens.as_ref(), user_id, &[], None)
+    // Phase 7a — demo issues a super-admin token (cross-tenant
+    // bypass). Real callers should issue tokens scoped to a
+    // specific tenant; see the seeded tenants in main.rs.
+    let t = issue(tokens.as_ref(), user_id, &[], "*", None)
         .await
         .context("issue token")?;
     Ok(t)
@@ -92,6 +95,9 @@ async fn upsert_rule(
         // sorts ties.
         priority: 100,
         created_by: admin_subject.to_string(),
+        // Phase 7a — demo grants are global (cross-tenant) so the
+        // existing single-tenant flow keeps working unchanged.
+        tenant_id: None,
     };
     engine
         .store()

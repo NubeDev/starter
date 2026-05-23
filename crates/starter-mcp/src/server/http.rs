@@ -162,6 +162,7 @@ mod tests {
                 subject: format!("token:{credential}"),
                 role: Role::Admin,
                 scopes: vec![],
+                tenant_id: None,
                 extra: Value::Null,
             })
         }

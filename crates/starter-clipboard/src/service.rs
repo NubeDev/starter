@@ -109,6 +109,7 @@ impl ClipboardService {
                 .and_then(|v| v.as_str())
                 .map(str::to_owned),
             owner: None,
+            tenant: None,
         };
 
         reversible

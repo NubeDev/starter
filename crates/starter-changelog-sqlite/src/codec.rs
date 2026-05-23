@@ -141,6 +141,7 @@ pub(crate) fn row_to_change(row: &sqlx::sqlite::SqliteRow) -> Result<Change> {
             kind: resource_kind,
             id: Some(resource_id),
             owner: resource_owner,
+            tenant: None,
         },
         resource_version: resource_version.map(|v| v as u64),
         op: op_from_text(&op_text),

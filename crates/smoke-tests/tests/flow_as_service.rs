@@ -86,6 +86,7 @@ fn build_principal() -> Principal {
         subject: "stage9-svc-user".into(),
         role: Role::Admin,
         scopes: Vec::new(),
+        tenant_id: None,
         extra: serde_json::Value::Null,
     }
 }

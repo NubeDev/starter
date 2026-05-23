@@ -53,10 +53,15 @@ where
         })?
         .ok_or(TokenError::Invalid)?;
 
+    // Phase 7a (R11) — the token carries its tenant binding.
+    // `Some("*")` is the super-admin sentinel reserved for tokens
+    // issued by users with global Admin role; the engine treats
+    // it as a cross-tenant bypass.
     Ok(Principal {
         subject: user.id,
         role: user.role,
         scopes: row.scopes,
+        tenant_id: Some(row.tenant_id),
         extra: serde_json::Value::Null,
     })
 }

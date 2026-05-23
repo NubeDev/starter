@@ -25,6 +25,7 @@ fn fresh_principal() -> Principal {
         subject: "u-1".into(),
         role: Role::Reader,
         scopes: vec![],
+        tenant_id: None,
         extra: serde_json::Value::Null,
     }
 }

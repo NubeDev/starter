@@ -29,6 +29,10 @@ struct CompiledRule {
     resource: String,
     actions: Vec<String>,
     effect: Effect,
+    /// Tenant scope of this rule (Phase 7a). `None` is a global
+    /// rule (matches any tenant). `Some(_)` only matches when the
+    /// principal is bound to that tenant.
+    tenant_id: Option<String>,
     /// `Some(Owner)` when the source rule used the magic
     /// `condition = "owner"` shortcut; `Some(Expr(_))` for a
     /// parsed mini-language expression; `None` for an
@@ -69,6 +73,7 @@ impl StaticRbacEngine {
                 resource: r.resource,
                 actions: r.actions,
                 effect: r.effect,
+                tenant_id: r.tenant_id,
                 cond,
             });
         }
@@ -134,12 +139,20 @@ fn build_context(p: &Principal, object: &ResourceRef) -> Context {
     if let Value::Object(map) = &mut root {
         map.insert("subject".into(), Value::String(p.subject.clone()));
         map.insert("role".into(), Value::String(role_name(p.role).into()));
+        // Phase 7a — expose `tenant` so conditions can reference it
+        // (e.g. `tenant == "acme"`). The cross-tenant predicate
+        // already fires before condition evaluation; this is here
+        // for diagnostic / dashboard rules.
+        if let Some(t) = &p.tenant_id {
+            map.insert("tenant".into(), Value::String(t.clone()));
+        }
         map.insert(
             "object".into(),
             json!({
                 "kind": object.kind,
                 "id": object.id,
                 "owner": object.owner,
+                "tenant": object.tenant,
             }),
         );
     }
@@ -150,15 +163,52 @@ fn build_context(p: &Principal, object: &ResourceRef) -> Context {
 impl PolicyEngine for StaticRbacEngine {
     async fn check(&self, principal: &Principal, action: &str, object: &ResourceRef) -> Decision {
         // SCOPE.md R3 — default-deny on unknown resources.
-        if self.registry.lookup(&object.kind).is_none() {
-            tracing::info!(
-                subject = %principal.subject,
-                action = %action,
-                kind = %object.kind,
-                reason = "unknown_resource",
-                "authz deny"
-            );
-            return Decision::deny("unknown_resource");
+        let spec = match self.registry.lookup(&object.kind) {
+            Some(s) => s,
+            None => {
+                tracing::info!(
+                    subject = %principal.subject,
+                    action = %action,
+                    kind = %object.kind,
+                    reason = "unknown_resource",
+                    "authz deny"
+                );
+                return Decision::deny("unknown_resource");
+            }
+        };
+
+        // SCOPE-EXT.md R11 — cross-tenant predicate runs BEFORE
+        // role / condition evaluation. Tenant-scoped kinds require
+        // `Some(principal.tenant) == Some(object.tenant)`; missing
+        // or mismatch short-circuits with a typed deny reason. The
+        // super-admin sentinel `"*"` on the principal bypasses the
+        // check (used by cross-tenant admin tokens).
+        if spec.tenant_scoped && !principal.is_super_admin() {
+            match (&principal.tenant_id, &object.tenant) {
+                (None, _) => {
+                    tracing::info!(
+                        subject = %principal.subject,
+                        action = %action,
+                        kind = %object.kind,
+                        reason = "no_tenant_binding",
+                        "authz deny"
+                    );
+                    return Decision::deny("no_tenant_binding");
+                }
+                (Some(pt), Some(ot)) if pt == ot => { /* fall through */ }
+                _ => {
+                    tracing::info!(
+                        subject = %principal.subject,
+                        action = %action,
+                        kind = %object.kind,
+                        principal_tenant = ?principal.tenant_id,
+                        object_tenant = ?object.tenant,
+                        reason = "cross_tenant",
+                        "authz deny"
+                    );
+                    return Decision::deny("cross_tenant");
+                }
+            }
         }
 
         let roles = self.roles_for(principal);
@@ -168,6 +218,16 @@ impl PolicyEngine for StaticRbacEngine {
         let mut deny_match: Option<&CompiledRule> = None;
 
         for rule in &self.rules {
+            // Phase 7a — tenant-scoped rules only match when the
+            // principal's tenant binding matches the rule's
+            // tenant. Global (None) rules always evaluate.
+            if let Some(rule_tenant) = &rule.tenant_id {
+                if !principal.is_super_admin()
+                    && principal.tenant_id.as_deref() != Some(rule_tenant.as_str())
+                {
+                    continue;
+                }
+            }
             if !role_matches(&rule.role, &roles) {
                 continue;
             }

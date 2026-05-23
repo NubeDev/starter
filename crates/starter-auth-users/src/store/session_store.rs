@@ -12,6 +12,12 @@ pub struct SessionRecord {
     pub user_id: String,
     /// CSRF double-submit token paired with this session.
     pub csrf_token: String,
+    /// Phase 7a — tenant the session is bound to (set at login
+    /// from the user's membership row). `None` for pre-Phase-7
+    /// sessions; tenant-scoped routes deny those with
+    /// `no_tenant_binding`. Switching tenants is a re-login per
+    /// SCOPE-EXT.md "Multi-tenant session model".
+    pub tenant_id: Option<String>,
     /// Absolute expiry. Sessions past this are treated as not found.
     pub expires_at: DateTime<Utc>,
     /// Set when the user logs out. Treated as not found by lookups.
@@ -31,11 +37,15 @@ pub enum SessionStoreError {
 #[async_trait]
 pub trait SessionStore: Send + Sync {
     /// Insert a fresh session row. Returns the new record.
+    /// Phase 7a — `tenant_id` is the binding the session is
+    /// minted for. `None` keeps pre-Phase-7 behaviour (session
+    /// without tenant); tenant-scoped routes deny those sessions.
     async fn create(
         &self,
         id: &str,
         user_id: &str,
         csrf_token: &str,
+        tenant_id: Option<&str>,
         expires_at: DateTime<Utc>,
     ) -> Result<SessionRecord, SessionStoreError>;
 
@@ -82,10 +92,12 @@ mod sqlite {
     fn map_row(row: sqlx::sqlite::SqliteRow) -> Result<SessionRecord, SessionStoreError> {
         let expires_at_s: String = row.get(3);
         let revoked_at_s: Option<String> = row.get(4);
+        let tenant_id: Option<String> = row.get(5);
         Ok(SessionRecord {
             id: row.get(0),
             user_id: row.get(1),
             csrf_token: row.get(2),
+            tenant_id,
             expires_at: parse_dt(&expires_at_s)?,
             revoked_at: revoked_at_s.as_deref().map(parse_dt).transpose()?,
         })
@@ -98,16 +110,19 @@ mod sqlite {
             id: &str,
             user_id: &str,
             csrf_token: &str,
+            tenant_id: Option<&str>,
             expires_at: DateTime<Utc>,
         ) -> Result<SessionRecord, SessionStoreError> {
             let exp = expires_at.to_rfc3339();
             sqlx::query(
                 "INSERT INTO starter_auth_users_sessions \
-                 (id, user_id, csrf_token, expires_at) VALUES (?1, ?2, ?3, ?4)",
+                 (id, user_id, csrf_token, tenant_id, expires_at) \
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
             )
             .bind(id)
             .bind(user_id)
             .bind(csrf_token)
+            .bind(tenant_id)
             .bind(&exp)
             .execute(self.pool.sqlx())
             .await
@@ -116,6 +131,7 @@ mod sqlite {
                 id: id.into(),
                 user_id: user_id.into(),
                 csrf_token: csrf_token.into(),
+                tenant_id: tenant_id.map(str::to_owned),
                 expires_at,
                 revoked_at: None,
             })
@@ -123,7 +139,7 @@ mod sqlite {
 
         async fn find_active(&self, id: &str) -> Result<Option<SessionRecord>, SessionStoreError> {
             let row = sqlx::query(
-                "SELECT id, user_id, csrf_token, expires_at, revoked_at \
+                "SELECT id, user_id, csrf_token, expires_at, revoked_at, tenant_id \
                  FROM starter_auth_users_sessions \
                  WHERE id = ?1 LIMIT 1",
             )

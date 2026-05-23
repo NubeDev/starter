@@ -99,6 +99,15 @@ pub struct Rule {
     /// future DB engine.
     #[serde(default)]
     pub priority: i32,
+
+    /// Tenant scope of this rule (Phase 7a). `None` means a global
+    /// rule — evaluated for every tenant. `Some(tenant_id)` means
+    /// the rule is only considered when the principal is bound to
+    /// that tenant. The super-admin sentinel `"*"` on
+    /// `Principal.tenant_id` matches every tenant_id (used by
+    /// cross-tenant admin tokens).
+    #[serde(default)]
+    pub tenant_id: Option<String>,
 }
 
 /// Allow or deny.

@@ -50,6 +50,7 @@ fn principal_carries_role_and_scopes() {
         subject: "u1".into(),
         role: Role::Admin,
         scopes: vec![Scope::new("read:metrics")],
+        tenant_id: None,
         extra: serde_json::Value::Null,
     };
     assert_eq!(p.role, Role::Admin);

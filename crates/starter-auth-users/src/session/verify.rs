@@ -76,10 +76,13 @@ where
         Err(e) => return Err(SessionError::Store(e.to_string())),
     };
 
+    // Phase 7a — the session carries its tenant binding (set
+    // at login from the user's membership row).
     Ok(Principal {
         subject: user.id,
         role: user.role,
         scopes: Vec::new(),
+        tenant_id: session.tenant_id,
         extra,
     })
 }
