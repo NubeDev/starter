@@ -1,0 +1,7 @@
+name: rubix-phase-0
+goal: |
+  Test probe.
+
+stages:
+  - "stage 1 — short test stage"
+  - REVIEW stage 1 — short test review
