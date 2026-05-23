@@ -1,0 +1,7 @@
+{
+  "name": "@rubix/ui-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "rubix UI kit (presentational primitives). Phase-0 skeleton.",
+  "type": "module"
+}

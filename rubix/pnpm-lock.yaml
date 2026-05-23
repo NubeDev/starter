@@ -1,0 +1,23 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+
+  agent-client-ts: {}
+
+  desktop: {}
+
+  extension-ui-sdk:
+    dependencies:
+      '@rubix/ui-core':
+        specifier: workspace:*
+        version: link:../ui-core
+
+  studio: {}
+
+  ui-core: {}
+
+  ui-kit: {}

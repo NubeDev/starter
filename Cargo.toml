@@ -70,6 +70,17 @@ members = [
     "examples/blobs",
     "examples/iot-anomaly-detector",
     "examples/authz-demo",
+
+    # rubix tree — Phase 0 skeleton crates (see rubix/SCOPE.md).
+    # Path-deps only; rubix-spi → starter-spi, all other rubix
+    # crates → rubix-spi (R4/R5).
+    "rubix/agent-client-rs",
+    "rubix/agent-sdk",
+    "rubix/agent/crates/apps/agent",
+    "rubix/agent/crates/engine",
+    "rubix/agent/crates/graph",
+    "rubix/agent/crates/kinds-registry",
+    "rubix/contracts/spi",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
 # `examples/notes` pulls a handful of its crates in via path dependencies
@@ -145,6 +156,10 @@ starter-blob-fs          = { path = "crates/starter-blob-fs",          version =
 starter-blob-s3          = { path = "crates/starter-blob-s3",          version = "0.1.0" }
 starter-blob-garage      = { path = "crates/starter-blob-garage",      version = "0.1.0" }
 starter-blob-compose     = { path = "crates/starter-blob-compose",     version = "0.1.0" }
+
+# rubix tree — see rubix/SCOPE.md. Phase 0 only wires the spi
+# alias; downstream rubix crates take it via `workspace = true`.
+rubix-spi                = { path = "rubix/contracts/spi",              version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.

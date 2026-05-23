@@ -1,0 +1,8 @@
+{
+  "name": "@rubix/agent-client-ts",
+  "version": "0.1.0",
+  "private": true,
+  "description": "rubix agent client (TypeScript). Phase-0 skeleton — no exports yet.",
+  "type": "module",
+  "workspaces": []
+}

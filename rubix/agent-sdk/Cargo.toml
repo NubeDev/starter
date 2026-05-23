@@ -1,0 +1,11 @@
+[package]
+name        = "rubix-agent-sdk"
+description = "rubix agent SDK. Phase-0 skeleton; path-deps rubix-spi only (R5)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+rubix-spi = { workspace = true }

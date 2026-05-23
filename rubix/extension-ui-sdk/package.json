@@ -1,0 +1,10 @@
+{
+  "name": "@rubix/extension-ui-sdk",
+  "version": "0.1.0",
+  "private": true,
+  "description": "rubix extension UI SDK. Phase-0 skeleton: re-exports from @rubix/ui-core per R7/R8 (no parallel implementation).",
+  "type": "module",
+  "dependencies": {
+    "@rubix/ui-core": "workspace:*"
+  }
+}
