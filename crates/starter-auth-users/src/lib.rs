@@ -39,6 +39,7 @@
 pub mod admin;
 pub mod authenticator;
 pub mod linked_providers;
+pub mod migration;
 pub mod openapi;
 pub mod password;
 pub mod principal_extras;

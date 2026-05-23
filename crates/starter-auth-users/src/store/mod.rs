@@ -1,7 +1,9 @@
 //! Persistence seams. One trait per row family (users / sessions /
-//! tokens), each with its own sqlite impl behind `feature = "sqlite"`.
-//! Postgres impls follow the same shape and land when postgres test
-//! infra exists (Phase 2 tail).
+//! tokens / tenants), each with its own SQLite impl behind
+//! `feature = "sqlite"` and a Postgres impl behind
+//! `feature = "postgres"`. The Postgres impls are landing one at a
+//! time alongside their integration tests; see
+//! [`crate::migration`] for the migration sources to apply first.
 
 mod session_store;
 mod tenant_store;
@@ -24,3 +26,6 @@ pub use tenant_store::SqliteTenantStore;
 pub use token_store::SqliteTokenStore;
 #[cfg(feature = "sqlite")]
 pub use user_store::SqliteUserStore;
+
+#[cfg(feature = "postgres")]
+pub use user_store::PgUserStore;

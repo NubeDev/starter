@@ -41,11 +41,16 @@ sqlite   = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite"]
 postgres = ["dep:sqlx", "sqlx/postgres", "dep:starter-store-postgres"]
 
 [dev-dependencies]
-tokio                 = { workspace = true, features = ["macros", "rt-multi-thread"] }
-starter-store-sqlite  = { workspace = true, features = ["testing"] }
-starter-server        = { workspace = true, features = ["testing"] }
-starter-observability = { workspace = true }
-starter-ui-theme      = { workspace = true }
-prometheus            = { workspace = true }
-reqwest               = { workspace = true, features = ["json", "cookies"] }
-sqlx                  = { workspace = true, features = ["sqlite", "macros", "migrate"] }
+tokio                  = { workspace = true, features = ["macros", "rt-multi-thread"] }
+starter-store-sqlite   = { workspace = true, features = ["testing"] }
+# Postgres testcontainers harness for the PgUserStore integration
+# test (and the PgSessionStore / PgTokenStore / PgTenantStore tests
+# that will land alongside their impls). The `testing` feature
+# pulls testcontainers + the postgres container module.
+starter-store-postgres = { workspace = true, features = ["testing"] }
+starter-server         = { workspace = true, features = ["testing"] }
+starter-observability  = { workspace = true }
+starter-ui-theme       = { workspace = true }
+prometheus             = { workspace = true }
+reqwest                = { workspace = true, features = ["json", "cookies"] }
+sqlx                   = { workspace = true, features = ["sqlite", "macros", "migrate"] }
