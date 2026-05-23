@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/starter-spi",
+    "crates/starter-tags",
     "crates/starter-config",
     "crates/starter-observability",
     "crates/starter-prefs",
@@ -83,6 +84,7 @@ rust-version = "1.80"
 [workspace.dependencies]
 # Internal crates — every consumer crate picks what it needs.
 starter-spi              = { path = "crates/starter-spi",              version = "0.1.0" }
+starter-tags             = { path = "crates/starter-tags",             version = "0.1.0" }
 starter-config           = { path = "crates/starter-config",           version = "0.1.0" }
 starter-observability    = { path = "crates/starter-observability",    version = "0.1.0" }
 starter-prefs            = { path = "crates/starter-prefs",            version = "0.1.0" }

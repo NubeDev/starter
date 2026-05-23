@@ -8419,6 +8419,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-tags"
+version = "0.1.0"
+dependencies = [
+ "nom 7.1.3",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+]
+
+[[package]]
 name = "starter-tauri"
 version = "0.1.0"
 dependencies = [
