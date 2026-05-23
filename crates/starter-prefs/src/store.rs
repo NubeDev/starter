@@ -1,4 +1,4 @@
-//! `PrefsStore` trait + sqlite implementation.
+//! `PrefsStore` trait + sqlite / postgres implementations.
 //!
 //! Owns: SCOPE.md "Preferences model" + the storage entries in
 //! "Crate layout". The storage layer is a **faithful mirror** of the
@@ -8,9 +8,10 @@
 //! module only round-trips rows.
 //!
 //! The trait is always compiled; the [`SqlitePrefsStore`]
-//! implementation is feature-gated behind the `sqlite` cargo
-//! feature per workspace policy R5 and the Phase 1 decision lock
-//! (sqlite-only for this job; Postgres is deferred to a follow-up).
+//! implementation is feature-gated behind the `sqlite` cargo feature
+//! and [`PgPrefsStore`] behind the `postgres` cargo feature per
+//! workspace policy R5. Consumers can activate one or both backends
+//! independently.
 
 use async_trait::async_trait;
 use serde::{de::DeserializeOwned, Serialize};
@@ -42,6 +43,24 @@ use crate::resolver::{OrgPrefsRow, StringPref, UnitPref, UserPrefsRow};
 /// which already depends only on `starter-spi`).
 #[cfg(feature = "sqlite")]
 pub static MIGRATIONS: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
+
+/// Embedded migrations for the Postgres backend. Apply via
+/// [`PgPrefsStore::migrate`] before any other call.
+///
+/// Composing with `starter-store-postgres`'s namespaced
+/// migration runner:
+///
+/// ```ignore
+/// use starter_store_postgres::MigrationSource;
+///
+/// const PREFS_SOURCE: MigrationSource = MigrationSource {
+///     name: "starter_prefs",
+///     migrator: &starter_prefs::store::PG_MIGRATIONS,
+/// };
+/// ```
+#[cfg(feature = "postgres")]
+pub static PG_MIGRATIONS: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/postgres");
 
 /// Persistence trait for starter-prefs rows.
 ///
@@ -98,7 +117,7 @@ fn err(e: impl std::error::Error + Send + Sync + 'static) -> Error {
     }
 }
 
-#[cfg_attr(not(feature = "sqlite"), allow(dead_code))]
+#[cfg_attr(not(any(feature = "sqlite", feature = "postgres")), allow(dead_code))]
 fn enum_to_db<T: Serialize>(v: T) -> String {
     match serde_json::to_value(v).expect("enum serializes to JSON") {
         JsonValue::String(s) => s,
@@ -106,12 +125,12 @@ fn enum_to_db<T: Serialize>(v: T) -> String {
     }
 }
 
-#[cfg_attr(not(feature = "sqlite"), allow(dead_code))]
+#[cfg_attr(not(any(feature = "sqlite", feature = "postgres")), allow(dead_code))]
 fn enum_from_db<T: DeserializeOwned>(s: &str) -> Result<T, Error> {
     serde_json::from_value::<T>(JsonValue::String(s.to_owned())).map_err(err)
 }
 
-#[cfg_attr(not(feature = "sqlite"), allow(dead_code))]
+#[cfg_attr(not(any(feature = "sqlite", feature = "postgres")), allow(dead_code))]
 fn unit_pref_to_db(v: &UnitPref) -> String {
     match v {
         UnitPref::Auto => "auto".to_owned(),
@@ -119,7 +138,7 @@ fn unit_pref_to_db(v: &UnitPref) -> String {
     }
 }
 
-#[cfg_attr(not(feature = "sqlite"), allow(dead_code))]
+#[cfg_attr(not(any(feature = "sqlite", feature = "postgres")), allow(dead_code))]
 fn unit_pref_from_db(s: &str) -> Result<UnitPref, Error> {
     if s == "auto" {
         Ok(UnitPref::Auto)
@@ -133,7 +152,7 @@ fn unit_pref_from_db(s: &str) -> Result<UnitPref, Error> {
     }
 }
 
-#[cfg_attr(not(feature = "sqlite"), allow(dead_code))]
+#[cfg_attr(not(any(feature = "sqlite", feature = "postgres")), allow(dead_code))]
 fn string_pref_to_db(v: &StringPref) -> String {
     match v {
         StringPref::Auto => "auto".to_owned(),
@@ -141,7 +160,7 @@ fn string_pref_to_db(v: &StringPref) -> String {
     }
 }
 
-#[cfg_attr(not(feature = "sqlite"), allow(dead_code))]
+#[cfg_attr(not(any(feature = "sqlite", feature = "postgres")), allow(dead_code))]
 fn string_pref_from_db(s: &str) -> StringPref {
     StringPref::parse(s)
 }
@@ -414,3 +433,275 @@ mod sqlite_impl {
 
 #[cfg(feature = "sqlite")]
 pub use sqlite_impl::SqlitePrefsStore;
+
+// ---------------------------------------------------------------------
+// Postgres implementation (feature-gated).
+// ---------------------------------------------------------------------
+
+#[cfg(feature = "postgres")]
+mod postgres_impl {
+    use super::*;
+    use sqlx::postgres::PgRow;
+    use sqlx::Row;
+    use sqlx::PgPool;
+    use starter_spi::preferences::{
+        DateFormat, NumberFormat, Theme, TimeFormat, UnitSystem, WeekStart,
+    };
+
+    /// `sqlx::PgPool`-backed [`PrefsStore`].
+    ///
+    /// Construct from an existing pool, then call
+    /// [`PgPrefsStore::migrate`] (or apply [`super::PG_MIGRATIONS`]
+    /// directly against the pool) before any other call.
+    pub struct PgPrefsStore {
+        pool: PgPool,
+    }
+
+    impl PgPrefsStore {
+        /// Wrap a pool. Caller is responsible for migration; use
+        /// [`Self::migrate`] for the convenience path.
+        pub fn new(pool: PgPool) -> Self {
+            Self { pool }
+        }
+
+        /// Apply the bundled Postgres migrations to the wrapped pool.
+        pub async fn migrate(&self) -> Result<(), Error> {
+            super::PG_MIGRATIONS.run(&self.pool).await.map_err(err)
+        }
+
+        /// Borrow the underlying pool — handy for tests that want to
+        /// poke the schema directly.
+        pub fn pool(&self) -> &PgPool {
+            &self.pool
+        }
+    }
+
+    fn now_epoch_ms() -> i64 {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0)
+    }
+
+    fn opt_text(row: &PgRow, col: &str) -> Option<String> {
+        row.try_get::<Option<String>, _>(col).ok().flatten()
+    }
+
+    fn opt_unit(row: &PgRow, col: &str) -> Result<Option<UnitPref>, Error> {
+        opt_text(row, col)
+            .map(|s| unit_pref_from_db(&s))
+            .transpose()
+    }
+
+    fn opt_enum<T: serde::de::DeserializeOwned>(
+        row: &PgRow,
+        col: &str,
+    ) -> Result<Option<T>, Error> {
+        opt_text(row, col)
+            .map(|s| enum_from_db::<T>(&s))
+            .transpose()
+    }
+
+    fn opt_string_pref(row: &PgRow, col: &str) -> Option<StringPref> {
+        opt_text(row, col).map(|s| string_pref_from_db(&s))
+    }
+
+    fn decode_user_row(row: &PgRow) -> Result<UserPrefsRow, Error> {
+        Ok(UserPrefsRow {
+            timezone: opt_string_pref(row, "timezone"),
+            locale: opt_text(row, "locale"),
+            language: opt_text(row, "language"),
+            unit_system: opt_enum::<UnitSystem>(row, "unit_system")?,
+            temperature_unit: opt_unit(row, "temperature_unit")?,
+            pressure_unit: opt_unit(row, "pressure_unit")?,
+            speed_unit: opt_unit(row, "speed_unit")?,
+            length_unit: opt_unit(row, "length_unit")?,
+            mass_unit: opt_unit(row, "mass_unit")?,
+            date_format: opt_enum::<DateFormat>(row, "date_format")?,
+            time_format: opt_enum::<TimeFormat>(row, "time_format")?,
+            week_start: opt_enum::<WeekStart>(row, "week_start")?,
+            number_format: opt_enum::<NumberFormat>(row, "number_format")?,
+            currency: opt_string_pref(row, "currency"),
+            theme: opt_enum::<Theme>(row, "theme")?,
+        })
+    }
+
+    fn decode_org_row(row: &PgRow) -> Result<OrgPrefsRow, Error> {
+        Ok(OrgPrefsRow {
+            timezone: opt_string_pref(row, "timezone"),
+            locale: opt_text(row, "locale"),
+            language: opt_text(row, "language"),
+            unit_system: opt_enum::<UnitSystem>(row, "unit_system")?,
+            temperature_unit: opt_unit(row, "temperature_unit")?,
+            pressure_unit: opt_unit(row, "pressure_unit")?,
+            speed_unit: opt_unit(row, "speed_unit")?,
+            length_unit: opt_unit(row, "length_unit")?,
+            mass_unit: opt_unit(row, "mass_unit")?,
+            date_format: opt_enum::<DateFormat>(row, "date_format")?,
+            time_format: opt_enum::<TimeFormat>(row, "time_format")?,
+            week_start: opt_enum::<WeekStart>(row, "week_start")?,
+            number_format: opt_enum::<NumberFormat>(row, "number_format")?,
+            currency: opt_string_pref(row, "currency"),
+        })
+    }
+
+    #[async_trait]
+    impl PrefsStore for PgPrefsStore {
+        async fn get_user_prefs(
+            &self,
+            user_id: &str,
+            workspace_id: &str,
+        ) -> Result<Option<UserPrefsRow>, Error> {
+            let row = sqlx::query(
+                "SELECT timezone, locale, language, unit_system, \
+                        temperature_unit, pressure_unit, speed_unit, \
+                        length_unit, mass_unit, date_format, \
+                        time_format, week_start, number_format, \
+                        currency, theme \
+                 FROM starter_prefs_user \
+                 WHERE user_id = $1 AND workspace_id = $2",
+            )
+            .bind(user_id)
+            .bind(workspace_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(err)?;
+            row.as_ref().map(decode_user_row).transpose()
+        }
+
+        async fn get_org_prefs(&self, workspace_id: &str) -> Result<Option<OrgPrefsRow>, Error> {
+            let row = sqlx::query(
+                "SELECT timezone, locale, language, unit_system, \
+                        temperature_unit, pressure_unit, speed_unit, \
+                        length_unit, mass_unit, date_format, \
+                        time_format, week_start, number_format, \
+                        currency \
+                 FROM starter_prefs_org \
+                 WHERE workspace_id = $1",
+            )
+            .bind(workspace_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(err)?;
+            row.as_ref().map(decode_org_row).transpose()
+        }
+
+        async fn upsert_user_prefs(
+            &self,
+            user_id: &str,
+            workspace_id: &str,
+            patch: UserPrefsRow,
+        ) -> Result<(), Error> {
+            sqlx::query(
+                "INSERT INTO starter_prefs_user ( \
+                    user_id, workspace_id, timezone, locale, language, \
+                    unit_system, temperature_unit, pressure_unit, \
+                    speed_unit, length_unit, mass_unit, date_format, \
+                    time_format, week_start, number_format, currency, \
+                    theme, updated_at \
+                 ) VALUES ( \
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, \
+                    $13, $14, $15, $16, $17, $18 \
+                 ) \
+                 ON CONFLICT (user_id, workspace_id) DO UPDATE SET \
+                    timezone         = EXCLUDED.timezone, \
+                    locale           = EXCLUDED.locale, \
+                    language         = EXCLUDED.language, \
+                    unit_system      = EXCLUDED.unit_system, \
+                    temperature_unit = EXCLUDED.temperature_unit, \
+                    pressure_unit    = EXCLUDED.pressure_unit, \
+                    speed_unit       = EXCLUDED.speed_unit, \
+                    length_unit      = EXCLUDED.length_unit, \
+                    mass_unit        = EXCLUDED.mass_unit, \
+                    date_format      = EXCLUDED.date_format, \
+                    time_format      = EXCLUDED.time_format, \
+                    week_start       = EXCLUDED.week_start, \
+                    number_format    = EXCLUDED.number_format, \
+                    currency         = EXCLUDED.currency, \
+                    theme            = EXCLUDED.theme, \
+                    updated_at       = EXCLUDED.updated_at",
+            )
+            .bind(user_id)
+            .bind(workspace_id)
+            .bind(patch.timezone.as_ref().map(string_pref_to_db))
+            .bind(patch.locale.clone())
+            .bind(patch.language.clone())
+            .bind(patch.unit_system.map(enum_to_db))
+            .bind(patch.temperature_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.pressure_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.speed_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.length_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.mass_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.date_format.map(enum_to_db))
+            .bind(patch.time_format.map(enum_to_db))
+            .bind(patch.week_start.map(enum_to_db))
+            .bind(patch.number_format.map(enum_to_db))
+            .bind(patch.currency.as_ref().map(string_pref_to_db))
+            .bind(patch.theme.map(enum_to_db))
+            .bind(now_epoch_ms())
+            .execute(&self.pool)
+            .await
+            .map_err(err)?;
+            Ok(())
+        }
+
+        async fn upsert_org_prefs(
+            &self,
+            workspace_id: &str,
+            patch: OrgPrefsRow,
+        ) -> Result<(), Error> {
+            sqlx::query(
+                "INSERT INTO starter_prefs_org ( \
+                    workspace_id, timezone, locale, language, \
+                    unit_system, temperature_unit, pressure_unit, \
+                    speed_unit, length_unit, mass_unit, date_format, \
+                    time_format, week_start, number_format, currency, \
+                    updated_at \
+                 ) VALUES ( \
+                    $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, \
+                    $13, $14, $15, $16 \
+                 ) \
+                 ON CONFLICT (workspace_id) DO UPDATE SET \
+                    timezone         = EXCLUDED.timezone, \
+                    locale           = EXCLUDED.locale, \
+                    language         = EXCLUDED.language, \
+                    unit_system      = EXCLUDED.unit_system, \
+                    temperature_unit = EXCLUDED.temperature_unit, \
+                    pressure_unit    = EXCLUDED.pressure_unit, \
+                    speed_unit       = EXCLUDED.speed_unit, \
+                    length_unit      = EXCLUDED.length_unit, \
+                    mass_unit        = EXCLUDED.mass_unit, \
+                    date_format      = EXCLUDED.date_format, \
+                    time_format      = EXCLUDED.time_format, \
+                    week_start       = EXCLUDED.week_start, \
+                    number_format    = EXCLUDED.number_format, \
+                    currency         = EXCLUDED.currency, \
+                    updated_at       = EXCLUDED.updated_at",
+            )
+            .bind(workspace_id)
+            .bind(patch.timezone.as_ref().map(string_pref_to_db))
+            .bind(patch.locale.clone())
+            .bind(patch.language.clone())
+            .bind(patch.unit_system.map(enum_to_db))
+            .bind(patch.temperature_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.pressure_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.speed_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.length_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.mass_unit.as_ref().map(unit_pref_to_db))
+            .bind(patch.date_format.map(enum_to_db))
+            .bind(patch.time_format.map(enum_to_db))
+            .bind(patch.week_start.map(enum_to_db))
+            .bind(patch.number_format.map(enum_to_db))
+            .bind(patch.currency.as_ref().map(string_pref_to_db))
+            .bind(now_epoch_ms())
+            .execute(&self.pool)
+            .await
+            .map_err(err)?;
+            Ok(())
+        }
+    }
+}
+
+#[cfg(feature = "postgres")]
+pub use postgres_impl::PgPrefsStore;

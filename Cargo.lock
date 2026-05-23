@@ -8168,6 +8168,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-spi",
+ "starter-store-postgres",
  "tokio",
  "tower 0.5.3",
  "tracing",
