@@ -74,6 +74,40 @@ them and get a row in the table above in the same PR.
 them under `/auth/oauth/...`. Provider config (GitHub, Google) is
 loaded from the secrets store at boot.
 
+## Bootstrap-user CLI
+
+First-run admin creation is an out-of-band operator action, never a
+public HTTP route. The `rubix-admin` binary (a sibling `[[bin]]` in
+the `rubix-agent` crate — the six-crate ceiling stays intact) exposes
+a `bootstrap-user` subcommand:
+
+```
+rubix-admin bootstrap-user --email <e> --password <p>
+```
+
+Both flags fall back to `RUBIX_BOOTSTRAP_EMAIL` /
+`RUBIX_BOOTSTRAP_PASSWORD` env vars; CLI wins when both are present.
+`RUBIX_DSN` is mandatory — the command fails fast when unset rather
+than silently no-op'ing.
+
+The subcommand:
+
+1. Opens a Postgres pool via `starter_store_postgres::pool::connect`.
+2. Applies `starter_auth_users::migration::postgres_migration_source()`
+   so the `starter_auth_users_*` tables exist on a fresh DB.
+3. Calls `starter_auth_users::admin::create_admin` with
+   `Role::Admin`.
+
+Idempotency rule: `AdminError::Conflict` is treated as success **only**
+when the existing row has the same email and the admin role. A
+different role is a hard error — the CLI refuses to silently
+escalate or demote an existing account.
+
+The `mani run bootstrap-user` task in [../../MANI.md](../../MANI.md)
+wraps this subcommand with the standard env-var contract; the
+migration source it applies is the same one chained into the agent's
+boot plan per [../migrations/README.md](../migrations/README.md).
+
 ## Phase 2a entry gates
 
 Both `AUTH.md` and `MIGRATIONS.md` must be **finalized** before

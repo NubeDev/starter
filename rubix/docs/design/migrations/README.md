@@ -30,6 +30,15 @@ each shipping `up.sql` + `down.sql`. The crate registers them
 with the namespaced migration runner from `starter-store-postgres`
 under `source = "rubix"`.
 
+## Sources chained at agent boot
+
+`starter-auth-users` postgres migrations chain into the agent's
+`migrate(&pool)` plan alongside `starter-changelog-postgres`; both
+share the `RUBIX_DSN`-unset skip behaviour. The `rubix-admin
+bootstrap-user` subcommand re-applies the same auth-users source on
+its own pool so it stays runnable against a fresh DB without first
+booting the agent.
+
 ## Cross-crate dependencies
 
 A rubix migration **may** reference a starter table by name, but

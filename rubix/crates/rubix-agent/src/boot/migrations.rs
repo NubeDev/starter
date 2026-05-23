@@ -7,6 +7,7 @@
 //! for the full boot-order plan.
 
 use anyhow::Result;
+use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
 use starter_store_postgres::{migrate, pool::connect};
 use tracing::{info, warn};
@@ -40,7 +41,12 @@ pub async fn apply_migrations() -> Result<MigrationReport> {
         .await
         .map_err(|e| anyhow::anyhow!("connect to RUBIX_DSN: {e}"))?;
 
-    let sources = [migration_source()];
+    // Chain every rubix-owned source through one runner so a failure
+    // in any of them aborts the whole boot atomically — half-applied
+    // schemas are the worst failure mode for the auth tables. See
+    // docs/design/migrations/README.md.
+    let sources = [migration_source(), postgres_migration_source()];
+    let sources_applied = sources.len();
     let mut plan = migrate(&pool);
     for source in sources {
         plan = plan.with_source(source);
@@ -50,7 +56,7 @@ pub async fn apply_migrations() -> Result<MigrationReport> {
         .map_err(|e| anyhow::anyhow!("apply migrations: {e}"))?;
 
     let report = MigrationReport {
-        sources_applied: sources.len(),
+        sources_applied,
         skipped: false,
     };
     info!(
@@ -89,6 +95,10 @@ mod tests {
             .await
             .expect("live migrations succeed");
         assert!(!report.skipped);
-        assert!(report.sources_applied >= 1);
+        // Both the changelog source and the auth-users source must
+        // be reported — see docs/design/migrations/README.md. A
+        // half-applied plan would fail the runner before getting
+        // here, so the count assertion is the right shape.
+        assert!(report.sources_applied >= 2);
     }
 }

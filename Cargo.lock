@@ -6347,11 +6347,13 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "axum 0.8.9",
+ "clap",
  "rubix-client",
  "rubix-flows",
  "rubix-skills",
  "rubix-spi",
  "rubix-tools",
+ "starter-auth-users",
  "starter-changelog-postgres",
  "starter-config",
  "starter-observability",

@@ -40,6 +40,15 @@ tasks:
     desc: Hit the Phase 0 health endpoint.
     cmd: curl -sf http://127.0.0.1:8080/healthz
 
+  bootstrap-user:
+    desc: |
+      Create or reconcile the first admin user via the rubix-admin
+      sibling binary. Reads RUBIX_DSN, RUBIX_BOOTSTRAP_EMAIL,
+      RUBIX_BOOTSTRAP_PASSWORD from the environment. Idempotent:
+      re-running with the same email + admin role is a no-op. See
+      docs/design/auth/README.md for the bootstrap contract.
+    cmd: cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user
+
   lint-doc-refs:
     desc: Enforce the doc-tier rule on every rubix Rust source file.
     cmd: ./rubix/scripts/lint-doc-refs.sh

@@ -1,5 +1,6 @@
 [package]
 name = "rubix-agent"
+default-run = "rubix-agent"
 description = "The rubix backend binary. Composes every starter-* capability with the rubix tools, skills, and flows for the six goals. Per SCOPE R5: main.rs only wires; domain logic lives in rubix-tools or starter."
 version.workspace = true
 edition.workspace = true
@@ -10,6 +11,12 @@ rust-version.workspace = true
 [[bin]]
 name = "rubix-agent"
 path = "src/main.rs"
+
+# Admin CLI sibling binary. Verb-per-file under `src/bin/rubix_admin/`.
+# See docs/design/auth/README.md for the bootstrap-user contract.
+[[bin]]
+name = "rubix-admin"
+path = "src/bin/rubix_admin/main.rs"
 
 [dependencies]
 rubix-spi    = { workspace = true }
@@ -26,8 +33,10 @@ starter-observability    = { workspace = true }
 starter-server           = { workspace = true }
 starter-store-postgres   = { workspace = true }
 starter-changelog-postgres = { workspace = true }
+starter-auth-users         = { workspace = true, features = ["postgres"] }
 
 axum    = { workspace = true }
+clap    = { workspace = true }
 
 # Async + utility
 tokio   = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
