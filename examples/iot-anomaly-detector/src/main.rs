@@ -104,7 +104,7 @@ FORMAT JSONEachRow
     let anomalies = body
         .lines()
         .filter(|l| !l.trim().is_empty())
-        .map(|line| serde_json::from_str::<Anomaly>(line))
+        .map(serde_json::from_str::<Anomaly>)
         .collect::<Result<Vec<_>, _>>()?;
 
     Ok(anomalies)

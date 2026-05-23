@@ -244,6 +244,7 @@ inputs
 inside
 instanceof
 intent
+intentclass
 interactive
 interface
 interpret
@@ -265,6 +266,7 @@ keyof
 kind
 kpi_cols
 kpi_grid
+kpi_intent_classes
 kpigridnode
 kpigridspec
 kpinode
@@ -316,6 +318,7 @@ nodeid
 nodes
 nodestyle
 none
+nonnullable
 noop
 noop_dispatch
 noopener
@@ -398,6 +401,7 @@ queryclient
 queryfn
 querykey
 range
+rawtabs
 react
 reactnode
 readonly
@@ -441,6 +445,7 @@ richtextspec
 right
 role
 root
+rose
 rounded
 row_template
 rownode
@@ -658,6 +663,7 @@ value
 values
 variant
 viewbox
+violet
 void
 warn
 warning
