@@ -25,7 +25,10 @@ pub struct SandboxDefine {
 
 impl SandboxDefine {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(SANDBOX_DEFINE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(SANDBOX_DEFINE).unwrap(),
+        }
     }
 }
 
@@ -44,8 +47,8 @@ impl NodeBehavior for SandboxDefine {
             Some(SlotValue::String(s)) => s.clone(),
             _ => return Err(NodeError::InvalidInput("missing 'owner' slot".into())),
         };
-        let spec: SandboxSpec =
-            serde_json::from_value(spec_v.clone()).map_err(|e| NodeError::InvalidInput(e.to_string()))?;
+        let spec: SandboxSpec = serde_json::from_value(spec_v.clone())
+            .map_err(|e| NodeError::InvalidInput(e.to_string()))?;
         self.rt
             .sandbox_define(&owner, spec, spec_v)
             .await

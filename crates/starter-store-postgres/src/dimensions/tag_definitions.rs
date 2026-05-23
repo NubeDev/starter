@@ -68,10 +68,7 @@ impl Row {
 /// Upsert a definition (T5: advisory — never refuses writes; merely
 /// records what the workspace knows about a key).
 pub async fn upsert(pool: &Pool, def: &TagDefinition) -> Result<()> {
-    let enum_json = def
-        .enum_values
-        .as_ref()
-        .map(|v| Json(serde_json::json!(v)));
+    let enum_json = def.enum_values.as_ref().map(|v| Json(serde_json::json!(v)));
     sqlx::query(
         "INSERT INTO tag_definitions \
             (key, kind, description, enum_values, ref_kind, source) \

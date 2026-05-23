@@ -55,11 +55,7 @@ pub async fn insert(pool: &Pool, s: InsertSandbox<'_>) -> Result<SandboxRow> {
 
 /// `sandbox.redefine` semantics: update the column set and bump
 /// `columns_revision` atomically. Returns the new revision.
-pub async fn redefine_columns(
-    pool: &Pool,
-    name: &str,
-    columns: &serde_json::Value,
-) -> Result<i64> {
+pub async fn redefine_columns(pool: &Pool, name: &str, columns: &serde_json::Value) -> Result<i64> {
     let (rev,): (i64,) = sqlx::query_as(
         "UPDATE sandboxes \
             SET columns = $2, columns_revision = columns_revision + 1 \

@@ -45,7 +45,8 @@ fn w5_definition_hash_changes_with_group_by() {
 fn w5_d7_order_by_promotes_first_group_by_column() {
     let ddl = ddl::mart::build(&fixture()).unwrap();
     assert!(
-        ddl.create_target.contains("ORDER BY (building, bucket, tenant)"),
+        ddl.create_target
+            .contains("ORDER BY (building, bucket, tenant)"),
         "ORDER BY must be (<first group_by>, bucket, <rest>): got {}",
         ddl.create_target
     );

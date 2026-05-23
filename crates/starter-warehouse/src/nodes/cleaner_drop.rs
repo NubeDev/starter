@@ -25,7 +25,10 @@ pub struct CleanerDrop {
 
 impl CleanerDrop {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(CLEANER_DROP).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(CLEANER_DROP).unwrap(),
+        }
     }
 }
 

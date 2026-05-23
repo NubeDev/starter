@@ -24,9 +24,7 @@ pub struct WarehouseStatusBody {
     pub ingest: IngestStatus,
 }
 
-pub async fn warehouse_status(
-    State(rt): State<Arc<WarehouseRuntime>>,
-) -> impl IntoResponse {
+pub async fn warehouse_status(State(rt): State<Arc<WarehouseRuntime>>) -> impl IntoResponse {
     let dims = match rt.freshness().await {
         Ok(d) => d,
         Err(e) => {
@@ -42,7 +40,10 @@ pub async fn warehouse_status(
         async_insert_backlog: 0,
     });
 
-    let body = WarehouseStatusBody { dimensions: dims, ingest };
+    let body = WarehouseStatusBody {
+        dimensions: dims,
+        ingest,
+    };
     let code = match body.dimensions.entities_dict.status {
         Status::FailedRefresh => StatusCode::SERVICE_UNAVAILABLE,
         _ => StatusCode::OK,

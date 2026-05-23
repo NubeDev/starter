@@ -80,10 +80,7 @@ pub async fn run_once(pool: &Pool, cfg: &WarehouseConfig) -> Result<GcReport, sq
 
 /// Spawn a daily background task. Cancel by dropping the
 /// `JoinHandle`.
-pub fn spawn_daily(
-    pool: Pool,
-    cfg: Arc<WarehouseConfig>,
-) -> tokio::task::JoinHandle<()> {
+pub fn spawn_daily(pool: Pool, cfg: Arc<WarehouseConfig>) -> tokio::task::JoinHandle<()> {
     tokio::spawn(async move {
         loop {
             if let Err(e) = run_once(&pool, &cfg).await {

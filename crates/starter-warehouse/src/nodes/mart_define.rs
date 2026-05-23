@@ -26,7 +26,10 @@ pub struct MartDefine {
 
 impl MartDefine {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(MART_DEFINE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(MART_DEFINE).unwrap(),
+        }
     }
 }
 
@@ -41,8 +44,8 @@ impl NodeBehavior for MartDefine {
             Some(SlotValue::Json(v)) => v.clone(),
             _ => return Err(NodeError::InvalidInput("missing 'spec' slot".into())),
         };
-        let spec: MartSpec = serde_json::from_value(spec_v)
-            .map_err(|e| NodeError::InvalidInput(e.to_string()))?;
+        let spec: MartSpec =
+            serde_json::from_value(spec_v).map_err(|e| NodeError::InvalidInput(e.to_string()))?;
         let res = self
             .rt
             .mart_define(spec)

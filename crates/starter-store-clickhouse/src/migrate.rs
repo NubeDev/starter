@@ -137,11 +137,7 @@ impl<'c> MigrationRunner<'c> {
     }
 }
 
-fn render(
-    name: &'static str,
-    blob: &str,
-    pg: Option<&PgSource>,
-) -> Result<String, MigrationError> {
+fn render(name: &'static str, blob: &str, pg: Option<&PgSource>) -> Result<String, MigrationError> {
     if !blob.contains("{{") {
         return Ok(blob.to_string());
     }
@@ -158,7 +154,10 @@ fn render(
         out = out.replace(&format!("{{{{{k}}}}}"), v);
     }
     if let Some(start) = out.find("{{") {
-        let end = out[start..].find("}}").map(|e| e + start + 2).unwrap_or(out.len());
+        let end = out[start..]
+            .find("}}")
+            .map(|e| e + start + 2)
+            .unwrap_or(out.len());
         let placeholder = &out[start + 2..end - 2];
         return Err(MigrationError::UnresolvedPlaceholder(
             placeholder.to_string(),

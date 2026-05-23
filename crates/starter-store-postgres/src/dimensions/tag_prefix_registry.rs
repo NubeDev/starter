@@ -58,7 +58,10 @@ pub async fn register(
     match res {
         Ok(row) => Ok(row),
         Err(sqlx::Error::Database(db)) if db.is_unique_violation() => {
-            let existing = lookup(pool, prefix).await?.map(|r| r.owner_pack).unwrap_or_default();
+            let existing = lookup(pool, prefix)
+                .await?
+                .map(|r| r.owner_pack)
+                .unwrap_or_default();
             Err(RegisterError::Conflict {
                 prefix: prefix.to_string(),
                 existing_owner: existing,

@@ -26,7 +26,10 @@ pub struct MartDrop {
 
 impl MartDrop {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(MART_DROP).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(MART_DROP).unwrap(),
+        }
     }
 }
 

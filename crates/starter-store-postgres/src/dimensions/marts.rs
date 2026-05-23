@@ -141,10 +141,9 @@ pub async fn live_count<'e, E>(executor: E) -> Result<i64>
 where
     E: sqlx::PgExecutor<'e>,
 {
-    let (n,): (i64,) =
-        sqlx::query_as("SELECT count(*) FROM marts WHERE status = 'live'")
-            .fetch_one(executor)
-            .await?;
+    let (n,): (i64,) = sqlx::query_as("SELECT count(*) FROM marts WHERE status = 'live'")
+        .fetch_one(executor)
+        .await?;
     Ok(n)
 }
 

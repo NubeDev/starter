@@ -24,7 +24,10 @@ pub struct SandboxDrop {
 
 impl SandboxDrop {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(SANDBOX_DROP).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(SANDBOX_DROP).unwrap(),
+        }
     }
 }
 

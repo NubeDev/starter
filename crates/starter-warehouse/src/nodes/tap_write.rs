@@ -46,11 +46,7 @@ impl NodeBehavior for TapWrite {
         &self.kind
     }
 
-    async fn invoke(
-        &self,
-        _ctx: NodeCtx<'_>,
-        input: SlotMap,
-    ) -> Result<SlotMap, NodeError> {
+    async fn invoke(&self, _ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError> {
         let source = string_slot(&input, "source")?;
         let payload = string_slot(&input, "payload")?;
         let tags = tags_slot(&input);
@@ -71,7 +67,9 @@ impl NodeBehavior for TapWrite {
 pub(crate) fn string_slot(m: &SlotMap, k: &str) -> Result<String, NodeError> {
     match m.get(k) {
         Some(SlotValue::String(s)) => Ok(s.clone()),
-        Some(_) => Err(NodeError::InvalidInput(format!("slot {k:?} must be String"))),
+        Some(_) => Err(NodeError::InvalidInput(format!(
+            "slot {k:?} must be String"
+        ))),
         None => Err(NodeError::InvalidInput(format!("missing slot {k:?}"))),
     }
 }

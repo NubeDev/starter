@@ -24,11 +24,10 @@ async fn boot() -> (Pool, ContainerGuard) {
 #[ignore = "requires docker"]
 async fn dimensions_migrations_use_dedicated_version_table() {
     let (pool, _g) = boot().await;
-    let (count,): (i64,) =
-        sqlx::query_as("SELECT count(*) FROM _sqlx_migrations_dimensions")
-            .fetch_one(pool.sqlx())
-            .await
-            .expect("version table exists");
+    let (count,): (i64,) = sqlx::query_as("SELECT count(*) FROM _sqlx_migrations_dimensions")
+        .fetch_one(pool.sqlx())
+        .await
+        .expect("version table exists");
     // 8 migrations expected (0001..0008).
     assert_eq!(count, 8);
 }
@@ -90,7 +89,10 @@ async fn tag_definitions_round_trip_through_starter_tags_types() {
         source: "builtin".into(),
     };
     tag_definitions::upsert(&pool, &def).await.unwrap();
-    let fetched = tag_definitions::get(&pool, "celsius").await.unwrap().unwrap();
+    let fetched = tag_definitions::get(&pool, "celsius")
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(fetched.kind, TagKind::NumDiscriminant);
     assert_eq!(fetched.description.as_deref(), Some("temperature"));
 }
@@ -107,14 +109,20 @@ async fn ext_manifest_approval_idempotent() {
         .await
         .unwrap();
 
-    assert!(ext_manifest_approvals::is_approved(&pool, "ext.energy", "deadbeef")
-        .await
-        .unwrap());
-    assert!(!ext_manifest_approvals::is_approved(&pool, "ext.energy", "feed")
-        .await
-        .unwrap());
+    assert!(
+        ext_manifest_approvals::is_approved(&pool, "ext.energy", "deadbeef")
+            .await
+            .unwrap()
+    );
+    assert!(
+        !ext_manifest_approvals::is_approved(&pool, "ext.energy", "feed")
+            .await
+            .unwrap()
+    );
 
-    let rows = ext_manifest_approvals::list(&pool, "ext.energy").await.unwrap();
+    let rows = ext_manifest_approvals::list(&pool, "ext.energy")
+        .await
+        .unwrap();
     assert_eq!(rows.len(), 1);
     // First-write wins on conflict — approved_by stays as install:initial.
     assert_eq!(rows[0].approved_by, "install:initial");

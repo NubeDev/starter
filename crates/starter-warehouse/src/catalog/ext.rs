@@ -32,7 +32,10 @@ impl<'a> Author<'a> {
             Ok(Author::Agent(rest))
         } else if let Some(rest) = created_by.strip_prefix("ext:") {
             let h = manifest_hash.unwrap_or("");
-            Ok(Author::Ext { id: rest, manifest_hash: h })
+            Ok(Author::Ext {
+                id: rest,
+                manifest_hash: h,
+            })
         } else {
             Err(CatalogError::BadCreatedBy(created_by.to_string()))
         }
@@ -69,7 +72,11 @@ pub async fn initial_status<'c>(
             .bind(manifest_hash)
             .fetch_optional(&mut *conn)
             .await?;
-            Ok(if approved.is_some() { "pending" } else { "quarantined" })
+            Ok(if approved.is_some() {
+                "pending"
+            } else {
+                "quarantined"
+            })
         }
     }
 }

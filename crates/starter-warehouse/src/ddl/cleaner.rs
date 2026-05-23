@@ -105,7 +105,10 @@ mod tests {
             backfill: "sync".into(),
             deterministic_key: false,
         };
-        assert!(matches!(build(&s), Err(DdlError::NonDeterministicBackfill { .. })));
+        assert!(matches!(
+            build(&s),
+            Err(DdlError::NonDeterministicBackfill { .. })
+        ));
     }
 
     #[test]

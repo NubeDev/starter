@@ -40,15 +40,9 @@ fn eq_bool_no_implicit_str_coercion() {
 #[test]
 fn and_or_not() {
     let q = TagQuery::from_str("a and (b or not c)").unwrap();
-    let s = set_from(&[
-        ("a", TagValue::Bool(true)),
-        ("b", TagValue::Bool(true)),
-    ]);
+    let s = set_from(&[("a", TagValue::Bool(true)), ("b", TagValue::Bool(true))]);
     assert!(s.matches(&q));
-    let s2 = set_from(&[
-        ("a", TagValue::Bool(true)),
-        ("c", TagValue::Bool(true)),
-    ]);
+    let s2 = set_from(&[("a", TagValue::Bool(true)), ("c", TagValue::Bool(true))]);
     assert!(!s2.matches(&q));
 }
 

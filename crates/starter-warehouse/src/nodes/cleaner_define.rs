@@ -26,7 +26,10 @@ pub struct CleanerDefine {
 
 impl CleanerDefine {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(CLEANER_DEFINE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(CLEANER_DEFINE).unwrap(),
+        }
     }
 }
 
@@ -41,8 +44,8 @@ impl NodeBehavior for CleanerDefine {
             Some(SlotValue::Json(v)) => v.clone(),
             _ => return Err(NodeError::InvalidInput("missing 'spec' slot".into())),
         };
-        let spec: CleanerSpec = serde_json::from_value(spec_v)
-            .map_err(|e| NodeError::InvalidInput(e.to_string()))?;
+        let spec: CleanerSpec =
+            serde_json::from_value(spec_v).map_err(|e| NodeError::InvalidInput(e.to_string()))?;
         let created_by = match input.get("created_by") {
             Some(SlotValue::String(s)) => s.clone(),
             _ => "user:unknown".to_string(),
@@ -62,10 +65,7 @@ impl NodeBehavior for CleanerDefine {
             "effective_backfill".into(),
             SlotValue::String(res.effective_backfill),
         );
-        out.insert(
-            "auto_promoted".into(),
-            SlotValue::Bool(res.auto_promoted),
-        );
+        out.insert("auto_promoted".into(), SlotValue::Bool(res.auto_promoted));
         Ok(out)
     }
 }

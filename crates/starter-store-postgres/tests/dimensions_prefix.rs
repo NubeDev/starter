@@ -51,14 +51,9 @@ async fn two_packs_claiming_the_same_prefix_fail_the_txn() {
 
     // The high-level `register` surface returns a typed Conflict
     // error with the pre-existing owner.
-    let err = tag_prefix_registry::register(
-        &pool,
-        "energy.*",
-        "pack:com.evil.energy",
-        None,
-    )
-    .await
-    .expect_err("conflict expected");
+    let err = tag_prefix_registry::register(&pool, "energy.*", "pack:com.evil.energy", None)
+        .await
+        .expect_err("conflict expected");
     match err {
         tag_prefix_registry::RegisterError::Conflict { existing_owner, .. } => {
             assert_eq!(existing_owner, "pack:com.acme.energy");

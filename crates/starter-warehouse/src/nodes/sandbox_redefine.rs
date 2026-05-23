@@ -24,7 +24,10 @@ pub struct SandboxRedefine {
 
 impl SandboxRedefine {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(SANDBOX_REDEFINE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(SANDBOX_REDEFINE).unwrap(),
+        }
     }
 }
 

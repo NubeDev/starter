@@ -118,7 +118,9 @@ impl FreshnessProbe {
             .fetch_all::<Raw>()
             .await?;
         let raw = rows.pop().ok_or_else(|| {
-            ChClientError::Other(format!("dictionary '{name}' not found in system.dictionaries"))
+            ChClientError::Other(format!(
+                "dictionary '{name}' not found in system.dictionaries"
+            ))
         })?;
 
         let now = Utc::now();

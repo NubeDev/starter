@@ -52,13 +52,11 @@ pub async fn list_to(pool: &Pool, to_id: &str) -> Result<Vec<EntityRefRow>> {
 
 /// Delete one ref. Returns rows removed.
 pub async fn delete(pool: &Pool, from_id: &str, rel: &str, to_id: &str) -> Result<u64> {
-    let res = sqlx::query(
-        "DELETE FROM entity_refs WHERE from_id = $1 AND rel = $2 AND to_id = $3",
-    )
-    .bind(from_id)
-    .bind(rel)
-    .bind(to_id)
-    .execute(pool.sqlx())
-    .await?;
+    let res = sqlx::query("DELETE FROM entity_refs WHERE from_id = $1 AND rel = $2 AND to_id = $3")
+        .bind(from_id)
+        .bind(rel)
+        .bind(to_id)
+        .execute(pool.sqlx())
+        .await?;
     Ok(res.rows_affected())
 }

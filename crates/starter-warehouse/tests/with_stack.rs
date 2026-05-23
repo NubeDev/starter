@@ -126,11 +126,10 @@ async fn w12_ext_manifest_change_requarantines_live_marts() {
     let mut spec2 = sample_spec("mart_ext_two", "ext:com.acme.cleaner");
     spec2.ext_manifest_hash = Some("hashB".into());
     let _ = rt.mart_define(spec2).await;
-    let row: (String,) =
-        sqlx::query_as("SELECT status FROM marts WHERE name = 'mart_ext_one'")
-            .fetch_one(pg.sqlx())
-            .await
-            .unwrap();
+    let row: (String,) = sqlx::query_as("SELECT status FROM marts WHERE name = 'mart_ext_one'")
+        .fetch_one(pg.sqlx())
+        .await
+        .unwrap();
     assert_eq!(row.0, "quarantined");
 }
 
@@ -142,7 +141,10 @@ async fn rf4_sandbox_redefine_refused_when_frozen() {
     let s = SandboxSpec {
         name: "sandbox_test".into(),
         ttl_days: 30,
-        columns: vec![SandboxColumn { name: "v".into(), r#type: "Float64".into() }],
+        columns: vec![SandboxColumn {
+            name: "v".into(),
+            r#type: "Float64".into(),
+        }],
     };
     rt.sandbox_define("user:alice", s.clone(), serde_json::to_value(&s).unwrap())
         .await
@@ -152,11 +154,7 @@ async fn rf4_sandbox_redefine_refused_when_frozen() {
         .await
         .unwrap();
     let r = rt
-        .sandbox_redefine(
-            "sandbox_test",
-            true,
-            serde_json::json!({"columns": []}),
-        )
+        .sandbox_redefine("sandbox_test", true, serde_json::json!({"columns": []}))
         .await;
     assert!(matches!(r, Err(RuntimeError::SandboxFrozen { .. })));
 }

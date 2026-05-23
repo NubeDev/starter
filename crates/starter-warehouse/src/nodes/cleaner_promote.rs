@@ -24,7 +24,10 @@ pub struct CleanerPromote {
 
 impl CleanerPromote {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(CLEANER_PROMOTE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(CLEANER_PROMOTE).unwrap(),
+        }
     }
 }
 

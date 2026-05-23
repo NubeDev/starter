@@ -26,7 +26,10 @@ pub struct MartPromote {
 
 impl MartPromote {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(MART_PROMOTE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(MART_PROMOTE).unwrap(),
+        }
     }
 }
 

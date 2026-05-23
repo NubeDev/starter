@@ -19,6 +19,16 @@ path = "src/lib.rs"
 starter-spi             = { workspace = true }
 starter-server          = { workspace = true }
 starter-store-postgres  = { workspace = true, features = ["flow", "agent-session"] }
+# Warehouse capability (W1–W16), opt-in.
+#
+# Per ADR-001, flow-agent's OLTP store is Postgres-only. The
+# warehouse capability is a separate (tag-driven analytics) seam
+# that flow-agent can opt into via this cargo feature — its
+# Postgres connection is reused for the `dimensions` catalog and a
+# ClickHouse client is constructed from `CLICKHOUSE_URL` etc.
+# When `warehouse` is OFF the binary boots exactly as before.
+starter-warehouse        = { workspace = true, features = ["warehouse"], optional = true }
+starter-store-clickhouse = { workspace = true, optional = true }
 starter-observability   = { workspace = true }
 starter-cache           = { workspace = true }
 
@@ -72,6 +82,14 @@ async-trait  = { workspace = true }
 thiserror    = { workspace = true }
 chrono       = { workspace = true }
 uuid         = { workspace = true }
+
+[features]
+default = []
+# Opt-in: mount the starter-warehouse REST surface
+# (`/api/marts`, `/api/sandboxes`, `/api/warehouse/{status,gc,audit}`)
+# alongside flow-agent's existing routes. Requires a ClickHouse
+# endpoint at `CLICKHOUSE_URL` (default `http://127.0.0.1:8123`).
+warehouse = ["dep:starter-warehouse", "dep:starter-store-clickhouse"]
 
 [dev-dependencies]
 starter-server         = { workspace = true, features = ["testing"] }

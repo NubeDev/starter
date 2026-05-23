@@ -73,7 +73,10 @@ async fn promote_mart(
     Query(q): Query<PromoteQuery>,
 ) -> impl IntoResponse {
     let by = q.approved_by.unwrap_or_else(|| "user:admin".into());
-    match rt.mart_promote(&name, &by, q.ext_manifest_hash.as_deref()).await {
+    match rt
+        .mart_promote(&name, &by, q.ext_manifest_hash.as_deref())
+        .await
+    {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => runtime_error_response(e).into_response(),
     }
@@ -187,7 +190,9 @@ async fn run_gc(State(rt): State<Arc<WarehouseRuntime>>) -> impl IntoResponse {
 
 async fn run_audit(State(rt): State<Arc<WarehouseRuntime>>) -> impl IntoResponse {
     match crate::audit::find_drift(&rt.pg).await {
-        Ok(entries) => (StatusCode::OK, Json(serde_json::json!({"drift": entries}))).into_response(),
+        Ok(entries) => {
+            (StatusCode::OK, Json(serde_json::json!({"drift": entries}))).into_response()
+        }
         Err(e) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(serde_json::json!({"error": e.to_string()})),

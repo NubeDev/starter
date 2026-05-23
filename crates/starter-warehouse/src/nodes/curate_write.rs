@@ -29,7 +29,10 @@ pub struct CurateWrite {
 
 impl CurateWrite {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(CURATE_WRITE).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(CURATE_WRITE).unwrap(),
+        }
     }
 }
 

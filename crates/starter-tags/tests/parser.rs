@@ -19,10 +19,7 @@ fn eq_string() {
 #[test]
 fn eq_integer_compiles_to_str() {
     let q = TagQuery::from_str("port:8080").unwrap();
-    assert_eq!(
-        q,
-        TagQuery::Eq("port".into(), TagValue::Str("8080".into()))
-    );
+    assert_eq!(q, TagQuery::Eq("port".into(), TagValue::Str("8080".into())));
 }
 
 #[test]
@@ -38,10 +35,7 @@ fn and_or_not_precedence() {
     assert_eq!(
         q,
         TagQuery::Or(vec![
-            TagQuery::And(vec![
-                TagQuery::Has("a".into()),
-                TagQuery::Has("b".into()),
-            ]),
+            TagQuery::And(vec![TagQuery::Has("a".into()), TagQuery::Has("b".into()),]),
             TagQuery::Not(Box::new(TagQuery::Has("c".into()))),
         ])
     );

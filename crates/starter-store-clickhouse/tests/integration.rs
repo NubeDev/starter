@@ -66,7 +66,9 @@ async fn migration_runner_idempotent() {
     apply_base_migrations(&client).await;
     apply_base_migrations(&client).await; // second run is a no-op
     #[derive(clickhouse::Row, Deserialize)]
-    struct Count { n: u64 }
+    struct Count {
+        n: u64,
+    }
     let row: Count = client
         .inner()
         .query("SELECT count() AS n FROM system.tables WHERE database = currentDatabase() AND name = 'samples'")
@@ -128,12 +130,17 @@ async fn samples_round_trip() {
         value_str: None,
         value_bool: None,
         quality: 0,
-        tags: vec![("kind".into(), "energy".into()), ("building".into(), "b1".into())],
+        tags: vec![
+            ("kind".into(), "energy".into()),
+            ("building".into(), "b1".into()),
+        ],
     };
     samples::insert_many(&client, std::slice::from_ref(&row))
         .await
         .unwrap();
-    let read = samples::read_for_entity(&client, "ent_01", 10).await.unwrap();
+    let read = samples::read_for_entity(&client, "ent_01", 10)
+        .await
+        .unwrap();
     assert_eq!(read.len(), 1);
     assert_eq!(read[0].value_num, Some(42.5));
     assert_eq!(read[0].tags.len(), 2);
@@ -176,7 +183,9 @@ async fn documents_round_trip_caller_supplied_id() {
     documents::insert_many(&client, std::slice::from_ref(&row))
         .await
         .unwrap();
-    let got = documents::get(&client, "doc_sha256_deadbeef").await.unwrap();
+    let got = documents::get(&client, "doc_sha256_deadbeef")
+        .await
+        .unwrap();
     assert!(got.is_some());
     assert_eq!(got.unwrap().mime, "application/pdf");
 }
@@ -201,7 +210,9 @@ async fn dim_freshness_status_transitions_and_dictgetornull_contract() {
         .unwrap();
     client
         .inner()
-        .query("INSERT INTO entities_src(id, kind, display, tags) VALUES ('ent_01','site','HQ','{}')")
+        .query(
+            "INSERT INTO entities_src(id, kind, display, tags) VALUES ('ent_01','site','HQ','{}')",
+        )
         .execute()
         .await
         .unwrap();

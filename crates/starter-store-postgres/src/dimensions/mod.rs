@@ -30,8 +30,7 @@ pub mod tag_prefix_registry;
 
 /// `sqlx` migrator for the dimensions schema. Paired with the
 /// dedicated `_sqlx_migrations_dimensions` version table.
-pub static DIMENSIONS_MIGRATOR: sqlx::migrate::Migrator =
-    sqlx::migrate!("./migrations/dimensions");
+pub static DIMENSIONS_MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/dimensions");
 
 /// Convenience `MigrationSource` for the dimensions schema. Mount
 /// on the migrate chain via

@@ -53,8 +53,7 @@ impl MartSpec {
             "group_by": self.group_by,
             "aggregations": self.aggregations,
         });
-        let bytes = serde_json::to_vec(&canonical)
-            .expect("canonical JSON is always serialisable");
+        let bytes = serde_json::to_vec(&canonical).expect("canonical JSON is always serialisable");
         let mut hasher = Sha256::new();
         hasher.update(bytes);
         hex::encode(hasher.finalize())

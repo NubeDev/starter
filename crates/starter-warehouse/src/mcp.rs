@@ -42,11 +42,7 @@ impl McpTools {
         Ok(Vec::new())
     }
 
-    pub async fn tag_entity(
-        &self,
-        id: &str,
-        tags: serde_json::Value,
-    ) -> Result<(), RuntimeError> {
+    pub async fn tag_entity(&self, id: &str, tags: serde_json::Value) -> Result<(), RuntimeError> {
         starter_store_postgres::dimensions::entities::upsert(
             &self.rt.pg,
             id,
@@ -79,27 +75,18 @@ impl McpTools {
         to: DateTime<Utc>,
         hide_unknown: bool,
     ) -> Result<ReadResult, RuntimeError> {
-        let q = TagQuery::from_str(filter)
-            .map_err(|e| RuntimeError::BadSpec(e.to_string()))?;
+        let q = TagQuery::from_str(filter).map_err(|e| RuntimeError::BadSpec(e.to_string()))?;
         self.rt
             .mart_read(name, q, from, to, hide_unknown, 20_000)
             .await
     }
 
-    pub async fn define_sandbox(
-        &self,
-        owner: &str,
-        spec: SandboxSpec,
-    ) -> Result<(), RuntimeError> {
+    pub async fn define_sandbox(&self, owner: &str, spec: SandboxSpec) -> Result<(), RuntimeError> {
         let cols = serde_json::to_value(&spec).unwrap();
         self.rt.sandbox_define(owner, spec, cols).await
     }
 
-    pub async fn peek_sandbox(
-        &self,
-        name: &str,
-        limit: u32,
-    ) -> Result<Vec<String>, RuntimeError> {
+    pub async fn peek_sandbox(&self, name: &str, limit: u32) -> Result<Vec<String>, RuntimeError> {
         let limit = limit.min(1000);
         let sql = format!(
             "SELECT toJSONString(any(*)) AS row FROM sandbox_{name} GROUP BY ts ORDER BY ts DESC LIMIT {limit}"

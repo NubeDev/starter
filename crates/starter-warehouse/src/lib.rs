@@ -34,7 +34,16 @@
 
 #![forbid(unsafe_code)]
 #![cfg_attr(not(feature = "warehouse"), allow(dead_code, unused_imports))]
+// Doc-comment formatting in the W-rule bullets uses 8-space indent
+// to align the rule code (`W11 — `, `W12 — `, …); clippy's
+// `doc_overindented_list_items` lint flags this stylistic choice
+// repeatedly across the crate. The DDL module's continuation lines
+// trigger `doc_lazy_continuation` for the same reason. Both are
+// cosmetic; suppress at crate scope rather than litter every site.
+#![allow(clippy::doc_overindented_list_items, clippy::doc_lazy_continuation)]
 
+#[cfg(feature = "warehouse")]
+pub mod audit;
 #[cfg(feature = "warehouse")]
 pub mod catalog;
 #[cfg(feature = "warehouse")]
@@ -43,8 +52,6 @@ pub mod ddl;
 pub mod dim_freshness;
 #[cfg(feature = "warehouse")]
 pub mod gc;
-#[cfg(feature = "warehouse")]
-pub mod audit;
 #[cfg(feature = "warehouse")]
 pub mod nodes;
 #[cfg(feature = "warehouse")]

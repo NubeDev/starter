@@ -324,10 +324,7 @@ fn find_float_literal(src: &str) -> Option<String> {
             while j < bytes.len() && (bytes[j] as char).is_ascii_digit() {
                 j += 1;
             }
-            if j > digits_start
-                && j < bytes.len()
-                && matches!(bytes[j] as char, '.' | 'e' | 'E')
-            {
+            if j > digits_start && j < bytes.len() && matches!(bytes[j] as char, '.' | 'e' | 'E') {
                 // continue capturing
                 let mut k = j + 1;
                 while k < bytes.len() {
@@ -345,4 +342,3 @@ fn find_float_literal(src: &str) -> Option<String> {
     }
     None
 }
-

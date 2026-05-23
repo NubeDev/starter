@@ -95,11 +95,7 @@ pub struct WarehouseRuntime {
 }
 
 impl WarehouseRuntime {
-    pub fn new(
-        pg: Pool,
-        ch_cfg: ChConfig,
-        config: WarehouseConfig,
-    ) -> Self {
+    pub fn new(pg: Pool, ch_cfg: ChConfig, config: WarehouseConfig) -> Self {
         let ch = ChClient::connect(ch_cfg);
         let probe = FreshnessProbe::new(ch.clone());
         Self {
@@ -153,9 +149,8 @@ impl WarehouseRuntime {
     ) -> Result<(), RuntimeError> {
         // Per-row PG lookup. Unknown entity ⇒ Err.
         let ent = dim::entities::get(&self.pg, entity_id).await?;
-        let ent = ent.ok_or_else(|| {
-            RuntimeError::BadSpec(format!("unknown entity_id {entity_id:?}"))
-        })?;
+        let ent =
+            ent.ok_or_else(|| RuntimeError::BadSpec(format!("unknown entity_id {entity_id:?}")))?;
         // Merge entity tags into the row's tag bag.
         if let serde_json::Value::Object(map) = ent.tags.0 {
             for (k, v) in map {
@@ -312,7 +307,8 @@ impl WarehouseRuntime {
                 .await
                 .map_err(|_| {
                     RuntimeError::Io(
-                        "sync backfill exceeded wall-clock budget; rerun with backfill='async'".into(),
+                        "sync backfill exceeded wall-clock budget; rerun with backfill='async'"
+                            .into(),
                     )
                 })??;
                 let _ = start;
@@ -361,10 +357,11 @@ impl WarehouseRuntime {
                 .strip_prefix("sandbox_")
                 .or_else(|| row.source_table.strip_prefix("sandbox:"))
             {
-                let _ = sqlx::query("UPDATE sandboxes SET frozen_at_revision = NULL WHERE name = $1")
-                    .bind(sb)
-                    .execute(self.pg.sqlx())
-                    .await?;
+                let _ =
+                    sqlx::query("UPDATE sandboxes SET frozen_at_revision = NULL WHERE name = $1")
+                        .bind(sb)
+                        .execute(self.pg.sqlx())
+                        .await?;
             }
         }
         dim::cleaners::set_status(&self.pg, name, "quarantined").await?;
@@ -385,7 +382,8 @@ impl WarehouseRuntime {
                 });
             }
             return Err(RuntimeError::BadSpec(format!(
-                "mart {} already exists with different definition_hash; drop first", spec.name
+                "mart {} already exists with different definition_hash; drop first",
+                spec.name
             )));
         }
         let ddl = crate::ddl::mart::build(&spec)?;
@@ -427,8 +425,11 @@ impl WarehouseRuntime {
         }
 
         let promoted_cols: Vec<String> = spec.promoted_columns();
-        let bucket =
-            sqlx::postgres::types::PgInterval { months: 0, days: 0, microseconds: spec.time_bucket_secs * 1_000_000 };
+        let bucket = sqlx::postgres::types::PgInterval {
+            months: 0,
+            days: 0,
+            microseconds: spec.time_bucket_secs * 1_000_000,
+        };
         let row = dim::marts::insert(
             &mut *tx,
             dim::marts::InsertMart {
@@ -472,7 +473,11 @@ impl WarehouseRuntime {
             return Err(e.into());
         }
 
-        let final_status = if initial == "pending" { "live" } else { "quarantined" };
+        let final_status = if initial == "pending" {
+            "live"
+        } else {
+            "quarantined"
+        };
         let _ = dim::marts::set_status(
             self.pg.sqlx(),
             &spec.name,
@@ -504,9 +509,7 @@ impl WarehouseRuntime {
         let row = dim::marts::get(self.pg.sqlx(), name).await?;
         let row = row.ok_or_else(|| RuntimeError::MartNotFound { name: name.into() })?;
         dim::marts::set_status(self.pg.sqlx(), name, dim::marts::MartStatus::Live).await?;
-        if let (Some(rest), Some(hash)) =
-            (row.created_by.strip_prefix("ext:"), ext_manifest_hash)
-        {
+        if let (Some(rest), Some(hash)) = (row.created_by.strip_prefix("ext:"), ext_manifest_hash) {
             let mut conn = self.pg.sqlx().acquire().await?;
             ext::record_approval(&mut conn, rest, hash, approved_by).await?;
         }
@@ -517,7 +520,11 @@ impl WarehouseRuntime {
     pub async fn mart_drop(&self, name: &str) -> Result<(), RuntimeError> {
         dim::marts::set_status(self.pg.sqlx(), name, dim::marts::MartStatus::Quarantined).await?;
         let n = name.strip_prefix("mart_").unwrap_or(name);
-        self.ch.inner().query(&format!("DROP VIEW IF EXISTS mart_{n}")).execute().await?;
+        self.ch
+            .inner()
+            .query(&format!("DROP VIEW IF EXISTS mart_{n}"))
+            .execute()
+            .await?;
         self.ch
             .inner()
             .query(&format!("DROP TABLE IF EXISTS mart_{n}_state"))

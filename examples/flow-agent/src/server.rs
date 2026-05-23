@@ -49,7 +49,39 @@ pub struct Built {
     pub hub: Arc<EventHub>,
 }
 
+/// Optional warehouse handle. When the `warehouse` feature is on
+/// and the caller supplies a `WarehouseRuntime`, its REST router
+/// (per Warehouse SCOPE "REST and SSE surface") is merged into the
+/// final assembly.
+#[cfg(feature = "warehouse")]
+pub type OptWarehouseRuntime = Option<Arc<starter_warehouse::nodes::runtime::WarehouseRuntime>>;
+
 pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>) -> Built {
+    build_inner(
+        pool,
+        registry,
+        metrics,
+        #[cfg(feature = "warehouse")]
+        None,
+    )
+}
+
+#[cfg(feature = "warehouse")]
+pub fn build_with_warehouse(
+    pool: Pool,
+    registry: Arc<Registry>,
+    metrics: Arc<StandardMetrics>,
+    warehouse: OptWarehouseRuntime,
+) -> Built {
+    build_inner(pool, registry, metrics, warehouse)
+}
+
+fn build_inner(
+    pool: Pool,
+    registry: Arc<Registry>,
+    metrics: Arc<StandardMetrics>,
+    #[cfg(feature = "warehouse")] warehouse: OptWarehouseRuntime,
+) -> Built {
     let sqlx = pool.sqlx().clone();
     let flows = Arc::new(FlowStore::new(sqlx.clone()));
     let agents = Arc::new(AgentStore::new(sqlx.clone()));
@@ -160,6 +192,18 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
         .with_openapi(FlowAgentApi::openapi())
         .with_metrics(registry, metrics)
         .build();
+
+    // Warehouse REST surface (W9 / W11 / W14 / W15). When the
+    // `warehouse` feature is enabled AND the caller passes a
+    // `WarehouseRuntime`, merge its stateless `Router<()>` into
+    // the final `axum::Router`. The runtime owns the PG pool +
+    // CH client + freshness probe; everything goes through it so
+    // W7/W8/W11/W12/W13/W14/W16 are enforced in one place.
+    #[cfg(feature = "warehouse")]
+    let router = match warehouse {
+        Some(rt) => router.merge(starter_warehouse::rest::router(rt)),
+        None => router,
+    };
 
     Built {
         router,

@@ -118,11 +118,7 @@ pub async fn insert(pool: &Pool, c: InsertCleaner<'_>) -> Result<CleanerRow> {
 
 /// Mark MV live: set `mv_live_at = now()`, status = 'live', and
 /// capture the backfill horizon.
-pub async fn mark_live(
-    pool: &Pool,
-    name: &str,
-    backfill_window_end: DateTime<Utc>,
-) -> Result<u64> {
+pub async fn mark_live(pool: &Pool, name: &str, backfill_window_end: DateTime<Utc>) -> Result<u64> {
     let res = sqlx::query(
         "UPDATE cleaners SET \
             status = 'live', \

@@ -3,9 +3,7 @@
 //! envelope shape in the read responses but does not duplicate
 //! the probe — the probe lives next to the dictionary it queries.
 
-pub use starter_store_clickhouse::dim_freshness::{
-    DictFreshness, FreshnessProbe, Status,
-};
+pub use starter_store_clickhouse::dim_freshness::{DictFreshness, FreshnessProbe, Status};
 
 /// The W11 `dimension_freshness` block as it appears at the top
 /// of every read envelope: a map keyed by dictionary name.

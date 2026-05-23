@@ -36,9 +36,7 @@ pub async fn find_drift(pool: &Pool) -> Result<Vec<DriftEntry>, sqlx::Error> {
             // CHECK constraint on the column.
         });
         let mut hasher = Sha256::new();
-        hasher.update(
-            serde_json::to_vec(&canonical).expect("canonical JSON serialises"),
-        );
+        hasher.update(serde_json::to_vec(&canonical).expect("canonical JSON serialises"));
         let recomputed = hex::encode(hasher.finalize());
         // The stored hash uses MartSpec's canonical form, which
         // ALSO includes `time_bucket_secs`. We compare prefixes:

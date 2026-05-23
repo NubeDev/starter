@@ -45,15 +45,16 @@ pub fn build(spec: &SandboxSpec) -> Result<SandboxDdl, DdlError> {
         match c.r#type.as_str() {
             "String" | "Float64" | "Int64" | "DateTime64(3)" | "UInt8" | "Bool" => {}
             other => {
-                return Err(DdlError::UnsupportedColumnType(c.name.clone(), other.to_string()))
+                return Err(DdlError::UnsupportedColumnType(
+                    c.name.clone(),
+                    other.to_string(),
+                ))
             }
         }
         cols.push_str(&format!(",\n  {} {}", c.name, c.r#type));
     }
     cols.push_str(",\n  tags Map(String, String) DEFAULT map()");
-    cols.push_str(
-        ",\n  INDEX tags_bloom tags TYPE bloom_filter GRANULARITY 1",
-    );
+    cols.push_str(",\n  INDEX tags_bloom tags TYPE bloom_filter GRANULARITY 1");
 
     let create_table = format!(
         "CREATE TABLE IF NOT EXISTS {table} (\n{cols}\n) ENGINE = MergeTree\nPARTITION BY toYYYYMM(ts)\nORDER BY (ts)\nTTL ts + INTERVAL {} DAY;",

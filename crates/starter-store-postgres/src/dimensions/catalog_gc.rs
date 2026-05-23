@@ -40,7 +40,10 @@ pub async fn run(pool: &Pool, age_days: i32) -> Result<GcReport> {
              WHERE status IN ('quarantined','failed') \
                AND created_at < NOW() - $1::interval"
         );
-        let res = sqlx::query(&sql).bind(&interval).execute(pool.sqlx()).await?;
+        let res = sqlx::query(&sql)
+            .bind(&interval)
+            .execute(pool.sqlx())
+            .await?;
         *target = res.rows_affected();
     }
     // Sandboxes use 'failed' for GC; 'promoted' is retained for

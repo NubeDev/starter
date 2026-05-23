@@ -26,7 +26,10 @@ pub struct BulkImport {
 
 impl BulkImport {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(BULK_IMPORT).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(BULK_IMPORT).unwrap(),
+        }
     }
 }
 

@@ -49,20 +49,30 @@ fn insert_mart(name: &str, status: MartStatus) -> InsertMart<'_> {
 #[ignore = "requires docker"]
 async fn insert_and_round_trip() {
     let (pool, _g) = boot().await;
-    let m = marts::insert(pool.sqlx(), insert_mart("mart_energy_hourly", MartStatus::Live))
-        .await
-        .unwrap();
+    let m = marts::insert(
+        pool.sqlx(),
+        insert_mart("mart_energy_hourly", MartStatus::Live),
+    )
+    .await
+    .unwrap();
     assert_eq!(m.status, "live");
     assert_eq!(m.group_by, vec!["building".to_string()]);
 
     // Idempotency: same name with INSERT (no upsert) errors.
-    let err = marts::insert(pool.sqlx(), insert_mart("mart_energy_hourly", MartStatus::Pending)).await;
+    let err = marts::insert(
+        pool.sqlx(),
+        insert_mart("mart_energy_hourly", MartStatus::Pending),
+    )
+    .await;
     assert!(err.is_err());
 
     marts::set_status(pool.sqlx(), "mart_energy_hourly", MartStatus::Quarantined)
         .await
         .unwrap();
-    let row = marts::get(pool.sqlx(), "mart_energy_hourly").await.unwrap().unwrap();
+    let row = marts::get(pool.sqlx(), "mart_energy_hourly")
+        .await
+        .unwrap()
+        .unwrap();
     assert_eq!(row.status, "quarantined");
 }
 
@@ -110,7 +120,10 @@ async fn live_mart_quota_trigger_only_scans_live_rows() {
 
     // ...the fourth must trip the trigger.
     let res = marts::insert(&mut *conn, insert_mart("mart_live_3", MartStatus::Live)).await;
-    assert!(res.is_err(), "quota trigger must reject the 4th live insert");
+    assert!(
+        res.is_err(),
+        "quota trigger must reject the 4th live insert"
+    );
 
     // Quarantining one live mart frees a slot.
     marts::set_status(&mut *conn, "mart_live_0", MartStatus::Quarantined)

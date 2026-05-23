@@ -3,8 +3,8 @@
 //! `max_buckets` cap (default 20_000) is bound at the HTTP layer
 //! per M-4.
 
-use std::sync::Arc;
 use std::str::FromStr;
+use std::sync::Arc;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
@@ -32,7 +32,10 @@ pub struct MartRead {
 
 impl MartRead {
     pub fn new(rt: Arc<WarehouseRuntime>) -> Self {
-        Self { rt, kind: KindId::new(MART_READ).unwrap() }
+        Self {
+            rt,
+            kind: KindId::new(MART_READ).unwrap(),
+        }
     }
 }
 
@@ -51,8 +54,8 @@ impl NodeBehavior for MartRead {
             Some(SlotValue::String(s)) => s.clone(),
             _ => return Err(NodeError::InvalidInput("missing 'filter' slot".into())),
         };
-        let filter = TagQuery::from_str(&filter_str)
-            .map_err(|e| NodeError::InvalidInput(e.to_string()))?;
+        let filter =
+            TagQuery::from_str(&filter_str).map_err(|e| NodeError::InvalidInput(e.to_string()))?;
         let (from, to) = parse_range(&input)?;
         let hide_unknown = matches!(input.get("hide_unknown"), Some(SlotValue::Bool(true)));
         let res = self

@@ -44,7 +44,7 @@ impl<'de> Deserialize<'de> for TagValue {
                 Ok(TagValue::Str(s))
             }
             serde_json::Value::Number(n) => {
-                let s = canonical_number_string(&n).map_err(|e| D::Error::custom(e))?;
+                let s = canonical_number_string(&n).map_err(D::Error::custom)?;
                 Ok(TagValue::Str(s))
             }
             other => Err(D::Error::custom(format!(

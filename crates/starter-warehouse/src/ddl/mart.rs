@@ -64,7 +64,11 @@ pub fn build(spec: &MartSpec) -> Result<MartDdl, DdlError> {
         state_cols.push_str(&format!("  {g} String,\n"));
     }
     for (i, a) in spec.aggregations.iter().enumerate() {
-        let comma = if i + 1 == spec.aggregations.len() { "" } else { "," };
+        let comma = if i + 1 == spec.aggregations.len() {
+            ""
+        } else {
+            ","
+        };
         state_cols.push_str(&format!(
             "  {alias}_state {sty}{comma}\n",
             alias = a.alias,
@@ -144,11 +148,7 @@ fn agg_state_type(a: &AggregationSpec) -> Result<String, DdlError> {
 /// to `entities_dict` via `dictGetOrNull` per W13. The `range`
 /// + caller-supplied `filter` are bound separately by the caller —
 /// this returns the bare query text + the column list.
-pub fn read_query(
-    spec: &MartSpec,
-    extra_where: &str,
-    hide_unknown: bool,
-) -> String {
+pub fn read_query(spec: &MartSpec, extra_where: &str, hide_unknown: bool) -> String {
     let mart_name = spec.name.strip_prefix("mart_").unwrap_or(&spec.name);
     let target = format!("mart_{mart_name}_state");
     let mut select = vec!["bucket".to_string()];
@@ -212,7 +212,9 @@ mod tests {
     #[test]
     fn order_by_promotes_first_group_by() {
         let ddl = build(&spec()).unwrap();
-        assert!(ddl.create_target.contains("ORDER BY (building, bucket, tenant)"));
+        assert!(ddl
+            .create_target
+            .contains("ORDER BY (building, bucket, tenant)"));
     }
 
     #[test]

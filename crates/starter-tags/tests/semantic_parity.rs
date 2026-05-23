@@ -213,7 +213,11 @@ fn json_ingest_rejects_non_integer_numbers() {
 #[test]
 fn composite_parity_battery() {
     let cases: &[(&str, Vec<(&str, TagValue)>, bool)] = &[
-        ("a and b", vec![("a", TagValue::Bool(true)), ("b", TagValue::Bool(true))], true),
+        (
+            "a and b",
+            vec![("a", TagValue::Bool(true)), ("b", TagValue::Bool(true))],
+            true,
+        ),
         ("a and b", vec![("a", TagValue::Bool(true))], false),
         ("a or b", vec![("b", TagValue::Bool(true))], true),
         ("not c", vec![], true),
