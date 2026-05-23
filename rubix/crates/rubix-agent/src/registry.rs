@@ -20,7 +20,7 @@ use starter_spi::tool::Tool;
 /// generated OpenAPI / MCP listing are stable across restarts.
 pub fn build_tool_registry() -> Vec<Arc<dyn Tool>> {
     vec![
-        Arc::new(DiskTool),
+        Arc::new(DiskTool::default()),
         Arc::new(DbTool),
         Arc::new(FlowErrorsTool::default()),
         Arc::new(AlertSendTool),

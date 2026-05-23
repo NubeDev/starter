@@ -19,6 +19,14 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 starter-tool-sysdiag = { workspace = true }
 
+# History side of the warehouse. Pulled in so the disk verb can
+# write a `system_disk_history` row after a successful probe and
+# so the dispatcher can re-export the `MigrationRunner` consumers
+# need to apply `rubix/0002_history`. No direct `clickhouse` crate
+# dep — that lives transitively under starter-store-clickhouse.
+starter-store-clickhouse = { workspace = true }
+uuid                      = { workspace = true }
+
 [dev-dependencies]
 # Recorded-LLM round-trip harness for the system.disk verb. Pulls
 # the ai-agent node body + the starter `RecordingAiRunner` fake so

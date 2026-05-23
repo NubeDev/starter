@@ -11,7 +11,7 @@ use starter_spi::tool::Tool;
 
 #[tokio::test]
 async fn invoke_returns_well_formed_response_for_default_request() {
-    let tool = DiskTool;
+    let tool = DiskTool::default();
     let def = tool.definition();
     assert_eq!(def.name, "rubix.system.disk");
 
@@ -44,7 +44,7 @@ async fn invoke_returns_well_formed_response_for_default_request() {
 
 #[tokio::test]
 async fn invoke_rejects_unknown_input_fields() {
-    let tool = DiskTool;
+    let tool = DiskTool::default();
     let raw = tool
         .invoke(serde_json::json!({ "nonexistent": 1 }))
         .await;

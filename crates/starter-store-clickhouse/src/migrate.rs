@@ -79,9 +79,18 @@ pub enum MigrationError {
 
 /// In-crate migration runner. Mirrors the shape of
 /// `sqlx::migrate::Migrator` to keep the call site familiar.
+///
+/// Consumer crates (rubix-agent and friends) ship their own DDL
+/// files alongside the warehouse-owned ones; they register them
+/// via [`with_extra_migration`](Self::with_extra_migration) so a
+/// single runner applies the union in declaration order. The
+/// audit-table writes still cover both sets — extras land in
+/// `_starter_ch_migrations` with the same `(filename, applied_at)`
+/// shape — so operators inspecting the table see one ordered log.
 pub struct MigrationRunner<'c> {
     client: &'c ChClient,
     pg_source: Option<PgSource>,
+    extras: Vec<(String, String)>,
 }
 
 impl<'c> MigrationRunner<'c> {
@@ -89,6 +98,7 @@ impl<'c> MigrationRunner<'c> {
         Self {
             client,
             pg_source: None,
+            extras: Vec::new(),
         }
     }
 
@@ -96,6 +106,21 @@ impl<'c> MigrationRunner<'c> {
     /// migration 0005. Required if 0005 is on the apply set.
     pub fn with_pg_source(mut self, src: PgSource) -> Self {
         self.pg_source = Some(src);
+        self
+    }
+
+    /// Register an additional DDL file owned by a consumer crate.
+    /// Applied after the warehouse-owned set, in registration order,
+    /// through the same `IF NOT EXISTS` discipline. `name` is the
+    /// row written to `_starter_ch_migrations` and the diagnostic
+    /// surface; callers should namespace it (e.g.
+    /// `"rubix/0002_history/up.sql"`).
+    pub fn with_extra_migration(
+        mut self,
+        name: impl Into<String>,
+        sql: impl Into<String>,
+    ) -> Self {
+        self.extras.push((name.into(), sql.into()));
         self
     }
 
@@ -130,6 +155,26 @@ impl<'c> MigrationRunner<'c> {
                 .inner()
                 .query("INSERT INTO _starter_ch_migrations(filename) VALUES (?)")
                 .bind(*name)
+                .execute()
+                .await;
+        }
+
+        // Extras are applied after the warehouse-owned set so a
+        // consumer DDL that references a warehouse column resolves
+        // against the already-created table. Same audit-table
+        // bookkeeping; same `IF NOT EXISTS` safety.
+        for (name, blob) in &self.extras {
+            self.client
+                .inner()
+                .query(blob)
+                .execute()
+                .await
+                .map_err(MigrationError::Clickhouse)?;
+            let _ = self
+                .client
+                .inner()
+                .query("INSERT INTO _starter_ch_migrations(filename) VALUES (?)")
+                .bind(name.as_str())
                 .execute()
                 .await;
         }

@@ -26,6 +26,7 @@ async fn main() -> Result<()> {
 
     let tools = registry::build_tool_registry();
     let migrations = boot::apply_migrations().await?;
+    let ch_migrations = boot::apply_ch_migrations().await?;
     let mcp = boot::mcp::build_mcp_surface().await?;
 
     info!(
@@ -37,6 +38,7 @@ async fn main() -> Result<()> {
         flows = rubix_flows::bundled().entries().len(),
         migrations = migrations.sources_applied,
         migrations_skipped = migrations.skipped,
+        ch_migrations_skipped = ch_migrations.skipped,
         i18n_keys = catalogue_size,
         "rubix-agent starting"
     );

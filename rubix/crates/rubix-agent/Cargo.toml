@@ -36,6 +36,7 @@ starter-changelog-postgres = { workspace = true }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences"] }
 starter-mcp               = { workspace = true, features = ["http"] }
+starter-store-clickhouse  = { workspace = true }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }

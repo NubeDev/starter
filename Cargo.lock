@@ -6366,6 +6366,7 @@ dependencies = [
  "starter-observability",
  "starter-server",
  "starter-spi",
+ "starter-store-clickhouse",
  "starter-store-postgres",
  "tokio",
  "tracing",
@@ -6427,10 +6428,12 @@ dependencies = [
  "starter-flow-nodes",
  "starter-flow-spi",
  "starter-spi",
+ "starter-store-clickhouse",
  "starter-tool-sysdiag",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]
