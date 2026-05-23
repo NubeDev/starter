@@ -2602,7 +2602,7 @@ dependencies = [
  "starter-prefs",
  "starter-server",
  "starter-spi",
- "starter-store-sqlite",
+ "starter-store-postgres",
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
