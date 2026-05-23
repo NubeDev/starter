@@ -9,7 +9,7 @@
 //! migrations live under `migrations/flow/` and are exposed as
 //! [`FLOW_MIGRATION_SOURCE`] for the namespaced migration runner.
 //!
-//! Three impls, one per SPI trait:
+//! Three core impls, one per SPI trait:
 //!
 //! - [`flow_store::PgFlowStore`] — flow definitions + revisions
 //!   + per-flow head pointer.
@@ -18,15 +18,32 @@
 //!   one transaction (D-F3.8 + D-F3.9).
 //! - [`session_store::PgSessionStore`] — session records,
 //!   principal-scoped listing.
+//!
+//! Plus, gated behind the additive `agent-session` feature
+//! (DOCS/storage/ADR-001), the M-B persistence seam:
+//!
+//! - [`agent_session_store::PgAgentSessionStore`] — append-only
+//!   turns + versioned artifacts, ships its own three-table schema
+//!   under `migrations/agent_sessions/`.
+//!
+//! `agent-session` implies `flow` so the layout mirrors the SQLite
+//! twin one-for-one (where both stores live under `flow/` and are
+//! gated by a single `flow` feature). See `Cargo.toml`.
 
 pub mod flow_store;
 pub mod run_store;
 mod schema;
 pub mod session_store;
 
+#[cfg(feature = "agent-session")]
+pub mod agent_session_store;
+
 pub use flow_store::PgFlowStore;
 pub use run_store::PgRunStore;
 pub use session_store::PgSessionStore;
+
+#[cfg(feature = "agent-session")]
+pub use agent_session_store::PgAgentSessionStore;
 
 /// `sqlx` migrator for the flow persistence schema. Pair with the
 /// crate's `migrate(pool).with_source(FLOW_MIGRATION_SOURCE)`
@@ -39,4 +56,24 @@ pub const FLOW_MIGRATION_SOURCE: crate::migrate::MigrationSource =
     crate::migrate::MigrationSource {
         name: "flow",
         migrator: &FLOW_MIGRATOR,
+    };
+
+/// Migrator for the agent-session persistence schema
+/// (DOCS/agent/MEMORY.md Phase M-B / DOCS/storage/ADR-001). Ships
+/// its own three-table schema (`agent_sessions`,
+/// `agent_session_turns`, `agent_session_artifacts`) on a
+/// dedicated migration table so consumers can adopt it without
+/// pulling the full flow schema (which owns a `runs` table that
+/// conflicts with bespoke per-app schemas — flow-agent ships its
+/// own).
+#[cfg(feature = "agent-session")]
+pub static AGENT_SESSION_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/agent_sessions");
+
+/// Convenience `MigrationSource` for the agent-session schema only.
+#[cfg(feature = "agent-session")]
+pub const AGENT_SESSION_MIGRATION_SOURCE: crate::migrate::MigrationSource =
+    crate::migrate::MigrationSource {
+        name: "agent_sessions",
+        migrator: &AGENT_SESSION_MIGRATOR,
     };

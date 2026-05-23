@@ -25,9 +25,6 @@ pub mod testing;
 #[cfg(feature = "skill-approvals")]
 pub mod skills;
 
-#[cfg(feature = "agent-session")]
-pub mod agent_session;
-
 #[cfg(feature = "flow")]
 pub mod flow;
 

@@ -59,10 +59,13 @@ testing = ["dep:testcontainers", "dep:testcontainers-modules", "dep:tokio"]
 skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
 # MEMORY.md Phase M-B — Postgres-backed `AgentSessionStore` impl.
 # Default-off so consumers that don't need agent surfaces (the
-# common minimal binary) carry zero cost. Pulls
-# `starter-flow-spi` for the trait + types, plus the sqlx
-# `chrono` + `json` features for `TIMESTAMPTZ` / `JSONB` binding.
-agent-session = ["dep:starter-flow-spi", "sqlx/chrono", "sqlx/json"]
+# common minimal binary) carry zero cost. Lives alongside the
+# `flow` stores under `src/flow/agent_session_store.rs` so the
+# Postgres layout mirrors the SQLite twin one-for-one; therefore
+# `agent-session` implies `flow` (parallel to the SQLite crate's
+# `flow` feature, which gates both the flow stores and the
+# agent-session store together).
+agent-session = ["flow", "dep:starter-flow-spi", "sqlx/chrono", "sqlx/json"]
 # Compiles the `flow` module with Postgres-backed `FlowStore`,
 # `RunStore`, and `SessionStore` implementations of the
 # `starter-flow-spi` contracts. Postgres twin of the SQLite crate's

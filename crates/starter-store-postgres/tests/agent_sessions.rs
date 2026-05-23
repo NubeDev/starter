@@ -1,13 +1,26 @@
-//! Integration tests for [`PostgresAgentSessionStore`]
-//! (MEMORY.md Phase M-B). Twin of
+//! Integration tests for [`PgAgentSessionStore`] (DOCS/agent/MEMORY.md
+//! Phase M-B, DOCS/storage/ADR-001). Postgres twin of
 //! `starter-store-sqlite/tests/agent_sessions.rs` — identical
-//! assertions, identical invariants, identical structure.
+//! assertions, identical invariants, identical structure. The only
+//! source-level deltas are the harness (`with_database()` instead
+//! of `ephemeral()`), the import path (`flow::PgAgentSessionStore`
+//! after slice B relocated the module to mirror the SQLite layout),
+//! and `#[ignore = "requires docker"]` on every test (same
+//! convention as `tests/migrate.rs` and `tests/skills.rs`).
 //!
-//! Marked `#[ignore]` because it requires Docker on the host (same
-//! pattern as `tests/migrate.rs` and `tests/skills.rs`). CI runs it
-//! explicitly via
+//! Exercises the load-bearing invariants:
+//!
+//! - M5: monotonic per-session `seq`; monotonic per-(session,key) `version`.
+//! - M5: store-assigned versions; no client-side computation.
+//! - M8: `ArtifactTooLarge` rejection.
+//! - M10/M11: transactional turn + artifact commit.
+//! - M12: `TurnTooLarge` rejection.
+//! - Optimistic CAS via `put_artifact_direct`.
+//! - Cascade delete.
+//!
+//! CI runs it explicitly via
 //! `cargo test -p starter-store-postgres --features
-//!  "testing agent-session" -- --ignored`.
+//!  "flow agent-session testing" -- --ignored`.
 
 #![cfg(all(feature = "agent-session", feature = "testing"))]
 
@@ -15,9 +28,7 @@ use starter_flow_spi::agent_session::{
     AgentSessionError, AgentSessionId, AgentSessionStore, ArtifactWrite, PutArtifactError,
     RetentionPolicy, TurnInput, TurnRole, ARTIFACT_VALUE_CAP_BYTES, TURN_CONTENT_CAP_BYTES,
 };
-use starter_store_postgres::agent_session::{
-    PostgresAgentSessionStore, AGENT_SESSION_MIGRATION_SOURCE,
-};
+use starter_store_postgres::flow::{PgAgentSessionStore, AGENT_SESSION_MIGRATION_SOURCE};
 use starter_store_postgres::{migrate, testing::with_database, Pool};
 
 async fn boot() -> (Pool, starter_store_postgres::testing::ContainerGuard) {
@@ -30,7 +41,7 @@ async fn boot() -> (Pool, starter_store_postgres::testing::ContainerGuard) {
     (pool, guard)
 }
 
-async fn fresh_session(store: &PostgresAgentSessionStore) -> AgentSessionId {
+async fn fresh_session(store: &PgAgentSessionStore) -> AgentSessionId {
     let id = AgentSessionId::new();
     store
         .create(id, "page-builder", "system", serde_json::json!({}))
@@ -43,7 +54,7 @@ async fn fresh_session(store: &PostgresAgentSessionStore) -> AgentSessionId {
 #[ignore = "requires docker"]
 async fn create_get_roundtrip() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = AgentSessionId::new();
     store
         .create(
@@ -65,7 +76,7 @@ async fn create_get_roundtrip() {
 #[ignore = "requires docker"]
 async fn append_assigns_monotonic_seq_per_session() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     let r1 = store
@@ -100,7 +111,7 @@ async fn append_assigns_monotonic_seq_per_session() {
 #[ignore = "requires docker"]
 async fn artifact_versions_are_monotonic_per_key() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     let r1 = store
@@ -124,6 +135,7 @@ async fn artifact_versions_are_monotonic_per_key() {
         )
         .await
         .unwrap();
+    // tree -> v2, draft -> v1 (first time written)
     assert_eq!(r2.artifact_versions, vec![2, 1]);
 
     let latest_tree = store.latest_artifact(id, "tree").await.unwrap().unwrap();
@@ -138,6 +150,7 @@ async fn artifact_versions_are_monotonic_per_key() {
 
     let versions = store.list_artifact_versions(id, "tree").await.unwrap();
     assert_eq!(versions.len(), 2);
+    // Newest-first per the trait contract.
     assert_eq!(versions[0].version, 2);
     assert_eq!(versions[1].version, 1);
 }
@@ -146,7 +159,7 @@ async fn artifact_versions_are_monotonic_per_key() {
 #[ignore = "requires docker"]
 async fn append_to_missing_session_errors() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let bogus = AgentSessionId::new();
     let err = store
         .append_turn_with_artifacts(
@@ -163,9 +176,12 @@ async fn append_to_missing_session_errors() {
 #[ignore = "requires docker"]
 async fn turn_too_large_is_rejected_without_writing() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
+    // Build a payload guaranteed to exceed the cap. The JSON
+    // escape for a long ASCII string is 1:1, so a string longer
+    // than the cap produces a JSON value longer than the cap.
     let big = "x".repeat(TURN_CONTENT_CAP_BYTES + 16);
     let err = store
         .append_turn_with_artifacts(
@@ -177,6 +193,7 @@ async fn turn_too_large_is_rejected_without_writing() {
         .unwrap_err();
     assert!(matches!(err, AgentSessionError::TurnTooLarge { .. }));
 
+    // No partial write: turns list is empty.
     let turns = store.list_turns(id, None, None).await.unwrap();
     assert!(turns.is_empty());
 }
@@ -185,7 +202,7 @@ async fn turn_too_large_is_rejected_without_writing() {
 #[ignore = "requires docker"]
 async fn artifact_too_large_is_rejected_without_writing() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     let big = "x".repeat(ARTIFACT_VALUE_CAP_BYTES + 16);
@@ -202,6 +219,7 @@ async fn artifact_too_large_is_rejected_without_writing() {
         .unwrap_err();
     assert!(matches!(err, AgentSessionError::ArtifactTooLarge { .. }));
 
+    // M10/M11: turn must not be persisted either — caps are pre-flight.
     let turns = store.list_turns(id, None, None).await.unwrap();
     assert!(turns.is_empty());
     assert!(store.latest_artifact(id, "tree").await.unwrap().is_none());
@@ -211,7 +229,7 @@ async fn artifact_too_large_is_rejected_without_writing() {
 #[ignore = "requires docker"]
 async fn put_artifact_direct_assigns_version_and_lineage() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     let v1 = store
@@ -229,6 +247,7 @@ async fn put_artifact_direct_assigns_version_and_lineage() {
     let row = store.latest_artifact(id, "tree").await.unwrap().unwrap();
     assert_eq!(row.version, 2);
     assert_eq!(row.parent_version, Some(1));
+    // Surface-initiated write — no producing turn.
     assert!(row.produced_by_seq.is_none());
 }
 
@@ -236,7 +255,7 @@ async fn put_artifact_direct_assigns_version_and_lineage() {
 #[ignore = "requires docker"]
 async fn put_artifact_direct_optimistic_conflict_returns_current() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     store
@@ -262,7 +281,7 @@ async fn put_artifact_direct_optimistic_conflict_returns_current() {
 #[ignore = "requires docker"]
 async fn delete_cascades_through_turns_and_artifacts() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     store
@@ -285,7 +304,7 @@ async fn delete_cascades_through_turns_and_artifacts() {
 #[ignore = "requires docker"]
 async fn list_turns_paginates_by_since_seq_and_limit() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     for i in 0..5 {
@@ -321,7 +340,7 @@ async fn list_turns_paginates_by_since_seq_and_limit() {
 #[ignore = "requires docker"]
 async fn tokens_in_and_out_roundtrip_when_set() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
     let mut input = TurnInput::new(TurnRole::Assistant, serde_json::json!({"text": "ok"}));
@@ -346,7 +365,7 @@ async fn tokens_in_and_out_roundtrip_when_set() {
 #[ignore = "requires docker"]
 async fn retention_keep_forever_is_noop() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
     store
         .append_turn_with_artifacts(
@@ -375,7 +394,7 @@ async fn retention_keep_forever_is_noop() {
 #[ignore = "requires docker"]
 async fn retention_delete_after_cascades_turns_and_artifacts() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
     store
         .append_turn_with_artifacts(
@@ -386,6 +405,7 @@ async fn retention_delete_after_cascades_turns_and_artifacts() {
         .await
         .unwrap();
 
+    // Wrong-kind sweep leaves the page-builder session alone.
     let untouched = store
         .sweep_retention(
             "chat",
@@ -399,6 +419,8 @@ async fn retention_delete_after_cascades_turns_and_artifacts() {
     assert_eq!(untouched.sessions_deleted, 0);
     assert!(store.get(id).await.unwrap().is_some());
 
+    // Cutoff = (now + 365d) - 1d = far in the future, so the row
+    // is eligible without needing to clock-skew the database.
     let report = store
         .sweep_retention(
             "page-builder",
@@ -423,9 +445,10 @@ async fn retention_delete_after_cascades_turns_and_artifacts() {
 #[ignore = "requires docker"]
 async fn retention_delete_turns_after_keeps_latest_artifact() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
 
+    // Two turns, each producing a new `tree` version.
     for i in 1..=2 {
         store
             .append_turn_with_artifacts(
@@ -454,6 +477,7 @@ async fn retention_delete_turns_after_keeps_latest_artifact() {
     assert_eq!(report.turns_deleted, 2);
     assert_eq!(report.artifacts_deleted, 1);
 
+    // Session lives, latest artifact lives, older versions are gone.
     assert!(store.get(id).await.unwrap().is_some());
     let versions_after = store.list_artifact_versions(id, "tree").await.unwrap();
     assert_eq!(versions_after.len(), 1);
@@ -466,7 +490,7 @@ async fn retention_delete_turns_after_keeps_latest_artifact() {
 #[ignore = "requires docker"]
 async fn retention_delete_turns_after_without_keep_leaves_artifacts() {
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
     for i in 1..=2 {
         store
@@ -493,6 +517,7 @@ async fn retention_delete_turns_after_without_keep_leaves_artifacts() {
     assert_eq!(report.turns_deleted, 2);
     assert_eq!(report.artifacts_deleted, 0);
 
+    // Every artifact version survives.
     let versions = store.list_artifact_versions(id, "tree").await.unwrap();
     assert_eq!(versions.len(), 2);
 }
@@ -500,8 +525,13 @@ async fn retention_delete_turns_after_without_keep_leaves_artifacts() {
 #[tokio::test]
 #[ignore = "requires docker"]
 async fn retention_zero_ttl_skips_recent_rows() {
+    // Sanity check: a sweep run with `now == CURRENT_TIMESTAMP`
+    // and `ttl >= 1 second` MUST NOT delete a session that was
+    // just created. Postgres `TIMESTAMPTZ` has microsecond
+    // resolution so this is less risky than the SQLite second
+    // resolution, but the test pins the same invariant for parity.
     let (pool, _guard) = boot().await;
-    let store = PostgresAgentSessionStore::new(pool);
+    let store = PgAgentSessionStore::new(pool);
     let id = fresh_session(&store).await;
     let report = store
         .sweep_retention(
