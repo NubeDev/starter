@@ -505,11 +505,12 @@ pub enum PutArtifactError {
 /// `agent_sessions.updated_at` (for `DeleteAfter`) or
 /// `agent_session_turns.created_at` /
 /// `agent_session_artifacts.updated_at` (for `DeleteTurnsAfter`).
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Default)]
 pub enum RetentionPolicy {
     /// Never delete. Default — every session lives until the
     /// surface explicitly drops it via
     /// [`AgentSessionStore::delete`].
+    #[default]
     KeepForever,
     /// Hard delete sessions idle for at least `ttl`.
     DeleteAfter {
@@ -531,11 +532,6 @@ pub enum RetentionPolicy {
     },
 }
 
-impl Default for RetentionPolicy {
-    fn default() -> Self {
-        Self::KeepForever
-    }
-}
 
 /// Report from [`AgentSessionStore::sweep_retention`].
 ///

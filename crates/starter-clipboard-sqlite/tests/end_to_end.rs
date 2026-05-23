@@ -23,6 +23,8 @@ fn principal(subject: &str) -> Principal {
         subject: subject.to_string(),
         role: Role::Writer,
         scopes: Vec::new(),
+        tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

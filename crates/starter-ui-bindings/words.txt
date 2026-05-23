@@ -19,7 +19,6 @@ borrow_mut
 btreeset
 cannot
 cell
-char
 characters
 child
 childlink

@@ -160,7 +160,7 @@ async fn api_token_round_trip() {
     .unwrap();
     let user = users.find_by_email("t@example.com").await.unwrap().unwrap();
 
-    let issued = token::issue(tokens.as_ref(), &user.id, &[], None)
+    let issued = token::issue(tokens.as_ref(), &user.id, &[], "t-test", None)
         .await
         .expect("issue token");
     assert!(issued.plaintext.starts_with("sak_"));
@@ -191,7 +191,7 @@ async fn wrong_secret_after_correct_prefix_is_invalid() {
     .await
     .unwrap();
     let user = users.find_by_email("w@example.com").await.unwrap().unwrap();
-    let issued = token::issue(tokens.as_ref(), &user.id, &[], None)
+    let issued = token::issue(tokens.as_ref(), &user.id, &[], "t-test", None)
         .await
         .unwrap();
 
@@ -239,7 +239,7 @@ async fn authenticator_dispatches_by_prefix() {
     let session = starter_auth_users::session::issue(sessions.as_ref(), &user.id)
         .await
         .unwrap();
-    let token = token::issue(tokens.as_ref(), &user.id, &[], None)
+    let token = token::issue(tokens.as_ref(), &user.id, &[], "t-test", None)
         .await
         .unwrap();
 

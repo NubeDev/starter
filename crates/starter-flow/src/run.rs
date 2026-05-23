@@ -150,6 +150,8 @@ fn default_system_admin_principal() -> Principal {
         subject: "system/Admin".to_string(),
         role: starter_spi::auth::Role::Admin,
         scopes: Vec::new(),
+        tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }
@@ -637,6 +639,8 @@ impl FlowRunner {
                     subject: "system".to_string(),
                     role: starter_spi::auth::Role::Admin,
                     scopes: Vec::new(),
+                    tenant_id: None,
+                    teams: Vec::new(),
                     extra: serde_json::Value::Null,
                 });
                 if let Err(e) = spi

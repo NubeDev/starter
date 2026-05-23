@@ -20,6 +20,7 @@ starter-ext-sdk        = { workspace = true, features = ["builtin"] }
 starter-ext-supervisor = { workspace = true }
 starter-spi            = { workspace = true }
 starter-mcp            = { workspace = true }
+starter-authz          = { workspace = true }
 
 serde       = { workspace = true }
 serde_json  = { workspace = true }

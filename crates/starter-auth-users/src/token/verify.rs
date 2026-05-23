@@ -4,7 +4,7 @@
 use starter_spi::auth::Principal;
 
 use crate::password;
-use crate::store::{TokenStore, UserStore, UserStoreError};
+use crate::store::{TenantStore, TokenStore, UserStore, UserStoreError};
 
 use super::issue::{map_store_err, TokenError, TOKEN_PREFIX};
 
@@ -53,10 +53,45 @@ where
         })?
         .ok_or(TokenError::Invalid)?;
 
+    // Phase 7a (R11) — the token carries its tenant binding.
+    // `Some("*")` is the super-admin sentinel reserved for tokens
+    // issued by users with global Admin role; the engine treats
+    // it as a cross-tenant bypass.
     Ok(Principal {
         subject: user.id,
         role: user.role,
         scopes: row.scopes,
+        tenant_id: Some(row.tenant_id),
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     })
+}
+
+/// Phase 7b — verify a token **and** populate `Principal.teams`
+/// from the team_members join for `(token.tenant_id, user_id)`.
+/// The super-admin sentinel `"*"` short-circuits the lookup with
+/// an empty team list (cross-tenant admin tokens are role-driven,
+/// not team-driven). See `verify_session_with_teams` in
+/// `session::verify` for the parallel session-side path.
+pub async fn verify_with_teams<T, U, TS>(
+    tokens: &T,
+    users: &U,
+    tenants: &TS,
+    presented: &str,
+) -> Result<Principal, TokenError>
+where
+    T: TokenStore + ?Sized,
+    U: UserStore + ?Sized,
+    TS: TenantStore + ?Sized,
+{
+    let mut principal = verify(tokens, users, presented).await?;
+    if let Some(t) = principal.tenant_id.clone() {
+        if t != "*" {
+            principal.teams = tenants
+                .team_slugs_for_user(&t, &principal.subject)
+                .await
+                .map_err(|e| TokenError::Store(e.to_string()))?;
+        }
+    }
+    Ok(principal)
 }

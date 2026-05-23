@@ -100,6 +100,8 @@ fn build_principal() -> Principal {
         subject: "stage8-user".to_string(),
         role: Role::Admin,
         scopes: Vec::new(),
+        tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

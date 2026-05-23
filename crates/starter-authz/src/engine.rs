@@ -9,6 +9,7 @@ use serde_json::{json, Value};
 use starter_spi::auth::{Principal, Role};
 use starter_spi::authz::{Decision, PolicyEngine, ResourceRef, ResourceRegistry};
 
+use crate::audit::{DecisionEntry, DecisionSink, NoopDecisionSink};
 use crate::condition::{Context, Expr};
 use crate::config::{Assignment, AuthzConfig, Effect, Rule};
 use crate::defaults;
@@ -20,6 +21,7 @@ pub struct StaticRbacEngine {
     rules: Vec<CompiledRule>,
     assignments: Vec<Assignment>,
     registry: Arc<dyn ResourceRegistry>,
+    sink: Arc<dyn DecisionSink>,
 }
 
 #[derive(Debug, Clone)]
@@ -29,6 +31,10 @@ struct CompiledRule {
     resource: String,
     actions: Vec<String>,
     effect: Effect,
+    /// Tenant scope of this rule (Phase 7a). `None` is a global
+    /// rule (matches any tenant). `Some(_)` only matches when the
+    /// principal is bound to that tenant.
+    tenant_id: Option<String>,
     /// `Some(Owner)` when the source rule used the magic
     /// `condition = "owner"` shortcut; `Some(Expr(_))` for a
     /// parsed mini-language expression; `None` for an
@@ -69,6 +75,7 @@ impl StaticRbacEngine {
                 resource: r.resource,
                 actions: r.actions,
                 effect: r.effect,
+                tenant_id: r.tenant_id,
                 cond,
             });
         }
@@ -77,7 +84,22 @@ impl StaticRbacEngine {
             rules: compiled,
             assignments: cfg.assignments,
             registry,
+            sink: Arc::new(NoopDecisionSink),
         })
+    }
+
+    /// Replace the audit sink. Default is [`NoopDecisionSink`]
+    /// (silent drop, zero overhead). Wire a [`crate::DbDecisionSink`]
+    /// here to persist decisions. SCOPE-EXT.md R14.
+    pub fn with_sink(mut self, sink: Arc<dyn DecisionSink>) -> Self {
+        self.sink = sink;
+        self
+    }
+
+    /// Borrow the configured sink — used by `DbPolicyEngine` to
+    /// propagate the sink across cache reloads.
+    pub fn sink(&self) -> &Arc<dyn DecisionSink> {
+        &self.sink
     }
 
     /// Resolve every role the principal carries: the built-in
@@ -134,12 +156,34 @@ fn build_context(p: &Principal, object: &ResourceRef) -> Context {
     if let Value::Object(map) = &mut root {
         map.insert("subject".into(), Value::String(p.subject.clone()));
         map.insert("role".into(), Value::String(role_name(p.role).into()));
+        // Phase 7a — expose `tenant` so conditions can reference it
+        // (e.g. `tenant == "acme"`). The cross-tenant predicate
+        // already fires before condition evaluation; this is here
+        // for diagnostic / dashboard rules.
+        if let Some(t) = &p.tenant_id {
+            map.insert("tenant".into(), Value::String(t.clone()));
+        }
+        // Phase 7b (R13) — expose principal-level fields under a
+        // dedicated `principal.*` namespace so rules can say
+        // `principal.teams contains "hvac-ops"`. The `teams`
+        // array is always present (empty for pre-Phase-7b
+        // principals) — see SCOPE-EXT.md "strictly additive".
+        map.insert(
+            "principal".into(),
+            json!({
+                "subject": p.subject,
+                "role":    role_name(p.role),
+                "teams":   p.teams,
+                "tenant":  p.tenant_id,
+            }),
+        );
         map.insert(
             "object".into(),
             json!({
                 "kind": object.kind,
                 "id": object.id,
                 "owner": object.owner,
+                "tenant": object.tenant,
             }),
         );
     }
@@ -150,15 +194,58 @@ fn build_context(p: &Principal, object: &ResourceRef) -> Context {
 impl PolicyEngine for StaticRbacEngine {
     async fn check(&self, principal: &Principal, action: &str, object: &ResourceRef) -> Decision {
         // SCOPE.md R3 — default-deny on unknown resources.
-        if self.registry.lookup(&object.kind).is_none() {
-            tracing::info!(
-                subject = %principal.subject,
-                action = %action,
-                kind = %object.kind,
-                reason = "unknown_resource",
-                "authz deny"
-            );
-            return Decision::deny("unknown_resource");
+        let spec = match self.registry.lookup(&object.kind) {
+            Some(s) => s,
+            None => {
+                tracing::info!(
+                    subject = %principal.subject,
+                    action = %action,
+                    kind = %object.kind,
+                    reason = "unknown_resource",
+                    "authz deny"
+                );
+                let decision = Decision::deny("unknown_resource");
+                self.audit(principal, action, object, &decision).await;
+                return decision;
+            }
+        };
+
+        // SCOPE-EXT.md R11 — cross-tenant predicate runs BEFORE
+        // role / condition evaluation. Tenant-scoped kinds require
+        // `Some(principal.tenant) == Some(object.tenant)`; missing
+        // or mismatch short-circuits with a typed deny reason. The
+        // super-admin sentinel `"*"` on the principal bypasses the
+        // check (used by cross-tenant admin tokens).
+        if spec.tenant_scoped && !principal.is_super_admin() {
+            match (&principal.tenant_id, &object.tenant) {
+                (None, _) => {
+                    tracing::info!(
+                        subject = %principal.subject,
+                        action = %action,
+                        kind = %object.kind,
+                        reason = "no_tenant_binding",
+                        "authz deny"
+                    );
+                    let decision = Decision::deny("no_tenant_binding");
+                    self.audit(principal, action, object, &decision).await;
+                    return decision;
+                }
+                (Some(pt), Some(ot)) if pt == ot => { /* fall through */ }
+                _ => {
+                    tracing::info!(
+                        subject = %principal.subject,
+                        action = %action,
+                        kind = %object.kind,
+                        principal_tenant = ?principal.tenant_id,
+                        object_tenant = ?object.tenant,
+                        reason = "cross_tenant",
+                        "authz deny"
+                    );
+                    let decision = Decision::deny("cross_tenant");
+                    self.audit(principal, action, object, &decision).await;
+                    return decision;
+                }
+            }
         }
 
         let roles = self.roles_for(principal);
@@ -168,6 +255,16 @@ impl PolicyEngine for StaticRbacEngine {
         let mut deny_match: Option<&CompiledRule> = None;
 
         for rule in &self.rules {
+            // Phase 7a — tenant-scoped rules only match when the
+            // principal's tenant binding matches the rule's
+            // tenant. Global (None) rules always evaluate.
+            if let Some(rule_tenant) = &rule.tenant_id {
+                if !principal.is_super_admin()
+                    && principal.tenant_id.as_deref() != Some(rule_tenant.as_str())
+                {
+                    continue;
+                }
+            }
             if !role_matches(&rule.role, &roles) {
                 continue;
             }
@@ -183,7 +280,27 @@ impl PolicyEngine for StaticRbacEngine {
                     Some(owner) => owner == &principal.subject,
                     None => false,
                 },
-                Some(CompiledCondition::Expr(e)) => e.eval(&ctx),
+                Some(CompiledCondition::Expr(e)) => match e.try_eval(&ctx) {
+                    Ok(v) => v,
+                    Err(err) => {
+                        // SCOPE-EXT.md R13 — `contains` LHS that
+                        // isn't an array is a loud-failure deny,
+                        // not a silent false. We short-circuit
+                        // the whole `check()` so the operator
+                        // sees the malformed rule on first hit.
+                        tracing::error!(
+                            subject = %principal.subject,
+                            action = %action,
+                            kind = %object.kind,
+                            rule = %rule.id,
+                            error = %err,
+                            "authz rule evaluation error"
+                        );
+                        let decision = Decision::deny_by("condition_invalid", rule.id.clone());
+                        self.audit(principal, action, object, &decision).await;
+                        return decision;
+                    }
+                },
             };
             if !cond_ok {
                 continue;
@@ -243,6 +360,43 @@ impl PolicyEngine for StaticRbacEngine {
             }
         }
 
+        self.audit(principal, action, object, &decision).await;
         decision
+    }
+}
+
+impl StaticRbacEngine {
+    /// Build a [`DecisionEntry`] from the decision and push it
+    /// through the configured sink. Default sink is the
+    /// [`NoopDecisionSink`] silent-drop; a `DbDecisionSink` does a
+    /// non-blocking `try_send` so this never blocks `check()`.
+    async fn audit(
+        &self,
+        principal: &Principal,
+        action: &str,
+        object: &ResourceRef,
+        decision: &Decision,
+    ) {
+        let (effect, rule_id, reason) = match decision {
+            Decision::Allow { matched_rule } => (Effect::Allow, matched_rule.clone(), None),
+            Decision::Deny {
+                reason,
+                matched_rule,
+            } => (Effect::Deny, matched_rule.clone(), Some(reason.clone())),
+        };
+        let entry = DecisionEntry {
+            at: chrono::Utc::now(),
+            tenant: principal.tenant_id.clone(),
+            subject: principal.subject.clone(),
+            principal_role: role_name(principal.role).to_string(),
+            action: action.to_string(),
+            kind: object.kind.clone(),
+            id: object.id.clone(),
+            effect,
+            rule_id,
+            reason,
+            surface: crate::surface::current_surface(),
+        };
+        self.sink.record(entry).await;
     }
 }

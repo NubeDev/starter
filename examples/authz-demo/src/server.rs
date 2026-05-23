@@ -30,7 +30,10 @@ use starter_auth_users::{
 use starter_authz::store::SqlitePolicyStore;
 use starter_authz::{DbPolicyEngine, StaticRegistry};
 use starter_ext_host::{ExtensionRegistry, Loader};
-use starter_ext_server::{router_with_auth, ExtensionAdmin, InMemoryEnablementStore};
+use starter_ext_server::{
+    rest_router, router_with_auth, BuiltinRestDispatcher, ExtensionAdmin, InMemoryEnablementStore,
+    RestRouterOptions,
+};
 use starter_observability::metrics::StandardMetrics;
 use starter_server::auth::with_principal;
 use starter_server::ServerBuilder;
@@ -98,9 +101,31 @@ pub async fn build(
     let engine_dyn: Arc<dyn PolicyEngine> = engine.clone();
 
     // ---------------------------------------------------------------
-    // Extension load — manifest-driven discovery only. The demo wires
-    // the actual REST handlers in `weather.rs` so each one can carry
-    // its own policy-engine gate.
+    // Extension load — manifest-driven, **plus the REST adapter
+    // mounts the weather routes**. Phase 7d (SCOPE-EXT R15): the
+    // manifest's `auth.permission: { resource, action }` block is
+    // what wraps each handler in `with_permission(...)`. The host
+    // hands `rest_router` the same `ResourceRegistry` the engine
+    // uses so an unknown `resource` is a load-time error symmetric
+    // with `UnknownRole` (the broken extension refuses to mount;
+    // the rest of the host comes up). The previous hand-mounted
+    // `weather::router()` has become a docstring on `weather.rs`.
+    //
+    // Layer order applied by the adapter (innermost-first in the
+    // code, outermost-first in the request path):
+    //
+    //   with_role (outer)
+    //     → with_scope
+    //       → with_permission (inner, from `auth.permission`)
+    //         → handler
+    //
+    // **Audit consequence:** a role-denied request never reaches
+    // the policy engine, so it does not produce a permission-deny
+    // row in `starter_authz_decisions`. Dashboards must exclude
+    // pre-role rejections from "permission deny rate" panels. Do
+    // NOT flip the order to make audit symmetric — the coarse
+    // role gate short-circuiting the engine is the intended
+    // trade.
     // ---------------------------------------------------------------
     let ext_dir = std::env::var_os("EXTENSIONS_DIR")
         .map(PathBuf::from)
@@ -131,9 +156,25 @@ pub async fn build(
     let reports = reports::router::<AppState>(ReportsState { pool: pool.clone() });
 
     // ---------------------------------------------------------------
-    // /weather/* — extension-contributed resource. Same gating shape.
+    // /weather/* — built by `rest_router` from the extension manifest.
+    // `BuiltinRestDispatcher` calls into the `BuiltinTable` registered
+    // by `weather::builtin_table()`. The adapter wraps each entry in
+    // `with_permission(...)` per the manifest's `auth.permission`.
     // ---------------------------------------------------------------
-    let weather = weather::router::<AppState>();
+    let weather_builtins = weather::builtin_table();
+    let rest_dispatcher = Arc::new(BuiltinRestDispatcher::new(
+        weather_builtins,
+        ext_registry.clone(),
+    ));
+    let weather = rest_router::<AppState>(
+        ext_registry.clone(),
+        rest_dispatcher,
+        RestRouterOptions {
+            path_prefix: None,
+            resource_registry: Some(res_registry.clone() as Arc<dyn ResourceRegistry>),
+        },
+    )
+    .context("build extension REST adapter")?;
 
     // ---------------------------------------------------------------
     // /extensions/* — admin slice. Lists the loaded extensions; gated

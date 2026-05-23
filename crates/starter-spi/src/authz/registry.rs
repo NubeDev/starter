@@ -20,6 +20,17 @@ pub struct ResourceSpec {
     /// Whether rows of this resource have an owner the engine
     /// should consider for ownership rules.
     pub ownership: Ownership,
+    /// Whether rows of this resource carry a `tenant_id` column
+    /// (Phase 7a — R11). When `true`, the engine evaluates the
+    /// cross-tenant predicate **before** role / condition and
+    /// short-circuits to `Deny { reason: "cross_tenant" }` or
+    /// `Deny { reason: "no_tenant_binding" }` without consulting
+    /// any rule. When `false` (the default — pre-Phase-7
+    /// behaviour) the predicate is skipped entirely; this is the
+    /// shape for globally-scoped kinds like `users`, `tenants`,
+    /// `extensions`.
+    #[serde(default)]
+    pub tenant_scoped: bool,
     /// Human label for the admin UI; not consumed by the engine.
     pub label: String,
     /// Human description for the admin UI; not consumed by the
@@ -41,6 +52,26 @@ impl ResourceSpec {
             kind: kind.to_string(),
             actions: actions.iter().map(|s| (*s).to_string()).collect(),
             ownership,
+            tenant_scoped: false,
+            label: label.to_string(),
+            description: description.to_string(),
+        }
+    }
+
+    /// Tenant-scoped variant — turns the cross-tenant predicate
+    /// on for this kind (Phase 7a — R11).
+    pub fn from_static_tenant_scoped(
+        kind: &'static str,
+        actions: &'static [&'static str],
+        ownership: Ownership,
+        label: &'static str,
+        description: &'static str,
+    ) -> Self {
+        Self {
+            kind: kind.to_string(),
+            actions: actions.iter().map(|s| (*s).to_string()).collect(),
+            ownership,
+            tenant_scoped: true,
             label: label.to_string(),
             description: description.to_string(),
         }

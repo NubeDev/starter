@@ -128,6 +128,10 @@ pub struct StoredRule {
     pub priority: i32,
     /// Subject id of the admin who created the row.
     pub created_by: String,
+    /// Phase 7a — tenant scope. `None` = global rule (applies to
+    /// every tenant); `Some(_)` = only matches a principal bound
+    /// to that tenant.
+    pub tenant_id: Option<String>,
 }
 
 impl StoredRule {
@@ -154,6 +158,7 @@ impl StoredRule {
             condition: self.condition.clone(),
             effect,
             priority: self.priority,
+            tenant_id: self.tenant_id.clone(),
         })
     }
 }

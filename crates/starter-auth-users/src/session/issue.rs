@@ -29,10 +29,22 @@ pub struct IssuedSession {
 }
 
 /// Issue a session for `user_id`. Generates a fresh opaque id +
-/// CSRF token and persists both.
+/// CSRF token and persists both. The session is tenant-less —
+/// use [`issue_for_tenant`] for the Phase 7a flow.
 pub async fn issue<S: SessionStore + ?Sized>(
     store: &S,
     user_id: &str,
+) -> Result<IssuedSession, SessionError> {
+    issue_for_tenant(store, user_id, None).await
+}
+
+/// Phase 7a — issue a session bound to `tenant_id`. The user
+/// must have a membership row for that tenant; the caller is
+/// responsible for that check (OAuth callback / login handler).
+pub async fn issue_for_tenant<S: SessionStore + ?Sized>(
+    store: &S,
+    user_id: &str,
+    tenant_id: Option<&str>,
 ) -> Result<IssuedSession, SessionError> {
     let mut id_bytes = [0u8; 32];
     rand::thread_rng().fill_bytes(&mut id_bytes);
@@ -44,7 +56,7 @@ pub async fn issue<S: SessionStore + ?Sized>(
 
     let expires_at = Utc::now() + Duration::hours(DEFAULT_TTL_HOURS);
     store
-        .create(&id, user_id, &csrf_token, expires_at)
+        .create(&id, user_id, &csrf_token, tenant_id, expires_at)
         .await
         .map_err(|e| match e {
             SessionStoreError::Backend(s) => SessionError::Store(s),

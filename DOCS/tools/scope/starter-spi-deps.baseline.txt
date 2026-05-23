@@ -21,11 +21,21 @@
 
 aho-corasick v1.1.4
 async-trait v0.1.89 (proc-macro)
+bytes v1.11.1
 cfg-if v1.0.4
 chrono v0.4.44
 equivalent v1.0.2
 errno v0.3.14
 fnv v1.0.7
+futures v0.3.32
+futures-channel v0.3.32
+futures-core v0.3.32
+futures-executor v0.3.32
+futures-io v0.3.32
+futures-macro v0.3.32 (proc-macro)
+futures-sink v0.3.32
+futures-task v0.3.32
+futures-util v0.3.32
 getrandom v0.4.2
 hashbrown v0.17.1
 iana-time-zone v0.1.65
@@ -54,9 +64,10 @@ secrecy v0.10.3
 serde v1.0.228
 serde_core v1.0.228
 serde_derive v1.0.228 (proc-macro)
-serde_json v1.0.149
+serde_json v1.0.150
 sha1_smol v1.0.1
 signal-hook-registry v1.4.8
+slab v0.4.12
 smallvec v1.15.1
 starter-spi v0.1.0
 syn v2.0.117

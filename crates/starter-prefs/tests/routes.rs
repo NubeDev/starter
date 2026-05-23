@@ -53,6 +53,8 @@ fn principal(role: Role, active_workspace: Option<&str>) -> Principal {
         role,
         scopes: Vec::<Scope>::new(),
         extra,
+        tenant_id: None,
+        teams: Vec::new(),
     }
 }
 

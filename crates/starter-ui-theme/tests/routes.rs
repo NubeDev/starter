@@ -38,6 +38,8 @@ fn principal(role: Role) -> Principal {
         subject: "u1".into(),
         role,
         scopes: Vec::<Scope>::new(),
+        tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

@@ -71,6 +71,8 @@ fn with_admin_extension(router: Router) -> Router {
         subject: "admin@example.com".to_string(),
         role: Role::Admin,
         scopes: vec![Scope("admin".to_string())],
+        tenant_id: None,
+        teams: Vec::new(),
         extra: Value::Null,
     };
     router.layer(from_fn(move |mut req: Request<Body>, next: Next| {
@@ -88,6 +90,8 @@ fn with_role_extension(router: Router, role: Role) -> Router {
         subject: "user@example.com".to_string(),
         role,
         scopes: Vec::new(),
+        tenant_id: None,
+        teams: Vec::new(),
         extra: Value::Null,
     };
     router.layer(from_fn(move |mut req: Request<Body>, next: Next| {
@@ -105,6 +109,7 @@ async fn admin_app() -> (Router, Arc<DbPolicyEngine>) {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry: registry(),
+        decision_sink: None,
     });
     (with_admin_extension(router), engine)
 }
@@ -161,6 +166,7 @@ async fn admin_routes_require_admin() {
     let router: Router = authz_router(AuthzRoutesState {
         engine,
         registry: registry(),
+        decision_sink: None,
     });
     let app = with_role_extension(router, Role::Writer);
     let resp = app
@@ -183,6 +189,7 @@ async fn rule_write_invalidates_cache() {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry,
+        decision_sink: None,
     });
     let app = with_admin_extension(router);
 
@@ -191,6 +198,8 @@ async fn rule_write_invalidates_cache() {
         subject: "r@example.com".to_string(),
         role: Role::Reader,
         scopes: vec![],
+        tenant_id: None,
+        teams: Vec::new(),
         extra: Value::Null,
     };
     let before = engine
@@ -230,6 +239,7 @@ async fn dry_run_matches_real_check() {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry,
+        decision_sink: None,
     });
     let app = with_admin_extension(router);
 
@@ -250,6 +260,8 @@ async fn dry_run_matches_real_check() {
         subject: "alice@example.com".to_string(),
         role: Role::Reader,
         scopes: vec![],
+        tenant_id: None,
+        teams: Vec::new(),
         extra: Value::Null,
     };
     let real = engine
@@ -278,6 +290,7 @@ async fn admin_cannot_lock_themselves_out() {
         effect: "deny".into(),
         priority: 999,
         created_by: "admin".into(),
+        tenant_id: None,
     };
     store.insert_rule(&bad).await.unwrap();
     engine.reload().await.unwrap();
@@ -285,6 +298,7 @@ async fn admin_cannot_lock_themselves_out() {
     let router: Router = authz_router(AuthzRoutesState {
         engine: engine.clone(),
         registry,
+        decision_sink: None,
     });
     let app = with_admin_extension(router);
 
@@ -320,6 +334,7 @@ async fn denial_logs_are_greppable() {
             effect: "deny".into(),
             priority: 50,
             created_by: "admin".into(),
+            tenant_id: None,
         })
         .await
         .unwrap();
@@ -329,6 +344,8 @@ async fn denial_logs_are_greppable() {
         subject: "w@example.com".into(),
         role: Role::Writer,
         scopes: vec![],
+        tenant_id: None,
+        teams: Vec::new(),
         extra: Value::Null,
     };
     let d = engine

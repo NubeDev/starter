@@ -44,6 +44,8 @@ impl Authenticator for FixedAuthenticator {
                 subject: "tester".into(),
                 role: Role::Admin,
                 scopes: Vec::new(),
+                tenant_id: None,
+                teams: Vec::new(),
                 extra: Default::default(),
             })
         } else {

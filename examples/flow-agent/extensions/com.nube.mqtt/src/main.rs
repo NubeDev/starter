@@ -9,16 +9,14 @@
 //! nodes are stateless behaviours on top).
 //!
 //! Wire surface (one tokio::main dispatcher):
-//!   - `init`              → InitReady { manifest_hash, ready }
-//!   - `health`            → `null`
-//!   - `flow.node.invoke`  → publish: returns SlotMap with
-//!                           `published_at` (millis). subscribe:
-//!                           returns open-stream ack, then emits
-//!                           `stream.event` per message until
-//!                           `stream.cancel` lands.
-//!   - `stream.cancel`     → cancel an in-flight subscribe by
-//!                           invocation_id.
-//!   - `shutdown`          → exit cleanly.
+//!
+//! - `init` → InitReady { manifest_hash, ready }
+//! - `health` → `null`
+//! - `flow.node.invoke` → publish returns SlotMap with `published_at` (millis);
+//!   subscribe returns open-stream ack then emits `stream.event` per message
+//!   until `stream.cancel` lands.
+//! - `stream.cancel` → cancel an in-flight subscribe by invocation_id.
+//! - `shutdown` → exit cleanly.
 
 use std::collections::HashMap;
 use std::sync::Arc;

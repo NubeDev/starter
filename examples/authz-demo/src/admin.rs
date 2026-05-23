@@ -38,7 +38,10 @@ pub async fn create_user(
 pub async fn issue_token(tokens: &Arc<dyn TokenStore>, user_id: &str) -> Result<IssuedToken> {
     // No scopes attached — authz decisions are by policy engine + role,
     // not by token scopes, in this demo.
-    let t = issue(tokens.as_ref(), user_id, &[], None)
+    // Phase 7a — demo issues a super-admin token (cross-tenant
+    // bypass). Real callers should issue tokens scoped to a
+    // specific tenant; see the seeded tenants in main.rs.
+    let t = issue(tokens.as_ref(), user_id, &[], "*", None)
         .await
         .context("issue token")?;
     Ok(t)
@@ -52,7 +55,15 @@ pub async fn grant(
     resource: &str,
     action: &str,
 ) -> Result<String> {
-    upsert_rule(engine, admin_subject, user_id, resource, action, Effect::Allow).await
+    upsert_rule(
+        engine,
+        admin_subject,
+        user_id,
+        resource,
+        action,
+        Effect::Allow,
+    )
+    .await
 }
 
 /// Insert a Deny rule scoped to a single user. Wins over any
@@ -64,7 +75,48 @@ pub async fn revoke(
     resource: &str,
     action: &str,
 ) -> Result<String> {
-    upsert_rule(engine, admin_subject, user_id, resource, action, Effect::Deny).await
+    upsert_rule(
+        engine,
+        admin_subject,
+        user_id,
+        resource,
+        action,
+        Effect::Deny,
+    )
+    .await
+}
+
+/// Phase 7b — insert one Allow rule that covers every member of a
+/// team via `principal.teams contains "<team_slug>"`. One row,
+/// not one per user (R13). Per-tenant: the rule's `tenant_id` is
+/// set so it only matches principals bound to that tenant.
+pub async fn grant_team(
+    engine: &Arc<DbPolicyEngine>,
+    admin_subject: &str,
+    tenant_id: &str,
+    team_slug: &str,
+    resource: &str,
+    action: &str,
+) -> Result<String> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let row = StoredRule {
+        id: id.clone(),
+        role: "*".into(),
+        resource: resource.into(),
+        actions: vec![action.into()],
+        condition: Some(format!("principal.teams contains \"{team_slug}\"")),
+        effect: "allow".into(),
+        priority: 100,
+        created_by: admin_subject.to_string(),
+        tenant_id: Some(tenant_id.into()),
+    };
+    engine
+        .store()
+        .insert_rule(&row)
+        .await
+        .context("insert team rule")?;
+    engine.reload().await.context("reload engine cache")?;
+    Ok(id)
 }
 
 async fn upsert_rule(
@@ -92,6 +144,9 @@ async fn upsert_rule(
         // sorts ties.
         priority: 100,
         created_by: admin_subject.to_string(),
+        // Phase 7a — demo grants are global (cross-tenant) so the
+        // existing single-tenant flow keeps working unchanged.
+        tenant_id: None,
     };
     engine
         .store()

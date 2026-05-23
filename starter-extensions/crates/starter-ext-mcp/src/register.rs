@@ -20,13 +20,37 @@ use std::time::Duration;
 
 use starter_ext_host::ExtensionRegistry;
 use starter_ext_sdk::builtin::BuiltinTable;
-use starter_ext_spi::{Error, ExtensionId, RuntimeKind};
+use starter_ext_spi::{Error, ExtensionId, PermissionGate, RuntimeKind};
 use starter_mcp::ToolRegistry;
+use starter_spi::authz::PolicyEngine;
 
 use crate::{
+    authzed::AuthzedToolBinding,
     ctx_stub::make_stub_ctx,
     tool_wrapper::{ExtensionToolBinding, ProcessExtensionToolBinding},
 };
+
+/// Helper: wrap `tool` in an [`AuthzedToolBinding`] when both
+/// `engine` and `gate` are present, otherwise return it untouched
+/// boxed into the registry's `Arc<dyn Tool>` shape. Keeps the
+/// "permission == None → zero overhead" property symmetric with
+/// the REST adapter (SCOPE-EXT R15).
+fn register_with_optional_gate<T>(
+    tools: ToolRegistry,
+    tool: T,
+    engine: &Option<Arc<dyn PolicyEngine>>,
+    gate: Option<&PermissionGate>,
+) -> ToolRegistry
+where
+    T: starter_spi::tool::Tool + Send + Sync + 'static,
+{
+    match (engine, gate) {
+        (Some(engine), Some(gate)) => {
+            tools.register(AuthzedToolBinding::new(tool, engine.clone(), gate.clone()))
+        }
+        _ => tools.register(tool),
+    }
+}
 
 /// Summary of what `register_tools` did. Surfaced so a consumer can log
 /// the outcome without re-scanning the registry.
@@ -82,6 +106,21 @@ pub enum RegisterError {
 pub fn register_tools(
     registry: &ExtensionRegistry,
     builtins: &Arc<BuiltinTable>,
+    tools: ToolRegistry,
+) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
+    register_tools_with_engine(registry, builtins, None, tools)
+}
+
+/// Same as [`register_tools`] but threads an optional
+/// [`PolicyEngine`] through every tool whose manifest declared
+/// `auth.permission`. SCOPE-EXT §5 (Phase 7d.2):
+/// `engine.check((resource, action))` runs before the tool body;
+/// a deny short-circuits with `Error::Forbidden` and lands in
+/// `starter_authz_decisions` with `surface = "mcp"`.
+pub fn register_tools_with_engine(
+    registry: &ExtensionRegistry,
+    builtins: &Arc<BuiltinTable>,
+    engine: Option<Arc<dyn PolicyEngine>>,
     mut tools: ToolRegistry,
 ) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
     let mut outcome = RegisterOutcome::default();
@@ -131,7 +170,8 @@ pub fn register_tools(
                 ctx.clone(),
             ) {
                 Ok(binding) => {
-                    tools = tools.register(binding);
+                    let gate = tool_entry.auth.permission.as_ref();
+                    tools = register_with_optional_gate(tools, binding, &engine, gate);
                     outcome.tools_registered += 1;
                 }
                 Err(e) => failures.push(ToolBindingFailure {
@@ -169,6 +209,17 @@ pub fn register_tools(
 pub fn register_process_tools(
     registry: &ExtensionRegistry,
     handles: &HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
+    request_timeout: Duration,
+    tools: ToolRegistry,
+) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
+    register_process_tools_with_engine(registry, handles, None, request_timeout, tools)
+}
+
+/// Process-flavour companion to [`register_tools_with_engine`].
+pub fn register_process_tools_with_engine(
+    registry: &ExtensionRegistry,
+    handles: &HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
+    engine: Option<Arc<dyn PolicyEngine>>,
     request_timeout: Duration,
     mut tools: ToolRegistry,
 ) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
@@ -214,7 +265,8 @@ pub fn register_process_tools(
                 request_timeout,
             ) {
                 Ok(binding) => {
-                    tools = tools.register(binding);
+                    let gate = tool_entry.auth.permission.as_ref();
+                    tools = register_with_optional_gate(tools, binding, &engine, gate);
                     outcome.tools_registered += 1;
                 }
                 Err(e) => failures.push(ToolBindingFailure {

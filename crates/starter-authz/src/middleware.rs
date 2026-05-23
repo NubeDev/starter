@@ -48,6 +48,56 @@ where
     }))
 }
 
+/// Owned-string variant of [`with_permission`]. Same semantics; the
+/// `(kind, action)` are stored as `Arc<str>` inside the closure so
+/// they don't have to be `&'static`. Use this when the gate values
+/// come from a runtime source (extension manifest, dynamic config)
+/// rather than a `&'static` literal — e.g. the REST adapter wiring
+/// `ContributeRest.auth.permission` per SCOPE-EXT R15.
+pub fn with_permission_owned<S>(router: Router<S>, kind: String, action: String) -> Router<S>
+where
+    S: Clone + Send + Sync + 'static,
+{
+    let kind: Arc<str> = Arc::from(kind);
+    let action: Arc<str> = Arc::from(action);
+    router.layer(from_fn(move |req: Request<Body>, next: Next| {
+        let kind = kind.clone();
+        let action = action.clone();
+        async move { gate_owned(kind, action, req, next).await }
+    }))
+}
+
+async fn gate_owned(kind: Arc<str>, action: Arc<str>, req: Request<Body>, next: Next) -> Response {
+    let principal = match req.extensions().get::<Principal>() {
+        Some(p) => p.clone(),
+        None => return StatusCode::UNAUTHORIZED.into_response(),
+    };
+    let engine = match req.extensions().get::<Arc<dyn PolicyEngine>>() {
+        Some(e) => e.clone(),
+        None => {
+            tracing::error!(
+                kind = %kind,
+                action = %action,
+                "authz: PolicyEngine extension missing on request"
+            );
+            return (
+                StatusCode::FORBIDDEN,
+                Json(serde_json::json!({"error": "engine_missing"})),
+            )
+                .into_response();
+        }
+    };
+    let object = ResourceRef::collection(kind.as_ref());
+    match crate::surface::with_surface("rest", engine.check(&principal, &action, &object)).await {
+        Decision::Allow { .. } => next.run(req).await,
+        Decision::Deny { reason, .. } => (
+            StatusCode::FORBIDDEN,
+            Json(serde_json::json!({"error": reason})),
+        )
+            .into_response(),
+    }
+}
+
 /// In-handler / call-site convenience: run an authorization check
 /// against the engine pulled out of request extensions, mapping a
 /// `Deny` to the same `403 { "error": <reason> }` body the
@@ -115,7 +165,7 @@ async fn gate(
     };
 
     let object = ResourceRef::collection(kind);
-    match engine.check(&principal, action, &object).await {
+    match crate::surface::with_surface("rest", engine.check(&principal, action, &object)).await {
         Decision::Allow { .. } => next.run(req).await,
         Decision::Deny { reason, .. } => (
             StatusCode::FORBIDDEN,

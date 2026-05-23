@@ -37,6 +37,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod audit;
 pub mod condition;
 pub mod config;
 pub mod defaults;
@@ -44,7 +45,15 @@ pub mod engine;
 pub mod error;
 pub mod middleware;
 pub mod registry;
+pub mod surface;
 pub mod testing;
+
+pub use surface::{current_surface, with_surface};
+
+pub use audit::{DecisionEntry, DecisionSink, NoopDecisionSink};
+
+#[cfg(any(feature = "sqlite", feature = "postgres"))]
+pub use audit::{DbDecisionSink, DecisionSinkConfig, RetentionConfig};
 
 #[cfg(any(feature = "sqlite", feature = "postgres"))]
 pub mod db_engine;
@@ -53,10 +62,11 @@ pub mod routes;
 #[cfg(any(feature = "sqlite", feature = "postgres"))]
 pub mod store;
 
+pub use condition::Expr;
 pub use config::{Assignment, AuthzConfig, Effect, Rule};
 pub use engine::StaticRbacEngine;
 pub use error::Error;
-pub use middleware::{require_permission, with_permission};
+pub use middleware::{require_permission, with_permission, with_permission_owned};
 pub use registry::StaticRegistry;
 
 #[cfg(any(feature = "sqlite", feature = "postgres"))]

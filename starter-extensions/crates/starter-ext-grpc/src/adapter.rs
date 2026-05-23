@@ -12,7 +12,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 use starter_ext_host::ExtensionRegistry;
-use starter_ext_spi::{ContributeGrpc, ExtensionId, LifecycleState};
+use starter_ext_spi::{ContributeGrpc, ExtensionId, LifecycleState, PermissionGate};
 
 /// One ready-to-serve gRPC method descriptor.
 ///
@@ -40,6 +40,13 @@ pub struct GrpcMethod {
     /// what the bundle ships (SCOPE R7 anti-prompt-injection
     /// guarantee).
     pub description: String,
+    /// Optional fine-grained policy-engine gate from
+    /// `auth.permission` on the manifest entry. Phase 7d.2
+    /// (SCOPE-EXT R15): consumed by [`crate::ExtensionGrpcService`]
+    /// when an engine has been wired in. `None` means "no per-call
+    /// authz" — the dispatcher runs unchanged (zero overhead for
+    /// extensions that don't opt in).
+    pub permission: Option<PermissionGate>,
 }
 
 /// Errors raised at adapter build time.
@@ -162,6 +169,7 @@ pub fn build_grpc_methods(registry: &ExtensionRegistry) -> Result<Vec<GrpcMethod
             streaming: entry.streaming,
             proto_path: entry.proto,
             description,
+            permission: entry.auth.permission.clone(),
         });
     }
     Ok(out)

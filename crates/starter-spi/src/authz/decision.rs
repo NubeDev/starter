@@ -27,6 +27,15 @@ pub struct ResourceRef {
     /// Subject id of the resource owner, if any.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub owner: Option<String>,
+    /// Tenant the resource row belongs to (Phase 7a — R11). For
+    /// kinds declared as `tenant_scoped = true` in the registry,
+    /// the engine requires
+    /// `Some(principal.tenant_id) == Some(object.tenant)` (with
+    /// the super-admin sentinel `"*"` bypassing the predicate).
+    /// `None` on a tenant-scoped kind is a `cross_tenant` deny —
+    /// the row is missing its tenancy column.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tenant: Option<String>,
 }
 
 impl ResourceRef {
@@ -37,6 +46,7 @@ impl ResourceRef {
             kind: kind.into(),
             id: None,
             owner: None,
+            tenant: None,
         }
     }
 
@@ -46,12 +56,19 @@ impl ResourceRef {
             kind: kind.into(),
             id: Some(id.into()),
             owner: None,
+            tenant: None,
         }
     }
 
     /// Set the owning subject for ownership rules.
     pub fn with_owner(mut self, owner: impl Into<String>) -> Self {
         self.owner = Some(owner.into());
+        self
+    }
+
+    /// Set the owning tenant (Phase 7a).
+    pub fn with_tenant(mut self, tenant: impl Into<String>) -> Self {
+        self.tenant = Some(tenant.into());
         self
     }
 }

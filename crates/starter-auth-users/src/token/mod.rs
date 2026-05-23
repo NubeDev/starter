@@ -7,4 +7,4 @@ mod verify;
 
 pub use issue::{issue, IssuedToken, TokenError, TOKEN_PREFIX};
 pub use revoke::revoke;
-pub use verify::verify;
+pub use verify::{verify, verify_with_teams};

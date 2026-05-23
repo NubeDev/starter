@@ -1,49 +1,84 @@
-//! Host-side wiring for the `com.acme.weather` extension's two REST
-//! endpoints.
+//! `com.acme.weather` extension — builtin handler table.
 //!
-//! In a fully-featured deployment these routes would be mounted by
-//! `starter_ext_server::rest_router` straight from the extension's
-//! `contributes.rest[]` block. The demo wires them by hand instead
-//! so each route can carry its own policy-engine gate
-//! (`with_permission`) — the manifest still drives discovery (the
-//! `/extensions/*` admin slice lists the extension), but the host
-//! decides the per-route authz contract.
+//! Phase 7d / SCOPE-EXT R15: the host-side hand-mounting that this
+//! file used to do is **gone**. The extension's manifest declares the
+//! per-route `auth.permission` field directly:
 //!
-//! What this proves end-to-end:
-//!   - the extension shows up in `/extensions` (manifest-driven),
-//!   - `GET  /weather/forecast` is gated by `("weather", "read")`,
-//!   - `POST /weather/refresh`  is gated by `("weather", "refresh")`.
+//! ```yaml
+//! contributes:
+//!   rest:
+//!     - id: com.acme.weather.forecast
+//!       method: GET
+//!       path: /weather/forecast
+//!       auth: { permission: { resource: weather, action: read } }
+//!     - id: com.acme.weather.refresh
+//!       method: POST
+//!       path: /weather/refresh
+//!       auth: { permission: { resource: weather, action: refresh } }
+//! ```
+//!
+//! `starter_ext_server::rest_router` reads those `permission` blocks,
+//! validates each `resource` against the host's `ResourceRegistry` at
+//! build time (typo → `RestBuildError::UnknownResource`, the extension
+//! refuses to mount), and wraps each entry's handler in
+//! `with_permission(resource, action)` automatically. The layer
+//! order is `with_role → with_scope → with_permission → handler`
+//! (R15); see `starter_ext_server::rest::auth::apply_gate` for the
+//! audit-consequence note.
+//!
+//! What remains here is the **body** of the two endpoints. The
+//! manifest's `runtime: builtin` tells the host this extension's
+//! requests dispatch through a [`BuiltinTable`] registered at boot;
+//! the table below is what the `BuiltinRestDispatcher` calls.
+//!
+//! Equivalent pre-Phase-7d code (kept as a docstring as a witness to
+//! "this is what the adapter does for you now"):
+//!
+//! ```ignore
+//! let read  = with_permission(
+//!     Router::new().route("/weather/forecast", get(forecast)),
+//!     "weather", "read",
+//! );
+//! let write = with_permission(
+//!     Router::new().route("/weather/refresh",  post(refresh)),
+//!     "weather", "refresh",
+//! );
+//! Router::new().merge(read).merge(write)
+//! ```
 
-use axum::http::StatusCode;
-use axum::routing::{get, post};
-use axum::{Json, Router};
+use std::sync::Arc;
+
 use chrono::Utc;
 use serde_json::{json, Value};
-use starter_authz::with_permission;
+use starter_ext_sdk::builtin::{BuiltinEntry, BuiltinTable};
+use starter_ext_sdk::{Error, ExtensionId};
 
-pub fn router<S: Clone + Send + Sync + 'static>() -> Router<S> {
-    // GET /weather/forecast — read. Gated by ("weather", "read").
-    let read = Router::new().route("/weather/forecast", get(forecast));
-    let read = with_permission(read, "weather", "read");
-
-    // POST /weather/refresh — read/write. Gated by ("weather", "refresh").
-    let write = Router::new().route("/weather/refresh", post(refresh));
-    let write = with_permission(write, "weather", "refresh");
-
-    Router::new().merge(read).merge(write)
-}
-
-async fn forecast() -> Result<Json<Value>, (StatusCode, String)> {
-    Ok(Json(json!({
-        "city": "Brisbane",
-        "temp_c": 24.5,
-        "condition": "sunny"
-    })))
-}
-
-async fn refresh() -> Result<Json<Value>, (StatusCode, String)> {
-    Ok(Json(json!({
-        "refreshed_at": Utc::now().to_rfc3339(),
-        "cleared": 0
-    })))
+/// Construct the [`BuiltinTable`] entry for `com.acme.weather`. The
+/// table is wrapped in an `Arc` and handed to
+/// `BuiltinRestDispatcher::new`; the dispatcher calls into the
+/// closure below for every request the REST adapter routes here.
+pub fn builtin_table() -> Arc<BuiltinTable> {
+    let mut table = BuiltinTable::new();
+    let extension_id = ExtensionId::new("com.acme.weather").expect("weather id is valid");
+    let entry = BuiltinEntry::new(
+        &["com.acme.weather.forecast", "com.acme.weather.refresh"],
+        |contribute_id, _ctx, _params| -> Result<Value, Error> {
+            match contribute_id {
+                "com.acme.weather.forecast" => Ok(json!({
+                    "city": "Brisbane",
+                    "temp_c": 24.5,
+                    "condition": "sunny",
+                })),
+                "com.acme.weather.refresh" => Ok(json!({
+                    "refreshed_at": Utc::now().to_rfc3339(),
+                    "cleared": 0,
+                })),
+                other => Err(Error::validation(format!(
+                    "unexpected contribute id {other:?}"
+                ))),
+            }
+        },
+    );
+    table.insert(extension_id, entry);
+    Arc::new(table)
 }

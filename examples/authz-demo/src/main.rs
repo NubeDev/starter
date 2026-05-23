@@ -156,9 +156,8 @@ async fn run_serve(matches: &ArgMatches) -> Result<()> {
     let pool = open_pool(matches).await?;
 
     let registry = Arc::new(prometheus::Registry::new());
-    let metrics = Arc::new(
-        StandardMetrics::register(&registry).context("register prometheus metrics")?,
-    );
+    let metrics =
+        Arc::new(StandardMetrics::register(&registry).context("register prometheus metrics")?);
 
     let built = demo_server::build(pool, registry, metrics).await?;
 
@@ -246,4 +245,3 @@ fn parse_role(s: &str) -> Result<Role> {
         )),
     }
 }
-
