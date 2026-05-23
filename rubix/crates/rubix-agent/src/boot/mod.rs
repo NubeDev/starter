@@ -1,5 +1,6 @@
 //! Process startup helpers — one verb per file.
 
+pub mod mcp;
 pub mod migrations;
 pub mod tracing;
 

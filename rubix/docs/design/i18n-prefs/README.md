@@ -96,8 +96,42 @@ The locale is sourced in this order, first hit wins:
 
 1. The authenticated principal's
    `sys.identity.preferences.language` (post-Phase-2a).
-2. An MCP-session `Accept-Language` initial handshake header.
+2. The MCP request's `params._meta.acceptLanguage` field. The
+   transport (`starter-mcp`) parses the BCP-47 tag, binds it on a
+   tokio task-local for the lifetime of one `tools/call`, and any
+   code that needs the caller's locale reads
+   `starter_mcp::current_locale()`. The HTTP transport binds the
+   same task-local per request from the `Accept-Language` header;
+   the stdio loop and the in-memory test pair both bind it per
+   session from the `initialize` frame's
+   `params._meta.acceptLanguage`. Rubix code never re-parses
+   `Accept-Language` and never threads a `LanguageTag` through
+   call sites by hand — that's the U1 contract from
+   `docs/design/starter-changes/`.
 3. The agent's fallback (`"en"`).
+
+#### Worked example — `es-AR`
+
+An MCP client invoking `com.rubix.scheduled-system-check` with
+`params._meta.acceptLanguage: "es-AR"` resolves a [`LanguageTag`]
+of `es-AR`. The transport binds it; the bundled flow's seed
+adapter reads `starter_mcp::current_locale()` and snapshots the
+matching `ResolvedPreferences`:
+
+```text
+language        = "es"
+locale          = "es-AR"
+timezone        = "America/Argentina/Buenos_Aires"   // UTC-3 year-round
+date_format     = DmySlash                            // DD/MM/YYYY
+time_format     = H24
+```
+
+A `rubix.system.disk.warn` diagnostic with
+`at = 2024-01-15T12:00:00Z` renders as:
+
+> `El disco está casi lleno (89% usado, 12500000000 libre, sondeado el 15/01/2024, 09:00).`
+
+— Spanish catalogue, EU date pattern, Buenos Aires wall-clock.
 
 ### CLI — `LANG` / `LC_*` env
 

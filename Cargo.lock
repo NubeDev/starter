@@ -6346,6 +6346,7 @@ name = "rubix-agent"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "async-trait",
  "axum 0.8.9",
  "clap",
  "rubix-client",
@@ -6353,9 +6354,15 @@ dependencies = [
  "rubix-skills",
  "rubix-spi",
  "rubix-tools",
+ "serde_json",
  "starter-auth-users",
  "starter-changelog-postgres",
  "starter-config",
+ "starter-flow",
+ "starter-flow-spi",
+ "starter-flow-surfaces",
+ "starter-i18n",
+ "starter-mcp",
  "starter-observability",
  "starter-server",
  "starter-spi",

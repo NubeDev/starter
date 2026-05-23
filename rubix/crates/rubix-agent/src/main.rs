@@ -11,9 +11,7 @@
 use anyhow::Result;
 use tracing::info;
 
-mod boot;
-mod health;
-mod registry;
+use rubix_agent::{boot, health, registry};
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -28,11 +26,13 @@ async fn main() -> Result<()> {
 
     let tools = registry::build_tool_registry();
     let migrations = boot::apply_migrations().await?;
+    let mcp = boot::mcp::build_mcp_surface().await?;
 
     info!(
         crate_name = env!("CARGO_PKG_NAME"),
         version = env!("CARGO_PKG_VERSION"),
         tools = tools.len(),
+        mcp_tools = mcp.tools.list().len(),
         skills = rubix_skills::bundled().entries().len(),
         flows = rubix_flows::bundled().entries().len(),
         migrations = migrations.sources_applied,
@@ -40,6 +40,14 @@ async fn main() -> Result<()> {
         i18n_keys = catalogue_size,
         "rubix-agent starting"
     );
+
+    // Keep the MCP router alive across the bind / serve below. The
+    // `health::serve` entry point owns the listener; the MCP router
+    // is merged into it once the HTTP composition lands. For PR 3
+    // we wire the registry + router so the surface is reachable
+    // through `starter_mcp::testing::pair` from integration tests
+    // and through the binary's `boot::mcp` module in process.
+    let _mcp_router = mcp.router;
 
     let bind = std::env::var("RUBIX_BIND").unwrap_or_else(|_| "127.0.0.1:8088".into());
     health::serve(&bind).await
