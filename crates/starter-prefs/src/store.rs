@@ -59,8 +59,7 @@ pub static MIGRATIONS: sqlx::migrate::Migrator = sqlx::migrate!("./migrations");
 /// };
 /// ```
 #[cfg(feature = "postgres")]
-pub static PG_MIGRATIONS: sqlx::migrate::Migrator =
-    sqlx::migrate!("./migrations/postgres");
+pub static PG_MIGRATIONS: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/postgres");
 
 /// Persistence trait for starter-prefs rows.
 ///
@@ -442,8 +441,8 @@ pub use sqlite_impl::SqlitePrefsStore;
 mod postgres_impl {
     use super::*;
     use sqlx::postgres::PgRow;
-    use sqlx::Row;
     use sqlx::PgPool;
+    use sqlx::Row;
     use starter_spi::preferences::{
         DateFormat, NumberFormat, Theme, TimeFormat, UnitSystem, WeekStart,
     };

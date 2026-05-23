@@ -134,18 +134,14 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     // surface without breaking the no-error guarantee.
     let bundle = {
         let mut b = starter_bundle();
-        let en_tag = starter_spi::i18n::LanguageTag::parse("en")
-            .expect("'en' is a valid BCP-47 tag");
-        let es_tag = starter_spi::i18n::LanguageTag::parse("es")
-            .expect("'es' is a valid BCP-47 tag");
-        let en_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!(
-            "../i18n/en.json"
-        ))
-        .expect("embedded flow-agent en.json must be valid");
-        let es_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!(
-            "../i18n/es.json"
-        ))
-        .expect("embedded flow-agent es.json must be valid");
+        let en_tag =
+            starter_spi::i18n::LanguageTag::parse("en").expect("'en' is a valid BCP-47 tag");
+        let es_tag =
+            starter_spi::i18n::LanguageTag::parse("es").expect("'es' is a valid BCP-47 tag");
+        let en_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!("../i18n/en.json"))
+            .expect("embedded flow-agent en.json must be valid");
+        let es_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!("../i18n/es.json"))
+            .expect("embedded flow-agent es.json must be valid");
         b.extend(en_tag, en_cat);
         b.extend(es_tag, es_cat);
         Arc::new(b)

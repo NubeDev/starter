@@ -1,6 +1,6 @@
 //! Domain types for flow-agent.
 //!
-//! `FlowGraph` is stored as opaque JSON in SQLite (column `graph_json`);
+//! `FlowGraph` is stored as opaque JSONB in Postgres (column `graph_json`);
 //! the runtime knows the shape because `@nube/starter-ui-flow`'s
 //! `FlowGraph` and `starter-flow-spi::FlowTopology` agree on it. We
 //! deliberately don't enforce the shape at the REST boundary — saving

@@ -21,7 +21,7 @@
 #![cfg(feature = "postgres")]
 
 use starter_prefs::resolver::{OrgPrefsRow, StringPref, UnitPref, UserPrefsRow};
-use starter_prefs::store::{PrefsStore, PgPrefsStore};
+use starter_prefs::store::{PgPrefsStore, PrefsStore};
 use starter_spi::preferences::{
     DateFormat, NumberFormat, Theme, TimeFormat, UnitSystem, WeekStart,
 };
@@ -36,7 +36,10 @@ use starter_store_postgres::testing::{with_database, ContainerGuard};
 async fn fresh_store() -> (PgPrefsStore, ContainerGuard) {
     let (pool, guard) = with_database().await;
     let store = PgPrefsStore::new(pool.sqlx().clone());
-    store.migrate().await.expect("apply postgres prefs migrations");
+    store
+        .migrate()
+        .await
+        .expect("apply postgres prefs migrations");
     (store, guard)
 }
 

@@ -147,11 +147,10 @@ impl FlowStore {
         .await?;
         if res.rows_affected() == 0 {
             // Distinguish not-found from version conflict.
-            let exists: Option<(i64,)> =
-                sqlx::query_as("SELECT version FROM flows WHERE id = $1")
-                    .bind(id)
-                    .fetch_optional(&self.pool)
-                    .await?;
+            let exists: Option<(i64,)> = sqlx::query_as("SELECT version FROM flows WHERE id = $1")
+                .bind(id)
+                .fetch_optional(&self.pool)
+                .await?;
             return Err(if exists.is_some() {
                 DomainError::VersionConflict
             } else {
@@ -336,15 +335,13 @@ impl RunStore {
         trace: Option<&serde_json::Value>,
     ) -> Result<(), DomainError> {
         let now = Utc::now();
-        sqlx::query(
-            "UPDATE runs SET status = $1, finished_at = $2, trace_json = $3 WHERE id = $4",
-        )
-        .bind(status)
-        .bind(now)
-        .bind(trace)
-        .bind(run_id)
-        .execute(&self.pool)
-        .await?;
+        sqlx::query("UPDATE runs SET status = $1, finished_at = $2, trace_json = $3 WHERE id = $4")
+            .bind(status)
+            .bind(now)
+            .bind(trace)
+            .bind(run_id)
+            .execute(&self.pool)
+            .await?;
         Ok(())
     }
 
@@ -365,9 +362,7 @@ impl RunStore {
                         status,
                         started_at,
                         finished_at,
-                        trace: trace_json
-                            .map(|v| serde_json::from_value(v))
-                            .transpose()?,
+                        trace: trace_json.map(serde_json::from_value).transpose()?,
                     })
                 },
             )
