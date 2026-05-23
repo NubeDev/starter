@@ -28,4 +28,10 @@ pub use token_store::SqliteTokenStore;
 pub use user_store::SqliteUserStore;
 
 #[cfg(feature = "postgres")]
+pub use session_store::PgSessionStore;
+#[cfg(feature = "postgres")]
+pub use tenant_store::PgTenantStore;
+#[cfg(feature = "postgres")]
+pub use token_store::PgTokenStore;
+#[cfg(feature = "postgres")]
 pub use user_store::PgUserStore;

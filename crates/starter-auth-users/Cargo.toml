@@ -38,7 +38,7 @@ starter-store-postgres = { workspace = true, optional = true }
 # SCOPE 228–232 says consumers wire exactly one of the two.
 default  = []
 sqlite   = ["dep:sqlx", "sqlx/sqlite", "dep:starter-store-sqlite"]
-postgres = ["dep:sqlx", "sqlx/postgres", "dep:starter-store-postgres"]
+postgres = ["dep:sqlx", "sqlx/postgres", "sqlx/chrono", "dep:starter-store-postgres"]
 
 [dev-dependencies]
 tokio                  = { workspace = true, features = ["macros", "rt-multi-thread"] }

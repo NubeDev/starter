@@ -252,8 +252,10 @@ sessions gate the MCP tool calls. `starter-auth-users` originally
 shipped only SQLite store impls (the `postgres` feature flag existed
 in `Cargo.toml` but had no implementations behind it).
 
-**Status: partially landed in-tree.** The locked reference pattern
-is in place; the remaining three stores follow the same shape.
+**Status: complete (in-tree).** All four Postgres store impls now
+mirror their sqlite counterparts row-for-row, each with an `#[ignore]`'d
+testcontainers test. PR 2 part 2 (rubix-side auth wiring) is fully
+unblocked.
 
 | Component | Status | Notes |
 |---|---|---|
@@ -261,34 +263,25 @@ is in place; the remaining three stores follow the same shape.
 | `migrations_postgres/starter_auth_users/0002_sessions.sql` | ✅ landed | Same timestamp translation; nullable `revoked_at` becomes TIMESTAMPTZ |
 | `migrations_postgres/starter_auth_users/0003_tokens.sql` | ✅ landed | Timestamp translation + `scopes TEXT DEFAULT '[]'` → `scopes JSONB DEFAULT '[]'::jsonb` (Postgres has a real JSON type — index + query efficiently; the application still treats it as a JSON-encoded array) |
 | `migrations_postgres/starter_auth_users/0004_users_email_verified.sql` | ✅ landed | `INTEGER NOT NULL DEFAULT 1` (sqlite bool) → `BOOLEAN NOT NULL DEFAULT TRUE` |
-| `migrations_postgres/starter_auth_users/0005_tenants.sql` | ❌ pending | Sqlite-specific: `slug NOT GLOB '[0-9]*'` → Postgres `slug !~ '^[0-9]'` (regex). The `RESERVED_SLUGS` CHECK constraint is straight string match. TIMESTAMPTZ translations as in 0001-0004 |
-| `migrations_postgres/starter_auth_users/0006_teams.sql` | ❌ pending | Sqlite triggers `BEFORE UPDATE ... SELECT RAISE(ABORT, ...)` → Postgres `CREATE OR REPLACE FUNCTION ... RAISE EXCEPTION ...; CREATE TRIGGER ... BEFORE UPDATE ... EXECUTE FUNCTION ...`. Same shape for the trigger in 0005 |
+| `migrations_postgres/starter_auth_users/0005_tenants.sql` | ✅ landed | Sqlite `slug NOT GLOB '[0-9]*'` → Postgres `slug !~ '^[0-9]'` (POSIX regex). `RESERVED_SLUGS` CHECK constraint is straight string match. TIMESTAMPTZ translations as in 0001-0004. BEFORE UPDATE `RAISE(ABORT)` trigger translated to a plpgsql function `RAISE EXCEPTION ... USING ERRCODE = '23514'` + `CREATE TRIGGER ... EXECUTE FUNCTION ...` |
+| `migrations_postgres/starter_auth_users/0006_teams.sql` | ✅ landed | Same trigger-translation pattern as 0005; teams `tenant_id` + `slug` immutability enforced by plpgsql function raising SQLSTATE 23514 |
 | `src/migration.rs` exposing `sqlite_migration_source()` + `postgres_migration_source()` | ✅ landed | Mirrors the `starter-changelog-{sqlite,postgres}::migration_source()` pattern; both use source name `"auth_users"` |
 | Refactor `src/store/tenant_store.rs` (590 lines) into `tenant_store/{mod.rs, sqlite.rs}` to fit R1 ≤ 400 lines | ✅ landed | No behavior change; all existing sqlite tests pass post-refactor |
 | `PgUserStore` (mirrors `SqliteUserStore` row-for-row) | ✅ landed | Bind placeholders `?N` → `$N`; row type `sqlx::sqlite::SqliteRow` → `sqlx::postgres::PgRow`; `set_email_verified` passes a real `bool` instead of `bool as i32` |
 | `tests/pg_user_store.rs` — `#[ignore]`d testcontainers test exercising every `UserStore` method against a real Postgres | ✅ landed | Uses `starter-store-postgres::testing::with_database`; the dev-dep was added to starter-auth-users' Cargo.toml |
-| `PgSessionStore` (mirrors `SqliteSessionStore`) | ❌ pending | Same translation rules as PgUserStore. The 177-line sqlite impl fits cleanly into a sibling `postgres` module inside `session_store.rs` without a directory split |
-| `PgTokenStore` (mirrors `SqliteTokenStore`) | ❌ pending | Same. Watch the `scopes` column — sqlite stored as TEXT-encoded JSON, Postgres as JSONB. The Rust code that reads/writes it as a JSON-encoded string keeps working unchanged because sqlx coerces JSONB ↔ String at the type seam, but the test should assert the column type is `jsonb` on the Postgres side |
-| `PgTenantStore` (mirrors `SqliteTenantStore`) | ❌ pending | Largest piece; the sqlite impl is 397 lines post-refactor. The `is_unique_violation()` / `CHECK constraint failed` error matching needs Postgres-specific equivalents (sqlx exposes `is_unique_violation()` cross-backend, but the CHECK-constraint string is Postgres-specific text — match on `code() == Some("23514")` instead) |
-| `tests/pg_session_store.rs` / `tests/pg_token_store.rs` / `tests/pg_tenant_store.rs` | ❌ pending | Same shape as `pg_user_store.rs` — all `#[ignore]`d, all use `with_database()` + `postgres_migration_source()` |
+| `PgSessionStore` (mirrors `SqliteSessionStore`) | ✅ landed | Sibling `postgres` module inside `session_store.rs`. `revoked_at` typed as nullable `TIMESTAMPTZ`; sqlx `chrono::DateTime<Utc>` carries it both ways |
+| `PgTokenStore` (mirrors `SqliteTokenStore`) | ✅ landed | Sibling `postgres` module inside `token_store.rs`. `scopes` JSONB ↔ Rust `String` (JSON-encoded array) coerces at the sqlx type seam; behaviour identical to sqlite |
+| `PgTenantStore` (mirrors `SqliteTenantStore`) | ✅ landed | Sibling `tenant_store/postgres.rs`. CHECK-constraint error matching uses the Postgres SQLSTATE `23514` via `e.as_database_error().and_then(\|d\| d.code())` instead of sqlite's text-match on `"CHECK constraint failed"` |
+| `tests/pg_session_store.rs` / `tests/pg_token_store.rs` / `tests/pg_tenant_store.rs` | ✅ landed | All `#[ignore]`d testcontainers tests; same shape as `pg_user_store.rs`; use `with_database()` + `postgres_migration_source()` |
 
-**Approach for the remaining work.** Each `PgXStore` is a near-mechanical
-translation of its sqlite sibling. The pattern is locked by
-`PgUserStore` + its test; the next session(s) should:
+**Phase 2a is complete.** PR 2 part 2 (rubix-side cookie sessions + API
+tokens + tenant-scoped authz wiring against `starter-auth-users`) is
+fully unblocked. The next step is the rubix-side bootstrap-user
+subcommand + `boot/migrations.rs` chaining described in the active
+session handoff at
+[docs/sessions/2026-05-23-next-steps-4.md](../../sessions/2026-05-23-next-steps-4.md).
 
-1. Land `PgSessionStore` + `tests/pg_session_store.rs` in one PR.
-2. Land `PgTokenStore` + `tests/pg_token_store.rs` + migration 0005's
-   trigger function translation in one PR.
-3. Land `PgTenantStore` + `tests/pg_tenant_store.rs` + migrations
-   0005/0006 (the tenant + team trigger translations) in one PR.
-
-Don't bundle these into a single change — each piece needs its own
-testcontainers run to prove it actually works against Postgres, and a
-single failing migration in a bundled PR is harder to bisect.
-
-**Tracked per R2** (upstream-first). The pattern is locked in-tree;
-the remaining work is mechanical translation against a working test
-harness.
+**Tracked per R2** (upstream-first). Pattern locked, surface complete.
 
 ### Phase 2b (gates)
 

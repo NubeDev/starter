@@ -14,11 +14,17 @@
 -- Token format: `sak_<public_id>.<secret>` — the cleartext shown to
 -- the user once, then split: `public_id` is what we look up (O(1)),
 -- `secret` is what we argon2-hash and compare.
+--   tenant_id is baked in directly (the sqlite migration set adds
+--   it later via ALTER in 0005_tenants; the Postgres migration set
+--   is fresh, so the long-term-correct shape lives in this file).
+--   `'*'` is the super-admin sentinel for cross-tenant admin tokens
+--   (see docs/design/auth/README.md).
 CREATE TABLE IF NOT EXISTS starter_auth_users_tokens (
     id            TEXT PRIMARY KEY,
     user_id       TEXT NOT NULL REFERENCES starter_auth_users_users(id) ON DELETE CASCADE,
     hashed_token  TEXT NOT NULL,
     scopes        JSONB NOT NULL DEFAULT '[]'::jsonb,
+    tenant_id     TEXT NOT NULL DEFAULT '*',
     created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_used_at  TIMESTAMPTZ,
     expires_at    TIMESTAMPTZ,
@@ -27,3 +33,6 @@ CREATE TABLE IF NOT EXISTS starter_auth_users_tokens (
 
 CREATE INDEX IF NOT EXISTS starter_auth_users_tokens_user_id_idx
     ON starter_auth_users_tokens(user_id);
+
+CREATE INDEX IF NOT EXISTS starter_auth_users_tokens_tenant_id_idx
+    ON starter_auth_users_tokens(tenant_id);

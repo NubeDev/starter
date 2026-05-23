@@ -175,3 +175,117 @@ mod sqlite {
 
 #[cfg(feature = "sqlite")]
 pub use sqlite::SqliteSessionStore;
+
+#[cfg(feature = "postgres")]
+mod postgres {
+    use async_trait::async_trait;
+    use chrono::{DateTime, Utc};
+    use sqlx::Row;
+    use starter_store_postgres::Pool;
+
+    use super::{SessionRecord, SessionStore, SessionStoreError};
+
+    /// Postgres-backed [`SessionStore`]. Mirrors
+    /// [`super::SqliteSessionStore`] row-for-row; the SQL differs
+    /// only in bind placeholders (`$1` vs `?1`) and in the timestamp
+    /// columns being real `TIMESTAMPTZ` (vs sqlite's rfc3339-in-TEXT).
+    /// `chrono::DateTime<Utc>` binds and decodes against both column
+    /// types via the `sqlx/chrono` feature; no rfc3339 parsing here.
+    pub struct PgSessionStore {
+        pool: Pool,
+    }
+
+    impl PgSessionStore {
+        /// Wrap the pool. Run the `starter_auth_users` Postgres
+        /// migrations first — see
+        /// [`crate::migration::POSTGRES_MIGRATOR`].
+        pub fn new(pool: Pool) -> Self {
+            Self { pool }
+        }
+    }
+
+    fn err(e: sqlx::Error) -> SessionStoreError {
+        SessionStoreError::Backend(e.to_string())
+    }
+
+    fn map_row(row: sqlx::postgres::PgRow) -> Result<SessionRecord, SessionStoreError> {
+        Ok(SessionRecord {
+            id: row.get(0),
+            user_id: row.get(1),
+            csrf_token: row.get(2),
+            expires_at: row.get(3),
+            revoked_at: row.get(4),
+            tenant_id: row.get(5),
+        })
+    }
+
+    #[async_trait]
+    impl SessionStore for PgSessionStore {
+        async fn create(
+            &self,
+            id: &str,
+            user_id: &str,
+            csrf_token: &str,
+            tenant_id: Option<&str>,
+            expires_at: DateTime<Utc>,
+        ) -> Result<SessionRecord, SessionStoreError> {
+            sqlx::query(
+                "INSERT INTO starter_auth_users_sessions \
+                 (id, user_id, csrf_token, tenant_id, expires_at) \
+                 VALUES ($1, $2, $3, $4, $5)",
+            )
+            .bind(id)
+            .bind(user_id)
+            .bind(csrf_token)
+            .bind(tenant_id)
+            .bind(expires_at)
+            .execute(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            Ok(SessionRecord {
+                id: id.into(),
+                user_id: user_id.into(),
+                csrf_token: csrf_token.into(),
+                tenant_id: tenant_id.map(str::to_owned),
+                expires_at,
+                revoked_at: None,
+            })
+        }
+
+        async fn find_active(&self, id: &str) -> Result<Option<SessionRecord>, SessionStoreError> {
+            let row = sqlx::query(
+                "SELECT id, user_id, csrf_token, expires_at, revoked_at, tenant_id \
+                 FROM starter_auth_users_sessions \
+                 WHERE id = $1 LIMIT 1",
+            )
+            .bind(id)
+            .fetch_optional(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            let rec = match row.map(map_row).transpose()? {
+                Some(r) => r,
+                None => return Ok(None),
+            };
+            if rec.revoked_at.is_some() || rec.expires_at <= Utc::now() {
+                return Ok(None);
+            }
+            Ok(Some(rec))
+        }
+
+        async fn revoke(&self, id: &str) -> Result<(), SessionStoreError> {
+            sqlx::query(
+                "UPDATE starter_auth_users_sessions SET revoked_at = $1 \
+                 WHERE id = $2 AND revoked_at IS NULL",
+            )
+            .bind(Utc::now())
+            .bind(id)
+            .execute(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            Ok(())
+        }
+    }
+}
+
+#[cfg(feature = "postgres")]
+pub use postgres::PgSessionStore;

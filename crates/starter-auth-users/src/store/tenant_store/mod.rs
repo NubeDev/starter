@@ -17,6 +17,12 @@ mod sqlite;
 #[cfg(feature = "sqlite")]
 pub use sqlite::SqliteTenantStore;
 
+#[cfg(feature = "postgres")]
+mod postgres;
+
+#[cfg(feature = "postgres")]
+pub use postgres::PgTenantStore;
+
 /// Tenant row.
 #[derive(Debug, Clone)]
 pub struct TenantRecord {
