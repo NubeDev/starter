@@ -49,20 +49,20 @@ fn insert_mart(name: &str, status: MartStatus) -> InsertMart<'_> {
 #[ignore = "requires docker"]
 async fn insert_and_round_trip() {
     let (pool, _g) = boot().await;
-    let m = marts::insert(&pool, insert_mart("mart_energy_hourly", MartStatus::Live))
+    let m = marts::insert(pool.sqlx(), insert_mart("mart_energy_hourly", MartStatus::Live))
         .await
         .unwrap();
     assert_eq!(m.status, "live");
     assert_eq!(m.group_by, vec!["building".to_string()]);
 
     // Idempotency: same name with INSERT (no upsert) errors.
-    let err = marts::insert(&pool, insert_mart("mart_energy_hourly", MartStatus::Pending)).await;
+    let err = marts::insert(pool.sqlx(), insert_mart("mart_energy_hourly", MartStatus::Pending)).await;
     assert!(err.is_err());
 
-    marts::set_status(&pool, "mart_energy_hourly", MartStatus::Quarantined)
+    marts::set_status(pool.sqlx(), "mart_energy_hourly", MartStatus::Quarantined)
         .await
         .unwrap();
-    let row = marts::get(&pool, "mart_energy_hourly").await.unwrap().unwrap();
+    let row = marts::get(pool.sqlx(), "mart_energy_hourly").await.unwrap().unwrap();
     assert_eq!(row.status, "quarantined");
 }
 
@@ -70,22 +70,31 @@ async fn insert_and_round_trip() {
 #[ignore = "requires docker"]
 async fn live_mart_quota_trigger_only_scans_live_rows() {
     let (pool, _g) = boot().await;
-    // Lower the quota so the test is cheap.
+
+    // The quota trigger reads `current_setting('warehouse.live_mart_quota')`
+    // — a session-scoped GUC. Pin a single connection so every
+    // helper here sees the same setting; with `&Pool` each call
+    // would land on an arbitrary backend and the SET would be
+    // invisible to all but one of them. (The previous review gate
+    // failed exactly this way: the 4th live insert succeeded
+    // because its backend never saw the SET and fell back to the
+    // hard-coded default of 50.)
+    let mut conn = pool.sqlx().acquire().await.unwrap();
     sqlx::query("SELECT set_config('warehouse.live_mart_quota', '3', false)")
-        .execute(pool.sqlx())
+        .execute(&mut *conn)
         .await
         .unwrap();
 
     // 200 non-live rows — these must NOT count against the quota.
     for i in 0..200 {
         let name = format!("mart_q_{i:03}");
-        marts::insert(&pool, insert_mart(&name, MartStatus::Quarantined))
+        marts::insert(&mut *conn, insert_mart(&name, MartStatus::Quarantined))
             .await
             .unwrap();
     }
     for i in 0..50 {
         let name = format!("mart_f_{i:03}");
-        marts::insert(&pool, insert_mart(&name, MartStatus::Failed))
+        marts::insert(&mut *conn, insert_mart(&name, MartStatus::Failed))
             .await
             .unwrap();
     }
@@ -93,28 +102,28 @@ async fn live_mart_quota_trigger_only_scans_live_rows() {
     // Three live rows fit under the quota...
     for i in 0..3 {
         let name = format!("mart_live_{i}");
-        marts::insert(&pool, insert_mart(&name, MartStatus::Live))
+        marts::insert(&mut *conn, insert_mart(&name, MartStatus::Live))
             .await
             .unwrap();
     }
-    assert_eq!(marts::live_count(&pool).await.unwrap(), 3);
+    assert_eq!(marts::live_count(&mut *conn).await.unwrap(), 3);
 
     // ...the fourth must trip the trigger.
-    let res = marts::insert(&pool, insert_mart("mart_live_3", MartStatus::Live)).await;
+    let res = marts::insert(&mut *conn, insert_mart("mart_live_3", MartStatus::Live)).await;
     assert!(res.is_err(), "quota trigger must reject the 4th live insert");
 
     // Quarantining one live mart frees a slot.
-    marts::set_status(&pool, "mart_live_0", MartStatus::Quarantined)
+    marts::set_status(&mut *conn, "mart_live_0", MartStatus::Quarantined)
         .await
         .unwrap();
-    marts::insert(&pool, insert_mart("mart_live_3", MartStatus::Live))
+    marts::insert(&mut *conn, insert_mart("mart_live_3", MartStatus::Live))
         .await
         .expect("live insert must succeed once a slot frees");
 
     // A status update that does NOT enter `live` is unaffected by
     // the quota (it skips the count). Promoting an existing non-live
     // row to live with quota already at cap still trips.
-    let res = marts::set_status(&pool, "mart_q_001", MartStatus::Live).await;
+    let res = marts::set_status(&mut *conn, "mart_q_001", MartStatus::Live).await;
     assert!(res.is_err());
 
     // Confirm the partial-index plan is the path used for the live
@@ -124,7 +133,7 @@ async fn live_mart_quota_trigger_only_scans_live_rows() {
         "SELECT indexdef FROM pg_indexes \
          WHERE tablename = 'marts' AND indexname = 'marts_live_count_idx'",
     )
-    .fetch_one(pool.sqlx())
+    .fetch_one(&mut *conn)
     .await
     .unwrap();
     assert!(idx.contains("WHERE"), "expected partial index: {idx}");

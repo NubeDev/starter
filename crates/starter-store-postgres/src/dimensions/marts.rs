@@ -3,12 +3,20 @@
 //! The DDL builder lives in `starter-warehouse`; this module owns
 //! the Postgres seam — INSERT, status transitions, definition_hash
 //! lookup, live-quota probe.
+//!
+//! Every function takes `impl sqlx::PgExecutor<'_>` rather than a
+//! `&Pool`. The live-quota trigger reads `current_setting(
+//! 'warehouse.live_mart_quota', true)` — a session-scoped GUC —
+//! which only stays stable across calls if the caller pins a single
+//! connection. Tests therefore acquire a connection from the pool
+//! once, set the GUC on it, and pass the same `&mut PgConnection`
+//! into every helper here. Accepting the executor at the API
+//! boundary makes that contract explicit, instead of leaking pool
+//! semantics into the SQL.
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::types::Json;
-
-use crate::pool::Pool;
 
 /// Lifecycle status of a mart catalog row.
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize, Deserialize)]
@@ -71,7 +79,10 @@ pub type Result<T> = std::result::Result<T, sqlx::Error>;
 
 /// Insert a catalog row. The live-quota trigger fires here for
 /// `status = 'live'` rows.
-pub async fn insert(pool: &Pool, m: InsertMart<'_>) -> Result<MartRow> {
+pub async fn insert<'e, E>(executor: E, m: InsertMart<'_>) -> Result<MartRow>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     sqlx::query_as::<_, MartRow>(
         "INSERT INTO marts \
             (name, description, source_table, filter, time_bucket, \
@@ -90,29 +101,35 @@ pub async fn insert(pool: &Pool, m: InsertMart<'_>) -> Result<MartRow> {
     .bind(m.definition_hash)
     .bind(m.created_by)
     .bind(m.status.as_str())
-    .fetch_one(pool.sqlx())
+    .fetch_one(executor)
     .await
 }
 
 /// Fetch one mart by name.
-pub async fn get(pool: &Pool, name: &str) -> Result<Option<MartRow>> {
+pub async fn get<'e, E>(executor: E, name: &str) -> Result<Option<MartRow>>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     sqlx::query_as::<_, MartRow>(
         "SELECT name, description, source_table, filter, time_bucket, \
             group_by, aggregations, definition_hash, created_by, created_at, status \
          FROM marts WHERE name = $1",
     )
     .bind(name)
-    .fetch_optional(pool.sqlx())
+    .fetch_optional(executor)
     .await
 }
 
 /// Transition a mart to a new status. Live-quota trigger fires on
 /// transitions into `live`.
-pub async fn set_status(pool: &Pool, name: &str, status: MartStatus) -> Result<u64> {
+pub async fn set_status<'e, E>(executor: E, name: &str, status: MartStatus) -> Result<u64>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     let res = sqlx::query("UPDATE marts SET status = $2 WHERE name = $1")
         .bind(name)
         .bind(status.as_str())
-        .execute(pool.sqlx())
+        .execute(executor)
         .await?;
     Ok(res.rows_affected())
 }
@@ -120,19 +137,25 @@ pub async fn set_status(pool: &Pool, name: &str, status: MartStatus) -> Result<u
 /// Count rows currently `status = 'live'`. The query uses the
 /// `marts_live_count_idx` partial index, so this is O(live_count)
 /// even with millions of `quarantined` rows in the table.
-pub async fn live_count(pool: &Pool) -> Result<i64> {
+pub async fn live_count<'e, E>(executor: E) -> Result<i64>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     let (n,): (i64,) =
         sqlx::query_as("SELECT count(*) FROM marts WHERE status = 'live'")
-            .fetch_one(pool.sqlx())
+            .fetch_one(executor)
             .await?;
     Ok(n)
 }
 
 /// Delete a row by name. Returns rows affected.
-pub async fn delete(pool: &Pool, name: &str) -> Result<u64> {
+pub async fn delete<'e, E>(executor: E, name: &str) -> Result<u64>
+where
+    E: sqlx::PgExecutor<'e>,
+{
     let res = sqlx::query("DELETE FROM marts WHERE name = $1")
         .bind(name)
-        .execute(pool.sqlx())
+        .execute(executor)
         .await?;
     Ok(res.rows_affected())
 }
