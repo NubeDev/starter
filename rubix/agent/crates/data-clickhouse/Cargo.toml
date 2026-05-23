@@ -1,0 +1,24 @@
+[package]
+name        = "rubix-data-clickhouse"
+description = "rubix agent — ClickHouse data layer. Phase-0 skeleton; path-deps starter-store-clickhouse so future rubix history tables land alongside the warehouse L1/L2 stores."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Phase-0 contract (Stage 2): production dep on
+# `starter-store-clickhouse`, dev-dep on the same crate with the
+# `testing` feature so the integration smoke under tests/ can boot
+# an ephemeral ClickHouse testcontainer via
+# `starter_store_clickhouse::testing::with_clickhouse`. The testing
+# feature is dev-only so non-test consumers do not pull
+# testcontainers + Docker-client deps.
+[dependencies]
+starter-store-clickhouse = { workspace = true }
+
+[dev-dependencies]
+starter-store-clickhouse = { workspace = true, features = ["testing"] }
+tokio                    = { workspace = true, features = ["macros", "rt-multi-thread"] }
+serde                    = { workspace = true }
+clickhouse               = { version = "0.13", default-features = false, features = ["lz4"] }

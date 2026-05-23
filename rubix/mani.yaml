@@ -33,7 +33,9 @@ tasks:
         -p rubix-kinds-registry \
         -p rubix-agent \
         -p rubix-agent-sdk \
-        -p rubix-agent-client-rs
+        -p rubix-agent-client-rs \
+        -p rubix-data-postgres \
+        -p rubix-data-clickhouse
       cd rubix
       pnpm install --frozen-lockfile=false
       pnpm -r --if-present run build || true
@@ -41,8 +43,11 @@ tasks:
   test:
     desc: |
       Run rubix Rust tests + TS tests. The data-postgres /
-      data-clickhouse crates land in Stage 2; once present, their
-      smoke tests run under `cargo test -- --ignored`.
+      data-clickhouse crates have testcontainer-backed smokes
+      gated behind `#[ignore]` (they need Docker — see
+      docs/testing/SETUP.md); this task runs the fast,
+      no-container path. Invoke `cargo test -p rubix-data-postgres
+      -- --ignored` (and the clickhouse twin) to run the smokes.
     cmd: |
       set -euo pipefail
       cd ..
@@ -53,7 +58,9 @@ tasks:
         -p rubix-kinds-registry \
         -p rubix-agent \
         -p rubix-agent-sdk \
-        -p rubix-agent-client-rs
+        -p rubix-agent-client-rs \
+        -p rubix-data-postgres \
+        -p rubix-data-clickhouse
       cd rubix
       pnpm -r --if-present run test || true
 
@@ -75,7 +82,9 @@ tasks:
         -p rubix-kinds-registry \
         -p rubix-agent \
         -p rubix-agent-sdk \
-        -p rubix-agent-client-rs
+        -p rubix-agent-client-rs \
+        -p rubix-data-postgres \
+        -p rubix-data-clickhouse
       cargo clippy --all-features \
         -p rubix-spi \
         -p rubix-graph \
@@ -84,6 +93,8 @@ tasks:
         -p rubix-agent \
         -p rubix-agent-sdk \
         -p rubix-agent-client-rs \
+        -p rubix-data-postgres \
+        -p rubix-data-clickhouse \
         -- -D warnings
       cd rubix
       # (2) R1 400-line-per-file budget. Walks every tracked file

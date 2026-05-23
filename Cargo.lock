@@ -6332,6 +6332,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "rubix-data-clickhouse"
+version = "0.1.0"
+dependencies = [
+ "clickhouse",
+ "serde",
+ "starter-store-clickhouse",
+ "tokio",
+]
+
+[[package]]
+name = "rubix-data-postgres"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
+ "starter-store-postgres",
+ "tokio",
+]
+
+[[package]]
 name = "rubix-engine"
 version = "0.1.0"
 dependencies = [
