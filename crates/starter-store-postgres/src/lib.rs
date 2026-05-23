@@ -28,5 +28,11 @@ pub mod skills;
 #[cfg(feature = "flow")]
 pub mod flow;
 
+#[cfg(feature = "dimensions")]
+pub mod dimensions;
+
+#[cfg(feature = "dimensions")]
+pub use dimensions::DIMENSIONS_MIGRATION_SOURCE;
+
 pub use migrate::{migrate, MigrationSource};
 pub use pool::Pool;

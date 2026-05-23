@@ -8390,6 +8390,7 @@ dependencies = [
  "starter-flow-spi",
  "starter-skills",
  "starter-spi",
+ "starter-tags",
  "testcontainers",
  "testcontainers-modules",
  "thiserror 1.0.69",
