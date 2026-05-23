@@ -30,7 +30,7 @@ function DropdownMenuContent({
         data-slot='dropdown-menu-content'
         sideOffset={sideOffset}
         className={cn(
-          'z-50 min-w-32 overflow-x-hidden overflow-y-auto rounded-md border border-white/10 bg-[color:var(--color-surface)] p-1 text-white shadow-md',
+          'z-50 min-w-32 overflow-x-hidden overflow-y-auto rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-1 text-[color:var(--color-text)] shadow-md',
           className,
         )}
         {...props}
@@ -60,7 +60,7 @@ function DropdownMenuItem({
       data-inset={inset}
       data-variant={variant}
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-white/[0.06] focus:text-white data-disabled:pointer-events-none data-disabled:opacity-50 data-inset:ps-8 data-[variant=destructive]:text-[color:var(--color-danger)] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-[color:var(--color-surface-2)]/70 focus:text-[color:var(--color-text)] data-disabled:pointer-events-none data-disabled:opacity-50 data-inset:ps-8 data-[variant=destructive]:text-[color:var(--color-danger)] [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -78,7 +78,7 @@ function DropdownMenuCheckboxItem({
     <DropdownMenuPrimitive.CheckboxItem
       data-slot='dropdown-menu-checkbox-item'
       className={cn(
-        'relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none focus:bg-white/[0.06]',
+        'relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none focus:bg-[color:var(--color-surface-2)]/70',
         className,
       )}
       checked={checked}
@@ -109,7 +109,7 @@ function DropdownMenuRadioItem({
     <DropdownMenuPrimitive.RadioItem
       data-slot='dropdown-menu-radio-item'
       className={cn(
-        'relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none focus:bg-white/[0.06]',
+        'relative flex cursor-default items-center gap-2 rounded-sm py-1.5 ps-8 pe-2 text-sm outline-hidden select-none focus:bg-[color:var(--color-surface-2)]/70',
         className,
       )}
       {...props}
@@ -146,7 +146,7 @@ function DropdownMenuSeparator({
   return (
     <DropdownMenuPrimitive.Separator
       data-slot='dropdown-menu-separator'
-      className={cn('-mx-1 my-1 h-px bg-white/10', className)}
+      className={cn('-mx-1 my-1 h-px bg-[color:var(--color-surface-2)]/60', className)}
       {...props}
     />
   )
@@ -177,7 +177,7 @@ function DropdownMenuSubTrigger({
       data-slot='dropdown-menu-sub-trigger'
       data-inset={inset}
       className={cn(
-        'flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-white/[0.06] data-inset:ps-8 data-[state=open]:bg-white/[0.06]',
+        'flex cursor-default items-center rounded-sm px-2 py-1.5 text-sm outline-hidden select-none focus:bg-[color:var(--color-surface-2)]/70 data-inset:ps-8 data-[state=open]:bg-[color:var(--color-surface-2)]/70',
         className,
       )}
       {...props}
@@ -196,7 +196,7 @@ function DropdownMenuSubContent({
     <DropdownMenuPrimitive.SubContent
       data-slot='dropdown-menu-sub-content'
       className={cn(
-        'z-50 min-w-32 overflow-hidden rounded-md border border-white/10 bg-[color:var(--color-surface)] p-1 text-white shadow-lg',
+        'z-50 min-w-32 overflow-hidden rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface)] p-1 text-[color:var(--color-text)] shadow-lg',
         className,
       )}
       {...props}

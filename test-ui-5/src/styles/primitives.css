@@ -1,0 +1,62 @@
+/* ---------------------------------------------------------------------------
+   Nube iO Design System — Primitives (v1)
+   ---------------------------------------------------------------------------
+   Raw color ramps. NEVER reference these from product code — always go through
+   the semantic layer in tokens.css. Values are stored as `H S% L%` triplets so
+   we can wrap with `hsl(var(--teal-500) / 0.5)` for opacity modifiers.
+
+   Source: design-system.md §5.1
+--------------------------------------------------------------------------- */
+
+:root {
+  /* Teal — brand */
+  --teal-50:  188 25% 96%;
+  --teal-100: 188 28% 88%;
+  --teal-200: 188 30% 77%;
+  --teal-300: 188 31% 63%;
+  --teal-400: 188 32% 53%;
+  --teal-500: 187 41% 45%;  /* ⭐ brand */
+  --teal-600: 187 44% 38%;
+  --teal-700: 187 43% 31%;
+  --teal-800: 187 41% 27%;
+  --teal-900: 187 40% 23%;
+  --teal-950: 188 43% 14%;
+
+  /* Yellow — callout (use sparingly: underlines + small badges only) */
+  --yellow-50:  45 100% 96%;
+  --yellow-100: 46 100% 89%;
+  --yellow-200: 46 100% 77%;
+  --yellow-300: 45 100% 65%;
+  --yellow-400: 40 96% 62%;  /* ⭐ callout */
+  --yellow-500: 38 92% 52%;
+  --yellow-600: 34 96% 44%;
+  --yellow-700: 28 91% 37%;
+  --yellow-800: 25 83% 32%;
+  --yellow-900: 23 78% 26%;
+
+  /* Grey — neutral */
+  --grey-50:  0 0% 98%;
+  --grey-100: 0 0% 96%;
+  --grey-200: 0 0% 90%;
+  --grey-300: 0 0% 83%;
+  --grey-400: 0 0% 64%;
+  --grey-500: 0 0% 45%;
+  --grey-600: 0 0% 32%;
+  --grey-700: 0 0% 25%;
+  --grey-800: 0 0% 15%;
+  --grey-900: 0 0% 9%;
+  --grey-950: 0 0% 4%;
+
+  /* Status — use only for status, never decoration */
+  --green-500: 142 71% 45%;
+  --amber-500: 38 92% 50%;
+  --red-500:   0 84% 60%;
+  --blue-500:  217 91% 60%;
+
+  /* Locked brand arc — thermal/diverging only (do not use as generic palette) */
+  --thermal-cold:  215 65% 27%;  /* #184171 navy   */
+  --thermal-cool:  187 41% 45%;  /* #459AA4 teal   */
+  --thermal-warm:  19  97% 60%;  /* #fc6833 orange */
+  --thermal-hot:   343 87% 52%;  /* #ee1b50 pink   */
+  --thermal-fresh: 75  85% 41%;  /* #88c20e green  */
+}

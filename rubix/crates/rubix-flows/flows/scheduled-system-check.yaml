@@ -1,9 +1,8 @@
 # Bundled rubix flow — Goal 5: background system health.
 #
-# Phase 1 ships this with `trigger: explicit` (callable on demand);
-# Phase 4 flips the trigger to `schedule(cron = ...)` once the
-# cron-schedule node kind lands upstream in starter-flow-nodes
-# (see docs/design/STARTER-CHANGES.md).
+# Trigger is `explicit` for now; the cron-schedule node kind that
+# would let this run on a timer is tracked in
+# docs/design/starter-changes/.
 
 id: com.rubix.scheduled-system-check
 description: |

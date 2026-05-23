@@ -33,28 +33,28 @@ export function PerformanceChart({ data, labels, className }: PerformanceChartPr
   const area = `${path} L ${points[points.length - 1][0]} ${h - padY} L ${points[0][0]} ${h - padY} Z`
 
   return (
-    <div className={cn('glass relative overflow-hidden rounded-3xl p-6', className)}>
+    <div className={cn('glass relative overflow-hidden rounded-3xl p-[var(--pad-card)]', className)}>
       <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
             Energy harvested
           </div>
           <div className="mt-1 flex items-baseline gap-2">
-            <div className="tabular text-3xl font-semibold tracking-tight text-white">
+            <div className="tabular text-3xl font-semibold tracking-tight text-[color:var(--color-text)]">
               42.3<span className="text-base text-[color:var(--color-subtle)]">kWh</span>
             </div>
             <div className="text-sm text-[color:var(--color-leaf)]">↑ 12.4%</div>
           </div>
         </div>
-        <div className="flex gap-1 rounded-full border border-white/10 bg-white/5 p-1 text-[11px]">
+        <div className="flex gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)] p-1 text-[11px]">
           {['1D', '1W', '1M', '1Y'].map((p, i) => (
             <button
               key={p}
               className={cn(
                 'cursor-pointer rounded-full px-3 py-1 transition-colors',
                 i === 1
-                  ? 'bg-white text-zinc-950'
-                  : 'text-zinc-400 hover:text-white',
+                  ? 'bg-[color:var(--color-text)] text-[color:var(--color-bg)]'
+                  : 'text-[color:var(--color-subtle)] hover:text-[color:var(--color-text)]',
               )}
             >
               {p}
@@ -121,7 +121,7 @@ export function PerformanceChart({ data, labels, className }: PerformanceChartPr
         ))}
       </svg>
 
-      <div className="mt-2 flex justify-between px-6 text-[10px] uppercase tracking-[0.15em] text-zinc-600">
+      <div className="mt-2 flex justify-between px-6 text-[10px] uppercase tracking-[0.15em] text-[color:var(--color-subtle)]">
         {labels.map((l) => (
           <span key={l}>{l}</span>
         ))}

@@ -1,0 +1,18 @@
+[package]
+name        = "starter-tool-sysdiag"
+description = "starter — host-local system diagnostics (disk usage, free memory, etc.) as reusable probes. Sibling crate selected by Cargo dependency; consumers wrap each probe in their own Tool impl."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Pure local-host probes — no network, no token, no async I/O. The
+# only deps are sysinfo (the cross-platform probe layer) and serde
+# for the result types so consumers can serialise probe output
+# directly. Kept off starter-observability deliberately: callers
+# decide whether the probe deserves a metric.
+[dependencies]
+serde     = { workspace = true, features = ["derive"] }
+sysinfo   = { workspace = true }
+thiserror = { workspace = true }

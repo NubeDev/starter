@@ -38,9 +38,9 @@ const COLLAPSIBLES: { id: Collapsible; label: string; hint: string }[] = [
 
 function Row({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 gap-4 border-b border-white/[0.04] py-6 last:border-b-0 md:grid-cols-[260px_1fr]">
+    <div className="grid grid-cols-1 gap-4 border-b border-[color:var(--color-border)] py-6 last:border-b-0 md:grid-cols-[260px_1fr]">
       <div>
-        <div className="text-sm font-medium text-white">{title}</div>
+        <div className="text-sm font-medium text-[color:var(--color-text)]">{title}</div>
         {hint && <div className="mt-1 text-xs text-[color:var(--color-subtle)]">{hint}</div>}
       </div>
       <div className="flex items-center">{children}</div>
@@ -66,7 +66,7 @@ function Settings() {
             Settings
           </span>
         </div>
-        <h1 className="mt-3 text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-white sm:text-5xl">
+        <h1 className="mt-3 text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-[color:var(--color-text)] sm:text-5xl">
           Appearance
         </h1>
         <p className="mt-2 text-sm text-[color:var(--color-muted)]">
@@ -82,7 +82,7 @@ function Settings() {
         {shellMode === 'sidebar' && (
           <>
             <Row title="Sidebar variant" hint="Visual treatment of the sidebar panel.">
-              <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
                 {VARIANTS.map((v) => (
                   <button
                     key={v.id}
@@ -92,7 +92,7 @@ function Settings() {
                       'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                       variant === v.id
                         ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
-                        : 'text-[color:var(--color-muted)] hover:text-white',
+                        : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                     )}
                   >
                     {v.label}
@@ -102,7 +102,7 @@ function Settings() {
             </Row>
 
             <Row title="Sidebar collapse" hint="What happens when the sidebar is collapsed.">
-              <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
                 {COLLAPSIBLES.map((c) => (
                   <button
                     key={c.id}
@@ -112,7 +112,7 @@ function Settings() {
                       'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                       collapsible === c.id
                         ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
-                        : 'text-[color:var(--color-muted)] hover:text-white',
+                        : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                     )}
                   >
                     {c.label}
@@ -124,7 +124,7 @@ function Settings() {
         )}
 
         <Row title="Mode" hint="Light, dark, or follow your OS.">
-          <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+          <div className="inline-flex items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
             {MODES.map((m) => (
               <button
                 key={m.id}
@@ -133,7 +133,7 @@ function Settings() {
                   'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                   mode === m.id
                     ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
-                    : 'text-[color:var(--color-muted)] hover:text-white',
+                    : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                 )}
               >
                 {m.label}
@@ -156,12 +156,12 @@ function Settings() {
                 >
                   <span
                     className={cn(
-                      'h-10 w-10 rounded-full ring-1 ring-white/20 ring-offset-2 ring-offset-[color:var(--color-bg)] transition-all',
+                      'h-10 w-10 rounded-full ring-1 ring-[color:var(--color-border)] ring-offset-2 ring-offset-[color:var(--color-bg)] transition-all',
                       active && 'ring-2 ring-[color:var(--color-leaf)]',
                     )}
                     style={{ background: p.swatch }}
                   />
-                  <span className={cn('text-[11px]', active ? 'text-white' : 'text-[color:var(--color-muted)]')}>
+                  <span className={cn('text-[11px]', active ? 'text-[color:var(--color-text)]' : 'text-[color:var(--color-muted)]')}>
                     {p.label}
                   </span>
                 </button>
@@ -171,7 +171,7 @@ function Settings() {
         </Row>
 
         <Row title="Font" hint="Type system for the whole console.">
-          <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
             {FONTS.map((f) => (
               <button
                 key={f.id}
@@ -181,7 +181,7 @@ function Settings() {
                   'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                   font === f.id
                     ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
-                    : 'text-[color:var(--color-muted)] hover:text-white',
+                    : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                 )}
               >
                 {f.label}

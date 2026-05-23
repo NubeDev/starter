@@ -39,7 +39,7 @@ export function ActivityFeed({ className }: { className?: string }) {
   const visible = Array.from({ length: 5 }, (_, i) => ITEMS[(start + i) % ITEMS.length])
 
   return (
-    <div className={cn('glass hairline relative overflow-hidden rounded-3xl p-6', className)}>
+    <div className={cn('glass hairline relative overflow-hidden rounded-3xl p-[var(--pad-card)]', className)}>
       <div className="mb-6 flex items-center justify-between">
         <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
           Living signal
@@ -64,7 +64,7 @@ export function ActivityFeed({ className }: { className?: string }) {
                 ? 'bg-[color:var(--color-aqua)]/10 text-[color:var(--color-aqua)] ring-[color:var(--color-aqua)]/25'
                 : item.accent === 'sun'
                 ? 'bg-[color:var(--color-sun)]/10 text-[color:var(--color-sun)] ring-[color:var(--color-sun)]/25'
-                : 'bg-white/5 text-white ring-white/10'
+                : 'bg-[color:var(--color-surface-2)] text-[color:var(--color-text)] ring-[color:var(--color-border)]'
             return (
               <motion.li
                 key={item.title + i}
@@ -73,13 +73,13 @@ export function ActivityFeed({ className }: { className?: string }) {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, x: 30 }}
                 transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
-                className="group flex cursor-default items-center gap-4 rounded-2xl px-3 py-3 transition-colors hover:bg-white/[0.03]"
+                className="group flex cursor-default items-center gap-4 rounded-2xl px-3 py-3 transition-colors hover:bg-[color:var(--color-surface-2)]/40"
               >
                 <div className={cn('flex h-9 w-9 items-center justify-center rounded-xl ring-1', accent)}>
                   <Icon className="h-4 w-4" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="truncate text-sm font-medium text-white">{item.title}</div>
+                  <div className="truncate text-sm font-medium text-[color:var(--color-text)]">{item.title}</div>
                   <div className="truncate text-xs text-[color:var(--color-subtle)]">{item.meta}</div>
                 </div>
                 <div className="tabular shrink-0 text-[11px] text-[color:var(--color-subtle)]">

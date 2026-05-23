@@ -30,13 +30,13 @@ function Section() {
               Live dashboard
             </span>
           </div>
-          <h1 className="max-w-3xl text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-white sm:text-5xl">
+          <h1 className="max-w-3xl text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-[color:var(--color-text)] sm:text-5xl">
             Fleet at a{' '}
             <span className="serif-italic text-[color:var(--color-leaf)]">glance.</span>
           </h1>
         </div>
         <div className="text-xs text-[color:var(--color-subtle)]">
-          Updated <span className="text-white">just now</span> · 3 sites
+          Updated <span className="text-[color:var(--color-text)]">just now</span> · 3 sites
         </div>
       </motion.div>
 
@@ -54,7 +54,7 @@ function Section() {
 
       <div className="mt-5 grid grid-cols-1 gap-5 lg:grid-cols-3">
         <ActivityFeed className="lg:col-span-2" />
-        <div className="glass relative overflow-hidden rounded-3xl p-6">
+        <div className="glass relative overflow-hidden rounded-3xl p-[var(--pad-card)]">
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
             Site by site
           </div>
@@ -71,9 +71,9 @@ function Section() {
                     <b.icon className="h-3.5 w-3.5" />
                     {b.label}
                   </span>
-                  <span className="tabular font-medium text-white">{b.value}%</span>
+                  <span className="tabular font-medium text-[color:var(--color-text)]">{b.value}%</span>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-white/[0.04]">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-[color:var(--color-surface-2)]">
                   <motion.div
                     initial={{ width: 0 }}
                     whileInView={{ width: `${b.value}%` }}

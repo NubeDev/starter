@@ -1,8 +1,16 @@
 import { useEffect } from 'react'
-import { applyFont, applyTheme, useTheme } from '@/stores/theme-store'
+import {
+  applyDensity,
+  applyFont,
+  applyFontSize,
+  applyMotion,
+  applyRadius,
+  applyTheme,
+  useTheme,
+} from '@/stores/theme-store'
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { mode, palette, font } = useTheme()
+  const { mode, palette, font, radius, density, fontSize, motion } = useTheme()
 
   useEffect(() => {
     applyTheme(mode, palette)
@@ -11,6 +19,22 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     applyFont(font)
   }, [font])
+
+  useEffect(() => {
+    applyRadius(radius)
+  }, [radius])
+
+  useEffect(() => {
+    applyDensity(density)
+  }, [density])
+
+  useEffect(() => {
+    applyFontSize(fontSize)
+  }, [fontSize])
+
+  useEffect(() => {
+    applyMotion(motion)
+  }, [motion])
 
   useEffect(() => {
     if (mode !== 'system') return

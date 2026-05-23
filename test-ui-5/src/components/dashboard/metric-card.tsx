@@ -79,7 +79,7 @@ export function MetricCard({
       ? '#67e8f9'
       : accent === 'sun'
       ? '#fde68a'
-      : '#ffffff'
+      : 'var(--color-text)'
   const deltaPositive = (delta ?? 0) >= 0
 
   return (
@@ -90,12 +90,12 @@ export function MetricCard({
       transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       whileHover={{ y: -2 }}
       className={cn(
-        'glass group relative flex flex-col gap-4 overflow-hidden rounded-3xl p-6',
+        'glass group relative flex flex-col gap-4 overflow-hidden rounded-3xl p-[var(--pad-card)]',
         className,
       )}
     >
       <div className="flex items-start justify-between">
-        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+        <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
           {label}
         </div>
         {typeof delta === 'number' && (
@@ -103,8 +103,8 @@ export function MetricCard({
             className={cn(
               'tabular rounded-full px-2 py-0.5 text-[10px] font-semibold',
               deltaPositive
-                ? 'bg-emerald-400/10 text-emerald-300'
-                : 'bg-rose-400/10 text-rose-300',
+                ? 'bg-[color:var(--color-ok)]/15 text-[color:var(--color-ok)]'
+                : 'bg-[color:var(--color-danger)]/15 text-[color:var(--color-danger)]',
             )}
           >
             {deltaPositive ? '↑' : '↓'} {Math.abs(delta).toFixed(1)}%
@@ -112,10 +112,10 @@ export function MetricCard({
         )}
       </div>
       <div className="flex items-end justify-between gap-3">
-        <div className="tabular flex items-baseline gap-1 text-4xl font-semibold tracking-[-0.03em] text-white">
-          {prefix && <span className="text-2xl text-zinc-500">{prefix}</span>}
+        <div className="tabular flex items-baseline gap-1 text-4xl font-semibold tracking-[-0.03em] text-[color:var(--color-text)]">
+          {prefix && <span className="text-2xl text-[color:var(--color-subtle)]">{prefix}</span>}
           <motion.span>{animated}</motion.span>
-          {suffix && <span className="text-xl text-zinc-500">{suffix}</span>}
+          {suffix && <span className="text-xl text-[color:var(--color-subtle)]">{suffix}</span>}
         </div>
         <div className="opacity-90">
           <Spark data={spark} color={accentColor} />

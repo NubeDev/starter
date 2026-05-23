@@ -16,8 +16,8 @@ export function RadialProgress({ value, label, subLabel, className }: RadialProg
   const offset = c - (value / 100) * c
 
   return (
-    <div className={cn('glass relative overflow-hidden rounded-3xl p-6', className)}>
-      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-zinc-500">
+    <div className={cn('glass relative overflow-hidden rounded-3xl p-[var(--pad-card)]', className)}>
+      <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
         {label}
       </div>
       <div className="mt-4 flex items-center justify-center">
@@ -53,12 +53,12 @@ export function RadialProgress({ value, label, subLabel, className }: RadialProg
             />
           </svg>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <div className="tabular text-4xl font-semibold tracking-tight text-white">
+            <div className="tabular text-4xl font-semibold tracking-tight text-[color:var(--color-text)]">
               {value}
-              <span className="text-xl text-zinc-500">%</span>
+              <span className="text-xl text-[color:var(--color-subtle)]">%</span>
             </div>
             {subLabel && (
-              <div className="mt-1 text-[10px] uppercase tracking-[0.15em] text-zinc-500">
+              <div className="mt-1 text-[10px] uppercase tracking-[0.15em] text-[color:var(--color-subtle)]">
                 {subLabel}
               </div>
             )}

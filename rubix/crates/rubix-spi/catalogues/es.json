@@ -1,0 +1,13 @@
+{
+  "rubix.skill.denied": "La habilidad {skill} no permite la herramienta {tool}.",
+  "rubix.flow.canceled": "La operación fue cancelada.",
+  "rubix.system.disk.ok": "El uso del disco es normal ({percent}% usado, {free} libre, sondeado el {at}).",
+  "rubix.system.disk.warn": "El disco está casi lleno ({percent}% usado, {free} libre, sondeado el {at}).",
+  "rubix.system.disk.full": "El disco está lleno ({percent}% usado, {free} libre, sondeado el {at}).",
+  "rubix.system.db.ok": "La base de datos está accesible ({used} bytes en uso, sondeado el {at}).",
+  "rubix.system.db.unreachable": "La base de datos no está accesible (sondeado el {at}).",
+  "rubix.system.flow_errors.ok": "Sin errores de flujo en los últimos {window}s (sondeado el {at}).",
+  "rubix.system.flow_errors.warn": "{count} errores de flujo en los últimos {window}s (sondeado el {at}).",
+  "rubix.system.flow_errors.error": "{count} errores de flujo en los últimos {window}s — investigar (sondeado el {at}).",
+  "rubix.alert.send.ok": "Alerta emitida con severidad {severity} (el {at})."
+}

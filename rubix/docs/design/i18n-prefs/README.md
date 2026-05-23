@@ -106,6 +106,84 @@ catalogue, and calls the same `MessageBundle::render_diagnostic`
 the MCP transport uses. No new mechanism — same renderer, same
 output shape.
 
+## Date / time / timezone
+
+The same client-renders-by-default / MCP+CLI-render-server-side
+split applies to timestamps as to MessageKeys — but the canonical
+wire form is **`i64` epoch milliseconds, UTC** (per starter user
+SCOPE R1), not a localised string.
+
+### Three independent inputs
+
+A rendered timestamp combines three resolved preferences:
+
+| Preference | Drives | Examples |
+|---|---|---|
+| `timezone` (IANA) | The wall-clock shift | `Europe/Paris`, `America/New_York`, `UTC` |
+| `date_format` | Date pattern | `YYYY-MM-DD` (ISO), `DD/MM/YYYY` (EU/UK), `MM/DD/YYYY` (US) |
+| `time_format` | Clock pattern | `H24` (`13:42`), `H12` (`1:42 PM`) |
+
+Same canonical wire value, four different outputs:
+
+| Locale | Timezone | Date | Time | Output |
+|---|---|---|---|---|
+| en-US | `America/New_York` | `MM/DD/YYYY` | `12h` | `01/15/2024, 7:00 AM` |
+| en-GB | `Europe/London` | `DD/MM/YYYY` | `24h` | `15/01/2024, 12:00` |
+| fr-FR | `Europe/Paris` | `DD/MM/YYYY` | `24h` | `15/01/2024, 13:00` |
+| (no prefs) | `UTC` | `YYYY-MM-DD` | `24h` | `2024-01-15, 12:00` |
+
+### Where conversion happens
+
+This is the industry-normal split for Rust backend + React (or
+Flutter / Swift / Kotlin) frontend:
+
+| Surface | Convert where | Why |
+|---|---|---|
+| REST + gRPC | **Client** (raw `i64` on the wire) | Cache-friendly; client picks `date-fns-tz` / `Intl.DateTimeFormat` / `java.time`. Every modern client platform has battle-tested timezone libs. |
+| SSE events | **Client** (raw `i64` in events) | Same — one stream serves every locale. |
+| MCP | **Server** | MCP clients render strings directly; the LLM would either pass raw ms through or hallucinate a format. Documented exception, same as i18n strings. |
+| CLI | **Server** (at call site) | A Rust CLI printing `1764892800000` is broken. `chrono`-format at the call site. |
+
+### Server-side rendering uses `render_diagnostic`
+
+The MCP transport and the CLI both call
+`MessageBundle::render_diagnostic` (from `starter-i18n`). When a
+`DiagnosticParam::Timestamp(ms)` is interpolated, the renderer:
+
+1. Converts `ms` → `DateTime<Utc>` via
+   `DateTime::from_timestamp_millis`.
+2. Shifts into `prefs.timezone` (IANA) via `chrono_tz`.
+3. Formats date pattern from `prefs.date_format` (ISO / DMY / MDY).
+4. Formats time pattern from `prefs.time_format` (24h / 12h).
+5. Writes `"<date>, <time>"`.
+
+Conversion failures (unknown timezone, out-of-range ms) fall
+through to canonical UTC RFC 3339 so the operator always sees a
+parseable timestamp.
+
+### Relative time ("5 minutes ago")
+
+**Client renders.** Every target platform has native support:
+
+- React / browser: `Intl.RelativeTimeFormat`, `date-fns/formatDistanceToNow`.
+- Flutter: `timeago` package.
+- iOS / Swift: `RelativeDateTimeFormatter`.
+- Android / Kotlin: `DateUtils.getRelativeTimeSpanString`.
+
+Tools emit absolute `Timestamp` values; clients compute relative
+spans if they want. The server doesn't ship a parallel
+`rubix.time.relative.minutes_ago` key namespace.
+
+### Anti-patterns
+
+- A REST handler that returns `"2024-01-15T13:00:00+01:00"`
+  as a string. Wire is `i64` ms; let the client format.
+- A domain function taking a `&Tz` parameter. Domain code is
+  timezone-agnostic. The renderer holds the timezone.
+- A tool that pre-formats a timestamp before passing it through a
+  `Diagnostic`. Use `DiagnosticParam::Timestamp(ms)`; the
+  renderer converts at the edge.
+
 ## What tools return
 
 A rubix tool's output is **structured + keyed**, never a
@@ -202,3 +280,39 @@ The transport calls the renderer, which calls
 - A skill or descriptor field containing non-EN text.
 - A REST error body that has only `message_en` and no `code`.
   Clients that ship their own catalogue can't re-render it.
+
+## Localisation section — SKILL.md template
+
+Every bundled rubix `SKILL.md` carries this section verbatim,
+adjusted only for the goal-specific MessageKey prefix. The
+purpose is to steer the LLM away from hallucinating raw floats
+or pre-rendered strings.
+
+```markdown
+## Localisation
+
+When you call a rubix tool, the reply is a structured
+`Diagnostic` (a stable `code` plus typed `params`) plus
+`data`. The transport layer renders the diagnostic into the
+caller's language and units before the human sees it.
+
+You MUST:
+
+- Emit MessageKey codes that already exist in the rubix
+  catalogue (prefix: `rubix.<goal>.*`). Do not invent new
+  keys at runtime — request a catalogue entry instead.
+- Pass numeric measurements through the tool's typed
+  `Quantity` slot. Never format units yourself ("12.5 GB"
+  is the renderer's job, not yours).
+- Leave dates / times as RFC3339 UTC; the renderer applies
+  the caller's timezone.
+
+You MUST NOT:
+
+- Concatenate localised strings yourself. Compose
+  `Diagnostic` instances instead.
+- Pick a language for the user. The transport does that.
+- Translate skill text or descriptor text. Both stay EN.
+```
+
+A skill that omits this section fails review.

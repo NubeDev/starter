@@ -145,6 +145,9 @@ fn write_param_with_prefs(
     use starter_spi::units::{convert_for_display, Quantity};
     use std::fmt::Write;
     match p {
+        DiagnosticParam::Timestamp(ms) => {
+            write_timestamp_with_prefs(*ms, prefs, out);
+        }
         DiagnosticParam::Quantity { canonical, quantity } => {
             let target = match quantity {
                 Quantity::Temperature => prefs.temperature_unit,
@@ -174,6 +177,59 @@ fn write_param_with_prefs(
         // Every other variant uses the same plain formatter.
         other => write_param(other, out),
     }
+}
+
+/// Format an epoch-ms `Timestamp` against the caller's `timezone`,
+/// `date_format`, and `time_format` preferences.
+///
+/// Output shape: `"<date>, <time>"` — e.g. `"23/05/2026, 13:42"`
+/// (UK/EU operator) or `"05/23/2026, 1:42 PM"` (US operator). The
+/// exact patterns come from the resolved [`DateFormat`] +
+/// [`TimeFormat`] enums in `starter-spi`; `Auto` is impossible at
+/// this stage because the resolver has already concretised it.
+///
+/// On any conversion failure (an unknown timezone, an out-of-range
+/// epoch value) the helper falls back to the canonical UTC RFC 3339
+/// rendering so the operator still sees a meaningful timestamp.
+#[cfg(feature = "preferences")]
+fn write_timestamp_with_prefs(
+    epoch_ms: i64,
+    prefs: &starter_spi::preferences::ResolvedPreferences,
+    out: &mut String,
+) {
+    use chrono::{DateTime, Utc};
+    use chrono_tz::Tz;
+    use starter_spi::preferences::{DateFormat, TimeFormat};
+    use std::fmt::Write;
+
+    // Step 1: epoch ms → DateTime<Utc>. The conversion can fail if
+    // the value is outside chrono's range — fall through to raw ms
+    // so the operator still sees something.
+    let Some(utc) = DateTime::<Utc>::from_timestamp_millis(epoch_ms) else {
+        let _ = write!(out, "{epoch_ms}");
+        return;
+    };
+
+    // Step 2: shift into the resolved timezone. An unknown IANA id
+    // (e.g. truncated `"Europe/"`) falls through to UTC rendering.
+    let tz: Tz = prefs.timezone.parse().unwrap_or(chrono_tz::UTC);
+    let local = utc.with_timezone(&tz);
+
+    let date_fmt = match prefs.date_format {
+        DateFormat::IsoYMD => "%Y-%m-%d",
+        DateFormat::DmySlash => "%d/%m/%Y",
+        DateFormat::MdySlash => "%m/%d/%Y",
+        // Resolver guarantees Auto is replaced — but keep a sane
+        // fallback for defensive callers.
+        DateFormat::Auto => "%Y-%m-%d",
+    };
+    let time_fmt = match prefs.time_format {
+        TimeFormat::H24 => "%H:%M",
+        TimeFormat::H12 => "%-I:%M %p",
+        TimeFormat::Auto => "%H:%M",
+    };
+
+    let _ = write!(out, "{}, {}", local.format(date_fmt), local.format(time_fmt));
 }
 
 #[cfg(test)]
@@ -211,5 +267,67 @@ mod tests {
     fn handles_malformed_template() {
         let params = BTreeMap::new();
         assert_eq!(interpolate_typed("oops {name", &params), "oops {name");
+    }
+
+    #[cfg(feature = "preferences")]
+    #[test]
+    fn timestamp_renders_in_caller_timezone_and_format() {
+        use starter_spi::preferences::{
+            DateFormat, NumberFormat, ResolvedPreferences, Theme, TimeFormat, UnitSystem,
+            WeekStart,
+        };
+        use starter_spi::units::Unit;
+
+        // 2024-01-15 12:00:00 UTC
+        let epoch_ms = 1_705_320_000_000_i64;
+
+        let eu = ResolvedPreferences {
+            timezone: "Europe/Paris".into(),
+            locale: "fr-FR".into(),
+            language: "fr".into(),
+            unit_system: UnitSystem::Metric,
+            temperature_unit: Unit::Celsius,
+            pressure_unit: Unit::Kilopascal,
+            speed_unit: Unit::MeterPerSecond,
+            length_unit: Unit::Meter,
+            mass_unit: Unit::Kilogram,
+            date_format: DateFormat::DmySlash,
+            time_format: TimeFormat::H24,
+            week_start: WeekStart::Monday,
+            number_format: NumberFormat::DotComma,
+            currency: "EUR".into(),
+            theme: Theme::Light,
+        };
+        let us = ResolvedPreferences {
+            timezone: "America/New_York".into(),
+            locale: "en-US".into(),
+            language: "en".into(),
+            date_format: DateFormat::MdySlash,
+            time_format: TimeFormat::H12,
+            currency: "USD".into(),
+            number_format: NumberFormat::CommaDot,
+            temperature_unit: Unit::Fahrenheit,
+            pressure_unit: Unit::Psi,
+            speed_unit: Unit::MilePerHour,
+            length_unit: Unit::Foot,
+            mass_unit: Unit::Pound,
+            unit_system: UnitSystem::Imperial,
+            week_start: WeekStart::Sunday,
+            theme: Theme::Light,
+        };
+
+        let mut params = BTreeMap::new();
+        params.insert("at".into(), DiagnosticParam::Timestamp(epoch_ms));
+
+        // EU operator: 13:00 Paris, DD/MM/YYYY, 24h
+        assert_eq!(
+            interpolate_typed_with_prefs("Last check at {at}.", &params, &eu),
+            "Last check at 15/01/2024, 13:00.",
+        );
+        // US operator: 7:00 AM New York, MM/DD/YYYY, 12h
+        assert_eq!(
+            interpolate_typed_with_prefs("Last check at {at}.", &params, &us),
+            "Last check at 01/15/2024, 7:00 AM.",
+        );
     }
 }

@@ -64,7 +64,7 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                 onClick={() => setActiveTeam(team)}
                 className='gap-2 p-2'
               >
-                <div className='flex size-6 items-center justify-center rounded-sm border border-white/10'>
+                <div className='flex size-6 items-center justify-center rounded-sm border border-[color:var(--color-border)]'>
                   <team.logo className='size-4 shrink-0' />
                 </div>
                 {team.name}
@@ -73,7 +73,7 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
             ))}
             <DropdownMenuSeparator />
             <DropdownMenuItem className='gap-2 p-2'>
-              <div className='flex size-6 items-center justify-center rounded-md border border-white/10 bg-[color:var(--color-bg)]'>
+              <div className='flex size-6 items-center justify-center rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-bg)]'>
                 <Plus className='size-4' />
               </div>
               <div className='font-medium text-[color:var(--color-muted)]'>Add team</div>

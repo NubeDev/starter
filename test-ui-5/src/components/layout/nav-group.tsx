@@ -165,7 +165,7 @@ function SidebarMenuCollapsedDropdown({ item, href }: { item: NavCollapsible; hr
             <DropdownMenuItem key={`${sub.title}-${sub.url}`} asChild>
               <NavAnchor
                 url={sub.url as string}
-                className={checkIsActive(href, sub) ? 'bg-white/10' : ''}
+                className={checkIsActive(href, sub) ? 'bg-[color:var(--color-surface-2)]/60' : ''}
               >
                 {sub.icon && <sub.icon />}
                 <span className='max-w-52 text-wrap'>{sub.title}</span>

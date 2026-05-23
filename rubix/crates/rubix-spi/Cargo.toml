@@ -8,7 +8,8 @@ repository.workspace = true
 rust-version.workspace = true
 
 [dependencies]
-starter-spi = { workspace = true }
+starter-spi = { workspace = true, features = ["i18n", "preferences"] }
+starter-i18n = { workspace = true, features = ["units", "preferences"] }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 utoipa = { workspace = true }

@@ -9,7 +9,7 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
   ({ className, variant = 'default', children, ...props }, ref) => {
     const styles = {
       default:
-        'border-white/10 bg-white/5 text-[color:var(--color-muted)]',
+        'border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/40 text-[color:var(--color-muted)]',
       leaf:
         'border-[color:var(--color-leaf)]/30 bg-[color:var(--color-leaf)]/10 text-[color:var(--color-leaf)]',
       aqua:
@@ -18,7 +18,7 @@ export const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
         'border-[color:var(--color-sun)]/30 bg-[color:var(--color-sun)]/10 text-[color:var(--color-sun)]',
       live:
         'border-[color:var(--color-leaf)]/30 bg-[color:var(--color-leaf)]/10 text-[color:var(--color-leaf)]',
-      outline: 'border-white/15 bg-transparent text-zinc-300',
+      outline: 'border-[color:var(--color-border)] bg-transparent text-[color:var(--color-muted)]',
     }[variant]
     return (
       <div

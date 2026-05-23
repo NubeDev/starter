@@ -4,6 +4,12 @@
 //! surface. Layout mirrors [`rubix-tools`] one-to-one: one subfolder
 //! per goal, one file per verb.
 
+pub mod client;
+pub mod error;
+
+pub use client::RubixClient;
+pub use error::RubixClientError;
+
 pub mod analytics;
 pub mod clickhouse;
 pub mod clipboard;

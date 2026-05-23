@@ -828,6 +828,21 @@ concept? Test at `tests/<same_name>_test.rs`? Any "no" → R1 slipped.
 - **Default extension transport: stdio + JSON-RPC** via
   `starter-jsonrpc-stdio` (matches starter's extension framework).
 
+## Thin-slice plan
+
+The five phases below remain the long-term shape. The **active
+working plan** is [`docs/scope/THIN-SLICE.md`](docs/scope/THIN-SLICE.md):
+one demo path that exercises every architectural layer
+end-to-end (auth, authz, audit, flow runtime, agent, MCP, tools,
+prefs, i18n, Postgres, ClickHouse, insights, CLI), shipped in
+five PRs.
+
+After the thin slice lands, each phase below becomes "broaden an
+already-working layer" rather than "add a layer that didn't
+exist." This is more valuable than depth in one phase because
+every later change has a working end-to-end test to validate
+against.
+
 ## Forward-looking gaps
 
 [`docs/scope/GAPS.md`](docs/scope/GAPS.md) is the rolling audit of

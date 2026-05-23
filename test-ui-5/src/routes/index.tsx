@@ -47,7 +47,7 @@ function Hero() {
         initial={{ opacity: 0, y: 24, filter: 'blur(8px)' }}
         animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
         transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
-        className="mt-6 max-w-4xl text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-white sm:text-7xl lg:text-[88px]"
+        className="mt-6 max-w-4xl text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-[color:var(--color-text)] sm:text-7xl lg:text-[88px]"
       >
         The operating layer for the{' '}
         <span className="serif-italic text-[color:var(--color-leaf)]">physical world.</span>
@@ -100,7 +100,7 @@ function Hero() {
               />
               <div className="flex items-baseline gap-3">
                 <span
-                  className="tabular text-5xl font-medium tracking-[-0.04em] text-white"
+                  className="tabular text-5xl font-medium tracking-[-0.04em] text-[color:var(--color-text)]"
                   style={{ color: c }}
                 >
                   {s.v}
@@ -133,7 +133,7 @@ function Capabilities() {
             What's inside
           </span>
         </div>
-        <h2 className="max-w-3xl text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-white sm:text-5xl">
+        <h2 className="max-w-3xl text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-[color:var(--color-text)] sm:text-5xl">
           An IoT platform that{' '}
           <span className="serif-italic text-[color:var(--color-muted)]">gets out of the way.</span>
         </h2>
@@ -178,7 +178,7 @@ function CTA() {
         />
         <div className="relative">
           <Badge variant="leaf">Public preview · Q2 2026</Badge>
-          <h2 className="mt-6 max-w-3xl text-5xl font-medium leading-[1.05] tracking-[-0.04em] text-white sm:text-6xl">
+          <h2 className="mt-6 max-w-3xl text-5xl font-medium leading-[1.05] tracking-[-0.04em] text-[color:var(--color-text)] sm:text-6xl">
             Bring your fleet{' '}
             <span className="serif-italic text-[color:var(--color-leaf)]">online</span> in an afternoon.
           </h2>

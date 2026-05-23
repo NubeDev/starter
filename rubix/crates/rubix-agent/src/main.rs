@@ -13,17 +13,31 @@ use tracing::info;
 
 mod boot;
 mod health;
+mod registry;
 
 #[tokio::main]
 async fn main() -> Result<()> {
     let _guard = boot::init_tracing()?;
 
+    let bundle = rubix_spi::i18n::rubix_bundle()?;
+    let catalogue_size: usize = bundle
+        .languages()
+        .filter_map(|tag| bundle.catalog(tag))
+        .map(|cat| cat.messages.len())
+        .sum();
+
+    let tools = registry::build_tool_registry();
+    let migrations = boot::apply_migrations().await?;
+
     info!(
         crate_name = env!("CARGO_PKG_NAME"),
         version = env!("CARGO_PKG_VERSION"),
-        tools = 0,
+        tools = tools.len(),
         skills = rubix_skills::bundled().entries().len(),
         flows = rubix_flows::bundled().entries().len(),
+        migrations = migrations.sources_applied,
+        migrations_skipped = migrations.skipped,
+        i18n_keys = catalogue_size,
         "rubix-agent starting"
     );
 

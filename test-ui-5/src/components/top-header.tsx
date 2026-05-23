@@ -13,7 +13,7 @@ function Brand() {
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]">
         <Sparkles className="h-4 w-4" strokeWidth={2.25} />
       </div>
-      <span className="text-sm font-semibold tracking-tight text-white">Nube</span>
+      <span className="text-sm font-semibold tracking-tight text-[color:var(--color-text)]">Nube</span>
       <span className="ml-1 hidden text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-subtle)] md:inline">
         IoT Console
       </span>
@@ -40,7 +40,7 @@ function HeaderNav() {
             {...linkProps}
             className={cn(
               'flex cursor-pointer items-center gap-1.5 transition-colors',
-              isActive ? 'text-white' : 'text-[color:var(--color-muted)] hover:text-white',
+              isActive ? 'text-[color:var(--color-text)]' : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
             )}
           >
             <Icon className="h-3.5 w-3.5" />
@@ -69,7 +69,7 @@ export function TopHeader() {
               <SidebarTrigger
                 data-testid="mobile-nav-trigger"
                 aria-label="Open navigation menu"
-                className="text-[color:var(--color-muted)] hover:bg-white/[0.04] hover:text-white md:hidden"
+                className="text-[color:var(--color-muted)] hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] md:hidden"
               />
               <Brand />
               <HeaderNav />
@@ -88,7 +88,7 @@ export function TopHeader() {
       initial={{ y: -16, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-      className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-white/[0.06] bg-[color:var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6 lg:px-8"
+      className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-[color:var(--color-border)] bg-[color:var(--color-bg)]/80 px-4 backdrop-blur-md sm:px-6 lg:px-8"
     >
       <div className="ml-auto">
         <ActionDock inline />

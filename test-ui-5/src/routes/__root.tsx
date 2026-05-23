@@ -26,7 +26,7 @@ function HeaderShellInner() {
   const { location } = useRouterState()
   const isMobile = useIsMobile()
   return (
-    <div className="min-h-screen bg-[color:var(--color-bg)] text-white">
+    <div className="min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]">
       <BootIntro />
       <ScrollProgress />
       {/* Mobile-only: reuses the shadcn AppSidebar as the slide-in nav so header
@@ -59,7 +59,7 @@ function SidebarShellInner() {
       <BootIntro />
       <ScrollProgress />
       <AppSidebar />
-      <SidebarInset className="@container/content min-h-svh bg-transparent text-white">
+      <SidebarInset className="@container/content min-h-svh bg-transparent text-[color:var(--color-text)]">
         <Header>
           <div className="ml-auto">
             <ActionDock inline />

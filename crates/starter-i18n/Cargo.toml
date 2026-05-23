@@ -26,8 +26,15 @@ routes = ["dep:axum", "dep:http", "dep:tower", "dep:futures", "dep:async-trait"]
 units = ["starter-spi/units"]
 # `preferences` enables `MessageBundle::render_diagnostic` — the
 # prefs-aware renderer that converts canonical Quantity params into
-# the caller's preferred unit before formatting. Implies `units`.
-preferences = ["units", "starter-spi/preferences"]
+# the caller's preferred unit and Timestamp params into the
+# caller's timezone + date/time format. Implies `units`; pulls
+# `chrono` + `chrono-tz` for timezone-aware formatting.
+preferences = [
+    "units",
+    "starter-spi/preferences",
+    "dep:chrono",
+    "dep:chrono-tz",
+]
 # Phase 5 — scope-limited diagnostics rewriter (opt-in response
 # extension). Builds on the same axum / tower stack as `routes`;
 # also pulls in `http-body-util` + `bytes` because the rewriter
@@ -73,6 +80,12 @@ http        = { workspace = true, optional = true }
 tower       = { workspace = true, optional = true }
 futures     = { workspace = true, optional = true }
 async-trait = { workspace = true, optional = true }
+
+# `preferences` feature deps — timezone-aware timestamp formatting
+# in `MessageBundle::render_diagnostic`. Both are pulled by the
+# `preferences` feature flag above.
+chrono      = { workspace = true, optional = true }
+chrono-tz   = { workspace = true, optional = true }
 
 # `diagnostics` feature deps — body buffering for the opt-in
 # rewriter. Both are also pulled in transitively by axum, but

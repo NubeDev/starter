@@ -45,6 +45,29 @@ rubix) is an **upstream gap to resolve** — see
 Decision audit lands in the configured audit sink. Per-tenant
 filtering is applied at the query layer, never client-side.
 
+### Per-verb permission declaration
+
+Every rubix tool declares its required `starter-authz` permission
+string as a `pub const REQUIRED_PERMISSION: &str` next to its
+`DESCRIPTOR` in the verb's DTO file (e.g.
+`rubix-spi/src/dto/system/disk.rs`). The dispatch wrapper reads it
+and calls `Authz::check` before invoking the underlying probe. This
+keeps each verb file the single source of truth for everything
+about that verb: the DTOs, the descriptor, the thresholds, and the
+permission. No central permission table to drift.
+
+Permission strings used so far:
+
+| Permission | Verbs |
+|---|---|
+| `system.read` | `rubix.system.disk`, `rubix.system.db`, `rubix.system.flow_errors` |
+| `system.alert` | `rubix.alert.send` |
+
+Write-side verbs ride on a different permission from read-side
+verbs so an operator can be granted observation without alerting.
+New permission strings land alongside the first verb that needs
+them and get a row in the table above in the same PR.
+
 ## OAuth callback flow
 
 `starter-auth-oauth` provides the callback handlers; rubix mounts

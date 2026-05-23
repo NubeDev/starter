@@ -9,7 +9,7 @@ rust-version.workspace = true
 
 [dependencies]
 rubix-spi = { workspace = true }
-starter-spi = { workspace = true }
+starter-spi = { workspace = true, features = ["i18n", "units"] }
 async-trait = { workspace = true }
 serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
@@ -17,3 +17,14 @@ tokio = { workspace = true }
 tracing = { workspace = true }
 thiserror = { workspace = true }
 anyhow = { workspace = true }
+starter-tool-sysdiag = { workspace = true }
+
+[dev-dependencies]
+# Recorded-LLM round-trip harness for the system.disk verb. Pulls
+# the ai-agent node body + the starter `RecordingAiRunner` fake so
+# the tool exercise the same NodeBehavior::invoke seam production
+# uses. See docs/design/tools/.
+starter-ai         = { workspace = true, features = ["testing"] }
+starter-flow       = { workspace = true }
+starter-flow-nodes = { workspace = true, features = ["ai-agent", "tool-call"] }
+starter-flow-spi   = { workspace = true }

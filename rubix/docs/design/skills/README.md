@@ -51,3 +51,22 @@ Every `agent.turn.start` event carries the active skill id (R13).
 Querying "why did the agent do that?" means grepping traces by
 turn id, finding the skill, and reading the skill body. This is
 the difference between debuggable and opaque.
+
+## Canonical example — `system-checker`
+
+[`com.rubix.system-checker`](../../crates/rubix-skills/skills/system-checker/SKILL.md)
+is the reference body the other five bundled skills inherit their
+structure from. Read it before authoring or reviewing a skill —
+specifically:
+
+- The **Tools you may call** table that maps each `allowed_tools`
+  entry to a one-line use-it-for.
+- The **How to work** numbered list that orders read-then-decide
+  before any write tool.
+- The **Localisation** section, copied verbatim from the
+  [i18n-prefs template](../i18n-prefs/README.md#localisation-section--skillmd-template).
+- The **Worked example** that shows operator → tool call → tool
+  reply → alert decision → rendered response, with the renderer
+  doing all unit / language work.
+
+A new skill that omits any of these four sections fails review.

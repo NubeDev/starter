@@ -1,0 +1,13 @@
+{
+  "rubix.skill.denied": "Skill {skill} does not allow tool {tool}.",
+  "rubix.flow.canceled": "The operation was canceled.",
+  "rubix.system.disk.ok": "Disk usage is normal ({percent}% used, {free} free, probed at {at}).",
+  "rubix.system.disk.warn": "Disk is nearly full ({percent}% used, {free} free, probed at {at}).",
+  "rubix.system.disk.full": "Disk is full ({percent}% used, {free} free, probed at {at}).",
+  "rubix.system.db.ok": "Database is reachable ({used} bytes in use, probed at {at}).",
+  "rubix.system.db.unreachable": "Database is not reachable (probed at {at}).",
+  "rubix.system.flow_errors.ok": "No flow errors in the last {window}s (probed at {at}).",
+  "rubix.system.flow_errors.warn": "{count} flow errors in the last {window}s (probed at {at}).",
+  "rubix.system.flow_errors.error": "{count} flow errors in the last {window}s — investigate (probed at {at}).",
+  "rubix.alert.send.ok": "Alert emitted at {severity} severity (at {at})."
+}

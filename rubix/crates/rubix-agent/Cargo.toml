@@ -20,10 +20,12 @@ rubix-client = { workspace = true }
 
 # Starter platform pieces wired in by the binary. Many are Phase 0
 # placeholders — Phase 1+ activates the additional surfaces.
-starter-spi           = { workspace = true }
-starter-config        = { workspace = true }
-starter-observability = { workspace = true }
-starter-server        = { workspace = true }
+starter-spi              = { workspace = true }
+starter-config           = { workspace = true }
+starter-observability    = { workspace = true }
+starter-server           = { workspace = true }
+starter-store-postgres   = { workspace = true }
+starter-changelog-postgres = { workspace = true }
 
 axum    = { workspace = true }
 

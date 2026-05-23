@@ -1,9 +1,31 @@
-//! Integration test for `rubix.system.flow_errors` (placeholder).
+//! Integration test for `rubix.system.flow_errors`.
 //!
-//! Round-trips the verb through the `ai-agent` node loop using the
-//! recorded-LLM harness. Live LLM calls are forbidden in CI; see
-//! [docs/design/tests/](../../docs/design/tests/README.md).
+//! Exercises the `Tool` trait surface with an empty in-process
+//! registry — same JSON shape MCP clients see.
 
-#[test]
-#[ignore = "placeholder — implemented alongside the verb"]
-fn placeholder() {}
+use rubix_spi::dto::system::flow_errors::FlowErrorsResponse;
+use rubix_tools::system::flow_errors::FlowErrorsTool;
+use starter_spi::tool::Tool;
+
+#[tokio::test]
+async fn invoke_returns_ok_summary_on_empty_registry() {
+    let tool = FlowErrorsTool::default();
+    let def = tool.definition();
+    assert_eq!(def.name, "rubix.system.flow_errors");
+
+    let raw = tool
+        .invoke(serde_json::json!({ "window_secs": 60 }))
+        .await
+        .expect("flow_errors tool succeeds");
+    let resp: FlowErrorsResponse =
+        serde_json::from_value(raw).expect("response matches DTO shape");
+
+    assert_eq!(resp.error_count, 0);
+    assert_eq!(resp.window_secs, 60);
+    assert!(resp.samples.is_empty());
+    assert_eq!(resp.summary.code.as_str(), "rubix.system.flow_errors.ok");
+    assert!(resp.summary.params.contains_key("at"));
+    assert!(resp.summary.params.contains_key("count"));
+    assert!(resp.summary.params.contains_key("window"));
+    assert!(resp.probed_at_ms > 0);
+}

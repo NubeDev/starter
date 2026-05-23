@@ -10,12 +10,12 @@ import { cn } from '@/lib/utils'
 export function LayoutToggle() {
   const { mode, setMode } = useLayout()
   return (
-    <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+    <div className="inline-flex items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
       <button
         onClick={() => setMode('header')}
         className={cn(
           'relative flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
-          mode === 'header' ? 'text-[color:var(--color-bg)]' : 'text-[color:var(--color-muted)] hover:text-white',
+          mode === 'header' ? 'text-[color:var(--color-bg)]' : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
         )}
         aria-pressed={mode === 'header'}
       >
@@ -33,7 +33,7 @@ export function LayoutToggle() {
         onClick={() => setMode('sidebar')}
         className={cn(
           'relative flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
-          mode === 'sidebar' ? 'text-[color:var(--color-bg)]' : 'text-[color:var(--color-muted)] hover:text-white',
+          mode === 'sidebar' ? 'text-[color:var(--color-bg)]' : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
         )}
         aria-pressed={mode === 'sidebar'}
       >
