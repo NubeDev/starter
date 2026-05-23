@@ -136,7 +136,9 @@ A misconfigured rule can deny `admin` everything and the admin can
 still `DELETE /v1/authz/rules/{id}` to fix it. This is enforced by the
 `admin-cannot-lock-themselves-out` smoke test.
 
-## Hard rules (from SCOPE.md)
+## Hard rules (from SCOPE.md / SCOPE-EXT.md)
+
+Phase 1–6 (`SCOPE.md`):
 
 | Rule | Summary |
 |------|---------|
@@ -151,9 +153,30 @@ still `DELETE /v1/authz/rules/{id}` to fix it. This is enforced by the
 | R9   | Decisions emit stable reason codes. |
 | R10  | Comments explain **why**, not what. |
 
+Phase 7 (`SCOPE-EXT.md`) — strictly additive, every Phase 1–6 deployment
+keeps working unchanged:
+
+| Rule | Summary |
+|------|---------|
+| R11  | **Tenants** are a typed first-class predicate evaluated *before* role/condition; missing binding defaults-deny with reason `no_tenant_binding`; cross-tenant access denies with reason `cross_tenant`. |
+| R12  | Tenant ownership is two columns (`tenant_id`, `owner_id`) with an immutability trigger; both participate in unique constraints. |
+| R13  | **Teams** are subjects in the rule grammar — team slug is the rule-stable identity; `Principal.teams` is populated at session-mint time. |
+| R14  | Decisions go to a best-effort `DecisionSink` — 100% deny retention, sampled allows, drop-don't-block on overflow. |
+| R15  | Extension REST/MCP/gRPC entries declare a `permission:` field inline in the manifest; the adapter wires `with_permission` so the host needs zero hand-mounting. |
+
+## Phase 7 worked example
+
+[`examples/authz-demo`](../../../examples/authz-demo/) is the canonical
+Phase 7 walkthrough — tenants seed, team rule, audit sink wiring,
+extension manifests with `permission:`, and the audit endpoint paging
+all in one runnable binary. See its
+[`README.md`](../../../examples/authz-demo/README.md) for the end-to-end
+script.
+
 ## See also
 
-- [`SCOPE.md`](./SCOPE.md) — full design, phasing plan, smoke tests.
+- [`SCOPE.md`](./SCOPE.md) — Phase 1–6 design, phasing plan, smoke tests.
+- [`SCOPE-EXT.md`](./SCOPE-EXT.md) — Phase 7 (tenants/teams/audit/extension permissions) design + R11–R15.
 - [`starter-authz` crate](../../../crates/starter-authz/) — implementation.
 - [`starter-spi::authz`](../../../crates/starter-spi/src/authz/) — trait surface.
 - [`starter-auth-oauth::OAuthPrincipalExtras`](../../../crates/starter-auth-oauth/src/principal_extras.rs) — OAuth attribute bridge (R8).

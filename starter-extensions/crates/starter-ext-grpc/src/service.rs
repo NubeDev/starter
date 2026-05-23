@@ -155,8 +155,7 @@ impl ExtensionGrpcService {
             .await
             .map_err(|_| Status::unauthenticated("invalid bearer token"))?;
         let object = ResourceRef::collection(perm.resource.clone());
-        let decision =
-            with_surface(SURFACE, engine.check(&principal, &perm.action, &object)).await;
+        let decision = with_surface(SURFACE, engine.check(&principal, &perm.action, &object)).await;
         match decision {
             Decision::Allow { .. } => Ok(()),
             Decision::Deny { reason, .. } => Err(Status::permission_denied(reason)),

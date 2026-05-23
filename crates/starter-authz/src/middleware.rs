@@ -67,12 +67,7 @@ where
     }))
 }
 
-async fn gate_owned(
-    kind: Arc<str>,
-    action: Arc<str>,
-    req: Request<Body>,
-    next: Next,
-) -> Response {
+async fn gate_owned(kind: Arc<str>, action: Arc<str>, req: Request<Body>, next: Next) -> Response {
     let principal = match req.extensions().get::<Principal>() {
         Some(p) => p.clone(),
         None => return StatusCode::UNAUTHORIZED.into_response(),

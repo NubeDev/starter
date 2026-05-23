@@ -7,8 +7,8 @@ use std::sync::Arc;
 use starter_auth_users::{
     admin::create_admin,
     store::{
-        is_reserved_slug, MembershipRecord, SqliteTenantStore, SqliteTokenStore,
-        SqliteUserStore, TenantRecord, TenantStore, TenantStoreError, TokenStore,
+        is_reserved_slug, MembershipRecord, SqliteTenantStore, SqliteTokenStore, SqliteUserStore,
+        TenantRecord, TenantStore, TenantStoreError, TokenStore,
     },
     token, Role,
 };
@@ -41,7 +41,9 @@ fn tenant(slug: &str) -> TenantRecord {
 
 #[tokio::test]
 async fn reserved_slugs_are_rejected_at_application_level() {
-    for s in ["admin", "api", "auth", "v1", "v2", "static", "system", "0", "123"] {
+    for s in [
+        "admin", "api", "auth", "v1", "v2", "static", "system", "0", "123",
+    ] {
         assert!(is_reserved_slug(s), "expected {s} to be reserved");
     }
     assert!(!is_reserved_slug("acme"));
@@ -52,10 +54,7 @@ async fn reserved_slugs_are_rejected_at_application_level() {
 async fn create_tenant_with_reserved_slug_errors() {
     let pool = fresh_pool().await;
     let tenants = SqliteTenantStore::new(pool);
-    let err = tenants
-        .create_tenant(&tenant("admin"))
-        .await
-        .unwrap_err();
+    let err = tenants.create_tenant(&tenant("admin")).await.unwrap_err();
     matches!(err, TenantStoreError::ReservedSlug(_));
 }
 
@@ -73,9 +72,14 @@ async fn token_immutability_trigger_rejects_tenant_change_on_update() {
     let users = Arc::new(SqliteUserStore::new(pool.clone()));
     let tokens = Arc::new(SqliteTokenStore::new(pool.clone()));
 
-    let user = create_admin(users.as_ref(), "ops@acme.com", "Hunter2!Hunter2!", Role::Admin)
-        .await
-        .expect("admin user");
+    let user = create_admin(
+        users.as_ref(),
+        "ops@acme.com",
+        "Hunter2!Hunter2!",
+        Role::Admin,
+    )
+    .await
+    .expect("admin user");
 
     let _issued = token::issue(tokens.as_ref(), &user, &[], "tenant-a", None)
         .await
@@ -131,11 +135,7 @@ async fn remove_member_revokes_tokens_in_same_txn() {
         .expect("token");
 
     // Active before revoke.
-    assert!(tokens
-        .find_active(&issued.id)
-        .await
-        .unwrap()
-        .is_some());
+    assert!(tokens.find_active(&issued.id).await.unwrap().is_some());
 
     tenants
         .remove_member(&t.id, &user)

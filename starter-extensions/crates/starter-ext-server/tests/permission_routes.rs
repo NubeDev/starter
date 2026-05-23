@@ -31,9 +31,7 @@ use axum::http::{Method, Request, StatusCode};
 use axum::{Extension, Router};
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_sdk::builtin::{BuiltinEntry, BuiltinTable};
-use starter_ext_server::{
-    rest_router, BuiltinRestDispatcher, RestBuildError, RestRouterOptions,
-};
+use starter_ext_server::{rest_router, BuiltinRestDispatcher, RestBuildError, RestRouterOptions};
 use starter_spi::auth::{Principal, Role};
 use starter_spi::authz::{
     Decision, Ownership, PolicyEngine, ResourceRef, ResourceRegistry, ResourceSpec,
@@ -131,20 +129,16 @@ fn weather_builtins() -> Arc<BuiltinTable> {
     table.insert(
         ext_id,
         BuiltinEntry::new(
-            &[
-                "com.acme.weather.forecast",
-                "com.acme.weather.refresh",
-            ],
+            &["com.acme.weather.forecast", "com.acme.weather.refresh"],
             |_id, _ctx, _params| Ok(serde_json::json!({ "ok": true })),
         ),
     );
     let ext_id = starter_ext_spi::ExtensionId::new("com.acme.admin").unwrap();
     table.insert(
         ext_id,
-        BuiltinEntry::new(
-            &["com.acme.admin.tools"],
-            |_id, _ctx, _params| Ok(serde_json::json!({ "ok": true })),
-        ),
+        BuiltinEntry::new(&["com.acme.admin.tools"], |_id, _ctx, _params| {
+            Ok(serde_json::json!({ "ok": true }))
+        }),
     );
     Arc::new(table)
 }
@@ -239,9 +233,7 @@ fn mount<S: Clone + Send + Sync + 'static>(
     engine: Arc<dyn PolicyEngine>,
     principal: Principal,
 ) -> Router<S> {
-    inner
-        .layer(Extension(engine))
-        .layer(Extension(principal))
+    inner.layer(Extension(engine)).layer(Extension(principal))
 }
 
 // ---------------------------------------------------------------------------

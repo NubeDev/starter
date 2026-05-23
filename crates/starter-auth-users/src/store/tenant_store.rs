@@ -67,8 +67,20 @@ pub enum TenantStoreError {
 /// DB-level CHECK constraint. Adding a new entry here is one
 /// migration + this list bump.
 pub const RESERVED_SLUGS: &[&str] = &[
-    "admin", "api", "auth", "v1", "v2", "static", "health", "metrics", "openapi", "extensions",
-    "mcp", "tools", "default", "system",
+    "admin",
+    "api",
+    "auth",
+    "v1",
+    "v2",
+    "static",
+    "health",
+    "metrics",
+    "openapi",
+    "extensions",
+    "mcp",
+    "tools",
+    "default",
+    "system",
 ];
 
 /// Returns true if `slug` is reserved (in the static list or
@@ -122,11 +134,7 @@ pub trait TenantStore: Send + Sync {
     ) -> Result<(), TenantStoreError>;
 
     /// Delete a membership.
-    async fn remove_member(
-        &self,
-        tenant_id: &str,
-        user_id: &str,
-    ) -> Result<(), TenantStoreError>;
+    async fn remove_member(&self, tenant_id: &str, user_id: &str) -> Result<(), TenantStoreError>;
 
     /// List a user's memberships (used by login / OAuth callback
     /// to choose a tenant).
@@ -154,17 +162,10 @@ pub trait TenantStore: Send + Sync {
     async fn get_team(&self, team_id: &str) -> Result<Option<TeamRecord>, TenantStoreError>;
 
     /// List the teams in a tenant.
-    async fn list_teams(
-        &self,
-        tenant_id: &str,
-    ) -> Result<Vec<TeamRecord>, TenantStoreError>;
+    async fn list_teams(&self, tenant_id: &str) -> Result<Vec<TeamRecord>, TenantStoreError>;
 
     /// Add a user to a team.
-    async fn add_team_member(
-        &self,
-        team_id: &str,
-        user_id: &str,
-    ) -> Result<(), TenantStoreError>;
+    async fn add_team_member(&self, team_id: &str, user_id: &str) -> Result<(), TenantStoreError>;
 
     /// Remove a user from a team.
     async fn remove_team_member(
@@ -193,8 +194,7 @@ mod sqlite {
     use starter_store_sqlite::Pool;
 
     use super::{
-        is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore,
-        TenantStoreError,
+        is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
     };
 
     /// sqlite-backed [`TenantStore`].
@@ -350,12 +350,9 @@ mod sqlite {
             .await;
             match res {
                 Ok(_) => Ok(()),
-                Err(sqlx::Error::Database(e)) if e.is_unique_violation() => {
-                    Err(TenantStoreError::SlugConflict(format!(
-                        "{}:{}",
-                        row.tenant_id, row.user_id
-                    )))
-                }
+                Err(sqlx::Error::Database(e)) if e.is_unique_violation() => Err(
+                    TenantStoreError::SlugConflict(format!("{}:{}", row.tenant_id, row.user_id)),
+                ),
                 Err(e) => Err(err(e)),
             }
         }
@@ -377,9 +374,7 @@ mod sqlite {
             .await
             .map_err(err)?;
             if res.rows_affected() == 0 {
-                return Err(TenantStoreError::NotFound(format!(
-                    "{tenant_id}:{user_id}"
-                )));
+                return Err(TenantStoreError::NotFound(format!("{tenant_id}:{user_id}")));
             }
             Ok(())
         }
@@ -416,9 +411,7 @@ mod sqlite {
             .map_err(err)?;
             if res.rows_affected() == 0 {
                 tx.rollback().await.map_err(err)?;
-                return Err(TenantStoreError::NotFound(format!(
-                    "{tenant_id}:{user_id}"
-                )));
+                return Err(TenantStoreError::NotFound(format!("{tenant_id}:{user_id}")));
             }
             tx.commit().await.map_err(err)?;
             Ok(())
@@ -469,12 +462,9 @@ mod sqlite {
             .await;
             match res {
                 Ok(_) => Ok(()),
-                Err(sqlx::Error::Database(e)) if e.is_unique_violation() => {
-                    Err(TenantStoreError::SlugConflict(format!(
-                        "{}:{}",
-                        row.tenant_id, row.slug
-                    )))
-                }
+                Err(sqlx::Error::Database(e)) if e.is_unique_violation() => Err(
+                    TenantStoreError::SlugConflict(format!("{}:{}", row.tenant_id, row.slug)),
+                ),
                 Err(e) => Err(err(e)),
             }
         }
@@ -491,10 +481,7 @@ mod sqlite {
             Ok(())
         }
 
-        async fn get_team(
-            &self,
-            team_id: &str,
-        ) -> Result<Option<TeamRecord>, TenantStoreError> {
+        async fn get_team(&self, team_id: &str) -> Result<Option<TeamRecord>, TenantStoreError> {
             let row = sqlx::query(
                 "SELECT id, tenant_id, slug, display_name \
                  FROM starter_auth_users_teams WHERE id = ?1 LIMIT 1",
@@ -511,10 +498,7 @@ mod sqlite {
             }))
         }
 
-        async fn list_teams(
-            &self,
-            tenant_id: &str,
-        ) -> Result<Vec<TeamRecord>, TenantStoreError> {
+        async fn list_teams(&self, tenant_id: &str) -> Result<Vec<TeamRecord>, TenantStoreError> {
             let rows = sqlx::query(
                 "SELECT id, tenant_id, slug, display_name \
                  FROM starter_auth_users_teams WHERE tenant_id = ?1 \

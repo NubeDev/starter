@@ -91,8 +91,11 @@ where
         // `surface-decisions-share-audit-trail` distinguish a deny
         // here from a REST or gRPC deny against the same
         // (resource, action).
-        let decision =
-            with_surface(SURFACE, self.engine.check(&principal, &self.gate.action, &object)).await;
+        let decision = with_surface(
+            SURFACE,
+            self.engine.check(&principal, &self.gate.action, &object),
+        )
+        .await;
         match decision {
             Decision::Allow { .. } => self.inner.invoke(input).await,
             Decision::Deny { .. } => Err(starter_spi::Error::Forbidden),

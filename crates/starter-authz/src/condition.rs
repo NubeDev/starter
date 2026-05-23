@@ -230,9 +230,7 @@ impl Expr {
                     // never been wired with `.teams` simply
                     // doesn't match team rules.
                     None => false,
-                    Some(Value::Array(items)) => {
-                        items.iter().any(|item| json_equal(item, &rhs_v))
-                    }
+                    Some(Value::Array(items)) => items.iter().any(|item| json_equal(item, &rhs_v)),
                     Some(other) => {
                         return Err(EvalError::ContainsLhsNotArray {
                             path: path.join("."),
@@ -257,9 +255,7 @@ pub enum EvalError {
     /// array. The rule is malformed for the data shape it was
     /// asked to evaluate against — surfaced as a typed deny
     /// rather than a silent `false`.
-    #[error(
-        "`contains` left-hand path `{path}` resolved to {actual_type}, expected an array"
-    )]
+    #[error("`contains` left-hand path `{path}` resolved to {actual_type}, expected an array")]
     ContainsLhsNotArray {
         /// The dotted path the rule referenced.
         path: String,

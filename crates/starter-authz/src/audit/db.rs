@@ -398,7 +398,9 @@ pub async fn sqlite_list_decisions(
         .into_iter()
         .filter_map(|r| {
             let at_s: String = r.get(0);
-            let at = DateTime::parse_from_rfc3339(&at_s).ok()?.with_timezone(&Utc);
+            let at = DateTime::parse_from_rfc3339(&at_s)
+                .ok()?
+                .with_timezone(&Utc);
             let effect_s: String = r.get(7);
             let effect = match effect_s.as_str() {
                 "allow" => Effect::Allow,

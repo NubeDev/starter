@@ -209,7 +209,7 @@ async fn allow_sampled_at_rate() {
 #[tokio::test]
 async fn audit_route_not_sampled() {
     let cfg = DecisionSinkConfig::new(); // default has audit_logs -> 1
-    // Sample policy must always retain audit_logs reads.
+                                         // Sample policy must always retain audit_logs reads.
     for i in 0..50 {
         let subject = format!("admin{i}@x");
         let keep = should_sample_allow(&cfg, "audit_logs", &subject, None);

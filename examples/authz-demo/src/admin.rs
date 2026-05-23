@@ -55,7 +55,15 @@ pub async fn grant(
     resource: &str,
     action: &str,
 ) -> Result<String> {
-    upsert_rule(engine, admin_subject, user_id, resource, action, Effect::Allow).await
+    upsert_rule(
+        engine,
+        admin_subject,
+        user_id,
+        resource,
+        action,
+        Effect::Allow,
+    )
+    .await
 }
 
 /// Insert a Deny rule scoped to a single user. Wins over any
@@ -67,7 +75,15 @@ pub async fn revoke(
     resource: &str,
     action: &str,
 ) -> Result<String> {
-    upsert_rule(engine, admin_subject, user_id, resource, action, Effect::Deny).await
+    upsert_rule(
+        engine,
+        admin_subject,
+        user_id,
+        resource,
+        action,
+        Effect::Deny,
+    )
+    .await
 }
 
 /// Phase 7b — insert one Allow rule that covers every member of a

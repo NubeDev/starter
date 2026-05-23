@@ -109,14 +109,8 @@ where
     U: UserStore + ?Sized,
     T: TenantStore + ?Sized,
 {
-    verify_session_with_teams_and_extras(
-        sessions,
-        users,
-        tenants,
-        &NoPrincipalExtras,
-        cookie_value,
-    )
-    .await
+    verify_session_with_teams_and_extras(sessions, users, tenants, &NoPrincipalExtras, cookie_value)
+        .await
 }
 
 /// Phase 7b — combined variant: extras + team lookup. Mirrors
@@ -135,8 +129,7 @@ where
     T: TenantStore + ?Sized,
     E: PrincipalExtrasLookup + ?Sized,
 {
-    let mut principal =
-        verify_session_with_extras(sessions, users, extras, cookie_value).await?;
+    let mut principal = verify_session_with_extras(sessions, users, extras, cookie_value).await?;
     if let Some(tenant_id) = &principal.tenant_id {
         // Super-admin sentinel "*" intentionally yields no team
         // memberships — cross-tenant admins are role-driven, not

@@ -64,8 +64,7 @@ async fn team_grant_covers_every_team_member() {
     // One rule, two principals: alice in hvac-ops gets refresh,
     // bob outside the team gets denied. No per-user rule rows.
     let reg = registry("weather", &["refresh"]);
-    let eng =
-        StaticRbacEngine::from_config(team_rule_cfg("tenant-a", "hvac-ops"), reg).unwrap();
+    let eng = StaticRbacEngine::from_config(team_rule_cfg("tenant-a", "hvac-ops"), reg).unwrap();
     let row = ResourceRef::row("weather", "row-1").with_tenant("tenant-a");
 
     let alice = principal_with_teams("alice", "tenant-a", &["hvac-ops"]);
@@ -91,8 +90,7 @@ async fn team_membership_remove_takes_effect_immediately() {
     // membership row is deleted). Same rule, same DB, no engine
     // reload — purely principal-driven.
     let reg = registry("weather", &["refresh"]);
-    let eng =
-        StaticRbacEngine::from_config(team_rule_cfg("tenant-a", "hvac-ops"), reg).unwrap();
+    let eng = StaticRbacEngine::from_config(team_rule_cfg("tenant-a", "hvac-ops"), reg).unwrap();
     let row = ResourceRef::row("weather", "row-1").with_tenant("tenant-a");
 
     let alice_member = principal_with_teams("alice", "tenant-a", &["hvac-ops"]);
@@ -117,8 +115,7 @@ async fn team_rules_are_tenant_scoped() {
     // same team slug. The cross-tenant predicate fires first;
     // even if it didn't, the rule's tenant_id filter would.
     let reg = registry("weather", &["refresh"]);
-    let eng =
-        StaticRbacEngine::from_config(team_rule_cfg("tenant-a", "hvac-ops"), reg).unwrap();
+    let eng = StaticRbacEngine::from_config(team_rule_cfg("tenant-a", "hvac-ops"), reg).unwrap();
 
     // Bob is in tenant-b, has the same team slug there, asks for
     // a row in tenant-b. There is no rule for tenant-b → deny.

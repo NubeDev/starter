@@ -82,8 +82,7 @@ async fn team_grant_coverage_via_team_slug_lookup() {
     // team-grant-coverage smoke test.
     let pool = fresh_pool().await;
     let tenants = SqliteTenantStore::new(pool.clone());
-    let (tenant_id, user_id) =
-        seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
+    let (tenant_id, user_id) = seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
 
     let t = team(&tenant_id, "hvac-ops");
     tenants.create_team(&t).await.expect("create team");
@@ -115,7 +114,10 @@ async fn team_grant_coverage_via_team_slug_lookup() {
         .team_slugs_for_user(&tenant_id, &user_id)
         .await
         .expect("lookup");
-    assert!(slugs.is_empty(), "expected empty after remove, got {slugs:?}");
+    assert!(
+        slugs.is_empty(),
+        "expected empty after remove, got {slugs:?}"
+    );
 }
 
 #[tokio::test]
@@ -128,8 +130,7 @@ async fn team_slug_lookup_is_tenant_scoped() {
     // team-rules-tenant-scoped test.
     let pool = fresh_pool().await;
     let tenants = SqliteTenantStore::new(pool.clone());
-    let (tenant_a, user_id) =
-        seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
+    let (tenant_a, user_id) = seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
     // Create a second tenant and make the same user a member.
     let tenant_b_row = tenant("beta");
     tenants
@@ -181,8 +182,7 @@ async fn team_slug_and_tenant_are_immutable_after_create() {
     // directly via raw SQL to prove it's wired.
     let pool = fresh_pool().await;
     let tenants = SqliteTenantStore::new(pool.clone());
-    let (tenant_id, _user_id) =
-        seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
+    let (tenant_id, _user_id) = seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
     let t = team(&tenant_id, "hvac-ops");
     tenants.create_team(&t).await.expect("create team");
 
@@ -211,8 +211,7 @@ async fn team_slug_and_tenant_are_immutable_after_create() {
 async fn duplicate_team_slug_in_same_tenant_conflicts() {
     let pool = fresh_pool().await;
     let tenants = SqliteTenantStore::new(pool.clone());
-    let (tenant_id, _) =
-        seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
+    let (tenant_id, _) = seed_tenant_and_user(&pool, &tenants, "acme", "ops@acme.com").await;
     let t1 = team(&tenant_id, "hvac-ops");
     let t2 = team(&tenant_id, "hvac-ops");
     tenants.create_team(&t1).await.expect("first");

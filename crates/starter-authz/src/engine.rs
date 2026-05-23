@@ -296,10 +296,7 @@ impl PolicyEngine for StaticRbacEngine {
                             error = %err,
                             "authz rule evaluation error"
                         );
-                        let decision = Decision::deny_by(
-                            "condition_invalid",
-                            rule.id.clone(),
-                        );
+                        let decision = Decision::deny_by("condition_invalid", rule.id.clone());
                         self.audit(principal, action, object, &decision).await;
                         return decision;
                     }

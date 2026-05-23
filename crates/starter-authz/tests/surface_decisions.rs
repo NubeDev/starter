@@ -114,20 +114,11 @@ async fn rest_mcp_grpc_denies_share_audit_trail_distinguishably() {
     // would bind. Run sequentially so each surface label only
     // applies to its own check.
     let d = with_surface("rest", engine.check(&p, "refresh", &object)).await;
-    assert!(matches!(
-        d,
-        starter_spi::authz::Decision::Deny { .. }
-    ));
+    assert!(matches!(d, starter_spi::authz::Decision::Deny { .. }));
     let d = with_surface("mcp", engine.check(&p, "refresh", &object)).await;
-    assert!(matches!(
-        d,
-        starter_spi::authz::Decision::Deny { .. }
-    ));
+    assert!(matches!(d, starter_spi::authz::Decision::Deny { .. }));
     let d = with_surface("grpc", engine.check(&p, "refresh", &object)).await;
-    assert!(matches!(
-        d,
-        starter_spi::authz::Decision::Deny { .. }
-    ));
+    assert!(matches!(d, starter_spi::authz::Decision::Deny { .. }));
 
     // The sink is async (bounded channel + writer task), so wait
     // briefly for the rows to drain. Non-ordering-sensitive: we

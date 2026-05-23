@@ -8,7 +8,10 @@ use starter_spi::authz::{
     Decision, Ownership, PolicyEngine, ResourceRef, ResourceRegistry, ResourceSpec,
 };
 
-fn registry_with_tenant_scoped(kind: &'static str, actions: &'static [&'static str]) -> Arc<StaticRegistry> {
+fn registry_with_tenant_scoped(
+    kind: &'static str,
+    actions: &'static [&'static str],
+) -> Arc<StaticRegistry> {
     let r = Arc::new(StaticRegistry::new());
     r.register(ResourceSpec::from_static_tenant_scoped(
         kind,
@@ -76,7 +79,10 @@ async fn cross_tenant_request_is_denied_before_any_rule_evaluates() {
     let d = eng.check(&alice_in_a, "read", &row_in_b).await;
     match d {
         Decision::Deny { reason, .. } => {
-            assert_eq!(reason, "cross_tenant", "expected cross_tenant, got {reason:?}");
+            assert_eq!(
+                reason, "cross_tenant",
+                "expected cross_tenant, got {reason:?}"
+            );
         }
         Decision::Allow { .. } => panic!("cross-tenant allowed: {d:?}"),
     }
@@ -165,7 +171,10 @@ effect    = "allow"
     let row_b = ResourceRef::row("weather", "row-2").with_tenant("tenant-b");
 
     let d_alice = eng.check(&alice_a, "refresh", &row_a).await;
-    assert!(d_alice.is_allow(), "tenant-a rule denied for tenant-a: {d_alice:?}");
+    assert!(
+        d_alice.is_allow(),
+        "tenant-a rule denied for tenant-a: {d_alice:?}"
+    );
 
     let d_bob = eng.check(&bob_b, "refresh", &row_b).await;
     // Cross-tenant predicate doesn't fire (both tenants align),

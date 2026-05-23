@@ -30,8 +30,7 @@ use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::store::{
-    is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore,
-    TenantStoreError,
+    is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore, TenantStoreError,
 };
 
 /// Wire shape for creating a tenant.
@@ -125,14 +124,8 @@ where
 {
     Router::new()
         .route("/v1/tenants", post(create_tenant_h).get(list_tenants_h))
-        .route(
-            "/v1/tenants/{id}",
-            get(get_tenant_h).patch(patch_tenant_h),
-        )
-        .route(
-            "/v1/tenants/{id}/members",
-            post(add_member_h),
-        )
+        .route("/v1/tenants/{id}", get(get_tenant_h).patch(patch_tenant_h))
+        .route("/v1/tenants/{id}/members", post(add_member_h))
         .route(
             "/v1/tenants/{id}/members/{user_id}",
             patch(patch_member_h).delete(remove_member_h),
@@ -178,12 +171,9 @@ async fn create_tenant_h(
 
 async fn list_tenants_h(State(tenants): State<Arc<dyn TenantStore>>) -> Response {
     match tenants.list_tenants().await {
-        Ok(rows) => Json(
-            rows.into_iter()
-                .map(TenantView::from)
-                .collect::<Vec<_>>(),
-        )
-        .into_response(),
+        Ok(rows) => {
+            Json(rows.into_iter().map(TenantView::from).collect::<Vec<_>>()).into_response()
+        }
         Err(e) => map_err(e),
     }
 }
@@ -252,10 +242,7 @@ async fn patch_member_h(
         )
             .into_response();
     }
-    match tenants
-        .patch_member_role(&id, &user_id, &body.role)
-        .await
-    {
+    match tenants.patch_member_role(&id, &user_id, &body.role).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => map_err(e),
     }
@@ -348,8 +335,7 @@ async fn list_teams_h(
     Path(tenant_id): Path<String>,
 ) -> Response {
     match tenants.list_teams(&tenant_id).await {
-        Ok(rows) => Json(rows.into_iter().map(TeamView::from).collect::<Vec<_>>())
-            .into_response(),
+        Ok(rows) => Json(rows.into_iter().map(TeamView::from).collect::<Vec<_>>()).into_response(),
         Err(e) => map_err(e),
     }
 }

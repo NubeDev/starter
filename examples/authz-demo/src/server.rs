@@ -31,8 +31,8 @@ use starter_authz::store::SqlitePolicyStore;
 use starter_authz::{DbPolicyEngine, StaticRegistry};
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_server::{
-    rest_router, router_with_auth, BuiltinRestDispatcher, ExtensionAdmin,
-    InMemoryEnablementStore, RestRouterOptions,
+    rest_router, router_with_auth, BuiltinRestDispatcher, ExtensionAdmin, InMemoryEnablementStore,
+    RestRouterOptions,
 };
 use starter_observability::metrics::StandardMetrics;
 use starter_server::auth::with_principal;

@@ -38,7 +38,11 @@ impl Anomaly {
     }
 
     fn direction(&self) -> &'static str {
-        if self.z_score > 0.0 { "HIGH" } else { "LOW" }
+        if self.z_score > 0.0 {
+            "HIGH"
+        } else {
+            "LOW"
+        }
     }
 }
 
@@ -136,14 +140,11 @@ async fn main() -> Result<()> {
     tracing_subscriber::fmt()
         .with_target(false)
         .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| "info".into()),
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| "info".into()),
         )
         .init();
 
-    let client = Client::builder()
-        .timeout(Duration::from_secs(10))
-        .build()?;
+    let client = Client::builder().timeout(Duration::from_secs(10)).build()?;
 
     info!(
         url = CLICKHOUSE_URL,
