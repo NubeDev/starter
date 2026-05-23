@@ -20,7 +20,9 @@
 //! - [`server`] — dispatch + transports.
 //! - [`registry`] — `ToolRegistry`, consumer adds tools at startup.
 //! - [`protocol`] — JSON-RPC envelope types.
-//! - [`testing`] — in-memory transport pair (`feature = "testing"`).
+//! - [`testing`] — in-memory transport pair (`feature = "testing"`):
+//!   [`testing::pair`] returns a `(client, server)` that round-trips real
+//!   JSON-RPC frames through the same dispatch core HTTP and stdio use.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
