@@ -11,8 +11,8 @@ use chrono::{DateTime, Utc};
 use futures::stream::{self, BoxStream, StreamExt, TryStreamExt};
 use sha2::{Digest, Sha256};
 use starter_spi::blob::{
-    BackendId, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal, BlobStore, Etag,
-    ListPage, PresignOp, PresignedUrl, PutOptions,
+    BackendId, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal, BlobStore,
+    BlobUsage, Etag, ListPage, PresignOp, PresignedUrl, PutOptions,
 };
 use tempfile::NamedTempFile;
 use tokio::sync::Mutex;
@@ -482,6 +482,46 @@ impl BlobStore for FsBlobStore {
         Ok(ListPage::new(items, next_cursor))
     }
 
+    async fn approximate_usage(&self, prefix: &BlobKey) -> Result<BlobUsage, BlobError> {
+        // Authoritative: walk the keyspace, skip sidecars, sum file
+        // lengths via stat. `walkdir` is sync — hop to a blocking
+        // pool so we do not stall the runtime on a deep tree.
+        let prefix_owned = prefix.as_str().to_owned();
+        let root = self.inner.root.clone();
+        let max_depth = self.inner.config.max_depth;
+        tokio::task::spawn_blocking(move || {
+            let mut walker = WalkDir::new(&root);
+            if let Some(d) = max_depth {
+                walker = walker.max_depth(d);
+            }
+            let mut bytes: u64 = 0;
+            let mut objects: u64 = 0;
+            for entry in walker.into_iter().filter_map(|e| e.ok()) {
+                if !entry.file_type().is_file() {
+                    continue;
+                }
+                let path = entry.path();
+                let Ok(rel) = path.strip_prefix(&root) else {
+                    continue;
+                };
+                let key = rel.to_string_lossy();
+                if key.ends_with(".meta.json") {
+                    continue;
+                }
+                if !key.starts_with(&prefix_owned) {
+                    continue;
+                }
+                if let Ok(md) = entry.metadata() {
+                    bytes = bytes.saturating_add(md.len());
+                    objects = objects.saturating_add(1);
+                }
+            }
+            Ok(BlobUsage::new(bytes, objects))
+        })
+        .await
+        .map_err(BlobError::backend)?
+    }
+
     async fn presign(
         &self,
         blob_ref: &BlobRef,
@@ -617,6 +657,20 @@ mod tests {
         s.delete(&r).await.unwrap();
         s.delete(&r).await.unwrap();
         assert!(matches!(s.head(&r).await.unwrap_err(), BlobError::NotFound));
+    }
+
+    #[tokio::test]
+    async fn approximate_usage_walks_tree_and_skips_sidecars() {
+        let (s, _d) = store();
+        for (key, body) in [("t/7/a", &b"aaaa"[..]), ("t/7/b", &b"bb"[..]), ("t/8/x", &b"xxxxxxxx"[..])] {
+            s.put_bytes(&k(key), Bytes::copy_from_slice(body), PutOptions::default())
+                .await
+                .unwrap();
+        }
+        let u = s.approximate_usage(&k("t/7/")).await.unwrap();
+        assert_eq!(u, BlobUsage::new(6, 2), "sidecar files must not count");
+        let all = s.approximate_usage(&k("t/")).await.unwrap();
+        assert_eq!(all, BlobUsage::new(14, 3));
     }
 
     #[tokio::test]

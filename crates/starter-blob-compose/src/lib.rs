@@ -57,7 +57,7 @@ mod read_through_cache;
 mod tiered;
 
 pub use mirrored::{MirrorMode, Mirrored, MirroredBuilder};
-pub use namespaced::Namespaced;
+pub use namespaced::{Namespaced, Quota};
 pub use read_through_cache::ReadThroughCache;
 pub use tiered::{Tiered, TieredPolicy};
 

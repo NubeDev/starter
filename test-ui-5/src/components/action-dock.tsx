@@ -4,13 +4,12 @@ import {
   Monitor,
   Moon,
   Search,
-  Settings,
   Sun,
 } from 'lucide-react'
-import { Link } from '@tanstack/react-router'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useTheme, type Mode, type Palette } from '@/stores/theme-store'
 import { cn } from '@/lib/utils'
+import { ConfigDrawer } from '@/components/config-drawer'
 
 const PALETTES: { id: Palette; label: string; swatch: string }[] = [
   { id: 'nube',   label: 'Nube',   swatch: 'linear-gradient(135deg,#339999,#184171)' },
@@ -94,18 +93,6 @@ function PaletteMenu() {
   )
 }
 
-function SettingsButton() {
-  return (
-    <Link
-      to="/settings"
-      aria-label="Settings"
-      title="Settings"
-      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-white/[0.04] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]"
-    >
-      <Settings className="h-4 w-4" />
-    </Link>
-  )
-}
 
 function UserMenu() {
   return (
@@ -154,7 +141,7 @@ export function ActionDock({ inline = false }: { inline?: boolean } = {}) {
         <SearchPill />
         <ModeSwitcher />
         <PaletteMenu />
-        <SettingsButton />
+        <ConfigDrawer />
         <UserMenu />
       </div>
     )
@@ -171,7 +158,7 @@ export function ActionDock({ inline = false }: { inline?: boolean } = {}) {
         <SearchPill />
         <ModeSwitcher />
         <PaletteMenu />
-        <SettingsButton />
+        <ConfigDrawer />
         <UserMenu />
       </div>
     </motion.div>

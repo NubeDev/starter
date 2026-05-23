@@ -1,4 +1,4 @@
-# 2026-05-23 — Blob storage feedback absorbed; follow-ups for next session
+# 2026-05-23 — Blob storage feedback absorbed; Gap 4 quotas landed
 
 ## What landed this session
 
@@ -17,18 +17,24 @@ Gaps 1, 2, 3, 5 are real code; Gap 4 is a named 0.2 scope item.
 ### TypeScript (7 tests passing)
 - `@nube/starter-ui-blobs`: **new package** — `useBlobUpload` + `useBlobUploadForMarkdown` at the `/markdown` subpath. Locked surface from the scope.
 
+### Gap 4 — quotas (now shipped, 86 tests across touched crates)
+- `starter-spi`: new `BlobUsage { bytes, objects }` type, new trait method `BlobStore::approximate_usage(prefix)` defaulting to `BlobError::Unsupported`.
+- `starter-blob-memory`: authoritative `approximate_usage` (walks the in-memory map under the read lock).
+- `starter-blob-fs`: authoritative `approximate_usage` via `walkdir` on a blocking pool; skips `.meta.json` sidecars.
+- `starter-blob-compose::Namespaced`: new `Quota { max_bytes, max_objects }` + `Namespaced::with_quota(...)`. `put_bytes` / `put_stream` / `copy_server_side` pre-flight via the inner store's `approximate_usage`; over-cap returns `BlobError::PayloadTooLarge`. No combinator-local counter — one source of truth per deployment.
+- `Namespaced::approximate_usage` overrides the default to combine + forward, so `Namespaced<Namespaced<...>>` stacks compose.
+- Documented limits at the `Quota` type: race window (two concurrent writers can overshoot by one write), and `put_stream` pre-flight only refuses an already-over namespace (mid-stream overflow is admitted).
+- `DOCS/storage/SCOPE.md`: Quotas moved from "Planned for 0.2" to "shipped"; new 0.2 entry tracks s3/garage `approximate_usage`.
+- `dev-pulse/SCOPE-STORAGE-FEEDBACK.md` status header refreshed.
+
 ---
 
 ## Follow-ups for next session
 
-### High priority — absorb the rest of the blob feedback
+### High priority — finish the blob feedback
 
-1. **Gap 4 — Quotas (0.2 work).**
-   Scope shape is locked. Land in this order:
-   - Add `BlobUsage { bytes, objects }` type + `BlobStore::approximate_usage(prefix)` default method (returns `Unsupported`) in `starter-spi`.
-   - Implement `approximate_usage` authoritatively in `starter-blob-memory` and `starter-blob-fs` (cheap; walk the keyspace).
-   - Implement eventually-consistent in `starter-blob-s3` / `starter-blob-garage` (list-based, document the lag).
-   - Add `Namespaced::Quota { max_bytes, max_objects }` — `put_*` exceeding the cap returns `BlobError::PayloadTooLarge`. **Do not** maintain a counter inside `Namespaced`; ask the inner store via `approximate_usage`.
+1. **`approximate_usage` on s3 + garage.**
+   Scope shape is locked (see SCOPE.md "Planned for 0.2"). List/inventory-based — `aws-sdk-s3::list_objects_v2` paginated with `prefix=` + summing `Contents[].Size`. Document the lag (list lags multipart-completion by seconds). Without it, a `Namespaced::with_quota(...)` over an s3-backed store always returns `Unsupported` on writes, which silently breaks quota enforcement in production deployments. Add a test that runs `Namespaced::with_quota` against the s3 engine behind localstack and verifies overshoot is rejected.
 
 2. **Propagate `user_metadata` through s3 + garage engines.**
    Memory + fs already round-trip it. S3/garage `put_object` accepts `metadata: HashMap<String, String>` — wire `opts.user_metadata` through and read it back in `head_object`. Without this, the `Content-Disposition: filename=…` behaviour from `starter-blob-axum` silently degrades to `"download"` for s3/garage-backed stores.
@@ -62,5 +68,5 @@ These are mutually coupled. A clean extraction needs a holistic plan for the who
 ## Don't forget
 
 - The dev-pulse feedback doc has a status header noting which gaps landed where: [/home/user/code/rust/dev-pulse/SCOPE-STORAGE-FEEDBACK.md](../../../../dev-pulse/SCOPE-STORAGE-FEEDBACK.md). Update it again after Gap 4 lands.
-- Run `cargo test -p starter-spi -p starter-blob-memory -p starter-blob-fs -p starter-blob-compose -p starter-blob-axum` before the next blob-touching commit to keep the 60-test baseline green.
+- Run `cargo test -p starter-spi -p starter-blob-memory -p starter-blob-fs -p starter-blob-compose -p starter-blob-axum` before the next blob-touching commit to keep the 86-test baseline green.
 - Run `pnpm --filter @nube/starter-ui-blobs test` to keep the TS-side 7-test baseline green.

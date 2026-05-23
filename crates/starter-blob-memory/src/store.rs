@@ -11,8 +11,8 @@ use futures::stream::{self, BoxStream, StreamExt, TryStreamExt};
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use starter_spi::blob::{
-    BackendId, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal, BlobStore, Etag,
-    ListPage, PresignOp, PresignedUrl, PutOptions,
+    BackendId, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal, BlobStore,
+    BlobUsage, Etag, ListPage, PresignOp, PresignedUrl, PutOptions,
 };
 use tokio::sync::RwLock;
 use tracing::debug;
@@ -254,6 +254,22 @@ impl BlobStore for MemoryBlobStore {
         Ok(ListPage::new(items, next_cursor))
     }
 
+    async fn approximate_usage(&self, prefix: &BlobKey) -> Result<BlobUsage, BlobError> {
+        // Authoritative: we hold every byte in this process. Walk
+        // the map under the read lock and sum.
+        let data = self.inner.data.read().await;
+        let p = prefix.as_str();
+        let mut bytes: u64 = 0;
+        let mut objects: u64 = 0;
+        for (k, entry) in data.iter() {
+            if k.starts_with(p) {
+                bytes = bytes.saturating_add(entry.meta.size);
+                objects = objects.saturating_add(1);
+            }
+        }
+        Ok(BlobUsage::new(bytes, objects))
+    }
+
     async fn presign(
         &self,
         blob_ref: &BlobRef,
@@ -413,6 +429,21 @@ mod tests {
         let claim = presign::verify(store.hmac_key(), token).unwrap();
         assert_eq!(claim.locator, "k");
         assert_eq!(claim.op, PresignOp::Get);
+    }
+
+    #[tokio::test]
+    async fn approximate_usage_tallies_by_prefix() {
+        let store = MemoryBlobStore::new();
+        for (k, body) in [("t/7/a", &b"aaaa"[..]), ("t/7/b", &b"bb"[..]), ("t/8/x", &b"xxxxxxxx"[..])] {
+            store
+                .put_bytes(&key(k), Bytes::copy_from_slice(body), PutOptions::default())
+                .await
+                .unwrap();
+        }
+        let u = store.approximate_usage(&key("t/7/")).await.unwrap();
+        assert_eq!(u, BlobUsage::new(6, 2));
+        let all = store.approximate_usage(&key("t/")).await.unwrap();
+        assert_eq!(all, BlobUsage::new(14, 3));
     }
 
     #[tokio::test]

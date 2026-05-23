@@ -1,6 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
-import { useTheme, type Mode, type Palette } from '@/stores/theme-store'
+import { useTheme, FONT_STACKS, type Mode, type Palette, type Font } from '@/stores/theme-store'
+import { useLayout, type Variant, type Collapsible } from '@/context/layout-provider'
 import { LayoutToggle } from '@/components/layout-toggle'
 import { cn } from '@/lib/utils'
 
@@ -16,6 +17,25 @@ const PALETTES: { id: Palette; label: string; swatch: string }[] = [
   { id: 'sunset', label: 'Sunset', swatch: 'linear-gradient(135deg,#f97316,#b21368)' },
 ]
 
+const FONTS: { id: Font; label: string }[] = [
+  { id: 'geist',   label: 'Geist' },
+  { id: 'inter',   label: 'Inter' },
+  { id: 'manrope', label: 'Manrope' },
+  { id: 'system',  label: 'System' },
+]
+
+const VARIANTS: { id: Variant; label: string; hint: string }[] = [
+  { id: 'inset',    label: 'Inset',    hint: 'Recessed panel inside the page' },
+  { id: 'sidebar',  label: 'Standard', hint: 'Classic flush sidebar' },
+  { id: 'floating', label: 'Floating', hint: 'Detached card with breathing room' },
+]
+
+const COLLAPSIBLES: { id: Collapsible; label: string; hint: string }[] = [
+  { id: 'icon',      label: 'Icon',       hint: 'Collapses to icons' },
+  { id: 'offcanvas', label: 'Off-canvas', hint: 'Slides fully out' },
+  { id: 'none',      label: 'Locked',     hint: 'Always open' },
+]
+
 function Row({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
   return (
     <div className="grid grid-cols-1 gap-4 border-b border-white/[0.04] py-6 last:border-b-0 md:grid-cols-[260px_1fr]">
@@ -29,7 +49,8 @@ function Row({ title, hint, children }: { title: string; hint?: string; children
 }
 
 function Settings() {
-  const { mode, palette, setMode, setPalette } = useTheme()
+  const { mode, palette, font, setMode, setPalette, setFont } = useTheme()
+  const { mode: shellMode, variant, setVariant, collapsible, setCollapsible } = useLayout()
 
   return (
     <section className="relative mx-auto max-w-4xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
@@ -57,6 +78,50 @@ function Settings() {
         <Row title="Layout" hint="Where the primary navigation lives.">
           <LayoutToggle />
         </Row>
+
+        {shellMode === 'sidebar' && (
+          <>
+            <Row title="Sidebar variant" hint="Visual treatment of the sidebar panel.">
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+                {VARIANTS.map((v) => (
+                  <button
+                    key={v.id}
+                    onClick={() => setVariant(v.id)}
+                    title={v.hint}
+                    className={cn(
+                      'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                      variant === v.id
+                        ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
+                        : 'text-[color:var(--color-muted)] hover:text-white',
+                    )}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            </Row>
+
+            <Row title="Sidebar collapse" hint="What happens when the sidebar is collapsed.">
+              <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+                {COLLAPSIBLES.map((c) => (
+                  <button
+                    key={c.id}
+                    onClick={() => setCollapsible(c.id)}
+                    title={c.hint}
+                    className={cn(
+                      'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                      collapsible === c.id
+                        ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
+                        : 'text-[color:var(--color-muted)] hover:text-white',
+                    )}
+                  >
+                    {c.label}
+                  </button>
+                ))}
+              </div>
+            </Row>
+          </>
+        )}
 
         <Row title="Mode" hint="Light, dark, or follow your OS.">
           <div className="inline-flex items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
@@ -102,6 +167,26 @@ function Settings() {
                 </button>
               )
             })}
+          </div>
+        </Row>
+
+        <Row title="Font" hint="Type system for the whole console.">
+          <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-white/[0.06] bg-white/[0.02] p-1">
+            {FONTS.map((f) => (
+              <button
+                key={f.id}
+                onClick={() => setFont(f.id)}
+                style={{ fontFamily: FONT_STACKS[f.id] }}
+                className={cn(
+                  'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
+                  font === f.id
+                    ? 'bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]'
+                    : 'text-[color:var(--color-muted)] hover:text-white',
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
           </div>
         </Row>
 

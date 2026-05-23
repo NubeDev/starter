@@ -42,6 +42,7 @@ use super::error::BlobError;
 use super::key::BlobKey;
 use super::meta::{BlobMeta, BlobRange};
 use super::presigned::{PresignOp, PresignedUrl};
+use super::usage::BlobUsage;
 
 /// Caller-supplied hints for [`BlobStore::put_bytes`] /
 /// [`BlobStore::put_stream`].
@@ -262,6 +263,22 @@ pub trait BlobStore: Send + Sync + 'static {
         _src: &BlobRef,
         _dst_key: &BlobKey,
     ) -> Result<BlobRef, BlobError> {
+        Err(BlobError::Unsupported)
+    }
+
+    /// Report approximate byte and object counts under `prefix`.
+    ///
+    /// The default impl returns [`BlobError::Unsupported`]; engines
+    /// that can answer (memory, fs authoritatively; s3, garage from
+    /// list/inventory and possibly lagging) override. See
+    /// [`BlobUsage`] for the precision posture the name implies.
+    ///
+    /// Consumed by `Namespaced::Quota` to refuse writes that would
+    /// exceed the cap. Combinators that wrap multiple inner stores
+    /// (e.g. `Mirrored`) override to delegate to a chosen authority
+    /// rather than maintaining their own counter — there is one
+    /// source of truth per deployment.
+    async fn approximate_usage(&self, _prefix: &BlobKey) -> Result<BlobUsage, BlobError> {
         Err(BlobError::Unsupported)
     }
 }

@@ -1,79 +1,275 @@
 @import 'tailwindcss';
 
+/* ---------------------------------------------------------------------------
+   Theme tokens
+   ----------------------------------------------------------------------------
+   Tailwind sees the @theme block and generates utilities for each name
+   (bg-bg, text-foreground, ring-primary, ...). Each name resolves to a
+   runtime CSS variable (--tk-*). The actual colors are picked from the
+   [data-mode][data-palette] blocks lower in this file, so the mode/palette
+   toggles in the Settings page can swap them without a rebuild.
+--------------------------------------------------------------------------- */
+
 @theme {
   --font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
   --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
-
-  /* Canvas — deep navy (nube-io brand) */
-  --color-bg: #071435;
-  --color-bg-2: #0a1a44;
-  --color-surface: #0d1f4a;
-  --color-surface-2: #122a5e;
-  --color-border: #1c3470;
-  --color-border-hi: #244a8d;
-  --color-text: #f0f6ff;
-  --color-muted: #a7c0d8;
-  --color-subtle: #6b85a4;
-
-  /* Leaf alias kept for compatibility with copied test-ui-3 components — points to nube teal */
-  --color-leaf: #339999;
-  --color-leaf-2: #459aa4;
-  --color-moss: #1f6e6e;
-  --color-lime: #b7e6e6;
-
-  /* Aqua — nube secondary cool */
-  --color-aqua: #67e8f9;
-  --color-aqua-2: #06b6d4;
-  --color-mist: #ccfbf1;
-
-  /* Sky */
-  --color-sky: #7dd3fc;
-
-  /* Energy — sunbeam */
-  --color-sun: #fde68a;
-
-  /* Status */
-  --color-ok: #22c55e;
-  --color-warn: #fde68a;
-  --color-danger: #fb7185;
-
-  --color-background: #071435;
-  --color-foreground: #f0f6ff;
-  --color-card: #0d1f4a;
-  --color-card-foreground: #f0f6ff;
-  --color-primary: #339999;
-  --color-primary-foreground: #071435;
-  --color-secondary: #122a5e;
-  --color-secondary-foreground: #f0f6ff;
-  --color-muted-bg: #122a5e;
-  --color-muted-foreground: #a7c0d8;
-  --color-accent: #122a5e;
-  --color-accent-foreground: #f0f6ff;
-  --color-destructive: #fb7185;
-  --color-input: #1c3470;
-  --color-ring: #339999;
 
   --radius-lg: 1rem;
   --radius-xl: 1.25rem;
   --radius-2xl: 1.5rem;
   --radius-3xl: 2rem;
 
-  /* Sidebar tokens (shadcn admin port) — mapped onto the nube palette */
-  --color-sidebar: #0d1f4a;
-  --color-sidebar-foreground: #f0f6ff;
-  --color-sidebar-primary: #339999;
-  --color-sidebar-primary-foreground: #071435;
-  --color-sidebar-accent: #122a5e;
-  --color-sidebar-accent-foreground: #f0f6ff;
-  --color-sidebar-border: rgba(255, 255, 255, 0.08);
-  --color-sidebar-ring: #339999;
+  /* Canvas */
+  --color-bg: var(--tk-bg);
+  --color-bg-2: var(--tk-bg-2);
+  --color-surface: var(--tk-surface);
+  --color-surface-2: var(--tk-surface-2);
+  --color-border: var(--tk-border);
+  --color-border-hi: var(--tk-border-hi);
+  --color-text: var(--tk-text);
+  --color-muted: var(--tk-muted);
+  --color-subtle: var(--tk-subtle);
 
-  /* Aliases the shadcn primitives expect via `bg-popover`, `bg-border`, etc. */
-  --color-popover: #0d1f4a;
-  --color-popover-foreground: #f0f6ff;
-  --color-border: rgba(255, 255, 255, 0.08);
+  /* Leaf / accent (palette-driven) */
+  --color-leaf: var(--tk-leaf);
+  --color-leaf-2: var(--tk-leaf-2);
+  --color-moss: var(--tk-moss);
+  --color-lime: var(--tk-lime);
+
+  /* Cool secondaries */
+  --color-aqua: var(--tk-aqua);
+  --color-aqua-2: var(--tk-aqua-2);
+  --color-mist: var(--tk-mist);
+  --color-sky: var(--tk-sky);
+
+  /* Energy */
+  --color-sun: var(--tk-sun);
+
+  /* Status (fixed across themes) */
+  --color-ok: #22c55e;
+  --color-warn: #fde68a;
+  --color-danger: #fb7185;
+
+  /* shadcn aliases */
+  --color-background: var(--tk-bg);
+  --color-foreground: var(--tk-text);
+  --color-card: var(--tk-surface);
+  --color-card-foreground: var(--tk-text);
+  --color-primary: var(--tk-leaf);
+  --color-primary-foreground: var(--tk-bg);
+  --color-secondary: var(--tk-surface-2);
+  --color-secondary-foreground: var(--tk-text);
+  --color-muted-bg: var(--tk-surface-2);
+  --color-muted-foreground: var(--tk-muted);
+  --color-accent: var(--tk-surface-2);
+  --color-accent-foreground: var(--tk-text);
+  --color-destructive: #fb7185;
+  --color-input: var(--tk-border);
+  --color-ring: var(--tk-leaf);
+  --color-popover: var(--tk-surface);
+  --color-popover-foreground: var(--tk-text);
+
+  /* Sidebar */
+  --color-sidebar: var(--tk-surface);
+  --color-sidebar-foreground: var(--tk-text);
+  --color-sidebar-primary: var(--tk-leaf);
+  --color-sidebar-primary-foreground: var(--tk-bg);
+  --color-sidebar-accent: var(--tk-surface-2);
+  --color-sidebar-accent-foreground: var(--tk-text);
+  --color-sidebar-border: var(--tk-sidebar-border);
+  --color-sidebar-ring: var(--tk-leaf);
 }
+
+/* ---------------------------------------------------------------------------
+   Fallback when no data-mode/data-palette is set yet (pre-hydration FOUC).
+--------------------------------------------------------------------------- */
+:root {
+  --tk-bg: #071435;
+  --tk-bg-2: #0a1a44;
+  --tk-surface: #0d1f4a;
+  --tk-surface-2: #122a5e;
+  --tk-border: rgba(255, 255, 255, 0.08);
+  --tk-border-hi: #244a8d;
+  --tk-text: #f0f6ff;
+  --tk-muted: #a7c0d8;
+  --tk-subtle: #6b85a4;
+  --tk-leaf: #339999;
+  --tk-leaf-2: #459aa4;
+  --tk-moss: #1f6e6e;
+  --tk-lime: #b7e6e6;
+  --tk-aqua: #67e8f9;
+  --tk-aqua-2: #06b6d4;
+  --tk-mist: #ccfbf1;
+  --tk-sky: #7dd3fc;
+  --tk-sun: #fde68a;
+  --tk-sidebar-border: rgba(255, 255, 255, 0.08);
+  --tk-glass-tint: 13, 31, 74;          /* rgb of surface */
+  --tk-glass-highlight: 186, 230, 230;  /* lime-ish tint */
+  --tk-hairline: 167, 192, 216;         /* muted line */
+}
+
+/* ===========================================================================
+   DARK MODE
+   =========================================================================== */
+
+:root[data-mode='dark'][data-palette='nube'] {
+  --tk-bg: #071435;
+  --tk-bg-2: #0a1a44;
+  --tk-surface: #0d1f4a;
+  --tk-surface-2: #122a5e;
+  --tk-border: rgba(255, 255, 255, 0.08);
+  --tk-border-hi: #244a8d;
+  --tk-text: #f0f6ff;
+  --tk-muted: #a7c0d8;
+  --tk-subtle: #6b85a4;
+  --tk-leaf: #339999;
+  --tk-leaf-2: #459aa4;
+  --tk-moss: #1f6e6e;
+  --tk-lime: #b7e6e6;
+  --tk-aqua: #67e8f9;
+  --tk-aqua-2: #06b6d4;
+  --tk-mist: #ccfbf1;
+  --tk-sky: #7dd3fc;
+  --tk-sun: #fde68a;
+  --tk-sidebar-border: rgba(255, 255, 255, 0.08);
+  --tk-glass-tint: 13, 31, 74;
+  --tk-glass-highlight: 186, 230, 230;
+  --tk-hairline: 167, 192, 216;
+}
+
+:root[data-mode='dark'][data-palette='ocean'] {
+  --tk-bg: #050e26;
+  --tk-bg-2: #081534;
+  --tk-surface: #0b1d4a;
+  --tk-surface-2: #112a66;
+  --tk-border: rgba(255, 255, 255, 0.08);
+  --tk-border-hi: #2455a8;
+  --tk-text: #eaf2ff;
+  --tk-muted: #9fb6d6;
+  --tk-subtle: #6478a0;
+  --tk-leaf: #3b82f6;
+  --tk-leaf-2: #60a5fa;
+  --tk-moss: #1e3a8a;
+  --tk-lime: #bfdbfe;
+  --tk-aqua: #38bdf8;
+  --tk-aqua-2: #0284c7;
+  --tk-mist: #dbeafe;
+  --tk-sky: #93c5fd;
+  --tk-sun: #fde68a;
+  --tk-sidebar-border: rgba(255, 255, 255, 0.08);
+  --tk-glass-tint: 11, 29, 74;
+  --tk-glass-highlight: 191, 219, 254;
+  --tk-hairline: 159, 182, 214;
+}
+
+:root[data-mode='dark'][data-palette='sunset'] {
+  --tk-bg: #1a0a14;
+  --tk-bg-2: #2a0d1f;
+  --tk-surface: #3a1428;
+  --tk-surface-2: #4e1c34;
+  --tk-border: rgba(255, 255, 255, 0.08);
+  --tk-border-hi: #7a2a4d;
+  --tk-text: #fff2eb;
+  --tk-muted: #f0c4b0;
+  --tk-subtle: #a87a6a;
+  --tk-leaf: #f97316;
+  --tk-leaf-2: #fb923c;
+  --tk-moss: #b21368;
+  --tk-lime: #fed7aa;
+  --tk-aqua: #fb7185;
+  --tk-aqua-2: #e11d48;
+  --tk-mist: #fee2e2;
+  --tk-sky: #fda4af;
+  --tk-sun: #fde68a;
+  --tk-sidebar-border: rgba(255, 255, 255, 0.08);
+  --tk-glass-tint: 58, 20, 40;
+  --tk-glass-highlight: 254, 215, 170;
+  --tk-hairline: 240, 196, 176;
+}
+
+/* ===========================================================================
+   LIGHT MODE
+   =========================================================================== */
+
+:root[data-mode='light'][data-palette='nube'] {
+  --tk-bg: #f6f9ff;
+  --tk-bg-2: #eaf0fb;
+  --tk-surface: #ffffff;
+  --tk-surface-2: #f1f5fc;
+  --tk-border: rgba(7, 20, 53, 0.10);
+  --tk-border-hi: #c5d3ea;
+  --tk-text: #0b1a3a;
+  --tk-muted: #41598a;
+  --tk-subtle: #6b85a4;
+  --tk-leaf: #1f8a8a;
+  --tk-leaf-2: #2aa3a3;
+  --tk-moss: #115858;
+  --tk-lime: #1f6e6e;
+  --tk-aqua: #0891b2;
+  --tk-aqua-2: #0e7490;
+  --tk-mist: #155e75;
+  --tk-sky: #0284c7;
+  --tk-sun: #b45309;
+  --tk-sidebar-border: rgba(7, 20, 53, 0.08);
+  --tk-glass-tint: 255, 255, 255;
+  --tk-glass-highlight: 31, 138, 138;
+  --tk-hairline: 65, 89, 138;
+}
+
+:root[data-mode='light'][data-palette='ocean'] {
+  --tk-bg: #f4f8ff;
+  --tk-bg-2: #e6eefb;
+  --tk-surface: #ffffff;
+  --tk-surface-2: #eef4ff;
+  --tk-border: rgba(8, 21, 52, 0.10);
+  --tk-border-hi: #bcd0ee;
+  --tk-text: #0a1734;
+  --tk-muted: #3e5688;
+  --tk-subtle: #6478a0;
+  --tk-leaf: #2563eb;
+  --tk-leaf-2: #3b82f6;
+  --tk-moss: #1e3a8a;
+  --tk-lime: #1d4ed8;
+  --tk-aqua: #0369a1;
+  --tk-aqua-2: #075985;
+  --tk-mist: #0c4a6e;
+  --tk-sky: #0284c7;
+  --tk-sun: #b45309;
+  --tk-sidebar-border: rgba(8, 21, 52, 0.08);
+  --tk-glass-tint: 255, 255, 255;
+  --tk-glass-highlight: 37, 99, 235;
+  --tk-hairline: 62, 86, 136;
+}
+
+:root[data-mode='light'][data-palette='sunset'] {
+  --tk-bg: #fff8f3;
+  --tk-bg-2: #ffeede;
+  --tk-surface: #ffffff;
+  --tk-surface-2: #fff1e6;
+  --tk-border: rgba(58, 20, 40, 0.10);
+  --tk-border-hi: #f4c9b0;
+  --tk-text: #2a0d1f;
+  --tk-muted: #8a4257;
+  --tk-subtle: #a87a6a;
+  --tk-leaf: #ea580c;
+  --tk-leaf-2: #f97316;
+  --tk-moss: #b21368;
+  --tk-lime: #c2410c;
+  --tk-aqua: #be123c;
+  --tk-aqua-2: #9f1239;
+  --tk-mist: #be185d;
+  --tk-sky: #db2777;
+  --tk-sun: #b45309;
+  --tk-sidebar-border: rgba(58, 20, 40, 0.08);
+  --tk-glass-tint: 255, 255, 255;
+  --tk-glass-highlight: 234, 88, 12;
+  --tk-hairline: 138, 66, 87;
+}
+
+/* ---------------------------------------------------------------------------
+   Global element styling
+--------------------------------------------------------------------------- */
 
 /* Collapsible animation (used by NavGroup) */
 .CollapsibleContent { overflow: hidden; }
@@ -96,9 +292,9 @@ body,
 
 body {
   background-image:
-    radial-gradient(1400px 700px at 85% -10%, rgba(51, 153, 153, 0.14), transparent 60%),
-    radial-gradient(900px 600px at -5% 110%, rgba(103, 232, 249, 0.08), transparent 60%),
-    radial-gradient(700px 500px at 50% 40%, rgba(24, 65, 113, 0.18), transparent 70%);
+    radial-gradient(1400px 700px at 85% -10%, color-mix(in srgb, var(--color-leaf) 18%, transparent), transparent 60%),
+    radial-gradient(900px 600px at -5% 110%, color-mix(in srgb, var(--color-aqua) 12%, transparent), transparent 60%),
+    radial-gradient(700px 500px at 50% 40%, color-mix(in srgb, var(--color-border-hi) 22%, transparent), transparent 70%);
   background-attachment: fixed;
 }
 
@@ -111,11 +307,11 @@ body {
 
 .glass {
   background:
-    linear-gradient(180deg, rgba(186, 230, 230, 0.03), rgba(255, 255, 255, 0) 60%),
-    rgba(13, 31, 74, 0.62);
+    linear-gradient(180deg, rgba(var(--tk-glass-highlight), 0.04), rgba(255, 255, 255, 0) 60%),
+    rgba(var(--tk-glass-tint), 0.62);
   backdrop-filter: blur(22px) saturate(150%);
   -webkit-backdrop-filter: blur(22px) saturate(150%);
-  border: 1px solid rgba(167, 192, 216, 0.08);
+  border: 1px solid color-mix(in srgb, var(--color-muted) 12%, transparent);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.04),
     0 30px 80px -40px rgba(0, 0, 0, 0.7);
@@ -129,9 +325,9 @@ body {
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(167, 192, 216, 0.2) 25%,
-    rgba(51, 153, 153, 0.6) 50%,
-    rgba(103, 232, 249, 0.4) 70%,
+    rgba(var(--tk-hairline), 0.2) 25%,
+    color-mix(in srgb, var(--color-leaf) 60%, transparent) 50%,
+    color-mix(in srgb, var(--color-aqua) 40%, transparent) 70%,
     transparent 100%
   );
   pointer-events: none;

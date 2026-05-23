@@ -9,7 +9,7 @@ use futures::stream::BoxStream;
 use serde::{Deserialize, Serialize};
 use starter_spi::blob::{
     BackendId, BlobContext, BlobError, BlobKey, BlobMeta, BlobRange, BlobRef, BlobRefInternal,
-    BlobStore, ListPage, PresignOp, PresignedUrl, PutOptions,
+    BlobStore, BlobUsage, ListPage, PresignOp, PresignedUrl, PutOptions,
 };
 
 use crate::codec;
@@ -46,6 +46,79 @@ pub struct Namespaced {
     inner: Arc<dyn BlobStore>,
     prefix: String,
     backend_id: BackendId,
+    quota: Option<Quota>,
+}
+
+/// Cap on bytes and/or object count under a [`Namespaced`] prefix.
+///
+/// `None` on a field means "no limit for this dimension". Either or
+/// both may be set — `Quota { max_bytes: Some(1 << 30), max_objects:
+/// None }` is a 1 GiB byte cap with no object-count cap.
+///
+/// # Where the counter lives
+///
+/// `Namespaced` deliberately keeps **no** in-memory counter. On
+/// every write it asks the inner store via
+/// [`BlobStore::approximate_usage`] for the current namespace
+/// footprint and compares against the cap. The scope locks this in:
+/// one source of truth per deployment, no drift between a
+/// combinator's stale tally and the engine's authoritative one.
+///
+/// # Race window
+///
+/// The check is pre-flight: read usage, then put. Two concurrent
+/// writers can both pass the check and both succeed, overshooting
+/// the cap. This is intentional — closing that window would force
+/// a global lock against the inner store, which is the wrong cost
+/// shape for the use case (a noisy-neighbour deterrent, not a
+/// hard-billing gate). Document the over-by-one-write behaviour at
+/// the consumer level.
+///
+/// # Streaming caveat
+///
+/// `put_stream` does not know the body length up-front, so the
+/// pre-flight check can only refuse a write into a namespace that
+/// is *already* over the byte cap. A streamed write whose body
+/// crosses the cap mid-stream is admitted; closing this gap means
+/// counting bytes during the stream and aborting the inner put,
+/// which is engine-coupled work. Tracked separately.
+#[derive(Clone, Copy, Debug, Default)]
+#[non_exhaustive]
+pub struct Quota {
+    /// Maximum total bytes under the namespace prefix.
+    pub max_bytes: Option<u64>,
+    /// Maximum object count under the namespace prefix.
+    pub max_objects: Option<u64>,
+}
+
+impl Quota {
+    /// Build a quota with a byte cap.
+    pub fn max_bytes(bytes: u64) -> Self {
+        Self {
+            max_bytes: Some(bytes),
+            max_objects: None,
+        }
+    }
+
+    /// Build a quota with an object-count cap.
+    pub fn max_objects(objects: u64) -> Self {
+        Self {
+            max_bytes: None,
+            max_objects: Some(objects),
+        }
+    }
+
+    /// Chain a byte cap onto an existing quota.
+    pub fn with_max_bytes(mut self, bytes: u64) -> Self {
+        self.max_bytes = Some(bytes);
+        self
+    }
+
+    /// Chain an object-count cap onto an existing quota.
+    pub fn with_max_objects(mut self, objects: u64) -> Self {
+        self.max_objects = Some(objects);
+        self
+    }
 }
 
 #[derive(Serialize, Deserialize)]
@@ -74,13 +147,77 @@ impl Namespaced {
             inner,
             prefix,
             backend_id,
+            quota: None,
         })
+    }
+
+    /// Attach a [`Quota`] to this namespace. Writes that would
+    /// breach the cap fail with [`BlobError::PayloadTooLarge`].
+    ///
+    /// Requires the inner store to implement
+    /// [`BlobStore::approximate_usage`] — otherwise the pre-flight
+    /// check returns [`BlobError::Unsupported`] and `put_*` will
+    /// propagate it. Engines (memory, fs, s3, garage) implement it;
+    /// a pass-through combinator without an answer would, by
+    /// construction, be unable to enforce a cap.
+    pub fn with_quota(mut self, quota: Quota) -> Self {
+        self.quota = Some(quota);
+        self
     }
 
     /// The prefix this combinator prepends. Operator-facing
     /// diagnostic only — not part of the consumer surface.
     pub fn prefix(&self) -> &str {
         &self.prefix
+    }
+
+    /// Current quota, if any. Operator-facing diagnostic.
+    pub fn quota(&self) -> Option<Quota> {
+        self.quota
+    }
+
+    /// Pre-flight check against the inner store's
+    /// [`BlobStore::approximate_usage`]. `incoming_bytes` is the
+    /// known length of a `put_bytes` body; pass `None` for
+    /// `put_stream` (we cannot count what we have not yet seen).
+    /// `incoming_objects` is `1` when the write would create a new
+    /// key, `0` for an overwrite — the caller cannot cheaply tell
+    /// the two apart without a round-trip, so we conservatively
+    /// pass `1` and accept that overwrites count as a fresh object
+    /// in the pre-flight (the cap is still respected; only the
+    /// rejection threshold is one object stricter than it could
+    /// be).
+    async fn check_quota(
+        &self,
+        incoming_bytes: Option<u64>,
+        incoming_objects: u64,
+    ) -> Result<(), BlobError> {
+        let Some(q) = self.quota else {
+            return Ok(());
+        };
+        if q.max_bytes.is_none() && q.max_objects.is_none() {
+            return Ok(());
+        }
+        // The inner store sees its own keyspace — query under the
+        // prefix that points at our namespace inside it.
+        let prefix_key = BlobKey::new(self.prefix.clone()).map_err(BlobError::backend)?;
+        let usage: BlobUsage = self.inner.approximate_usage(&prefix_key).await?;
+        if let Some(cap) = q.max_bytes {
+            let projected = match incoming_bytes {
+                Some(n) => usage.bytes.saturating_add(n),
+                None => usage.bytes,
+            };
+            if projected > cap {
+                return Err(BlobError::PayloadTooLarge);
+            }
+        }
+        if let Some(cap) = q.max_objects {
+            let projected = usage.objects.saturating_add(incoming_objects);
+            if projected > cap {
+                return Err(BlobError::PayloadTooLarge);
+            }
+        }
+        Ok(())
     }
 
     fn combined(&self, key: &BlobKey) -> Result<BlobKey, BlobError> {
@@ -133,6 +270,7 @@ impl BlobStore for Namespaced {
         bytes: Bytes,
         opts: PutOptions,
     ) -> Result<BlobRef, BlobError> {
+        self.check_quota(Some(bytes.len() as u64), 1).await?;
         let inner_key = self.combined(key)?;
         let inner_ref = self.inner.put_bytes(&inner_key, bytes, opts).await?;
         Ok(self.wrap(inner_ref))
@@ -144,6 +282,10 @@ impl BlobStore for Namespaced {
         stream: BoxStream<'static, Result<Bytes, BlobError>>,
         opts: PutOptions,
     ) -> Result<BlobRef, BlobError> {
+        // Pre-flight against the cap without a known body length —
+        // we can only refuse a namespace that is *already* over.
+        // See the `Quota` docstring on the streaming caveat.
+        self.check_quota(None, 1).await?;
         let inner_key = self.combined(key)?;
         let inner_ref = self.inner.put_stream(&inner_key, stream, opts).await?;
         Ok(self.wrap(inner_ref))
@@ -210,10 +352,22 @@ impl BlobStore for Namespaced {
         src: &BlobRef,
         dst_key: &BlobKey,
     ) -> Result<BlobRef, BlobError> {
+        // A server-side copy adds a new object — count its size
+        // against the cap. `head` against the inner ref tells us
+        // how big.
         let inner_src = self.unwrap_ref(src)?;
+        let incoming = self.inner.head(&inner_src).await?.size;
+        self.check_quota(Some(incoming), 1).await?;
         let inner_dst = self.combined(dst_key)?;
         let inner_ref = self.inner.copy_server_side(&inner_src, &inner_dst).await?;
         Ok(self.wrap(inner_ref))
+    }
+
+    async fn approximate_usage(&self, prefix: &BlobKey) -> Result<BlobUsage, BlobError> {
+        // Combine our prefix with the caller-supplied one before
+        // asking the inner store — same shape as `list`.
+        let combined = self.combined(prefix)?;
+        self.inner.approximate_usage(&combined).await
     }
 }
 
@@ -306,6 +460,92 @@ mod tests {
             .unwrap();
         let page = ns.list(None, None).await.unwrap();
         assert_eq!(page.items.len(), 2, "must not leak tenant-8 row");
+    }
+
+    #[tokio::test]
+    async fn quota_rejects_put_bytes_that_would_overflow() {
+        let inner = Arc::new(MemoryBlobStore::new());
+        let ns = Namespaced::new(inner, "tenant-7/")
+            .unwrap()
+            .with_quota(Quota::max_bytes(10));
+        // 6 bytes — fits.
+        ns.put_bytes(&k("a"), Bytes::from_static(b"abcdef"), PutOptions::default())
+            .await
+            .unwrap();
+        // Adding 5 more would push us to 11; reject.
+        let err = ns
+            .put_bytes(&k("b"), Bytes::from_static(b"vwxyz"), PutOptions::default())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, BlobError::PayloadTooLarge));
+        // 4 still fits exactly at the cap (6 + 4 = 10).
+        ns.put_bytes(&k("c"), Bytes::from_static(b"wxyz"), PutOptions::default())
+            .await
+            .unwrap();
+    }
+
+    #[tokio::test]
+    async fn quota_rejects_on_object_count() {
+        let inner = Arc::new(MemoryBlobStore::new());
+        let ns = Namespaced::new(inner, "tenant-7/")
+            .unwrap()
+            .with_quota(Quota::max_objects(2));
+        ns.put_bytes(&k("a"), Bytes::from_static(b"x"), PutOptions::default())
+            .await
+            .unwrap();
+        ns.put_bytes(&k("b"), Bytes::from_static(b"x"), PutOptions::default())
+            .await
+            .unwrap();
+        let err = ns
+            .put_bytes(&k("c"), Bytes::from_static(b"x"), PutOptions::default())
+            .await
+            .unwrap_err();
+        assert!(matches!(err, BlobError::PayloadTooLarge));
+    }
+
+    #[tokio::test]
+    async fn quota_isolates_namespaces() {
+        // Two namespaces over the same inner store: one's writes
+        // must not eat the other's cap.
+        let inner = Arc::new(MemoryBlobStore::new());
+        let ns7 = Namespaced::new(inner.clone(), "tenant-7/")
+            .unwrap()
+            .with_quota(Quota::max_bytes(4));
+        let ns8 = Namespaced::new(inner, "tenant-8/")
+            .unwrap()
+            .with_quota(Quota::max_bytes(4));
+        ns7.put_bytes(&k("a"), Bytes::from_static(b"abcd"), PutOptions::default())
+            .await
+            .unwrap();
+        ns8.put_bytes(&k("a"), Bytes::from_static(b"wxyz"), PutOptions::default())
+            .await
+            .unwrap();
+        assert!(matches!(
+            ns7.put_bytes(&k("b"), Bytes::from_static(b"!"), PutOptions::default())
+                .await
+                .unwrap_err(),
+            BlobError::PayloadTooLarge
+        ));
+    }
+
+    #[tokio::test]
+    async fn approximate_usage_forwards_combined_prefix() {
+        let inner = Arc::new(MemoryBlobStore::new());
+        let ns = Namespaced::new(inner.clone(), "tenant-7/").unwrap();
+        ns.put_bytes(&k("docs/a"), Bytes::from_static(b"abcd"), PutOptions::default())
+            .await
+            .unwrap();
+        ns.put_bytes(&k("docs/b"), Bytes::from_static(b"xy"), PutOptions::default())
+            .await
+            .unwrap();
+        ns.put_bytes(&k("imgs/x"), Bytes::from_static(b"!"), PutOptions::default())
+            .await
+            .unwrap();
+        // Caller asks for usage of a sub-prefix inside the
+        // namespace; combinator prepends `tenant-7/` for the inner
+        // store.
+        let u = ns.approximate_usage(&k("docs/")).await.unwrap();
+        assert_eq!(u, BlobUsage::new(6, 2));
     }
 
     #[tokio::test]

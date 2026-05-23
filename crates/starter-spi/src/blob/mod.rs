@@ -68,6 +68,7 @@ mod meta;
 pub mod meta_keys;
 mod presigned;
 mod store;
+mod usage;
 
 pub use blob_ref::{BackendId, BlobRef, BlobRefInternal, Etag};
 pub use context::BlobContext;
@@ -76,3 +77,4 @@ pub use key::{BlobKey, BlobKeyError, MAX_BLOB_KEY_LEN};
 pub use meta::{BlobMeta, BlobRange};
 pub use presigned::{PresignOp, PresignedUrl};
 pub use store::{copy_via_client, BlobStore, ListPage, PutOptions};
+pub use usage::BlobUsage;

@@ -21,7 +21,7 @@ function ScrollProgress() {
   )
 }
 
-function HeaderShell() {
+function HeaderShellInner() {
   const { location } = useRouterState()
   return (
     <div className="min-h-screen bg-[color:var(--color-bg)] text-white">
@@ -46,42 +46,47 @@ function HeaderShell() {
   )
 }
 
-function SidebarShell() {
+function SidebarShellInner() {
   const { location } = useRouterState()
-  const defaultOpen = getCookie('sidebar_state') !== 'false'
   return (
     <div className="bg-[color:var(--color-bg)] text-white">
       <BootIntro />
       <ScrollProgress />
-      <SidebarProvider defaultOpen={defaultOpen}>
-        <AppSidebar />
-        <SidebarInset className="@container/content min-h-svh bg-transparent">
-          <Header>
-            <div className="ml-auto">
-              <ActionDock inline />
-            </div>
-          </Header>
-          <AnimatePresence mode="wait">
-            <motion.main
-              key={location.pathname}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -4 }}
-              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
-              className="pt-2"
-            >
-              <Outlet />
-            </motion.main>
-          </AnimatePresence>
-        </SidebarInset>
-      </SidebarProvider>
+      <AppSidebar />
+      <SidebarInset className="@container/content min-h-svh bg-transparent">
+        <Header>
+          <div className="ml-auto">
+            <ActionDock inline />
+          </div>
+        </Header>
+        <AnimatePresence mode="wait">
+          <motion.main
+            key={location.pathname}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -4 }}
+            transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            className="pt-2"
+          >
+            <Outlet />
+          </motion.main>
+        </AnimatePresence>
+      </SidebarInset>
     </div>
   )
 }
 
 function Shell() {
   const { mode } = useLayout()
-  return mode === 'sidebar' ? <SidebarShell /> : <HeaderShell />
+  const defaultOpen = getCookie('sidebar_state') !== 'false'
+  return (
+    <SidebarProvider
+      defaultOpen={defaultOpen}
+      className={mode === 'header' ? 'flex-col' : undefined}
+    >
+      {mode === 'sidebar' ? <SidebarShellInner /> : <HeaderShellInner />}
+    </SidebarProvider>
+  )
 }
 
 function RootComponent() {

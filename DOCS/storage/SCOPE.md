@@ -510,29 +510,42 @@ examples/
   combinator pair) cannot do it natively; the free function
   `copy_via_client` is the explicit opt-in for streamed copy.
 
+## Quotas / per-namespace accounting (shipped)
+
+Driven by dev-pulse: per-project byte caps prevent one noisy
+project from exhausting an org-wide budget.
+
+Shape:
+
+- `BlobUsage { bytes: u64, objects: u64 }` in `starter-spi::blob`.
+- `BlobStore::approximate_usage(prefix: &BlobKey) ->
+  Result<BlobUsage, BlobError>` with a default impl that returns
+  `BlobError::Unsupported`. The word "approximate" is in the name
+  deliberately: `fs` and `memory` answer authoritatively;
+  `s3`/`garage` will answer from list/inventory and may lag (not
+  yet implemented, tracked as 0.2 follow-up).
+- `Namespaced::with_quota(Quota { max_bytes, max_objects })`.
+  `put_*` exceeding the cap returns `BlobError::PayloadTooLarge`.
+- Counter authority is engine-defined. `Namespaced` does **not**
+  maintain its own counter — it asks the inner engine via
+  `approximate_usage` on every write, so there is one source of
+  truth per deployment.
+
+Known limits (documented at `Quota`):
+
+- Pre-flight race window: two concurrent writers can both pass the
+  check and overshoot by one write. Closing this would require a
+  global lock against the inner store, which is the wrong cost
+  shape for a noisy-neighbour deterrent.
+- `put_stream` does not know body length up-front, so the
+  pre-flight only refuses a namespace that is already over the
+  byte cap. Streaming bytes that cross the cap mid-flight are
+  admitted.
+
 ## Planned for 0.2
 
-- **Quotas / per-namespace accounting.** Promoted out of "open
-  questions" because the first real consumer (dev-pulse) needs
-  per-project byte caps — without them, one noisy project can
-  exhaust an org-wide budget, which is the wrong product shape.
-  Locked shape:
-
-  - New type `BlobUsage { bytes: u64, objects: u64 }` in
-    `starter-spi::blob`.
-  - New trait method `fn approximate_usage(prefix: &BlobKey) ->
-    Result<BlobUsage, BlobError>` with a default impl that returns
-    `BlobError::Unsupported`. The word "approximate" is in the name
-    deliberately: `fs` and `memory` can answer authoritatively;
-    `s3` and `garage` answer from list/inventory and may lag.
-  - `Namespaced` gains an optional `Quota { max_bytes, max_objects }`.
-    `put_*` exceeding the cap returns `BlobError::PayloadTooLarge`
-    (already in the enum).
-  - Counter authority is engine-defined and documented per engine,
-    not abstracted on the trait. `Namespaced` does not maintain
-    its own counter — it asks the inner engine via
-    `approximate_usage`, so there is one source of truth per
-    deployment.
+- `approximate_usage` on `starter-blob-s3` and `starter-blob-garage`
+  (list-/inventory-based; document the lag at the call site).
 
 ## Open questions (decide before 0.1)
 

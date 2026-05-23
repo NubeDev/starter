@@ -8,17 +8,28 @@ import { Leaf } from 'lucide-react'
  *  2. brand mark expands → fades into the page
  *  3. a green→aqua sheet wipes off downward
  */
+const BOOT_FLAG = 'test-ui-5:boot-played'
+
 export function BootIntro() {
-  const [stage, setStage] = useState<'logo' | 'wipe' | 'done'>('logo')
+  const [stage, setStage] = useState<'logo' | 'wipe' | 'done'>(() => {
+    if (typeof window !== 'undefined' && window.sessionStorage.getItem(BOOT_FLAG)) {
+      return 'done'
+    }
+    return 'logo'
+  })
 
   useEffect(() => {
+    if (stage === 'done') return
     const t1 = setTimeout(() => setStage('wipe'), 1500)
-    const t2 = setTimeout(() => setStage('done'), 2400)
+    const t2 = setTimeout(() => {
+      setStage('done')
+      try { window.sessionStorage.setItem(BOOT_FLAG, '1') } catch {}
+    }, 2400)
     return () => {
       clearTimeout(t1)
       clearTimeout(t2)
     }
-  }, [])
+  }, [stage])
 
   return (
     <AnimatePresence>
