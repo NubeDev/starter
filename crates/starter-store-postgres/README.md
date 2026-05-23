@@ -21,6 +21,18 @@ migrate(&pool)
 
 ## Features
 
+- `flow` — Postgres impls of the `FlowStore`, `RunStore`,
+  `SessionStore`, and `AgentSessionStore` traits from
+  [`starter-flow-spi`](../starter-flow-spi). Mirrors the layout of
+  [`starter-store-sqlite::flow`](../starter-store-sqlite/src/flow).
+  Used by [`examples/flow-agent`](../../examples/flow-agent) — see
+  [ADR-001](../../DOCS/storage/ADR-001-flow-agent-postgres-only.md).
+  Exports: `PgFlowStore`, `PgRunStore`, `PgSessionStore`,
+  `PgAgentSessionStore`, `FLOW_MIGRATION_SOURCE`,
+  `AGENT_SESSION_MIGRATION_SOURCE`.
+- `agent-session` — standalone agent-session store (a subset of
+  what `flow` enables); kept for consumers that want session
+  persistence without the rest of the flow surface.
 - `testing` — `testing::with_database()` spins up an ephemeral
   Postgres container via `testcontainers-modules` (0.23 / 0.11) and
   returns `(Pool, ContainerGuard)`. Requires Docker on the host;

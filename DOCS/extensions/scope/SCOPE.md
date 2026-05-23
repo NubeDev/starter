@@ -332,6 +332,7 @@ manifest contributions into transport-native objects:
 | `contributes.rest`  | `starter-ext-server`         | merges `axum::Router` fragment            |
 | `contributes.grpc`  | `starter-ext-grpc` (slot)    | registers tonic `Service` impl            |
 | `contributes.workers` | `starter-ext-workers`      | schedules tick handler on host scheduler  |
+| `contributes.warehouse` | `starter-ext-warehouse` (planned) | registers cleaners / rules / marts into the warehouse catalog (see note below) |
 | `contributes.ui`    | `starter-ext-ui`             | mounts MF remote at named slot            |
 
 **One contribution can surface in multiple transports.** A
@@ -357,6 +358,43 @@ This is the seam that justifies the whole framework. Without it,
 "extension" would mean a different thing per surface and the host
 would accrete bespoke plugin hooks per transport — exactly the drift
 the parent SCOPE.md is trying to prevent.
+
+#### Note — `contributes.warehouse` (planned, focus area)
+
+The near-term focus is integrating this framework with the
+[ClickHouse warehouse](../../Warehouse/SCOPE.md). A
+`contributes.warehouse` block in `block.yaml` will let extensions
+ship named **cleaners** (transform MVs between L1 `raw_events` and
+L2 `samples` / `events`), **rules** (parameterised SQL evaluated on
+demand, Insights-shaped), and **marts** (`MartSpec` catalog rows
+that generate `AggregatingMergeTree` targets). Each entry points to
+a static SQL or TOML file in the bundle (per R7 — never templated
+at runtime); the `starter-ext-warehouse` adapter reads, hashes, and
+validates them at load, then registers them in the Postgres catalog
+with `created_by = 'ext:<extension-id>'`.
+
+Reverse-DNS ids (R4) become the catalog/MV names — namespace
+collisions between extensions are structurally impossible
+(`com.acme.energy.cleaner.normalise_kwh` is the cleaner's MV name).
+A new `warehouse_write` capability (R6) scopes which tables an
+extension may register cleaners against, listed per-table the same
+way `http_out` is listed per-host.
+
+**Lifecycle ownership.** Extension-authored marts and cleaners follow
+the lifecycle defined in
+[Warehouse W12](../../Warehouse/SCOPE.md#w12--mart-lifecycle-is-governed)
+— the `ext:` author type starts `pending` and auto-promotes to `live`
+on successful DDL apply (the manifest hash + operator enable/disable
+is the trust seam). **The `starter-ext-warehouse` adapter does not
+write the `status` column directly.** It calls `mart.promote` (or
+`cleaner.promote`) through the warehouse capability API after DDL
+succeeds. The warehouse owns the status state machine; the extension
+adapter is a caller. This ensures the three-author lifecycle table in
+W12 is the single source of truth for all status transitions.
+
+A separate SCOPE for `starter-ext-warehouse` will land alongside
+the adapter crate. Nothing in the trait or manifest core changes;
+this is purely an additive transport adapter per R13.
 
 ## Repo layout
 

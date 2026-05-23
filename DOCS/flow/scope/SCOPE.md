@@ -344,6 +344,120 @@ R4](../../agent/SCOPE.md). LLM-facing descriptions are byte-identical
 at load and call time — the same R7 anti-prompt-injection guarantee the
 extensions framework already enforces.
 
+## Three layers: node kind, flow graph, catalog metadata
+
+These three things are distinct and often confused. They live in
+different places and serve different purposes.
+
+### Layer 1 — Node kind (Rust)
+
+A node kind is **a Rust struct implementing `NodeBehavior`**. That is
+the entirety of what makes a node kind. YAML plays no role here.
+
+```rust
+// crates/starter-flow-nodes/src/log.rs — the real implementation
+
+pub const KIND_ID: &str = "starter.flow.log";
+
+pub struct Log { kind: KindId }
+
+impl NodeBehavior for Log {
+    fn kind_id(&self) -> &KindId { &self.kind }
+
+    async fn invoke(&self, ctx: NodeCtx<'_>, input: SlotMap)
+        -> Result<SlotMap, NodeError>
+    {
+        // reads input slots, does work, returns output slots
+        // this is ALL a node kind is
+    }
+}
+```
+
+The struct is registered into `StaticNodeKindRegistry` at boot:
+
+```rust
+registry.register(&log::DESCRIPTOR);
+```
+
+From that point the engine can instantiate this node kind whenever a
+flow graph references `"starter.flow.log"` as a node's `kind`. There
+is no YAML involved in defining what a node kind does or how it
+behaves.
+
+### Layer 2 — Flow graph (authored as YAML or on canvas, stored as JSON)
+
+A flow graph is a description of **which node instances exist and how
+they are wired together**. This is where YAML appears — but only as an
+authoring convenience, not as a runtime format.
+
+```
+Author writes     →   Engine boundary       →   Runtime source of truth
+──────────────────────────────────────────────────────────────────────
+YAML file         →   normalised to JSON    →   FlowStore (SQLite / Postgres)
+  or                  at load time               Revisions are immutable.
+Visual canvas     →   same JSON shape            head_seq tracks current.
+  (drag-and-drop)
+```
+
+The engine **never reads YAML at runtime**. By the time a flow runs,
+the graph is a set of typed `Node` / `SlotRef` / `Link` structs loaded
+from `FlowStore`. The YAML is consumed once at load/import time and
+then discarded. The store is the source of truth.
+
+A flow graph node entry looks like this (shown as YAML for readability;
+stored as JSON):
+
+```yaml
+- id: my-log-node          # instance id — unique within this flow
+  kind: starter.flow.log   # which NodeBehavior impl to run
+  config:
+    level: warn            # config slot values set at authoring time
+  links:
+    - from: upstream-node.output
+      to:   my-log-node.value
+```
+
+`kind: starter.flow.log` is what connects the graph to the Rust struct.
+The engine looks up `"starter.flow.log"` in `NodeKindRegistry`, gets
+back the `NodeBehavior` impl, and calls `invoke` when the node fires.
+
+### Layer 3 — Catalog metadata (`node_kind.yaml` / `block.yaml`)
+
+The `node_kind.yaml` file (builtin kinds) or the `contributes.nodes`
+block inside `block.yaml` (extension kinds) carries **static display
+metadata only** — what the visual canvas shows, what slots are
+available, what capabilities the kind needs. It does not define
+behaviour. It is read once at load time, cached, and never templated.
+
+```yaml
+# node_kind.yaml colocated with log.rs — catalog/UI metadata only
+id: starter.flow.log
+label_key:   starter.flow.node.log.label    # resolved via starter-i18n
+summary_key: starter.flow.node.log.summary
+help_key:    starter.flow.node.log.help
+input_slots:
+  - name: value   type: any     required: true
+  - name: level   type: string  required: false  default: "info"
+output_slots:
+  - name: emitted type: any
+```
+
+This file tells the canvas what to render. It tells the LLM (via MCP
+`flow.nodes.list`) what the node does, without any runtime templating.
+It is **not** the behaviour — the behaviour is the Rust `invoke` method.
+
+### Summary
+
+| Layer | What it is | Format | When consumed |
+|---|---|---|---|
+| Node kind | `NodeBehavior` Rust impl | Rust | compiled into the binary |
+| Flow graph | instance wiring | YAML to author → JSON at runtime | YAML read once at load; JSON read per run |
+| Catalog metadata | display info for canvas / LLM | `node_kind.yaml` or `block.yaml` | read once at load, cached, never templated |
+
+**If you are writing a node kind, you are writing Rust.** YAML does not
+make a node kind exist. The `node_kind.yaml` makes it discoverable in
+the canvas and queryable via MCP; the Rust struct makes it run.
+
 ### R5 — Node behaviours are stateless
 
 `NodeBehavior` impls take `&self`, never `&mut self`. Per-instance state

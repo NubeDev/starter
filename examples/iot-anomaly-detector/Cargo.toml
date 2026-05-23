@@ -1,0 +1,19 @@
+[package]
+name    = "iot-anomaly-detector"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[[bin]]
+name = "iot-anomaly-detector"
+path = "src/main.rs"
+
+[dependencies]
+reqwest  = { workspace = true }
+tokio    = { workspace = true, features = ["rt-multi-thread", "macros", "time"] }
+serde    = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+anyhow   = { workspace = true }
+tracing  = { workspace = true }
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }

@@ -12,8 +12,9 @@ an AI chat surface, where the agent can invoke flows as tools.
 - **Backend** — a single Cargo binary (`flow-agent`) built on
   [`starter-server`](../../crates/starter-server),
   [`starter-flow`](../../crates/starter-flow), and
-  [`starter-ai`](../../crates/starter-ai). REST + SSE only, SQLite
-  storage.
+  [`starter-ai`](../../crates/starter-ai). REST + SSE only, Postgres
+  storage (see [ADR-001](../../DOCS/storage/ADR-001-flow-agent-postgres-only.md)
+  for why this example dropped SQLite).
 - **Frontend** — a Vite + React SPA built against
   [`@nube/starter-ui-flow`](../../packages/starter-ui-flow),
   [`@nube/starter-ui-chat`](../../packages/starter-ui-chat), and
@@ -26,13 +27,15 @@ checklist.
 
 ### 1. Backend
 
+Start a local Postgres first (see [Database](#database) below), then:
+
 ```bash
+export DATABASE_URL=postgres://flow_agent:flow_agent@localhost:5432/flow_agent
 cargo run -p flow-agent
 ```
 
-The server binds to `http://127.0.0.1:8080` by default. SQLite lives
-under the OS data dir (`~/.local/share/flow-agent/flow-agent.db` on
-Linux). Migrations run automatically on boot.
+The server binds to `http://127.0.0.1:8080` by default. Migrations
+run automatically on boot.
 
 In release mode the binary serves the prebuilt SPA from
 `frontend/dist`. In development you want the Vite dev server instead:
@@ -55,6 +58,33 @@ pnpm --filter flow-agent-frontend build
 
 Then re-run the backend in release mode (`cargo run -p flow-agent
 --release`) — it will serve the built assets.
+
+## Database
+
+flow-agent is **Postgres-only**. The minimal local setup:
+
+```bash
+docker run -d --name flow-agent-pg \
+  -e POSTGRES_USER=flow_agent \
+  -e POSTGRES_PASSWORD=flow_agent \
+  -e POSTGRES_DB=flow_agent \
+  -p 5432:5432 \
+  postgres:16-alpine
+```
+
+Configuration:
+
+- `DATABASE_URL` — full Postgres connection string. Required. No
+  hidden default — boot fails fast if unset.
+
+**Running on a Raspberry Pi.** Postgres works fine on a Pi 4/5 with
+4 GB+ of RAM, but **use SSD/USB3 storage, not an SD card**. PG's WAL
+fsync pattern wears SD cards and is dramatically slower on them.
+Tune `shared_buffers=128MB`, `work_mem=4MB`, `max_connections=20`
+for a small footprint.
+
+See [ADR-001](../../DOCS/storage/ADR-001-flow-agent-postgres-only.md)
+for the reasoning behind dropping SQLite from this example.
 
 ## Providers
 

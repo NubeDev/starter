@@ -35,8 +35,9 @@ small product that:
 3. Streams **live run state** (node status, edge activity, agent
    tokens, tool calls) back to the UI over **SSE**.
 
-Everything else (auth, CLI, persistence beyond SQLite, multi-user,
-RBAC) is explicitly out of scope.
+Everything else (auth, CLI, multi-user, RBAC) is explicitly out of
+scope. Persistence is **Postgres-only** — see
+[ADR-001](../../DOCS/storage/ADR-001-flow-agent-postgres-only.md).
 
 ---
 
@@ -164,7 +165,7 @@ examples/flow-agent/
     domain.rs             # FlowService, AgentService — no HTTP, no SQL
     rest.rs               # REST handlers (thin: extract → domain → DTO)
     sse.rs                # SSE handlers for run + agent + sidebar feeds
-    store.rs              # sqlx queries against starter-store-sqlite
+    store.rs              # sqlx queries against starter-store-postgres
     flow_engine.rs        # starter-flow wiring; node kind registry
     ai_registry.rs        # starter-ai providers + tool bridge to flows
     migrations.rs         # embed_migrations! against ./migrations
@@ -177,7 +178,7 @@ starter-spi          = { path = "../../crates/starter-spi" }
 starter-config       = { path = "../../crates/starter-config" }
 starter-observability= { path = "../../crates/starter-observability" }
 starter-server       = { path = "../../crates/starter-server" }
-starter-store-sqlite = { path = "../../crates/starter-store-sqlite" }
+starter-store-postgres = { path = "../../crates/starter-store-postgres", features = ["flow", "agent-session"] }
 starter-flow         = { path = "../../crates/starter-flow" }
 starter-flow-nodes   = { path = "../../crates/starter-flow-nodes" }
 starter-flow-spi     = { path = "../../crates/starter-flow-spi" }
@@ -280,38 +281,38 @@ TS deps:
 
 ## The data model
 
-Three tables in SQLite (one set of `_sqlx_migrations` namespaced to
+Three tables in Postgres (one set of `_sqlx_migrations` namespaced to
 `flow-agent`):
 
 ```sql
 CREATE TABLE flows (
-  id          TEXT PRIMARY KEY,           -- "flow_01H…"
+  id          TEXT PRIMARY KEY,             -- "flow_01H…"
   name        TEXT NOT NULL,
   description TEXT,
-  graph_json  TEXT NOT NULL,              -- FlowGraph serialized
-  version     INTEGER NOT NULL DEFAULT 1, -- optimistic lock
-  created_at  INTEGER NOT NULL,
-  updated_at  INTEGER NOT NULL
+  graph_json  JSONB NOT NULL,               -- FlowGraph serialized
+  version     INTEGER NOT NULL DEFAULT 1,   -- optimistic lock
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE agents (
   id            TEXT PRIMARY KEY,
   name          TEXT NOT NULL,
-  provider      TEXT NOT NULL,            -- "anthropic.claude", "openai", …
+  provider      TEXT NOT NULL,              -- "anthropic.claude", "openai", …
   model         TEXT NOT NULL,
   system_prompt TEXT,
-  tools_json    TEXT NOT NULL DEFAULT '[]', -- ["flow:flow_…", …]
-  created_at    INTEGER NOT NULL,
-  updated_at    INTEGER NOT NULL
+  tools_json    JSONB NOT NULL DEFAULT '[]'::jsonb, -- ["flow:flow_…", …]
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE runs (
   id          TEXT PRIMARY KEY,
   flow_id     TEXT NOT NULL REFERENCES flows(id) ON DELETE CASCADE,
-  status      TEXT NOT NULL,              -- queued|running|ok|error|cancelled
-  started_at  INTEGER NOT NULL,
-  finished_at INTEGER,
-  trace_json  TEXT                        -- per-node status, errors
+  status      TEXT NOT NULL,                -- queued|running|ok|error|cancelled
+  started_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  finished_at TIMESTAMPTZ,
+  trace_json  JSONB                         -- per-node status, errors
 );
 ```
 
@@ -352,7 +353,7 @@ UI path collapse onto the same domain function.
 
 | Phase | Deliverable                                                                                  |
 |-------|----------------------------------------------------------------------------------------------|
-| 1     | Cargo binary boots, serves empty SPA, REST `/api/flows` CRUD against SQLite.                 |
+| 1     | Cargo binary boots, serves empty SPA, REST `/api/flows` CRUD against Postgres.               |
 | 2     | `FlowEditor` renders `<FlowCanvas>` with the built-in node kinds; save round-trips JSON.     |
 | 3     | `/fire` runs the flow through `starter-flow`; SSE overlay drives node + edge animation.      |
 | 4     | Agents CRUD + `AgentChat` working against `starter-ai` (Claude CLI runner) over SSE.         |
@@ -369,7 +370,9 @@ smoke note in [`README.md`](#).
 
 - ❌ Authentication or multi-tenant isolation.
 - ❌ CLI.
-- ❌ Postgres (SQLite only — the pattern transfers).
+- ❌ SQLite (Postgres only as of [ADR-001](../../DOCS/storage/ADR-001-flow-agent-postgres-only.md);
+  the `starter-store-sqlite` crate is still part of the workspace for
+  other consumers, but this example is single-backend).
 - ❌ gRPC, WebSocket, MCP transport in this example.
 - ❌ Versioned/forked flows, undo history beyond in-session.
 - ❌ Custom node-kind authoring UI (kinds are registered in Rust).
