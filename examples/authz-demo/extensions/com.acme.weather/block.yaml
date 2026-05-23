@@ -38,3 +38,34 @@ contributes:
         permission:
           resource: weather
           action:   refresh
+
+  # Phase 7d.2 (SCOPE-EXT §5) — MCP tool entry. The `auth.permission`
+  # field is the SAME one the REST entries above declare; the MCP
+  # adapter wraps tool dispatch in `AuthzedToolBinding` so a
+  # `(weather, read)` deny lands in `starter_authz_decisions` with
+  # `surface = "mcp"`. Zero host-side wiring beyond passing the
+  # engine into `register_tools_with_engine`.
+  tools:
+    - id: com.acme.weather.forecast_tool
+      input_schema: schemas/forecast_in.json
+      output_schema: schemas/forecast_out.json
+      description_file: docs/forecast_tool.md
+      auth:
+        permission:
+          resource: weather
+          action:   read
+
+  # Phase 7d.2 (SCOPE-EXT §5) — gRPC method entry. Same field shape;
+  # the gRPC adapter consults `engine.check` inside
+  # `with_surface("grpc", …)` before dispatch when the consumer
+  # wires `ExtensionGrpcService::with_authz`.
+  grpc:
+    - id: com.acme.weather.forecast_rpc
+      service: weather.v1.Weather
+      method:  Current
+      proto: proto/weather.proto
+      description_file: docs/forecast_rpc.md
+      auth:
+        permission:
+          resource: weather
+          action:   read

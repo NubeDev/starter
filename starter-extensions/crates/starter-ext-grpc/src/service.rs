@@ -16,6 +16,10 @@ use std::time::Duration;
 
 use futures::stream::Stream;
 use futures::StreamExt;
+use starter_authz::with_surface;
+use starter_spi::auth::{Authenticator, Principal};
+use starter_spi::authz::{Decision, PolicyEngine, ResourceRef};
+use tonic::metadata::MetadataMap;
 use tonic::{Request, Response, Status};
 
 use crate::adapter::GrpcMethod;
@@ -25,6 +29,12 @@ use crate::proto::{
     InvokeRequest, InvokeResponse, InvokeStreamEvent, ListMethodsRequest, ListMethodsResponse,
     MethodDescriptor,
 };
+
+/// Surface label written into `starter_authz::DecisionEntry::surface`
+/// for every check this service performs. Distinguishes a deny that
+/// originated on the gRPC backplane from REST/MCP denies against the
+/// same `(resource, action)` pair (SCOPE-EXT §5).
+pub const SURFACE: &str = "grpc";
 
 /// Type alias for the streaming response item the tonic codegen
 /// expects.
@@ -39,6 +49,16 @@ pub struct ExtensionGrpcService {
     methods: Vec<GrpcMethod>,
     dispatcher: Arc<dyn GrpcDispatcher>,
     default_timeout: Duration,
+    /// Phase 7d.2 (SCOPE-EXT §5) — first authz layer on the gRPC
+    /// backplane. When both `engine` and `authenticator` are wired
+    /// AND the manifest entry declared `auth.permission`, the
+    /// service runs `engine.check((resource, action))` before
+    /// dispatch with the surface task-local bound to `"grpc"`.
+    /// Either being `None` (e.g. consumer didn't opt in to authz)
+    /// disables the gate entirely — same zero-overhead default as
+    /// the REST adapter when the manifest field is absent.
+    engine: Option<Arc<dyn PolicyEngine>>,
+    authenticator: Option<Arc<dyn Authenticator>>,
 }
 
 impl ExtensionGrpcService {
@@ -60,7 +80,27 @@ impl ExtensionGrpcService {
             methods,
             dispatcher,
             default_timeout,
+            engine: None,
+            authenticator: None,
         }
+    }
+
+    /// Wire the per-call [`PolicyEngine`] gate and the
+    /// [`Authenticator`] that resolves the inbound
+    /// `authorization: Bearer …` metadata header into a
+    /// [`Principal`]. SCOPE-EXT §5 (Phase 7d.2): both must be set
+    /// for `auth.permission` on a manifest entry to take effect;
+    /// absent either, the service falls back to the pre-7d.2 shape
+    /// (dispatch with no authz) — matching the REST adapter's
+    /// behaviour when the manifest doesn't declare a gate.
+    pub fn with_authz(
+        mut self,
+        engine: Arc<dyn PolicyEngine>,
+        authenticator: Arc<dyn Authenticator>,
+    ) -> Self {
+        self.engine = Some(engine);
+        self.authenticator = Some(authenticator);
+        self
     }
 
     /// Wrap in the tonic-generated server ready for
@@ -86,6 +126,41 @@ impl ExtensionGrpcService {
                     "no extension method registered for ({service:?}, {method:?})"
                 ))
             })
+    }
+
+    /// Per-call authz gate. Returns `Ok(())` to proceed with
+    /// dispatch, `Err(Status)` to refuse the request before the
+    /// dispatcher runs. Behaviour matrix:
+    ///
+    /// - No engine + authenticator wired → no-op (Ok).
+    /// - Entry has no `permission` → no-op (Ok).
+    /// - No `authorization: Bearer …` header → `UNAUTHENTICATED`.
+    /// - Authenticator rejects → `UNAUTHENTICATED`.
+    /// - Engine returns Deny → `PERMISSION_DENIED` (and a row
+    ///   lands in `starter_authz_decisions` with `surface = "grpc"`
+    ///   because we run the check inside `with_surface("grpc", …)`).
+    #[allow(clippy::result_large_err)]
+    async fn enforce_permission(&self, entry: &GrpcMethod, md: &MetadataMap) -> Result<(), Status> {
+        let (engine, authn) = match (self.engine.as_ref(), self.authenticator.as_ref()) {
+            (Some(e), Some(a)) => (e, a),
+            _ => return Ok(()),
+        };
+        let Some(perm) = entry.permission.as_ref() else {
+            return Ok(());
+        };
+        let token = bearer_from_md(md)
+            .ok_or_else(|| Status::unauthenticated("missing authorization: Bearer header"))?;
+        let principal: Principal = authn
+            .verify(&token)
+            .await
+            .map_err(|_| Status::unauthenticated("invalid bearer token"))?;
+        let object = ResourceRef::collection(perm.resource.clone());
+        let decision =
+            with_surface(SURFACE, engine.check(&principal, &perm.action, &object)).await;
+        match decision {
+            Decision::Allow { .. } => Ok(()),
+            Decision::Deny { reason, .. } => Err(Status::permission_denied(reason)),
+        }
     }
 
     #[allow(clippy::result_large_err)]
@@ -127,12 +202,14 @@ impl ExtensionGrpc for ExtensionGrpcService {
         req: Request<InvokeRequest>,
     ) -> Result<Response<InvokeResponse>, Status> {
         let timeout = self.default_timeout;
+        let md = req.metadata().clone();
         let InvokeRequest {
             service,
             method,
             args_proto_json,
         } = req.into_inner();
         let entry = self.resolve(&service, &method)?.clone();
+        self.enforce_permission(&entry, &md).await?;
         if entry.streaming {
             return Err(Status::failed_precondition(format!(
                 "({service:?}, {method:?}) is server-streaming; use InvokeStream"
@@ -157,12 +234,14 @@ impl ExtensionGrpc for ExtensionGrpcService {
         req: Request<InvokeRequest>,
     ) -> Result<Response<Self::InvokeStreamStream>, Status> {
         let timeout = self.default_timeout;
+        let md = req.metadata().clone();
         let InvokeRequest {
             service,
             method,
             args_proto_json,
         } = req.into_inner();
         let entry = self.resolve(&service, &method)?.clone();
+        self.enforce_permission(&entry, &md).await?;
         if !entry.streaming {
             return Err(Status::failed_precondition(format!(
                 "({service:?}, {method:?}) is unary; use Invoke"
@@ -204,6 +283,16 @@ impl ExtensionGrpc for ExtensionGrpcService {
 
 fn dispatch_to_status(err: DispatchError) -> Status {
     Status::new(err.tonic_code(), err.to_string())
+}
+
+/// Pull a bearer token from an `authorization: Bearer …` metadata
+/// header. Lower-cases the prefix for tolerance (matches the REST
+/// adapter's `with_principal` and the MCP HTTP transport).
+fn bearer_from_md(md: &MetadataMap) -> Option<String> {
+    let raw = md.get("authorization")?.to_str().ok()?;
+    raw.strip_prefix("Bearer ")
+        .or_else(|| raw.strip_prefix("bearer "))
+        .map(|s| s.trim().to_string())
 }
 
 /// One-line convenience for the common path: build the service +

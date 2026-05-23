@@ -29,9 +29,14 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+mod authzed;
 mod ctx_stub;
 mod register;
 mod tool_wrapper;
 
-pub use register::{register_process_tools, register_tools, RegisterError, RegisterOutcome};
+pub use authzed::{AuthzedToolBinding, SURFACE as MCP_SURFACE};
+pub use register::{
+    register_process_tools, register_process_tools_with_engine, register_tools,
+    register_tools_with_engine, RegisterError, RegisterOutcome,
+};
 pub use tool_wrapper::{ExtensionToolBinding, ProcessExtensionToolBinding};

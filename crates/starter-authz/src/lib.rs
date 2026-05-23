@@ -45,7 +45,10 @@ pub mod engine;
 pub mod error;
 pub mod middleware;
 pub mod registry;
+pub mod surface;
 pub mod testing;
+
+pub use surface::{current_surface, with_surface};
 
 pub use audit::{DecisionEntry, DecisionSink, NoopDecisionSink};
 

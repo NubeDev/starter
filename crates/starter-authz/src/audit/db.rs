@@ -332,8 +332,8 @@ async fn sqlite_insert_one(
     };
     sqlx::query(
         "INSERT INTO starter_authz_decisions \
-            (id, at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason) \
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
+            (id, at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason, surface) \
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)",
     )
     .bind(&id)
     .bind(entry.at.to_rfc3339())
@@ -346,6 +346,7 @@ async fn sqlite_insert_one(
     .bind(effect)
     .bind(&entry.rule_id)
     .bind(&entry.reason)
+    .bind(&entry.surface)
     .execute(pool.sqlx())
     .await?;
     Ok(())
@@ -360,7 +361,7 @@ pub async fn sqlite_list_decisions(
     use sqlx::Row;
 
     let mut sql = String::from(
-        "SELECT at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason \
+        "SELECT at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason, surface \
          FROM starter_authz_decisions WHERE 1=1",
     );
     if filter.tenant.is_some() {
@@ -415,6 +416,7 @@ pub async fn sqlite_list_decisions(
                 effect,
                 rule_id: r.get(8),
                 reason: r.get(9),
+                surface: r.get(10),
             })
         })
         .collect();
@@ -447,8 +449,8 @@ async fn postgres_insert_one(
     };
     sqlx::query(
         "INSERT INTO starter_authz_decisions \
-            (id, at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason) \
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)",
+            (id, at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason, surface) \
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)",
     )
     .bind(&id)
     .bind(entry.at)
@@ -461,6 +463,7 @@ async fn postgres_insert_one(
     .bind(effect)
     .bind(&entry.rule_id)
     .bind(&entry.reason)
+    .bind(&entry.surface)
     .execute(pool.sqlx())
     .await?;
     Ok(())
@@ -475,7 +478,7 @@ pub async fn postgres_list_decisions(
     use sqlx::Row;
 
     let mut sql = String::from(
-        "SELECT at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason \
+        "SELECT at, tenant_id, subject, principal_role, action, kind, resource_id, effect, rule_id, reason, surface \
          FROM starter_authz_decisions WHERE 1=1",
     );
     let mut idx = 1usize;
@@ -534,6 +537,7 @@ pub async fn postgres_list_decisions(
                 effect,
                 rule_id: r.get(8),
                 reason: r.get(9),
+                surface: r.get(10),
             })
         })
         .collect();

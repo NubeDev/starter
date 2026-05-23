@@ -21,6 +21,7 @@ starter-ext-sdk        = { workspace = true, features = ["builtin"] }
 starter-ext-supervisor = { workspace = true }
 starter-spi            = { workspace = true }
 starter-grpc           = { workspace = true }
+starter-authz          = { workspace = true }
 
 tonic        = { workspace = true }
 prost        = { workspace = true }

@@ -104,8 +104,13 @@ async fn auth_layer(
     };
     match authenticator.verify(&token).await {
         Ok(principal) => {
-            req.extensions_mut().insert::<Principal>(principal);
-            next.run(req).await
+            req.extensions_mut().insert::<Principal>(principal.clone());
+            // Phase 7d.2 (SCOPE-EXT §5): bind the principal on the
+            // task so tool wrappers (`starter-ext-mcp`'s
+            // `AuthzedToolBinding`) can run a `PolicyEngine::check`
+            // before tool dispatch without us forking the `Tool`
+            // trait. See `crate::principal_local`.
+            crate::with_principal(principal, next.run(req)).await
         }
         Err(_) => unauthorized("invalid bearer token"),
     }

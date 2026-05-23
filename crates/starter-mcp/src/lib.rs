@@ -25,9 +25,12 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod principal_local;
 pub mod protocol;
 pub mod registry;
 pub mod server;
+
+pub use principal_local::{current_principal, with_principal};
 
 #[cfg(feature = "testing")]
 pub mod testing;

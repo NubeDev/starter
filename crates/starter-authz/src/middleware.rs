@@ -93,7 +93,7 @@ async fn gate_owned(
         }
     };
     let object = ResourceRef::collection(kind.as_ref());
-    match engine.check(&principal, &action, &object).await {
+    match crate::surface::with_surface("rest", engine.check(&principal, &action, &object)).await {
         Decision::Allow { .. } => next.run(req).await,
         Decision::Deny { reason, .. } => (
             StatusCode::FORBIDDEN,
@@ -170,7 +170,7 @@ async fn gate(
     };
 
     let object = ResourceRef::collection(kind);
-    match engine.check(&principal, action, &object).await {
+    match crate::surface::with_surface("rest", engine.check(&principal, action, &object)).await {
         Decision::Allow { .. } => next.run(req).await,
         Decision::Deny { reason, .. } => (
             StatusCode::FORBIDDEN,

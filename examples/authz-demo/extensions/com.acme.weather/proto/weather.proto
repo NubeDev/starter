@@ -1,0 +1,12 @@
+syntax = "proto3";
+// Phase 7d.2 demo. The adapter doesn't parse this file in v0.1 —
+// it only verifies presence so a manifest pointing at a missing
+// proto is caught at host startup. Shape is illustrative.
+package weather.v1;
+
+message ForecastRequest { string city = 1; }
+message ForecastReply   { string city = 1; double temp_c = 2; string condition = 3; }
+
+service Weather {
+  rpc Current (ForecastRequest) returns (ForecastReply);
+}

@@ -398,6 +398,7 @@ impl StaticRbacEngine {
             effect,
             rule_id,
             reason,
+            surface: crate::surface::current_surface(),
         };
         self.sink.record(entry).await;
     }

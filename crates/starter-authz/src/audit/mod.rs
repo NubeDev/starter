@@ -65,6 +65,14 @@ pub struct DecisionEntry {
     /// Independent of `rule_id` so a rule whose id happens to be
     /// `"cross_tenant"` is never confused with the built-in code.
     pub reason: Option<String>,
+    /// Originating adapter surface (Phase 7d.2). One of `"rest"`,
+    /// `"mcp"`, `"grpc"` when the check came through an adapter
+    /// that set the surface task-local via
+    /// [`crate::surface::with_surface`]. `None` for in-process
+    /// engine calls (background jobs, tests, direct calls from a
+    /// handler). Surfaced so dashboards can break down deny
+    /// volume by surface without re-parsing tracing.
+    pub surface: Option<String>,
 }
 
 /// Best-effort decision sink. SCOPE-EXT.md R14 specifies the
