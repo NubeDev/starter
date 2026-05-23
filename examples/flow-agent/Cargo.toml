@@ -16,17 +16,17 @@ path = "src/main.rs"
 path = "src/lib.rs"
 
 [dependencies]
-starter-spi           = { workspace = true }
-starter-server        = { workspace = true }
-starter-store-sqlite  = { workspace = true, features = ["flow"] }
-starter-observability = { workspace = true }
-starter-cache         = { workspace = true }
+starter-spi             = { workspace = true }
+starter-server          = { workspace = true }
+starter-store-postgres  = { workspace = true, features = ["flow", "agent-session"] }
+starter-observability   = { workspace = true }
+starter-cache           = { workspace = true }
 
 # Prefs + i18n (US English + Spanish, US/metric/imperial units,
 # timezone-aware date/time). flow-agent has no real auth so we mount
 # these behind `starter_server::auth::with_anonymous_principal` —
 # every request resolves to the same local-operator principal.
-starter-prefs         = { workspace = true, features = ["routes", "sqlite"] }
+starter-prefs         = { workspace = true, features = ["routes", "postgres"] }
 starter-i18n          = { workspace = true, features = ["routes"] }
 
 # Flow engine + nodes (Phase 3+).
@@ -61,7 +61,7 @@ axum         = { workspace = true }
 prometheus   = { workspace = true }
 serde        = { workspace = true }
 serde_json   = { workspace = true }
-sqlx         = { workspace = true, features = ["sqlite", "macros", "migrate", "runtime-tokio"] }
+sqlx         = { workspace = true, features = ["postgres", "macros", "migrate", "runtime-tokio"] }
 tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "signal"] }
 tokio-stream = { version = "0.1", features = ["sync"] }
 futures      = { workspace = true }
@@ -74,8 +74,9 @@ chrono       = { workspace = true }
 uuid         = { workspace = true }
 
 [dev-dependencies]
-starter-server  = { workspace = true, features = ["testing"] }
-starter-ai      = { workspace = true, features = ["provider-claude", "provider-anthropic", "testing"] }
-tower           = { workspace = true, features = ["util"] }
-http-body-util  = "0.1"
-tempfile        = "3"
+starter-server         = { workspace = true, features = ["testing"] }
+starter-ai             = { workspace = true, features = ["provider-claude", "provider-anthropic", "testing"] }
+starter-store-postgres = { workspace = true, features = ["testing"] }
+tower                  = { workspace = true, features = ["util"] }
+http-body-util         = "0.1"
+tempfile               = "3"

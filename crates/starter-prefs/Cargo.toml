@@ -21,9 +21,14 @@ routes = ["dep:axum", "dep:http", "dep:bytes"]
 # `sqlite` enables the sqlx-based `store::SqlitePrefsStore`
 # implementation of `store::PrefsStore`. Default-off per workspace
 # policy R5 — a consumer that only wants the resolver + trait shape
-# pays nothing. Postgres is deferred per the SCOPE.md Phase 1
-# decision lock.
+# pays nothing.
 sqlite = ["sqlx/sqlite", "sqlx/migrate", "sqlx/runtime-tokio"]
+# `postgres` enables the sqlx-based `store::PgPrefsStore`
+# implementation of `store::PrefsStore`. Default-off per workspace
+# policy R5 — same rationale as `sqlite`. Consumers can activate
+# one or both backends independently; they share only the common
+# codec helpers and the `PrefsStore` trait.
+postgres = ["sqlx/postgres", "sqlx/migrate", "sqlx/runtime-tokio"]
 
 [dependencies]
 starter-spi = { workspace = true, features = ["preferences"] }
@@ -55,3 +60,9 @@ tower          = { workspace = true }
 http           = { workspace = true }
 http-body-util = "0.1"
 serde_json     = { workspace = true }
+# Postgres test support — testcontainers-backed pool factory.
+# The `testing` feature on `starter-store-postgres` pulls in
+# testcontainers + the postgres module; `postgres_store.rs` uses
+# `starter_store_postgres::testing::with_database` to spin up an
+# ephemeral container for the `#[cfg(feature = "postgres")]` tests.
+starter-store-postgres = { workspace = true, features = ["testing"] }

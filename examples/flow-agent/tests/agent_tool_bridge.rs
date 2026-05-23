@@ -12,6 +12,9 @@
 //!    the log node's `emitted` slot value.
 //! 3. The agent receives the log output as a `user`-role history
 //!    message on the second turn (so it could act on it).
+//!
+//! Requires Docker (testcontainers Postgres). Run with:
+//!   cargo test -p flow-agent -- --ignored
 
 use std::sync::Arc;
 use std::time::Duration;
@@ -23,7 +26,7 @@ use tokio::time::timeout;
 use starter_ai::testing::{RecordingAiRunner, ScriptTurn};
 use starter_ai::Registry as AiRegistry;
 use starter_spi::ai::{Provider, ToolUse};
-use starter_store_sqlite::{migrate, pool};
+use starter_store_postgres::testing::with_database;
 
 use flow_agent::ai_runtime::AiRuntime;
 use flow_agent::domain::{CreateAgent, CreateFlow};
@@ -34,15 +37,16 @@ use flow_agent::store::{AgentStore, FlowStore, RunStore};
 
 /// Cap the SSE drain so a stuck stream fails the test instead of
 /// hanging the whole `cargo test` invocation.
-const DRAIN_TIMEOUT: Duration = Duration::from_secs(10);
+const DRAIN_TIMEOUT: Duration = Duration::from_secs(30);
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn agent_invokes_flow_tool_and_receives_log_output() {
     // -----------------------------------------------------------
-    // 1. Stand up an isolated in-memory backend.
+    // 1. Stand up an isolated Postgres backend via testcontainers.
     // -----------------------------------------------------------
-    let pool = pool::connect("sqlite::memory:").await.expect("connect");
-    let mut chain = migrate(&pool);
+    let (pool, _guard) = with_database().await;
+    let mut chain = starter_store_postgres::migrate(&pool);
     for src in migrations::sources() {
         chain = chain.with_source(src);
     }

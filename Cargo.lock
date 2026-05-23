@@ -2602,7 +2602,7 @@ dependencies = [
  "starter-prefs",
  "starter-server",
  "starter-spi",
- "starter-store-sqlite",
+ "starter-store-postgres",
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
@@ -7055,6 +7055,7 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -7135,6 +7136,7 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.18",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -7173,6 +7175,7 @@ dependencies = [
  "stringprep",
  "thiserror 2.0.18",
  "tracing",
+ "uuid",
  "whoami",
 ]
 
@@ -7199,6 +7202,7 @@ dependencies = [
  "thiserror 2.0.18",
  "tracing",
  "url",
+ "uuid",
 ]
 
 [[package]]
@@ -8177,6 +8181,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-spi",
+ "starter-store-postgres",
  "tokio",
  "tower 0.5.3",
  "tracing",
@@ -8390,6 +8395,7 @@ dependencies = [
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+ "uuid",
 ]
 
 [[package]]

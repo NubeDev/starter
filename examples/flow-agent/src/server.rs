@@ -19,11 +19,11 @@ use starter_i18n::routes::router as i18n_router;
 use starter_observability::metrics::StandardMetrics;
 use starter_prefs::resolver::SystemDefaults;
 use starter_prefs::routes::{prefs_router, PrefsRoutesState};
-use starter_prefs::store::SqlitePrefsStore;
+use starter_prefs::store::PgPrefsStore;
 use starter_server::auth::{local_operator, with_anonymous_principal};
 use starter_server::ServerBuilder;
-use starter_store_sqlite::flow::SqliteAgentSessionStore;
-use starter_store_sqlite::Pool;
+use starter_store_postgres::flow::PgAgentSessionStore;
+use starter_store_postgres::Pool;
 use utoipa::OpenApi;
 
 use crate::ai_runtime::AiRuntime;
@@ -53,15 +53,15 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let sqlx = pool.sqlx().clone();
     let flows = Arc::new(FlowStore::new(sqlx.clone()));
     let agents = Arc::new(AgentStore::new(sqlx.clone()));
-    let runs = Arc::new(RunStore::new(sqlx));
+    let runs = Arc::new(RunStore::new(sqlx.clone()));
     let hub = Arc::new(EventHub::new());
     let engine = FlowEngine::new();
-    // MEMORY.md Phase M-D — page-builder persistence. SQLite-backed
+    // MEMORY.md Phase M-D — page-builder persistence. Postgres-backed
     // `AgentSessionStore` shares the connection pool with the rest
-    // of the example; the schema ships with starter-flow's
-    // `FLOW_MIGRATION_SOURCE` (wired in `migrations::sources`).
+    // of the example; the schema ships with starter-store-postgres's
+    // `AGENT_SESSION_MIGRATION_SOURCE` (wired in `migrations::sources`).
     let agent_sessions: Arc<dyn starter_flow_spi::agent_session::AgentSessionStore> =
-        Arc::new(SqliteAgentSessionStore::new(pool.clone()));
+        Arc::new(PgAgentSessionStore::new(pool.clone()));
 
     // Insights mock-up surface (INSIGHTS-MOCKUP.md). Fixture files
     // are loaded on startup; missing fixtures degrade to an empty
@@ -114,12 +114,12 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     let extensions_mgr =
         ExtensionManager::bootstrap(extensions_root, node_kinds_state.clone(), hub.clone());
 
-    // Prefs surface: SQLite-backed PrefsStore + starter defaults
+    // Prefs surface: Postgres-backed PrefsStore + starter defaults
     // (en-US, UTC, metric). The router is wrapped with
     // `with_anonymous_principal` since flow-agent has no real auth;
     // every request resolves to the same local-operator principal so
     // `/v1/me/preferences` has a stable subject.
-    let prefs_store = Arc::new(SqlitePrefsStore::new(pool.sqlx().clone()));
+    let prefs_store = Arc::new(PgPrefsStore::new(sqlx));
     let prefs_state = PrefsRoutesState::new(prefs_store, SystemDefaults::starter());
     let prefs = with_anonymous_principal::<AppState>(
         prefs_router::<AppState>(prefs_state),
@@ -134,18 +134,14 @@ pub fn build(pool: Pool, registry: Arc<Registry>, metrics: Arc<StandardMetrics>)
     // surface without breaking the no-error guarantee.
     let bundle = {
         let mut b = starter_bundle();
-        let en_tag = starter_spi::i18n::LanguageTag::parse("en")
-            .expect("'en' is a valid BCP-47 tag");
-        let es_tag = starter_spi::i18n::LanguageTag::parse("es")
-            .expect("'es' is a valid BCP-47 tag");
-        let en_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!(
-            "../i18n/en.json"
-        ))
-        .expect("embedded flow-agent en.json must be valid");
-        let es_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!(
-            "../i18n/es.json"
-        ))
-        .expect("embedded flow-agent es.json must be valid");
+        let en_tag =
+            starter_spi::i18n::LanguageTag::parse("en").expect("'en' is a valid BCP-47 tag");
+        let es_tag =
+            starter_spi::i18n::LanguageTag::parse("es").expect("'es' is a valid BCP-47 tag");
+        let en_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!("../i18n/en.json"))
+            .expect("embedded flow-agent en.json must be valid");
+        let es_cat = starter_i18n::catalog::Catalog::from_json_str(include_str!("../i18n/es.json"))
+            .expect("embedded flow-agent es.json must be valid");
         b.extend(en_tag, en_cat);
         b.extend(es_tag, es_cat);
         Arc::new(b)

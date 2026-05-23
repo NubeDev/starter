@@ -6,11 +6,10 @@ use std::net::SocketAddr;
 
 use anyhow::{Context, Result};
 use starter_observability::{metrics::StandardMetrics, tracing::Format};
-use starter_store_sqlite::{migrate, pool};
+use starter_store_postgres::{migrate, pool};
 
 use flow_agent::{migrations, server as fa_server};
 
-const DEFAULT_DATABASE_URL: &str = "sqlite:./flow-agent.db?mode=rwc";
 const DEFAULT_HTTP_BIND: &str = "127.0.0.1:8090";
 
 #[tokio::main]
@@ -19,8 +18,9 @@ async fn main() -> Result<()> {
     let _tracing = starter_observability::tracing::init(&filter, Format::Pretty)
         .map_err(|e| anyhow::anyhow!("init tracing: {e}"))?;
 
-    let database_url =
-        std::env::var("DATABASE_URL").unwrap_or_else(|_| DEFAULT_DATABASE_URL.to_owned());
+    let database_url = std::env::var("DATABASE_URL").with_context(|| {
+        "DATABASE_URL is required (e.g. postgres://user:pass@localhost:5432/flow_agent)"
+    })?;
     let bind = std::env::var("HTTP_BIND").unwrap_or_else(|_| DEFAULT_HTTP_BIND.to_owned());
 
     let pool = pool::connect(&database_url)

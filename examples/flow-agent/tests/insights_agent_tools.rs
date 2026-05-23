@@ -9,6 +9,9 @@
 //! 3. `rule.propose` returns a proposal object without writing;
 //!    `rule.apply` does write through to disk. The propose-vs-apply
 //!    contract is load-bearing per spec §Agent tools.
+//!
+//! Requires Docker (testcontainers Postgres). Run with:
+//!   cargo test -p flow-agent -- --ignored
 
 use std::path::PathBuf;
 use std::sync::Arc;
@@ -16,7 +19,7 @@ use std::sync::Arc;
 use serde_json::{json, Value};
 use starter_ai::Registry as AiRegistry;
 use starter_spi::ai::ToolUse;
-use starter_store_sqlite::{migrate, pool};
+use starter_store_postgres::testing::{with_database, ContainerGuard};
 
 use flow_agent::ai_runtime::AiRuntime;
 use flow_agent::flow_engine::FlowEngine;
@@ -29,7 +32,7 @@ fn fixtures_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures/insights")
 }
 
-async fn make_runtime() -> (AiRuntime, tempfile::TempDir) {
+async fn make_runtime() -> (AiRuntime, tempfile::TempDir, ContainerGuard) {
     let tmp = tempfile::tempdir().expect("tempdir");
     for name in [
         "rules.json",
@@ -43,8 +46,8 @@ async fn make_runtime() -> (AiRuntime, tempfile::TempDir) {
     let data = InsightsFixtures::load(tmp.path()).expect("load fixtures");
     let state = InsightsState::new(data);
 
-    let pool = pool::connect("sqlite::memory:").await.expect("connect");
-    let mut chain = migrate(&pool);
+    let (pool, guard) = with_database().await;
+    let mut chain = starter_store_postgres::migrate(&pool);
     for src in migrations::sources() {
         chain = chain.with_source(src);
     }
@@ -62,12 +65,13 @@ async fn make_runtime() -> (AiRuntime, tempfile::TempDir) {
         hub,
     )
     .with_insights(state);
-    (ai, tmp)
+    (ai, tmp, guard)
 }
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn synth_rule_tools_lights_under_wildcard() {
-    let (ai, _tmp) = make_runtime().await;
+    let (ai, _tmp, _guard) = make_runtime().await;
     let tools = ai.synthesize_insights_tools(&["insights:rule.*".into()]);
     assert_eq!(tools.len(), 5, "expected 5 rule tools, got {}", tools.len());
     assert!(tools.iter().any(|t| t.name == "insights:rule.propose"));
@@ -78,8 +82,9 @@ async fn synth_rule_tools_lights_under_wildcard() {
 }
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn dispatch_rule_read_returns_fixture_row() {
-    let (ai, _tmp) = make_runtime().await;
+    let (ai, _tmp, _guard) = make_runtime().await;
     let tu = ToolUse {
         id: "t1".into(),
         name: "insights:rule.read".into(),
@@ -91,8 +96,9 @@ async fn dispatch_rule_read_returns_fixture_row() {
 }
 
 #[tokio::test]
+#[ignore = "requires docker"]
 async fn propose_does_not_mutate_apply_does() {
-    let (ai, tmp) = make_runtime().await;
+    let (ai, tmp, _guard) = make_runtime().await;
 
     let propose = ai
         .dispatch_insights_tool(&ToolUse {

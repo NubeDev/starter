@@ -92,12 +92,7 @@ mod tests {
         );
 
         let resp = app
-            .oneshot(
-                Request::builder()
-                    .uri("/who")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/who").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(resp.status(), 200);
@@ -124,12 +119,7 @@ mod tests {
         .layer(injector);
 
         let resp = app
-            .oneshot(
-                Request::builder()
-                    .uri("/who")
-                    .body(Body::empty())
-                    .unwrap(),
-            )
+            .oneshot(Request::builder().uri("/who").body(Body::empty()).unwrap())
             .await
             .unwrap();
         assert_eq!(resp.status(), 200);
