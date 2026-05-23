@@ -23,6 +23,8 @@ async-trait = { workspace = true }
 serde_json  = { workspace = true }
 tokio       = { workspace = true, features = ["macros", "sync", "rt", "time"] }
 tracing     = { workspace = true }
+thiserror   = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
 
 # Stage 8 (D-F3.12): blake3 content hash for the `FlowAsService`
 # dedup-key fallback when an `EventSink::dedup_key` impl returns
@@ -31,6 +33,15 @@ tracing     = { workspace = true }
 # the first time a second consumer appears.
 blake3 = "1"
 
+# YAML loader for FlowRegistry::register_yaml (see
+# docs/design/starter-changes/README.md Phase 2b U3). Aligns
+# with the optional dep already used by starter-flow-watch.
+serde_yaml = "0.9"
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time"] }
 prometheus = { workspace = true }
+async-trait = { workspace = true }
+serde_json = { workspace = true }
+schemars = { workspace = true }
+tempfile = "3"

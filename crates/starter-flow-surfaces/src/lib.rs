@@ -14,6 +14,13 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod flow_registry;
+
+pub use flow_registry::{
+    register::FlowRegistration, resolve::FromRegistryError, FlowRegistry, FlowRegistryError,
+    RegisteredFlow, ResolvedFlow,
+};
+
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
