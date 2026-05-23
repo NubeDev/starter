@@ -76,8 +76,13 @@ starter-spi                         (BlobStore, BlobKey, BlobRef, BlobMeta,
    ├── starter-blob-fs              (local filesystem; dev, single-node deploys)
    ├── starter-blob-s3              (any S3-compatible endpoint; AWS, R2, MinIO, Garage-via-S3)
    ├── starter-blob-garage          (Garage-native; uses S3 API + Garage admin API for buckets/keys)
-   └── starter-blob-compose         (combinators: Namespaced, Tiered, Mirrored, ReadThroughCache)
+   ├── starter-blob-compose         (combinators: Namespaced, Tiered, Mirrored, ReadThroughCache)
+   └── starter-blob-axum            (authenticated GET proxy handler; presign router shared with fs/memory)
 ```
+
+The proxy crate is broken out so `starter-spi` and the engine crates
+stay free of an `axum` dependency. Consumers who don't need a proxy
+(e.g. CLI tools, batch jobs) skip the crate entirely.
 
 `starter-store-sqlite` / `starter-store-postgres` are **unaffected**.
 Blob bytes do not go in SQL; SQL rows reference blobs by `BlobRef`
@@ -118,7 +123,23 @@ families do not depend on each other.
     invalidates outstanding `BlobRef`s — documented, migration-tool
     territory, not silently broken.
 - `BlobMeta` — content-type, content-length, etag, last-modified,
-  user-defined string→string metadata (capped, validated).
+  user-defined string→string metadata (capped, validated). The
+  user-metadata map reserves three conventional keys that every
+  engine and combinator round-trips unchanged, so a `BlobRef` is
+  portable between consumers without each one inventing its own
+  spelling:
+
+  | Key            | Meaning                                          |
+  | -------------- | ------------------------------------------------ |
+  | `filename`     | Original client-supplied filename, UTF-8         |
+  | `uploaded_by`  | Opaque consumer-defined principal id             |
+  | `uploaded_at`  | RFC3339 timestamp                                |
+
+  `starter-blob-axum`'s proxy handler reads `filename` to populate
+  `Content-Disposition: attachment; filename="…"`. Consumers may add
+  their own keys freely; the reserved set is documented in
+  `starter-spi::blob::meta` as constants so call sites don't
+  stringly-type them.
 - `BlobError` — enum, exhaustively matched by engines:
   - `NotFound`
   - `Unauthorized` / `Forbidden` (distinct — leaking which one is a
@@ -245,6 +266,131 @@ Combinators are themselves `BlobStore`s, so they nest: a consumer can
 build `Namespaced("tenant-7", Tiered(Fs::local, Garage::remote))` and
 hand it to any code that takes `impl BlobStore`.
 
+### `starter-blob-axum`
+
+An optional crate that ships the **authenticated GET proxy** every
+consumer would otherwise write themselves. Presign covers the
+direct-PUT-from-browser case; it is the wrong primitive for inline
+content (e.g. images embedded in a markdown body persisted in SQL):
+
+- A markdown row is rendered at arbitrary times; presigned image
+  URLs with a TTL would have to be refreshed on every render or
+  rewritten into the body on every edit (lossy round-trip).
+- Per-request auth is the right model: the GET handler decides
+  whether *this* viewer can see *this* `BlobRef` based on the
+  enclosing domain object's ACL — which only the consumer knows.
+
+The crate exposes:
+
+```rust
+pub fn blob_proxy_handler<S: BlobStore + 'static>(
+    store: Arc<S>,
+    authz: impl Fn(&BlobRef, &BlobContext, &Request) -> Result<(), BlobError>
+        + Send + Sync + 'static,
+) -> axum::Router
+```
+
+`BlobContext` is a small struct the combinator stack populates as
+the request is routed: it carries the **parsed namespace prefix**
+(e.g. `Some("project-7")` for a `Namespaced` wrapper) alongside the
+`BlobRef`. This is load-bearing: without it the consumer's authz
+closure would have to re-parse the prefix out of an opaque
+`BlobRef`, leaking the namespace scheme into auth code and
+undermining B1/B2. With it, the authz closure receives a structured
+value and stays domain-clean.
+
+The handler is responsible for:
+
+- Parsing `BlobRef` from the URL using the serde round-trip already
+  defined in `starter-spi`.
+- Resolving `BlobContext` by walking the combinator stack on `store`.
+- Calling the consumer-supplied `authz` closure.
+- Mapping `BlobError` variants to HTTP status codes per the table
+  below — uniform across consumers, never re-derived:
+
+  | `BlobError` variant     | HTTP                                  |
+  | ----------------------- | ------------------------------------- |
+  | `NotFound`              | 404                                   |
+  | `Unauthorized`          | 401                                   |
+  | `Forbidden`             | 403                                   |
+  | `PreconditionFailed`    | 412                                   |
+  | `PayloadTooLarge`       | 413                                   |
+  | `Throttled { retry_after }` | 503 + `Retry-After` header        |
+  | `Timeout`               | 504                                   |
+  | `Unsupported`           | 501                                   |
+  | `Backend(_)`            | 500                                   |
+
+- Forwarding `Range`, `If-None-Match`, `If-Modified-Since`, and
+  `Accept-Encoding` end-to-end where the engine supports it.
+- Reading the reserved `filename` user-metadata key to populate
+  `Content-Disposition: attachment; filename="…"` when the client
+  sets `?download=1`.
+
+The presign router that `starter-blob-fs` and `starter-blob-memory`
+already ship moves here too, so all `axum` integration lives in one
+crate and consumers wire one `Router` per surface.
+
+The handler takes consumer authz as a closure; it knows nothing
+about domain entities. B1 stays intact.
+
+### React: `useBlobUpload` (in `@nube/starter-ui-core`)
+
+The scope previously said this hook would be specified in a separate
+doc that did not yet exist. The surface is locked here so the first
+consumer doesn't have to invent it (and so future consumers don't
+each re-roll a divergent version that leaks raw keys into
+user-visible content):
+
+```ts
+function useBlobUpload(opts: {
+    presignEndpoint: string;            // POST → { url, headers, ref }
+    onUploaded: (ref: BlobRef, meta: BlobMeta) => void;
+    maxBytes?: number;
+    acceptedTypes?: string[];
+}): {
+    upload: (file: File) => Promise<BlobRef>;
+    progress: number | null;
+    error: Error | null;
+};
+```
+
+Plus a markdown-editor adapter that composes with the hook so any
+`@uiw/react-md-editor` (or tiptap, or codemirror) instance gets
+paste-image / drop-image / toolbar-upload behaviour with one prop:
+
+```ts
+const onImageUpload = useBlobUploadForMarkdown({
+    presignEndpoint,
+    proxyUrlFor,   // (ref: BlobRef) => string — typically /api/blobs/{ref}
+});
+<MDEditor ... onImageUpload={onImageUpload} />
+```
+
+The adapter **always** writes `![](proxyUrlFor(ref))` into the
+markdown body — never an engine-specific URL, never a presigned
+URL, never a raw key. This is what makes a later
+`Namespaced`/`Tiered` swap non-breaking for content already stored
+in markdown rows. The hook is taxonomy-agnostic: it does not know
+what a "project" or "user" is — the consumer's presign endpoint is
+what binds an upload to a domain object.
+
+## Choosing isolation — `Namespaced` vs Garage per-bucket keys
+
+`starter-blob-compose::Namespaced` and `starter-blob-garage`'s
+per-bucket access-key minting both isolate one consumer-defined
+scope from another, but they sit at very different costs. Pick by
+the **trust boundary** between scopes, not by the number of scopes:
+
+| Need                                       | Use                                  |
+| ------------------------------------------ | ------------------------------------ |
+| Multi-scope, single trust boundary (e.g. multi-project SaaS where the app server is the only thing that can reach the bucket) | `Namespaced("scope-<id>", store)`    |
+| Multi-tenant, separate trust boundaries (each tenant gets credentials they could in principle use directly against the engine) | Garage per-bucket key minting        |
+| Multi-tenant, hosted on shared S3          | `Namespaced` + IAM bucket policy     |
+
+The default for a starter consumer is row 1. Reach for row 2 only
+when a tenant must be able to hold their own credential against the
+engine — most consumers never do.
+
 **On `list` and B2.** `list` returns `(BlobRef, BlobMeta)` pairs,
 not raw keys. Combinators rewrite the `BlobRef`s on the way out the
 same way they rewrite them on `put`, so a `list` result from a
@@ -292,10 +438,12 @@ rustdoc, not in a separate guide.
 - **No transcoding, no thumbnailing, no virus scanning.** Those are
   domain concerns and belong in the consumer or in a dedicated crate
   outside the storage family.
-- **No upload UI.** The React side gets a `useBlobUpload` hook in
-  `@nube/starter-ui-core` (separate scope doc) that calls `presign`
-  and `PUT`s directly to the backend; no widget is shipped in
-  `ui-kit`.
+- **No upload widget in `ui-kit`.** The React side gets a
+  `useBlobUpload` hook in `@nube/starter-ui-core` whose surface is
+  locked above under §"React: `useBlobUpload`". The hook calls
+  `presign` and `PUT`s directly to the backend; no styled widget,
+  picker, or drop-zone is shipped — the consumer composes those
+  themselves.
 - **No file-share / public-link feature.** Presigned URLs are the
   primitive; sharing is a product decision.
 - **No Garage-cluster orchestration.** `docker/` will gain a
@@ -333,6 +481,7 @@ crates/
   starter-blob-s3/
   starter-blob-garage/
   starter-blob-compose/
+  starter-blob-axum/
 
 docker/
   garage.example.toml           <- reference single-node config
@@ -361,11 +510,32 @@ examples/
   combinator pair) cannot do it natively; the free function
   `copy_via_client` is the explicit opt-in for streamed copy.
 
+## Planned for 0.2
+
+- **Quotas / per-namespace accounting.** Promoted out of "open
+  questions" because the first real consumer (dev-pulse) needs
+  per-project byte caps — without them, one noisy project can
+  exhaust an org-wide budget, which is the wrong product shape.
+  Locked shape:
+
+  - New type `BlobUsage { bytes: u64, objects: u64 }` in
+    `starter-spi::blob`.
+  - New trait method `fn approximate_usage(prefix: &BlobKey) ->
+    Result<BlobUsage, BlobError>` with a default impl that returns
+    `BlobError::Unsupported`. The word "approximate" is in the name
+    deliberately: `fs` and `memory` can answer authoritatively;
+    `s3` and `garage` answer from list/inventory and may lag.
+  - `Namespaced` gains an optional `Quota { max_bytes, max_objects }`.
+    `put_*` exceeding the cap returns `BlobError::PayloadTooLarge`
+    (already in the enum).
+  - Counter authority is engine-defined and documented per engine,
+    not abstracted on the trait. `Namespaced` does not maintain
+    its own counter — it asks the inner engine via
+    `approximate_usage`, so there is one source of truth per
+    deployment.
+
 ## Open questions (decide before 0.1)
 
 - **Server-side encryption.** Engine-level config or `SecretStore`
   hook? Leaning engine-level: keys are an ops concern, not a domain
   one.
-- **Quotas / accounting.** Out of scope for 0.1; revisit when a real
-  consumer needs per-tenant byte caps. The `Namespaced` combinator is
-  the natural place to add it.

@@ -3,3 +3,4 @@ packages:
   - "examples/*/frontend"
   - "starter-extensions/packages/*"
   - "starter-extensions/examples/*"
+  - "test-ui-5"

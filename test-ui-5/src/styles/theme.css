@@ -1,0 +1,139 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Geist', 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-serif: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-mono: 'Geist Mono', 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* Canvas — deep navy (nube-io brand) */
+  --color-bg: #071435;
+  --color-bg-2: #0a1a44;
+  --color-surface: #0d1f4a;
+  --color-surface-2: #122a5e;
+  --color-border: #1c3470;
+  --color-border-hi: #244a8d;
+  --color-text: #f0f6ff;
+  --color-muted: #a7c0d8;
+  --color-subtle: #6b85a4;
+
+  /* Leaf alias kept for compatibility with copied test-ui-3 components — points to nube teal */
+  --color-leaf: #339999;
+  --color-leaf-2: #459aa4;
+  --color-moss: #1f6e6e;
+  --color-lime: #b7e6e6;
+
+  /* Aqua — nube secondary cool */
+  --color-aqua: #67e8f9;
+  --color-aqua-2: #06b6d4;
+  --color-mist: #ccfbf1;
+
+  /* Sky */
+  --color-sky: #7dd3fc;
+
+  /* Energy — sunbeam */
+  --color-sun: #fde68a;
+
+  /* Status */
+  --color-ok: #22c55e;
+  --color-warn: #fde68a;
+  --color-danger: #fb7185;
+
+  --color-background: #071435;
+  --color-foreground: #f0f6ff;
+  --color-card: #0d1f4a;
+  --color-card-foreground: #f0f6ff;
+  --color-primary: #339999;
+  --color-primary-foreground: #071435;
+  --color-secondary: #122a5e;
+  --color-secondary-foreground: #f0f6ff;
+  --color-muted-bg: #122a5e;
+  --color-muted-foreground: #a7c0d8;
+  --color-accent: #122a5e;
+  --color-accent-foreground: #f0f6ff;
+  --color-destructive: #fb7185;
+  --color-input: #1c3470;
+  --color-ring: #339999;
+
+  --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 2rem;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-feature-settings: 'cv11', 'ss01';
+}
+
+body {
+  background-image:
+    radial-gradient(1400px 700px at 85% -10%, rgba(51, 153, 153, 0.14), transparent 60%),
+    radial-gradient(900px 600px at -5% 110%, rgba(103, 232, 249, 0.08), transparent 60%),
+    radial-gradient(700px 500px at 50% 40%, rgba(24, 65, 113, 0.18), transparent 70%);
+  background-attachment: fixed;
+}
+
+.serif-italic {
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+}
+
+.glass {
+  background:
+    linear-gradient(180deg, rgba(186, 230, 230, 0.03), rgba(255, 255, 255, 0) 60%),
+    rgba(13, 31, 74, 0.62);
+  backdrop-filter: blur(22px) saturate(150%);
+  -webkit-backdrop-filter: blur(22px) saturate(150%);
+  border: 1px solid rgba(167, 192, 216, 0.08);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.04),
+    0 30px 80px -40px rgba(0, 0, 0, 0.7);
+}
+
+.hairline::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 192, 216, 0.2) 25%,
+    rgba(51, 153, 153, 0.6) 50%,
+    rgba(103, 232, 249, 0.4) 70%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+@keyframes marquee {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+.animate-marquee { animation: marquee 40s linear infinite; }
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); opacity: 0.55; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
+.animate-breathe { animation: breathe 6s ease-in-out infinite; }
+
+.tabular { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    transition-duration: 0.001ms !important;
+  }
+}

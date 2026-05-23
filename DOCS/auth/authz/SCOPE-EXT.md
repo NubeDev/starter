@@ -362,6 +362,19 @@ with_role (outer, from require_role)
       → handler
 ```
 
+**Why role outer, permission inner — and the audit consequence.** A
+user who fails the role gate gets a 403 from `with_role` before
+the permission middleware ever runs; the audit log will record a
+role-deny (via `with_role`'s tracing) but **no permission deny
+entry**. That's intended: the role gate is a coarse precondition
+("can this user touch this surface at all"), and dashboards of
+"permission denies" by definition exclude pre-role rejections.
+Acknowledge this in dashboards or add a `with_role` audit hook
+later if it matters; do not flip the layer order to fix it,
+because doing so would force the engine to evaluate rules for
+requests the role gate would have killed anyway (wasted work +
+larger attack surface for the engine).
+
 The `permission.resource` must be a `kind` the host registered in
 its `ResourceRegistry`. The adapter calls `registry.lookup(kind)`
 at build time; an unknown kind is a `RestBuildError::UnknownResource`
@@ -388,8 +401,9 @@ manifest field shipped here is the same one.
 
 CREATE TABLE starter_auth_users_tenants (
   id           TEXT PRIMARY KEY,
-  slug         TEXT NOT NULL UNIQUE,         -- url-safe identifier
+  slug         TEXT NOT NULL UNIQUE,         -- url-safe identifier; reserved-name list enforced at create time
   display_name TEXT NOT NULL,
+  audit_allow_sample INTEGER,                 -- per-tenant override of STARTER_AUTHZ_DECISION_ALLOW_SAMPLE; NULL = use env default
   created_at   TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -436,7 +450,8 @@ CREATE TABLE starter_authz_decisions (
   kind          TEXT NOT NULL,
   resource_id   TEXT,
   effect        TEXT NOT NULL,                -- allow | deny
-  reason        TEXT
+  rule_id       TEXT,                          -- which rule matched, when one did
+  reason        TEXT                           -- engine-supplied code: cross_tenant | no_tenant_binding | unknown_resource | no_matching_rule
 );
 CREATE INDEX idx_authz_decisions_tenant_at
   ON starter_authz_decisions (tenant_id, at);
@@ -444,7 +459,20 @@ CREATE INDEX idx_authz_decisions_subject_at
   ON starter_authz_decisions (subject, at);
 CREATE INDEX idx_authz_decisions_effect_at
   ON starter_authz_decisions (effect, at);    -- "find recent denies"
+CREATE INDEX idx_authz_decisions_rule_at
+  ON starter_authz_decisions (rule_id, at);   -- "which rule is firing most"
 ```
+
+**Reserved slug list.** Tenant slugs eventually appear in URLs
+(`/{slug}/dashboard`, future SDUI deep links). The `tenants`
+INSERT path enforces a hard-coded reserved list — `admin`, `api`,
+`auth`, `v1`, `v2`, `static`, `health`, `metrics`, `openapi`,
+`extensions`, `mcp`, `tools`, `default`, `system` — plus anything
+matching `[0-9]+` (collides with id-style routing). Adding to the
+list later is a breaking change for any tenant who already grabbed
+the slug; the only way to avoid that is to reserve broadly up
+front. (Same trade-off GitHub made — `/api`, `/settings`, etc. are
+all reserved usernames.)
 
 `Principal.tenant_id` and `Principal.teams` are populated by the
 authenticator from the current session's `(user_id, tenant_id)`
@@ -457,6 +485,50 @@ not `(user_id)`. The user picks a tenant at login (or there's only
 one); the session cookie / token carries the tenant binding; the
 authenticator surfaces it. Switching tenants is a re-login.
 
+### Bearer-token bindings (cookie sessions are easy; tokens aren't)
+
+Cookie sessions are minted fresh on each login, so the
+`(user_id, tenant_id)` binding falls out for free. Bearer tokens
+(`starter-auth-token` PATs, `starter-auth-users` API tokens,
+external-IdP OAuth access tokens) need explicit handling. The
+rules below are deliberate; they are not derivable from the
+existing token verifiers and must land alongside the tenants
+migration:
+
+1. **PATs and API tokens are minted bound to one `(user_id,
+   tenant_id)`.** The token-issue flow gains a `tenant_id`
+   argument; the database column is `NOT NULL` for any token
+   created post-migration. A super-admin token can be minted with a
+   sentinel `tenant_id = "*"` (allowed only for users with the
+   global `Admin` role); the engine treats `*` as "tenant predicate
+   passes for any value." This is the one place the `Option<String>`
+   shape is not enough.
+2. **Membership-change revokes every active token for that
+   `(user_id, tenant_id)`.** Adding or changing a membership is one
+   write; **revoking** a membership is two writes — delete the
+   membership row, then `UPDATE … SET revoked_at = now() WHERE
+   user_id = ? AND tenant_id = ?` on the tokens table. Without
+   this, a revoke takes effect only at token expiry, which is the
+   month-3 security-incident shape. The token store grows a
+   `revoke_for_membership(user_id, tenant_id)` method; the
+   membership route calls it inside the same transaction.
+3. **External-IdP OAuth tokens are not naturally tenant-bound.** A
+   token from Google for `alice@acme.com` says nothing about which
+   tenant alice is acting on behalf of. The OAuth callback path
+   resolves the tenant via either (a) an explicit `?tenant=…` query
+   param on the authorize URL, validated against alice's
+   memberships, or (b) a "you have N tenants, pick one" interstitial
+   on first-login. The resolved tenant is written into the local
+   session row at callback time, **not** read from the IdP token on
+   every request. This means the rest of the system never sees a
+   tenantless OAuth principal; it sees the local session with the
+   resolved binding.
+
+The token table schema gets a `tenant_id TEXT NOT NULL` column and
+the same `BEFORE UPDATE` immutability trigger as R12. The
+membership-revoke path is a Phase 7a smoke test
+(`token-revoked-when-membership-removed`).
+
 ## Routes
 
 New admin REST under the same `/v1/authz/*` and `/v1/auth/*`
@@ -466,9 +538,9 @@ prefixes:
 POST   /v1/tenants                          create tenant (super-admin only)
 GET    /v1/tenants                          list tenants visible to caller
 GET    /v1/tenants/{id}
-PATCH  /v1/tenants/{id}                     rename, slug, …
+PATCH  /v1/tenants/{id}                     rename, audit_allow_sample, …  (slug is immutable)
 POST   /v1/tenants/{id}/members             add user as member with role
-DELETE /v1/tenants/{id}/members/{user_id}
+DELETE /v1/tenants/{id}/members/{user_id}   (also revokes that user's tokens for this tenant — see Bearer-token bindings)
 PATCH  /v1/tenants/{id}/members/{user_id}   change role
 POST   /v1/tenants/{id}/teams               create team in tenant
 DELETE /v1/tenants/{id}/teams/{team_id}
@@ -478,10 +550,32 @@ DELETE /v1/tenants/{id}/teams/{team_id}/members/{user_id}
 GET    /v1/authz/decisions?tenant=…&subject=…&effect=deny&since=…   page audit
 ```
 
+**`DELETE /v1/tenants/{id}` is deliberately not in this surface.**
+Cascading deletion across every tenant-scoped table (reports,
+flows, pages, marts, sandboxes, tokens, memberships, teams,
+sessions, decisions, ...) is a high-blast-radius operation that
+deserves an explicit ops workflow, not a one-button REST call.
+The Phase 7a delivery is "tenants exist forever once created"; the
+follow-up doc (`ADR-tenant-deletion`) covers the ordered-cascade,
+the soft-delete-then-hard-delete window, and the operator
+confirmation flow. Customers wanting to "delete their tenant" are
+served by the soft-delete-then-disable path in the meantime
+(`PATCH /v1/tenants/{id}` setting a `disabled_at` column blocks
+all access; data lingers until the ADR lands).
+
+**`GET /v1/authz/decisions` is exempt from allow-sampling.** A
+tenant admin paging the deny log otherwise generates one
+sampled-away allow per page request, which makes the audit-of-
+audit chain ~99% lossy. The route's `with_permission` middleware
+records its decision via a sink override that bypasses sampling
+for this kind. (Implementation: a per-kind `sample_override` map
+on the sink, defaulting to `audit_logs` → 1.)
+
 `/v1/authz/decisions` is paginated by `at` (cursor) with bounded
 `limit`. Tenant scoping: a tenant-admin sees decisions for their
 own tenant; a super-admin sees everything. The route honours its
-own gates — looking at the audit log is itself an audited action.
+own gates — looking at the audit log is itself an audited action
+(exempt from allow-sampling per the section above).
 
 ## Configuration
 
@@ -527,12 +621,18 @@ contributes:
 `with_permission("weather", "read")`; per-user grant / revoke
 through the policy engine works exactly like a built-in route.
 
-**MCP and gRPC parity (per the project's MCP / gRPC goals):** the
-same `permission: { resource, action }` declaration is consulted
-by `starter-ext-mcp` and `starter-ext-grpc`. The engine `check()`
-runs at the adapter boundary; the extension closure never sees an
-unauthorised call. (gRPC adapter today does no authz; this is part
-of the work.)
+**MCP and gRPC parity is a goal, but a separate phase.** The
+`permission: { resource, action }` field lives in
+`starter-ext-spi`'s `AuthGate` so the MCP and gRPC adapters can
+read it without further manifest churn. Wiring MCP and gRPC
+adapters to call `engine.check()` at their dispatch boundary is
+**Phase 7d.2** — listed separately because the gRPC adapter today
+does no authz at all (not even `require_role`), so this is a
+larger workstream than the REST add. Phase 7d ships the REST path
+and the shared `AuthGate` field; Phase 7d.2 brings MCP and gRPC
+to parity. A consumer needing per-user authz on MCP / gRPC routes
+in the meantime mounts a host-side wrapper, just as
+`examples/authz-demo` does for REST today.
 
 ## Flow (a request through the stack, post-Phase-7)
 
@@ -568,18 +668,46 @@ without consulting the rule.
 user to the team; they immediately get `refresh`. Remove them;
 they immediately lose it. No new rule rows.
 
-### "Audit log records every deny"
+### "Audit log eventually records every deny under no overflow"
 
-Sink in "db" mode. Issue a request that denies. The
-`starter_authz_decisions` row exists before the HTTP response is
-returned to the client. (The test asserts ordering: SELECT
-COUNT(*) after a 403, must be ≥ 1.)
+Sink in "db" mode, default queue depth. Issue 100 deny requests
+back-to-back. Poll `SELECT COUNT(*) FROM starter_authz_decisions
+WHERE effect = 'deny'` with a 2s deadline; assert it reaches 100.
+**The test is not ordering-sensitive against the HTTP response** —
+the sink dispatch is non-blocking, so a row may land after the
+response, but R14's best-effort contract says it lands as long as
+the queue isn't overflowed. The 2s budget is generous enough to
+catch the common-case write-lag without being flaky; a separate
+soak test exercises the overflow path explicitly.
+
+### "Audit log drops cleanly on overflow"
+
+Sink in "db" mode, queue depth lowered to 4. Issue 1000 deny
+requests in a tight loop with the writer task paused. Assert
+`tracing::warn` emits `dropped_count` ≥ 1 and the server keeps
+serving. (The contract is "drop, don't block" — the test proves
+the drop, not the count.)
 
 ### "Audit log samples allows"
 
 Sink in "db" mode, sample = 10. Issue 1000 allow requests.
 `SELECT COUNT(*) FROM starter_authz_decisions WHERE effect =
 'allow'` is in `[80, 120]` — within a binomial spread.
+
+### "None-tenant principal hits tenant-scoped resource → no_tenant_binding"
+
+A `starter-auth-token` authenticator (which produces tenantless
+`Principal`s) wired in front of a router with a `tenant_scoped =
+true` resource. Any request to that resource returns `Deny {
+reason: "no_tenant_binding" }` — no rule consulted.
+
+### "Membership-revoke kills the user's tokens"
+
+Mint a PAT for `(alice, tenant-A)`. Delete the membership row.
+Subsequent requests with that PAT return 401, **not** 403 — the
+token is revoked, not merely unauthorized. Same check for
+`starter-auth-users` API tokens. (OAuth tokens are covered by the
+"session row owns the tenant binding" rule; not in this test.)
 
 ### "Extension REST entry with `permission:` gets a permission gate"
 
@@ -644,6 +772,19 @@ authenticated identity for that tenant.
   Rules in TOML / YAML reference teams by stable slug. UUIDs would
   force rule edits whenever a team is recreated; slugs survive
   re-creation as long as the operator picks the same slug.
+- **Team slugs are immutable after create.** A rename would
+  silently break every rule referencing the old slug — the engine
+  has no way to know "team X was renamed to Y." The team's
+  `display_name` is mutable; the slug is the rule-stable identity.
+  Tenant slugs are immutable for the same reason, plus the URL-
+  routing concern.
+- **Audit dispatch is non-blocking (best-effort, deny-asymmetric),
+  not synchronous (fail-closed).** Synchronous audit forces every
+  authz check to await a DB write; a sink outage takes the service
+  down. Best-effort + 100% deny retention + sampled allows answers
+  the deny-side compliance question without service coupling.
+  Consumers with regulated workloads override via a fail-closed
+  sink wrapper (sketched in R14).
 - **Audit sink is a trait, not just a table.** The DB writer is the
   shipped impl, but a consumer routing decisions to Loki /
   CloudWatch / Datadog wires their own sink without forking the
@@ -689,17 +830,32 @@ authenticated identity for that tenant.
 Each phase is independently mergeable; the order matters because
 later phases depend on earlier ones.
 
+**Note on 7b vs 7c order.** Audit (7c) has the only externally-
+imposed timeline pressure — a customer / auditor / incident response
+ask. Teams (7b) is a quality-of-life improvement; per-user rules
+keep working until it lands. A consumer with an audit pressure
+should re-order to `7a → 7c → 7b → 7d`; the doc keeps the
+implementation-friendly order (7b first because the team-tables
+migration is small and the condition-grammar change is a tight
+diff), but the dependency graph permits either.
+
 ### Phase 7a — Tenants
 
 - `Principal.tenant_id: Option<String>`.
 - `ResourceRef.tenant: Option<String>` + `ResourceSpec.tenant_scoped: bool`.
 - `StoredRule.tenant_id: Option<String>` + migration.
 - Engine evaluates tenant predicate before role / condition.
-- `starter-auth-users`: tenants + memberships tables;
-  authenticator populates `Principal.tenant_id`.
-- Admin REST: `/v1/tenants` + `/v1/tenants/{id}/members`.
-- Smoke tests: cross-tenant-deny, multi-tenant-session-binding,
-  global-resource-bypass (`tenant_scoped = false` cases).
+- `(tenant_id, owner_id)` immutability triggers on every tenant-
+  scoped table.
+- `starter-auth-users`: tenants + memberships tables; tokens table
+  grows `tenant_id NOT NULL`; membership-revoke also revokes tokens.
+- Authenticator populates `Principal.tenant_id`.
+- Admin REST: `/v1/tenants` + `/v1/tenants/{id}/members`. Slug
+  reservation list enforced at create.
+- Smoke tests: cross-tenant-deny, none-tenant-no_tenant_binding,
+  multi-tenant-session-binding, global-resource-bypass
+  (`tenant_scoped = false` cases), token-revoked-when-membership-
+  removed, immutability-trigger-rejects-update.
 
 Outcome: a multi-tenant deployment is possible. No team grants yet
 (per-user rules per tenant remain the only granularity).
@@ -720,39 +876,64 @@ N per-user rules.
 ### Phase 7c — Decision audit log
 
 - `DecisionSink` trait + `NoopDecisionSink` + `DbDecisionSink`.
-- `starter_authz_decisions` table + migration.
-- Engine calls sink inside `check()`.
-- Retention + sampling honoured by the DB sink.
-- `GET /v1/authz/decisions` admin route.
-- Smoke tests: deny-always-recorded, allow-sampled-at-rate,
-  audit-route-is-itself-audited.
+- `DecisionEntry` with split `rule_id` + `reason` fields.
+- `starter_authz_decisions` table + migration; per-tenant
+  `audit_allow_sample` override column.
+- Engine hands the entry to the sink before returning, but the
+  dispatch is non-blocking (best-effort per R14).
+- Retention task wired in by `audit::spawn_retention(pool, cfg)`.
+- `GET /v1/authz/decisions` admin route, exempt from allow-sampling.
+- Smoke tests: deny-eventually-recorded, deny-drops-cleanly-on-
+  overflow, allow-sampled-at-rate, audit-route-not-sampled,
+  retention-task-deletes-expired.
 
-Outcome: every authz decision is queryable. SOC 2 / ISO 27001 audit
-trail story works.
+Outcome: every authz **deny** is queryable (under no overflow);
+allow access patterns are statistically observable. Meets the
+deny-side compliance ask without coupling the request path to the
+audit DB. Customers who need 100% allow retention flip the per-
+tenant sample to 1.
 
 ### Phase 7d — AuthZ-aware extension REST adapter
 
 - `ContributeRest.auth.permission: { resource, action }` field on
-  the manifest.
+  the manifest, declared in `starter-ext-spi`'s `AuthGate`.
 - `rest_router` wraps each entry with `with_permission` when
-  declared; layer order documented.
+  declared; layer order (role → scope → permission → handler)
+  documented.
 - `RestBuildError::UnknownResource` for typos.
 - `examples/authz-demo` simplified: drop the host-side `weather.rs`
   hand-mounting; the manifest declares the permission inline.
 - Smoke tests: per-entry-permission-applied, unknown-resource-is-
   build-error, role+permission-compose-correctly.
 
-Outcome: extension authors get per-user authz with zero host
-changes. `examples/authz-demo` becomes the canonical
-demonstration of the full Phase 7 stack.
+Outcome: REST extension authors get per-user authz with zero host
+changes. `examples/authz-demo` becomes the canonical demonstration
+of the full Phase 7 stack.
+
+### Phase 7d.2 — MCP and gRPC adapter parity
+
+- `starter-ext-mcp` calls `engine.check()` at tool-dispatch using
+  the same `AuthGate.permission` field.
+- `starter-ext-grpc` gets its first authz layer; the gRPC dispatcher
+  invokes `engine.check()` keyed off the per-method `AuthGate`.
+- Smoke tests (one per surface): mcp-permission-applied,
+  grpc-permission-applied, surface-decisions-share-audit-trail.
+
+Outcome: MCP and gRPC extension routes are authz-gated by the same
+declaration REST already honours. Separated from 7d because gRPC
+has no authz at all today, which is a meaningful workstream of its
+own.
 
 ## Bottom line
 
 **Four additions, each strictly additive: tenants as a typed first-
-class predicate (R11–R12), teams as a rule subject (R13), an
-inside-the-engine decision sink (R14), and a `permission:` field on
-extension manifests so the rest adapter does the gating (R15). Every
-Phase 1–6 deployment keeps working with no changes; every Phase 7
-deployment gets the multi-tenant, team-grant, audit-trail, extension-
-authz-by-manifest shape the project's Niagara-style cloud product
-needs.**
+class predicate that defaults-deny on missing binding (R11–R12),
+teams as a rule subject with immutable slugs (R13), a best-effort
+decision sink with 100% deny retention + sampled allows (R14), and
+a `permission:` field on extension manifests so the rest adapter
+does the gating (R15). Every Phase 1–6 deployment keeps working
+with no changes; every Phase 7 deployment gets the multi-tenant,
+team-grant, deny-side-auditable, extension-authz-by-manifest shape
+the project's Niagara-style cloud product needs. MCP and gRPC
+parity lands in 7d.2 — the manifest shape is shared, the wiring
+follows.**
