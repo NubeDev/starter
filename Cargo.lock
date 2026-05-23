@@ -7865,6 +7865,7 @@ dependencies = [
  "serde",
  "serde_json",
  "sha2 0.10.9",
+ "starter-authz",
  "starter-ext-host",
  "starter-ext-sdk",
  "starter-ext-spi",

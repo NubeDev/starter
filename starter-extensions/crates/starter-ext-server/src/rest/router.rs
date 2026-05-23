@@ -29,6 +29,7 @@ use starter_ext_host::ExtensionRegistry;
 use starter_ext_spi::{
     AuthGate, ContributeRest, ContributeTool, ExtensionId, LifecycleState, RestStreaming,
 };
+use starter_spi::authz::ResourceRegistry;
 
 use super::auth::apply_gate;
 use super::dispatcher::RestDispatcher;
@@ -44,6 +45,16 @@ pub struct RestRouterOptions {
     /// routes (`POST /tools/<id>`) are not affected. Leave `None` for
     /// "mount at root" (the common case).
     pub path_prefix: Option<String>,
+    /// Host `ResourceRegistry`, consulted at build time to validate
+    /// every `ContributeRest.auth.permission.resource` against a
+    /// registered kind (SCOPE-EXT R15 / Phase 7d). An unknown kind
+    /// surfaces as [`RestBuildError::UnknownResource`] — symmetric
+    /// with [`RestBuildError::UnknownRole`]. A manifest entry that
+    /// declares a `permission` field without a registry wired in
+    /// is rejected as `UnknownResource` for the same reason: the
+    /// adapter cannot verify the kind exists, so the safe action
+    /// is "refuse to mount" (loud failure beats silent skip).
+    pub resource_registry: Option<Arc<dyn ResourceRegistry>>,
 }
 
 /// Errors raised at router build time.
@@ -74,6 +85,25 @@ pub enum RestBuildError {
         entry: String,
         /// The unrecognised role string.
         role: String,
+    },
+
+    /// A `permission.resource` value did not resolve to a kind
+    /// registered in the host's
+    /// [`starter_spi::authz::ResourceRegistry`]. Surfaces a typo
+    /// in the manifest at deploy time rather than as a runtime
+    /// 403. The broken extension refuses to mount; the rest of
+    /// the host's extensions continue to load (the caller logs
+    /// the error and skips this extension at the loader level).
+    #[error(
+        "entry {entry:?}: unknown permission resource `{resource}` \
+         (register the kind on the host's ResourceRegistry, or remove \
+         `auth.permission` from the manifest)"
+    )]
+    UnknownResource {
+        /// "<extension>:<contribute_id>"
+        entry: String,
+        /// The unrecognised resource kind.
+        resource: String,
     },
 
     /// A schema file referenced by a contribute entry could not be
@@ -172,6 +202,7 @@ where
                 extension_id,
                 tool,
                 &record.bundle_dir,
+                options.resource_registry.as_deref(),
             )?;
         }
         for rest in &manifest.contributes.rest {
@@ -182,6 +213,7 @@ where
                 rest,
                 &record.bundle_dir,
                 options.path_prefix.as_deref(),
+                options.resource_registry.as_deref(),
             )?;
         }
     }
@@ -198,6 +230,7 @@ fn mount_tool<S>(
     extension: &ExtensionId,
     tool: &ContributeTool,
     bundle_dir: &std::path::Path,
+    resource_registry: Option<&dyn ResourceRegistry>,
 ) -> Result<Router<S>, RestBuildError>
 where
     S: Clone + Send + Sync + 'static,
@@ -209,7 +242,7 @@ where
     let sub: Router<S> = Router::new()
         .route(&path, post(non_streaming))
         .with_state(spec);
-    let sub = apply_gate(sub, &tool.auth, &entry_label)?;
+    let sub = apply_gate(sub, &tool.auth, &entry_label, resource_registry)?;
     Ok(router.merge(sub))
 }
 
@@ -220,6 +253,7 @@ fn mount_rest<S>(
     rest: &ContributeRest,
     bundle_dir: &std::path::Path,
     path_prefix: Option<&str>,
+    resource_registry: Option<&dyn ResourceRegistry>,
 ) -> Result<Router<S>, RestBuildError>
 where
     S: Clone + Send + Sync + 'static,
@@ -255,7 +289,7 @@ where
     };
     let path = mount_path(&path_prefix.map(str::to_string), &rest.path);
     let sub: Router<S> = Router::new().route(&path, method_router).with_state(spec);
-    let sub = apply_gate(sub, &rest.auth, &entry_label)?;
+    let sub = apply_gate(sub, &rest.auth, &entry_label, resource_registry)?;
     Ok(router.merge(sub))
 }
 

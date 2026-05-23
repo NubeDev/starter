@@ -415,6 +415,37 @@ pub struct AuthGate {
     /// Required scope (e.g. `"extension:weather"`).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub require_scope: Option<String>,
+    /// Optional fine-grained policy-engine gate (SCOPE-EXT R15 —
+    /// Phase 7d). When set, the adapter wraps the entry's handler
+    /// in `with_permission(resource, action)` so the host's
+    /// `PolicyEngine` decides Allow/Deny per request. The
+    /// `resource` must be a kind registered in the host's
+    /// `ResourceRegistry`; an unknown kind is a load-time error
+    /// (symmetric with `require_role`'s unknown-role rejection).
+    ///
+    /// **Shared across all adapters** (REST, MCP, gRPC). The
+    /// field shape lives on `AuthGate` rather than per-contribute
+    /// so the three adapters consume it uniformly (SCOPE-EXT
+    /// R15: "the manifest field shipped here is the same one").
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub permission: Option<PermissionGate>,
+}
+
+/// Fine-grained policy-engine gate declared on a contribute entry's
+/// [`AuthGate`].
+///
+/// The host's `PolicyEngine` is asked to decide Allow/Deny on every
+/// request against `(resource, action)`. `resource` must be a kind
+/// the host registered in its `ResourceRegistry`; the adapter
+/// validates this at build time so a typo is caught at deploy.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct PermissionGate {
+    /// Resource kind (e.g. `"weather"`, `"flows"`). Must be
+    /// registered in the host's `ResourceRegistry`.
+    pub resource: String,
+    /// Action verb on the resource (e.g. `"read"`, `"refresh"`).
+    pub action: String,
 }
 
 /// One flow node-kind the extension contributes.

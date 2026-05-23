@@ -63,7 +63,7 @@ pub use condition::Expr;
 pub use config::{Assignment, AuthzConfig, Effect, Rule};
 pub use engine::StaticRbacEngine;
 pub use error::Error;
-pub use middleware::{require_permission, with_permission};
+pub use middleware::{require_permission, with_permission, with_permission_owned};
 pub use registry::StaticRegistry;
 
 #[cfg(any(feature = "sqlite", feature = "postgres"))]

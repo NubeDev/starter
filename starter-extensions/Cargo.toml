@@ -62,6 +62,7 @@ starter-ext-workers     = { path = "crates/starter-ext-workers", version = "0.1.
 # path because the two workspaces sit next to each other in this repo.
 starter-mcp             = { path = "../crates/starter-mcp", version = "0.1.0" }
 starter-server          = { path = "../crates/starter-server", version = "0.1.0" }
+starter-authz           = { path = "../crates/starter-authz", version = "0.1.0" }
 
 # Parent-workspace flow SPI — consumed by `starter-ext-flow` to surface
 # extension-contributed node kinds into the engine's
