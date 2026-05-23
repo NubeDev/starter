@@ -1,0 +1,12 @@
+[package]
+name = "rubix-skills"
+description = "Bundled SKILL.md files for the six rubix goals. Content crate: markdown shipped via include_dir!, with a load helper that registers the bundle into a SkillRegistry. Per SCOPE R7: rubix ships defaults; extensions and operators add more into the same registry."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+include_dir = "0.7"
+anyhow = { workspace = true }

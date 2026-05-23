@@ -17,6 +17,17 @@ default = []
 # GET /v1/i18n/manifest) plus the Accept-Language tower middleware.
 # Owned by SCOPE.md Phase 3 + the "API surface" block.
 routes = ["dep:axum", "dep:http", "dep:tower", "dep:futures", "dep:async-trait"]
+# `units` enables the `DiagnosticParam::Quantity` render branch in
+# the typed interpolator. Consumers that emit Quantity-typed
+# diagnostic params (rubix's MCP + CLI surfaces, any caller of
+# `MessageBundle::render_diagnostic` with prefs-aware Quantity
+# formatting) turn this on; pure-string consumers leave it off and
+# pay zero extra deps.
+units = ["starter-spi/units"]
+# `preferences` enables `MessageBundle::render_diagnostic` — the
+# prefs-aware renderer that converts canonical Quantity params into
+# the caller's preferred unit before formatting. Implies `units`.
+preferences = ["units", "starter-spi/preferences"]
 # Phase 5 — scope-limited diagnostics rewriter (opt-in response
 # extension). Builds on the same axum / tower stack as `routes`;
 # also pulls in `http-body-util` + `bytes` because the rewriter

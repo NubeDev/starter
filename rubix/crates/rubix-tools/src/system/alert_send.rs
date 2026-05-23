@@ -1,0 +1,6 @@
+//! system.alert_send — tool dispatch (placeholder).
+//!
+//! Implements `starter_spi::Tool` for the `rubix.system.alert_send` verb.
+//! Dispatch logic only — request/response DTOs and the
+//! `ToolDescriptor` live in [`rubix-spi::dto::system::alert_send`].
+//! See [docs/design/tools/](../../../../docs/design/tools/README.md).

@@ -1,0 +1,16 @@
+# Bundled rubix flow — see SCOPE Phase plan for which phase wires this.
+id: com.rubix.flow-programmer
+description: |
+  flow-programmer flow rooted at an ai-agent node. Auto-surfaces as an MCP
+  tool via FlowAsTool (no per-flow MCP wiring per SCOPE R7).
+trigger: explicit
+
+nodes:
+  - id: agent
+    kind: ai-agent
+    config:
+      session_policy: continue
+      skill_hint: com.rubix.flow-programmer
+      cost_cap: 0.50_usd
+
+links: []

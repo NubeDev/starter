@@ -22,12 +22,19 @@
 //! [`MessageBundle::render_or_key`] for the documented default
 //! ("log a debug event and return the key itself").
 
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 use icu_locale_core::LanguageIdentifier;
-use starter_spi::i18n::{LanguageTag, MessageKey};
+#[cfg(feature = "preferences")]
+use starter_spi::i18n::Diagnostic;
+use starter_spi::i18n::{DiagnosticParam, LanguageTag, MessageKey};
+#[cfg(feature = "preferences")]
+use starter_spi::preferences::ResolvedPreferences;
 
 use crate::catalog::Catalog;
+#[cfg(feature = "preferences")]
+use crate::interpolate::interpolate_typed_with_prefs;
+use crate::interpolate::interpolate_typed;
 
 /// In-memory snapshot of every language catalog the binary knows
 /// about.
@@ -167,6 +174,76 @@ impl MessageBundle {
                 key.as_str().to_string()
             }
         }
+    }
+
+    /// Lookup + interpolate the named `{placeholder}` substitutions
+    /// in the template with the supplied typed `params`. The R5
+    /// fallback chain applies; a missing key renders the key itself
+    /// (same posture as [`render_or_key`]).
+    ///
+    /// This is the param-aware counterpart to [`render_or_key`].
+    /// Use it from transports that resolve outside the HTTP
+    /// [`crate::diagnostics_layer`] — typically the MCP server-side
+    /// render path, the CLI, and any tool returning a
+    /// pre-formatted summary string. The interpolation supports
+    /// named substitution only (no plural / select); richer
+    /// rendering belongs in the client.
+    ///
+    /// Unknown placeholders are left literal so a template
+    /// referencing a missing param surfaces as text rather than
+    /// silently dropping.
+    #[must_use]
+    pub fn render(
+        &self,
+        lang: &LanguageTag,
+        key: &MessageKey,
+        params: &BTreeMap<String, DiagnosticParam>,
+    ) -> String {
+        let template = match self.lookup(lang, key) {
+            Some(v) => v,
+            None => {
+                tracing::debug!(
+                    target: "i18n.missing_key",
+                    lang = %lang,
+                    key = %key,
+                    "missing translation; rendering key as fallback",
+                );
+                return key.as_str().to_string();
+            }
+        };
+        interpolate_typed(template, params)
+    }
+
+    /// Render a [`Diagnostic`] for the supplied caller, converting
+    /// any `Quantity`-typed params into the caller's preferred unit
+    /// system before substituting. This is the one-call helper for
+    /// transports that resolve server-side — MCP (the documented R5
+    /// exception), the CLI, and any other consumer holding a
+    /// [`ResolvedPreferences`].
+    ///
+    /// Gated on the `preferences` feature so the i18n core stays
+    /// usable for consumers that don't ship the preferences crate.
+    #[cfg(feature = "preferences")]
+    #[must_use]
+    pub fn render_diagnostic(
+        &self,
+        lang: &LanguageTag,
+        diag: &Diagnostic,
+        prefs: &ResolvedPreferences,
+    ) -> String {
+        let template = match self.lookup(lang, &diag.code) {
+            Some(v) => v,
+            None => {
+                tracing::debug!(
+                    target: "i18n.missing_key",
+                    lang = %lang,
+                    key = %diag.code,
+                    "missing translation; rendering key as fallback",
+                );
+                return diag.code.as_str().to_string();
+            }
+        };
+        interpolate_typed_with_prefs(template, &diag.params, prefs)
     }
 }
 

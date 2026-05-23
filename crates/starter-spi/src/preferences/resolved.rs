@@ -16,6 +16,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::{DateFormat, NumberFormat, Theme, TimeFormat, UnitSystem, WeekStart};
+#[cfg(feature = "i18n")]
+use crate::i18n::LanguageTag;
 use crate::units::Unit;
 
 /// Fully-resolved per-principal preferences. All fields are concrete —
@@ -67,4 +69,23 @@ pub struct ResolvedPreferences {
 
     /// UI theme (`Light`, `Dark`, or `System`). User-only field.
     pub theme: Theme,
+}
+
+/// Bridge from a [`ResolvedPreferences`] to the i18n [`LanguageTag`]
+/// type so a caller can hand it straight to
+/// `starter_i18n::MessageBundle::render` without re-typing the
+/// language string. Gated on the `i18n` feature.
+#[cfg(feature = "i18n")]
+impl ResolvedPreferences {
+    /// Parse the resolved `language` field into a [`LanguageTag`].
+    ///
+    /// Falls back to `"en"` if the stored string fails to parse.
+    /// The resolver guarantees BCP-47 input, so the parse step does
+    /// not fail in practice — but the API stays infallible by
+    /// construction so the bridge is a one-liner at call sites.
+    #[must_use]
+    pub fn language_tag(&self) -> LanguageTag {
+        LanguageTag::parse(self.language.clone())
+            .unwrap_or_else(|_| LanguageTag::parse("en").expect("'en' parses"))
+    }
 }

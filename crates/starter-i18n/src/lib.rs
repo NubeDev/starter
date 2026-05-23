@@ -27,6 +27,12 @@ pub mod catalog;
 /// `Arc`. Empty in stage 12; filled in by the next stage.
 pub mod bundle;
 
+/// Shared named-placeholder interpolator used by
+/// [`bundle::MessageBundle::render`] (typed-param path) and the
+/// [`diagnostics`] HTTP layer (JSON-Value path) so substitution
+/// semantics stay consistent across transports.
+pub mod interpolate;
+
 /// The `Translate` trait: the small read-only surface a handler
 /// reaches for. Empty in stage 12; filled in by the next stage.
 pub mod translate;

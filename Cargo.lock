@@ -3894,6 +3894,25 @@ dependencies = [
 ]
 
 [[package]]
+name = "include_dir"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "923d117408f1e49d914f1a379a309cffe4f18c05cf4e3d12e613a15fc81bd0dd"
+dependencies = [
+ "include_dir_macros",
+]
+
+[[package]]
+name = "include_dir_macros"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7cab85a7ed0bd5f0e76d93846e0147172bed2e2d3f859bcc33a8d9699cad1a75"
+dependencies = [
+ "proc-macro2",
+ "quote",
+]
+
+[[package]]
 name = "indexmap"
 version = "1.9.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -6316,66 +6335,76 @@ dependencies = [
 [[package]]
 name = "rubix-agent"
 version = "0.1.0"
-
-[[package]]
-name = "rubix-agent-client-rs"
-version = "0.1.0"
 dependencies = [
+ "anyhow",
+ "axum 0.8.9",
+ "rubix-client",
+ "rubix-flows",
+ "rubix-skills",
  "rubix-spi",
+ "rubix-tools",
+ "starter-config",
+ "starter-observability",
+ "starter-server",
+ "starter-spi",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
-name = "rubix-agent-sdk"
+name = "rubix-client"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "reqwest 0.12.28",
  "rubix-spi",
-]
-
-[[package]]
-name = "rubix-data-clickhouse"
-version = "0.1.0"
-dependencies = [
- "clickhouse",
  "serde",
- "starter-store-clickhouse",
- "tokio",
+ "serde_json",
+ "starter-client-rs",
+ "starter-spi",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
-name = "rubix-data-postgres"
+name = "rubix-flows"
 version = "0.1.0"
 dependencies = [
- "sqlx",
- "starter-store-postgres",
- "tokio",
+ "anyhow",
+ "include_dir",
 ]
 
 [[package]]
-name = "rubix-engine"
+name = "rubix-skills"
 version = "0.1.0"
 dependencies = [
- "rubix-spi",
-]
-
-[[package]]
-name = "rubix-graph"
-version = "0.1.0"
-dependencies = [
- "rubix-spi",
-]
-
-[[package]]
-name = "rubix-kinds-registry"
-version = "0.1.0"
-dependencies = [
- "rubix-spi",
+ "anyhow",
+ "include_dir",
 ]
 
 [[package]]
 name = "rubix-spi"
 version = "0.1.0"
 dependencies = [
+ "serde",
+ "serde_json",
  "starter-spi",
+ "thiserror 1.0.69",
+ "utoipa",
+]
+
+[[package]]
+name = "rubix-tools"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "rubix-spi",
+ "serde",
+ "serde_json",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

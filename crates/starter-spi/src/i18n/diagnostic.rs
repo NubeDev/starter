@@ -8,6 +8,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use super::MessageKey;
+#[cfg(feature = "units")]
+use crate::units::Quantity;
 
 /// A typed value interpolated into a translated message.
 ///
@@ -33,6 +35,28 @@ pub enum DiagnosticParam {
     /// are always epoch milliseconds in UTC; the client renders into
     /// the resolved timezone.
     Timestamp(i64),
+    /// A physical measurement carried as **canonical SI value plus
+    /// dimension**. The renderer consults the caller's
+    /// `ResolvedPreferences` to pick the target unit (e.g.
+    /// temperature in °C vs °F) and to format. Per R1 of
+    /// `DOCS/user/scope/SCOPE.md`: store canonical, convert at the
+    /// edge.
+    ///
+    /// Wire form: `{"quantity": {"canonical": 25.0, "quantity": "temperature"}}`.
+    ///
+    /// Gated on the `units` feature so this enum still compiles for
+    /// downstream consumers that don't need the unit registry.
+    #[cfg(feature = "units")]
+    Quantity {
+        /// The canonical (SI) magnitude. For temperature this is °C;
+        /// for pressure kPa; for speed m/s; etc — see [`Quantity`]
+        /// docs.
+        canonical: f64,
+        /// The quantity dimension. The renderer pairs this with the
+        /// caller's resolved unit preference (e.g.
+        /// `ResolvedPreferences::temperature_unit`) before formatting.
+        quantity: Quantity,
+    },
 }
 
 /// A translatable diagnostic — the code plus the typed parameters the

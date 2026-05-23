@@ -1,0 +1,19 @@
+[package]
+name = "rubix-tools"
+description = "Rubix-specific tool implementations (impl starter_spi::Tool) grouped by the six goals: dashboard, user, flow_ops, clickhouse, system, analytics. Per SCOPE R5: dispatch logic only — DTOs and descriptors live in rubix-spi."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rubix-spi = { workspace = true }
+starter-spi = { workspace = true }
+async-trait = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+thiserror = { workspace = true }
+anyhow = { workspace = true }

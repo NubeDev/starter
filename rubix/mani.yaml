@@ -1,0 +1,41 @@
+# rubix task orchestration.
+#
+# Per SCOPE: `mani run build --all`, `mani run test --all`, and
+# `mani run status --all` are the canonical daily commands. Add new
+# workflows here first, then document.
+
+projects:
+  rubix:
+    path: .
+    desc: |
+      rubix backend product (six crates + extension example).
+      See SCOPE.md for the load-bearing R-rules.
+
+tasks:
+  build:
+    desc: Build every rubix workspace member.
+    cmd: cargo build -p rubix-spi -p rubix-tools -p rubix-skills -p rubix-flows -p rubix-client -p rubix-agent
+
+  test:
+    desc: Run every rubix test suite (unit + integration).
+    cmd: cargo test -p rubix-spi -p rubix-tools -p rubix-skills -p rubix-flows -p rubix-client -p rubix-agent
+
+  fmt:
+    desc: Format rubix Rust code.
+    cmd: cargo fmt --package rubix-spi --package rubix-tools --package rubix-skills --package rubix-flows --package rubix-client --package rubix-agent
+
+  clippy:
+    desc: Lint every rubix crate.
+    cmd: cargo clippy -p rubix-spi -p rubix-tools -p rubix-skills -p rubix-flows -p rubix-client -p rubix-agent -- -D warnings
+
+  status:
+    desc: Show git status for the rubix tree.
+    cmd: git status --short rubix/
+
+  run:
+    desc: Boot the Phase 0 rubix-agent locally.
+    cmd: cargo run -p rubix-agent
+
+  healthz:
+    desc: Hit the Phase 0 health endpoint.
+    cmd: curl -sf http://127.0.0.1:8080/healthz

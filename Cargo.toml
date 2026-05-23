@@ -71,18 +71,15 @@ members = [
     "examples/iot-anomaly-detector",
     "examples/authz-demo",
 
-    # rubix tree — Phase 0 skeleton crates (see rubix/SCOPE.md).
-    # Path-deps only; rubix-spi → starter-spi, all other rubix
-    # crates → rubix-spi (R4/R5).
-    "rubix/agent-client-rs",
-    "rubix/agent-sdk",
-    "rubix/agent/crates/apps/agent",
-    "rubix/agent/crates/data-clickhouse",
-    "rubix/agent/crates/data-postgres",
-    "rubix/agent/crates/engine",
-    "rubix/agent/crates/graph",
-    "rubix/agent/crates/kinds-registry",
-    "rubix/contracts/spi",
+    # rubix tree — see rubix/SCOPE.md.
+    # Six crates: rubix-spi → starter-spi; rubix-tools, rubix-skills,
+    # rubix-flows, rubix-client all → rubix-spi; rubix-agent binds them.
+    "rubix/crates/rubix-spi",
+    "rubix/crates/rubix-tools",
+    "rubix/crates/rubix-skills",
+    "rubix/crates/rubix-flows",
+    "rubix/crates/rubix-client",
+    "rubix/crates/rubix-agent",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
 # `examples/notes` pulls a handful of its crates in via path dependencies
@@ -159,11 +156,13 @@ starter-blob-s3          = { path = "crates/starter-blob-s3",          version =
 starter-blob-garage      = { path = "crates/starter-blob-garage",      version = "0.1.0" }
 starter-blob-compose     = { path = "crates/starter-blob-compose",     version = "0.1.0" }
 
-# rubix tree — see rubix/SCOPE.md. Phase 0 only wires the spi
-# alias; downstream rubix crates take it via `workspace = true`.
-rubix-spi                = { path = "rubix/contracts/spi",                  version = "0.1.0" }
-rubix-data-postgres      = { path = "rubix/agent/crates/data-postgres",     version = "0.1.0" }
-rubix-data-clickhouse    = { path = "rubix/agent/crates/data-clickhouse",   version = "0.1.0" }
+# rubix tree — see rubix/SCOPE.md. Six crates registered as workspace
+# aliases so downstream rubix crates take them via `workspace = true`.
+rubix-spi                = { path = "rubix/crates/rubix-spi",               version = "0.1.0" }
+rubix-tools              = { path = "rubix/crates/rubix-tools",             version = "0.1.0" }
+rubix-skills             = { path = "rubix/crates/rubix-skills",            version = "0.1.0" }
+rubix-flows              = { path = "rubix/crates/rubix-flows",             version = "0.1.0" }
+rubix-client             = { path = "rubix/crates/rubix-client",            version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.

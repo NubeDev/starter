@@ -1,0 +1,18 @@
+[package]
+name = "rubix-client"
+description = "HTTP client for the rubix backend. Thin extension of starter-client-rs, adds rubix endpoints (the six goals' REST surface). Zero agent dep. Per SCOPE Open Question Q6: this crate may collapse into a starter-client-rs re-export module once that becomes possible — for now it exists so consumers have a stable surface."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+rubix-spi = { workspace = true }
+starter-spi = { workspace = true }
+starter-client-rs = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+async-trait = { workspace = true }

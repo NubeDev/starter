@@ -1,0 +1,21 @@
+# Example extension-contributed flow. Auto-surfaces as an MCP tool
+# alongside the six rubix-bundled flows once starter-ext-flow loads
+# this block.
+
+id: com.rubix.example.assistant
+description: |
+  Reference assistant that demonstrates extension contribution to
+  rubix's shared FlowRegistry.
+trigger: explicit
+
+nodes:
+  - id: agent
+    kind: ai-agent
+    config:
+      session_policy: continue
+      skill_hint: com.rubix.example.echo-skill
+      cost_cap: 0.10_usd
+      allowed_tools:
+        - com.rubix.example.echo
+
+links: []

@@ -1,0 +1,33 @@
+[package]
+name = "rubix-agent"
+description = "The rubix backend binary. Composes every starter-* capability with the rubix tools, skills, and flows for the six goals. Per SCOPE R5: main.rs only wires; domain logic lives in rubix-tools or starter."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "rubix-agent"
+path = "src/main.rs"
+
+[dependencies]
+rubix-spi    = { workspace = true }
+rubix-tools  = { workspace = true }
+rubix-skills = { workspace = true }
+rubix-flows  = { workspace = true }
+rubix-client = { workspace = true }
+
+# Starter platform pieces wired in by the binary. Many are Phase 0
+# placeholders — Phase 1+ activates the additional surfaces.
+starter-spi           = { workspace = true }
+starter-config        = { workspace = true }
+starter-observability = { workspace = true }
+starter-server        = { workspace = true }
+
+axum    = { workspace = true }
+
+# Async + utility
+tokio   = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
+tracing = { workspace = true }
+anyhow  = { workspace = true }

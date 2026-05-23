@@ -1,0 +1,15 @@
+[package]
+name = "rubix-spi"
+description = "Contracts hub for rubix: REST DTOs, proto messages, MCP tool descriptors. Re-exports starter-spi types. Per SCOPE R6: zero internal deps; no HTTP, no SQL, no runtime logic."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+starter-spi = { workspace = true }
+serde = { workspace = true, features = ["derive"] }
+serde_json = { workspace = true }
+utoipa = { workspace = true }
+thiserror = { workspace = true }

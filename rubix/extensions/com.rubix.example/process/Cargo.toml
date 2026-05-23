@@ -1,0 +1,23 @@
+# Reference extension binary — placeholder.
+#
+# This Cargo.toml is not wired into the rubix workspace because the
+# planned `rubix-extensions-sdk` crate does not yet exist. Once that
+# SDK lands, this manifest becomes a real binary crate that depends
+# on it.
+#
+# See docs/design/extensions/README.md for the full block authoring
+# guide; see docs/design/starter-changes/README.md for the upstream
+# work required before this becomes buildable.
+
+[package]
+name        = "rubix-example-extension"
+version     = "0.0.0"
+edition     = "2021"
+publish     = false
+
+[[bin]]
+name = "rubix-example-extension"
+path = "src/main.rs"
+
+[dependencies]
+# rubix-extensions-sdk = { ... }   # planned, see STARTER-CHANGES
