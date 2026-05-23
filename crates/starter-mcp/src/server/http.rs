@@ -163,6 +163,7 @@ mod tests {
                 role: Role::Admin,
                 scopes: vec![],
                 tenant_id: None,
+                teams: Vec::new(),
                 extra: Value::Null,
             })
         }

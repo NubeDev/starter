@@ -27,6 +27,7 @@ fn principal(subject: &str, role: Role) -> Principal {
         role,
         scopes: Vec::new(),
         tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

@@ -53,6 +53,7 @@ pub mod routes;
 #[cfg(any(feature = "sqlite", feature = "postgres"))]
 pub mod store;
 
+pub use condition::Expr;
 pub use config::{Assignment, AuthzConfig, Effect, Rule};
 pub use engine::StaticRbacEngine;
 pub use error::Error;

@@ -146,6 +146,20 @@ fn build_context(p: &Principal, object: &ResourceRef) -> Context {
         if let Some(t) = &p.tenant_id {
             map.insert("tenant".into(), Value::String(t.clone()));
         }
+        // Phase 7b (R13) — expose principal-level fields under a
+        // dedicated `principal.*` namespace so rules can say
+        // `principal.teams contains "hvac-ops"`. The `teams`
+        // array is always present (empty for pre-Phase-7b
+        // principals) — see SCOPE-EXT.md "strictly additive".
+        map.insert(
+            "principal".into(),
+            json!({
+                "subject": p.subject,
+                "role":    role_name(p.role),
+                "teams":   p.teams,
+                "tenant":  p.tenant_id,
+            }),
+        );
         map.insert(
             "object".into(),
             json!({
@@ -243,7 +257,28 @@ impl PolicyEngine for StaticRbacEngine {
                     Some(owner) => owner == &principal.subject,
                     None => false,
                 },
-                Some(CompiledCondition::Expr(e)) => e.eval(&ctx),
+                Some(CompiledCondition::Expr(e)) => match e.try_eval(&ctx) {
+                    Ok(v) => v,
+                    Err(err) => {
+                        // SCOPE-EXT.md R13 — `contains` LHS that
+                        // isn't an array is a loud-failure deny,
+                        // not a silent false. We short-circuit
+                        // the whole `check()` so the operator
+                        // sees the malformed rule on first hit.
+                        tracing::error!(
+                            subject = %principal.subject,
+                            action = %action,
+                            kind = %object.kind,
+                            rule = %rule.id,
+                            error = %err,
+                            "authz rule evaluation error"
+                        );
+                        return Decision::deny_by(
+                            "condition_invalid",
+                            rule.id.clone(),
+                        );
+                    }
+                },
             };
             if !cond_ok {
                 continue;

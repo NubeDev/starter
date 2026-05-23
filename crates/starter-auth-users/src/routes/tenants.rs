@@ -25,12 +25,13 @@ use std::sync::Arc;
 use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
-use axum::routing::{delete, get, patch, post};
+use axum::routing::{get, patch, post};
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 
 use crate::store::{
-    is_reserved_slug, MembershipRecord, TenantRecord, TenantStore, TenantStoreError,
+    is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore,
+    TenantStoreError,
 };
 
 /// Wire shape for creating a tenant.
@@ -135,6 +136,23 @@ where
         .route(
             "/v1/tenants/{id}/members/{user_id}",
             patch(patch_member_h).delete(remove_member_h),
+        )
+        // Phase 7b — teams CRUD (R13).
+        .route(
+            "/v1/tenants/{id}/teams",
+            post(create_team_h).get(list_teams_h),
+        )
+        .route(
+            "/v1/tenants/{id}/teams/{team_id}",
+            axum::routing::delete(delete_team_h),
+        )
+        .route(
+            "/v1/tenants/{id}/teams/{team_id}/members",
+            post(add_team_member_h),
+        )
+        .route(
+            "/v1/tenants/{id}/teams/{team_id}/members/{user_id}",
+            axum::routing::delete(remove_team_member_h),
         )
         .with_state(tenants)
 }
@@ -250,6 +268,118 @@ async fn remove_member_h(
     // SCOPE-EXT.md R12 — cascades to token revoke inside the
     // store's own transaction.
     match tenants.remove_member(&id, &user_id).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+// ------------------------------------------------------------- teams (7b)
+
+/// Wire shape for `POST /v1/tenants/{id}/teams`.
+#[derive(Debug, Deserialize)]
+pub struct CreateTeamBody {
+    /// Rule-stable slug. Immutable after create (DB-level trigger).
+    pub slug: String,
+    /// Human-readable display name.
+    pub display_name: String,
+}
+
+/// Wire shape for `POST /v1/tenants/{id}/teams/{team_id}/members`.
+#[derive(Debug, Deserialize)]
+pub struct AddTeamMemberBody {
+    /// User id to add.
+    pub user_id: String,
+}
+
+/// JSON view of a team.
+#[derive(Debug, Serialize)]
+pub struct TeamView {
+    /// Stable id.
+    pub id: String,
+    /// Tenant id.
+    pub tenant_id: String,
+    /// Rule-stable slug.
+    pub slug: String,
+    /// Display name.
+    pub display_name: String,
+}
+
+impl From<TeamRecord> for TeamView {
+    fn from(r: TeamRecord) -> Self {
+        Self {
+            id: r.id,
+            tenant_id: r.tenant_id,
+            slug: r.slug,
+            display_name: r.display_name,
+        }
+    }
+}
+
+async fn create_team_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path(tenant_id): Path<String>,
+    Json(body): Json<CreateTeamBody>,
+) -> Response {
+    // Slug validation: same url-safe shape as tenant slugs would
+    // be too restrictive (teams aren't routed), but we do refuse
+    // empty / whitespace-only slugs at the boundary so they never
+    // reach the DB.
+    if body.slug.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({"error": "invalid_slug"})),
+        )
+            .into_response();
+    }
+    let row = TeamRecord {
+        id: uuid::Uuid::new_v4().to_string(),
+        tenant_id,
+        slug: body.slug,
+        display_name: body.display_name,
+    };
+    match tenants.create_team(&row).await {
+        Ok(()) => (StatusCode::CREATED, Json(TeamView::from(row))).into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn list_teams_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path(tenant_id): Path<String>,
+) -> Response {
+    match tenants.list_teams(&tenant_id).await {
+        Ok(rows) => Json(rows.into_iter().map(TeamView::from).collect::<Vec<_>>())
+            .into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn delete_team_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path((_tenant_id, team_id)): Path<(String, String)>,
+) -> Response {
+    match tenants.delete_team(&team_id).await {
+        Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn add_team_member_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path((_tenant_id, team_id)): Path<(String, String)>,
+    Json(body): Json<AddTeamMemberBody>,
+) -> Response {
+    match tenants.add_team_member(&team_id, &body.user_id).await {
+        Ok(()) => StatusCode::CREATED.into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn remove_team_member_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path((_tenant_id, team_id, user_id)): Path<(String, String, String)>,
+) -> Response {
+    match tenants.remove_team_member(&team_id, &user_id).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
         Err(e) => map_err(e),
     }

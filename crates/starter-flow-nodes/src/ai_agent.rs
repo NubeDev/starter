@@ -1068,6 +1068,7 @@ fn system_admin_principal() -> Principal {
         role: starter_spi::auth::Role::Admin,
         scopes: Vec::new(),
         tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

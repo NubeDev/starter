@@ -86,6 +86,7 @@ pub(super) async fn check_handler(
         role: req.principal.role,
         scopes: Vec::new(),
         tenant_id: None,
+        teams: Vec::new(),
         extra: req.principal.extra,
     };
     let resource = match (req.resource.id.as_deref(), req.resource.owner.as_deref()) {

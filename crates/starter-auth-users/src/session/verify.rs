@@ -5,7 +5,7 @@ use serde_json::Value;
 use starter_spi::auth::Principal;
 
 use crate::principal_extras::{NoPrincipalExtras, PrincipalExtrasLookup};
-use crate::store::{SessionStore, UserStore, UserStoreError};
+use crate::store::{SessionStore, TenantStore, UserStore, UserStoreError};
 
 use super::issue::SessionError;
 
@@ -83,6 +83,71 @@ where
         role: user.role,
         scopes: Vec::new(),
         tenant_id: session.tenant_id,
+        teams: Vec::new(),
         extra,
     })
+}
+
+/// Phase 7b — verify a session **and** populate `Principal.teams`
+/// from `starter_auth_users_team_members` joined to
+/// `starter_auth_users_teams.slug` for the session's
+/// `(user_id, tenant_id)`. A tenantless session yields an empty
+/// team list (rules referencing `principal.teams` simply do not
+/// match, per R13). Errors from the tenant store are surfaced as
+/// `SessionError::Store` — a sink-side hiccup is not allowed to
+/// silently shrink a principal's team set, because that would
+/// silently widen access (no team match → no team-grant allow,
+/// which is the opposite of the conservative default).
+pub async fn verify_session_with_teams<S, U, T>(
+    sessions: &S,
+    users: &U,
+    tenants: &T,
+    cookie_value: &str,
+) -> Result<Principal, SessionError>
+where
+    S: SessionStore + ?Sized,
+    U: UserStore + ?Sized,
+    T: TenantStore + ?Sized,
+{
+    verify_session_with_teams_and_extras(
+        sessions,
+        users,
+        tenants,
+        &NoPrincipalExtras,
+        cookie_value,
+    )
+    .await
+}
+
+/// Phase 7b — combined variant: extras + team lookup. Mirrors
+/// [`verify_session_with_extras`] so consumers wiring both don't
+/// need two separate paths.
+pub async fn verify_session_with_teams_and_extras<S, U, T, E>(
+    sessions: &S,
+    users: &U,
+    tenants: &T,
+    extras: &E,
+    cookie_value: &str,
+) -> Result<Principal, SessionError>
+where
+    S: SessionStore + ?Sized,
+    U: UserStore + ?Sized,
+    T: TenantStore + ?Sized,
+    E: PrincipalExtrasLookup + ?Sized,
+{
+    let mut principal =
+        verify_session_with_extras(sessions, users, extras, cookie_value).await?;
+    if let Some(tenant_id) = &principal.tenant_id {
+        // Super-admin sentinel "*" intentionally yields no team
+        // memberships — cross-tenant admins are role-driven, not
+        // team-driven.
+        if tenant_id != "*" {
+            let teams = tenants
+                .team_slugs_for_user(tenant_id, &principal.subject)
+                .await
+                .map_err(|e| SessionError::Store(e.to_string()))?;
+            principal.teams = teams;
+        }
+    }
+    Ok(principal)
 }

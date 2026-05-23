@@ -70,6 +70,39 @@ pub async fn revoke(
     upsert_rule(engine, admin_subject, user_id, resource, action, Effect::Deny).await
 }
 
+/// Phase 7b — insert one Allow rule that covers every member of a
+/// team via `principal.teams contains "<team_slug>"`. One row,
+/// not one per user (R13). Per-tenant: the rule's `tenant_id` is
+/// set so it only matches principals bound to that tenant.
+pub async fn grant_team(
+    engine: &Arc<DbPolicyEngine>,
+    admin_subject: &str,
+    tenant_id: &str,
+    team_slug: &str,
+    resource: &str,
+    action: &str,
+) -> Result<String> {
+    let id = uuid::Uuid::new_v4().to_string();
+    let row = StoredRule {
+        id: id.clone(),
+        role: "*".into(),
+        resource: resource.into(),
+        actions: vec![action.into()],
+        condition: Some(format!("principal.teams contains \"{team_slug}\"")),
+        effect: "allow".into(),
+        priority: 100,
+        created_by: admin_subject.to_string(),
+        tenant_id: Some(tenant_id.into()),
+    };
+    engine
+        .store()
+        .insert_rule(&row)
+        .await
+        .context("insert team rule")?;
+    engine.reload().await.context("reload engine cache")?;
+    Ok(id)
+}
+
 async fn upsert_rule(
     engine: &Arc<DbPolicyEngine>,
     admin_subject: &str,

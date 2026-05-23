@@ -37,6 +37,21 @@ pub struct Principal {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub tenant_id: Option<String>,
 
+    /// Teams the principal belongs to in the current tenant
+    /// (Phase 7b — R13). Slug list, not ids: rules reference
+    /// teams by stable slug (`principal.teams contains
+    /// "hvac-ops"`); UUIDs would force rule edits whenever a team
+    /// is recreated. Populated by the authenticator at session-
+    /// mint / token-verify time from
+    /// `starter_auth_users_team_members` joined to
+    /// `starter_auth_users_teams.slug`. Empty (`[]`) for any
+    /// principal that pre-dates Phase 7b or that the
+    /// authenticator did not look up team memberships for —
+    /// conditions referencing `principal.teams` simply do not
+    /// match, which keeps Phase 1–6 wiring unchanged.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub teams: Vec<String>,
+
     /// Consumer-defined extra claims. Keep this small — heavy
     /// per-request lookups belong elsewhere.
     #[serde(default)]

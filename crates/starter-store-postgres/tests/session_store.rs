@@ -26,6 +26,7 @@ fn fresh_principal() -> Principal {
         role: Role::Reader,
         scopes: vec![],
         tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

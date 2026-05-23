@@ -50,6 +50,7 @@ impl<S: ClaimStore + 'static> Authenticator for TokenAuthenticator<S> {
             role: Role::Admin,
             scopes: Vec::new(),
             tenant_id: None,
+            teams: Vec::new(),
             extra: serde_json::Value::Null,
         })
     }

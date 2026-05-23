@@ -51,6 +51,7 @@ fn principal_carries_role_and_scopes() {
         role: Role::Admin,
         scopes: vec![Scope::new("read:metrics")],
         tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     };
     assert_eq!(p.role, Role::Admin);

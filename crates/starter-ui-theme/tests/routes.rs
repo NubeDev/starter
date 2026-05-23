@@ -39,6 +39,7 @@ fn principal(role: Role) -> Principal {
         role,
         scopes: Vec::<Scope>::new(),
         tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }

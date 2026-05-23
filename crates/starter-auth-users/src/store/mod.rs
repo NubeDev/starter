@@ -10,8 +10,8 @@ mod user_store;
 
 pub use session_store::{SessionRecord, SessionStore, SessionStoreError};
 pub use tenant_store::{
-    is_reserved_slug, MembershipRecord, TenantRecord, TenantStore, TenantStoreError,
-    RESERVED_SLUGS,
+    is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore,
+    TenantStoreError, RESERVED_SLUGS,
 };
 pub use token_store::{TokenRecord, TokenStore, TokenStoreError};
 pub use user_store::{UserRecord, UserStore, UserStoreError};

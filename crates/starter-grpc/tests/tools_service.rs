@@ -45,6 +45,7 @@ impl Authenticator for FixedAuthenticator {
                 role: Role::Admin,
                 scopes: Vec::new(),
                 tenant_id: None,
+                teams: Vec::new(),
                 extra: Default::default(),
             })
         } else {

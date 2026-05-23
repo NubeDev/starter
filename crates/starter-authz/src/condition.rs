@@ -11,7 +11,8 @@
 //! atom      := '(' expr ')'
 //!            | path op value
 //!            | path 'in' list
-//!            | path                 ; truthy test
+//!            | path 'contains' value      ; Phase 7b — R13
+//!            | path                        ; truthy test
 //! op        := '==' | '!='
 //! value     := string | bool | path
 //! list      := '[' value (',' value)* ']'
@@ -19,6 +20,17 @@
 //! string    := '"' ... '"'
 //! bool      := 'true' | 'false'
 //! ```
+//!
+//! `contains` is the Phase 7b array-membership operator: the LHS
+//! must resolve to a JSON array (typically `principal.teams`) and
+//! the RHS is a literal or another path. Loud failure (parallel
+//! to R8's missing-attribute shape, not R3's silent deny): when
+//! the LHS resolves to a value that is not an array, the
+//! evaluator returns a `ContainsLhsNotArray` error so the engine
+//! can surface a typed deny reason rather than silently return
+//! `false`. A missing LHS is treated as an empty array (no team
+//! membership → no match), matching the additive-by-default
+//! Phase 7b contract.
 //!
 //! Paths are resolved against a [`Context`] carrying the principal
 //! attributes (typically the `Principal.extra` JSON blob, with
@@ -90,6 +102,17 @@ pub enum Expr {
         /// Candidate values; membership is by equality.
         values: Vec<Operand>,
     },
+    /// Phase 7b — `path contains value`. The LHS must resolve to
+    /// a JSON array; otherwise [`Expr::try_eval`] returns
+    /// [`EvalError::ContainsLhsNotArray`]. RHS may be a literal
+    /// or another path.
+    Contains {
+        /// Left-hand path; must resolve to a JSON array at eval
+        /// time.
+        path: Vec<String>,
+        /// Value the array must contain (literal or path).
+        rhs: Operand,
+    },
     /// `a and b`.
     And(Box<Expr>, Box<Expr>),
     /// `a or b`.
@@ -145,8 +168,24 @@ impl Expr {
 
     /// Evaluate against a context. Returns `false` on any missing
     /// attribute or type mismatch (deliberate: missing != true).
+    ///
+    /// `contains` type-errors are mapped to `false` here for
+    /// backward source-compatibility — call [`Expr::try_eval`]
+    /// when you want the typed error surfaced (the engine does).
     pub fn eval(&self, ctx: &Context) -> bool {
-        match self {
+        self.try_eval(ctx).unwrap_or(false)
+    }
+
+    /// Phase 7b — typed evaluator. Returns
+    /// [`EvalError::ContainsLhsNotArray`] when a `contains`
+    /// expression's LHS resolves to a value that is not a JSON
+    /// array (the spec's "loud failure" path, parallel to R8's
+    /// missing-attribute shape). All other failure modes (missing
+    /// path, type mismatch on `==` / `!=`, etc.) still surface as
+    /// `Ok(false)` so consumers get the existing "missing != true"
+    /// semantics.
+    pub fn try_eval(&self, ctx: &Context) -> std::result::Result<bool, EvalError> {
+        Ok(match self {
             Expr::Lit(b) => *b,
             Expr::Truthy(path) => match ctx.resolve(&path_refs(path)) {
                 Some(Value::Bool(b)) => *b,
@@ -161,9 +200,6 @@ impl Expr {
                 let rhs_v = resolve_operand(rhs, ctx);
                 let eq = match (lhs, rhs_v.as_ref()) {
                     (Some(a), Some(b)) => json_equal(a, b),
-                    // Missing values are never equal to anything,
-                    // including missing values. Per SCOPE.md the
-                    // condition treats missing as not-equal.
                     _ => false,
                 };
                 match op {
@@ -173,7 +209,7 @@ impl Expr {
             }
             Expr::In { path, values } => {
                 let Some(lhs) = ctx.resolve(&path_refs(path)) else {
-                    return false;
+                    return Ok(false);
                 };
                 values.iter().any(|v| {
                     resolve_operand(v, ctx)
@@ -182,10 +218,64 @@ impl Expr {
                         .unwrap_or(false)
                 })
             }
-            Expr::And(a, b) => a.eval(ctx) && b.eval(ctx),
-            Expr::Or(a, b) => a.eval(ctx) || b.eval(ctx),
-            Expr::Not(a) => !a.eval(ctx),
-        }
+            Expr::Contains { path, rhs } => {
+                let lhs = ctx.resolve(&path_refs(path));
+                let Some(rhs_v) = resolve_operand(rhs, ctx) else {
+                    return Ok(false);
+                };
+                match lhs {
+                    // Missing LHS is treated as empty array: no
+                    // match, no error. The additive-by-default
+                    // Phase 7b contract says a principal that has
+                    // never been wired with `.teams` simply
+                    // doesn't match team rules.
+                    None => false,
+                    Some(Value::Array(items)) => {
+                        items.iter().any(|item| json_equal(item, &rhs_v))
+                    }
+                    Some(other) => {
+                        return Err(EvalError::ContainsLhsNotArray {
+                            path: path.join("."),
+                            actual_type: type_name(other),
+                        });
+                    }
+                }
+            }
+            Expr::And(a, b) => a.try_eval(ctx)? && b.try_eval(ctx)?,
+            Expr::Or(a, b) => a.try_eval(ctx)? || b.try_eval(ctx)?,
+            Expr::Not(a) => !a.try_eval(ctx)?,
+        })
+    }
+}
+
+/// Typed evaluation errors raised by [`Expr::try_eval`]. The
+/// engine maps these to a deny with a stable reason code.
+#[derive(Debug, Clone, thiserror::Error, PartialEq, Eq)]
+#[non_exhaustive]
+pub enum EvalError {
+    /// `contains` LHS resolved to a value that is not a JSON
+    /// array. The rule is malformed for the data shape it was
+    /// asked to evaluate against — surfaced as a typed deny
+    /// rather than a silent `false`.
+    #[error(
+        "`contains` left-hand path `{path}` resolved to {actual_type}, expected an array"
+    )]
+    ContainsLhsNotArray {
+        /// The dotted path the rule referenced.
+        path: String,
+        /// JSON type name of what it actually resolved to.
+        actual_type: &'static str,
+    },
+}
+
+fn type_name(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "null",
+        Value::Bool(_) => "bool",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
     }
 }
 
@@ -229,6 +319,7 @@ enum Tok {
     Or,
     Not,
     In,
+    Contains,
     True,
     False,
 }
@@ -311,6 +402,7 @@ fn tokenize(src: &str) -> std::result::Result<Vec<Tok>, String> {
                     "or" => Tok::Or,
                     "not" => Tok::Not,
                     "in" => Tok::In,
+                    "contains" => Tok::Contains,
                     "true" => Tok::True,
                     "false" => Tok::False,
                     _ => Tok::Ident(ident.to_string()),
@@ -420,6 +512,11 @@ impl<'a> Parser<'a> {
                             op: CmpOp::Neq,
                             rhs,
                         })
+                    }
+                    Some(Tok::Contains) => {
+                        self.bump();
+                        let rhs = self.parse_operand()?;
+                        Ok(Expr::Contains { path, rhs })
                     }
                     Some(Tok::In) => {
                         self.bump();

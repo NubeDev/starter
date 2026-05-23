@@ -69,6 +69,7 @@ pub fn local_operator(subject: impl Into<String>) -> Principal {
         role: Role::Admin,
         scopes: Vec::new(),
         tenant_id: None,
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }
@@ -110,6 +111,7 @@ mod tests {
                 role: Role::Reader,
                 scopes: Vec::new(),
                 tenant_id: None,
+                teams: Vec::new(),
                 extra: serde_json::Value::Null,
             });
             next.run(req).await

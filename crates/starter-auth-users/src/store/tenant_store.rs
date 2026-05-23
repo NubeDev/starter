@@ -21,6 +21,19 @@ pub struct TenantRecord {
     pub audit_allow_sample: Option<i32>,
 }
 
+/// Team row (Phase 7b — R13).
+#[derive(Debug, Clone)]
+pub struct TeamRecord {
+    /// Stable id (UUID).
+    pub id: String,
+    /// Tenant the team belongs to.
+    pub tenant_id: String,
+    /// Rule-stable slug. Immutable after create.
+    pub slug: String,
+    /// Display name shown in UIs. Mutable.
+    pub display_name: String,
+}
+
 /// Membership row joining a user to a tenant with a role.
 #[derive(Debug, Clone)]
 pub struct MembershipRecord {
@@ -127,6 +140,50 @@ pub trait TenantStore: Send + Sync {
         &self,
         tenant_id: &str,
     ) -> Result<Vec<MembershipRecord>, TenantStoreError>;
+
+    // ---------------------------------------------------------- teams (7b)
+
+    /// Insert a new team. `SlugConflict` if `(tenant_id, slug)`
+    /// already exists.
+    async fn create_team(&self, row: &TeamRecord) -> Result<(), TenantStoreError>;
+
+    /// Delete a team and (via FK CASCADE) its memberships.
+    async fn delete_team(&self, team_id: &str) -> Result<(), TenantStoreError>;
+
+    /// Look up a team by id.
+    async fn get_team(&self, team_id: &str) -> Result<Option<TeamRecord>, TenantStoreError>;
+
+    /// List the teams in a tenant.
+    async fn list_teams(
+        &self,
+        tenant_id: &str,
+    ) -> Result<Vec<TeamRecord>, TenantStoreError>;
+
+    /// Add a user to a team.
+    async fn add_team_member(
+        &self,
+        team_id: &str,
+        user_id: &str,
+    ) -> Result<(), TenantStoreError>;
+
+    /// Remove a user from a team.
+    async fn remove_team_member(
+        &self,
+        team_id: &str,
+        user_id: &str,
+    ) -> Result<(), TenantStoreError>;
+
+    /// Return the team slugs a user belongs to within `tenant_id`.
+    /// Used by the authenticator at session-mint / token-verify
+    /// time to populate `Principal.teams` (R13). The list is a
+    /// `Vec<String>` of **slugs**, not ids — rules reference teams
+    /// by slug so that recreating a team with the same slug keeps
+    /// the rule working.
+    async fn team_slugs_for_user(
+        &self,
+        tenant_id: &str,
+        user_id: &str,
+    ) -> Result<Vec<String>, TenantStoreError>;
 }
 
 #[cfg(feature = "sqlite")]
@@ -136,7 +193,8 @@ mod sqlite {
     use starter_store_sqlite::Pool;
 
     use super::{
-        is_reserved_slug, MembershipRecord, TenantRecord, TenantStore, TenantStoreError,
+        is_reserved_slug, MembershipRecord, TeamRecord, TenantRecord, TenantStore,
+        TenantStoreError,
     };
 
     /// sqlite-backed [`TenantStore`].
@@ -396,6 +454,150 @@ mod sqlite {
             .await
             .map_err(err)?;
             Ok(rows.into_iter().map(map_membership).collect())
+        }
+
+        async fn create_team(&self, row: &TeamRecord) -> Result<(), TenantStoreError> {
+            let res = sqlx::query(
+                "INSERT INTO starter_auth_users_teams \
+                 (id, tenant_id, slug, display_name) VALUES (?1, ?2, ?3, ?4)",
+            )
+            .bind(&row.id)
+            .bind(&row.tenant_id)
+            .bind(&row.slug)
+            .bind(&row.display_name)
+            .execute(self.pool.sqlx())
+            .await;
+            match res {
+                Ok(_) => Ok(()),
+                Err(sqlx::Error::Database(e)) if e.is_unique_violation() => {
+                    Err(TenantStoreError::SlugConflict(format!(
+                        "{}:{}",
+                        row.tenant_id, row.slug
+                    )))
+                }
+                Err(e) => Err(err(e)),
+            }
+        }
+
+        async fn delete_team(&self, team_id: &str) -> Result<(), TenantStoreError> {
+            let res = sqlx::query("DELETE FROM starter_auth_users_teams WHERE id = ?1")
+                .bind(team_id)
+                .execute(self.pool.sqlx())
+                .await
+                .map_err(err)?;
+            if res.rows_affected() == 0 {
+                return Err(TenantStoreError::NotFound(team_id.into()));
+            }
+            Ok(())
+        }
+
+        async fn get_team(
+            &self,
+            team_id: &str,
+        ) -> Result<Option<TeamRecord>, TenantStoreError> {
+            let row = sqlx::query(
+                "SELECT id, tenant_id, slug, display_name \
+                 FROM starter_auth_users_teams WHERE id = ?1 LIMIT 1",
+            )
+            .bind(team_id)
+            .fetch_optional(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            Ok(row.map(|r| TeamRecord {
+                id: r.get(0),
+                tenant_id: r.get(1),
+                slug: r.get(2),
+                display_name: r.get(3),
+            }))
+        }
+
+        async fn list_teams(
+            &self,
+            tenant_id: &str,
+        ) -> Result<Vec<TeamRecord>, TenantStoreError> {
+            let rows = sqlx::query(
+                "SELECT id, tenant_id, slug, display_name \
+                 FROM starter_auth_users_teams WHERE tenant_id = ?1 \
+                 ORDER BY created_at ASC, slug ASC",
+            )
+            .bind(tenant_id)
+            .fetch_all(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            Ok(rows
+                .into_iter()
+                .map(|r| TeamRecord {
+                    id: r.get(0),
+                    tenant_id: r.get(1),
+                    slug: r.get(2),
+                    display_name: r.get(3),
+                })
+                .collect())
+        }
+
+        async fn add_team_member(
+            &self,
+            team_id: &str,
+            user_id: &str,
+        ) -> Result<(), TenantStoreError> {
+            let res = sqlx::query(
+                "INSERT INTO starter_auth_users_team_members \
+                 (team_id, user_id) VALUES (?1, ?2)",
+            )
+            .bind(team_id)
+            .bind(user_id)
+            .execute(self.pool.sqlx())
+            .await;
+            match res {
+                Ok(_) => Ok(()),
+                Err(sqlx::Error::Database(e)) if e.is_unique_violation() => {
+                    // Idempotent: already a member is fine.
+                    Ok(())
+                }
+                Err(e) => Err(err(e)),
+            }
+        }
+
+        async fn remove_team_member(
+            &self,
+            team_id: &str,
+            user_id: &str,
+        ) -> Result<(), TenantStoreError> {
+            let res = sqlx::query(
+                "DELETE FROM starter_auth_users_team_members \
+                 WHERE team_id = ?1 AND user_id = ?2",
+            )
+            .bind(team_id)
+            .bind(user_id)
+            .execute(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            if res.rows_affected() == 0 {
+                return Err(TenantStoreError::NotFound(format!("{team_id}:{user_id}")));
+            }
+            Ok(())
+        }
+
+        async fn team_slugs_for_user(
+            &self,
+            tenant_id: &str,
+            user_id: &str,
+        ) -> Result<Vec<String>, TenantStoreError> {
+            // Join team_members → teams; filter by tenant so a
+            // membership row that leaks past the FK does not surface
+            // a team slug from another tenant (R13 — tenant-scoped).
+            let rows = sqlx::query(
+                "SELECT t.slug FROM starter_auth_users_teams t \
+                 INNER JOIN starter_auth_users_team_members m ON m.team_id = t.id \
+                 WHERE t.tenant_id = ?1 AND m.user_id = ?2 \
+                 ORDER BY t.slug ASC",
+            )
+            .bind(tenant_id)
+            .bind(user_id)
+            .fetch_all(self.pool.sqlx())
+            .await
+            .map_err(err)?;
+            Ok(rows.into_iter().map(|r| r.get::<String, _>(0)).collect())
         }
     }
 }

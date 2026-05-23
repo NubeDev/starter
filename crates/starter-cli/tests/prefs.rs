@@ -50,6 +50,7 @@ async fn inject_principal(mut req: Request<Body>, next: Next) -> Response {
         role: Role::Admin,
         scopes: Vec::<Scope>::new(),
         tenant_id: None,
+        teams: Vec::new(),
         extra: json!({ "active_workspace": "ws1" }),
     });
     next.run(req).await

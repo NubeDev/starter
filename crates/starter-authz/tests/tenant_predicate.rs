@@ -38,6 +38,7 @@ fn principal(subject: &str, role: Role, tenant_id: Option<&str>) -> Principal {
         role,
         scopes: vec![],
         tenant_id: tenant_id.map(str::to_owned),
+        teams: Vec::new(),
         extra: serde_json::Value::Null,
     }
 }
