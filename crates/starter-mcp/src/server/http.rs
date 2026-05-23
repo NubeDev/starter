@@ -28,7 +28,10 @@ use std::sync::Arc;
 
 use axum::body::Body;
 use axum::extract::State;
-use axum::http::{header::AUTHORIZATION, HeaderMap, Request, StatusCode};
+use axum::http::{
+    header::{ACCEPT_LANGUAGE, AUTHORIZATION},
+    HeaderMap, Request, StatusCode,
+};
 use axum::middleware::{from_fn_with_state, Next};
 use axum::response::{IntoResponse, Response};
 use axum::routing::post;
@@ -83,8 +86,26 @@ where
     router
 }
 
-async fn handle(State(registry): State<Arc<ToolRegistry>>, body: String) -> Response {
-    match dispatch(&registry, &body).await {
+async fn handle(
+    State(registry): State<Arc<ToolRegistry>>,
+    headers: HeaderMap,
+    body: String,
+) -> Response {
+    // Extract `Accept-Language` and bind it as a task-local before
+    // entering dispatch, so tools invoked via `tools/call` can read the
+    // caller's preferred locale through `current_locale()`. See
+    // `docs/design/i18n-prefs/README.md` for the negotiation contract
+    // and `docs/design/starter-changes/README.md` (Phase 2b U1).
+    let locale = headers
+        .get(ACCEPT_LANGUAGE)
+        .and_then(|h| h.to_str().ok())
+        .and_then(crate::locale_local::locale_from_accept_language);
+
+    let response = match locale {
+        Some(tag) => crate::with_locale(tag, dispatch(&registry, &body)).await,
+        None => dispatch(&registry, &body).await,
+    };
+    match response {
         Some(resp) => (StatusCode::OK, Json(resp)).into_response(),
         None => StatusCode::NO_CONTENT.into_response(),
     }

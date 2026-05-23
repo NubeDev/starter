@@ -9,6 +9,7 @@ rust-version.workspace = true
 
 [dependencies]
 starter-spi           = { workspace = true }
+starter-i18n          = { workspace = true }
 starter-jsonrpc-stdio = { workspace = true }
 async-trait = { workspace = true }
 serde       = { workspace = true }
@@ -33,4 +34,10 @@ tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }
 axum           = { workspace = true }
 http           = { workspace = true }
 starter-server = { workspace = true, features = ["testing"] }
+# `starter-server` (dev-dep above) enables `starter-spi/preferences`,
+# which turns on `DiagnosticParam::Quantity`. Force `starter-i18n`'s
+# matching `preferences` feature in the same dev graph so its
+# interpolator handles that variant — otherwise cargo's feature
+# unification leaves a non-exhaustive match in `interpolate.rs`.
+starter-i18n   = { workspace = true, features = ["preferences"] }
 reqwest        = { workspace = true, features = ["json"] }
