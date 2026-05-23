@@ -5,6 +5,7 @@ import { NAV_GROUPS } from '@/lib/nav'
 import { useLayout } from '@/context/layout-provider'
 import { cn } from '@/lib/utils'
 import { ActionDock } from '@/components/action-dock'
+import { SidebarTrigger } from '@/components/ui/sidebar'
 
 function Brand() {
   return (
@@ -63,8 +64,13 @@ export function TopHeader() {
         className="fixed inset-x-0 top-3 z-40"
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="glass flex items-center justify-between gap-6 rounded-full py-2 pl-3 pr-3">
-            <div className="flex items-center gap-6">
+          <div className="glass flex items-center justify-between gap-3 rounded-full py-2 pl-2 pr-2 sm:gap-6 sm:pl-3 sm:pr-3">
+            <div className="flex items-center gap-2 sm:gap-6">
+              <SidebarTrigger
+                data-testid="mobile-nav-trigger"
+                aria-label="Open navigation menu"
+                className="text-[color:var(--color-muted)] hover:bg-white/[0.04] hover:text-white md:hidden"
+              />
               <Brand />
               <HeaderNav />
             </div>

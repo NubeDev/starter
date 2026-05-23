@@ -1,6 +1,6 @@
 import { type SVGProps } from 'react'
 import { Root as Radio, Item } from '@radix-ui/react-radio-group'
-import { CircleCheck, RotateCcw, Settings } from 'lucide-react'
+import { CircleCheck, PanelLeft, PanelTop, RotateCcw, Settings } from 'lucide-react'
 import { IconDir } from '@/assets/custom/icon-dir'
 import { IconLayoutCompact } from '@/assets/custom/icon-layout-compact'
 import { IconLayoutDefault } from '@/assets/custom/icon-layout-default'
@@ -65,6 +65,7 @@ export function ConfigDrawer() {
           </SheetDescription>
         </SheetHeader>
         <div className='space-y-6 overflow-y-auto px-4'>
+          <ShellConfig />
           <ThemeConfig />
           <PaletteConfig />
           <FontConfig />
@@ -171,6 +172,55 @@ function RadioGroupItem({
         {item.label}
       </div>
     </Item>
+  )
+}
+
+function ShellConfig() {
+  const { defaultMode, mode, setMode } = useLayout()
+  return (
+    <div>
+      <SectionTitle
+        title='Shell'
+        showReset={mode !== defaultMode}
+        onReset={() => setMode(defaultMode)}
+        resetAriaLabel='Reset shell layout to default'
+      />
+      <Radio
+        value={mode}
+        onValueChange={(v) => setMode(v as typeof mode)}
+        className='grid w-full max-w-md grid-cols-2 gap-4'
+        aria-label='Select shell layout'
+      >
+        {[
+          { value: 'header',  label: 'Top header', Icon: PanelTop },
+          { value: 'sidebar', label: 'Sidebar',    Icon: PanelLeft },
+        ].map(({ value, label, Icon }) => (
+          <Item
+            key={value}
+            value={value}
+            className='group outline-none'
+            aria-label={`Select ${label.toLowerCase()} shell`}
+          >
+            <div
+              className={cn(
+                'relative flex h-16 items-center justify-center rounded-[6px] ring-[1px] ring-[color:var(--color-border)]',
+                'group-data-[state=checked]:shadow-2xl group-data-[state=checked]:ring-[color:var(--color-leaf)]',
+              )}
+            >
+              <CircleCheck
+                className={cn(
+                  'size-6 fill-[color:var(--color-leaf)] stroke-white',
+                  'group-data-[state=unchecked]:hidden',
+                  'absolute top-0 right-0 translate-x-1/2 -translate-y-1/2',
+                )}
+              />
+              <Icon className='h-7 w-7 text-[color:var(--color-muted)] group-data-[state=checked]:text-[color:var(--color-leaf)]' />
+            </div>
+            <div className='mt-1 text-xs'>{label}</div>
+          </Item>
+        ))}
+      </Radio>
+    </div>
   )
 }
 

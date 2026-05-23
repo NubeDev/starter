@@ -21,11 +21,19 @@ const MODE_ICON: Record<Mode, typeof Sun> = { light: Sun, dark: Moon, system: Mo
 
 function SearchPill() {
   return (
-    <button className="flex h-9 w-56 cursor-pointer items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-3.5 text-sm text-[color:var(--color-subtle)] transition-colors hover:border-white/10 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]">
-      <Search className="h-3.5 w-3.5" />
-      <span className="flex-1 truncate text-left">Search…</span>
-      <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
-    </button>
+    <>
+      <button
+        aria-label="Search"
+        className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-white/[0.04] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] md:hidden"
+      >
+        <Search className="h-4 w-4" />
+      </button>
+      <button className="hidden h-9 w-56 cursor-pointer items-center gap-2 rounded-full border border-white/[0.06] bg-white/[0.02] px-3.5 text-sm text-[color:var(--color-subtle)] transition-colors hover:border-white/10 hover:bg-white/[0.04] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] md:flex">
+        <Search className="h-3.5 w-3.5" />
+        <span className="flex-1 truncate text-left">Search…</span>
+        <kbd className="rounded border border-white/10 bg-white/[0.04] px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+      </button>
+    </>
   )
 }
 
@@ -137,11 +145,13 @@ function UserMenu() {
 export function ActionDock({ inline = false }: { inline?: boolean } = {}) {
   if (inline) {
     return (
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2">
         <SearchPill />
         <ModeSwitcher />
-        <PaletteMenu />
-        <ConfigDrawer />
+        <div className="hidden sm:contents">
+          <PaletteMenu />
+          <ConfigDrawer />
+        </div>
         <UserMenu />
       </div>
     )

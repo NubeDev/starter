@@ -6,6 +6,7 @@ import { ActionDock } from '@/components/action-dock'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { Header } from '@/components/layout/header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { LayoutProvider, useLayout } from '@/context/layout-provider'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
@@ -23,10 +24,15 @@ function ScrollProgress() {
 
 function HeaderShellInner() {
   const { location } = useRouterState()
+  const isMobile = useIsMobile()
   return (
     <div className="min-h-screen bg-[color:var(--color-bg)] text-white">
       <BootIntro />
       <ScrollProgress />
+      {/* Mobile-only: reuses the shadcn AppSidebar as the slide-in nav so header
+          and sidebar modes share one navigation surface. On desktop in header
+          mode we don't mount it — the inline HeaderNav handles top-level links. */}
+      {isMobile && <AppSidebar />}
       <div className="relative">
         <TopHeader />
         <AnimatePresence mode="wait">
@@ -49,11 +55,11 @@ function HeaderShellInner() {
 function SidebarShellInner() {
   const { location } = useRouterState()
   return (
-    <div className="bg-[color:var(--color-bg)] text-white">
+    <>
       <BootIntro />
       <ScrollProgress />
       <AppSidebar />
-      <SidebarInset className="@container/content min-h-svh bg-transparent">
+      <SidebarInset className="@container/content min-h-svh bg-transparent text-white">
         <Header>
           <div className="ml-auto">
             <ActionDock inline />
@@ -72,7 +78,7 @@ function SidebarShellInner() {
           </motion.main>
         </AnimatePresence>
       </SidebarInset>
-    </div>
+    </>
   )
 }
 
