@@ -34,5 +34,8 @@
   "rubix.goal.not_wired": "El objetivo {goal} aún no está conectado; consulte {design_doc} para los criterios de desbloqueo.",
   "rubix.analytics.query.ran": "La consulta analítica {name} se ejecutó ({rows} filas).",
   "rubix.analytics.query.unknown_template": "Consulta analítica rechazada — no existe la plantilla {name}.",
-  "rubix.analytics.query.bind_error": "La consulta analítica {name} falló al enlazar parámetros o al ejecutarse en ClickHouse."
+  "rubix.analytics.query.bind_error": "La consulta analítica {name} falló al enlazar parámetros o al ejecutarse en ClickHouse.",
+  "rubix.analytics.report.rendered": "Informe analítico {template} generado como {format} ({bytes} bytes, {queries} consultas).",
+  "rubix.analytics.report.empty": "Informe analítico {template} generado sin datos ({format}, {queries} consultas devolvieron cero filas).",
+  "rubix.analytics.report.format_unsupported": "Informe analítico rechazado — el formato {format} no es compatible con este binario."
 }

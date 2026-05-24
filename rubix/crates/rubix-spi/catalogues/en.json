@@ -34,5 +34,8 @@
   "rubix.goal.not_wired": "Goal {goal} is not wired yet; see {design_doc} for the unblock criteria.",
   "rubix.analytics.query.ran": "Analytics query {name} ran ({rows} rows).",
   "rubix.analytics.query.unknown_template": "Analytics query refused — no template named {name}.",
-  "rubix.analytics.query.bind_error": "Analytics query {name} failed to bind parameters or execute against ClickHouse."
+  "rubix.analytics.query.bind_error": "Analytics query {name} failed to bind parameters or execute against ClickHouse.",
+  "rubix.analytics.report.rendered": "Analytics report {template} rendered as {format} ({bytes} bytes, {queries} queries).",
+  "rubix.analytics.report.empty": "Analytics report {template} rendered with no data ({format}, {queries} queries returned zero rows).",
+  "rubix.analytics.report.format_unsupported": "Analytics report refused — format {format} is not supported by this binary."
 }

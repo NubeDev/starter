@@ -41,7 +41,21 @@ starter-changelog         = { workspace = true }
 # See src/analytics/templates/.
 include_dir               = "0.7"
 
+# analytics.report stitches several named queries into one rendered
+# artifact via starter-export and persists the bytes through any
+# `starter_spi::blob::BlobStore` (in practice `starter-blob-fs`).
+# See src/analytics/report.rs.
+starter-export            = { workspace = true, features = ["html", "csv", "json"] }
+bytes                     = { workspace = true }
+
 [dev-dependencies]
+# analytics.report integration test writes the rendered bytes to a
+# tempdir-backed FsBlobStore. Pulled into dev only — the verb itself
+# is BlobStore-trait-only, so production wiring can swap in any
+# backend without touching this crate's compile graph.
+starter-blob-fs    = { workspace = true }
+tempfile           = "3"
+futures            = { workspace = true }
 chrono             = { workspace = true }
 # Recorded-LLM round-trip harness for the system.disk verb. Pulls
 # the ai-agent node body + the starter `RecordingAiRunner` fake so

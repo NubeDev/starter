@@ -137,7 +137,7 @@ pub(crate) fn lookup_template(name: &str) -> Result<&'static str> {
 /// parameter syntax. Failures (parse/bind/connection) surface as
 /// `rubix.analytics.query.bind_error` so callers see one stable
 /// MessageKey rather than the driver's free-form text.
-async fn run_query(
+pub(crate) async fn run_query(
     client: &ChClient,
     sql: &str,
     params: &std::collections::BTreeMap<String, Value>,
