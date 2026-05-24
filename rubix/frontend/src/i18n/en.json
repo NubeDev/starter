@@ -397,5 +397,17 @@
   "access.decisions.filters.apply": "Apply",
   "access.decisions.filters.reset": "Reset",
   "access.decisions.loadMore": "Load more",
-  "access.decisions.endOfList": "End of list."
+  "access.decisions.endOfList": "End of list.",
+  "flows.eyebrow": "Flows",
+  "flows.title": "Deployed flows",
+  "flows.subtitle": "Every flow with a live, non-superseded revision served by this rubix-agent. Click a row to inspect its graph.",
+  "flows.empty.title": "No deployed flows",
+  "flows.empty.body": "Use rubix.flow_ops.deploy to publish a revision and it will appear here.",
+  "flows.col.flow_id": "Flow id",
+  "flows.col.latest_revision_id": "Latest revision",
+  "flows.col.last_deployed_at": "Last deployed",
+  "flows.col.supersession_count": "Supersessions",
+  "flows.detail.eyebrow": "Flow",
+  "flows.detail.back": "Back to flows",
+  "flows.detail.placeholder": "Placeholder graph — rubix-agent does not yet expose a flow-body endpoint, so the canvas shows a stub node instead of the deployed YAML."
 }

@@ -14,9 +14,11 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as ExtensionsRouteImport } from './routes/extensions'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as FlowsIndexRouteImport } from './routes/flows/index'
+import { Route as FlowsFlowIdRouteImport } from './routes/flows/$flowId'
+import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
-import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -43,6 +45,21 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const FlowsIndexRoute = FlowsIndexRouteImport.update({
+  id: '/flows/',
+  path: '/flows/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlowsFlowIdRoute = FlowsFlowIdRouteImport.update({
+  id: '/flows/$flowId',
+  path: '/flows/$flowId',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminWarehouseRoute = AdminWarehouseRouteImport.update({
+  id: '/admin/warehouse',
+  path: '/admin/warehouse',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminUsersRoute = AdminUsersRouteImport.update({
   id: '/admin/users',
   path: '/admin/users',
@@ -51,11 +68,6 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
 const AdminAccessRoute = AdminAccessRouteImport.update({
   id: '/admin/access',
   path: '/admin/access',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AdminWarehouseRoute = AdminWarehouseRouteImport.update({
-  id: '/admin/warehouse',
-  path: '/admin/warehouse',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -68,6 +80,8 @@ export interface FileRoutesByFullPath {
   '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
+  '/flows/$flowId': typeof FlowsFlowIdRoute
+  '/flows/': typeof FlowsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -78,6 +92,8 @@ export interface FileRoutesByTo {
   '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
+  '/flows/$flowId': typeof FlowsFlowIdRoute
+  '/flows': typeof FlowsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -89,6 +105,8 @@ export interface FileRoutesById {
   '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
+  '/flows/$flowId': typeof FlowsFlowIdRoute
+  '/flows/': typeof FlowsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -101,6 +119,8 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/users'
     | '/admin/warehouse'
+    | '/flows/$flowId'
+    | '/flows/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -111,6 +131,8 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/users'
     | '/admin/warehouse'
+    | '/flows/$flowId'
+    | '/flows'
   id:
     | '__root__'
     | '/'
@@ -121,6 +143,8 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/users'
     | '/admin/warehouse'
+    | '/flows/$flowId'
+    | '/flows/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -132,6 +156,8 @@ export interface RootRouteChildren {
   AdminAccessRoute: typeof AdminAccessRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
+  FlowsFlowIdRoute: typeof FlowsFlowIdRoute
+  FlowsIndexRoute: typeof FlowsIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -171,6 +197,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/flows/': {
+      id: '/flows/'
+      path: '/flows'
+      fullPath: '/flows/'
+      preLoaderRoute: typeof FlowsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flows/$flowId': {
+      id: '/flows/$flowId'
+      path: '/flows/$flowId'
+      fullPath: '/flows/$flowId'
+      preLoaderRoute: typeof FlowsFlowIdRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/warehouse': {
+      id: '/admin/warehouse'
+      path: '/admin/warehouse'
+      fullPath: '/admin/warehouse'
+      preLoaderRoute: typeof AdminWarehouseRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/users': {
       id: '/admin/users'
       path: '/admin/users'
@@ -185,13 +232,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/admin/warehouse': {
-      id: '/admin/warehouse'
-      path: '/admin/warehouse'
-      fullPath: '/admin/warehouse'
-      preLoaderRoute: typeof AdminWarehouseRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -204,6 +244,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAccessRoute: AdminAccessRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,
+  FlowsFlowIdRoute: FlowsFlowIdRoute,
+  FlowsIndexRoute: FlowsIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
