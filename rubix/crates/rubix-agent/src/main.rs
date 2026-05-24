@@ -69,7 +69,7 @@ async fn main() -> Result<()> {
             .map(|url| Arc::new(ChClient::connect(boot::rubix_ch_config(url.clone()))))
     };
     let mcp = boot::mcp::build_mcp_surface(ch_client.clone()).await?;
-    let tools = registry::build_tool_registry(ch_client);
+    let tools = registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
 
     info!(
         crate_name = env!("CARGO_PKG_NAME"),

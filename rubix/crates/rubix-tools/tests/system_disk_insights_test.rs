@@ -17,7 +17,7 @@
 
 use rubix_spi::dto::system::disk::DiskUsageResponse;
 use rubix_tools::system::alert_send;
-use rubix_tools::system::disk::run_insights_gate;
+use rubix_tools::system::disk::{run_insights_gate, INSIGHTS_DISK_ALERT_THRESHOLD};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 
 fn synth_response(percent_used: u8) -> DiskUsageResponse {
@@ -39,7 +39,7 @@ fn synth_response(percent_used: u8) -> DiskUsageResponse {
 #[tokio::test]
 async fn insights_gate_fires_alert_when_percent_above_threshold() {
     let before = alert_send::dispatched_count();
-    let fired = run_insights_gate(&synth_response(95))
+    let fired = run_insights_gate(&synth_response(95), INSIGHTS_DISK_ALERT_THRESHOLD)
         .await
         .expect("gate runs cleanly at 95% used");
     let after = alert_send::dispatched_count();
@@ -54,7 +54,7 @@ async fn insights_gate_fires_alert_when_percent_above_threshold() {
 #[tokio::test]
 async fn insights_gate_is_silent_when_percent_below_threshold() {
     let before = alert_send::dispatched_count();
-    let fired = run_insights_gate(&synth_response(50))
+    let fired = run_insights_gate(&synth_response(50), INSIGHTS_DISK_ALERT_THRESHOLD)
         .await
         .expect("gate runs cleanly at 50% used");
     let after = alert_send::dispatched_count();

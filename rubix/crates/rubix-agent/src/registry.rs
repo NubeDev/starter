@@ -23,8 +23,11 @@ use starter_store_clickhouse::ChClient;
 /// history write is skipped silently. Order matches the canonical
 /// id order so the boot log and any generated OpenAPI / MCP
 /// listing are stable across restarts.
-pub fn build_tool_registry(ch: Option<Arc<ChClient>>) -> Vec<Arc<dyn Tool>> {
-    let mut disk = DiskTool::default();
+pub fn build_tool_registry(
+    ch: Option<Arc<ChClient>>,
+    insights_disk_threshold: u8,
+) -> Vec<Arc<dyn Tool>> {
+    let mut disk = DiskTool::default().with_insights_threshold(insights_disk_threshold);
     if let Some(client) = ch {
         disk = disk.with_history(client);
     }
@@ -42,7 +45,7 @@ mod tests {
 
     #[test]
     fn registry_contains_disk_tool() {
-        let names: Vec<String> = build_tool_registry(None)
+        let names: Vec<String> = build_tool_registry(None, 90)
             .iter()
             .map(|t| t.definition().name)
             .collect();
@@ -51,7 +54,7 @@ mod tests {
 
     #[test]
     fn registry_contains_every_wired_system_tool() {
-        let names: Vec<String> = build_tool_registry(None)
+        let names: Vec<String> = build_tool_registry(None, 90)
             .iter()
             .map(|t| t.definition().name)
             .collect();
