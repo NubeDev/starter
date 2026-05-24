@@ -17,3 +17,9 @@ export {
   useRubixClient,
 } from "./provider/rubix-client-provider.js";
 export type { RubixClientProviderProps } from "./provider/rubix-client-provider.js";
+
+export * from "./hooks/system.js";
+export * from "./hooks/users.js";
+export * from "./hooks/mcp.js";
+export * from "./hooks/extensions.js";
+export * from "./hooks/use-extension-events.js";
