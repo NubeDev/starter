@@ -1,0 +1,274 @@
+//! `service::FlowAsService` — the cron-aware companion to
+//! [`crate::FlowAsTool`].
+//!
+//! Phase B.1 scaffold (Goal 6 — see
+//! `.codeless/jobs/rubix-goal-6-weekly-report/SCOPE.md`). This
+//! file lands the struct, the [`FlowRunner`] trait that future
+//! tick loops dispatch through, and the two write-side methods
+//! that own the `starter_scheduled_flows` PG table:
+//!
+//! - [`FlowAsService::register_schedule`] inserts (or updates) a
+//!   row with `next_run_at = clock.now() + next_fire(expr)` and
+//!   relies on the migration's `AFTER INSERT` trigger to emit a
+//!   `starter_scheduled_flows` LISTEN/NOTIFY payload.
+//! - [`FlowAsService::unregister_schedule`] flips `enabled =
+//!   FALSE`; the same trigger fires on the scoped `UPDATE OF
+//!   enabled` so cross-instance listeners hear the disable.
+//!
+//! The tick loop (`tick` + `start`) lands in Phase B.2; this
+//! stage's surface is intentionally limited to the two write
+//! verbs the rubix-agent boot path needs to seed bundled
+//! `trigger: schedule` flows.
+//!
+//! ## Naming note
+//!
+//! The crate root already exports an event-driven `FlowAsService`
+//! (the broadcast-subscriber wrapper from stage 8). That type is
+//! re-exported as [`crate::FlowAsService`]; this scheduler-flavored
+//! type lives at `starter_flow_surfaces::service::FlowAsService`
+//! and is the one the durable scheduler land referenced in the
+//! Goal 6 SCOPE. The two compose at the rubix-agent layer (one
+//! wraps a flow for cron-driven invocation, the other for
+//! broadcast-event-driven invocation) and never alias inside any
+//! single use-site.
+
+use std::sync::Arc;
+
+use async_trait::async_trait;
+use chrono::{DateTime, Utc};
+use sqlx::Row;
+use thiserror::Error;
+use uuid::Uuid;
+
+use starter_cron::CronError;
+use starter_store_postgres::Pool;
+
+use crate::clock::{Clock, SystemClock};
+use crate::FlowRegistry;
+
+/// Trait the durable scheduler dispatches a claimed schedule row
+/// through. Kept local to `starter-flow-surfaces` (rather than
+/// promoted to `starter-flow-spi`) so the rubix-agent boot path
+/// can wire any callable — a real
+/// [`starter_flow::run::FlowRunner`](starter_flow::run::FlowRunner),
+/// a test stub, or a tracing-only logger — without dragging the
+/// concrete runner into the SPI crate.
+///
+/// The Phase B.2 tick loop calls [`FlowRunner::run`] once per
+/// claimed row and uses the `Result` to populate
+/// `last_run_status` / `last_run_message` before recomputing
+/// `next_run_at`.
+#[async_trait]
+pub trait FlowRunner: Send + Sync + 'static {
+    /// Dispatch the named flow under the given tenant. Returns
+    /// `Ok(())` on a successful run; the `Err` arm carries a
+    /// human-readable summary the scheduler truncates to 4 KB and
+    /// writes into `last_run_message`.
+    async fn run(
+        &self,
+        tenant_id: Uuid,
+        flow_id: &str,
+    ) -> Result<(), Box<dyn std::error::Error + Send + Sync>>;
+}
+
+/// Errors raised by [`FlowAsService`] write-side methods.
+#[derive(Debug, Error)]
+#[non_exhaustive]
+pub enum ServiceError {
+    /// The cron expression failed [`starter_cron::next_fire`]
+    /// validation. Carries the structured parser error so callers
+    /// can surface a precise diagnostic to operators.
+    #[error("invalid cron expression `{expr}`: {source}")]
+    InvalidCron {
+        /// The offending expression as supplied.
+        expr: String,
+        /// The structured `starter-cron` error.
+        #[source]
+        source: CronError,
+    },
+
+    /// The underlying SQL operation against
+    /// `starter_scheduled_flows` failed. Wraps the `sqlx` error
+    /// verbatim — the trigger / unique constraint detail rides
+    /// along so operators can pinpoint conflicts.
+    #[error("scheduled_flows write failed: {0}")]
+    Sql(#[from] sqlx::Error),
+}
+
+/// Durable scheduler write surface — the cron-aware companion to
+/// [`crate::FlowAsTool`].
+///
+/// Holds:
+///
+/// - the PG [`Pool`] backing the `starter_scheduled_flows` table;
+/// - an [`Arc<FlowRegistry>`] so the future tick loop can look up
+///   the typed `(topology, terminal_slots, …)` bundle by flow id;
+/// - an `Arc<dyn FlowRunner>` the future tick loop dispatches
+///   through;
+/// - an `Arc<dyn Clock>` so tests can drive time deterministically
+///   via [`crate::clock::TestClock`].
+///
+/// This phase exposes only the write-side methods
+/// [`Self::register_schedule`] / [`Self::unregister_schedule`];
+/// `tick` and `start` land in Phase B.2.
+pub struct FlowAsService {
+    pool: Pool,
+    registry: Arc<FlowRegistry>,
+    runner: Arc<dyn FlowRunner>,
+    clock: Arc<dyn Clock>,
+}
+
+impl FlowAsService {
+    /// Construct a fresh scheduler write-surface against the
+    /// supplied PG [`Pool`] and dispatcher. The clock defaults to
+    /// [`SystemClock`]; tests substitute via
+    /// [`Self::with_clock`].
+    pub fn new(pool: Pool, registry: Arc<FlowRegistry>, runner: Arc<dyn FlowRunner>) -> Self {
+        Self {
+            pool,
+            registry,
+            runner,
+            clock: Arc::new(SystemClock::new()),
+        }
+    }
+
+    /// Replace the wall-clock seam. Used by `tests/clock_test.rs`
+    /// and the Phase B.2 tick test to advance time without
+    /// sleeping the test runner.
+    #[must_use]
+    pub fn with_clock(mut self, clock: Arc<dyn Clock>) -> Self {
+        self.clock = clock;
+        self
+    }
+
+    /// Borrow the bound [`FlowRegistry`] (introspection helper).
+    pub fn registry(&self) -> &Arc<FlowRegistry> {
+        &self.registry
+    }
+
+    /// Borrow the bound [`FlowRunner`] (introspection helper).
+    pub fn runner(&self) -> &Arc<dyn FlowRunner> {
+        &self.runner
+    }
+
+    /// Borrow the bound [`Clock`] (introspection helper).
+    pub fn clock(&self) -> &Arc<dyn Clock> {
+        &self.clock
+    }
+
+    /// Borrow the bound [`Pool`] (introspection helper).
+    pub fn pool(&self) -> &Pool {
+        &self.pool
+    }
+
+    /// Register (or re-register) a schedule for `(tenant, flow)`.
+    ///
+    /// Inserts a row into `starter_scheduled_flows` with
+    /// `next_run_at = clock.now() + first cron fire`, or updates
+    /// the existing row's cron expression + recomputed
+    /// `next_run_at` if one already exists (the
+    /// `ON CONFLICT (tenant_id, flow_id)` arm). The migration's
+    /// `AFTER INSERT` trigger fires the `starter_scheduled_flows`
+    /// LISTEN/NOTIFY payload on first insert; the scoped
+    /// `AFTER UPDATE OF next_run_at, enabled` trigger fires on
+    /// the conflict-update path because both columns change.
+    ///
+    /// The PK is a ULID rendered as TEXT to match the schema and
+    /// keep parity with the sqlite twin (which has no UUID type).
+    pub async fn register_schedule(
+        &self,
+        tenant_id: Uuid,
+        flow_id: &str,
+        cron_expr: &str,
+    ) -> Result<DateTime<Utc>, ServiceError> {
+        // Validate the cron expression up-front. Storing an
+        // invalid expression would leave the tick loop unable to
+        // recompute `next_run_at` after the first fire; bail now.
+        let now = self.clock.now();
+        let next_run_at =
+            starter_cron::next_fire(now, cron_expr).map_err(|source| ServiceError::InvalidCron {
+                expr: cron_expr.to_string(),
+                source,
+            })?;
+
+        let id = ulid::Ulid::new().to_string();
+
+        // The `created_by` actor for an upstream-driven register
+        // call defaults to the all-zero sentinel. The future REST
+        // surface that lets operators register schedules
+        // interactively will supply a real principal here.
+        let actor: Uuid = Uuid::nil();
+
+        sqlx::query(
+            r#"INSERT INTO starter_scheduled_flows
+                  (id, tenant_id, flow_id, cron_expr, next_run_at, created_by, enabled)
+               VALUES ($1, $2, $3, $4, $5, $6, TRUE)
+               ON CONFLICT (tenant_id, flow_id) DO UPDATE
+                  SET cron_expr   = EXCLUDED.cron_expr,
+                      next_run_at = EXCLUDED.next_run_at,
+                      enabled     = TRUE"#,
+        )
+        .bind(&id)
+        .bind(tenant_id)
+        .bind(flow_id)
+        .bind(cron_expr)
+        .bind(next_run_at)
+        .bind(actor)
+        .execute(self.pool.sqlx())
+        .await?;
+
+        Ok(next_run_at)
+    }
+
+    /// Soft-disable the `(tenant, flow)` schedule by flipping
+    /// `enabled = FALSE`. The scoped `AFTER UPDATE OF enabled`
+    /// trigger emits the LISTEN/NOTIFY payload so other rubix-
+    /// agent instances drop the schedule from their tick loop.
+    ///
+    /// Returns `Ok(true)` if a row was affected, `Ok(false)` if
+    /// no matching row existed (idempotent caller contract — the
+    /// boot seeder may call this for a flow it later removes).
+    pub async fn unregister_schedule(
+        &self,
+        tenant_id: Uuid,
+        flow_id: &str,
+    ) -> Result<bool, ServiceError> {
+        let result = sqlx::query(
+            r#"UPDATE starter_scheduled_flows
+                  SET enabled = FALSE
+                WHERE tenant_id = $1 AND flow_id = $2 AND enabled = TRUE"#,
+        )
+        .bind(tenant_id)
+        .bind(flow_id)
+        .execute(self.pool.sqlx())
+        .await?;
+
+        Ok(result.rows_affected() > 0)
+    }
+
+    /// Read back the `(next_run_at, enabled)` pair for
+    /// `(tenant, flow)` — convenience for tests asserting the
+    /// register / unregister round-trip wrote what the caller
+    /// expected. Returns `None` if no row exists.
+    pub async fn lookup_schedule(
+        &self,
+        tenant_id: Uuid,
+        flow_id: &str,
+    ) -> Result<Option<(DateTime<Utc>, bool)>, ServiceError> {
+        let row = sqlx::query(
+            r#"SELECT next_run_at, enabled
+                 FROM starter_scheduled_flows
+                WHERE tenant_id = $1 AND flow_id = $2"#,
+        )
+        .bind(tenant_id)
+        .bind(flow_id)
+        .fetch_optional(self.pool.sqlx())
+        .await?;
+
+        Ok(row.map(|r| {
+            let next_run_at: DateTime<Utc> = r.get("next_run_at");
+            let enabled: bool = r.get("enabled");
+            (next_run_at, enabled)
+        }))
+    }
+}

@@ -135,6 +135,7 @@ starter-clipboard-postgres = { path = "crates/starter-clipboard-postgres", versi
 starter-export           = { path = "crates/starter-export",           version = "0.1.0" }
 starter-ai               = { path = "crates/starter-ai",               version = "0.1.0" }
 starter-flow-spi         = { path = "crates/starter-flow-spi",         version = "0.1.0" }
+starter-cron             = { path = "crates/starter-cron",             version = "0.1.0" }
 starter-insights         = { path = "crates/starter-insights",         version = "0.1.0" }
 starter-flow             = { path = "crates/starter-flow",             version = "0.1.0" }
 starter-skills           = { path = "crates/starter-skills",           version = "0.1.0" }
