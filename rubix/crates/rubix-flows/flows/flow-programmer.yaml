@@ -12,5 +12,11 @@ nodes:
       session_policy: continue
       skill_hint: com.rubix.flow-programmer
       cost_cap: 0.50_usd
+      allowed_tools:
+        - rubix.flow_ops.deploy
+        - rubix.flow_ops.lint
+        - rubix.flow_ops.list
+        - rubix.flow_ops.duplicate
+        - rubix.undo.last
 
 links: []
