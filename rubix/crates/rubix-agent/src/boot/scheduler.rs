@@ -92,45 +92,26 @@ pub async fn spawn(
     let svc =
         FlowAsService::new(pool, registry, runner).with_clock(Arc::new(SystemClock::new()));
 
+    // Single source of truth for the bundled `(flow_id,
+    // cron_expr)` list — shared with the always-on
+    // `boot::flow_runtime` mounter so both surfaces never drift on
+    // which flows are "scheduled today".
     let mut seeded = 0usize;
-    for (path, bytes) in bundled_yaml_pairs() {
-        let yaml = rubix_flows::parse_yaml(&path, &bytes)
-            .map_err(|e| anyhow::anyhow!("parse bundled yaml `{path}`: {e}"))?;
-
-        // Only flows carrying both `trigger: schedule` and a
-        // top-level `cron_expr` participate. Authoring a YAML
-        // with one but not the other is treated as a load-time
-        // error so the operator notices early.
-        let is_schedule = yaml
-            .trigger
-            .as_deref()
-            .map(|s| s.eq_ignore_ascii_case("schedule"))
-            .unwrap_or(false);
-        match (is_schedule, yaml.cron_expr.as_deref()) {
-            (false, _) => continue,
-            (true, None) => {
-                anyhow::bail!(
-                    "bundled flow `{flow}` declares `trigger: schedule` but no `cron_expr`",
-                    flow = yaml.id
-                );
-            }
-            (true, Some(cron_expr)) => {
-                let next_run_at = svc
-                    .register_schedule(SYSTEM_TENANT, &yaml.id, cron_expr)
-                    .await
-                    .map_err(|e| {
-                        anyhow::anyhow!("register_schedule(`{flow}`): {e}", flow = yaml.id)
-                    })?;
-                seeded += 1;
-                info!(
-                    target: "rubix.boot.scheduler",
-                    flow_id = %yaml.id,
-                    cron_expr = %cron_expr,
-                    next_run_at = %next_run_at,
-                    "seeded scheduled flow"
-                );
-            }
-        }
+    for entry in super::flow_runtime::bundled_schedule_pairs()? {
+        let next_run_at = svc
+            .register_schedule(SYSTEM_TENANT, &entry.flow_id, &entry.cron_expr)
+            .await
+            .map_err(|e| {
+                anyhow::anyhow!("register_schedule(`{flow}`): {e}", flow = entry.flow_id)
+            })?;
+        seeded += 1;
+        info!(
+            target: "rubix.boot.scheduler",
+            flow_id = %entry.flow_id,
+            cron_expr = %entry.cron_expr,
+            next_run_at = %next_run_at,
+            "seeded scheduled flow"
+        );
     }
 
     info!(
@@ -182,25 +163,6 @@ impl FlowRunner for ToolRegistryRunner {
     }
 }
 
-/// Walk every bundled `*.yaml` / `*.yml` file (mirrors the
-/// helper in `flows_seed.rs` so the two seeders see an identical
-/// view of the bundle).
-fn bundled_yaml_pairs() -> Vec<(String, Vec<u8>)> {
-    let mut out = Vec::new();
-    collect(&rubix_flows::BUNDLED, &mut out);
-    out
-}
-
-fn collect(dir: &include_dir::Dir<'_>, out: &mut Vec<(String, Vec<u8>)>) {
-    for entry in dir.entries() {
-        match entry {
-            include_dir::DirEntry::File(f) => {
-                let path = f.path().to_string_lossy().into_owned();
-                if path.ends_with(".yaml") || path.ends_with(".yml") {
-                    out.push((path, f.contents().to_vec()));
-                }
-            }
-            include_dir::DirEntry::Dir(sub) => collect(sub, out),
-        }
-    }
-}
+// Bundled-YAML enumeration moved to
+// `super::flow_runtime::bundled_schedule_pairs` so the always-on
+// runtime and the durable scheduler share one definition.

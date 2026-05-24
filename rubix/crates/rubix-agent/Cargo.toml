@@ -43,6 +43,7 @@ starter-store-clickhouse  = { workspace = true }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }
+starter-store-sqlite      = { workspace = true, features = ["flow"] }
 starter-ai                = { workspace = true, features = ["provider-claude"] }
 starter-ai-agent          = { workspace = true }
 starter-flow-node-loop    = { workspace = true }
@@ -58,7 +59,8 @@ starter-ext-supervisor = { path = "../../../starter-extensions/crates/starter-ex
 starter-ext-store-pg  = { path = "../../../starter-extensions/crates/starter-ext-store-pg" }
 starter-ext-mcp       = { path = "../../../starter-extensions/crates/starter-ext-mcp" }
 thiserror             = { workspace = true }
-sqlx                      = { workspace = true, features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
+sqlx                      = { workspace = true, features = ["postgres", "sqlite", "runtime-tokio", "uuid", "chrono"] }
+tokio-stream              = { workspace = true }
 uuid                      = { workspace = true }
 include_dir               = "0.7"
 futures                   = { workspace = true }
@@ -79,7 +81,7 @@ anyhow  = { workspace = true }
 [dev-dependencies]
 starter-mcp              = { workspace = true, features = ["http", "testing"] }
 starter-changelog-sqlite = { workspace = true }
-starter-store-sqlite     = { workspace = true, features = ["testing"] }
+starter-store-sqlite     = { workspace = true, features = ["testing", "flow"] }
 starter-store-postgres   = { workspace = true, features = ["testing"] }
 starter-store-clickhouse = { workspace = true, features = ["testing"] }
 starter-undo             = { workspace = true }

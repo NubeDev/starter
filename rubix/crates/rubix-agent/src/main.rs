@@ -190,6 +190,25 @@ async fn main() -> Result<()> {
     let tools_state = routes::tools::ToolsState::new(tools, bundle.clone());
     let tools_router = routes::tools::router(tools_state);
 
+    // Phase C.2 — always-on flow runtime. Constructs the shared
+    // `FlowSubscriptionRegistry` consumed by the SSE
+    // `/api/v1/flows/{flow_id}/events` route plus the `NodeStateStore`
+    // seam threaded into every `NodeCtx::state` call site (today the
+    // engine still owns its own store wiring; the runtime hands its
+    // `Arc<dyn NodeStateStore>` out for upstream engine reuse as the
+    // per-flow event pump lands in a follow-up stage).
+    let flow_runtime =
+        boot::build_flow_runtime(cfg.database_url.as_deref(), &cfg.flow_runtime).await?;
+    let flow_events_router =
+        routes::flow_events::router(routes::flow_events::FlowEventsState {
+            subscriptions: flow_runtime.subscriptions.clone(),
+        });
+    // Surface the runtime via the same `_` leak pattern as the other
+    // always-on boot pieces — the `Arc<dyn NodeStateStore>` rides on
+    // it so a future stage can hand it to the engine without another
+    // boot-time refactor.
+    let _flow_runtime = flow_runtime;
+
     // ----------------------------------------------------------------
     // Compose. The auth + authz + changelog sandwich layers in only
     // when a database is configured; without a DSN the binary still
@@ -204,7 +223,14 @@ async fn main() -> Result<()> {
     let openapi_doc = routes::openapi_doc::openapi_router(rubix_openapi_mod::rubix_openapi());
     let mut app: Router = health::healthz_router()
         .merge(mcp_routes)
-        .merge(openapi_doc);
+        .merge(openapi_doc)
+        // SSE flow-events route. CSRF-exempt (mirrors the
+        // extensions-events route): `EventSource` cannot send a CSRF
+        // token and `text/event-stream` GETs carry no body. AuthN
+        // still gates the route under the standard `with_principal`
+        // sandwich when a DSN is set; without a DSN the laptop dev
+        // path leaves it open alongside the tools router.
+        .merge(flow_events_router);
 
     if let Some(dsn) = cfg.database_url.as_deref() {
         let pool = pg_connect(dsn)
