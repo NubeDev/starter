@@ -43,3 +43,37 @@ Reads `../../openapi.json`, writes `./src/generated/index.ts`. The CI
 Methods throw `StarterError` (subclass of `Error`) on non-2xx. It
 carries `status: number` and `problem: Problem | undefined` parsed
 from the RFC 7807 body when present.
+
+## Streaming
+
+`streamJson<T>(starter, path, opts?): AsyncIterable<T>` is the
+package's SSE primitive — one verb file, no React, no provider.
+Endpoint packages wrap it to type the event shape:
+
+```ts
+import { streamJson } from "@nube/starter-client-ts";
+
+for await (const evt of streamJson<MyEvent>(starter, "/api/v1/things/events", { signal })) {
+  // ...
+}
+```
+
+Behaviour:
+
+- Uses `EventSource` (with `withCredentials: true`) when available,
+  falls back to `fetch` + `ReadableStream` so it works in Node test
+  runners. Either way the same async iterable is returned.
+- Exponential reconnect — base 1s, cap 30s, 10% jitter. A synthetic
+  `{ kind: "reconnecting" }` envelope is yielded so consumers can
+  surface a UI state without parsing transport details.
+- `opts.signal` aborts cleanly; the iterator returns and the
+  underlying connection closes.
+- CSRF is intentionally not threaded through. The browser sends the
+  session cookie on the `EventSource` request — the same-site cookie
+  flow is enough for read-only streams.
+
+React consumers shouldn't iterate `streamJson` by hand. Use
+`useEventStream()` from
+[`@nube/starter-client-react`](../starter-client-react), which bridges
+the iterable into `useSyncExternalStore` with stable reconnect
+identity and lifecycle teardown.
