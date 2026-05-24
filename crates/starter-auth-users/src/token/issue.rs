@@ -29,6 +29,12 @@ pub struct IssuedToken {
 /// binding (Phase 7a — R11). Tokens minted with this value bypass
 /// the cross-tenant predicate and are only allowed for users with
 /// the global Admin role.
+///
+/// Currently referenced only by doc-comment from [`issue`]; the
+/// in-tree callers in `routes/tokens.rs` pass the literal `"*"`.
+/// Kept as a named constant so downstream crates can match against
+/// it without spelling the magic string.
+#[allow(dead_code)]
 pub const SUPER_ADMIN_TENANT: &str = "*";
 
 /// Issue a new token for `(user_id, tenant_id)` with the given

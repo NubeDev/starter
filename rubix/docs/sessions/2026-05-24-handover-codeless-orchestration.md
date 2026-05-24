@@ -108,7 +108,7 @@ runs clean post-#29.
 
 ```bash
 mani run dev-deps-down
-docker volume rm rubix-dev-postgres-data rubix-dev-clickhouse-data 2>/dev/null
+docker volume rm docker_rubix_postgres_data docker_rubix_clickhouse_data 2>/dev/null
 mani run demo
 # then steps 2–6 from THIN-SLICE.md §"Success criterion"
 ```
@@ -391,13 +391,12 @@ Three plausible threads, ordered by my best read of priority:
 
 ### Thread 1 — Re-run the smoke test post-PR-#29
 
-The B1–B4 fixes merged; nobody has re-run the six-step demo to
-confirm all six PASS. Top of the list because it's small and
-either confirms reality or surfaces a new bug.
-
-**~30 min.** Re-uses the smoke prompt at the end of
-[2026-05-24-smoke-test-pr28.md](./2026-05-24-smoke-test-pr28.md)
-(or write a fresh one if cleaner).
+Superseded by
+[2026-05-24-smoke-test-pr30.md](./2026-05-24-smoke-test-pr30.md):
+the post-#29 smoke was run and surfaced bugs B5–B10 + N4. Those
+follow-ups are being landed on
+`codeless/rubix-smoke-followups`; once that PR merges, re-run
+the six-step demo against the new master to confirm 6/6 PASS.
 
 ### Thread 2 — Restart the agent-runtime job
 

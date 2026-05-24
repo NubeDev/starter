@@ -27,6 +27,28 @@ probe, columns `tenant_id (UUID)`, `host (String)`,
 partitioned by `toYYYYMM(toDateTime(epoch_ms / 1000))`, ordered by
 `(tenant_id, host, epoch_ms)`.
 
+## Database routing — every rubix-owned table lives in `rubix`
+
+The canonical ClickHouse database for rubix-owned tables is
+**`rubix`** (constant `RUBIX_CH_DATABASE` in
+`rubix-agent::boot::clickhouse`). The bootstrap of
+`apply_ch_migrations` issues `CREATE DATABASE IF NOT EXISTS rubix`
+against the server's `default` database, then binds the migration
+client — and every `ChClient` the agent constructs at runtime
+(the HTTP binary, the `rubix-admin mcp` stdio binary, the typed
+write paths in `rubix-tools`) — to that database via
+`boot::rubix_ch_config(url)`. Unqualified DDL / INSERT / SELECT
+against `system_disk_history` therefore resolves to
+`rubix.system_disk_history`. This matches the named-tenant intent
+that the dev compose recipe (`rubix/docker/docker-compose.dev.yaml`
+ships `CLICKHOUSE_DB=rubix`) already encoded; the routing fix
+makes the agent honour it instead of writing to `default`.
+
+Operators inspecting the warehouse should always qualify with
+`rubix.` (e.g.
+`clickhouse-client -q "SELECT count() FROM rubix.system_disk_history"`)
+so the query is correct regardless of the session database.
+
 ## Tag types are `Bool | Str` only
 
 Locked in `rubix-spi` slot schemas. Adding a third tag type (Int,

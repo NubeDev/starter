@@ -70,7 +70,7 @@ pub async fn build_flow_registry(
     let runner: Arc<dyn AiRunner> = ai::build_runner(&cfg)
         .map_err(|e| anyhow::anyhow!("boot::ai::build_runner: {e}"))?;
     let tool_registry_snapshot: Vec<Arc<dyn Tool>> =
-        crate::registry::build_tool_registry(ch_client);
+        crate::registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
 
     // Load every bundled YAML up front so we can build the
     // per-node primary-tool map the `RubixAiAgentNode` consults at

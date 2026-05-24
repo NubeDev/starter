@@ -37,11 +37,23 @@ pub const INSIGHTS_DISK_ALERT_THRESHOLD: u8 = 90;
 /// a `ChClient` for the history-row write and a tenant id for the
 /// per-row isolation column; both default to `None` / `Uuid::nil()`
 /// so the in-process unit tests do not need a live ClickHouse.
-#[derive(Clone, Default)]
+#[derive(Clone)]
 pub struct DiskTool {
     history: Option<Arc<ChClient>>,
     tenant_id: Uuid,
     host: Option<String>,
+    insights_threshold: u8,
+}
+
+impl Default for DiskTool {
+    fn default() -> Self {
+        Self {
+            history: None,
+            tenant_id: Uuid::nil(),
+            host: None,
+            insights_threshold: INSIGHTS_DISK_ALERT_THRESHOLD,
+        }
+    }
 }
 
 impl std::fmt::Debug for DiskTool {
@@ -77,6 +89,19 @@ impl DiskTool {
     /// `$HOSTNAME` or `"localhost"`; tests pin it for determinism.
     pub fn with_host(mut self, host: impl Into<String>) -> Self {
         self.host = Some(host.into());
+        self
+    }
+
+    /// Override the percent-used threshold above which the
+    /// post-dispatch insights gate fires `rubix.alert.send`.
+    /// Defaults to [`INSIGHTS_DISK_ALERT_THRESHOLD`]; the agent
+    /// binary threads `cfg.insights.disk_warn_threshold` through
+    /// [`crate::system::disk::DiskTool::with_insights_threshold`] so
+    /// operators can tune the gate without recompiling, and so the
+    /// rubix-agent alert-path integration test can drop the
+    /// threshold to a value a synthetic 60%-used probe will cross.
+    pub fn with_insights_threshold(mut self, threshold: u8) -> Self {
+        self.insights_threshold = threshold;
         self
     }
 
@@ -122,7 +147,7 @@ impl Tool for DiskTool {
             write_history(client, self.tenant_id, &self.host_str(), &response).await?;
         }
 
-        run_insights_gate(&response).await?;
+        run_insights_gate(&response, self.insights_threshold).await?;
 
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -136,12 +161,15 @@ impl Tool for DiskTool {
 /// (the probe reads the host filesystem and cannot easily be made
 /// to report 95% used on demand). Returns `true` when the gate
 /// fired an alert.
-pub async fn run_insights_gate(response: &DiskUsageResponse) -> Result<bool> {
-    // The literal `> 90` is the v0 rule, and the constant exists
-    // so the threshold has a name when the rule lifts upstream.
-    debug_assert_eq!(INSIGHTS_DISK_ALERT_THRESHOLD, 90);
+pub async fn run_insights_gate(
+    response: &DiskUsageResponse,
+    threshold: u8,
+) -> Result<bool> {
+    // The literal `> threshold` is the v0 rule; the constant
+    // [`INSIGHTS_DISK_ALERT_THRESHOLD`] is the configured default
+    // the agent threads in via `cfg.insights.disk_warn_threshold`.
     // TODO(upstream: rule.rhai migration) — promote to starter-insights::RuleRegistry once a second rule appears.
-    if response.percent_used > 90 {
+    if response.percent_used > threshold {
         alert_send::dispatch(AlertSeverity::Error, alert_diagnostic(response)).await?;
         Ok(true)
     } else {

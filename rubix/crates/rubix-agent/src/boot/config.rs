@@ -57,6 +57,39 @@ pub struct AgentConfig {
     /// `starter_spi::ai::Provider` variant string; `"anthropic"`
     /// returns [`crate::boot::ai::AiError::Unimplemented`] in v0.
     pub ai_provider: Option<String>,
+
+    /// Insights-gate knobs. The disk verb's post-dispatch hook
+    /// reads [`InsightsConfig::disk_warn_threshold`] to decide when
+    /// a percent-used reading is high enough to fire
+    /// `rubix.alert.send`. Carried as a nested struct so the
+    /// `[insights]` TOML section and the `RUBIX_INSIGHTS__*` env
+    /// names match the loader's double-underscore convention.
+    pub insights: InsightsConfig,
+}
+
+/// Tunables for the v0 insights gate. Kept on its own type so the
+/// `[insights]` TOML section nests cleanly and so additional rule
+/// thresholds (CPU, memory, etc.) land here without re-flattening
+/// the root config. The single field today maps the threshold the
+/// hardcoded `if response.percent_used > N` in
+/// `rubix_tools::system::disk::run_insights_gate` consults.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct InsightsConfig {
+    /// Percent-used reading above which the disk verb fires an
+    /// `rubix.alert.send` alert. Default `90` mirrors the v0
+    /// hardcoded constant in `rubix-tools`. Lowering it (e.g. `50`
+    /// in the alert-path integration test) deterministically makes
+    /// the gate fire on a synthetic 60%-used response.
+    pub disk_warn_threshold: u8,
+}
+
+impl Default for InsightsConfig {
+    fn default() -> Self {
+        Self {
+            disk_warn_threshold: 90,
+        }
+    }
 }
 
 impl Default for AgentConfig {
@@ -68,6 +101,7 @@ impl Default for AgentConfig {
             secrets_path: None,
             config_path: None,
             ai_provider: None,
+            insights: InsightsConfig::default(),
         }
     }
 }

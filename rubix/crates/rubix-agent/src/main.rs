@@ -28,7 +28,7 @@ use rubix_agent::boot::{self, AgentConfig};
 use rubix_agent::{health, middleware, registry, routes};
 use starter_changelog_postgres::PgChangeRecorder;
 use starter_spi::changelog::ChangeRecorder;
-use starter_store_clickhouse::{ChClient, ChConfig};
+use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::connect as pg_connect;
 
 #[tokio::main]
@@ -66,10 +66,10 @@ async fn main() -> Result<()> {
     } else {
         cfg.clickhouse_url
             .as_ref()
-            .map(|url| Arc::new(ChClient::connect(ChConfig::local(url.clone()))))
+            .map(|url| Arc::new(ChClient::connect(boot::rubix_ch_config(url.clone()))))
     };
     let mcp = boot::mcp::build_mcp_surface(ch_client.clone()).await?;
-    let tools = registry::build_tool_registry(ch_client);
+    let tools = registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
 
     info!(
         crate_name = env!("CARGO_PKG_NAME"),

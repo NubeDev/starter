@@ -21,3 +21,11 @@ secrets_path = "rubix/dev/secrets.age"
 # REST branch is deferred for v0 — see
 # crates/starter-ai-agent/LONG-TERM.md for the staged plan.
 # ai_provider = "claude-cli"
+
+# Insights-gate thresholds. The disk verb's post-dispatch hook
+# fires `rubix.alert.send` once `percent_used` crosses
+# `disk_warn_threshold`. Default `90` matches the v0 hardcoded
+# constant; lower it (e.g. `50`) to exercise the alert path on
+# hosts that never reach 90% used.
+# [insights]
+# disk_warn_threshold = 90
