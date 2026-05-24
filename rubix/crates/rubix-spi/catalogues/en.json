@@ -17,6 +17,12 @@
   "rubix.team.assigned": "User {user} added to team {team} (at {at}).",
   "rubix.user.listed": "Listed {count} users.",
   "rubix.tenant.listed": "Listed {count} tenants.",
+  "rubix.clickhouse.rule.written": "ClickHouse rule {rule} written (at {at}).",
+  "rubix.clickhouse.rule.invalid": "ClickHouse rule DDL is invalid (must begin with CREATE or ALTER).",
+  "rubix.clickhouse.mart.created": "ClickHouse mart {mart} created (at {at}); undo will DROP the table and lose any rows ingested afterwards.",
+  "rubix.clickhouse.mart.already_exists": "ClickHouse mart {mart} already exists; no change made (at {at}).",
+  "rubix.clickhouse.retention.set": "Retention for ClickHouse table {table} set to {days} days (at {at}).",
+  "rubix.clickhouse.retention.unchanged": "Retention for ClickHouse table {table} already {days} days; no change made (at {at}).",
   "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL is not set; rubix-admin mcp cannot resolve an actor for the stdio session.",
   "rubix.admin.mcp.principal.not_found": "No user with email {email} exists in the rubix database; bootstrap one with `rubix-admin bootstrap-user` before launching the MCP stdio session."
 }
