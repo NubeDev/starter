@@ -140,6 +140,28 @@ catalogue, and calls the same `MessageBundle::render_diagnostic`
 the MCP transport uses. No new mechanism — same renderer, same
 output shape.
 
+### MCP over stdio — third path, three-step cascade
+
+The `rubix-admin mcp` subcommand drives the same `FlowAsTool`
+registry as the HTTP MCP router, but the locale source list is
+different: there is no `Accept-Language` header on stdin. The
+binary reads three sources at startup / per call, first hit wins:
+
+1. **Per-call `params._meta.acceptLanguage`** — the U1 contract.
+   `starter-mcp`'s stdio loop captures this from the `initialize`
+   frame and re-binds it on `tools/call`.
+2. **Process-startup `LANG`** — POSIX-style `es_AR.UTF-8`
+   parsed into a BCP-47 tag (`es-AR`). The serve verb wraps the
+   whole stdio loop in `starter_mcp::with_locale(...)` so this
+   fallback is live whenever the host did not negotiate a locale
+   on `initialize`. `C` / `POSIX` / empty / unparseable values
+   fall through.
+3. **`"en"`** — final fallback. Matches the HTTP cascade.
+
+Same renderer (`MessageBundle::render_diagnostic`), same output
+shape; the only difference from the HTTP path is the source of
+the BCP-47 tag.
+
 ## Date / time / timezone
 
 The same client-renders-by-default / MCP+CLI-render-server-side

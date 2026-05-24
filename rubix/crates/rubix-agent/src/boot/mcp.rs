@@ -88,15 +88,24 @@ pub struct McpSurface {
 /// Stage-1 of PR 3 only mounts `com.rubix.scheduled-system-check`;
 /// stages 4+ register the remaining five goal flows the same way.
 pub async fn build_mcp_surface() -> anyhow::Result<McpSurface> {
+    let tools = Arc::new(build_tool_registry().await?);
+    let router: axum::Router =
+        starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
+    Ok(McpSurface { tools, router })
+}
+
+/// Shared composition step: build the starter-mcp [`ToolRegistry`]
+/// containing every bundled rubix flow wrapped via
+/// [`FlowAsTool::from_registry`]. Both the HTTP surface
+/// ([`build_mcp_surface`]) and the stdio surface (the
+/// `rubix-admin mcp` subcommand) call this so the tool catalogue is
+/// identical across transports — there is no "stdio-only" tool list.
+pub async fn build_tool_registry() -> anyhow::Result<ToolRegistry> {
     let (registry, flow_id, revision, engine) = build_flow_registry().await?;
     let tool = FlowAsTool::from_registry(&registry, &flow_id, &revision, engine)
         .await
         .map_err(|e| anyhow::anyhow!("FlowAsTool::from_registry: {e}"))?;
-
-    let tools = Arc::new(ToolRegistry::new().register(tool));
-    let router: axum::Router =
-        starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
-    Ok(McpSurface { tools, router })
+    Ok(ToolRegistry::new().register(tool))
 }
 
 /// Lower-level entry point exposed so integration tests can drive

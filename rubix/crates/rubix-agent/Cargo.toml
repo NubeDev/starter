@@ -32,7 +32,9 @@ starter-config           = { workspace = true }
 starter-observability    = { workspace = true }
 starter-server           = { workspace = true }
 starter-store-postgres   = { workspace = true }
+starter-changelog        = { workspace = true }
 starter-changelog-postgres = { workspace = true }
+starter-authz             = { workspace = true }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
 starter-mcp               = { workspace = true, features = ["http"] }
@@ -44,6 +46,7 @@ starter-flow-surfaces     = { workspace = true }
 axum    = { workspace = true }
 clap    = { workspace = true }
 async-trait = { workspace = true }
+chrono      = { workspace = true }
 serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
 
@@ -53,6 +56,8 @@ tracing = { workspace = true }
 anyhow  = { workspace = true }
 
 [dev-dependencies]
-starter-mcp  = { workspace = true, features = ["http", "testing"] }
-tokio        = { workspace = true, features = ["macros", "rt-multi-thread"] }
-tower            = { workspace = true }
+starter-mcp              = { workspace = true, features = ["http", "testing"] }
+starter-changelog-sqlite = { workspace = true }
+starter-store-sqlite     = { workspace = true, features = ["testing"] }
+tokio                    = { workspace = true, features = ["macros", "rt-multi-thread", "process", "io-util", "time"] }
+tower                    = { workspace = true }

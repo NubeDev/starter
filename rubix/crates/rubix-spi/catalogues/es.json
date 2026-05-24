@@ -9,5 +9,7 @@
   "rubix.system.flow_errors.ok": "Sin errores de flujo en los últimos {window}s (sondeado el {at}).",
   "rubix.system.flow_errors.warn": "{count} errores de flujo en los últimos {window}s (sondeado el {at}).",
   "rubix.system.flow_errors.error": "{count} errores de flujo en los últimos {window}s — investigar (sondeado el {at}).",
-  "rubix.alert.send.ok": "Alerta emitida con severidad {severity} (el {at})."
+  "rubix.alert.send.ok": "Alerta emitida con severidad {severity} (el {at}).",
+  "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL no está definido; rubix-admin mcp no puede resolver un actor para la sesión stdio.",
+  "rubix.admin.mcp.principal.not_found": "No existe ningún usuario con el correo {email} en la base de datos de rubix; cree uno con `rubix-admin bootstrap-user` antes de iniciar la sesión MCP por stdio."
 }

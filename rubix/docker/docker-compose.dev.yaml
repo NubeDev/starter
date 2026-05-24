@@ -1,0 +1,59 @@
+# Local-dev compose for the rubix six-step thin-slice demo.
+#
+# Brings up only the two stores the rubix-agent binary talks to:
+#   * Postgres 16   — sessions, authz, changelog, agent-log
+#   * ClickHouse    — per-disk-check history rows
+#
+# Both ports are bound to 127.0.0.1 only so a laptop running this
+# does not expose itself to the LAN. Ports are non-standard
+# (5433/8124/9001) so an already-running local Postgres / ClickHouse
+# instance on the canonical ports is left alone.
+#
+# Matches `rubix/dev/agent.toml` byte-for-byte. If you change a
+# port, user, or db here, change it there too.
+#
+# Convention follows `docker/docker-compose.{clickhouse,example}.yml`
+# at the workspace root: named volumes for persistence across
+# `docker compose down`, healthchecks on each service, no extra
+# services beyond what the rubix-agent binary needs at boot.
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: rubix
+      POSTGRES_PASSWORD: rubix-dev
+      POSTGRES_DB: rubix
+    ports:
+      - "127.0.0.1:5433:5432"
+    volumes:
+      - rubix_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rubix -d rubix"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24-alpine
+    environment:
+      CLICKHOUSE_DB: rubix
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "127.0.0.1:8124:8123"   # HTTP interface
+      - "127.0.0.1:9001:9000"   # Native TCP interface
+    volumes:
+      - rubix_clickhouse_data:/var/lib/clickhouse
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8123/ping || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+
+volumes:
+  rubix_postgres_data:
+  rubix_clickhouse_data:

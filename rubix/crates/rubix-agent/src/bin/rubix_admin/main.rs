@@ -11,6 +11,7 @@ use anyhow::Result;
 use clap::{Parser, Subcommand};
 
 mod bootstrap_user;
+mod mcp;
 mod system;
 
 #[derive(Debug, Parser)]
@@ -33,23 +34,41 @@ enum Command {
     /// `probe()` the REST handler dispatches.
     #[command(subcommand)]
     System(system::SystemCommand),
+    /// Run the MCP stdio JSON-RPC transport so an MCP host
+    /// (Claude Desktop, another agent) can talk to rubix as a
+    /// child process. `RUBIX_PRINCIPAL_EMAIL` selects the actor;
+    /// `RUBIX_CONFIG` points at the agent config; per-call
+    /// `params._meta.acceptLanguage` selects the locale.
+    Mcp(mcp::Args),
 }
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Same tracing shape the agent binary uses, so operators see
-    // identical log formatting across `rubix-agent` and
-    // `rubix-admin`.
-    let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into());
-    let _guard = starter_observability::tracing::init(
-        &filter,
-        starter_observability::tracing::Format::Pretty,
-    )
-    .map_err(|e| anyhow::anyhow!("init tracing: {e}"))?;
-
     let cli = Cli::parse();
+
+    // Only the non-`mcp` verbs install the pretty tracing
+    // subscriber. The stdio MCP transport reserves stdout for
+    // framed JSON-RPC, and `starter_observability::tracing::init`
+    // writes records to stdout by default; installing it here
+    // would corrupt the wire. The `mcp` verb opts out and routes
+    // operator-visible messages straight to stderr.
+    let _guard = match cli.command {
+        Command::Mcp(_) => None,
+        _ => {
+            let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into());
+            Some(
+                starter_observability::tracing::init(
+                    &filter,
+                    starter_observability::tracing::Format::Pretty,
+                )
+                .map_err(|e| anyhow::anyhow!("init tracing: {e}"))?,
+            )
+        }
+    };
+
     match cli.command {
         Command::BootstrapUser(args) => bootstrap_user::run(args).await,
         Command::System(cmd) => system::run(cmd).await,
+        Command::Mcp(args) => mcp::run(args).await,
     }
 }

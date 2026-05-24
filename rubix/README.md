@@ -54,6 +54,46 @@ cargo run -p rubix-agent
 curl -sf http://127.0.0.1:8080/healthz
 ```
 
+## Local demo
+
+The six-step thin-slice path (see
+[docs/scope/THIN-SLICE.md §Success criterion](./docs/scope/THIN-SLICE.md)).
+On a fresh dev machine with only `docker` + `cargo` installed:
+
+```bash
+# One-line setup — brings up Postgres + ClickHouse, seeds the
+# bootstrap operator, then boots the rubix-agent against
+# rubix/dev/agent.toml. Tear down later with `mani run dev-deps-down`.
+mani run demo
+```
+
+Once the binary is up, walk the six smoke steps by hand:
+
+```bash
+# 1. Boot
+mani run run
+
+# 2. Log in as the bootstrap operator
+curl -c cookies.txt -X POST http://127.0.0.1:8088/api/v1/auth/login \
+     -d '{"email":"op@example.com","password":"..."}'
+
+# 3. Call the disk-check via REST with Spanish + Paris prefs
+curl -b cookies.txt -H "Accept-Language: es-AR" \
+     http://127.0.0.1:8088/api/v1/tools/rubix.system.disk
+# → JSON with Diagnostic { code, params: { percent, free }, message_en }
+
+# 4. Connect Claude Desktop to the MCP endpoint
+# → "What's the disk situation?" returns Spanish prose with EU date format
+
+# 5. Inspect the audit trail
+psql -c "SELECT actor, action, kind FROM changelog ORDER BY at DESC LIMIT 5"
+
+# 6. Inspect the history
+clickhouse-client -q "SELECT * FROM system_disk_history ORDER BY at DESC LIMIT 5"
+```
+
+If all six steps work, the arch is real.
+
 ## How rubix uses starter
 
 Rubix consumes ~28 `starter-*` crates listed in
