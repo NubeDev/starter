@@ -129,3 +129,38 @@ pnpm api:check                  # verify public API snapshots
 4. Run `pnpm api:update` to seed the API snapshot.
 5. If you ship CSS, document the required `@source` directives in the
    package README.
+
+---
+
+## Extraction bar (when a feature graduates from `examples/`)
+
+Components inside `examples/admin/src/components/**` graduate into
+their own `@nube/starter-*` package once they meet **all** of these
+criteria:
+
+1. **Zero I/O.** No `fetch`, no React Query, no auth checks. Data comes
+   in via props or a transport adapter.
+2. **No router coupling.** No `Link`, `useLocation`, or
+   `useRouterState` imports. If navigation is needed, accept a
+   `renderLink`/`as` prop or a slot.
+3. **No global stores.** No `useTheme`, `useLayout`, `useLocale` from
+   app-local Zustand stores. The package may consume `@nube/starter-ui-core`
+   facades (graduated stores) but not consumer-specific ones.
+4. **i18n at the call site.** Components accept already-translated
+   strings as props. No `useIntl` / `FormattedMessage` inside the
+   package source.
+5. **shadcn-standard tokens.** Visual styles use `--card`, `--primary`,
+   `--muted-foreground`, etc. Demo-specific tokens (`--color-leaf`,
+   `--pad-card`) get lifted into accent props or removed.
+6. **A clear single-purpose name.** `starter-ui-<thing>` where `<thing>`
+   is a kind of UI surface, not a feature flag.
+
+The current `examples/admin/src/components/{layout,top-header,action-dock}`
+tree **intentionally does not yet meet this bar** — those components
+import `@tanstack/react-router`, consume the admin-local theme store
+directly, and embed `useIntl` calls throughout. Extracting them today
+would either ship a TanStack-Router-only package (locking out other
+router choices) or force the wrong abstraction (render-prop everywhere)
+before we know which patterns will hold up across consumers. They stay
+inlined in `examples/admin` until a second consumer needs them or the
+deps are decoupled.
