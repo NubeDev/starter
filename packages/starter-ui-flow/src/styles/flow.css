@@ -1,72 +1,278 @@
 /*
  * @nube/starter-ui-flow — visual defaults.
  *
- * Variables (override in your app's CSS):
- *   --sf-node-bg, --sf-node-border, --sf-node-divider, --sf-node-extra
- *   --sf-handle-border
- *   --sf-slot-label
+ * Everything is class-driven; consumers retheme by overriding the
+ * variables below in their own CSS. The defaults below produce a
+ * modern glassmorphic node, paper-textured background, and tasteful
+ * dark-mode pair without depending on any specific design system.
+ *
+ * Variables (override at :root or scoped to a parent):
+ *   --sf-node-bg, --sf-node-fg, --sf-node-border, --sf-node-divider,
+ *   --sf-node-extra, --sf-node-shadow
+ *   --sf-handle-border, --sf-handle-ring
+ *   --sf-slot-label, --sf-slot-value-bg, --sf-slot-value-fg, --sf-mono
  *   --sf-edge-label-bg
  *   --sf-palette-bg, --sf-palette-border, --sf-palette-hover
- *   --sf-font
+ *   --sf-font, --sf-radius, --sf-radius-sm
+ *   --sf-accent-default
+ *   --sf-state-ready, --sf-state-running, --sf-state-ok,
+ *   --sf-state-error, --sf-state-cancelled, --sf-state-skipped
+ *   --sf-selected-ring
  */
 
-/* Ensure Tailwind v4 scans this package's components when the host
- * imports this stylesheet (v4 skips node_modules). */
+/* Tailwind v4 skips node_modules; opt this package back in. */
 @source "../..";
 
 :root {
-  --sf-node-bg: #ffffff;
-  --sf-node-border: #e2e8f0;
-  --sf-node-divider: #f1f5f9;
-  --sf-node-extra: #475569;
-  --sf-handle-border: #ffffff;
-  --sf-slot-label: #475569;
-  --sf-edge-label-bg: #ffffff;
-  --sf-palette-bg: #ffffff;
+  --sf-node-bg:        #ffffffeb;
+  --sf-node-fg:        #0f172a;
+  --sf-node-border:    #e2e8f0;
+  --sf-node-divider:   #eef2f7;
+  --sf-node-extra:     #475569;
+  --sf-node-shadow:    0 1px 0 0 rgba(15, 23, 42, 0.04) inset,
+                       0 14px 32px -18px rgba(15, 23, 42, 0.45),
+                       0 2px 6px -2px rgba(15, 23, 42, 0.08);
+  --sf-handle-border:  #ffffff;
+  --sf-handle-ring:    rgba(15, 23, 42, 0.10);
+  --sf-slot-label:     #475569;
+  --sf-slot-value-bg:  rgba(15, 23, 42, 0.06);
+  --sf-slot-value-fg:  #0f172a;
+  --sf-edge-label-bg:  #ffffff;
+  --sf-palette-bg:     #ffffff;
   --sf-palette-border: #e2e8f0;
-  --sf-palette-hover: #f1f5f9;
-  --sf-font: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sf-palette-hover:  #f1f5f9;
+  --sf-font:           ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --sf-mono:           ui-monospace, SFMono-Regular, Menlo, monospace;
+  --sf-radius:         14px;
+  --sf-radius-sm:      8px;
+  --sf-accent-default: #0ea5e9;
+  --sf-state-ready:    #3b82f6;
+  --sf-state-running:  #f59e0b;
+  --sf-state-ok:       #10b981;
+  --sf-state-error:    #ef4444;
+  --sf-state-cancelled:#64748b;
+  --sf-state-skipped:  #94a3b8;
+  --sf-selected-ring:  color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 60%, transparent);
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --sf-node-bg: #0f172a;
-    --sf-node-border: #1e293b;
-    --sf-node-divider: #1e293b;
-    --sf-node-extra: #cbd5e1;
-    --sf-handle-border: #0f172a;
-    --sf-slot-label: #cbd5e1;
-    --sf-edge-label-bg: #0f172a;
-    --sf-palette-bg: #0f172a;
+    --sf-node-bg:        rgba(15, 23, 42, 0.78);
+    --sf-node-fg:        #f1f5f9;
+    --sf-node-border:    #1e293b;
+    --sf-node-divider:   #1e293b;
+    --sf-node-extra:     #cbd5e1;
+    --sf-node-shadow:    0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+                         0 16px 36px -14px rgba(0, 0, 0, 0.6),
+                         0 2px 6px -2px rgba(0, 0, 0, 0.4);
+    --sf-handle-border:  #0f172a;
+    --sf-handle-ring:    rgba(255, 255, 255, 0.08);
+    --sf-slot-label:     #cbd5e1;
+    --sf-slot-value-bg:  rgba(255, 255, 255, 0.08);
+    --sf-slot-value-fg:  #f1f5f9;
+    --sf-edge-label-bg:  #0f172a;
+    --sf-palette-bg:     rgba(15, 23, 42, 0.92);
     --sf-palette-border: #1e293b;
-    --sf-palette-hover: #1e293b;
+    --sf-palette-hover:  #1e293b;
   }
 }
 
-.sf-edge--active {
-  animation: sf-dash 600ms linear infinite;
-}
-
-@keyframes sf-dash {
-  to {
-    stroke-dashoffset: -20;
-  }
-}
-
+/* ---------------------------------------------------------------------------
+   Node frame
+   ------------------------------------------------------------------------- */
 .sf-node {
-  transition: box-shadow 120ms ease, border-color 120ms ease;
+  font-family: var(--sf-font);
+  color: var(--sf-node-fg);
+  background: var(--sf-node-bg);
+  border: 1px solid var(--sf-node-border);
+  border-radius: var(--sf-radius);
+  min-width: 220px;
+  box-shadow: var(--sf-node-shadow);
+  backdrop-filter: blur(10px) saturate(140%);
+  -webkit-backdrop-filter: blur(10px) saturate(140%);
+  overflow: hidden;
+  transition: box-shadow 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.sf-node:hover {
+  border-color: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 35%, var(--sf-node-border));
+}
+.sf-node--selected {
+  border-color: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 70%, var(--sf-node-border));
+  box-shadow: var(--sf-node-shadow), 0 0 0 3px var(--sf-selected-ring);
 }
 
+/* Top accent stripe — uses the node's --sf-accent (set inline from spec.color) */
+.sf-node::before {
+  content: "";
+  display: block;
+  height: 3px;
+  background: linear-gradient(
+    90deg,
+    var(--sf-accent, var(--sf-accent-default)) 0%,
+    color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 50%, transparent) 100%
+  );
+}
+
+/* ---------------------------------------------------------------------------
+   Header
+   ------------------------------------------------------------------------- */
+.sf-node__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 12px 8px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+}
+.sf-node__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 18%, transparent);
+  color: var(--sf-accent, var(--sf-accent-default));
+  font-size: 10px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+.sf-node__title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--sf-node-fg);
+}
+.sf-node__kind {
+  font-size: 10px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sf-slot-label);
+  opacity: 0.7;
+}
+.sf-node__state {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.sf-node__state--ready     { background: var(--sf-state-ready); }
+.sf-node__state--running   { background: var(--sf-state-running);
+                             box-shadow: 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 40%, transparent);
+                             animation: sf-pulse-dot 1.2s ease-in-out infinite; }
+.sf-node__state--ok        { background: var(--sf-state-ok); }
+.sf-node__state--error     { background: var(--sf-state-error); }
+.sf-node__state--cancelled { background: var(--sf-state-cancelled); }
+.sf-node__state--skipped   { background: var(--sf-state-skipped); }
+
+/* ---------------------------------------------------------------------------
+   Body / slots
+   ------------------------------------------------------------------------- */
+.sf-node__body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding: 6px 0 10px;
+  gap: 4px 12px;
+  border-top: 1px solid var(--sf-node-divider);
+}
+.sf-node__col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 6px 0;
+}
+.sf-node__col--out { align-items: flex-end; }
+.sf-node__extra {
+  border-top: 1px solid var(--sf-node-divider);
+  padding: 8px 12px;
+  font-size: 11px;
+  color: var(--sf-node-extra);
+}
+
+/* Slot rows */
+.sf-slot-row {
+  display: flex;
+  flex-direction: column;
+}
+.sf-slot-row--input  { align-items: flex-start; }
+.sf-slot-row--output { align-items: flex-end; }
+
+.sf-slot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 2px 12px;
+  position: relative;
+}
+.sf-slot--output { flex-direction: row-reverse; }
+.sf-slot__handle {
+  /* @xyflow/react renders this as <div role="button">; size override */
+  width: 10px !important;
+  height: 10px !important;
+  border: 2px solid var(--sf-handle-border) !important;
+  box-shadow: 0 0 0 2px var(--sf-handle-ring);
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+.sf-slot__handle:hover {
+  transform: scale(1.25);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--sf-accent, var(--sf-accent-default)) 30%, transparent);
+}
+.sf-slot__label {
+  font-size: 11px;
+  color: var(--sf-slot-label);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+.sf-slot__required { color: var(--sf-state-error); margin-left: 2px; }
+
+/* Slot value badges */
+.sf-slot__value {
+  margin: 1px 12px 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--sf-slot-value-bg);
+  color: var(--sf-slot-value-fg);
+  font-family: var(--sf-mono);
+  font-size: 10px;
+  line-height: 1.3;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------------------
+   Run-state ring on the whole node
+   ------------------------------------------------------------------------- */
+.sf-node--ready     { border-color: var(--sf-state-ready); }
+.sf-node--ok        { border-color: color-mix(in oklab, var(--sf-state-ok) 60%, var(--sf-node-border)); }
+.sf-node--error     { border-color: color-mix(in oklab, var(--sf-state-error) 70%, var(--sf-node-border)); }
+.sf-node--cancelled { border-color: var(--sf-state-cancelled); }
+.sf-node--skipped   { border-color: var(--sf-state-skipped); }
 .sf-node--running {
-  animation: sf-pulse 1.2s ease-in-out infinite;
+  border-color: color-mix(in oklab, var(--sf-state-running) 70%, var(--sf-node-border));
+  animation: sf-pulse 1.6s ease-in-out infinite;
 }
 
 @keyframes sf-pulse {
-  0%,
-  100% {
-    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
-  }
-  50% {
-    box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
-  }
+  0%, 100% { box-shadow: var(--sf-node-shadow), 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 35%, transparent); }
+  50%      { box-shadow: var(--sf-node-shadow), 0 0 0 8px color-mix(in oklab, var(--sf-state-running) 0%, transparent); }
+}
+@keyframes sf-pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 color-mix(in oklab, var(--sf-state-running) 50%, transparent); }
+  50%      { box-shadow: 0 0 0 5px color-mix(in oklab, var(--sf-state-running) 0%,  transparent); }
+}
+
+/* ---------------------------------------------------------------------------
+   Edges
+   ------------------------------------------------------------------------- */
+.sf-edge--active {
+  animation: sf-dash 600ms linear infinite;
+}
+@keyframes sf-dash {
+  to { stroke-dashoffset: -20; }
 }

@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import type { ReactNode } from "react";
 import type { NodeKindSpec, NodeRunState, SlotName, SlotSpec } from "../types.js";
 import { SlotHandle } from "../slots/SlotHandle.js";
 import { cn } from "../lib/cn.js";
@@ -19,21 +19,14 @@ export interface BaseNodeProps {
   children?: ReactNode;
 }
 
-const STATE_BORDER: Record<NodeRunState, string> = {
-  idle: "#cbd5e1",
-  ready: "#3b82f6",
-  running: "#f59e0b",
-  ok: "#10b981",
-  error: "#ef4444",
-  cancelled: "#64748b",
-  skipped: "#94a3b8",
-};
-
 /**
- * Visual frame for every node kind. Renders header + input column +
- * output column. Kind-specific bodies plug into `children`.
+ * Visual frame for every node kind. Renders an iconified header, a
+ * two-column slot grid (inputs left, outputs right), an optional
+ * config slot (`children`), and a run-state ring.
  *
- * Hosts can fully restyle by targeting `.sf-node` and
+ * Visuals are 100% class-driven against the `--sf-*` variables defined
+ * in `styles/flow.css`. Hosts can fully restyle by overriding those
+ * variables or by targeting `.sf-node`, `.sf-node__header`, and
  * `[data-node-kind="…"]` in their own CSS.
  */
 export function BaseNode({
@@ -44,78 +37,39 @@ export function BaseNode({
   slotValues,
   children,
 }: BaseNodeProps) {
-  const accent = spec.color ?? "#0ea5e9";
-  const border = selected
-    ? "#0ea5e9"
-    : state !== "idle"
-      ? STATE_BORDER[state]
-      : "var(--sf-node-border, #e2e8f0)";
-
-  const wrap: CSSProperties = {
-    background: "var(--sf-node-bg, #ffffff)",
-    border: `2px solid ${border}`,
-    borderRadius: 8,
-    minWidth: 200,
-    boxShadow: selected
-      ? "0 0 0 2px rgba(14,165,233,0.25)"
-      : "0 1px 2px rgba(15,23,42,0.06)",
-    fontFamily: "var(--sf-font, ui-sans-serif, system-ui, sans-serif)",
-  };
-
-  const header: CSSProperties = {
-    background: accent,
-    color: "#ffffff",
-    padding: "6px 10px",
-    borderTopLeftRadius: 6,
-    borderTopRightRadius: 6,
-    fontSize: 12,
-    fontWeight: 600,
-    display: "flex",
-    justifyContent: "space-between",
-    gap: 8,
-  };
-
-  const body: CSSProperties = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    padding: "6px 4px",
-    gap: 4,
-  };
-
+  const accent = spec.color ?? "var(--sf-accent-default, #0ea5e9)";
   return (
-    <div className={cn("sf-node", `sf-node--${state}`)} data-node-kind={spec.kind} style={wrap}>
-      <div className="sf-node__header" style={header}>
-        <span>{label ?? spec.label}</span>
-        <span style={{ opacity: 0.85, fontWeight: 400 }}>{spec.kind}</span>
+    <div
+      className={cn(
+        "sf-node",
+        `sf-node--${state}`,
+        selected && "sf-node--selected",
+      )}
+      data-node-kind={spec.kind}
+      data-node-state={state}
+      style={{ ["--sf-accent" as string]: accent }}
+    >
+      <div className="sf-node__header">
+        <span className="sf-node__icon" aria-hidden="true">
+          <NodeIcon icon={spec.icon} fallback={spec.label} />
+        </span>
+        <span className="sf-node__title">{label ?? spec.label}</span>
+        <span className="sf-node__kind">{spec.kind}</span>
+        <StateDot state={state} />
       </div>
-      <div className="sf-node__body" style={body}>
-        <div className="sf-node__inputs" style={{ display: "flex", flexDirection: "column" }}>
+      <div className="sf-node__body">
+        <div className="sf-node__col sf-node__col--in">
           {spec.inputs.map((s) => (
             <SlotRow key={`in-${s.name}`} spec={s} side="input" value={slotValues?.[s.name]} />
           ))}
         </div>
-        <div
-          className="sf-node__outputs"
-          style={{ display: "flex", flexDirection: "column", alignItems: "flex-end" }}
-        >
+        <div className="sf-node__col sf-node__col--out">
           {spec.outputs.map((s) => (
             <SlotRow key={`out-${s.name}`} spec={s} side="output" value={slotValues?.[s.name]} />
           ))}
         </div>
       </div>
-      {children ? (
-        <div
-          className="sf-node__extra"
-          style={{
-            borderTop: "1px solid var(--sf-node-divider, #f1f5f9)",
-            padding: "6px 10px",
-            fontSize: 11,
-            color: "var(--sf-node-extra, #475569)",
-          }}
-        >
-          {children}
-        </div>
-      ) : null}
+      {children ? <div className="sf-node__extra">{children}</div> : null}
     </div>
   );
 }
@@ -132,37 +86,14 @@ function SlotRow({
   value: unknown;
 }) {
   const rendered = renderSlotValue(value);
-  const wrap: CSSProperties = {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: side === "input" ? "flex-start" : "flex-end",
-  };
-  const badge: CSSProperties = {
-    marginLeft: side === "input" ? 16 : 0,
-    marginRight: side === "output" ? 16 : 0,
-    marginTop: 1,
-    padding: "1px 6px",
-    borderRadius: 4,
-    background: "var(--sf-slot-value-bg, rgba(15,23,42,0.06))",
-    color: "var(--sf-slot-value-fg, #0f172a)",
-    fontFamily:
-      "var(--sf-mono, ui-monospace, SFMono-Regular, Menlo, monospace)",
-    fontSize: 10,
-    lineHeight: 1.3,
-    maxWidth: 180,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  };
   return (
-    <div style={wrap}>
+    <div className={cn("sf-slot-row", `sf-slot-row--${side}`)}>
       <SlotHandle spec={spec} side={side} />
       {rendered !== null ? (
         <span
           className="sf-slot__value"
           data-slot-kind={spec.kind}
           title={rendered}
-          style={badge}
         >
           {rendered.length > BADGE_MAX
             ? `${rendered.slice(0, BADGE_MAX - 1)}…`
@@ -171,6 +102,47 @@ function SlotRow({
       ) : null}
     </div>
   );
+}
+
+const STATE_LABEL: Record<NodeRunState, string> = {
+  idle: "Idle",
+  ready: "Ready",
+  running: "Running",
+  ok: "Succeeded",
+  error: "Failed",
+  cancelled: "Cancelled",
+  skipped: "Skipped",
+};
+
+function StateDot({ state }: { state: NodeRunState }) {
+  if (state === "idle") return null;
+  return (
+    <span
+      className={cn("sf-node__state", `sf-node__state--${state}`)}
+      aria-label={STATE_LABEL[state]}
+      title={STATE_LABEL[state]}
+    />
+  );
+}
+
+/**
+ * Lightweight icon renderer. `spec.icon` is a free-form string
+ * identifier (e.g. "sparkles"). The package stays icon-library-free;
+ * we render a 1–2 char monogram derived from the icon string (or the
+ * label as fallback). Consumers who want lucide / phosphor / heroicons
+ * can supply their own NodeKindComponent and ignore BaseNode entirely.
+ */
+function NodeIcon({ icon, fallback }: { icon: string | undefined; fallback: string }) {
+  const seed = (icon ?? fallback ?? "").trim();
+  if (!seed) return <span className="sf-node__icon-glyph" />;
+  // Take the first letter of each dash-separated word, max 2 chars.
+  const initials = seed
+    .split(/[-\s_]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((p) => p[0]?.toUpperCase() ?? "")
+    .join("");
+  return <span className="sf-node__icon-glyph">{initials || seed[0]?.toUpperCase()}</span>;
 }
 
 /**

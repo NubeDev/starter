@@ -1,5 +1,4 @@
 import { Handle, Position, type HandleProps } from "@xyflow/react";
-import type { CSSProperties } from "react";
 import type { SlotSpec } from "../types.js";
 import { colorForKind } from "./colors.js";
 
@@ -14,47 +13,34 @@ interface SlotHandleProps {
  * A typed slot handle. Renders a coloured connector on the side of a
  * node with a label adjacent to it. The handle `id` is the slot name,
  * which is what `useTypedConnect` uses to validate connections.
+ *
+ * The connector gets its colour from the slot's `kind` (see
+ * `colorForKind`). Everything else is class-driven so hosts can
+ * restyle by overriding the `--sf-*` variables or by targeting
+ * `.sf-slot`, `.sf-slot__handle`, and `.sf-slot__label`.
  */
 export function SlotHandle({ spec, side, id }: SlotHandleProps) {
   const position = side === "input" ? Position.Left : Position.Right;
   const type: HandleProps["type"] = side === "input" ? "target" : "source";
   const handleId = id ?? spec.name;
   const color = colorForKind(spec.kind);
-
-  const handleStyle: CSSProperties = {
-    background: color,
-    width: 10,
-    height: 10,
-    border: "2px solid var(--sf-handle-border, #ffffff)",
-  };
-
-  const rowStyle: CSSProperties = {
-    display: "flex",
-    flexDirection: side === "input" ? "row" : "row-reverse",
-    alignItems: "center",
-    gap: 6,
-    position: "relative",
-    padding: "2px 0",
-  };
-
-  const labelStyle: CSSProperties = {
-    fontSize: 11,
-    color: "var(--sf-slot-label, #475569)",
-    whiteSpace: "nowrap",
-  };
-
   return (
-    <div className="sf-slot" data-slot-kind={spec.kind} style={rowStyle}>
+    <div
+      className={`sf-slot sf-slot--${side}`}
+      data-slot-kind={spec.kind}
+      data-slot-required={spec.required ? "" : undefined}
+    >
       <Handle
         id={handleId}
         type={type}
         position={position}
-        style={handleStyle}
+        className="sf-slot__handle"
         data-slot-kind={spec.kind}
+        style={{ background: color }}
       />
-      <span style={labelStyle}>
+      <span className="sf-slot__label">
         {spec.label ?? spec.name}
-        {spec.required ? <span style={{ color: "#ef4444" }}> *</span> : null}
+        {spec.required ? <span className="sf-slot__required" aria-hidden="true"> *</span> : null}
       </span>
     </div>
   );
