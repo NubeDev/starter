@@ -1,0 +1,4 @@
+{
+  "extends": "../starter-client-ts/tsconfig.json",
+  "include": ["src"]
+}

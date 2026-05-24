@@ -13,4 +13,5 @@
 
 export { StarterClient } from "./client/client.js";
 export { StarterError } from "./error/starter-error.js";
+export type { Problem } from "./error/starter-error.js";
 export * from "./endpoints/index.js";

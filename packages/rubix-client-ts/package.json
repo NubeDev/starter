@@ -1,0 +1,28 @@
+{
+  "name": "@nube/rubix-client-ts",
+  "version": "0.1.0",
+  "description": "TS HTTP client for rubix-agent. Codegen'd from rubix/openapi.json. Wraps @nube/starter-client-ts.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./generated": "./src/generated/index.ts"
+  },
+  "files": ["src", "bin", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "codegen": "node ../starter-client-ts/bin/codegen.mjs --input ../../rubix/openapi.json --output ./src/generated/index.ts"
+  },
+  "dependencies": {
+    "@nube/starter-client-ts": "workspace:*"
+  },
+  "devDependencies": {
+    "openapi-typescript": "^7.4.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.1.0"
+  }
+}
