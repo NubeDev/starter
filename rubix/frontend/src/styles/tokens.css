@@ -1,0 +1,86 @@
+/* ---------------------------------------------------------------------------
+   Nube iO Design System — Semantic tokens (v1)
+   ---------------------------------------------------------------------------
+   This is the layer product code SHOULD reference. Values are `H S% L%`
+   triplets (shadcn convention) so callers wrap with `hsl(var(--primary))`
+   and can apply opacity via `hsl(var(--primary) / 0.5)`.
+
+   The selector is `[data-palette='nube']` because palette switching lives in
+   the theme-store. Light/dark variants are gated on `[data-mode]`.
+
+   Source: design-system.md §5.2
+--------------------------------------------------------------------------- */
+
+:root[data-palette='nube'][data-mode='light'] {
+  /* Backgrounds */
+  --background:        var(--grey-50);
+  --foreground:        var(--grey-800);
+  --card:              0 0% 100%;
+  --card-foreground:   var(--grey-800);
+  --popover:           0 0% 100%;
+  --popover-foreground: var(--grey-800);
+
+  /* Brand */
+  --primary:            var(--teal-500);
+  --primary-foreground: 0 0% 100%;
+
+  /* Secondary / muted */
+  --secondary:            var(--grey-100);
+  --secondary-foreground: var(--grey-800);
+  --muted:                var(--grey-100);
+  --muted-foreground:     var(--grey-500);
+
+  /* Accent — teal-tinted hover/active surface, NOT yellow */
+  --accent:            var(--teal-50);
+  --accent-foreground: var(--teal-700);
+
+  /* Callout (yellow) — underlines + badges only */
+  --callout:            var(--yellow-400);
+  --callout-foreground: var(--grey-800);
+
+  /* Status */
+  --success:                 var(--green-500);
+  --warning:                 var(--amber-500);
+  --destructive:             var(--red-500);
+  --destructive-foreground:  0 0% 100%;
+  --info:                    var(--blue-500);
+
+  /* Borders, inputs, focus */
+  --border: var(--grey-200);
+  --input:  var(--grey-200);
+  --ring:   var(--teal-500);
+}
+
+:root[data-palette='nube'][data-mode='dark'] {
+  --background:        var(--grey-950);
+  --foreground:        0 0% 96%;
+  --card:              var(--grey-900);
+  --card-foreground:   0 0% 96%;
+  --popover:           var(--grey-900);
+  --popover-foreground: 0 0% 96%;
+
+  /* Teal lifted for dark backgrounds */
+  --primary:            var(--teal-400);
+  --primary-foreground: var(--grey-950);
+
+  --secondary:            var(--grey-800);
+  --secondary-foreground: 0 0% 96%;
+  --muted:                var(--grey-800);
+  --muted-foreground:     var(--grey-400);
+
+  --accent:            var(--teal-950);
+  --accent-foreground: var(--teal-300);
+
+  --callout:            var(--yellow-400);
+  --callout-foreground: var(--grey-950);
+
+  --success:                var(--green-500);
+  --warning:                var(--amber-500);
+  --destructive:            var(--red-500);
+  --destructive-foreground: 0 0% 100%;
+  --info:                   var(--blue-500);
+
+  --border: var(--grey-800);
+  --input:  var(--grey-800);
+  --ring:   var(--teal-400);
+}

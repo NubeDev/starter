@@ -4,3 +4,5 @@ packages:
   - "examples/*/frontend"
   - "starter-extensions/packages/*"
   - "starter-extensions/examples/*"
+  - "rubix/packages/*"
+  - "rubix/frontend"
