@@ -31,9 +31,11 @@ use starter_spi::ai::AiRunner;
 use starter_spi::i18n::LanguageTag;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
+use starter_store_postgres::pool::Pool;
 
 use crate::boot::ai;
 use crate::boot::config::AgentConfig;
+use crate::boot::flows_seed;
 
 use super::agent_node::RubixAiAgentNode;
 use super::prefs::prefs_from_locale;
@@ -53,6 +55,7 @@ use super::prefs::prefs_from_locale;
 /// `DiskTool::with_history` contract.
 pub async fn build_flow_registry(
     ch_client: Option<Arc<ChClient>>,
+    pg_pool: Option<Pool>,
 ) -> anyhow::Result<(Arc<FlowRegistry>, Vec<(FlowId, FlowRevisionId)>, Arc<Engine>)> {
     // -- 1. Engine on a fresh in-memory graph store. The terminal-
     //       slot read-back in `FlowAsTool` reads through this store.
@@ -72,12 +75,29 @@ pub async fn build_flow_registry(
     let tool_registry_snapshot: Vec<Arc<dyn Tool>> =
         crate::registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
 
-    // Load every bundled YAML up front so we can build the
-    // per-node primary-tool map the `RubixAiAgentNode` consults at
-    // invocation time. The map is keyed by `NodeId` so each ai-agent
-    // node knows which concrete tool to dispatch when its flow runs.
-    let triples = rubix_flows::load_all()
-        .map_err(|e| anyhow::anyhow!("rubix_flows::load_all: {e}"))?;
+    // Source the flow definitions from PG when a pool is wired
+    // in — that is the Phase D contract: PG is the source of
+    // truth, the bundled YAMLs are only the first-boot seed.
+    // The laptop / no-Postgres path falls back to the embedded
+    // bundle directly so `cargo run -p rubix-agent` still works
+    // without a database.
+    let triples = if let Some(pool) = pg_pool.as_ref() {
+        let (rows, inserted) = flows_seed::seed_and_load(pool)
+            .await
+            .map_err(|e| anyhow::anyhow!("flows_seed::seed_and_load: {e}"))?;
+        tracing::info!(
+            inserted,
+            loaded = rows.len(),
+            "flows_definitions sourced from Postgres",
+        );
+        rows
+    } else {
+        tracing::info!(
+            "no Postgres pool — loading flow definitions from the embedded bundle",
+        );
+        rubix_flows::load_all()
+            .map_err(|e| anyhow::anyhow!("rubix_flows::load_all: {e}"))?
+    };
     let primary_tools = primary_tools_from_triples(&triples);
 
     let kinds = NodeKindRegistry::new();

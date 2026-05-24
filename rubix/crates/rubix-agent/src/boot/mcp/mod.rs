@@ -76,8 +76,9 @@ pub struct McpSurface {
 /// to the warehouse identically.
 pub async fn build_mcp_surface(
     ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
+    pg_pool: Option<starter_store_postgres::pool::Pool>,
 ) -> anyhow::Result<McpSurface> {
-    let tools = Arc::new(build_tool_registry(ch_client).await?);
+    let tools = Arc::new(build_tool_registry(ch_client, pg_pool).await?);
     let router: axum::Router =
         starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
     Ok(McpSurface { tools, router })
@@ -95,8 +96,9 @@ pub async fn build_mcp_surface(
 /// six bundled flows are present).
 pub async fn build_tool_registry(
     ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
+    pg_pool: Option<starter_store_postgres::pool::Pool>,
 ) -> anyhow::Result<ToolRegistry> {
-    let (registry, flows, engine) = register::build_flow_registry(ch_client).await?;
+    let (registry, flows, engine) = register::build_flow_registry(ch_client, pg_pool).await?;
     let mut tools = ToolRegistry::new();
     for (flow_id, revision) in &flows {
         let tool = FlowAsTool::from_registry(&registry, flow_id, revision, engine.clone())

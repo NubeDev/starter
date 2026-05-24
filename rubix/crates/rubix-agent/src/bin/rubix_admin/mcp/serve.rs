@@ -85,7 +85,7 @@ pub async fn run(_args: Args) -> Result<()> {
 
     // Shared composition — identical tool catalogue to the HTTP
     // surface. `run_stdio` consumes the registry by value.
-    let tools = rubix_agent::boot::mcp::build_tool_registry(ch_client)
+    let tools = rubix_agent::boot::mcp::build_tool_registry(ch_client, None)
         .await
         .map_err(|e| anyhow::anyhow!("build MCP tool registry: {e}"))?;
 

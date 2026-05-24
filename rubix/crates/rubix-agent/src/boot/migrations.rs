@@ -9,7 +9,9 @@
 //! for the full boot-order plan.
 
 use anyhow::Result;
-use rubix_store_postgres::UNDO_SNAPSHOTS_MIGRATION_SOURCE;
+use rubix_store_postgres::{
+    FLOWS_DEFINITIONS_MIGRATION_SOURCE, UNDO_SNAPSHOTS_MIGRATION_SOURCE,
+};
 use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
 use starter_store_postgres::{migrate, pool::connect};
@@ -54,6 +56,7 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         migration_source(),
         postgres_migration_source(),
         UNDO_SNAPSHOTS_MIGRATION_SOURCE,
+        FLOWS_DEFINITIONS_MIGRATION_SOURCE,
     ];
     let sources_applied = sources.len();
     let mut plan = migrate(&pool);

@@ -46,7 +46,10 @@ starter-flow-surfaces     = { workspace = true }
 starter-ai                = { workspace = true, features = ["provider-claude"] }
 starter-ai-agent          = { workspace = true }
 starter-flow-node-loop    = { workspace = true }
-sqlx                      = { workspace = true, features = ["postgres", "runtime-tokio"] }
+sqlx                      = { workspace = true, features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
+uuid                      = { workspace = true }
+include_dir               = "0.7"
+futures                   = { workspace = true }
 
 axum    = { workspace = true }
 clap    = { workspace = true }
