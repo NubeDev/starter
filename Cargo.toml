@@ -91,7 +91,13 @@ members = [
 # (SCOPE.md R3), but the ext crates use `workspace = true` against their
 # OWN root — so we must keep cargo from treating those manifests as
 # members of *this* workspace.
-exclude = ["starter-extensions"]
+#
+# `rubix/extensions/` is likewise a sibling cargo workspace (see
+# rubix/extensions/Cargo.toml). It holds rubix-owned extension binaries
+# whose manifests pick up `starter-ext-sdk` from the starter-extensions
+# workspace via a path dep; the root rubix workspace must not claim
+# them as members.
+exclude = ["starter-extensions", "rubix/extensions"]
 
 [workspace.package]
 version = "0.1.0"
