@@ -17,7 +17,10 @@ pub mod undo_sweep;
 pub use auth::{build_auth, AuthSurface};
 pub use clickhouse::{apply_ch_migrations, rubix_ch_config, RUBIX_CH_DATABASE};
 pub use config::{AgentConfig, ExtensionsConfig, SchedulerConfig, UndoConfig};
-pub use extensions::{build_extension_admin, BootError as ExtensionsBootError};
+pub use extensions::{
+    build_extension_admin, BootError as ExtensionsBootError, ExtensionAdminBundle,
+    SYSTEM_AUTOSTART_PRINCIPAL,
+};
 pub use scheduler::{spawn as spawn_scheduler, SchedulerHandle};
 pub use flow_notify::spawn_flow_notify;
 pub use flows_seed::seed_and_load as seed_and_load_flow_definitions;

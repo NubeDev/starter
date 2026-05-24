@@ -56,6 +56,7 @@ starter-ext-host      = { path = "../../../starter-extensions/crates/starter-ext
 starter-ext-server    = { path = "../../../starter-extensions/crates/starter-ext-server" }
 starter-ext-supervisor = { path = "../../../starter-extensions/crates/starter-ext-supervisor" }
 starter-ext-store-pg  = { path = "../../../starter-extensions/crates/starter-ext-store-pg" }
+starter-ext-mcp       = { path = "../../../starter-extensions/crates/starter-ext-mcp" }
 thiserror             = { workspace = true }
 sqlx                      = { workspace = true, features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
 uuid                      = { workspace = true }

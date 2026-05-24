@@ -85,7 +85,10 @@ pub async fn run(_args: Args) -> Result<()> {
 
     // Shared composition — identical tool catalogue to the HTTP
     // surface. `run_stdio` consumes the registry by value.
-    let tools = rubix_agent::boot::mcp::build_tool_registry(ch_client, None)
+    // Stdio surface does not load extensions — pass `None` for the
+    // extension MCP context. Extension-contributed tools are surfaced
+    // by the long-running HTTP surface only (where supervisors live).
+    let tools = rubix_agent::boot::mcp::build_tool_registry(ch_client, None, None)
         .await
         .map_err(|e| anyhow::anyhow!("build MCP tool registry: {e}"))?;
 

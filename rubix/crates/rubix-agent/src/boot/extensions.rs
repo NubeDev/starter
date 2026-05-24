@@ -39,8 +39,21 @@ use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_server::{
     DefaultSupervisorFactory, EnablementState, ExtensionAdmin, SupervisorFactory,
 };
+use starter_ext_spi::ExtensionId;
 use starter_ext_store_pg::PgEnablementStore;
 use starter_ext_supervisor::SupervisorHandle;
+
+/// Synthetic principal recorded as the actor for any audit / log entry
+/// emitted by the boot-time autostart path. SCOPE OQ-5: operators must
+/// be able to tell at a glance whether a row was produced by a real
+/// operator action (their subject id, written via the `set_as` helper
+/// when they hit `POST /extensions/<id>/{enable,disable}`) or by the
+/// agent's own boot replay of persisted-enabled rows.
+///
+/// The string deliberately namespaces the source (`extensions-`) so
+/// downstream tooling can distinguish it from other internal actors
+/// (e.g. `system:scheduler`, `system:migration`).
+pub const SYSTEM_AUTOSTART_PRINCIPAL: &str = "system:extensions-autostart";
 
 use crate::boot::config::AgentConfig;
 
@@ -114,10 +127,32 @@ pub struct AutostartSpawnError(pub String);
 /// The caller (main.rs Phase C.2) then merges
 /// `starter_ext_server::router(admin.clone(), ..)` under
 /// `/api/v1/extensions/*`. This function does not touch routing.
+/// Bundle returned from [`build_extension_admin`]. The `admin` handle
+/// is what `starter_ext_server::router` consumes; `registry` and
+/// `process_handles` are surfaced so the MCP transport adapter
+/// ([`starter_ext_mcp::register_process_tools`]) can wire each
+/// process-flavour extension's `contributes.tools[]` into the rubix
+/// `ToolRegistry` alongside the bundled `FlowAsTool` entries. Keeping
+/// these as fields on the bundle (rather than fishing them back out of
+/// `ExtensionAdmin`, whose supervisor accessor is crate-private)
+/// avoids reaching into upstream private API.
+pub struct ExtensionAdminBundle {
+    /// Shared admin state for the REST router.
+    pub admin: ExtensionAdmin,
+    /// The sealed registry — shared with `admin` (same `Arc`).
+    pub registry: Arc<ExtensionRegistry>,
+    /// Live supervisor handles for autostarted process-flavour
+    /// extensions, keyed by [`ExtensionId`] as
+    /// [`starter_ext_mcp::register_process_tools`] expects. Each
+    /// handle is wrapped in `Arc` because the MCP adapter clones it
+    /// into every per-tool binding it registers.
+    pub process_handles: HashMap<ExtensionId, Arc<SupervisorHandle>>,
+}
+
 pub async fn build_extension_admin(
     cfg: &AgentConfig,
     pg_pool: &PgPool,
-) -> Result<ExtensionAdmin, BootError> {
+) -> Result<ExtensionAdminBundle, BootError> {
     // (1) Migration. Idempotent — the SQL uses CREATE TABLE IF NOT
     // EXISTS so a second boot is a no-op.
     sqlx::query(PG_ENABLEMENT_MIGRATION_SQL)
@@ -161,6 +196,10 @@ pub async fn build_extension_admin(
     // `with_supervisor_factory`.
     let factory: Arc<dyn SupervisorFactory> = Arc::new(DefaultSupervisorFactory);
     let mut supervisors: HashMap<String, SupervisorHandle> = HashMap::new();
+    // Parallel map keyed by `ExtensionId`, surfaced in the returned
+    // bundle so adapters (notably `starter-ext-mcp`'s
+    // `register_process_tools`) can clone the handle per tool binding.
+    let mut process_handles: HashMap<ExtensionId, Arc<SupervisorHandle>> = HashMap::new();
     if cfg.extensions.autostart_enabled_records {
         let enabled = store
             .list_all()
@@ -178,18 +217,26 @@ pub async fn build_extension_admin(
             };
             match factory.spawn(record).await {
                 Ok(Some(handle)) => {
-                    supervisors.insert(id.as_str().to_string(), handle);
-                    info!(target: "rubix-agent::boot::extensions", id = %id.as_str(),
+                    supervisors.insert(id.as_str().to_string(), handle.clone());
+                    process_handles.insert(id.clone(), Arc::new(handle));
+                    info!(target: "rubix-agent::boot::extensions",
+                        id = %id.as_str(),
+                        actor = SYSTEM_AUTOSTART_PRINCIPAL,
                         "autostarted supervisor");
                 }
                 Ok(None) => {
                     // Builtin / WASM flavour — no supervisor to spawn.
-                    info!(target: "rubix-agent::boot::extensions", id = %id.as_str(),
+                    info!(target: "rubix-agent::boot::extensions",
+                        id = %id.as_str(),
+                        actor = SYSTEM_AUTOSTART_PRINCIPAL,
                         "enabled record has no supervisor (builtin/wasm); skipping");
                 }
                 Err(e) => {
-                    warn!(target: "rubix-agent::boot::extensions", id = %id.as_str(),
-                        error = %e, "autostart spawn failed; continuing boot");
+                    warn!(target: "rubix-agent::boot::extensions",
+                        id = %id.as_str(),
+                        actor = SYSTEM_AUTOSTART_PRINCIPAL,
+                        error = %e,
+                        "autostart spawn failed; continuing boot");
                 }
             }
         }
@@ -199,7 +246,7 @@ pub async fn build_extension_admin(
     // the live-handle map so `GET /extensions/<id>` reports the
     // autostarted records as Running from the first request.
     let autostarted = supervisors.len();
-    let admin = ExtensionAdmin::builder(registry)
+    let admin = ExtensionAdmin::builder(registry.clone())
         .with_supervisors(supervisors)
         .with_enablement_store(store)
         .with_supervisor_factory(factory)
@@ -212,7 +259,12 @@ pub async fn build_extension_admin(
         loaded = outcome.validated,
         failed = outcome.failed,
         autostarted = autostarted,
+        actor = SYSTEM_AUTOSTART_PRINCIPAL,
         "extensions wired"
     );
-    Ok(admin)
+    Ok(ExtensionAdminBundle {
+        admin,
+        registry,
+        process_handles,
+    })
 }

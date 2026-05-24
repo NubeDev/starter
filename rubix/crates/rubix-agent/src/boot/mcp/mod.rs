@@ -32,14 +32,45 @@
 //! [docs/design/agent/](../../../../docs/design/agent/README.md) for
 //! the boot order this fits into.
 
+use std::collections::HashMap;
 use std::sync::Arc;
+use std::time::Duration;
 
+use starter_ext_host::ExtensionRegistry;
+use starter_ext_spi::ExtensionId;
+use starter_ext_supervisor::SupervisorHandle;
 use starter_flow::engine::Engine;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow_spi::graph::GraphStore;
 use starter_flow_surfaces::FlowAsTool;
 
 use starter_mcp::registry::ToolRegistry;
+
+/// Per-request timeout the MCP adapter passes to each
+/// `ProcessExtensionToolBinding`. Generous enough that a process
+/// extension can do its own I/O without tripping, tight enough that a
+/// hung extension does not stall `tools/call`. SCOPE OQ-4: the
+/// rubix-agent end of the MCP wiring picks the value; extensions
+/// cannot override it.
+const EXTENSION_TOOL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+
+/// Input handed to [`build_mcp_surface`] when the agent has an
+/// extension host wired in. Lets the MCP transport adapter
+/// (`starter-ext-mcp`) walk the validated registry and emit one MCP
+/// tool per `contributes.tools[]` entry, dispatching to the matching
+/// supervisor handle for process-flavour extensions.
+///
+/// `None` (the laptop / no-DB path) means the MCP surface still works
+/// — it just won't include extension-contributed tools, because no
+/// extensions were loaded.
+pub struct ExtensionMcpContext {
+    /// The sealed registry, shared with `ExtensionAdmin`.
+    pub registry: Arc<ExtensionRegistry>,
+    /// Live supervisor handles for autostarted process-flavour
+    /// extensions, keyed by [`ExtensionId`] as
+    /// [`starter_ext_mcp::register_process_tools`] expects.
+    pub process_handles: HashMap<ExtensionId, Arc<SupervisorHandle>>,
+}
 
 mod agent_node;
 mod prefs;
@@ -77,8 +108,9 @@ pub struct McpSurface {
 pub async fn build_mcp_surface(
     ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
     pg_pool: Option<starter_store_postgres::pool::Pool>,
+    ext: Option<&ExtensionMcpContext>,
 ) -> anyhow::Result<McpSurface> {
-    let tools = Arc::new(build_tool_registry(ch_client, pg_pool).await?);
+    let tools = Arc::new(build_tool_registry(ch_client, pg_pool, ext).await?);
     let router: axum::Router =
         starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
     Ok(McpSurface { tools, router })
@@ -97,6 +129,7 @@ pub async fn build_mcp_surface(
 pub async fn build_tool_registry(
     ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
     pg_pool: Option<starter_store_postgres::pool::Pool>,
+    ext: Option<&ExtensionMcpContext>,
 ) -> anyhow::Result<ToolRegistry> {
     let (registry, flows, engine) = register::build_flow_registry(ch_client, pg_pool).await?;
     let mut tools = ToolRegistry::new();
@@ -106,7 +139,48 @@ pub async fn build_tool_registry(
             .map_err(|e| anyhow::anyhow!("FlowAsTool::from_registry({flow_id}): {e}"))?;
         tools = tools.register(tool);
     }
-    tracing::info!(mcp_tools = flows.len(), "rubix MCP surface assembled");
+
+    // SCOPE OQ-4: walk every validated process-flavour extension and
+    // register its `contributes.tools[]` into the same `ToolRegistry`
+    // the bundled `FlowAsTool` entries land in. The adapter is the
+    // single transport seam; without this call extensions appear under
+    // `GET /extensions` but `tools/list` is silently incomplete.
+    let mut ext_registered: usize = 0;
+    if let Some(ctx) = ext {
+        let (next, outcome, result) = starter_ext_mcp::register_process_tools(
+            &ctx.registry,
+            &ctx.process_handles,
+            EXTENSION_TOOL_REQUEST_TIMEOUT,
+            tools,
+        );
+        tools = next;
+        ext_registered = outcome.tools_registered;
+        if let Err(e) = result {
+            // Per-tool failures are aggregated by the adapter — log
+            // and continue. The successful tools are already in
+            // `tools`; an operator can read per-id failure detail via
+            // `GET /api/v1/extensions/<id>/events`.
+            tracing::warn!(
+                target: "rubix.boot.extensions.mcp",
+                error = %e,
+                "one or more extension tools failed to wire into MCP",
+            );
+        }
+        tracing::info!(
+            target: "rubix.boot.extensions.mcp",
+            extensions_seen = outcome.extensions_seen,
+            tools_registered = outcome.tools_registered,
+            tools_skipped_non_process = outcome.tools_skipped_non_builtin,
+            "extension tools wired into MCP",
+        );
+    }
+
+    tracing::info!(
+        mcp_tools = flows.len() + ext_registered,
+        flow_tools = flows.len(),
+        extension_tools = ext_registered,
+        "rubix MCP surface assembled",
+    );
     Ok(tools)
 }
 

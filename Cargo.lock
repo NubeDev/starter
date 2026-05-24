@@ -6383,6 +6383,7 @@ dependencies = [
  "starter-changelog-sqlite",
  "starter-config",
  "starter-ext-host",
+ "starter-ext-mcp",
  "starter-ext-server",
  "starter-ext-spi",
  "starter-ext-store-pg",
