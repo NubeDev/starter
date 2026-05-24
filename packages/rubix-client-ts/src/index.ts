@@ -11,3 +11,4 @@
 
 export { RubixClient } from "./client/client.js";
 export { RubixError } from "./error/rubix-error.js";
+export * from "./endpoints/index.js";
