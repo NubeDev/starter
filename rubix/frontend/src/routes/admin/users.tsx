@@ -15,15 +15,21 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, type FormEvent } from 'react'
 import { useIntl } from 'react-intl'
-import { Undo2, UserPlus, Ban } from 'lucide-react'
+import { Undo2, UserPlus, Ban, Users } from 'lucide-react'
 import {
   Button,
   Card,
   CardContent,
   CardHeader,
   CardTitle,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
   Input,
   Label,
+  Skeleton,
 } from '@nube/starter-ui-kit'
 import {
   useUserList,
@@ -121,13 +127,28 @@ function UsersPanel() {
           <div className="text-right">{tr('users.col.actions', 'Actions')}</div>
         </div>
         {list.isLoading ? (
-          <div className="px-6 py-8 text-sm text-[color:var(--color-muted)]">
-            {tr('common.loading', 'Loading…')}
+          <div className="space-y-3 p-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         ) : users.length === 0 ? (
-          <div className="px-6 py-8 text-sm text-[color:var(--color-muted)]">
-            {tr('users.empty', 'No users yet.')}
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Users />
+              </EmptyMedia>
+              <EmptyTitle>
+                {tr('users.empty.title', 'No users yet')}
+              </EmptyTitle>
+              <EmptyDescription>
+                {tr(
+                  'users.empty.body',
+                  'Create the first user with the form above and they will appear here.',
+                )}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           users.map((u) => {
             const disabled = u.disabled_at_ms != null

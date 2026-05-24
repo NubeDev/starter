@@ -29,3 +29,4 @@ export * from "./hooks/clickhouse.js";
 export * from "./hooks/flow-ops.js";
 export * from "./hooks/undo.js";
 export * from "./hooks/audit.js";
+export * from "./hooks/insights.js";

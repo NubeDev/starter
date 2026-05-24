@@ -159,3 +159,112 @@ What each layer contributes:
 
 Operator-runnable manual flow lives in
 [`docs/sessions/2026-05-24-frontend-wired.md`](../../sessions/2026-05-24-frontend-wired.md).
+
+## Route map (after the frontend-surfaces branch)
+
+The console surfaces after `codeless/rubix-frontend-surfaces` lands:
+
+| Path                  | Mounts                                               | Source |
+|-----------------------|------------------------------------------------------|--------|
+| `/` (dashboard)       | feature tiles + boot intro                           | `src/routes/dashboard.tsx` |
+| `/login`              | starter-ui-auth login                                | `src/routes/login.tsx` |
+| `/flows`              | flow list (id, latest revision, deployed_at, supersession_count) | `src/routes/flows/index.tsx` |
+| `/flows/$flowId`      | `<FlowCanvas registry={flowRegistry} readOnly />`    | `src/routes/flows/$flowId.tsx` |
+| `/extensions`         | extensions table + SSE worked example                | `src/routes/extensions.tsx` |
+| `/admin/access`       | `<AuthzAdmin>` (8 tabs)                              | `src/routes/admin/access.tsx` |
+| `/admin/users`        | user admin panel + undo                              | `src/routes/admin/users.tsx` |
+| `/admin/warehouse`    | `<WarehouseAdmin>` (rules · marts · retention · insights) | `src/routes/admin/warehouse.tsx` |
+| `/settings`           | per-user prefs (locale, units, theme)                | `src/routes/settings.tsx` |
+
+Left-nav groups the entries as **Home · Flows · Extensions · Admin · Settings**;
+the admin section expands to access/users/warehouse. Every route is gated by
+the cookie session — unauthenticated visits redirect to `/login`.
+
+## Rubix-flavoured `NodeKindRegistry` boot wiring
+
+`@nube/starter-ui-flow` ships a built-in registry covering the four kinds
+shared across every starter-flow consumer (`ai-agent`, `tool-call`,
+`trigger`, `branch`). Rubix builds its own registry on top of that at boot
+in [`src/lib/flow-registry.ts`](../../../frontend/src/lib/flow-registry.ts):
+
+1. Pull the starter built-ins via `builtinNodeKinds()`.
+2. Replace the `ai-agent` entry with the rubix-specific renderer at
+   [`src/lib/flow-nodes/ai-agent-node.tsx`](../../../frontend/src/lib/flow-nodes/ai-agent-node.tsx)
+   so the canvas shows `skill_hint` as a label and `allowed_tools.length`
+   as a badge — fields that only exist in the rubix flow schema.
+3. Export the assembled registry as a singleton; `/flows/$flowId` passes
+   it to `<FlowCanvas registry={flowRegistry} readOnly />`.
+
+The override is **rubix-side only** — `@nube/starter-ui-flow` is never
+patched. The same pattern lets the next consumer (a tenant console, a
+flow-programmer app) layer its own node kinds without forking the package.
+
+## Warehouse admin surface design
+
+`/admin/warehouse` is the rubix-side equivalent of `<AuthzAdmin>` — a
+tabbed shell with four panels, each a verb file ≤ 200 LOC under
+[`src/components/admin/warehouse/`](../../../frontend/src/components/admin/warehouse/):
+
+| Tab        | Panel                | Hooks |
+|------------|----------------------|-------|
+| Rules      | `rules-panel.tsx`    | `useClickhouseRulesList`, `useClickhouseRuleWrite` |
+| Marts      | `marts-panel.tsx`    | `useClickhouseMartsList`, `useClickhouseMartCreate`, `useClickhouseMartDrop` |
+| Retention  | `retention-panel.tsx`| `useClickhouseTablesList`, `useClickhouseRetentionSet` |
+| Insights   | `insights-panel.tsx` | `useInsightsRulesList`, `useInsightsRuleCreate`, `useInsightsRuleEnable`, `useInsightsRuleDisable` |
+
+The shell ([`warehouse-admin.tsx`](../../../frontend/src/components/admin/warehouse/warehouse-admin.tsx))
+mirrors `<AuthzAdmin>`: starter-ui-kit `<Tabs>`, one panel per tab,
+`<ErrorBoundary>` at the route level, `<Skeleton>` while `isLoading`,
+`<EmptyState>` when a list returns zero rows. Every mutation flows
+through a rubix-agent verb that writes a `undo_snapshots` row, so the
+operator can roll back via `rubix.undo.last` or the panel's undo button.
+
+i18n keys for this surface live under `admin.warehouse.*` in
+`src/i18n/{en,es}.json`, copied from the `rubix-spi` catalogue at
+build time by `pnpm sync-catalogues`.
+
+## Toast error listener pattern
+
+Uncaught `RubixError`s thrown by hooks need to surface as a localised
+toast, not a blank screen. The pattern (target wiring lives at
+`src/components/toast-error-listener.tsx`, mounted once in `main.tsx`
+alongside `<ErrorBoundary>`):
+
+```tsx
+// rubix/frontend/src/components/toast-error-listener.tsx
+import { useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { RubixError } from "@nube/rubix-client-ts";
+import { useToast } from "@nube/starter-ui-kit"; // ← OQ-6: see status note
+
+export function ToastErrorListener() {
+  const qc = useQueryClient();
+  const { toast } = useToast();
+  useEffect(() => {
+    const cache = qc.getQueryCache();
+    const unsub = cache.subscribe((evt) => {
+      if (evt.type === "updated" && evt.action.type === "error") {
+        const err = evt.action.error;
+        if (err instanceof RubixError) {
+          toast({ kind: "error", titleKey: err.messageKey, params: err.params });
+        }
+      }
+    });
+    return unsub;
+  }, [qc, toast]);
+  return null;
+}
+```
+
+Why the listener pattern and not per-hook handlers:
+
+- One place to translate `RubixError.messageKey` through the i18n
+  catalogue, so every uncaught query/mutation error reads the same.
+- TanStack's `QueryCache.subscribe` covers both `useQuery` and
+  `useMutation` failures without each consumer wiring `onError`.
+- The component renders nothing — mounting it once is the whole API.
+
+**Status:** SCOPE OQ-6 — `@nube/starter-ui-kit` does not yet export a
+`Toast` primitive (see session note for the frontend-surfaces branch).
+Until the upstream lands, only the `<EmptyState>` + `<Skeleton>` half of
+Phase D.2 ships; the listener wires up the same day the primitive does.

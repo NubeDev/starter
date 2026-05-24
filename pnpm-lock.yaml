@@ -772,6 +772,9 @@ importers:
       '@nube/starter-ui-dashboard':
         specifier: workspace:*
         version: link:../../packages/starter-ui-dashboard
+      '@nube/starter-ui-flow':
+        specifier: workspace:*
+        version: link:../../packages/starter-ui-flow
       '@nube/starter-ui-kit':
         specifier: workspace:*
         version: link:../../packages/starter-ui-kit
@@ -814,6 +817,9 @@ importers:
       '@tanstack/react-router':
         specifier: ^1.168.10
         version: 1.170.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@xyflow/react':
+        specifier: ^12.3.0
+        version: 12.10.2(@types/react@19.2.14)(immer@11.1.8)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       class-variance-authority:
         specifier: ^0.7.1
         version: 0.7.1

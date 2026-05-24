@@ -12,6 +12,8 @@ import { ThemeProvider } from '@/components/theme/theme-provider'
 import { I18nProvider } from '@/i18n/provider'
 import { getRubixClient, getStarterClient } from '@/lib/client'
 import { LoginRoute } from '@/routes/login'
+import '@xyflow/react/dist/style.css'
+import '@nube/starter-ui-flow/styles.css'
 import './styles/theme.css'
 
 const router = createRouter({ routeTree, defaultPreload: 'intent' })
