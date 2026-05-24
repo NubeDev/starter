@@ -37,5 +37,9 @@
   "rubix.analytics.query.bind_error": "La consulta analítica {name} falló al enlazar parámetros o al ejecutarse en ClickHouse.",
   "rubix.analytics.report.rendered": "Informe analítico {template} generado como {format} ({bytes} bytes, {queries} consultas).",
   "rubix.analytics.report.empty": "Informe analítico {template} generado sin datos ({format}, {queries} consultas devolvieron cero filas).",
-  "rubix.analytics.report.format_unsupported": "Informe analítico rechazado — el formato {format} no es compatible con este binario."
+  "rubix.analytics.report.format_unsupported": "Informe analítico rechazado — el formato {format} no es compatible con este binario.",
+  "rubix.extension.install.succeeded": "Extensión {id} instalada (el {at}); se mostrará tras el siguiente arranque del agente.",
+  "rubix.extension.install.invalid_manifest": "Instalación de extensión rechazada — el archivo subido no contiene un manifiesto block.yaml válido.",
+  "rubix.extension.uninstall.succeeded": "Extensión {id} desinstalada (el {at}); directorio del paquete eliminado y la fila de persistencia marcada como deshabilitada.",
+  "rubix.extension.uninstall.not_found": "No se puede desinstalar la extensión {id} — no existe ningún directorio de paquete para ese id."
 }

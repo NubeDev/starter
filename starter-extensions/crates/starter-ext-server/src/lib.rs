@@ -62,6 +62,7 @@ mod etag;
 mod events;
 mod factory;
 mod i18n;
+mod lifecycle;
 mod rest;
 mod router;
 mod routes;
@@ -75,4 +76,4 @@ pub use rest::{
     RestBuildError, RestDispatcher, RestRouterOptions, SchemaCheck, StreamResponse,
 };
 pub use router::{router, router_with_auth, AdminRouterOptions};
-pub use store::{EnablementState, EnablementStore, InMemoryEnablementStore};
+pub use store::{EnablementState, EnablementStore, InMemoryEnablementStore, StoreError};

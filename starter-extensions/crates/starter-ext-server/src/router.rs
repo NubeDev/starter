@@ -27,7 +27,7 @@
 
 use std::sync::Arc;
 
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use axum::Router;
 use starter_server::auth::{with_principal, with_role};
 use starter_spi::auth::{Authenticator, Role};
@@ -35,6 +35,7 @@ use starter_spi::auth::{Authenticator, Role};
 use crate::admin::ExtensionAdmin;
 use crate::events::events;
 use crate::i18n::i18n;
+use crate::lifecycle::{install, uninstall};
 use crate::routes::{detail, disable, enable, list};
 use crate::ui::ui;
 
@@ -78,6 +79,8 @@ where
         .route("/extensions/{id}/events", get(events))
         .route("/extensions/{id}/enable", post(enable))
         .route("/extensions/{id}/disable", post(disable))
+        .route("/extensions/install", post(install))
+        .route("/extensions/{id}", delete(uninstall))
         .with_state(admin)
 }
 

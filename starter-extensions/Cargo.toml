@@ -7,6 +7,7 @@ members = [
     "crates/starter-ext-host",
     "crates/starter-ext-mcp",
     "crates/starter-ext-server",
+    "crates/starter-ext-store-pg",
     "crates/starter-ext-supervisor",
     "crates/starter-ext-wasm",
     "crates/starter-ext-cli",
@@ -90,7 +91,9 @@ clap        = { version = "4", features = ["derive", "env", "string"] }
 
 # HTTP stack — aligned with parent workspace's pins so a consumer importing
 # both ends up with one major of each.
-axum        = { version = "0.8", features = ["macros"] }
+axum        = { version = "0.8", features = ["macros", "multipart"] }
+tar         = "0.4"
+flate2      = "1"
 tower       = "0.5"
 tower-http  = { version = "0.6", features = ["cors", "trace"] }
 http        = "1"

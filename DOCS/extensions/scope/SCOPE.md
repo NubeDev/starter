@@ -1307,6 +1307,11 @@ accidentally re-exported host-internal types, the test fails.
   pure-CLI deploy) and needs a file-backed alternative — the
   persistence layer becomes a small trait (`EnableStore`) with a
   default DB-backed impl plus a file-backed impl, gated by feature.
+  The default DB-backed impl is **`starter-ext-store-pg`** — a
+  `PgEnablementStore` over `sqlx::PgPool` with a single owned
+  migration (`0001_extensions_enablement.sql`) and a testcontainers
+  integration test covering get/set roundtrip, UPSERT idempotence,
+  `list_all` ordering, and the `updated_by` audit column.
 - **JSON-RPC wire-schema versioning via `host_capabilities`:** when
   v0.2 adds its first new host method, the init handshake gains a
   `host_capabilities` field — an explicit set of method names (and

@@ -215,6 +215,29 @@ jobs:
       - name: check skills dep isolation
         run: scripts/check-skills-dep-isolation.sh
 
+  rubix-extensions:
+    # The `rubix/extensions/` sibling cargo workspace is intentionally
+    # excluded from the rubix root workspace (so example-extension
+    # `workspace = true` aliases resolve against the sibling root, not
+    # rubix's). That means the main `rust` job above never touches it.
+    # This job builds it explicitly so a broken extension binary fails
+    # the PR. See rubix/extensions/README.md.
+    name: rubix-extensions (cargo build)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: rubix-extensions
+
+      - name: build (rubix/extensions workspace)
+        run: cargo build --manifest-path rubix/extensions/Cargo.toml --workspace
+
   audit:
     name: cargo audit
     runs-on: ubuntu-latest

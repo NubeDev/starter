@@ -1,0 +1,22 @@
+# rubix/extensions/ — sibling cargo workspace holding rubix-owned
+# extension binaries. Excluded from the root rubix workspace (see
+# the repo-root Cargo.toml `exclude` list) so the example crate's
+# `workspace = true` aliases resolve here, not against the rubix
+# tree.
+#
+# Members pick up `starter-ext-sdk` (and friends) by path dependency
+# into ../../starter-extensions/crates/*, keeping the dependency arrow
+# the same direction the upstream SCOPE.md R2 prescribes
+# (rubix → starter-extensions, never the other way).
+[workspace]
+resolver = "2"
+members = [
+    "com.rubix.example/process",
+]
+
+[workspace.package]
+version      = "0.0.0"
+edition      = "2021"
+license      = "MIT OR Apache-2.0"
+rust-version = "1.80"
+publish      = false

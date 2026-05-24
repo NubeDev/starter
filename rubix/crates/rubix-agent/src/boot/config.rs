@@ -76,6 +76,58 @@ pub struct AgentConfig {
     /// [`crate::boot::scheduler`] and dispatches every bundled
     /// flow whose YAML carries `trigger: schedule` + `cron_expr`.
     pub scheduler: SchedulerConfig,
+
+    /// Extension-host knobs. See [`ExtensionsConfig`]. The host
+    /// itself lives in [`crate::boot::extensions`] and is
+    /// constructed by `build_extension_admin` when `enabled = true`.
+    pub extensions: ExtensionsConfig,
+}
+
+/// Tunables for the extension host.
+///
+/// The host is opt-out via `enabled = false` so an operator running
+/// rubix-agent purely as a REST/MCP frontend can skip the
+/// `extensions_enablement` migration and the on-boot supervisor
+/// spawns without uninstalling extensions on disk. `dir` defaults to
+/// `rubix/extensions` (the in-repo workspace) so a fresh checkout
+/// boots against the bundled `com.rubix.example`; production
+/// deployments override it to `/var/lib/rubix/extensions` (see
+/// SCOPE open question #1).
+///
+/// `autostart_enabled_records` controls whether the boot path reads
+/// the `extensions_enablement` table and spawns a supervisor for
+/// every persisted-enabled record. Turn it off in integration tests
+/// that want to drive lifecycle transitions explicitly from the
+/// admin routes without racing against autostart spawns.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct ExtensionsConfig {
+    /// When `false` the host is never constructed at boot. The
+    /// `/api/v1/extensions/*` routes are not mounted and no
+    /// migration runs against the Postgres pool. Default `true`.
+    pub enabled: bool,
+
+    /// Filesystem root scanned by `Loader::scan` for extension
+    /// bundles. Each immediate child directory containing a
+    /// `block.yaml` is a candidate. Default `rubix/extensions` —
+    /// the in-repo workspace shipping `com.rubix.example`.
+    pub dir: PathBuf,
+
+    /// When `true` the boot path reads every `Enabled` row from the
+    /// PG store and spawns a supervisor for the matching record so
+    /// the extension is `Running` before the HTTP listener starts
+    /// accepting traffic. Default `true`.
+    pub autostart_enabled_records: bool,
+}
+
+impl Default for ExtensionsConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            dir: PathBuf::from("rubix/extensions"),
+            autostart_enabled_records: true,
+        }
+    }
 }
 
 /// Tunables for the durable cron scheduler (Goal 6).
@@ -184,6 +236,7 @@ impl Default for AgentConfig {
             insights: InsightsConfig::default(),
             undo: UndoConfig::default(),
             scheduler: SchedulerConfig::default(),
+            extensions: ExtensionsConfig::default(),
         }
     }
 }

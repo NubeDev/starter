@@ -87,7 +87,41 @@ async fn main() -> Result<()> {
             ),
             None => None,
         };
-    let mcp = boot::mcp::build_mcp_surface(ch_client.clone(), mcp_pool.clone()).await?;
+
+    // SCOPE OQ-4: build the extension admin BEFORE the MCP surface so
+    // the surface can emit one MCP tool per
+    // `contributes.tools[]` entry alongside the bundled `FlowAsTool`
+    // entries. The ordering is load-bearing: starter-mcp's
+    // `ToolRegistry` is wrapped in `Arc` once `build_mcp_surface`
+    // returns, so any extension tool not registered here is silently
+    // missing from `tools/list`. The PG pool acquired here is reused
+    // below for the auth + changelog sandwich — keeping the
+    // connection-pool count at one.
+    let ext_bundle: Option<boot::ExtensionAdminBundle> =
+        match (mcp_pool.as_ref(), cfg.extensions.enabled) {
+            (Some(pool), true) => Some(boot::build_extension_admin(&cfg, pool.sqlx()).await?),
+            (Some(_), false) => {
+                info!(
+                    target: "rubix.boot.extensions",
+                    "[extensions].enabled = false — extension host not mounted",
+                );
+                None
+            }
+            (None, _) => None,
+        };
+    let ext_mcp_ctx: Option<boot::mcp::ExtensionMcpContext> =
+        ext_bundle
+            .as_ref()
+            .map(|b| boot::mcp::ExtensionMcpContext {
+                registry: b.registry.clone(),
+                process_handles: b.process_handles.clone(),
+            });
+    let mcp = boot::mcp::build_mcp_surface(
+        ch_client.clone(),
+        mcp_pool.clone(),
+        ext_mcp_ctx.as_ref(),
+    )
+    .await?;
 
     // Phase D.2 — durable cron scheduler. Wires only when a PG
     // pool is present (the scheduler's claim/dispatch loop is
@@ -179,6 +213,26 @@ async fn main() -> Result<()> {
         let auth = boot::build_auth(pool.clone());
         let auth_routes = routes::auth::auth_router(auth.state);
         let engine = boot::authz::build_engine()?;
+
+        // Phase C.2 — mount the extension-host admin router. The
+        // lifecycle endpoints (`/extensions`, `/extensions/{id}`,
+        // `/extensions/{id}/{enable,disable,events}`) are sandwiched by
+        // upstream `with_principal` + `with_role(Role::Admin)` inside
+        // `starter_ext_server::router_with_auth`, which is the
+        // admin-only authz gate the rubix surface reuses for operator
+        // routes. The UI bundle + i18n catalogue routes remain
+        // unauthed (see starter_ext_server::router module docs). The
+        // host is skipped entirely when `[extensions].enabled = false`
+        // so integration tests can opt out without a stub PG table.
+        // The extension admin was built earlier (above the MCP
+        // surface) so its registry + supervisor handles could be
+        // threaded into `tools/list`. Here we just consume the
+        // pre-built `ExtensionAdmin` into the auth-gated router.
+        if let Some(bundle) = ext_bundle {
+            let ext_router: Router =
+                starter_ext_server::router_with_auth(bundle.admin, auth.authenticator.clone());
+            app = app.merge(Router::new().nest("/api/v1", ext_router));
+        }
 
         // Layer order matters. The changelog middleware reads
         // `Principal` from request extensions, so it must run
