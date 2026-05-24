@@ -15,7 +15,9 @@
 -- first so the index can skip whole kinds cheaply; per-entity
 -- lookups within a kind still get good locality.
 --
--- `TTL ts + INTERVAL 1 YEAR` per SCOPE.
+-- `TTL toDateTime(ts) + INTERVAL 1 YEAR` per SCOPE. The cast is
+-- mandatory: ClickHouse 24+ rejects TTL expressions whose result
+-- type is `DateTime64` (BAD_TTL_EXPRESSION at CREATE time).
 CREATE TABLE IF NOT EXISTS events (
     id           UInt64 DEFAULT generateSnowflakeID(),
     entity_id    String CODEC(ZSTD(3)),
@@ -23,9 +25,12 @@ CREATE TABLE IF NOT EXISTS events (
     kind         LowCardinality(String),
     payload      String CODEC(ZSTD(3)),
     tags         Map(String, String) DEFAULT map(),
-    INDEX tags_bloom tags TYPE bloom_filter GRANULARITY 1
+    -- See `0001_raw_events.sql` — ClickHouse 24+ rejects
+    -- `bloom_filter` declared directly on a Map column; index
+    -- the keys instead.
+    INDEX tags_bloom mapKeys(tags) TYPE bloom_filter GRANULARITY 1
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(ts)
 ORDER BY (kind, entity_id, ts)
-TTL ts + INTERVAL 1 YEAR;
+TTL toDateTime(ts) + INTERVAL 1 YEAR;

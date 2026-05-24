@@ -42,18 +42,18 @@ tasks:
     desc: |
       Bring up the Postgres + ClickHouse pair the thin-slice demo
       needs, bound to 127.0.0.1 on non-standard ports.
-    cmd: docker compose -f rubix/docker/docker-compose.dev.yaml up -d
+    cmd: docker compose -f docker/docker-compose.dev.yaml up -d
 
   dev-deps-down:
     desc: Tear down the thin-slice Postgres + ClickHouse pair.
-    cmd: docker compose -f rubix/docker/docker-compose.dev.yaml down
+    cmd: docker compose -f docker/docker-compose.dev.yaml down
 
   bootstrap:
     desc: |
       Create or reconcile the op@example.com bootstrap operator
       against the local dev DB. Idempotent — second run is a no-op
       with exit 0.
-    cmd: cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev
+    cmd: RUBIX_DSN=postgres://rubix:rubix-dev@127.0.0.1:5433/rubix cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev-passwd
 
   demo:
     desc: |
@@ -62,9 +62,9 @@ tasks:
       connections (30s ceiling), seed the bootstrap operator,
       then boot the rubix-agent.
     cmd: |
-      docker compose -f rubix/docker/docker-compose.dev.yaml up -d
-      ./rubix/scripts/wait-for-deps.sh
-      cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev
+      docker compose -f docker/docker-compose.dev.yaml up -d
+      ./scripts/wait-for-deps.sh
+      RUBIX_DSN=postgres://rubix:rubix-dev@127.0.0.1:5433/rubix cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev-passwd
       RUBIX_CONFIG=rubix/dev/agent.toml cargo run -p rubix-agent
 
   healthz:
@@ -78,7 +78,7 @@ tasks:
       RUBIX_BOOTSTRAP_PASSWORD from the environment. Idempotent:
       re-running with the same email + admin role is a no-op. See
       docs/design/auth/README.md for the bootstrap contract.
-    cmd: cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user
+    cmd: RUBIX_DSN=postgres://rubix:rubix-dev@127.0.0.1:5433/rubix cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user
 
   mcp-stdio:
     desc: |
@@ -86,7 +86,7 @@ tasks:
       against the dev Postgres. Mirrors what Claude Desktop spawns;
       see rubix/dev/claude-desktop.example.json for the host-side
       snippet. RUBIX_PRINCIPAL_EMAIL selects the actor.
-    cmd: RUBIX_CONFIG=rubix/dev/agent.toml RUBIX_PRINCIPAL_EMAIL=op@example.com cargo run -p rubix-agent --bin rubix-admin -- mcp
+    cmd: RUBIX_DSN=postgres://rubix:rubix-dev@127.0.0.1:5433/rubix RUBIX_CONFIG=rubix/dev/agent.toml RUBIX_PRINCIPAL_EMAIL=op@example.com cargo run -p rubix-agent --bin rubix-admin -- mcp
 
   lint-doc-refs:
     desc: Enforce the doc-tier rule on every rubix Rust source file.

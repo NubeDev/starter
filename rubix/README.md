@@ -73,9 +73,10 @@ Once the binary is up, walk the six smoke steps by hand:
 # 1. Boot
 mani run run
 
-# 2. Log in as the bootstrap operator
+# 2. Log in as the bootstrap operator (default password from
+#    `mani run bootstrap`; override with --password if you reseed).
 curl -c cookies.txt -X POST http://127.0.0.1:8088/api/v1/auth/login \
-     -d '{"email":"op@example.com","password":"..."}'
+     -d '{"email":"op@example.com","password":"rubix-dev-passwd"}'
 
 # 3. Call the disk-check via REST with Spanish + Paris prefs
 curl -b cookies.txt -H "Accept-Language: es-AR" \

@@ -12,7 +12,10 @@ CREATE TABLE IF NOT EXISTS documents (
     blob_ref     String CODEC(ZSTD(3)),
     mime         LowCardinality(String),
     tags         Map(String, String) DEFAULT map(),
-    INDEX tags_bloom tags TYPE bloom_filter GRANULARITY 1
+    -- See `0001_raw_events.sql` — ClickHouse 24+ rejects
+    -- `bloom_filter` declared directly on a Map column; index
+    -- the keys instead.
+    INDEX tags_bloom mapKeys(tags) TYPE bloom_filter GRANULARITY 1
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(ts)
