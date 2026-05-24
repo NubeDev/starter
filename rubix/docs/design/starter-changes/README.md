@@ -44,7 +44,7 @@ PR / issue URL.
 
 | Phase | File | Summary |
 |---|---|---|
-| Phase 1 | [phase-1.md](./phase-1.md) | i18n render API, `DiagnosticParam::Quantity`, `render_diagnostic`, timezone-aware timestamps, `starter-tool-sysdiag`, recorded-LLM harness, flow-node-loop, skills parser, MCP prompts/resources, typed agent events. |
+| Phase 1 | [phase-1.md](./phase-1.md) | i18n render API, `DiagnosticParam::Quantity`, `render_diagnostic`, timezone-aware timestamps, `starter-tool-sysdiag`, recorded-LLM harness, `starter-ai-agent` (runner-agnostic `AgentLoop` primitive, **landed in-tree**), `starter-flow-node-loop` (**landed in-tree**), skills parser, MCP prompts/resources, typed agent events. |
 | Phase 2a | [phase-2a.md](./phase-2a.md) | `starter-auth-users` Postgres store impls. **Complete.** |
 | Phase 2b | [phase-2b.md](./phase-2b.md) | `starter-mcp` Accept-Language plumbing (U1), real `InMemoryTransport` (U2), `starter-flow-surfaces` `FlowRegistry::resolve` + `FlowAsTool::from_registry` (U3). **All complete.** |
 | Phase 2c | [phase-2c.md](./phase-2c.md) | gRPC/CLI rough edges; `starter-i18n` interpolate feature-gate mismatch (latent). |

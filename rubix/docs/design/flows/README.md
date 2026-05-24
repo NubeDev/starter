@@ -91,14 +91,13 @@ All six register at boot; all six surface as MCP tools.
 | `schedule(cron = "...")` | Goal 5 + 6 (Phase 4+) | Needs `cron-schedule` node kind upstream — see [STARTER-CHANGES.md](./STARTER-CHANGES.md) |
 | `event(slot)` | Future | If a goal needs slot-change reactivity |
 
-## Block-A scope note
+## Where invocation behaviour comes from
 
-Stage 1 of the agent-runtime job only owns the YAML → body
-conversion and the boot-time registration. The `ai-agent`
-[`NodeBehavior`](../../../../crates/starter-flow-spi/src/node.rs) is a
-stub here: `FlowRegistry::register` succeeds (so every bundled
-flow surfaces as an MCP tool and the boot log shows
-`mcp_tools=6`), but invoking any flow returns a clear
-`NodeError::Backend("…not wired yet…")`. Block C replaces the stub
-with `starter-flow-node-loop`'s real `AiAgentNode` wired to a
-Claude runner.
+The loader owns YAML → body conversion and boot-time registration
+only. The `ai-agent`
+[`NodeBehavior`](../../../../crates/starter-flow-spi/src/node.rs)
+itself is supplied by the upstream `starter-flow-node-loop` crate
+(`AiAgentNode`), which the host wires to a Claude runner. The host
+binds that behaviour to the registered `com.rubix.ai-agent` kind so
+every bundled flow becomes both a registered MCP tool *and*
+invocable end-to-end through the same registry.

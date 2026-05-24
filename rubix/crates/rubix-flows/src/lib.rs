@@ -8,12 +8,18 @@
 
 use include_dir::{include_dir, Dir};
 
+pub mod convert;
+pub mod error;
 pub mod load;
+pub mod yaml;
 
-pub use load::{
-    convert, load_all, parse_yaml, LoadError, RubixFlowYaml, RubixLinkYaml, RubixNodeYaml,
-    AI_AGENT_KIND_ID, AI_AGENT_KIND_YAML, DEFAULT_OUTPUT_SLOT, DEFAULT_SEED_SLOT, NODE_ID_PREFIX,
+pub use convert::{
+    convert, AI_AGENT_KIND_ID, AI_AGENT_KIND_YAML, DEFAULT_OUTPUT_SLOT, DEFAULT_SEED_SLOT,
+    NODE_ID_PREFIX,
 };
+pub use error::LoadError;
+pub use load::{into_arcs, load_all};
+pub use yaml::{parse_yaml, RubixFlowYaml, RubixLinkYaml, RubixNodeYaml};
 
 /// All bundled rubix flows, embedded at compile time.
 pub static BUNDLED: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/flows");
