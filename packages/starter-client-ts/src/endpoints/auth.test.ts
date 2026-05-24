@@ -1,4 +1,4 @@
-// Wire-contract tests for the /auth/* endpoint methods. Each test
+// Wire-contract tests for the /api/v1/auth/* endpoint methods. Each test
 // captures the outgoing Request via a fake fetch and asserts the
 // method, path, headers, and body the client would put on the wire.
 
@@ -33,7 +33,7 @@ function record(response: Response): { client: StarterClient; calls: Recorded[] 
 }
 
 describe("StarterClient auth endpoints", () => {
-  it("login() POSTs JSON to /auth/login and returns the body", async () => {
+  it("login() POSTs JSON to /api/v1/auth/login and returns the body", async () => {
     const res = new Response(JSON.stringify({ csrf_token: "abc" }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -45,20 +45,20 @@ describe("StarterClient auth endpoints", () => {
     expect(calls).toHaveLength(1);
     const call = calls[0]!;
     expect(call.method).toBe("POST");
-    expect(call.url).toBe("http://t/auth/login");
+    expect(call.url).toBe("http://t/api/v1/auth/login");
     expect(call.headers["content-type"]).toBe("application/json");
     expect(JSON.parse(call.body!)).toEqual({ email: "a@b", password: "pw" });
     expect(out).toEqual({ csrf_token: "abc" });
   });
 
-  it("logout() POSTs to /auth/logout", async () => {
+  it("logout() POSTs to /api/v1/auth/logout", async () => {
     const { client, calls } = record(new Response(null, { status: 204 }));
     await client.logout();
     expect(calls[0]!.method).toBe("POST");
-    expect(calls[0]!.url).toBe("http://t/auth/logout");
+    expect(calls[0]!.url).toBe("http://t/api/v1/auth/logout");
   });
 
-  it("me() GETs /auth/me and returns the body", async () => {
+  it("me() GETs /api/v1/auth/me and returns the body", async () => {
     const me = { subject: "u-1", email: "a@b", role: "admin" };
     const { client, calls } = record(
       new Response(JSON.stringify(me), {
@@ -69,7 +69,7 @@ describe("StarterClient auth endpoints", () => {
 
     const out = await client.me();
     expect(calls[0]!.method).toBe("GET");
-    expect(calls[0]!.url).toBe("http://t/auth/me");
+    expect(calls[0]!.url).toBe("http://t/api/v1/auth/me");
     expect(out).toEqual(me);
   });
 
@@ -96,6 +96,6 @@ describe("StarterClient auth endpoints", () => {
     };
     const client = new StarterClient({ baseUrl: "http://t/", fetch: fake });
     await client.me();
-    expect(calls[0]!.url).toBe("http://t/auth/me");
+    expect(calls[0]!.url).toBe("http://t/api/v1/auth/me");
   });
 });

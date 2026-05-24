@@ -1,4 +1,4 @@
-// `/auth/*` client methods. Cookie-based; the client never handles
+// `/api/v1/auth/*` client methods. Cookie-based; the client never handles
 // raw tokens — the browser handles the session cookie automatically
 // via the shared `fetchJson` / `fetchVoid` helpers (which set
 // `credentials: "include"`).
@@ -26,7 +26,7 @@ declare module "../client/client.js" {
 }
 
 StarterClient.prototype.login = function login(this: StarterClient, request: LoginRequest): Promise<LoginResponse> {
-  return fetchJson<LoginResponse>(this, `/auth/login`, {
+  return fetchJson<LoginResponse>(this, `/api/v1/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(request),
@@ -34,9 +34,9 @@ StarterClient.prototype.login = function login(this: StarterClient, request: Log
 };
 
 StarterClient.prototype.logout = async function logout(this: StarterClient): Promise<void> {
-  await fetchVoid(this, `/auth/logout`, { method: "POST", headers: readCsrfHeader() });
+  await fetchVoid(this, `/api/v1/auth/logout`, { method: "POST", headers: readCsrfHeader() });
 };
 
 StarterClient.prototype.me = function me(this: StarterClient): Promise<MeResponse> {
-  return fetchJson<MeResponse>(this, `/auth/me`);
+  return fetchJson<MeResponse>(this, `/api/v1/auth/me`);
 };
