@@ -24,6 +24,8 @@
     "@nube/starter-ui-dashboard": "workspace:*",
     "@nube/starter-ui-kit": "workspace:*",
     "@nube/starter-ui-authz": "workspace:*",
+    "@nube/starter-ui-flow": "workspace:*",
+    "@xyflow/react": "^12.3.0",
     "@nube/rubix-client-ts": "workspace:*",
     "@nube/rubix-client-react": "workspace:*",
     "@nube/starter-client-ts": "workspace:*",
