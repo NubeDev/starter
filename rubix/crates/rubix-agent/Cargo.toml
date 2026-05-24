@@ -62,5 +62,6 @@ anyhow  = { workspace = true }
 starter-mcp              = { workspace = true, features = ["http", "testing"] }
 starter-changelog-sqlite = { workspace = true }
 starter-store-sqlite     = { workspace = true, features = ["testing"] }
+starter-store-clickhouse = { workspace = true, features = ["testing"] }
 tokio                    = { workspace = true, features = ["macros", "rt-multi-thread", "process", "io-util", "time"] }
 tower                    = { workspace = true }

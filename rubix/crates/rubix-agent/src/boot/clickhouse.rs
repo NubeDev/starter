@@ -35,6 +35,29 @@ use tracing::{info, warn};
 const RUBIX_0002_HISTORY_UP: &str =
     include_str!("../../migrations/0002_history/up.sql");
 
+/// Name of the ClickHouse database that owns every rubix-owned
+/// warehouse table (today: `system_disk_history`; tomorrow:
+/// L2/L3 marts). Matches `CLICKHOUSE_DB` in
+/// `rubix/docker/docker-compose.dev.yaml` and the named-tenant
+/// intent documented in
+/// [docs/design/warehouse/](../../../docs/design/warehouse/README.md).
+/// Every `ChClient` rubix-agent constructs binds to this database
+/// so that unqualified DDL / INSERT / SELECT against
+/// `system_disk_history` resolves here instead of `default`.
+pub const RUBIX_CH_DATABASE: &str = "rubix";
+
+/// Build a [`ChConfig`] that pins the connection to the rubix
+/// database. Used by the boot wiring, the admin stdio MCP, and
+/// any integration test that wants the same routing the binary
+/// uses in production. Inherits the W8 `async_insert` default
+/// from [`ChConfig::local`].
+pub fn rubix_ch_config(url: impl Into<String>) -> ChConfig {
+    ChConfig {
+        database: RUBIX_CH_DATABASE.to_owned(),
+        ..ChConfig::local(url)
+    }
+}
+
 /// What happened during the CH migrations step.
 #[derive(Debug, Clone)]
 pub struct ChMigrationReport {
@@ -72,7 +95,22 @@ pub async fn apply_ch_migrations(
         return Ok(ChMigrationReport { skipped: true });
     };
 
-    let client = ChClient::connect(ChConfig::local(url.to_owned()));
+    // Ensure the named-tenant database exists before binding the
+    // migration client to it. Issued against `default` so the
+    // statement succeeds even on a fresh ClickHouse that was not
+    // bootstrapped via `CLICKHOUSE_DB=rubix`. `IF NOT EXISTS`
+    // keeps the step idempotent across re-runs.
+    let bootstrap = ChClient::connect(ChConfig::local(url.to_owned()));
+    bootstrap
+        .inner()
+        .query(&format!(
+            "CREATE DATABASE IF NOT EXISTS {RUBIX_CH_DATABASE}"
+        ))
+        .execute()
+        .await
+        .map_err(|e| anyhow::anyhow!("create rubix CH database: {e}"))?;
+
+    let client = ChClient::connect(rubix_ch_config(url.to_owned()));
     MigrationRunner::new(&client)
         .with_pg_source(pg)
         .with_extra_migration("rubix/0002_history/up.sql", RUBIX_0002_HISTORY_UP)
