@@ -21,32 +21,55 @@ short-circuit.
 
 ## Why this exists
 
-Today (Phase 2–5):
+Every definition edit — REST handler, CLI command, UI canvas save,
+host-dir file-watch, extension reload, programmatic API, the
+rubix-side `flow_ops.deploy` tool — funnels through one chokepoint:
+[`DefinitionManager::publish`](../../../crates/starter-flow/src/definition/manager.rs#L308).
+That function is the only writer that canonicalises the body, hashes
+it, short-circuits on a hash match against the current head, parses
+the typed [`FlowBody`], drives [`TopologyResolver::resolve_body`](../../../crates/starter-flow/src/definition/resolver.rs#L158)
+(which validates each node's settings against the kind's schema —
+see [settings.md](settings.md)), writes the new `FlowRevision`,
+and dispatches on a classifier ([`classify`](../../../crates/starter-flow/src/definition/classifier.rs#L109))
+that maps `(old_body, new_body)` to one of five
+[`EditKind`](../../../crates/starter-flow/src/definition/classifier.rs#L33)
+arms — `Initial`, `Unchanged`, `SettingsOnly { writes }`,
+`Structural`, `Mixed { writes }` (a.k.a. the
+first/no-op/settings-only/topology/both shapes the SCOPE talks
+about). The dispatch in `publish` ([manager.rs:445–477](../../../crates/starter-flow/src/definition/manager.rs#L445))
+runs the structural swap when the edit is `Initial | Structural | Mixed`
+and runs the settings-only slot writes when the edit is
+`SettingsOnly | Mixed` — HR3's structural-then-settings order falls
+out of that single function.
 
-- `FlowTopology` is constructed once at boot and frozen
-  (`Arc<FlowTopology>` cloned per run — see
-  [`examples/notes/src/flow_demo.rs`](../../../examples/notes/src/flow_demo.rs#L60),
-  comment: *"Frozen topology — same three nodes, same links, every
-  run"*).
-- [`FlowRegistry::put`](../../../crates/starter-flow/src/registry.rs#L241)
-  records an immutable revision but nothing resolves it to a
-  `FlowTopology`, and nothing tells the runtime *"use the new one
-  now"*. The Phase 3 SCOPE-named `FlowRegistry::resolve` does not
-  yet exist.
-- [`NodeKindRegistry::register` / `deregister`](../../../crates/starter-flow/src/registry.rs#L113)
-  exists, but a deregister never invalidates topologies that
-  reference the kind.
-- "Save" in any editor surface is a no-op for the running engine.
-  The operator restarts the process to see their change.
+Settings-only edits short-circuit straight into the existing
+`write_slot` chokepoint: [`DefinitionManager::apply_settings`](../../../crates/starter-flow/src/definition/manager.rs#L928)
+walks each `(SlotRef, SlotValue)` from the classifier and calls
+`GraphStore::write_slot` with `WriteSlotOpts::config()`. No new
+topology is built; no `Arc` is swapped; reactive subscribers see a
+`SlotChanged` and re-tick on the same active topology they were
+already running against.
 
-The cost: every settings tweak ("change a prompt", "raise a
-`cost_cap`"), every wiring change ("add an `http-out` after the
-agent"), and every node-set change ("drop the `log` node") is a
-deploy-cycle, not an interactive edit. That kills the authoring
-shape the SCOPE Why-this-exists block calls out — *"Node-RED's
-model is the right authoring shape for AI + integration workflows
-in 2026"*. Node-RED's edits are interactive; if starter's are not,
-the SCOPE's third force collapses.
+Structural edits build a fresh `Arc<FlowTopology>` via the resolver
+and hand it to [`ActiveTopologies::install`](../../../crates/starter-flow/src/definition/active.rs#L96),
+which calls [`ActiveTopology::store`](../../../crates/starter-flow/src/definition/active.rs#L52)
+under an `ArcSwap` — a wait-free pointer swap. In-flight runs hold
+an `Arc<FlowTopology>` they obtained from
+[`ActiveTopology::load`](../../../crates/starter-flow/src/definition/active.rs#L59)
+at the start of their tick; they keep that snapshot alive until they
+drop it, so they finish on the prior revision while new runs pick up
+the new one on the next `load`. The classifier consults the
+*previous* revision's `apply_policy` ([manager.rs:446–450](../../../crates/starter-flow/src/definition/manager.rs#L446))
+so the body being torn down dictates how — never the body coming in.
+
+A draft whose body fails to parse, whose kind ids do not resolve,
+or whose per-node settings fail `validate_settings` is rejected at
+publish ([manager.rs:337–362](../../../crates/starter-flow/src/definition/manager.rs#L337));
+no `FlowRevision` is written, no `ActiveTopology` is touched, and
+the engine continues serving the previous head. "Save" in any
+editor surface is therefore a synchronous, observable engine
+transition — the next-fired run picks up the change with no extra
+step, and a bad draft never replaces a good one.
 
 ## Hard rules (load-bearing)
 
