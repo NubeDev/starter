@@ -15,3 +15,11 @@
 export { StarterClientProvider, useStarterClient } from "./provider/starter-client-provider.js";
 export { QueryProvider } from "./provider/query-provider.js";
 export type { QueryProviderProps } from "./provider/query-provider.js";
+export { AuthProvider, useAuth, ME_QUERY_KEY } from "./provider/auth-provider.js";
+export type { AuthContextValue, AuthProviderProps } from "./provider/auth-provider.js";
+export { useEventStream } from "./hooks/use-event-stream.js";
+export type {
+  EventStreamStatus,
+  UseEventStreamOptions,
+  UseEventStreamResult,
+} from "./hooks/use-event-stream.js";
