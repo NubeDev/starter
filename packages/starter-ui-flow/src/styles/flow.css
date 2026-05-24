@@ -86,7 +86,7 @@
   background: var(--sf-node-bg);
   border: 1px solid var(--sf-node-border);
   border-radius: var(--sf-radius);
-  min-width: 220px;
+  width: var(--sf-node-width, 240px);
   box-shadow: var(--sf-node-shadow);
   backdrop-filter: blur(10px) saturate(140%);
   -webkit-backdrop-filter: blur(10px) saturate(140%);
@@ -178,12 +178,14 @@
   padding: 6px 0 10px;
   gap: 4px 12px;
   border-top: 1px solid var(--sf-node-divider);
+  min-width: 0;
 }
 .sf-node__col {
   display: flex;
   flex-direction: column;
   gap: 4px;
   padding: 6px 0;
+  min-width: 0;
 }
 .sf-node__col--out { align-items: flex-end; }
 .sf-node__extra {
@@ -197,6 +199,8 @@
 .sf-slot-row {
   display: flex;
   flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
 }
 .sf-slot-row--input  { align-items: flex-start; }
 .sf-slot-row--output { align-items: flex-end; }
@@ -229,7 +233,9 @@
 }
 .sf-slot__required { color: var(--sf-state-error); margin-left: 2px; }
 
-/* Slot value badges */
+/* Slot value badges — sized relative to the node so they never
+   push the node wider. Each badge clips with an ellipsis; the full
+   value is reachable via the title attribute (and the inspector). */
 .sf-slot__value {
   margin: 1px 12px 0;
   padding: 1px 6px;
@@ -239,7 +245,7 @@
   font-family: var(--sf-mono);
   font-size: 10px;
   line-height: 1.3;
-  max-width: 180px;
+  max-width: calc(var(--sf-node-width, 240px) - 32px);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
