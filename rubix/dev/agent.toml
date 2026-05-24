@@ -14,3 +14,10 @@ bind = "127.0.0.1:8088"
 database_url = "postgres://rubix:rubix-dev@127.0.0.1:5433/rubix"
 clickhouse_url = "http://127.0.0.1:8124"
 secrets_path = "rubix/dev/secrets.age"
+
+# Which AI runner `boot::ai::build_runner` constructs at startup.
+# Defaults to the local `claude` CLI on PATH (zero-config; the
+# binary manages its own auth via `claude login`). The `anthropic`
+# REST branch is deferred for v0 — see
+# crates/starter-ai-agent/LONG-TERM.md for the staged plan.
+# ai_provider = "claude-cli"

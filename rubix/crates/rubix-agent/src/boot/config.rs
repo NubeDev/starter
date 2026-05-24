@@ -50,6 +50,13 @@ pub struct AgentConfig {
     /// falls back to `$XDG_CONFIG_HOME/rubix/agent.toml` then
     /// `$HOME/.config/rubix/agent.toml`.
     pub config_path: Option<PathBuf>,
+
+    /// Which `AiRunner` [`crate::boot::ai::build_runner`] should
+    /// construct. Defaults to `"claude-cli"` (the operator's
+    /// `claude` binary on PATH). Parses any
+    /// `starter_spi::ai::Provider` variant string; `"anthropic"`
+    /// returns [`crate::boot::ai::AiError::Unimplemented`] in v0.
+    pub ai_provider: Option<String>,
 }
 
 impl Default for AgentConfig {
@@ -60,6 +67,7 @@ impl Default for AgentConfig {
             clickhouse_url: None,
             secrets_path: None,
             config_path: None,
+            ai_provider: None,
         }
     }
 }

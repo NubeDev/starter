@@ -1,5 +1,6 @@
 //! Process startup helpers — one verb per file.
 
+pub mod ai;
 pub mod auth;
 pub mod authz;
 pub mod clickhouse;

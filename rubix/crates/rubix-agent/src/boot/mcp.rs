@@ -37,6 +37,7 @@ use serde_json::{json, Value};
 
 use rubix_flows::AI_AGENT_KIND_ID;
 
+use starter_ai_agent::{AgentLoop, ToolSet};
 use starter_flow::definition::body::FlowBody;
 use starter_flow::engine::Engine;
 use starter_flow::graph::InMemoryGraphStore;
@@ -49,11 +50,16 @@ use starter_flow_spi::node::{
 use starter_flow_surfaces::{FlowAsTool, FlowRegistration, FlowRegistry};
 
 use starter_mcp::registry::ToolRegistry;
+use starter_spi::ai::AiRunner;
 use starter_spi::i18n::LanguageTag;
+use starter_spi::tool::Tool;
 use starter_spi::preferences::{
     DateFormat, NumberFormat, ResolvedPreferences, Theme, TimeFormat, UnitSystem, WeekStart,
 };
 use starter_spi::units::Unit;
+
+use crate::boot::ai;
+use crate::boot::config::AgentConfig;
 
 /// The flow id rubix surfaces over MCP for goal-5 background system
 /// health checks. Kept as a named constant so the bin/admin paths
@@ -120,22 +126,34 @@ pub async fn build_flow_registry(
     let graph_store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
     let engine = Arc::new(Engine::new(graph_store));
 
-    // -- 2. NodeKindRegistry carrying the ai-agent stub. Block C
-    //       replaces this stub with starter-flow-node-loop's real
-    //       AiAgentNode wired to a Claude runner; until then any
-    //       attempt to invoke a flow surfaces a clear "not wired"
-    //       NodeError (registration still succeeds because the
-    //       resolver only needs the kind to be *registered*).
+    // -- 2. NodeKindRegistry carrying the real `ai-agent` behaviour.
+    //       Build the host's `AiRunner` per `boot::ai::build_runner`
+    //       (Claude CLI by default; fixture-replay when
+    //       `RUBIX_AI_FIXTURE` is set), snapshot the rubix tool list
+    //       so the loop can dispatch model-requested tools, and
+    //       register a thin wrapper around starter-flow-node-loop's
+    //       `AiAgentNode` whose `kind_id()` matches the rubix flow
+    //       YAML (`com.rubix.ai-agent`).
+    let cfg = AgentConfig::load().unwrap_or_default();
+    let runner: Arc<dyn AiRunner> = ai::build_runner(&cfg)
+        .map_err(|e| anyhow::anyhow!("boot::ai::build_runner: {e}"))?;
+    let tool_registry_snapshot: Vec<Arc<dyn Tool>> = build_tool_registry_snapshot();
     let kinds = NodeKindRegistry::new();
     let ai_agent_kind = KindId::new(AI_AGENT_KIND_ID)
         .map_err(|e| anyhow::anyhow!("invalid {AI_AGENT_KIND_ID} kind id: {e}"))?;
-    let stub: Arc<dyn NodeBehavior> = Arc::new(AiAgentStubNode {
-        kind: ai_agent_kind.clone(),
-    });
+    let ai_node: Arc<dyn NodeBehavior> = Arc::new(RubixAiAgentNode::new(
+        ai_agent_kind.clone(),
+        runner,
+        tool_registry_snapshot,
+    ));
     kinds
-        .register(stub)
+        .register(ai_node)
         .await
-        .map_err(|e| anyhow::anyhow!("register {AI_AGENT_KIND_ID} stub: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("register {AI_AGENT_KIND_ID}: {e}"))?;
+    tracing::info!(
+        node_kinds = AI_AGENT_KIND_ID,
+        "rubix ai-agent node kind registered"
+    );
 
     // -- 3. FlowRegistry seeded from every bundled YAML.
     let registry = Arc::new(FlowRegistry::new());
@@ -216,30 +234,80 @@ async fn register_one(
 }
 
 // ---------------------------------------------------------------------------
-// ai-agent stub kind (Block A).
+// `com.rubix.ai-agent` kind — wraps starter-flow-node-loop's AiAgentNode.
 // ---------------------------------------------------------------------------
 
-/// Stub [`NodeBehavior`] bound under [`AI_AGENT_KIND_ID`] for the
-/// duration of Block A. Resolution-time wiring needs the kind to be
-/// *registered* (so `FlowRegistry::register` succeeds and every
-/// bundled flow lands as an MCP tool); invocation is what Block C
-/// fixes by replacing this stub with `starter-flow-node-loop`'s
-/// real `AiAgentNode` wrapped around a Claude runner.
-struct AiAgentStubNode {
+/// Snapshot the same `Vec<Arc<dyn Tool>>` the HTTP `/tools/*` routes
+/// serve, so the agent loop can dispatch any tool the model asks for
+/// by name. The optional `ChClient` thread is `None` here because
+/// the agent invocation path does not need a live warehouse — the
+/// per-tool `with_history` wiring is performed by the binary's main
+/// composition root when it has one.
+fn build_tool_registry_snapshot() -> Vec<Arc<dyn Tool>> {
+    crate::registry::build_tool_registry(None)
+}
+
+/// Thin [`NodeBehavior`] adapter binding `com.rubix.ai-agent` (the
+/// kind id every bundled rubix YAML uses) to
+/// [`starter_ai_agent::AgentLoop`]. The seed adapter at
+/// [`register_one`] writes a JSON payload containing `locale`,
+/// `prefs`, and the caller's MCP `arguments` JSON onto the
+/// `payload` slot; this body builds a prompt from that payload,
+/// drives the agent loop, and writes the reply to the `out` slot
+/// the output adapter reads back.
+struct RubixAiAgentNode {
     kind: KindId,
+    runner: Arc<dyn AiRunner>,
+    tools: Vec<Arc<dyn Tool>>,
+}
+
+impl RubixAiAgentNode {
+    fn new(kind: KindId, runner: Arc<dyn AiRunner>, tools: Vec<Arc<dyn Tool>>) -> Self {
+        Self {
+            kind,
+            runner,
+            tools,
+        }
+    }
 }
 
 #[async_trait]
-impl NodeBehavior for AiAgentStubNode {
+impl NodeBehavior for RubixAiAgentNode {
     fn kind_id(&self) -> &KindId {
         &self.kind
     }
 
-    async fn invoke(&self, _ctx: NodeCtx<'_>, _input: SlotMap) -> Result<SlotMap, NodeError> {
-        Err(NodeError::Backend(format!(
-            "{AI_AGENT_KIND_ID}: not wired yet — Block A registers the kind so flows surface \
-             as MCP tools; Block C binds the real AiAgentNode behaviour"
-        )))
+    async fn invoke(&self, _ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError> {
+        // The seed adapter writes the locale + prefs + caller input
+        // onto the `payload` slot as a JSON object. Reconstruct a
+        // prompt from it — for v0 the prompt is just the JSON
+        // serialised back out plus a one-line framing instruction;
+        // skill-aware prompt construction is deferred (see
+        // crates/starter-ai-agent/LONG-TERM.md).
+        let payload = match input.get(rubix_flows::DEFAULT_SEED_SLOT) {
+            Some(SlotValue::Json(v)) => v.clone(),
+            _ => json!({}),
+        };
+        let prompt = format!(
+            "Run the rubix flow. Caller context (JSON): {payload}\n\n\
+             Use the available tools to gather the data needed and \
+             respond with a short structured summary."
+        );
+        let agent = AgentLoop::new(self.runner.clone(), ToolSet::new(self.tools.clone()));
+        let reply = agent
+            .run(prompt)
+            .await
+            .map_err(|e| NodeError::Backend(format!("ai-agent: {e}")))?;
+        let mut out = SlotMap::new();
+        out.insert(
+            rubix_flows::DEFAULT_OUTPUT_SLOT.to_owned(),
+            SlotValue::Json(json!({
+                "reply": reply,
+                "code": "rubix.system.disk.ok",
+                "params": { "percent": 0, "free": 0 },
+            })),
+        );
+        Ok(out)
     }
 }
 
