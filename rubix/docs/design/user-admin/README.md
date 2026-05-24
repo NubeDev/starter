@@ -1,19 +1,26 @@
 # user-admin
 
 Present-tense design note for the rubix user-admin goal. Covers the
-four write verbs that landed in phase B.1 — `rubix.user.create`,
-`rubix.user.disable`, `rubix.team.create`, and `rubix.team.assign` —
-plus the snapshot shape every verb's `Reversible` impl reads and
-writes.
+six verbs bound to the `com.rubix.user-admin` flow — four write
+verbs (`rubix.user.create`, `rubix.user.disable`, `rubix.team.create`,
+`rubix.team.assign`) plus two read verbs (`rubix.user.list`,
+`rubix.tenant.list`) — and the snapshot shape every write verb's
+`Reversible` impl reads and writes. End-to-end coverage lives in
+`rubix-agent/tests/goal_2_user_admin_test.rs`: scenario 1 dispatches
+`user.create` through the `UndoDispatcher` and asserts the row +
+Diagnostic; scenario 2 dispatches `user.disable` then
+`rubix.undo.last` and asserts the user is enabled again.
 
 ## Verb surface
 
-| Verb               | Op       | MessageKey(s)                                              | Reversible? |
-| ------------------ | -------- | ---------------------------------------------------------- | ----------- |
-| `rubix.user.create`  | Create | `rubix.user.created`                                       | yes         |
-| `rubix.user.disable` | Update | `rubix.user.disabled`, `rubix.user.already_disabled`       | yes (first-disable only — the idempotent re-call records no Change) |
-| `rubix.team.create`  | Create | `rubix.team.created`                                       | yes         |
-| `rubix.team.assign`  | Update | `rubix.team.assigned`                                      | yes (first-assign only — the idempotent re-call records no Change) |
+| Verb                 | Op       | MessageKey(s)                                              | Reversible? |
+| -------------------- | -------- | ---------------------------------------------------------- | ----------- |
+| `rubix.user.create`  | Create   | `rubix.user.created`                                       | yes         |
+| `rubix.user.disable` | Update   | `rubix.user.disabled`, `rubix.user.already_disabled`       | yes (first-disable only — the idempotent re-call records no Change) |
+| `rubix.user.list`    | Read     | `rubix.user.listed`                                        | no          |
+| `rubix.team.create`  | Create   | `rubix.team.created`                                       | yes         |
+| `rubix.team.assign`  | Update   | `rubix.team.assigned`                                      | yes (first-assign only — the idempotent re-call records no Change) |
+| `rubix.tenant.list`  | Read     | `rubix.tenant.listed`                                      | no          |
 
 Each verb implements `starter_spi::tool::Tool` for invocation and
 `rubix_tools::undo::dispatch::ReversibleTool` for the `change_for`
@@ -89,13 +96,15 @@ pipeline, not a public surface.
 
 ## Localisation
 
-Five MessageKeys land alongside the verb files:
+Seven MessageKeys land alongside the verb files:
 
 - `rubix.user.created` — `{email}`, `{role}`, `{at}`
 - `rubix.user.disabled` — `{email}`, `{at}`
 - `rubix.user.already_disabled` — `{email}`, `{at}`
+- `rubix.user.listed` — `{count}`
 - `rubix.team.created` — `{name}`, `{at}`
 - `rubix.team.assigned` — `{team}`, `{user}`, `{at}`
+- `rubix.tenant.listed` — `{count}`
 
 Entries land in both `rubix-spi/catalogues/en.json` and
 `rubix-spi/catalogues/es.json` in the same commit that fills the

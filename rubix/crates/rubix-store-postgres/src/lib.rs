@@ -9,7 +9,7 @@
 //! table (per starter R4 — no version-number collisions across
 //! migration sources).
 //!
-//! Scope (per `rubix/SCOPE.md` Phase A):
+//! Scope:
 //!
 //! - [`UNDO_SNAPSHOTS_MIGRATION_SOURCE`] — the
 //!   `undo_snapshots` dimension table that backs every
