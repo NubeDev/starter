@@ -559,28 +559,49 @@ master commit (`0511981`).
 | **B8** — root cause was `AgentLoop` always sending `RunnerInput::Rest`; the runner-specific input shape was never selected | `AgentLoop::call` now dispatches on `runner.provider()`. CLI providers (Claude / Codex / Copilot) receive `RunnerInput::Cli(CliCfg)` with history folded into the prompt; REST providers (Anthropic / OpenAi) keep the existing `RestCfg` path with `tools` + `history`. The CLI tool-dispatch limitation (CliCfg has no tool-definition field) is documented in `LONG-TERM.md §"CLI runner tool dispatch (via MCP bridge)"`. |
 | **B8.2** — `RubixAiAgentNode::invoke` wrote a hardcoded `{code: "rubix.system.disk.ok", percent: 0, free: 0}` | The node now (a) extracts a per-node "primary tool" map from each flow YAML's `allowed_tools[0]` at boot, (b) dispatches the primary tool with the caller's `input` and writes its real output verbatim under `payload.tool`, and (c) optionally runs the AgentLoop for prose narration when `RUBIX_AI_NARRATION=1` is set (off by default; the LLM call would race the `FlowRunner`'s 100ms quiescence window and produce non-deterministic timing). |
 
-### Engine-coordinator quiescence: why narration is opt-in
+### Engine-coordinator quiescence: in-flight node tracker (fixed)
 
-The investigation surfaced one starter-flow semantic that deserves
-explicit naming: `FlowRunnerConfig::quiescence` defaults to 100 ms
-and the run coordinator declares `RunCompleted` after that window
+The investigation surfaced one starter-flow semantic that needed
+fixing properly: `FlowRunnerConfig::quiescence` defaults to 100 ms
+and the run coordinator declared `RunCompleted` after that window
 of no events. The propagator awaits `behavior.invoke().await`
-synchronously, so a node body that blocks longer than 100 ms (an
-LLM call, a subprocess spawn, a remote HTTP, …) races the
-coordinator: `RunStarted` and `NodeStarted` arrive at t≈0; if
-invoke returns at t=5 s, the coordinator hit quiescence at t=100 ms
-and already emitted `RunCompleted` with whatever was in the slot
-store, then the node's actual output writes too late and `FlowAsTool`
-reads the stale value.
+synchronously, so a node body that blocked longer than 100 ms (an
+LLM call, a subprocess spawn, a remote HTTP, …) raced the
+coordinator: `RunStarted` and `NodeStarted` arrived at t≈0; if
+invoke returned at t=5 s, the coordinator hit quiescence at
+t=100 ms, emitted `RunCompleted` with whatever was in the slot
+store, and `FlowAsTool` read the stale value before the node's
+actual output landed.
 
-For v0 the rubix node side-steps this by making narration opt-in;
-the tool dispatch is fast (<1 ms) so the run completes within
-quiescence with the real `Diagnostic` written. The proper fix is
-either (a) bump `FlowRunnerConfig::quiescence` for the
-`FlowAsTool` RPC path AND have the coordinator hold completion
-until terminal slots are present rather than purely time-based, or
-(b) have node bodies emit a heartbeat event during long awaits.
-Tracked as a follow-up — not a smoke blocker.
+**Fix landed in [`crates/starter-flow/src/run.rs`](../../../crates/starter-flow/src/run.rs)
+(`run_coordinator`):** the coordinator now maintains an
+`in_flight: HashSet<NodeId>` keyed off propagator events —
+`NodeStarted` inserts, `NodeEmitted` / `NodeFailed` remove. The
+quiescence-deadline arm of the `tokio::select!` carries a
+`if in_flight.is_empty()` guard so the timer cannot fire while a
+node is still awaiting `invoke`. Once the propagator emits
+`NodeEmitted`, the slot write has happened (the propagator's emit
+→ write order at `propagator.rs:548-570` is sequential), the
+deadline resets, and the next 100 ms tick completes the run with
+the populated terminal slot. This is a pure addition — no SPI
+change, no breaking change, every consumer wins.
+
+**Coverage:** the new
+[`slow_node_body_does_not_race_quiescence`](../../../crates/starter-flow/src/run.rs)
+test in `starter-flow` registers a node body that sleeps 250 ms
+with `cfg.quiescence = 50 ms`, asserts `RunStatus::Completed`,
+AND asserts `RunCompleted.output["flow.test.slow.out"]` carries
+the real `SlotValue::Int(42)` rather than an empty map. The full
+starter-flow suite remains green (97/97 passing).
+
+**Knock-on:** because the engine no longer races, the rubix
+`RUBIX_AI_NARRATION` gate is **flipped back to on by default**.
+Operators who want pure tool output (no LLM cost / deterministic
+CI) can still opt out with `RUBIX_AI_NARRATION=0`. The
+`mcp_stdio_test` integration test now asserts both halves of the
+response (`tool.summary.code` numeric + non-empty `reply`); the
+reply assertion is the canary for any future regression of the
+in-flight tracker.
 
 ### Integration test
 
@@ -694,6 +715,7 @@ recent REST reading. Localised EN rendering via `starter-i18n`.
 Touched / created in this session (all under `master`, no
 commits made yet):
 
+- `crates/starter-flow/src/run.rs` — `run_coordinator` grows an `in_flight: HashSet<NodeId>` updated on `NodeStarted` / `NodeEmitted` / `NodeFailed`; the quiescence-deadline arm of the `tokio::select!` gains an `if in_flight.is_empty()` guard so a node body blocked in `invoke` cannot race the run to `RunCompleted`. Inline test `slow_node_body_does_not_race_quiescence` added (250 ms sleep node + 50 ms quiescence; asserts terminal slot is populated in `RunCompleted.output`).
 - `crates/starter-observability/src/tracing/init.rs` — honor `RUST_LOG`
 - `crates/starter-mcp/src/protocol/error.rs` — `RpcError::internal_from_source`
 - `crates/starter-mcp/src/server/dispatch.rs` — use new constructor, log on dispatch failure
@@ -701,10 +723,10 @@ commits made yet):
 - `crates/starter-ai-agent/LONG-TERM.md` — new §"CLI runner tool dispatch (via MCP bridge)"
 - `rubix/crates/rubix-agent/src/boot/migrations.rs` — `Option<&str>` parameter
 - `rubix/crates/rubix-agent/src/boot/clickhouse.rs` — `Option<&str>, Option<&str>` parameters
-- `rubix/crates/rubix-agent/src/boot/mcp/` — split: `mod.rs`, `agent_node.rs`, `prefs.rs`, `register.rs` (primary-tool dispatch + opt-in narration + nonce + locale plumbed; ch_client now threads through `build_mcp_surface` → `build_tool_registry` → `build_flow_registry` per B12)
+- `rubix/crates/rubix-agent/src/boot/mcp/` — split: `mod.rs`, `agent_node.rs`, `prefs.rs`, `register.rs` (primary-tool dispatch + locale plumbed + nonce; `RUBIX_AI_NARRATION` flipped to **on by default** now that the starter-flow in-flight tracker removes the race — set `RUBIX_AI_NARRATION=0` for the no-LLM path; `ch_client` now threads through `build_mcp_surface` → `build_tool_registry` → `build_flow_registry` per B12)
 - `rubix/crates/rubix-agent/src/main.rs` — updated call sites; reordered so `ch_client` is built before MCP and shared with both surfaces
 - `rubix/crates/rubix-agent/src/bin/rubix_admin/mcp/serve.rs` — builds its own `ChClient` from `cfg.clickhouse_url` and threads it into `build_tool_registry` so stdio MCP probes persist history too
-- `rubix/crates/rubix-agent/tests/mcp_stdio_test.rs` — new payload-shape assertions
+- `rubix/crates/rubix-agent/tests/mcp_stdio_test.rs` — new payload-shape assertions; also asserts a non-empty `reply` (canary for any future regression of the starter-flow in-flight tracker — without it the slow narration await would race quiescence and the node return would never land in `out`)
 - `rubix/mani.yaml` — pre-flight port check in `demo`
 - `rubix/docs/scope/THIN-SLICE.md` — smoke-test row flipped to verified-on-2026-05-24
 - `rubix/docs/sessions/2026-05-24-smoke-test-pr30.md` — this section

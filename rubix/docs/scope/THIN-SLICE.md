@@ -289,5 +289,10 @@ fix-up landed; see
 
 Re-run when any of the load-bearing pieces touches the boot
 order, the slot/seed contract, the `AiAgentNode` body, the
-`FlowAsTool` quiescence model, the JSON-RPC error mapping, or
-the cfg/env split for migrations.
+run-coordinator quiescence/in-flight-tracker model, the
+JSON-RPC error mapping, or the cfg/env split for migrations.
+
+The starter-flow run coordinator now holds completion until no
+nodes are in flight — the `slow_node_body_does_not_race_quiescence`
+test in `crates/starter-flow/src/run.rs` is the canary. Rubix
+narration is on by default; opt out with `RUBIX_AI_NARRATION=0`.

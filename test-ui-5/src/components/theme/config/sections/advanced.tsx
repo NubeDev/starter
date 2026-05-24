@@ -1,4 +1,9 @@
-import { ComingSoonField, SectionTitle } from '../shared'
+// Advanced tab. Section heading + ComingSoonField come from
+// ui-kit's packaged drawer; the colour-row / disabled-input shapes
+// are local decoration.
+
+import { useIntl } from 'react-intl'
+import { ComingSoonField, SectionTitle } from '@nube/starter-ui-kit/theme-editor/config-drawer'
 
 function DisabledInput({ placeholder }: { placeholder: string }) {
   return (
@@ -28,32 +33,38 @@ function ColorRow({ label, value }: { label: string; value: string }) {
 }
 
 export function AdvancedTab() {
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <div className='space-y-6'>
       <SectionTitle
-        title='Advanced'
-        description='Fine-grained control for power users and design systems.'
+        title={tr('config.advanced.title')}
+        description={tr('config.advanced.description')}
       />
       <ComingSoonField
-        label='Custom palette'
-        description='Define your own primary, accent, and surface colors.'
+        label={tr('config.advanced.palette.label')}
+        description={tr('config.advanced.palette.description')}
+        badgeLabel={tr('config.comingSoon')}
         control={
           <div className='space-y-2 rounded-md border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/40 p-3 opacity-60'>
-            <ColorRow label='Primary' value='#339999' />
-            <ColorRow label='Accent' value='#67e8f9' />
-            <ColorRow label='Surface' value='#0d1f4a' />
+            <ColorRow label={tr('config.advanced.palette.primary')} value='#339999' />
+            <ColorRow label={tr('config.advanced.palette.accent')}  value='#67e8f9' />
+            <ColorRow label={tr('config.advanced.palette.surface')} value='#0d1f4a' />
           </div>
         }
       />
       <ComingSoonField
-        label='Custom font'
-        description='Upload a font file or provide a Google Fonts URL.'
+        label={tr('config.advanced.font.label')}
+        description={tr('config.advanced.font.description')}
+        badgeLabel={tr('config.comingSoon')}
         control={
           <div className='space-y-2'>
-            <DisabledInput placeholder='https://fonts.googleapis.com/css2?family=…' />
-            <div className='text-center text-[10px] text-[color:var(--color-subtle)]'>or</div>
+            <DisabledInput placeholder={tr('config.advanced.font.placeholder')} />
+            <div className='text-center text-[10px] text-[color:var(--color-subtle)]'>
+              {tr('config.advanced.font.or')}
+            </div>
             <div className='flex cursor-not-allowed items-center justify-center rounded-md border border-dashed border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/40 px-3 py-4 text-xs text-[color:var(--color-muted)]'>
-              Upload .woff, .woff2, or .ttf
+              {tr('config.advanced.font.upload')}
             </div>
           </div>
         }

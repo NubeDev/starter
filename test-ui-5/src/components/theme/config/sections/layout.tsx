@@ -1,6 +1,18 @@
+// Layout tab. Density + Motion use the packaged TileChoiceSection;
+// the rest (Shell, Sidebar, Layout, Radius, Direction) stay local
+// because they depend on ui-5-specific stores (layout-provider,
+// direction-provider) or on custom icon assets.
+
 import { type SVGProps } from 'react'
 import { Root as Radio, Item } from '@radix-ui/react-radio-group'
 import { CircleCheck, PanelLeft, PanelTop } from 'lucide-react'
+import { useIntl } from 'react-intl'
+import {
+  RadioIconTile,
+  SectionTitle,
+  TileChoiceSection,
+  type TileChoiceItem,
+} from '@nube/starter-ui-kit/theme-editor/config-drawer'
 import { IconDir } from '@/assets/custom/icon-dir'
 import { IconLayoutCompact } from '@/assets/custom/icon-layout-compact'
 import { IconLayoutDefault } from '@/assets/custom/icon-layout-default'
@@ -22,33 +34,34 @@ import {
   type Radius,
 } from '@/stores/theme-store'
 import { useSidebar } from '@/components/ui/sidebar'
-import { RadioGroupItem, RadioTile, SectionTitle } from '../shared'
 
 function ShellConfig() {
   const { defaultMode, mode, setMode } = useLayout()
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <div>
       <SectionTitle
-        title='Shell'
+        title={tr('settings.row.layout')}
         showReset={mode !== defaultMode}
         onReset={() => setMode(defaultMode)}
-        resetAriaLabel='Reset shell layout to default'
+        resetAriaLabel={tr('settings.row.layout.hint')}
       />
       <Radio
         value={mode}
         onValueChange={(v) => setMode(v as typeof mode)}
         className='grid w-full max-w-md grid-cols-2 gap-4'
-        aria-label='Select shell layout'
+        aria-label={tr('settings.row.layout.hint')}
       >
         {[
-          { value: 'header', label: 'Top header', Icon: PanelTop },
-          { value: 'sidebar', label: 'Sidebar', Icon: PanelLeft },
+          { value: 'header',  label: tr('layoutToggle.header'),  Icon: PanelTop },
+          { value: 'sidebar', label: tr('layoutToggle.sidebar'), Icon: PanelLeft },
         ].map(({ value, label, Icon }) => (
           <Item
             key={value}
             value={value}
             className='group outline-none'
-            aria-label={`Select ${label.toLowerCase()} shell`}
+            aria-label={label}
           >
             <div
               className={cn(
@@ -75,26 +88,28 @@ function ShellConfig() {
 
 function SidebarConfig() {
   const { defaultVariant, variant, setVariant } = useLayout()
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <div className='max-md:hidden'>
       <SectionTitle
-        title='Sidebar'
+        title={tr('settings.row.sidebarVariant')}
         showReset={defaultVariant !== variant}
         onReset={() => setVariant(defaultVariant)}
-        resetAriaLabel='Reset sidebar style to default'
+        resetAriaLabel={tr('settings.row.sidebarVariant.hint')}
       />
       <Radio
         value={variant}
         onValueChange={(v) => setVariant(v as typeof variant)}
         className='grid w-full max-w-md grid-cols-3 gap-4'
-        aria-label='Select sidebar style'
+        aria-label={tr('settings.row.sidebarVariant.hint')}
       >
         {[
-          { value: 'inset', label: 'Inset', icon: IconSidebarInset },
-          { value: 'floating', label: 'Floating', icon: IconSidebarFloating },
-          { value: 'sidebar', label: 'Sidebar', icon: IconSidebarSidebar },
+          { value: 'inset',    label: tr('settings.variant.inset'),    icon: IconSidebarInset },
+          { value: 'floating', label: tr('settings.variant.floating'), icon: IconSidebarFloating },
+          { value: 'sidebar',  label: tr('settings.variant.sidebar'),  icon: IconSidebarSidebar },
         ].map((item) => (
-          <RadioGroupItem key={item.value} item={item} />
+          <RadioIconTile key={item.value} item={item} />
         ))}
       </Radio>
     </div>
@@ -104,17 +119,19 @@ function SidebarConfig() {
 function LayoutConfig() {
   const { open, setOpen } = useSidebar()
   const { defaultCollapsible, collapsible, setCollapsible } = useLayout()
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   const radioState = open ? 'default' : collapsible
   return (
     <div className='max-md:hidden'>
       <SectionTitle
-        title='Layout'
+        title={tr('settings.row.sidebarCollapse')}
         showReset={radioState !== 'default'}
         onReset={() => {
           setOpen(true)
           setCollapsible(defaultCollapsible)
         }}
-        resetAriaLabel='Reset layout options to default'
+        resetAriaLabel={tr('settings.row.sidebarCollapse.hint')}
       />
       <Radio
         value={radioState}
@@ -127,14 +144,14 @@ function LayoutConfig() {
           setCollapsible(v as Collapsible)
         }}
         className='grid w-full max-w-md grid-cols-3 gap-4'
-        aria-label='Select layout style'
+        aria-label={tr('settings.row.sidebarCollapse.hint')}
       >
         {[
-          { value: 'default', label: 'Default', icon: IconLayoutDefault },
-          { value: 'icon', label: 'Compact', icon: IconLayoutCompact },
-          { value: 'offcanvas', label: 'Full layout', icon: IconLayoutFull },
+          { value: 'default',   label: tr('common.default'),                icon: IconLayoutDefault },
+          { value: 'icon',      label: tr('settings.collapsible.icon'),     icon: IconLayoutCompact },
+          { value: 'offcanvas', label: tr('settings.collapsible.offcanvas'),icon: IconLayoutFull },
         ].map((item) => (
-          <RadioGroupItem key={item.value} item={item} />
+          <RadioIconTile key={item.value} item={item} />
         ))}
       </Radio>
     </div>
@@ -143,32 +160,34 @@ function LayoutConfig() {
 
 function RadiusConfig() {
   const { radius, setRadius } = useTheme()
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   const items: { value: Radius; label: string }[] = [
-    { value: 'none', label: 'None' },
-    { value: 'sm', label: 'Small' },
-    { value: 'md', label: 'Medium' },
-    { value: 'lg', label: 'Large' },
+    { value: 'none', label: tr('settings.collapsible.none') },
+    { value: 'sm',   label: tr('config.fontSize.sm') },
+    { value: 'md',   label: tr('config.fontSize.md') },
+    { value: 'lg',   label: tr('config.fontSize.lg') },
   ]
   return (
     <div>
       <SectionTitle
-        title='Corner radius'
+        title={tr('settings.row.layout')}
         showReset={radius !== DEFAULT_RADIUS}
         onReset={() => setRadius(DEFAULT_RADIUS)}
-        resetAriaLabel='Reset corner radius to default'
+        resetAriaLabel={tr('settings.row.layout.hint')}
       />
       <Radio
         value={radius}
         onValueChange={(v) => setRadius(v as Radius)}
         className='grid w-full max-w-md grid-cols-4 gap-2'
-        aria-label='Select corner radius'
+        aria-label={tr('settings.row.layout.hint')}
       >
         {items.map((item) => (
           <Item
             key={item.value}
             value={item.value}
             className='group outline-none'
-            aria-label={`Select ${item.label.toLowerCase()} radius`}
+            aria-label={item.label}
           >
             <div
               className={cn(
@@ -195,104 +214,82 @@ function RadiusConfig() {
 
 function DensityConfig() {
   const { density, setDensity } = useTheme()
-  const items: { value: Density; label: string }[] = [
-    { value: 'compact', label: 'Compact' },
-    { value: 'comfortable', label: 'Comfortable' },
-    { value: 'spacious', label: 'Spacious' },
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
+  const items: TileChoiceItem<Density>[] = [
+    { value: 'compact',     label: tr('config.density.compact') },
+    { value: 'comfortable', label: tr('config.density.comfortable') },
+    { value: 'spacious',    label: tr('config.density.spacious') },
   ]
   return (
-    <div>
-      <SectionTitle
-        title='Density'
-        showReset={density !== DEFAULT_DENSITY}
-        onReset={() => setDensity(DEFAULT_DENSITY)}
-        resetAriaLabel='Reset density to default'
-      />
-      <Radio
-        value={density}
-        onValueChange={(v) => setDensity(v as Density)}
-        className='grid w-full max-w-md grid-cols-3 gap-2'
-        aria-label='Select density'
-      >
-        {items.map((item) => (
-          <RadioTile
-            key={item.value}
-            value={item.value}
-            label={item.label}
-            ariaLabel={`Select ${item.label.toLowerCase()} density`}
-          >
-            <div className='text-sm font-medium text-[color:var(--color-text)]'>{item.label}</div>
-          </RadioTile>
-        ))}
-      </Radio>
-    </div>
+    <TileChoiceSection
+      value={density}
+      onChange={setDensity}
+      items={items}
+      defaultValue={DEFAULT_DENSITY}
+      i18n={{
+        title: tr('config.density.title'),
+        groupAriaLabel: tr('config.density.groupAria'),
+        resetAriaLabel: tr('config.density.resetAria'),
+      }}
+    />
   )
 }
 
 function MotionConfig() {
   const { motion, setMotion } = useTheme()
-  const items: { value: Motion; label: string }[] = [
-    { value: 'full', label: 'Full motion' },
-    { value: 'reduced', label: 'Reduced' },
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
+  const items: TileChoiceItem<Motion>[] = [
+    { value: 'full',    label: tr('config.motion.full') },
+    { value: 'reduced', label: tr('config.motion.reduced') },
   ]
   return (
-    <div>
-      <SectionTitle
-        title='Motion'
-        showReset={motion !== DEFAULT_MOTION}
-        onReset={() => setMotion(DEFAULT_MOTION)}
-        resetAriaLabel='Reset motion preference to default'
-      />
-      <Radio
-        value={motion}
-        onValueChange={(v) => setMotion(v as Motion)}
-        className='grid w-full max-w-md grid-cols-2 gap-2'
-        aria-label='Select motion preference'
-      >
-        {items.map((item) => (
-          <RadioTile
-            key={item.value}
-            value={item.value}
-            label={item.label}
-            ariaLabel={`Select ${item.label.toLowerCase()}`}
-          >
-            <div className='text-sm font-medium text-[color:var(--color-text)]'>{item.label}</div>
-          </RadioTile>
-        ))}
-      </Radio>
-    </div>
+    <TileChoiceSection
+      value={motion}
+      onChange={setMotion}
+      items={items}
+      defaultValue={DEFAULT_MOTION}
+      i18n={{
+        title: tr('config.motion.title'),
+        groupAriaLabel: tr('config.motion.groupAria'),
+        resetAriaLabel: tr('config.motion.resetAria'),
+      }}
+    />
   )
 }
 
 function DirConfig() {
   const { defaultDir, dir, setDir } = useDirection()
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <div>
       <SectionTitle
-        title='Direction'
+        title={tr('settings.row.layout')}
         showReset={defaultDir !== dir}
         onReset={() => setDir(defaultDir)}
-        resetAriaLabel='Reset text direction to default'
+        resetAriaLabel={tr('settings.row.layout.hint')}
       />
       <Radio
         value={dir}
         onValueChange={(v) => setDir(v as typeof dir)}
         className='grid w-full max-w-md grid-cols-3 gap-4'
-        aria-label='Select site direction'
+        aria-label={tr('settings.row.layout.hint')}
       >
         {[
           {
             value: 'ltr',
-            label: 'Left to Right',
+            label: 'LTR',
             icon: (props: SVGProps<SVGSVGElement>) => <IconDir dir='ltr' {...props} />,
           },
           {
             value: 'rtl',
-            label: 'Right to Left',
+            label: 'RTL',
             icon: (props: SVGProps<SVGSVGElement>) => <IconDir dir='rtl' {...props} />,
           },
         ].map((item) => (
-          <RadioGroupItem key={item.value} item={item} />
+          <RadioIconTile key={item.value} item={item} />
         ))}
       </Radio>
     </div>

@@ -140,26 +140,100 @@ Resolution of the four open decisions, applied:
 - ✅ Dev server boots clean on `localhost:5176`; theme-store and
   theme-provider modules serve 200 via Vite SSR-transform.
 
+### Step B — landed in `starter-ui-kit` (2026-05-24)
+
+Approach: port what *generalises*, keep what doesn't. Sections that
+depend on ui-5-specific stores (font, radius, shell mode, direction,
+custom SVG icons) stay in test-ui-5 but now compose **packaged
+primitives** from ui-kit.
+
+**New surface in
+[packages/starter-ui-kit/src/theme-editor/config-drawer/](../packages/starter-ui-kit/src/theme-editor/config-drawer/)**:
+
+- ✅ [shared.tsx](../packages/starter-ui-kit/src/theme-editor/config-drawer/shared.tsx):
+  `SectionTitle`, `RadioIconTile` (renamed from `RadioGroupItem` to
+  avoid collision with ui-kit's existing dot-radio primitive),
+  `RadioTile`, `ComingSoonField`. All accept localized strings as
+  props; zero baked-in English.
+- ✅ [sections.tsx](../packages/starter-ui-kit/src/theme-editor/config-drawer/sections.tsx):
+  `ThemeSection`, `PaletteSection`, `FontSizeSection`,
+  `TileChoiceSection`. Each is fully props-driven (value, onChange,
+  items, defaultValue, i18n bundle) — ui-kit imports zero state.
+- ✅ [drawer.tsx](../packages/starter-ui-kit/src/theme-editor/config-drawer/drawer.tsx):
+  `ConfigDrawer` — Sheet + tab nav + optional footer. Takes a `tabs`
+  array (id, label, icon, content), an `i18n` bundle, and an optional
+  `onReset`. Trigger is overridable.
+- ✅ Re-exported from
+  [theme-editor/index.ts](../packages/starter-ui-kit/src/theme-editor/index.ts).
+  A dedicated `@nube/starter-ui-kit/theme-editor/config-drawer`
+  package.json export entry was added so consumers can pull just the
+  drawer surface without ui-kit's `branding-editor` /
+  `color-token-editor` / `import-css-dialog` / `theme-editor-page`
+  pre-existing strict-mode bugs surfacing in their build.
+- ✅ `lucide-react` added as a regular ui-kit dependency (ui-kit
+  previously used `@hugeicons/react`, but `lucide-react` is the
+  de-facto standard for shadcn-style code and is what the ported
+  drawer reuses internally).
+- ✅ Drive-by fix: `sheet.tsx` switched its `@/components/ui/button`
+  import to relative `./button` so the ui-kit Sheet primitive resolves
+  correctly when typechecked from a consumer whose `@/*` path map
+  points elsewhere. (Standalone ui-kit typecheck still passes.)
+
+**Test-ui-5 swap**:
+
+- ✅ `@nube/starter-ui-kit: workspace:*` added to
+  [package.json](./package.json).
+- ✅ [src/components/theme/config/index.tsx](./src/components/theme/config/index.tsx)
+  is now a 50-line composition that wires the packaged `ConfigDrawer`
+  shell to ui-5's `useTheme` / `useLayout` / `useDirection` resets.
+- ✅ [sections/appearance.tsx](./src/components/theme/config/sections/appearance.tsx):
+  Theme / Palette / FontSize routed through packaged sections; Font
+  stays local (its "Ag 123" preview is ui-5-specific) but uses the
+  packaged `SectionTitle`.
+- ✅ [sections/layout.tsx](./src/components/theme/config/sections/layout.tsx):
+  Density / Motion through packaged `TileChoiceSection`; Shell /
+  Sidebar / Layout-collapsible / Radius / Direction stay local but
+  use packaged `SectionTitle` + `RadioIconTile`.
+- ✅ [sections/branding.tsx](./src/components/theme/config/sections/branding.tsx)
+  and [sections/advanced.tsx](./src/components/theme/config/sections/advanced.tsx):
+  use packaged `SectionTitle` + `ComingSoonField`.
+- ✅ Local `shared.tsx` deleted (dead code after the swap).
+- ✅ ~60 new i18n keys covering the ConfigDrawer surface added to
+  [en.json](./src/i18n/en.json) and [es.json](./src/i18n/es.json).
+  Stage 1's "deferred ~80 strings" deferral is now resolved.
+
+**Gates passed**:
+
+- ✅ `tsc -b` on test-ui-5: clean.
+- ✅ `vite build` on test-ui-5: clean (809 kB / 244 kB gzip — +16 kB
+  vs. earlier Stage 2 build, expected from the new ui-kit surface).
+- ✅ `vitest run` on ui-core: **100 / 100 passing**.
+- ✅ Standalone typechecks clean: `starter-ui-kit`,
+  `starter-ext-ui`, `starter-ext-sdk-ts`.
+- ✅ Dev server boots clean; config drawer module serves 200.
+
 ### What's left
 
-**Step B — port ConfigDrawer UI into `starter-ui-kit`** (the original
-plan's "biggest" step) is **not done** yet. The current `ConfigDrawer`
-at [src/components/theme/config/](./src/components/theme/config/) is
-still test-ui-5-local, with its strings still hardcoded English (the
-~80-string set deferred from Stage 1). When Step B happens:
+The graduation pass is functionally complete. Open items for a future
+session, not blocking ship:
 
-1. Port `ConfigDrawer` + section components (`appearance`, `layout`,
-   `branding`, `advanced`) into
-   `packages/starter-ui-kit/src/theme-editor/`.
-2. Re-key all of its hardcoded strings through `@nube/starter-ui-core/i18n`.
-3. Replace test-ui-5's local `ConfigDrawer` import with the packaged
-   one.
-
-Step B is a self-contained pass and a good unit of work for a future
-session. The current Step A + C work is independently shippable: ui-5
-now consumes ui-core's preference model, ui-core's API is additive
-(no breaking changes), and every existing consumer still builds and
-tests.
+- ⏳ The Font, Radius, Shell, Sidebar, Layout-collapsible, Direction
+  sub-sections still live in test-ui-5. They depend on ui-5-only
+  state (font stacks, layout-provider, direction-provider) or on
+  custom SVG icons. Graduating them needs either (a) ui-core to grow
+  matching state primitives, or (b) those custom icons to be ported
+  to ui-kit as standalone components. Both are reasonable Stage-3
+  follow-ups but not part of the original scope.
+- ⏳ ui-kit's pre-existing strict-mode TypeScript errors in
+  `branding-editor.tsx`, `color-token-editor.tsx`,
+  `import-css-dialog.tsx`, `theme-editor-page.tsx`, `live-preview.tsx`
+  are still there. Not my regressions; surface only when a consumer
+  imports the catch-all `@nube/starter-ui-kit/theme-editor` barrel.
+  Worth a dedicated cleanup pass.
+- ⏳ Visual sign-off in a browser. The full toolchain (tsc, vite
+  build, dev server, ui-core tests) is green but I haven't actually
+  opened the drawer in a browser. `pnpm dev` in test-ui-5 will spin
+  it up on `localhost:5175`.
 
 
 **Scope of this pass**: `i18n` and `theme-editor` only. Components,
