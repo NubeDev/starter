@@ -19,6 +19,8 @@ import {
   ActivityFeed,
   type ActivityItem,
 } from '@nube/starter-ui-dashboard'
+import { useDiskUsage } from '@nube/rubix-client-react'
+import { ErrorBoundary } from '@/components/error-boundary'
 
 const SPARK_DEVICES = [380, 384, 388, 390, 395, 398, 402, 405, 408, 410, 411, 412]
 const SPARK_LOAD    = [22, 24, 26, 28, 30, 28, 26, 28, 30, 31, 30, 28]
@@ -56,6 +58,13 @@ const ACTIVITY_SEEDS: ActivitySeed[] = [
 function Section() {
   const intl = useIntl()
   const tr = (id: string) => intl.formatMessage({ id })
+  // Live disk-usage probe via rubix-agent. While loading we keep the
+  // dial at the last-known value (or 0); on error the dial drops to 0
+  // and the surrounding ErrorBoundary surfaces the localised
+  // diagnostic. `percent_used` is already a 0-100 integer per the
+  // `rubix.system.disk` DTO.
+  const disk = useDiskUsage()
+  const diskPercent = Math.round(disk.data?.percent_used ?? 0)
   const sites = [
     { labelKey: 'dashboard.site.northPlant',  value: 96, color: 'var(--color-leaf)',   icon: Gauge },
     { labelKey: 'dashboard.site.southCampus', value: 88, color: 'var(--color-aqua)',   icon: Droplet },
@@ -120,9 +129,9 @@ function Section() {
           className="lg:col-span-2"
         />
         <RadialProgress
-          value={94}
-          label={tr('dashboard.deviceHealth')}
-          subLabel={tr('dashboard.deviceHealthSub')}
+          value={diskPercent}
+          label={tr('dashboard.diskUsage')}
+          subLabel={tr('dashboard.diskUsageSub')}
           accent={ACCENT_LEAF}
         />
       </div>
@@ -168,4 +177,12 @@ function Section() {
   )
 }
 
-export const Route = createFileRoute('/dashboard')({ component: Section })
+function DashboardRoute() {
+  return (
+    <ErrorBoundary>
+      <Section />
+    </ErrorBoundary>
+  )
+}
+
+export const Route = createFileRoute('/dashboard')({ component: DashboardRoute })
