@@ -42,11 +42,11 @@ tasks:
     desc: |
       Bring up the Postgres + ClickHouse pair the thin-slice demo
       needs, bound to 127.0.0.1 on non-standard ports.
-    cmd: docker compose -f rubix/docker/docker-compose.dev.yaml up -d
+    cmd: docker compose -f docker/docker-compose.dev.yaml up -d
 
   dev-deps-down:
     desc: Tear down the thin-slice Postgres + ClickHouse pair.
-    cmd: docker compose -f rubix/docker/docker-compose.dev.yaml down
+    cmd: docker compose -f docker/docker-compose.dev.yaml down
 
   bootstrap:
     desc: |
@@ -62,8 +62,8 @@ tasks:
       connections (30s ceiling), seed the bootstrap operator,
       then boot the rubix-agent.
     cmd: |
-      docker compose -f rubix/docker/docker-compose.dev.yaml up -d
-      ./rubix/scripts/wait-for-deps.sh
+      docker compose -f docker/docker-compose.dev.yaml up -d
+      ./scripts/wait-for-deps.sh
       cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev
       RUBIX_CONFIG=rubix/dev/agent.toml cargo run -p rubix-agent
 
