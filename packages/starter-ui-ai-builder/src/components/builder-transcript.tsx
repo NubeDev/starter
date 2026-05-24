@@ -9,6 +9,7 @@ import {
 import { cn } from "../lib/utils.js";
 import type { BuilderMode, BuilderPhase } from "../types/index.js";
 import type { BuilderTranscriptEntry } from "../hooks/use-builder.js";
+import { useBuilderMessages } from "../i18n/context.js";
 
 export interface BuilderTranscriptProps {
   entries: BuilderTranscriptEntry[];
@@ -47,21 +48,24 @@ export function BuilderTranscript(
     phase,
     mode,
     onModeChange,
-    busyLabel = "Working…",
+    busyLabel,
     allowAttachments,
-    placeholder = "Describe the UI you want…",
+    placeholder,
     onSend,
     onCancel,
     onRetry,
     canRetry,
     className,
   } = props;
+  const messages = useBuilderMessages();
+  const resolvedBusyLabel = busyLabel ?? messages.busyLabel;
+  const resolvedPlaceholder = placeholder ?? messages.buildPlaceholder;
 
   const showModeToggle = mode !== undefined && onModeChange !== undefined;
   const effectivePlaceholder =
     mode === "ask"
-      ? "Ask a question about your page…"
-      : placeholder;
+      ? messages.askPlaceholder
+      : resolvedPlaceholder;
 
   const composerStatus: ChatStatus =
     phase === "thinking"
@@ -84,13 +88,12 @@ export function BuilderTranscript(
       <ChatMessageList deps={[entries.length, entries[entries.length - 1]?.text, phase]}>
         {entries.length === 0 ? (
           <div className="m-auto max-w-sm p-6 text-center text-sm text-muted-foreground">
-            Tell the agent what to build. Updates stream into the
-            canvas on the right.
+            {messages.emptyTranscript}
           </div>
         ) : (
           entries.map((e) => <TranscriptItem key={e.id} entry={e} />)
         )}
-        {showBusy ? <BusyBubble label={busyLabel} phase={phase} /> : null}
+        {showBusy ? <BusyBubble label={resolvedBusyLabel} phase={phase} /> : null}
         {showRetry ? (
           <div className="flex">
             <button
@@ -111,7 +114,7 @@ export function BuilderTranscript(
                 <path d="M21 12a9 9 0 11-3-6.7L21 8" />
                 <path d="M21 3v5h-5" />
               </svg>
-              Regenerate
+              {messages.regenerate}
             </button>
           </div>
         ) : null}
@@ -133,12 +136,13 @@ export function BuilderTranscript(
 }
 
 function TranscriptItem({ entry }: { entry: BuilderTranscriptEntry }) {
+  const messages = useBuilderMessages();
   if (entry.kind === "user") {
     return (
       <div className="flex w-full flex-col items-end gap-1">
         {entry.mode === "ask" ? (
           <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-            Ask
+            {messages.askTag}
           </span>
         ) : null}
         <div className="max-w-[85%] whitespace-pre-wrap break-words rounded-2xl rounded-br-md bg-primary px-3.5 py-2 text-sm text-primary-foreground shadow-sm">
@@ -189,6 +193,7 @@ function TranscriptItem({ entry }: { entry: BuilderTranscriptEntry }) {
 }
 
 function BusyBubble({ label, phase }: { label: string; phase: BuilderPhase }) {
+  const messages = useBuilderMessages();
   return (
     <div className="flex">
       <div className="inline-flex items-center gap-2 rounded-2xl rounded-bl-md border border-border/40 bg-muted/60 px-3.5 py-2 text-xs text-muted-foreground">
@@ -199,7 +204,7 @@ function BusyBubble({ label, phase }: { label: string; phase: BuilderPhase }) {
         </span>
         <span>{label}</span>
         <span className="text-[10px] uppercase tracking-wide opacity-60">
-          {phase}
+          {messages.phase[phase]}
         </span>
       </div>
     </div>
@@ -213,23 +218,24 @@ function ModeToggle({
   mode: BuilderMode;
   onChange: (mode: BuilderMode) => void;
 }) {
+  const messages = useBuilderMessages();
   return (
     <div
       role="radiogroup"
-      aria-label="Conversation mode"
+      aria-label={messages.modeToggleAriaLabel}
       className="mb-2 inline-flex items-center gap-0.5 rounded-md border border-border/60 bg-background/60 p-0.5 text-xs"
     >
       <ModeButton
         active={mode === "build"}
         onClick={() => onChange("build")}
-        label="Build"
-        hint="Generate or edit the page"
+        label={messages.buildModeLabel}
+        hint={messages.buildModeHint}
       />
       <ModeButton
         active={mode === "ask"}
         onClick={() => onChange("ask")}
-        label="Ask"
-        hint="Chat about the page without changing it"
+        label={messages.askModeLabel}
+        hint={messages.askModeHint}
       />
     </div>
   );

@@ -10,6 +10,11 @@ import type {
 } from "../types/index.js";
 import { AiBuilderCanvas } from "./ai-builder-canvas.js";
 import { BuilderTranscript } from "./builder-transcript.js";
+import {
+  BuilderI18nProvider,
+  useBuilderMessages,
+  type BuilderMessages,
+} from "../i18n/index.js";
 
 export interface AiBuilderProps {
   adapter: BuilderAdapter;
@@ -35,6 +40,10 @@ export interface AiBuilderProps {
   className?: string;
   /** Default: `1fr_1fr`. Tweak the split ratio. */
   splitClassName?: string;
+  /** Partial override of the package's user-visible strings
+   * (composer placeholders, mode toggle, phase labels, …). Hosts
+   * derive this from their own translation hook. */
+  i18n?: Partial<BuilderMessages>;
 }
 
 // Opinionated end-to-end ai-builder surface: chat transcript on the
@@ -57,6 +66,7 @@ export function AiBuilder(props: AiBuilderProps): React.ReactElement {
     transcriptOnly,
     className,
     splitClassName = "md:grid-cols-[minmax(20rem,28rem)_1fr]",
+    i18n,
   } = props;
 
   const builder = useBuilder({
@@ -71,63 +81,87 @@ export function AiBuilder(props: AiBuilderProps): React.ReactElement {
   const showCanvas = !transcriptOnly;
 
   return (
-    <div
-      data-slot="ai-builder"
-      className={cn(
-        "flex h-full min-h-0 w-full flex-col bg-gradient-to-b from-background to-muted/30 text-foreground",
-        className,
-      )}
-    >
-      {(title || headerExtras) && (
-        <header className="flex shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 py-2.5 backdrop-blur">
-          {title ? <div className="text-sm font-semibold">{title}</div> : null}
-          <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-            <PhaseBadge phase={builder.phase} />
-            {builder.bufferedPatches > 0 ? (
-              <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-700 dark:text-amber-300">
-                {builder.bufferedPatches} buffered
-              </span>
-            ) : null}
-            {headerExtras}
-          </div>
-        </header>
-      )}
-
+    <BuilderI18nProvider value={i18n}>
       <div
+        data-slot="ai-builder"
         className={cn(
-          "grid min-h-0 flex-1 grid-cols-1 gap-0",
-          showTranscript && showCanvas && splitClassName,
+          "flex h-full min-h-0 w-full flex-col bg-gradient-to-b from-background to-muted/30 text-foreground",
+          className,
         )}
       >
-        {showTranscript && (
-          <div className="min-h-0 border-border/40 md:border-r">
-            <BuilderTranscript
-              entries={builder.transcript}
-              phase={builder.phase}
-              mode={hideModeToggle ? undefined : builder.mode}
-              onModeChange={hideModeToggle ? undefined : builder.setMode}
-              placeholder={placeholder}
-              allowAttachments={allowAttachments}
-              onSend={(text) => void builder.send(text)}
-              onCancel={builder.cancel}
-              onRetry={() => void builder.retry()}
-              canRetry={builder.transcript.some((e) => e.kind === "user")}
-              className="bg-transparent"
+        <AiBuilderHeader
+          title={title}
+          headerExtras={headerExtras}
+          phase={builder.phase}
+          bufferedPatches={builder.bufferedPatches}
+        />
+
+        <div
+          className={cn(
+            "grid min-h-0 flex-1 grid-cols-1 gap-0",
+            showTranscript && showCanvas && splitClassName,
+          )}
+        >
+          {showTranscript && (
+            <div className="min-h-0 border-border/40 md:border-r">
+              <BuilderTranscript
+                entries={builder.transcript}
+                phase={builder.phase}
+                mode={hideModeToggle ? undefined : builder.mode}
+                onModeChange={hideModeToggle ? undefined : builder.setMode}
+                placeholder={placeholder}
+                allowAttachments={allowAttachments}
+                onSend={(text) => void builder.send(text)}
+                onCancel={builder.cancel}
+                onRetry={() => void builder.retry()}
+                canRetry={builder.transcript.some((e) => e.kind === "user")}
+                className="bg-transparent"
+              />
+            </div>
+          )}
+          {showCanvas && (
+            <AiBuilderCanvas
+              tree={builder.tree}
+              bufferedPatches={builder.bufferedPatches}
             />
-          </div>
-        )}
-        {showCanvas && (
-          <AiBuilderCanvas
-            tree={builder.tree}
-            bufferedPatches={builder.bufferedPatches}
-          />
-        )}
+          )}
+        </div>
       </div>
-    </div>
+    </BuilderI18nProvider>
+  );
+}
+
+function AiBuilderHeader({
+  title,
+  headerExtras,
+  phase,
+  bufferedPatches,
+}: {
+  title: React.ReactNode;
+  headerExtras: React.ReactNode;
+  phase: ReturnType<typeof useBuilder>["phase"];
+  bufferedPatches: number;
+}) {
+  const messages = useBuilderMessages();
+  if (!title && !headerExtras) return null;
+  return (
+    <header className="flex shrink-0 items-center gap-2 border-b border-border/60 bg-background/70 px-4 py-2.5 backdrop-blur">
+      {title ? <div className="text-sm font-semibold">{title}</div> : null}
+      <div className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
+        <PhaseBadge phase={phase} />
+        {bufferedPatches > 0 ? (
+          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-amber-700 dark:text-amber-300">
+            {bufferedPatches} {messages.bufferedSuffix}
+          </span>
+        ) : null}
+        {headerExtras}
+      </div>
+    </header>
   );
 }
 
 function PhaseBadge({ phase }: { phase: ReturnType<typeof useBuilder>["phase"] }) {
+  const messages = useBuilderMessages();
   if (phase === "idle") return null;
   const styles: Record<string, string> = {
     thinking: "bg-primary/15 text-primary",
@@ -143,7 +177,7 @@ function PhaseBadge({ phase }: { phase: ReturnType<typeof useBuilder>["phase"] }
         styles[phase] ?? "bg-muted text-muted-foreground",
       )}
     >
-      {phase}
+      {messages.phase[phase]}
     </span>
   );
 }

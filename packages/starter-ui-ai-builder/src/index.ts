@@ -43,4 +43,6 @@ export type { AiBuilderCanvasProps } from "./components/ai-builder-canvas.js";
 export { BuilderTranscript } from "./components/builder-transcript.js";
 export type { BuilderTranscriptProps } from "./components/builder-transcript.js";
 
+export * from "./i18n/index.js";
+
 export { cn, makeId, treeHasId } from "./lib/utils.js";

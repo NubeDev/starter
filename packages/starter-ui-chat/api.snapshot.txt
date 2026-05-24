@@ -6,10 +6,12 @@ ChatComposer
 ChatEmpty
 ChatFooter
 ChatHeader
+ChatI18nProvider
 ChatMessage
 ChatMessageList
 ChatRoot
 ChatTypingIndicator
+DEFAULT_CHAT_MESSAGES
 cn
 createEchoAdapter
 createLocalStorageStore
@@ -19,10 +21,13 @@ formatBytes
 formatTime
 isImageAttachment
 makeId
+mergeChatMessages
 type ChatAdapter
 type ChatAttachment
 type ChatEmptySuggestion
+type ChatI18nProviderProps
 type ChatMessage
+type ChatMessages
 type ChatProps
 type ChatRole
 type ChatSendInput
@@ -40,3 +45,4 @@ type UseChatReturn
 useAutoScroll
 useAutosizeTextarea
 useChat
+useChatMessages

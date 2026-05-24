@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn, formatTime } from "../lib/utils.js";
 import { formatBytes, isImageAttachment } from "../lib/attachments.js";
+import { useChatMessages } from "../i18n/context.js";
 import type {
   ChatAttachment,
   ChatMessage as ChatMessageT,
@@ -170,6 +171,7 @@ function MessageActions({
   onRetry?: (m: ChatMessageT) => void;
 }) {
   const [copied, setCopied] = React.useState(false);
+  const messages = useChatMessages();
   const onCopy = async () => {
     try {
       await navigator.clipboard.writeText(message.content);
@@ -182,7 +184,7 @@ function MessageActions({
   return (
     <span className="inline-flex items-center gap-0.5 opacity-0 transition group-hover/msg:opacity-100 focus-within:opacity-100">
       <ActionButton
-        label={copied ? "Copied" : "Copy"}
+        label={copied ? messages.copied : messages.copy}
         onClick={onCopy}
       >
         {copied ? (
@@ -215,7 +217,7 @@ function MessageActions({
         )}
       </ActionButton>
       {showRetry ? (
-        <ActionButton label="Retry" onClick={() => onRetry?.(message)}>
+        <ActionButton label={messages.retry} onClick={() => onRetry?.(message)}>
           <svg
             viewBox="0 0 24 24"
             fill="none"

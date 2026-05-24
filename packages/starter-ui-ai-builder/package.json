@@ -12,6 +12,7 @@
     "./hooks": "./src/hooks/index.ts",
     "./types": "./src/types/index.ts",
     "./adapters": "./src/adapters/index.ts",
+    "./i18n": "./src/i18n/index.ts",
     "./styles.css": "./styles.css"
   },
   "files": [

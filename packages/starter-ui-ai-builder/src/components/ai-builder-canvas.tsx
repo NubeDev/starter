@@ -9,6 +9,7 @@ import {
   type UiComponentTree,
 } from "@nube/starter-sdui-react";
 import { cn } from "../lib/utils.js";
+import { useBuilderMessages } from "../i18n/context.js";
 
 export interface AiBuilderCanvasProps
   extends React.HTMLAttributes<HTMLDivElement> {
@@ -38,6 +39,7 @@ export const AiBuilderCanvas = React.forwardRef<
   );
   const customRegistry = React.useMemo(() => new Map(), []);
   const treeQueryKey = React.useMemo(() => ["ai-builder-canvas"] as const, []);
+  const messages = useBuilderMessages();
 
   return (
     <div
@@ -52,7 +54,7 @@ export const AiBuilderCanvas = React.forwardRef<
       {bufferedPatches ? (
         <div className="pointer-events-none absolute right-3 top-3 z-10 inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300">
           <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-amber-500" />
-          {bufferedPatches} buffered
+          {bufferedPatches} {messages.bufferedSuffix}
         </div>
       ) : null}
 
@@ -74,7 +76,7 @@ export const AiBuilderCanvas = React.forwardRef<
           </QueryClientProvider>
         ) : (
           <div className="m-auto text-sm text-muted-foreground">
-            {emptyState ?? "Send a prompt to start building."}
+            {emptyState ?? messages.canvasEmpty}
           </div>
         )}
       </div>

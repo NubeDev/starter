@@ -49,6 +49,8 @@ export { ChatEmpty } from "./components/chat-empty.js";
 export type { ChatEmptySuggestion } from "./components/chat-empty.js";
 export { ChatTypingIndicator } from "./components/chat-typing-indicator.js";
 
+export * from "./i18n/index.js";
+
 export { cn, makeId, formatTime } from "./lib/utils.js";
 export {
   fileToAttachment,

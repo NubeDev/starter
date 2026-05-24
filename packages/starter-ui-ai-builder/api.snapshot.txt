@@ -3,17 +3,22 @@
 # Source: src/index.ts
 AiBuilder
 AiBuilderCanvas
+BuilderI18nProvider
 BuilderTranscript
+DEFAULT_BUILDER_MESSAGES
 cn
 createFixtureBuilderAdapter
 createHttpBuilderAdapter
 fixtureTree
 makeId
+mergeBuilderMessages
 treeHasId
 type AiBuilderCanvasProps
 type AiBuilderProps
 type BuilderAdapter
 type BuilderEvent
+type BuilderI18nProviderProps
+type BuilderMessages
 type BuilderMode
 type BuilderPhase
 type BuilderSendInput
@@ -26,3 +31,4 @@ type TokenPatch
 type UseBuilderOptions
 type UseBuilderReturn
 useBuilder
+useBuilderMessages

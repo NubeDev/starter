@@ -14,6 +14,11 @@ import { ChatMessage } from "./chat-message.js";
 import { ChatComposer } from "./chat-composer.js";
 import { ChatEmpty, type ChatEmptySuggestion } from "./chat-empty.js";
 import { ChatTypingIndicator } from "./chat-typing-indicator.js";
+import {
+  ChatI18nProvider,
+  useChatMessages,
+  type ChatMessages,
+} from "../i18n/index.js";
 
 export interface ChatProps {
   adapter: ChatAdapter;
@@ -40,6 +45,10 @@ export interface ChatProps {
   persistence?: UseChatPersistence | UseChatOptions["persistence"];
   /** Show a "Clear" button in the header. Calls `useChat().clear()`. */
   showClearButton?: boolean;
+  /** Partial override of the package's user-visible strings (composer
+   * placeholder, action labels, typing-indicator a11y, …). Hosts
+   * derive this from their own translation hook. */
+  i18n?: Partial<ChatMessages>;
   renderMessage?: (
     m: ChatMessageT,
     helpers: { retry: () => void },
@@ -68,6 +77,7 @@ export function Chat(props: ChatProps): React.ReactElement {
     maxAttachments,
     persistence,
     showClearButton,
+    i18n,
     renderMessage,
   } = props;
 
@@ -78,6 +88,94 @@ export function Chat(props: ChatProps): React.ReactElement {
   });
 
   const empty = messages.length === 0;
+
+  return (
+    <ChatI18nProvider value={i18n}>
+      <ChatBody
+        className={className}
+        title={title}
+        headerExtras={headerExtras}
+        showClearButton={showClearButton}
+        messages={messages}
+        status={status}
+        send={send}
+        cancel={cancel}
+        retry={retry}
+        clear={clear}
+        empty={empty}
+        emptyTitle={emptyTitle}
+        emptyDescription={emptyDescription}
+        emptyIcon={emptyIcon}
+        suggestions={suggestions}
+        userName={userName}
+        assistantName={assistantName}
+        placeholder={placeholder}
+        allowAttachments={allowAttachments}
+        acceptAttachments={acceptAttachments}
+        maxAttachmentBytes={maxAttachmentBytes}
+        maxAttachments={maxAttachments}
+        renderMessage={renderMessage}
+      />
+    </ChatI18nProvider>
+  );
+}
+
+interface ChatBodyProps {
+  className?: string;
+  title?: React.ReactNode;
+  headerExtras?: React.ReactNode;
+  showClearButton?: boolean;
+  messages: ChatMessageT[];
+  status: ReturnType<typeof useChat>["status"];
+  send: ReturnType<typeof useChat>["send"];
+  cancel: ReturnType<typeof useChat>["cancel"];
+  retry: ReturnType<typeof useChat>["retry"];
+  clear: ReturnType<typeof useChat>["clear"];
+  empty: boolean;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyIcon?: React.ReactNode;
+  suggestions?: Array<ChatEmptySuggestion>;
+  userName?: string;
+  assistantName?: string;
+  placeholder?: string;
+  allowAttachments?: boolean;
+  acceptAttachments?: string;
+  maxAttachmentBytes?: number;
+  maxAttachments?: number;
+  renderMessage?: (
+    m: ChatMessageT,
+    helpers: { retry: () => void },
+  ) => React.ReactNode;
+}
+
+function ChatBody(props: ChatBodyProps): React.ReactElement {
+  const {
+    className,
+    title,
+    headerExtras,
+    showClearButton,
+    messages,
+    status,
+    send,
+    cancel,
+    retry,
+    clear,
+    empty,
+    emptyTitle,
+    emptyDescription,
+    emptyIcon,
+    suggestions,
+    userName,
+    assistantName,
+    placeholder,
+    allowAttachments,
+    acceptAttachments,
+    maxAttachmentBytes,
+    maxAttachments,
+    renderMessage,
+  } = props;
+  const chatMessages = useChatMessages();
 
   return (
     <ChatRoot className={className}>
@@ -94,7 +192,7 @@ export function Chat(props: ChatProps): React.ReactElement {
                 onClick={clear}
                 className="rounded-md px-2 py-1 text-xs text-muted-foreground transition hover:bg-muted hover:text-foreground"
               >
-                Clear
+                {chatMessages.clear}
               </button>
             ) : null}
           </div>

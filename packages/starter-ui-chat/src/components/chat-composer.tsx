@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "../lib/utils.js";
 import { useAutosizeTextarea } from "../hooks/use-autosize-textarea.js";
+import { useChatMessages } from "../i18n/context.js";
 import {
   fileToAttachment,
   formatBytes,
@@ -43,7 +44,7 @@ export const ChatComposer = React.forwardRef<
 >((props, ref) => {
   const {
     status = "idle",
-    placeholder = "Send a message…",
+    placeholder,
     disabled,
     maxRows = 8,
     onSend,
@@ -56,6 +57,8 @@ export const ChatComposer = React.forwardRef<
     maxAttachments = 10,
     renderSubmit,
   } = props;
+  const messages = useChatMessages();
+  const resolvedPlaceholder = placeholder ?? messages.composerPlaceholder;
   const [value, setValue] = React.useState("");
   const [attachments, setAttachments] = React.useState<ChatAttachment[]>([]);
   const [dragOver, setDragOver] = React.useState(false);
@@ -247,7 +250,7 @@ export const ChatComposer = React.forwardRef<
             />
             <button
               type="button"
-              aria-label="Attach files"
+              aria-label={messages.attachFiles}
               disabled={disabled || attachments.length >= maxAttachments}
               onClick={() => fileInputRef.current?.click()}
               className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground disabled:opacity-40"
@@ -272,7 +275,7 @@ export const ChatComposer = React.forwardRef<
           rows={1}
           value={value}
           disabled={disabled}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={onKeyDown}
           onPaste={onPaste}
@@ -289,6 +292,8 @@ export const ChatComposer = React.forwardRef<
             canSubmit={canSubmit}
             canCancel={canCancel}
             onCancel={onCancel}
+            cancelLabel={messages.cancel}
+            sendLabel={messages.send}
           />
         )}
       </div>
@@ -297,7 +302,7 @@ export const ChatComposer = React.forwardRef<
           className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-2xl bg-primary/5 text-xs font-medium text-primary"
           aria-hidden
         >
-          Drop files to attach
+          {messages.dropFilesToAttach}
         </div>
       )}
     </form>
@@ -310,18 +315,22 @@ function DefaultSubmit({
   canSubmit,
   canCancel,
   onCancel,
+  cancelLabel,
+  sendLabel,
 }: {
   status: ChatStatus;
   canSubmit: boolean;
   canCancel: boolean;
   onCancel?: () => void;
+  cancelLabel: string;
+  sendLabel: string;
 }) {
   if (canCancel) {
     return (
       <button
         type="button"
         onClick={onCancel}
-        aria-label="Cancel"
+        aria-label={cancelLabel}
         className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-destructive text-destructive-foreground transition hover:opacity-90"
       >
         <span className="block h-2.5 w-2.5 rounded-[2px] bg-current" />
@@ -332,7 +341,7 @@ function DefaultSubmit({
     <button
       type="submit"
       disabled={!canSubmit}
-      aria-label="Send"
+      aria-label={sendLabel}
       data-status={status}
       className={cn(
         "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground transition",

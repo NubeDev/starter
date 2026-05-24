@@ -1,5 +1,6 @@
 import * as React from "react";
 import { cn } from "../lib/utils.js";
+import { useChatMessages } from "../i18n/context.js";
 
 export interface ChatEmptySuggestion {
   label: string;
@@ -20,7 +21,7 @@ export const ChatEmpty = React.forwardRef<HTMLDivElement, ChatEmptyProps>(
   (
     {
       className,
-      title = "How can I help?",
+      title,
       description,
       icon,
       suggestions,
@@ -29,7 +30,10 @@ export const ChatEmpty = React.forwardRef<HTMLDivElement, ChatEmptyProps>(
       ...props
     },
     ref,
-  ) => (
+  ) => {
+    const messages = useChatMessages();
+    const resolvedTitle = title ?? messages.emptyTitle;
+    return (
     <div
       ref={ref}
       data-slot="chat-empty"
@@ -59,7 +63,7 @@ export const ChatEmpty = React.forwardRef<HTMLDivElement, ChatEmptyProps>(
         )}
       </div>
       <div className="flex flex-col gap-1">
-        <div className="text-lg font-semibold tracking-tight">{title}</div>
+        <div className="text-lg font-semibold tracking-tight">{resolvedTitle}</div>
         {description ? (
           <div className="text-sm text-muted-foreground">{description}</div>
         ) : null}
@@ -92,6 +96,7 @@ export const ChatEmpty = React.forwardRef<HTMLDivElement, ChatEmptyProps>(
         </div>
       ) : null}
     </div>
-  ),
+    );
+  },
 );
 ChatEmpty.displayName = "ChatEmpty";
