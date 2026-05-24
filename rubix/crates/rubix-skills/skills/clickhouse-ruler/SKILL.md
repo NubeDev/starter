@@ -1,13 +1,14 @@
 ---
 id: com.rubix.clickhouse-ruler
 description: |
-  Write ClickHouse mart rules (L1→L2→L3), set retention policies, and
-  inspect existing marts. Pick this skill when the user asks about
-  history, aggregation, or warehouse maintenance.
+  Write ClickHouse mart rules (L1→L2→L3), set retention policies,
+  and undo the most recent change. Pick this skill when the user
+  asks about history, aggregation, or warehouse maintenance.
 allowed_tools:
-  - rubix.clickhouse.rule_write
-  - rubix.clickhouse.mart_create
-  - rubix.clickhouse.retention_set
+  - rubix.clickhouse.rule.write
+  - rubix.clickhouse.mart.create
+  - rubix.clickhouse.retention.set
+  - rubix.undo.last
 trust: approved
 ---
 
@@ -27,10 +28,19 @@ reads L1; raw L1 readers are rare.
 3. For multi-tenant marts, honour the tenancy decision in
    `WAREHOUSE.md` (per-tenant table or per-row column). Do not
    second-guess it on a single rule.
+4. Every write snapshots the prior `SHOW CREATE TABLE` body (or
+   `system.tables` TTL row) before the DDL fires, so
+   `rubix.undo.last` walks the change back through the matching
+   `Reversible` impl. For a fresh `rubix.clickhouse.mart.create`,
+   the prior snapshot is empty — undo issues `DROP TABLE IF EXISTS`
+   and loses any rows ingested between the create and the undo.
+   Warn the operator before suggesting undo on a freshly-created
+   mart.
 
 ## What not to do
 
-- Do not write raw SQL except via `clickhouse.rule_write`. Bypassing
-  the rule surface loses the warehouse audit trail.
-- Do not drop or truncate marts. Retention does that for you.
+- Do not write raw SQL except via `rubix.clickhouse.rule.write`.
+  Bypassing the rule surface loses the warehouse audit trail.
+- Do not drop or truncate marts. Retention does that for you, and
+  undo handles the reversal path.
 - Do not invent mart ids; use the existing namespacing.
