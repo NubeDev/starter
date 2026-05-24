@@ -65,6 +65,45 @@ pub struct AgentConfig {
     /// `[insights]` TOML section and the `RUBIX_INSIGHTS__*` env
     /// names match the loader's double-underscore convention.
     pub insights: InsightsConfig,
+
+    /// Retention knobs for the `undo_snapshots` sweep task. See
+    /// [`UndoConfig`] for field defaults; the sweep itself lives
+    /// in [`crate::boot::undo_sweep`].
+    pub undo: UndoConfig,
+}
+
+/// Bounds the on-disk size of `undo_snapshots`. The sweep keeps
+/// **the smaller of** the two limits per
+/// `(tenant_id, resource_kind, resource_id)`, so the limit that
+/// bites first wins — a chatty resource hits `max_rows_per_resource`
+/// before its oldest row turns `max_age_days` old, while a sleepy
+/// resource ages out before it accumulates `max_rows_per_resource`
+/// snapshots. Both knobs are exposed in `agent.toml` under
+/// `[undo]` so operators can shrink the window without a rebuild.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct UndoConfig {
+    /// Maximum live snapshot rows to retain per
+    /// `(tenant_id, resource_kind, resource_id)`. Older rows
+    /// beyond this count are deleted on each sweep tick.
+    /// Default `50` — large enough to cover a normal session's
+    /// undo depth with headroom, small enough to keep the table
+    /// from unbounded growth on hot resources.
+    pub max_rows_per_resource: u32,
+
+    /// Maximum age (in days) of any snapshot row. Rows older
+    /// than this are deleted on each sweep tick regardless of
+    /// how many remain for the resource. Default `90`.
+    pub max_age_days: u32,
+}
+
+impl Default for UndoConfig {
+    fn default() -> Self {
+        Self {
+            max_rows_per_resource: 50,
+            max_age_days: 90,
+        }
+    }
 }
 
 /// Tunables for the v0 insights gate. Kept on its own type so the
@@ -102,6 +141,7 @@ impl Default for AgentConfig {
             config_path: None,
             ai_provider: None,
             insights: InsightsConfig::default(),
+            undo: UndoConfig::default(),
         }
     }
 }

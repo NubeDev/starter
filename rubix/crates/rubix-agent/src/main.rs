@@ -45,6 +45,12 @@ async fn main() -> Result<()> {
         .sum();
 
     let migrations = boot::apply_migrations(cfg.database_url.as_deref()).await?;
+    // The sweep handle is intentionally leaked into the process
+    // lifetime — `health::serve` blocks until shutdown, at which
+    // point the runtime dropping aborts every task. See
+    // [`boot::undo_sweep`] for the cadence + bound contract.
+    let _undo_sweep =
+        boot::spawn_undo_sweep(cfg.database_url.as_deref(), cfg.undo.clone()).await?;
     let ch_migrations = boot::apply_ch_migrations(
         cfg.clickhouse_url.as_deref(),
         cfg.database_url.as_deref(),
