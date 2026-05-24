@@ -11,6 +11,7 @@
     "codegen": "pnpm --filter @nube/starter-client-ts run codegen",
     "check:i18n": "node scripts/check-i18n.mjs",
     "api:check": "node scripts/check-public-api.mjs",
-    "api:update": "node scripts/check-public-api.mjs --update"
+    "api:update": "node scripts/check-public-api.mjs --update",
+    "check:no-alias-imports": "node scripts/check-no-alias-imports.mjs"
   }
 }
