@@ -26,3 +26,13 @@ contributes:
     - id: com.rubix.example.assistant
       flow_file: flows/example-assistant.yaml
       auth: { require_role: Reader }
+
+  # Phase D.2 — ship one UI panel so the frontend host-provider page in
+  # `packages/test-ui-5` has something to render into the `main` slot.
+  # `entry` resolves to the federation bundle at install time; for the
+  # in-tree typecheck path the panel ships as `ui/main.tsx` and the
+  # build script (added in Phase E) emits `ui/remoteEntry.js`.
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - { name: Main, module: "./main", slot: main }
