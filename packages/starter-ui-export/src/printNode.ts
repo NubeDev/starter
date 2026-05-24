@@ -1,6 +1,22 @@
 import { dimensionsMm, type PageOptions } from "./types";
 
 /**
+ * Optional second argument shape for {@link printNode}. Today only
+ * carries the document title used by the browser's print chrome
+ * (header band + saved-PDF filename); kept as a struct so we can
+ * grow the surface without another breaking-change.
+ */
+export interface PrintNodeExtras {
+  /**
+   * Temporarily overrides `document.title` for the duration of the
+   * print dialog. The browser uses this for the page header band
+   * AND the default filename when the user picks "Save as PDF".
+   * Restored on `afterprint`.
+   */
+  title?: string;
+}
+
+/**
  * Open the browser's native print dialog with the given page options
  * applied through an injected `@page` rule scoped to the target node.
  *
@@ -22,6 +38,7 @@ import { dimensionsMm, type PageOptions } from "./types";
 export async function printNode(
   node: HTMLElement,
   options: PageOptions,
+  extras: PrintNodeExtras = {},
 ): Promise<void> {
   const [w, h] = dimensionsMm(options);
   const m = options.margins;
@@ -41,9 +58,16 @@ export async function printNode(
   `;
   document.head.appendChild(style);
 
+  // Swap document.title so the browser's print chrome shows the
+  // export's name instead of whatever the host SPA had loaded. Also
+  // becomes the default "Save as PDF" filename in Chromium.
+  const prevTitle = document.title;
+  if (extras.title) document.title = extras.title;
+
   const cleanup = () => {
     node.removeAttribute(marker);
     style.remove();
+    if (extras.title) document.title = prevTitle;
     window.removeEventListener("afterprint", cleanup);
   };
   window.addEventListener("afterprint", cleanup);

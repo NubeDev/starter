@@ -1,6 +1,6 @@
 import { useCallback, useRef, useState } from "react";
 
-import { printNode } from "./printNode";
+import { printNode, type PrintNodeExtras } from "./printNode";
 import { DEFAULT_PAGE_OPTIONS, type PageOptions } from "./types";
 
 /**
@@ -12,8 +12,12 @@ export interface UsePrintResult {
    * host element so {@link print} can hand it to {@link printNode}.
    */
   hostRef: (node: HTMLDivElement | null) => void;
-  /** Open the native print dialog targeting the printable subtree. */
-  print: () => Promise<void>;
+  /**
+   * Open the native print dialog targeting the printable subtree.
+   * Accepts per-call extras (e.g. `title` to override the browser's
+   * print-chrome header + the default Save-as-PDF filename).
+   */
+  print: (extras?: PrintNodeExtras) => Promise<void>;
   /** True while images/fonts are loading and the dialog is opening. */
   printing: boolean;
   /** Last error from {@link print}, or `null` if none. */
@@ -46,22 +50,25 @@ export function usePrint(
     nodeRef.current = node;
   }, []);
 
-  const print = useCallback(async () => {
-    setError(null);
-    const node = nodeRef.current;
-    if (!node) {
-      setError(new Error("printable host is not mounted"));
-      return;
-    }
-    setPrinting(true);
-    try {
-      await printNode(node, options);
-    } catch (e) {
-      setError(e instanceof Error ? e : new Error(String(e)));
-    } finally {
-      setPrinting(false);
-    }
-  }, [options]);
+  const print = useCallback(
+    async (extras?: PrintNodeExtras) => {
+      setError(null);
+      const node = nodeRef.current;
+      if (!node) {
+        setError(new Error("printable host is not mounted"));
+        return;
+      }
+      setPrinting(true);
+      try {
+        await printNode(node, options, extras);
+      } catch (e) {
+        setError(e instanceof Error ? e : new Error(String(e)));
+      } finally {
+        setPrinting(false);
+      }
+    },
+    [options],
+  );
 
   return { hostRef, print, printing, error };
 }

@@ -16,4 +16,5 @@ export type { PrintableContentProps } from "./PrintableContent";
 export { usePrint } from "./usePrint";
 export type { UsePrintResult } from "./usePrint";
 export { printNode } from "./printNode";
+export type { PrintNodeExtras } from "./printNode";
 export { exportNodeToPdf } from "./exportNodeToPdf";
