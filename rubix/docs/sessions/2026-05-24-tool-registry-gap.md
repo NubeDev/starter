@@ -15,62 +15,107 @@ which was wrong. The grep was against the typed-client TypeScript
 package (`packages/rubix-client-ts/src/endpoints/`), not the
 agent's registered tools.
 
-Concretely:
+Concretely, the agent's `build_tool_registry()` registered only 5
+of the ~26 tool ids the frontend SDK calls. The full audit:
 
-| Verb id                            | Rust type in `rubix-tools` | Registered in `build_tool_registry` |
-| ---------------------------------- | -------------------------- | ----------------------------------- |
-| `rubix.flow_ops.list`              | `FlowListTool`             | **no** (now yes)                    |
-| `rubix.flow_ops.lint`              | `FlowLintTool`             | **no** (now yes)                    |
-| `rubix.flow_ops.deploy`            | `FlowDeployTool`           | **no** (now yes)                    |
-| `rubix.flow_ops.duplicate`         | `FlowDuplicateTool`        | **no** (now yes)                    |
-| `rubix.user.list`                  | `UserListTool`             | **no** (now yes)                    |
-| `rubix.user.create`                | `UserCreateTool`           | **no** (now yes)                    |
-| `rubix.user.disable`               | `UserDisableTool`          | **no** (now yes)                    |
-| `rubix.tenant.list`                | `TenantListTool`           | **no** (now yes)                    |
-| `rubix.team.create`                | `TeamCreateTool`           | **no** (now yes)                    |
-| `rubix.team.assign`                | `TeamAssignTool`           | **no** (now yes)                    |
-| `rubix.clickhouse.mart.list`       | —                          | **no Rust impl**                    |
-| `rubix.clickhouse.mart.drop`       | —                          | **no Rust impl**                    |
-| `rubix.clickhouse.rule.list`       | —                          | **no Rust impl**                    |
-| `rubix.clickhouse.tables.list`     | —                          | **no Rust impl**                    |
-| `rubix.analytics.report`           | `AnalyticsReportTool`      | **no** (deferred — needs `BlobStore`) |
-| `rubix.analytics.query`            | `AnalyticsQueryTool`       | **no** (deferred — call site unknown) |
-| `rubix.undo.last`                  | `UndoLastTool`             | **no** (deferred — needs `UndoService` + `ActorSource`) |
+| Verb id                                | Rust type in `rubix-tools` | Status after this branch |
+| -------------------------------------- | -------------------------- | ----------------------- |
+| `rubix.flow_ops.list`                  | `FlowListTool`             | wired (InMemory + seeded) |
+| `rubix.flow_ops.lint`                  | `FlowLintTool`             | wired                   |
+| `rubix.flow_ops.deploy`                | `FlowDeployTool`           | wired (InMemory)        |
+| `rubix.flow_ops.duplicate`             | `FlowDuplicateTool`        | wired (InMemory)        |
+| `rubix.user.list`                      | `UserListTool`             | wired (InMemory)        |
+| `rubix.user.create`                    | `UserCreateTool`           | wired (InMemory)        |
+| `rubix.user.disable`                   | `UserDisableTool`          | wired (InMemory)        |
+| `rubix.tenant.list`                    | `TenantListTool`           | wired (InMemory)        |
+| `rubix.team.create`                    | `TeamCreateTool`           | wired (InMemory)        |
+| `rubix.team.assign`                    | `TeamAssignTool`           | wired (InMemory)        |
+| `rubix.clickhouse.rule.list`           | `ClickhouseRuleListTool`   | **NEW** + wired         |
+| `rubix.clickhouse.rule.write`          | `ClickhouseRuleWriteTool`  | wired (was unregistered)|
+| `rubix.clickhouse.mart.list`           | `ClickhouseMartListTool`   | **NEW** + wired         |
+| `rubix.clickhouse.mart.create`         | `ClickhouseMartCreateTool` | wired (was unregistered)|
+| `rubix.clickhouse.mart.drop`           | `ClickhouseMartDropTool`   | **NEW** + wired         |
+| `rubix.clickhouse.tables.list`         | `ClickhouseTablesListTool` | **NEW** + wired         |
+| `rubix.clickhouse.retention.set`       | `ClickhouseRetentionSetTool` | wired (was unregistered)|
+| `rubix.insights.rule.list`             | `InsightsRuleListTool`     | **NEW** + wired         |
+| `rubix.insights.rule.create`           | `InsightsRuleCreateTool`   | **NEW** + wired         |
+| `rubix.insights.rule.enable`           | `InsightsRuleEnableTool`   | **NEW** + wired         |
+| `rubix.insights.rule.disable`          | `InsightsRuleDisableTool`  | **NEW** + wired         |
+| `rubix.analytics.report`               | `AnalyticsReportTool`      | deferred — needs `BlobStore` |
+| `rubix.analytics.query`                | `AnalyticsQueryTool`       | deferred — no SDK call site |
+| `rubix.undo.last`                      | `UndoLastTool`             | deferred — needs `UndoService` + `ActorSource` |
 
 ## What landed in this PR
+
+### Commit `dd698ab` — flow_ops + user + tenant + team
 
 [`rubix/crates/rubix-agent/src/registry.rs`](../../crates/rubix-agent/src/registry.rs)
 now registers the ten verbs in the upper block, backed by the
 existing `InMemory*` stores. `InMemoryFlowDefStore` is **seeded
 from `rubix_flows::bundled()`** at boot, so
 `rubix.flow_ops.list` returns the six canonical flows on a fresh
-agent. The user / tenant / team stores start empty (mutations land
-in-memory; lost on restart).
+agent.
+
+### Follow-up commit — clickhouse + insights
+
+Eleven additional verbs registered:
+
+- **Three already implemented but never wired**:
+  `clickhouse.rule.write`, `clickhouse.mart.create`,
+  `clickhouse.retention.set` — direct wire-up against a shared
+  `Arc<dyn ChWriter>` (the existing `InMemoryChWriter`).
+
+- **Four new ClickHouse verbs**: `rule.list`, `mart.list`,
+  `mart.drop`, `tables.list`. Backed by three new `ChWriter`
+  trait methods (`list_rules`, `list_marts`, `list_tables`) with
+  default empty-vec impls so any pre-existing fake keeps
+  compiling. `InMemoryChWriter` returns the union of marts and
+  TTL-tracked tables for `list_tables` with a constant engine
+  name; the CH-backed swap returns real `system.tables` rows.
+  `mart.drop` walks `ChWriter::restore_mart` with an empty
+  snapshot (the same code path the undo dispatcher uses).
+
+- **Four new insights verbs**: `rule.list`, `rule.create`,
+  `rule.enable`, `rule.disable`. New `InsightsRuleStore` trait
+  with an `InMemoryInsightsStore` impl. `create` is an idempotent
+  upsert; toggle verbs return a `rubix.insights.rule.not_found`
+  diagnostic (not an error) when the id is unknown so the SPA
+  can render a friendly toast.
+
+Live smoke against the running agent (cookie + CSRF, post-login):
 
 ```
-$ curl -sb jar -X POST http://127.0.0.1:8088/api/v1/tools/rubix.flow_ops.list \
-    -H "x-csrf-token: $CSRF" -d '{}'
-{"count":6,"flows":[{"flow_id":"com.rubix.clickhouse-ruler", ...}]}
-
-$ curl -sb jar -X POST http://127.0.0.1:8088/api/v1/tools/rubix.user.list \
-    -H "x-csrf-token: $CSRF" -d '{}'
-{"count":0,"summary":{"code":"rubix.user.listed", ...},"users":[]}
-
-$ curl -sb jar -X POST http://127.0.0.1:8088/api/v1/tools/rubix.tenant.list \
-    -H "x-csrf-token: $CSRF" -d '{}'
-{"count":0,"summary":{"code":"rubix.tenant.listed", ...},"tenants":[]}
+$ for v in rubix.clickhouse.{rule.list,rule.write,mart.list,mart.create,mart.drop,tables.list,retention.set} \
+           rubix.insights.rule.{list,create,enable,disable}; do
+    curl -s -o /dev/null -w "%{http_code}  $v\n" \
+      -b jar -H "x-csrf-token: $CSRF" -H 'content-type: application/json' \
+      -X POST "http://127.0.0.1:8088/api/v1/tools/$v" -d "$body"
+  done
+200  rubix.clickhouse.rule.list
+200  rubix.clickhouse.rule.write
+200  rubix.clickhouse.mart.list
+200  rubix.clickhouse.mart.create
+200  rubix.clickhouse.mart.drop
+200  rubix.clickhouse.tables.list
+200  rubix.clickhouse.retention.set
+200  rubix.insights.rule.list
+200  rubix.insights.rule.create
+200  rubix.insights.rule.enable
+200  rubix.insights.rule.disable
 ```
 
-A boot-time `warn!` on `rubix.registry` makes the in-memory backing
-state visible in the boot log so an operator does not mistake the
-empty lists for a working production surface.
+Boot log confirms `tools=26 mcp_tools=6` (was `tools=5` before
+this branch).
 
-Six new registry unit tests pin the wired verb ids
-(`registry_contains_flow_ops_quartet`,
-`registry_contains_user_admin_verbs`,
-`registry_contains_tenant_and_team_verbs`,
-`flow_store_is_seeded_from_bundled_flows`) so silent
-re-deregistration cannot happen in the future.
+A boot-time `warn!` on `rubix.registry` makes the in-memory
+backing state visible in the boot log so an operator does not
+mistake the empty lists for a working production surface.
+
+Sixteen new unit tests pin the wired verb ids and per-verb
+behaviour so silent re-deregistration cannot happen in the future
+(8 in the agent's `registry::tests`, 6 in
+`rubix-tools::clickhouse::*::tests` for the four new verbs, 6 in
+`rubix-tools::insights::*::tests` for the new family).
 
 ## Follow-ups (NOT in this PR)
 
@@ -106,32 +151,36 @@ emitting reload signals as soon as the PG store is in place.
 ### F3 — PG-backed `TenantStore` / `TeamAdminStore`
 
 Same shape as F1/F2. Lower priority since the admin UI's
-tenant/team surfaces are not on the critical path for the rubix-agent
-smoke flow.
+tenant/team surfaces are not on the critical path for the
+rubix-agent smoke flow.
 
-### F4 — ClickHouse list/admin verbs
+### F4 — CH-backed `ChWriter` impl (replaces `InMemoryChWriter`)
 
-`rubix.clickhouse.mart.list`, `rubix.clickhouse.mart.drop`,
-`rubix.clickhouse.rule.list`, `rubix.clickhouse.tables.list` have no
-Rust types yet — the typed TypeScript client and the React hooks
-were written ahead of the backend. The DTOs need to land in
-`rubix-spi/src/dto/clickhouse/` first, then the tools in
-`rubix-tools/src/clickhouse/`. The read verbs can be implemented as
-thin wrappers over the ClickHouse `system.tables` query the existing
-`ChClient` already supports.
+The seven `rubix.clickhouse.*` verbs are now wired but land DDL
+against an in-process `HashMap`. Production needs a `ChWriter`
+impl over `starter_store_clickhouse::ChClient`:
 
-The frontend hooks
-([`rubix/packages/rubix-client-react/src/hooks/clickhouse.ts`](../../packages/rubix-client-react/src/hooks/clickhouse.ts))
-already carry an inline comment acknowledging this gap ("the
-backing tool ids do not yet exist in `@nube/rubix-client-ts` — the
-agent-side endpoints are still being landed — see the stage 9
-BLOCKED handover").
+- `show_create_*` → `SHOW CREATE TABLE <name>` (catch
+  `UNKNOWN_TABLE` as `Ok(None)`).
+- `apply_*_ddl` → execute the DDL, then `SHOW CREATE TABLE` to
+  produce the post-state snapshot.
+- `list_rules` / `list_marts` → `SELECT name, create_table_query
+  FROM system.tables WHERE database = currentDatabase()` with a
+  family-discriminator predicate (engine starts with
+  `MaterializedView` for rules; `MergeTree`-family for marts).
+- `list_tables` → `SELECT name, engine, total_rows, ttl FROM
+  system.tables`.
+- `apply_retention` → `ALTER TABLE ... MODIFY TTL ...`.
 
-### F5 — `rubix.undo.last`, `rubix.analytics.{report,query}`
+The trait is already in the right shape; only the impl needs to
+land.
 
-Lower priority — none of these surfaced in the operator's 404
-report. Wire when:
+### F5 — PG-backed `InsightsRuleStore` + `rubix.undo.last` + analytics
 
+- `InsightsRuleStore`: tiny PG table `insights_rules(rule_id PK,
+  name, enabled, body_yaml, updated_at)` — straight `UPSERT`,
+  `UPDATE`, `SELECT`. After this lands the four insights verbs
+  survive restart.
 - `rubix.undo.last`: requires constructing an `UndoService` (needs
   the changelog SQLite/PG impl already wired in
   `boot::build_auth`) and an `ActorSource` that reads the
@@ -146,4 +195,8 @@ report. Wire when:
 
 R2 (upstream-first) applies. The PG store impls land in
 `rubix-store-postgres/`, not in the rubix-agent binary's
-`registry.rs`. The binary only wires `Arc::new(PgFooStore::new(pool))`.
+`registry.rs`. The CH-backed `ChWriter` impl lands in
+`starter-store-clickhouse/`. The binary only wires
+`Arc::new(PgFooStore::new(pool))` /
+`Arc::new(ChClientWriter::new(client))`.
+

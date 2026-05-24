@@ -75,6 +75,26 @@ pub struct ChRetentionSnapshot {
     pub days: Option<u32>,
 }
 
+/// Read-only row returned by [`ChWriter::list_tables`].
+///
+/// Mirrors the loose shape the rubix-client-react `clickhouse.ts`
+/// hooks expect — `engine` defaults to `"MergeTree"` for the
+/// in-memory backing since SQL semantics are not modelled; the
+/// CH-backed swap will return the real `system.tables.engine`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct ChTableSummary {
+    /// Fully-qualified table name.
+    pub table_name: String,
+    /// Engine name (e.g. `MergeTree`).
+    pub engine: String,
+    /// Current TTL in days; `None` when the table has no TTL clause.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retention_days: Option<u32>,
+    /// Approximate row count; `None` when unknown.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub row_count: Option<u64>,
+}
+
 /// Persistence + DDL surface the three CH write verbs target.
 ///
 /// Method shape mirrors the snapshot-before-write contract:
@@ -122,6 +142,33 @@ pub trait ChWriter: Send + Sync {
     ) -> Result<(ChRetentionSnapshot, ChRetentionSnapshot)>;
     /// Restore retention from a snapshot.
     async fn restore_retention(&self, snap: &ChRetentionSnapshot) -> Result<()>;
+
+    // ----- read surface for the four list/drop verbs --------------
+    //
+    // These power `rubix.clickhouse.{rule.list, mart.list,
+    // mart.drop, tables.list}`. Default impls return empty so any
+    // legacy [`ChWriter`] fake that pre-dates the read surface
+    // keeps compiling — the production CH-backed impl overrides
+    // them with the real `SHOW CREATE TABLE` / `system.tables`
+    // queries.
+
+    /// Enumerate every rule the backing store currently holds.
+    /// Default: empty (no rules visible).
+    async fn list_rules(&self) -> Result<Vec<ChRuleSnapshot>> {
+        Ok(Vec::new())
+    }
+    /// Enumerate every mart the backing store currently holds.
+    /// Default: empty.
+    async fn list_marts(&self) -> Result<Vec<ChMartSnapshot>> {
+        Ok(Vec::new())
+    }
+    /// Enumerate every table the backing store knows about (the
+    /// union of marts and TTL-tracked tables for the in-memory
+    /// impl; `system.tables` for the production impl).
+    /// Default: empty.
+    async fn list_tables(&self) -> Result<Vec<ChTableSummary>> {
+        Ok(Vec::new())
+    }
 }
 
 /// In-memory [`ChWriter`] for tests and the in-process smoke
@@ -300,6 +347,72 @@ impl ChWriter for InMemoryChWriter {
             }
         }
         Ok(())
+    }
+
+    async fn list_rules(&self) -> Result<Vec<ChRuleSnapshot>> {
+        let mut rows: Vec<ChRuleSnapshot> = self
+            .rules
+            .lock()
+            .expect("ChWriter mutex poisoned")
+            .iter()
+            .map(|(name, ddl)| ChRuleSnapshot {
+                rule_name: name.clone(),
+                ddl: Some(ddl.clone()),
+            })
+            .collect();
+        rows.sort_by(|a, b| a.rule_name.cmp(&b.rule_name));
+        Ok(rows)
+    }
+
+    async fn list_marts(&self) -> Result<Vec<ChMartSnapshot>> {
+        let mut rows: Vec<ChMartSnapshot> = self
+            .marts
+            .lock()
+            .expect("ChWriter mutex poisoned")
+            .iter()
+            .map(|(name, ddl)| ChMartSnapshot {
+                mart_name: name.clone(),
+                ddl: Some(ddl.clone()),
+            })
+            .collect();
+        rows.sort_by(|a, b| a.mart_name.cmp(&b.mart_name));
+        Ok(rows)
+    }
+
+    async fn list_tables(&self) -> Result<Vec<ChTableSummary>> {
+        // Union of every name we have seen as a mart or as a
+        // retention target. The in-memory backing has no notion of
+        // engine or row counts, so we surface a constant engine and
+        // omit row_count — the CH-backed swap fills both in from
+        // `system.tables`.
+        use std::collections::BTreeSet;
+        let mut names: BTreeSet<String> = BTreeSet::new();
+        for k in self
+            .marts
+            .lock()
+            .expect("ChWriter mutex poisoned")
+            .keys()
+        {
+            names.insert(k.clone());
+        }
+        for k in self
+            .ttl
+            .lock()
+            .expect("ChWriter mutex poisoned")
+            .keys()
+        {
+            names.insert(k.clone());
+        }
+        let ttl = self.ttl.lock().expect("ChWriter mutex poisoned").clone();
+        Ok(names
+            .into_iter()
+            .map(|n| ChTableSummary {
+                retention_days: ttl.get(&n).copied(),
+                table_name: n,
+                engine: "MergeTree".to_owned(),
+                row_count: None,
+            })
+            .collect())
     }
 }
 

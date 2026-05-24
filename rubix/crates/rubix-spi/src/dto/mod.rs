@@ -8,6 +8,7 @@ pub mod clickhouse;
 pub mod clipboard;
 pub mod dashboard;
 pub mod flow_ops;
+pub mod insights;
 pub mod system;
 pub mod tags;
 pub mod team;

@@ -31,18 +31,32 @@
 //!   survive restart (already seeded from `rubix_flows::bundled()`
 //!   below so list/lint/duplicate work read-only today).
 //! * Replace `InMemoryTenantStore` / `InMemoryTeamStore` likewise.
-//! * Implement and register the four read-only ClickHouse admin
-//!   verbs the SDK already calls (`rubix.clickhouse.{mart.list,
-//!   mart.drop, rule.list, tables.list}`).
+//! * Replace `InMemoryChWriter` with a `starter-store-clickhouse`
+//!   `ChClient`-backed impl so the seven `rubix.clickhouse.*` verbs
+//!   land DDL against the live warehouse.
+//! * Replace `InMemoryInsightsStore` with a PG-backed adapter so
+//!   insights-rule writes survive restart.
 
 use std::sync::Arc;
 
+use rubix_tools::clickhouse::mart_create::ClickhouseMartCreateTool;
+use rubix_tools::clickhouse::mart_drop::ClickhouseMartDropTool;
+use rubix_tools::clickhouse::mart_list::ClickhouseMartListTool;
+use rubix_tools::clickhouse::retention_set::ClickhouseRetentionSetTool;
+use rubix_tools::clickhouse::rule_list::ClickhouseRuleListTool;
+use rubix_tools::clickhouse::rule_write::ClickhouseRuleWriteTool;
+use rubix_tools::clickhouse::store::{ChWriter, InMemoryChWriter};
+use rubix_tools::clickhouse::tables_list::ClickhouseTablesListTool;
 use rubix_tools::dashboard::assistant::DashboardAssistantStub;
 use rubix_tools::flow_ops::deploy::FlowDeployTool;
 use rubix_tools::flow_ops::duplicate::FlowDuplicateTool;
 use rubix_tools::flow_ops::lint::FlowLintTool;
 use rubix_tools::flow_ops::list::FlowListTool;
 use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
+use rubix_tools::insights::rule_create::InsightsRuleCreateTool;
+use rubix_tools::insights::rule_list::InsightsRuleListTool;
+use rubix_tools::insights::rule_toggle::{InsightsRuleDisableTool, InsightsRuleEnableTool};
+use rubix_tools::insights::store::{InMemoryInsightsStore, InsightsRuleStore};
 use rubix_tools::system::alert_send::AlertSendTool;
 use rubix_tools::system::db::DbTool;
 use rubix_tools::system::disk::DiskTool;
@@ -86,13 +100,16 @@ pub fn build_tool_registry(
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
     let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::new());
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
+    let ch_writer: Arc<dyn ChWriter> = Arc::new(InMemoryChWriter::new());
+    let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
 
     warn!(
         target: "rubix.registry",
-        "user/tenant/team verbs are wired against in-memory stores; \
-         create/disable/assign state does not survive restart and \
-         does not reflect rows from starter-auth-users (PG-backed \
-         adapter is a tracked follow-up — see registry.rs module docs)",
+        "user/tenant/team/clickhouse/insights verbs are wired against \
+         in-memory stores; mutations do not survive restart and do \
+         not reflect rows from auth/PG/ClickHouse — PG-backed and \
+         CH-backed adapters are tracked follow-ups (see registry.rs \
+         module docs)",
     );
 
     vec![
@@ -115,6 +132,19 @@ pub fn build_tool_registry(
         // ---- team admin (write-only today) ----------------------
         Arc::new(TeamCreateTool::new(team_store.clone())),
         Arc::new(TeamAssignTool::new(team_store.clone())),
+        // ---- clickhouse admin (read + write) --------------------
+        Arc::new(ClickhouseRuleListTool::new(ch_writer.clone())),
+        Arc::new(ClickhouseRuleWriteTool::new(ch_writer.clone())),
+        Arc::new(ClickhouseMartListTool::new(ch_writer.clone())),
+        Arc::new(ClickhouseMartCreateTool::new(ch_writer.clone())),
+        Arc::new(ClickhouseMartDropTool::new(ch_writer.clone())),
+        Arc::new(ClickhouseTablesListTool::new(ch_writer.clone())),
+        Arc::new(ClickhouseRetentionSetTool::new(ch_writer.clone())),
+        // ---- insights admin (read + write) ----------------------
+        Arc::new(InsightsRuleListTool::new(insights_store.clone())),
+        Arc::new(InsightsRuleCreateTool::new(insights_store.clone())),
+        Arc::new(InsightsRuleEnableTool::new(insights_store.clone())),
+        Arc::new(InsightsRuleDisableTool::new(insights_store.clone())),
         // ---- placeholders ---------------------------------------
         // Goal 1 is still deferred — this stub surfaces so the flow
         // YAML `flows/dashboard-assistant.yaml` can dispatch its
@@ -228,6 +258,41 @@ mod tests {
     fn registry_contains_tenant_and_team_verbs() {
         let names = names();
         for expected in ["rubix.tenant.list", "rubix.team.create", "rubix.team.assign"] {
+            assert!(
+                names.contains(&expected.to_owned()),
+                "registry missing {expected}",
+            );
+        }
+    }
+
+    #[test]
+    fn registry_contains_every_clickhouse_verb() {
+        let names = names();
+        for expected in [
+            "rubix.clickhouse.rule.list",
+            "rubix.clickhouse.rule.write",
+            "rubix.clickhouse.mart.list",
+            "rubix.clickhouse.mart.create",
+            "rubix.clickhouse.mart.drop",
+            "rubix.clickhouse.tables.list",
+            "rubix.clickhouse.retention.set",
+        ] {
+            assert!(
+                names.contains(&expected.to_owned()),
+                "registry missing {expected}",
+            );
+        }
+    }
+
+    #[test]
+    fn registry_contains_every_insights_verb() {
+        let names = names();
+        for expected in [
+            "rubix.insights.rule.list",
+            "rubix.insights.rule.create",
+            "rubix.insights.rule.enable",
+            "rubix.insights.rule.disable",
+        ] {
             assert!(
                 names.contains(&expected.to_owned()),
                 "registry missing {expected}",
