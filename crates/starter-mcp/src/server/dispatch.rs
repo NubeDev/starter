@@ -112,7 +112,14 @@ async fn tools_call(registry: &ToolRegistry, params: &Value) -> Result<Value, Rp
             }],
             "structuredContent": output,
         })),
-        Err(e) => Err(RpcError::internal(e.to_string())),
+        Err(e) => {
+            tracing::warn!(
+                tool = name,
+                error = %e,
+                "tool dispatch failed"
+            );
+            Err(RpcError::internal_from_source(&e))
+        }
     }
 }
 

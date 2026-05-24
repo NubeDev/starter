@@ -1,20 +1,32 @@
 import { useEffect } from 'react'
 import {
-  applyDensity,
+  applyThemePreferences,
+  subscribePrefersDark,
+  useLayoutPreferences,
+} from '@nube/starter-ui-core/theme-editor'
+import {
   applyFont,
-  applyFontSize,
-  applyMotion,
   applyRadius,
-  applyTheme,
   useTheme,
 } from '@/stores/theme-store'
 
+/** Single React effect driver. ui-core's `applyThemePreferences`
+ * handles mode + palette + density + motion + font-size in one
+ * write; we still call the ui-5-only helpers for `font` and
+ * `radius`. */
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const { mode, palette, font, radius, density, fontSize, motion } = useTheme()
+  const prefs = useLayoutPreferences()
+  const { font, radius, mode } = useTheme()
 
   useEffect(() => {
-    applyTheme(mode, palette)
-  }, [mode, palette])
+    applyThemePreferences(document.documentElement, {
+      mode: prefs.mode,
+      density: prefs.density,
+      fontSize: prefs.fontSize,
+      motion: prefs.motion,
+      palette: prefs.palette ?? 'nube',
+    })
+  }, [prefs.mode, prefs.density, prefs.fontSize, prefs.motion, prefs.palette])
 
   useEffect(() => {
     applyFont(font)
@@ -24,25 +36,20 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     applyRadius(radius)
   }, [radius])
 
-  useEffect(() => {
-    applyDensity(density)
-  }, [density])
-
-  useEffect(() => {
-    applyFontSize(fontSize)
-  }, [fontSize])
-
-  useEffect(() => {
-    applyMotion(motion)
-  }, [motion])
-
+  // Re-apply when the OS-level prefers-color-scheme flips, but only
+  // when the user picked "system".
   useEffect(() => {
     if (mode !== 'system') return
-    const mql = window.matchMedia('(prefers-color-scheme: dark)')
-    const onChange = () => applyTheme(mode, palette)
-    mql.addEventListener('change', onChange)
-    return () => mql.removeEventListener('change', onChange)
-  }, [mode, palette])
+    return subscribePrefersDark(() => {
+      applyThemePreferences(document.documentElement, {
+        mode: prefs.mode,
+        density: prefs.density,
+        fontSize: prefs.fontSize,
+        motion: prefs.motion,
+        palette: prefs.palette ?? 'nube',
+      })
+    })
+  }, [mode, prefs.mode, prefs.density, prefs.fontSize, prefs.motion, prefs.palette])
 
   return <>{children}</>
 }

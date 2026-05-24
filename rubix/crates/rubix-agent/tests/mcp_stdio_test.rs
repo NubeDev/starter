@@ -2,25 +2,33 @@
 //!
 //! Spawns the `rubix-admin` binary as a child process, writes
 //! Content-Length-framed JSON-RPC frames to its stdin, and reads the
-//! framed responses back from stdout. The bundled flows are now
-//! driven through a real [`starter_ai_agent::AgentLoop`] so the
-//! tests use a recorded-LLM fixture under `tests/fixtures/` —
-//! `RUBIX_AI_FIXTURE` swaps the default [`ClaudeRunner`] for a JSON-
-//! script replay runner. **No live LLM is hit in CI.**
+//! framed responses back from stdout. The bundled scheduled-system-
+//! check flow dispatches its primary tool (`rubix.system.disk`)
+//! deterministically via [`crate::boot::mcp::RubixAiAgentNode`];
+//! narration is on by default and the test passes
+//! `RUBIX_AI_FIXTURE` so the AgentLoop hits a recorded-response
+//! runner instead of the live `claude` CLI. **No live LLM is hit
+//! in CI.**
 //!
-//! Block C deleted the hand-rolled `com.rubix.diag-render` node, so
-//! the previous exact-string assertions on Spanish disk-rendering
-//! output are gone. The structural assertions that remain are:
+//! Both halves of the response are asserted: the structured-
+//! `Diagnostic` shape under `tool.*` and the non-empty `reply`
+//! string under `reply`. The reply assertion is what guards the
+//! starter-flow in-flight-node tracker — without it, the slow
+//! agent-loop await would race the run coordinator's quiescence
+//! window and the node's return value would never land in `out`.
+//!
+//! Structural assertions:
 //!
 //!   1. `initialize` succeeds.
 //!   2. `tools/list` lists all six bundled flows — at minimum the
 //!      `com.rubix.scheduled-system-check` entry.
 //!   3. `tools/call` against that flow round-trips a non-error
-//!      response whose payload carries `code` matching the
-//!      `rubix.system.disk.*` shape and a numeric `params.percent`.
+//!      response whose payload carries `tool.summary.code` matching
+//!      the `rubix.system.disk.*` shape and numeric
+//!      `tool.summary.params.percent.i64` / `…free.i64`.
 //!   4. Same call in both `en-US` and `es-AR` locales (the
-//!      acceptLanguage cascade still routes — the wording is
-//!      LLM-supplied via the fixture).
+//!      acceptLanguage cascade still routes through the seed adapter
+//!      and reaches the node).
 
 use std::process::Stdio;
 use std::time::Duration;
@@ -176,31 +184,54 @@ async fn drive_call(accept_language: &str, fixture_file: &str) -> Value {
     call_resp
 }
 
-/// Structural assertion (`code` + numeric `params.percent`/`params.free`)
-/// against the JSON payload the rubix `ai-agent` node writes to its
-/// `out` slot. The exact wording is LLM-supplied (fixture-driven);
-/// only the shape is invariant.
+/// Structural assertion against the JSON payload the rubix
+/// `ai-agent` node writes to its `out` slot. The deterministic part
+/// is the primary tool's `Diagnostic` shape — `summary.code` is one
+/// of `rubix.system.disk.{ok,warn,full}` and `summary.params.percent`
+/// / `summary.params.free` are numeric. Narration is on by default
+/// (since the starter-flow in-flight node tracker landed, slow
+/// AgentLoop awaits no longer race the run coordinator's quiescence
+/// window) and the test fixture supplies the runner reply
+/// deterministically, so `reply` must be a non-empty string here
+/// too. To exercise the no-narration path locally, set
+/// `RUBIX_AI_NARRATION=0`.
 fn assert_disk_shape(call_resp: &Value) {
     let payload = &call_resp["result"]["structuredContent"];
-    let code = payload["code"]
+    let tool = &payload["tool"];
+    let summary = &tool["summary"];
+    let code = summary["code"]
         .as_str()
-        .unwrap_or_else(|| panic!("expected `code` string in {payload}"));
+        .unwrap_or_else(|| panic!("expected `tool.summary.code` string in {payload}"));
     assert!(
         code.starts_with("rubix.system.disk."),
-        "code must be rubix.system.disk.{{ok,warn,full}}; got {code:?}",
+        "tool.summary.code must be rubix.system.disk.{{ok,warn,full}}; got {code:?}",
+    );
+    // Params are typed `DiagnosticParam::I64` wrappers: `{"i64": <n>}`.
+    assert!(
+        summary["params"]["percent"]["i64"].is_number(),
+        "tool.summary.params.percent.i64 must be numeric; got {payload}",
     );
     assert!(
-        payload["params"]["percent"].is_number(),
-        "params.percent must be numeric; got {payload}",
+        summary["params"]["free"]["i64"].is_number(),
+        "tool.summary.params.free.i64 must be numeric; got {payload}",
     );
+    // Narration on (default) + recorded fixture runner means the
+    // `reply` field is populated end-to-end. This is the assertion
+    // that proves the in-flight-node tracker is doing its job —
+    // without it the slow agent-loop await would race quiescence
+    // and the node's return value would never land in `out`.
+    let reply = payload["reply"]
+        .as_str()
+        .unwrap_or_else(|| panic!("expected `reply` string in {payload}"));
     assert!(
-        payload["params"]["free"].is_number(),
-        "params.free must be numeric; got {payload}",
+        !reply.is_empty(),
+        "reply must be non-empty when narration runs through the fixture; got {payload}",
     );
-    // The model's final reply text is present (whatever the fixture supplied).
+    // Raw `tool.percent_used` is also numeric (the unwrapped probe
+    // result the REST handler returns).
     assert!(
-        payload["reply"].as_str().map(|s| !s.is_empty()).unwrap_or(false),
-        "reply text must be non-empty; got {payload}",
+        tool["percent_used"].is_number(),
+        "tool.percent_used must be numeric; got {payload}",
     );
 }
 

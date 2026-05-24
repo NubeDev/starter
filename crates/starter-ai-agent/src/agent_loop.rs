@@ -9,7 +9,9 @@
 
 use std::sync::Arc;
 
-use starter_spi::ai::{AiRunner, Cancel, RestCfg, RunResult, RunnerInput, SessionId};
+use starter_spi::ai::{
+    AiRunner, Cancel, CliCfg, Provider, RestCfg, RunResult, RunnerInput, SessionId,
+};
 use tokio::sync::mpsc;
 
 use crate::error::AgentError;
@@ -64,13 +66,36 @@ impl AgentLoop {
         prompt: String,
         history: Vec<starter_spi::ai::HistoryMessage>,
     ) -> Result<RunResult, AgentError> {
-        let cfg = RestCfg {
-            prompt,
-            history,
-            tools: self.tools.definitions(),
-            ..Default::default()
+        let input = match self.runner.provider() {
+            Provider::Claude | Provider::Codex | Provider::Copilot => {
+                // CLI runners take a single combined prompt — they
+                // do not consume `tools` or `history` directly. For
+                // multi-turn, we serialise history into the prompt;
+                // for tool dispatch through a CLI binary, the long-
+                // term plan is an MCP-server bridge (see
+                // LONG-TERM.md §"Tool-call streaming").
+                let combined = if history.is_empty() {
+                    prompt
+                } else {
+                    let mut s = String::new();
+                    for m in &history {
+                        s.push_str(&format!("[{}] {}\n", m.role, m.content));
+                    }
+                    s.push_str(&prompt);
+                    s
+                };
+                RunnerInput::Cli(CliCfg {
+                    prompt: combined,
+                    ..Default::default()
+                })
+            }
+            Provider::Anthropic | Provider::OpenAi => RunnerInput::Rest(RestCfg {
+                prompt,
+                history,
+                tools: self.tools.definitions(),
+                ..Default::default()
+            }),
         };
-        let input = RunnerInput::Rest(cfg);
         // The loop is non-streaming today; the channel is wired only
         // because the trait requires it. Capacity 16 swallows the
         // small bursts a runner emits without back-pressuring it.

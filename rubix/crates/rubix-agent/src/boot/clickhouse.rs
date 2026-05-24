@@ -1,6 +1,8 @@
 //! Apply rubix-owned ClickHouse migrations at boot.
 //!
-//! `RUBIX_CH_URL` selects the ClickHouse HTTP endpoint. Unset means
+//! Reads the ClickHouse HTTP endpoint from the loaded `AgentConfig`
+//! (which the `starter-config` layered loader assembles from
+//! defaults < `rubix/dev/agent.toml` < `RUBIX_*` env). When unset,
 //! the warehouse side is not configured in this deployment; the
 //! binary logs a warn and continues so a developer can boot the
 //! agent on a laptop without a ClickHouse running. See
@@ -42,7 +44,7 @@ pub struct ChMigrationReport {
 
 /// Apply the rubix-owned `0002_history` ClickHouse migration via
 /// the shared `MigrationRunner`. Skips with a warn when
-/// `RUBIX_CH_URL` is absent.
+/// `clickhouse_url` is `None`.
 ///
 /// `database_url` is the agent's Postgres DSN; it is parsed into
 /// the [`PgSource`] required by the shared
@@ -50,11 +52,14 @@ pub struct ChMigrationReport {
 /// step is skipped entirely (the binary still boots) so a
 /// developer can run the agent against a ClickHouse without a
 /// Postgres alongside.
-pub async fn apply_ch_migrations(database_url: Option<&str>) -> Result<ChMigrationReport> {
-    let Ok(url) = std::env::var("RUBIX_CH_URL") else {
+pub async fn apply_ch_migrations(
+    clickhouse_url: Option<&str>,
+    database_url: Option<&str>,
+) -> Result<ChMigrationReport> {
+    let Some(url) = clickhouse_url else {
         warn!(
             target: "rubix.boot",
-            "RUBIX_CH_URL unset — skipping ClickHouse migrations; agent will boot without warehouse-backed features",
+            "ClickHouse URL unset — skipping ClickHouse migrations; agent will boot without warehouse-backed features",
         );
         return Ok(ChMigrationReport { skipped: true });
     };
@@ -67,7 +72,7 @@ pub async fn apply_ch_migrations(database_url: Option<&str>) -> Result<ChMigrati
         return Ok(ChMigrationReport { skipped: true });
     };
 
-    let client = ChClient::connect(ChConfig::local(url));
+    let client = ChClient::connect(ChConfig::local(url.to_owned()));
     MigrationRunner::new(&client)
         .with_pg_source(pg)
         .with_extra_migration("rubix/0002_history/up.sql", RUBIX_0002_HISTORY_UP)
@@ -111,16 +116,17 @@ mod tests {
 
     #[tokio::test]
     async fn skips_when_ch_url_unset() {
-        let prior = std::env::var("RUBIX_CH_URL").ok();
-        std::env::remove_var("RUBIX_CH_URL");
-        let report = apply_ch_migrations(Some(
-            "postgres://u:p@h:5432/d",
-        ))
-        .await
-        .expect("skip path succeeds");
-        if let Some(v) = prior {
-            std::env::set_var("RUBIX_CH_URL", v);
-        }
+        let report = apply_ch_migrations(None, Some("postgres://u:p@h:5432/d"))
+            .await
+            .expect("skip path succeeds");
+        assert!(report.skipped);
+    }
+
+    #[tokio::test]
+    async fn skips_when_database_url_unset() {
+        let report = apply_ch_migrations(Some("http://127.0.0.1:8124"), None)
+            .await
+            .expect("skip path succeeds");
         assert!(report.skipped);
     }
 

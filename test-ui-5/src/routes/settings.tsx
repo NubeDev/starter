@@ -1,39 +1,40 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
+import { useIntl } from 'react-intl'
 import { useTheme, FONT_STACKS, type Mode, type Palette, type Font } from '@/stores/theme-store'
 import { useLayout, type Variant, type Collapsible } from '@/context/layout-provider'
 import { LayoutToggle } from '@/components/layout-toggle'
 import { cn } from '@/lib/utils'
 
-const MODES: { id: Mode; label: string }[] = [
-  { id: 'light',  label: 'Light' },
-  { id: 'dark',   label: 'Dark' },
-  { id: 'system', label: 'System' },
+const MODES: { id: Mode; labelKey: string }[] = [
+  { id: 'light',  labelKey: 'mode.light' },
+  { id: 'dark',   labelKey: 'mode.dark' },
+  { id: 'system', labelKey: 'mode.system' },
 ]
 
-const PALETTES: { id: Palette; label: string; swatch: string }[] = [
-  { id: 'nube',   label: 'Nube',   swatch: 'linear-gradient(135deg,#339999,#184171)' },
-  { id: 'ocean',  label: 'Ocean',  swatch: 'linear-gradient(135deg,#3b82f6,#1e3a8a)' },
-  { id: 'sunset', label: 'Sunset', swatch: 'linear-gradient(135deg,#f97316,#b21368)' },
+const PALETTES: { id: Palette; labelKey: string; swatch: string }[] = [
+  { id: 'nube',   labelKey: 'palette.nube',   swatch: 'linear-gradient(135deg,#339999,#184171)' },
+  { id: 'ocean',  labelKey: 'palette.ocean',  swatch: 'linear-gradient(135deg,#3b82f6,#1e3a8a)' },
+  { id: 'sunset', labelKey: 'palette.sunset', swatch: 'linear-gradient(135deg,#f97316,#b21368)' },
 ]
 
-const FONTS: { id: Font; label: string }[] = [
-  { id: 'geist',   label: 'Geist' },
-  { id: 'inter',   label: 'Inter' },
-  { id: 'manrope', label: 'Manrope' },
-  { id: 'system',  label: 'System' },
+const FONTS: { id: Font; labelKey: string }[] = [
+  { id: 'geist',   labelKey: 'font.geist' },
+  { id: 'inter',   labelKey: 'font.inter' },
+  { id: 'manrope', labelKey: 'font.manrope' },
+  { id: 'system',  labelKey: 'font.system' },
 ]
 
-const VARIANTS: { id: Variant; label: string; hint: string }[] = [
-  { id: 'inset',    label: 'Inset',    hint: 'Recessed panel inside the page' },
-  { id: 'sidebar',  label: 'Standard', hint: 'Classic flush sidebar' },
-  { id: 'floating', label: 'Floating', hint: 'Detached card with breathing room' },
+const VARIANTS: { id: Variant; labelKey: string; hintKey: string }[] = [
+  { id: 'inset',    labelKey: 'settings.variant.inset',    hintKey: 'settings.variant.inset.hint' },
+  { id: 'sidebar',  labelKey: 'settings.variant.sidebar',  hintKey: 'settings.variant.sidebar.hint' },
+  { id: 'floating', labelKey: 'settings.variant.floating', hintKey: 'settings.variant.floating.hint' },
 ]
 
-const COLLAPSIBLES: { id: Collapsible; label: string; hint: string }[] = [
-  { id: 'icon',      label: 'Icon',       hint: 'Collapses to icons' },
-  { id: 'offcanvas', label: 'Off-canvas', hint: 'Slides fully out' },
-  { id: 'none',      label: 'Locked',     hint: 'Always open' },
+const COLLAPSIBLES: { id: Collapsible; labelKey: string; hintKey: string }[] = [
+  { id: 'icon',      labelKey: 'settings.collapsible.icon',      hintKey: 'settings.collapsible.icon.hint' },
+  { id: 'offcanvas', labelKey: 'settings.collapsible.offcanvas', hintKey: 'settings.collapsible.offcanvas.hint' },
+  { id: 'none',      labelKey: 'settings.collapsible.none',      hintKey: 'settings.collapsible.none.hint' },
 ]
 
 function Row({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
@@ -51,6 +52,8 @@ function Row({ title, hint, children }: { title: string; hint?: string; children
 function Settings() {
   const { mode, palette, font, setMode, setPalette, setFont } = useTheme()
   const { mode: shellMode, variant, setVariant, collapsible, setCollapsible } = useLayout()
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
 
   return (
     <section className="relative mx-auto max-w-4xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
@@ -63,31 +66,31 @@ function Settings() {
         <div className="flex items-center gap-3">
           <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-            Settings
+            {tr('settings.eyebrow')}
           </span>
         </div>
         <h1 className="mt-3 text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-[color:var(--color-text)] sm:text-5xl">
-          Appearance
+          {tr('settings.title')}
         </h1>
         <p className="mt-2 text-sm text-[color:var(--color-muted)]">
-          Make the console feel like home. Changes apply instantly and persist across sessions.
+          {tr('settings.subtitle')}
         </p>
       </motion.div>
 
       <div className="glass rounded-3xl p-6 sm:p-8">
-        <Row title="Layout" hint="Where the primary navigation lives.">
+        <Row title={tr('settings.row.layout')} hint={tr('settings.row.layout.hint')}>
           <LayoutToggle />
         </Row>
 
         {shellMode === 'sidebar' && (
           <>
-            <Row title="Sidebar variant" hint="Visual treatment of the sidebar panel.">
+            <Row title={tr('settings.row.sidebarVariant')} hint={tr('settings.row.sidebarVariant.hint')}>
               <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
                 {VARIANTS.map((v) => (
                   <button
                     key={v.id}
                     onClick={() => setVariant(v.id)}
-                    title={v.hint}
+                    title={tr(v.hintKey)}
                     className={cn(
                       'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                       variant === v.id
@@ -95,19 +98,19 @@ function Settings() {
                         : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                     )}
                   >
-                    {v.label}
+                    {tr(v.labelKey)}
                   </button>
                 ))}
               </div>
             </Row>
 
-            <Row title="Sidebar collapse" hint="What happens when the sidebar is collapsed.">
+            <Row title={tr('settings.row.sidebarCollapse')} hint={tr('settings.row.sidebarCollapse.hint')}>
               <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
                 {COLLAPSIBLES.map((c) => (
                   <button
                     key={c.id}
                     onClick={() => setCollapsible(c.id)}
-                    title={c.hint}
+                    title={tr(c.hintKey)}
                     className={cn(
                       'cursor-pointer rounded-full px-3 py-1.5 text-xs font-medium transition-colors',
                       collapsible === c.id
@@ -115,7 +118,7 @@ function Settings() {
                         : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                     )}
                   >
-                    {c.label}
+                    {tr(c.labelKey)}
                   </button>
                 ))}
               </div>
@@ -123,7 +126,7 @@ function Settings() {
           </>
         )}
 
-        <Row title="Mode" hint="Light, dark, or follow your OS.">
+        <Row title={tr('settings.row.mode')} hint={tr('settings.row.mode.hint')}>
           <div className="inline-flex items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
             {MODES.map((m) => (
               <button
@@ -136,13 +139,13 @@ function Settings() {
                     : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                 )}
               >
-                {m.label}
+                {tr(m.labelKey)}
               </button>
             ))}
           </div>
         </Row>
 
-        <Row title="Palette" hint="Brand accent. Swap any time.">
+        <Row title={tr('settings.row.palette')} hint={tr('settings.row.palette.hint')}>
           <div className="flex items-center gap-3">
             {PALETTES.map((p) => {
               const active = palette === p.id
@@ -162,7 +165,7 @@ function Settings() {
                     style={{ background: p.swatch }}
                   />
                   <span className={cn('text-[11px]', active ? 'text-[color:var(--color-text)]' : 'text-[color:var(--color-muted)]')}>
-                    {p.label}
+                    {tr(p.labelKey)}
                   </span>
                 </button>
               )
@@ -170,7 +173,7 @@ function Settings() {
           </div>
         </Row>
 
-        <Row title="Font" hint="Type system for the whole console.">
+        <Row title={tr('settings.row.font')} hint={tr('settings.row.font.hint')}>
           <div className="inline-flex flex-wrap items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
             {FONTS.map((f) => (
               <button
@@ -184,18 +187,18 @@ function Settings() {
                     : 'text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]',
                 )}
               >
-                {f.label}
+                {tr(f.labelKey)}
               </button>
             ))}
           </div>
         </Row>
 
-        <Row title="Density" hint="Coming soon — comfortable, compact.">
-          <span className="text-xs text-[color:var(--color-subtle)]">Default</span>
+        <Row title={tr('settings.row.density')} hint={tr('settings.row.density.hint')}>
+          <span className="text-xs text-[color:var(--color-subtle)]">{tr('common.default')}</span>
         </Row>
 
-        <Row title="Motion" hint="Honors prefers-reduced-motion automatically.">
-          <span className="text-xs text-[color:var(--color-subtle)]">Auto</span>
+        <Row title={tr('settings.row.motion')} hint={tr('settings.row.motion.hint')}>
+          <span className="text-xs text-[color:var(--color-subtle)]">{tr('common.auto')}</span>
         </Row>
       </div>
     </section>

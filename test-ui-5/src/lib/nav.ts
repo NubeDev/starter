@@ -12,40 +12,42 @@ import {
 } from 'lucide-react'
 
 export interface NavItem {
-  label: string
+  /** i18n message key — resolve via `useIntl().formatMessage({ id: labelKey })`. */
+  labelKey: string
   href: string
   icon: LucideIcon
   badge?: string
 }
 
 export interface NavGroup {
-  title: string
+  /** i18n message key for the group heading. */
+  titleKey: string
   items: NavItem[]
 }
 
 export const NAV_GROUPS: NavGroup[] = [
   {
-    title: 'Overview',
+    titleKey: 'nav.group.overview',
     items: [
-      { label: 'Home',      href: '/',          icon: Home },
-      { label: 'Dashboard', href: '/dashboard', icon: Gauge, badge: 'live' },
+      { labelKey: 'nav.item.home',      href: '/',          icon: Home },
+      { labelKey: 'nav.item.dashboard', href: '/dashboard', icon: Gauge, badge: 'live' },
     ],
   },
   {
-    title: 'Fleet',
+    titleKey: 'nav.group.fleet',
     items: [
-      { label: 'Devices',  href: '#devices',  icon: Cpu,      badge: '412' },
-      { label: 'Flows',    href: '#flows',    icon: Boxes },
-      { label: 'Activity', href: '#activity', icon: Activity, badge: '3.4k' },
+      { labelKey: 'nav.item.devices',  href: '#devices',  icon: Cpu,      badge: '412' },
+      { labelKey: 'nav.item.flows',    href: '#flows',    icon: Boxes },
+      { labelKey: 'nav.item.activity', href: '#activity', icon: Activity, badge: '3.4k' },
     ],
   },
   {
-    title: 'Platform',
+    titleKey: 'nav.group.platform',
     items: [
-      { label: 'Extensions', href: '#extensions', icon: Layers,    badge: '7' },
-      { label: 'Insights',   href: '#insights',   icon: Sparkles },
-      { label: 'Git ops',    href: '#git',        icon: GitBranch },
-      { label: 'Settings',   href: '/settings',   icon: Settings },
+      { labelKey: 'nav.item.extensions', href: '#extensions', icon: Layers,    badge: '7' },
+      { labelKey: 'nav.item.insights',   href: '#insights',   icon: Sparkles },
+      { labelKey: 'nav.item.gitOps',     href: '#git',        icon: GitBranch },
+      { labelKey: 'nav.item.settings',   href: '/settings',   icon: Settings },
     ],
   },
 ]

@@ -58,10 +58,16 @@ tasks:
   demo:
     desc: |
       First-boot aggregate for the six-step thin-slice demo:
-      bring up Postgres + ClickHouse, wait until they accept
-      connections (30s ceiling), seed the bootstrap operator,
-      then boot the rubix-agent.
+      check the agent port is free, bring up Postgres + ClickHouse,
+      wait until they accept connections (30s ceiling), seed the
+      bootstrap operator, then boot the rubix-agent.
     cmd: |
+      if ss -tlnp 2>/dev/null | grep -q '127.0.0.1:8088 '; then
+        echo "rubix demo: 127.0.0.1:8088 is already in use by another process." >&2
+        echo "  Likely a leftover rubix-agent from a prior session — stop it with:" >&2
+        echo "    pkill -f target/debug/rubix-agent" >&2
+        exit 1
+      fi
       docker compose -f docker/docker-compose.dev.yaml up -d
       ./scripts/wait-for-deps.sh
       RUBIX_DSN=postgres://rubix:rubix-dev@127.0.0.1:5433/rubix cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev-passwd

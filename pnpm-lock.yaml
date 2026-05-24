@@ -607,6 +607,9 @@ importers:
 
   test-ui-5:
     dependencies:
+      '@nube/starter-ui-core':
+        specifier: workspace:*
+        version: link:../packages/starter-ui-core
       '@radix-ui/react-avatar':
         specifier: ^1.1.11
         version: 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -661,6 +664,9 @@ importers:
       react-dom:
         specifier: ^19.2.5
         version: 19.2.6(react@19.2.6)
+      react-intl:
+        specifier: ^7.1.14
+        version: 7.1.14(react@19.2.6)(typescript@5.9.3)
       recharts:
         specifier: ^3.8.1
         version: 3.8.1(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react-is@17.0.2)(react@19.2.6)(redux@5.0.1)
@@ -6029,6 +6035,20 @@ snapshots:
       hoist-non-react-statics: 3.3.2
       intl-messageformat: 10.7.18
       react: 18.3.1
+      tslib: 2.8.1
+    optionalDependencies:
+      typescript: 5.9.3
+
+  react-intl@7.1.14(react@19.2.6)(typescript@5.9.3):
+    dependencies:
+      '@formatjs/ecma402-abstract': 2.3.6
+      '@formatjs/icu-messageformat-parser': 2.11.4
+      '@formatjs/intl': 3.1.8(typescript@5.9.3)
+      '@types/hoist-non-react-statics': 3.3.7(@types/react@19.2.14)
+      '@types/react': 19.2.14
+      hoist-non-react-statics: 3.3.2
+      intl-messageformat: 10.7.18
+      react: 19.2.6
       tslib: 2.8.1
     optionalDependencies:
       typescript: 5.9.3

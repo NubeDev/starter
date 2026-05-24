@@ -835,11 +835,37 @@ async fn run_coordinator(
         }
     }
 
-    // Quiescence loop. After every event we reset the deadline to
-    // `now + cfg.quiescence`. If the deadline elapses with no fresh
-    // event, the run is treated as complete.
+    // Completion loop. The coordinator tracks two pieces of state:
+    //
+    //   * `deadline` — the time-based quiescence window. After every
+    //     event we reset it to `now + cfg.quiescence`. When the
+    //     deadline elapses *and* no nodes are in flight, the run is
+    //     complete.
+    //
+    //   * `in_flight` — the count of nodes that have emitted
+    //     `NodeStarted` but not yet `NodeEmitted` (any number of
+    //     emits per started node — propagator emits one per output
+    //     slot) or `NodeFailed`. The propagator awaits node bodies
+    //     synchronously, so an in-flight node has *no* event traffic
+    //     to bump the quiescence deadline while it works. Without
+    //     this counter a node body that takes longer than
+    //     `cfg.quiescence` (a slow LLM call, a subprocess spawn, a
+    //     remote HTTP) races the coordinator into emitting
+    //     `RunCompleted` before its output lands in the store, and
+    //     surfaces like `FlowAsTool` read the terminal slot too
+    //     early. Tracking `NodeStarted - (NodeEmitted-on-this-node ∪
+    //     NodeFailed)` removes the race without changing any SPI
+    //     surface.
+    //
+    // `NodeEmitted` carries the node id, so we close the in-flight
+    // entry only when the *first* emit for that node arrives — a
+    // node with multiple terminal slots still counts as one in-flight
+    // unit, matching the propagator's "one invoke per
+    // NodeStarted/NodeEmitted+ pair" contract.
     let mut terminal: Option<RunStatus> = None;
     let mut deadline = Instant::now() + cfg.quiescence;
+    let mut in_flight: std::collections::HashSet<starter_flow_spi::node::NodeId> =
+        std::collections::HashSet::new();
 
     while terminal.is_none() {
         tokio::select! {
@@ -857,6 +883,18 @@ async fn run_coordinator(
                             FlowEvent::RunCompleted { .. } => {
                                 terminal = Some(RunStatus::Completed);
                             }
+                            FlowEvent::NodeStarted { node, .. } => {
+                                in_flight.insert(node);
+                                deadline = Instant::now() + cfg.quiescence;
+                            }
+                            FlowEvent::NodeEmitted { node, .. } => {
+                                in_flight.remove(&node);
+                                deadline = Instant::now() + cfg.quiescence;
+                            }
+                            FlowEvent::NodeFailed { node, .. } => {
+                                in_flight.remove(&node);
+                                deadline = Instant::now() + cfg.quiescence;
+                            }
                             _ => {
                                 deadline = Instant::now() + cfg.quiescence;
                             }
@@ -868,8 +906,9 @@ async fn run_coordinator(
                     Err(broadcast::error::RecvError::Closed) => break,
                 }
             }
-            _ = sleep_until(deadline) => {
-                // Quiescence: read terminal output and emit RunCompleted.
+            _ = sleep_until(deadline), if in_flight.is_empty() => {
+                // Quiescence with no in-flight nodes: read terminal
+                // output and emit RunCompleted.
                 let mut output = SlotMap::new();
                 for sr in &terminal_slots {
                     if let Ok(v) = store.read_slot(sr).await {
@@ -1353,5 +1392,119 @@ mod tests {
             }
             other => panic!("expected Selected, got {other:?}"),
         }
+    }
+
+    /// Long-running node body whose `invoke` sleeps for `delay`
+    /// before returning a single `out` slot. Used to exercise the
+    /// in-flight tracker in the run coordinator: the propagator
+    /// awaits `invoke` synchronously, so during the sleep there are
+    /// no events on the bus to bump the quiescence deadline.
+    struct SlowNode {
+        kind: KindId,
+        delay: Duration,
+    }
+    impl SlowNode {
+        fn new(delay: Duration) -> Arc<Self> {
+            Arc::new(Self {
+                kind: KindId::new("starter.flow.run-test-slow-node").unwrap(),
+                delay,
+            })
+        }
+    }
+    #[async_trait]
+    impl NodeBehavior for SlowNode {
+        fn kind_id(&self) -> &KindId {
+            &self.kind
+        }
+        async fn invoke(&self, _ctx: NodeCtx<'_>, _input: SlotMap) -> Result<SlotMap, NodeError> {
+            sleep(self.delay).await;
+            let mut out = SlotMap::new();
+            out.insert("out".to_owned(), SlotValue::Int(42));
+            Ok(out)
+        }
+    }
+
+    /// A node body that takes longer than `cfg.quiescence` must not
+    /// race the run coordinator into emitting `RunCompleted` before
+    /// the slot write lands.
+    ///
+    /// Setup:
+    ///   * one node `flow.test.slow` whose `invoke` sleeps 250 ms
+    ///   * `cfg.quiescence = 50 ms` (deliberately shorter than the
+    ///     sleep so a time-only completion check would fire mid-await)
+    ///   * `terminal_slots = [flow.test.slow.out]`
+    ///
+    /// Expected: status `Completed`, `RunCompleted.output` carries
+    /// `flow.test.slow.out -> 42`. Without the in-flight tracker the
+    /// coordinator would emit `RunCompleted` with an empty output
+    /// map at ~50 ms (well before the 250 ms slot write), and the
+    /// terminal-slot read would race the store.
+    #[tokio::test]
+    async fn slow_node_body_does_not_race_quiescence() {
+        let store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
+        let run_store: Arc<dyn RunStore> = Arc::new(InMemoryRunStore::new());
+        let runner =
+            FlowRunner::new(store.clone(), run_store.clone()).with_config(FlowRunnerConfig {
+                quiescence: Duration::from_millis(50),
+                ..FlowRunnerConfig::default()
+            });
+
+        let slow = SlowNode::new(Duration::from_millis(250));
+        let mut triggers: BTreeMap<NodeId, BTreeSet<String>> = BTreeMap::new();
+        triggers.insert(nid("flow.test.slow"), BTreeSet::from(["in".to_owned()]));
+        let mut behaviors: BTreeMap<NodeId, Arc<dyn NodeBehavior>> = BTreeMap::new();
+        behaviors.insert(nid("flow.test.slow"), slow);
+        let topology = Arc::new(FlowTopology {
+            links: HashMap::new(),
+            triggers,
+            behaviors,
+        });
+
+        let spec = RunSpec {
+            flow: FlowId::new("flow.test.slow").unwrap(),
+            revision: FlowRevisionId::new(),
+            topology,
+            seeds: vec![(slot("flow.test.slow", "in"), SlotValue::Int(1))],
+            terminal_slots: vec![slot("flow.test.slow", "out")],
+            principal: None,
+            dedup_key: None,
+        };
+
+        let mut handle = runner
+            .start(spec, SlotMap::new())
+            .await
+            .expect("start rejected");
+
+        // Generous outer timeout — should complete in ~300 ms total
+        // (250 ms sleep + 50 ms quiescence after the emit).
+        let status = timeout(Duration::from_secs(2), &mut handle.join)
+            .await
+            .expect("coordinator did not exit within 2s")
+            .expect("coordinator panicked");
+        assert_eq!(status, RunStatus::Completed);
+
+        // The slot store must hold the slow node's output.
+        let stored = store
+            .read_slot(&slot("flow.test.slow", "out"))
+            .await
+            .expect("terminal slot was written");
+        assert_eq!(stored, SlotValue::Int(42));
+
+        // RunCompleted.output must include the terminal slot — the
+        // race we are guarding against is the coordinator reading
+        // the store too early and shipping an empty output map.
+        let events = drain(&mut handle.initial_rx, Duration::from_millis(100)).await;
+        let completed = events
+            .iter()
+            .find_map(|e| match e {
+                FlowEvent::RunCompleted { output, .. } => Some(output),
+                _ => None,
+            })
+            .expect("RunCompleted event was emitted");
+        assert_eq!(
+            completed.get("flow.test.slow.out"),
+            Some(&SlotValue::Int(42)),
+            "RunCompleted.output must carry the terminal slot value; got {completed:?}",
+        );
     }
 }

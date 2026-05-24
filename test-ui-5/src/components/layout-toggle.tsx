@@ -1,5 +1,6 @@
 import { motion } from 'motion/react'
 import { LayoutPanelTop, PanelLeft } from 'lucide-react'
+import { useIntl } from 'react-intl'
 import { useLayout } from '@/context/layout-provider'
 import { cn } from '@/lib/utils'
 
@@ -9,6 +10,7 @@ import { cn } from '@/lib/utils'
  */
 export function LayoutToggle() {
   const { mode, setMode } = useLayout()
+  const intl = useIntl()
   return (
     <div className="inline-flex items-center gap-1 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 p-1">
       <button
@@ -27,7 +29,7 @@ export function LayoutToggle() {
           />
         )}
         <LayoutPanelTop className="relative z-10 h-3.5 w-3.5" />
-        <span className="relative z-10">Header</span>
+        <span className="relative z-10">{intl.formatMessage({ id: 'layoutToggle.header' })}</span>
       </button>
       <button
         onClick={() => setMode('sidebar')}
@@ -45,7 +47,7 @@ export function LayoutToggle() {
           />
         )}
         <PanelLeft className="relative z-10 h-3.5 w-3.5" />
-        <span className="relative z-10">Sidebar</span>
+        <span className="relative z-10">{intl.formatMessage({ id: 'layoutToggle.sidebar' })}</span>
       </button>
     </div>
   )

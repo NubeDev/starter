@@ -1,6 +1,7 @@
 import { motion } from 'motion/react'
 import { Sparkles } from 'lucide-react'
 import { Link, useRouterState } from '@tanstack/react-router'
+import { useIntl } from 'react-intl'
 import { NAV_GROUPS } from '@/lib/nav'
 import { useLayout } from '@/context/layout-provider'
 import { cn } from '@/lib/utils'
@@ -8,14 +9,17 @@ import { ActionDock } from '@/components/action-dock'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
 function Brand() {
+  const intl = useIntl()
   return (
     <Link to="/" className="flex shrink-0 items-center gap-2.5 pl-2 pr-3">
       <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[color:var(--color-leaf)] text-[color:var(--color-bg)]">
         <Sparkles className="h-4 w-4" strokeWidth={2.25} />
       </div>
-      <span className="text-sm font-semibold tracking-tight text-[color:var(--color-text)]">Nube</span>
+      <span className="text-sm font-semibold tracking-tight text-[color:var(--color-text)]">
+        {intl.formatMessage({ id: 'brand.name' })}
+      </span>
       <span className="ml-1 hidden text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-subtle)] md:inline">
-        IoT Console
+        {intl.formatMessage({ id: 'brand.tagline' })}
       </span>
     </Link>
   )
@@ -23,6 +27,7 @@ function Brand() {
 
 function HeaderNav() {
   const { location } = useRouterState()
+  const intl = useIntl()
   const items = NAV_GROUPS.flatMap((g) => g.items).slice(0, 5)
   return (
     <nav className="hidden items-center gap-5 text-sm md:flex">
@@ -44,7 +49,7 @@ function HeaderNav() {
             )}
           >
             <Icon className="h-3.5 w-3.5" />
-            <span className="whitespace-nowrap">{item.label}</span>
+            <span className="whitespace-nowrap">{intl.formatMessage({ id: item.labelKey })}</span>
           </Comp>
         )
       })}
@@ -54,6 +59,7 @@ function HeaderNav() {
 
 export function TopHeader() {
   const { mode } = useLayout()
+  const intl = useIntl()
 
   if (mode === 'header') {
     return (
@@ -68,7 +74,7 @@ export function TopHeader() {
             <div className="flex items-center gap-2 sm:gap-6">
               <SidebarTrigger
                 data-testid="mobile-nav-trigger"
-                aria-label="Open navigation menu"
+                aria-label={intl.formatMessage({ id: 'a11y.openNav' })}
                 className="text-[color:var(--color-muted)] hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] md:hidden"
               />
               <Brand />

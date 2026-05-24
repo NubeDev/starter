@@ -1,5 +1,6 @@
 import * as React from 'react'
 import { ChevronsUpDown, Plus } from 'lucide-react'
+import { useIntl } from 'react-intl'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,8 @@ type TeamSwitcherProps = {
 export function TeamSwitcher({ teams }: TeamSwitcherProps) {
   const { isMobile } = useSidebar()
   const [activeTeam, setActiveTeam] = React.useState(teams[0])
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
 
   if (!activeTeam) return null
 
@@ -43,8 +46,8 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                 <activeTeam.logo className='size-4' />
               </div>
               <div className='grid flex-1 text-start text-sm leading-tight'>
-                <span className='truncate font-semibold'>{activeTeam.name}</span>
-                <span className='truncate text-xs'>{activeTeam.plan}</span>
+                <span className='truncate font-semibold'>{tr(activeTeam.name)}</span>
+                <span className='truncate text-xs'>{tr(activeTeam.plan)}</span>
               </div>
               <ChevronsUpDown className='ms-auto' />
             </SidebarMenuButton>
@@ -67,7 +70,7 @@ export function TeamSwitcher({ teams }: TeamSwitcherProps) {
                 <div className='flex size-6 items-center justify-center rounded-sm border border-[color:var(--color-border)]'>
                   <team.logo className='size-4 shrink-0' />
                 </div>
-                {team.name}
+                {tr(team.name)}
                 <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
               </DropdownMenuItem>
             ))}

@@ -1,5 +1,6 @@
 import { motion, AnimatePresence } from 'motion/react'
 import { useEffect, useState } from 'react'
+import { useIntl } from 'react-intl'
 import { Leaf } from 'lucide-react'
 
 /**
@@ -11,6 +12,7 @@ import { Leaf } from 'lucide-react'
 const BOOT_FLAG = 'test-ui-5:boot-played'
 
 export function BootIntro() {
+  const intl = useIntl()
   const [stage, setStage] = useState<'logo' | 'wipe' | 'done'>(() => {
     if (typeof window !== 'undefined' && window.sessionStorage.getItem(BOOT_FLAG)) {
       return 'done'
@@ -102,7 +104,7 @@ export function BootIntro() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="text-[11px] font-medium uppercase tracking-[0.4em] text-[color:var(--color-mist)]"
             >
-              Breathe · Drink · Grow
+              {intl.formatMessage({ id: 'boot.tagline' })}
             </motion.div>
           </motion.div>
         </motion.div>

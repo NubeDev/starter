@@ -31,13 +31,21 @@ pub struct TracingGuard {
 /// `filter` is a `RUST_LOG`-style directive string (e.g.
 /// `"info,starter_server=debug"`). Pass `"info"` if unsure.
 ///
+/// When the `RUST_LOG` environment variable is set, it wins over the
+/// `filter` argument so operators can crank verbosity without
+/// recompiling. The argument is the default; the env var is the
+/// override.
+///
 /// Returns a [`TracingGuard`] the caller must keep alive for the
 /// lifetime of the process (typically `let _guard = init(...)?` in
 /// `main`). Installing twice in the same process is an error.
 pub fn init(filter: &str, format: Format) -> Result<TracingGuard, Box<dyn std::error::Error>> {
     use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
-    let env_filter = EnvFilter::try_new(filter)?;
+    let env_filter = match std::env::var("RUST_LOG") {
+        Ok(env) if !env.trim().is_empty() => EnvFilter::try_new(&env)?,
+        _ => EnvFilter::try_new(filter)?,
+    };
 
     let registry = tracing_subscriber::registry().with(env_filter);
 

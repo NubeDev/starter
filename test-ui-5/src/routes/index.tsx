@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { motion } from 'motion/react'
+import { useIntl } from 'react-intl'
 import {
   ArrowUpRight,
   Boxes,
@@ -10,22 +11,22 @@ import {
   Play,
   Sparkles,
   Workflow,
-  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { FeatureTile } from '@/components/feature-tile'
 
 const STATS = [
-  { k: 'Devices online', v: '412',  accent: 'leaf' as const },
-  { k: 'Flows / second', v: '3.4k', accent: 'aqua' as const },
-  { k: 'Extensions',     v: '7',    accent: 'sun'  as const },
+  { labelKey: 'home.stats.devicesOnline',   v: '412',  accent: 'leaf' as const },
+  { labelKey: 'home.stats.flowsPerSecond',  v: '3.4k', accent: 'aqua' as const },
+  { labelKey: 'home.stats.extensions',      v: '7',    accent: 'sun'  as const },
 ]
 
 function Hero() {
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <section className="relative mx-auto max-w-7xl px-4 pt-12 pb-24 sm:px-6 lg:px-8">
-      {/* breathing accent glow behind */}
       <div
         aria-hidden
         className="pointer-events-none absolute inset-0 -z-10"
@@ -40,7 +41,7 @@ function Hero() {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
       >
-        <Badge variant="live">Live · 412 devices streaming</Badge>
+        <Badge variant="live">{intl.formatMessage({ id: 'home.badge.live' }, { count: 412 })}</Badge>
       </motion.div>
 
       <motion.h1
@@ -49,8 +50,8 @@ function Hero() {
         transition={{ duration: 0.85, ease: [0.22, 1, 0.36, 1], delay: 0.1 }}
         className="mt-6 max-w-4xl text-5xl font-medium leading-[1.02] tracking-[-0.04em] text-[color:var(--color-text)] sm:text-7xl lg:text-[88px]"
       >
-        The operating layer for the{' '}
-        <span className="serif-italic text-[color:var(--color-leaf)]">physical world.</span>
+        {tr('home.hero.titlePrefix')}{' '}
+        <span className="serif-italic text-[color:var(--color-leaf)]">{tr('home.hero.titleAccent')}</span>
       </motion.h1>
 
       <motion.p
@@ -59,8 +60,7 @@ function Hero() {
         transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1], delay: 0.25 }}
         className="mt-6 max-w-xl text-base leading-relaxed text-[color:var(--color-muted)] sm:text-lg"
       >
-        Stream telemetry, model assets, automate flows, and ship dashboards —
-        all from one extensible Rust runtime. Built for energy, water and HVAC at scale.
+        {tr('home.hero.subtitle')}
       </motion.p>
 
       <motion.div
@@ -71,15 +71,14 @@ function Hero() {
       >
         <Link to="/dashboard">
           <Button size="lg" variant="leaf">
-            Enter dashboard <ArrowUpRight className="h-4 w-4" />
+            {tr('home.cta.enterDashboard')} <ArrowUpRight className="h-4 w-4" />
           </Button>
         </Link>
         <Button size="lg" variant="ghost">
-          <Play className="h-3.5 w-3.5" /> Watch 90s tour
+          <Play className="h-3.5 w-3.5" /> {tr('home.cta.watchTour')}
         </Button>
       </motion.div>
 
-      {/* Live stat strip */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
@@ -92,7 +91,7 @@ function Hero() {
             s.accent === 'aqua' ? 'var(--color-aqua)' :
             'var(--color-sun)'
           return (
-            <div key={s.k} className="glass relative overflow-hidden rounded-3xl p-6">
+            <div key={s.labelKey} className="glass relative overflow-hidden rounded-3xl p-6">
               <div
                 aria-hidden
                 className="absolute -right-10 -top-10 h-32 w-32 rounded-full opacity-50 blur-2xl"
@@ -107,7 +106,7 @@ function Hero() {
                 </span>
               </div>
               <div className="mt-2 text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
-                {s.k}
+                {tr(s.labelKey)}
               </div>
             </div>
           )
@@ -118,6 +117,8 @@ function Hero() {
 }
 
 function Capabilities() {
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
       <motion.div
@@ -130,28 +131,30 @@ function Capabilities() {
         <div className="flex items-center gap-3">
           <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-            What's inside
+            {tr('home.capabilities.eyebrow')}
           </span>
         </div>
         <h2 className="max-w-3xl text-4xl font-medium leading-[1.05] tracking-[-0.03em] text-[color:var(--color-text)] sm:text-5xl">
-          An IoT platform that{' '}
-          <span className="serif-italic text-[color:var(--color-muted)]">gets out of the way.</span>
+          {tr('home.capabilities.titlePrefix')}{' '}
+          <span className="serif-italic text-[color:var(--color-muted)]">{tr('home.capabilities.titleAccent')}</span>
         </h2>
       </motion.div>
 
       <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        <FeatureTile icon={Workflow}  accent="leaf" eyebrow="01 · Flows"      title="Visual runtime"      body="Visual flows compile to a deterministic Rust runtime. Hot-reload in dev, zero-downtime in prod." />
-        <FeatureTile icon={Layers}    accent="aqua" eyebrow="02 · Extensions" title="Module-Federation"   body="Drop-in extensions contribute pages, widgets, and commands without forks. Singletons negotiated automatically." />
-        <FeatureTile icon={Boxes}     accent="sun"  eyebrow="03 · SDUI"       title="Server-driven UI"    body="Design once, render on web, mobile, and panel. No native rebuild required." />
-        <FeatureTile icon={Cpu}       accent="leaf" eyebrow="04 · Warehouse"  title="ClickHouse history"  body="Sub-second queries across millions of points and tags. Tags are Bool|Str — L1 to L3 marts on demand." />
-        <FeatureTile icon={Lock}      accent="aqua" eyebrow="05 · AuthZ"      title="Per-user gating"     body="Dynamic resources, not static routes. Gate any SDUI page per user, per tenant, per role." />
-        <FeatureTile icon={GitBranch} accent="leaf" eyebrow="06 · Git-native" title="Everything is a file" body="Tags, flows, dashboards — all in git. Branch, diff, review, revert." />
+        <FeatureTile icon={Workflow}  accent="leaf" eyebrow={tr('home.feature.flows.eyebrow')}      title={tr('home.feature.flows.title')}      body={tr('home.feature.flows.body')} />
+        <FeatureTile icon={Layers}    accent="aqua" eyebrow={tr('home.feature.extensions.eyebrow')} title={tr('home.feature.extensions.title')} body={tr('home.feature.extensions.body')} />
+        <FeatureTile icon={Boxes}     accent="sun"  eyebrow={tr('home.feature.sdui.eyebrow')}       title={tr('home.feature.sdui.title')}       body={tr('home.feature.sdui.body')} />
+        <FeatureTile icon={Cpu}       accent="leaf" eyebrow={tr('home.feature.warehouse.eyebrow')}  title={tr('home.feature.warehouse.title')}  body={tr('home.feature.warehouse.body')} />
+        <FeatureTile icon={Lock}      accent="aqua" eyebrow={tr('home.feature.authz.eyebrow')}      title={tr('home.feature.authz.title')}      body={tr('home.feature.authz.body')} />
+        <FeatureTile icon={GitBranch} accent="leaf" eyebrow={tr('home.feature.git.eyebrow')}        title={tr('home.feature.git.title')}        body={tr('home.feature.git.body')} />
       </div>
     </section>
   )
 }
 
 function CTA() {
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
       <motion.div
@@ -177,22 +180,23 @@ function CTA() {
           transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
         />
         <div className="relative">
-          <Badge variant="leaf">Public preview · Q2 2026</Badge>
+          <Badge variant="leaf">{tr('home.cta2.badge')}</Badge>
           <h2 className="mt-6 max-w-3xl text-5xl font-medium leading-[1.05] tracking-[-0.04em] text-[color:var(--color-text)] sm:text-6xl">
-            Bring your fleet{' '}
-            <span className="serif-italic text-[color:var(--color-leaf)]">online</span> in an afternoon.
+            {tr('home.cta2.titlePrefix')}{' '}
+            <span className="serif-italic text-[color:var(--color-leaf)]">{tr('home.cta2.titleAccent')}</span>{' '}
+            {tr('home.cta2.titleSuffix')}
           </h2>
           <p className="mt-5 max-w-xl text-base leading-relaxed text-[color:var(--color-muted)]">
-            Install the agent, point at your devices, and ship your first dashboard before lunch.
+            {tr('home.cta2.subtitle')}
           </p>
           <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <Link to="/dashboard">
               <Button size="lg" variant="leaf">
-                Open the console <ArrowUpRight className="h-4 w-4" />
+                {tr('home.cta2.openConsole')} <ArrowUpRight className="h-4 w-4" />
               </Button>
             </Link>
             <Button size="lg" variant="ghost">
-              <Sparkles className="h-3.5 w-3.5" /> Book a demo
+              <Sparkles className="h-3.5 w-3.5" /> {tr('home.cta2.bookDemo')}
             </Button>
           </div>
         </div>

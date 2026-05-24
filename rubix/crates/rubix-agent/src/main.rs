@@ -44,9 +44,12 @@ async fn main() -> Result<()> {
         .map(|cat| cat.messages.len())
         .sum();
 
-    let migrations = boot::apply_migrations().await?;
-    let ch_migrations = boot::apply_ch_migrations(cfg.database_url.as_deref()).await?;
-    let mcp = boot::mcp::build_mcp_surface().await?;
+    let migrations = boot::apply_migrations(cfg.database_url.as_deref()).await?;
+    let ch_migrations = boot::apply_ch_migrations(
+        cfg.clickhouse_url.as_deref(),
+        cfg.database_url.as_deref(),
+    )
+    .await?;
 
     // The agent boots without a warehouse when `clickhouse_url` is
     // unset OR when the CH migration step skipped (no RUBIX_CH_URL,
@@ -54,6 +57,10 @@ async fn main() -> Result<()> {
     // tool when the `system_disk_history` table was never created
     // would 500 on every invocation — see
     // docs/design/warehouse/README.md for the gate contract.
+    //
+    // Build the `ChClient` BEFORE the MCP surface so both the REST
+    // and the MCP/`ai-agent` tool snapshots persist history rows
+    // identically.
     let ch_client: Option<Arc<ChClient>> = if ch_migrations.skipped {
         None
     } else {
@@ -61,6 +68,7 @@ async fn main() -> Result<()> {
             .as_ref()
             .map(|url| Arc::new(ChClient::connect(ChConfig::local(url.clone()))))
     };
+    let mcp = boot::mcp::build_mcp_surface(ch_client.clone()).await?;
     let tools = registry::build_tool_registry(ch_client);
 
     info!(

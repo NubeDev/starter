@@ -1,4 +1,5 @@
 import { motion } from 'motion/react'
+import { useIntl } from 'react-intl'
 import { cn } from '@/lib/utils'
 
 interface PerformanceChartProps {
@@ -8,6 +9,7 @@ interface PerformanceChartProps {
 }
 
 export function PerformanceChart({ data, labels, className }: PerformanceChartProps) {
+  const intl = useIntl()
   const w = 720
   const h = 240
   const padX = 24
@@ -37,7 +39,7 @@ export function PerformanceChart({ data, labels, className }: PerformanceChartPr
       <div className="mb-4 flex items-start justify-between">
         <div>
           <div className="text-[11px] font-medium uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
-            Energy harvested
+            {intl.formatMessage({ id: 'chart.energyHarvested' })}
           </div>
           <div className="mt-1 flex items-baseline gap-2">
             <div className="tabular text-3xl font-semibold tracking-tight text-[color:var(--color-text)]">

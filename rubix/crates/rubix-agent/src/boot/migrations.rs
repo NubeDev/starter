@@ -1,9 +1,11 @@
 //! Apply starter-changelog migrations at boot.
 //!
-//! `RUBIX_DSN` selects the Postgres instance. If unset, the binary
-//! logs a warn and continues without any DB I/O so a developer can
-//! still boot the agent on a laptop without Postgres running. See
-//! [docs/design/migrations/](../../../docs/design/migrations/README.md)
+//! Reads the Postgres DSN from the loaded `AgentConfig` (which the
+//! `starter-config` layered loader assembles from defaults <
+//! `rubix/dev/agent.toml` < `RUBIX_*` env). If the DSN is unset, the
+//! binary logs a warn and continues without any DB I/O so a developer
+//! can still boot the agent on a laptop without Postgres running.
+//! See [docs/design/migrations/](../../../docs/design/migrations/README.md)
 //! for the full boot-order plan.
 
 use anyhow::Result;
@@ -19,17 +21,19 @@ pub struct MigrationReport {
     /// Number of distinct migration sources applied (0 when the
     /// step was skipped).
     pub sources_applied: usize,
-    /// True when `RUBIX_DSN` was unset and the step was a no-op.
+    /// True when the DSN was unset and the step was a no-op.
     pub skipped: bool,
 }
 
-/// Apply every rubix-owned migration source against the DSN held in
-/// `RUBIX_DSN`. Skips with a warn line when the env var is absent.
-pub async fn apply_migrations() -> Result<MigrationReport> {
-    let Ok(dsn) = std::env::var("RUBIX_DSN") else {
+/// Apply every rubix-owned migration source against the supplied DSN.
+/// `None` is the laptop / no-Postgres path — log a warn and return a
+/// `skipped` report so the boot can continue without DB-backed
+/// features.
+pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
+    let Some(dsn) = dsn else {
         warn!(
             target: "rubix.boot",
-            "RUBIX_DSN unset — skipping migrations; agent will boot without DB-backed features",
+            "Postgres DSN unset — skipping migrations; agent will boot without DB-backed features",
         );
         return Ok(MigrationReport {
             sources_applied: 0,
@@ -37,7 +41,7 @@ pub async fn apply_migrations() -> Result<MigrationReport> {
         });
     };
 
-    let pool = connect(&dsn)
+    let pool = connect(dsn)
         .await
         .map_err(|e| anyhow::anyhow!("connect to RUBIX_DSN: {e}"))?;
 
@@ -73,25 +77,16 @@ mod tests {
 
     #[tokio::test]
     async fn apply_migrations_skips_when_dsn_unset() {
-        // SAFETY: tests run single-threaded for env mutation only
-        // when --test-threads=1 is set; we restore the prior value
-        // immediately to avoid cross-test bleed.
-        let prior = std::env::var("RUBIX_DSN").ok();
-        std::env::remove_var("RUBIX_DSN");
-        let report = apply_migrations().await.expect("skip path succeeds");
-        if let Some(v) = prior {
-            std::env::set_var("RUBIX_DSN", v);
-        }
+        let report = apply_migrations(None).await.expect("skip path succeeds");
         assert!(report.skipped);
         assert_eq!(report.sources_applied, 0);
     }
 
     #[tokio::test]
-    #[ignore = "requires a reachable Postgres at RUBIX_DSN; run from the integration job"]
+    #[ignore = "requires a reachable Postgres; pass the DSN via RUBIX_DSN and run from the integration job"]
     async fn apply_migrations_runs_against_live_postgres() {
         let dsn = std::env::var("RUBIX_DSN").expect("test requires RUBIX_DSN");
-        std::env::set_var("RUBIX_DSN", &dsn);
-        let report = apply_migrations()
+        let report = apply_migrations(Some(&dsn))
             .await
             .expect("live migrations succeed");
         assert!(!report.skipped);

@@ -278,3 +278,16 @@ clickhouse-client -q "SELECT * FROM system_disk_history ORDER BY at DESC LIMIT 5
 ```
 
 If all six steps work, the arch is real.
+
+### Status
+
+**Last verified: 2026-05-24** on master commit `0511981` (PR #30
+merged). Six of six steps PASS end-to-end after the B5–B8.2
+fix-up landed; see
+[`docs/sessions/2026-05-24-smoke-test-pr30.md`](../sessions/2026-05-24-smoke-test-pr30.md)
+§"Re-run after fixes" for the evidence and the fix list.
+
+Re-run when any of the load-bearing pieces touches the boot
+order, the slot/seed contract, the `AiAgentNode` body, the
+`FlowAsTool` quiescence model, the JSON-RPC error mapping, or
+the cfg/env split for migrations.

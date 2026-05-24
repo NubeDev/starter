@@ -85,6 +85,34 @@ Surfaced via either an `mpsc::Sender<AgentEvent>` argument to a new
 choice depends on whether the consumer needs back-pressure (the
 channel shape gives it for free).
 
+## CLI runner tool dispatch (via MCP bridge)
+
+The v0 `AgentLoop::call` dispatches on the runner's `Provider`: REST
+runners (Anthropic, OpenAi) receive the full `RestCfg` with `tools`
+and `history`; CLI runners (Claude, Codex, Copilot) receive only a
+`CliCfg { prompt }` because `CliCfg` has no native tool-definition
+field. Multi-turn history is folded into the prompt with `[role]`
+prefixes.
+
+Net effect today: a CLI-backed loop returns the model's free-form
+reply but the model cannot invoke the host's `ToolSet` directly — the
+`first.tool_uses` vector is always empty for CLI providers, so the
+second-round tool-result stitch never runs.
+
+The long-term shape lets the loop spin up a temporary MCP server
+exposing the `ToolSet` and pass its URL + a one-shot bearer into
+`CliCfg::mcp_url` / `mcp_token` (or `mcp_config_path`), so the CLI
+binary calls the host's tools as normal MCP tools. The loop then
+correlates the MCP tool-call events back into the same `tool_uses`
+shape the REST path produces. Pieces needed:
+
+- `starter-mcp` exposing a "one-shot stdio server" constructor that
+  serves a supplied `ToolSet` and emits structured tool-call events
+  on a channel.
+- `AgentLoop::call` lazily starts that server for the duration of a
+  CLI run, drains its event channel into `first.tool_uses` /
+  `tool_results`, and shuts it down after the second runner call.
+
 ## Skill enforcement
 
 Today the caller does the filtering: it intersects the host's full
