@@ -9,12 +9,14 @@ pub mod flow_notify;
 pub mod flows_seed;
 pub mod mcp;
 pub mod migrations;
+pub mod scheduler;
 pub mod tracing;
 pub mod undo_sweep;
 
 pub use auth::{build_auth, AuthSurface};
 pub use clickhouse::{apply_ch_migrations, rubix_ch_config, RUBIX_CH_DATABASE};
-pub use config::{AgentConfig, UndoConfig};
+pub use config::{AgentConfig, SchedulerConfig, UndoConfig};
+pub use scheduler::{spawn as spawn_scheduler, SchedulerHandle};
 pub use flow_notify::spawn_flow_notify;
 pub use flows_seed::seed_and_load as seed_and_load_flow_definitions;
 pub use migrations::apply_migrations;

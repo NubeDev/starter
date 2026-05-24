@@ -70,6 +70,47 @@ pub struct AgentConfig {
     /// [`UndoConfig`] for field defaults; the sweep itself lives
     /// in [`crate::boot::undo_sweep`].
     pub undo: UndoConfig,
+
+    /// Durable-scheduler knobs. See [`SchedulerConfig`] for
+    /// defaults; the scheduler itself lives in
+    /// [`crate::boot::scheduler`] and dispatches every bundled
+    /// flow whose YAML carries `trigger: schedule` + `cron_expr`.
+    pub scheduler: SchedulerConfig,
+}
+
+/// Tunables for the durable cron scheduler (Goal 6).
+///
+/// `enabled = false` lets an operator disable scheduled flows
+/// without uninstalling the bundle — useful when running a
+/// rubix-agent purely for the REST / MCP surface, or under
+/// integration tests that don't want a 60-second tick task in
+/// the background. `tick_interval_seconds` shadows the upstream
+/// `FlowAsService::start` default (60s) for documentation; the
+/// concrete tick cadence lives upstream in
+/// `starter-flow-surfaces` and currently runs at the fixed 60s
+/// default — this knob is parsed today so the TOML section is
+/// self-describing for the moment the upstream surface exposes
+/// an interval override.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct SchedulerConfig {
+    /// When `false` the scheduler is never constructed at boot.
+    /// Default `true`.
+    pub enabled: bool,
+
+    /// Tick interval in whole seconds. Default `60`. Operators
+    /// rarely need to tune this; the value is exposed so the
+    /// `[scheduler]` TOML section is self-describing.
+    pub tick_interval_seconds: u64,
+}
+
+impl Default for SchedulerConfig {
+    fn default() -> Self {
+        Self {
+            enabled: true,
+            tick_interval_seconds: 60,
+        }
+    }
 }
 
 /// Bounds the on-disk size of `undo_snapshots`. The sweep keeps
@@ -142,6 +183,7 @@ impl Default for AgentConfig {
             ai_provider: None,
             insights: InsightsConfig::default(),
             undo: UndoConfig::default(),
+            scheduler: SchedulerConfig::default(),
         }
     }
 }
