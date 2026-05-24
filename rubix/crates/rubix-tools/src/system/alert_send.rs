@@ -5,6 +5,7 @@
 //! alert-sink wiring tracked in
 //! [docs/design/audit/](../../../../docs/design/audit/README.md).
 
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
@@ -16,6 +17,20 @@ use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
 use tracing::{error, info, warn};
+
+/// Process-wide counter incremented on every successful
+/// [`dispatch`] call. Integration tests assert the post-dispatch
+/// insights gate fires exactly once per threshold-crossing probe;
+/// production readers should use the tracing pipeline instead.
+static ALERTS_FIRED: AtomicU64 = AtomicU64::new(0);
+
+/// Snapshot of the dispatch counter. Tests read this before and
+/// after exercising the insights gate so the assertion is a delta,
+/// not an absolute (other tests in the binary may have fired the
+/// gate too).
+pub fn dispatched_count() -> u64 {
+    ALERTS_FIRED.load(Ordering::Relaxed)
+}
 
 /// Concrete `Tool` impl for `rubix.alert.send`. Holds no
 /// state; each invocation emits to tracing immediately.
@@ -77,6 +92,7 @@ pub fn probe(req: AlertSendRequest) -> Result<AlertSendResponse> {
         AlertSeverity::Warn => warn!(target: "rubix.alert", "{truncated}"),
         AlertSeverity::Error => error!(target: "rubix.alert", "{truncated}"),
     }
+    ALERTS_FIRED.fetch_add(1, Ordering::Relaxed);
 
     let probed_at_ms = now_epoch_ms();
     let code = MessageKey::parse("rubix.alert.send.ok").expect("hard-coded key parses");
@@ -98,6 +114,71 @@ fn severity_str(s: AlertSeverity) -> &'static str {
         AlertSeverity::Warn => "warn",
         AlertSeverity::Error => "error",
     }
+}
+
+/// Insights-gate entry point. The disk verb's post-dispatch hook
+/// calls this when a threshold-crossing probe lands; downstream
+/// rule.rhai migration (see `docs/design/insights/`) replaces the
+/// hardcoded `if` with a `RuleRegistry::evaluate` and reuses the
+/// same [`dispatch`] callback.
+///
+/// The shape is `(severity, MessageKey, params)` rather than the
+/// public [`AlertSendRequest`] DTO so the gate can pass through
+/// the structured diagnostic the probe built without flattening it
+/// to a string twice. The tracing line carries `severity`, `key`
+/// and the param map as structured fields so log aggregators can
+/// filter on them.
+pub async fn dispatch(
+    severity: AlertSeverity,
+    diag: Diagnostic,
+) -> Result<AlertSendResponse> {
+    let probed_at_ms = now_epoch_ms();
+    let key = diag.code.as_str();
+    let params = serde_json::to_string(&diag.params)
+        .unwrap_or_else(|_| "{}".to_owned());
+
+    match severity {
+        AlertSeverity::Info => info!(
+            target: "rubix.alert",
+            severity = severity_str(severity),
+            key,
+            params = %params,
+            "rubix.alert.send fired"
+        ),
+        AlertSeverity::Warn => warn!(
+            target: "rubix.alert",
+            severity = severity_str(severity),
+            key,
+            params = %params,
+            "rubix.alert.send fired"
+        ),
+        AlertSeverity::Error => error!(
+            target: "rubix.alert",
+            severity = severity_str(severity),
+            key,
+            params = %params,
+            "rubix.alert.send fired"
+        ),
+    }
+    ALERTS_FIRED.fetch_add(1, Ordering::Relaxed);
+
+    let summary = Diagnostic::new(
+        MessageKey::parse("rubix.alert.send.ok").expect("hard-coded key parses"),
+    )
+    .with_param(
+        "severity",
+        DiagnosticParam::String(severity_str(severity).to_owned()),
+    )
+    .with_param("at", DiagnosticParam::Timestamp(probed_at_ms));
+
+    let delivered_chars = u32::try_from(params.chars().count()).unwrap_or(u32::MAX);
+
+    Ok(AlertSendResponse {
+        summary,
+        severity,
+        delivered_chars,
+        probed_at_ms,
+    })
 }
 
 fn now_epoch_ms() -> i64 {

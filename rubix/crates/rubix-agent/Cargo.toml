@@ -27,18 +27,32 @@ rubix-client = { workspace = true }
 
 # Starter platform pieces wired in by the binary. Many are Phase 0
 # placeholders — Phase 1+ activates the additional surfaces.
-starter-spi              = { workspace = true }
+starter-spi              = { workspace = true, features = ["i18n", "preferences"] }
 starter-config           = { workspace = true }
 starter-observability    = { workspace = true }
 starter-server           = { workspace = true }
 starter-store-postgres   = { workspace = true }
 starter-changelog-postgres = { workspace = true }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
+starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
+starter-mcp               = { workspace = true, features = ["http"] }
+starter-store-clickhouse  = { workspace = true }
+starter-flow              = { workspace = true }
+starter-flow-spi          = { workspace = true }
+starter-flow-surfaces     = { workspace = true }
 
 axum    = { workspace = true }
 clap    = { workspace = true }
+async-trait = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
+serde_json  = { workspace = true }
 
 # Async + utility
 tokio   = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
 tracing = { workspace = true }
 anyhow  = { workspace = true }
+
+[dev-dependencies]
+starter-mcp  = { workspace = true, features = ["http", "testing"] }
+tokio        = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower            = { workspace = true }

@@ -32,6 +32,15 @@ pub mod testing;
 pub use client::{ChClient, ChClientError, ChConfig};
 pub use migrate::{MigrationError, MigrationRunner, PgSource, MIGRATION_SOURCE};
 
+/// Re-export of the underlying official `clickhouse` Rust crate so
+/// consumers can use the `Row` derive, the typed `Compression` enum
+/// and the rest of the low-level surface without taking a direct
+/// dependency on `clickhouse` themselves. Pulling everything
+/// through `starter-store-clickhouse` keeps the workspace's one
+/// pin authoritative (ADR-003) and lets consumers like rubix
+/// satisfy the "no direct clickhouse dep" rule.
+pub use clickhouse;
+
 /// All `.sql` filenames the in-crate runner applies, in order. The
 /// runner does the read; this list is exported so callers can audit
 /// the planned migration set without touching the filesystem.

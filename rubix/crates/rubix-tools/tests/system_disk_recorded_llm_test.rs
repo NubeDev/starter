@@ -87,7 +87,7 @@ async fn disk_tool_round_trips_through_the_ai_agent_loop() {
     let mut tool_registry = StaticToolRegistry::new();
     tool_registry.register(
         KindId::new(TOOL_ID).unwrap(),
-        Arc::new(DiskTool) as Arc<dyn Tool>,
+        Arc::new(DiskTool::default()) as Arc<dyn Tool>,
     );
     let tools_arc: Arc<dyn ToolRegistry> = Arc::new(tool_registry);
 

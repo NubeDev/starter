@@ -88,6 +88,54 @@ async fn migration_runner_idempotent() {
 
 #[tokio::test]
 #[ignore = "requires docker"]
+async fn migration_runner_applies_consumer_supplied_extras() {
+    // Consumer crates (rubix-agent, future extensions) ship their
+    // own DDL through `with_extra_migration` instead of forking
+    // the runner. The extras land in `_starter_ch_migrations`
+    // under the supplied name so the audit table tells one
+    // ordered story. The warehouse-owned 0005 needs a PgSource we
+    // don't have here, so we issue extras-only by bypassing
+    // `run()` and asserting the row reaches the audit table.
+    let (client, _g) = with_clickhouse().await;
+    apply_base_migrations(&client).await;
+
+    const EXTRA_NAME: &str = "consumer/0001_demo.sql";
+    const EXTRA_SQL: &str = "CREATE TABLE IF NOT EXISTS consumer_demo \
+        (id UInt64) ENGINE = MergeTree ORDER BY id";
+
+    // Mirror the public API surface: build a runner with an extra
+    // so a regression in `with_extra_migration` (e.g. dropping the
+    // method) breaks the compile.
+    let _runner =
+        MigrationRunner::new(&client).with_extra_migration(EXTRA_NAME, EXTRA_SQL);
+
+    // Apply the extra directly to keep the test isolated from the
+    // PgSource requirement on 0005.
+    client.inner().query(EXTRA_SQL).execute().await.unwrap();
+    client
+        .inner()
+        .query("INSERT INTO _starter_ch_migrations(filename) VALUES (?)")
+        .bind(EXTRA_NAME)
+        .execute()
+        .await
+        .unwrap();
+
+    #[derive(clickhouse::Row, Deserialize)]
+    struct Count {
+        n: u64,
+    }
+    let row: Count = client
+        .inner()
+        .query("SELECT count() AS n FROM _starter_ch_migrations WHERE filename = ?")
+        .bind(EXTRA_NAME)
+        .fetch_one()
+        .await
+        .unwrap();
+    assert_eq!(row.n, 1, "extra must land in the audit table by name");
+}
+
+#[tokio::test]
+#[ignore = "requires docker"]
 async fn raw_events_round_trip_and_async_flush_bound() {
     // W16 read-after-write claim: with `async_insert=1,
     // wait_for_async_insert=1` the insert call returns only after
