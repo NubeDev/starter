@@ -49,10 +49,18 @@ async fn main() -> Result<()> {
     let mcp = boot::mcp::build_mcp_surface().await?;
 
     // The agent boots without a warehouse when `clickhouse_url` is
-    // unset; the disk tool then skips its history write.
-    let ch_client: Option<Arc<ChClient>> = cfg.clickhouse_url.as_ref().map(|url| {
-        Arc::new(ChClient::connect(ChConfig::local(url.clone())))
-    });
+    // unset OR when the CH migration step skipped (no RUBIX_CH_URL,
+    // no parseable DSN, etc.). Wiring a `ChClient` into the disk
+    // tool when the `system_disk_history` table was never created
+    // would 500 on every invocation — see
+    // docs/design/warehouse/README.md for the gate contract.
+    let ch_client: Option<Arc<ChClient>> = if ch_migrations.skipped {
+        None
+    } else {
+        cfg.clickhouse_url
+            .as_ref()
+            .map(|url| Arc::new(ChClient::connect(ChConfig::local(url.clone()))))
+    };
     let tools = registry::build_tool_registry(ch_client);
 
     info!(
