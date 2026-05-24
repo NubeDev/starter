@@ -1,7 +1,7 @@
 import { motion } from 'motion/react'
 import { LayoutPanelTop, PanelLeft } from 'lucide-react'
 import { useIntl } from 'react-intl'
-import { useLayout } from '@/context/layout-provider'
+import { useLayout } from '@nube/starter-ui-core/layout'
 import { cn } from '@/lib/utils'
 
 /**

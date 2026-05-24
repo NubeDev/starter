@@ -2,7 +2,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { motion } from 'motion/react'
 import { useIntl } from 'react-intl'
 import { useTheme, FONT_STACKS, type Mode, type Palette, type Font } from '@/stores/theme-store'
-import { useLayout, type Variant, type Collapsible } from '@/context/layout-provider'
+import { useLayout, type Variant, type Collapsible } from '@nube/starter-ui-core/layout'
 import { LayoutToggle } from '@/components/layout-toggle'
 import { cn } from '@/lib/utils'
 

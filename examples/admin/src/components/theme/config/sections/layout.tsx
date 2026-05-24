@@ -20,8 +20,8 @@ import { IconLayoutFull } from '@/assets/custom/icon-layout-full'
 import { IconSidebarFloating } from '@/assets/custom/icon-sidebar-floating'
 import { IconSidebarInset } from '@/assets/custom/icon-sidebar-inset'
 import { IconSidebarSidebar } from '@/assets/custom/icon-sidebar-sidebar'
-import { useDirection } from '@/context/direction-provider'
-import { type Collapsible, useLayout } from '@/context/layout-provider'
+import { useDirection } from '@nube/starter-ui-core/layout'
+import { type Collapsible, useLayout } from '@nube/starter-ui-core/layout'
 import { cn } from '@/lib/utils'
 import {
   DEFAULT_DENSITY,

@@ -1,4 +1,4 @@
-import { useLayout } from '@/context/layout-provider'
+import { useLayout } from '@nube/starter-ui-core/layout'
 import {
   Sidebar,
   SidebarContent,
