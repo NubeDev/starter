@@ -4,6 +4,14 @@
 export type { Catalog, I18nManifest, LanguageTag, MessageKey } from "./types.js";
 
 export {
+  createLocaleStore,
+} from "./locale-store.js";
+export type {
+  CreateLocaleStoreOptions,
+  LocaleStoreState,
+} from "./locale-store.js";
+
+export {
   IntlContext,
   IntlProvider,
   useIntlContext,

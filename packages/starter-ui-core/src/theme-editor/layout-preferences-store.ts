@@ -6,7 +6,7 @@
 // `localStorage` by default; tests can pass a `MockStorage` via the
 // `storage` option of `createLayoutPreferencesStore`.
 
-import { create, type StoreApi, type UseBoundStore } from "zustand";
+import { create, type Mutate, type StoreApi, type UseBoundStore } from "zustand";
 import { createJSONStorage, persist, type PersistStorage } from "zustand/middleware";
 
 import {
@@ -39,13 +39,20 @@ export interface CreateLayoutPreferencesStoreOptions {
   initial?: Partial<LayoutPreferences>;
 }
 
+/** A `LayoutPreferences` store with `persist` middleware attached.
+ * Exposed as a return type so consumers (and tests) can reach
+ * `.persist.clearStorage()` etc. without losing type-safety. */
+export type LayoutPreferencesStore = UseBoundStore<
+  Mutate<StoreApi<LayoutPreferencesState>, [["zustand/persist", LayoutPreferencesState]]>
+>;
+
 /** Build a configured `useLayoutPreferences` hook. Use the default
  * `useLayoutPreferences` export for the common case; call this factory
  * if a consumer needs a non-default storage key or a fresh instance
  * (multi-tenant testbeds). */
 export function createLayoutPreferencesStore(
   options: CreateLayoutPreferencesStoreOptions = {},
-): UseBoundStore<StoreApi<LayoutPreferencesState>> {
+): LayoutPreferencesStore {
   const {
     storageKey = "starter:layout-preferences",
     storage,

@@ -7,10 +7,12 @@ CANONICAL_UNIT
 DEFAULT_PRESETS
 DEFAULT_WORKSPACE
 DENSITY_SCALE
+DirectionProvider
 FONT_SIZE_SCALE
 I18N_FALLBACK_LANGUAGE
 IntlContext
 IntlProvider
+LayoutProvider
 NON_COLOR_KEYS
 PREFERENCES_BROADCAST_CHANNEL
 PreferencesContext
@@ -34,6 +36,7 @@ clearThemePreferences
 colorFormatter
 convertUnit
 createLayoutPreferencesStore
+createLocaleStore
 defaultDarkThemeStyles
 defaultLayoutPreferences
 defaultLightThemeStyles
@@ -86,13 +89,18 @@ type AuthProviderProps
 type AuthStatus
 type AuthStrategy
 type Catalog
+type Collapsible
 type Color
 type ColorFormat
 type ContrastTier
 type CreateLayoutPreferencesStoreOptions
+type CreateLocaleStoreOptions
 type CurrencyCode
 type DateFormat
 type Density
+type Direction
+type DirectionContextValue
+type DirectionProviderProps
 type ExtensionMessageTelemetryEvent
 type ExtensionMessageTelemetrySink
 type FontSize
@@ -102,9 +110,14 @@ type I18nTelemetrySink
 type IntlContextValue
 type IntlProviderProps
 type LanguageTag
+type LayoutContextValue
+type LayoutMode
 type LayoutPreferences
 type LayoutPreferencesState
+type LayoutPreferencesStore
+type LayoutProviderProps
 type LocaleFallbackResult
+type LocaleStoreState
 type LoginInput
 type MessageKey
 type MessageValues
@@ -139,10 +152,14 @@ type Unit
 type UnitSystem
 type UnitsResponse
 type UseThemeEditorResult
+type Variant
 type WeekStart
 unregisterExtensionMessages
 useAuth
+useDirection
 useIntlContext
+useIsMobile
+useLayout
 useLayoutPreferences
 usePreferences
 useThemeEditor
