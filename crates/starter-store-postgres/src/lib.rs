@@ -34,5 +34,9 @@ pub mod dimensions;
 #[cfg(feature = "dimensions")]
 pub use dimensions::DIMENSIONS_MIGRATION_SOURCE;
 
+pub mod scheduled_flows;
+
+pub use scheduled_flows::{SCHEDULED_FLOWS_MIGRATION_SOURCE, SCHEDULED_FLOWS_MIGRATOR};
+
 pub use migrate::{migrate, MigrationSource};
 pub use pool::Pool;
