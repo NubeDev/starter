@@ -27,6 +27,11 @@ starter-tool-sysdiag = { workspace = true }
 starter-store-clickhouse = { workspace = true }
 uuid                      = { workspace = true }
 
+# undo goal — Reversible-aware dispatch wrapper + rubix.undo.last verb.
+# See docs/design/undo/.
+starter-undo              = { workspace = true }
+starter-changelog         = { workspace = true }
+
 [dev-dependencies]
 # Recorded-LLM round-trip harness for the system.disk verb. Pulls
 # the ai-agent node body + the starter `RecordingAiRunner` fake so
