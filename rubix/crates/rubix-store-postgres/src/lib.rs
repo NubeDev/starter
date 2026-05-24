@@ -18,8 +18,15 @@
 //!   `rubix-agent::boot::undo_sweep` prunes per
 //!   `(tenant_id, resource_kind, resource_id)`.
 //!
-//! Future rubix-owned schemas (e.g. `flows_definitions` for
-//! Phase D) land here as additional `MigrationSource` constants.
+//! - [`FLOWS_DEFINITIONS_MIGRATION_SOURCE`] — the
+//!   `flows_definitions` dimension table that holds every rubix
+//!   flow definition. Bundled YAMLs are seeded on first boot per
+//!   `(tenant_id, flow_id)`; subsequent edits land as new
+//!   revisions and supersede prior heads via `superseded_at`.
+//!   An insert/update trigger fires `NOTIFY rubix_flows_definitions`
+//!   so the listener in `rubix-agent::boot::flow_notify` can
+//!   reload the in-process `FlowRegistry` across instances
+//!   without a redeploy.
 
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
@@ -42,3 +49,25 @@ pub const UNDO_SNAPSHOTS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
     name: "undo_snapshots",
     migrator: &UNDO_SNAPSHOTS_MIGRATOR,
 };
+
+/// `sqlx` migrator for the rubix `flows_definitions` schema. Pair
+/// with `starter_store_postgres::migrate(pool)
+///     .with_source(FLOWS_DEFINITIONS_MIGRATION_SOURCE)` at boot.
+pub static FLOWS_DEFINITIONS_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/flows_definitions");
+
+/// Convenience [`MigrationSource`] for the `flows_definitions`
+/// table. The `name` field becomes the suffix of the source's own
+/// `_sqlx_migrations_flows_definitions` table, isolating this
+/// schema's migration history from the other rubix- and starter-
+/// owned sources in the boot chain.
+pub const FLOWS_DEFINITIONS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "flows_definitions",
+    migrator: &FLOWS_DEFINITIONS_MIGRATOR,
+};
+
+/// Postgres channel name the `flows_definitions` insert/update
+/// trigger publishes to. Kept here so the producer (the trigger
+/// SQL) and the consumer (`rubix-agent::boot::flow_notify`) share
+/// one source of truth.
+pub const FLOWS_DEFINITIONS_CHANNEL: &str = "rubix_flows_definitions";
