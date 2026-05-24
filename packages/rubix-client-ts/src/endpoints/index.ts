@@ -15,3 +15,4 @@ export * from "./tenant.js";
 export * from "./clickhouse.js";
 export * from "./flow_ops.js";
 export * from "./undo.js";
+export * from "./mcp.js";
