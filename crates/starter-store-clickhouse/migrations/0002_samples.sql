@@ -28,10 +28,16 @@ CREATE TABLE IF NOT EXISTS samples (
     value_bool   Nullable(UInt8),
     quality      UInt8 DEFAULT 0,
     tags         Map(String, String) DEFAULT map(),
-    INDEX tags_bloom tags TYPE bloom_filter GRANULARITY 1,
+    -- See `0001_raw_events.sql` — ClickHouse 24+ rejects
+    -- `bloom_filter` declared directly on a Map column; index
+    -- the keys instead.
+    INDEX tags_bloom mapKeys(tags) TYPE bloom_filter GRANULARITY 1,
     INDEX entity_bloom entity_id TYPE bloom_filter GRANULARITY 1
 )
 ENGINE = MergeTree
 PARTITION BY toYYYYMM(ts)
 ORDER BY (entity_id, ts)
-TTL ts + INTERVAL 2 YEAR DELETE;
+-- `toDateTime(ts)`: ClickHouse 24+ rejects TTL expressions that
+-- resolve to `DateTime64` (BAD_TTL_EXPRESSION). Cast to `DateTime`
+-- so the engine can evaluate the bound at part-merge time.
+TTL toDateTime(ts) + INTERVAL 2 YEAR DELETE;

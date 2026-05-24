@@ -45,7 +45,7 @@ async fn main() -> Result<()> {
         .sum();
 
     let migrations = boot::apply_migrations().await?;
-    let ch_migrations = boot::apply_ch_migrations().await?;
+    let ch_migrations = boot::apply_ch_migrations(cfg.database_url.as_deref()).await?;
     let mcp = boot::mcp::build_mcp_surface().await?;
 
     // The agent boots without a warehouse when `clickhouse_url` is

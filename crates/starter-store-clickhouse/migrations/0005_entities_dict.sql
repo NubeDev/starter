@@ -6,12 +6,15 @@
 --   invalidate_query             — detect updates via max(updated_at)
 --   LAYOUT(HASHED())             — full in-memory hash
 --
--- Connection knobs are mustache placeholders {{name}} that
--- `MigrationRunner` substitutes at apply time from the
+-- Connection knobs are mustache placeholders (double-brace name)
+-- that `MigrationRunner` substitutes at apply time from the
 -- `pg_source` config; the runner refuses to apply this file if
 -- any placeholder is missing. CH parameter substitution
--- (`{name:Type}`) is a query-time feature and does not work in
--- DDL — so the substitution is host-side, on the SQL text.
+-- (single-brace `name:Type`) is a query-time feature and does not
+-- work in DDL — so the substitution is host-side, on the SQL
+-- text. Literal mustache braces are avoided in the comments
+-- because the runner scans for leftover mustache pairs after
+-- substitution and would flag them as unresolved.
 --
 -- IF NOT EXISTS so re-running the migration is a no-op. Note that
 -- CH does not currently support ALTER DICTIONARY for source config

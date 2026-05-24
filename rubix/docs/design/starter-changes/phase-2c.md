@@ -54,3 +54,53 @@ pass. Add a regression test in `starter-i18n` that enables
 interpolates a `Quantity` param.
 
 *Status.* Filed for fix-when-touched; not blocking PR 3.
+
+## `starter-store-clickhouse` TTL on `DateTime64` rejected by CH 24+ (latent)
+
+`starter-store-clickhouse` fix · surfaced during the PR #28 smoke
+test · **landed (in-tree)**, three-line fix per file.
+
+*Bug.* `CREATE TABLE` with `TTL <DateTime64 column> + INTERVAL N
+DAY` is rejected by ClickHouse 24+ with
+`Code: 450. DB::Exception: TTL expression result column should
+have DateTime or Date type, but has DateTime64(3).
+(BAD_TTL_EXPRESSION)`. The three shared migrations declared
+`DateTime64(3)` columns for the timestamp (`received_at`, `ts`)
+and used those columns directly in the TTL clause; CH 23.x
+accepted the expression, CH 24.x does not.
+
+*Fix.* Cast the TTL expression to `DateTime` so the result type
+satisfies the engine's constraint. The retention bound is
+day-grained anyway, so the dropped sub-second precision is
+irrelevant for TTL.
+
+*Files changed.*
+- `crates/starter-store-clickhouse/migrations/0001_raw_events.sql`
+- `crates/starter-store-clickhouse/migrations/0002_samples.sql`
+- `crates/starter-store-clickhouse/migrations/0003_events.sql`
+
+*Rationale for cast-not-pin.* Pinning the rubix compose image to
+ClickHouse 23.x would mask the same bug for every other consumer
+that boots starter-store-clickhouse against CH 24+. The cast keeps
+the migration valid on every CH version the crate documents
+support for.
+
+## `starter-store-clickhouse` `bloom_filter` index on `Map` rejected by CH 24+ (latent)
+
+`starter-store-clickhouse` fix · surfaced alongside the TTL fix
+above · **landed (in-tree)**, one-line fix per file.
+
+*Bug.* `CREATE TABLE ... INDEX <name> tags TYPE bloom_filter ...`
+where `tags` is `Map(String, String)` is rejected by CH 24+ with
+`Code: 44. DB::Exception: Unexpected type Map(String, String) of
+bloom filter index. (ILLEGAL_COLUMN)`. CH 23.x silently accepted
+the declaration; CH 24.x requires the index to be declared on a
+column the bloom filter knows how to hash.
+
+*Fix.* Index `mapKeys(tags)` instead of `tags`. The dominant
+"does this tag key exist?" lookup is unchanged; value-level skip
+needs a separate `tokenbf_v1` index on `mapValues(tags)` if it
+ever becomes a hot path.
+
+*Files changed.* Same three files as the TTL fix above
+(`0001_raw_events.sql`, `0002_samples.sql`, `0003_events.sql`).
