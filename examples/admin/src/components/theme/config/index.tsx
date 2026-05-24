@@ -1,11 +1,11 @@
 // test-ui-5's ConfigDrawer — Stage-2 graduated. The Sheet + tab shell
-// now comes from `@nube/starter-ui-kit/theme-editor/config-drawer`. The four tab
+// now comes from `@nube/starter-ui-kit/theme-editor`. The four tab
 // contents are composed locally because some sections still depend on
 // ui-5-only stores (font, radius, shell mode, direction).
 
 import { Layers, Palette as PaletteIcon, Sliders, Sparkles } from 'lucide-react'
 import { useIntl } from 'react-intl'
-import { ConfigDrawer as KitConfigDrawer } from '@nube/starter-ui-kit/theme-editor/config-drawer'
+import { ConfigDrawer as KitConfigDrawer } from '@nube/starter-ui-kit/theme-editor'
 import { useDirection } from '@nube/starter-ui-core/layout'
 import { useLayout } from '@nube/starter-ui-core/layout'
 import { useTheme } from '@/stores/theme-store'

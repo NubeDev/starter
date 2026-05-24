@@ -3,7 +3,7 @@
 // are local decoration.
 
 import { useIntl } from 'react-intl'
-import { ComingSoonField, SectionTitle } from '@nube/starter-ui-kit/theme-editor/config-drawer'
+import { ComingSoonField, SectionTitle } from '@nube/starter-ui-kit/theme-editor'
 
 function DisabledInput({ placeholder }: { placeholder: string }) {
   return (

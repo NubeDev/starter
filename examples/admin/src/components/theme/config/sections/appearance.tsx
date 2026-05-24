@@ -13,7 +13,7 @@ import {
   type FontSizeItem,
   type PaletteItem,
   type ThemeIconItem,
-} from '@nube/starter-ui-kit/theme-editor/config-drawer'
+} from '@nube/starter-ui-kit/theme-editor'
 import { IconThemeDark } from '@/assets/custom/icon-theme-dark'
 import { IconThemeLight } from '@/assets/custom/icon-theme-light'
 import { IconThemeSystem } from '@/assets/custom/icon-theme-system'

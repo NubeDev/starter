@@ -12,7 +12,7 @@ import {
   SectionTitle,
   TileChoiceSection,
   type TileChoiceItem,
-} from '@nube/starter-ui-kit/theme-editor/config-drawer'
+} from '@nube/starter-ui-kit/theme-editor'
 import { IconDir } from '@/assets/custom/icon-dir'
 import { IconLayoutCompact } from '@/assets/custom/icon-layout-compact'
 import { IconLayoutDefault } from '@/assets/custom/icon-layout-default'
