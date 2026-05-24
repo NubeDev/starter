@@ -25,7 +25,14 @@ pub fn healthz_router() -> Router {
 /// `main.rs` composed (typically `healthz_router().merge(...)`).
 pub async fn serve(bind: &str, router: Router) -> Result<()> {
     let listener = tokio::net::TcpListener::bind(bind).await?;
-    info!(bind = %bind, "rubix-agent listening");
+    // Log the bound `local_addr` alongside the requested `bind` so
+    // callers driving an ephemeral port (`RUBIX_BIND=127.0.0.1:0`,
+    // used by `rubix/scripts/snapshot-openapi.sh` to capture
+    // `rubix/openapi.json`) can discover the real port from a
+    // line-buffered log stream. The original `bind` field is
+    // preserved for back-compat with operators grep'ing logs.
+    let local_addr = listener.local_addr()?;
+    info!(bind = %bind, local_addr = %local_addr, "rubix-agent listening");
     axum::serve(listener, router).await?;
     Ok(())
 }

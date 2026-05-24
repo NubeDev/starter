@@ -1,0 +1,133 @@
+{
+  "components": {},
+  "info": {
+    "description": "Rubix backend REST surface. See `rubix/docs/design/agent/README.md` for the runtime wiring picture.",
+    "license": {
+      "identifier": "MIT OR Apache-2.0",
+      "name": "MIT OR Apache-2.0"
+    },
+    "title": "rubix-agent",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/tools/{tool_id}": {
+      "post": {
+        "operationId": "dispatch",
+        "parameters": [
+          {
+            "description": "Registered tool id (e.g. `rubix.system.disk`, `rubix.user.create`, `rubix.flow.deploy`, `rubix.undo.last`).",
+            "in": "path",
+            "name": "tool_id",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "Pass `server` to ask the agent to render the `summary` Diagnostic against the negotiated locale and return it as `rendered_summary` alongside the raw structured form.",
+            "in": "query",
+            "name": "render",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {}
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Tool invocation succeeded; body is the tool's structured response."
+          },
+          "400": {
+            "description": "Invalid tool input."
+          },
+          "401": {
+            "description": "Unauthenticated (cookie session or API token required when the agent boots with `RUBIX_DATABASE_URL`)."
+          },
+          "403": {
+            "description": "Forbidden by the authz engine."
+          },
+          "404": {
+            "description": "Unknown tool id."
+          },
+          "409": {
+            "description": "Conflict — invariant violated."
+          },
+          "500": {
+            "description": "Tool execution failed."
+          }
+        },
+        "summary": "Handler — kept at ≤20 lines. Any growth here is a smell:\ndomain logic belongs in `rubix-tools` (push into `probe()`),\nshaping logic belongs in [`shape_response`].",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/healthz": {
+      "get": {
+        "operationId": "healthz",
+        "responses": {
+          "200": {
+            "description": "Agent is alive; body is `{\"status\":\"ok\"}`"
+          }
+        },
+        "summary": "Liveness probe. Returns 200 with a tiny JSON body — no DB, no\ndownstream calls. A reachable port is the entire signal.",
+        "tags": [
+          "system"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Default development bind (RUBIX_BIND).",
+      "url": "http://127.0.0.1:8088"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Cookie-session + API-token authentication (delegated to starter-auth-users).",
+      "name": "auth"
+    },
+    {
+      "description": "System probes: disk, db, flow errors (Goal 5 — system-check + alert).",
+      "name": "system"
+    },
+    {
+      "description": "User-admin verbs (Goal 2): user/team/tenant create + disable + list.",
+      "name": "user-admin"
+    },
+    {
+      "description": "ClickHouse ruler verbs (Goal 4): rule write, mart create, retention set.",
+      "name": "clickhouse-ruler"
+    },
+    {
+      "description": "Flow programmer verbs (Goal 3): flow deploy, lint, list, duplicate.",
+      "name": "flow-programmer"
+    },
+    {
+      "description": "MCP JSON-RPC over HTTP (tools/list, tools/call).",
+      "name": "mcp"
+    },
+    {
+      "description": "Undo dispatcher (`rubix.undo.last`) — reverses the most recent reversible change.",
+      "name": "undo"
+    },
+    {
+      "description": "Goal 1 (dashboard-assistant) stub surface — `code = rubix.goal.not_wired`.",
+      "name": "dashboard-stub"
+    },
+    {
+      "description": "Goal 6 (weekly-report) stub surface — `code = rubix.goal.not_wired`.",
+      "name": "weekly-report-stub"
+    }
+  ]
+}
