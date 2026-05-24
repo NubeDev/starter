@@ -89,7 +89,25 @@ pub fn router(state: ToolsState) -> Router {
 /// Handler — kept at ≤20 lines. Any growth here is a smell:
 /// domain logic belongs in `rubix-tools` (push into `probe()`),
 /// shaping logic belongs in [`shape_response`].
-async fn dispatch(
+#[utoipa::path(
+    post,
+    path = "/api/v1/tools/{tool_id}",
+    tag = "system",
+    params(
+        ("tool_id" = String, Path, description = "Registered tool id (e.g. `rubix.system.disk`, `rubix.user.create`, `rubix.flow.deploy`, `rubix.undo.last`)."),
+        ("render" = Option<String>, Query, description = "Pass `server` to ask the agent to render the `summary` Diagnostic against the negotiated locale and return it as `rendered_summary` alongside the raw structured form."),
+    ),
+    responses(
+        (status = 200, description = "Tool invocation succeeded; body is the tool's structured response."),
+        (status = 400, description = "Invalid tool input."),
+        (status = 401, description = "Unauthenticated (cookie session or API token required when the agent boots with `RUBIX_DATABASE_URL`)."),
+        (status = 403, description = "Forbidden by the authz engine."),
+        (status = 404, description = "Unknown tool id."),
+        (status = 409, description = "Conflict — invariant violated."),
+        (status = 500, description = "Tool execution failed."),
+    ),
+)]
+pub(crate) async fn dispatch(
     State(state): State<ToolsState>,
     Path(tool_id): Path<String>,
     Query(q): Query<RenderQuery>,

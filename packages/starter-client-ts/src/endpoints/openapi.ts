@@ -2,6 +2,7 @@
 // the rest of this package's types.
 
 import { StarterClient } from "../client/client.js";
+import { fetchJson } from "../client/fetch_json.js";
 
 declare module "../client/client.js" {
   interface StarterClient {
@@ -9,7 +10,6 @@ declare module "../client/client.js" {
   }
 }
 
-StarterClient.prototype.openapi = async function openapi(this: StarterClient): Promise<unknown> {
-  const res = await this.fetch(`${this.baseUrl}/openapi.json`, { headers: this.headers });
-  return await res.json();
+StarterClient.prototype.openapi = function openapi(this: StarterClient): Promise<unknown> {
+  return fetchJson<unknown>(this, `/openapi.json`);
 };

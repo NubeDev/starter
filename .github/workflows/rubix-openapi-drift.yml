@@ -1,0 +1,59 @@
+name: rubix-openapi-drift
+
+on:
+  pull_request:
+  push:
+    branches: [master, main]
+
+concurrency:
+  group: rubix-openapi-drift-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  CARGO_TERM_COLOR: always
+  CARGO_INCREMENTAL: 0
+  RUST_BACKTRACE: 1
+
+jobs:
+  rubix-openapi-drift:
+    name: rubix openapi / ts drift
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: install
+        run: pnpm install --frozen-lockfile
+
+      # Source of truth: re-run the snapshot script. It boots
+      # rubix-agent on an ephemeral port, curls /openapi.json, and
+      # rewrites rubix/openapi.json. Any drift vs the committed
+      # snapshot fails the diff step below.
+      # See rubix/HOW-TO-CODE.md §OpenAPI snapshot regen.
+      - name: regenerate rubix openapi snapshot
+        run: bash rubix/scripts/snapshot-openapi.sh
+
+      - name: fail on openapi drift
+        run: git diff --exit-code rubix/openapi.json
+
+      - name: regenerate rubix ts client
+        run: pnpm --filter @nube/rubix-client-ts run codegen
+
+      - name: fail on ts client drift
+        run: git diff --exit-code packages/rubix-client-ts/src/generated/index.ts

@@ -10,12 +10,12 @@
     ".": "./src/index.ts",
     "./generated": "./src/generated/index.ts"
   },
-  "files": ["src", "README.md"],
+  "files": ["src", "bin", "README.md"],
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
-    "codegen": "openapi-typescript ../../openapi.json -o ./src/generated/index.ts"
+    "codegen": "node ./bin/codegen.mjs"
   },
   "dependencies": {
     "zod": "^3.23.0"

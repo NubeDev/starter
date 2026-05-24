@@ -29,4 +29,11 @@ export class StarterError extends Error {
     const msg = problem?.title ?? `HTTP ${res.status}`;
     return new StarterError(res.status, msg, problem);
   }
+
+  // Type guard. With one arg, narrows to StarterError; with two, also
+  // requires that `.status` matches.
+  static is(err: unknown, status?: number): err is StarterError {
+    if (!(err instanceof StarterError)) return false;
+    return status === undefined || err.status === status;
+  }
 }

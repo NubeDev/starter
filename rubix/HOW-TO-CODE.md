@@ -385,6 +385,24 @@ a real server and exercise the full stack. Run with:
 cargo test -p smoke-tests
 ```
 
+### OpenAPI snapshot regen
+
+`@nube/rubix-client-ts` is codegen'd from `rubix/openapi.json`, a
+committed snapshot of the document the agent serves at
+`GET /openapi.json`. Regenerate it whenever you add or change a
+`#[utoipa::path]` attribute, a tag, the `info` block, or any schema
+referenced from a path — i.e. whenever the served document would
+diverge from the committed file. Run
+`bash rubix/scripts/snapshot-openapi.sh` (it builds `rubix-agent`,
+boots it on an ephemeral port with no DB/CH dependencies, curls
+`/openapi.json`, pretty-prints it with `jq -S --indent 2`, and
+tears the child process down through a `trap`). Commit the
+refreshed snapshot in its own commit with a message of the form
+`chore(rubix): refresh openapi.json snapshot` so reviewers can
+diff it independently of the Rust change that drove it. CI's
+`openapi-drift` job (phase B.4) re-runs the script and fails if
+the snapshot is stale.
+
 ---
 
 ## 6 — Layer separation — transport contains zero logic
