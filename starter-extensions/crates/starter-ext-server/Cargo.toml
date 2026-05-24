@@ -34,6 +34,9 @@ sha2        = { workspace = true }
 hex         = { workspace = true }
 thiserror   = { workspace = true }
 tracing     = { workspace = true }
+tar         = { workspace = true }
+flate2      = { workspace = true }
+serde_yaml  = { workspace = true }
 
 [dev-dependencies]
 tower    = { workspace = true, features = ["util"] }
@@ -41,3 +44,6 @@ tempfile = { workspace = true }
 tokio    = { workspace = true, features = ["macros", "rt-multi-thread", "fs", "time"] }
 futures  = { workspace = true }
 http-body-util = "0.1"
+tar      = { workspace = true }
+flate2   = { workspace = true }
+serde_json = { workspace = true }

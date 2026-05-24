@@ -250,6 +250,7 @@ pub async fn build_extension_admin(
         .with_supervisors(supervisors)
         .with_enablement_store(store)
         .with_supervisor_factory(factory)
+        .with_extensions_dir(dir.to_path_buf())
         .build();
     // Summary boot line consumed by operators + the integration test.
     // Distinct target from the per-step lines above so log filters can

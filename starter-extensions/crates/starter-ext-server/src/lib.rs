@@ -62,6 +62,7 @@ mod etag;
 mod events;
 mod factory;
 mod i18n;
+mod lifecycle;
 mod rest;
 mod router;
 mod routes;

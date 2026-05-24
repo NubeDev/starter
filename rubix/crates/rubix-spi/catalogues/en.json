@@ -37,5 +37,9 @@
   "rubix.analytics.query.bind_error": "Analytics query {name} failed to bind parameters or execute against ClickHouse.",
   "rubix.analytics.report.rendered": "Analytics report {template} rendered as {format} ({bytes} bytes, {queries} queries).",
   "rubix.analytics.report.empty": "Analytics report {template} rendered with no data ({format}, {queries} queries returned zero rows).",
-  "rubix.analytics.report.format_unsupported": "Analytics report refused — format {format} is not supported by this binary."
+  "rubix.analytics.report.format_unsupported": "Analytics report refused — format {format} is not supported by this binary.",
+  "rubix.extension.install.succeeded": "Extension {id} installed (at {at}); it will surface after the next agent boot.",
+  "rubix.extension.install.invalid_manifest": "Extension install refused — the uploaded tarball does not contain a valid block.yaml manifest.",
+  "rubix.extension.uninstall.succeeded": "Extension {id} uninstalled (at {at}); bundle directory removed and persistence row marked disabled.",
+  "rubix.extension.uninstall.not_found": "Extension {id} cannot be uninstalled — no bundle directory exists for that id."
 }

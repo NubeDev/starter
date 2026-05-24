@@ -17,6 +17,7 @@
 //! need.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 use starter_ext_host::ExtensionRegistry;
@@ -40,6 +41,11 @@ struct Inner {
     factory: DynFactory,
     etag_cache: EtagCache,
     worker_states: Option<WorkerStatesFn>,
+    /// On-disk root that holds extension bundles. Required for the
+    /// install / uninstall endpoints (Phase D.1); endpoints return
+    /// HTTP 503 when unset so a `TestApp` that doesn't wire it stays
+    /// functional for the toggle-only surface.
+    extensions_dir: Option<PathBuf>,
 }
 
 /// Closure shape the admin route calls when rendering
@@ -62,6 +68,7 @@ impl ExtensionAdmin {
             store: None,
             factory: None,
             worker_states: None,
+            extensions_dir: None,
         }
     }
 
@@ -116,6 +123,12 @@ impl ExtensionAdmin {
     /// response still includes a `workers: []` field, which is the
     /// truthful shape for hosts that did not opt into the periodic-
     /// worker adapter.
+    /// On-disk root holding extension bundles, when wired. Used by
+    /// the install / uninstall endpoints (Phase D.1).
+    pub(crate) fn extensions_dir(&self) -> Option<&std::path::Path> {
+        self.inner.extensions_dir.as_deref()
+    }
+
     pub(crate) fn worker_states(&self, id: &ExtensionId) -> Vec<serde_json::Value> {
         match &self.inner.worker_states {
             Some(f) => f(id),
@@ -133,6 +146,7 @@ pub struct ExtensionAdminBuilder {
     store: Option<Arc<dyn EnablementStore>>,
     factory: Option<DynFactory>,
     worker_states: Option<WorkerStatesFn>,
+    extensions_dir: Option<PathBuf>,
 }
 
 impl ExtensionAdminBuilder {
@@ -172,6 +186,14 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Wire the on-disk extensions root so the install / uninstall
+    /// endpoints (Phase D.1) can extract tarballs into it and remove
+    /// uninstalled bundles. When unset both endpoints return HTTP 503.
+    pub fn with_extensions_dir(mut self, dir: PathBuf) -> Self {
+        self.extensions_dir = Some(dir);
+        self
+    }
+
     /// Materialise the [`ExtensionAdmin`].
     pub fn build(self) -> ExtensionAdmin {
         ExtensionAdmin {
@@ -186,6 +208,7 @@ impl ExtensionAdminBuilder {
                     .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory)),
                 etag_cache: EtagCache::new(),
                 worker_states: self.worker_states,
+                extensions_dir: self.extensions_dir,
             }),
         }
     }
