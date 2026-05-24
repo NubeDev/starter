@@ -33,8 +33,39 @@ tasks:
     cmd: git status --short rubix/
 
   run:
-    desc: Boot the Phase 0 rubix-agent locally.
-    cmd: cargo run -p rubix-agent
+    desc: |
+      Boot the rubix-agent against the local thin-slice config at
+      rubix/dev/agent.toml (matches docker/docker-compose.dev.yaml).
+    cmd: RUBIX_CONFIG=rubix/dev/agent.toml cargo run -p rubix-agent
+
+  dev-deps:
+    desc: |
+      Bring up the Postgres + ClickHouse pair the thin-slice demo
+      needs, bound to 127.0.0.1 on non-standard ports.
+    cmd: docker compose -f rubix/docker/docker-compose.dev.yaml up -d
+
+  dev-deps-down:
+    desc: Tear down the thin-slice Postgres + ClickHouse pair.
+    cmd: docker compose -f rubix/docker/docker-compose.dev.yaml down
+
+  bootstrap:
+    desc: |
+      Create or reconcile the op@example.com bootstrap operator
+      against the local dev DB. Idempotent — second run is a no-op
+      with exit 0.
+    cmd: cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev
+
+  demo:
+    desc: |
+      First-boot aggregate for the six-step thin-slice demo:
+      bring up Postgres + ClickHouse, wait until they accept
+      connections (30s ceiling), seed the bootstrap operator,
+      then boot the rubix-agent.
+    cmd: |
+      docker compose -f rubix/docker/docker-compose.dev.yaml up -d
+      ./rubix/scripts/wait-for-deps.sh
+      cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user --email op@example.com --password rubix-dev
+      RUBIX_CONFIG=rubix/dev/agent.toml cargo run -p rubix-agent
 
   healthz:
     desc: Hit the Phase 0 health endpoint.

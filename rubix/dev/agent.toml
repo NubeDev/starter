@@ -1,0 +1,16 @@
+# Sample rubix-agent config for the local thin-slice demo.
+#
+# Install once:
+#     cp rubix/dev/agent.toml ~/.config/rubix/agent.toml
+#
+# Or point the binary at it directly:
+#     RUBIX_CONFIG=rubix/dev/agent.toml cargo run -p rubix-agent
+#
+# Values match `rubix/docker/docker-compose.dev.yaml` byte-for-byte.
+# Loaded by `rubix_agent::boot::config::AgentConfig::load` with the
+# precedence: defaults < this file < RUBIX_* env < flags.
+
+bind = "127.0.0.1:8088"
+database_url = "postgres://rubix:rubix-dev@127.0.0.1:5433/rubix"
+clickhouse_url = "http://127.0.0.1:8124"
+secrets_path = "rubix/dev/secrets.age"
