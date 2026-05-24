@@ -42,7 +42,7 @@ async fn ai_agent_node_reply_lands_in_out_slot() {
     let node_id = NodeId::new("com.example.agent").expect("node id");
     let cancel = NoopCancel;
     let skill = SkillSelection::None;
-    let ctx = NodeCtx::new(RunId::new(), &node_id, &cancel, &skill);
+    let ctx = NodeCtx::new(RunId::new(), &node_id, &cancel, &skill, &starter_flow_spi::state::NOOP_NODE_STATE_STORE);
 
     let mut input = SlotMap::new();
     input.insert(

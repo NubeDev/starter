@@ -376,6 +376,7 @@ mod tests {
             node,
             cancel,
             starter_flow_spi::skill::SkillSelection::NONE,
+            &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
         )
     }
 
@@ -494,6 +495,7 @@ mod tests {
                     Box::leak(Box::new(node)),
                     cancel.as_ref(),
                     starter_flow_spi::skill::SkillSelection::NONE,
+                    &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
                 );
                 node_kind
                     .invoke(ctx, input_with("com.acme.slow", serde_json::json!({})))

@@ -107,22 +107,37 @@ pub struct NodeCtx<'a> {
     /// is invoked exactly once per `FlowRunner::start`. Non-ai-agent
     /// kinds ignore this field.
     pub skill: &'a crate::skill::SkillSelection,
+    /// Per-node persistent state seam (R5 chokepoint; see
+    /// `DOCS/flow/scope/node-state.md`). Node bodies that need durable
+    /// per-instance state (the canonical example is the counter node's
+    /// tick count) call into this borrow rather than reaching for a
+    /// global; tests and bare-engine configurations pass
+    /// [`crate::state::NOOP_NODE_STATE_STORE`] which errors on writes
+    /// so a missing wiring fails loudly instead of silently swallowing
+    /// updates.
+    pub state: &'a dyn crate::state::NodeStateStore,
 }
 
 impl<'a> NodeCtx<'a> {
     /// Construct a [`NodeCtx`]. The propagator is the only in-engine
     /// caller; it builds one of these per `NodeBehavior::invoke` call.
+    ///
+    /// `state` is the per-node persistent state seam; pass
+    /// [`crate::state::NOOP_NODE_STATE_STORE`] in tests and bare-engine
+    /// configurations that do not exercise node state.
     pub fn new(
         run: crate::flow::RunId,
         node: &'a NodeId,
         cancel: &'a dyn crate::Cancel,
         skill: &'a crate::skill::SkillSelection,
+        state: &'a dyn crate::state::NodeStateStore,
     ) -> Self {
         Self {
             run,
             node,
             cancel,
             skill,
+            state,
         }
     }
 }
