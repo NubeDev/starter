@@ -6432,6 +6432,14 @@ dependencies = [
 ]
 
 [[package]]
+name = "rubix-store-postgres"
+version = "0.1.0"
+dependencies = [
+ "sqlx",
+ "starter-store-postgres",
+]
+
+[[package]]
 name = "rubix-tools"
 version = "0.1.0"
 dependencies = [

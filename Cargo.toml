@@ -82,6 +82,7 @@ members = [
     "rubix/crates/rubix-skills",
     "rubix/crates/rubix-flows",
     "rubix/crates/rubix-client",
+    "rubix/crates/rubix-store-postgres",
     "rubix/crates/rubix-agent",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
@@ -169,6 +170,7 @@ rubix-tools              = { path = "rubix/crates/rubix-tools",             vers
 rubix-skills             = { path = "rubix/crates/rubix-skills",            version = "0.1.0" }
 rubix-flows              = { path = "rubix/crates/rubix-flows",             version = "0.1.0" }
 rubix-client             = { path = "rubix/crates/rubix-client",            version = "0.1.0" }
+rubix-store-postgres     = { path = "rubix/crates/rubix-store-postgres",    version = "0.1.0" }
 
 # Common third-party deps. Per R5, no crate should pull these by default
 # unless its job genuinely needs them.
