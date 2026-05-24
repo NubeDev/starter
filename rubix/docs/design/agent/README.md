@@ -138,6 +138,40 @@ permissions land alongside the rule data (the
 `REQUIRED_PERMISSION` constants on each `rubix-spi::dto::system::*`
 module are the canonical mapping).
 
+## The live agent path (present-tense)
+
+A `tools/call` against any of the six bundled flows traverses:
+
+```text
+MCP transport (HTTP /mcp or stdio)
+  → starter-mcp dispatcher
+    → FlowAsTool::from_registry  (one per bundled flow)
+      → FlowRegistry resolves `com.rubix.ai-agent`
+        → RubixAiAgentNode  (boot::mcp.rs)
+          → starter_ai_agent::AgentLoop
+            → boot::ai::build_runner — ClaudeRunner | FixtureRunner
+            → ToolSet over crate::registry::build_tool_registry
+              → (tool dispatch round)
+                → AiRunner::run (second turn) → final reply text
+            → reply written to the flow's `out` slot
+        → FlowAsTool's output adapter reads the slot back
+      → starter-mcp returns the structuredContent JSON
+```
+
+`boot::mcp::build_mcp_surface` is the single composition site that
+wires these pieces. The two seams it pulls together:
+
+* [`boot::ai::build_runner`](../../crates/rubix-agent/src/boot/ai.rs) —
+  the only `AiRunner` constructor. See
+  [docs/design/ai-providers/](../ai-providers/README.md).
+* [`crate::registry::build_tool_registry`](../../crates/rubix-agent/src/registry.rs) —
+  the snapshot of `Arc<dyn Tool>` the loop dispatches against.
+
+The `AiAgentNode` wrapper itself is registered under the rubix kind
+id `com.rubix.ai-agent` so the bundled YAML files (which all root
+at `kind: ai-agent`) resolve directly. The boot log emits
+`node_kinds=com.rubix.ai-agent` confirming the registration.
+
 ## How the parts compose at boot
 
 ```text

@@ -6357,6 +6357,8 @@ dependencies = [
  "rubix-tools",
  "serde",
  "serde_json",
+ "starter-ai",
+ "starter-ai-agent",
  "starter-auth-users",
  "starter-authz",
  "starter-changelog",
@@ -6364,6 +6366,7 @@ dependencies = [
  "starter-changelog-sqlite",
  "starter-config",
  "starter-flow",
+ "starter-flow-node-loop",
  "starter-flow-spi",
  "starter-flow-surfaces",
  "starter-i18n",
@@ -6399,6 +6402,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "include_dir",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-flow",
+ "starter-flow-spi",
+ "thiserror 1.0.69",
 ]
 
 [[package]]
@@ -7536,6 +7545,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "starter-ai-agent"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde_json",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
+]
+
+[[package]]
 name = "starter-audit"
 version = "0.1.0"
 dependencies = [
@@ -8242,6 +8263,20 @@ dependencies = [
  "tokio-stream",
  "tracing",
  "tracing-subscriber",
+]
+
+[[package]]
+name = "starter-flow-node-loop"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde_json",
+ "starter-ai-agent",
+ "starter-flow-spi",
+ "starter-spi",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]

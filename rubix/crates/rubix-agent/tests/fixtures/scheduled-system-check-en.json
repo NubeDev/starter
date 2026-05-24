@@ -1,0 +1,12 @@
+[
+  {
+    "text": "",
+    "tool_uses": [
+      { "id": "call_1", "name": "rubix.system.disk", "input": {} }
+    ]
+  },
+  {
+    "text": "Disk usage is normal — 12% used, 870 GB free.",
+    "tool_uses": []
+  }
+]

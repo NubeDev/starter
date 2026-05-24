@@ -154,6 +154,20 @@ See [README.md](./README.md) for the index and per-item format.
 - **Notes:** rubix Phase 1 is the first real consumer; the API
   shape is sharpened here.
 
+## `starter-ai-agent` — runner-agnostic `AgentLoop` primitive
+
+- **Crate:** `starter-ai-agent` (new)
+- **Blocks rubix phase:** 1
+- **Why upstream:** the loop is the same shape for every consumer.
+  Decoupling it from any flow-engine concern means CLI / REST / MCP
+  callers reuse the exact same primitive that the `ai-agent` node
+  wraps.
+- **Status:** **landed (in-tree)** — see
+  `crates/starter-ai-agent/`. Five long-term concerns (multi-turn
+  session persistence, cost cap, cooperative cancellation, tool-call
+  streaming, skill enforcement) are scoped in
+  `crates/starter-ai-agent/LONG-TERM.md`.
+
 ## `starter-flow-node-loop` — the `ai-agent` node body
 
 - **Crate:** `starter-flow-node-loop` (new)
@@ -161,11 +175,14 @@ See [README.md](./README.md) for the index and per-item format.
 - **Why upstream:** every starter consumer that wants an LLM loop
   needs this; codeless already wrote one, rubix would write a
   third. See starter `DOCS/agent/SCOPE.md` D1.
-- **Status:** planned
-- **Notes:** starter `DOCS/agent/SCOPE.md` D1 leaves the choice
-  between `-loop` and `-adk` open; rubix has no preference beyond
-  "the simpler one". If `-adk` is picked, the rubix dep changes
-  but nothing else.
+- **Status:** **landed (in-tree)** — see
+  `crates/starter-flow-node-loop/`. Thin `NodeBehavior` wrapper
+  around `starter-ai-agent::AgentLoop`; registers under
+  `KIND_ID = "com.starter.ai-agent"`.
+- **Notes:** starter `DOCS/agent/SCOPE.md` D1 left the choice
+  between `-loop` and `-adk` open; rubix picked `-loop` as the
+  simpler surface. The crate name is the only spot where the
+  decision is visible.
 
 ## `starter-skills` — SKILL.md parser + registry + content-hash quarantine
 

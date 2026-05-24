@@ -2,80 +2,96 @@
 
 ## The model
 
-`rubix-agent` runs every flow through starter's `ai-agent` node
-kind. That node holds one `Arc<dyn AiRunner>` (see
-`starter_spi::ai::AiRunner`). Rubix does not build a second LLM
-seam — it picks one runner at boot and hands it to the flow
-engine. See [docs/design/agent/](../agent/README.md) for where the
-runner plugs into the boot composition.
+`rubix-agent` runs every bundled flow through starter's `ai-agent`
+node kind. That node holds one `Arc<dyn AiRunner>` (see
+[`starter_spi::ai::AiRunner`](../../../crates/starter-spi/src/ai/)).
+Rubix builds the runner once at boot and hands the same instance to
+every `ai-agent` invocation — there is no second LLM seam.
 
-## Selection at boot
+## The contract
 
-The provider is chosen by a single config knob (`ai.provider`,
-loaded via `starter-config` once that wiring lands — until then,
-the binary reads `RUBIX_AI_PROVIDER`, defaulting to `claude`):
+The runner is constructed by
+[`boot::ai::build_runner`](../../crates/rubix-agent/src/boot/ai.rs):
 
-| `ai.provider` | Resolved runner |
-|---|---|
-| `claude` (default) | Claude Code CLI via `starter-ai`'s `provider-claude` feature |
-| `codex` | OpenAI Codex CLI via `provider-codex` |
-| `copilot` | GitHub Copilot CLI via `provider-copilot` |
-| `anthropic` | Anthropic REST via `provider-anthropic` |
-| `openai` | OpenAI REST via `provider-openai` |
-
-Resolution is one call:
-
-```text
-starter_ai::registry::Registry::with_defaults()
-    .get(&Provider::from_config(&cfg.ai.provider))
-    .ok_or_else(|| Error::ProviderNotCompiled)?
+```rust
+pub fn build_runner(cfg: &AgentConfig) -> Result<Arc<dyn AiRunner>, AiError>;
 ```
 
-If the requested provider's cargo feature was not compiled into
-the binary, `get()` returns `None` and the agent fails fast at
-boot. There is no runtime fallback to a different provider — a
-silent fallback would hide an operator misconfiguration.
+`AgentConfig::ai_provider` (loaded by
+[`boot::config::AgentConfig::load`](../../crates/rubix-agent/src/boot/config.rs))
+picks which concrete runner is constructed:
+
+| `ai_provider` | Resolved runner | Status |
+|---|---|---|
+| `claude-cli` (default) | [`starter_ai::runners::claude::ClaudeRunner`](../../../crates/starter-ai/src/runners/claude.rs) | live |
+| `anthropic` | Anthropic REST | returns `AiError::Unimplemented`; see [`crates/starter-ai-agent/LONG-TERM.md`](../../../crates/starter-ai-agent/LONG-TERM.md) |
+
+`build_runner` is the **only** call site that constructs an
+`AiRunner` in the binary. `boot::mcp::build_mcp_surface` reads the
+runner from this function and registers it on the rubix `ai-agent`
+node kind alongside the snapshot of `crate::registry::build_tool_registry`
+the loop dispatches from.
+
+## Default — zero-config Claude CLI
+
+With no `ai_provider` set, the binary resolves to `ClaudeRunner`.
+The `claude` binary on PATH manages its own auth (`claude login`);
+rubix does not look at `ANTHROPIC_API_KEY`. The commented sample
+in `rubix/dev/agent.toml` documents the default:
+
+```toml
+# ai_provider = "claude-cli"
+```
+
+## Recorded-LLM fixture (`RUBIX_AI_FIXTURE`)
+
+When `RUBIX_AI_FIXTURE` points at a JSON-script file,
+`build_runner` swaps `ClaudeRunner` for a replay runner whose
+turns are fed straight off the file. Each script element is
+`{ "text": "<final>", "tool_uses": [{ id, name, input }] }`:
+
+* `tool_uses` empty → terminal turn, `text` becomes the agent reply.
+* `tool_uses` non-empty → `AgentLoop` dispatches each tool against
+  the host's `crate::registry::build_tool_registry` snapshot, then
+  pops the next scripted turn.
+
+This is the seam `mcp_stdio_test` uses to assert the agent loop
+end-to-end without calling out to a live model. Fixtures live in
+`rubix/crates/rubix-agent/tests/fixtures/`.
 
 ## What rubix does NOT do
 
-- **No multi-provider fan-out.** One provider per binary, chosen
-  at boot. Flows do not pick per-turn.
+- **No multi-provider fan-out.** One runner per binary, chosen at boot.
 - **No per-skill override.** Skills steer behaviour through their
   prompt, not through provider choice.
-- **No auto-fallback chain.** If Claude CLI is not installed and
-  `ai.provider = claude`, the binary refuses to start. The
-  operator must change the config explicitly.
-- **No auth handling.** CLI providers manage their own auth
-  (`claude login`, `gh auth`); REST providers read the standard
-  env var (`ANTHROPIC_API_KEY`, `OPENAI_API_KEY`) or take a key
-  from `starter-secrets-*`.
-
-## Headless appliance guarantee
-
-Per starter-ai's per-provider feature flags, a deployment that
-only needs Anthropic REST builds with
-`features = ["provider-anthropic"]`. The Claude/Codex/Copilot CLI
-wrappers and the OpenAI SDK do not enter the dependency graph.
-This matters for rubix containerised deployments where dragging
-in five client SDKs would bloat the image needlessly.
-
-## The `claude-wrapper` pin
-
-`starter-ai` pins `claude-wrapper = "=0.5.1"` because that crate
-parses the `claude` binary's stream-json output, which Anthropic
-does not promise to keep stable. Rubix inherits the pin — when
-`starter-ai` bumps it, rubix consumes the bump through a normal
-`cargo update`. Rubix never pins `claude-wrapper` directly.
+- **No auto-fallback chain.** A missing `claude` binary surfaces as
+  a runner error on first invocation, not a silent switch.
+- **No auth handling.** CLI providers manage their own auth.
 
 ## Failure modes
 
 | Failure | Surface |
 |---|---|
-| Provider feature not compiled | `rubix-agent` exits non-zero at boot with the requested provider name |
-| CLI binary missing on PATH | First tool dispatch fails with `AiRunner::Error::TransportUnavailable`; logged structurally |
-| REST API key missing | Same — surfaces on first turn, not at boot (auth check is per-call) |
-| Wrong API key | Surfaces on first turn as a 401-equivalent in the SSE error event |
+| `ai_provider = "anthropic"` | `build_runner` returns `AiError::Unimplemented` at boot; binary exits |
+| `ai_provider` unknown value | `AiError::Unknown` at boot |
+| `RUBIX_AI_FIXTURE` path missing / bad JSON | `AiError::Fixture` at boot |
+| `claude` binary missing on PATH | First `AiAgentNode` invocation surfaces `RunnerError` through the flow engine |
 
-Boot-time failures stop the binary. Per-call failures surface
-through the SSE event taxonomy (R13) as `agent.turn.error`
-events; the flow may retry or abort per the skill's policy.
+Boot-time failures stop the binary. Per-invocation failures surface
+as `NodeError::Backend` from the rubix `ai-agent` kind.
+
+## Open work (deferred to LONG-TERM.md)
+
+- Multi-turn session persistence (`SessionStore`)
+- Per-turn cost cap
+- Cooperative cancellation observed inside the loop
+- Tool-call streaming via the R13 SSE taxonomy
+- First-class skill resolution / enforcement
+- `RunnerInput::Cli` dispatch path (today `AgentLoop` builds
+  `RunnerInput::Rest`; the live `ClaudeRunner` is CLI-only and
+  rejects `Rest`, so the fixture runner is the only seam the loop
+  drives end-to-end. The CLI-input branch is the next thing
+  every Block-D extension needs).
+
+Each is sectioned in
+[`crates/starter-ai-agent/LONG-TERM.md`](../../../crates/starter-ai-agent/LONG-TERM.md).

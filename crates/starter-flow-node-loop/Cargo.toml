@@ -1,0 +1,20 @@
+[package]
+name        = "starter-flow-node-loop"
+description = "NodeBehavior wrapper exposing starter-ai-agent's AgentLoop as a flow node (kind id `ai-agent`)."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-ai-agent  = { workspace = true }
+starter-flow-spi  = { workspace = true }
+starter-spi       = { workspace = true }
+async-trait       = { workspace = true }
+thiserror         = { workspace = true }
+serde_json        = { workspace = true }
+tracing           = { workspace = true }
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
