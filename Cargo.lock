@@ -6462,6 +6462,7 @@ dependencies = [
  "anyhow",
  "async-trait",
  "chrono",
+ "include_dir",
  "rubix-flows",
  "rubix-spi",
  "serde",
