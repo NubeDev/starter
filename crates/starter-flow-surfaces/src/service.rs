@@ -33,11 +33,13 @@
 //! single use-site.
 
 use std::sync::Arc;
+use std::time::Duration;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
 use sqlx::Row;
 use thiserror::Error;
+use tokio::task::JoinHandle;
 use uuid::Uuid;
 
 use starter_cron::CronError;
@@ -271,4 +273,160 @@ impl FlowAsService {
             (next_run_at, enabled)
         }))
     }
+
+    /// Run one durable-scheduler tick.
+    ///
+    /// Within a single transaction, this method claims up to 32
+    /// rows whose `next_run_at <= clock.now()` and `enabled = TRUE`
+    /// via `SELECT … FOR UPDATE SKIP LOCKED` so that multiple
+    /// rubix-agent instances sharing the same `starter_scheduled_flows`
+    /// table never double-fire a schedule. For every claimed row the
+    /// tick re-computes the next firing time via
+    /// [`starter_cron::next_fire`] and writes it back **before**
+    /// committing the transaction; this is what releases the row
+    /// for other instances while keeping it from being reclaimed
+    /// on the very next tick.
+    ///
+    /// Dispatch through the bound [`FlowRunner`] happens **outside**
+    /// the claim transaction so a slow flow does not hold the row
+    /// lock for the duration of its run. The post-dispatch
+    /// `last_run_at` / `last_run_status` / `last_run_message`
+    /// bookkeeping update runs against the pool directly; a NULL
+    /// is written for `last_run_message` on success, and the
+    /// failure summary is truncated to 4 KB on error.
+    ///
+    /// Returns the number of rows claimed (and therefore the
+    /// number of dispatches attempted). A claim whose
+    /// `cron_expr` fails re-parse after-the-fact (which should
+    /// not happen because `register_schedule` validates) is
+    /// dispatched anyway but its `next_run_at` is left untouched
+    /// and the bookkeeping row records `failed` with a
+    /// parse-error message — the scheduler does not silently
+    /// disable schedules whose authors made a mistake; operators
+    /// see the failed status and intervene.
+    pub async fn tick(&self) -> Result<usize, ServiceError> {
+        let now = self.clock.now();
+
+        // Claim due rows within a single transaction. The
+        // FOR UPDATE SKIP LOCKED clause is what makes the table
+        // safe to share across rubix-agent instances.
+        let mut tx = self.pool.sqlx().begin().await?;
+        let rows = sqlx::query(
+            r#"SELECT id, tenant_id, flow_id, cron_expr
+                 FROM starter_scheduled_flows
+                WHERE enabled = TRUE AND next_run_at <= $1
+                ORDER BY next_run_at
+                FOR UPDATE SKIP LOCKED
+                LIMIT 32"#,
+        )
+        .bind(now)
+        .fetch_all(&mut *tx)
+        .await?;
+
+        let mut claimed: Vec<(String, Uuid, String, String)> = Vec::with_capacity(rows.len());
+        for r in rows {
+            let id: String = r.get("id");
+            let tenant_id: Uuid = r.get("tenant_id");
+            let flow_id: String = r.get("flow_id");
+            let cron_expr: String = r.get("cron_expr");
+
+            // Recompute `next_run_at` while still inside the
+            // transaction so the row immediately stops looking
+            // due to peer instances.
+            if let Ok(next) = starter_cron::next_fire(now, &cron_expr) {
+                sqlx::query(
+                    r#"UPDATE starter_scheduled_flows
+                          SET next_run_at = $1
+                        WHERE id = $2"#,
+                )
+                .bind(next)
+                .bind(&id)
+                .execute(&mut *tx)
+                .await?;
+            }
+            claimed.push((id, tenant_id, flow_id, cron_expr));
+        }
+        tx.commit().await?;
+
+        let count = claimed.len();
+        for (id, tenant_id, flow_id, _cron) in claimed {
+            let result = self.runner.run(tenant_id, &flow_id).await;
+            let (status, message): (&'static str, Option<String>) = match result {
+                Ok(()) => ("succeeded", None),
+                Err(e) => ("failed", Some(truncate_message(&e.to_string()))),
+            };
+            if let Err(e) = sqlx::query(
+                r#"UPDATE starter_scheduled_flows
+                      SET last_run_at      = $1,
+                          last_run_status  = $2,
+                          last_run_message = $3
+                    WHERE id = $4"#,
+            )
+            .bind(self.clock.now())
+            .bind(status)
+            .bind(message)
+            .bind(&id)
+            .execute(self.pool.sqlx())
+            .await
+            {
+                tracing::warn!(
+                    flow_id = %flow_id,
+                    error = %e,
+                    "flow_as_service.tick.bookkeeping_failed",
+                );
+            }
+        }
+
+        Ok(count)
+    }
+
+    /// Spawn the durable-scheduler tick loop and return its
+    /// [`JoinHandle`].
+    ///
+    /// The loop ticks every 60 seconds via a
+    /// [`tokio::time::interval`] with `MissedTickBehavior::Skip`
+    /// (a slow tick must not pile up missed ticks; if a tick takes
+    /// >60s the scheduler simply runs the next one immediately on
+    /// the next interval edge, not back-to-back to catch up).
+    /// Each iteration calls [`Self::tick`]; tick failures are logged
+    /// but do not terminate the loop — a transient PG outage must
+    /// not silently disable scheduling for the rest of the
+    /// process's lifetime.
+    ///
+    /// The returned handle never resolves under normal operation;
+    /// callers shut the loop down by `JoinHandle::abort`.
+    pub fn start(self) -> JoinHandle<()> {
+        let me = Arc::new(self);
+        tokio::spawn(async move {
+            let mut interval = tokio::time::interval(Duration::from_secs(60));
+            interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
+            loop {
+                interval.tick().await;
+                match me.tick().await {
+                    Ok(n) if n > 0 => {
+                        tracing::debug!(claimed = n, "flow_as_service.tick.fired");
+                    }
+                    Ok(_) => {}
+                    Err(e) => {
+                        tracing::warn!(error = %e, "flow_as_service.tick.failed");
+                    }
+                }
+            }
+        })
+    }
+}
+
+/// Truncate `s` to at most 4 KB on a UTF-8 char boundary, as the
+/// SCOPE pins for `last_run_message`. Returns owned `String` so
+/// callers can `bind` it directly.
+fn truncate_message(s: &str) -> String {
+    const CAP: usize = 4 * 1024;
+    if s.len() <= CAP {
+        return s.to_owned();
+    }
+    let mut end = CAP;
+    while end > 0 && !s.is_char_boundary(end) {
+        end -= 1;
+    }
+    s[..end].to_owned()
 }
