@@ -281,5 +281,14 @@
   "rubix.user.already_disabled": "El usuario {email} ya estaba deshabilitado (desde {at}).",
   "rubix.user.created": "Usuario {email} creado con rol {role} (el {at}).",
   "rubix.user.disabled": "Usuario {email} deshabilitado (el {at}).",
-  "rubix.user.listed": "Se listaron {count} usuarios."
+  "rubix.user.listed": "Se listaron {count} usuarios.",
+  "access.shell.title": "Control de acceso",
+  "access.tabs.tenants": "Inquilinos",
+  "access.tabs.teams": "Equipos",
+  "access.tabs.members": "Miembros",
+  "access.tabs.rules": "Reglas",
+  "access.tabs.assignments": "Asignaciones",
+  "access.tabs.resources": "Recursos",
+  "access.tabs.check": "Verificar",
+  "access.tabs.decisions": "Decisiones"
 }

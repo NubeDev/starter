@@ -281,5 +281,14 @@
   "rubix.user.already_disabled": "User {email} is already disabled (since {at}).",
   "rubix.user.created": "User {email} created with role {role} (at {at}).",
   "rubix.user.disabled": "User {email} disabled (at {at}).",
-  "rubix.user.listed": "Listed {count} users."
+  "rubix.user.listed": "Listed {count} users.",
+  "access.shell.title": "Access Control",
+  "access.tabs.tenants": "Tenants",
+  "access.tabs.teams": "Teams",
+  "access.tabs.members": "Members",
+  "access.tabs.rules": "Rules",
+  "access.tabs.assignments": "Assignments",
+  "access.tabs.resources": "Resources",
+  "access.tabs.check": "Check",
+  "access.tabs.decisions": "Decisions"
 }
