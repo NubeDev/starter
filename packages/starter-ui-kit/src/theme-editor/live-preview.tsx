@@ -9,11 +9,11 @@ import { useEffect, useRef } from "react";
 
 import { applyThemeToElement, useThemeEditorStore } from "@nube/starter-ui-core/theme-editor";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../components/ui/card";
+import { Input } from "../components/ui/input";
+import { cn } from "../lib/utils";
 
 export interface LivePreviewProps {
   className?: string;

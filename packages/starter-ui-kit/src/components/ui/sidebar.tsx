@@ -2,13 +2,13 @@
 // auto icon-rail under 1024 px. See SIDEBAR.md §1.
 import * as React from "react"
 import { ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "../../lib/utils"
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { ScrollArea } from "@/components/ui/scroll-area"
+} from "./collapsible"
+import { ScrollArea } from "./scroll-area"
 
 const COOKIE_NAME = "sidebar_state"
 const COOKIE_MAX_AGE = 60 * 60 * 24 * 365

@@ -15,8 +15,8 @@ import {
 } from "@nube/starter-ui-core/theme-editor";
 import type { ThemeTransport } from "@nube/starter-ui-core/theme-editor";
 
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { cn } from "@/lib/utils";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { cn } from "../lib/utils";
 
 import { BrandingEditor } from "./branding-editor.js";
 import { ColorTokenEditor } from "./color-token-editor.js";

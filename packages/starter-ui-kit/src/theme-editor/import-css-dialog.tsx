@@ -6,7 +6,7 @@ import { useState } from "react";
 
 import { parseCssInput, useThemeEditorStore } from "@nube/starter-ui-core/theme-editor";
 
-import { Button } from "@/components/ui/button";
+import { Button } from "../components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -16,8 +16,8 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
+} from "../components/ui/dialog";
+import { Textarea } from "../components/ui/textarea";
 
 export interface ImportCssDialogProps {
   /** Optional trigger; defaults to a "Import CSS" outline button. */

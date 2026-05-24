@@ -10,11 +10,11 @@ import { useCallback, useId, useRef } from "react";
 
 import { useThemeEditorStore } from "@nube/starter-ui-core/theme-editor";
 
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { cn } from "../lib/utils";
 
 export interface BrandingEditorProps {
   /** Optional consumer-defined feature flags the admin can toggle off.

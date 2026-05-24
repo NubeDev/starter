@@ -21,9 +21,9 @@ import type {
   ThemeStyleProps,
 } from "@nube/starter-ui-core/theme-editor";
 
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { cn } from "@/lib/utils";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
+import { cn } from "../lib/utils";
 
 /** Visual grouping for the editor. Order is the render order. The
  * `pairWith` field, if set, drives the WCAG contrast badge: the row's

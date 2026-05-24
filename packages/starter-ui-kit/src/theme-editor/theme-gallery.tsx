@@ -10,7 +10,7 @@
 import { useThemeEditorStore } from "@nube/starter-ui-core/theme-editor";
 import type { ThemeMode, ThemePreset, ThemeStyleProps, ThemeStyles } from "@nube/starter-ui-core/theme-editor";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../lib/utils";
 
 export interface ThemeGalleryProps {
   presets: readonly ThemePreset[];
