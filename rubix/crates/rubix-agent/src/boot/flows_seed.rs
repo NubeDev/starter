@@ -58,7 +58,9 @@ pub async fn seed_and_load(
         // Probe live-row existence per (tenant, flow_id) — the
         // miss path inserts a new revision, the hit path leaves
         // the row alone so the seed is idempotent across boots.
-        let exists: Option<i64> = sqlx::query_scalar(
+        // PostgreSQL types the integer literal `1` as INT4, so
+        // decode into i32 (not i64) or sqlx will refuse on hit.
+        let exists: Option<i32> = sqlx::query_scalar(
             "SELECT 1 FROM flows_definitions
               WHERE tenant_id = $1::uuid
                 AND flow_id = $2
