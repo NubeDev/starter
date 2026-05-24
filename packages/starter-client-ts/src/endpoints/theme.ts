@@ -8,12 +8,13 @@
 // the public API names the editor already imports (`ThemeStyles`,
 // `ThemeDocument`, `ThemeSaveRequest`, `ThemeShellConfig`).
 //
-// Multipart-style asset uploads use raw `fetch` with the file's
-// declared MIME type as `Content-Type`; the server stores the body
-// bytes verbatim and returns `204 No Content` on success.
+// Multipart-style asset uploads stream the file body verbatim with
+// the declared MIME type as `Content-Type`; the server returns
+// `204 No Content` on success.
 
 import { StarterClient } from "../client/client.js";
-import { StarterError } from "../error/starter-error.js";
+import { fetchJson } from "../client/fetch_json.js";
+import { fetchVoid } from "../client/fetch_void.js";
 import type { components } from "../generated/index.js";
 
 /** Per-mode token map. Open-ended to track the editor's
@@ -52,29 +53,22 @@ declare module "../client/client.js" {
 
 const BASE = "/api/v1/ui/theme";
 
-StarterClient.prototype.themeGet = async function themeGet(this: StarterClient): Promise<ThemeDocument> {
-  const res = await this.fetch(`${this.baseUrl}${BASE}`, {
-    credentials: "include",
-    headers: this.headers,
-  });
-  if (!res.ok) throw await StarterError.fromResponse(res);
-  return (await res.json()) as ThemeDocument;
+StarterClient.prototype.themeGet = function themeGet(this: StarterClient): Promise<ThemeDocument> {
+  return fetchJson<ThemeDocument>(this, BASE);
 };
 
 StarterClient.prototype.themeSave = async function themeSave(
   this: StarterClient,
   request: ThemeSaveRequest,
 ): Promise<ThemeDocument> {
-  const res = await this.fetch(`${this.baseUrl}${BASE}`, {
+  const res = await fetchVoid(this, BASE, {
     method: "PUT",
-    credentials: "include",
-    headers: { ...this.headers, "content-type": "application/json" },
+    headers: { "content-type": "application/json" },
     body: JSON.stringify(request),
   });
-  if (!res.ok) throw await StarterError.fromResponse(res);
   // The server may return either the updated document or 204 — handle
   // both so we don't blow up on `res.json()` against an empty body.
-  if (res.status === 204) return (await this.themeGet());
+  if (res.status === 204) return this.themeGet();
   return (await res.json()) as ThemeDocument;
 };
 
@@ -101,20 +95,13 @@ StarterClient.prototype.themeDeleteFavicon = async function themeDeleteFavicon(t
 };
 
 async function uploadAsset(client: StarterClient, kind: "logo" | "favicon", file: File): Promise<void> {
-  const res = await client.fetch(`${client.baseUrl}${BASE}/${kind}`, {
+  await fetchVoid(client, `${BASE}/${kind}`, {
     method: "POST",
-    credentials: "include",
-    headers: { ...client.headers, "content-type": file.type || "application/octet-stream" },
+    headers: { "content-type": file.type || "application/octet-stream" },
     body: file,
   });
-  if (!res.ok) throw await StarterError.fromResponse(res);
 }
 
 async function deleteAsset(client: StarterClient, kind: "logo" | "favicon"): Promise<void> {
-  const res = await client.fetch(`${client.baseUrl}${BASE}/${kind}`, {
-    method: "DELETE",
-    credentials: "include",
-    headers: client.headers,
-  });
-  if (!res.ok) throw await StarterError.fromResponse(res);
+  await fetchVoid(client, `${BASE}/${kind}`, { method: "DELETE" });
 }

@@ -1,6 +1,7 @@
 // `GET /health` client method.
 
 import { StarterClient } from "../client/client.js";
+import { fetchJson } from "../client/fetch_json.js";
 
 /** Health-check response. Mirror of `starter_spi::dto::Health`. */
 export interface Health {
@@ -15,7 +16,6 @@ declare module "../client/client.js" {
   }
 }
 
-StarterClient.prototype.health = async function health(this: StarterClient): Promise<Health> {
-  const res = await this.fetch(`${this.baseUrl}/health`, { headers: this.headers });
-  return (await res.json()) as Health;
+StarterClient.prototype.health = function health(this: StarterClient): Promise<Health> {
+  return fetchJson<Health>(this, `/health`);
 };
