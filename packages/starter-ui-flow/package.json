@@ -13,7 +13,8 @@
     "./nodes": "./src/nodes/index.ts",
     "./edges": "./src/edges/index.ts",
     "./slots": "./src/slots/index.ts",
-    "./hooks": "./src/hooks/index.ts"
+    "./hooks": "./src/hooks/index.ts",
+    "./i18n": "./src/i18n/index.ts"
   },
   "files": ["src", "README.md"],
   "scripts": {

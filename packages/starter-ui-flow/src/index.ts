@@ -20,3 +20,4 @@ export * from "./nodes/index.js";
 export * from "./edges/index.js";
 export * from "./slots/index.js";
 export * from "./hooks/index.js";
+export * from "./i18n/index.js";

@@ -6,7 +6,9 @@ BRANCH_SPEC
 BUILTIN_NODE_KINDS
 BaseNode
 DEFAULT_EDGE_TYPES
+DEFAULT_FLOW_MESSAGES
 FlowCanvas
+FlowI18nProvider
 NodeKindRegistry
 NodePalette
 SLOT_COLORS
@@ -18,11 +20,14 @@ TRIGGER_SPEC
 TypedEdge
 colorForKind
 defaultCompatible
+mergeFlowMessages
 type BaseNodeProps
 type FlowCanvasProps
 type FlowEdge
 type FlowGraph
+type FlowI18nProviderProps
 type FlowId
+type FlowMessages
 type FlowNode
 type NodeId
 type NodeKindComponent
@@ -35,4 +40,5 @@ type SlotKind
 type SlotName
 type SlotSpec
 useFlowGraph
+useFlowMessages
 useTypedConnect

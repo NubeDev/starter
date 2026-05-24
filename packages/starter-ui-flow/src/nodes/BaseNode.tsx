@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import type { NodeKindSpec, NodeRunState, SlotName, SlotSpec } from "../types.js";
 import { SlotHandle } from "../slots/SlotHandle.js";
 import { cn } from "../lib/cn.js";
+import { useFlowMessages } from "../i18n/context.js";
 
 export interface BaseNodeProps {
   spec: NodeKindSpec;
@@ -37,7 +38,9 @@ export function BaseNode({
   slotValues,
   children,
 }: BaseNodeProps) {
+  const messages = useFlowMessages();
   const accent = spec.color ?? "var(--sf-accent-default, #0ea5e9)";
+  const resolvedLabel = label ?? messages.kindLabels?.[spec.kind] ?? spec.label;
   return (
     <div
       className={cn(
@@ -53,19 +56,19 @@ export function BaseNode({
         <span className="sf-node__icon" aria-hidden="true">
           <NodeIcon icon={spec.icon} fallback={spec.label} />
         </span>
-        <span className="sf-node__title">{label ?? spec.label}</span>
+        <span className="sf-node__title">{resolvedLabel}</span>
         <span className="sf-node__kind">{spec.kind}</span>
         <StateDot state={state} />
       </div>
       <div className="sf-node__body">
         <div className="sf-node__col sf-node__col--in">
           {spec.inputs.map((s) => (
-            <SlotRow key={`in-${s.name}`} spec={s} side="input" value={slotValues?.[s.name]} />
+            <SlotRow key={`in-${s.name}`} kindId={spec.kind} spec={s} side="input" value={slotValues?.[s.name]} />
           ))}
         </div>
         <div className="sf-node__col sf-node__col--out">
           {spec.outputs.map((s) => (
-            <SlotRow key={`out-${s.name}`} spec={s} side="output" value={slotValues?.[s.name]} />
+            <SlotRow key={`out-${s.name}`} kindId={spec.kind} spec={s} side="output" value={slotValues?.[s.name]} />
           ))}
         </div>
       </div>
@@ -77,18 +80,22 @@ export function BaseNode({
 const BADGE_MAX = 48;
 
 function SlotRow({
+  kindId,
   spec,
   side,
   value,
 }: {
+  kindId: string;
   spec: SlotSpec;
   side: "input" | "output";
   value: unknown;
 }) {
+  const messages = useFlowMessages();
   const rendered = renderSlotValue(value);
+  const labelOverride = messages.slotLabels?.[`${kindId}.${spec.name}`];
   return (
     <div className={cn("sf-slot-row", `sf-slot-row--${side}`)}>
-      <SlotHandle spec={spec} side={side} />
+      <SlotHandle spec={spec} side={side} labelOverride={labelOverride} />
       {rendered !== null ? (
         <span
           className="sf-slot__value"
@@ -115,12 +122,14 @@ const STATE_LABEL: Record<NodeRunState, string> = {
 };
 
 function StateDot({ state }: { state: NodeRunState }) {
+  const messages = useFlowMessages();
   if (state === "idle") return null;
+  const label = messages.state[state] ?? STATE_LABEL[state];
   return (
     <span
       className={cn("sf-node__state", `sf-node__state--${state}`)}
-      aria-label={STATE_LABEL[state]}
-      title={STATE_LABEL[state]}
+      aria-label={label}
+      title={label}
     />
   );
 }

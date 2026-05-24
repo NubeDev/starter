@@ -127,6 +127,28 @@ Override these CSS variables to fit the host theme — see
 Defaults include a light and a dark variant (the latter via
 `prefers-color-scheme: dark`).
 
+## Localization
+
+The package ships English defaults and no `react-intl` dependency.
+Translate the strings the package owns by passing `i18n` to
+`<FlowCanvas>`:
+
+```tsx
+import type { FlowMessages } from "@nube/starter-ui-flow";
+
+const i18n: Partial<FlowMessages> = {
+  state: { running: t("flow.state.running"), ok: t("flow.state.ok"), /* … */ },
+  kindLabels: { "ai-agent": t("flow.kind.ai-agent") /* … */ },
+  slotLabels: { "ai-agent.tools": t("flow.slot.ai-agent.tools") },
+};
+
+<FlowCanvas registry={registry} graph={graph} i18n={i18n} />
+```
+
+Outside `<FlowCanvas>` (e.g. a standalone `<BaseNode>` in a docs page)
+wrap with `<FlowI18nProvider value={i18n}>` instead. `DEFAULT_FLOW_MESSAGES`
+is exported so consumers can build on top of the English fallback.
+
 ## Non-goals
 
 - No HTTP, no websocket, no SSE wiring. Connect the engine yourself

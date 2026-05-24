@@ -7,6 +7,8 @@ interface SlotHandleProps {
   side: "input" | "output";
   /** Override the handle id. Defaults to `spec.name`. */
   id?: string;
+  /** Localized label override. Falls back to `spec.label ?? spec.name`. */
+  labelOverride?: string;
 }
 
 /**
@@ -19,11 +21,12 @@ interface SlotHandleProps {
  * restyle by overriding the `--sf-*` variables or by targeting
  * `.sf-slot`, `.sf-slot__handle`, and `.sf-slot__label`.
  */
-export function SlotHandle({ spec, side, id }: SlotHandleProps) {
+export function SlotHandle({ spec, side, id, labelOverride }: SlotHandleProps) {
   const position = side === "input" ? Position.Left : Position.Right;
   const type: HandleProps["type"] = side === "input" ? "target" : "source";
   const handleId = id ?? spec.name;
   const color = colorForKind(spec.kind);
+  const label = labelOverride ?? spec.label ?? spec.name;
   return (
     <div
       className={`sf-slot sf-slot--${side}`}
@@ -39,7 +42,7 @@ export function SlotHandle({ spec, side, id }: SlotHandleProps) {
         style={{ background: color }}
       />
       <span className="sf-slot__label">
-        {spec.label ?? spec.name}
+        {label}
         {spec.required ? <span className="sf-slot__required" aria-hidden="true"> *</span> : null}
       </span>
     </div>

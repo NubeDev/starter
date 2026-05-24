@@ -14,6 +14,7 @@ import {
   type NodeRunState,
   type SlotName,
   type NodeId,
+  type FlowMessages,
 } from '@nube/starter-ui-flow'
 import { Button } from '@/components/ui/button'
 
@@ -134,6 +135,32 @@ function FlowPage() {
   const tr = (id: string) => intl.formatMessage({ id })
   const registry = useMemo(() => new NodeKindRegistry().registerAll(BUILTIN_NODE_KINDS), [])
 
+  // Translations passed to the canvas. Built-in kinds get their
+  // labels swapped via `kindLabels`; state-dot a11y text via `state`.
+  const flowMessages = useMemo<Partial<FlowMessages>>(
+    () => ({
+      state: {
+        idle: tr('flow.legend.idle'),
+        ready: tr('flow.state.ready'),
+        running: tr('flow.legend.running'),
+        ok: tr('flow.legend.ok'),
+        error: tr('flow.legend.error'),
+        cancelled: tr('flow.state.cancelled'),
+        skipped: tr('flow.state.skipped'),
+      },
+      kindLabels: {
+        'ai-agent':  tr('flow.kind.ai-agent'),
+        'tool-call': tr('flow.kind.tool-call'),
+        'trigger':   tr('flow.kind.trigger'),
+        'branch':    tr('flow.kind.branch'),
+        'transform': tr('flow.kind.transform'),
+        'subflow':   tr('flow.kind.subflow'),
+      },
+    }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [intl.locale],
+  )
+
   const [graph, setGraph] = useState<FlowGraph>(INITIAL_GRAPH)
   const [overlay, setOverlay] = useState<RunOverlay | undefined>(undefined)
   const [runId, setRunId] = useState(0)
@@ -247,6 +274,7 @@ function FlowPage() {
           graph={graph}
           overlay={overlay}
           onChange={setGraph}
+          i18n={flowMessages}
           className="h-full w-full overflow-hidden rounded-[22px]"
           reactFlowProps={{
             onNodeClick: (_e, node) => setSelectedId(node.id),
@@ -309,6 +337,7 @@ function NodeInspector({
   onClose: () => void
   onChange: (next: Record<string, unknown>) => void
 }) {
+  const intl = useIntl()
   return (
     <motion.aside
       initial={{ opacity: 0, x: 24 }}
@@ -332,7 +361,7 @@ function NodeInspector({
         <button
           onClick={onClose}
           className="-mt-1 -mr-1 rounded-md p-1 text-[color:var(--color-subtle)] hover:bg-[color:var(--color-surface-2)] hover:text-[color:var(--color-text)]"
-          aria-label="Close"
+          aria-label={intl.formatMessage({ id: 'flow.inspector.close' })}
         >
           <X className="h-4 w-4" />
         </button>
@@ -352,6 +381,8 @@ function SettingsEditor({
   data: Record<string, unknown>
   onChange: (next: Record<string, unknown>) => void
 }) {
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   const [draft, setDraft] = useState(() => JSON.stringify(data, null, 2))
   const [error, setError] = useState<string | null>(null)
 
@@ -365,7 +396,7 @@ function SettingsEditor({
     try {
       const next = JSON.parse(draft)
       if (next === null || typeof next !== 'object' || Array.isArray(next)) {
-        setError('Settings must be a JSON object')
+        setError(tr('flow.inspector.settingsInvalid'))
         return
       }
       setError(null)
@@ -373,13 +404,14 @@ function SettingsEditor({
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
     }
-  }, [draft, onChange])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [draft, onChange, intl.locale])
 
   return (
     <section className="flex min-h-0 flex-col gap-2">
       <div className="flex items-center justify-between">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-subtle)]">
-          Settings
+          {tr('flow.inspector.settings')}
         </h3>
         <span className="text-[10px] text-[color:var(--color-subtle)]">node.data</span>
       </div>
@@ -394,8 +426,7 @@ function SettingsEditor({
         <p className="text-[11px] text-[color:var(--color-danger)]">{error}</p>
       ) : (
         <p className="text-[10px] text-[color:var(--color-subtle)]">
-          Validated server-side against <code className="font-mono">NodeBehavior::config_schema()</code>.
-          Blur to commit.
+          {tr('flow.inspector.settingsHint')}
         </p>
       )}
     </section>
@@ -403,18 +434,29 @@ function SettingsEditor({
 }
 
 function SlotValuesPanel({ values }: { values: Record<SlotName, unknown> | undefined }) {
+  const intl = useIntl()
+  const tr = (id: string) => intl.formatMessage({ id })
   const entries = values ? Object.entries(values) : []
   return (
     <section className="flex min-h-0 flex-1 flex-col gap-2">
       <div className="flex items-center justify-between">
         <h3 className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--color-subtle)]">
-          Slot values
+          {tr('flow.inspector.slotValues')}
         </h3>
-        <span className="text-[10px] text-[color:var(--color-subtle)]">live</span>
+        <span className="text-[10px] text-[color:var(--color-subtle)]">{tr('flow.inspector.live')}</span>
       </div>
       {entries.length === 0 ? (
         <p className="rounded-md border border-dashed border-[color:var(--color-border)] p-3 text-[11px] text-[color:var(--color-subtle)]">
-          No values yet. Press <span className="font-medium text-[color:var(--color-text)]">Simulate run</span> to populate.
+          {intl.formatMessage(
+            { id: 'flow.inspector.empty' },
+            {
+              action: (
+                <span className="font-medium text-[color:var(--color-text)]">
+                  {tr('flow.toolbar.run')}
+                </span>
+              ),
+            },
+          )}
         </p>
       ) : (
         <ul className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
