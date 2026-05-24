@@ -38,3 +38,25 @@ describe("StarterError.fromResponse", () => {
     expect(err.message).toBe("HTTP 400");
   });
 });
+
+describe("StarterError.is", () => {
+  it("narrows unknown values to StarterError", () => {
+    const err: unknown = new StarterError(404, "Not Found");
+    expect(StarterError.is(err)).toBe(true);
+    if (StarterError.is(err)) {
+      // type-guard narrowing — `.status` is accessible without cast.
+      expect(err.status).toBe(404);
+    }
+    expect(StarterError.is(new Error("plain"))).toBe(false);
+    expect(StarterError.is(undefined)).toBe(false);
+    expect(StarterError.is("nope")).toBe(false);
+    expect(StarterError.is({ status: 404 })).toBe(false);
+  });
+
+  it("also matches on status when provided", () => {
+    const err = new StarterError(401, "Unauthorized");
+    expect(StarterError.is(err, 401)).toBe(true);
+    expect(StarterError.is(err, 500)).toBe(false);
+    expect(StarterError.is(new Error("plain"), 401)).toBe(false);
+  });
+});
