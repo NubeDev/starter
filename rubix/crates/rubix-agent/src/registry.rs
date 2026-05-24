@@ -8,6 +8,8 @@
 
 use std::sync::Arc;
 
+use rubix_tools::analytics::weekly_report::WeeklyReportStub;
+use rubix_tools::dashboard::assistant::DashboardAssistantStub;
 use rubix_tools::system::alert_send::AlertSendTool;
 use rubix_tools::system::db::DbTool;
 use rubix_tools::system::disk::DiskTool;
@@ -36,6 +38,15 @@ pub fn build_tool_registry(
         Arc::new(DbTool),
         Arc::new(FlowErrorsTool::default()),
         Arc::new(AlertSendTool),
+        // Goals 1 and 6 are deferred — these stubs surface so the
+        // flow YAMLs `flows/{dashboard-assistant,weekly-report}.yaml`
+        // can dispatch their primary tool to a Diagnostic with code
+        // `rubix.goal.not_wired`. See
+        // `rubix-tools/src/dashboard/assistant.rs` and
+        // `rubix-tools/src/analytics/weekly_report.rs` for unblock
+        // criteria.
+        Arc::new(DashboardAssistantStub),
+        Arc::new(WeeklyReportStub),
     ]
 }
 

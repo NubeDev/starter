@@ -4,3 +4,4 @@
 //! verb modules and contains no logic of its own.
 
 pub mod list;
+pub mod store;

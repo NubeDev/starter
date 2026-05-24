@@ -45,6 +45,12 @@ async fn main() -> Result<()> {
         .sum();
 
     let migrations = boot::apply_migrations(cfg.database_url.as_deref()).await?;
+    // The sweep handle is intentionally leaked into the process
+    // lifetime — `health::serve` blocks until shutdown, at which
+    // point the runtime dropping aborts every task. See
+    // [`boot::undo_sweep`] for the cadence + bound contract.
+    let _undo_sweep =
+        boot::spawn_undo_sweep(cfg.database_url.as_deref(), cfg.undo.clone()).await?;
     let ch_migrations = boot::apply_ch_migrations(
         cfg.clickhouse_url.as_deref(),
         cfg.database_url.as_deref(),
@@ -68,7 +74,39 @@ async fn main() -> Result<()> {
             .as_ref()
             .map(|url| Arc::new(ChClient::connect(boot::rubix_ch_config(url.clone()))))
     };
-    let mcp = boot::mcp::build_mcp_surface(ch_client.clone()).await?;
+    // Reuse a single PG pool for the MCP surface (flows_definitions
+    // seed + load) so we don't open a second connection pool just
+    // to read flow YAMLs. `None` is the laptop path — MCP falls
+    // back to the embedded bundle.
+    let mcp_pool: Option<starter_store_postgres::pool::Pool> =
+        match cfg.database_url.as_deref() {
+            Some(dsn) => Some(
+                pg_connect(dsn)
+                    .await
+                    .map_err(|e| anyhow::anyhow!("connect for mcp pool: {e}"))?,
+            ),
+            None => None,
+        };
+    let mcp = boot::mcp::build_mcp_surface(ch_client.clone(), mcp_pool.clone()).await?;
+    let _flow_notify = boot::spawn_flow_notify(
+        cfg.database_url.as_deref(),
+        std::sync::Arc::new(|(flow_id, revision, _body)| {
+            // Phase D.1 lands the listener + the seed/load contract.
+            // The actual `FlowRegistry::register` reload wires in
+            // alongside the goal-3 flow-programmer verbs in a
+            // subsequent stage — for now we log so the channel
+            // wiring is observable end-to-end.
+            Box::pin(async move {
+                tracing::info!(
+                    flow_id = %flow_id,
+                    revision = %revision,
+                    "flow_notify: reload signal received",
+                );
+                Ok(())
+            })
+        }),
+    )
+    .await?;
     let tools = registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
 
     info!(

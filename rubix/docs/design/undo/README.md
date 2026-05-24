@@ -1,30 +1,55 @@
 # UNDO
 
-> **Status:** placeholder. The system this folder will describe does
-> not yet exist; this file exists so cross-references from other
-> design docs and code resolve.
->
-> When the implementation lands, this README is rewritten in
-> **present tense**, describing the system as it is. Until then,
-> the only honest content is the intent and the gap entry that
-> motivates it.
+Every reversible write the rubix backend dispatches lands in
+`starter_changes`, and any actor can roll back their last group with
+`rubix.undo.last`. The wiring has three pieces:
 
-## Intent
+1. **`starter_undo::ReversibleRegistry`** — one
+   `starter_spi::changelog::Reversible` impl per resource kind. Built
+   once at agent boot and shared as an `Arc` with every dispatcher.
+2. **`starter_undo::dispatch::record_if_reversible`** — the helper
+   the dispatch wrapper calls after a successful domain mutation.
+   Looks up the resource kind in the registry; if found, opens a
+   `ChangeRecorder::transaction` and writes one row with the
+   `(before, after, op, resource, actor)` the tool supplied.
+   Returns the assigned `GroupId`. Unregistered kinds short-circuit
+   to `Ok(None)` — read-only verbs and tools that have no Reversible
+   counterpart never touch the recorder.
+3. **`rubix_tools::undo::dispatch::UndoDispatcher`** — the
+   `Tool`-shaped wrapper used at the agent boundary. It calls the
+   inner `Tool::invoke`, hands the `(input, output)` pair to the
+   tool's `ReversibleTool::change_for` adapter to build a
+   `ChangeDraft`, then forwards to `record_if_reversible`. Tools
+   that have no Reversible adapter implement `Tool` only and
+   bypass the wrapper.
 
-write-tool reversibility; rubix consumes starter-undo + starter-clipboard.
+The verb that closes the loop is **`rubix.undo.last`**
+(`rubix_tools::undo::last::UndoLastTool`). It pulls the calling
+`Actor` from an `ActorSource` (the agent loop's request context) and
+calls `starter_undo::undo_last(service, actor, scope)`, which today
+delegates to `UndoService::undo` and walks the actor's most recent
+group. The `scope` parameter is reserved for a per-resource filter
+the goal-2/3/4 work introduces; the verb already accepts it so the
+client contract does not change when the filter activates.
 
-## Status / gap reference
+## Adding a new reversible resource
 
-See [docs/scope/GAPS.md](../../scope/GAPS.md) — the rolling audit
-of what rubix has not yet accounted for. Find the row that names
-this folder; it has the phase that owns the promotion and the
-proposed shape.
+1. Implement `starter_spi::changelog::Reversible` for the resource
+   and register the impl with `ReversibleRegistry::insert` at boot.
+2. Implement `ReversibleTool::change_for` on the tool that mutates
+   it; return `Some(ChangeDraft)` describing the before/after
+   snapshot pair.
+3. Wrap the tool with `UndoDispatcher::new(inner, registry,
+   recorder, actor)` in the agent's tool registry.
 
-## What goes here when the system lands
+Nothing else changes — the dispatcher, helper, and `rubix.undo.last`
+verb are kind-agnostic.
 
-- **One present-tense overview** at the top of this README.
-- **Diagrams** if they help (Mermaid is fine; keep them minimal).
-- **One file per sub-concern** if the doc grows past ~300 lines
-  (the same one-responsibility-per-file rule applies to docs).
-- **No phasing language**, no "we will…" — that belongs in
-  `docs/scope/` or an ADR. Design docs describe what *is*.
+## Tests
+
+- **`starter_undo::dispatch::tests`** — unit-level round-trip
+  through a fake `Reversible` and an in-memory recorder.
+- **`rubix_agent` integration test `undo_dispatch_test.rs`** —
+  registers a fake tool + Reversible, dispatches through the live
+  `SqliteChangeRecorder`, and asserts the recorded row drives the
+  inverse path.

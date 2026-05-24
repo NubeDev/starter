@@ -13,12 +13,14 @@ starter-changelog = { workspace = true }
 
 async-trait = { workspace = true }
 serde       = { workspace = true }
+serde_json  = { workspace = true }
 thiserror   = { workspace = true }
 tokio       = { workspace = true, features = ["sync"] }
 tracing     = { workspace = true }
 axum           = { workspace = true }
 starter-server = { workspace = true }
 utoipa         = { workspace = true }
+chrono         = { workspace = true }
 
 # Optional SQLite-backed [`UndoCursor`] persistence — opt-in via
 # the `sqlite` feature. Owns the `starter_undo_cursors` table under
@@ -26,11 +28,10 @@ utoipa         = { workspace = true }
 # of the changelog migrations.
 starter-store-sqlite = { workspace = true, optional = true }
 sqlx                 = { workspace = true, features = ["sqlite", "macros", "migrate"], optional = true }
-chrono               = { workspace = true, optional = true }
 
 [features]
 default = []
-sqlite  = ["dep:starter-store-sqlite", "dep:sqlx", "dep:chrono"]
+sqlite  = ["dep:starter-store-sqlite", "dep:sqlx"]
 
 [dev-dependencies]
 starter-store-sqlite = { workspace = true, features = ["testing"] }

@@ -39,6 +39,46 @@ pub struct RubixNodeYaml {
     pub config: serde_yaml::Value,
 }
 
+/// Key under `node.config` that carries the per-node tool allowlist
+/// (a YAML array of reverse-DNS tool ids). The list is read in full
+/// and threaded into the AiAgentNode config so the agent loop's
+/// `ToolSet` filter scopes tool visibility per flow — every entry
+/// in the list is allowed, not just `[0]`.
+pub const ALLOWED_TOOLS_KEY: &str = "allowed_tools";
+
+impl RubixNodeYaml {
+    /// Return the full `config.allowed_tools` list, in declaration
+    /// order. An empty `Vec` means the YAML did not declare the key;
+    /// callers downstream interpret that as "no per-node scoping"
+    /// (the AiAgentNode falls back to the host registry intersected
+    /// with the active skill's allowlist per D-F4.5).
+    ///
+    /// Returns an error if `allowed_tools` is present but is not a
+    /// YAML sequence of strings — surfacing typos at load time
+    /// rather than at first invocation.
+    pub fn allowed_tools(&self) -> Result<Vec<String>, LoadError> {
+        let Some(node) = self.config.as_mapping() else {
+            return Ok(Vec::new());
+        };
+        let Some(raw) = node.get(serde_yaml::Value::String(ALLOWED_TOOLS_KEY.to_owned())) else {
+            return Ok(Vec::new());
+        };
+        let seq = raw.as_sequence().ok_or_else(|| LoadError::AllowedTools {
+            node: self.id.clone(),
+            message: format!("`{ALLOWED_TOOLS_KEY}` must be a sequence of strings"),
+        })?;
+        let mut out = Vec::with_capacity(seq.len());
+        for entry in seq {
+            let s = entry.as_str().ok_or_else(|| LoadError::AllowedTools {
+                node: self.id.clone(),
+                message: format!("`{ALLOWED_TOOLS_KEY}` entries must be strings"),
+            })?;
+            out.push(s.to_owned());
+        }
+        Ok(out)
+    }
+}
+
 /// One link entry inside a [`RubixFlowYaml`].
 #[derive(Debug, Clone, Deserialize)]
 pub struct RubixLinkYaml {

@@ -19,6 +19,10 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 starter-tool-sysdiag = { workspace = true }
 
+# flow-programmer verbs validate YAML through `rubix_flows::yaml::RubixFlowYaml`
+# and `rubix_flows::convert`. See docs/design/flows/.
+rubix-flows               = { workspace = true }
+
 # History side of the warehouse. Pulled in so the disk verb can
 # write a `system_disk_history` row after a successful probe and
 # so the dispatcher can re-export the `MigrationRunner` consumers
@@ -27,7 +31,13 @@ starter-tool-sysdiag = { workspace = true }
 starter-store-clickhouse = { workspace = true }
 uuid                      = { workspace = true }
 
+# undo goal — Reversible-aware dispatch wrapper + rubix.undo.last verb.
+# See docs/design/undo/.
+starter-undo              = { workspace = true }
+starter-changelog         = { workspace = true }
+
 [dev-dependencies]
+chrono             = { workspace = true }
 # Recorded-LLM round-trip harness for the system.disk verb. Pulls
 # the ai-agent node body + the starter `RecordingAiRunner` fake so
 # the tool exercise the same NodeBehavior::invoke seam production

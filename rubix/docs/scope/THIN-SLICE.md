@@ -237,6 +237,31 @@ The thin slice doesn't replace the phases — it **front-loads one
 end-to-end demo** so every later broaden-a-layer change has
 something working to test against.
 
+## Goals lit up beyond the thin slice
+
+Branch `codeless/rubix-goals-2-4-3` broadens Phase 3 + Phase 4
+incrementally on top of the landed thin slice. Four of the six
+SCOPE goals now light up end-to-end through the real agent loop;
+the remaining two are stub-output verbs returning
+`Diagnostic { code: rubix.goal.not_wired }` so the MCP catalogue
+stays the same shape across the surface.
+
+| Goal | Flow | State | Evidence / unblock |
+|---|---|---|---|
+| 1 — Dashboards | `com.rubix.dashboard-assistant` | **stubbed** | Primary tool returns `rubix.goal.not_wired` pointing at `docs/design/sdui/`. Unblock when SDUI page store + `dashboard.{create,update,list,page.set,duplicate}` verbs land. |
+| 2 — User admin | `com.rubix.user-admin` | **real** | Phase B — six verbs + undo + integration test `rubix-agent/tests/goal_2_user_admin_test.rs`. See `docs/design/user-admin/`. |
+| 3 — Flow programmer | `com.rubix.flow-programmer` | **real** | Phase D — flow definitions live in PG (`flows_definitions` dimension table), cross-instance NOTIFY, `flow.{deploy,lint,list,duplicate}` + undo. See `docs/design/flow-programmer/`. |
+| 4 — ClickHouse ruler | `com.rubix.clickhouse-ruler` | **real** | Phase C — `clickhouse.{rule.write,mart.create,retention.set}` + undo with snapshot rows in bounded `undo_snapshots`. See `docs/design/clickhouse-rules/`. |
+| 5 — Scheduled system check | `com.rubix.scheduled-system-check` | **real** | Original thin-slice path. See `docs/scope/THIN-SLICE.md` smoke checklist. |
+| 6 — Weekly report | `com.rubix.weekly-report` | **stubbed** | Primary tool returns `rubix.goal.not_wired` pointing at `docs/design/reports/`. Unblock when analytics query runner + blob report sink + `analytics.{query,report}` verbs land. |
+
+Every "real" goal above writes are reversible through
+`rubix.undo.last`, audits a row to `changelog`, and round-trips
+the `Diagnostic` through the EN/ES catalogues. Per-goal
+integration tests live in `rubix-agent/tests/goal_{2,3,4}_*.rs`;
+the closing smoke session note is
+[`docs/sessions/2026-05-24-goals-2-4-3-landed.md`](../sessions/2026-05-24-goals-2-4-3-landed.md).
+
 ## Open questions specific to the thin slice
 
 | # | Question | Resolves before |

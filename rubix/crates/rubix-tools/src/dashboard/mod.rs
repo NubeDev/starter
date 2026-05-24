@@ -8,3 +8,4 @@ pub mod update;
 pub mod list;
 pub mod page_set;
 pub mod duplicate;
+pub mod assistant;

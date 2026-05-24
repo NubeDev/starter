@@ -12,5 +12,10 @@ nodes:
       session_policy: continue
       skill_hint: com.rubix.clickhouse-ruler
       cost_cap: 0.50_usd
+      allowed_tools:
+        - rubix.clickhouse.rule.write
+        - rubix.clickhouse.mart.create
+        - rubix.clickhouse.retention.set
+        - rubix.undo.last
 
 links: []

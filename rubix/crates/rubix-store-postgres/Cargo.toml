@@ -1,0 +1,12 @@
+[package]
+name        = "rubix-store-postgres"
+description = "rubix-owned Postgres migrations + helpers that sit on top of starter-store-postgres. Houses tables that are rubix-domain (undo snapshots, flow definitions) and not generic enough to live upstream per SCOPE R2."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+starter-store-postgres = { workspace = true }
+sqlx                   = { workspace = true, features = ["postgres", "macros", "migrate"] }

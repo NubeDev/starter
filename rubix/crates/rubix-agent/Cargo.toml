@@ -24,6 +24,7 @@ rubix-tools  = { workspace = true }
 rubix-skills = { workspace = true }
 rubix-flows  = { workspace = true }
 rubix-client = { workspace = true }
+rubix-store-postgres = { workspace = true }
 
 # Starter platform pieces wired in by the binary. Many are Phase 0
 # placeholders — Phase 1+ activates the additional surfaces.
@@ -45,6 +46,10 @@ starter-flow-surfaces     = { workspace = true }
 starter-ai                = { workspace = true, features = ["provider-claude"] }
 starter-ai-agent          = { workspace = true }
 starter-flow-node-loop    = { workspace = true }
+sqlx                      = { workspace = true, features = ["postgres", "runtime-tokio", "uuid", "chrono"] }
+uuid                      = { workspace = true }
+include_dir               = "0.7"
+futures                   = { workspace = true }
 
 axum    = { workspace = true }
 clap    = { workspace = true }
@@ -62,6 +67,11 @@ anyhow  = { workspace = true }
 starter-mcp              = { workspace = true, features = ["http", "testing"] }
 starter-changelog-sqlite = { workspace = true }
 starter-store-sqlite     = { workspace = true, features = ["testing"] }
+starter-store-postgres   = { workspace = true, features = ["testing"] }
 starter-store-clickhouse = { workspace = true, features = ["testing"] }
+starter-undo             = { workspace = true }
+rubix-store-postgres     = { workspace = true }
+sqlx                     = { workspace = true, features = ["postgres", "macros", "runtime-tokio"] }
+async-trait              = { workspace = true }
 tokio                    = { workspace = true, features = ["macros", "rt-multi-thread", "process", "io-util", "time"] }
 tower                    = { workspace = true }
