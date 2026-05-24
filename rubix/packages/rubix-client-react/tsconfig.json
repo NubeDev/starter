@@ -1,4 +1,8 @@
 {
   "extends": "../../../packages/starter-client-ts/tsconfig.json",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM"]
+  },
   "include": ["src"]
 }

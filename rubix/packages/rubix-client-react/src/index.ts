@@ -1,0 +1,19 @@
+// # @nube/rubix-client-react
+//
+// React bindings for `@nube/rubix-client-ts`. This package will grow
+// typed hooks per rubix-agent endpoint family (auth, users,
+// extensions, …) in later stages; for now it ships only the
+// provider scaffold so downstream packages and the rubix frontend
+// can wire context at the app root.
+//
+// `RubixClientProvider` mounts a sibling `StarterClientProvider`
+// under the hood with the wrapped client's `.starter` instance, so
+// hooks from both `@nube/starter-client-react` and
+// `@nube/rubix-client-react` resolve against the same long-lived
+// transport.
+
+export {
+  RubixClientProvider,
+  useRubixClient,
+} from "./provider/rubix-client-provider.js";
+export type { RubixClientProviderProps } from "./provider/rubix-client-provider.js";
