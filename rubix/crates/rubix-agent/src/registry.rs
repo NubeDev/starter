@@ -13,14 +13,23 @@ use rubix_tools::system::db::DbTool;
 use rubix_tools::system::disk::DiskTool;
 use rubix_tools::system::flow_errors::FlowErrorsTool;
 use starter_spi::tool::Tool;
+use starter_store_clickhouse::ChClient;
 
 /// Build the tool registry the agent serves at boot.
 ///
-/// Order matches the canonical id order so the boot log and any
-/// generated OpenAPI / MCP listing are stable across restarts.
-pub fn build_tool_registry() -> Vec<Arc<dyn Tool>> {
+/// `ch` carries a live ClickHouse client used by tools that write
+/// history rows on success (currently just [`DiskTool`]). Passing
+/// `None` keeps the verbs runnable without a warehouse — the
+/// history write is skipped silently. Order matches the canonical
+/// id order so the boot log and any generated OpenAPI / MCP
+/// listing are stable across restarts.
+pub fn build_tool_registry(ch: Option<Arc<ChClient>>) -> Vec<Arc<dyn Tool>> {
+    let mut disk = DiskTool::default();
+    if let Some(client) = ch {
+        disk = disk.with_history(client);
+    }
     vec![
-        Arc::new(DiskTool::default()),
+        Arc::new(disk),
         Arc::new(DbTool),
         Arc::new(FlowErrorsTool::default()),
         Arc::new(AlertSendTool),
@@ -33,7 +42,7 @@ mod tests {
 
     #[test]
     fn registry_contains_disk_tool() {
-        let names: Vec<String> = build_tool_registry()
+        let names: Vec<String> = build_tool_registry(None)
             .iter()
             .map(|t| t.definition().name)
             .collect();
@@ -42,7 +51,7 @@ mod tests {
 
     #[test]
     fn registry_contains_every_wired_system_tool() {
-        let names: Vec<String> = build_tool_registry()
+        let names: Vec<String> = build_tool_registry(None)
             .iter()
             .map(|t| t.definition().name)
             .collect();

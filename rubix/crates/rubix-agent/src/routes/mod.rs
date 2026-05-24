@@ -7,4 +7,5 @@
 //! lives here. See
 //! [docs/design/tools/](../../docs/design/tools/README.md).
 
+pub mod auth;
 pub mod tools;

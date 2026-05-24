@@ -11,5 +11,6 @@
 
 pub mod boot;
 pub mod health;
+pub mod middleware;
 pub mod registry;
 pub mod routes;
