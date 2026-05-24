@@ -26,14 +26,13 @@
 //!    in starter-flow's run coordinator holds completion until
 //!    `NodeEmitted` arrives.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde_json::{json, Value};
 
 use starter_ai_agent::{AgentLoop, ToolSet};
-use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, NodeId, SlotMap, SlotValue};
+use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue};
 
 use starter_spi::ai::AiRunner;
 use starter_spi::tool::Tool;
@@ -43,11 +42,6 @@ pub(super) struct RubixAiAgentNode {
     kind: KindId,
     runner: Arc<dyn AiRunner>,
     tools: Vec<Arc<dyn Tool>>,
-    /// Per-`NodeId` primary tool name — extracted at boot from each
-    /// flow YAML's `allowed_tools[0]`. A node listed here dispatches
-    /// its primary tool deterministically; nodes absent from the map
-    /// fall back to the agent-loop-reply path.
-    primary_tools: HashMap<NodeId, String>,
 }
 
 impl RubixAiAgentNode {
@@ -55,13 +49,11 @@ impl RubixAiAgentNode {
         kind: KindId,
         runner: Arc<dyn AiRunner>,
         tools: Vec<Arc<dyn Tool>>,
-        primary_tools: HashMap<NodeId, String>,
     ) -> Self {
         Self {
             kind,
             runner,
             tools,
-            primary_tools,
         }
     }
 
@@ -100,7 +92,16 @@ impl NodeBehavior for RubixAiAgentNode {
         // bonus narration field that the smoke test does not assert
         // against. For nodes without a mapping, fall back to a
         // reply-only response.
-        let tool_value: Option<Value> = match self.primary_tools.get(ctx.node) {
+        //
+        // The primary tool name is sourced from the per-invocation
+        // seed payload (written by the per-flow seed adapter in
+        // `super::register`). Keying off `ctx.node` is unsafe — every
+        // rubix flow's root node uses the same id (`agent` / `check`),
+        // so a NodeId-keyed lookup collides across flows.
+        let primary_tool_name: Option<&str> = payload
+            .get("primary_tool")
+            .and_then(|v| v.as_str());
+        let tool_value: Option<Value> = match primary_tool_name {
             Some(tool_name) => {
                 let tool = self.find_tool(tool_name).ok_or_else(|| {
                     NodeError::Backend(format!(

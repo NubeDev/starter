@@ -13,7 +13,6 @@
 //! `Accept-Language`/`_meta.acceptLanguage` and never threads a
 //! `LanguageTag` through call sites by hand.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use serde_json::{json, Value};
@@ -24,7 +23,7 @@ use starter_flow::definition::body::FlowBody;
 use starter_flow::engine::Engine;
 use starter_flow::registry::NodeKindRegistry;
 use starter_flow_spi::flow::{FlowId, FlowRevisionId};
-use starter_flow_spi::node::{KindId, NodeBehavior, NodeId, SlotMap, SlotRef, SlotValue};
+use starter_flow_spi::node::{KindId, NodeBehavior, SlotMap, SlotRef, SlotValue};
 use starter_flow_surfaces::{FlowRegistration, FlowRegistry};
 
 use starter_spi::ai::AiRunner;
@@ -98,7 +97,6 @@ pub async fn build_flow_registry(
         rubix_flows::load_all()
             .map_err(|e| anyhow::anyhow!("rubix_flows::load_all: {e}"))?
     };
-    let primary_tools = primary_tools_from_triples(&triples);
 
     let kinds = NodeKindRegistry::new();
     let ai_agent_kind = KindId::new(AI_AGENT_KIND_ID)
@@ -107,7 +105,6 @@ pub async fn build_flow_registry(
         ai_agent_kind.clone(),
         runner,
         tool_registry_snapshot,
-        primary_tools,
     ));
     kinds
         .register(ai_node)
@@ -129,25 +126,23 @@ pub async fn build_flow_registry(
     Ok((registry, flows, engine))
 }
 
-/// Walk every bundled flow body and extract the first entry of each
-/// node's `allowed_tools` setting as that node's "primary" tool —
-/// the concrete `Tool` the [`RubixAiAgentNode`] dispatches when the
-/// flow runs. Nodes with no `allowed_tools` are absent from the map
-/// and fall back to the agent-loop-reply-only path.
-fn primary_tools_from_triples(
-    triples: &[(FlowId, FlowRevisionId, FlowBody)],
-) -> HashMap<NodeId, String> {
-    let mut map = HashMap::new();
-    for (_flow_id, _revision, body) in triples {
-        for node in &body.nodes {
-            if let Some(arr) = node.settings.get("allowed_tools").and_then(|v| v.as_array()) {
-                if let Some(first) = arr.first().and_then(|v| v.as_str()) {
-                    map.insert(node.id.clone(), first.to_owned());
-                }
-            }
-        }
-    }
-    map
+/// Extract the root node's first `allowed_tools` entry — the
+/// concrete `Tool` the [`RubixAiAgentNode`] dispatches when this
+/// flow runs. Returns `None` if the flow's root node has no
+/// `allowed_tools` setting, in which case the agent node falls
+/// back to the agent-loop-reply-only path.
+///
+/// We must key per-flow (not per-`NodeId`) because every rubix
+/// flow's root node uses the same id (`agent` / `check`) so a
+/// `HashMap<NodeId, String>` collides — last-seeded would win,
+/// dispatching the wrong primary tool. The per-flow seed adapter
+/// captures this value into the seed payload and the node body
+/// reads it back from there.
+fn primary_tool_for_root(body: &FlowBody) -> Option<String> {
+    let root = body.nodes.first()?;
+    let arr = root.settings.get("allowed_tools")?.as_array()?;
+    let first = arr.first()?.as_str()?;
+    Some(first.to_owned())
 }
 
 /// Register one `(flow_id, revision, body)` triple with the shared
@@ -172,7 +167,15 @@ async fn register_one(
     let tool_id = KindId::new(flow_id.to_string())
         .map_err(|e| anyhow::anyhow!("flow `{flow_id}` is not a valid KindId: {e}"))?;
 
+    // Per-flow primary tool, captured at register time. The seed
+    // closure embeds this into the seed-slot JSON payload so the
+    // (shared) `com.rubix.ai-agent` node body can read which tool
+    // to dispatch on a per-invocation basis instead of via a
+    // NodeId-keyed lookup (node ids collide across flows).
+    let primary_tool = primary_tool_for_root(&body);
+
     let seed_slot_for_adapter = seed_slot.clone();
+    let primary_tool_for_adapter = primary_tool.clone();
     let seed: starter_flow_surfaces::SeedAdapter = Arc::new(move |input: &Value| {
         // The locale task-local is bound by starter-mcp's dispatch
         // wrapper before this closure runs; reading it here is the
@@ -198,6 +201,7 @@ async fn register_one(
             "locale": lang.as_str(),
             "prefs": prefs,
             "input": input.clone(),
+            "primary_tool": primary_tool_for_adapter,
             "_nonce": nonce.to_string(),
         });
         vec![(seed_slot_for_adapter.clone(), SlotValue::Json(payload))]
