@@ -20,6 +20,7 @@ the layering below describes how they compose.
 | [`@nube/starter-sdui-react`](./starter-sdui-react) | Renderer for server-driven-UI trees produced by `starter-sdui-routes`. Projects against `ui-kit` primitives. | Renderer |
 | [`@nube/starter-ui-chat`](./starter-ui-chat) | Reusable AI chat surface (composer, message list, tool calls) with a headless `ChatAdapter` transport. | Feature kit |
 | [`@nube/starter-ui-skills`](./starter-ui-skills) | UI for browsing and inspecting a `starter-skills` registry (SKILL.md bundles). | Feature kit |
+| [`@nube/starter-ui-dashboard`](./starter-ui-dashboard) | Dashboard primitives — metric tiles, radial progress, performance charts, live activity feeds. Theme-agnostic, props-driven. | Feature kit |
 | [`@nube/starter-ui-flow`](./starter-ui-flow) | React components for the `starter-flow` node graph. Wraps `@xyflow/react` with typed slots, nodes, and edges. | Feature kit |
 | [`@nube/starter-ui-blobs`](./starter-ui-blobs) | Hooks for direct-to-storage blob uploads + a markdown-editor integration. | Feature kit |
 | [`@nube/starter-ui-export`](./starter-ui-export) | Browser-side PDF export: `<PrintableContent>`, `<ExportButton>`, `usePrint`, `exportNodeToPdf`. | Feature kit |
@@ -46,7 +47,7 @@ the layering below describes how they compose.
                          │             │
         ┌────────────────┤             ├────────────────┐
         ▼                ▼             ▼                ▼
-  starter-ui-chat   starter-ui-skills  starter-sdui-react   …
+  starter-ui-chat   starter-ui-skills  starter-sdui-react   starter-ui-dashboard
         │                              │
         └──────────────┬───────────────┘
                        ▼
