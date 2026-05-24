@@ -12,5 +12,12 @@ nodes:
       session_policy: continue
       skill_hint: com.rubix.dashboard-builder
       cost_cap: 0.50_usd
+      # Goal 1 is deferred. Primary tool dispatch returns
+      # Diagnostic { code: rubix.goal.not_wired }. Replace with
+      # the real dashboard verbs once SDUI lands. See
+      # rubix-tools/src/dashboard/assistant.rs and
+      # docs/design/sdui/README.md.
+      allowed_tools:
+        - com.rubix.dashboard-assistant
 
 links: []

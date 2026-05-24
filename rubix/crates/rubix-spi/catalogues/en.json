@@ -30,5 +30,6 @@
   "rubix.flow.listed": "Listed {count} flows.",
   "rubix.flow.duplicated": "Flow {source} duplicated as {target} (at {at}).",
   "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL is not set; rubix-admin mcp cannot resolve an actor for the stdio session.",
-  "rubix.admin.mcp.principal.not_found": "No user with email {email} exists in the rubix database; bootstrap one with `rubix-admin bootstrap-user` before launching the MCP stdio session."
+  "rubix.admin.mcp.principal.not_found": "No user with email {email} exists in the rubix database; bootstrap one with `rubix-admin bootstrap-user` before launching the MCP stdio session.",
+  "rubix.goal.not_wired": "Goal {goal} is not wired yet; see {design_doc} for the unblock criteria."
 }
