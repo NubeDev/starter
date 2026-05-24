@@ -14,8 +14,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import { useIntl } from 'react-intl'
-import { Activity, Play, RotateCw, Square } from 'lucide-react'
-import { Button } from '@nube/starter-ui-kit'
+import { Activity, Boxes, Play, RotateCw, Square } from 'lucide-react'
+import {
+  Button,
+  Empty,
+  EmptyDescription,
+  EmptyHeader,
+  EmptyMedia,
+  EmptyTitle,
+  Skeleton,
+} from '@nube/starter-ui-kit'
 import {
   useExtensionsList,
   useExtensionStart,
@@ -96,13 +104,28 @@ function ExtensionsTable() {
           <div className="text-right">{tr('extensions.col.actions', 'Actions')}</div>
         </div>
         {list.isLoading ? (
-          <div className="px-6 py-8 text-sm text-[color:var(--color-muted)]">
-            {tr('common.loading', 'Loading…')}
+          <div className="space-y-3 p-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
           </div>
         ) : rows.length === 0 ? (
-          <div className="px-6 py-8 text-sm text-[color:var(--color-muted)]">
-            {tr('extensions.empty', 'No extensions installed.')}
-          </div>
+          <Empty>
+            <EmptyHeader>
+              <EmptyMedia variant="icon">
+                <Boxes />
+              </EmptyMedia>
+              <EmptyTitle>
+                {tr('extensions.empty.title', 'No extensions installed')}
+              </EmptyTitle>
+              <EmptyDescription>
+                {tr(
+                  'extensions.empty.body',
+                  'Install a Rubix extension to surface its pages, widgets, and commands here.',
+                )}
+              </EmptyDescription>
+            </EmptyHeader>
+          </Empty>
         ) : (
           rows.map((row) => {
             const state = liveStateById.get(row.id) ?? row.state
