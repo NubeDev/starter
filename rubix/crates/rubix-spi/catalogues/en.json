@@ -15,6 +15,8 @@
   "rubix.user.already_disabled": "User {email} is already disabled (since {at}).",
   "rubix.team.created": "Team {name} created (at {at}).",
   "rubix.team.assigned": "User {user} added to team {team} (at {at}).",
+  "rubix.user.listed": "Listed {count} users.",
+  "rubix.tenant.listed": "Listed {count} tenants.",
   "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL is not set; rubix-admin mcp cannot resolve an actor for the stdio session.",
   "rubix.admin.mcp.principal.not_found": "No user with email {email} exists in the rubix database; bootstrap one with `rubix-admin bootstrap-user` before launching the MCP stdio session."
 }

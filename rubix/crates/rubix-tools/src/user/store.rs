@@ -63,6 +63,9 @@ pub trait UserAdminStore: Send + Sync {
     async fn get(&self, user_id: &str) -> Result<Option<UserRow>>;
     /// Fetch by email.
     async fn find_by_email(&self, email: &str) -> Result<Option<UserRow>>;
+    /// List all rows (read-only). Order is unspecified — callers
+    /// sort if they need stability.
+    async fn list(&self) -> Result<Vec<UserRow>>;
     /// Restore (or insert) a row to the supplied snapshot. Used by
     /// `UserReversible::apply_inverse` to walk a `Change` backwards.
     async fn put(&self, row: UserRow) -> Result<()>;
@@ -119,6 +122,9 @@ impl UserAdminStore for InMemoryUserStore {
     }
     async fn find_by_email(&self, email: &str) -> Result<Option<UserRow>> {
         Ok(self.lock().values().find(|r| r.email == email).cloned())
+    }
+    async fn list(&self) -> Result<Vec<UserRow>> {
+        Ok(self.lock().values().cloned().collect())
     }
     async fn put(&self, row: UserRow) -> Result<()> {
         self.lock().insert(row.user_id.clone(), row);
