@@ -65,3 +65,6 @@ pub mod log;
 
 #[cfg(feature = "sleep")]
 pub mod sleep;
+
+#[cfg(feature = "counter")]
+pub mod counter;

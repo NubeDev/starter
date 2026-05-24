@@ -92,6 +92,7 @@ trigger-webhook   = []
 http-out          = ["dep:tokio", "dep:reqwest"]
 log               = ["dep:tokio"]
 sleep             = ["dep:tokio"]
+counter           = []
 
 all-kinds = [
     "transform",
@@ -108,4 +109,5 @@ all-kinds = [
     "http-out",
     "log",
     "sleep",
+    "counter",
 ]

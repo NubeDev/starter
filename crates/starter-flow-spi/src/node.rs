@@ -42,6 +42,19 @@ pub trait NodeBehavior: Send + Sync + 'static {
         Ok(())
     }
 
+    /// Hook fired after the engine reconciles a new flow revision into
+    /// the running topology (see `DOCS/flow/scope/hot-reload.md`). The
+    /// engine reports *what* changed via [`EditKind`] so kinds with a
+    /// `reset_on_redeploy` policy (the counter is the canonical
+    /// example) can clear their persisted state through the
+    /// [`crate::state::NodeStateStore`] seam on the ctx.
+    ///
+    /// Default impl is a no-op so existing kinds compile unchanged.
+    #[allow(unused_variables)]
+    async fn on_redeploy(&self, ctx: NodeCtx<'_>, edit: EditKind) -> Result<(), NodeError> {
+        Ok(())
+    }
+
     /// JSON Schema describing this kind's settings (the typed,
     /// publish-time configuration carried on the node's
     /// `settings:` field in a flow body).
@@ -116,6 +129,11 @@ pub struct NodeCtx<'a> {
     /// so a missing wiring fails loudly instead of silently swallowing
     /// updates.
     pub state: &'a dyn crate::state::NodeStateStore,
+    /// Owning flow id, when known. Required by node bodies that build
+    /// a [`crate::state::NodeStateKey`] (e.g. `starter.flow.counter`).
+    /// `None` in legacy [`NodeCtx::new`] call sites; populated via
+    /// [`NodeCtx::with_flow`].
+    pub flow: Option<&'a crate::flow::FlowId>,
 }
 
 impl<'a> NodeCtx<'a> {
@@ -138,8 +156,47 @@ impl<'a> NodeCtx<'a> {
             cancel,
             skill,
             state,
+            flow: None,
         }
     }
+
+    /// Like [`NodeCtx::new`] but with an explicit owning [`crate::flow::FlowId`].
+    /// Required for node bodies that build a
+    /// [`crate::state::NodeStateKey`] (the counter node is the
+    /// canonical first consumer).
+    pub fn with_flow(
+        flow: &'a crate::flow::FlowId,
+        run: crate::flow::RunId,
+        node: &'a NodeId,
+        cancel: &'a dyn crate::Cancel,
+        skill: &'a crate::skill::SkillSelection,
+        state: &'a dyn crate::state::NodeStateStore,
+    ) -> Self {
+        Self {
+            run,
+            node,
+            cancel,
+            skill,
+            state,
+            flow: Some(flow),
+        }
+    }
+}
+
+/// What changed in a hot-reload edit, as reported to
+/// [`NodeBehavior::on_redeploy`]. Node kinds with a
+/// `reset_on_redeploy` policy use this to decide whether to clear
+/// persisted [`crate::state::NodeStateStore`] entries.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[non_exhaustive]
+pub enum EditKind {
+    /// The node's `settings:` payload changed; topology unchanged.
+    Settings,
+    /// The flow's topology (links, slots, surrounding nodes) changed;
+    /// this node's settings unchanged.
+    Topology,
+    /// Both settings and topology changed in the same reconciliation.
+    Both,
 }
 
 /// Lifecycle transition the engine notifies a node of.
