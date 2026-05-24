@@ -1,70 +1,64 @@
 //! MCP wiring at boot.
 //!
-//! Builds the rubix [`FlowRegistry`] containing
-//! `com.rubix.scheduled-system-check`, plugs it into starter-mcp's
-//! [`ToolRegistry`] via the one-line
-//! [`FlowAsTool::from_registry`] contract, and returns the assembled
-//! tool registry + `axum::Router` the binary mounts under `/mcp`.
+//! Loads every bundled rubix flow via [`rubix_flows::load_all`],
+//! registers each on a fresh [`FlowRegistry`] under the
+//! `com.rubix.ai-agent` kind (a stub [`NodeBehavior`] until Block C
+//! binds `starter-flow-node-loop`'s real `AiAgentNode`), wraps each
+//! registered flow as a [`FlowAsTool`] via
+//! [`FlowAsTool::from_registry`], and returns the assembled
+//! starter-mcp [`ToolRegistry`] + `axum::Router` the binary mounts
+//! under `/mcp`.
 //!
-//! Locale propagation is the load-bearing concern here. The
+//! There is no per-flow MCP wiring code here — `FlowAsTool` is the
+//! one-line contract that turns each flow into an MCP tool, exactly
+//! the property SCOPE R7 calls out. Adding a seventh flow is one
+//! `*.yaml` file under `rubix-flows/flows/`; this module needs no
+//! edit.
+//!
+//! Locale propagation is still the load-bearing concern. The
 //! `starter-mcp` transports (HTTP and the in-memory test pair) bind
 //! the caller's BCP-47 tag on a tokio task-local for the lifetime of
 //! one `tools/call`; rubix code reads it via
-//! [`starter_mcp::current_locale`]. We never thread a `LanguageTag`
-//! through call sites by hand, and we never re-parse
-//! `Accept-Language` / `_meta.acceptLanguage` here — that is U1's
-//! job upstream.
+//! [`starter_mcp::current_locale`]. The flow's seed adapter snapshots
+//! the locale + the corresponding [`ResolvedPreferences`] onto the
+//! input slot so the eventual `AiAgentNode` (Block C) reads them
+//! without re-parsing `Accept-Language` / `_meta.acceptLanguage`.
 //!
-//! See [docs/design/i18n-prefs/](../../../docs/design/i18n-prefs/README.md)
-//! for the four-transport translation contract and
+//! See [docs/design/flows/](../../../docs/design/flows/README.md) for
+//! the loader contract, [docs/design/i18n-prefs/](../../../docs/design/i18n-prefs/README.md)
+//! for the four-transport translation contract, and
 //! [docs/design/agent/](../../../docs/design/agent/README.md) for the
 //! boot order this fits into.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde_json::{json, Value};
 
+use rubix_flows::AI_AGENT_KIND_ID;
+
+use starter_flow::definition::body::FlowBody;
 use starter_flow::engine::Engine;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::registry::NodeKindRegistry;
 use starter_flow_spi::flow::{FlowId, FlowRevisionId};
 use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::{
-    KindId, NodeBehavior, NodeCtx, NodeError, NodeId, SlotMap, SlotRef, SlotValue,
+    KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotRef, SlotValue,
 };
-use starter_flow_surfaces::{
-    FlowAsTool, FlowRegistration, FlowRegistry,
-};
-
-use starter_flow::definition::body::{FlowBody, NodeDecl};
+use starter_flow_surfaces::{FlowAsTool, FlowRegistration, FlowRegistry};
 
 use starter_mcp::registry::ToolRegistry;
-use starter_spi::i18n::{Diagnostic, DiagnosticParam, LanguageTag, MessageKey};
+use starter_spi::i18n::LanguageTag;
 use starter_spi::preferences::{
     DateFormat, NumberFormat, ResolvedPreferences, Theme, TimeFormat, UnitSystem, WeekStart,
 };
 use starter_spi::units::Unit;
 
 /// The flow id rubix surfaces over MCP for goal-5 background system
-/// health checks.
+/// health checks. Kept as a named constant so the bin/admin paths
+/// and integration tests reference a single source of truth.
 pub const SCHEDULED_SYSTEM_CHECK_FLOW: &str = "com.rubix.scheduled-system-check";
-
-/// Reverse-DNS id of the bundled diagnostic-renderer node kind. Lives
-/// outside the reserved `starter.flow.*` prefix so the public
-/// [`NodeKindRegistry::register`] entry point accepts it.
-const DIAG_RENDER_KIND: &str = "com.rubix.diag-render";
-
-/// Node id used inside the bundled flow body. Must be reverse-DNS.
-const RENDER_NODE_ID: &str = "com.rubix.render";
-
-/// Slot the seed adapter writes; also the only trigger slot on the
-/// render node.
-const SEED_SLOT: &str = "payload";
-
-/// Slot the render node writes the rendered diagnostic to.
-const OUTPUT_SLOT: &str = "out";
 
 /// Bundle holding the rubix MCP surface — the
 /// [`Arc<ToolRegistry>`](ToolRegistry) the dispatch loop reads tools
@@ -79,14 +73,11 @@ pub struct McpSurface {
     pub router: axum::Router,
 }
 
-/// Build the MCP surface for the rubix agent: register every bundled
-/// flow on a fresh [`FlowRegistry`], wrap each as a
+/// Build the MCP surface for the rubix agent: load every bundled
+/// flow, register them on a fresh [`FlowRegistry`], wrap each as a
 /// [`FlowAsTool`] via [`FlowAsTool::from_registry`], hand the
 /// resulting tool list to starter-mcp's [`ToolRegistry`], and return
 /// the assembled router.
-///
-/// Stage-1 of PR 3 only mounts `com.rubix.scheduled-system-check`;
-/// stages 4+ register the remaining five goal flows the same way.
 pub async fn build_mcp_surface() -> anyhow::Result<McpSurface> {
     let tools = Arc::new(build_tool_registry().await?);
     let router: axum::Router =
@@ -94,75 +85,96 @@ pub async fn build_mcp_surface() -> anyhow::Result<McpSurface> {
     Ok(McpSurface { tools, router })
 }
 
-/// Shared composition step: build the starter-mcp [`ToolRegistry`]
-/// containing every bundled rubix flow wrapped via
-/// [`FlowAsTool::from_registry`]. Both the HTTP surface
-/// ([`build_mcp_surface`]) and the stdio surface (the
+/// Shared composition step: load every bundled rubix flow and
+/// surface them as MCP tools on a fresh [`ToolRegistry`]. Both the
+/// HTTP surface ([`build_mcp_surface`]) and the stdio surface (the
 /// `rubix-admin mcp` subcommand) call this so the tool catalogue is
-/// identical across transports — there is no "stdio-only" tool list.
+/// identical across transports — there is no "stdio-only" tool
+/// list.
+///
+/// Emits one `tracing::info` line summarising how many tools landed
+/// so the boot log shows `mcp_tools=N` (expected `N = 6` once the
+/// six bundled flows are present).
 pub async fn build_tool_registry() -> anyhow::Result<ToolRegistry> {
-    let (registry, flow_id, revision, engine) = build_flow_registry().await?;
-    let tool = FlowAsTool::from_registry(&registry, &flow_id, &revision, engine)
-        .await
-        .map_err(|e| anyhow::anyhow!("FlowAsTool::from_registry: {e}"))?;
-    Ok(ToolRegistry::new().register(tool))
+    let (registry, flows, engine) = build_flow_registry().await?;
+    let mut tools = ToolRegistry::new();
+    for (flow_id, revision) in &flows {
+        let tool = FlowAsTool::from_registry(&registry, flow_id, revision, engine.clone())
+            .await
+            .map_err(|e| anyhow::anyhow!("FlowAsTool::from_registry({flow_id}): {e}"))?;
+        tools = tools.register(tool);
+    }
+    tracing::info!(mcp_tools = flows.len(), "rubix MCP surface assembled");
+    Ok(tools)
 }
 
 /// Lower-level entry point exposed so integration tests can drive
 /// the same wiring without standing up the HTTP listener. Returns
-/// the registry + the `(flow_id, revision)` pair the tests pass to
-/// [`FlowAsTool::from_registry`] alongside an
-/// [`Arc<Engine>`](Engine).
+/// the registry, the list of `(flow_id, revision)` pairs that were
+/// landed, and an [`Arc<Engine>`](Engine) bound to a fresh
+/// in-memory graph store.
 pub async fn build_flow_registry(
-) -> anyhow::Result<(Arc<FlowRegistry>, FlowId, FlowRevisionId, Arc<Engine>)> {
+) -> anyhow::Result<(Arc<FlowRegistry>, Vec<(FlowId, FlowRevisionId)>, Arc<Engine>)> {
     // -- 1. Engine on a fresh in-memory graph store. The terminal-
     //       slot read-back in `FlowAsTool` reads through this store.
     let graph_store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
     let engine = Arc::new(Engine::new(graph_store));
 
-    // -- 2. NodeKindRegistry carrying the rubix-side kinds. The
-    //       diag-render kind lives outside `starter.flow.*` so the
-    //       public `register` path accepts it (R10).
+    // -- 2. NodeKindRegistry carrying the ai-agent stub. Block C
+    //       replaces this stub with starter-flow-node-loop's real
+    //       AiAgentNode wired to a Claude runner; until then any
+    //       attempt to invoke a flow surfaces a clear "not wired"
+    //       NodeError (registration still succeeds because the
+    //       resolver only needs the kind to be *registered*).
     let kinds = NodeKindRegistry::new();
-    let kind = KindId::new(DIAG_RENDER_KIND)
-        .map_err(|e| anyhow::anyhow!("invalid kind id: {e}"))?;
-    let behavior: Arc<dyn NodeBehavior> = Arc::new(DiagRenderNode {
-        kind: kind.clone(),
+    let ai_agent_kind = KindId::new(AI_AGENT_KIND_ID)
+        .map_err(|e| anyhow::anyhow!("invalid {AI_AGENT_KIND_ID} kind id: {e}"))?;
+    let stub: Arc<dyn NodeBehavior> = Arc::new(AiAgentStubNode {
+        kind: ai_agent_kind.clone(),
     });
     kinds
-        .register(behavior)
+        .register(stub)
         .await
-        .map_err(|e| anyhow::anyhow!("register diag-render kind: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("register {AI_AGENT_KIND_ID} stub: {e}"))?;
 
-    // -- 3. FlowRegistry with the bundled scheduled-system-check
-    //       flow. The body is built programmatically — the on-disk
-    //       YAML at `rubix-flows/flows/` is the
-    //       human-authored surface but its current shape predates
-    //       the typed `FlowBody` projection and will be replaced
-    //       once the `ai-agent` kind is wired into rubix-agent
-    //       (later phase). For PR 3 the one-node renderer is
-    //       enough to assert the FlowAsTool ↔ MCP locale path.
-    let flow_id = FlowId::new(SCHEDULED_SYSTEM_CHECK_FLOW)
-        .map_err(|e| anyhow::anyhow!("invalid flow id: {e}"))?;
-    let render_node = NodeId::new(RENDER_NODE_ID)
-        .map_err(|e| anyhow::anyhow!("invalid node id: {e}"))?;
-
-    let mut node = NodeDecl::new(render_node.clone(), kind.clone());
-    node.triggers = vec![SEED_SLOT.to_owned()];
-    let mut body = FlowBody::new(flow_id.clone());
-    body.nodes = vec![node];
-
-    let revision = FlowRevisionId::new();
+    // -- 3. FlowRegistry seeded from every bundled YAML.
     let registry = Arc::new(FlowRegistry::new());
+    let mut flows = Vec::new();
+    let triples = rubix_flows::load_all()
+        .map_err(|e| anyhow::anyhow!("rubix_flows::load_all: {e}"))?;
 
-    let seed_slot = SlotRef::new(render_node.clone(), SEED_SLOT);
-    let output_slot = SlotRef::new(render_node, OUTPUT_SLOT);
+    for (flow_id, revision, body) in triples {
+        register_one(&registry, &kinds, &flow_id, revision, body).await?;
+        flows.push((flow_id, revision));
+    }
 
-    let tool_id = KindId::new(SCHEDULED_SYSTEM_CHECK_FLOW)
-        .map_err(|e| anyhow::anyhow!("invalid tool id: {e}"))?;
+    Ok((registry, flows, engine))
+}
+
+/// Register one `(flow_id, revision, body)` triple with the shared
+/// adapter shape every bundled flow uses: a single seed slot
+/// (`payload`) carrying a JSON object snapshotting the caller's
+/// locale + resolved preferences, and a single terminal slot
+/// (`out`) read back by the output adapter.
+async fn register_one(
+    registry: &FlowRegistry,
+    kinds: &NodeKindRegistry,
+    flow_id: &FlowId,
+    revision: FlowRevisionId,
+    body: FlowBody,
+) -> anyhow::Result<()> {
+    let root = body
+        .nodes
+        .first()
+        .ok_or_else(|| anyhow::anyhow!("flow `{flow_id}` has zero nodes after conversion"))?;
+    let seed_slot = SlotRef::new(root.id.clone(), rubix_flows::DEFAULT_SEED_SLOT);
+    let output_slot = SlotRef::new(root.id.clone(), rubix_flows::DEFAULT_OUTPUT_SLOT);
+
+    let tool_id = KindId::new(flow_id.to_string())
+        .map_err(|e| anyhow::anyhow!("flow `{flow_id}` is not a valid KindId: {e}"))?;
 
     let seed_slot_for_adapter = seed_slot.clone();
-    let seed = Arc::new(move |_input: &Value| {
+    let seed: starter_flow_surfaces::SeedAdapter = Arc::new(move |input: &Value| {
         // The locale task-local is bound by starter-mcp's dispatch
         // wrapper before this closure runs; reading it here is the
         // U1 contract (no Accept-Language parsing in rubix, no
@@ -174,115 +186,60 @@ pub async fn build_flow_registry(
         let prefs = prefs_from_locale(&lang);
         let payload = json!({
             "lang": prefs.language,
+            "locale": lang.as_str(),
             "prefs": prefs,
-            "percent": 89_i64,
-            "free_bytes": 12_500_000_000_i64,
-            "at_ms": 1_705_320_000_000_i64,
+            "input": input.clone(),
         });
-        vec![(
-            seed_slot_for_adapter.clone(),
-            SlotValue::Json(payload),
-        )]
+        vec![(seed_slot_for_adapter.clone(), SlotValue::Json(payload))]
     });
 
     let output_key = format!("{}.{}", output_slot.node, output_slot.slot);
-    let output = Arc::new(move |out: &SlotMap| -> Value {
+    let output: starter_flow_surfaces::OutputAdapter = Arc::new(move |out: &SlotMap| -> Value {
         match out.get(&output_key) {
             Some(SlotValue::Json(v)) => v.clone(),
             _ => Value::Null,
         }
     });
 
-    let spec = FlowRegistration::new(
-        body,
-        revision,
-        tool_id,
-        SCHEDULED_SYSTEM_CHECK_FLOW,
-        "Inspect rubix host health and alert if a threshold is crossed.",
-    )
-    .terminal_slots(vec![output_slot])
-    .input_schema(json!({"type": "object"}))
-    .output_schema(json!({
-        "type": "object",
-        "properties": {"rendered": {"type": "string"}},
-        "required": ["rendered"]
-    }))
-    .with_adapters(seed, output);
+    let description = format!("{flow_id} — bundled rubix flow rooted at an ai-agent node.");
+    let spec = FlowRegistration::new(body, revision, tool_id, flow_id.to_string(), description)
+        .terminal_slots(vec![output_slot])
+        .input_schema(json!({"type": "object"}))
+        .output_schema(json!({"type": "object"}))
+        .with_adapters(seed, output);
 
     registry
-        .register(spec, &kinds)
+        .register(spec, kinds)
         .await
-        .map_err(|e| anyhow::anyhow!("register scheduled-system-check: {e}"))?;
-
-    Ok((registry, flow_id, revision, engine))
+        .map_err(|e| anyhow::anyhow!("register `{flow_id}`: {e}"))?;
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
-// Diag-render node body.
+// ai-agent stub kind (Block A).
 // ---------------------------------------------------------------------------
 
-/// One-node body that renders a `rubix.system.disk.warn` diagnostic
-/// in the caller's locale + timezone. The seed adapter snapshots
-/// `starter_mcp::current_locale()` and the corresponding
-/// [`ResolvedPreferences`] onto the input slot; this node looks
-/// nothing up — the renderer runs purely on the payload, so
-/// task-local propagation across the FlowRunner's spawn boundary is
-/// a non-issue (R5 design note: the locale is captured at the seed-
-/// adapter call site, where the with_locale scope is live).
-struct DiagRenderNode {
+/// Stub [`NodeBehavior`] bound under [`AI_AGENT_KIND_ID`] for the
+/// duration of Block A. Resolution-time wiring needs the kind to be
+/// *registered* (so `FlowRegistry::register` succeeds and every
+/// bundled flow lands as an MCP tool); invocation is what Block C
+/// fixes by replacing this stub with `starter-flow-node-loop`'s
+/// real `AiAgentNode` wrapped around a Claude runner.
+struct AiAgentStubNode {
     kind: KindId,
 }
 
 #[async_trait]
-impl NodeBehavior for DiagRenderNode {
+impl NodeBehavior for AiAgentStubNode {
     fn kind_id(&self) -> &KindId {
         &self.kind
     }
 
-    async fn invoke(&self, _ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError> {
-        let payload = match input.get(SEED_SLOT) {
-            Some(SlotValue::Json(v)) => v.clone(),
-            _ => {
-                return Err(NodeError::InvalidInput(
-                    "diag-render: missing `payload` slot".to_owned(),
-                ));
-            }
-        };
-
-        let lang_str = payload.get("lang").and_then(|v| v.as_str()).unwrap_or("en");
-        let lang = LanguageTag::parse(lang_str)
-            .unwrap_or_else(|_| LanguageTag::parse("en").expect("'en' parses"));
-
-        let prefs: ResolvedPreferences = serde_json::from_value(
-            payload.get("prefs").cloned().unwrap_or(Value::Null),
-        )
-        .map_err(|e| NodeError::InvalidInput(format!("diag-render: prefs: {e}")))?;
-
-        let percent = payload.get("percent").and_then(|v| v.as_i64()).unwrap_or(0);
-        let free = payload
-            .get("free_bytes")
-            .and_then(|v| v.as_i64())
-            .unwrap_or(0);
-        let at_ms = payload.get("at_ms").and_then(|v| v.as_i64()).unwrap_or(0);
-
-        let diag = Diagnostic::new(
-            MessageKey::parse("rubix.system.disk.warn")
-                .expect("hard-coded key parses"),
-        )
-        .with_param("percent", DiagnosticParam::I64(percent))
-        .with_param("free", DiagnosticParam::I64(free))
-        .with_param("at", DiagnosticParam::Timestamp(at_ms));
-
-        let bundle = rubix_spi::i18n::rubix_bundle()
-            .map_err(|e| NodeError::Backend(format!("rubix_bundle: {e}")))?;
-        let rendered = bundle.render_diagnostic(&lang, &diag, &prefs);
-
-        let mut out = SlotMap::new();
-        out.insert(
-            OUTPUT_SLOT.to_owned(),
-            SlotValue::Json(json!({"rendered": rendered})),
-        );
-        Ok(out)
+    async fn invoke(&self, _ctx: NodeCtx<'_>, _input: SlotMap) -> Result<SlotMap, NodeError> {
+        Err(NodeError::Backend(format!(
+            "{AI_AGENT_KIND_ID}: not wired yet — Block A registers the kind so flows surface \
+             as MCP tools; Block C binds the real AiAgentNode behaviour"
+        )))
     }
 }
 
@@ -294,10 +251,10 @@ impl NodeBehavior for DiagRenderNode {
 /// timezone, date format, time format, and language reflect a
 /// reasonable default for the tag's region subtag.
 ///
-/// PR 3 only needs the en-US and es-AR cases for the integration
-/// test; the table is open for the remaining locales as goal-flows
-/// land. Unknown tags fall through to the platform-default UTC /
-/// ISO date / 24-hour clock posture.
+/// Called from the seed adapter at MCP `tools/call` dispatch time
+/// and from sibling code in [`crate::routes::tools`] /
+/// [`crate::bin::rubix_admin`] that wants the same locale → prefs
+/// mapping outside the flow path.
 pub fn prefs_from_locale(tag: &LanguageTag) -> ResolvedPreferences {
     let raw = tag.as_str();
     let (timezone, locale, language, date_format, time_format) = match raw {
@@ -347,10 +304,3 @@ pub fn prefs_from_locale(tag: &LanguageTag) -> ResolvedPreferences {
         theme: Theme::System,
     }
 }
-
-// Touch the HashMap import so this file stays compatible with a
-// future per-locale lookup table without re-touching the import
-// block. (Empty placeholder — collapses to a no-op at codegen.)
-const _: fn() = || {
-    let _: HashMap<&'static str, &'static str> = HashMap::new();
-};

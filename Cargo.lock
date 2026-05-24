@@ -6399,6 +6399,12 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "include_dir",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "starter-flow",
+ "starter-flow-spi",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

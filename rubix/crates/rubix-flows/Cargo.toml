@@ -9,4 +9,16 @@ rust-version.workspace = true
 
 [dependencies]
 include_dir = "0.7"
-anyhow = { workspace = true }
+anyhow      = { workspace = true }
+serde       = { workspace = true, features = ["derive"] }
+serde_json  = { workspace = true }
+serde_yaml  = "0.9"
+thiserror   = { workspace = true }
+
+# Typed flow body + id types. The loader projects the
+# human-authored YAML surface into starter-flow's typed shape so
+# the agent binary can register each entry with the host's
+# FlowRegistry on boot. rubix-flows stays a small content crate;
+# starter-flow is the typed projection it converts into.
+starter-flow     = { workspace = true }
+starter-flow-spi = { workspace = true }
