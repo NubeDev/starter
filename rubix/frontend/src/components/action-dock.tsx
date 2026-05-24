@@ -34,9 +34,9 @@ function SearchPill() {
         <Search className="h-4 w-4" />
       </button>
       <button className="hidden h-9 w-56 cursor-pointer items-center gap-2 rounded-full border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/30 px-3.5 text-sm text-[color:var(--color-subtle)] transition-colors hover:border-[color:var(--color-border)] hover:bg-[color:var(--color-surface-2)]/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)] md:flex">
-        <Search className="h-3.5 w-3.5" />
+        <Search className="h-3.5 w-3.5 shrink-0" />
         <span className="flex-1 truncate text-left">{intl.formatMessage({ id: 'common.search' })}</span>
-        <kbd className="rounded border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/50 px-1.5 py-0.5 font-mono text-[10px]">⌘K</kbd>
+        <kbd className="shrink-0 rounded border border-[color:var(--color-border)] bg-[color:var(--color-surface-2)]/50 px-1.5 py-[1px] font-sans text-[11px] leading-none tracking-wide">Ctrl K</kbd>
       </button>
     </>
   )

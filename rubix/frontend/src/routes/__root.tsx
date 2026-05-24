@@ -6,8 +6,7 @@ import { ActionDock } from '@/components/action-dock'
 import { AppSidebar } from '@/components/layout/app-sidebar'
 import { Header } from '@/components/layout/header'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
-import { useIsMobile } from '@nube/starter-ui-core/layout'
-import { LayoutProvider, useLayout } from '@nube/starter-ui-core/layout'
+import { useIsMobile, LayoutProvider, useLayout } from '@nube/starter-ui-core/layout'
 import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 
@@ -29,9 +28,8 @@ function HeaderShellInner() {
     <div className="min-h-screen bg-[color:var(--color-bg)] text-[color:var(--color-text)]">
       <BootIntro />
       <ScrollProgress />
-      {/* Mobile-only: reuses the shadcn AppSidebar as the slide-in nav so header
-          and sidebar modes share one navigation surface. On desktop in header
-          mode we don't mount it — the inline HeaderNav handles top-level links. */}
+      {/* Mobile-only slide-in nav so the SidebarTrigger in the top bar can open
+          AppSidebar on small screens. On desktop the inline HeaderNav is the nav. */}
       {isMobile && <AppSidebar />}
       <div className="relative">
         <TopHeader />

@@ -267,7 +267,8 @@ export function TopHeader() {
               <SidebarTrigger
                 data-testid="mobile-nav-trigger"
                 aria-label={intl.formatMessage({ id: 'a11y.openNav' })}
-                className="text-[color:var(--color-muted)] hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] md:hidden"
+                variant='outline'
+                className="size-8 border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-2)]/60 hover:text-[color:var(--color-text)] md:hidden"
               />
               <Brand />
               <HeaderNav />

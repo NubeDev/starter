@@ -36,7 +36,10 @@ export function Header({ className, fixed, children, ...props }: HeaderProps) {
           offset > 10 && fixed && 'after:absolute after:inset-0 after:-z-10 after:bg-[color:var(--color-bg)]/40 after:backdrop-blur-lg',
         )}
       >
-        <SidebarTrigger className='max-md:scale-125' />
+        <SidebarTrigger
+          variant='outline'
+          className='size-8 max-md:scale-125 border-[color:var(--color-border)] bg-[color:var(--color-surface)] text-[color:var(--color-text)] hover:bg-[color:var(--color-surface-2)]/60 hover:text-[color:var(--color-text)]'
+        />
         <Separator orientation='vertical' className='h-6' />
         {children}
       </div>
