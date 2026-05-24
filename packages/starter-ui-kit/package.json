@@ -9,6 +9,7 @@
   "exports": {
     ".": "./src/index.ts",
     "./styles.css": "./src/styles/globals.css",
+    "./scan-source.css": "./src/styles/scan-source.css",
     "./theme-editor": "./src/theme-editor/index.ts",
     "./theme-editor/config-drawer": "./src/theme-editor/config-drawer/index.ts",
     "./components/*": "./src/components/ui/*.tsx",

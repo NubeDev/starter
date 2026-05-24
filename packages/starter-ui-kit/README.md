@@ -23,3 +23,20 @@ once at your app entry:
 ```ts
 import "@nube/starter-ui-kit/styles.css";
 ```
+
+### Bring-your-own theme
+
+If you want your own tokens but still need Tailwind to see the kit's
+class usage, skip `styles.css` and import the scan shim instead:
+
+```css
+/* your app's main Tailwind stylesheet */
+@import "tailwindcss";
+@import "@nube/starter-ui-kit/scan-source.css";
+@import "./your-own-tokens.css";
+```
+
+Tailwind v4 skips `node_modules` by default; the shim emits the right
+`@source` directive so the kit's `bg-popover`, `data-[side=right]`,
+`slide-in-from-right-*`, etc. all end up in your CSS bundle without
+needing a brittle relative `@source` path.

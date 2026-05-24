@@ -1,0 +1,23 @@
+/* Tailwind v4 source-scanning shim for `@nube/starter-ui-kit`.
+ *
+ * Tailwind v4 skips `node_modules` by default, so without an `@source`
+ * directive pointing at this package the shadcn primitives render
+ * unstyled when a host installs the kit from a workspace/registry.
+ *
+ * Consumers should `@import` this file once from their main Tailwind
+ * stylesheet, after `@import "tailwindcss";`. Paths resolve relative
+ * to this file inside `node_modules/@nube/starter-ui-kit/src/styles/`,
+ * so `../..` walks up to the package root.
+ *
+ * Example (host app's `globals.css`):
+ *
+ *   @import "tailwindcss";
+ *   @import "@nube/starter-ui-kit/scan-source.css";
+ *
+ * If you import the kit's full stylesheet (`@nube/starter-ui-kit/styles.css`)
+ * you do NOT need this file — the full stylesheet already includes the
+ * same `@source` directive. Use `scan-source.css` only when you want to
+ * keep your own theme tokens but still need Tailwind to pick up the
+ * kit's class usage.
+ */
+@source "../..";
