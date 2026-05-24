@@ -22,6 +22,20 @@ secrets_path = "rubix/dev/secrets.age"
 # crates/starter-ai-agent/LONG-TERM.md for the staged plan.
 # ai_provider = "claude-cli"
 
+# Extension-host knobs (rubix-extensions-wire Phase C). The agent
+# constructs `ExtensionAdmin` from these values via
+# `boot::extensions::build_extension_admin`. `dir` is repo-relative
+# in dev (the in-repo `rubix/extensions` workspace, which ships
+# `com.rubix.example`); production overrides to `/var/lib/rubix/extensions`.
+# `autostart_enabled_records = true` re-spawns supervisors for every
+# extension the PG store marks Enabled before the HTTP listener
+# opens — integration tests that want to drive lifecycle explicitly
+# should set this to false.
+[extensions]
+enabled = true
+dir = "rubix/extensions"
+autostart_enabled_records = true
+
 # Insights-gate thresholds. The disk verb's post-dispatch hook
 # fires `rubix.alert.send` once `percent_used` crosses
 # `disk_warn_threshold`. Default `90` matches the v0 hardcoded

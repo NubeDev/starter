@@ -6382,6 +6382,11 @@ dependencies = [
  "starter-changelog-postgres",
  "starter-changelog-sqlite",
  "starter-config",
+ "starter-ext-host",
+ "starter-ext-server",
+ "starter-ext-spi",
+ "starter-ext-store-pg",
+ "starter-ext-supervisor",
  "starter-flow",
  "starter-flow-node-loop",
  "starter-flow-spi",
@@ -6396,6 +6401,7 @@ dependencies = [
  "starter-store-sqlite",
  "starter-undo",
  "tempfile",
+ "thiserror 1.0.69",
  "tokio",
  "tower 0.5.3",
  "tracing",
@@ -8272,6 +8278,18 @@ dependencies = [
  "serde_json",
  "serde_yaml",
  "starter-spi",
+ "thiserror 1.0.69",
+]
+
+[[package]]
+name = "starter-ext-store-pg"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "serde",
+ "sqlx",
+ "starter-ext-server",
+ "starter-ext-spi",
  "thiserror 1.0.69",
 ]
 
