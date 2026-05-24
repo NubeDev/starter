@@ -33,6 +33,11 @@ const defaultConfig: QueryClientConfig = {
       retry: (failureCount, error) => {
         if (error instanceof StarterError) {
           if (error.status === 401 || error.status === 403) return false;
+          // 502 + invalid-response-content-type is a routing/config
+          // failure (the request never reached the API). Retries
+          // cannot fix it; bail immediately so AuthProvider can flip
+          // to the unauthenticated slot in one tick.
+          if (error.status === 502 && error.code === "invalid-response-content-type") return false;
         }
         return failureCount < 3;
       },

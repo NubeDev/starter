@@ -92,7 +92,10 @@ describe("StarterClient auth endpoints", () => {
     const fake: typeof fetch = async (input, init) => {
       const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
       calls.push({ method: init?.method ?? "GET", url, headers: {}, body: undefined });
-      return new Response(JSON.stringify({ subject: "u", email: "a@b", role: "admin" }), { status: 200 });
+      return new Response(JSON.stringify({ subject: "u", email: "a@b", role: "admin" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
     };
     const client = new StarterClient({ baseUrl: "http://t/", fetch: fake });
     await client.me();

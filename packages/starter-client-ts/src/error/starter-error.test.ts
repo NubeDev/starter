@@ -60,3 +60,19 @@ describe("StarterError.is", () => {
     expect(StarterError.is(new Error("plain"), 401)).toBe(false);
   });
 });
+
+describe("StarterError.invalidResponse", () => {
+  it("tags 502 with a recognizable code so callers can branch on it", () => {
+    const err = StarterError.invalidResponse("http://t/api/v1/auth/me", "text/html");
+    expect(err.status).toBe(502);
+    expect(err.code).toBe("invalid-response-content-type");
+    expect(err.message).toContain("text/html");
+    expect(err.message).toContain("/api/v1/auth/me");
+  });
+
+  it("handles a missing content-type header", () => {
+    const err = StarterError.invalidResponse("http://t/x", null);
+    expect(err.message).toContain("<none>");
+    expect(err.code).toBe("invalid-response-content-type");
+  });
+});

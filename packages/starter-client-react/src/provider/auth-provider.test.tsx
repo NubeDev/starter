@@ -28,6 +28,17 @@ function problem(status: number, title: string): Response {
   );
 }
 
+function htmlResponse(): Response {
+  // Mimics a vite dev-server SPA-fallback: a 200 with text/html
+  // because the requested path was not matched by the proxy. This
+  // is the exact wire shape that masked the auth-path-mismatch bug
+  // (session: 2026-05-24-auth-path-mismatch-fix.md).
+  return new Response("<!DOCTYPE html><html><body>SPA</body></html>", {
+    status: 200,
+    headers: { "content-type": "text/html" },
+  });
+}
+
 function Harness() {
   const auth = useAuth();
   return (
@@ -61,6 +72,21 @@ describe("AuthProvider", () => {
     mount(fetchImpl as unknown as typeof fetch);
     await waitFor(() => expect(screen.getByTestId("anon")).toBeTruthy());
   });
+
+  it(
+    "renders unauthenticatedSlot when me() returns an HTML SPA-fallback " +
+      "(transport reports 502 + invalid-response-content-type)",
+    async () => {
+      // Regression: without the content-type guard, vite served
+      // index.html for unproxied paths, fetchJson called res.json()
+      // and threw a SyntaxError, AuthProvider's old `is401` branch
+      // ignored it, and `children` rendered with no user — the SPA
+      // looked logged-in while every subsequent /api/v1 call 401'd.
+      const fetchImpl = vi.fn(async () => htmlResponse());
+      mount(fetchImpl as unknown as typeof fetch);
+      await waitFor(() => expect(screen.getByTestId("anon")).toBeTruthy());
+    },
+  );
 
   it("renders children with user when me() succeeds", async () => {
     const me = { email: "u@x", role: "admin", subject: "s1" };
