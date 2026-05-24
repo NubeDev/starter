@@ -4,7 +4,8 @@
 //! verb modules and contains no logic of its own.
 
 pub mod deploy;
-pub mod validate;
+pub mod duplicate;
 pub mod lint;
 pub mod list;
-pub mod duplicate;
+pub mod store;
+pub mod validate;

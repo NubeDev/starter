@@ -23,6 +23,12 @@
   "rubix.clickhouse.mart.already_exists": "El mart de ClickHouse {mart} ya existe; sin cambios (el {at}).",
   "rubix.clickhouse.retention.set": "Retención de la tabla ClickHouse {table} establecida en {days} días (el {at}).",
   "rubix.clickhouse.retention.unchanged": "La retención de la tabla ClickHouse {table} ya es {days} días; sin cambios (el {at}).",
+  "rubix.flow.deployed": "Flujo {flow_id} desplegado (el {at}).",
+  "rubix.flow.deploy.invalid": "Despliegue de flujo rechazado — el cuerpo YAML no es válido.",
+  "rubix.flow.linted": "El cuerpo del flujo se analiza correctamente; sin errores de lint.",
+  "rubix.flow.lint.found_errors": "El cuerpo del flujo tiene {count} errores de lint.",
+  "rubix.flow.listed": "Se listaron {count} flujos.",
+  "rubix.flow.duplicated": "Flujo {source} duplicado como {target} (el {at}).",
   "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL no está definido; rubix-admin mcp no puede resolver un actor para la sesión stdio.",
   "rubix.admin.mcp.principal.not_found": "No existe ningún usuario con el correo {email} en la base de datos de rubix; cree uno con `rubix-admin bootstrap-user` antes de iniciar la sesión MCP por stdio."
 }

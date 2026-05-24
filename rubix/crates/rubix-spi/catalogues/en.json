@@ -23,6 +23,12 @@
   "rubix.clickhouse.mart.already_exists": "ClickHouse mart {mart} already exists; no change made (at {at}).",
   "rubix.clickhouse.retention.set": "Retention for ClickHouse table {table} set to {days} days (at {at}).",
   "rubix.clickhouse.retention.unchanged": "Retention for ClickHouse table {table} already {days} days; no change made (at {at}).",
+  "rubix.flow.deployed": "Flow {flow_id} deployed (at {at}).",
+  "rubix.flow.deploy.invalid": "Flow deploy refused — the YAML body is invalid.",
+  "rubix.flow.linted": "Flow body parses cleanly; no lint errors.",
+  "rubix.flow.lint.found_errors": "Flow body has {count} lint errors.",
+  "rubix.flow.listed": "Listed {count} flows.",
+  "rubix.flow.duplicated": "Flow {source} duplicated as {target} (at {at}).",
   "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL is not set; rubix-admin mcp cannot resolve an actor for the stdio session.",
   "rubix.admin.mcp.principal.not_found": "No user with email {email} exists in the rubix database; bootstrap one with `rubix-admin bootstrap-user` before launching the MCP stdio session."
 }
