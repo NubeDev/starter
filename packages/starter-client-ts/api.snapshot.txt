@@ -7,11 +7,40 @@ fetchBytes
 fetchJson
 fetchVoid
 readCsrfHeader
+streamJson
+type AddMemberBody
+type AddTeamMemberBody
+type AssignmentBody
+type AssignmentResponse
+type AssignmentView
+type AssignmentsListResponse
+type CheckRequest
+type CheckResponse
+type CreateTeamBody
+type CreateTenantBody
+type DecisionView
+type DecisionsPage
+type DecisionsQuery
 type Health
 type LoginRequest
 type LoginResponse
 type MeResponse
+type MembershipView
+type PatchMemberBody
+type PatchTenantBody
 type Problem
+type ResourceOwnership
+type ResourceSpec
+type ResourcesListResponse
+type RuleBody
+type RuleEffect
+type RuleResponse
+type RuleView
+type RulesListResponse
+type StreamJsonOptions
+type TeamView
+type TenantRole
+type TenantView
 type ThemeDocument
 type ThemeSaveRequest
 type ThemeShellConfig

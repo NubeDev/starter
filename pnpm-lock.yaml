@@ -414,6 +414,40 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)
 
+  packages/starter-ui-authz:
+    dependencies:
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+    devDependencies:
+      '@nube/starter-client-react':
+        specifier: workspace:*
+        version: link:../starter-client-react
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../starter-client-ts
+      '@nube/starter-ui-kit':
+        specifier: workspace:*
+        version: link:../starter-ui-kit
+      '@tanstack/react-query':
+        specifier: ^5.99.0
+        version: 5.100.11(react@19.2.6)
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      react:
+        specifier: ^19
+        version: 19.2.6
+      react-dom:
+        specifier: ^19
+        version: 19.2.6(react@19.2.6)
+      typescript:
+        specifier: ^5.4
+        version: 5.9.3
+
   packages/starter-ui-blobs:
     devDependencies:
       '@testing-library/react':
@@ -729,6 +763,9 @@ importers:
       '@nube/starter-client-ts':
         specifier: workspace:*
         version: link:../../packages/starter-client-ts
+      '@nube/starter-ui-authz':
+        specifier: workspace:*
+        version: link:../../packages/starter-ui-authz
       '@nube/starter-ui-core':
         specifier: workspace:*
         version: link:../../packages/starter-ui-core

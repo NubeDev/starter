@@ -1,0 +1,45 @@
+{
+  "name": "@nube/starter-ui-authz",
+  "version": "0.1.0",
+  "description": "Admin UI for tenants, teams, members, authz rules, assignments, and the decisions audit log. Pages built on @nube/starter-ui-kit; data via @nube/starter-client-ts + @tanstack/react-query. Zero I/O.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./hooks": "./src/hooks/index.ts",
+    "./panels": "./src/panels/index.ts",
+    "./i18n": "./src/i18n/index.ts"
+  },
+  "files": [
+    "README.md",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "peerDependencies": {
+    "@nube/starter-client-react": "workspace:*",
+    "@nube/starter-client-ts": "workspace:*",
+    "@nube/starter-ui-kit": "workspace:*",
+    "@tanstack/react-query": "^5",
+    "react": "^18 || ^19",
+    "react-dom": "^18 || ^19"
+  },
+  "dependencies": {
+    "clsx": "^2.1.1"
+  },
+  "devDependencies": {
+    "@nube/starter-client-react": "workspace:*",
+    "@nube/starter-client-ts": "workspace:*",
+    "@nube/starter-ui-kit": "workspace:*",
+    "@tanstack/react-query": "^5.99.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5.4"
+  }
+}

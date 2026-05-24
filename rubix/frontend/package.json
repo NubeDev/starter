@@ -23,6 +23,7 @@
     "@nube/starter-ui-core": "workspace:*",
     "@nube/starter-ui-dashboard": "workspace:*",
     "@nube/starter-ui-kit": "workspace:*",
+    "@nube/starter-ui-authz": "workspace:*",
     "@nube/rubix-client-ts": "workspace:*",
     "@nube/rubix-client-react": "workspace:*",
     "@nube/starter-client-ts": "workspace:*",

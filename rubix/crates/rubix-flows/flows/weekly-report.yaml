@@ -7,7 +7,10 @@ description: |
   blob via `analytics.report`. Auto-surfaces as an MCP tool via
   FlowAsTool (no per-flow MCP wiring per SCOPE R7).
 trigger: schedule
-cron_expr: "0 8 * * 1"
+# `cron` crate (used by starter-cron::next_fire) requires the
+# 6-field format: sec min hour day-of-month month day-of-week.
+# Monday 08:00 UTC weekly.
+cron_expr: "0 0 8 * * Mon"
 
 nodes:
   - id: agent

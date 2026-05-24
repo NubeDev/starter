@@ -1,0 +1,16 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+AuthProvider
+ME_QUERY_KEY
+QueryProvider
+StarterClientProvider
+type AuthContextValue
+type AuthProviderProps
+type EventStreamStatus
+type QueryProviderProps
+type UseEventStreamOptions
+type UseEventStreamResult
+useAuth
+useEventStream
+useStarterClient

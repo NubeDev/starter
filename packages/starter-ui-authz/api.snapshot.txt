@@ -1,0 +1,60 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+AssignmentsPanel
+AuthzAdmin
+AuthzI18nProvider
+CheckPanel
+DEFAULT_AUTHZ_MESSAGES
+DecisionsPanel
+MembersPanel
+ResourcesPanel
+RulesPanel
+TeamsPanel
+TenantsPanel
+authzKeys
+mergeAuthzMessages
+type AddMemberArgs
+type AddTeamMemberArgs
+type AssignmentsPanelProps
+type AuthzAdminProps
+type AuthzAdminTab
+type AuthzI18nProviderProps
+type AuthzMessages
+type CheckPanelProps
+type CreateTeamArgs
+type DecisionsPanelProps
+type DeleteTeamArgs
+type MembersPanelProps
+type PatchMemberArgs
+type PatchTenantArgs
+type RemoveMemberArgs
+type RemoveTeamMemberArgs
+type ResourcesPanelProps
+type RulesPanelProps
+type TeamsPanelProps
+type TenantsPanelProps
+type UpdateRuleArgs
+useAddTeamMember
+useAddTenantMember
+useAuthzAssignments
+useAuthzCheck
+useAuthzDecisions
+useAuthzMessages
+useAuthzResources
+useAuthzRules
+useCreateAuthzAssignment
+useCreateAuthzRule
+useCreateTeam
+useCreateTenant
+useDeleteAuthzAssignment
+useDeleteAuthzRule
+useDeleteTeam
+usePatchTenant
+usePatchTenantMember
+useRemoveTeamMember
+useRemoveTenantMember
+useTeams
+useTenant
+useTenants
+useUpdateAuthzRule

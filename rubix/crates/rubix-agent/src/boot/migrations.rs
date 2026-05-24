@@ -14,7 +14,7 @@ use rubix_store_postgres::{
 };
 use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
-use starter_store_postgres::{migrate, pool::connect};
+use starter_store_postgres::{migrate, pool::connect, SCHEDULED_FLOWS_MIGRATION_SOURCE};
 use tracing::{info, warn};
 
 /// What happened during the migrations step. Returned so the boot
@@ -57,6 +57,7 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         postgres_migration_source(),
         UNDO_SNAPSHOTS_MIGRATION_SOURCE,
         FLOWS_DEFINITIONS_MIGRATION_SOURCE,
+        SCHEDULED_FLOWS_MIGRATION_SOURCE,
     ];
     let sources_applied = sources.len();
     let mut plan = migrate(&pool);

@@ -3,14 +3,14 @@ import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
-import { AuthProvider } from '@nube/starter-client-react'
+import { AuthProvider, StarterClientProvider } from '@nube/starter-client-react'
 import { StarterError } from '@nube/starter-client-ts'
 import { RubixClientProvider } from '@nube/rubix-client-react'
 import { routeTree } from './routeTree.gen'
 import { DirectionProvider } from '@nube/starter-ui-core/layout'
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { I18nProvider } from '@/i18n/provider'
-import { getRubixClient } from '@/lib/client'
+import { getRubixClient, getStarterClient } from '@/lib/client'
 import { LoginRoute } from '@/routes/login'
 import './styles/theme.css'
 
@@ -54,17 +54,19 @@ const queryClient = new QueryClient({
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RubixClientProvider client={getRubixClient()}>
-        <DirectionProvider>
-          <ThemeProvider>
-            <I18nProvider>
-              <AuthProvider unauthenticatedSlot={<LoginRoute />}>
-                <RouterProvider router={router} />
-              </AuthProvider>
-            </I18nProvider>
-          </ThemeProvider>
-        </DirectionProvider>
-      </RubixClientProvider>
+      <StarterClientProvider client={getStarterClient()}>
+        <RubixClientProvider client={getRubixClient()}>
+          <DirectionProvider>
+            <ThemeProvider>
+              <I18nProvider>
+                <AuthProvider unauthenticatedSlot={<LoginRoute />}>
+                  <RouterProvider router={router} />
+                </AuthProvider>
+              </I18nProvider>
+            </ThemeProvider>
+          </DirectionProvider>
+        </RubixClientProvider>
+      </StarterClientProvider>
       {/* SCOPE OQ-3: devtools mount only in dev — Vite tree-shakes
           the import out of production bundles via the DEV flag. */}
       {import.meta.env.DEV ? <ReactQueryDevtools initialIsOpen={false} /> : null}

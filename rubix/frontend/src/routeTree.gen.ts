@@ -15,6 +15,7 @@ import { Route as ExtensionsRouteImport } from './routes/extensions'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminAccessRouteImport } from './routes/admin/access'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -46,6 +47,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAccessRoute = AdminAccessRouteImport.update({
+  id: '/admin/access',
+  path: '/admin/access',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/extensions': typeof ExtensionsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/extensions': typeof ExtensionsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
 }
 export interface FileRoutesById {
@@ -70,14 +78,37 @@ export interface FileRoutesById {
   '/extensions': typeof ExtensionsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
+  '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/dashboard' | '/extensions' | '/login' | '/settings' | '/admin/users'
+  fullPaths:
+    | '/'
+    | '/dashboard'
+    | '/extensions'
+    | '/login'
+    | '/settings'
+    | '/admin/access'
+    | '/admin/users'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/dashboard' | '/extensions' | '/login' | '/settings' | '/admin/users'
-  id: '__root__' | '/' | '/dashboard' | '/extensions' | '/login' | '/settings' | '/admin/users'
+  to:
+    | '/'
+    | '/dashboard'
+    | '/extensions'
+    | '/login'
+    | '/settings'
+    | '/admin/access'
+    | '/admin/users'
+  id:
+    | '__root__'
+    | '/'
+    | '/dashboard'
+    | '/extensions'
+    | '/login'
+    | '/settings'
+    | '/admin/access'
+    | '/admin/users'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -86,6 +117,7 @@ export interface RootRouteChildren {
   ExtensionsRoute: typeof ExtensionsRoute
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
+  AdminAccessRoute: typeof AdminAccessRoute
   AdminUsersRoute: typeof AdminUsersRoute
 }
 
@@ -133,6 +165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/access': {
+      id: '/admin/access'
+      path: '/admin/access'
+      fullPath: '/admin/access'
+      preLoaderRoute: typeof AdminAccessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -142,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtensionsRoute: ExtensionsRoute,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
+  AdminAccessRoute: AdminAccessRoute,
   AdminUsersRoute: AdminUsersRoute,
 }
 export const routeTree = rootRouteImport
