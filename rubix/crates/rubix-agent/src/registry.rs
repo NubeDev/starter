@@ -5,16 +5,60 @@
 //! the binary has wired. The transport layer reads this once at
 //! startup and serves the registry's contents from then on. See
 //! [docs/design/tools/](../../docs/design/tools/README.md).
+//!
+//! ## Backing stores
+//!
+//! Several verb families (`flow_ops.*`, `user.*`, `tenant.*`,
+//! `team.*`) target trait-bound stores whose only impl today is
+//! `InMemory*`. The PG-backed swap is documented as a "one-line
+//! change in the agent boot wiring" in
+//! [`rubix-agent/tests/goal_3_flow_programmer_test.rs`] and in the
+//! per-store module docs. Wiring the in-memory variant here is
+//! **better than not registering the verbs at all** — the SDK +
+//! frontend already call them by id, so leaving them off the
+//! registry returns 404 to the SPA and silently breaks every admin
+//! surface that consumes them. The in-memory variant returns the
+//! correct *shape* (empty list / created row) so the UI renders
+//! its "no rows yet" empty state instead of an error toast.
+//!
+//! Tracked follow-ups (see
+//! [`docs/sessions/2026-05-24-tool-registry-gap.md`](../../../docs/sessions/2026-05-24-tool-registry-gap.md)):
+//!
+//! * Replace `InMemoryUserStore` with a `starter-auth-users`-backed
+//!   adapter so `rubix.user.list` reflects the operators created by
+//!   `rubix-admin bootstrap-user`.
+//! * Replace `InMemoryFlowDefStore` with a PG impl so deploys
+//!   survive restart (already seeded from `rubix_flows::bundled()`
+//!   below so list/lint/duplicate work read-only today).
+//! * Replace `InMemoryTenantStore` / `InMemoryTeamStore` likewise.
+//! * Implement and register the four read-only ClickHouse admin
+//!   verbs the SDK already calls (`rubix.clickhouse.{mart.list,
+//!   mart.drop, rule.list, tables.list}`).
 
 use std::sync::Arc;
 
 use rubix_tools::dashboard::assistant::DashboardAssistantStub;
+use rubix_tools::flow_ops::deploy::FlowDeployTool;
+use rubix_tools::flow_ops::duplicate::FlowDuplicateTool;
+use rubix_tools::flow_ops::lint::FlowLintTool;
+use rubix_tools::flow_ops::list::FlowListTool;
+use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
 use rubix_tools::system::alert_send::AlertSendTool;
 use rubix_tools::system::db::DbTool;
 use rubix_tools::system::disk::DiskTool;
 use rubix_tools::system::flow_errors::FlowErrorsTool;
+use rubix_tools::team::assign::TeamAssignTool;
+use rubix_tools::team::create::TeamCreateTool;
+use rubix_tools::team::store::{InMemoryTeamStore, TeamAdminStore};
+use rubix_tools::tenant::list::TenantListTool;
+use rubix_tools::tenant::store::{InMemoryTenantStore, TenantStore};
+use rubix_tools::user::create::UserCreateTool;
+use rubix_tools::user::disable::UserDisableTool;
+use rubix_tools::user::list::UserListTool;
+use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
+use tracing::{info, warn};
 
 /// Build the tool registry the agent serves at boot.
 ///
@@ -32,11 +76,46 @@ pub fn build_tool_registry(
     if let Some(client) = ch {
         disk = disk.with_history(client);
     }
+
+    // ---- shared in-memory stores (see module docs) ---------------
+    //
+    // Single Arc per store so the read + write verbs of a family see
+    // the same state within the process. A PG-backed impl can be
+    // dropped in here without touching the verb constructors.
+    let flow_store: Arc<dyn FlowDefStore> = Arc::new(seed_flow_store());
+    let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
+    let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::new());
+    let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
+
+    warn!(
+        target: "rubix.registry",
+        "user/tenant/team verbs are wired against in-memory stores; \
+         create/disable/assign state does not survive restart and \
+         does not reflect rows from starter-auth-users (PG-backed \
+         adapter is a tracked follow-up — see registry.rs module docs)",
+    );
+
     vec![
+        // ---- system / insights ----------------------------------
         Arc::new(disk),
         Arc::new(DbTool),
         Arc::new(FlowErrorsTool::default()),
         Arc::new(AlertSendTool),
+        // ---- flow_ops (read + write) ----------------------------
+        Arc::new(FlowListTool::new(flow_store.clone())),
+        Arc::new(FlowLintTool::new()),
+        Arc::new(FlowDeployTool::new(flow_store.clone())),
+        Arc::new(FlowDuplicateTool::new(flow_store.clone())),
+        // ---- user admin (read + write) --------------------------
+        Arc::new(UserListTool::new(user_store.clone())),
+        Arc::new(UserCreateTool::new(user_store.clone())),
+        Arc::new(UserDisableTool::new(user_store.clone())),
+        // ---- tenant admin (read-only today) ---------------------
+        Arc::new(TenantListTool::new(tenant_store.clone())),
+        // ---- team admin (write-only today) ----------------------
+        Arc::new(TeamCreateTool::new(team_store.clone())),
+        Arc::new(TeamAssignTool::new(team_store.clone())),
+        // ---- placeholders ---------------------------------------
         // Goal 1 is still deferred — this stub surfaces so the flow
         // YAML `flows/dashboard-assistant.yaml` can dispatch its
         // primary tool to a Diagnostic with code
@@ -47,25 +126,64 @@ pub fn build_tool_registry(
     ]
 }
 
+/// Seed an [`InMemoryFlowDefStore`] from the bundled flow YAMLs so
+/// `rubix.flow_ops.list` returns the canonical six rubix flows on
+/// a fresh boot. Each bundled file is inserted as revision 1 at
+/// timestamp 0; the deploy verb overwrites these with real
+/// revisions once a flow is mutated through the admin surface.
+fn seed_flow_store() -> InMemoryFlowDefStore {
+    let store = InMemoryFlowDefStore::new();
+    let mut seeded = 0usize;
+    for entry in rubix_flows::bundled().files() {
+        let Some(body) = entry.contents_utf8() else {
+            continue;
+        };
+        let Some(flow_id) = entry
+            .path()
+            .file_stem()
+            .and_then(|s| s.to_str())
+            .map(|s| format!("com.rubix.{s}"))
+        else {
+            continue;
+        };
+        // best-effort: ignore individual seed failures so a single
+        // malformed bundled file cannot brick boot.
+        match futures::executor::block_on(store.insert_revision(&flow_id, body, 0)) {
+            Ok(_) => seeded += 1,
+            Err(err) => warn!(
+                target: "rubix.registry",
+                %flow_id, error = %err,
+                "flow seed failed",
+            ),
+        }
+    }
+    info!(
+        target: "rubix.registry",
+        seeded,
+        "seeded in-memory flow store from rubix_flows::bundled()",
+    );
+    store
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    #[test]
-    fn registry_contains_disk_tool() {
-        let names: Vec<String> = build_tool_registry(None, 90)
+    fn names() -> Vec<String> {
+        build_tool_registry(None, 90)
             .iter()
             .map(|t| t.definition().name)
-            .collect();
-        assert!(names.contains(&"rubix.system.disk".to_owned()));
+            .collect()
+    }
+
+    #[test]
+    fn registry_contains_disk_tool() {
+        assert!(names().contains(&"rubix.system.disk".to_owned()));
     }
 
     #[test]
     fn registry_contains_every_wired_system_tool() {
-        let names: Vec<String> = build_tool_registry(None, 90)
-            .iter()
-            .map(|t| t.definition().name)
-            .collect();
+        let names = names();
         for expected in [
             "rubix.system.disk",
             "rubix.system.db",
@@ -77,5 +195,55 @@ mod tests {
                 "registry missing {expected}",
             );
         }
+    }
+
+    #[test]
+    fn registry_contains_flow_ops_quartet() {
+        let names = names();
+        for expected in [
+            "rubix.flow_ops.list",
+            "rubix.flow_ops.lint",
+            "rubix.flow_ops.deploy",
+            "rubix.flow_ops.duplicate",
+        ] {
+            assert!(
+                names.contains(&expected.to_owned()),
+                "registry missing {expected}",
+            );
+        }
+    }
+
+    #[test]
+    fn registry_contains_user_admin_verbs() {
+        let names = names();
+        for expected in ["rubix.user.list", "rubix.user.create", "rubix.user.disable"] {
+            assert!(
+                names.contains(&expected.to_owned()),
+                "registry missing {expected}",
+            );
+        }
+    }
+
+    #[test]
+    fn registry_contains_tenant_and_team_verbs() {
+        let names = names();
+        for expected in ["rubix.tenant.list", "rubix.team.create", "rubix.team.assign"] {
+            assert!(
+                names.contains(&expected.to_owned()),
+                "registry missing {expected}",
+            );
+        }
+    }
+
+    #[test]
+    fn flow_store_is_seeded_from_bundled_flows() {
+        // The bundle ships six goal-aligned flow YAMLs (one per
+        // goal). The seed should land all six as revision 1 so
+        // `rubix.flow_ops.list` is non-empty on first boot.
+        let store = seed_flow_store();
+        assert!(
+            store.len() >= rubix_flows::bundled().files().count(),
+            "expected seed_flow_store() to insert one row per bundled flow file",
+        );
     }
 }
