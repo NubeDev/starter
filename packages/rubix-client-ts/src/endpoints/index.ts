@@ -12,3 +12,6 @@ export * from "./alert.js";
 export * from "./user.js";
 export * from "./team.js";
 export * from "./tenant.js";
+export * from "./clickhouse.js";
+export * from "./flow_ops.js";
+export * from "./undo.js";
