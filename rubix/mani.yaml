@@ -80,6 +80,14 @@ tasks:
       docs/design/auth/README.md for the bootstrap contract.
     cmd: cargo run -p rubix-agent --bin rubix-admin -- bootstrap-user
 
+  mcp-stdio:
+    desc: |
+      Ad-hoc local launch of the rubix-admin MCP stdio transport
+      against the dev Postgres. Mirrors what Claude Desktop spawns;
+      see rubix/dev/claude-desktop.example.json for the host-side
+      snippet. RUBIX_PRINCIPAL_EMAIL selects the actor.
+    cmd: RUBIX_CONFIG=rubix/dev/agent.toml RUBIX_PRINCIPAL_EMAIL=op@example.com cargo run -p rubix-agent --bin rubix-admin -- mcp
+
   lint-doc-refs:
     desc: Enforce the doc-tier rule on every rubix Rust source file.
     cmd: ./rubix/scripts/lint-doc-refs.sh

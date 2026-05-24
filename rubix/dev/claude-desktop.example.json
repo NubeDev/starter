@@ -1,0 +1,14 @@
+{
+  "_comment": "Paste the `rubix` entry into your claude_desktop_config.json `mcpServers` block. RUBIX_PRINCIPAL_EMAIL selects the actor whose changelog rows the stdio session writes; RUBIX_CONFIG points at the agent.toml the binary loads (defaults: rubix/dev/agent.toml).",
+  "mcpServers": {
+    "rubix": {
+      "command": "cargo",
+      "args": ["run", "-p", "rubix-agent", "--bin", "rubix-admin", "--", "mcp"],
+      "env": {
+        "RUBIX_CONFIG": "rubix/dev/agent.toml",
+        "RUBIX_PRINCIPAL_EMAIL": "op@example.com",
+        "LANG": "en_US.UTF-8"
+      }
+    }
+  }
+}

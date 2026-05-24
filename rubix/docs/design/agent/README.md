@@ -70,6 +70,47 @@ in this order:
 8. Hands the composed router to
    [`health::serve`](../../crates/rubix-agent/src/health.rs).
 
+## The stdio MCP transport (`rubix-admin mcp`)
+
+The `rubix-admin` sibling binary exposes the same `FlowAsTool`
+catalogue over a Content-Length-framed JSON-RPC stdio loop so an
+MCP host (Claude Desktop, another agent) can launch rubix as a
+child process. Wiring lives in
+[`crates/rubix-agent/src/bin/rubix_admin/mcp/serve.rs`](../../crates/rubix-agent/src/bin/rubix_admin/mcp/serve.rs):
+
+1. Calls
+   [`boot::mcp::build_tool_registry`](../../crates/rubix-agent/src/boot/mcp.rs)
+   — the **same** composition the HTTP `build_mcp_surface` uses —
+   so `tools/list` returns an identical catalogue across transports.
+2. Resolves the session principal from `RUBIX_PRINCIPAL_EMAIL`
+   against `starter_auth_users::store::PgUserStore` when the
+   loaded `AgentConfig` carries a `database_url`. Missing env var
+   → localised `rubix.admin.mcp.principal.missing` on stderr, exit
+   1. Unknown email or pool-connect failure → localised
+   `rubix.admin.mcp.principal.not_found`, exit 1. No `database_url`
+   → the binary degrades gracefully and synthesises a principal
+   from the email, mirroring the HTTP binary's no-DSN tolerance.
+3. Binds the resolved `Principal` on
+   `starter_mcp::with_principal` for the lifetime of the loop so
+   audited tool bodies see the actor for changelog rows.
+4. Binds a session-wide locale fallback from `LANG` (POSIX-style
+   `es_AR.UTF-8` → BCP-47 `es-AR`). Per-call
+   `params._meta.acceptLanguage` still wins; the LANG fallback
+   only activates when the MCP host did not negotiate a locale on
+   `initialize`. Final fallback is `"en"`.
+
+`stdout` is reserved for MCP framing — `starter_observability`'s
+tracing init writes to stdout, so the `rubix-admin` `main.rs`
+skips installing the global subscriber when the verb is `mcp`.
+Operator-visible messages go to `stderr`. The framing itself is
+owned upstream by `starter-jsonrpc-stdio` (re-exported through
+`starter_mcp::run_stdio`); rubix never reimplements it.
+
+See [docs/design/i18n-prefs/](../i18n-prefs/README.md) for the
+locale cascade and [`rubix/dev/claude-desktop.example.json`](../../dev/claude-desktop.example.json)
+for the host-side snippet the operator pastes into
+`claude_desktop_config.json`.
+
 ## The auth + authz + audit sandwich
 
 The tools router runs inside three concentric middleware layers,
