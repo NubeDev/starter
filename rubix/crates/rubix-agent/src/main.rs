@@ -25,7 +25,7 @@ use axum::Router;
 use tracing::{info, warn};
 
 use rubix_agent::boot::{self, AgentConfig};
-use rubix_agent::{health, middleware, registry, routes};
+use rubix_agent::{health, middleware, openapi as rubix_openapi_mod, registry, routes};
 use starter_changelog_postgres::PgChangeRecorder;
 use starter_spi::changelog::ChangeRecorder;
 use starter_store_clickhouse::ChClient;
@@ -140,7 +140,10 @@ async fn main() -> Result<()> {
     // `/api/v1` so the production surface lands at
     // `POST /api/v1/mcp` per docs/design/mcp-ux/README.md.
     let mcp_routes = Router::new().nest("/api/v1", mcp.router);
-    let mut app: Router = health::healthz_router().merge(mcp_routes);
+    let openapi_doc = routes::openapi_doc::openapi_router(rubix_openapi_mod::rubix_openapi());
+    let mut app: Router = health::healthz_router()
+        .merge(mcp_routes)
+        .merge(openapi_doc);
 
     if let Some(dsn) = cfg.database_url.as_deref() {
         let pool = pg_connect(dsn)

@@ -32,6 +32,14 @@ pub async fn serve(bind: &str, router: Router) -> Result<()> {
 
 /// Liveness probe. Returns 200 with a tiny JSON body — no DB, no
 /// downstream calls. A reachable port is the entire signal.
-async fn healthz() -> &'static str {
+#[utoipa::path(
+    get,
+    path = "/healthz",
+    tag = "system",
+    responses(
+        (status = 200, description = "Agent is alive; body is `{\"status\":\"ok\"}`"),
+    ),
+)]
+pub(crate) async fn healthz() -> &'static str {
     r#"{"status":"ok"}"#
 }
