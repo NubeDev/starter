@@ -1,0 +1,38 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+AI_AGENT_SPEC
+BRANCH_SPEC
+BUILTIN_NODE_KINDS
+BaseNode
+DEFAULT_EDGE_TYPES
+FlowCanvas
+NodeKindRegistry
+NodePalette
+SLOT_COLORS
+SUBFLOW_SPEC
+SlotHandle
+TOOL_CALL_SPEC
+TRANSFORM_SPEC
+TRIGGER_SPEC
+TypedEdge
+colorForKind
+defaultCompatible
+type BaseNodeProps
+type FlowCanvasProps
+type FlowEdge
+type FlowGraph
+type FlowId
+type FlowNode
+type NodeId
+type NodeKindComponent
+type NodeKindEntry
+type NodeKindSpec
+type NodeRunState
+type RFNodeData
+type RunOverlay
+type SlotKind
+type SlotName
+type SlotSpec
+useFlowGraph
+useTypedConnect

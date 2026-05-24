@@ -9,6 +9,8 @@
     "typecheck": "pnpm -r run typecheck",
     "test": "pnpm -r run test",
     "codegen": "pnpm --filter @nube/starter-client-ts run codegen",
-    "check:i18n": "node scripts/check-i18n.mjs"
+    "check:i18n": "node scripts/check-i18n.mjs",
+    "api:check": "node scripts/check-public-api.mjs",
+    "api:update": "node scripts/check-public-api.mjs --update"
   }
 }

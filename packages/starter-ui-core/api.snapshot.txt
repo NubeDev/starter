@@ -1,0 +1,151 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+ALLOWED_UNITS
+AuthProvider
+CANONICAL_UNIT
+DEFAULT_PRESETS
+DEFAULT_WORKSPACE
+DENSITY_SCALE
+FONT_SIZE_SCALE
+I18N_FALLBACK_LANGUAGE
+IntlContext
+IntlProvider
+NON_COLOR_KEYS
+PREFERENCES_BROADCAST_CHANNEL
+PreferencesContext
+PreferencesProvider
+STARTER_QUERY_PREFIX
+SettingsPage
+TO_CANONICAL
+UNIT_QUANTITY
+UNIT_SYMBOL
+UnitConversionError
+_resetCatalogCacheForTesting
+_resetExtensionMessagesForTesting
+_resetI18nTelemetryForTesting
+_resetLocaleFallbackDedupeForTesting
+_resetManifestCacheForTesting
+_resetPreferencesTelemetryForTesting
+applyThemePreferences
+applyThemeToElement
+clearThemeFromElement
+clearThemePreferences
+colorFormatter
+convertUnit
+createLayoutPreferencesStore
+defaultDarkThemeStyles
+defaultLayoutPreferences
+defaultLightThemeStyles
+defaultThemeStyles
+emitI18nTelemetry
+emitPreferencesTelemetry
+extensionMessagesVersion
+externalStrategy
+fetchCatalog
+fetchManifest
+formatCurrency
+formatDate
+formatDateTime
+formatNumber
+formatQuantity
+formatTime
+generateCssString
+generateTailwindThemeCss
+generateYamlString
+getContrastRatio
+getContrastTier
+getExtensionMessages
+httpThemeTransport
+inMemoryThemeTransport
+isStarterQueryKey
+loadCatalogCached
+localStorageThemeTransport
+parse
+parseCssInput
+preferredUnitFor
+registerExtensionMessages
+resolveLocale
+resolveMode
+sessionStrategy
+setExtensionMessageTelemetry
+setI18nTelemetry
+setPreferencesTelemetry
+starterQueryKey
+subscribeExtensionMessages
+subscribePrefersDark
+subscribePrefersReducedMotion
+toHexForPicker
+toOklchString
+toRgb
+tokenStrategy
+type AppMessageKeys
+type ApplyPreferencesResult
+type AuthContextValue
+type AuthProviderProps
+type AuthStatus
+type AuthStrategy
+type Catalog
+type Color
+type ColorFormat
+type ContrastTier
+type CreateLayoutPreferencesStoreOptions
+type CurrencyCode
+type DateFormat
+type Density
+type ExtensionMessageTelemetryEvent
+type ExtensionMessageTelemetrySink
+type FontSize
+type I18nManifest
+type I18nTelemetryEvent
+type I18nTelemetrySink
+type IntlContextValue
+type IntlProviderProps
+type LanguageTag
+type LayoutPreferences
+type LayoutPreferencesState
+type LocaleFallbackResult
+type LoginInput
+type MessageKey
+type MessageValues
+type ModePreference
+type Motion
+type NumberFormat
+type PaletteId
+type PreferencesContextValue
+type PreferencesPatch
+type PreferencesProviderProps
+type PreferencesTelemetryEvent
+type PreferencesTelemetrySink
+type Quantity
+type RegisterExtensionMessagesInput
+type ResolvedMode
+type ResolvedPreferences
+type SettingsPageProps
+type ShellConfig
+type Theme
+type ThemeDocument
+type ThemeEditorState
+type ThemeMode
+type ThemePreset
+type ThemeStyleKey
+type ThemeStyleProps
+type ThemeStyles
+type ThemeTransport
+type TimeFormat
+type ToastFn
+type TranslateFn
+type Unit
+type UnitSystem
+type UnitsResponse
+type UseThemeEditorResult
+type WeekStart
+unregisterExtensionMessages
+useAuth
+useIntlContext
+useLayoutPreferences
+usePreferences
+useThemeEditor
+useThemeEditorStore
+useThemePresets
+useTranslate

@@ -1,8 +1,7 @@
 // Sidebar primitive: cookie-persisted open/collapsed (`sidebar_state`),
 // auto icon-rail under 1024 px. See SIDEBAR.md §1.
 import * as React from "react"
-import { HugeiconsIcon } from "@hugeicons/react"
-import { ArrowRight01Icon } from "@hugeicons/core-free-icons"
+import { ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Collapsible,
@@ -188,8 +187,7 @@ export function SidebarGroupLabel({
         className,
       )}
     >
-      <HugeiconsIcon
-        icon={ArrowRight01Icon}
+      <ChevronRight
         strokeWidth={2}
         className="size-3 shrink-0 transition-transform duration-150 group-data-[state=open]/group-label:rotate-90"
       />
@@ -359,8 +357,7 @@ function SidebarTreeRow({
       }}
     >
       {hasChildren ? (
-        <HugeiconsIcon
-          icon={ArrowRight01Icon}
+        <ChevronRight
           strokeWidth={2}
           className={cn(
             "size-3 shrink-0 transition-transform duration-150",

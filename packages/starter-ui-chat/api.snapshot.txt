@@ -1,0 +1,42 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+Chat
+ChatComposer
+ChatEmpty
+ChatFooter
+ChatHeader
+ChatMessage
+ChatMessageList
+ChatRoot
+ChatTypingIndicator
+cn
+createEchoAdapter
+createLocalStorageStore
+createSseAdapter
+fileToAttachment
+formatBytes
+formatTime
+isImageAttachment
+makeId
+type ChatAdapter
+type ChatAttachment
+type ChatEmptySuggestion
+type ChatMessage
+type ChatProps
+type ChatRole
+type ChatSendInput
+type ChatStatus
+type ChatStore
+type ChatStreamDelta
+type ChatToolCall
+type LocalStorageStoreOptions
+type SseAdapterOptions
+type UseAutoScrollOptions
+type UseAutoScrollReturn
+type UseChatOptions
+type UseChatPersistence
+type UseChatReturn
+useAutoScroll
+useAutosizeTextarea
+useChat

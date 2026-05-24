@@ -1,0 +1,24 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+DEFAULT_MARGINS
+DEFAULT_PAGE_OPTIONS
+ExportButton
+PageOptionsForm
+PrintableContent
+dimensionsMm
+exportNodeToPdf
+printNode
+type CustomPageSize
+type ExportButtonProps
+type ExportFormat
+type Margins
+type NamedPageSize
+type Orientation
+type PageOptions
+type PageOptionsFormProps
+type PageSize
+type PrintNodeExtras
+type PrintableContentProps
+type UsePrintResult
+usePrint

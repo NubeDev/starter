@@ -1,0 +1,40 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+SkillActionButton
+SkillDetail
+SkillFilterBar
+SkillHash
+SkillList
+SkillListItem
+SkillTrustBadge
+SkillsManager
+cn
+createInMemorySkillsAdapter
+formatBytes
+formatRelative
+shortHash
+type InMemorySkillsAdapterOptions
+type Skill
+type SkillActionButtonProps
+type SkillApprovalRow
+type SkillDetailProps
+type SkillFilterBarProps
+type SkillHashProps
+type SkillListItemProps
+type SkillListProps
+type SkillQuarantineReason
+type SkillResourceRef
+type SkillSummary
+type SkillTrust
+type SkillTrustBadgeProps
+type SkillsAdapter
+type SkillsFilter
+type SkillsListResult
+type SkillsManagerProps
+type UseSkillOptions
+type UseSkillReturn
+type UseSkillsOptions
+type UseSkillsReturn
+useSkill
+useSkills

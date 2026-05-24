@@ -1,0 +1,14 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+StarterClient
+StarterError
+type Health
+type LoginRequest
+type LoginResponse
+type MeResponse
+type ThemeDocument
+type ThemeSaveRequest
+type ThemeShellConfig
+type ThemeStyleProps
+type ThemeStyles

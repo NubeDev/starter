@@ -6,18 +6,9 @@ glue and `@nube/starter-client-ts` for the wire.
 
 ## Icons
 
-This package depends on **HugeIcons**:
+This package uses **[`lucide-react`](https://www.npmjs.com/package/lucide-react)** — the icon library that ships with shadcn/ui by default. One icon family means one consistent visual language across the kit.
 
-- [`@hugeicons/react`](https://www.npmjs.com/package/@hugeicons/react)
-  — the renderer component.
-- [`@hugeicons/core-free-icons`](https://www.npmjs.com/package/@hugeicons/core-free-icons)
-  — the free icon set used throughout the kit.
-
-A single icon family was chosen so the kit ships one consistent visual
-language. Consumers needing a different set can either: (a) swap the
-peer dep and re-import in their own copy of the components, or
-(b) wrap the HugeIcon component behind a thin adapter at the
-application boundary.
+Consumers needing a different set can swap icons at the application boundary by re-exporting components with their own preferred renderer.
 
 ## What's in the box
 

@@ -1,0 +1,12 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+BlobUploadTransportError
+BlobUploadValidationError
+metaKeys
+type BlobMeta
+type BlobRef
+type PresignResponse
+type UseBlobUploadOptions
+type UseBlobUploadResult
+useBlobUpload

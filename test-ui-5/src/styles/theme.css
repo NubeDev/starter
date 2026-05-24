@@ -2,6 +2,14 @@
 @import './primitives.css';
 @import './tokens.css';
 
+/* Tailwind v4 doesn't scan node_modules by default. The graduated
+ * ConfigDrawer + Sheet primitives live in `@nube/starter-ui-kit`; tell
+ * Tailwind to walk that source so its utility classes (bg-popover,
+ * data-[side=right], slide-in-from-right-10, ...) end up in our CSS
+ * bundle. Without this the sheet opens but renders unstyled.
+ */
+@source '../../../packages/starter-ui-kit/src';
+
 /* ---------------------------------------------------------------------------
    Theme tokens
    ----------------------------------------------------------------------------

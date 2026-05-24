@@ -1,0 +1,28 @@
+# Public API snapshot — DO NOT edit by hand.
+# Regenerate with: pnpm api:update
+# Source: src/index.ts
+AiBuilder
+AiBuilderCanvas
+BuilderTranscript
+cn
+createFixtureBuilderAdapter
+createHttpBuilderAdapter
+fixtureTree
+makeId
+treeHasId
+type AiBuilderCanvasProps
+type AiBuilderProps
+type BuilderAdapter
+type BuilderEvent
+type BuilderMode
+type BuilderPhase
+type BuilderSendInput
+type BuilderTranscriptEntry
+type BuilderTranscriptProps
+type FixtureBuilderAdapterOptions
+type HttpBuilderAdapterOptions
+type ShellPatch
+type TokenPatch
+type UseBuilderOptions
+type UseBuilderReturn
+useBuilder
