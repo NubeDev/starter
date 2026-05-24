@@ -1,13 +1,11 @@
 {
   "brand.name": "Nube",
   "brand.tagline": "Consola IoT",
-
   "common.search": "Buscar…",
   "common.active": "activo",
   "common.signOut": "Cerrar sesión",
   "common.default": "Predeterminado",
   "common.auto": "Auto",
-
   "a11y.searchButton": "Buscar",
   "a11y.paletteButton": "Paleta",
   "a11y.paletteTitle": "Paleta de colores",
@@ -15,29 +13,23 @@
   "a11y.localeButton": "Idioma",
   "a11y.themeMode": "Modo de tema: {mode}",
   "a11y.themeModeTitle": "Modo: {mode} (clic para {next})",
-
   "user.role": "Administrador · Acme Energy",
   "user.menu.profile": "Perfil",
   "user.menu.tenants": "Inquilinos",
   "user.menu.apiKeys": "Claves de API",
   "user.menu.billing": "Facturación",
-
   "palette.nube": "Nube",
   "palette.ocean": "Océano",
   "palette.sunset": "Atardecer",
-
   "mode.light": "Claro",
   "mode.dark": "Oscuro",
   "mode.system": "Sistema",
-
   "font.geist": "Geist",
   "font.inter": "Inter",
   "font.manrope": "Manrope",
   "font.system": "Sistema",
-
   "locale.en": "English",
   "locale.es": "Español",
-
   "nav.group.overview": "Resumen",
   "nav.group.fleet": "Flota",
   "nav.group.platform": "Plataforma",
@@ -50,7 +42,6 @@
   "nav.item.insights": "Análisis",
   "nav.item.gitOps": "Git ops",
   "nav.item.settings": "Ajustes",
-
   "dashboard.eyebrow": "Panel en vivo",
   "dashboard.titlePrefix": "La flota de un",
   "dashboard.titleAccent": "vistazo.",
@@ -68,7 +59,6 @@
   "dashboard.site.southCampus": "Campus sur",
   "dashboard.site.eastTower": "Torre este",
   "dashboard.site.westDepot": "Depósito oeste",
-
   "settings.eyebrow": "Ajustes",
   "settings.title": "Apariencia",
   "settings.subtitle": "Haz que la consola se sienta como en casa. Los cambios se aplican al instante y persisten entre sesiones.",
@@ -100,7 +90,6 @@
   "settings.collapsible.offcanvas.hint": "Se desliza fuera por completo",
   "settings.collapsible.none": "Bloqueada",
   "settings.collapsible.none.hint": "Siempre abierta",
-
   "home.badge.live": "En vivo · {count} dispositivos transmitiendo",
   "home.hero.titlePrefix": "La capa operativa del",
   "home.hero.titleAccent": "mundo físico.",
@@ -110,7 +99,6 @@
   "home.stats.devicesOnline": "Dispositivos en línea",
   "home.stats.flowsPerSecond": "Flujos / segundo",
   "home.stats.extensions": "Extensiones",
-
   "home.capabilities.eyebrow": "Qué incluye",
   "home.capabilities.titlePrefix": "Una plataforma IoT que",
   "home.capabilities.titleAccent": "no estorba.",
@@ -132,7 +120,6 @@
   "home.feature.git.eyebrow": "06 · Git-nativo",
   "home.feature.git.title": "Todo es un archivo",
   "home.feature.git.body": "Tags, flujos, paneles — todo en git. Ramifica, compara, revisa, revierte.",
-
   "home.cta2.badge": "Vista previa pública · Q2 2026",
   "home.cta2.titlePrefix": "Pon tu flota",
   "home.cta2.titleAccent": "en línea",
@@ -140,7 +127,6 @@
   "home.cta2.subtitle": "Instala el agente, apúntalo a tus dispositivos y entrega tu primer panel antes del almuerzo.",
   "home.cta2.openConsole": "Abrir la consola",
   "home.cta2.bookDemo": "Reservar demo",
-
   "activity.title": "Señal viva",
   "activity.streaming": "transmitiendo",
   "activity.now": "ahora",
@@ -156,14 +142,10 @@
   "activity.item.co2Vented.meta": "dormitorio · 740 → 480 ppm",
   "activity.item.greywater.title": "Aguas grises recicladas",
   "activity.item.greywater.meta": "32 L desviados al jardín",
-
   "chart.energyHarvested": "Energía recolectada",
-
   "boot.tagline": "Respira · Bebe · Crece",
-
   "layoutToggle.header": "Encabezado",
   "layoutToggle.sidebar": "Barra lateral",
-
   "config.title": "Ajustes de tema",
   "config.description": "Ajusta la apariencia y el diseño a tu gusto.",
   "config.triggerAria": "Abrir ajustes de tema",
@@ -174,42 +156,35 @@
   "config.tab.layout": "Diseño",
   "config.tab.branding": "Marca",
   "config.tab.advanced": "Avanzado",
-
   "config.theme.title": "Tema",
   "config.theme.groupAria": "Seleccionar preferencia de tema",
   "config.theme.resetAria": "Restablecer preferencia de tema",
   "config.theme.system.aria": "Seleccionar tema del sistema",
   "config.theme.light.aria": "Seleccionar tema claro",
   "config.theme.dark.aria": "Seleccionar tema oscuro",
-
   "config.palette.title": "Paleta",
   "config.palette.groupAria": "Seleccionar paleta",
   "config.palette.resetAria": "Restablecer paleta",
-
   "config.font.title": "Fuente",
   "config.font.groupAria": "Seleccionar fuente",
   "config.font.resetAria": "Restablecer fuente",
-
   "config.fontSize.title": "Tamaño de fuente base",
   "config.fontSize.groupAria": "Seleccionar tamaño de fuente base",
   "config.fontSize.resetAria": "Restablecer tamaño de fuente",
   "config.fontSize.sm": "Pequeño",
   "config.fontSize.md": "Mediano",
   "config.fontSize.lg": "Grande",
-
   "config.density.title": "Densidad",
   "config.density.groupAria": "Seleccionar densidad",
   "config.density.resetAria": "Restablecer densidad",
   "config.density.compact": "Compacta",
   "config.density.comfortable": "Cómoda",
   "config.density.spacious": "Espaciosa",
-
   "config.motion.title": "Movimiento",
   "config.motion.groupAria": "Seleccionar preferencia de movimiento",
   "config.motion.resetAria": "Restablecer preferencia de movimiento",
   "config.motion.full": "Movimiento completo",
   "config.motion.reduced": "Reducido",
-
   "config.comingSoon": "Próximamente",
   "config.branding.title": "Marca",
   "config.branding.description": "Personaliza cómo se ve tu espacio para los usuarios.",
@@ -223,7 +198,6 @@
   "config.branding.tabName.description": "Sustituye al título por defecto del documento.",
   "config.branding.tabName.placeholder": "Nube IoT Console",
   "config.branding.fileLimit": "PNG, SVG hasta 1 MB",
-
   "config.advanced.title": "Avanzado",
   "config.advanced.description": "Control fino para usuarios avanzados y sistemas de diseño.",
   "config.advanced.palette.label": "Paleta personalizada",
@@ -235,5 +209,44 @@
   "config.advanced.font.description": "Sube un archivo de fuente o proporciona una URL de Google Fonts.",
   "config.advanced.font.placeholder": "https://fonts.googleapis.com/css2?family=…",
   "config.advanced.font.or": "o",
-  "config.advanced.font.upload": "Sube .woff, .woff2 o .ttf"
+  "config.advanced.font.upload": "Sube .woff, .woff2 o .ttf",
+  "rubix.admin.mcp.principal.missing": "RUBIX_PRINCIPAL_EMAIL no está definido; rubix-admin mcp no puede resolver un actor para la sesión stdio.",
+  "rubix.admin.mcp.principal.not_found": "No existe ningún usuario con el correo {email} en la base de datos de rubix; cree uno con `rubix-admin bootstrap-user` antes de iniciar la sesión MCP por stdio.",
+  "rubix.alert.send.ok": "Alerta emitida con severidad {severity} (el {at}).",
+  "rubix.analytics.query.bind_error": "La consulta analítica {name} falló al enlazar parámetros o al ejecutarse en ClickHouse.",
+  "rubix.analytics.query.ran": "La consulta analítica {name} se ejecutó ({rows} filas).",
+  "rubix.analytics.query.unknown_template": "Consulta analítica rechazada — no existe la plantilla {name}.",
+  "rubix.analytics.report.empty": "Informe analítico {template} generado sin datos ({format}, {queries} consultas devolvieron cero filas).",
+  "rubix.analytics.report.format_unsupported": "Informe analítico rechazado — el formato {format} no es compatible con este binario.",
+  "rubix.analytics.report.rendered": "Informe analítico {template} generado como {format} ({bytes} bytes, {queries} consultas).",
+  "rubix.clickhouse.mart.already_exists": "El mart de ClickHouse {mart} ya existe; sin cambios (el {at}).",
+  "rubix.clickhouse.mart.created": "Mart de ClickHouse {mart} creado (el {at}); deshacer ejecutará DROP TABLE y se perderán las filas ingresadas después.",
+  "rubix.clickhouse.retention.set": "Retención de la tabla ClickHouse {table} establecida en {days} días (el {at}).",
+  "rubix.clickhouse.retention.unchanged": "La retención de la tabla ClickHouse {table} ya es {days} días; sin cambios (el {at}).",
+  "rubix.clickhouse.rule.invalid": "DDL de la regla de ClickHouse no válido (debe comenzar con CREATE o ALTER).",
+  "rubix.clickhouse.rule.written": "Regla de ClickHouse {rule} escrita (el {at}).",
+  "rubix.flow.canceled": "La operación fue cancelada.",
+  "rubix.flow.deploy.invalid": "Despliegue de flujo rechazado — el cuerpo YAML no es válido.",
+  "rubix.flow.deployed": "Flujo {flow_id} desplegado (el {at}).",
+  "rubix.flow.duplicated": "Flujo {source} duplicado como {target} (el {at}).",
+  "rubix.flow.lint.found_errors": "El cuerpo del flujo tiene {count} errores de lint.",
+  "rubix.flow.linted": "El cuerpo del flujo se analiza correctamente; sin errores de lint.",
+  "rubix.flow.listed": "Se listaron {count} flujos.",
+  "rubix.goal.not_wired": "El objetivo {goal} aún no está conectado; consulte {design_doc} para los criterios de desbloqueo.",
+  "rubix.skill.denied": "La habilidad {skill} no permite la herramienta {tool}.",
+  "rubix.system.db.ok": "La base de datos está accesible ({used} bytes en uso, sondeado el {at}).",
+  "rubix.system.db.unreachable": "La base de datos no está accesible (sondeado el {at}).",
+  "rubix.system.disk.full": "El disco está lleno ({percent}% usado, {free} libre, sondeado el {at}).",
+  "rubix.system.disk.ok": "El uso del disco es normal ({percent}% usado, {free} libre, sondeado el {at}).",
+  "rubix.system.disk.warn": "El disco está casi lleno ({percent}% usado, {free} libre, sondeado el {at}).",
+  "rubix.system.flow_errors.error": "{count} errores de flujo en los últimos {window}s — investigar (sondeado el {at}).",
+  "rubix.system.flow_errors.ok": "Sin errores de flujo en los últimos {window}s (sondeado el {at}).",
+  "rubix.system.flow_errors.warn": "{count} errores de flujo en los últimos {window}s (sondeado el {at}).",
+  "rubix.team.assigned": "Usuario {user} añadido al equipo {team} (el {at}).",
+  "rubix.team.created": "Equipo {name} creado (el {at}).",
+  "rubix.tenant.listed": "Se listaron {count} inquilinos.",
+  "rubix.user.already_disabled": "El usuario {email} ya estaba deshabilitado (desde {at}).",
+  "rubix.user.created": "Usuario {email} creado con rol {role} (el {at}).",
+  "rubix.user.disabled": "Usuario {email} deshabilitado (el {at}).",
+  "rubix.user.listed": "Se listaron {count} usuarios."
 }

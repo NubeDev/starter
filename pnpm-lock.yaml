@@ -677,6 +677,9 @@ importers:
       '@nube/rubix-client-ts':
         specifier: workspace:*
         version: link:../packages/rubix-client-ts
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../packages/starter-client-ts
       '@nube/starter-ui-core':
         specifier: workspace:*
         version: link:../../packages/starter-ui-core
