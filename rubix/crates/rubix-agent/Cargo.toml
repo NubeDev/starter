@@ -71,6 +71,9 @@ starter-store-sqlite     = { workspace = true, features = ["testing"] }
 starter-store-postgres   = { workspace = true, features = ["testing"] }
 starter-store-clickhouse = { workspace = true, features = ["testing"] }
 starter-undo             = { workspace = true }
+starter-blob-fs          = { workspace = true }
+bytes                    = { workspace = true }
+tempfile                 = "3"
 rubix-store-postgres     = { workspace = true }
 sqlx                     = { workspace = true, features = ["postgres", "macros", "runtime-tokio"] }
 async-trait              = { workspace = true }

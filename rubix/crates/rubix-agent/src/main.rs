@@ -88,6 +88,33 @@ async fn main() -> Result<()> {
             None => None,
         };
     let mcp = boot::mcp::build_mcp_surface(ch_client.clone(), mcp_pool.clone()).await?;
+
+    // Phase D.2 — durable cron scheduler. Wires only when a PG
+    // pool is present (the scheduler's claim/dispatch loop is
+    // table-driven; no table means nothing to claim) and when
+    // `[scheduler].enabled` is true (default). The handle is
+    // intentionally leaked into the process lifetime — the
+    // tokio runtime aborts the tick task on shutdown via the
+    // same pattern as `_undo_sweep` above.
+    let _scheduler = if let Some(pool) = mcp_pool.clone() {
+        match boot::spawn_scheduler(pool, mcp.tools.clone(), &cfg.scheduler).await? {
+            Some(handle) => {
+                info!(
+                    target: "rubix.boot.scheduler",
+                    seeded = handle.seeded,
+                    "durable scheduler running"
+                );
+                Some(handle)
+            }
+            None => None,
+        }
+    } else {
+        warn!(
+            target: "rubix.boot.scheduler",
+            "RUBIX_DATABASE_URL unset — scheduled flows will not fire",
+        );
+        None
+    };
     let _flow_notify = boot::spawn_flow_notify(
         cfg.database_url.as_deref(),
         std::sync::Arc::new(|(flow_id, revision, _body)| {

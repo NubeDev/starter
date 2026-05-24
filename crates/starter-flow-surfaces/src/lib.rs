@@ -14,7 +14,9 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod clock;
 pub mod flow_registry;
+pub mod service;
 
 pub use flow_registry::{
     register::FlowRegistration, resolve::FromRegistryError, FlowRegistry, FlowRegistryError,

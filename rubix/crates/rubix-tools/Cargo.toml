@@ -36,13 +36,35 @@ uuid                      = { workspace = true }
 starter-undo              = { workspace = true }
 starter-changelog         = { workspace = true }
 
+# analytics.query bundles its named SQL templates via `include_dir!`
+# at compile time — same pattern as `rubix-flows` and `rubix-skills`.
+# See src/analytics/templates/.
+include_dir               = "0.7"
+
+# analytics.report stitches several named queries into one rendered
+# artifact via starter-export and persists the bytes through any
+# `starter_spi::blob::BlobStore` (in practice `starter-blob-fs`).
+# See src/analytics/report.rs.
+starter-export            = { workspace = true, features = ["html", "csv", "json"] }
+bytes                     = { workspace = true }
+
 [dev-dependencies]
+# analytics.report integration test writes the rendered bytes to a
+# tempdir-backed FsBlobStore. Pulled into dev only — the verb itself
+# is BlobStore-trait-only, so production wiring can swap in any
+# backend without touching this crate's compile graph.
+starter-blob-fs    = { workspace = true }
+tempfile           = "3"
+futures            = { workspace = true }
 chrono             = { workspace = true }
 # Recorded-LLM round-trip harness for the system.disk verb. Pulls
 # the ai-agent node body + the starter `RecordingAiRunner` fake so
 # the tool exercise the same NodeBehavior::invoke seam production
 # uses. See docs/design/tools/.
 starter-ai         = { workspace = true, features = ["testing"] }
+# testcontainers-based ClickHouse harness for the analytics.query
+# integration test. See tests/analytics_query_test.rs.
+starter-store-clickhouse = { workspace = true, features = ["testing"] }
 starter-flow       = { workspace = true }
 starter-flow-nodes = { workspace = true, features = ["ai-agent", "tool-call"] }
 starter-flow-spi   = { workspace = true }

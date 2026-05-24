@@ -38,6 +38,19 @@ blake3 = "1"
 # with the optional dep already used by starter-flow-watch.
 serde_yaml = "0.9"
 
+# Phase B.1 (Goal 6 — durable scheduler). `service::FlowAsService`
+# under `src/service.rs` writes `starter_scheduled_flows` rows
+# through the starter-store-postgres `Pool` wrapper, validates
+# cron expressions via `starter-cron::next_fire`, and stamps
+# ULID-shaped TEXT primary keys. See
+# `.codeless/jobs/rubix-goal-6-weekly-report/SCOPE.md` Phase B.
+starter-cron           = { workspace = true }
+starter-store-postgres = { workspace = true }
+sqlx   = { workspace = true, features = ["postgres", "macros", "chrono", "uuid"] }
+chrono = { workspace = true }
+uuid   = { workspace = true, features = ["v4"] }
+ulid   = "1"
+
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread", "sync", "time"] }
 prometheus = { workspace = true }
@@ -45,3 +58,8 @@ async-trait = { workspace = true }
 serde_json = { workspace = true }
 schemars = { workspace = true }
 tempfile = "3"
+# Phase B.1 register_test.rs — ephemeral PG via testcontainers.
+starter-store-postgres = { workspace = true, features = ["testing"] }
+sqlx  = { workspace = true, features = ["postgres", "macros", "runtime-tokio", "chrono"] }
+chrono = { workspace = true }
+uuid   = { workspace = true, features = ["v4"] }

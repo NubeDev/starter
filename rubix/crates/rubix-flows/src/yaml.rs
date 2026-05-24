@@ -19,6 +19,13 @@ pub struct RubixFlowYaml {
     /// Trigger declaration (`explicit`, `schedule(cron = "...")`, …).
     #[serde(default)]
     pub trigger: Option<String>,
+    /// Cron expression for `trigger: schedule` flows. Surfaces at
+    /// the YAML root (not on a node) so the rubix-agent boot
+    /// seeder can register the schedule against `starter-flow-surfaces`'s
+    /// durable cron table without descending into node configs. See
+    /// `rubix-agent/src/boot/scheduler.rs`.
+    #[serde(default)]
+    pub cron_expr: Option<String>,
     /// Declared nodes (first is the root).
     #[serde(default)]
     pub nodes: Vec<RubixNodeYaml>,

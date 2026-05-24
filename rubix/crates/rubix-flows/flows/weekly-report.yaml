@@ -1,23 +1,25 @@
-# Bundled rubix flow — see SCOPE Phase plan for which phase wires this.
+# Bundled rubix flow — Goal 6: weekly analytics report.
 id: com.rubix.weekly-report
 description: |
-  analytics-reporter flow rooted at an ai-agent node. Auto-surfaces as an MCP
-  tool via FlowAsTool (no per-flow MCP wiring per SCOPE R7).
-trigger: explicit
+  analytics-reporter flow rooted at an ai-agent node. Runs weekly on
+  Monday 08:00 UTC via the durable FlowAsService scheduler, queries
+  the warehouse through `analytics.query`, and renders an HTML report
+  blob via `analytics.report`. Auto-surfaces as an MCP tool via
+  FlowAsTool (no per-flow MCP wiring per SCOPE R7).
+trigger: schedule
+cron_expr: "0 8 * * 1"
 
 nodes:
   - id: agent
     kind: ai-agent
     config:
-      session_policy: continue
+      session_policy: fresh
       skill_hint: com.rubix.analytics-reporter
       cost_cap: 0.50_usd
-      # Goal 6 is deferred. Primary tool dispatch returns
-      # Diagnostic { code: rubix.goal.not_wired }. Replace with
-      # the real analytics verbs once the report sink lands. See
-      # rubix-tools/src/analytics/weekly_report.rs and
-      # docs/design/reports/README.md.
       allowed_tools:
-        - com.rubix.weekly-report
+        - analytics.query
+        - analytics.report
+        - rubix.alert.send
+        - rubix.undo.last
 
 links: []

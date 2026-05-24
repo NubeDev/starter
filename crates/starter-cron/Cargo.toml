@@ -1,0 +1,16 @@
+[package]
+name        = "starter-cron"
+description = "starter — durable cron primitive: parse cron expressions and compute next-fire times."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+# `cron` parses standard 5/6/7-field cron expressions and computes
+# upcoming fire times against a `chrono` clock. We pin a recent 0.12.x
+# which is the current line on crates.io.
+cron      = "0.12"
+chrono    = { workspace = true }
+thiserror = { workspace = true }
