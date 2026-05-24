@@ -428,24 +428,34 @@ phases never use it.
 
 ---
 
-## 16. Flow surfaces — `FlowAsService` (🟧 major, Phase 4)
+## 16. Flow surfaces — `FlowAsService` (🟧 major, Phase 4) — ✅ addressed in branch `codeless/rubix-goal-6-weekly-report`
 
-**What's missing.** SCOPE leans on `FlowAsTool` (every flow is an
-MCP tool, automatically). The companion `FlowAsService`
-(`starter-flow-surfaces`) is what gives a flow a *trigger* —
-schedule, event sink, etc. Phase 4 says "cron via `starter-flow`
-Service surface" but doesn't say `FlowAsService` by name.
+**Status.** Addressed. The durable cron scheduler landed upstream
+across three commits:
 
-**Proposed promotion.**
+- `starter-cron` crate — 5/6/7-field cron grammar + `next_fire`
+  evaluator (replaces the 5-field-only parser that previously
+  rejected bundled `weekly-report.yaml`).
+- `starter-store-postgres` migration `scheduled_flows/0001_init.sql`
+  — durable table with a `pg_notify('starter_scheduled_flows', …)`
+  trigger on insert + `next_run_at` / `enabled` change.
+- `starter-flow-surfaces::FlowAsService` — `register_schedule` /
+  `unregister_schedule` API, `Clock` trait (`SystemClock` +
+  `TestClock`), and a `tick()` loop claiming due rows via
+  `SELECT FOR UPDATE SKIP LOCKED LIMIT 32`, dispatching through
+  `FlowRunner`, then writing `last_run_*` + recomputing
+  `next_run_at`.
 
-- Update SCOPE Phase 4 + `docs/design/flows/README.md` to name
-  `FlowAsService` and cite
-  [starter-flow-surfaces](../../../crates/starter-flow-surfaces).
-- Add to `docs/design/agent/README.md` the explicit distinction:
-  - `FlowAsTool` → MCP / REST / CLI dispatch.
-  - `FlowAsService` → cron / event / webhook trigger.
+Rubix-agent now seeds `scheduled_flows` at boot from every bundled
+YAML carrying `trigger: schedule`, and the `[scheduler]` section
+of `AgentConfig` toggles the tick task. The
+`FlowAsTool` / `FlowAsService` distinction is documented in
+[`docs/design/scheduling/README.md`](../design/scheduling/README.md)
+and cross-linked from [`docs/design/flows/README.md`](../design/flows/README.md)
++ [`docs/design/agent/README.md`](../design/agent/README.md).
 
-**Owner:** Phase 4 entry gate.
+The upstream PR ledger now carries the three corresponding entries
+under [`docs/design/starter-changes/`](../design/starter-changes/README.md).
 
 ---
 
@@ -586,7 +596,7 @@ discipline is honour-system.
 | 13 | Port picker | 🟩 | done (RUBIX_BIND) | — |
 | 14 | Tauri | 🟩 | already Non-goal | — |
 | 15 | Config layering | 🟨 | Phase 2a | `docs/design/config/` |
-| 16 | `FlowAsService` named | 🟧 | Phase 4 | extend `flows/` and `agent/` |
+| 16 | `FlowAsService` named | ✅ | addressed in `codeless/rubix-goal-6-weekly-report` | `docs/design/scheduling/` + starter-changes ledger |
 | 17 | `mani` skill/flow/ext tasks | 🟨 | incremental | none (config) |
 | 18 | ADR series | ✅ | done | `docs/adr/` |
 | 19 | AI provider routing | 🟨 | Phase 1 | `docs/design/ai-providers/` |

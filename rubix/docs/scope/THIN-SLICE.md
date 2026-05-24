@@ -239,12 +239,14 @@ something working to test against.
 
 ## Goals lit up beyond the thin slice
 
-Branch `codeless/rubix-goals-2-4-3` broadens Phase 3 + Phase 4
-incrementally on top of the landed thin slice. Four of the six
-SCOPE goals now light up end-to-end through the real agent loop;
-the remaining two are stub-output verbs returning
-`Diagnostic { code: rubix.goal.not_wired }` so the MCP catalogue
-stays the same shape across the surface.
+Branch `codeless/rubix-goals-2-4-3` broadened Phase 3 + Phase 4
+incrementally on top of the landed thin slice; branch
+`codeless/rubix-goal-6-weekly-report` then lit up Goal 6 plus the
+durable cron scheduler primitive upstream. Five of the six SCOPE
+goals now light up end-to-end through the real agent loop; the
+remaining one (Goal 1 — Dashboards) is a stub-output verb
+returning `Diagnostic { code: rubix.goal.not_wired }` so the MCP
+catalogue stays the same shape across the surface.
 
 | Goal | Flow | State | Evidence / unblock |
 |---|---|---|---|
@@ -253,7 +255,7 @@ stays the same shape across the surface.
 | 3 — Flow programmer | `com.rubix.flow-programmer` | **real** | Phase D — flow definitions live in PG (`flows_definitions` dimension table), cross-instance NOTIFY, `flow.{deploy,lint,list,duplicate}` + undo. See `docs/design/flow-programmer/`. |
 | 4 — ClickHouse ruler | `com.rubix.clickhouse-ruler` | **real** | Phase C — `clickhouse.{rule.write,mart.create,retention.set}` + undo with snapshot rows in bounded `undo_snapshots`. See `docs/design/clickhouse-rules/`. |
 | 5 — Scheduled system check | `com.rubix.scheduled-system-check` | **real** | Original thin-slice path. See `docs/scope/THIN-SLICE.md` smoke checklist. |
-| 6 — Weekly report | `com.rubix.weekly-report` | **stubbed** | Primary tool returns `rubix.goal.not_wired` pointing at `docs/design/reports/`. Unblock when analytics query runner + blob report sink + `analytics.{query,report}` verbs land. |
+| 6 — Weekly report | `com.rubix.weekly-report` | **real** | Phase D — `analytics.query` (six named CH templates) + `analytics.report` (rendered via `starter-export`, persisted via `starter-blob-fs`) + durable cron scheduler upstream (`starter-cron` crate + `scheduled_flows` PG table + `FlowAsService`). End-to-end test `rubix-agent/tests/goal_6_weekly_report_test.rs` advances a `TestClock` by 7 days, asserts one fire, HTML blob lands, `rubix.undo.last` deletes it. See [`docs/design/reports/`](../design/reports/) + [`docs/design/scheduling/`](../design/scheduling/) + [`docs/sessions/2026-05-24-goal-6-landed.md`](../sessions/2026-05-24-goal-6-landed.md). |
 
 Every "real" goal above writes are reversible through
 `rubix.undo.last`, audits a row to `changelog`, and round-trips
