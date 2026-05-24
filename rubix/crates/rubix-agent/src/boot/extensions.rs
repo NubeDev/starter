@@ -198,10 +198,21 @@ pub async fn build_extension_admin(
     // (5) Materialise the admin handle. `with_supervisors` pre-populates
     // the live-handle map so `GET /extensions/<id>` reports the
     // autostarted records as Running from the first request.
+    let autostarted = supervisors.len();
     let admin = ExtensionAdmin::builder(registry)
         .with_supervisors(supervisors)
         .with_enablement_store(store)
         .with_supervisor_factory(factory)
         .build();
+    // Summary boot line consumed by operators + the integration test.
+    // Distinct target from the per-step lines above so log filters can
+    // pin a single regex on the boot summary.
+    info!(
+        target: "rubix.boot.extensions",
+        loaded = outcome.validated,
+        failed = outcome.failed,
+        autostarted = autostarted,
+        "extensions wired"
+    );
     Ok(admin)
 }

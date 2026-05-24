@@ -180,6 +180,28 @@ async fn main() -> Result<()> {
         let auth_routes = routes::auth::auth_router(auth.state);
         let engine = boot::authz::build_engine()?;
 
+        // Phase C.2 — mount the extension-host admin router. The
+        // lifecycle endpoints (`/extensions`, `/extensions/{id}`,
+        // `/extensions/{id}/{enable,disable,events}`) are sandwiched by
+        // upstream `with_principal` + `with_role(Role::Admin)` inside
+        // `starter_ext_server::router_with_auth`, which is the
+        // admin-only authz gate the rubix surface reuses for operator
+        // routes. The UI bundle + i18n catalogue routes remain
+        // unauthed (see starter_ext_server::router module docs). The
+        // host is skipped entirely when `[extensions].enabled = false`
+        // so integration tests can opt out without a stub PG table.
+        if cfg.extensions.enabled {
+            let admin = boot::build_extension_admin(&cfg, pool.sqlx()).await?;
+            let ext_router: Router =
+                starter_ext_server::router_with_auth(admin, auth.authenticator.clone());
+            app = app.merge(Router::new().nest("/api/v1", ext_router));
+        } else {
+            info!(
+                target: "rubix.boot.extensions",
+                "[extensions].enabled = false — extension host not mounted",
+            );
+        }
+
         // Layer order matters. The changelog middleware reads
         // `Principal` from request extensions, so it must run
         // *inside* `with_principal`. We therefore audit the
