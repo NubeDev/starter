@@ -2,8 +2,8 @@
 //! the expected `ai-agent` root the host's MCP catalogue depends on.
 
 use rubix_flows::{
-    load_all, parse_yaml, AI_AGENT_KIND_ID, AI_AGENT_KIND_YAML, BUNDLED, DEFAULT_SEED_SLOT,
-    NODE_ID_PREFIX,
+    convert, load_all, parse_yaml, AI_AGENT_KIND_ID, AI_AGENT_KIND_YAML, ALLOWED_TOOLS_KEY,
+    BUNDLED, DEFAULT_SEED_SLOT, NODE_ID_PREFIX,
 };
 
 const EXPECTED_FLOW_IDS: &[&str] = &[
@@ -55,4 +55,73 @@ fn load_all_converts_every_bundled_flow() {
     let seen = triples.iter().map(|(id, _, _)| id.to_string());
     let expected = EXPECTED_FLOW_IDS.iter().map(|s| (*s).to_owned());
     assert_eq!(sorted(seen), sorted(expected));
+}
+
+/// Phase A.3 — the full `allowed_tools[]` list must round-trip from
+/// YAML through `convert()` onto the AiAgentNode config, not just
+/// `[0]`. Asserts both the surface-level `RubixNodeYaml::allowed_tools`
+/// accessor and the post-conversion `NodeDecl.settings.allowed_tools`
+/// JSON array carry every entry, in declaration order, so AgentLoop's
+/// `ToolSet` filter can scope tool visibility per flow.
+#[test]
+fn allowed_tools_multi_entry_list_round_trips_through_convert() {
+    const PATH: &str = "tests/fixtures/multi-tool.yaml";
+    let yaml_src = r#"
+id: com.rubix.multi-tool-test
+description: Phase A.3 fixture — multi-entry allowed_tools list.
+trigger: explicit
+nodes:
+  - id: agent
+    kind: ai-agent
+    config:
+      session_policy: fresh
+      skill_hint: com.rubix.system-checker
+      allowed_tools:
+        - rubix.system.disk
+        - rubix.system.db
+        - rubix.system.flow_errors
+        - rubix.alert.send
+links: []
+"#;
+
+    let parsed = parse_yaml(PATH, yaml_src.as_bytes()).expect("yaml parses");
+
+    // (a) Surface accessor returns the full list, in order.
+    let surface = parsed.nodes[0]
+        .allowed_tools()
+        .expect("allowed_tools parses");
+    assert_eq!(
+        surface,
+        vec![
+            "rubix.system.disk".to_owned(),
+            "rubix.system.db".to_owned(),
+            "rubix.system.flow_errors".to_owned(),
+            "rubix.alert.send".to_owned(),
+        ],
+        "RubixNodeYaml::allowed_tools must surface every entry, not just [0]"
+    );
+
+    // (b) After convert(), the AiAgentNode settings carry the same
+    //     list — this is the seam AgentLoop's ToolSet filter reads.
+    let (_flow_id, _rev, body) = convert(PATH, parsed).expect("convert succeeds");
+    let root = &body.nodes[0];
+    let arr = root
+        .settings
+        .get(ALLOWED_TOOLS_KEY)
+        .and_then(|v| v.as_array())
+        .expect("settings.allowed_tools is a JSON array");
+    let on_node: Vec<String> = arr
+        .iter()
+        .map(|v| v.as_str().expect("string entry").to_owned())
+        .collect();
+    assert_eq!(
+        on_node,
+        vec![
+            "rubix.system.disk".to_owned(),
+            "rubix.system.db".to_owned(),
+            "rubix.system.flow_errors".to_owned(),
+            "rubix.alert.send".to_owned(),
+        ],
+        "NodeDecl.settings.allowed_tools must carry every entry post-convert"
+    );
 }

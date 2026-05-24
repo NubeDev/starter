@@ -32,4 +32,8 @@ pub enum LoadError {
     /// The flow body had zero nodes.
     #[error("flow `{path}`: must declare at least one node")]
     EmptyBody { path: String },
+    /// `config.allowed_tools` was present but malformed (not a
+    /// sequence of strings).
+    #[error("node `{node}`: {message}")]
+    AllowedTools { node: String, message: String },
 }
