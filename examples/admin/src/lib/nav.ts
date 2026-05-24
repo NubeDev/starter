@@ -37,7 +37,7 @@ export const NAV_GROUPS: NavGroup[] = [
     titleKey: 'nav.group.fleet',
     items: [
       { labelKey: 'nav.item.devices',  href: '#devices',  icon: Cpu,      badge: '412' },
-      { labelKey: 'nav.item.flows',    href: '#flows',    icon: Boxes },
+      { labelKey: 'nav.item.flows',    href: '/flow',     icon: Boxes },
       { labelKey: 'nav.item.activity', href: '#activity', icon: Activity, badge: '3.4k' },
     ],
   },

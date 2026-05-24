@@ -406,3 +406,116 @@ body {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ---------------------------------------------------------------------------
+   @nube/starter-ui-flow — biophilic theme overrides
+   ----------------------------------------------------------------------------
+   Maps the package's --sf-* variables onto our admin tokens so the canvas
+   feels native to this app. Package internals stay generic; this layer
+   provides the look.
+   ------------------------------------------------------------------------- */
+:root {
+  --sf-node-bg: color-mix(in oklab, var(--color-surface) 80%, transparent);
+  --sf-node-border: var(--color-border);
+  --sf-node-divider: var(--color-border);
+  --sf-node-extra: var(--color-subtle);
+  --sf-handle-border: var(--color-surface);
+  --sf-slot-label: var(--color-subtle);
+  --sf-edge-label-bg: var(--color-surface);
+  --sf-palette-bg: var(--color-surface);
+  --sf-palette-border: var(--color-border);
+  --sf-palette-hover: var(--color-surface-2);
+  --sf-font: inherit;
+}
+
+/* React Flow canvas surface — keep our paper texture, not white. */
+.react-flow {
+  --xy-background-color-default: transparent;
+  --xy-edge-stroke-default: color-mix(in oklab, var(--color-text) 30%, transparent);
+  --xy-edge-stroke-selected-default: var(--color-leaf);
+  --xy-edge-stroke-width-default: 1.5;
+  --xy-connectionline-stroke-default: var(--color-leaf);
+  --xy-connectionline-stroke-width-default: 2;
+  --xy-attribution-background-color-default: transparent;
+  background: transparent;
+}
+.react-flow__attribution { display: none; }
+
+.react-flow__background {
+  background-color: color-mix(in oklab, var(--color-bg) 65%, transparent);
+}
+.react-flow__background-pattern.dots {
+  color: color-mix(in oklab, var(--color-text) 14%, transparent);
+}
+
+/* Controls (zoom in / out / fit) — square them up, drop the white. */
+.react-flow__controls {
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: 0 8px 30px -12px color-mix(in oklab, var(--color-text) 30%, transparent);
+  border: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+}
+.react-flow__controls-button {
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text);
+  width: 32px;
+  height: 32px;
+}
+.react-flow__controls-button:last-child { border-bottom: none; }
+.react-flow__controls-button:hover {
+  background: var(--color-surface-2);
+}
+.react-flow__controls-button svg { fill: currentColor; }
+
+/* MiniMap */
+.react-flow__minimap {
+  border-radius: 14px;
+  border: 1px solid var(--color-border);
+  background: color-mix(in oklab, var(--color-surface) 92%, transparent);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+}
+.react-flow__minimap-mask {
+  fill: color-mix(in oklab, var(--color-bg) 60%, transparent);
+}
+
+/* Nodes — glassmorphism + soft shadow, palette-tinted accent header. */
+.sf-node,
+.react-flow__node[data-id] > div[style] {
+  /* Keep package inline styles but layer on a real shadow + blur. */
+  box-shadow:
+    0 1px 0 0 color-mix(in oklab, var(--color-text) 6%, transparent) inset,
+    0 12px 32px -16px color-mix(in oklab, var(--color-text) 35%, transparent),
+    0 2px 6px -2px color-mix(in oklab, var(--color-text) 10%, transparent);
+  backdrop-filter: blur(8px);
+}
+.react-flow__node.selected > div[style] {
+  outline: 1px solid color-mix(in oklab, var(--color-leaf) 70%, transparent);
+  outline-offset: 1px;
+}
+
+/* Handles */
+.react-flow__handle {
+  box-shadow: 0 0 0 2px color-mix(in oklab, var(--color-surface) 90%, transparent);
+}
+.react-flow__handle:hover {
+  transform: scale(1.25);
+  transition: transform 120ms ease;
+}
+
+/* Edges */
+.react-flow__edge-path {
+  transition: stroke 120ms ease;
+}
+.react-flow__edge.selected .react-flow__edge-path {
+  stroke-width: 2;
+}
+.sf-edge--active .react-flow__edge-path,
+.react-flow__edge.sf-edge--active .react-flow__edge-path {
+  stroke: var(--color-leaf);
+  stroke-width: 2.25;
+}
