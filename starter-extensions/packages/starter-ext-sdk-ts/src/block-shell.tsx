@@ -18,11 +18,47 @@ import * as React from "react";
 
 import { useSlotContext } from "./slot-context.js";
 
+/**
+ * User-visible strings the shell emits when the extension is
+ * loading or has crashed. The SDK does not import `react-intl` —
+ * the consumer (the extension itself) is the one that knows what
+ * locale the host is in, so it passes pre-translated strings in.
+ *
+ * Mirrors the `FlowMessages` contract from `@nube/starter-ui-flow`:
+ * typed shape + English defaults + a `merge` helper.
+ */
+export interface BlockShellMessages {
+  /** Suspense skeleton label. Default: `"Loading…"`. */
+  loading: string;
+  /** Bold prefix in the crash fallback. Default: `"Extension failed:"`. */
+  errorTitle: string;
+}
+
+export const DEFAULT_BLOCK_SHELL_MESSAGES: BlockShellMessages = {
+  loading: "Loading…",
+  errorTitle: "Extension failed:",
+};
+
+export function mergeBlockShellMessages(
+  override?: Partial<BlockShellMessages>,
+): BlockShellMessages {
+  return override
+    ? { ...DEFAULT_BLOCK_SHELL_MESSAGES, ...override }
+    : DEFAULT_BLOCK_SHELL_MESSAGES;
+}
+
 export interface BlockShellProps {
   /** Override the default fallback rendered while the panel suspends. */
   loading?: React.ReactNode;
   /** Override the default fallback rendered when the panel throws. */
   errorFallback?: (err: unknown, extensionId: string) => React.ReactNode;
+  /**
+   * Localized strings for the shell's own chrome (loading skeleton,
+   * crash fallback header). Missing keys fall back to English.
+   * Hosts already running through `useHostTranslate()` typically
+   * build this from their catalog and pass it in.
+   */
+  messages?: Partial<BlockShellMessages>;
   /** Optional className appended to the shell root. */
   className?: string;
   children: React.ReactNode;
@@ -45,6 +81,10 @@ export interface BlockShellProps {
  */
 export function BlockShell(props: BlockShellProps): React.ReactElement {
   const slot = useSlotContext();
+  const messages = React.useMemo(
+    () => mergeBlockShellMessages(props.messages),
+    [props.messages],
+  );
   return (
     <div
       className={
@@ -58,9 +98,14 @@ export function BlockShell(props: BlockShellProps): React.ReactElement {
       <ExtensionErrorBoundary
         extensionId={slot.extensionId}
         fallback={props.errorFallback}
+        errorTitle={messages.errorTitle}
       >
         <React.Suspense
-          fallback={props.loading ?? <DefaultLoading slotId={slot.slotId} />}
+          fallback={
+            props.loading ?? (
+              <DefaultLoading slotId={slot.slotId} label={messages.loading} />
+            )
+          }
         >
           {props.children}
         </React.Suspense>
@@ -72,6 +117,7 @@ export function BlockShell(props: BlockShellProps): React.ReactElement {
 interface ErrorBoundaryProps {
   extensionId: string;
   fallback: BlockShellProps["errorFallback"];
+  errorTitle: string;
   children: React.ReactNode;
 }
 
@@ -108,24 +154,38 @@ class ExtensionErrorBoundary extends React.Component<
 
   override render(): React.ReactNode {
     if (this.state.error !== null) {
-      const fb = this.props.fallback ?? defaultErrorFallback;
-      return fb(this.state.error, this.props.extensionId);
+      const fb = this.props.fallback;
+      if (fb) {
+        return fb(this.state.error, this.props.extensionId);
+      }
+      return defaultErrorFallback(
+        this.state.error,
+        this.props.extensionId,
+        this.props.errorTitle,
+      );
     }
     return this.props.children;
   }
 }
 
-function defaultErrorFallback(err: unknown, extensionId: string): React.ReactElement {
+function defaultErrorFallback(
+  err: unknown,
+  extensionId: string,
+  title: string,
+): React.ReactElement {
   const msg = err instanceof Error ? err.message : String(err);
   return (
     <div role="alert" className="starter-ext-block__error">
-      <strong>Extension failed:</strong> {extensionId}
+      <strong>{title}</strong> {extensionId}
       <div>{msg}</div>
     </div>
   );
 }
 
-function DefaultLoading(props: { slotId: string }): React.ReactElement {
+function DefaultLoading(props: {
+  slotId: string;
+  label: string;
+}): React.ReactElement {
   return (
     <div
       aria-busy="true"
@@ -133,7 +193,7 @@ function DefaultLoading(props: { slotId: string }): React.ReactElement {
       className="starter-ext-block__loading"
       data-slot={props.slotId}
     >
-      Loading…
+      {props.label}
     </div>
   );
 }

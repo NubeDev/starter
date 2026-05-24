@@ -28,7 +28,13 @@ export {
   type ExtensionHostClient,
   type ExtensionHostClientProviderProps,
 } from "./host-client.js";
-export { BlockShell, type BlockShellProps } from "./block-shell.js";
+export {
+  BlockShell,
+  DEFAULT_BLOCK_SHELL_MESSAGES,
+  mergeBlockShellMessages,
+  type BlockShellProps,
+  type BlockShellMessages,
+} from "./block-shell.js";
 export {
   SlotContextProvider,
   useSlotContext,
