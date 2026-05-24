@@ -159,3 +159,38 @@ the send/cancel button toggles automatically.
 `minmax(20rem, 28rem) 1fr` on `md+` viewports, single-column below.
 Override via `splitClassName`, or pass `canvasOnly` / `transcriptOnly`
 to render just one pane.
+
+## Localization
+
+Ships English defaults and no `react-intl` dependency. Translate
+via `i18n` on `<AiBuilder>`:
+
+```tsx
+import type { BuilderMessages } from "@nube/starter-ui-ai-builder";
+
+const i18n: Partial<BuilderMessages> = {
+  buildPlaceholder: t("builder.placeholder.build"),
+  askPlaceholder:   t("builder.placeholder.ask"),
+  regenerate:       t("builder.action.regenerate"),
+  phase: {
+    thinking:  t("builder.phase.thinking"),
+    writing:   t("builder.phase.writing"),
+    done:      t("builder.phase.done"),
+    error:     t("builder.phase.error"),
+    cancelled: t("builder.phase.cancelled"),
+    idle:      t("builder.phase.idle"),
+  },
+};
+
+<AiBuilder adapter={adapter} i18n={i18n} />
+```
+
+Composing primitives directly? Wrap them in
+`<BuilderI18nProvider value={i18n}>`. `DEFAULT_BUILDER_MESSAGES` is
+exported so consumers can build on top of the English fallback.
+
+Note: `<Chat>`-derived strings inside the transcript (composer
+placeholder, attach/send/cancel) come from
+`@nube/starter-ui-chat`'s own i18n — pass a `ChatI18nProvider`
+above your `<AiBuilder>` to translate those, or rely on the
+host-level translation hook used by both packages.

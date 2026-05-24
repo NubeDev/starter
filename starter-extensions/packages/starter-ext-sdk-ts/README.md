@@ -40,3 +40,27 @@ export default {
   },
 };
 ```
+
+## Localizing `BlockShell` chrome
+
+The two strings the shell renders itself — the Suspense skeleton
+("Loading…") and the error-boundary header ("Extension failed:") —
+are overridable. The SDK does not bundle `react-intl`; extensions
+that already pull a translator from `useHostTranslate()` pass
+pre-translated strings in:
+
+```tsx
+import { BlockShell, type BlockShellMessages } from "@nube/starter-ext-sdk-ts";
+
+const messages: Partial<BlockShellMessages> = {
+  loading:    t("ext.shell.loading"),
+  errorTitle: t("ext.shell.errorTitle"),
+};
+
+<BlockShell messages={messages}>
+  <YourContent />
+</BlockShell>
+```
+
+`DEFAULT_BLOCK_SHELL_MESSAGES` and `mergeBlockShellMessages` are
+exported for consumers building on top of the English fallback.

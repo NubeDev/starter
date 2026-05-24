@@ -167,6 +167,32 @@ export const myAdapter: ChatAdapter = {
 `ChatStreamDelta` variants: `text` (append tokens), `tool-call`
 (upsert into the current assistant message), `status`, `error`, `done`.
 
+## Localization
+
+The package ships English defaults and no `react-intl` dependency.
+Translate the strings the package owns by passing `i18n` to
+`<Chat>`:
+
+```tsx
+import type { ChatMessages } from "@nube/starter-ui-chat";
+
+const i18n: Partial<ChatMessages> = {
+  composerPlaceholder: t("chat.composer.placeholder"),
+  send: t("chat.action.send"),
+  cancel: t("chat.action.cancel"),
+  copy: t("chat.action.copy"),
+  copied: t("chat.action.copied"),
+  retry: t("chat.action.retry"),
+  typing: t("chat.typing"),
+};
+
+<Chat adapter={adapter} i18n={i18n} />
+```
+
+Composing the primitives by hand? Wrap them in
+`<ChatI18nProvider value={i18n}>` instead. `DEFAULT_CHAT_MESSAGES`
+is exported so consumers can build on top of the English fallback.
+
 ## Scope
 
 - ✅ Components, hooks, types, adapters.
