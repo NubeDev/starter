@@ -19,3 +19,21 @@ sqlx        = { version = "0.8", default-features = false, features = ["runtime-
 async-trait = { workspace = true }
 serde       = { workspace = true }
 thiserror   = { workspace = true }
+
+[features]
+# Off by default. Enables the testcontainers-driven integration test
+# under `tests/store_test.rs`. Pulls Docker + the postgres container
+# module via the dev-dependency on `starter-store-postgres/testing`,
+# so it stays out of the default compile path. Invoked in CI via
+# `cargo test -p starter-ext-store-pg --features testcontainers`.
+testcontainers = []
+
+[dev-dependencies]
+# `starter-store-postgres` lives in the parent workspace; pulled in
+# by path here (not via `workspace.dependencies`) because it is only
+# needed for the testcontainers harness. The `testing` feature
+# brings in testcontainers + the postgres container module and
+# exposes `with_database()` which starts an ephemeral PG and returns
+# a connected pool.
+starter-store-postgres = { path = "../../../crates/starter-store-postgres", features = ["testing"] }
+tokio                  = { version = "1", features = ["macros", "rt-multi-thread"] }
