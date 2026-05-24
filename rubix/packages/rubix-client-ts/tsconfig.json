@@ -1,4 +1,4 @@
 {
-  "extends": "../starter-client-ts/tsconfig.json",
+  "extends": "../../../packages/starter-client-ts/tsconfig.json",
   "include": ["src"]
 }

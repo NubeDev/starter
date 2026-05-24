@@ -1,0 +1,135 @@
+name: rubix-frontend-e2e
+
+# Playwright e2e for `rubix/frontend`. The three new specs (auth /
+# extensions / users) drive the wired frontend against a real
+# `rubix-agent` on 127.0.0.1:8088, so this job is what catches a
+# REST or SSE regression that vitest never sees.
+#
+# Pattern follows the `example-admin (Playwright)` job in `ci.yml`,
+# extended with the Postgres + ClickHouse service containers and a
+# backgrounded `rubix-agent` boot — the same shape `mani run demo`
+# orchestrates locally.
+
+on:
+  pull_request:
+    paths:
+      - rubix/**
+      - packages/starter-client-ts/**
+      - packages/starter-client-react/**
+      - .github/workflows/rubix-frontend-e2e.yml
+  push:
+    branches: [master, main]
+
+concurrency:
+  group: rubix-frontend-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: rubix/frontend (Playwright)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: rubix
+          POSTGRES_PASSWORD: rubix-dev-passwd
+          POSTGRES_DB: rubix
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U rubix"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+      clickhouse:
+        image: clickhouse/clickhouse-server:24.3
+        ports:
+          - 8123:8123
+          - 9000:9000
+        options: >-
+          --health-cmd "wget -qO- http://localhost:8123/ping || exit 1"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: install (node)
+        run: pnpm install --frozen-lockfile
+
+      - name: install (playwright browsers)
+        run: pnpm --filter @nube/rubix-frontend exec playwright install --with-deps chromium
+
+      # Build the agent once so the next step boots quickly. We use
+      # `--bin rubix-agent` rather than `cargo run` so the boot in
+      # the background step has nothing left to compile.
+      - name: build rubix-agent
+        run: cargo build -p rubix-agent
+
+      - name: seed bootstrap operator
+        # `rubix-agent seed-bootstrap` is the idempotent equivalent
+        # of the seed step inside `mani run demo`.
+        env:
+          DATABASE_URL: postgres://rubix:rubix-dev-passwd@127.0.0.1:5432/rubix
+          CLICKHOUSE_URL: http://127.0.0.1:8123
+        run: |
+          ./target/debug/rubix-agent seed-bootstrap \
+            --email op@example.com \
+            --password rubix-dev-passwd
+
+      - name: start rubix-agent (background)
+        env:
+          DATABASE_URL: postgres://rubix:rubix-dev-passwd@127.0.0.1:5432/rubix
+          CLICKHOUSE_URL: http://127.0.0.1:8123
+          RUBIX_HTTP_ADDR: 127.0.0.1:8088
+        run: |
+          ./target/debug/rubix-agent serve &
+          echo $! > /tmp/rubix-agent.pid
+          # Poll until the agent answers /readyz, fail after 60s.
+          for i in $(seq 1 60); do
+            if curl -fsS http://127.0.0.1:8088/readyz >/dev/null; then
+              echo "rubix-agent ready after ${i}s"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "rubix-agent failed to come up" >&2
+          exit 1
+
+      - name: e2e (auth + extensions + users)
+        run: pnpm --filter @nube/rubix-frontend run e2e -- auth.spec.ts extensions.spec.ts users.spec.ts
+
+      - name: stop rubix-agent
+        if: always()
+        run: |
+          if [ -f /tmp/rubix-agent.pid ]; then
+            kill "$(cat /tmp/rubix-agent.pid)" || true
+          fi
+
+      - name: upload trace on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: rubix-frontend-playwright-report
+          path: |
+            rubix/frontend/test-results
+            rubix/frontend/playwright-report
+          if-no-files-found: ignore

@@ -13,5 +13,16 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(__dirname, './src') },
   },
-  server: { port: 5185 },
+  server: {
+    port: 5185,
+    // Proxy REST + OpenAPI to the local rubix-agent so the SPA can use
+    // same-origin paths in dev. The agent listens on 127.0.0.1:8088 by
+    // default; override the upstream by exporting `VITE_RUBIX_BASE_URL`
+    // and constructing `RubixClient` against that URL directly (see
+    // `src/lib/client.ts`).
+    proxy: {
+      '/api/v1': { target: 'http://127.0.0.1:8088', changeOrigin: true },
+      '/openapi.json': { target: 'http://127.0.0.1:8088', changeOrigin: true },
+    },
+  },
 })

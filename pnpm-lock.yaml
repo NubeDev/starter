@@ -293,6 +293,40 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)
 
+  packages/starter-client-react:
+    dependencies:
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../starter-client-ts
+    devDependencies:
+      '@tanstack/react-query':
+        specifier: ^5.59.0
+        version: 5.100.11(react@19.2.6)
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+      react:
+        specifier: ^19
+        version: 19.2.6
+      react-dom:
+        specifier: ^19
+        version: 19.2.6(react@19.2.6)
+      typescript:
+        specifier: ^5.4
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)
+
   packages/starter-client-ts:
     dependencies:
       zod:
@@ -683,9 +717,18 @@ importers:
 
   rubix/frontend:
     dependencies:
+      '@nube/rubix-client-react':
+        specifier: workspace:*
+        version: link:../packages/rubix-client-react
       '@nube/rubix-client-ts':
         specifier: workspace:*
         version: link:../packages/rubix-client-ts
+      '@nube/starter-client-react':
+        specifier: workspace:*
+        version: link:../../packages/starter-client-react
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../packages/starter-client-ts
       '@nube/starter-ui-core':
         specifier: workspace:*
         version: link:../../packages/starter-ui-core
@@ -728,6 +771,9 @@ importers:
       '@tanstack/react-query':
         specifier: ^5.99.0
         version: 5.100.11(react@19.2.6)
+      '@tanstack/react-query-devtools':
+        specifier: ^5.99.0
+        version: 5.100.14(@tanstack/react-query@5.100.11(react@19.2.6))(react@19.2.6)
       '@tanstack/react-router':
         specifier: ^1.168.10
         version: 1.170.7(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -789,6 +835,46 @@ importers:
       vite:
         specifier: ^6.0.7
         version: 6.4.2(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)
+
+  rubix/packages/rubix-client-react:
+    dependencies:
+      '@nube/rubix-client-ts':
+        specifier: workspace:*
+        version: link:../rubix-client-ts
+      '@nube/starter-client-react':
+        specifier: workspace:*
+        version: link:../../../packages/starter-client-react
+    devDependencies:
+      '@nube/starter-client-ts':
+        specifier: workspace:*
+        version: link:../../../packages/starter-client-ts
+      '@tanstack/react-query':
+        specifier: ^5.59.0
+        version: 5.100.11(react@19.2.6)
+      '@testing-library/react':
+        specifier: ^16.1.0
+        version: 16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
+      '@types/react':
+        specifier: ^19
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19
+        version: 19.2.3(@types/react@19.2.14)
+      jsdom:
+        specifier: ^25.0.0
+        version: 25.0.1
+      react:
+        specifier: ^19
+        version: 19.2.6
+      react-dom:
+        specifier: ^19
+        version: 19.2.6(react@19.2.6)
+      typescript:
+        specifier: ^5.4
+        version: 5.9.3
+      vitest:
+        specifier: ^2.1.0
+        version: 2.1.9(@types/node@22.19.19)(jsdom@25.0.1)(lightningcss@1.32.0)
 
   rubix/packages/rubix-client-ts:
     dependencies:
@@ -2442,6 +2528,15 @@ packages:
 
   '@tanstack/query-core@5.100.11':
     resolution: {integrity: sha512-lmE0994apShXPj8CUxgx4ch5yUJhE9k/+tVwihBvPOyerACWdBocfFg24t8+0RhtlTd7tEgchDkhlCxNssvDxw==}
+
+  '@tanstack/query-devtools@5.100.14':
+    resolution: {integrity: sha512-g96SmSSQecYTYcyuAMRXr895GplJv01UGt7qttQWPOUyZ5EGz5tbRc589bMc2m5BsPFD6O0PCEAHdbDYNP6UBw==}
+
+  '@tanstack/react-query-devtools@5.100.14':
+    resolution: {integrity: sha512-JkP5VDgKOw3t/QSA1OABRHEqx8BuNs5MfvZRooNqdvN57SzTuGq3fKR1a2IH5rqa5HDLUm+FOXUEnB9ueHiLzg==}
+    peerDependencies:
+      '@tanstack/react-query': ^5.100.14
+      react: ^18 || ^19
 
   '@tanstack/react-query@5.100.11':
     resolution: {integrity: sha512-J0f9s5x3LE1450nNNfYx+e/n0DMa0uOBdFJUy5r0RvmsXd4nB/n0rbHtHI1vYXhikNFan+wf51p6Tmp4c8ucrg==}
@@ -5260,6 +5355,14 @@ snapshots:
 
   '@tanstack/query-core@5.100.11': {}
 
+  '@tanstack/query-devtools@5.100.14': {}
+
+  '@tanstack/react-query-devtools@5.100.14(@tanstack/react-query@5.100.11(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@tanstack/query-devtools': 5.100.14
+      '@tanstack/react-query': 5.100.11(react@19.2.6)
+      react: 19.2.6
+
   '@tanstack/react-query@5.100.11(react@18.3.1)':
     dependencies:
       '@tanstack/query-core': 5.100.11
@@ -5375,6 +5478,16 @@ snapshots:
     optionalDependencies:
       '@types/react': 18.3.28
       '@types/react-dom': 19.2.3(@types/react@18.3.28)
+
+  '@testing-library/react@16.3.2(@testing-library/dom@10.4.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)':
+    dependencies:
+      '@babel/runtime': 7.29.2
+      '@testing-library/dom': 10.4.1
+      react: 19.2.6
+      react-dom: 19.2.6(react@19.2.6)
+    optionalDependencies:
+      '@types/react': 19.2.14
+      '@types/react-dom': 19.2.3(@types/react@19.2.14)
 
   '@types/aria-query@5.0.4': {}
 

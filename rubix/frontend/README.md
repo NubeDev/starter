@@ -81,11 +81,36 @@ rubix/frontend/
 ## Scripts
 
 ```bash
-pnpm dev          # vite on http://localhost:5185
-pnpm build        # tsc -b && vite build
-pnpm preview      # serve dist/
-pnpm e2e          # playwright (chromium, starts dev server on :5187)
+pnpm dev               # vite on http://localhost:5185
+pnpm build             # tsc -b && vite build
+pnpm preview           # serve dist/
+pnpm typecheck         # tsc -b --noEmit
+pnpm e2e               # playwright (chromium, starts dev server on :5187)
+pnpm sync-catalogues   # copy rubix.* keys from rubix-spi → src/i18n/{en,es}.json
 ```
+
+## Talking to rubix-agent
+
+The dev server proxies `/api/v1` and `/openapi.json` to
+`http://127.0.0.1:8088` (see `vite.config.ts`), so `RubixClient` uses
+same-origin paths and bypasses CORS in dev. Construct it once via
+`getRubixClient()` in `src/lib/client.ts`.
+
+`VITE_RUBIX_BASE_URL` (Vite env var, baked at build time) overrides
+the base URL — set it to a fully-qualified URL when the agent is on
+a non-default port, behind a different host, or in production:
+
+```bash
+# Dev against an agent on a non-default port:
+VITE_RUBIX_BASE_URL=http://127.0.0.1:9090 pnpm dev
+
+# Prod build pointing at a deployed agent:
+VITE_RUBIX_BASE_URL=https://rubix.example.com pnpm build
+```
+
+When unset (the default), the variable is empty and the client issues
+relative requests that the Vite proxy (in dev) or the reverse proxy
+hosting the SPA (in prod) is responsible for forwarding.
 
 ## Future packages
 

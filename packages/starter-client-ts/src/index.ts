@@ -22,4 +22,6 @@ export { fetchJson } from "./client/fetch_json.js";
 export { fetchVoid } from "./client/fetch_void.js";
 export { fetchBytes } from "./client/fetch_bytes.js";
 export { readCsrfHeader } from "./client/csrf.js";
+export { streamJson } from "./client/stream_json.js";
+export type { StreamJsonOptions } from "./client/stream_json.js";
 export * from "./endpoints/index.js";
