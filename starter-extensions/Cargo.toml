@@ -7,6 +7,7 @@ members = [
     "crates/starter-ext-host",
     "crates/starter-ext-mcp",
     "crates/starter-ext-server",
+    "crates/starter-ext-store-pg",
     "crates/starter-ext-supervisor",
     "crates/starter-ext-wasm",
     "crates/starter-ext-cli",

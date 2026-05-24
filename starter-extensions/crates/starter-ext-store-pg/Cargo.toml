@@ -1,0 +1,21 @@
+[package]
+name        = "starter-ext-store-pg"
+description = "starter-extensions — PostgreSQL-backed `EnablementStore` impl. The first real consumer of the `starter-ext-server::store::EnablementStore` trait (rubix). Lands upstream per SCOPE R2 so every future consumer benefits."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# R2: adapter crate. Depends on `starter-ext-spi` (for `ExtensionId`) and
+# `starter-ext-server` (for the `EnablementStore` trait + `EnablementState`
+# enum + `StoreError`). Brings in sqlx with the postgres + chrono features so
+# the `updated_at` column round-trips as a `TIMESTAMPTZ`.
+[dependencies]
+starter-ext-spi    = { workspace = true }
+starter-ext-server = { workspace = true }
+
+sqlx        = { version = "0.8", default-features = false, features = ["runtime-tokio", "macros", "postgres", "chrono"] }
+async-trait = { workspace = true }
+serde       = { workspace = true }
+thiserror   = { workspace = true }
