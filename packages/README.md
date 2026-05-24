@@ -6,7 +6,7 @@ published as `@nube/starter-*` and is consumed via pnpm workspace links
 the layering below describes how they compose.
 
 > Looking for the Rust side? See [`crates/`](../crates).
-> Looking for runnable demos? See [`examples/`](../examples).
+> Looking for runnable demos? See [`examples/`](../examples) — `examples/admin/` is the lighthouse consumer of every package below.
 
 ---
 

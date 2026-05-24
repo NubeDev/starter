@@ -27,3 +27,4 @@ dist/
 *.db-*
 *.pid
 coverage/
+test-ui
