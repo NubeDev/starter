@@ -13,5 +13,17 @@
     "api:check": "node scripts/check-public-api.mjs",
     "api:update": "node scripts/check-public-api.mjs --update",
     "check:no-alias-imports": "node scripts/check-no-alias-imports.mjs"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "^19.0.0",
+      "@types/react-dom": "^19.0.0"
+    },
+    "peerDependencyRules": {
+      "allowedVersions": {
+        "@types/react": "19",
+        "@types/react-dom": "19"
+      }
+    }
   }
 }

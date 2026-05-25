@@ -1,5 +1,17 @@
 # 2026-05-25 — Flow live-tick demo landed end-to-end
 
+> **Update (post-PR #38):** the node-state wiring described
+> below shipped against `SqliteNodeStateStore` +
+> `~/.rubix/node_state.db`. Commit `63913c0` later migrated
+> rubix node-state to Postgres (`PgNodeStateStore` over the
+> shared PG pool, with a boot-time one-shot copy from the old
+> SQLite file). See
+> [`docs/scope/sqlite-to-postgres.md`](../scope/sqlite-to-postgres.md)
+> for the plan and rationale. The SPI seam, the always-on
+> mounter, the SSE route, the hot-edit classifier path, and
+> the bundled `com.rubix.tick-counter` flow are all unchanged
+> — only the concrete store impl moved.
+
 Closing session note for branch
 `codeless/rubix-flow-live-tick-demo`. The job framed itself as
 "smallest end-to-end proof of a Niagara-shape always-on flow
@@ -111,6 +123,9 @@ Three commits.
   wired against `~/.rubix/node_state.db` when
   `RUBIX_DATABASE_URL` is set, otherwise `InMemoryNodeStateStore`.
   `AgentConfig` gains a `[flow_runtime] state_db_path` knob.
+  *(Superseded by `63913c0` — `PgNodeStateStore` over the shared
+  PG pool; `state_db_path` removed. See
+  [`docs/scope/sqlite-to-postgres.md`](../scope/sqlite-to-postgres.md).)*
 - **C.3 — live tick + hot-edit + restart-persistence integration
   test** (`bc5993b` + `3a54ca5`). New
   [`rubix-agent/tests/flow_live_tick_test.rs`](../../../crates/rubix-agent/tests/flow_live_tick_test.rs)
@@ -221,12 +236,13 @@ open http://127.0.0.1:5185/flows/com.rubix.tick-counter
 #   topology Arc atomically; the next tick uses the new cron.
 
 # 6. Refresh the browser tab.
-# → Count is preserved (SqliteNodeStateStore replays the row).
+# → Count is preserved (NodeStateStore replays the row — SQLite
+#   in PR #38, Postgres after 63913c0).
 
 # 7. make restart
-# → Count restored from sqlite; the always-on mounter picks the
-#   flow up at boot and FlowAsService resumes firing on the
-#   already-persisted schedule. The new ticks continue climbing
+# → Count restored from the durable store; the always-on mounter
+#   picks the flow up at boot and FlowAsService resumes firing on
+#   the already-persisted schedule. The new ticks continue climbing
 #   from the prior total.
 ```
 
@@ -240,7 +256,9 @@ open http://127.0.0.1:5185/flows/com.rubix.tick-counter
   (tick-counter YAML round-trip).
 - `cargo test -p rubix-agent --test flow_live_tick_test` —
   green under testcontainers PG + tempdir sqlite (live tick +
-  hot-edit + restart-persistence).
+  hot-edit + restart-persistence). *(Post-`63913c0` the
+  tempdir-sqlite half is gone; the test runs against
+  testcontainers PG only.)*
 - `pnpm --filter @nube/starter-ui-flow test` — green.
 - `pnpm --filter @nube/rubix-client-react test` — green
   (`flow-events.test.tsx`).

@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { InfoCard, InfoCardProps } from "@/components/info-card";
+import { FreshnessTiles } from "@/components/rubix/FreshnessTiles";
+import { MartTree } from "@/components/rubix/MartTree";
 import {
   Table,
   TableBody,
@@ -83,6 +85,10 @@ function Index() {
         EXPLORING{" "}
         <span className="font-bold text-foreground">{data.file_name}</span>
       </h2>
+
+      <FreshnessTiles />
+
+      <MartTree />
 
       <div className="grid gap-4 md:grid-cols-2 md:gap-8 lg:grid-cols-4">
         {cards.map((card, i) => (

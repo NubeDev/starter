@@ -137,3 +137,155 @@ const erd = z.object({
 });
 
 export const fetchErd = () => $fetch(erd, `${BASE_URL}/erd`);
+
+// ---------------------------------------------------------------
+// PR 4 — rubix overlays. Wrappers for the broader warehouse REST
+// surface (`starter-warehouse::rest::router`) and for the rubix
+// verb dispatcher (`POST /api/v1/tools/{tool_id}`, served by
+// `rubix-agent`).
+//
+// These live at a different mount path than the explorer routes
+// above: the explorer is `/api/warehouse/ch/*`, the warehouse
+// REST is `/api/warehouse/*` (no `ch`), and the rubix verbs are
+// `/api/v1/tools/*`. Demos that only mount the explorer sub-router
+// (e.g. `examples/ch-explorer`) will respond `404` to the calls
+// below; the consuming components are written to treat `null` as
+// "feature disabled" and render nothing rather than throwing.
+
+const RUBIX_BASE = import.meta.env.PROD
+  ? basePath
+    ? `${basePath.content}/api`
+    : "/api"
+  : "http://localhost:3030/api";
+
+const dictFreshness = z.object({
+  status: z.enum([
+    "ok",
+    "stale",
+    "refreshing",
+    "failed_refresh",
+    "never_refreshed",
+  ]),
+  last_successful_refresh: z.string().nullable().optional(),
+  rows: z.number().optional(),
+});
+
+const warehouseStatus = z.object({
+  dimensions: z.object({
+    entities_dict: dictFreshness,
+  }),
+  ingest: z.object({
+    async_insert_oldest_age_ms: z.number(),
+    async_insert_backlog: z.number(),
+  }),
+});
+
+export type WarehouseStatus = z.infer<typeof warehouseStatus>;
+
+/// Hit `GET /api/warehouse/status`. Returns `null` when the
+/// endpoint isn't mounted (HTTP 404) so callers can degrade
+/// gracefully — the explorer-only demo binary doesn't carry the
+/// W11 freshness probe.
+export async function fetchWarehouseStatus(): Promise<WarehouseStatus | null> {
+  const res = await fetch(`${RUBIX_BASE}/warehouse/status`, {
+    headers: { Accept: "application/json" },
+  });
+  // `503` is W11's "dictionary failed_refresh" code; the body is
+  // still a valid envelope so we surface it.
+  if (res.status === 404) return null;
+  if (!res.ok && res.status !== 503) {
+    throw new Error(`warehouse status: HTTP ${res.status}`);
+  }
+  const body = await res.json();
+  return warehouseStatus.parse(body);
+}
+
+// ---------------------------------------------------------------
+// Rubix verb dispatcher. Every mutation flows through
+// `POST /api/v1/tools/{tool_id}` on the rubix-agent so the
+// snapshot-before-write + undo + changelog invariants are
+// preserved. The explorer never bypasses this — anything
+// destructive in the UI calls one of the wrappers below.
+// ---------------------------------------------------------------
+
+const RUBIX_VERB_BASE = import.meta.env.PROD
+  ? basePath
+    ? `${basePath.content}/api/v1/tools`
+    : "/api/v1/tools"
+  : "http://localhost:3030/api/v1/tools";
+
+/// Sentinel returned by [`callRubixVerb`] when the dispatcher
+/// itself isn't mounted (HTTP 404 on the tool id). Components use
+/// this to disable their action buttons without crashing.
+export const RUBIX_VERB_NOT_AVAILABLE = Symbol("RUBIX_VERB_NOT_AVAILABLE");
+
+export type VerbOutcome<T> =
+  | { ok: true; data: T }
+  | { ok: false; status: number; error: string }
+  | { ok: false; status: 404; error: typeof RUBIX_VERB_NOT_AVAILABLE };
+
+export async function callRubixVerb<TIn, TOut>(
+  toolId: string,
+  body: TIn,
+  responseSchema: z.ZodType<TOut>,
+): Promise<VerbOutcome<TOut>> {
+  const res = await fetch(`${RUBIX_VERB_BASE}/${toolId}`, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(body),
+  });
+  if (res.status === 404) {
+    return { ok: false, status: 404, error: RUBIX_VERB_NOT_AVAILABLE };
+  }
+  if (!res.ok) {
+    const errBody = await res.text();
+    return { ok: false, status: res.status, error: errBody };
+  }
+  const parsed = await res.json();
+  return { ok: true, data: responseSchema.parse(parsed) };
+}
+
+// `rubix.clickhouse.mart.{list,drop}` DTOs. Kept narrow — only
+// the fields the UI actually consumes; the dispatcher tolerates
+// extra fields on the wire.
+
+const diagnostic = z
+  .object({
+    code: z.string(),
+  })
+  .passthrough();
+
+const martSummary = z.object({
+  mart_name: z.string(),
+  ddl: z.string().nullable().optional(),
+});
+
+const martListResponse = z.object({
+  summary: diagnostic,
+  count: z.number(),
+  marts: martSummary.array(),
+});
+
+const martDropResponse = z.object({
+  summary: diagnostic,
+  mart_name: z.string(),
+  was_present: z.boolean(),
+  dropped_at_ms: z.number(),
+});
+
+export type MartSummary = z.infer<typeof martSummary>;
+export type MartListResponse = z.infer<typeof martListResponse>;
+export type MartDropResponse = z.infer<typeof martDropResponse>;
+
+export const callMartList = () =>
+  callRubixVerb("rubix.clickhouse.mart.list", {}, martListResponse);
+
+export const callMartDrop = (mart_name: string) =>
+  callRubixVerb(
+    "rubix.clickhouse.mart.drop",
+    { mart_name },
+    martDropResponse,
+  );

@@ -187,12 +187,97 @@ header:
 Add `NOTICES.md` at the workspace root with the full MIT text and
 a list of paths derived from sql-studio.
 
+## Status (2026-05-25)
+
+- ✅ **PR 0** — static-asset mount in `starter-server` (merged).
+- ✅ **PR 1** — backend skeleton + authz gate (merged).
+- ✅ **PR 2** — read-only `POST /query` + real `table_data` rows
+  (merged; testcontainer + doctests green).
+- ✅ **PR 3** — UI fork landed at `packages/starter-ui-ch-explorer/`,
+  wired end-to-end through the new `examples/ch-explorer/` binary
+  (`mani run warehouse-seed && mani run warehouse-explorer` or
+  the matching `make` targets). Browser smoke-tested against the
+  local CH on `:8124`: `/tables`, `/overview`,
+  `/tables/:name/data?page=1`, `/autocomplete`, `/erd`, SPA index
+  + SPA fallback all return 200; `POST /query` allows `SELECT 1`
+  and refuses `DROP TABLE` with `400 read_only_violation`.
+- ⏸ **PR 4** — rubix overlays (marts, sandboxes, verbs).
+  **🛑 Superseded.** The "graft rubix overlays onto the standalone
+  SPA" approach was wrong: it kept the explorer as a parallel
+  application reachable at `/warehouse/explorer/` instead of a
+  first-class page inside the rubix shell. See
+  [`clickhouse-explorer-in-rubix-shell.md`](./clickhouse-explorer-in-rubix-shell.md)
+  for the replacement plan (5 PRs to convert
+  `packages/starter-ui-ch-explorer/` into a headless library,
+  mount it under `/admin/warehouse/explorer` in `rubix/frontend`,
+  and slim the existing demo binary).
+
+  Two slices that landed against the old direction are still
+  reusable in the new plan — the components keep their fork
+  headers and move into the library exports — but the
+  per-package `callRubixVerb` / `RUBIX_VERB_NOT_AVAILABLE`
+  transport gets deleted in favour of typed
+  `@nube/rubix-client-react` hooks:
+  * `FreshnessTiles` (W11 dimension freshness + W16 ingest lag).
+  * `MartTree` — `rubix.clickhouse.mart.list` + drop via
+    `rubix.clickhouse.mart.drop`.
+
+### What's left before "explorer works"
+
+These are PR 3's leftover exit-signal items and the bridge into PR 4.
+
+1. ✅ **Mount the dist from a real binary.** Done in
+   `examples/ch-explorer/` (`bin = ch-explorer`). Calls
+   `ServerBuilder::with_static_assets("/warehouse/explorer",
+   …/dist)` and merges the `starter-warehouse::explorer::routes`
+   sub-router wrapped in `with_permission("warehouse", "read")`.
+   See `examples/ch-explorer/README.md` for env vars.
+2. ✅ **End-to-end browser smoke.** `mani run warehouse-seed`
+   followed by `mani run warehouse-explorer` against the local
+   `docker-compose.dev.yaml` CH on `:8124`. `curl`-level smoke
+   confirmed every API surface and the SPA + fallback; manual
+   browser checks against the live binary are unblocked once an
+   operator runs the same two commands.
+3. ✅ **`autocomplete` end-to-end.** `GET
+   /api/warehouse/ch/autocomplete` returns
+   `{tables:[{table_name, columns:[…]}, …]}` against the seeded
+   fixture.
+4. ✅ **Auth dev story.** `examples/ch-explorer` wires
+   `starter_authz::testing::AllowAll` plus
+   `starter_server::auth::with_anonymous_principal(local_operator(…))`,
+   so every request satisfies the `("warehouse","read")` gate
+   without a login. The "do NOT copy into production" caveat is
+   spelled out in the example's README and in the binary's module
+   doc.
+5. **Dev proxy sanity check.** `pnpm -F
+   @nube/starter-ui-ch-explorer dev` proxies
+   `/api/warehouse/ch/*` to `CH_EXPLORER_API_TARGET` (default
+   `http://localhost:3030`); the value lines up with the explorer
+   binary's default bind. Operator confirmation against a live
+   `pnpm dev` session is the one remaining manual step.
+6. **Lockfile housekeeping.** Pre-existing peer-dep warnings
+   surfaced when the lockfile was regenerated for the merge
+   (`@tanstack/react-query-devtools` vs `@tanstack/react-query`,
+   `react-native` 0.85 expecting React 19 while parts of the tree
+   still pin React 18). Not blocking the explorer, but track them
+   so they don't regress the build later.
+7. ✅ **Sample data seed.** `examples/ch-explorer/src/main.rs`
+   ships a `seed` subcommand (drops + recreates
+   `demo_buildings`, `demo_meters`, `demo_samples`; 96 sample
+   rows). Exposed as `mani run warehouse-seed` and `make
+   warehouse-seed`.
+8. **Bridge to PR 4.** Stub
+   `rubix/docs/design/warehouse/explorer/README.md` already exists
+   (created in PR 1). Promote it from placeholder to present-tense
+   doc only when PR 4 lands; until then, every PR 3 change ships
+   with the existing "TODO: flip the link" header in `mod.rs`.
+
 ## Five PRs
 
 Each PR is independently shippable. Each one lights up another slice
 of the explorer.
 
-### PR 0 — static-asset mount in `starter-server`
+### PR 0 — static-asset mount in `starter-server` ✅ merged
 
 Prerequisite for PR 3. `starter-server` today only wires `/health`,
 `/metrics`, `openapi.json` — no `ServeDir`, no SPA fallback. Land
@@ -216,7 +301,7 @@ in the right place."
 proxy (`vite.config.ts` → `/api/warehouse/ch` → backend port) and
 explicitly defers production hosting. Do not pretend the rail exists.
 
-### PR 1 — backend skeleton, no UI
+### PR 1 — backend skeleton, no UI ✅ merged
 
 The minimal vertical: hit `GET /api/warehouse/ch/tables` from `curl`
 and get real rows.
@@ -261,7 +346,7 @@ with non-stub rows. `cargo test -p starter-warehouse --test
 explorer_smoke` passes, including the authz gate assertion. The
 explorer router has no compile-time path to a write surface.
 
-### PR 2 — read-only `POST /query` + `table_data`
+### PR 2 — read-only `POST /query` + `table_data` ✅ merged
 
 Finish sql-studio's stubs. This is the part that didn't exist
 upstream.
@@ -298,7 +383,7 @@ returns `{"columns":["1"],"rows":[[1]]}`. The same endpoint with
 `DROP TABLE x` returns 400. CH server-side `readonly = 2` blocks
 anything that slipped through.
 
-### PR 3 — UI fork, ClickHouse-only
+### PR 3 — UI fork, ClickHouse-only 🟡 fork landed, not yet wired into a binary
 
 Get the sql-studio frontend on screen, pointed at our routes.
 No rubix-specific overlays yet.
@@ -320,7 +405,7 @@ No rubix-specific overlays yet.
 sql-studio shell with our database name. Tables list, schema, ERD,
 and Monaco query editor all work against the CH testcontainer.
 
-### PR 4 — rubix overlays (marts, sandboxes, verbs)
+### PR 4 — rubix overlays (marts, sandboxes, verbs) ⏸ not started
 
 The reason this explorer exists in a rubix tree instead of just
 running sql-studio: surface our own constructs.

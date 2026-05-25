@@ -74,6 +74,7 @@ members = [
     "examples/blobs",
     "examples/iot-anomaly-detector",
     "examples/authz-demo",
+    "examples/ch-explorer",
 
     # rubix tree — see rubix/SCOPE.md.
     # Six crates: rubix-spi → starter-spi; rubix-tools, rubix-skills,

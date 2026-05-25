@@ -1,0 +1,36 @@
+[package]
+name        = "ch-explorer-example"
+description = "Demo binary: serves the ClickHouse explorer UI (packages/starter-ui-ch-explorer) and the `/api/warehouse/ch/*` read-only sub-router on http://127.0.0.1:3030/warehouse/explorer."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+publish     = false
+
+# Hard rule (mirrors examples/iot-anomaly-detector): the binary must
+# not depend on the `clickhouse` crate directly — all CH I/O is
+# routed through `starter-warehouse` → `starter-store-clickhouse`.
+# `cargo tree -p ch-explorer-example | grep -i '^clickhouse '`
+# should show the upstream clickhouse crate reachable only via
+# `starter-store-clickhouse`.
+
+[[bin]]
+name = "ch-explorer"
+path = "src/main.rs"
+
+[dependencies]
+starter-server           = { workspace = true }
+starter-warehouse        = { workspace = true, features = ["warehouse"] }
+starter-store-clickhouse = { workspace = true }
+starter-authz            = { workspace = true }
+starter-spi              = { workspace = true }
+starter-observability    = { workspace = true }
+
+axum         = { workspace = true }
+prometheus   = { workspace = true }
+serde_json   = { workspace = true }
+tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
+tracing      = { workspace = true }
+anyhow       = { workspace = true }
+clap         = { workspace = true }

@@ -6,7 +6,7 @@
 //! path. Authz (`warehouse.read`) is applied at the mount site in
 //! `lib.rs`, not here, so the router stays composable.
 //!
-//! Design notes (placeholder until PR 4):
+//! Design notes:
 //! `rubix/docs/design/warehouse/explorer/README.md`.
 //!
 //! Public surface:

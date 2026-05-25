@@ -23,8 +23,9 @@ FRONTEND_PORT  := 5173
 RUBIX_DSN      ?= postgres://rubix:rubix-dev@127.0.0.1:5433/rubix
 RUBIX_CONFIG   ?= rubix/dev/agent.toml
 RUBIX_CH_URL   ?= http://127.0.0.1:8124
+CH_EXPLORER_URL ?= http://127.0.0.1:8124
 
-.PHONY: build start restart clean stop deps-up deps-down bootstrap agent frontend help
+.PHONY: build start restart clean stop deps-up deps-down bootstrap agent frontend help warehouse-seed warehouse-explorer
 
 help:
 	@echo "rubix make targets:"
@@ -96,3 +97,11 @@ clean: stop
 	@echo "==> frontend dist + vite cache"
 	-rm -rf $(FRONTEND_DIR)/dist $(FRONTEND_DIR)/node_modules/.vite $(FRONTEND_DIR)/.tanstack
 	@rm -f $(AGENT_LOG) $(FRONTEND_LOG)
+
+warehouse-seed:
+	@echo "==> ch-explorer seed (CH_EXPLORER_URL=$(CH_EXPLORER_URL))"
+	CH_EXPLORER_URL=$(CH_EXPLORER_URL) cargo run -p ch-explorer-example -- seed
+
+warehouse-explorer:
+	@echo "==> ch-explorer serve → http://127.0.0.1:3030/warehouse/explorer"
+	CH_EXPLORER_URL=$(CH_EXPLORER_URL) cargo run -p ch-explorer-example -- serve

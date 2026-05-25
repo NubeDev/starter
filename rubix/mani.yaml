@@ -97,3 +97,33 @@ tasks:
   lint-doc-refs:
     desc: Enforce the doc-tier rule on every rubix Rust source file.
     cmd: ./rubix/scripts/lint-doc-refs.sh
+
+  warehouse-seed:
+    desc: |
+      Seed the local ClickHouse with a small demo fixture
+      (demo_buildings / demo_meters / demo_samples) so the
+      explorer at http://127.0.0.1:3030/warehouse/explorer is
+      non-empty on a fresh dev box. Idempotent: re-running the
+      seed drops + recreates the tables.
+
+      Defaults to CH_EXPLORER_URL=http://127.0.0.1:8124 to match
+      docker-compose.dev.yaml; override the env var to point
+      anywhere else.
+    cmd: |
+      : "${CH_EXPLORER_URL:=http://127.0.0.1:8124}"
+      export CH_EXPLORER_URL
+      cargo run -p ch-explorer-example -- seed
+
+  warehouse-explorer:
+    desc: |
+      Boot the ch-explorer example binary against the local dev
+      ClickHouse. Serves the SPA at
+      http://127.0.0.1:3030/warehouse/explorer and the read-only
+      API at /api/warehouse/ch/*. Run `mani run warehouse-seed`
+      first on a fresh box, and
+      `pnpm -F @nube/starter-ui-ch-explorer build` if dist/ is
+      empty.
+    cmd: |
+      : "${CH_EXPLORER_URL:=http://127.0.0.1:8124}"
+      export CH_EXPLORER_URL
+      cargo run -p ch-explorer-example -- serve
