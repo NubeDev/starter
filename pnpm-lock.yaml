@@ -772,9 +772,15 @@ importers:
       '@nube/starter-ui-flow':
         specifier: workspace:*
         version: link:../../packages/starter-ui-flow
+      '@nube/starter-ui-ir':
+        specifier: workspace:*
+        version: link:../../packages/starter-ui-ir
       '@nube/starter-ui-kit':
         specifier: workspace:*
         version: link:../../packages/starter-ui-kit
+      '@nube/starter-ui-sdui-react':
+        specifier: workspace:*
+        version: link:../../packages/starter-ui-sdui-react
       '@radix-ui/react-avatar':
         specifier: ^1.1.11
         version: 1.1.11(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)

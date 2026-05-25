@@ -127,6 +127,12 @@ pub async fn seed(
 /// seeder copes with zero entries.
 fn bundled_pages() -> Vec<NewRevision> {
     let mut out = Vec::new();
+    // Phase D.2 moved bundled dashboards to a sibling `dashboards/`
+    // dir served by `rubix_flows::BUNDLED_DASHBOARDS`. The old
+    // `flows/dashboards/` subtree (kept for the brief window between
+    // A.1 and D.2) is still consulted as a fallback so a stray
+    // hand-authored test page picks up.
+    collect(&rubix_flows::BUNDLED_DASHBOARDS, &mut out);
     if let Some(dir) = rubix_flows::BUNDLED.get_dir("dashboards") {
         collect(dir, &mut out);
     }

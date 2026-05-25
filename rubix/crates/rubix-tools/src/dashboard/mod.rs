@@ -10,5 +10,4 @@ pub mod list;
 pub mod page_set;
 pub mod duplicate;
 pub mod delete;
-pub mod assistant;
 pub mod store;

@@ -48,7 +48,6 @@ use rubix_tools::clickhouse::rule_write::ClickhouseRuleWriteTool;
 use rubix_tools::clickhouse::store::{ChWriter, InMemoryChWriter};
 use rubix_tools::clickhouse::tables_list::ClickhouseTablesListTool;
 use rubix_spi::dashboard::DashboardStore;
-use rubix_tools::dashboard::assistant::DashboardAssistantStub;
 use rubix_tools::dashboard::create::DashboardCreateTool;
 use rubix_tools::dashboard::delete::DashboardDeleteTool;
 use rubix_tools::dashboard::duplicate::DashboardDuplicateTool;
@@ -188,11 +187,12 @@ pub fn build_tool_registry(
         Arc::new(DashboardDuplicateTool::new(dashboard_store.clone())),
         Arc::new(DashboardDeleteTool::new(dashboard_store.clone())),
         Arc::new(DashboardPageSetTool::new(dashboard_graph.clone())),
-        // The assistant stub remains the flow-dispatched verb the
-        // `dashboard-assistant` YAML calls into; the seven verbs
-        // above are the ones the assistant invokes through the
-        // model loop.
-        Arc::new(DashboardAssistantStub),
+        // Phase D.2: the dashboard-assistant YAML is now the real
+        // flow rooted at an ai-agent node — the seven verbs above
+        // are its `allowed_tools`, surfacing through the
+        // `tool_registry_snapshot` boot/mcp/register.rs threads in
+        // per R7. The stub `DashboardAssistantStub` it used to
+        // dispatch to has been removed.
     ]
 }
 
