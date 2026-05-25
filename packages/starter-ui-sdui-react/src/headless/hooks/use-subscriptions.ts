@@ -5,7 +5,7 @@
 import { useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { SubscriptionPlan } from "@nube/starter-ui-ir";
-import { useSduiTransport } from "../provider/sdui-provider.js";
+import { useSduiTransport } from "../sdui-provider.js";
 
 export function useSduiSubscriptions(
   plan: SubscriptionPlan | undefined,

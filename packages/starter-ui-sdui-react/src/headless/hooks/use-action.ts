@@ -5,7 +5,7 @@
 import { useMutation } from "@tanstack/react-query";
 import type { UseMutationResult } from "@tanstack/react-query";
 import type { ActionRequest, UiActionResponse } from "@nube/starter-ui-ir";
-import { useSduiTransport } from "../provider/sdui-provider.js";
+import { useSduiTransport } from "../sdui-provider.js";
 
 export function useSduiAction(): UseMutationResult<
   UiActionResponse,

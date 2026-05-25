@@ -4,8 +4,8 @@
 
 import { createContext, useContext } from "react";
 import type { ReactNode } from "react";
-import type { SduiTransport } from "../transport/index.js";
-import type { CustomRendererRegistry } from "../renderer/registry.js";
+import type { SduiTransport } from "./transport/index.js";
+import type { CustomRendererRegistry } from "./registry.js";
 
 export interface SduiContextValue {
   transport: SduiTransport;

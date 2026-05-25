@@ -1,6 +1,6 @@
 // `divider` — `<Separator>` from the UI kit.
 import { Separator, cn } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
+import { registerRenderer } from "../headless/registry.js";
 
 export function RenderDivider({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const orientation = node.orientation === "vertical" ? "vertical" : "horizontal";

@@ -1,6 +1,11 @@
-// Import side-effect: every render-*.tsx file calls
-// `registerRenderer(...)` at module load. Importing this barrel once
-// (from `src/index.ts` or `src/sdui-page.tsx`) wires up the registry.
+// Web-renderer side-effect barrel. Each `render-*.tsx` calls
+// `registerRenderer(...)` at module load against the registry in
+// `../headless/registry.js`. Importing this barrel (from the root
+// `src/index.ts`) wires the web kit into the shared dispatcher.
+//
+// Mobile builds MUST NOT import this barrel: they ship their own
+// renderer side-effect file against `@nube/starter-ui-kit-native`
+// and consume `@nube/starter-ui-sdui-react/headless` for the rest.
 
 import "./render-page.js";
 import "./render-row.js";
@@ -19,13 +24,6 @@ import "./render-divider.js";
 import "./render-custom.js";
 import "./render-repeat.js";
 
-export { Render, RenderChildren } from "./render.js";
-export {
-  registerRenderer,
-  lookupRenderer,
-  listRenderers,
-} from "./registry.js";
-export type { Renderer, RenderProps, CustomRendererRegistry } from "./registry.js";
 export { RenderPage } from "./render-page.js";
 export { RenderRow } from "./render-row.js";
 export { RenderCol } from "./render-col.js";

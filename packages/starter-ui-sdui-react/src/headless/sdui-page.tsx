@@ -8,7 +8,8 @@ import { IR_VERSION } from "@nube/starter-ui-ir";
 import { PageStateProvider } from "./page-state.js";
 import { useSduiResolve } from "./hooks/use-resolve.js";
 import { useSduiSubscriptions } from "./hooks/use-subscriptions.js";
-import { Render, listRenderers } from "./renderer/index.js";
+import { Render } from "./render.js";
+import { listRenderers } from "./registry.js";
 
 export interface SduiPageProps {
   /** Logical page name, e.g. `dashboard.overview`. */

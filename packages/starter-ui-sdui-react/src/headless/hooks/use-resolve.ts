@@ -9,7 +9,7 @@ import type {
   ResolveRequest,
   UiResolveResponse,
 } from "@nube/starter-ui-ir";
-import { useSduiTransport } from "../provider/sdui-provider.js";
+import { useSduiTransport } from "../sdui-provider.js";
 import { usePageState } from "../page-state.js";
 
 export interface UseSduiResolveOptions {

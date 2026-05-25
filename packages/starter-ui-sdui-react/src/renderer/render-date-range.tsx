@@ -2,8 +2,8 @@
 // `page_state[node.page_state_key]`. The fancier calendar popover
 // is a v2 enhancement.
 import { Input, Label, cn } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
-import { usePageStateKey } from "../page-state.js";
+import { registerRenderer } from "../headless/registry.js";
+import { usePageStateKey } from "../headless/page-state.js";
 
 interface Range { from?: string; to?: string }
 

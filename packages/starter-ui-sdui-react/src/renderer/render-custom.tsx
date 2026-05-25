@@ -2,8 +2,8 @@
 // `node.renderer_id`. If the host hasn't registered a renderer for
 // this id, fall back to the same "dangling" placeholder the central
 // walker uses for unknown variants.
-import { registerRenderer } from "./registry.js";
-import { useSduiContext } from "../provider/sdui-provider.js";
+import { registerRenderer } from "../headless/registry.js";
+import { useSduiContext } from "../headless/sdui-provider.js";
 
 export function RenderCustom({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const id = typeof node.renderer_id === "string" ? node.renderer_id : "";

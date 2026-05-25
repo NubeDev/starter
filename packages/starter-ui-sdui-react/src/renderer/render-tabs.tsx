@@ -1,7 +1,7 @@
 // `tabs` — `<Tabs>` from the UI kit; children live in `node.tabs`.
 import { Tabs, TabsContent, TabsList, TabsTrigger, cn } from "@nube/starter-ui-kit";
-import { RenderChildren } from "./render.js";
-import { registerRenderer } from "./registry.js";
+import { RenderChildren } from "../headless/render.js";
+import { registerRenderer } from "../headless/registry.js";
 
 interface TabSpec {
   id?: string;
