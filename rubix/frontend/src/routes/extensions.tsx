@@ -32,6 +32,7 @@ import {
   useExtensionEvents,
   type ExtensionSummary,
 } from '@nube/rubix-client-react'
+import { ExtensionSlot } from '@nube/starter-ext-ui'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 function StatusBadge({ state }: { state: string }) {
@@ -184,7 +185,28 @@ function ExtensionsRoute() {
   return (
     <ErrorBoundary>
       <ExtensionsTable />
+      <ExtensionContributedPanels />
     </ErrorBoundary>
+  )
+}
+
+/** Federated panels contributed by enabled extensions into the
+ * `main` slot. The host runtime
+ * (`@nube/starter-ext-ui::ExtensionHostManager`, constructed in
+ * `lib/extension-host.ts`) holds the registered remotes; this
+ * section just exposes the named slot so any extension whose
+ * `block.yaml` declares `contributes.ui.exposes[*].slot: main`
+ * renders here. The slot is empty until at least one remote has
+ * been registered — the bootstrap loop that walks
+ * `GET /api/v1/extensions` and dynamic-imports each
+ * `contributes.ui.entry` is the next slice (it belongs in
+ * `@nube/starter-ext-ui` so every host shell benefits, per SCOPE
+ * R2). */
+function ExtensionContributedPanels() {
+  return (
+    <section className="relative mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
+      <ExtensionSlot id="main" />
+    </section>
   )
 }
 

@@ -6,12 +6,14 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthProvider, StarterClientProvider } from '@nube/starter-client-react'
 import { StarterError } from '@nube/starter-client-ts'
 import { RubixClientProvider } from '@nube/rubix-client-react'
+import { ExtensionHostProvider } from '@nube/starter-ext-ui'
 import { SduiProvider, createHttpSduiTransport } from '@nube/starter-ui-sdui-react'
 import { routeTree } from './routeTree.gen'
 import { DirectionProvider } from '@nube/starter-ui-core/layout'
 import { ThemeProvider } from '@/components/theme/theme-provider'
 import { I18nProvider } from '@/i18n/provider'
 import { getRubixClient, getStarterClient } from '@/lib/client'
+import { getExtensionHost } from '@/lib/extension-host'
 import { LoginRoute } from '@/routes/login'
 import '@xyflow/react/dist/style.css'
 import '@nube/starter-ui-flow/styles.css'
@@ -59,6 +61,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <StarterClientProvider client={getStarterClient()}>
         <RubixClientProvider client={getRubixClient()}>
+          <ExtensionHostProvider host={getExtensionHost()}>
           <SduiProvider transport={createHttpSduiTransport({ client: getStarterClient() })}>
           <DirectionProvider>
             <ThemeProvider>
@@ -70,6 +73,7 @@ createRoot(document.getElementById('root')!).render(
             </ThemeProvider>
           </DirectionProvider>
           </SduiProvider>
+          </ExtensionHostProvider>
         </RubixClientProvider>
       </StarterClientProvider>
       {/* SCOPE OQ-3: devtools mount only in dev — Vite tree-shakes
