@@ -15,7 +15,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useIntl } from 'react-intl'
-import { Activity, Boxes, Download, Play, RotateCw, Square } from 'lucide-react'
+import { Activity, Boxes, CheckCircle2, Download, Power, PowerOff } from 'lucide-react'
 import {
   Button,
   Empty,
@@ -27,9 +27,8 @@ import {
 } from '@nube/starter-ui-kit'
 import {
   useExtensionsList,
-  useExtensionStart,
-  useExtensionStop,
-  useExtensionRestart,
+  useExtensionEnable,
+  useExtensionDisable,
   type ExtensionSummary,
 } from '@nube/rubix-client-react'
 import {
@@ -65,9 +64,8 @@ function ExtensionsTable() {
     intl.formatMessage({ id, defaultMessage: def })
 
   const list = useExtensionsList()
-  const startMut = useExtensionStart()
-  const stopMut = useExtensionStop()
-  const restartMut = useExtensionRestart()
+  const enableMut = useExtensionEnable()
+  const disableMut = useExtensionDisable()
 
   // No aggregate SSE endpoint today — the agent only exposes per-id
   // streams at `/api/v1/extensions/{id}/events`. Live status is
@@ -162,29 +160,20 @@ function ExtensionsTable() {
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={startMut.isPending || state === 'running' || state === 'starting'}
-                      onClick={() => startMut.mutate({ id: r.id })}
+                      disabled={enableMut.isPending || enabled}
+                      onClick={() => enableMut.mutate({ id: r.id })}
                     >
-                      <Play className="h-3.5 w-3.5" />
-                      {tr('extensions.action.start', 'Start')}
+                      <Power className="h-3.5 w-3.5" />
+                      Enable
                     </Button>
                     <Button
                       size="sm"
                       variant="outline"
-                      disabled={stopMut.isPending || state === 'stopped' || state === 'stopping'}
-                      onClick={() => stopMut.mutate({ id: r.id })}
+                      disabled={disableMut.isPending || !enabled}
+                      onClick={() => disableMut.mutate({ id: r.id })}
                     >
-                      <Square className="h-3.5 w-3.5" />
-                      {tr('extensions.action.stop', 'Stop')}
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      disabled={restartMut.isPending}
-                      onClick={() => restartMut.mutate({ id: r.id })}
-                    >
-                      <RotateCw className="h-3.5 w-3.5" />
-                      {tr('extensions.action.restart', 'Restart')}
+                      <PowerOff className="h-3.5 w-3.5" />
+                      Disable
                     </Button>
                   </div>
                 </div>
@@ -351,7 +340,13 @@ function ExtensionContributesPanel({ id }: { id: string }) {
           <span className="ml-2 text-[11px] text-red-400">{loadError}</span>
         ) : null}
       </div>
-      <div className="flex justify-end">
+      <div className="flex justify-end gap-2">
+        {registered ? (
+          <span className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-leaf)]/15 px-2 py-0.5 text-[11px] font-medium uppercase tracking-wider text-[color:var(--color-leaf)] ring-1 ring-[color:var(--color-leaf)]/30">
+            <CheckCircle2 className="h-3 w-3" />
+            UI loaded
+          </span>
+        ) : null}
         {ui ? (
           <Button
             size="sm"
