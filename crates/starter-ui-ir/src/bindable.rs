@@ -157,6 +157,19 @@ pub trait Bindable {
     /// total so walkers can call it uniformly without prior
     /// dispatch.
     fn set_resolved_value(&mut self, value: JsonValue, issues: &mut Vec<ResolveIssue>);
+
+    /// Visit every `{{...}}`-bearing string field on **this node only**
+    /// (does not recurse into children), allowing the visitor to
+    /// rewrite the string in place. The substitute walker calls this
+    /// once per node as it descends the tree, so child traversal stays
+    /// explicit in the walker rather than implicit in every variant.
+    ///
+    /// Layout-only variants whose only mutable strings are CSS-token
+    /// fields (gap, columns) must NOT pass those — the visitor is
+    /// exclusively for fields that may carry a binding tag.
+    fn visit_bindings<F>(&mut self, visit: &mut F)
+    where
+        F: FnMut(&mut String);
 }
 
 /// JSON shape names used by `ResolveIssue::TypeMismatch`. Centralised
