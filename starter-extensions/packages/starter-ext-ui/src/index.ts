@@ -59,6 +59,14 @@ export {
 } from "./use-extension-host.js";
 
 export {
+  bootstrapExtensions,
+  type BootstrapOptions,
+  type BootstrapResult,
+  type BootstrapExtensionSummary,
+  type BootstrapExtensionDetail,
+} from "./bootstrap.js";
+
+export {
   matchingMajor,
   parseMajor,
   parseMinor,
