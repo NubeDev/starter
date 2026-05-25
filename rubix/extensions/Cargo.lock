@@ -565,6 +565,7 @@ name = "rubix-example-extension"
 version = "0.0.0"
 dependencies = [
  "starter-ext-sdk",
+ "tokio",
 ]
 
 [[package]]

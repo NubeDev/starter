@@ -275,7 +275,18 @@ function ExtensionContributesPanel({ id }: { id: string }) {
     setLoading(true)
     setLoadError(null)
     try {
-      const entryUrl = `/api/v1/extensions/${encodeURIComponent(id)}/ui/${ui.entry.replace(/^\/+/, '')}`
+      // The agent's `GET /api/v1/extensions/{id}/ui/{*path}` handler
+      // computes a `ui_root` = the parent dir of `manifest.contributes
+      // .ui.entry`, then serves the wildcard suffix from that root.
+      // For a manifest with `entry: ui/remoteEntry.js` this means the
+      // URL for the entry file itself is just the basename
+      // (`remoteEntry.js`) — handing it the full `ui/remoteEntry.js`
+      // would produce a `/ui/ui/remoteEntry.js` 404.
+      const entryBasename = ui.entry
+        .replace(/^\/+/, '')
+        .split('/')
+        .pop()!
+      const entryUrl = `/api/v1/extensions/${encodeURIComponent(id)}/ui/${entryBasename}`
       const mod = (await import(/* @vite-ignore */ entryUrl)) as
         | ExtensionRemoteFactory
         | { default: ExtensionRemoteFactory }

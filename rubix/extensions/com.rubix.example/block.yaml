@@ -15,3 +15,49 @@ display_name: Rubix Example Extension
 runtime:
   kind: process
   bin: rubix-example-extension
+
+# What this extension contributes to the host.
+#
+# Every section is optional and additive (see
+# `starter-extensions/crates/starter-ext-spi/src/manifest.rs::Contributes`).
+# Field shapes follow the upstream SPI's `#[serde(deny_unknown_fields)]`
+# structs — a typo here is a load-time error, never a silent ignore.
+contributes:
+  # MCP-style tools (consumed by `starter-ext-mcp-adapter`).
+  # The handler body lives in `process/src/main.rs`; the tool id is
+  # mangled into the handler name `handle_com_rubix_example_echo` by
+  # the `register_process_main!` macro.
+  tools:
+    - id: com.rubix.example.echo
+      input_schema: kinds/echo_in.json
+      output_schema: kinds/echo_out.json
+      description_file: kinds/echo.md
+
+  # `SKILL.md` bundle root(s). Each entry names a directory whose
+  # immediate children are `<id>/SKILL.md` bundles. The adapter folds
+  # each bundle into the host's `SkillRegistry` quarantined regardless
+  # of frontmatter trust (DOCS/agent/SKILLS.md R-skills-3).
+  skills:
+    - dir: skills
+
+  # Flow node-kind contributions (DOCS/extensions/scope/FLOW-NODES.md).
+  # The kernel binds slice-A's placeholder behaviour today; slice-B's
+  # `ProcessNodeProxy` will route `flow.node.invoke` to the same child.
+  nodes:
+    - kind: com.rubix.example.echo
+      settings_schema: kinds/echo_node_settings.json
+      description_file: kinds/echo.md
+      facets: [transform]
+
+  # Module-Federation UI entry. The `entry` path is served by
+  # `starter-ext-server` at `/extensions/<id>/ui/*`. The `name` of
+  # each `exposes[]` row must match a component registered through
+  # `handle.register({ components: { ... } })` in `ui/remoteEntry.js`.
+  # `slot: main` lines up with `<ExtensionSlot id="main"/>` on the
+  # rubix-frontend `/extensions` route.
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - name: Main
+        module: "./Main"
+        slot: main

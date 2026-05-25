@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EchoNodeSettings",
+  "type": "object",
+  "properties": {
+    "prefix": {
+      "type": "string",
+      "description": "Optional string prepended to the echoed message.",
+      "default": ""
+    }
+  },
+  "additionalProperties": false
+}

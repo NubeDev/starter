@@ -32,3 +32,9 @@ path = "src/main.rs"
 # adopt (Phase B.2+); declaring it here keeps the dep resolution
 # honest even while `src/main.rs` is still a placeholder.
 starter-ext-sdk = { path = "../../../../starter-extensions/crates/starter-ext-sdk", default-features = false, features = ["process"] }
+# Async runtime for the `run()` entry-point emitted by
+# `starter_ext_sdk::register_process_main!`. `current_thread` flavour
+# keeps the binary footprint small; the SDK does its own task-spawning
+# under the hood.
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "io-std", "io-util", "time"] }
+

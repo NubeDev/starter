@@ -72,6 +72,25 @@ export interface FlowRunOverlay {
 
 const EMPTY_OVERLAY: FlowRunOverlay = { nodes: {}, slotValues: {} };
 
+/**
+ * Rubix-side reverse-DNS prefix the `rubix-flows` YAML converter
+ * prepends to every short node id (e.g. YAML `id: tick` →
+ * engine `NodeId("com.rubix.tick")`). Mirrors the Rust constant
+ * `rubix_flows::NODE_ID_PREFIX`. The agent's SSE wire frames
+ * carry the qualified engine id, but the `<FlowCanvas>` graph
+ * built by the rubix frontend keys nodes by the short YAML id
+ * (no prefix), so we strip the prefix here on ingest. Without
+ * this, `runOverlay.slotValues[frame.node]` always misses and
+ * the canvas never paints live values.
+ */
+const RUBIX_NODE_ID_PREFIX = "com.rubix.";
+
+function rubixShortNodeId(nodeId: string): string {
+  return nodeId.startsWith(RUBIX_NODE_ID_PREFIX)
+    ? nodeId.slice(RUBIX_NODE_ID_PREFIX.length)
+    : nodeId;
+}
+
 export interface UseFlowEventsOptions {
   /** Maximum frames retained in `events`. Default 200. */
   bufferSize?: number;
@@ -144,12 +163,15 @@ export function useFlowEvents(
       return [...next, frame];
     });
     setRunOverlay((prev) => {
-      const nodeSlots = prev.slotValues[frame.node] ?? {};
+      // Strip the rubix-flows reverse-DNS prefix so the overlay
+      // keys match the `<FlowCanvas>` graph's short node ids.
+      const nodeKey = rubixShortNodeId(frame.node);
+      const nodeSlots = prev.slotValues[nodeKey] ?? {};
       return {
-        nodes: { ...prev.nodes, [frame.node]: "ok" },
+        nodes: { ...prev.nodes, [nodeKey]: "ok" },
         slotValues: {
           ...prev.slotValues,
-          [frame.node]: { ...nodeSlots, [frame.slot]: frame.value },
+          [nodeKey]: { ...nodeSlots, [frame.slot]: frame.value },
         },
       };
     });

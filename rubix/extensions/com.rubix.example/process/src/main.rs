@@ -1,31 +1,59 @@
-//! Reference extension binary.
+//! Reference rubix extension — process flavour.
 //!
-//! Phase 0 placeholder — the planned `rubix-extensions-sdk` crate
-//! does not yet exist (see docs/design/STARTER-CHANGES.md). Until
-//! Phase 5 lands the SDK + the `starter-ext-flow` adapter, this
-//! file documents the expected entry point shape.
+//! Mirrors `starter-extensions/examples/hello-process/src/main.rs`.
+//! Per SCOPE R8 the extension depends ONLY on `starter-ext-sdk`; per
+//! SCOPE R1 / "One source, three flavours" the handler body would be
+//! byte-identical to a builtin/wasm twin — only the entry-point macro
+//! (`register_process_main!`) is flavour-specific.
 //!
-//! Expected real implementation (Phase 5):
-//!
-//! ```ignore
-//! use rubix_extensions_sdk::{run_process_plugin, Tool, NodeCtx};
-//!
-//! struct EchoTool;
-//!
-//! #[async_trait::async_trait]
-//! impl Tool for EchoTool {
-//!     // ... per starter_spi::Tool ...
-//! }
-//!
-//! #[tokio::main]
-//! async fn main() -> anyhow::Result<()> {
-//!     run_process_plugin(vec![Box::new(EchoTool)]).await
-//! }
-//! ```
+//! The host hands `block.yaml` to the SDK derive at compile time. Each
+//! `contributes.tools[]` entry whose id is `com.rubix.example.foo`
+//! produces a required handler method `handle_com_rubix_example_foo`
+//! on the generated `*ToolHandlers` trait.
 
-fn main() {
-    eprintln!(
-        "rubix-example-extension is a Phase 5 placeholder; \
-         rubix-extensions-sdk is not yet available."
-    );
+use starter_ext_sdk::Extension;
+
+/// The extension's unit struct. SCOPE R5: no fields. All state lives
+/// in the host-provided Ctx.
+#[derive(Extension)]
+#[extension(manifest = "../block.yaml")]
+pub struct Example;
+
+starter_ext_sdk::requires! {
+    name = ExampleCtx,
+    capabilities = [],
+}
+
+impl ExampleToolHandlers for Example {
+    type Ctx = ExampleCtx;
+
+    /// `com.rubix.example.echo` — return the input verbatim.
+    fn handle_com_rubix_example_echo(
+        &self,
+        _ctx: &Self::Ctx,
+        params: starter_ext_sdk::serde_json::Value,
+    ) -> starter_ext_sdk::Result<starter_ext_sdk::serde_json::Value> {
+        Ok(params)
+    }
+}
+
+// Emits `pub async fn run() -> starter_ext_sdk::Result<()>` driving
+// the stdio JSON-RPC loop that the rubix-agent supervisor speaks to.
+starter_ext_sdk::register_process_main! {
+    extension: Example,
+    ctx: ExampleCtx,
+    instance: Example,
+}
+
+#[tokio::main(flavor = "current_thread")]
+async fn main() -> std::process::ExitCode {
+    match run().await {
+        Ok(()) => std::process::ExitCode::SUCCESS,
+        Err(e) => {
+            // Supervisor's stderr-forwarder pushes this into the
+            // per-extension event ring.
+            eprintln!("rubix-example-extension exiting with error: {e}");
+            std::process::ExitCode::FAILURE
+        }
+    }
 }

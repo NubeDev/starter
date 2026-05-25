@@ -167,7 +167,27 @@ pub async fn build_extension_admin(
     // extensions root as an empty load (per its own doc comment),
     // which keeps `cargo run -p rubix-agent` working out-of-the-box
     // on a fresh checkout that has not built any extensions yet.
-    let dir: &Path = cfg.extensions.dir.as_ref();
+    //
+    // Canonicalise the configured root to an absolute path *before*
+    // handing it to `Loader::scan`. The loader stamps each record's
+    // `bundle_dir = scan_root.join(entry_name)`; the process-flavour
+    // supervisor then `Command::current_dir(&bundle_dir).arg0(bundle_dir
+    // .join(runtime.bin))`, which double-resolves a relative
+    // `bundle_dir` against itself and produces a bogus exec path
+    // (e.g. `rubix/extensions/<id>/rubix/extensions/<id>/<bin>` -> ENOENT).
+    // Resolving to an absolute path here makes the join a no-op for the
+    // cwd-change and keeps `runtime.bin` valid. Falls back to the
+    // configured value verbatim if the dir doesn't yet exist (the
+    // loader will just produce an empty record set in that case).
+    let raw_dir: &Path = cfg.extensions.dir.as_ref();
+    let owned_dir;
+    let dir: &Path = match raw_dir.canonicalize() {
+        Ok(abs) => {
+            owned_dir = abs;
+            owned_dir.as_path()
+        }
+        Err(_) => raw_dir,
+    };
     info!(target: "rubix-agent::boot::extensions", dir = %dir.display(),
         "scanning extensions root");
     let records = Loader::scan(dir).validate_all();
