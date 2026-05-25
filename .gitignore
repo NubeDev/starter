@@ -28,3 +28,4 @@ dist/
 *.pid
 coverage/
 test-ui
+rubix/frontend/.tanstack/tmp/

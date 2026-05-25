@@ -33,7 +33,16 @@ export function useSduiResolve(
   };
   return useQuery<UiResolveResponse, Error>({
     queryKey: ["sdui", "resolve", req],
-    queryFn: ({ signal }) => transport.resolve(req, signal),
+    // Intentionally drop the per-observer `signal`. In React 19
+    // `<StrictMode>` dev mode the first mount's signal aborts on
+    // the synthetic unmount, which makes the in-flight resolve
+    // request fail and forces the second mount to refetch — two
+    // network requests for one render. Without the signal, the
+    // second mount re-subscribes to the still-pending promise and
+    // we see one request. Cancellation still happens implicitly
+    // when the queryKey changes (page-state writes) — TanStack
+    // Query GCs the old query and starts a new one.
+    queryFn: () => transport.resolve(req),
     staleTime: 0,
   });
 }

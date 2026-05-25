@@ -265,6 +265,24 @@ async fn main() -> Result<()> {
             app = app.merge(Router::new().nest("/api/v1", ext_router));
         }
 
+        // Goal 1, Phase A.1 — seed bundled SDUI dashboard pages
+        // (e.g. `dashboard.disk-overview`) into
+        // `dashboards_definitions` before the page provider goes
+        // live. Idempotent: a row already present for
+        // `(BUNDLED_TENANT, page_id)` is skipped. The throwaway
+        // `StaticRegistry` only carries the in-process
+        // `try_register` call inside the seed — the real authz
+        // engine above already declared the same kind, so this
+        // registry is dropped after the seed returns.
+        let seed_registry = starter_authz::StaticRegistry::new();
+        let inserted = boot::dashboards_seed::seed(Some(&pool), &seed_registry)
+            .await
+            .map_err(|e| anyhow::anyhow!("dashboards_seed::seed: {e}"))?;
+        tracing::info!(
+            inserted,
+            "dashboards_definitions seed complete",
+        );
+
         // Phase B.2 — mount the SDUI router under `/api/v1/ui`.
         // `starter_sdui_routes::sdui_router` already roots its
         // routes at the full path, so we `merge` (not `nest`). The

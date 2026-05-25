@@ -3,6 +3,8 @@
 // (from `src/index.ts` or `src/sdui-page.tsx`) wires up the registry.
 
 import "./render-page.js";
+import "./render-row.js";
+import "./render-col.js";
 import "./render-grid.js";
 import "./render-kpi.js";
 import "./render-chart.js";
@@ -25,6 +27,8 @@ export {
 } from "./registry.js";
 export type { Renderer, RenderProps, CustomRendererRegistry } from "./registry.js";
 export { RenderPage } from "./render-page.js";
+export { RenderRow } from "./render-row.js";
+export { RenderCol } from "./render-col.js";
 export { RenderGrid } from "./render-grid.js";
 export { RenderKpi } from "./render-kpi.js";
 export { RenderChart } from "./render-chart.js";

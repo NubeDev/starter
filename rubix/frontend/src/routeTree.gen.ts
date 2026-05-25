@@ -15,8 +15,8 @@ import { Route as ExtensionsRouteImport } from './routes/extensions'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FlowsIndexRouteImport } from './routes/flows/index'
-import { Route as FlowsFlowIdRouteImport } from './routes/flows/$flowId'
 import { Route as DashboardsIndexRouteImport } from './routes/dashboards/index'
+import { Route as FlowsFlowIdRouteImport } from './routes/flows/$flowId'
 import { Route as DashboardsPageIdRouteImport } from './routes/dashboards/$pageId'
 import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
@@ -52,14 +52,14 @@ const FlowsIndexRoute = FlowsIndexRouteImport.update({
   path: '/flows/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const FlowsFlowIdRoute = FlowsFlowIdRouteImport.update({
-  id: '/flows/$flowId',
-  path: '/flows/$flowId',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DashboardsIndexRoute = DashboardsIndexRouteImport.update({
   id: '/dashboards/',
   path: '/dashboards/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FlowsFlowIdRoute = FlowsFlowIdRouteImport.update({
+  id: '/flows/$flowId',
+  path: '/flows/$flowId',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardsPageIdRoute = DashboardsPageIdRouteImport.update({
@@ -93,8 +93,8 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
-  '/dashboards/': typeof DashboardsIndexRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
+  '/dashboards/': typeof DashboardsIndexRoute
   '/flows/': typeof FlowsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -107,8 +107,8 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
-  '/dashboards': typeof DashboardsIndexRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
+  '/dashboards': typeof DashboardsIndexRoute
   '/flows': typeof FlowsIndexRoute
 }
 export interface FileRoutesById {
@@ -122,8 +122,8 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
-  '/dashboards/': typeof DashboardsIndexRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
+  '/dashboards/': typeof DashboardsIndexRoute
   '/flows/': typeof FlowsIndexRoute
 }
 export interface FileRouteTypes {
@@ -138,8 +138,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/warehouse'
     | '/dashboards/$pageId'
-    | '/dashboards/'
     | '/flows/$flowId'
+    | '/dashboards/'
     | '/flows/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -152,8 +152,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/warehouse'
     | '/dashboards/$pageId'
-    | '/dashboards'
     | '/flows/$flowId'
+    | '/dashboards'
     | '/flows'
   id:
     | '__root__'
@@ -166,8 +166,8 @@ export interface FileRouteTypes {
     | '/admin/users'
     | '/admin/warehouse'
     | '/dashboards/$pageId'
-    | '/dashboards/'
     | '/flows/$flowId'
+    | '/dashboards/'
     | '/flows/'
   fileRoutesById: FileRoutesById
 }
@@ -181,8 +181,8 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
   DashboardsPageIdRoute: typeof DashboardsPageIdRoute
-  DashboardsIndexRoute: typeof DashboardsIndexRoute
   FlowsFlowIdRoute: typeof FlowsFlowIdRoute
+  DashboardsIndexRoute: typeof DashboardsIndexRoute
   FlowsIndexRoute: typeof FlowsIndexRoute
 }
 
@@ -230,18 +230,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FlowsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/flows/$flowId': {
-      id: '/flows/$flowId'
-      path: '/flows/$flowId'
-      fullPath: '/flows/$flowId'
-      preLoaderRoute: typeof FlowsFlowIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/dashboards/': {
       id: '/dashboards/'
       path: '/dashboards'
       fullPath: '/dashboards/'
       preLoaderRoute: typeof DashboardsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/flows/$flowId': {
+      id: '/flows/$flowId'
+      path: '/flows/$flowId'
+      fullPath: '/flows/$flowId'
+      preLoaderRoute: typeof FlowsFlowIdRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboards/$pageId': {
@@ -285,8 +285,8 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,
   DashboardsPageIdRoute: DashboardsPageIdRoute,
-  DashboardsIndexRoute: DashboardsIndexRoute,
   FlowsFlowIdRoute: FlowsFlowIdRoute,
+  DashboardsIndexRoute: DashboardsIndexRoute,
   FlowsIndexRoute: FlowsIndexRoute,
 }
 export const routeTree = rootRouteImport
