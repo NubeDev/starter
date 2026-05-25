@@ -1,0 +1,20 @@
+{
+  "name": "@nube/starter-ui-ir",
+  "version": "0.1.0",
+  "description": "TypeScript mirror of the starter-ui-ir Rust crate. Hand-maintained wire-shape types consumed by SDUI renderer packages. Per scope OQ-7 the Rust crate is the source of truth; this package is the small TS-side addition until codegen lands.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4"
+  }
+}
