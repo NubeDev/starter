@@ -6,3 +6,4 @@ packages:
   - "starter-extensions/examples/*"
   - "rubix/packages/*"
   - "rubix/frontend"
+  - "rubix/mobile"
