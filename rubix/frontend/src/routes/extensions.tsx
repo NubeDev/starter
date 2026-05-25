@@ -12,7 +12,7 @@
 // inside the hook so the table reflects authoritative state.
 
 import { createFileRoute } from '@tanstack/react-router'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useIntl } from 'react-intl'
 import { Activity, Boxes, Play, RotateCw, Square } from 'lucide-react'
 import {
@@ -32,8 +32,9 @@ import {
   useExtensionEvents,
   type ExtensionSummary,
 } from '@nube/rubix-client-react'
-import { ExtensionSlot } from '@nube/starter-ext-ui'
+import { ExtensionSlot, bootstrapExtensions } from '@nube/starter-ext-ui'
 import { ErrorBoundary } from '@/components/error-boundary'
+import { getExtensionHost } from '@/lib/extension-host'
 
 function StatusBadge({ state }: { state: string }) {
   const color =
@@ -191,18 +192,17 @@ function ExtensionsRoute() {
 }
 
 /** Federated panels contributed by enabled extensions into the
- * `main` slot. The host runtime
- * (`@nube/starter-ext-ui::ExtensionHostManager`, constructed in
- * `lib/extension-host.ts`) holds the registered remotes; this
- * section just exposes the named slot so any extension whose
- * `block.yaml` declares `contributes.ui.exposes[*].slot: main`
- * renders here. The slot is empty until at least one remote has
- * been registered — the bootstrap loop that walks
- * `GET /api/v1/extensions` and dynamic-imports each
- * `contributes.ui.entry` is the next slice (it belongs in
- * `@nube/starter-ext-ui` so every host shell benefits, per SCOPE
- * R2). */
+ * `main` slot. On mount, `bootstrapExtensions` (from
+ * `@nube/starter-ext-ui`) walks `GET /api/v1/extensions`, fetches
+ * each manifest, dynamic-imports its `contributes.ui.entry`, and
+ * calls `manager.registerExtensionRemote`. The slot then renders
+ * every registered component whose `slot: main`. */
 function ExtensionContributedPanels() {
+  useEffect(() => {
+    void bootstrapExtensions(getExtensionHost(), {
+      basePath: '/api/v1/extensions',
+    })
+  }, [])
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
       <ExtensionSlot id="main" />
