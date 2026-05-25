@@ -16,8 +16,14 @@ import { WarehouseRulesPanel } from './rules-panel'
 import { WarehouseMartsPanel } from './marts-panel'
 import { WarehouseRetentionPanel } from './retention-panel'
 import { WarehouseInsightsPanel } from './insights-panel'
+import { WarehouseExplorerPanel } from './explorer-panel'
 
-export type WarehouseAdminTab = 'rules' | 'marts' | 'retention' | 'insights'
+export type WarehouseAdminTab =
+  | 'rules'
+  | 'marts'
+  | 'retention'
+  | 'insights'
+  | 'explorer'
 
 export interface WarehouseAdminProps {
   defaultTab?: WarehouseAdminTab
@@ -44,6 +50,9 @@ export function WarehouseAdmin({ defaultTab = 'rules' }: WarehouseAdminProps) {
         <TabsTrigger value="insights">
           {tr('admin.warehouse.tabs.insights', 'Insights')}
         </TabsTrigger>
+        <TabsTrigger value="explorer">
+          {tr('admin.warehouse.tabs.explorer', 'Explorer')}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="rules" className="mt-6">
         <WarehouseRulesPanel />
@@ -56,6 +65,9 @@ export function WarehouseAdmin({ defaultTab = 'rules' }: WarehouseAdminProps) {
       </TabsContent>
       <TabsContent value="insights" className="mt-6">
         <WarehouseInsightsPanel />
+      </TabsContent>
+      <TabsContent value="explorer" className="mt-6">
+        <WarehouseExplorerPanel />
       </TabsContent>
     </Tabs>
   )

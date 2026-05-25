@@ -32,8 +32,10 @@
 #![warn(missing_docs)]
 
 pub mod dashboards;
+pub mod flows;
 
 pub use dashboards::PgDashboardStore;
+pub use flows::PgFlowDefStore;
 pub use starter_store_postgres::MigrationSource;
 
 /// `sqlx` migrator for the rubix `undo_snapshots` schema. Pair

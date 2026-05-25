@@ -36,7 +36,23 @@ export const STARTER_FLOW_TRIGGER_SCHEDULE_SPEC: NodeKindSpec = {
   color: "#ef4444",
   icon: "clock",
   inputs: [],
-  outputs: [{ name: "fire", kind: "trigger", label: "fire" }],
+  // Two outputs, matching the backend node
+  // (crates/starter-flow-nodes/src/trigger_schedule.rs):
+  //
+  //   * `fire`      — per-tick `SlotValue::Int(unix_ms)`. The signal
+  //                   downstream nodes wire to for fan-out. Varies
+  //                   per tick by construction, so the engine's R3
+  //                   idempotent-write short-circuit never suppresses
+  //                   propagation.
+  //   * `schedule`  — constant `SlotValue::String(cron_expr)` for
+  //                   enumeration / inspection surfaces (FlowAsService).
+  //                   Do NOT wire downstream fan-out to this slot —
+  //                   R3 will swallow every emit after the first and
+  //                   the pipeline goes silent.
+  outputs: [
+    { name: "fire", kind: "trigger", label: "fire" },
+    { name: "schedule", kind: "string", label: "schedule" },
+  ],
 };
 
 interface GenericNodeData {

@@ -137,37 +137,39 @@ and the full MIT text live in
 [`NOTICES.md`](../../../../NOTICES.md) at the workspace root.
 The workspace [`LICENSE`](../../../../LICENSE) is untouched.
 
-## Not yet (PR 4)
+## Frontend topology
 
-Rubix-specific overlays — `MartTree`, `SandboxTree`, `CleanerTree`,
-`ActionButtons` — and the typed wrappers around `/api/marts`,
-`/api/sandboxes`, `/api/warehouse/{gc,audit}`, plus the three
-rubix verb POST shapes, are tracked in the PR 4 section of
-[`rubix/docs/scope/clickhouse-explorer.md`](../../scope/clickhouse-explorer.md).
-This page expands as each slice lands.
+The explorer ships as a **headless React component library**:
 
-### Landed in PR 4 so far
+- [`@nube/starter-ui-ch-explorer`](../../../../packages/starter-ui-ch-explorer/)
+  exports `<Explorer />` (tabbed shell), the four individual views
+  (`<ExplorerOverview />`, `<ExplorerTables />`, `<ExplorerSchema />`,
+  `<ExplorerQuery />`), and a set of typed React Query hooks
+  (`useChOverview`, `useChTables`, `useChTable`, `useChTableData`,
+  `useChQuery`, `useChErd`, `useChAutocomplete`). The library
+  declares no `main.tsx`, no router, no `QueryClient`, no theme
+  provider, and no transport — hosts wire those up. Visible strings
+  flow through `DEFAULT_EXPLORER_MESSAGES` + `<ExplorerI18nProvider>`
+  on the same pattern as `@nube/starter-ui-authz`.
+- Two **rubix-only overlays** live behind the optional
+  [`./rubix` subpath](../../../../packages/starter-ui-ch-explorer/src/rubix/):
+  `<FreshnessTiles />` reads `/api/warehouse/status` via
+  `@nube/starter-client-ts`'s typed `fetchJson` (returns `null` on
+  `404`/`503` so it stays invisible on the explorer-only demo
+  binary); `<MartTree />` lists + drops marts through the typed
+  `useClickhouseMartsList` / `useClickhouseMartDrop` hooks from
+  `@nube/rubix-client-react`, surfaces destructive UX through the
+  kit's `<AlertDialog>` (no `window.confirm`), and is gated behind
+  an optional peer dep so the demo host doesn't pull rubix in.
 
-- **`FreshnessTiles`** — three read-only tiles spliced into
-  `routes/index.tsx` above the sql-studio counts panel. Hits
-  `GET /api/warehouse/status` (W11 envelope + W16
-  `async_insert_oldest_age_ms`) via the new
-  [`fetchWarehouseStatus`](../../../../packages/starter-ui-ch-explorer/src/api.ts)
-  wrapper. The wrapper returns `null` on `404`, so the tiles are
-  invisible on the explorer-only demo binary
-  (`examples/ch-explorer/`) and visible on a rubix-agent
-  deployment that mounts the full `starter_warehouse::rest::router`.
-  The wrapper accepts HTTP `503` as a valid body so the
-  failed-refresh tile renders red instead of throwing.
-- **`MartTree` + rubix verb dispatcher.** First write path through
-  the explorer UI: lists marts via `rubix.clickhouse.mart.list`
-  and drops them via `rubix.clickhouse.mart.drop`, both routed
-  through `POST /api/v1/tools/{tool_id}` on rubix-agent so the
-  snapshot-before-write + undo + changelog contract is preserved.
-  The transport lives in
-  [`callRubixVerb`](../../../../packages/starter-ui-ch-explorer/src/api.ts);
-  the dispatcher is keyed by tool id (not REST verb), and a `404`
-  on the tool id is sentinel-typed (`RUBIX_VERB_NOT_AVAILABLE`)
-  so panels can disable themselves cleanly. As with
-  `FreshnessTiles`, the panel renders nothing against the
-  explorer-only demo binary.
+The library mounts inside two hosts:
+
+| Host | What it adds | Where |
+|---|---|---|
+| **rubix shell** (primary) | full rubix chrome, `react-intl` catalogue, theme tokens, sidebar / breadcrumbs; composes `<FreshnessTiles />` + `<MartTree />` above `<Explorer />` | `rubix/frontend/src/components/admin/warehouse/explorer-panel.tsx`, mounted as the fifth tab of `<WarehouseAdmin>` at `/admin/warehouse` |
+| **demo binary** (fallback) | thin Vite host: `QueryClientProvider` + `StarterClientProvider` + tailwind tokens, `<Explorer />` only | `examples/ch-explorer/ui/`, served by `cargo run -p ch-explorer-example -- serve` under `/warehouse/explorer/` |
+
+One library, two mount points. The destructive-write contract
+(snapshot + undo + changelog) is preserved because every mutation
+goes through `POST /api/v1/tools/{tool_id}` on rubix-agent, never
+through a bespoke transport in the library.

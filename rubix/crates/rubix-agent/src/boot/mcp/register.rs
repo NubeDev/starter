@@ -75,7 +75,11 @@ pub async fn build_flow_registry(
     let runner: Arc<dyn AiRunner> = ai::build_runner(&cfg)
         .map_err(|e| anyhow::anyhow!("boot::ai::build_runner: {e}"))?;
     let tool_registry_snapshot: Vec<Arc<dyn Tool>> =
-        crate::registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
+        crate::registry::build_tool_registry(
+            ch_client,
+            cfg.insights.disk_warn_threshold,
+            pg_pool.clone(),
+        );
 
     // Source the flow definitions from PG when a pool is wired
     // in — that is the Phase D contract: PG is the source of

@@ -21,7 +21,7 @@
 //!   CH_EXPLORER_PASSWORD  Password (default empty)
 //!   CH_EXPLORER_BIND      Bind address (default 127.0.0.1:3030)
 //!   CH_EXPLORER_DIST      Path to the built SPA dist directory
-//!                         (default packages/starter-ui-ch-explorer/dist)
+//!                         (default examples/ch-explorer/ui/dist)
 //!
 //! Auth: the example mounts a dev-only `AllowAll` policy engine
 //! and injects an anonymous `Role::Admin` principal via
@@ -49,7 +49,13 @@ const DEFAULT_CH_URL: &str = "http://127.0.0.1:8123";
 const DEFAULT_CH_DATABASE: &str = "default";
 const DEFAULT_CH_USER: &str = "default";
 const DEFAULT_BIND: &str = "127.0.0.1:3030";
-const DEFAULT_DIST: &str = "packages/starter-ui-ch-explorer/dist";
+// Slim demo host introduced by `clickhouse-explorer-in-rubix-shell.md`
+// PR 4: `packages/starter-ui-ch-explorer/` is now a headless React
+// library and no longer ships its own dist/. The thin Vite host at
+// `examples/ch-explorer/ui/` wraps `<Explorer />` in the providers
+// the library expects (QueryClient + StarterClient) and emits the
+// bundle this binary serves.
+const DEFAULT_DIST: &str = "examples/ch-explorer/ui/dist";
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -116,7 +122,7 @@ async fn run_serve(matches: &ArgMatches) -> Result<()> {
         .into();
     if !dist.join("index.html").exists() {
         anyhow::bail!(
-            "SPA dist not found at {} (run `pnpm -F @nube/starter-ui-ch-explorer build` first, \
+            "SPA dist not found at {} (run `pnpm -F ch-explorer-demo-ui build` first, \
              or override with --dist / CH_EXPLORER_DIST)",
             dist.display(),
         );

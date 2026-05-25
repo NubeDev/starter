@@ -18,6 +18,7 @@ pub mod descriptor;
 pub mod dto;
 pub mod error;
 pub mod events;
+pub mod flow_def;
 pub mod i18n;
 
 pub use descriptor::ToolDescriptor;

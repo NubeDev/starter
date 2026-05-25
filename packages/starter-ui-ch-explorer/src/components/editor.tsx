@@ -13,11 +13,9 @@ import {
   autoSuggestionCompletionItems,
 } from "./editor.config";
 
-import { fetchAutocomplete } from "@/api";
-import { Card } from "@/components/ui/card";
-import { useQuery } from "@tanstack/react-query";
-import { useTheme } from "@/provider/theme.provider";
-import { useSqlFormattingProviders } from "@/lib/sql-formatting";
+import { Card } from "./ui/card.js";
+import { useChAutocomplete, useResolvedTheme } from "../hooks/index.js";
+import { useSqlFormattingProviders } from "../lib/sql-formatting.js";
 
 type Props = {
   value: string;
@@ -25,14 +23,11 @@ type Props = {
 };
 
 export const Editor: FunctionComponent<Props> = ({ value, onChange }) => {
-  const currentTheme = useTheme();
+  const currentTheme = useResolvedTheme();
   const monacoInstance = useMonaco();
   const providerRef = useRef<IDisposable | null>(null);
 
-  const { data: autoCompleteData } = useQuery({
-    queryKey: ["autocomplete"],
-    queryFn: () => fetchAutocomplete(),
-  });
+  const { data: autoCompleteData } = useChAutocomplete();
 
   // Configure Monaco
   useEffect(() => {

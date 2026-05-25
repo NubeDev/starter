@@ -2,7 +2,7 @@
 // Original copyright (c) frectonz. See NOTICES.md.
 
 import { LucideIcon } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "./ui/card.js";
 
 export type InfoCardProps = {
   title: string;

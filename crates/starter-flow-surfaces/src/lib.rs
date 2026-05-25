@@ -209,8 +209,22 @@ impl FlowAsTool {
         // (e.g. rubix-agent's `FlowSubscriptionRegistry`) see
         // live `NodeEmitted` / `RunCompleted` frames from runs
         // started through this surface.
+        //
+        // We consume `handle.initial_rx` — the pre-subscribed
+        // receiver the runner set up *before* spawning the
+        // coordinator — rather than calling
+        // `handle.events_tx.subscribe()` here. A fresh
+        // `subscribe()` after `runner.start(..)` returns races the
+        // coordinator: short flows (the `tick-counter` reference
+        // demo finishes in microseconds) emit every
+        // `NodeEmitted` / `RunCompleted` before this task is
+        // polled, and `broadcast` only delivers events sent
+        // *after* a receiver was created. Using `initial_rx`
+        // closes that race and guarantees the optional
+        // `FlowEventSink` (the rubix SSE fan-out) sees every
+        // frame.
         let node_failure: Arc<Mutex<Option<(String, String)>>> = Arc::new(Mutex::new(None));
-        let mut events_rx = handle.events_tx.subscribe();
+        let mut events_rx = handle.initial_rx;
         let node_failure_for_task = node_failure.clone();
         let sink_for_task = self.engine.event_sink().cloned();
         let flow_for_task = self.flow_id.clone();

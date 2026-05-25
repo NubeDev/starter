@@ -12,9 +12,10 @@
 // inside the hook so the table reflects authoritative state.
 
 import { createFileRoute } from '@tanstack/react-router'
-import { useEffect, useMemo } from 'react'
+import { useMemo, useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useIntl } from 'react-intl'
-import { Activity, Boxes, Play, RotateCw, Square } from 'lucide-react'
+import { Activity, Boxes, Download, Play, RotateCw, Square } from 'lucide-react'
 import {
   Button,
   Empty,
@@ -29,10 +30,13 @@ import {
   useExtensionStart,
   useExtensionStop,
   useExtensionRestart,
-  useExtensionEvents,
   type ExtensionSummary,
 } from '@nube/rubix-client-react'
-import { ExtensionSlot, bootstrapExtensions } from '@nube/starter-ext-ui'
+import {
+  ExtensionSlot,
+  useExtensionHost,
+  type ExtensionRemoteFactory,
+} from '@nube/starter-ext-ui'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { getExtensionHost } from '@/lib/extension-host'
 
@@ -61,23 +65,18 @@ function ExtensionsTable() {
     intl.formatMessage({ id, defaultMessage: def })
 
   const list = useExtensionsList()
-  const events = useExtensionEvents()
   const startMut = useExtensionStart()
   const stopMut = useExtensionStop()
   const restartMut = useExtensionRestart()
 
-  // SSE overlay: collapse the lifecycle frames into a per-extension
-  // map of the most-recent state so a live status badge can render
-  // without waiting for the next list refetch.
-  const liveStateById = useMemo(() => {
-    const m = new Map<string, string>()
-    for (const e of events.events) {
-      if (e.kind === 'lifecycle') m.set(e.extension_id, e.state)
-    }
-    return m
-  }, [events.events])
+  // No aggregate SSE endpoint today — the agent only exposes per-id
+  // streams at `/api/v1/extensions/{id}/events`. Live status is
+  // refreshed by list refetch after each mutation.
+  const liveStateById = useMemo(() => new Map<string, string>(), [])
 
-  const rows: ExtensionSummary[] = list.data?.extensions ?? []
+  const rows: ExtensionSummary[] = Array.isArray(list.data)
+    ? (list.data as unknown as ExtensionSummary[])
+    : (list.data?.extensions ?? [])
 
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
@@ -94,7 +93,7 @@ function ExtensionsTable() {
           </h1>
         </div>
         <div className="text-xs text-[color:var(--color-subtle)]">
-          {tr('extensions.streamStatus', 'Live status')}: <span className="text-[color:var(--color-text)]">{events.status}</span>
+          {tr('extensions.streamStatus', 'Live status')}: <span className="text-[color:var(--color-text)]">poll</span>
         </div>
       </header>
 
@@ -130,49 +129,66 @@ function ExtensionsTable() {
           </Empty>
         ) : (
           rows.map((row) => {
-            const state = liveStateById.get(row.id) ?? row.state
+            const r = row as ExtensionSummary & {
+              display_name?: string | null
+              version?: string | null
+            }
+            const state = liveStateById.get(r.id) ?? r.state
+            const name = r.display_name ?? r.name ?? r.id
+            const enabled =
+              typeof r.enabled === 'boolean' ? r.enabled : r.enabled === 'enabled'
             return (
               <div
-                key={row.id}
-                className="grid grid-cols-[1.5fr_1fr_1fr_auto] items-center gap-4 border-b border-[color:var(--color-border)]/50 px-6 py-4 last:border-b-0"
+                key={r.id}
+                className="border-b border-[color:var(--color-border)]/50 last:border-b-0"
               >
-                <div>
-                  <div className="font-medium text-[color:var(--color-text)]">{row.name}</div>
-                  <div className="font-mono text-[10px] text-[color:var(--color-subtle)]">{row.id}</div>
+                <div className="grid grid-cols-[1.5fr_1fr_1fr_auto] items-center gap-4 px-6 py-4">
+                  <div>
+                    <div className="font-medium text-[color:var(--color-text)]">
+                      {name}
+                      {r.version ? (
+                        <span className="ml-2 text-[10px] font-normal text-[color:var(--color-subtle)]">
+                          v{r.version}
+                        </span>
+                      ) : null}
+                    </div>
+                    <div className="font-mono text-[10px] text-[color:var(--color-subtle)]">{r.id}</div>
+                  </div>
+                  <div><StatusBadge state={state} /></div>
+                  <div className="text-sm text-[color:var(--color-muted)]">
+                    {enabled ? tr('common.yes', 'Yes') : tr('common.no', 'No')}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={startMut.isPending || state === 'running' || state === 'starting'}
+                      onClick={() => startMut.mutate({ id: r.id })}
+                    >
+                      <Play className="h-3.5 w-3.5" />
+                      {tr('extensions.action.start', 'Start')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={stopMut.isPending || state === 'stopped' || state === 'stopping'}
+                      onClick={() => stopMut.mutate({ id: r.id })}
+                    >
+                      <Square className="h-3.5 w-3.5" />
+                      {tr('extensions.action.stop', 'Stop')}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={restartMut.isPending}
+                      onClick={() => restartMut.mutate({ id: r.id })}
+                    >
+                      <RotateCw className="h-3.5 w-3.5" />
+                      {tr('extensions.action.restart', 'Restart')}
+                    </Button>
+                  </div>
                 </div>
-                <div><StatusBadge state={state} /></div>
-                <div className="text-sm text-[color:var(--color-muted)]">
-                  {row.enabled ? tr('common.yes', 'Yes') : tr('common.no', 'No')}
-                </div>
-                <div className="flex justify-end gap-2">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={startMut.isPending || state === 'running' || state === 'starting'}
-                    onClick={() => startMut.mutate({ id: row.id })}
-                  >
-                    <Play className="h-3.5 w-3.5" />
-                    {tr('extensions.action.start', 'Start')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={stopMut.isPending || state === 'stopped' || state === 'stopping'}
-                    onClick={() => stopMut.mutate({ id: row.id })}
-                  >
-                    <Square className="h-3.5 w-3.5" />
-                    {tr('extensions.action.stop', 'Stop')}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    disabled={restartMut.isPending}
-                    onClick={() => restartMut.mutate({ id: row.id })}
-                  >
-                    <RotateCw className="h-3.5 w-3.5" />
-                    {tr('extensions.action.restart', 'Restart')}
-                  </Button>
-                </div>
+                <ExtensionContributesPanel id={r.id} />
               </div>
             )
           })
@@ -186,27 +202,178 @@ function ExtensionsRoute() {
   return (
     <ErrorBoundary>
       <ExtensionsTable />
-      <ExtensionContributedPanels />
+      <ExtensionMainSlot />
     </ErrorBoundary>
   )
 }
 
-/** Federated panels contributed by enabled extensions into the
- * `main` slot. On mount, `bootstrapExtensions` (from
- * `@nube/starter-ext-ui`) walks `GET /api/v1/extensions`, fetches
- * each manifest, dynamic-imports its `contributes.ui.entry`, and
- * calls `manager.registerExtensionRemote`. The slot then renders
- * every registered component whose `slot: main`. */
-function ExtensionContributedPanels() {
-  useEffect(() => {
-    void bootstrapExtensions(getExtensionHost(), {
-      basePath: '/api/v1/extensions',
-    })
-  }, [])
+/** Render whatever federated extensions have registered into the
+ * `main` slot. Loading is no longer automatic — operators trigger
+ * a per-extension load from the table above. */
+function ExtensionMainSlot() {
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
       <ExtensionSlot id="main" />
     </section>
+  )
+}
+
+/** Manifest shape (subset) returned by `GET /api/v1/extensions/<id>`. */
+interface ExtensionDetail {
+  id: string
+  state: string
+  manifest: {
+    id?: string
+    version?: string
+    contributes?: {
+      tools?: ReadonlyArray<{ id: string }>
+      cli?: ReadonlyArray<{ id: string }>
+      rest?: ReadonlyArray<{ id: string; method: string; path: string }>
+      grpc?: ReadonlyArray<{ id: string }>
+      workers?: ReadonlyArray<{ id: string }>
+      nodes?: ReadonlyArray<{ kind: string }>
+      skills?: ReadonlyArray<{ dir: string }>
+      ui?: {
+        entry: string
+        exposes?: ReadonlyArray<{ name: string; module: string; slot: string }>
+      }
+    }
+  } | null
+  failure: string | null
+}
+
+/** Per-extension "what this contributes" panel + a Load UI button.
+ * Fetches the agent's detail route lazily; on Load UI, dynamic-imports
+ * `contributes.ui.entry` from `/api/v1/extensions/<id>/ui/<entry>` and
+ * registers it with the host manager so `<ExtensionSlot/>` mounts it. */
+function ExtensionContributesPanel({ id }: { id: string }) {
+  const detail = useQuery<ExtensionDetail, Error>({
+    queryKey: ['rubix', 'extensions', 'detail', id],
+    queryFn: async () => {
+      const res = await fetch(`/api/v1/extensions/${encodeURIComponent(id)}`, {
+        credentials: 'include',
+        headers: { accept: 'application/json' },
+      })
+      if (!res.ok) throw new Error(`GET /api/v1/extensions/${id}: ${res.status}`)
+      return (await res.json()) as ExtensionDetail
+    },
+  })
+
+  const view = useExtensionHost()
+  const registered = view.registered.some((r) => r.id === id)
+  const [loading, setLoading] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const ui = detail.data?.manifest?.contributes?.ui ?? null
+  const contributes = detail.data?.manifest?.contributes ?? null
+
+  const pills = useMemo(() => {
+    if (!contributes) return [] as Array<{ label: string; count: number }>
+    return [
+      { label: 'tools', count: contributes.tools?.length ?? 0 },
+      { label: 'cli', count: contributes.cli?.length ?? 0 },
+      { label: 'rest', count: contributes.rest?.length ?? 0 },
+      { label: 'grpc', count: contributes.grpc?.length ?? 0 },
+      { label: 'workers', count: contributes.workers?.length ?? 0 },
+      { label: 'nodes', count: contributes.nodes?.length ?? 0 },
+      { label: 'skills', count: contributes.skills?.length ?? 0 },
+      { label: 'ui slots', count: ui?.exposes?.length ?? 0 },
+    ].filter((p) => p.count > 0)
+  }, [contributes, ui])
+
+  async function loadUi() {
+    if (!ui) return
+    setLoading(true)
+    setLoadError(null)
+    try {
+      const entryUrl = `/api/v1/extensions/${encodeURIComponent(id)}/ui/${ui.entry.replace(/^\/+/, '')}`
+      const mod = (await import(/* @vite-ignore */ entryUrl)) as
+        | ExtensionRemoteFactory
+        | { default: ExtensionRemoteFactory }
+      const factory: ExtensionRemoteFactory =
+        'init' in mod ? (mod as ExtensionRemoteFactory) : mod.default
+      if (!factory || typeof factory.init !== 'function') {
+        throw new Error('remoteEntry did not export an ExtensionRemoteFactory')
+      }
+      await getExtensionHost().registerExtensionRemote(
+        id,
+        { entry: ui.entry, exposes: ui.exposes ?? [] },
+        factory,
+      )
+    } catch (e) {
+      setLoadError(e instanceof Error ? e.message : String(e))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  if (detail.isLoading) {
+    return (
+      <div className="px-6 pb-4">
+        <Skeleton className="h-8 w-72" />
+      </div>
+    )
+  }
+  if (detail.isError) {
+    return (
+      <div className="px-6 pb-4 text-xs text-red-400">
+        Failed to load manifest: {detail.error.message}
+      </div>
+    )
+  }
+  if (!contributes) {
+    return null
+  }
+
+  return (
+    <div className="grid grid-cols-[1fr_auto] items-start gap-4 px-6 pb-4">
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
+          Contributes
+        </span>
+        {pills.length === 0 ? (
+          <span className="text-xs text-[color:var(--color-subtle)]">(nothing)</span>
+        ) : (
+          pills.map((p) => (
+            <span
+              key={p.label}
+              className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface-2)]/60 px-2 py-0.5 text-[11px] text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-border)]"
+            >
+              <span className="font-medium text-[color:var(--color-text)]">{p.count}</span>
+              {p.label}
+            </span>
+          ))
+        )}
+        {detail.data?.failure ? (
+          <span className="ml-2 text-[11px] text-red-400">{detail.data.failure}</span>
+        ) : null}
+        {loadError ? (
+          <span className="ml-2 text-[11px] text-red-400">{loadError}</span>
+        ) : null}
+      </div>
+      <div className="flex justify-end">
+        {ui ? (
+          <Button
+            size="sm"
+            variant="default"
+            disabled={loading}
+            onClick={() => void loadUi()}
+            title={registered ? 'Reload UI bundle' : `Load ${ui.entry}`}
+          >
+            <Download className="h-3.5 w-3.5" />
+            {loading
+              ? 'Loading…'
+              : registered
+                ? 'Reload UI'
+                : 'Load UI'}
+          </Button>
+        ) : (
+          <span className="text-[11px] text-[color:var(--color-subtle)]">
+            No UI bundle
+          </span>
+        )}
+      </div>
+    </div>
   )
 }
 

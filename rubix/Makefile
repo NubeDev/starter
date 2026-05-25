@@ -13,6 +13,7 @@
 #   - Logs land in /tmp/rubix-agent.log and /tmp/rubix-frontend.log.
 
 SHELL          := /bin/bash
+REPO_ROOT      := $(abspath $(CURDIR)/..)
 FRONTEND_DIR   := frontend
 COMPOSE_FILE   := docker/docker-compose.dev.yaml
 AGENT_LOG      := /tmp/rubix-agent.log
@@ -60,7 +61,8 @@ agent:
 	@if ss -tlnp 2>/dev/null | grep -q '127.0.0.1:$(AGENT_PORT) '; then \
 	    echo "rubix-agent: 127.0.0.1:$(AGENT_PORT) already in use — skipping launch." >&2; \
 	else \
-	    echo "==> rubix-agent → $(AGENT_LOG)"; \
+	    echo "==> rubix-agent → $(AGENT_LOG) (cwd=$(REPO_ROOT))"; \
+	    cd $(REPO_ROOT) && \
 	    RUBIX_DSN=$(RUBIX_DSN) RUBIX_CONFIG=$(RUBIX_CONFIG) RUBIX_CH_URL=$(RUBIX_CH_URL) \
 	        nohup cargo run -p rubix-agent > $(AGENT_LOG) 2>&1 & \
 	    echo "    pid=$$!"; \

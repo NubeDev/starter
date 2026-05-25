@@ -1,12 +1,12 @@
-//! Backing store + [`Reversible`] glue for the flow-programmer verbs.
+//! In-memory [`FlowDefStore`] backing + [`Reversible`] glue for
+//! the flow-programmer verbs.
 //!
-//! The two write verbs (`flow_ops.deploy`, `flow_ops.duplicate`)
-//! talk to a small [`FlowDefStore`] trait so the production binary
-//! can swap a PG-backed impl in without touching the verb files.
-//! Today only the [`InMemoryFlowDefStore`] exists — it is enough
-//! for unit tests and the agent loop's recorded-LLM integration
-//! tests; the PG impl lands in a follow-up that wires the
-//! `flows_definitions` migration to the same trait.
+//! The trait + the wire types ([`FlowDefStore`],
+//! [`FlowRevisionRow`], [`FlowDefChange`], [`FLOW_DEFINITION_KIND`])
+//! live in [`rubix_spi::flow_def`] so the production PG impl in
+//! `rubix-store-postgres::flows` can target them without taking
+//! a dependency on this verb crate. The names are re-exported
+//! from this module so existing `use` sites keep working.
 //!
 //! [`FlowDefReversible`] is the single `Reversible` impl for
 //! resource kind `"flow_definition"`. The snapshot shape is a
@@ -20,7 +20,7 @@ use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+use serde::Deserialize;
 use serde_json::Value;
 use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
@@ -28,70 +28,9 @@ use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 use starter_spi::changelog::{Actor, ChangeId, GroupId};
 use starter_spi::error::{Error, Result};
 
-/// Resource-kind discriminator for flow-definition revisions.
-pub const FLOW_DEFINITION_KIND: &str = "flow_definition";
-
-/// One row in the `flows_definitions` table.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FlowRevisionRow {
-    /// ULID/text primary key.
-    pub id: String,
-    /// Reverse-DNS flow id (rows for one flow share this value).
-    pub flow_id: String,
-    /// Per-row revision id (UUID text).
-    pub revision_id: String,
-    /// Raw YAML body, persisted verbatim.
-    pub body_yaml: String,
-    /// Insertion timestamp (epoch ms, UTC).
-    pub created_at_ms: i64,
-    /// When set, this revision has been replaced by a newer one.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub superseded_at_ms: Option<i64>,
-}
-
-/// Snapshot payload the verbs stamp into `Change::after`. The
-/// `Reversible` impl uses both fields to walk the deploy backwards.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct FlowDefChange {
-    /// Flow id this revision belongs to.
-    pub flow_id: String,
-    /// Revision id created by the verb.
-    pub revision_id: String,
-    /// Revision id that was marked superseded by this write, or
-    /// `None` when this was the first revision for `flow_id`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub prior_revision_id: Option<String>,
-}
-
-/// Persistence surface the flow-programmer verbs target.
-#[async_trait]
-pub trait FlowDefStore: Send + Sync {
-    /// Insert a new revision and mark the currently-live revision
-    /// for `flow_id` superseded. Returns `(inserted_row,
-    /// prior_revision_id)`.
-    async fn insert_revision(
-        &self,
-        flow_id: &str,
-        body_yaml: &str,
-        now_ms: i64,
-    ) -> Result<(FlowRevisionRow, Option<String>)>;
-
-    /// Fetch the currently-live revision for `flow_id`.
-    async fn fetch_latest_live(&self, flow_id: &str) -> Result<Option<FlowRevisionRow>>;
-
-    /// Return every live revision (one row per flow_id).
-    async fn list_live(&self) -> Result<Vec<FlowRevisionRow>>;
-
-    /// Mark `revision_id` as superseded at `now_ms`. Used by the
-    /// `Reversible` impl to walk a deploy forward, and during
-    /// every insert to retire the previous head.
-    async fn mark_superseded(&self, revision_id: &str, now_ms: i64) -> Result<()>;
-
-    /// Clear `superseded_at` on `revision_id`. Used by the
-    /// `Reversible` impl to walk an inverse — restoring a prior
-    /// head after the deploy is undone.
-    async fn clear_superseded(&self, revision_id: &str) -> Result<()>;
-}
+pub use rubix_spi::flow_def::{
+    FlowDefChange, FlowDefStore, FlowRevisionRow, FLOW_DEFINITION_KIND,
+};
 
 /// In-memory [`FlowDefStore`] for tests and the in-process smoke
 /// session.

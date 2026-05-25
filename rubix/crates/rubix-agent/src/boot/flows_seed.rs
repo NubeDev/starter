@@ -13,6 +13,17 @@
 //!   live-check together make a second boot a no-op (the
 //!   second-boot assertion in
 //!   `tests/flow_definitions_seed_test.rs`).
+//! - **Bundled roll-forward.** When a live row *does* exist but
+//!   its `created_by` is the all-zero `SYSTEM_TENANT` sentinel
+//!   (i.e. the live row is itself a previously-bundled
+//!   revision, not a user edit) AND its `body_yaml` differs
+//!   from the on-disk bundled YAML, the seeder atomically
+//!   supersedes the old row and inserts a fresh bundled
+//!   revision. User-deployed bodies (`created_by` ≠
+//!   `SYSTEM_TENANT`) are left untouched — `flow_ops.deploy`
+//!   always wins over a bundled upgrade. This closes the gap
+//!   where binary upgrades that changed a bundled YAML had no
+//!   effect because the prior bundled row sat untouched in PG.
 //! - **Load from PG.** After seeding, `SELECT flow_id,
 //!   revision_id, body_yaml FROM flows_definitions WHERE
 //!   tenant_id = $0 AND superseded_at IS NULL`. Each `body_yaml`
@@ -50,18 +61,31 @@ pub async fn seed_and_load(
     pool: &Pool,
 ) -> Result<(Vec<(FlowId, FlowRevisionId, FlowBody)>, usize)> {
     let mut inserted = 0usize;
+    let mut rolled_forward = 0usize;
     for (path, bytes) in bundled_pairs() {
         let yaml = rubix_flows::parse_yaml(&path, &bytes)
             .map_err(|e| anyhow::anyhow!("parse bundled yaml `{path}`: {e}"))?;
         let flow_id = yaml.id.clone();
+        let body_yaml = std::str::from_utf8(&bytes)
+            .map_err(|e| anyhow::anyhow!("bundled yaml `{path}` not utf8: {e}"))?;
 
-        // Probe live-row existence per (tenant, flow_id) — the
-        // miss path inserts a new revision, the hit path leaves
-        // the row alone so the seed is idempotent across boots.
-        // PostgreSQL types the integer literal `1` as INT4, so
-        // decode into i32 (not i64) or sqlx will refuse on hit.
-        let exists: Option<i32> = sqlx::query_scalar(
-            "SELECT 1 FROM flows_definitions
+        // Probe live-row state per (tenant, flow_id). Three
+        // outcomes:
+        //
+        // - `None`        — no live row, INSERT fresh below.
+        // - `Some(row)` with `created_by = SYSTEM_TENANT` and
+        //   `body_yaml` matching on-disk bytes — steady state,
+        //   nothing to do.
+        // - `Some(row)` with `created_by = SYSTEM_TENANT` and
+        //   `body_yaml` *different* from on-disk bytes — bundled
+        //   roll-forward: supersede the old row + INSERT the
+        //   new one in one tx.
+        // - `Some(row)` with `created_by ≠ SYSTEM_TENANT` —
+        //   user-deployed via `flow_ops.deploy`, never
+        //   overwrite.
+        let live: Option<(String, Uuid, String)> = sqlx::query_as(
+            "SELECT id, created_by, body_yaml
+               FROM flows_definitions
               WHERE tenant_id = $1::uuid
                 AND flow_id = $2
                 AND superseded_at IS NULL
@@ -71,15 +95,63 @@ pub async fn seed_and_load(
         .bind(&flow_id)
         .fetch_optional(pool.sqlx())
         .await?;
-        if exists.is_some() {
-            debug!(flow_id = %flow_id, "flows_definitions seed: skipped (live row present)");
+
+        if let Some((live_id, created_by, live_body)) = live {
+            if created_by != SYSTEM_TENANT {
+                debug!(
+                    flow_id = %flow_id,
+                    "flows_definitions seed: skipped (user-deployed live row)",
+                );
+                continue;
+            }
+            if live_body == body_yaml {
+                debug!(
+                    flow_id = %flow_id,
+                    "flows_definitions seed: skipped (bundled body unchanged)",
+                );
+                continue;
+            }
+            // Bundled body differs from the live bundled row —
+            // roll forward. Single transaction so observers
+            // never see zero live rows for this flow_id.
+            let revision = FlowRevisionId::new();
+            let id = ulid_text();
+            let mut tx = pool.sqlx().begin().await?;
+            sqlx::query(
+                "UPDATE flows_definitions
+                    SET superseded_at = now()
+                  WHERE id = $1",
+            )
+            .bind(&live_id)
+            .execute(&mut *tx)
+            .await?;
+            sqlx::query(
+                "INSERT INTO flows_definitions
+                    (id, tenant_id, flow_id, revision_id, body_yaml, created_by)
+                 VALUES ($1, $2::uuid, $3, $4, $5, $6::uuid)
+                 ON CONFLICT (tenant_id, flow_id, revision_id) DO NOTHING",
+            )
+            .bind(&id)
+            .bind(SYSTEM_TENANT)
+            .bind(&flow_id)
+            .bind(revision.to_string())
+            .bind(body_yaml)
+            .bind(SYSTEM_TENANT)
+            .execute(&mut *tx)
+            .await?;
+            tx.commit().await?;
+            rolled_forward += 1;
+            info!(
+                flow_id = %flow_id,
+                revision = %revision,
+                superseded = %live_id,
+                "flows_definitions seed: rolled forward (bundled body changed)",
+            );
             continue;
         }
 
         let revision = FlowRevisionId::new();
         let id = ulid_text();
-        let body_yaml = std::str::from_utf8(&bytes)
-            .map_err(|e| anyhow::anyhow!("bundled yaml `{path}` not utf8: {e}"))?;
         let rows = sqlx::query(
             "INSERT INTO flows_definitions
                 (id, tenant_id, flow_id, revision_id, body_yaml, created_by)
@@ -135,6 +207,7 @@ pub async fn seed_and_load(
 
     info!(
         inserted,
+        rolled_forward,
         loaded = triples.len(),
         "flows_definitions seed-and-load complete"
     );

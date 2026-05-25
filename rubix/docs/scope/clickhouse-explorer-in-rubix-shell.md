@@ -1,17 +1,10 @@
 # Plan — Bring the ClickHouse Explorer into the Rubix Shell
 
-> **Tier:** plan, not system-as-it-is. Lives in `docs/scope/` per
-> [HOW-TO-CODE.md §0a](../../HOW-TO-CODE.md). Source code must not
-> reference this file — once a PR below lands, its design moves into
-> `docs/design/warehouse/explorer/README.md` and code links there.
->
-> **Supersedes the "PR 4" rubix-overlays section of
-> [`clickhouse-explorer.md`](./clickhouse-explorer.md).** PRs 0–3 of
-> that plan still stand (they delivered the backend, the static-asset
-> rail, and a standalone SPA). This doc replaces what was going to be
-> "rubix overlays grafted onto the standalone SPA" with a real
-> integration into the rubix admin shell.
-
+> **Status:** all five PRs landed (2026-05-25). The present-tense
+> reference for what shipped lives in
+> [`rubix/docs/design/warehouse/explorer/README.md`](../design/warehouse/explorer/README.md);
+> source code links there, never here. This file is retained as the
+> historical plan per HOW-TO-CODE.md §0a.
 ## Why this exists
 
 PR 3 of the upstream plan landed the explorer as a **separate Vite
@@ -313,13 +306,22 @@ Goal: clean documentation tail.
 
 ## Status (2026-05-25)
 
-- ⏸ **PR 1** — extract headless library. Not started.
-- ⏸ **PR 2** — port destructive surfaces to rubix-client-react.
-  Not started.
-- ⏸ **PR 3** — mount in rubix shell. Not started.
-- ⏸ **PR 4** — slim the demo binary. Not started.
-- ⏸ **PR 5** — promote design doc, retire supersession note.
-  Not started.
+- ✅ **PR 1** — extract headless library. Landed.
+- ✅ **PR 2** — port destructive surfaces to rubix-client-react.
+  Landed (`FreshnessTiles` + `MartTree` under the `./rubix`
+  subpath, typed `fetchJson` transport, kit `<AlertDialog>`).
+- ✅ **PR 3** — mount in rubix shell. Landed as the fifth tab
+  inside `<WarehouseAdmin>` at `/admin/warehouse` (no separate
+  sidebar entry; the tab keeps all CH admin under one route).
+- ✅ **PR 4** — slim the demo binary. Landed as
+  `examples/ch-explorer/ui/` (Vite host wrapping `<Explorer />` in
+  `QueryClient` + `StarterClient` + tailwind). `DEFAULT_DIST` in
+  `examples/ch-explorer/src/main.rs` now points at
+  `examples/ch-explorer/ui/dist`.
+- ✅ **PR 5** — promote design doc, retire supersession note.
+  Landed; the design doc at
+  [`rubix/docs/design/warehouse/explorer/README.md`](../design/warehouse/explorer/README.md)
+  now covers the headless-library + two-host topology.
 
 ## Risks and open questions
 

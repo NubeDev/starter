@@ -188,7 +188,11 @@ async fn main() -> Result<()> {
     // `QueryEngine` honours `ch:<table>` prefixes against the same
     // warehouse the disk tool persists history into.
     let ch_client_for_sdui = ch_client.clone();
-    let tools = registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
+    let tools = registry::build_tool_registry(
+        ch_client,
+        cfg.insights.disk_warn_threshold,
+        mcp_pool.clone(),
+    );
 
     info!(
         crate_name = env!("CARGO_PKG_NAME"),

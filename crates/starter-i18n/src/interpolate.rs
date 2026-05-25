@@ -87,6 +87,18 @@ fn write_param(p: &DiagnosticParam, out: &mut String) {
             // wants the canonical SI value formatted as-is.
             let _ = write!(out, "{canonical}");
         }
+        // Feature-unification fallback: a downstream crate may
+        // enable `starter-spi/units` without flipping our own
+        // `units` feature, which makes `DiagnosticParam::Quantity`
+        // visible here even though the typed arm above is cfg'd
+        // out. Render the params' `Debug` form so the user still
+        // sees something; the prefs-aware path
+        // (`write_param_with_prefs`) is the supported renderer for
+        // Quantity values.
+        #[allow(unreachable_patterns)]
+        other => {
+            let _ = write!(out, "{other:?}");
+        }
     }
 }
 

@@ -19,6 +19,7 @@
     "@nube/starter-ext-sdk-ts": "workspace:*",
     "@nube/starter-ext-ui": "workspace:*",
     "@nube/starter-ui-authz": "workspace:*",
+    "@nube/starter-ui-ch-explorer": "workspace:*",
     "@nube/starter-ui-core": "workspace:*",
     "@nube/starter-ui-dashboard": "workspace:*",
     "@nube/starter-ui-flow": "workspace:*",

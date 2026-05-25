@@ -1,7 +1,7 @@
 // Forked from sql-studio (MIT) — https://github.com/frectonz/sql-studio
 // Original copyright (c) frectonz. See NOTICES.md.
 
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils.js";
 
 function Skeleton({
   className,

@@ -1,10 +1,17 @@
 # `ch-explorer-example`
 
-End-to-end demo that proves PR 3 of
-`rubix/docs/scope/clickhouse-explorer.md` is wired up: serves the
-ClickHouse explorer SPA from `packages/starter-ui-ch-explorer/dist`
-under `/warehouse/explorer/*` and the read-only API from
-`starter-warehouse::explorer` under `/api/warehouse/ch/*`.
+End-to-end demo for the ClickHouse explorer: serves the SPA bundle
+from [`examples/ch-explorer/ui/dist`](./ui/) under `/warehouse/explorer/*`
+and the read-only API from `starter-warehouse::explorer` under
+`/api/warehouse/ch/*`.
+
+The SPA is a thin Vite host (`examples/ch-explorer/ui/`) that wraps
+the headless [`@nube/starter-ui-ch-explorer`](../../packages/starter-ui-ch-explorer/)
+React components in a `QueryClient` + `StarterClient` + tailwind
+shell. The same headless library is the primary explorer surface
+inside the rubix admin shell at `/admin/warehouse` → Explorer tab
+(see `rubix/docs/design/warehouse/explorer/README.md`). This demo
+binary keeps it reachable for non-rubix deployments.
 
 ## Prerequisites
 
@@ -15,8 +22,8 @@ under `/warehouse/explorer/*` and the read-only API from
 2. The SPA bundle built once:
 
    ```bash
-   pnpm -F @nube/starter-ui-ch-explorer install
-   pnpm -F @nube/starter-ui-ch-explorer build
+   pnpm install
+   pnpm -F ch-explorer-demo-ui build
    ```
 
 ## Run
@@ -49,7 +56,7 @@ Then open <http://127.0.0.1:3030/warehouse/explorer>. You should see:
 | `CH_EXPLORER_USER` | `default` | CH user |
 | `CH_EXPLORER_PASSWORD` | *(empty)* | CH password |
 | `CH_EXPLORER_BIND` | `127.0.0.1:3030` | HTTP bind for `serve` |
-| `CH_EXPLORER_DIST` | `packages/starter-ui-ch-explorer/dist` | Built SPA bundle |
+| `CH_EXPLORER_DIST` | `examples/ch-explorer/ui/dist` | Built SPA bundle |
 | `RUST_LOG` | `info` | Tracing filter |
 
 ## Auth
@@ -78,7 +85,7 @@ the Vite dev server on `:5173`:
 cargo run -p ch-explorer-example -- serve
 
 # terminal 2
-pnpm -F @nube/starter-ui-ch-explorer dev
+pnpm -F ch-explorer-demo-ui dev
 ```
 
 Vite proxies `/api/warehouse/ch/*` → `CH_EXPLORER_API_TARGET`

@@ -16,9 +16,9 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 
-import { useTheme } from "@/provider/theme.provider";
-import { TableNode } from "./table-node";
-import { useLayout } from "./use-layout";
+import { useResolvedTheme } from "../../hooks/index.js";
+import { TableNode } from "./table-node.js";
+import { useLayout } from "./use-layout.js";
 
 type Column = {
   name: string;
@@ -53,7 +53,7 @@ type Props = {
 };
 
 export function ErdDiagram({ data }: Props) {
-  const theme = useTheme();
+  const theme = useResolvedTheme();
 
   const { initialNodes, initialEdges } = useMemo(() => {
     const nodes: Node[] = data.tables.map((table) => ({

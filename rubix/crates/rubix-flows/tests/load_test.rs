@@ -190,10 +190,11 @@ fn bundled_tick_counter_parses_with_three_nodes_and_two_edges() {
     let tos: Vec<&str> = body.links.iter().map(|l| l.to.as_str()).collect();
     assert_eq!(
         froms,
-        vec!["com.rubix.tick.schedule", "com.rubix.count.out"],
+        vec!["com.rubix.tick.fire", "com.rubix.count.out"],
         "link endpoint node ids are reverse-DNS-prefixed to match the rewritten node ids; \
-         the trigger.schedule node emits on its `schedule` output slot \
-         (starter-flow-nodes::trigger_schedule::SCHEDULE_SLOT), not `fire`"
+         the trigger.schedule node fans out on its per-tick `fire` output \
+         (starter-flow-nodes::trigger_schedule::FIRE_SLOT), not the constant `schedule` \
+         slot which would defeat R3's idempotent-write short-circuit after tick 1"
     );
     assert_eq!(tos, vec!["com.rubix.count.in", "com.rubix.emit.value"]);
 }

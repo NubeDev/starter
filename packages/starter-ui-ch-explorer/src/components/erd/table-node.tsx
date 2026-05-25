@@ -4,7 +4,7 @@
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import { Table as TableIcon, KeyRound } from "lucide-react";
 
-import { cn } from "@/lib/utils";
+import { cn } from "../../lib/utils.js";
 
 type Column = {
   name: string;

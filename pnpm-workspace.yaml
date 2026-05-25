@@ -2,6 +2,7 @@ packages:
   - "packages/*"
   - "examples/*"
   - "examples/*/frontend"
+  - "examples/*/ui"
   - "starter-extensions/packages/*"
   - "starter-extensions/examples/*"
   - "rubix/packages/*"

@@ -6,7 +6,7 @@ import type { IDisposable } from "monaco-editor";
 import type * as Monaco from "monaco-editor";
 import { format as formatSql } from "sql-formatter";
 import type { FormatOptionsWithLanguage } from "sql-formatter";
-import { ID_LANGUAGE_SQL } from "@/components/editor.config";
+import { ID_LANGUAGE_SQL } from "../components/editor.config.js";
 
 const getDefaultSqlFormatOptions = (): FormatOptionsWithLanguage => ({
   language: "sqlite",

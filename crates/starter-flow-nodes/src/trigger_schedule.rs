@@ -76,7 +76,23 @@ pub const CRON_EXPR_SLOT: &str = "cron_expr";
 /// [`SlotValue::String`]. `FlowAsService` (and any other surface that
 /// enumerates a flow's schedules) reads this slot to discover the
 /// cron expression without having to re-parse the flow YAML.
+///
+/// **Not** a per-tick fan-out signal — the value is the configured
+/// cron expression and therefore stable across firings; SCOPE R3's
+/// idempotent-write short-circuit would suppress every emit after
+/// the first. Downstream nodes that want to react per-tick must
+/// subscribe to [`FIRE_SLOT`] instead.
 pub const SCHEDULE_SLOT: &str = "schedule";
+
+/// Output slot carrying the per-invocation firing timestamp as a
+/// [`SlotValue::Int`] (Unix epoch milliseconds, UTC). The value
+/// varies per tick by construction, so the R3 short-circuit at
+/// `crates/starter-flow/src/graph.rs` (`prev_was_equal && !opts.force`)
+/// never suppresses propagation. This is the slot downstream nodes
+/// wire to for fan-out — see `rubix/crates/rubix-flows/flows/
+/// tick-counter.yaml` (`tick.fire -> count.in`) for the canonical
+/// example.
+pub const FIRE_SLOT: &str = "fire";
 
 /// Publish-time configuration carried on a `trigger.schedule` node's
 /// `settings:` field in a flow body. Per
@@ -186,8 +202,21 @@ impl NodeBehavior for TriggerSchedule {
         }
         span.record("cancel_observed", false);
 
+        // Per-invocation Unix-epoch-ms stamp. We don't rely on the
+        // monotonic clock — fan-out only needs the values across
+        // ticks to differ, which `SystemTime::now()` guarantees in
+        // practice for cron resolutions >= 1s; on the off chance a
+        // clock skew produces equality, the next tick still moves
+        // it forward and the missed tick is observable as a
+        // single-tick gap rather than a wedged pipeline.
+        let fire_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0);
+
         let mut out = SlotMap::new();
         out.insert(SCHEDULE_SLOT.to_owned(), SlotValue::String(cron_expr));
+        out.insert(FIRE_SLOT.to_owned(), SlotValue::Int(fire_ms));
         Ok(out)
     }
 }
@@ -242,7 +271,8 @@ mod tests {
     }
 
     /// Happy path: the cron expression flows verbatim from the input
-    /// config slot to the `schedule` output slot.
+    /// config slot to the `schedule` output slot, AND the per-tick
+    /// `fire` slot is populated with a Unix-epoch-ms timestamp.
     #[tokio::test]
     async fn cron_expr_passes_through_to_schedule_slot() {
         let node_kind = TriggerSchedule::new();
@@ -254,11 +284,52 @@ mod tests {
             .await
             .expect("happy path must succeed");
 
-        assert_eq!(out.len(), 1);
+        assert_eq!(out.len(), 2, "trigger emits both `schedule` and `fire`");
         match out.get(SCHEDULE_SLOT) {
             Some(SlotValue::String(s)) => assert_eq!(s, "0 0 * * 0"),
             other => panic!("expected SlotValue::String on `schedule`; got {other:?}"),
         }
+        match out.get(FIRE_SLOT) {
+            Some(SlotValue::Int(ms)) => assert!(*ms > 0, "fire timestamp must be set"),
+            other => panic!("expected SlotValue::Int on `fire`; got {other:?}"),
+        }
+    }
+
+    /// R3 guard: successive invocations produce distinct values on
+    /// `fire` so the graph propagator never short-circuits the
+    /// downstream fan-out for a schedule trigger. The corresponding
+    /// bug — counter frozen at first tick because `schedule` carried
+    /// a constant — was the live-tick demo's #1 symptom; see
+    /// `rubix/docs/sessions/2026-05-25-tick-counter-r3-and-flow-ops-pg.md`.
+    #[tokio::test]
+    async fn successive_invocations_produce_distinct_fire_values() {
+        let node_kind = TriggerSchedule::new();
+        let node = NodeId::new("flow.test.ts").unwrap();
+        let cancel = NoCancel;
+
+        let first = node_kind
+            .invoke(make_ctx(&node, &cancel), input_with("*/5 * * * * *"))
+            .await
+            .expect("first invoke");
+        // 2ms sleep so even a coarse-resolution monotonic clock
+        // observably advances between calls. The production guard
+        // is millisecond resolution; sub-ms ticks are not a
+        // supported scheduler frequency.
+        tokio::time::sleep(std::time::Duration::from_millis(2)).await;
+        let second = node_kind
+            .invoke(make_ctx(&node, &cancel), input_with("*/5 * * * * *"))
+            .await
+            .expect("second invoke");
+
+        let a = match first.get(FIRE_SLOT) {
+            Some(SlotValue::Int(ms)) => *ms,
+            other => panic!("first fire not Int: {other:?}"),
+        };
+        let b = match second.get(FIRE_SLOT) {
+            Some(SlotValue::Int(ms)) => *ms,
+            other => panic!("second fire not Int: {other:?}"),
+        };
+        assert!(b > a, "successive `fire` must strictly advance ({a} -> {b})");
     }
 
     /// Missing `cron_expr` slot returns

@@ -65,6 +65,7 @@ use rubix_tools::flow_ops::lint::FlowLintTool;
 use rubix_tools::flow_ops::kinds::FlowKindsTool;
 use rubix_tools::flow_ops::list::FlowListTool;
 use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
+use rubix_store_postgres::PgFlowDefStore;
 use rubix_tools::insights::rule_create::InsightsRuleCreateTool;
 use rubix_tools::insights::rule_list::InsightsRuleListTool;
 use rubix_tools::insights::rule_toggle::{InsightsRuleDisableTool, InsightsRuleEnableTool};
@@ -85,6 +86,7 @@ use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
+use starter_store_postgres::pool::Pool;
 use tracing::{info, warn};
 
 /// Build the tool registry the agent serves at boot.
@@ -98,6 +100,7 @@ use tracing::{info, warn};
 pub fn build_tool_registry(
     ch: Option<Arc<ChClient>>,
     insights_disk_threshold: u8,
+    pg_pool: Option<Pool>,
 ) -> Vec<Arc<dyn Tool>> {
     let mut disk = DiskTool::default().with_insights_threshold(insights_disk_threshold);
     if let Some(client) = ch {
@@ -109,7 +112,18 @@ pub fn build_tool_registry(
     // Single Arc per store so the read + write verbs of a family see
     // the same state within the process. A PG-backed impl can be
     // dropped in here without touching the verb constructors.
-    let flow_store: Arc<dyn FlowDefStore> = Arc::new(seed_flow_store());
+    //
+    // `flow_store` is the one store that already has a real PG impl
+    // (Phase 2 of the live-tick fix). When a pool is wired in we
+    // bind it so `flow_ops.deploy` / `.list` / `.duplicate` all
+    // target the same `flows_definitions` table the engine-side
+    // `flows_seed::seed_and_load` populates on first boot. The
+    // in-memory fallback only fires on the laptop / no-DB path —
+    // see `rubix/docs/sessions/2026-05-25-tick-counter-r3-and-flow-ops-pg.md`.
+    let flow_store: Arc<dyn FlowDefStore> = match pg_pool {
+        Some(pool) => Arc::new(PgFlowDefStore::new(pool)),
+        None => Arc::new(seed_flow_store()),
+    };
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
     let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::new());
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
@@ -254,7 +268,7 @@ mod tests {
     use super::*;
 
     fn names() -> Vec<String> {
-        build_tool_registry(None, 90)
+        build_tool_registry(None, 90, None)
             .iter()
             .map(|t| t.definition().name)
             .collect()

@@ -47,7 +47,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     titleKey: 'nav.group.platform',
     items: [
-      { labelKey: 'nav.item.extensions', href: '#extensions', icon: Layers,    badge: '7' },
+      { labelKey: 'nav.item.extensions', href: '/extensions', icon: Layers },
       { labelKey: 'nav.item.insights',   href: '#insights',   icon: Sparkles },
       { labelKey: 'nav.item.gitOps',     href: '#git',        icon: GitBranch },
       { labelKey: 'nav.item.settings',   href: '/settings',   icon: Settings },
