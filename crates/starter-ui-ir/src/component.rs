@@ -2035,6 +2035,47 @@ pub enum MenuItem {
 }
 
 // -------------------------------------------------------------------
+// Portable subset (G5 — cross-platform contract)
+// -------------------------------------------------------------------
+
+impl Component {
+    /// `true` for variants in the portable IR subset — those a
+    /// non-web renderer (react-native, SwiftUI, Flutter) can
+    /// implement faithfully without DOM/CSS assumptions. Variants
+    /// that embed CSS-length strings, HTML elements as part of their
+    /// rendering contract, or verbatim platform-specific props are
+    /// not portable; non-web renderers must either implement them
+    /// with a documented platform mapping or downgrade them to
+    /// `Dangling` via the capability handshake.
+    ///
+    /// The same set is exported as the runtime-readable list
+    /// [`crate::IR_PORTABLE_VARIANTS`].
+    pub const fn is_portable(&self) -> bool {
+        matches!(
+            self,
+            Component::Page { .. }
+                | Component::Row { .. }
+                | Component::Col { .. }
+                | Component::Grid { .. }
+                | Component::Card { .. }
+                | Component::Tabs { .. }
+                | Component::Divider { .. }
+                | Component::Text { .. }
+                | Component::Kpi { .. }
+                | Component::Chart { .. }
+                | Component::Table { .. }
+                | Component::Form { .. }
+                | Component::Select { .. }
+                | Component::Toggle { .. }
+                | Component::Slider { .. }
+                | Component::DateRange { .. }
+                | Component::RefPicker { .. }
+                | Component::Repeat { .. }
+        )
+    }
+}
+
+// -------------------------------------------------------------------
 // Synthetic id helpers (G3/G5 — Repeat expansion stable keying)
 // -------------------------------------------------------------------
 
