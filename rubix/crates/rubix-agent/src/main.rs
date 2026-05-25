@@ -188,6 +188,9 @@ async fn main() -> Result<()> {
     // `QueryEngine` honours `ch:<table>` prefixes against the same
     // warehouse the disk tool persists history into.
     let ch_client_for_sdui = ch_client.clone();
+    // Second clone for the explorer sub-router mounted below — the
+    // registry call moves `ch_client` into the tool list.
+    let ch_client_for_explorer = ch_client.clone();
     let tools = registry::build_tool_registry(
         ch_client,
         cfg.insights.disk_warn_threshold,
@@ -248,6 +251,19 @@ async fn main() -> Result<()> {
         // sandwich when a DSN is set; without a DSN the laptop dev
         // path leaves it open alongside the tools router.
         .merge(flow_events_router);
+
+    // ClickHouse explorer read-only sub-router. Mounts the seven
+    // `GET /api/warehouse/ch/*` + one `POST /api/warehouse/ch/query`
+    // endpoints powering `/admin/warehouse` → Explorer in the
+    // rubix-frontend shell. Ungated here mirrors the posture
+    // `starter_warehouse::rest::router` takes for the rest of the
+    // warehouse REST surface; the statement-shape parser inside the
+    // explorer sub-router refuses anything other than SELECT / SHOW
+    // / DESCRIBE / EXPLAIN / WITH server-side. Skipped when no
+    // ClickHouse URL is configured.
+    if let Some(ch) = ch_client_for_explorer {
+        app = app.merge(starter_warehouse::explorer::routes((*ch).clone()));
+    }
 
     if let Some(dsn) = cfg.database_url.as_deref() {
         let pool = pg_connect(dsn)

@@ -6449,6 +6449,7 @@ dependencies = [
  "starter-ui-bindings",
  "starter-ui-ir",
  "starter-undo",
+ "starter-warehouse",
  "tempfile",
  "thiserror 1.0.69",
  "tokio",

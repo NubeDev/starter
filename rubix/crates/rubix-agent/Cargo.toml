@@ -45,6 +45,12 @@ starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
 starter-mcp               = { workspace = true, features = ["http"] }
 starter-store-clickhouse  = { workspace = true }
+# Mount-only consumer: rubix-agent merges
+# `starter_warehouse::explorer::routes(ch)` so the rubix admin
+# shell's `/admin/warehouse` → Explorer tab can talk to the
+# read-only ClickHouse explorer surface at `/api/warehouse/ch/*`.
+# Design notes in `rubix/docs/design/warehouse/explorer/README.md`.
+starter-warehouse         = { workspace = true, features = ["warehouse"] }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }
