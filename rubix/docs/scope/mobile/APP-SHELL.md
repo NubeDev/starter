@@ -114,21 +114,24 @@ Total ≤ 40 lines. If it grows, the providers are doing too much.
 Cookies don't exist in RN's `fetch`; mobile uses bearer tokens.
 The app is multi-instance — one token per saved connection.
 
-### Backend prerequisite — BLOCKER for Block 4
+### Backend prerequisite — LANDED
 
 > **Promotion note:** this whole subsection describes work that
-> happens *before* mobile code starts; on promotion to
+> *has happened* before mobile code starts; on promotion to
 > `docs/design/mobile/app-shell.md` it collapses to a one-line
-> pointer at `docs/design/auth/`.
+> pointer at `docs/design/auth/token-issuance.md`.
 
-Mobile needs a credentials→bearer issuance route. Today
-`POST /api/v1/auth/login` returns `{ csrf_token }` + sets a
-`starter_session` cookie. Bearer **acceptance** already works
-(`principal_layer.rs` reads `Authorization: Bearer`; rubix-agent
-has `/api/v1/auth/api-tokens` minting bearers for already-authed
-users). Mobile blocks on a new route, e.g.
-`POST /api/v1/auth/token` accepting `{ email, password }` and
-returning `{ token, expires_at }`. Gates
+Mobile needs a credentials→bearer issuance route. `POST
+/api/v1/auth/login` is cookie-shaped (returns `{ csrf_token }`,
+sets `starter_session`) and unusable from RN's cookie-less
+`fetch`. The credentials→bearer counterpart is now live:
+`POST /api/v1/auth/token` in `starter-auth-users`, accepting
+`{ email, password, tenant_id? }` and returning `{ token,
+expires_at, token_type: "Bearer" }`. Full payload + error
+contract (incl. parity with login's `password_not_set` envelope
+and the multi-membership `tenant_required` envelope) is recorded
+in [`docs/design/auth/token-issuance.md`](../../design/auth/token-issuance.md).
+Unblocks
 [THIN-SLICE Block 4](./THIN-SLICE.md#block-4--rubixmobile-scaffold--login--provider-stack);
 recorded as a consequence in
 [ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences).

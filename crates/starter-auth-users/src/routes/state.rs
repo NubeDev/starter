@@ -9,7 +9,7 @@ use crate::principal_extras::{NoPrincipalExtras, PrincipalExtrasLookup};
 use crate::role::Role;
 use crate::signup::mode::SignupMode;
 use crate::signup::rate_limit::{MemoryRateLimiter, SignupRateLimiter};
-use crate::store::{SessionStore, TokenStore, UserStore};
+use crate::store::{SessionStore, TenantStore, TokenStore, UserStore};
 
 /// Shared state for the `/auth/*` handlers. Build once at startup and
 /// hand to [`super::auth_router`].
@@ -36,6 +36,14 @@ pub struct AuthState {
     /// Rate limiter for signup requests. Defaults to
     /// [`MemoryRateLimiter`].
     pub rate_limit: Arc<dyn SignupRateLimiter>,
+    /// Optional tenant store. When wired, `POST /auth/token`
+    /// resolves an absent `tenant_id` from
+    /// [`TenantStore::memberships_for_user`]. When `None`, the
+    /// token route requires the client to pass `tenant_id`
+    /// explicitly (`400 missing_tenant_id`). See
+    /// [`docs/design/auth/token-issuance.md`](https://example.invalid)
+    /// for the resolution rules.
+    pub tenants: Option<Arc<dyn TenantStore>>,
 }
 
 impl AuthState {
@@ -55,7 +63,18 @@ impl AuthState {
             principal_extras: Arc::new(NoPrincipalExtras),
             signup: SignupMode::Disabled,
             rate_limit: Arc::new(MemoryRateLimiter::new()),
+            tenants: None,
         }
+    }
+
+    /// Wire a [`TenantStore`] so `POST /auth/token` can resolve
+    /// an absent `tenant_id` from the user's memberships. Without
+    /// this builder call, `tenant_id` becomes a required request
+    /// field on that route (the route still works — it just
+    /// fails closed for callers that omit it).
+    pub fn with_tenants(mut self, tenants: Arc<dyn TenantStore>) -> Self {
+        self.tenants = Some(tenants);
+        self
     }
 
     /// Override the linked-providers lookup. Builder-style so the

@@ -7,8 +7,9 @@
 use utoipa::OpenApi;
 
 use crate::routes::{
-    LoginRequest, LoginResponse, MeResponse, PasswordNotSetResponse, SignupError, SignupRequest,
-    SignupResponse,
+    LoginRequest, LoginResponse, MeResponse, MissingTenantIdResponse, PasswordNotSetResponse,
+    SignupError, SignupRequest, SignupResponse, TenantMembershipEntry, TenantRequiredResponse,
+    TokenRequest, TokenResponse,
 };
 use crate::signup::mode::SignupMode;
 use starter_spi::auth::Role;
@@ -25,8 +26,14 @@ use starter_spi::dto::Problem;
         crate::routes::login::handler,
         crate::routes::logout::handler,
         crate::routes::me::handler,
+        crate::routes::token::handler,
     ),
-    components(schemas(LoginRequest, LoginResponse, PasswordNotSetResponse, MeResponse, Role, Problem)),
+    components(schemas(
+        LoginRequest, LoginResponse, PasswordNotSetResponse, MeResponse,
+        TokenRequest, TokenResponse, TenantRequiredResponse, TenantMembershipEntry,
+        MissingTenantIdResponse,
+        Role, Problem,
+    )),
     tags((name = "auth", description = "Authentication endpoints"))
 )]
 /// utoipa entry point holding the path + component derives for this crate.
@@ -43,10 +50,13 @@ pub struct AuthUsersApi;
         crate::routes::login::handler,
         crate::routes::logout::handler,
         crate::routes::me::handler,
+        crate::routes::token::handler,
         crate::routes::signup::handler,
     ),
     components(schemas(
         LoginRequest, LoginResponse, PasswordNotSetResponse, MeResponse,
+        TokenRequest, TokenResponse, TenantRequiredResponse, TenantMembershipEntry,
+        MissingTenantIdResponse,
         SignupRequest, SignupResponse, SignupError,
         Role, Problem,
     )),

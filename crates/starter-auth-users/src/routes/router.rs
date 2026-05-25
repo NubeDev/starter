@@ -20,6 +20,7 @@ use super::logout::handler as logout_handler;
 use super::me::handler as me_handler;
 use super::signup::{handler as signup_handler, SignupRequest};
 use super::state::AuthState;
+use super::token::{handler as token_handler, TokenRequest};
 
 /// Extract client IP from `X-Forwarded-For` or `X-Real-Ip` headers.
 /// Falls back to `0.0.0.0` when neither is present.
@@ -49,6 +50,7 @@ pub fn auth_router<S: Clone + Send + Sync + 'static>(state: AuthState) -> Router
     let login_state = state.clone();
     let logout_state = state.clone();
     let me_state = state.clone();
+    let token_state = state.clone();
 
     let mut router = Router::new()
         .route(
@@ -56,6 +58,13 @@ pub fn auth_router<S: Clone + Send + Sync + 'static>(state: AuthState) -> Router
             post(move |body: Json<LoginRequest>| {
                 let state = login_state.clone();
                 async move { login_handler(state, body).await }
+            }),
+        )
+        .route(
+            "/auth/token",
+            post(move |body: Json<TokenRequest>| {
+                let state = token_state.clone();
+                async move { token_handler(state, body).await }
             }),
         )
         .route(

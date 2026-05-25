@@ -74,25 +74,17 @@ at [`docs/adr/0004-react-native-mobile-app.md`](../../adr/0004-react-native-mobi
 The mobile plan is not self-contained — two backend changes must
 land before any mobile code starts:
 
-1. **Bearer-token issuance from credentials.** Bearer
-   **acceptance** already works —
-   [`crates/starter-auth-users/src/principal_layer.rs`](../../../../crates/starter-auth-users/src/principal_layer.rs)
-   extracts `Authorization: Bearer`, and rubix-agent already has
-   `/api/v1/auth/api-tokens` minting bearer tokens for
-   *already-authenticated* users. The gap is precisely a
-   **credentials→bearer issuance** route, e.g.
-   `POST /api/v1/auth/token` accepting `{ email, password }` and
-   returning `{ token, expires_at }`. Today
-   [`POST /api/v1/auth/login`](../../../../openapi.json) returns
-   `{ csrf_token }` and sets a session cookie. **Open question**
-   (see [THIN-SLICE Pre-Block 4](./THIN-SLICE.md#pre-block-4--backend-bearer-token-endpoint-blocker)):
-   does the new route live in `starter-auth-users` (every starter
-   consumer gets it) or only in rubix-agent? Default proposal:
-   `starter-auth-users`. Specified in
-   [`docs/design/auth/`](../../design/auth/); blocker called out in
-   [APP-SHELL §Auth strategy](./APP-SHELL.md#backend-prerequisite--blocker-for-block-4),
-   [THIN-SLICE §Pre-Block 4](./THIN-SLICE.md#pre-block-4--backend-bearer-token-endpoint-blocker),
-   and [ADR 0004 §Consequences](../../adr/0004-react-native-mobile-app.md#consequences).
+1. **Bearer-token issuance from credentials — LANDED.**
+   `POST /api/v1/auth/token` in `starter-auth-users` accepts
+   `{ email, password, tenant_id? }` and returns `{ token,
+   expires_at, token_type: "Bearer" }`. Bearer **acceptance** was
+   already in place via
+   [`crates/starter-auth-users/src/principal_layer.rs`](../../../../crates/starter-auth-users/src/principal_layer.rs);
+   this route is the missing **issuance** counterpart so mobile,
+   native-desktop, and CLI clients can sign in without cookies.
+   Location decision (live in `starter-auth-users`, not just
+   rubix-agent) and full payload + error contract:
+   [`docs/design/auth/token-issuance.md`](../../design/auth/token-issuance.md).
 2. **`@nube/starter-ui-sdui-react` `./headless` subpath.** Splits
    the registry / provider / hooks / transport (DOM-free) away from
    the renderers (DOM-bound) so the native renderer package can

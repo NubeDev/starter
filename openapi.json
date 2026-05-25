@@ -298,6 +298,62 @@
           }
         }
       }
+    },
+    "/auth/token": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "issue_token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Bearer issued",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account has no local password (parity with /auth/login), or tenants store unwired and tenant_id omitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordNotSetResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "403": {
+            "description": "tenant_id mismatch with memberships, or no tenant resolvable for a non-admin user"
+          },
+          "409": {
+            "description": "Multiple memberships exist; client must re-POST with explicit tenant_id",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantRequiredResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -353,6 +409,19 @@
           "subject": {
             "type": "string",
             "description": "Stable user identifier (the `Principal.subject`)."
+          }
+        }
+      },
+      "MissingTenantIdResponse": {
+        "type": "object",
+        "description": "Body returned when `tenant_id` is required (no tenants store\nwired) and the client omitted it.",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Always `\"missing_tenant_id\"`."
           }
         }
       },
@@ -425,6 +494,45 @@
           "nav_title": {
             "type": "string",
             "description": "Display name shown in the top nav."
+          }
+        }
+      },
+      "TenantMembershipEntry": {
+        "type": "object",
+        "description": "One membership the user could pick on retry.",
+        "required": [
+          "tenant_id",
+          "role"
+        ],
+        "properties": {
+          "role": {
+            "type": "string",
+            "description": "User's role within that tenant (`reader | writer | admin`)."
+          },
+          "tenant_id": {
+            "type": "string",
+            "description": "Tenant id to echo back in `TokenRequest.tenant_id`."
+          }
+        }
+      },
+      "TenantRequiredResponse": {
+        "type": "object",
+        "description": "Body returned when the route cannot disambiguate the user's\ntenant — multiple memberships exist and the client did not pass\n`tenant_id`. The client re-POSTs with `tenant_id` set to one of\nthe entries below.",
+        "required": [
+          "error",
+          "memberships"
+        ],
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Always `\"tenant_required\"`. Discriminator string."
+          },
+          "memberships": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TenantMembershipEntry"
+            },
+            "description": "One entry per membership row for the authenticated user."
           }
         }
       },
@@ -501,6 +609,55 @@
             "propertyNames": {
               "type": "string"
             }
+          }
+        }
+      },
+      "TokenRequest": {
+        "type": "object",
+        "description": "Request body for `POST /auth/token`.",
+        "required": [
+          "email",
+          "password"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User's email — same identifier as `POST /auth/login`."
+          },
+          "password": {
+            "type": "string",
+            "description": "Plaintext password."
+          },
+          "tenant_id": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Optional tenant binding. When omitted, the route resolves\nthe tenant from the user's memberships (requires\n[`AuthState::with_tenants`]). See design doc §payload."
+          }
+        }
+      },
+      "TokenResponse": {
+        "type": "object",
+        "description": "Successful response body for `POST /auth/token`.",
+        "required": [
+          "token",
+          "expires_at",
+          "token_type"
+        ],
+        "properties": {
+          "expires_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Absolute UTC expiry (RFC3339). Advisory in v1 — clients\nreact to 401 rather than pre-emptively refreshing."
+          },
+          "token": {
+            "type": "string",
+            "description": "The plaintext bearer (`sak_<id>.<secret>`). Shown once;\nthe server stores only the argon2id hash of the secret."
+          },
+          "token_type": {
+            "type": "string",
+            "description": "Always `\"Bearer\"`. Reserved for the future refresh-token\nflow."
           }
         }
       }

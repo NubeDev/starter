@@ -65,28 +65,22 @@ and design-doc updates per [NEW-SESSION.md §3](../../../NEW-SESSION.md#3--workf
 - **Blocked by:** the `starter-ui-sdui-react/headless` split — see
   [NEW-PACKAGES §Precondition](./NEW-PACKAGES.md#precondition--sdui-react-package-split).
 
-### Pre-Block 4 — backend bearer-token endpoint (BLOCKER)
+### Pre-Block 4 — backend bearer-token endpoint (LANDED)
 
-The rubix-agent today returns `{ csrf_token }` from
-`POST /api/v1/auth/login` and sets a `starter_session` cookie.
-Bearer **acceptance** already works (`crates/starter-auth-users`
-extracts `Authorization: Bearer` via `principal_layer.rs`, and
-rubix-agent has `/api/v1/auth/api-tokens` minting bearers for
-*already-authenticated* users). The gap is precisely a
-**credentials → bearer** issuance route, e.g.
-`POST /api/v1/auth/token` accepting `{ email, password }` and
-returning `{ token, expires_at }`. Specified in
-[`docs/design/auth/`](../../design/auth/) and recorded as a
-consequence in [ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences).
+Landed. `POST /api/v1/auth/token` in `starter-auth-users` accepts
+`{ email, password, tenant_id? }` and returns `{ token,
+expires_at, token_type: "Bearer" }`. Bearer **acceptance** was
+already in place via
+[`crates/starter-auth-users/src/principal_layer.rs`](../../../../crates/starter-auth-users/src/principal_layer.rs);
+this route adds the missing **issuance** counterpart so mobile,
+native-desktop, and CLI clients can sign in without cookies.
+Location decision (live in `starter-auth-users`, not just
+rubix-agent) and full payload + error contract are recorded in
+[`docs/design/auth/token-issuance.md`](../../design/auth/token-issuance.md).
 
-**Open question (see [README.md §Backend prerequisites](./README.md#backend-prerequisites)):**
-should the new route live in `starter-auth-users` (every starter
-consumer gets it) or in rubix-agent only? Default proposal:
-`starter-auth-users`, since both web SPA and mobile benefit.
-
-**Promotion note:** this section describes a future PR; on
-promotion to `docs/design/mobile/` it collapses to one sentence
-pointing at `docs/design/auth/`.
+**Promotion note:** Block 4 can now proceed against this route.
+On promotion of this file to `docs/design/mobile/`, this section
+collapses to a one-line pointer at `docs/design/auth/token-issuance.md`.
 
 ### Block 4 — `rubix/mobile` scaffold + login + provider stack
 
@@ -96,7 +90,9 @@ pointing at `docs/design/auth/`.
 - Implement the token `AuthStrategy` (see
   [APP-SHELL.md](./APP-SHELL.md#strategy)).
 - Implement the login screen on top of `useAuth`.
-- Pre-Block 4 above MUST be merged first.
+- Pre-Block 4 has landed — the route is live at
+  `POST /api/v1/auth/token` (see
+  [`docs/design/auth/token-issuance.md`](../../design/auth/token-issuance.md)).
 
 ### Block 5 — `dashboards/[pageId].tsx` + the slice itself
 

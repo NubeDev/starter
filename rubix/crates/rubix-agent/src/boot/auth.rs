@@ -11,7 +11,8 @@
 use std::sync::Arc;
 
 use starter_auth_users::store::{
-    PgSessionStore, PgTokenStore, PgUserStore, SessionStore, TokenStore, UserStore,
+    PgSessionStore, PgTenantStore, PgTokenStore, PgUserStore, SessionStore, TenantStore,
+    TokenStore, UserStore,
 };
 use starter_auth_users::{routes::AuthState, AuthAuthenticator};
 use starter_spi::auth::Authenticator;
@@ -32,13 +33,20 @@ pub struct AuthSurface {
 pub fn build_auth(pool: Pool) -> AuthSurface {
     let users: Arc<dyn UserStore> = Arc::new(PgUserStore::new(pool.clone()));
     let sessions: Arc<dyn SessionStore> = Arc::new(PgSessionStore::new(pool.clone()));
-    let tokens: Arc<dyn TokenStore> = Arc::new(PgTokenStore::new(pool));
+    let tokens: Arc<dyn TokenStore> = Arc::new(PgTokenStore::new(pool.clone()));
+    let tenants: Arc<dyn TenantStore> = Arc::new(PgTenantStore::new(pool));
     let authenticator: Arc<dyn Authenticator> = Arc::new(AuthAuthenticator::new(
         users.clone(),
         sessions.clone(),
         tokens.clone(),
     ));
-    let state = AuthState::new(users, sessions, tokens);
+    // `with_tenants` lets `POST /auth/token` (the credentials →
+    // bearer route used by mobile / native-desktop / CLI sign-in)
+    // resolve an absent `tenant_id` from the user's memberships.
+    // Without this builder call the route would fail closed with
+    // `400 missing_tenant_id` whenever the client omitted the
+    // field — fine for tests, wrong for prod.
+    let state = AuthState::new(users, sessions, tokens).with_tenants(tenants);
     AuthSurface {
         state,
         authenticator,
