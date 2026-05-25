@@ -41,5 +41,8 @@
   "rubix.extension.install.succeeded": "Extensión {id} instalada (el {at}); se mostrará tras el siguiente arranque del agente.",
   "rubix.extension.install.invalid_manifest": "Instalación de extensión rechazada — el archivo subido no contiene un manifiesto block.yaml válido.",
   "rubix.extension.uninstall.succeeded": "Extensión {id} desinstalada (el {at}); directorio del paquete eliminado y la fila de persistencia marcada como deshabilitada.",
-  "rubix.extension.uninstall.not_found": "No se puede desinstalar la extensión {id} — no existe ningún directorio de paquete para ese id."
+  "rubix.extension.uninstall.not_found": "No se puede desinstalar la extensión {id} — no existe ningún directorio de paquete para ese id.",
+  "rubix.dashboard.fetched": "Panel {page_id} obtenido.",
+  "rubix.dashboard.listed": "Se listaron {count} paneles.",
+  "rubix.dashboard.get.not_found": "Panel {page_id} no encontrado."
 }

@@ -41,5 +41,8 @@
   "rubix.extension.install.succeeded": "Extension {id} installed (at {at}); it will surface after the next agent boot.",
   "rubix.extension.install.invalid_manifest": "Extension install refused — the uploaded tarball does not contain a valid block.yaml manifest.",
   "rubix.extension.uninstall.succeeded": "Extension {id} uninstalled (at {at}); bundle directory removed and persistence row marked disabled.",
-  "rubix.extension.uninstall.not_found": "Extension {id} cannot be uninstalled — no bundle directory exists for that id."
+  "rubix.extension.uninstall.not_found": "Extension {id} cannot be uninstalled — no bundle directory exists for that id.",
+  "rubix.dashboard.fetched": "Dashboard {page_id} fetched.",
+  "rubix.dashboard.listed": "Listed {count} dashboards.",
+  "rubix.dashboard.get.not_found": "Dashboard {page_id} not found."
 }
