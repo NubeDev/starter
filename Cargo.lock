@@ -6408,6 +6408,7 @@ dependencies = [
  "starter-ext-supervisor",
  "starter-flow",
  "starter-flow-node-loop",
+ "starter-flow-nodes",
  "starter-flow-spi",
  "starter-flow-surfaces",
  "starter-i18n",

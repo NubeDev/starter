@@ -88,6 +88,7 @@ starter-undo             = { workspace = true }
 starter-blob-fs          = { workspace = true }
 bytes                    = { workspace = true }
 tempfile                 = "3"
+starter-flow-nodes       = { workspace = true, features = ["counter"] }
 rubix-store-postgres     = { workspace = true }
 sqlx                     = { workspace = true, features = ["postgres", "macros", "runtime-tokio"] }
 async-trait              = { workspace = true }
