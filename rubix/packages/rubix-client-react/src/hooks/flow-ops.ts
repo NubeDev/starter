@@ -21,6 +21,8 @@ import type {
   FlowDeployResponse,
   FlowDuplicateRequest,
   FlowDuplicateResponse,
+  FlowKindsRequest,
+  FlowKindsResponse,
   FlowLintRequest,
   FlowLintResponse,
   FlowListRequest,
@@ -70,6 +72,27 @@ export function useFlowList(
   return useQuery<FlowListResponse, StarterError>({
     queryKey: [...FLOW_OPS_KEY, "list"],
     queryFn: () => client.flowList(request),
+    ...options,
+  });
+}
+
+/**
+ * List the node kinds the rubix flow runtime knows about.
+ *
+ * Result is cached under `['rubix','flow_ops','kinds']` — flat
+ * because the response is process-static (kinds are registered at
+ * boot from the `NodeKindRegistry`) so a single shared cache entry
+ * is enough across every consumer that wants the palette / settings
+ * sidebar.
+ */
+export function useFlowKinds(
+  request: FlowKindsRequest = {},
+  options?: ReadOptions<FlowKindsResponse>,
+): UseQueryResult<FlowKindsResponse, StarterError> {
+  const client = useRubixClient();
+  return useQuery<FlowKindsResponse, StarterError>({
+    queryKey: [...FLOW_OPS_KEY, "kinds"],
+    queryFn: () => client.flowKinds(request),
     ...options,
   });
 }

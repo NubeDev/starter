@@ -24,6 +24,12 @@ pub struct FlowListItem {
     pub flow_id: String,
     /// Revision id of the currently-live row for this flow.
     pub revision_id: String,
+    /// Raw YAML body of the live revision. Returned inline from the
+    /// same row the live-revision SELECT already fetches — no extra
+    /// round-trip — so the frontend can render a flow's full graph
+    /// from a single `flow_ops.list` response without needing a
+    /// follow-up `flow_ops.get` verb.
+    pub body_yaml: String,
 }
 
 /// Tool reply.

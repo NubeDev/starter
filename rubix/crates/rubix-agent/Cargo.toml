@@ -47,6 +47,10 @@ starter-store-sqlite      = { workspace = true, features = ["flow"] }
 starter-ai                = { workspace = true, features = ["provider-claude"] }
 starter-ai-agent          = { workspace = true }
 starter-flow-node-loop    = { workspace = true }
+# Built-in node kinds used to seed `FlowKindsTool` at boot — the
+# `rubix.flow_ops.kinds` verb snapshots `kind_id` + `config_schema`
+# off each behaviour. See src/registry.rs.
+starter-flow-nodes        = { workspace = true, features = ["counter", "log", "trigger-schedule"] }
 
 # Extension-host primitives. The `starter-extensions/` sibling
 # workspace is excluded from this workspace (parent `Cargo.toml`'s
