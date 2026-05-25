@@ -1,0 +1,37 @@
+# Bundled rubix flow — Phase D: always-on tick-counter live demo.
+#
+# A schedule trigger fires every 5 seconds; the counter increments
+# and emits the new value; the log node records it. Demonstrates
+# persistent node state (via NodeStateStore), hot-reload of
+# settings, and the SSE live-value feed at
+# /api/v1/flows/com.rubix.tick-counter/events.
+
+id: com.rubix.tick-counter
+description: |
+  Always-on demo flow. A schedule trigger fires every 5 seconds; the
+  counter increments and emits the new value; the log node records it.
+  Demonstrates persistent node state, hot-reload of settings, and the
+  SSE live-value feed at /flows/com.rubix.tick-counter.
+trigger: schedule
+cron_expr: "*/5 * * * * *"
+
+nodes:
+  - id: tick
+    kind: starter.flow.trigger.schedule
+    config:
+      cron_expr: "*/5 * * * * *"
+  - id: count
+    kind: starter.flow.counter
+    config:
+      step: 1
+      initial: 0
+      reset_on_redeploy: false
+  - id: emit
+    kind: starter.flow.log
+    config:
+      level: info
+      message_template: "tick {value}"
+
+links:
+  - { from: "tick.fire", to: "count.in" }
+  - { from: "count.out", to: "emit.value" }
