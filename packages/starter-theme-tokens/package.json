@@ -1,0 +1,26 @@
+{
+  "name": "@nube/starter-theme-tokens",
+  "version": "0.1.0",
+  "description": "Pure-data source-of-truth for starter platform design tokens (palettes, density, radius, type, motion, semantic roles). Consumed by both web (@nube/starter-ui-kit, @nube/starter-ui-core/theme-editor) and mobile (@nube/starter-ui-kit-native). Zero runtime deps: no React, no React Native, no DOM, no styling runtime.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./palette": "./src/palette.ts",
+    "./density": "./src/density.ts",
+    "./radius": "./src/radius.ts",
+    "./type": "./src/type.ts",
+    "./motion": "./src/motion.ts",
+    "./role": "./src/role.ts"
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "devDependencies": {
+    "typescript": "^5.4"
+  }
+}
