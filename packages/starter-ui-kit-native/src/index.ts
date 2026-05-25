@@ -7,6 +7,14 @@
 export { useTheme } from "./theme.js";
 export type { Theme, ThemePreferencesSnapshot } from "./theme.js";
 
+export { Box, Row, Column, Text, ScrollArea, Divider } from "./layout.js";
+export type {
+  BoxProps,
+  TextProps,
+  ScrollAreaProps,
+  DividerProps,
+} from "./layout.js";
+
 export { Button } from "./button.js";
 export type { ButtonProps, ButtonVariant, ButtonSize } from "./button.js";
 
