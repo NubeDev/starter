@@ -1,0 +1,5 @@
+name: throwaway-test
+goal: |
+  Create a single file hello.txt containing "Hello from codeless" to prove the job pipeline works end-to-end.
+stages:
+  - Create hello.txt with the greeting text and commit
