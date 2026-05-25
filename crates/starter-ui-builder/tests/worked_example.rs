@@ -138,6 +138,8 @@ fn resolve_against(graph: &FixtureGraph, target_id: &str) -> (ComponentTree, Sub
         user: &user,
         page: &page,
         access_log: Some(&log),
+        item: None,
+        index: None,
     };
 
     let mut tree = building_overview();

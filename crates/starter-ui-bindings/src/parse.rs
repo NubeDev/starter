@@ -27,6 +27,13 @@ pub enum Source {
     /// `.field` step picks a top-level key; further steps walk
     /// nested values.
     Page,
+    /// `$item` — synthetic source pushed by the Repeat expander.
+    /// Resolves to the current iteration's array element. Further
+    /// `.ident` steps walk into the item's JSON shape.
+    Item,
+    /// `$index` — synthetic source pushed by the Repeat expander.
+    /// Resolves to the zero-based iteration index as a JSON number.
+    Index,
 }
 
 /// One walk step in the binding's path.
@@ -124,6 +131,8 @@ impl Binding {
             "$self" => Source::SelfNode,
             "$user" => Source::User,
             "$page" => Source::Page,
+            "$item" => Source::Item,
+            "$index" => Source::Index,
             "$stack" => {
                 // Required `.alias` segment. We do not allow
                 // `$stack/foo` — `$stack` itself is not a graph

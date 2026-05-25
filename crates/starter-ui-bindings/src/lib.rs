@@ -35,12 +35,14 @@
 //! promoted to `starter-spi`.
 
 mod eval;
+mod expand;
 mod graph;
 mod parse;
 mod subscription;
 mod substitute;
 
 pub use eval::{evaluate, BindingError, EvalContext};
+pub use expand::{expand_repeats, ExpandError};
 pub use graph::{ChildLink, EntityGraph, EntityId, NullGraph};
 pub use parse::{Binding, ParseError, Qualifier, Source, Step};
 pub use subscription::{SlotAccess, Subject, SubscriptionPlan};

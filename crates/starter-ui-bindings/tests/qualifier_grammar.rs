@@ -40,6 +40,8 @@ fn optional_missing_claim_collapses_to_empty() {
         user: &user,
         page: &page,
         access_log: None,
+        item: None,
+        index: None,
     };
     let out = substitute_text("hi {{$user.missing?}}!", &ctx).unwrap();
     assert_eq!(out, "hi !");
@@ -59,6 +61,8 @@ fn non_optional_missing_target_errors() {
         user: &user,
         page: &page,
         access_log: None,
+        item: None,
+        index: None,
     };
     // $target with no target in scope is an error; without `?` it
     // surfaces structurally.

@@ -69,6 +69,17 @@ pub fn substitute_tree<G: EntityGraph + ?Sized>(
     walk(&mut tree.root, ctx)
 }
 
+/// Same as [`substitute_tree`] but operates on a single `Component`
+/// subtree. Exposed for the Repeat expander which needs to substitute
+/// each cloned template against a per-iteration context before
+/// emitting it.
+pub fn substitute_subtree<G: EntityGraph + ?Sized>(
+    node: &mut Component,
+    ctx: &EvalContext<'_, G>,
+) -> Result<(), SubstituteError> {
+    walk(node, ctx)
+}
+
 fn walk<G: EntityGraph + ?Sized>(
     node: &mut Component,
     ctx: &EvalContext<'_, G>,
@@ -182,6 +193,8 @@ mod tests {
             user: &user,
             page: &page,
             access_log: None,
+            item: None,
+            index: None,
         };
         assert_eq!(
             substitute_text("Hi {{$user.name}}!", &ctx).unwrap(),

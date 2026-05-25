@@ -51,6 +51,13 @@ pub struct EvalContext<'a, G: EntityGraph + ?Sized> {
     /// unique slot the resolve touched — per-target by construction
     /// because the target id is what seeded the cursor.
     pub access_log: Option<&'a RefCell<Vec<SlotAccess>>>,
+    /// Current `$item` frame — set by the Repeat expander while
+    /// instantiating each iteration of a template. `None` outside a
+    /// Repeat expansion.
+    pub item: Option<&'a JsonValue>,
+    /// Current `$index` frame — zero-based iteration index. `None`
+    /// outside a Repeat expansion.
+    pub index: Option<usize>,
 }
 
 impl<'a, G: EntityGraph + ?Sized> EvalContext<'a, G> {
@@ -73,6 +80,8 @@ impl<'a, G: EntityGraph + ?Sized> EvalContext<'a, G> {
             user: EMPTY_OBJ.get_or_init(serde_json::Map::new),
             page: EMPTY_OBJ.get_or_init(serde_json::Map::new),
             access_log: None,
+            item: None,
+            index: None,
         }
     }
 
@@ -106,6 +115,14 @@ pub enum BindingError {
     WalkThroughNonObject { slot: String },
     #[error("cannot walk child `{child}` — no graph cursor (source is not graph-rooted)")]
     NoCursorForChild { child: String },
+    #[error("`$item` used but no Repeat frame is in scope")]
+    NoItem,
+    #[error("`$index` used but no Repeat frame is in scope")]
+    NoIndex,
+    #[error("`$msg` used but the binding has no key step")]
+    MsgNeedsKey,
+    #[error("`$msg.{0}` — key not present in the catalogue")]
+    UnknownMessage(String),
 }
 
 /// Evaluate one parsed binding against `ctx`.
@@ -196,6 +213,14 @@ fn seed<G: EntityGraph + ?Sized>(
             Ok((None, Some(JsonValue::Object(ctx.user.clone()))))
         }
         Source::Page => Ok((None, Some(JsonValue::Object(ctx.page.clone())))),
+        Source::Item => {
+            let v = ctx.item.ok_or(BindingError::NoItem)?;
+            Ok((None, Some(v.clone())))
+        }
+        Source::Index => {
+            let i = ctx.index.ok_or(BindingError::NoIndex)?;
+            Ok((None, Some(JsonValue::Number((i as u64).into()))))
+        }
     }
 }
 
@@ -263,6 +288,8 @@ mod tests {
             user: &user,
             page: &page,
             access_log: None,
+            item: None,
+            index: None,
         };
         let b = Binding::parse("$target/temp.value").unwrap();
         assert_eq!(evaluate(&b, &ctx).unwrap(), json!(21.5));
@@ -282,6 +309,8 @@ mod tests {
             user: &user,
             page: &page,
             access_log: None,
+            item: None,
+            index: None,
         };
         let b = Binding::parse("$target/temp.value").unwrap();
         assert_eq!(evaluate(&b, &ctx).unwrap_err(), BindingError::NoTarget);
@@ -302,6 +331,8 @@ mod tests {
             user: &user,
             page: &page,
             access_log: None,
+            item: None,
+            index: None,
         };
         let b = Binding::parse("$user.orgId").unwrap();
         assert_eq!(evaluate(&b, &ctx).unwrap(), json!("sys"));
@@ -325,6 +356,8 @@ mod tests {
             user: &user,
             page: &page,
             access_log: Some(&log),
+            item: None,
+            index: None,
         };
         let b = Binding::parse("$target/temp.value").unwrap();
         evaluate(&b, &ctx).unwrap();
