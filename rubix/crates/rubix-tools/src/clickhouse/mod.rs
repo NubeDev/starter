@@ -9,6 +9,10 @@
 //! on mart.create undo.
 
 pub mod mart_create;
+pub mod mart_drop;
+pub mod mart_list;
 pub mod retention_set;
+pub mod rule_list;
 pub mod rule_write;
 pub mod store;
+pub mod tables_list;

@@ -17,6 +17,10 @@ Per [HOW-TO-CODE.md §0a](../../HOW-TO-CODE.md):
 - [THIN-SLICE.md](./THIN-SLICE.md) — the active plan: one demo
   path that exercises every architectural layer end-to-end, in
   five PRs.
+- [dashboards/](./dashboards/) — Goal 1 plan: SDUI dashboards
+  end-to-end (storage, binding-engine gaps, host glue, tools,
+  frontend renderer, AI builder, open questions). Eight files,
+  one slice per file.
 
 ## Active codeless jobs
 

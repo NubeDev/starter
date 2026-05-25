@@ -42,6 +42,29 @@ test.describe('auth', () => {
     await expect(page.getByRole('heading', { name: /Sign in to Rubix/i })).toBeHidden({ timeout: 10_000 })
     await expect(page).toHaveURL(/\/(?:\?.*)?$/)
 
+    // The session cookie set by rubix-agent must have landed against
+    // the SPA origin — if this is missing every subsequent /api/v1/*
+    // call will 401 even though the UI thinks the user is logged in.
+    // This is the assertion that catches the prior path-mismatch bug
+    // where login() POSTed to /auth/login (no /api/v1) and the vite
+    // proxy served the SPA index instead of forwarding to the agent.
+    const cookies = await page.context().cookies()
+    expect(cookies.map((c) => c.name)).toEqual(
+      expect.arrayContaining([expect.stringMatching(/session/i)]),
+    )
+
+    // Drive a real authenticated route through the proxy so an
+    // accidental "200 HTML from SPA fallback" can no longer pass as
+    // a successful me() — /extensions calls /api/v1/extensions and
+    // the heading only renders when the call comes back authed.
+    await page.goto('/extensions')
+    await expect(
+      page.getByRole('heading', { name: /Installed extensions/i }),
+    ).toBeVisible({ timeout: 10_000 })
+    await expect(
+      page.getByRole('heading', { name: /Sign in to Rubix/i }),
+    ).toBeHidden()
+
     // Logout via the wire-level endpoint — the UI item in
     // <NavUser> is not yet wired to `auth.logout()` (see
     // src/components/layout/nav-user.tsx). The behaviour we care about

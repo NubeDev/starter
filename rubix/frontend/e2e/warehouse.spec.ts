@@ -69,4 +69,25 @@ test.describe('admin/warehouse', () => {
       await expect(page.getByText(marker).first()).toBeVisible({ timeout: 10_000 })
     }
   })
+
+  // Regression: see authz-admin.spec.ts for the full context. The
+  // Tabs primitive's bare-key data variants didn't match Radix's
+  // `data-orientation` / `data-state` attributes, leaving the root
+  // as a flex row so TabsContent rendered beside TabsList. Assert
+  // the active panel sits below the list.
+  test('TabsContent renders below TabsList, not beside it', async ({ page }) => {
+    await login(page)
+    await page.goto('/admin/warehouse')
+
+    const list = page.getByRole('tablist').first()
+    await expect(list).toBeVisible({ timeout: 10_000 })
+    const panel = page.locator('[role="tabpanel"][data-state="active"]').first()
+    await expect(panel).toBeVisible({ timeout: 10_000 })
+
+    const lb = await list.boundingBox()
+    const cb = await panel.boundingBox()
+    expect(lb).not.toBeNull()
+    expect(cb).not.toBeNull()
+    expect(cb!.y).toBeGreaterThan(lb!.y + lb!.height - 1)
+  })
 })

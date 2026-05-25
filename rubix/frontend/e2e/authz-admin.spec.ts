@@ -70,4 +70,28 @@ test.describe('admin/access', () => {
       ).toBeVisible({ timeout: 10_000 })
     }
   })
+
+  // Regression: the Tabs primitive (@nube/starter-ui-kit) previously
+  // used Tailwind bare-key data variants (`data-horizontal:flex-col`,
+  // `data-active:...`) that compile to `[data-horizontal]` selectors.
+  // Radix emits `data-orientation="horizontal"` and `data-state="active"`,
+  // not `data-horizontal`/`data-active`, so the variants silently
+  // failed and TabsContent rendered as a right-side column beside
+  // TabsList instead of stacked below it.
+  // Asserts the active panel's bounding box sits below the tab list.
+  test('TabsContent renders below TabsList, not beside it', async ({ page }) => {
+    await login(page)
+    await page.goto('/admin/access')
+
+    const list = page.getByRole('tablist').first()
+    await expect(list).toBeVisible({ timeout: 10_000 })
+    const panel = page.locator('[role="tabpanel"][data-state="active"]').first()
+    await expect(panel).toBeVisible({ timeout: 10_000 })
+
+    const lb = await list.boundingBox()
+    const cb = await panel.boundingBox()
+    expect(lb).not.toBeNull()
+    expect(cb).not.toBeNull()
+    expect(cb!.y).toBeGreaterThan(lb!.y + lb!.height - 1)
+  })
 })

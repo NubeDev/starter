@@ -62,7 +62,9 @@ export function LoginRoute() {
     <div className="flex min-h-svh items-center justify-center bg-[color:var(--color-bg)] p-6">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle>Sign in to Rubix</CardTitle>
+          <CardTitle>
+            <h2 className="m-0 p-0 text-inherit">Sign in to Rubix</h2>
+          </CardTitle>
           <CardDescription>
             Use your operator credentials to continue.
           </CardDescription>

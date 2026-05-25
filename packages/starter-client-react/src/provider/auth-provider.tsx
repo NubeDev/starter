@@ -123,18 +123,33 @@ export function AuthProvider(props: AuthProviderProps) {
     [meQuery.data, meQuery.isSuccess, login, logout],
   );
 
-  // Decide which slot to render. We split the unauthenticated check
-  // off the StarterError 401 specifically — other errors (network,
-  // 500) should not silently flip the UI to "please log in".
-  const is401 =
+  // Decide which slot to render. We render the unauthenticated slot
+  // when `me()` fails in a way that proves the user is not (or can
+  // no longer be) validated:
+  //
+  //   - StarterError 401     → no session.
+  //   - StarterError 502 with code "invalid-response-content-type"
+  //                          → the request did not reach the API at
+  //                            all (dev-server SPA-fallback misroute,
+  //                            misconfigured proxy). Without this we
+  //                            would silently render `children` with
+  //                            no user and every downstream call would
+  //                            then 401 with no obvious cause.
+  //
+  // Other failures (network errors, 5xx) keep `children` mounted so
+  // a transient blip does not bounce the user to a "please log in"
+  // screen that implies bad credentials.
+  const err = meQuery.error;
+  const isUnauthenticated =
     meQuery.isError &&
-    meQuery.error instanceof StarterError &&
-    meQuery.error.status === 401;
+    err instanceof StarterError &&
+    (err.status === 401 ||
+      (err.status === 502 && err.code === "invalid-response-content-type"));
 
   let body: ReactNode;
   if (meQuery.isPending) {
     body = props.loadingSlot ?? null;
-  } else if (is401) {
+  } else if (isUnauthenticated) {
     body = props.unauthenticatedSlot;
   } else {
     body = props.children;
