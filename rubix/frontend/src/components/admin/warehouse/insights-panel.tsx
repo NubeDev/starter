@@ -1,5 +1,10 @@
 // Insights rules panel. Lists `rubix.insights.rule.*` rules with
 // enable/disable toggles and a create form (id + body YAML).
+//
+// Also surfaces the W11/W16 freshness tiles at the top of the
+// panel. Freshness lives here because Insights is the rubix
+// operator surface for warehouse observability; the Explorer tab
+// stays pure sql-studio per design/warehouse/explorer/README.md.
 
 import { useState } from 'react'
 import { useIntl } from 'react-intl'
@@ -23,6 +28,7 @@ import {
   useInsightsRuleEnable,
   useInsightsRulesList,
 } from '@nube/rubix-client-react'
+import { FreshnessTiles } from '@nube/starter-ui-ch-explorer/rubix'
 
 export function WarehouseInsightsPanel() {
   const intl = useIntl()
@@ -56,6 +62,34 @@ export function WarehouseInsightsPanel() {
 
   return (
     <div className="space-y-6">
+      <FreshnessTiles
+        messages={{
+          entitiesTitle: tr(
+            'admin.warehouse.explorer.freshness.entities',
+            'Entities dictionary',
+          ),
+          ingestLagTitle: tr(
+            'admin.warehouse.explorer.freshness.ingestLag',
+            'Ingest lag (W16)',
+          ),
+          ingestBacklogTitle: tr(
+            'admin.warehouse.explorer.freshness.ingestBacklog',
+            'Ingest backlog',
+          ),
+          awaitingFirstRefresh: tr(
+            'admin.warehouse.explorer.freshness.awaiting',
+            'Awaiting first refresh.',
+          ),
+          ingestLagSubtitle: tr(
+            'admin.warehouse.explorer.freshness.ingestLagSubtitle',
+            'Oldest async-insert part awaiting flush.',
+          ),
+          ingestBacklogSubtitle: tr(
+            'admin.warehouse.explorer.freshness.ingestBacklogSubtitle',
+            'Bytes pending in system.asynchronous_inserts.',
+          ),
+        }}
+      />
       <div className="rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-1)] p-4">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium">
           <Plus className="h-4 w-4" />

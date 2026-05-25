@@ -1,11 +1,21 @@
 // ClickHouse marts panel. Lists materialised marts, supports
 // creating a new mart via `useMartCreate` (modal with name + DDL),
 // and dropping a mart via `useClickhouseMartDrop` with a hard
-// data-loss warning.
+// data-loss warning surfaced through the kit's `<AlertDialog>`
+// (no `window.confirm`, per the explorer scope's code-standard
+// checklist).
 
 import { useState } from 'react'
 import { useIntl } from 'react-intl'
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
   Button,
   Dialog,
   DialogContent,
@@ -42,6 +52,7 @@ export function WarehouseMartsPanel() {
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')
   const [ddl, setDdl] = useState('')
+  const [pendingDrop, setPendingDrop] = useState<string | null>(null)
 
   async function submit() {
     if (!name.trim() || !ddl.trim()) return
@@ -51,17 +62,11 @@ export function WarehouseMartsPanel() {
     setDdl('')
   }
 
-  async function onDrop(martName: string) {
-    if (
-      !window.confirm(
-        tr(
-          'admin.warehouse.marts.confirmDrop',
-          'DROP mart "{name}"? This deletes the underlying table and all its data. This action cannot be undone.',
-        ).replace('{name}', martName),
-      )
-    )
-      return
-    await drop.mutateAsync({ mart_name: martName })
+  async function confirmDrop() {
+    if (!pendingDrop) return
+    const target = pendingDrop
+    setPendingDrop(null)
+    await drop.mutateAsync({ mart_name: target })
   }
 
   const rows = list.data?.marts ?? []
@@ -117,7 +122,7 @@ export function WarehouseMartsPanel() {
               <Button
                 size="sm"
                 variant="destructive"
-                onClick={() => onDrop(m.mart_name)}
+                onClick={() => setPendingDrop(m.mart_name)}
               >
                 <Trash2 className="h-3.5 w-3.5" />
                 {tr('admin.warehouse.marts.drop', 'Drop')}
@@ -171,6 +176,38 @@ export function WarehouseMartsPanel() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog
+        open={pendingDrop !== null}
+        onOpenChange={(o) => {
+          if (!o) setPendingDrop(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {tr(
+                'admin.warehouse.marts.confirmDropTitle',
+                'Drop mart "{name}"?',
+              ).replace('{name}', pendingDrop ?? '')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {tr(
+                'admin.warehouse.marts.confirmDropBody',
+                'This deletes the underlying table and all its data. This action cannot be undone.',
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {tr('admin.warehouse.common.cancel', 'Cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDrop}>
+              {tr('admin.warehouse.marts.drop', 'Drop')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }

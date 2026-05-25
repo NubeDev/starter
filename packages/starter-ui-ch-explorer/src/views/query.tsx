@@ -7,11 +7,16 @@
 //     (localStorage-backed, mirrors the deleted `SqlProvider`).
 //   * Result data goes through `useChQuery()`.
 //   * Visible strings via `useExplorerMessages()`.
+//   * Monaco is loaded lazily via `React.lazy` so the editor's
+//     ~2.6 MB of bundle weight doesn't land in the cold-load
+//     payload of the Overview / Tables / Schema sub-tabs (see
+//     "Monaco bundle size" risk in
+//     `rubix/docs/scope/clickhouse-explorer-in-rubix-shell.md`).
 //
 // Design notes: rubix/docs/design/warehouse/explorer/README.md.
 
 import "react-data-grid/lib/styles.css";
-import { useState } from "react";
+import { Suspense, lazy, useState } from "react";
 
 import { DataGrid } from "react-data-grid";
 import { useDebounce } from "@uidotdev/usehooks";
@@ -24,12 +29,18 @@ import {
   CardHeader,
   CardDescription,
 } from "../components/ui/card.js";
-import { Editor } from "../components/editor.js";
 import { Toggle } from "../components/ui/toggle.js";
 import { Button } from "../components/ui/button.js";
 import { Skeleton } from "../components/ui/skeleton.js";
 import { useChQuery, useResolvedTheme, useSqlState } from "../hooks/index.js";
 import { useExplorerMessages } from "../i18n/index.js";
+
+// Lazy chunk boundary for Monaco + the SQL autocomplete glue.
+// `React.lazy` requires a default export, so adapt the named
+// `Editor` export at the await boundary.
+const Editor = lazy(() =>
+  import("../components/editor.js").then((m) => ({ default: m.Editor })),
+);
 
 export function ExplorerQuery() {
   const m = useExplorerMessages();
@@ -102,7 +113,9 @@ export function ExplorerQuery() {
   return (
     <div className="grid gap-8">
       <div className="grid gap-4 grid-cols-1">
-        <Editor value={codeState} onChange={(val) => setCodeState(val)} />
+        <Suspense fallback={<Skeleton className="w-full h-[220px]" />}>
+          <Editor value={codeState} onChange={(val) => setCodeState(val)} />
+        </Suspense>
 
         <div className="flex gap-2 justify-between">
           <div className="flex gap-2">
