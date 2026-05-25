@@ -27,6 +27,8 @@ fn ctx<'a>(
         access_log: None,
         item: None,
         index: None,
+        catalogue: &starter_ui_bindings::NullBag,
+        locale: "en",
     }
 }
 
@@ -120,3 +122,4 @@ fn repeat_with_empty_source_collapses_to_zero_children() {
         _ => unreachable!(),
     }
 }
+

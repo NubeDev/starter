@@ -153,6 +153,8 @@ fn with_item_frame<'a, G: EntityGraph + ?Sized>(
         access_log: ctx.access_log,
         item: Some(item),
         index: Some(index),
+        catalogue: ctx.catalogue,
+        locale: ctx.locale,
     }
 }
 

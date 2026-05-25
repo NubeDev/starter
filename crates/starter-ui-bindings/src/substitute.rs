@@ -195,6 +195,8 @@ mod tests {
             access_log: None,
             item: None,
             index: None,
+            catalogue: &crate::NullBag,
+            locale: "en",
         };
         assert_eq!(
             substitute_text("Hi {{$user.name}}!", &ctx).unwrap(),

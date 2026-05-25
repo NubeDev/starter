@@ -20,6 +20,7 @@ use std::collections::HashMap;
 use serde_json::Value as JsonValue;
 use thiserror::Error;
 
+use crate::catalogue::{MessageBag, NullBag};
 use crate::graph::{EntityGraph, EntityId};
 use crate::parse::{Binding, Source, Step};
 use crate::subscription::SlotAccess;
@@ -58,6 +59,14 @@ pub struct EvalContext<'a, G: EntityGraph + ?Sized> {
     /// Current `$index` frame — zero-based iteration index. `None`
     /// outside a Repeat expansion.
     pub index: Option<usize>,
+    /// Message catalogue used by the `$msg.<key>` source. Defaults
+    /// to `&NullBag` in [`EvalContext::new`]; production resolvers
+    /// supply a host-specific catalogue here.
+    pub catalogue: &'a dyn MessageBag,
+    /// Active locale used for catalogue lookups. Defaults to `"en"`
+    /// in [`EvalContext::new`]; production resolvers fill this from
+    /// the request's `Accept-Language` / `$user.language` cascade.
+    pub locale: &'a str,
 }
 
 impl<'a, G: EntityGraph + ?Sized> EvalContext<'a, G> {
@@ -82,6 +91,8 @@ impl<'a, G: EntityGraph + ?Sized> EvalContext<'a, G> {
             access_log: None,
             item: None,
             index: None,
+            catalogue: &NullBag,
+            locale: "en",
         }
     }
 
@@ -130,6 +141,32 @@ pub fn evaluate<G: EntityGraph + ?Sized>(
     binding: &Binding,
     ctx: &EvalContext<'_, G>,
 ) -> Result<JsonValue, BindingError> {
+    // `$msg` is special: the first Slot step is the catalogue key
+    // (not a slot read), so we resolve it before the generic walk.
+    if matches!(binding.source, Source::Msg) {
+        let key = match binding.steps.first() {
+            Some(Step::Slot(k)) => k.clone(),
+            _ => return Err(BindingError::MsgNeedsKey),
+        };
+        let resolved = ctx
+            .catalogue
+            .lookup(&key, ctx.locale)
+            .ok_or_else(|| BindingError::UnknownMessage(key.clone()))?;
+        // Remaining steps walk into the JSON value.
+        let mut value: JsonValue = resolved;
+        for step in binding.steps.iter().skip(1) {
+            match step {
+                Step::Slot(field) => value = walk_field(&value, field)?,
+                Step::Child(child) => {
+                    return Err(BindingError::NoCursorForChild {
+                        child: child.clone(),
+                    })
+                }
+            }
+        }
+        return Ok(value);
+    }
+
     let (mut cursor, mut value) = seed(binding, ctx)?;
 
     for step in &binding.steps {
@@ -221,6 +258,12 @@ fn seed<G: EntityGraph + ?Sized>(
             let i = ctx.index.ok_or(BindingError::NoIndex)?;
             Ok((None, Some(JsonValue::Number((i as u64).into()))))
         }
+        Source::Msg => {
+            // Unreachable: `evaluate` special-cases `Source::Msg`
+            // before calling `seed`. Returning a structural error
+            // keeps the arm total without panicking.
+            Err(BindingError::MsgNeedsKey)
+        }
     }
 }
 
@@ -290,6 +333,8 @@ mod tests {
             access_log: None,
             item: None,
             index: None,
+            catalogue: &crate::NullBag,
+            locale: "en",
         };
         let b = Binding::parse("$target/temp.value").unwrap();
         assert_eq!(evaluate(&b, &ctx).unwrap(), json!(21.5));
@@ -311,6 +356,8 @@ mod tests {
             access_log: None,
             item: None,
             index: None,
+            catalogue: &crate::NullBag,
+            locale: "en",
         };
         let b = Binding::parse("$target/temp.value").unwrap();
         assert_eq!(evaluate(&b, &ctx).unwrap_err(), BindingError::NoTarget);
@@ -333,6 +380,8 @@ mod tests {
             access_log: None,
             item: None,
             index: None,
+            catalogue: &crate::NullBag,
+            locale: "en",
         };
         let b = Binding::parse("$user.orgId").unwrap();
         assert_eq!(evaluate(&b, &ctx).unwrap(), json!("sys"));
@@ -358,6 +407,8 @@ mod tests {
             access_log: Some(&log),
             item: None,
             index: None,
+            catalogue: &crate::NullBag,
+            locale: "en",
         };
         let b = Binding::parse("$target/temp.value").unwrap();
         evaluate(&b, &ctx).unwrap();

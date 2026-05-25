@@ -34,6 +34,7 @@
 //! trait lives in this crate until a second consumer wants it
 //! promoted to `starter-spi`.
 
+mod catalogue;
 mod eval;
 mod expand;
 mod graph;
@@ -41,9 +42,11 @@ mod parse;
 mod subscription;
 mod substitute;
 
+pub use catalogue::{MessageBag, NullBag};
 pub use eval::{evaluate, BindingError, EvalContext};
 pub use expand::{expand_repeats, ExpandError};
 pub use graph::{ChildLink, EntityGraph, EntityId, NullGraph};
 pub use parse::{Binding, ParseError, Qualifier, Source, Step};
+
 pub use subscription::{SlotAccess, Subject, SubscriptionPlan};
 pub use substitute::{substitute_text, substitute_tree};

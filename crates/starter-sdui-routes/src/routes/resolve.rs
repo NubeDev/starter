@@ -122,6 +122,8 @@ pub async fn handler(
         access_log: Some(&log),
         item: None,
         index: None,
+        catalogue: &starter_ui_bindings::NullBag,
+        locale: "en",
     };
     substitute_tree(&mut tree, &ctx)
         .map_err(|e| SduiError::BadRequest(format!("binding substitution failed: {e}")))?;

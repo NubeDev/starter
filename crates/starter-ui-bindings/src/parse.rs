@@ -34,6 +34,9 @@ pub enum Source {
     /// `$index` — synthetic source pushed by the Repeat expander.
     /// Resolves to the zero-based iteration index as a JSON number.
     Index,
+    /// `$msg` — catalogue lookup. The first `.ident` step is the
+    /// message key; further steps walk into the resolved JSON value.
+    Msg,
 }
 
 /// One walk step in the binding's path.
@@ -133,6 +136,7 @@ impl Binding {
             "$page" => Source::Page,
             "$item" => Source::Item,
             "$index" => Source::Index,
+            "$msg" => Source::Msg,
             "$stack" => {
                 // Required `.alias` segment. We do not allow
                 // `$stack/foo` — `$stack` itself is not a graph

@@ -42,6 +42,8 @@ fn kpi_label_substitutes_user_claim() {
         access_log: None,
         item: None,
         index: None,
+        catalogue: &starter_ui_bindings::NullBag,
+        locale: "en",
     };
 
     let mut tree = ComponentTree::new(Component::Page {
@@ -96,6 +98,8 @@ fn chart_source_node_id_substitutes_from_target() {
         access_log: Some(&log),
         item: None,
         index: None,
+        catalogue: &starter_ui_bindings::NullBag,
+        locale: "en",
     };
 
     let mut tree = ComponentTree::new(Component::Page {

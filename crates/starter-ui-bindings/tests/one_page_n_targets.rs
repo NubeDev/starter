@@ -99,6 +99,8 @@ fn resolve_against(graph: &FixtureGraph, target: &str) -> (ComponentTree, Subscr
         access_log: Some(&log),
         item: None,
         index: None,
+        catalogue: &starter_ui_bindings::NullBag,
+        locale: "en",
     };
 
     let mut tree = authored_page();
@@ -176,6 +178,8 @@ fn unknown_target_surfaces_clean_error() {
         access_log: None,
         item: None,
         index: None,
+        catalogue: &starter_ui_bindings::NullBag,
+        locale: "en",
     };
     let mut tree = authored_page();
     let err = substitute_tree(&mut tree, &ctx).unwrap_err();
