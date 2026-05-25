@@ -194,3 +194,169 @@ fn backend(e: rubix_spi::dashboard::DashboardStoreError) -> Error {
         source: Box::new(e),
     }
 }
+
+/// In-memory [`DashboardStore`] suitable for laptop / no-Postgres
+/// boots and tests that do not need durability. Mirrors the PG
+/// insert-only contract: `insert_revision` supersedes any prior
+/// live row for `(tenant_id, page_id)` in the same critical
+/// section; `get_active` / `list_active` skip superseded rows;
+/// `history` returns every revision newest-first.
+///
+/// Used by [`rubix_agent::registry::build_tool_registry`] as the
+/// fallback backing store when no PG pool is wired. The PG-backed
+/// [`rubix_store_postgres::PgDashboardStore`] is the production
+/// drop-in replacement (same trait shape).
+#[derive(Default)]
+pub struct InMemoryDashboardStore {
+    rows: std::sync::Mutex<Vec<rubix_spi::dashboard::DashboardRevision>>,
+    next_rev: std::sync::Mutex<u64>,
+}
+
+impl InMemoryDashboardStore {
+    /// Fresh empty store.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    fn next_rev(&self) -> String {
+        let mut g = self.next_rev.lock().unwrap();
+        *g += 1;
+        format!("mem-rev-{g}")
+    }
+
+    /// Monotonic timestamp string. Wall-clock fidelity does not
+    /// matter — the contract is that newer inserts compare greater
+    /// than older ones via lexical `cmp` so `history` ordering
+    /// works.
+    fn now() -> String {
+        use std::time::{SystemTime, UNIX_EPOCH};
+        let nanos = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_nanos())
+            .unwrap_or(0);
+        // Pad so lex order matches numeric order across at least the
+        // next century.
+        format!("{nanos:030}")
+    }
+}
+
+#[async_trait]
+impl DashboardStore for InMemoryDashboardStore {
+    async fn insert_revision(
+        &self,
+        new: NewRevision,
+    ) -> std::result::Result<
+        rubix_spi::dashboard::DashboardRevision,
+        rubix_spi::dashboard::DashboardStoreError,
+    > {
+        let now = Self::now();
+        let mut rows = self.rows.lock().unwrap();
+        for r in rows.iter_mut() {
+            if r.tenant_id == new.tenant_id
+                && r.page_id == new.page_id
+                && r.superseded_at.is_none()
+            {
+                r.superseded_at = Some(now.clone());
+            }
+        }
+        let inserted = rubix_spi::dashboard::DashboardRevision {
+            page_id: new.page_id,
+            revision_id: self.next_rev(),
+            tenant_id: new.tenant_id,
+            owner_principal: new.owner_principal,
+            title: new.title,
+            tags: new.tags,
+            body_json: new.body_json,
+            created_by: new.created_by,
+            created_at: now,
+            superseded_at: None,
+        };
+        rows.push(inserted.clone());
+        Ok(inserted)
+    }
+
+    async fn get_active(
+        &self,
+        tenant_id: &str,
+        page_id: &str,
+    ) -> std::result::Result<
+        Option<rubix_spi::dashboard::DashboardRevision>,
+        rubix_spi::dashboard::DashboardStoreError,
+    > {
+        Ok(self
+            .rows
+            .lock()
+            .unwrap()
+            .iter()
+            .find(|r| {
+                r.tenant_id == tenant_id
+                    && r.page_id == page_id
+                    && r.superseded_at.is_none()
+            })
+            .cloned())
+    }
+
+    async fn list_active(
+        &self,
+        tenant_id: &str,
+        filter: &rubix_spi::dashboard::ListFilter,
+    ) -> std::result::Result<
+        Vec<rubix_spi::dashboard::DashboardRevision>,
+        rubix_spi::dashboard::DashboardStoreError,
+    > {
+        Ok(self
+            .rows
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|r| r.tenant_id == tenant_id && r.superseded_at.is_none())
+            .filter(|r| {
+                filter.tags_any.is_empty()
+                    || r.tags.iter().any(|t| filter.tags_any.contains(t))
+            })
+            .filter(|r| match &filter.owner {
+                None => true,
+                Some(o) => &r.owner_principal == o,
+            })
+            .cloned()
+            .collect())
+    }
+
+    async fn mark_superseded(
+        &self,
+        tenant_id: &str,
+        page_id: &str,
+    ) -> std::result::Result<u64, rubix_spi::dashboard::DashboardStoreError> {
+        let now = Self::now();
+        let mut n = 0u64;
+        for r in self.rows.lock().unwrap().iter_mut() {
+            if r.tenant_id == tenant_id
+                && r.page_id == page_id
+                && r.superseded_at.is_none()
+            {
+                r.superseded_at = Some(now.clone());
+                n += 1;
+            }
+        }
+        Ok(n)
+    }
+
+    async fn history(
+        &self,
+        page_id: &str,
+    ) -> std::result::Result<
+        Vec<rubix_spi::dashboard::DashboardRevision>,
+        rubix_spi::dashboard::DashboardStoreError,
+    > {
+        let mut rows: Vec<_> = self
+            .rows
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|r| r.page_id == page_id)
+            .cloned()
+            .collect();
+        rows.sort_by(|a, b| b.created_at.cmp(&a.created_at));
+        Ok(rows)
+    }
+}

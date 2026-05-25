@@ -47,7 +47,19 @@ use rubix_tools::clickhouse::rule_list::ClickhouseRuleListTool;
 use rubix_tools::clickhouse::rule_write::ClickhouseRuleWriteTool;
 use rubix_tools::clickhouse::store::{ChWriter, InMemoryChWriter};
 use rubix_tools::clickhouse::tables_list::ClickhouseTablesListTool;
+use rubix_spi::dashboard::DashboardStore;
 use rubix_tools::dashboard::assistant::DashboardAssistantStub;
+use rubix_tools::dashboard::create::DashboardCreateTool;
+use rubix_tools::dashboard::delete::DashboardDeleteTool;
+use rubix_tools::dashboard::duplicate::DashboardDuplicateTool;
+use rubix_tools::dashboard::get::DashboardGetTool;
+use rubix_tools::dashboard::list::DashboardListTool;
+use rubix_tools::dashboard::page_set::DashboardPageSetTool;
+use rubix_tools::dashboard::store::InMemoryDashboardStore;
+use rubix_tools::dashboard::update::DashboardUpdateTool;
+use starter_authz::StaticRegistry;
+use starter_flow::graph::InMemoryGraphStore;
+use starter_flow_spi::graph::GraphStore;
 use rubix_tools::flow_ops::deploy::FlowDeployTool;
 use rubix_tools::flow_ops::duplicate::FlowDuplicateTool;
 use rubix_tools::flow_ops::lint::FlowLintTool;
@@ -104,6 +116,17 @@ pub fn build_tool_registry(
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
     let ch_writer: Arc<dyn ChWriter> = Arc::new(InMemoryChWriter::new());
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
+    let dashboard_store: Arc<dyn DashboardStore> = Arc::new(InMemoryDashboardStore::new());
+    // Shared with `boot::authz`. The dashboard.create tool re-asserts
+    // the `rubix.dashboard.page` ResourceSpec on this registry on
+    // every successful write; the call is idempotent.
+    let authz_registry: Arc<StaticRegistry> = Arc::new(StaticRegistry::new());
+    // dashboard.page_set funnels operator slot writes through the R2
+    // chokepoint on a `GraphStore`. The registry-local in-memory
+    // store stands in for the laptop boot path — the production
+    // wiring threads the agent's live `Engine`-backed graph here so
+    // every operator write reaches the same chokepoint flows use.
+    let dashboard_graph: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
 
     warn!(
         target: "rubix.registry",
@@ -148,13 +171,27 @@ pub fn build_tool_registry(
         Arc::new(InsightsRuleCreateTool::new(insights_store.clone())),
         Arc::new(InsightsRuleEnableTool::new(insights_store.clone())),
         Arc::new(InsightsRuleDisableTool::new(insights_store.clone())),
-        // ---- placeholders ---------------------------------------
-        // Goal 1 is still deferred — this stub surfaces so the flow
-        // YAML `flows/dashboard-assistant.yaml` can dispatch its
-        // primary tool to a Diagnostic with code
-        // `rubix.goal.not_wired`. See
-        // `rubix-tools/src/dashboard/assistant.rs` for unblock
-        // criteria.
+        // ---- dashboard (read + write + runtime slot-set) --------
+        // Phase C.5 wires the seven `rubix.dashboard.*` verbs into
+        // the same registry the REST tools router and the MCP
+        // `tool_registry_snapshot` (see boot/mcp/register.rs) read
+        // from. Per R7 the verbs auto-surface to the dashboard-
+        // assistant flow's model loop through this snapshot; the
+        // flow itself remains the MCP-facing entrypoint.
+        Arc::new(DashboardGetTool::new(dashboard_store.clone())),
+        Arc::new(DashboardListTool::new(dashboard_store.clone())),
+        Arc::new(DashboardCreateTool::new(
+            dashboard_store.clone(),
+            authz_registry.clone(),
+        )),
+        Arc::new(DashboardUpdateTool::new(dashboard_store.clone())),
+        Arc::new(DashboardDuplicateTool::new(dashboard_store.clone())),
+        Arc::new(DashboardDeleteTool::new(dashboard_store.clone())),
+        Arc::new(DashboardPageSetTool::new(dashboard_graph.clone())),
+        // The assistant stub remains the flow-dispatched verb the
+        // `dashboard-assistant` YAML calls into; the seven verbs
+        // above are the ones the assistant invokes through the
+        // model loop.
         Arc::new(DashboardAssistantStub),
     ]
 }
@@ -310,6 +347,25 @@ mod tests {
             "rubix.insights.rule.create",
             "rubix.insights.rule.enable",
             "rubix.insights.rule.disable",
+        ] {
+            assert!(
+                names.contains(&expected.to_owned()),
+                "registry missing {expected}",
+            );
+        }
+    }
+
+    #[test]
+    fn registry_contains_every_dashboard_verb() {
+        let names = names();
+        for expected in [
+            "rubix.dashboard.get",
+            "rubix.dashboard.list",
+            "rubix.dashboard.create",
+            "rubix.dashboard.update",
+            "rubix.dashboard.duplicate",
+            "rubix.dashboard.delete",
+            "rubix.dashboard.page_set",
         ] {
             assert!(
                 names.contains(&expected.to_owned()),
