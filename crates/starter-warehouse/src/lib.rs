@@ -51,6 +51,8 @@ pub mod ddl;
 #[cfg(feature = "warehouse")]
 pub mod dim_freshness;
 #[cfg(feature = "warehouse")]
+pub mod explorer;
+#[cfg(feature = "warehouse")]
 pub mod gc;
 #[cfg(feature = "warehouse")]
 pub mod nodes;

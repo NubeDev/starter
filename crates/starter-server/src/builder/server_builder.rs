@@ -1,6 +1,7 @@
 //! The builder: collect consumer Routers, the OpenAPI doc, and
 //! the shared prometheus registry, and assemble a final `axum::Router`.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use axum::Router;
@@ -10,6 +11,7 @@ use tower_http::{cors::CorsLayer, trace::TraceLayer};
 
 use crate::middleware::{with_latency, with_request_id};
 use crate::routes::{health_router, metrics_router, openapi_router};
+use crate::static_assets;
 
 /// Fluent builder for the starter server.
 ///
@@ -31,6 +33,7 @@ pub struct ServerBuilder<S> {
     openapi: Option<utoipa::openapi::OpenApi>,
     metrics: Option<(Arc<Registry>, Arc<StandardMetrics>)>,
     cors: Option<CorsLayer>,
+    static_mounts: Vec<(String, PathBuf)>,
 }
 
 impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
@@ -42,6 +45,7 @@ impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
             openapi: None,
             metrics: None,
             cors: None,
+            static_mounts: Vec::new(),
         }
     }
 
@@ -74,6 +78,20 @@ impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
         self
     }
 
+    /// Mount a static-asset directory (built SPA bundle) at
+    /// `mount_path`. Off by default. Requests that don't match a file
+    /// on disk fall back to `index.html` so a client-side router owns
+    /// the URL space below the mount. May be called multiple times to
+    /// mount more than one bundle.
+    pub fn with_static_assets(
+        mut self,
+        mount_path: impl Into<String>,
+        dist_dir: impl Into<PathBuf>,
+    ) -> Self {
+        self.static_mounts.push((mount_path.into(), dist_dir.into()));
+        self
+    }
+
     /// Materialise the final `axum::Router`.
     ///
     /// Mount order: consumer routers (merged into one), starter-owned
@@ -90,6 +108,12 @@ impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
         }
         if let Some(doc) = self.openapi {
             app = app.merge(openapi_router::<S>(doc));
+        }
+
+        // Opt-in static-asset mounts. ServeDir is stateless so this
+        // happens before `with_state` for parity with consumer routers.
+        for (mount_path, dist_dir) in self.static_mounts {
+            app = static_assets::mount(app, &mount_path, dist_dir);
         }
 
         // Apply the consumer state so the result is `Router<()>` —

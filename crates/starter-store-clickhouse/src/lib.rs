@@ -24,6 +24,7 @@
 pub mod client;
 pub mod dim_freshness;
 pub mod migrate;
+pub mod raw;
 pub mod store;
 
 #[cfg(feature = "testing")]
