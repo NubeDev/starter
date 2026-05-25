@@ -9,6 +9,7 @@ import {
   FLOW_OPS_KEY,
   useFlowDeploy,
   useFlowDuplicate,
+  useFlowKinds,
   useFlowLint,
   useFlowList,
 } from "./flow-ops.js";
@@ -25,7 +26,19 @@ afterEach(clearCsrfCookie);
 const listBody = {
   summary: { code: "rubix.flow_ops.listed" },
   count: 1,
-  flows: [{ flow_id: "f1", revision_id: "r1" }],
+  flows: [{ flow_id: "f1", revision_id: "r1", body_yaml: "id: f1\n" }],
+};
+
+const kindsBody = {
+  summary: { code: "rubix.flow.kinds.listed" },
+  count: 1,
+  kinds: [
+    {
+      kind_id: "starter.flow.counter",
+      config_schema: { type: "object" },
+      default_label: "Counter",
+    },
+  ],
 };
 
 describe("useFlowList", () => {
@@ -40,6 +53,17 @@ describe("useFlowList", () => {
     const { Wrapper } = makeHarness(() => jsonResponse({ summary: { code: "x" } }, 500));
     const { result } = renderHook(() => useFlowList(), { wrapper: Wrapper });
     await waitFor(() => expect(result.current.isError).toBe(true));
+  });
+});
+
+describe("useFlowKinds", () => {
+  it("fetches and caches under ['rubix','flow_ops','kinds']", async () => {
+    const { Wrapper, calls, queryClient } = makeHarness(() => jsonResponse(kindsBody));
+    const { result } = renderHook(() => useFlowKinds(), { wrapper: Wrapper });
+    await waitFor(() => expect(result.current.isSuccess).toBe(true));
+    expect(calls[0]!.url).toContain("/api/v1/tools/rubix.flow_ops.kinds");
+    const cached = queryClient.getQueryData([...FLOW_OPS_KEY, "kinds"]);
+    expect(cached).toEqual(kindsBody);
   });
 });
 

@@ -5,6 +5,7 @@
 
 pub mod deploy;
 pub mod duplicate;
+pub mod kinds;
 pub mod lint;
 pub mod list;
 pub mod store;

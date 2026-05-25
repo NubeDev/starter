@@ -41,11 +41,31 @@ export interface FlowListRequest {}
 export interface FlowListItem {
   flow_id: string;
   revision_id: string;
+  /** Raw YAML body of the live revision, inlined from the same row
+   * the live-revision SELECT already fetches. Lets the frontend
+   * render a flow's full graph from a single `flow_ops.list`
+   * response — no follow-up `flow_ops.get` round-trip needed. */
+  body_yaml: string;
 }
 export interface FlowListResponse {
   summary: Diagnostic;
   count: number;
   flows: FlowListItem[];
+}
+
+export interface FlowKindsRequest {}
+export interface FlowKindItem {
+  kind_id: string;
+  /** JSON Schema describing the kind's `settings:` shape. */
+  config_schema: Record<string, unknown>;
+  /** Human-readable label used when the i18n catalog has not
+   * resolved (typically the last reverse-DNS segment title-cased). */
+  default_label: string;
+}
+export interface FlowKindsResponse {
+  summary: Diagnostic;
+  count: number;
+  kinds: FlowKindItem[];
 }
 
 export interface FlowDuplicateRequest {
@@ -65,6 +85,7 @@ declare module "../client/client.js" {
     flowDeploy(request: FlowDeployRequest): Promise<FlowDeployResponse>;
     flowLint(request: FlowLintRequest): Promise<FlowLintResponse>;
     flowList(request?: FlowListRequest): Promise<FlowListResponse>;
+    flowKinds(request?: FlowKindsRequest): Promise<FlowKindsResponse>;
     flowDuplicate(request: FlowDuplicateRequest): Promise<FlowDuplicateResponse>;
   }
 }
@@ -96,6 +117,13 @@ RubixClient.prototype.flowList = function flowList(
   request: FlowListRequest = {},
 ): Promise<FlowListResponse> {
   return dispatch(this, "rubix.flow_ops.list", request);
+};
+
+RubixClient.prototype.flowKinds = function flowKinds(
+  this: RubixClient,
+  request: FlowKindsRequest = {},
+): Promise<FlowKindsResponse> {
+  return dispatch(this, "rubix.flow_ops.kinds", request);
 };
 
 RubixClient.prototype.flowDuplicate = function flowDuplicate(

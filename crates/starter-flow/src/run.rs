@@ -818,6 +818,13 @@ async fn run_coordinator(
         cfg.propagator,
         checkpoint_hook,
         skill_arc,
+        // Stage A+B.1: every run threads a `NodeStateStore` into the
+        // propagator so node bodies can persist per-instance state
+        // through `NodeCtx.state`. The `FlowRunner` is the in-process
+        // engine surface; Phase 3 / rubix wiring swaps this default
+        // out for `Arc<SqliteNodeStateStore>` from the host. See
+        // `DOCS/flow/scope/node-state.md`.
+        Arc::new(starter_flow_spi::state::NoopNodeStateStore),
     );
 
     // Seed writes — these enter through the single chokepoint per R2.

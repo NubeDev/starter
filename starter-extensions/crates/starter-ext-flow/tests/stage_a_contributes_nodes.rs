@@ -137,6 +137,7 @@ async fn placeholder_invoke_returns_no_behaviour_bound() {
         &node,
         &cancel,
         starter_flow_spi::skill::SkillSelection::NONE,
+        &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
     );
 
     let err = behavior

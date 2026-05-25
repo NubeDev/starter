@@ -7,6 +7,7 @@ pub mod clickhouse;
 pub mod config;
 pub mod extensions;
 pub mod flow_notify;
+pub mod flow_runtime;
 pub mod flows_seed;
 pub mod mcp;
 pub mod migrations;
@@ -16,7 +17,13 @@ pub mod undo_sweep;
 
 pub use auth::{build_auth, AuthSurface};
 pub use clickhouse::{apply_ch_migrations, rubix_ch_config, RUBIX_CH_DATABASE};
-pub use config::{AgentConfig, ExtensionsConfig, SchedulerConfig, UndoConfig};
+pub use config::{
+    AgentConfig, ExtensionsConfig, FlowRuntimeConfig, SchedulerConfig, UndoConfig,
+};
+pub use flow_runtime::{
+    build as build_flow_runtime, bundled_schedule_pairs, BundledSchedule, FlowRuntime,
+    FlowSubscriptionRegistry,
+};
 pub use extensions::{
     build_extension_admin, BootError as ExtensionsBootError, ExtensionAdminBundle,
     SYSTEM_AUTOSTART_PRINCIPAL,

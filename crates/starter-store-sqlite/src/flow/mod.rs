@@ -19,12 +19,14 @@
 
 pub mod agent_session_store;
 pub mod flow_store;
+pub mod node_state;
 pub mod run_store;
 mod schema;
 pub mod session_store;
 
 pub use agent_session_store::SqliteAgentSessionStore;
 pub use flow_store::SqliteFlowStore;
+pub use node_state::SqliteNodeStateStore;
 pub use run_store::SqliteRunStore;
 pub use session_store::SqliteSessionStore;
 

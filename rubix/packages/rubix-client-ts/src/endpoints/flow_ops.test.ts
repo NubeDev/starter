@@ -105,7 +105,13 @@ describe("RubixClient flow_ops endpoints", () => {
     const body = {
       summary: { code: "rubix.flow.listed", params: { count: 1 } },
       count: 1,
-      flows: [{ flow_id: "com.rubix.flow-programmer", revision_id: "rev-1" }],
+      flows: [
+        {
+          flow_id: "com.rubix.flow-programmer",
+          revision_id: "rev-1",
+          body_yaml: "id: com.rubix.flow-programmer\n",
+        },
+      ],
     };
     const { client, calls } = record(
       new Response(JSON.stringify(body), {
@@ -118,6 +124,34 @@ describe("RubixClient flow_ops endpoints", () => {
 
     expect(calls[0]!.method).toBe("POST");
     expect(calls[0]!.url).toBe("http://t/api/v1/tools/rubix.flow_ops.list");
+    expect(calls[0]!.headers["X-CSRF-Token"]).toBe(CSRF);
+    expect(JSON.parse(calls[0]!.body!)).toEqual({});
+    expect(out).toEqual(body);
+  });
+
+  it("flowKinds() POSTs an empty body to /api/v1/tools/rubix.flow_ops.kinds with CSRF header", async () => {
+    const body = {
+      summary: { code: "rubix.flow.kinds.listed", params: { count: 1 } },
+      count: 1,
+      kinds: [
+        {
+          kind_id: "starter.flow.counter",
+          config_schema: { type: "object" },
+          default_label: "Counter",
+        },
+      ],
+    };
+    const { client, calls } = record(
+      new Response(JSON.stringify(body), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      }),
+    );
+
+    const out = await client.flowKinds();
+
+    expect(calls[0]!.method).toBe("POST");
+    expect(calls[0]!.url).toBe("http://t/api/v1/tools/rubix.flow_ops.kinds");
     expect(calls[0]!.headers["X-CSRF-Token"]).toBe(CSRF);
     expect(JSON.parse(calls[0]!.body!)).toEqual({});
     expect(out).toEqual(body);

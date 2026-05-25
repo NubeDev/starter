@@ -27,6 +27,7 @@ pub mod graph;
 pub mod node;
 pub mod settings;
 pub mod skill;
+pub mod state;
 
 /// Re-export of [`starter_spi::ai::Cancel`].
 ///

@@ -51,6 +51,7 @@ use rubix_tools::dashboard::assistant::DashboardAssistantStub;
 use rubix_tools::flow_ops::deploy::FlowDeployTool;
 use rubix_tools::flow_ops::duplicate::FlowDuplicateTool;
 use rubix_tools::flow_ops::lint::FlowLintTool;
+use rubix_tools::flow_ops::kinds::FlowKindsTool;
 use rubix_tools::flow_ops::list::FlowListTool;
 use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
 use rubix_tools::insights::rule_create::InsightsRuleCreateTool;
@@ -70,6 +71,7 @@ use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
+use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
 use tracing::{info, warn};
@@ -120,6 +122,7 @@ pub fn build_tool_registry(
         Arc::new(AlertSendTool),
         // ---- flow_ops (read + write) ----------------------------
         Arc::new(FlowListTool::new(flow_store.clone())),
+        Arc::new(FlowKindsTool::from_behaviors(&builtin_kind_behaviors())),
         Arc::new(FlowLintTool::new()),
         Arc::new(FlowDeployTool::new(flow_store.clone())),
         Arc::new(FlowDuplicateTool::new(flow_store.clone())),
@@ -153,6 +156,20 @@ pub fn build_tool_registry(
         // `rubix-tools/src/dashboard/assistant.rs` for unblock
         // criteria.
         Arc::new(DashboardAssistantStub),
+    ]
+}
+
+/// Snapshot of the built-in [`NodeBehavior`] instances the kinds
+/// verb advertises. Matches the kinds the bundled flows lean on
+/// (`starter.flow.counter`, `.log`, `.trigger.explicit`,
+/// `.trigger.schedule`) — extending the slice is the one-line change
+/// when a new built-in lands. The kinds tool sorts the list before
+/// returning, so insertion order here has no observable effect.
+fn builtin_kind_behaviors() -> Vec<Arc<dyn NodeBehavior>> {
+    vec![
+        Arc::new(starter_flow_nodes::counter::Counter::new()),
+        Arc::new(starter_flow_nodes::log::Log::new()),
+        Arc::new(starter_flow_nodes::trigger_schedule::TriggerSchedule::new()),
     ]
 }
 
@@ -232,6 +249,7 @@ mod tests {
         let names = names();
         for expected in [
             "rubix.flow_ops.list",
+            "rubix.flow_ops.kinds",
             "rubix.flow_ops.lint",
             "rubix.flow_ops.deploy",
             "rubix.flow_ops.duplicate",

@@ -74,6 +74,18 @@ export const TRANSFORM_SPEC: NodeKindSpec = {
   outputs: [{ name: "out", kind: "any" }],
 };
 
+export const COUNTER_SPEC: NodeKindSpec = {
+  kind: "starter.flow.counter",
+  label: "Counter",
+  category: "data",
+  color: "#22c55e",
+  icon: "hash",
+  inputs: [{ name: "in", kind: "any" }],
+  // SlotKind has no `i64`; the runtime `out` carries `SlotValue::Int`
+  // (i64). Surface it as `number` on the UI palette.
+  outputs: [{ name: "out", kind: "number", label: "i64" }],
+};
+
 export const SUBFLOW_SPEC: NodeKindSpec = {
   kind: "subflow",
   label: "Subflow",
@@ -114,4 +126,5 @@ export const BUILTIN_NODE_KINDS: NodeKindEntry[] = [
   { spec: BRANCH_SPEC, component: genericRenderer },
   { spec: TRANSFORM_SPEC, component: genericRenderer },
   { spec: SUBFLOW_SPEC, component: genericRenderer },
+  { spec: COUNTER_SPEC, component: genericRenderer },
 ];

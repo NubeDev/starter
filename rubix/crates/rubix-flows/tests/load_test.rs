@@ -13,7 +13,16 @@ const EXPECTED_FLOW_IDS: &[&str] = &[
     "com.rubix.flow-programmer",
     "com.rubix.clickhouse-ruler",
     "com.rubix.user-admin",
+    "com.rubix.tick-counter",
 ];
+
+/// Bundled flows that do NOT root at `ai-agent` and therefore opt
+/// out of the AI-agent-shape assertions below. The Phase D
+/// `tick-counter` flow is the first such flow: it roots at
+/// `starter.flow.trigger.schedule` and chains into the counter +
+/// log node kinds, exercising the always-on flow runtime + the
+/// new `NodeStateStore` seam end to end.
+const NON_AI_AGENT_FLOW_IDS: &[&str] = &["com.rubix.tick-counter"];
 
 fn sorted(v: impl IntoIterator<Item = String>) -> Vec<String> {
     let mut out: Vec<String> = v.into_iter().collect();
@@ -32,8 +41,10 @@ fn every_bundled_yaml_parses_with_ai_agent_root() {
         let yaml = parse_yaml(&path, file.contents()).expect("yaml parses");
         assert!(!yaml.nodes.is_empty(), "flow `{path}` has zero nodes");
         let root = &yaml.nodes[0];
-        assert_eq!(root.kind, AI_AGENT_KIND_YAML);
         assert!(!root.id.is_empty());
+        if !NON_AI_AGENT_FLOW_IDS.contains(&yaml.id.as_str()) {
+            assert_eq!(root.kind, AI_AGENT_KIND_YAML);
+        }
         seen.push(yaml.id);
     }
     let expected: Vec<String> = EXPECTED_FLOW_IDS.iter().map(|s| (*s).to_owned()).collect();
@@ -48,9 +59,11 @@ fn load_all_converts_every_bundled_flow() {
         assert_eq!(&body.flow_id, flow_id);
         assert!(!body.nodes.is_empty());
         let root = &body.nodes[0];
-        assert_eq!(root.kind.as_str(), AI_AGENT_KIND_ID);
         assert!(root.id.as_str().starts_with(NODE_ID_PREFIX));
         assert!(root.triggers.iter().any(|t| t == DEFAULT_SEED_SLOT));
+        if !NON_AI_AGENT_FLOW_IDS.contains(&flow_id.as_str()) {
+            assert_eq!(root.kind.as_str(), AI_AGENT_KIND_ID);
+        }
     }
     let seen = triples.iter().map(|(id, _, _)| id.to_string());
     let expected = EXPECTED_FLOW_IDS.iter().map(|s| (*s).to_owned());
@@ -124,4 +137,57 @@ links: []
         ],
         "NodeDecl.settings.allowed_tools must carry every entry post-convert"
     );
+}
+
+/// Phase D sanity — the bundled `com.rubix.tick-counter` YAML parses
+/// and converts to a `FlowBody` with three nodes (schedule trigger ->
+/// counter -> log) and two edges (`tick.fire -> count.in` and
+/// `count.out -> emit.value`). This is the smallest end-to-end
+/// proof of the always-on flow runtime + `NodeStateStore` seam.
+#[test]
+fn bundled_tick_counter_parses_with_three_nodes_and_two_edges() {
+    const PATH: &str = "tick-counter.yaml";
+    let bytes = BUNDLED
+        .get_file(PATH)
+        .expect("tick-counter.yaml is bundled under flows/")
+        .contents();
+
+    let yaml = parse_yaml(PATH, bytes).expect("tick-counter yaml parses");
+    assert_eq!(yaml.id, "com.rubix.tick-counter");
+    assert_eq!(yaml.trigger.as_deref(), Some("schedule"));
+    assert_eq!(yaml.cron_expr.as_deref(), Some("*/5 * * * * *"));
+    assert_eq!(yaml.nodes.len(), 3);
+    assert_eq!(yaml.links.len(), 2);
+
+    let (flow_id, _rev, body) = convert(PATH, yaml).expect("tick-counter converts");
+    assert_eq!(flow_id.as_str(), "com.rubix.tick-counter");
+    assert_eq!(body.nodes.len(), 3, "three nodes: trigger -> counter -> log");
+    assert_eq!(
+        body.links.len(),
+        2,
+        "two edges: tick.fire -> count.in and count.out -> emit.value"
+    );
+
+    let kinds: Vec<&str> = body.nodes.iter().map(|n| n.kind.as_str()).collect();
+    assert_eq!(
+        kinds,
+        vec![
+            "starter.flow.trigger.schedule",
+            "starter.flow.counter",
+            "starter.flow.log",
+        ],
+        "node kinds preserved in declaration order (kinds other than `ai-agent` pass through verbatim per convert.rs)"
+    );
+
+    let ids: Vec<&str> = body.nodes.iter().map(|n| n.id.as_str()).collect();
+    assert_eq!(
+        ids,
+        vec!["com.rubix.tick", "com.rubix.count", "com.rubix.emit"],
+        "short YAML ids are reverse-DNS-prefixed by convert()"
+    );
+
+    let froms: Vec<&str> = body.links.iter().map(|l| l.from.as_str()).collect();
+    let tos: Vec<&str> = body.links.iter().map(|l| l.to.as_str()).collect();
+    assert_eq!(froms, vec!["tick.fire", "count.out"]);
+    assert_eq!(tos, vec!["count.in", "emit.value"]);
 }

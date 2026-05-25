@@ -37,7 +37,7 @@ impl Cancel for NoCancel {
 }
 
 fn make_ctx<'a>(node: &'a NodeId, cancel: &'a dyn Cancel) -> NodeCtx<'a> {
-    NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE)
+    NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE, &starter_flow_spi::state::NOOP_NODE_STATE_STORE)
 }
 
 fn decode_verdict(out: &SlotMap) -> Verdict {

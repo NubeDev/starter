@@ -23,28 +23,53 @@ Rust type).
 
 ## Why this exists
 
-Today (Phase 2–5):
+[`starter-flow-spi/src/settings.rs`](../../../crates/starter-flow-spi/src/settings.rs)
+ships the publish-time settings contract: a
+[`SettingsError`](../../../crates/starter-flow-spi/src/settings.rs#L58)
+enum (`SchemaViolation { pointer, rule, detail }` / `Deserialise` /
+`Domain { code, detail }`), an
+[`EMPTY_SCHEMA`](../../../crates/starter-flow-spi/src/settings.rs#L48)
+`LazyLock<RootSchema>` for kinds with no settings, and a
+[`default_validate`](../../../crates/starter-flow-spi/src/settings.rs#L111)
+helper that compiles a kind's `RootSchema` and runs a body through
+it. Each node kind (`trigger_explicit`, `trigger_schedule`, `log`,
+`ai_agent`, `http_out`, plus the demo `starter.flow.counter` landed
+in stage 2) derives its `Settings` struct with
+`#[derive(Deserialize, JsonSchema)]` and `#[serde(deny_unknown_fields)]`,
+stores the `RootSchema` in a `LazyLock`, and returns `&*KIND_SCHEMA`
+from `config_schema()`.
 
-- Node kinds declare config as untyped `pub const SLOT_NAME: &str`
-  identifiers
-  ([`ai_agent.rs:80-105`](../../../crates/starter-flow-nodes/src/ai_agent.rs#L80-L105),
-  [`log.rs:56-62`](../../../crates/starter-flow-nodes/src/log.rs#L56-L62),
-  [`http_out.rs:58-78`](../../../crates/starter-flow-nodes/src/http_out.rs#L58-L78)).
-- There is no machine-readable description of *what slots a kind
-  accepts*, *what types they carry*, *which are required*, *what
-  defaults apply*, or *what validation rules govern them*.
-- Validation lives inside each kind's `invoke()`
-  (e.g. [`http_out.rs:106-130`](../../../crates/starter-flow-nodes/src/http_out.rs#L106-L130),
-  [`log.rs:131-141`](../../../crates/starter-flow-nodes/src/log.rs#L131-L141))
-  and surfaces as `NodeError::Domain` with ad-hoc string codes.
-- A UI canvas, REST handler, or file-watcher publishing a draft cannot
-  catch `cost_cap: "banana"` or a missing required slot until the run
-  fires — defeating the "edit and observe" loop
-  [hot-reload.md](hot-reload.md) targets.
+[`NodeBehavior`](../../../crates/starter-flow-spi/src/node.rs#L69)
+gains two default-implemented methods:
+[`config_schema(&self) -> &'static RootSchema`](../../../crates/starter-flow-spi/src/node.rs#L69)
+(default: `&*EMPTY_SCHEMA`) and
+[`validate_settings(&self, &serde_json::Value) -> Result<(), SettingsError>`](../../../crates/starter-flow-spi/src/node.rs#L88)
+(default: delegates to `default_validate`). Existing kinds with no
+config compile unchanged; kinds with cross-field rules JSON Schema
+cannot express override `validate_settings`, call the default first,
+and surface domain rules as `SettingsError::Domain`.
 
-The cost: every settings typo is a *runtime* failure, every editor
-surface has to re-implement validation from scratch (or do without),
-and the schema for a kind is "read the source of `invoke`".
+[`DefinitionManager::publish`](../../../crates/starter-flow/src/definition/manager.rs#L308)
+funnels every per-node settings validation through one site. After
+parsing the typed `FlowBody` ([manager.rs:338–350](../../../crates/starter-flow/src/definition/manager.rs#L338))
+it drives [`TopologyResolver::resolve_body`](../../../crates/starter-flow/src/definition/resolver.rs#L158),
+which walks `body.nodes`, looks up each kind in the
+`NodeKindRegistry`, and calls `behavior.validate_settings(settings)`
+([resolver.rs:193–199](../../../crates/starter-flow/src/definition/resolver.rs#L193)).
+A failure is converted into
+[`TopologyResolverError::SettingsViolation { node, kind, error }`](../../../crates/starter-flow/src/definition/resolver.rs#L40),
+the publish span records `outcome = "rejected"`
+([manager.rs:355–361](../../../crates/starter-flow/src/definition/manager.rs#L355)),
+no `FlowRevision` is written, no `ActiveTopology` is touched, and
+the engine continues serving the previous head — the same
+*last-good* fallback [hot-reload.md](hot-reload.md) describes for
+every other class of bad draft.
+
+The result: schema is the single publish-time gate, runtime `invoke()`
+keeps its existing checks (it cannot validate linked values that don't
+exist yet), and the editor surface gets `SchemaViolation { pointer, … }`
+errors it can render against a form field directly — no per-kind
+boilerplate, no second source of truth.
 
 ## Hard rules (load-bearing)
 

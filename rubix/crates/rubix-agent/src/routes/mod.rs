@@ -8,5 +8,6 @@
 //! [docs/design/tools/](../../docs/design/tools/README.md).
 
 pub mod auth;
+pub mod flow_events;
 pub mod openapi_doc;
 pub mod tools;

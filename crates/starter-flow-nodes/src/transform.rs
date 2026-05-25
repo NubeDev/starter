@@ -353,6 +353,7 @@ mod tests {
             node,
             cancel,
             starter_flow_spi::skill::SkillSelection::NONE,
+            &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
         )
     }
 

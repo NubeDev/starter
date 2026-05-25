@@ -1308,7 +1308,7 @@ mod tests {
     }
 
     fn ctx<'a>(node: &'a NodeId, cancel: &'a dyn FlowCancel) -> NodeCtx<'a> {
-        NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE)
+        NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE, &starter_flow_spi::state::NOOP_NODE_STATE_STORE)
     }
 
     fn node(id: &str) -> NodeId {

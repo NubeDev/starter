@@ -19,6 +19,11 @@ thiserror = { workspace = true }
 anyhow = { workspace = true }
 starter-tool-sysdiag = { workspace = true }
 
+# flow_ops.kinds reads `NodeBehavior::config_schema()` / `kind_id()`
+# off the node-kind trait when constructing a kinds snapshot via
+# `FlowKindsTool::from_behaviors`. See src/flow_ops/kinds.rs.
+starter-flow-spi          = { workspace = true }
+
 # flow-programmer verbs validate YAML through `rubix_flows::yaml::RubixFlowYaml`
 # and `rubix_flows::convert`. See docs/design/flows/.
 rubix-flows               = { workspace = true }
@@ -66,5 +71,4 @@ starter-ai         = { workspace = true, features = ["testing"] }
 # integration test. See tests/analytics_query_test.rs.
 starter-store-clickhouse = { workspace = true, features = ["testing"] }
 starter-flow       = { workspace = true }
-starter-flow-nodes = { workspace = true, features = ["ai-agent", "tool-call"] }
-starter-flow-spi   = { workspace = true }
+starter-flow-nodes = { workspace = true, features = ["ai-agent", "tool-call", "counter"] }

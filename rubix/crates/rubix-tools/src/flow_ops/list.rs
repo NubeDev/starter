@@ -56,6 +56,7 @@ impl Tool for FlowListTool {
             .map(|r| FlowListItem {
                 flow_id: r.flow_id,
                 revision_id: r.revision_id,
+                body_yaml: r.body_yaml,
             })
             .collect();
         let count = flows.len();
@@ -104,5 +105,30 @@ mod tests {
         assert_eq!(resp.count, 3);
         let ids: Vec<&str> = resp.flows.iter().map(|f| f.flow_id.as_str()).collect();
         assert_eq!(ids, vec!["com.x.ada", "com.x.kay", "com.x.zed"]);
+    }
+
+    #[tokio::test]
+    async fn body_yaml_is_returned_inline_on_every_row() {
+        let store = Arc::new(InMemoryFlowDefStore::new());
+        store
+            .insert_revision("com.x.alpha", "id: com.x.alpha\nbody: yes\n", 10)
+            .await
+            .unwrap();
+        store
+            .insert_revision("com.x.beta", "id: com.x.beta\nbody: yes\n", 20)
+            .await
+            .unwrap();
+        let tool = FlowListTool::new(store);
+        let out = tool.invoke(serde_json::json!({})).await.unwrap();
+        let resp: FlowListResponse = serde_json::from_value(out).unwrap();
+        assert_eq!(resp.flows.len(), 2);
+        for f in &resp.flows {
+            assert!(
+                f.body_yaml.contains(&format!("id: {}", f.flow_id)),
+                "body_yaml must round-trip from the live row (got {:?} for {})",
+                f.body_yaml,
+                f.flow_id,
+            );
+        }
     }
 }

@@ -61,7 +61,7 @@ impl Cancel for NoCancel {
 }
 
 fn ctx<'a>(node: &'a NodeId, cancel: &'a dyn Cancel) -> NodeCtx<'a> {
-    NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE)
+    NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE, &starter_flow_spi::state::NOOP_NODE_STATE_STORE)
 }
 
 fn decode(out: &SlotMap, slot: &str) -> serde_json::Value {

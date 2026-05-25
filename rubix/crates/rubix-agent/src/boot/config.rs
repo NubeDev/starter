@@ -81,6 +81,40 @@ pub struct AgentConfig {
     /// itself lives in [`crate::boot::extensions`] and is
     /// constructed by `build_extension_admin` when `enabled = true`.
     pub extensions: ExtensionsConfig,
+
+    /// Always-on flow runtime knobs. See [`FlowRuntimeConfig`]. The
+    /// runtime itself lives in [`crate::boot::flow_runtime`] and owns
+    /// the shared SSE-subscription registry plus the per-node state
+    /// store backing every `NodeCtx::state` call.
+    pub flow_runtime: FlowRuntimeConfig,
+}
+
+/// Tunables for the always-on flow runtime
+/// ([`crate::boot::flow_runtime`]).
+///
+/// `state_db_path` selects the SQLite file the
+/// [`starter_store_sqlite::flow::node_state::SqliteNodeStateStore`]
+/// opens for the durable per-node state seam. The path is `~`-expanded
+/// against `$HOME` so the default `~/.rubix/node_state.db` works
+/// without a leaked tilde on the SQLite filename. When this knob is
+/// `None` *or* `RUBIX_DATABASE_URL` is unset the runtime falls back to
+/// [`starter_flow::state::in_memory::InMemoryNodeStateStore`] so a
+/// laptop boot keeps working.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(default)]
+pub struct FlowRuntimeConfig {
+    /// On-disk SQLite path for the per-node state store. Defaults to
+    /// `~/.rubix/node_state.db`; set to `None` (or empty in TOML) to
+    /// force the in-memory fallback even when a Postgres DSN is set.
+    pub state_db_path: Option<PathBuf>,
+}
+
+impl Default for FlowRuntimeConfig {
+    fn default() -> Self {
+        Self {
+            state_db_path: Some(PathBuf::from("~/.rubix/node_state.db")),
+        }
+    }
 }
 
 /// Tunables for the extension host.
@@ -237,6 +271,7 @@ impl Default for AgentConfig {
             undo: UndoConfig::default(),
             scheduler: SchedulerConfig::default(),
             extensions: ExtensionsConfig::default(),
+            flow_runtime: FlowRuntimeConfig::default(),
         }
     }
 }

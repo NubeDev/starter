@@ -8,4 +8,5 @@ pub mod deploy;
 pub mod validate;
 pub mod lint;
 pub mod list;
+pub mod kinds;
 pub mod duplicate;
