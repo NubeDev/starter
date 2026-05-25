@@ -16,7 +16,12 @@ import { useIntl } from 'react-intl'
 import { ArrowLeft } from 'lucide-react'
 import { FlowCanvas } from '@nube/starter-ui-flow'
 import type { FlowGraph } from '@nube/starter-ui-flow'
-import { Button, Skeleton } from '@nube/starter-ui-kit'
+import {
+  Button,
+  PageContainer,
+  PageHeader,
+  Skeleton,
+} from '@nube/starter-ui-kit'
 import { useFlowDefinition } from '@nube/rubix-client-react'
 import { buildFlowRegistry } from '@/lib/flow-registry'
 import { ErrorBoundary } from '@/components/error-boundary'
@@ -37,29 +42,28 @@ function FlowDetail() {
   )
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
-      <header className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-              {tr('flows.detail.eyebrow', 'Flow')}
-            </span>
-          </div>
-          <h1 className="mt-3 text-3xl font-medium tracking-[-0.03em]">{flowId}</h1>
-          {def.data?.revision_id ? (
-            <p className="mt-2 font-mono text-xs text-[color:var(--color-muted)]">
-              {def.data.revision_id}
-            </p>
-          ) : null}
-        </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/flows">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {tr('flows.detail.back', 'Back to flows')}
-          </Link>
-        </Button>
-      </header>
+    // The flow editor benefits from every pixel of horizontal space, so we
+    // opt out of the standard `max-w-7xl` shell and let the canvas span the
+    // full viewport. The vertical `calc(100vh - …)` accounts for the fixed
+    // top header (~6rem) plus this page's own header + padding (~7rem).
+    <PageContainer width="full">
+      <PageHeader
+        eyebrow={tr('flows.detail.eyebrow', 'Flow')}
+        title={flowId}
+        description={
+          def.data?.revision_id ? (
+            <span className="font-mono text-xs">{def.data.revision_id}</span>
+          ) : undefined
+        }
+        actions={
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/flows">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {tr('flows.detail.back', 'Back to flows')}
+            </Link>
+          </Button>
+        }
+      />
 
       {def.data?.placeholder ? (
         <div className="mb-4 rounded-xl border border-[color:var(--color-sun)]/40 bg-[color:var(--color-sun)]/10 px-4 py-3 text-sm text-[color:var(--color-sun)]">
@@ -71,9 +75,9 @@ function FlowDetail() {
       ) : null}
 
       {def.isLoading ? (
-        <Skeleton className="h-[640px] w-full" />
+        <Skeleton className="h-[calc(100vh-13rem)] w-full" />
       ) : (
-        <div className="h-[640px] overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-1)]">
+        <div className="h-[calc(100vh-13rem)] min-h-[480px] overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-1)]">
           <FlowCanvas
             registry={flowRegistry}
             graph={flowGraph}
@@ -84,7 +88,7 @@ function FlowDetail() {
           />
         </div>
       )}
-    </section>
+    </PageContainer>
   )
 }
 

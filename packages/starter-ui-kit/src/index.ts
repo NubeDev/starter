@@ -42,6 +42,7 @@ export * from "./components/ui/item.js";
 export * from "./components/ui/kbd.js";
 export * from "./components/ui/label.js";
 export * from "./components/ui/menubar.js";
+export * from "./components/ui/page-container.js";
 export * from "./components/ui/popover.js";
 export * from "./components/ui/progress.js";
 export * from "./components/ui/radio-group.js";

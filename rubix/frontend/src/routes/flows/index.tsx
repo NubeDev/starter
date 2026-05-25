@@ -21,6 +21,8 @@ import {
   EmptyHeader,
   EmptyMedia,
   EmptyTitle,
+  PageContainer,
+  PageHeader,
   Skeleton,
 } from '@nube/starter-ui-kit'
 import { useFlowsList } from '@nube/rubix-client-react'
@@ -34,26 +36,16 @@ function FlowsTable() {
   const rows = list.data?.flows ?? []
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
-      <header className="mb-8 flex items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-              {tr('flows.eyebrow', 'Flows')}
-            </span>
-          </div>
-          <h1 className="mt-3 text-4xl font-medium tracking-[-0.03em]">
-            {tr('flows.title', 'Deployed flows')}
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-muted)]">
-            {tr(
-              'flows.subtitle',
-              'Every flow with a live, non-superseded revision served by this rubix-agent. Click a row to inspect its graph.',
-            )}
-          </p>
-        </div>
-      </header>
+    <PageContainer width="wide">
+      <PageHeader
+        className="mb-8"
+        eyebrow={tr('flows.eyebrow', 'Flows')}
+        title={tr('flows.title', 'Deployed flows')}
+        description={tr(
+          'flows.subtitle',
+          'Every flow with a live, non-superseded revision served by this rubix-agent. Click a row to inspect its graph.',
+        )}
+      />
 
       {list.isLoading ? (
         <div className="space-y-3">
@@ -122,7 +114,7 @@ function FlowsTable() {
           </table>
         </div>
       )}
-    </section>
+    </PageContainer>
   )
 }
 
