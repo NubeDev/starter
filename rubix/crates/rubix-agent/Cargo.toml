@@ -32,7 +32,12 @@ starter-spi              = { workspace = true, features = ["i18n", "preferences"
 starter-config           = { workspace = true }
 starter-observability    = { workspace = true }
 starter-server           = { workspace = true }
-starter-store-postgres   = { workspace = true }
+# `flow` feature pulls in `PgFlowStore`, `PgRunStore`,
+# `PgNodeStateStore`, and the `FLOW_MIGRATION_SOURCE` migrator.
+# Per `rubix/docs/scope/sqlite-to-postgres.md` rubix consolidates
+# all flow persistence onto Postgres; this replaces the previous
+# `starter-store-sqlite` flow wiring.
+starter-store-postgres   = { workspace = true, features = ["flow"] }
 starter-changelog        = { workspace = true }
 starter-changelog-postgres = { workspace = true }
 starter-authz             = { workspace = true }
@@ -43,7 +48,6 @@ starter-store-clickhouse  = { workspace = true }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }
-starter-store-sqlite      = { workspace = true, features = ["flow"] }
 starter-ai                = { workspace = true, features = ["provider-claude"] }
 starter-ai-agent          = { workspace = true }
 starter-flow-node-loop    = { workspace = true }
@@ -68,6 +72,13 @@ starter-ext-supervisor = { path = "../../../starter-extensions/crates/starter-ex
 starter-ext-store-pg  = { path = "../../../starter-extensions/crates/starter-ext-store-pg" }
 starter-ext-mcp       = { path = "../../../starter-extensions/crates/starter-ext-mcp" }
 thiserror             = { workspace = true }
+# `sqlite` feature stays on for two reasons: (a) dev-dependencies
+# below still pull `starter-store-sqlite` for hermetic SPI-contract
+# tests, and (b) `boot/flow_runtime.rs` opens the legacy
+# `~/.rubix/node_state.db` read-only at boot to migrate any
+# in-flight rows into the new PG `node_state` table. Drop only
+# when both go away (see `rubix/docs/scope/sqlite-to-postgres.md`
+# Block 4).
 sqlx                      = { workspace = true, features = ["postgres", "sqlite", "runtime-tokio", "uuid", "chrono"] }
 tokio-stream              = { workspace = true }
 uuid                      = { workspace = true }

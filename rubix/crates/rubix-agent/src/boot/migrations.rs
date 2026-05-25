@@ -15,6 +15,7 @@ use rubix_store_postgres::{
 };
 use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
+use starter_store_postgres::flow::FLOW_MIGRATION_SOURCE;
 use starter_store_postgres::{migrate, pool::connect, SCHEDULED_FLOWS_MIGRATION_SOURCE};
 use tracing::{info, warn};
 
@@ -60,6 +61,15 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         FLOWS_DEFINITIONS_MIGRATION_SOURCE,
         DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE,
         SCHEDULED_FLOWS_MIGRATION_SOURCE,
+        // Upstream flow persistence schema — owns the
+        // `node_state` table backing `PgNodeStateStore`
+        // (`rubix/docs/scope/sqlite-to-postgres.md`). The
+        // boot-time `flow_runtime::build` re-runs this against
+        // its own pool defensively; running it here too keeps
+        // the migration story uniform with the other rubix
+        // sources and means a one-shot `apply_migrations` from
+        // an operator script also provisions node_state.
+        FLOW_MIGRATION_SOURCE,
     ];
     let sources_applied = sources.len();
     let mut plan = migrate(&pool);

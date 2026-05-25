@@ -123,8 +123,12 @@ async fn main() -> Result<()> {
     // broadcast registry). Without this hand-off, scheduled
     // / MCP-triggered runs use a noop state store (counter state
     // never persists) and their events never reach SSE.
+    //
+    // Reuses the `mcp_pool` opened above so we keep the
+    // connection-pool count at one (the node_state seam used to
+    // open a second pool from the DSN).
     let flow_runtime =
-        boot::build_flow_runtime(cfg.database_url.as_deref(), &cfg.flow_runtime).await?;
+        boot::build_flow_runtime(mcp_pool.clone(), &cfg.flow_runtime).await?;
 
     let mcp = boot::mcp::build_mcp_surface(
         ch_client.clone(),

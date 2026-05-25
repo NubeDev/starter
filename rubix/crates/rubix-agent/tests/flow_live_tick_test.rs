@@ -3,10 +3,8 @@
 //!
 //! Boots [`rubix_agent::boot::build_flow_runtime`] against a
 //! testcontainers Postgres pool (selects the durable
-//! `SqliteNodeStateStore` backend via the
-//! `(database_url, state_db_path)` switch in
-//! `rubix-agent/src/boot/flow_runtime.rs`) and a tempdir-backed
-//! SQLite file for the node-state seam itself. Three scenarios
+//! `PgNodeStateStore` backend; the legacy SQLite path was removed
+//! per `rubix/docs/scope/sqlite-to-postgres.md`). Three scenarios
 //! land here, each one a present-tense assertion against the
 //! pieces that already exist on `master`:
 //!
@@ -49,7 +47,6 @@
 //! cargo test -p rubix-agent --test flow_live_tick_test -- --ignored
 //! ```
 
-use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
 
@@ -161,27 +158,20 @@ async fn tick_once(
 #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
 #[ignore = "requires docker"]
 async fn live_tick_hot_edit_and_restart_persistence() {
-    // ----- 1. Boot two backing stores ---------------------------------
-    // testcontainers Postgres pool — present here because the
-    // `(database_url, state_db_path)` switch in
-    // `boot/flow_runtime.rs` only selects the durable
-    // `SqliteNodeStateStore` when *both* are set. The PG pool is
-    // not otherwise consulted in this test.
-    let (_pg_pool, _pg_guard) = with_database().await;
-    let database_url = std::env::var("RUBIX_DATABASE_URL")
-        .unwrap_or_else(|_| "postgres://stub".to_owned());
+    // ----- 1. Boot the backing store ---------------------------------
+    // testcontainers Postgres pool — `flow_runtime::build` now
+    // takes the already-open pool from the caller and runs the
+    // upstream `FLOW_MIGRATION_SOURCE` against it to provision
+    // the `node_state` table. The container started here owns
+    // the database lifecycle for the test.
+    let (pg_pool, _pg_guard) = with_database().await;
 
-    // Tempdir-backed SQLite file for the node-state seam itself.
-    let tmp = tempfile::tempdir().expect("tempdir");
-    let state_db_path: PathBuf = tmp.path().join("node_state.db");
-    let cfg = FlowRuntimeConfig {
-        state_db_path: Some(state_db_path.clone()),
-    };
+    let cfg = FlowRuntimeConfig::default();
 
     // ----- 2. First runtime: live-tick + SSE drain --------------------
-    let rt = build(Some(&database_url), &cfg)
+    let rt = build(Some(pg_pool.clone()), &cfg)
         .await
-        .expect("FlowRuntime builds against tempdir sqlite");
+        .expect("FlowRuntime builds against Postgres");
     let store: Arc<dyn NodeStateStore> = rt.state_store.clone();
     let subs = rt.subscriptions.clone();
 
@@ -248,10 +238,10 @@ async fn live_tick_hot_edit_and_restart_persistence() {
     drop(store);
     drop(rt);
 
-    // ----- 4. Restart: rebuild against the same sqlite file -----------
-    let rt2 = build(Some(&database_url), &cfg)
+    // ----- 4. Restart: rebuild against the same PG database -----------
+    let rt2 = build(Some(pg_pool.clone()), &cfg)
         .await
-        .expect("FlowRuntime rebuilds against the same sqlite file");
+        .expect("FlowRuntime rebuilds against the same Postgres database");
     let store2: Arc<dyn NodeStateStore> = rt2.state_store.clone();
     let subs2 = rt2.subscriptions.clone();
 
