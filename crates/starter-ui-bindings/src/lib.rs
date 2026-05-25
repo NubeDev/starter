@@ -42,6 +42,6 @@ mod substitute;
 
 pub use eval::{evaluate, BindingError, EvalContext};
 pub use graph::{ChildLink, EntityGraph, EntityId, NullGraph};
-pub use parse::{Binding, ParseError, Source, Step};
+pub use parse::{Binding, ParseError, Qualifier, Source, Step};
 pub use subscription::{SlotAccess, Subject, SubscriptionPlan};
 pub use substitute::{substitute_text, substitute_tree};

@@ -15,7 +15,7 @@ use starter_ui_ir::{Bindable, Component, ComponentTree};
 
 use crate::eval::{evaluate, BindingError, EvalContext};
 use crate::graph::EntityGraph;
-use crate::parse::{Binding, ParseError};
+use crate::parse::{Binding, ParseError, Qualifier};
 
 /// Substitute every `{{ ... }}` tag inside `input` with the
 /// evaluated binding's value. Non-string results are rendered with
@@ -38,7 +38,18 @@ pub fn substitute_text<G: EntityGraph + ?Sized>(
             .ok_or_else(|| SubstituteError::Unterminated(rest[open..].to_string()))?;
         let expr = &after_open[..close];
         let binding = Binding::parse(expr.trim()).map_err(SubstituteError::Parse)?;
-        let value = evaluate(&binding, ctx).map_err(SubstituteError::Eval)?;
+        let value = match evaluate(&binding, ctx) {
+            Ok(v) => v,
+            Err(e) if binding.qualifier == Qualifier::Optional => {
+                // Optional binding swallows lookup errors and renders
+                // as empty. Per the qualifier grammar (G2): a missing
+                // claim/slot/child collapses, leaving the surrounding
+                // template untouched.
+                let _ = e;
+                serde_json::Value::Null
+            }
+            Err(e) => return Err(SubstituteError::Eval(e)),
+        };
         out.push_str(&value_to_text(&value));
         rest = &after_open[close + 2..];
     }

@@ -39,6 +39,18 @@ pub enum Step {
     Child(String),
 }
 
+/// Qualifier suffix on a binding expression. `?` makes the binding
+/// optional — lookup errors collapse to an empty Null value instead
+/// of an evaluator error. `!` is the explicit "required" form;
+/// behaviour is identical to `Default` today but reserved so authors
+/// can declare intent.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Qualifier {
+    Default,
+    Optional,
+    Required,
+}
+
 /// A parsed binding expression.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Binding {
@@ -46,6 +58,9 @@ pub struct Binding {
     /// Steps in declaration order. Length-prefixed evaluation: the
     /// state after step *N* is fully determined by steps `0..=N`.
     pub steps: Vec<Step>,
+    /// Trailing `?` (Optional) or `!` (Required) qualifier; defaults
+    /// to `Default` when absent.
+    pub qualifier: Qualifier,
 }
 
 /// Parse error variants. Carried structurally so the resolver can
@@ -72,7 +87,24 @@ impl Binding {
     /// trimmed by [`substitute_text`](crate::substitute_text) before
     /// the call.
     pub fn parse(expr: &str) -> Result<Self, ParseError> {
-        let expr = expr.trim();
+        let mut expr = expr.trim();
+        if expr.is_empty() {
+            return Err(ParseError::Empty);
+        }
+        // Trailing qualifier — strip first so subsequent ident parsing
+        // does not see the `?` / `!`.
+        let qualifier = match expr.as_bytes().last().copied() {
+            Some(b'?') => {
+                expr = &expr[..expr.len() - 1];
+                Qualifier::Optional
+            }
+            Some(b'!') => {
+                expr = &expr[..expr.len() - 1];
+                Qualifier::Required
+            }
+            _ => Qualifier::Default,
+        };
+        let expr = expr.trim_end();
         if expr.is_empty() {
             return Err(ParseError::Empty);
         }
@@ -125,7 +157,11 @@ impl Binding {
             rest = after;
         }
 
-        Ok(Self { source, steps })
+        Ok(Self {
+            source,
+            steps,
+            qualifier,
+        })
     }
 }
 
