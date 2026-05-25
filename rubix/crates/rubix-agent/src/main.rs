@@ -273,6 +273,32 @@ async fn main() -> Result<()> {
         let auth_routes = routes::auth::auth_router(auth.state);
         let engine = boot::authz::build_engine()?;
 
+        // `GET /api/warehouse/status` — W11 dimension-freshness +
+        // W16 ingest-lag envelope consumed by the `<FreshnessTiles>`
+        // component now rendered at the top of the rubix admin
+        // shell's `/admin/warehouse` → Insights tab. Needs both a
+        // PG pool and a ClickHouse URL (the freshness probe joins
+        // PG-side `entities` against the CH dictionary refresh
+        // status), so it lands inside the DSN branch and only if
+        // `RUBIX_CH_URL` was parseable. Ungated — same posture as
+        // the explorer routes merged above; the handler is
+        // read-only and returns 503 on a failed dictionary refresh.
+        if let Some(url) = cfg.clickhouse_url.as_ref() {
+            use axum::routing::get;
+            let rt = std::sync::Arc::new(starter_warehouse::nodes::runtime::WarehouseRuntime::new(
+                pool.clone(),
+                boot::rubix_ch_config(url.clone()),
+                starter_warehouse::WarehouseConfig::default(),
+            ));
+            let status_router = Router::new()
+                .route(
+                    "/api/warehouse/status",
+                    get(starter_warehouse::rest::status::warehouse_status),
+                )
+                .with_state(rt);
+            app = app.merge(status_router);
+        }
+
         // Phase C.2 — mount the extension-host admin router. The
         // lifecycle endpoints (`/extensions`, `/extensions/{id}`,
         // `/extensions/{id}/{enable,disable,events}`) are sandwiched by

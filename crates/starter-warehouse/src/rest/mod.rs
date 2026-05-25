@@ -4,7 +4,7 @@
 //! the warehouse never has two implementations of the same node body.
 
 mod sse;
-mod status;
+pub mod status;
 
 use std::sync::Arc;
 
