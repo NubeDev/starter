@@ -12,6 +12,7 @@ import { ConnectionProvider } from './connection/provider';
 import { ThemeProvider } from './theme/provider';
 import { I18nProvider } from './i18n/provider';
 import { ClientStrap } from './connection/client-strap';
+import { MobileSduiProvider } from './sdui/provider';
 
 export function Providers({ children }: { children: ReactNode }) {
   // Single QueryClient for the app lifetime. Per-connection cache
@@ -24,7 +25,9 @@ export function Providers({ children }: { children: ReactNode }) {
         <ConnectionProvider>
           <I18nProvider>
             <ThemeProvider>
-              <ClientStrap>{children}</ClientStrap>
+              <ClientStrap>
+                <MobileSduiProvider>{children}</MobileSduiProvider>
+              </ClientStrap>
             </ThemeProvider>
           </I18nProvider>
         </ConnectionProvider>

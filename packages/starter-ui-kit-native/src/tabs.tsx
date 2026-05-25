@@ -140,7 +140,7 @@ export function TabsContent({
   const ctx = useTabs();
   if (ctx.value !== value) return null;
   return (
-    <View accessibilityRole="tabpanel" style={{ flex: 1 }}>
+    <View accessibilityRole={"tabpanel" as never} style={{ flex: 1 }}>
       {children}
     </View>
   );

@@ -1,7 +1,10 @@
-// app/dashboards/[pageId].tsx — single dashboard route.
+// app/dashboards/[pageId].tsx — Block 5: render a server-driven
+// dashboard page via the native SDUI stack.
 //
-// Block 4: shows the requested page id so deep-linking + last-page
-// resume can be verified. Block 5 swaps the body for `<SduiPage pageRef={pageId}/>`.
+// The pageId in the URL is the IR `page_ref` (e.g.
+// `dashboard.disk-overview`) — the same identifier the web app uses.
+// On mount we record it as the active connection's last-opened page
+// so a cold start resumes here (boot redirect in app/index.tsx).
 
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect } from 'react';
@@ -10,6 +13,7 @@ import { Text, View } from 'react-native';
 import { useLocalDb } from '../../local-db/provider';
 import { setLastPage } from '../../local-db/state/last-page';
 import { useConnection } from '../../connection/provider';
+import { SduiPageNative } from '../../sdui/page';
 import { useTheme } from '../../theme/provider';
 
 export default function DashboardPage() {
@@ -24,15 +28,13 @@ export default function DashboardPage() {
     }
   }, [db, active, pageId]);
 
-  return (
-    <View style={{ flex: 1, backgroundColor: theme.background, padding: 24, justifyContent: 'center' }}>
-      <Text style={{ fontSize: 20, fontWeight: '600', color: theme.foreground }}>
-        Dashboard
-      </Text>
-      <Text style={{ marginTop: 8, color: theme.foreground, opacity: 0.7 }}>{pageId}</Text>
-      <Text style={{ marginTop: 24, color: theme.foreground, opacity: 0.6 }}>
-        SDUI renderer lands in Block 5.
-      </Text>
-    </View>
-  );
+  if (!pageId) {
+    return (
+      <View style={{ flex: 1, padding: 24, backgroundColor: theme.background }}>
+        <Text style={{ color: theme.foreground }}>Missing page id.</Text>
+      </View>
+    );
+  }
+
+  return <SduiPageNative pageRef={pageId} />;
 }

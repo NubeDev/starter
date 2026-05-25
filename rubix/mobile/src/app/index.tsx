@@ -26,8 +26,10 @@ export default function IndexRedirect() {
       return;
     }
     getLastPage(db, active.id)
-      .then((page) => setTarget(page ? `/dashboards/${page}` : '/dashboards'))
-      .catch(() => setTarget('/dashboards'));
+      .then((page) =>
+        setTarget(page ? `/dashboards/${page}` : '/dashboards/dashboard.disk-overview'),
+      )
+      .catch(() => setTarget('/dashboards/dashboard.disk-overview'));
   }, [ready, active, db]);
 
   if (!target) {

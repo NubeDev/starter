@@ -7,6 +7,12 @@
 // polyfill so we install it explicitly at boot.
 
 import 'react-native-gesture-handler';
+// Side-effect import: registers all 16 native SDUI renderers
+// (RenderPage, RenderRow, RenderCol, RenderKpi, RenderChart, …) with
+// the shared registry exported from `@nube/starter-ui-sdui-react/
+// headless`. Must run before the SDUI provider mounts; importing it
+// at the top of the root layout is the earliest module-graph point.
+import '@nube/starter-ui-sdui-native';
 import { Stack } from 'expo-router';
 import EventSource from 'react-native-sse';
 

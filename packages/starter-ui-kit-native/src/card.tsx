@@ -47,7 +47,7 @@ export function Card({
   return (
     <View
       accessible
-      accessibilityRole={accessibilityRole}
+      accessibilityRole={accessibilityRole as never}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
       testID={testID}

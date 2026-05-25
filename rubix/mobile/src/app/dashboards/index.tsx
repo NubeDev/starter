@@ -38,6 +38,11 @@ export default function DashboardsIndex() {
         <FormattedMessage id="dashboards.empty" />
       </Text>
       <View style={{ flexDirection: 'row', gap: 12, marginTop: 24 }}>
+        <Link href="/dashboards/dashboard.disk-overview" asChild>
+          <Pressable accessibilityRole="button">
+            <Text style={{ color: theme.accent }}>disk-overview</Text>
+          </Pressable>
+        </Link>
         <Link href="/connections" asChild>
           <Pressable accessibilityRole="button">
             <Text style={{ color: theme.accent }}>

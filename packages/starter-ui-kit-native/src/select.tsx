@@ -121,7 +121,7 @@ export function SelectContent({ children }: { children?: React.ReactNode }) {
         accessibilityRole="button"
         accessibilityLabel="Close menu"
         onPress={() => sel.setOpen(false)}
-        style={StyleSheet.absoluteFillObject as Record<string, unknown>}
+        style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0 } as Record<string, unknown>}
       />
       <View
         style={{

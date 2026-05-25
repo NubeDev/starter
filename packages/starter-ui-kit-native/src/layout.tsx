@@ -61,7 +61,7 @@ export function Box(props: BoxProps): React.ReactElement {
   ]);
   return (
     <View
-      style={computed}
+      style={computed as never}
       accessibilityRole={accessibilityRole as never}
       accessibilityLabel={accessibilityLabel}
       accessibilityHint={accessibilityHint}
@@ -141,7 +141,7 @@ export function Text(props: TextProps): React.ReactElement {
   ]);
   return (
     <RNText
-      style={computed}
+      style={computed as never}
       numberOfLines={numberOfLines}
       accessibilityRole={accessibilityRole as never}
       accessibilityLabel={accessibilityLabel}
@@ -189,7 +189,7 @@ export function Divider(props: DividerProps): React.ReactElement {
       : { height: StyleSheet.hairlineWidth, alignSelf: "stretch", backgroundColor: t.color("border") };
   return (
     <View
-      style={StyleSheet.flatten([base, style ?? {}])}
+      style={StyleSheet.flatten([base, style ?? {}]) as never}
       accessibilityRole={"separator" as never}
       testID={testID}
     />
