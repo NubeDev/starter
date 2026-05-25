@@ -13,7 +13,7 @@
 // presets land with the dashboard renderer in Block 5.
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
-import { Appearance, type ColorSchemeName } from 'react-native';
+import { Appearance } from 'react-native';
 
 export interface ThemeTokens {
   /** Either 'light' or 'dark' — never null at the consumer layer. */
@@ -39,7 +39,7 @@ const DARK: ThemeTokens = {
   border: '#1F2937',
 };
 
-function tokensFor(scheme: ColorSchemeName): ThemeTokens {
+function tokensFor(scheme: string | null | undefined): ThemeTokens {
   return scheme === 'dark' ? DARK : LIGHT;
 }
 

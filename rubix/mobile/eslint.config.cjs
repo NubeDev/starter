@@ -27,6 +27,7 @@ module.exports = [
   {
     files: ['src/**/*.{ts,tsx}'],
     languageOptions: {
+      parser: require('@typescript-eslint/parser'),
       parserOptions: { ecmaVersion: 2022, sourceType: 'module' },
     },
     rules: {
