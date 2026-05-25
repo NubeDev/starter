@@ -51,6 +51,11 @@ starter-flow-node-loop    = { workspace = true }
 # `rubix.flow_ops.kinds` verb snapshots `kind_id` + `config_schema`
 # off each behaviour. See src/registry.rs.
 starter-flow-nodes        = { workspace = true, features = ["counter", "log", "trigger-schedule"] }
+# SDUI substrate — IR + binding evaluator + the resolve/action/table router.
+# Consumed by `boot::sdui::build_sdui_router` per docs/design/sdui/host-glue.md.
+starter-ui-ir             = { workspace = true }
+starter-ui-bindings       = { workspace = true }
+starter-sdui-routes       = { workspace = true }
 
 # Extension-host primitives. The `starter-extensions/` sibling
 # workspace is excluded from this workspace (parent `Cargo.toml`'s
