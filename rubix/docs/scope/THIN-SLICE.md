@@ -242,15 +242,14 @@ something working to test against.
 Branch `codeless/rubix-goals-2-4-3` broadened Phase 3 + Phase 4
 incrementally on top of the landed thin slice; branch
 `codeless/rubix-goal-6-weekly-report` then lit up Goal 6 plus the
-durable cron scheduler primitive upstream. Five of the six SCOPE
-goals now light up end-to-end through the real agent loop; the
-remaining one (Goal 1 — Dashboards) is a stub-output verb
-returning `Diagnostic { code: rubix.goal.not_wired }` so the MCP
-catalogue stays the same shape across the surface.
+durable cron scheduler primitive upstream; branch
+`codeless/rubix-dashboards-goal-1` then lit up Goal 1 end-to-end.
+All six SCOPE goals now light up end-to-end through the real
+agent loop.
 
 | Goal | Flow | State | Evidence / unblock |
 |---|---|---|---|
-| 1 — Dashboards | `com.rubix.dashboard-assistant` | **stubbed** | Primary tool returns `rubix.goal.not_wired` pointing at `docs/design/sdui/`. Unblock when SDUI page store + `dashboard.{create,update,list,page.set,duplicate}` verbs land. |
+| 1 — Dashboards | `com.rubix.dashboard-assistant` | **real** | Phase E — `dashboards_definitions` PG store + seven `rubix.dashboard.*` verbs (`get`/`list`/`create`/`update`/`duplicate`/`delete`/`page_set`) with undo + `<SduiPage>` renderer in new `@nube/starter-ui-sdui-react` + bundled `disk-overview` demo. End-to-end test `rubix-agent/tests/dashboard_crud_test.rs` + Playwright `rubix-frontend/e2e/dashboards.spec.ts`. See [`docs/design/sdui/`](../design/sdui/) + [`docs/sessions/2026-05-25-dashboards-goal-1-landed.md`](../sessions/2026-05-25-dashboards-goal-1-landed.md). |
 | 2 — User admin | `com.rubix.user-admin` | **real** | Phase B — six verbs + undo + integration test `rubix-agent/tests/goal_2_user_admin_test.rs`. See `docs/design/user-admin/`. |
 | 3 — Flow programmer | `com.rubix.flow-programmer` | **real** | Phase D — flow definitions live in PG (`flows_definitions` dimension table), cross-instance NOTIFY, `flow.{deploy,lint,list,duplicate}` + undo. See `docs/design/flow-programmer/`. |
 | 4 — ClickHouse ruler | `com.rubix.clickhouse-ruler` | **real** | Phase C — `clickhouse.{rule.write,mart.create,retention.set}` + undo with snapshot rows in bounded `undo_snapshots`. See `docs/design/clickhouse-rules/`. |
