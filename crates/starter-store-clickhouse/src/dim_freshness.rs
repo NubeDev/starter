@@ -92,11 +92,24 @@ impl FreshnessProbe {
 
     async fn query_dict(&self, name: &str) -> Result<DictFreshness, ChClientError> {
         // `clickhouse::Row` for a `system.dictionaries` sub-select.
+        //
+        // `last_successful_update_time` is a non-nullable `DateTime`
+        // in CH ≥ 24 (verified against 24.10 `DESCRIBE
+        // system.dictionaries`). Decoding it into `Option<DateTime>`
+        // makes the clickhouse-rs RowBinary reader expect a
+        // nullable "tag" byte (0 = None / 1 = Some) that the wire
+        // never sends; the reader then consumes the first byte of
+        // the timestamp and bails with "tag for enum is not valid"
+        // (Option is internally a 2-variant enum). Decode as the
+        // raw non-nullable `DateTime`; a never-refreshed dictionary
+        // surfaces as the Unix epoch which we re-promote to `None`
+        // below so the downstream age math + ReadResult envelope
+        // stay unchanged.
         #[derive(Debug, clickhouse::Row, Deserialize)]
         struct Raw {
             name: String,
-            #[serde(with = "clickhouse::serde::chrono::datetime::option")]
-            loaded: Option<DateTime<Utc>>,
+            #[serde(with = "clickhouse::serde::chrono::datetime")]
+            loaded: DateTime<Utc>,
             lifetime_min: u64,
             lifetime_max: u64,
             last_exception: String,
@@ -123,9 +136,13 @@ impl FreshnessProbe {
             ))
         })?;
 
+        let loaded = if raw.loaded.timestamp() == 0 {
+            None
+        } else {
+            Some(raw.loaded)
+        };
         let now = Utc::now();
-        let age = raw
-            .loaded
+        let age = loaded
             .map(|l| (now - l).num_seconds())
             .unwrap_or(i64::MAX);
         let status = if !raw.last_exception.is_empty() {
@@ -141,7 +158,7 @@ impl FreshnessProbe {
         Ok(DictFreshness {
             name: raw.name,
             status,
-            loaded_at: raw.loaded,
+            loaded_at: loaded,
             age_seconds: age,
             lifetime_min_seconds: raw.lifetime_min as u32,
             lifetime_max_seconds: raw.lifetime_max as u32,
