@@ -22,6 +22,8 @@ starter-tool-sysdiag = { workspace = true }
 # flow_ops.kinds reads `NodeBehavior::config_schema()` / `kind_id()`
 # off the node-kind trait when constructing a kinds snapshot via
 # `FlowKindsTool::from_behaviors`. See src/flow_ops/kinds.rs.
+# Also used by dashboard.page_set to funnel operator slot writes
+# through the R2 chokepoint `GraphStore::write_slot`.
 starter-flow-spi          = { workspace = true }
 
 # flow-programmer verbs validate YAML through `rubix_flows::yaml::RubixFlowYaml`
@@ -56,10 +58,6 @@ include_dir               = "0.7"
 # See src/analytics/report.rs.
 starter-export            = { workspace = true, features = ["html", "csv", "json"] }
 bytes                     = { workspace = true }
-
-# dashboard.page_set funnels operator slot writes through the R2
-# chokepoint `starter_flow_spi::graph::GraphStore::write_slot`.
-starter-flow-spi          = { workspace = true }
 
 [dev-dependencies]
 # analytics.report integration test writes the rendered bytes to a
