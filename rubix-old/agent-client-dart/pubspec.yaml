@@ -1,7 +1,0 @@
-name: rubix_agent_client_dart
-description: rubix agent client (Dart). Phase-0 skeleton — Phase 5 mobile admin will land the real surface.
-version: 0.1.0
-publish_to: none
-
-environment:
-  sdk: ">=3.4.0 <4.0.0"

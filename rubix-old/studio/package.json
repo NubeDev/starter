@@ -1,7 +1,0 @@
-{
-  "name": "@rubix/studio",
-  "version": "0.1.0",
-  "private": true,
-  "description": "rubix Studio (web + Tauri shell). Phase-0 skeleton — no pages, no router; Phase 1 lands the shell.",
-  "type": "module"
-}

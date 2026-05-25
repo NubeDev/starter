@@ -1,7 +1,0 @@
-{
-  "name": "@rubix/desktop",
-  "version": "0.1.0",
-  "private": true,
-  "description": "rubix desktop — reserved for the shared Tauri shell. Phase-0 skeleton.",
-  "type": "module"
-}

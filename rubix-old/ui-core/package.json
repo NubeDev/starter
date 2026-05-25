@@ -1,7 +1,0 @@
-{
-  "name": "@rubix/ui-core",
-  "version": "0.1.0",
-  "private": true,
-  "description": "rubix UI core. Phase-0 skeleton — re-exported by @rubix/extension-ui-sdk (R8).",
-  "type": "module"
-}
