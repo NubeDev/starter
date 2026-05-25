@@ -9,8 +9,10 @@ programming flows, writing ClickHouse rules, running background jobs,
 and producing analytics reports — all driven by the `ai-agent` node
 kind from starter, all exposed over REST + SSE + gRPC + MCP + CLI.
 
-No frontend. No Studio. No mobile. No `ui-*` crates. A future UI is a
-client of this backend and lives elsewhere.
+Backend product first; UI surfaces ([`rubix/frontend/`](frontend/)
+and the planned [`rubix/mobile/`](docs/scope/mobile/)) consume the
+backend per [ADR 0004](docs/adr/0004-react-native-mobile-app.md)
+and never the reverse.
 
 ## The mental model
 
@@ -641,7 +643,11 @@ rubix crate.
 **Deliberately not used:** `starter-auth-token` (single-owner bearer
 for headless appliances) — rubix is multi-user from day one.
 `starter-store-sqlite` — Postgres only (Non-goals). `starter-tauri`
-and the `starter-ui-*` packages — no frontend in this tree.
+— not used in this tree. The `starter-ui-*` packages are consumed
+by [`rubix/frontend/`](frontend/) and the planned
+[`rubix/mobile/`](docs/scope/mobile/) per
+[ADR 0004](docs/adr/0004-react-native-mobile-app.md); the
+backend crates themselves do not depend on them.
 
 ## Where does my code go? — short decision tree
 
@@ -772,8 +778,11 @@ concept? Test at `tests/<same_name>_test.rs`? Any "no" → R1 slipped.
 
 ## Non-goals (this scope)
 
-- **No frontend.** No Studio, no `ui-*` crates, no React, no Tauri,
-  no mobile. A future UI is a client of this backend.
+- **Frontend surfaces live in their own trees.** [`rubix/frontend/`](frontend/)
+  is the web SPA; [`rubix/mobile/`](docs/scope/mobile/) is the
+  planned React Native app. Both consume the backend; the backend
+  crates do not depend on either. See
+  [ADR 0004](docs/adr/0004-react-native-mobile-app.md).
 - **No second agent runtime.** The `ai-agent` node kind from starter
   is the agent. No `Agent` trait, no rubix LLM loop.
 - **No second tool/skill/flow registry.** Same registries as starter.
@@ -801,7 +810,10 @@ concept? Test at `tests/<same_name>_test.rs`? Any "no" → R1 slipped.
 
 ## Decisions made (locked)
 
-- **Backend only.** No frontend in this tree, ever.
+- **Backend product first.** Frontend surfaces live in their own
+  trees ([`rubix/frontend/`](frontend/) today,
+  [`rubix/mobile/`](docs/scope/mobile/) planned) and consume the
+  backend per [ADR 0004](docs/adr/0004-react-native-mobile-app.md).
 - **One repo, two trees.** `rubix/` sibling to `starter/crates/`.
   Path-deps for now; registry deps when starter stabilises.
 - **Postgres only** for state. ClickHouse for history.

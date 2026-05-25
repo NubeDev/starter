@@ -62,26 +62,15 @@ CREATE TABLE connection (
   agent_version   TEXT,                        -- from /healthz, optional
   notes           TEXT NOT NULL DEFAULT ''
 );
-
-CREATE UNIQUE INDEX connection_base_url_unique ON connection(base_url);
 ```
 
-### `0002_auth_token.sql`
+**No uniqueness constraint on `base_url`.** Operators legitimately
+add the same URL twice with different labels (one rubix-agent
+behind two tunnels, dev/prod toggle, single hostname serving two
+logical tenants). The `connection/create.ts` verb warns at the
+app layer if a duplicate `base_url` exists but doesn't reject.
 
-```sql
-CREATE TABLE auth_token (
-  connection_id   TEXT PRIMARY KEY
-                  REFERENCES connection(id) ON DELETE CASCADE,
-  token           TEXT NOT NULL,               -- bearer
-  issued_at       INTEGER NOT NULL,
-  expires_at      INTEGER                       -- null = no known expiry
-);
-```
-
-The token column is **not** raw on the device — see
-[Secret handling](#secret-handling) below.
-
-### `0003_active_connection.sql`
+### `0002_active_connection.sql`
 
 ```sql
 CREATE TABLE app_state (
@@ -95,7 +84,7 @@ CREATE TABLE app_state (
 it tiny; once it grows beyond five keys, promote each to its own
 table.
 
-### `0004_per_connection_state.sql`
+### `0003_per_connection_state.sql`
 
 ```sql
 CREATE TABLE connection_state (
@@ -105,6 +94,19 @@ CREATE TABLE connection_state (
   last_synced_at       INTEGER
 );
 ```
+
+### Deferred (not in v1)
+
+- **`auth_token` table.** Bearer tokens live in `expo-secure-store`
+  (platform Keychain / Keystore) keyed by `connection_id`, **not**
+  in SQLite. See [Secret handling](#secret-handling).
+- **TLS pinning column.** When mobile gains self-signed support
+  (today a [non-goal](./NON-GOALS.md#technical)), add a migration
+  with `tls_pinned_fingerprint TEXT` on `connection`.
+- **Token expiry metadata.** If tracked separately from the token
+  itself, lives next to it in `expo-secure-store` as a JSON
+  envelope `{ token, issued_at, expires_at }`. SQLite stays
+  secret-free.
 
 ## File layout
 
@@ -117,19 +119,18 @@ src/local-db/
   migrations/
     index.ts               ← ordered list of migration sources
     0001_connections.sql
-    0002_auth_token.sql
-    0003_active_connection.sql
-    0004_per_connection_state.sql
+    0002_active_connection.sql
+    0003_per_connection_state.sql
   connection/
     list.ts                ← list connections
     get.ts                 ← get by id
-    create.ts              ← add a new server
+    create.ts              ← add a new server; warns on duplicate base_url
     update.ts              ← rename / recolour / re-base-url
-    delete.ts              ← cascade clears token + state
+    delete.ts              ← cascade clears state; also deletes secure-store token
     set-active.ts          ← write active_connection_id
     active.ts              ← read active connection (one row)
-  token/
-    get.ts                 ← read token for connection
+  token/                   ← thin wrapper over expo-secure-store
+    get.ts                 ← read token for connection id
     put.ts                 ← write token after login
     clear.ts               ← logout
   state/
@@ -140,34 +141,61 @@ src/local-db/
 
 `open.ts` is the only file that touches `expo-sqlite` directly;
 every verb file takes a `db` argument so verbs are unit-testable
-against an in-memory database.
+against an in-memory database. `token/*` files take a `secureStore`
+argument so they're unit-testable against an in-memory mock.
 
 ## Secret handling
 
-A bearer token in a plaintext SQLite file is fine for dev, weak
-for prod. The token column stores a ciphertext; the key lives in
-the platform keychain via `expo-secure-store`:
+Bearer tokens live in **`expo-secure-store`** — the platform
+Keychain on iOS and Keystore on Android — keyed by
+`rubix.token.<connection_id>`. SQLite stores no secrets.
 
-- First launch: `expo-secure-store` generates and stores a 32-byte
-  random key under `rubix.localdb.key`.
-- `token/put.ts` AES-GCM-encrypts the token with that key before
-  insert; `token/get.ts` decrypts on read.
-- If the key is missing (post-restore on a new device), tokens
-  decrypt to null and the connection requires re-login. That's
-  the correct outcome — auth tokens should not survive a device
-  restore.
+**Why direct, not AES-GCM-in-SQLite:** the alternative scheme
+(AES key in secure-store, ciphertext in SQLite) shares the same
+trust boundary as the token directly in secure-store, requires a
+third-party native crypto module (Hermes has no `crypto.subtle`),
+and contradicts the Expo-managed promise of
+[ADR 0004 §Alternatives considered](../../adr/0004-react-native-mobile-app.md#alternatives-considered)
+where the full rejection lives. This doc records the decision;
+the long-form rebuttal stays in the ADR.
 
-Encryption lives in `rubix/mobile/src/local-db/crypto.ts` (one
-file, two functions: `encrypt`, `decrypt`). No `utils.ts`.
+**Threat model covered:** offline SQLite read by another app or
+backup extractor reveals the connection list but not the tokens.
+**Threat model NOT covered:** rooted/jailbroken device with
+keychain access — explicitly out of scope.
 
-> An alternative is **SQLCipher** (whole-file encryption via
-> `op-sqlite` or `@op-engineering/op-sqlite`). It's stronger but
-> drags in a custom native module and breaks the "stays on Expo
-> managed" promise from [ADR 0004](../../adr/0004-react-native-mobile-app.md#alternatives-considered).
-> Defer until a security review demands it; the per-token AES-GCM
-> approach is enough for v1.
+> **SQLCipher** (whole-file encryption via `op-sqlite`) remains an
+> escape hatch if a security review later demands defence-in-depth.
+> Deferred until then; it would require ejecting Expo managed for
+> a custom native module.
+
+## Health probe
+
+`connection.last_seen_at` and `connection.agent_version` are
+written in exactly three places, all via
+`src/local-db/connection/touch.ts`:
+
+1. **On add** (`connection/create.ts` after a successful
+   `GET <base_url>/healthz`).
+2. **On dashboard mount** (`<SduiPage>` boot path — piggybacks on
+   the first `/api/v1/ui/resolve` response; the agent already
+   returns version in the response headers).
+3. **On manual refresh** of the connections screen
+   (`connections/index.tsx` pull-to-refresh).
+
+No background poll in v1 — "is this site up?" indicators on the
+connections list show the value from the last natural touch with
+a human-readable relative age ("seen 4m ago"). Background polling
+is a follow-up once we understand drain on cellular.
 
 ## How the rest of the app sees it
+
+> **Promotion note:** on promotion to
+> `docs/design/mobile/`, this section splits out into its own
+> `connection-provider.md` (sibling of `app-shell.md` and
+> `local-db.md`). The `ConnectionProvider` design is a separate
+> concern from the SQLite schema; co-locating them here is a
+> scope-doc convenience, not a design intent.
 
 The local store is **invisible to React-Query, SDUI, and the
 clients** — they only see the *active connection's* `StarterClient`
@@ -178,19 +206,23 @@ clients** — they only see the *active connection's* `StarterClient`
 ConnectionProvider
   ├─ reads active connection id from app_state
   ├─ reads its row from connection
-  ├─ reads its token from auth_token (decrypts)
+  ├─ reads its token from expo-secure-store
   ├─ constructs StarterClient with { baseUrl, authHeader }
   ├─ constructs RubixClient(starterClient)
-  └─ provides both via context
+  ├─ publishes the active connection id so starterQueryKey
+  │    namespaces every React-Query cache key by it
+  └─ provides both clients via context
 ```
 
 Switching server = `setActive(id)` → provider re-derives clients
-→ React-Query is reset (`queryClient.clear()`) so cached data
-from server A never bleeds into server B. The reset is the
-*entire* reason the clients aren't singletons in
-[APP-SHELL.md](./APP-SHELL.md#provider-stack); update that file
-to call out the swap-on-active-change semantics when this design
-lands.
+→ the namespaced query keys change → active hooks refetch under
+the new prefix; stale entries from server A are simply unreachable
+and GC'd on the normal React-Query `gcTime`. A plain
+`queryClient.clear()` was rejected because it aborts in-flight
+queries and causes visible flicker.
+
+See [APP-SHELL.md §Provider stack](./APP-SHELL.md#provider-stack)
+for where this provider sits in the boot sequence.
 
 ## Screens this enables (out of scope for THIN-SLICE)
 
@@ -210,7 +242,7 @@ The login screen in [APP-SHELL.md](./APP-SHELL.md) is
 into its login. Bearer-token auth (already mandated by
 [ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences))
 makes this clean — one token per connection, stored in
-`auth_token`.
+`expo-secure-store` (see [Secret handling](#secret-handling)).
 
 ## Backup, export, sync
 
@@ -236,7 +268,9 @@ boot inside a single transaction and records the version in
 - Each verb file has a sibling test (`connection/create.test.ts`)
   running against an in-memory `expo-sqlite` opened by a shared
   fixture.
-- One e2e (Detox or Maestro) covers the round-trip: add server →
+- One e2e (Maestro — see
+  [THIN-SLICE Block 5](./THIN-SLICE.md#block-5--dashboardspageidtsx--the-slice-itself))
+  covers the round-trip: add server →
   login → render dashboard → switch to a second server → render
   its dashboard → delete the first server → confirm its token is
   gone.

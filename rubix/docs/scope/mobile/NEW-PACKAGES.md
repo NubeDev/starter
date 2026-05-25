@@ -24,7 +24,8 @@ starter-theme-tokens     ← no deps
         ↑
 starter-ui-kit-native    ← react-native, react-native-svg, moti
         ↑
-starter-ui-sdui-native   ← starter-ui-sdui-react (registry), starter-ui-ir
+starter-ui-sdui-native   ← starter-ui-kit-native, starter-ui-ir,
+                             starter-ui-sdui-react/headless (registry)
         ↑
 starter-ui-dashboard-native ← starter-ui-kit-native, react-native-svg
 ```
@@ -34,6 +35,52 @@ starter-ui-dashboard-native ← starter-ui-kit-native, react-native-svg
 type scale are identical by construction. The web kit's CSS is
 generated from the same object; that refactor is part of the
 package-1 PR.
+
+## Precondition — sdui-react package split
+
+This whole plan blocks on `@nube/starter-ui-sdui-react` exposing a
+`./headless` subpath that contains `SduiPage`, `SduiProvider`, the
+hooks, the transport, and the renderer registry — **without**
+re-exporting `./renderer/*` (which today's root barrel does, and
+which would pull `@nube/starter-ui-kit` into the mobile bundle).
+The registry must move into `/headless` so web and mobile share
+one module instance — a second copy would silently de-register.
+
+Three concrete refactors are required, in this order:
+
+1. **Move the registry** (`renderer/registry.ts`) under
+   `headless/`. Web renderers update their import path; the
+   registry itself doesn't change.
+2. **Move `sdui-page.tsx` to import the registry directly.**
+   Today it imports `Render, listRenderers from "./renderer/index.js"`
+   — the barrel, which triggers every web renderer's
+   `registerRenderer(...)` side-effect. The refactor switches it
+   to `./headless/registry.js` (or whatever the new location is)
+   so that importing `/headless` from mobile pulls **only** the
+   registry + page logic, not any renderers.
+3. **Add the `./headless` export entry** to
+   `packages/starter-ui-sdui-react/package.json` and update the
+   root barrel to re-export from headless instead of duplicating
+   the API surface.
+
+Proposed shape:
+
+```
+@nube/starter-ui-sdui-react/headless   ← SduiPage, SduiProvider, hooks,
+                                          transport, registerRenderer/
+                                          lookupRenderer/listRenderers
+@nube/starter-ui-sdui-react             ← today's root; web renderers,
+                                          which depend on /headless
+```
+
+Web consumers continue to import the root; mobile imports only
+`/headless`. Until this lands, [Block 3](./THIN-SLICE.md#block-3--nubestarter-ui-sdui-native-first-five-kinds)
+cannot begin.
+
+The registry refactor + `sdui-page.tsx` decoupling is itself a
+public-API change to a starter package and is recorded as a
+consequence in
+[ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences).
 
 ---
 
@@ -64,7 +111,12 @@ src/
 
 **Web migration:** `starter-ui-kit`'s `globals.css` becomes a
 build-time generator (`scripts/generate-css.ts`) that reads this
-package and emits the same CSS vars. Zero behaviour change on web.
+package and emits the same CSS vars. Zero behaviour change on web
+is the goal; **validation** is by visual diff. Visual-snapshot CI
+for `starter-ui-kit` does not exist today; Block 1 lands either
+(a) a minimal snapshot harness (Playwright + per-primitive page),
+or (b) a documented manual-review checklist signed off in the PR.
+Pick (a) if Block 2 will use it too.
 
 **MUST:** be pure data. **MUST NOT:** depend on React, RN, DOM, or
 any styling runtime.
@@ -108,13 +160,22 @@ from `starter-ui-core/theme-editor`. No `className`, no
 them.
 
 **MUST:** match the `starter-ui-kit` component API for the listed
-primitives. **MUST NOT:** import `starter-ui-kit` (no web deps),
+primitives. Every primitive ships with appropriate
+`accessibilityRole` and `accessibilityLabel` / `accessibilityHint`
+props wired through to the RN base element — this is a **kit
+acceptance criterion**, not a polish item. A reviewer is
+entitled to block a primitive PR that ships a `Pressable` without
+`accessibilityRole="button"` or a `TextInput` without an
+`accessibilityLabel` resolution path.
+**MUST NOT:** import `starter-ui-kit` (no web deps),
 do network I/O, or own application state.
 
-**Choice of foundation:** start on RN core + `react-native-svg` +
-`moti`. If the per-component port cost is high, evaluate Tamagui
-or gluestack-ui as a *implementation detail* — the API surface
-this package exposes does not change.
+**Choice of foundation:** RN core + `react-native-svg` + `moti`.
+A later swap to Tamagui or gluestack-ui is **not** an
+implementation detail — it changes the styling runtime model
+and the snapshot baseline — so it would require its own ADR. The
+scope plan commits to the RN-core path; do not adopt a styling
+framework as a Block-2 deviation.
 
 ---
 
@@ -157,8 +218,22 @@ calls `registerRenderer(...)` for every kind), then mounts the
 existing `<SduiPage>` from `starter-ui-sdui-react`.
 
 **MUST:** cover the same kinds in the same priority order as
-[`packages/starter-ui-sdui-react/src/renderer/index.ts`](../../../../packages/starter-ui-sdui-react/src/renderer/index.ts).
-**MUST NOT:** import `starter-ui-kit` or any web-only package.
+[`packages/starter-ui-sdui-react/src/renderer/index.ts`](../../../../packages/starter-ui-sdui-react/src/renderer/index.ts)
+(16 kinds today). **MUST NOT:** import `starter-ui-kit` or any
+web-only package.
+
+**Parity vs the IR `Kind` union (26 variants).** The IR declares
+26 kinds in
+[`packages/starter-ui-ir/src/index.ts`](../../../../packages/starter-ui-ir/src/index.ts);
+the web renderer registers 16. The 10 unimplemented-on-web kinds
+are:
+`stack, card, text, heading, badge, kpi_grid, button, link, field, sparkline`.
+Mobile **inherits the same 16 today** and **defers the same 10**
+until web ships them — a parity backfill, web first. The
+rationale is simple: a phone surface should not silently render
+IR shapes that the source-of-truth web renderer rejects. If
+mobile ever needs one of the 10 before web does, that's a
+separate decision and gets called out in the PR.
 
 ---
 

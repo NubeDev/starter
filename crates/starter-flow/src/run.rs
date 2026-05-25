@@ -390,6 +390,12 @@ pub struct FlowRunner {
     health: HealthHandle,
     skill_selector: Arc<dyn SkillSelector>,
     config: FlowRunnerConfig,
+    /// Per-node persistent state seam threaded into every
+    /// `NodeCtx.state`. Defaults to
+    /// [`starter_flow_spi::state::NoopNodeStateStore`]; hosts that
+    /// need durable per-instance state (counter node, etc.) swap in
+    /// a real backend via [`Self::with_node_state_store`].
+    node_state_store: Arc<dyn starter_flow_spi::state::NodeStateStore>,
 }
 
 impl FlowRunner {
@@ -403,7 +409,21 @@ impl FlowRunner {
             health: HealthHandle::new(),
             skill_selector: Arc::new(NullSkillSelector),
             config: FlowRunnerConfig::default(),
+            node_state_store: Arc::new(starter_flow_spi::state::NoopNodeStateStore),
         }
+    }
+
+    /// Swap the per-run [`NodeStateStore`](starter_flow_spi::state::NodeStateStore)
+    /// the propagator threads into every `NodeCtx`. Defaults to
+    /// [`starter_flow_spi::state::NoopNodeStateStore`]; production
+    /// surfaces pass `Arc<SqliteNodeStateStore>` here so counter
+    /// nodes (and any other stateful kind) persist across runs.
+    pub fn with_node_state_store(
+        mut self,
+        store: Arc<dyn starter_flow_spi::state::NodeStateStore>,
+    ) -> Self {
+        self.node_state_store = store;
+        self
     }
 
     /// Attach a Phase 3 SPI [`SpiRunStore`] (R6, D-F3.2). When
@@ -674,6 +694,7 @@ impl FlowRunner {
         let health_for_task = self.health.clone();
         let queue_for_task = degraded_queue.clone();
         let metrics_for_task = metrics.clone();
+        let node_state_for_task = self.node_state_store.clone();
         let RunSpec {
             flow,
             revision: _,
@@ -706,6 +727,7 @@ impl FlowRunner {
                 health_for_task,
                 queue_for_task,
                 metrics_for_task,
+                node_state_for_task,
             )
             .await
         });
@@ -774,6 +796,7 @@ async fn run_coordinator(
     health: HealthHandle,
     degraded_queue: Arc<DegradedQueue>,
     metrics: Arc<RunMetricsCell>,
+    node_state_store: Arc<dyn starter_flow_spi::state::NodeStateStore>,
 ) -> RunStatus {
     // Mark Running.
     {
@@ -820,11 +843,11 @@ async fn run_coordinator(
         skill_arc,
         // Stage A+B.1: every run threads a `NodeStateStore` into the
         // propagator so node bodies can persist per-instance state
-        // through `NodeCtx.state`. The `FlowRunner` is the in-process
-        // engine surface; Phase 3 / rubix wiring swaps this default
-        // out for `Arc<SqliteNodeStateStore>` from the host. See
+        // through `NodeCtx.state`. Defaults to noop; production
+        // surfaces (rubix-agent) pass `Arc<SqliteNodeStateStore>`
+        // via `FlowRunner::with_node_state_store`. See
         // `DOCS/flow/scope/node-state.md`.
-        Arc::new(starter_flow_spi::state::NoopNodeStateStore),
+        node_state_store,
     );
 
     // Seed writes — these enter through the single chokepoint per R2.

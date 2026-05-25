@@ -208,6 +208,20 @@ pub struct Engine {
     /// [`Self::run_store`] and thread it into the run. `None` means
     /// the engine runs Phase-2-style in-memory only.
     run_store: Option<Arc<dyn SpiRunStore>>,
+    /// Per-node persistent state seam (R5; see
+    /// `DOCS/flow/scope/node-state.md`). Held here so per-run
+    /// constructors (`FlowRunner` in [`crate::run`]) can pull it
+    /// via [`Self::node_state_store`] and thread it into the run.
+    /// `None` means the per-run default
+    /// [`starter_flow_spi::state::NoopNodeStateStore`] is used
+    /// (Phase-2 behaviour).
+    node_state_store: Option<Arc<dyn starter_flow_spi::state::NodeStateStore>>,
+    /// Optional sink fed every [`starter_flow_spi::flow::FlowEvent`]
+    /// emitted by surface-driven runs (today: [`FlowAsTool`] /
+    /// [`FlowAsService`] in `starter-flow-surfaces`). Hosts wiring
+    /// the SSE bridge implement this to fan run events out to
+    /// per-flow subscriber channels.
+    event_sink: Option<Arc<dyn crate::FlowEventSink>>,
     /// MEMORY.md M1 [`SpiAgentSessionStore`] for agent turn /
     /// artifact persistence. Separate from
     /// [`Self::run_store`] (flow runs) and from the legacy
@@ -269,6 +283,8 @@ impl Engine {
             propagator: Mutex::new(None),
             writables: RwLock::new(Vec::new()),
             run_store: None,
+            node_state_store: None,
+            event_sink: None,
             agent_session_store: None,
             agent_session_retention: std::collections::HashMap::new(),
             health: HealthHandle::new(),
@@ -346,6 +362,42 @@ impl Engine {
     /// this `Arc` into the run.
     pub fn run_store(&self) -> Option<&Arc<dyn SpiRunStore>> {
         self.run_store.as_ref()
+    }
+
+    /// Attach a per-node persistent state seam. Surfaces (e.g.
+    /// rubix-agent's durable SQLite-backed
+    /// `SqliteNodeStateStore`) wire this so `FlowAsTool` invocations
+    /// share the same per-node state across runs as the always-on
+    /// flow runtime.
+    pub fn with_node_state_store(
+        mut self,
+        store: Arc<dyn starter_flow_spi::state::NodeStateStore>,
+    ) -> Self {
+        self.node_state_store = Some(store);
+        self
+    }
+
+    /// Borrow the attached [`NodeStateStore`](starter_flow_spi::state::NodeStateStore)
+    /// if any. `FlowAsTool` calls this when constructing its
+    /// per-call `FlowRunner` so node bodies see the host's durable
+    /// state.
+    pub fn node_state_store(
+        &self,
+    ) -> Option<&Arc<dyn starter_flow_spi::state::NodeStateStore>> {
+        self.node_state_store.as_ref()
+    }
+
+    /// Attach an event sink. `FlowAsTool` / `FlowAsService` clone
+    /// this into the per-run forwarder so SSE subscribers see live
+    /// run events.
+    pub fn with_event_sink(mut self, sink: Arc<dyn crate::FlowEventSink>) -> Self {
+        self.event_sink = Some(sink);
+        self
+    }
+
+    /// Borrow the attached event sink, if any.
+    pub fn event_sink(&self) -> Option<&Arc<dyn crate::FlowEventSink>> {
+        self.event_sink.as_ref()
     }
 
     /// Attach an [`SpiAgentSessionStore`] (DOCS/agent/MEMORY.md

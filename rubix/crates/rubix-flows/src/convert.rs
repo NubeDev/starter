@@ -86,7 +86,19 @@ pub fn convert(
         }
         let mut decl = NodeDecl::new(node_id, kind);
         decl.settings = settings;
-        decl.triggers = vec![DEFAULT_SEED_SLOT.to_owned()];
+        // Every node fires on the shared `payload` seed slot the
+        // rubix surface layer writes (see
+        // `boot::mcp::register::register_one`). `trigger.schedule`
+        // root nodes additionally need their `cron_expr` slot
+        // listed as a trigger input so the propagator copies the
+        // seeded cron expression into the node's input SlotMap;
+        // without this the node body errors with `trigger.schedule
+        // input missing cron_expr slot`.
+        let mut triggers = vec![DEFAULT_SEED_SLOT.to_owned()];
+        if decl.kind.as_str() == "starter.flow.trigger.schedule" {
+            triggers.push("cron_expr".to_owned());
+        }
+        decl.triggers = triggers;
         body.nodes.push(decl);
     }
     body.links = yaml

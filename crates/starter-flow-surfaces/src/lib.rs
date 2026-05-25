@@ -176,6 +176,9 @@ impl FlowAsTool {
         if let Some(spi_store) = self.engine.run_store() {
             runner = runner.with_spi_run_store(spi_store.clone());
         }
+        if let Some(node_state) = self.engine.node_state_store() {
+            runner = runner.with_node_state_store(node_state.clone());
+        }
 
         let mut handle =
             runner
@@ -201,18 +204,28 @@ impl FlowAsTool {
         // termination reports the run as `Completed` (a single
         // failing node does not by itself flip the engine's
         // RunStatus to Failed — only propagator-level errors do).
+        // The same loop also forwards every event into the
+        // engine's optional `FlowEventSink` so SSE subscribers
+        // (e.g. rubix-agent's `FlowSubscriptionRegistry`) see
+        // live `NodeEmitted` / `RunCompleted` frames from runs
+        // started through this surface.
         let node_failure: Arc<Mutex<Option<(String, String)>>> = Arc::new(Mutex::new(None));
         let mut events_rx = handle.events_tx.subscribe();
         let node_failure_for_task = node_failure.clone();
+        let sink_for_task = self.engine.event_sink().cloned();
+        let flow_for_task = self.flow_id.clone();
         let watcher = tokio::spawn(async move {
             while let Ok(ev) = events_rx.recv().await {
-                if let FlowEvent::NodeFailed { node, error, .. } = ev {
+                if let FlowEvent::NodeFailed { node, error, .. } = &ev {
                     let mut slot = node_failure_for_task
                         .lock()
                         .unwrap_or_else(|e| e.into_inner());
                     if slot.is_none() {
-                        *slot = Some((node.to_string(), error));
+                        *slot = Some((node.to_string(), error.clone()));
                     }
+                }
+                if let Some(sink) = sink_for_task.as_ref() {
+                    sink.publish(&flow_for_task, ev);
                 }
             }
         });
@@ -748,6 +761,9 @@ impl FlowAsServiceWorkerHandle {
         .with_config(FlowRunnerConfig::default());
         if let Some(spi_store) = self.engine.run_store() {
             runner = runner.with_spi_run_store(spi_store.clone());
+        }
+        if let Some(node_state) = self.engine.node_state_store() {
+            runner = runner.with_node_state_store(node_state.clone());
         }
 
         let handle = match runner.start(spec, SlotMap::new()).await {

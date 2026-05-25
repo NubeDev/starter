@@ -79,8 +79,13 @@ Order (outermost first):
    [LOCAL-DB.md](./LOCAL-DB.md).
 3. `ConnectionProvider` (`src/connection/provider.tsx`) — reads
    the active connection from the local DB and constructs
-   `StarterClient` + `RubixClient` for it. Swapping the active
-   connection rebuilds both clients and clears the query cache.
+   `StarterClient` + `RubixClient` for it. Cache isolation is via
+   **key namespacing**, not `queryClient.clear()` (clear aborts
+   in-flight queries and flickers). See
+   [Active-connection publication](#active-connection-publication)
+   below for the mechanism that makes `starterQueryKey` see the
+   live id. Stale per-connection entries are GC'd by React-Query's
+   normal `gcTime`.
 4. `StarterClientProvider` with the **token** `AuthStrategy`
    (`@nube/starter-ui-core/auth` + `src/auth/strategy.ts`),
    fed by `ConnectionProvider`.
@@ -91,8 +96,11 @@ Order (outermost first):
    and exposes resolved tokens via context.
 7. `I18nProvider` (`src/i18n/provider.tsx`) — `react-intl` with the
    same `en.json` / `es.json` the web app uses.
-8. `SduiProvider` from `@nube/starter-ui-sdui-react` with
-   `createHttpSduiTransport({ client: rubixClient })`.
+8. `SduiProvider` from `@nube/starter-ui-sdui-react/headless` with
+   `createHttpSduiTransport({ client: rubixClient })`. The
+   `/headless` subpath is a precondition on the package — see
+   [REUSE.md](./REUSE.md#reused--sdui-after-a-package-split-blocker)
+   and [NEW-PACKAGES.md](./NEW-PACKAGES.md#precondition--sdui-react-package-split).
 
 If there is **no active connection** (fresh install), the
 navigation root sends the user to `/connections/new` and the
@@ -104,31 +112,139 @@ Total ≤ 40 lines. If it grows, the providers are doing too much.
 ## Auth strategy
 
 Cookies don't exist in RN's `fetch`; mobile uses bearer tokens.
+The app is multi-instance — one token per saved connection.
 
-`src/auth/strategy.ts` implements the `AuthStrategy` contract from
-`@nube/starter-ui-core/auth`:
+### Backend prerequisite — BLOCKER for Block 4
 
-- `login(email, password)` → POST `/api/v1/auth/login`, persist the
-  returned token in `@react-native-async-storage/async-storage`.
-- `currentToken()` → read from AsyncStorage on cold start.
-- `authHeader()` → `Authorization: Bearer <token>`.
-- `logout()` → POST `/api/v1/auth/logout`, clear AsyncStorage.
+> **Promotion note:** this whole subsection describes work that
+> happens *before* mobile code starts; on promotion to
+> `docs/design/mobile/app-shell.md` it collapses to a one-line
+> pointer at `docs/design/auth/`.
 
-**Backend prerequisite:** the agent must accept bearer tokens on the
-same routes that today accept cookies. Confirm against
-[`docs/design/auth/`](../../design/auth/) before scaffolding;
-if it doesn't, that work blocks mobile and lands first as a
-backend PR.
+Mobile needs a credentials→bearer issuance route. Today
+`POST /api/v1/auth/login` returns `{ csrf_token }` + sets a
+`starter_session` cookie. Bearer **acceptance** already works
+(`principal_layer.rs` reads `Authorization: Bearer`; rubix-agent
+has `/api/v1/auth/api-tokens` minting bearers for already-authed
+users). Mobile blocks on a new route, e.g.
+`POST /api/v1/auth/token` accepting `{ email, password }` and
+returning `{ token, expires_at }`. Gates
+[THIN-SLICE Block 4](./THIN-SLICE.md#block-4--rubixmobile-scaffold--login--provider-stack);
+recorded as a consequence in
+[ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences).
+
+### Strategy
+
+`src/auth/strategy.ts` exposes a thin `useLogin()` hook on top of
+the `tokenStrategy` from `@nube/starter-ui-core/auth`. The
+upstream `tokenStrategy.login(client, { kind: 'token', token })`
+**does not exchange credentials** — it installs an already-issued
+bearer string on the client. The credentials POST is the app's
+job. So mobile's login flow is two steps:
+
+1. **Issue.** POST `{ email, password }` to
+   `<base_url>/api/v1/auth/token` (the route added in the
+   Backend prerequisite above) via a plain `fetch` against the
+   active connection's `base_url`. On 200, write the returned
+   `{ token, expires_at }` to `expo-secure-store` under the key
+   `rubix.token.<connectionId>`.
+2. **Install.** Call
+   `tokenStrategy.login(client, { kind: 'token', token })` so the
+   in-memory `StarterClient` has `Authorization: Bearer <token>`
+   for the rest of the session.
+
+Other strategy operations:
+
+- `currentToken()` — read from `expo-secure-store` on cold start;
+  if present, install on the client via step 2 only.
+- `logout()` — POST `/api/v1/auth/logout`, delete the secure-store
+  entry, call `tokenStrategy.logout(client)`.
+- On any **401** mid-session: evict the token, preserve
+  `connection_state.last_opened_page_ref`, route to per-connection
+  login. See [401 mid-session](#401-mid-session) below for the
+  re-resume contract. Refresh tokens are a follow-up — see
+  [NON-GOALS.md](./NON-GOALS.md#technical).
+
+> `tokenStrategy.login` is verified in
+> [`packages/starter-ui-core/src/auth/strategy.ts`](../../../../packages/starter-ui-core/src/auth/strategy.ts)
+> to throw on `{ kind: 'credentials' }`. The two-step shape above
+> is therefore not a stylistic choice — it is what the existing
+> contract requires.
+
+### Active-connection publication
+
+`starterQueryKey` from `@nube/starter-ui-core/query` is a **pure
+helper** that prefixes a key array with an active-connection
+scope. It does **not** read from React context on its own. Mobile
+publishes the active id with this shape, in order of preference:
+
+1. `ConnectionProvider` writes the id into a tiny
+   `useActiveConnectionId()` zustand store (one module-level
+   atom, no React context). All sites that build query keys call
+   `starterQueryKey(useActiveConnectionId(), [...])`.
+2. A thin `useStarterQuery` wrapper around `useQuery` reads the
+   active id from the same store and prepends it, so call sites
+   don't have to remember.
+
+The store is module-level mutable but written by exactly one
+place (`ConnectionProvider.setActiveId`), so two readers can
+never disagree. This is the only place in the app where the
+multi-instance guarantee is actually made; if you change it,
+update this section.
+
+### Server unreachable
+
+The active connection's agent can go away at any moment (laptop
+sleep, VPN drop, router reboot). Dashboard routes render in
+these phases:
+
+1. **Loading** — React-Query `isPending`. Skeleton.
+2. **Cached-empty** — no cached page yet, no response yet after
+   `queryTimeoutMs` (default 8s). Same skeleton, plus a non-modal
+   "reaching `<label>`…" hint.
+3. **Unreachable** — network error or 5xx after retry. Render an
+   "agent unreachable" panel with the connection label and
+   `base_url`, a Retry button, and a "Switch connection" link.
+4. **Cached-stale** — a previously-loaded page is in the
+   React-Query cache but the latest fetch failed. Render the
+   cached payload with a small stale badge; never block the UI
+   on a failed refetch when there is data to show.
+
+No phase silently swallows the error; the panel and the badge
+are both `accessibilityRole="alert"`.
+
+### 401 mid-session
+
+On any 401:
+
+1. Evict the token from memory + secure-store.
+2. Preserve `connection_state.last_opened_page_ref` and the
+   current route in `state/pending-route.ts`.
+3. Route to `/login` for the active connection.
+4. After successful re-login, restore the pending route. If the
+   server now returns 404 for that `pageRef` (page was deleted /
+   renamed agent-side), fall back to `/dashboards` index and
+   show a one-shot toast naming the missing page.
+
+### Token expiry
+
+`expires_at` from the issuance response is treated as **advisory
+only** in v1. The app does **not** proactively refresh — there
+is no refresh-token (deferred,
+[NON-GOALS.md](./NON-GOALS.md#technical)). The app reacts to 401
+as above. The expiry value is stored alongside the token in
+secure-store so a future refresh implementation has the field
+without a migration.
 
 ## Storage
 
 | Concern | Mechanism |
 |---|---|
 | Saved connections to remote agents | **SQLite via `expo-sqlite`** — see [LOCAL-DB.md](./LOCAL-DB.md). The app is multi-instance: one phone, many agents. |
-| Auth token (per connection) | SQLite `auth_token` table, AES-GCM-encrypted with a key from `expo-secure-store`. See [LOCAL-DB.md](./LOCAL-DB.md#secret-handling). |
+| Auth token (per connection) | **`expo-secure-store`** (platform Keychain on iOS, Keystore on Android), one entry per connection id. Plain bearer string — no JS-side encryption layer. Rationale and rejected AES-GCM-in-SQLite alternative in [LOCAL-DB.md](./LOCAL-DB.md#secret-handling). |
 | Theme + layout preferences | zustand `persist` middleware backed by `@react-native-async-storage/async-storage`. |
 | i18n locale | Same. |
-| React-Query cache | In-memory only. Reset on active-connection switch so server A's data never bleeds into server B (see [LOCAL-DB.md](./LOCAL-DB.md#how-the-rest-of-the-app-sees-it)). Persist later via `@tanstack/query-async-storage-persister`. |
+| React-Query cache | In-memory. Per-connection cache isolation via key namespacing through `starterQueryKey` (see provider stack item 3). Persist later via `@tanstack/query-async-storage-persister`. |
 
 ## Environment
 
@@ -164,13 +280,48 @@ Installed in `rubix/mobile/package.json` (Expo doesn't ship these
 by default):
 
 - `@tanstack/react-query`
-- `react-intl`
+- `react-intl` — pin minimum Expo SDK / Hermes that ships full
+  Intl (SDK 52+ does); add `@formatjs/intl-pluralrules` polyfill
+  if a lower target is ever needed.
 - `zustand`
 - `@react-native-async-storage/async-storage`
-- `react-native-sse` — polyfill for `useEventStream`.
+- `expo-sqlite` — multi-instance connection store. See
+  [LOCAL-DB.md](./LOCAL-DB.md).
+- `expo-secure-store` — per-connection bearer token.
+- `react-native-sse` — provides `EventSource`. The starter SSE
+  hook reads `(globalThis as { EventSource? }).EventSource`, so
+  `App.tsx` must do
+  `globalThis.EventSource = require('react-native-sse').default`
+  at boot (or pass it explicitly to `streamJson`'s
+  `eventSourceCtor`). It is not a drop-in polyfill.
 - `react-native-svg` — dashboard widgets.
 - `react-native-reanimated`, `moti` — animation in widgets and
-  the kit.
+  the kit. Reanimated 3 currently requires
+  `'react-native-reanimated/plugin'` as the **last** entry in
+  `babel.config.js`. Verify against the live Expo SDK 52 +
+  Reanimated 3.16 docs at Block 4 — the worklets-plugin
+  migration may have flipped this to `react-native-worklets/plugin`;
+  if so, switch the pin and note it in the PR.
+
+## Theme + dark mode
+
+`ThemeProvider` (provider stack item 6) subscribes to the
+layout-preferences store from `starter-ui-core/theme-editor` and
+resolves tokens against `starter-theme-tokens`. The web reader
+reads `window.matchMedia('(prefers-color-scheme: dark)')`; on
+RN the same store is initialised from
+`Appearance.getColorScheme()` and updated via
+`Appearance.addChangeListener`. Result: `useColorScheme` parity
+with web, same store, no fork.
+
+## Network reality
+
+RN's `fetch` ignores CORS (it isn't a browser), but operators
+sometimes terminate rubix behind a reverse proxy with a WAF that
+allow-lists known User-Agents. The mobile app sends a fixed UA
+(`rubix-mobile/<version> (<platform>)`); if a deployment proxy
+rejects it, the proxy needs to allow-list that UA. There is no
+in-app override.
 
 ## Import lint
 
@@ -184,10 +335,52 @@ A lint rule in `rubix/mobile` forbids importing:
 - `@nube/starter-sdui-react`
 - `@nube/starter-ui-dashboard`
 - `@nube/starter-ui-core/layout`
-- `@nube/starter-ui-sdui-react/renderer`
+- `@nube/starter-ui-core/theme-editor/utils/apply-theme`
+- `@nube/starter-ui-core/theme-editor/utils/apply-preferences`
+- `@nube/starter-ui-core/theme-editor/utils/generate-css`
+- `@nube/starter-ui-core/theme-editor/utils/tailwind-css`
+- `@nube/starter-ui-core/theme-editor/utils/parse-css-input`
+- `@nube/starter-ui-core/theme-editor/transport`
+- `@nube/starter-ui-sdui-react` (root) — must use `/headless`
+  (see [REUSE.md](./REUSE.md#reused--sdui-after-a-package-split-blocker)).
 
-Implementation: `eslint-plugin-import` `no-restricted-imports`
-rule in `rubix/mobile/.eslintrc`. CI runs the lint on every PR.
+The choice of lint tool (`eslint-plugin-import` `no-restricted-imports`
+vs alternatives) is an implementation detail recorded in
+[ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences).
+CI runs the lint on every PR.
 
-The rule is what enforces the "reuse matrix" in
-[REUSE.md](./REUSE.md); without it the boundary erodes silently.
+**Named-export restriction caveat:** `no-restricted-imports`
+restricts **paths**, not named exports. The REUSE.md guidance
+that e.g. `@nube/starter-ui-core/auth` may only import
+`tokenStrategy` (not `sessionStrategy`, not `externalStrategy`)
+cannot be path-enforced as long as `starter-ui-core/auth` is a
+single subpath. Two options, picked at Block 4:
+
+1. **Code-review enforcement only**, with a CODEOWNERS rule that
+   routes any mobile change touching imports to a reviewer who
+   knows the matrix.
+2. **Custom AST rule** via `no-restricted-syntax` matching
+   `ImportDeclaration` source + `ImportSpecifier` name pairs.
+   Heavier; only worth it if (1) bleeds.
+
+Until starter-ui-core ships finer subpaths (e.g.
+`/auth/token`), neither REUSE.md nor this section can claim full
+automated enforcement of the named-export discipline.
+
+The path-level rule is what enforces the rest of the
+[reuse matrix](./REUSE.md); without it the boundary erodes
+silently.
+
+### Block-4 essential imports (quick reference)
+
+A full allow/forbid list is in [REUSE.md](./REUSE.md). The
+minimum a fresh implementer of Block 4 needs:
+
+- **Allowed:** `@nube/starter-client-ts`, `@nube/starter-client-react`,
+  `@nube/starter-ui-ir`, `@nube/rubix-client-ts`,
+  `@nube/rubix-client-react`,
+  `@nube/starter-ui-core/{auth, query, i18n}` (named exports only —
+  see REUSE.md), the workspace `starter-ui-kit-native` +
+  `starter-ui-sdui-native` + `starter-theme-tokens` packages.
+- **Forbidden:** everything in the path list above plus everything
+  in [REUSE.md §Explicitly NOT reused](./REUSE.md#explicitly-not-reused).

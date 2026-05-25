@@ -151,13 +151,26 @@ impl FlowRunner for ToolRegistryRunner {
         match tool.invoke(serde_json::json!({})).await {
             Ok(_) => Ok(()),
             Err(e) => {
+                // The outer `Display` for `SpiError::Internal` is
+                // just the literal "internal error"; walk the
+                // `source()` chain so the scheduler log has the
+                // real failure (engine error, kind not registered,
+                // bad config, etc.) instead of an opaque label.
+                let mut detail = e.to_string();
+                let mut src: Option<&(dyn std::error::Error + 'static)> =
+                    std::error::Error::source(&e);
+                while let Some(cause) = src {
+                    detail.push_str(": ");
+                    detail.push_str(&cause.to_string());
+                    src = cause.source();
+                }
                 warn!(
                     target: "rubix.boot.scheduler",
                     flow_id = %flow_id,
-                    error = %e,
+                    error = %detail,
                     "scheduled flow dispatch failed"
                 );
-                Err(Box::<dyn std::error::Error + Send + Sync>::from(e.to_string()))
+                Err(Box::<dyn std::error::Error + Send + Sync>::from(detail))
             }
         }
     }

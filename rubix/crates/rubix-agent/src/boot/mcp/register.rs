@@ -194,8 +194,35 @@ async fn register_one(
     // NodeId-keyed lookup (node ids collide across flows).
     let primary_tool = primary_tool_for_root(&body);
 
+    // If the root node is a `trigger.schedule`, project its
+    // `settings.cron_expr` into the runtime `cron_expr` input slot
+    // it expects. Until TopologyResolver/HR5 lands the projection
+    // automatically, the surface has to seed it; without this the
+    // scheduled dispatch of e.g. `com.rubix.tick-counter` fails
+    // per tick with `trigger.schedule input missing cron_expr
+    // slot`.
+    let trigger_cron_seed: Option<(SlotRef, String)> = if root.kind.as_str()
+        == starter_flow_nodes::trigger_schedule::KIND_ID
+    {
+        root.settings
+            .get("cron_expr")
+            .and_then(|v| v.as_str())
+            .map(|s| {
+                (
+                    SlotRef::new(
+                        root.id.clone(),
+                        starter_flow_nodes::trigger_schedule::CRON_EXPR_SLOT,
+                    ),
+                    s.to_owned(),
+                )
+            })
+    } else {
+        None
+    };
+
     let seed_slot_for_adapter = seed_slot.clone();
     let primary_tool_for_adapter = primary_tool.clone();
+    let trigger_cron_for_adapter = trigger_cron_seed.clone();
     let seed: starter_flow_surfaces::SeedAdapter = Arc::new(move |input: &Value| {
         // The locale task-local is bound by starter-mcp's dispatch
         // wrapper before this closure runs; reading it here is the
@@ -225,6 +252,13 @@ async fn register_one(
             "_nonce": nonce.to_string(),
         });
         vec![(seed_slot_for_adapter.clone(), SlotValue::Json(payload))]
+            .into_iter()
+            .chain(
+                trigger_cron_for_adapter
+                    .clone()
+                    .map(|(slot, cron)| (slot, SlotValue::String(cron))),
+            )
+            .collect()
     });
 
     let output_key = format!("{}.{}", output_slot.node, output_slot.slot);

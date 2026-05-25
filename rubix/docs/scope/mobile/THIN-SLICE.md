@@ -13,8 +13,11 @@ prove themselves before we scale to more pages.
 - It already exists, seeded by rubix-agent, and is the canonical
   smoke test for the web SDUI pipeline (see the curl in the
   session log around `POST /api/v1/ui/resolve`).
-- It uses `grid`, `row`, `col`, `kpi`, and `chart` — five of the
-  most common IR kinds. Anything else (forms, tables, tabs) is
+- Its renderer kinds are `page`, `row`, `col`, `kpi`, `chart`
+  (`grid` is **not** used by this page) and it exercises `static`
+  slot-value bindings via `value.ref`. Five renderer kinds + one
+  binding kind: the minimum that exercises layout, data, and a
+  chart simultaneously. Everything else (forms, tables, tabs) is
   follow-up work, not first-light work.
 
 ## Block sequence
@@ -47,13 +50,43 @@ and design-doc updates per [NEW-SESSION.md §3](../../../NEW-SESSION.md#3--workf
 
 ### Block 3 — `@nube/starter-ui-sdui-native` (first five kinds)
 
-- Implement `render-page.tsx`, `render-grid.tsx`, `render-row.tsx`,
-  `render-col.tsx`, `render-kpi.tsx`, `render-chart.tsx`. The
-  other kinds land in follow-up blocks; the slice only needs these.
+- Implement `render-page.tsx`, `render-row.tsx`, `render-col.tsx`,
+  `render-kpi.tsx`, `render-chart.tsx` (5 of 16 web-registered
+  kinds; the other 11 land in follow-up blocks, with the
+  10-renderer parity gap vs the IR `Kind` union called out
+  separately in [NEW-PACKAGES.md](./NEW-PACKAGES.md#starter-ui-sdui-native)).
+  The slice only needs these five. `render-grid.tsx` lands in
+  the first follow-up block, not the slice — `disk-overview` does
+  not use it.
 - Each renderer ≤150 lines. No direct RN primitives — only
   `starter-ui-kit-native`.
 - Register from a single barrel `src/index.ts`. Importing the
   package from the mobile app is what registers everything.
+- **Blocked by:** the `starter-ui-sdui-react/headless` split — see
+  [NEW-PACKAGES §Precondition](./NEW-PACKAGES.md#precondition--sdui-react-package-split).
+
+### Pre-Block 4 — backend bearer-token endpoint (BLOCKER)
+
+The rubix-agent today returns `{ csrf_token }` from
+`POST /api/v1/auth/login` and sets a `starter_session` cookie.
+Bearer **acceptance** already works (`crates/starter-auth-users`
+extracts `Authorization: Bearer` via `principal_layer.rs`, and
+rubix-agent has `/api/v1/auth/api-tokens` minting bearers for
+*already-authenticated* users). The gap is precisely a
+**credentials → bearer** issuance route, e.g.
+`POST /api/v1/auth/token` accepting `{ email, password }` and
+returning `{ token, expires_at }`. Specified in
+[`docs/design/auth/`](../../design/auth/) and recorded as a
+consequence in [ADR 0004](../../adr/0004-react-native-mobile-app.md#consequences).
+
+**Open question (see [README.md §Backend prerequisites](./README.md#backend-prerequisites)):**
+should the new route live in `starter-auth-users` (every starter
+consumer gets it) or in rubix-agent only? Default proposal:
+`starter-auth-users`, since both web SPA and mobile benefit.
+
+**Promotion note:** this section describes a future PR; on
+promotion to `docs/design/mobile/` it collapses to one sentence
+pointing at `docs/design/auth/`.
 
 ### Block 4 — `rubix/mobile` scaffold + login + provider stack
 
@@ -61,25 +94,25 @@ and design-doc updates per [NEW-SESSION.md §3](../../../NEW-SESSION.md#3--workf
 - Wire the workspace deps and metro config per
   [APP-SHELL.md](./APP-SHELL.md#metro).
 - Implement the token `AuthStrategy` (see
-  [APP-SHELL.md](./APP-SHELL.md#auth-strategy)).
+  [APP-SHELL.md](./APP-SHELL.md#strategy)).
 - Implement the login screen on top of `useAuth`.
-- Backend bearer-token support is a prerequisite — if it doesn't
-  exist yet (see [APP-SHELL.md](./APP-SHELL.md#auth-strategy)),
-  that work lands first as a backend PR and this block waits.
+- Pre-Block 4 above MUST be merged first.
 
 ### Block 5 — `dashboards/[pageId].tsx` + the slice itself
 
 - Implement the dashboards route (`<SduiPage pageRef={pageId} />`)
-  and the redirect from `/` to `/dashboards/disk-overview`.
+  and the redirect from `/` to `/dashboards/disk-overview` (or to
+  `/connections/new` if there is no active connection).
 - Manual smoke test on iOS simulator + Android emulator: login →
   redirect → page renders with live data.
-- Add an e2e on Detox (or Maestro) that performs the same flow.
+- Add an e2e on **Maestro** (chosen over Detox: no native build
+  step, YAML flows, Expo-friendly) that performs the same flow.
 - The slice is **done** when the same page renders correctly on
   both platforms with the same data the web shows.
 
 ## Out of scope for the slice
 
-- The other 11 IR kind renderers — covered by follow-up blocks.
+- The other 10 IR kind renderers — covered by follow-up blocks.
 - `starter-ui-dashboard-native` widgets — `disk-overview` is built
   from generic IR kinds, not the bespoke widgets. Those land when
   a page needs them.
@@ -90,11 +123,13 @@ and design-doc updates per [NEW-SESSION.md §3](../../../NEW-SESSION.md#3--workf
 
 The slice merges when:
 
-1. CI green on `rubix/mobile` lint + tests + e2e.
+1. CI green on `rubix/mobile` lint + tests + Maestro e2e.
 2. The import-lint rule from [APP-SHELL.md](./APP-SHELL.md#import-lint)
    is in place and clean.
-3. Screenshots of `disk-overview` on iOS and Android are attached
-   to the PR.
+3. A signed **TestFlight (iOS) + Internal-track (Android)** build
+   is produced via EAS and a link is attached to the PR. Bare
+   screenshots are not enough — the binary must demonstrably
+   reach the store-review pipeline.
 4. Each block's design doc lives under `docs/design/mobile/`
    (per [README.md](./README.md#promotion-path)).
 5. This file is **deleted** — the slice has shipped; the

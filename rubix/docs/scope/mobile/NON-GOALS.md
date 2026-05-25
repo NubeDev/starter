@@ -22,20 +22,54 @@ name so reviewers can reject scope creep with a one-line link.
 - **No code-push / OTA before launch.** Expo Updates may come
   later, but the slice ships through the store review pipeline so
   we measure the real-world boot path.
-- **No biometric unlock in v1.** Token in AsyncStorage is the
-  baseline; biometrics is a follow-up ADR after the slice ships.
+- **No biometric unlock in v1.** A bearer token in
+  `expo-secure-store` is the baseline; biometrics is a follow-up
+  ADR after the slice ships.
 - **No offline cache in v1.** React-Query cache is in-memory.
   Persistence is a follow-up once we understand which pages
   operators actually use on flaky connections.
 - **No push notifications in v1.** SSE on a foregrounded screen
   is the slice; APNs / FCM is a separate workstream.
+- **No bearer-token refresh in v1.** On 401 the app evicts the
+  token, preserves `last_opened_page_ref`, and routes back to
+  per-connection login (see [APP-SHELL.md](./APP-SHELL.md#strategy)).
+  Refresh tokens are a separate auth-crate workstream.
+- **No self-signed TLS / cert pinning in v1.** The mobile app
+  trusts the system root store only. **Deployment assumption,
+  stated explicitly:** operators with home-LAN rubix-agent
+  instances (e.g. `https://rubix.local:8088` with a self-signed
+  cert) are expected to front them with Tailscale, Cloudflare
+  Tunnel, Let's Encrypt + a real DNS name, or another path that
+  presents a system-trusted cert. **Mobile will not work against
+  a bare self-signed cert in v1, and that is a known UX gap for
+  the home-lab audience.** Per-connection pinning is a follow-up
+  whose schema hook (`tls_pinned_fingerprint`) is already
+  reserved in [LOCAL-DB.md](./LOCAL-DB.md#deferred-not-in-v1).
+  *This is an open call: if home-lab UX matters more than v1
+  ship date, TLS pinning gets promoted to Block 0.* See
+  question to the author in the README.
+- **No server discovery (mDNS / Bonjour / QR-pairing) in v1.**
+  Add a server by typing URL + label. Forward compatibility:
+  `connections/new.tsx` URL parsing strips an optional `?pair=`
+  query string and treats the rest as a plain `base_url`, so a
+  future QR-pairing flow can encode its handshake in the same
+  surface without breaking today's manual add.
+- **No deep links into a specific connection's dashboard in v1.**
+  Expo Router supports it; the per-connection resolution UX is a
+  follow-up.
 - **No second SDUI renderer set.** `@nube/starter-sdui-react` (the
   D2 / older renderers) stays web-only. Mobile maintains one
   renderer surface, period.
 - **No bespoke per-page React Native screens beyond the dashboard
   route.** Everything is SDUI-driven; if a screen needs a hand
   layout, that's a sign the IR needs a new kind, not a new screen.
-
+- **No formal accessibility audit gate on the slice.** A formal
+  audit (dynamic type, screen reader walkthroughs, contrast
+  checks against WCAG AA) is a follow-up after the slice. The
+  **per-primitive `accessibilityRole` + `accessibilityLabel`
+  contract is NOT a non-goal** — it is a kit acceptance criterion
+  enforced at primitive-PR review time. See
+  [NEW-PACKAGES §starter-ui-kit-native](./NEW-PACKAGES.md#starter-ui-kit-native).
 ## Process
 
 - **No "phase 2" markers in code.** Per

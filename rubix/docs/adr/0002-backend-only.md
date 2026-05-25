@@ -1,7 +1,8 @@
 # ADR 0002 — Backend only (no frontend in this tree)
 
 **Status:** superseded by [ADR 0004](./0004-react-native-mobile-app.md), 2026-05-25.
-  The `rubix/frontend/` SPA was added before this ADR's superseding ADR was written; ADR 0004 records the formal reversal and extends the policy to mobile.
+  The `rubix/frontend/` SPA shipped without a superseding ADR; 0004
+  closes that gap retroactively and extends the policy to mobile.
 **Cites:** [SCOPE one-line summary](../../SCOPE.md), Non-goals
 
 ## Decision

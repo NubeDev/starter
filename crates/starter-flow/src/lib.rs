@@ -69,3 +69,22 @@ pub mod definition;
 /// sees on the next turn. Storage and replay stay separate
 /// decisions per MEMORY.md §3 M3 + M4.
 pub mod replay;
+
+/// Optional sink fed every [`starter_flow_spi::flow::FlowEvent`]
+/// emitted by surface-driven runs. Hosts wire an `Arc<dyn
+/// FlowEventSink>` onto the engine via
+/// [`engine::Engine::with_event_sink`]; `FlowAsTool` /
+/// `FlowAsService` spawn a per-run forwarder that subscribes to
+/// the run's `events_tx` broadcast and calls
+/// [`FlowEventSink::publish`] on every event. This is how the
+/// rubix SSE bridge sees live `NodeEmitted` frames from
+/// scheduled / MCP-triggered runs without the surfaces needing
+/// to know about the per-flow broadcast registry.
+pub trait FlowEventSink: Send + Sync {
+    /// Publish one event for the given flow. Implementations must
+    /// not block; the per-run forwarder calls this in a tokio
+    /// task. Backpressure / lagged-subscriber handling is the
+    /// implementation's responsibility (the upstream broadcast
+    /// already drops lagged receivers).
+    fn publish(&self, flow: &starter_flow_spi::flow::FlowId, event: starter_flow_spi::flow::FlowEvent);
+}

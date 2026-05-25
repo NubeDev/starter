@@ -1,6 +1,11 @@
 # ADR 0004 — React Native mobile app reuses the chassis at the kit seam
 
-**Status:** accepted, 2026-05-25. **Supersedes** [ADR 0002](./0002-backend-only.md).
+**Status:** accepted, 2026-05-25. **Partially supersedes**
+[ADR 0002](./0002-backend-only.md): the `rubix/frontend/` SPA
+already shipped without a superseding ADR; this ADR closes that
+policy gap retroactively and extends it to mobile. A separate ADR
+for the web frontend's own justification (ADR 0005?) is still
+outstanding.
 **Cites:** [SCOPE R6](../../SCOPE.md#r6),
 [HOW-TO-CODE §0a](../../HOW-TO-CODE.md#0a--doc-tiers-and-what-code-may-reference),
 [docs/design/frontend/README.md](../design/frontend/README.md),
@@ -38,30 +43,57 @@ The full plan lives in [docs/scope/mobile/](../scope/mobile/README.md).
 - Operators want dashboards on a phone. They do not want the
   flow editor or admin surfaces on a phone — those stay web-only.
 - The token-vs-cookie split is not a preference: RN's `fetch`
-  doesn't share cookies with `WebView`, so the same `AuthStrategy`
-  abstraction must support both. It already does.
+  doesn't share cookies with a `WebView`, so mobile needs a
+  bearer-flavoured auth. The `AuthStrategy` abstraction in
+  `@nube/starter-ui-core/auth` happens to already ship a
+  `tokenStrategy` alongside `sessionStrategy` (cookie/CSRF,
+  web-only by semantics) and `externalStrategy`
+  (`window.location.assign`, web-only by implementation), so
+  mobile gets to reuse the abstraction. `tokenStrategy.login`
+  installs an already-issued bearer; the credentials→token
+  exchange itself is the app's job, not the strategy's — mobile
+  performs the exchange in `src/auth/strategy.ts` against the
+  active connection's `base_url`. See
+  [docs/scope/mobile/APP-SHELL.md §Strategy](../scope/mobile/APP-SHELL.md#strategy).
 
 ## Consequences
 
 - The web `starter-ui-kit` is refactored to read tokens from the
   new `starter-theme-tokens` package. This is a non-behaviour
-  change on web, validated by visual snapshot diff in CI.
-- `starter-ui-sdui-react/renderer/` becomes one of two consumers
-  of the registry; the registry surface (`registerRenderer`,
-  `lookupRenderer`, `listRenderers`) is now load-bearing for two
-  packages and must not be folded back into the web renderers.
+  change on web, validated by visual diff (snapshot harness or
+  documented manual review — see
+  [docs/scope/mobile/NEW-PACKAGES.md](../scope/mobile/NEW-PACKAGES.md#starter-theme-tokens)).
+- `@nube/starter-ui-sdui-react` gains a `./headless` subpath
+  (registry + provider + hooks + transport, no renderers). This
+  is a precondition on the whole plan — see
+  [docs/scope/mobile/REUSE.md](../scope/mobile/REUSE.md#reused--sdui-after-a-package-split-blocker).
+  As part of the same refactor, `sdui-page.tsx` is decoupled from
+  the renderer barrel (`./renderer/index.js`) and depends only on
+  the registry under `./headless`; without that decoupling,
+  importing `/headless` still pulls every web renderer
+  transitively. See
+  [docs/scope/mobile/NEW-PACKAGES.md §Precondition](../scope/mobile/NEW-PACKAGES.md#precondition--sdui-react-package-split).
+- `@nube/starter-ui-core` exposes the portable subset cleanly
+  (`tokenStrategy` from `/auth`; types/store/formatters from
+  `/preferences` separately from the `PreferencesProvider` React
+  component, which writes to `document`).
+- **Backend gains a bearer-issuing route** (e.g.
+  `POST /api/v1/auth/token` returning `{ token, expires_at }`)
+  as a precondition to mobile login. This ADR does not justify
+  that route on its own merits; mobile blocks on it. Specified
+  in [docs/design/auth/](../design/auth/).
 - The mobile app enforces the reuse boundary via an ESLint
-  `no-restricted-imports` rule listed in
+  `no-restricted-imports` rule (chosen for ubiquity, no
+  alternative seriously evaluated) listed in
   [docs/scope/mobile/APP-SHELL.md](../scope/mobile/APP-SHELL.md#import-lint).
 - The app is **multi-instance**: one phone talks to many
   rubix-agent servers, with an on-device SQLite store as the
-  source of truth for saved connections and per-connection
-  bearer tokens. See
-  [docs/scope/mobile/LOCAL-DB.md](../scope/mobile/LOCAL-DB.md).
-  Backend must accept bearer tokens on routes that today require
-  the session cookie. If a route requires cookie-only auth, it
-  is a backend bug surfaced by the mobile app, not a mobile
-  workaround.
+  source of truth for saved connection metadata and
+  `expo-secure-store` as the home for per-connection bearer
+  tokens. See [docs/scope/mobile/LOCAL-DB.md](../scope/mobile/LOCAL-DB.md).
+- Per-connection cache isolation uses key namespacing via
+  `starterQueryKey`, not `queryClient.clear()` on swap (which
+  aborts in-flight queries).
 
 ## Alternatives considered
 
@@ -90,12 +122,18 @@ but that decision is its own ADR.
 
 ### D. Bare React Native (no Expo)
 
-Rejected for the first surface. Expo SDK 52+ supports the
-runtime deps we need (`react-native-svg`, `react-native-reanimated`,
-SSE polyfill, AsyncStorage), gives us EAS for builds, and removes
-two weeks of platform plumbing. If we hit an Expo wall we eject;
-the codebase is structured so ejecting changes only `rubix/mobile/`,
-not the workspace packages.
+Rejected. **Expo (SDK 52+) is the locked-in runtime for `rubix/mobile`.**
+Expo supplies every runtime dep we need (`react-native-svg`,
+`react-native-reanimated`, the SSE polyfill, AsyncStorage,
+`expo-sqlite`, `expo-secure-store`), gives us EAS for signed
+iOS + Android builds without owning a Mac fleet, and removes
+roughly two weeks of platform plumbing per surface. The workspace
+packages (`starter-theme-tokens`, `starter-ui-kit-native`,
+`starter-ui-sdui-native`, `starter-ui-dashboard-native`) are
+Expo-agnostic by construction — they consume only React Native
+APIs, not Expo modules — so the lock-in is confined to
+`rubix/mobile/` (the app shell) and the two `expo-*` storage
+choices. Revisiting Expo is a new ADR, not a Block-N deviation.
 
 ### E. Ship dashboards as a Tauri mobile build
 
@@ -103,3 +141,40 @@ Rejected. Tauri Mobile is alpha-grade for both iOS and Android
 and would force every operator to install a custom binary instead
 of using the store. The mobile audience is operators on
 unmanaged phones — store install is non-negotiable.
+
+### F. Navigation: React Navigation vs Expo Router
+
+Chose **Expo Router**. File-based routing mirrors the Vite +
+TanStack-Router pattern of `rubix/frontend`, reduces hand-wired
+stack code, and is the Expo-recommended default. React Navigation
+remains underneath; switching the surface API is reversible.
+
+### G. State management: zustand vs Redux / Jotai / Context-only
+
+Chose **zustand**. Already used in `@nube/starter-ui-core` for
+the theme + i18n stores; mobile reuses those stores verbatim
+and adopting any other library would mean two state stacks.
+Redux is heavier without payoff for this surface; Jotai is
+plausible but adds a second paradigm.
+
+### H. Token storage: `expo-secure-store` vs SQLite + AES-GCM vs SQLCipher
+
+Chose **`expo-secure-store`** for tokens (SQLite for everything
+else). The earlier AES-GCM-in-SQLite scheme was rejected: RN has
+no `crypto.subtle`, `expo-crypto` has no AES, and a third-party
+crypto module would contradict the Expo-managed promise of
+alternative D. The threat model (offline SQLite read by another
+app) is covered by storing tokens directly in the platform
+keychain. SQLCipher remains an escape hatch behind a future
+security-review ADR.
+
+### I. E2E framework: Maestro vs Detox
+
+Chose **Maestro**. YAML flows, no native build step, runs against
+the Expo-built binary as-is, and works on the same emulators the
+dev loop already uses. Detox requires native build configuration
+and is heavier to maintain in an Expo-managed project; the only
+reason to revisit is if Maestro's CI runner becomes a bottleneck
+or an interaction we need (deep gestures, native dialogs) is
+better expressed in JS. Carried forward from
+[THIN-SLICE Block 5](../scope/mobile/THIN-SLICE.md#block-5--dashboardspageidtsx--the-slice-itself).
