@@ -26,7 +26,7 @@ declare module "../client/client.js" {
 }
 
 StarterClient.prototype.login = function login(this: StarterClient, request: LoginRequest): Promise<LoginResponse> {
-  return fetchJson<LoginResponse>(this, `/api/v1/auth/login`, {
+  return fetchJson<LoginResponse>(this, `${this.apiPrefix}/auth/login`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(request),
@@ -34,9 +34,9 @@ StarterClient.prototype.login = function login(this: StarterClient, request: Log
 };
 
 StarterClient.prototype.logout = async function logout(this: StarterClient): Promise<void> {
-  await fetchVoid(this, `/api/v1/auth/logout`, { method: "POST", headers: readCsrfHeader() });
+  await fetchVoid(this, `${this.apiPrefix}/auth/logout`, { method: "POST", headers: readCsrfHeader() });
 };
 
 StarterClient.prototype.me = function me(this: StarterClient): Promise<MeResponse> {
-  return fetchJson<MeResponse>(this, `/api/v1/auth/me`);
+  return fetchJson<MeResponse>(this, `${this.apiPrefix}/auth/me`);
 };

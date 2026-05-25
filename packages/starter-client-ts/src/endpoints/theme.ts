@@ -51,17 +51,17 @@ declare module "../client/client.js" {
   }
 }
 
-const BASE = "/api/v1/ui/theme";
+const SUFFIX = "/ui/theme";
 
 StarterClient.prototype.themeGet = function themeGet(this: StarterClient): Promise<ThemeDocument> {
-  return fetchJson<ThemeDocument>(this, BASE);
+  return fetchJson<ThemeDocument>(this, `${this.apiPrefix}${SUFFIX}`);
 };
 
 StarterClient.prototype.themeSave = async function themeSave(
   this: StarterClient,
   request: ThemeSaveRequest,
 ): Promise<ThemeDocument> {
-  const res = await fetchVoid(this, BASE, {
+  const res = await fetchVoid(this, `${this.apiPrefix}${SUFFIX}`, {
     method: "PUT",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(request),
@@ -95,7 +95,7 @@ StarterClient.prototype.themeDeleteFavicon = async function themeDeleteFavicon(t
 };
 
 async function uploadAsset(client: StarterClient, kind: "logo" | "favicon", file: File): Promise<void> {
-  await fetchVoid(client, `${BASE}/${kind}`, {
+  await fetchVoid(client, `${client.apiPrefix}${SUFFIX}/${kind}`, {
     method: "POST",
     headers: { "content-type": file.type || "application/octet-stream" },
     body: file,
@@ -103,5 +103,5 @@ async function uploadAsset(client: StarterClient, kind: "logo" | "favicon", file
 }
 
 async function deleteAsset(client: StarterClient, kind: "logo" | "favicon"): Promise<void> {
-  await fetchVoid(client, `${BASE}/${kind}`, { method: "DELETE" });
+  await fetchVoid(client, `${client.apiPrefix}${SUFFIX}/${kind}`, { method: "DELETE" });
 }

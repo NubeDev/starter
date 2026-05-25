@@ -101,4 +101,38 @@ describe("StarterClient auth endpoints", () => {
     await client.me();
     expect(calls[0]!.url).toBe("http://t/api/v1/auth/me");
   });
+
+  it("honours an empty apiPrefix so endpoints sit at the root", async () => {
+    // Some servers (e.g. dev-pulse's dp-server) mount the starter routes
+    // at `/auth/*` rather than `/api/v1/auth/*`. Passing `apiPrefix: ""`
+    // strips the default prefix so the client URL matches.
+    const calls: Recorded[] = [];
+    const fake: typeof fetch = async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      calls.push({ method: init?.method ?? "GET", url, headers: {}, body: undefined });
+      return new Response(JSON.stringify({ subject: "u", email: "a@b", role: "admin" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+    const client = new StarterClient({ baseUrl: "http://t", apiPrefix: "", fetch: fake });
+    await client.me();
+    expect(calls[0]!.url).toBe("http://t/auth/me");
+  });
+
+  it("honours a custom apiPrefix and normalises slashes", async () => {
+    const calls: Recorded[] = [];
+    const fake: typeof fetch = async (input, init) => {
+      const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+      calls.push({ method: init?.method ?? "GET", url, headers: {}, body: undefined });
+      return new Response(JSON.stringify({ subject: "u", email: "a@b", role: "admin" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+    // Missing leading slash + trailing slash — both get normalised.
+    const client = new StarterClient({ baseUrl: "http://t", apiPrefix: "api/v2/", fetch: fake });
+    await client.me();
+    expect(calls[0]!.url).toBe("http://t/api/v2/auth/me");
+  });
 });
