@@ -13,6 +13,7 @@
 
 pub use starter_spi as starter;
 
+pub mod dashboard;
 pub mod descriptor;
 pub mod dto;
 pub mod error;

@@ -31,6 +31,9 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod dashboards;
+
+pub use dashboards::PgDashboardStore;
 pub use starter_store_postgres::MigrationSource;
 
 /// `sqlx` migrator for the rubix `undo_snapshots` schema. Pair
@@ -71,3 +74,25 @@ pub const FLOWS_DEFINITIONS_MIGRATION_SOURCE: MigrationSource = MigrationSource 
 /// SQL) and the consumer (`rubix-agent::boot::flow_notify`) share
 /// one source of truth.
 pub const FLOWS_DEFINITIONS_CHANNEL: &str = "rubix_flows_definitions";
+
+/// `sqlx` migrator for the rubix `dashboards_definitions` schema.
+/// Pair with `starter_store_postgres::migrate(pool)
+///     .with_source(DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE)` at boot.
+pub static DASHBOARDS_DEFINITIONS_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/dashboards_definitions");
+
+/// Convenience [`MigrationSource`] for the `dashboards_definitions`
+/// table (Goal 1, Phase A.1). The `name` field becomes the suffix
+/// of the source's own `_sqlx_migrations_dashboards_definitions`
+/// table, isolating this schema's migration history from the other
+/// rubix- and starter-owned sources in the boot chain.
+pub const DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "dashboards_definitions",
+    migrator: &DASHBOARDS_DEFINITIONS_MIGRATOR,
+};
+
+/// Postgres channel name the `dashboards_definitions` insert/update
+/// trigger publishes to. Consumed by the Phase A.2 listener in
+/// `rubix-agent::boot::dashboards_notify` to invalidate the
+/// in-process `PageProvider` cache cross-instance.
+pub const DASHBOARDS_DEFINITIONS_CHANNEL: &str = "rubix_dashboards_definitions";

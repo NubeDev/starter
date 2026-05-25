@@ -5,6 +5,7 @@ pub mod auth;
 pub mod authz;
 pub mod clickhouse;
 pub mod config;
+pub mod dashboards_seed;
 pub mod extensions;
 pub mod flow_notify;
 pub mod flow_runtime;

@@ -6470,6 +6470,7 @@ dependencies = [
 name = "rubix-spi"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
  "starter-i18n",
@@ -6482,8 +6483,14 @@ dependencies = [
 name = "rubix-store-postgres"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "chrono",
+ "rubix-spi",
+ "serde_json",
  "sqlx",
  "starter-store-postgres",
+ "thiserror 1.0.69",
+ "uuid",
 ]
 
 [[package]]
