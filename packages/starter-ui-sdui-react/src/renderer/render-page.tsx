@@ -1,7 +1,7 @@
 // `page` — root frame. Renders a flex column with optional title.
 import { cn } from "@nube/starter-ui-kit";
-import { RenderChildren } from "./render.js";
-import { registerRenderer } from "./registry.js";
+import { RenderChildren } from "../headless/render.js";
+import { registerRenderer } from "../headless/registry.js";
 
 export function RenderPage({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const title = typeof node.title === "string" ? node.title : undefined;

@@ -1,0 +1,54 @@
+{
+  "name": "@nube/starter-ui-kit-native",
+  "version": "0.1.0",
+  "description": "React Native primitives whose prop API mirrors @nube/starter-ui-kit one-to-one. Foundation: RN core + react-native-svg + moti (reanimated). Reads tokens from @nube/starter-theme-tokens + the layout-preferences store in @nube/starter-ui-core/theme-editor. MUST NOT import @nube/starter-ui-kit, do network I/O, or own application state.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./theme": "./src/theme.ts",
+    "./layout": "./src/layout.tsx",
+    "./button": "./src/button.tsx",
+    "./card": "./src/card.tsx",
+    "./input": "./src/input.tsx",
+    "./tabs": "./src/tabs.tsx",
+    "./badge": "./src/badge.tsx",
+    "./switch": "./src/switch.tsx",
+    "./slider": "./src/slider.tsx",
+    "./select": "./src/select.tsx",
+    "./sheet": "./src/sheet.tsx",
+    "./dialog": "./src/dialog.tsx",
+    "./spinner": "./src/spinner.tsx",
+    "./skeleton": "./src/skeleton.tsx",
+    "./tooltip": "./src/tooltip.tsx"
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-native": ">=0.74",
+    "react-native-svg": ">=15",
+    "react-native-reanimated": ">=3",
+    "moti": ">=0.29"
+  },
+  "dependencies": {
+    "@nube/starter-theme-tokens": "workspace:*",
+    "@nube/starter-ui-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "jsdom": "^25.0.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "typescript": "^5.4",
+    "vitest": "^2.1.0"
+  }
+}

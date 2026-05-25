@@ -8,11 +8,18 @@
 // duplicate cache state and force us to keep the two in sync. The
 // `setPreferences` callback exposed via context PATCHes the server
 // and invalidates the query, never mutating local state directly.
+//
+// Web-only side-effects living in this file:
+//   * `document.documentElement.lang` / `.dir` writes (a11y / RTL).
+//   * The aria-live announcer (`<div>` JSX).
+//
+// Everything DOM-free — the context, hook, constants, HTTP helpers,
+// `buildLanguageAnnouncement`, `isRtlLanguage`, the SR_ONLY_STYLE —
+// lives in `./provider-core.ts` so React-Native consumers (Hermes)
+// can import the same surface without dragging the DOM bits in.
 
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useRef,
@@ -25,49 +32,31 @@ import type { StarterClient } from "@nube/starter-client-ts";
 import { starterQueryKey } from "../query/index.js";
 import { emitPreferencesTelemetry } from "./telemetry.js";
 import type { PreferencesPatch, ResolvedPreferences } from "./types.js";
+import {
+  DEFAULT_WORKSPACE,
+  PREFERENCES_BROADCAST_CHANNEL,
+  PreferencesContext,
+  type PreferencesBroadcastMessage,
+  SR_ONLY_STYLE,
+  buildLanguageAnnouncement,
+  fetchMyPreferences,
+  isRtlLanguage,
+  patchMyPreferences,
+} from "./provider-core.js";
 
-/** Name of the same-browser multi-tab fan-out channel. Frozen on
- *  merge per `examples/notes/user-pref.md` D-NP.9; production-team
- *  dashboards and dev tooling key off this exact string. */
-export const PREFERENCES_BROADCAST_CHANNEL = "starter-prefs";
-
-/** Message shape posted on the BroadcastChannel. The receiver
- *  invalidates the query (server is the source of truth) and
- *  optimistically applies the patch via `setQueryData` so the flip
- *  appears in the next animation frame; the subsequent refetch is
- *  the safety net. */
-interface PreferencesBroadcastMessage {
-  kind: "starter-prefs:patch";
-  workspaceId: string;
-  patch: PreferencesPatch;
-}
-
-/** Workspace sentinel matching the Rust resolver's default scope. */
-export const DEFAULT_WORKSPACE = "@starter/default";
-
-export interface PreferencesContextValue {
-  /** The resolved preferences. `null` while the initial fetch is in
-   * flight. Consumers can branch on `null` to render a loading state
-   * or simply skip rendering until preferences arrive. */
-  preferences: ResolvedPreferences | null;
-  /** True while the initial fetch is in flight. */
-  isLoading: boolean;
-  /** Fetch error, if the initial probe failed. */
-  error: unknown;
-  /** PATCH a subset of fields; resolves once the server has applied
-   * the change and the query has refetched. A `null` field value
-   * means "revert to inherit" per the Rust route layer. */
-  setPreferences: (patch: PreferencesPatch) => Promise<void>;
-}
-
-/**
- * The React Context object backing `<PreferencesProvider>`. Exported
- * so the host's Module-Federation runtime can register it as the
- * `@nube/starter-ui-core/preferences` singleton — extensions then
- * `useContext(handle.singletons["@nube/starter-ui-core/preferences"])`
- * against the host's instance instead of bundling their own copy.
- */
-export const PreferencesContext = createContext<PreferencesContextValue | undefined>(undefined);
+// Backwards-compat re-exports — `./index.ts` and external consumers
+// historically import these from `./provider.js`. Keep the surface
+// stable; new RN-targeted callers can reach them via `./provider-core.js`.
+export {
+  DEFAULT_WORKSPACE,
+  PREFERENCES_BROADCAST_CHANNEL,
+  PreferencesContext,
+  usePreferences,
+} from "./provider-core.js";
+export type {
+  PreferencesBroadcastMessage,
+  PreferencesContextValue,
+} from "./provider-core.js";
 
 export interface PreferencesProviderProps {
   /** The shared `StarterClient`. Re-used for the underlying HTTP. */
@@ -196,7 +185,7 @@ export function PreferencesProvider({
     [],
   );
 
-  const value = useMemo<PreferencesContextValue>(
+  const value = useMemo(
     () => ({
       preferences: query.data ?? null,
       isLoading: query.isLoading,
@@ -211,17 +200,13 @@ export function PreferencesProvider({
   // browser hyphenation, spell-check and font fallback all use the
   // right rules. The provider owns this so every consumer gets it
   // for free; teams that forget to wire it ship a broken a11y story
-  // and do not notice.
+  // and do not notice. WEB-ONLY — RN callers apply the same rule via
+  // `isRtlLanguage()` from `./provider-core.js` against `I18nManager`.
   const language = query.data?.language;
   useEffect(() => {
     if (typeof document === "undefined" || !language) return;
     document.documentElement.lang = language;
-    // RTL-list per `examples/notes/user-pref.md` Out-of-scope note.
-    // No catalogs ship here, but setting `dir` keeps the chrome
-    // correct the day one is added.
-    const primary = language.split("-")[0]?.toLowerCase();
-    const rtl = primary === "ar" || primary === "he" || primary === "fa" || primary === "ur";
-    document.documentElement.dir = rtl ? "rtl" : "ltr";
+    document.documentElement.dir = isRtlLanguage(language) ? "rtl" : "ltr";
   }, [language]);
 
   // A11y aria-live announcer (Stage-7 cross-cut). When the language
@@ -261,103 +246,4 @@ export function PreferencesProvider({
       </div>
     </PreferencesContext.Provider>
   );
-}
-
-/** Visually hidden, screen-reader-only style. Inline because the
- *  provider must not depend on a global stylesheet. */
-const SR_ONLY_STYLE = {
-  position: "absolute",
-  width: "1px",
-  height: "1px",
-  margin: "-1px",
-  padding: 0,
-  overflow: "hidden",
-  clip: "rect(0,0,0,0)",
-  whiteSpace: "nowrap",
-  border: 0,
-} as const;
-
-/** Build the polite-announcement string for a language flip. Tries
- *  `Intl.DisplayNames` in the new language (so a flip to `es` says
- *  `"Idioma cambiado a Español"`); falls back to the BCP-47 tag if
- *  the runtime lacks `DisplayNames` or the lookup throws. */
-function buildLanguageAnnouncement(language: string): string {
-  try {
-    const dn = new Intl.DisplayNames([language], { type: "language" });
-    const localized = dn.of(language);
-    // Match the SCOPE-named phrasing: `"Idioma cambiado a Español"`
-    // in the *new* language. We rely on `Intl.DisplayNames` for the
-    // language name; the verb is statically picked per language from
-    // a tiny table so consumers don't have to ship a catalog for
-    // this single string. Unknown languages fall back to English.
-    const phrase = LANG_CHANGED_PHRASE[language.split("-")[0]?.toLowerCase() ?? ""];
-    if (phrase && localized) return `${phrase} ${localized}`;
-    return localized
-      ? `Language changed to ${localized}`
-      : `Language changed to ${language}`;
-  } catch {
-    return `Language changed to ${language}`;
-  }
-}
-
-/** Tiny localised lead-in for the aria-live announcement. Adding a
- *  catalog round-trip just for this one string would defeat the
- *  point — the announcer fires *during* a catalog flip. */
-const LANG_CHANGED_PHRASE: Record<string, string> = {
-  en: "Language changed to",
-  es: "Idioma cambiado a",
-  de: "Sprache geändert zu",
-  fr: "Langue changée en",
-  pt: "Idioma alterado para",
-  it: "Lingua cambiata in",
-  nl: "Taal gewijzigd in",
-  ja: "言語が変更されました:",
-  zh: "语言已更改为",
-};
-
-/** Read the preferences context. Throws if called outside a
- * `<PreferencesProvider>`. */
-export function usePreferences(): PreferencesContextValue {
-  const ctx = useContext(PreferencesContext);
-  if (!ctx) throw new Error("usePreferences must be called inside <PreferencesProvider>");
-  return ctx;
-}
-
-// ---------------------------------------------------------------------
-// HTTP — minimal direct fetches via StarterClient. We do not depend on
-// a generated endpoint module because /v1/me/preferences ships with
-// starter-prefs, which sits outside the codegen pipeline today. The
-// shape is hand-mirrored in `types.ts`.
-// ---------------------------------------------------------------------
-
-async function fetchMyPreferences(
-  client: StarterClient,
-  workspaceId: string,
-): Promise<ResolvedPreferences> {
-  const url = `${client.baseUrl}/v1/me/preferences?org=${encodeURIComponent(workspaceId)}`;
-  const res = await client.fetch(url, {
-    credentials: "include",
-    headers: client.headers,
-  });
-  if (!res.ok) {
-    throw new Error(`GET /v1/me/preferences failed: ${res.status}`);
-  }
-  return (await res.json()) as ResolvedPreferences;
-}
-
-async function patchMyPreferences(
-  client: StarterClient,
-  workspaceId: string,
-  patch: PreferencesPatch,
-): Promise<void> {
-  const url = `${client.baseUrl}/v1/me/preferences?org=${encodeURIComponent(workspaceId)}`;
-  const res = await client.fetch(url, {
-    method: "PATCH",
-    credentials: "include",
-    headers: { ...client.headers, "content-type": "application/json" },
-    body: JSON.stringify(patch),
-  });
-  if (!res.ok) {
-    throw new Error(`PATCH /v1/me/preferences failed: ${res.status}`);
-  }
 }

@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Spinner> > snapshot stable 1`] = `
+<div>
+  <rn-activity-indicator
+    accessibilitylabel="Loading"
+    accessibilityrole="progressbar"
+    accessible="true"
+    color="oklch(0.218 0.008 223.9)"
+    data-slot="activity-indicator"
+    data-style="null"
+    size="large"
+  />
+</div>
+`;

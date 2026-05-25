@@ -9,7 +9,7 @@
 // label comes from `node.unit_symbol` (current IR) or `node.unit`
 // (legacy). See `crates/rubix-flows/dashboards/disk-overview.json`.
 import { Card, CardContent, cn } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
+import { registerRenderer } from "../headless/registry.js";
 
 type Point = [number, number];
 

@@ -2,9 +2,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import type { ReactElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { PageStateProvider } from "../page-state.js";
-import { SduiProvider } from "../provider/sdui-provider.js";
-import type { SduiTransport } from "../transport/index.js";
+import { PageStateProvider } from "../headless/page-state.js";
+import { SduiProvider } from "../headless/sdui-provider.js";
+import type { SduiTransport } from "../headless/transport/index.js";
 
 export function nullTransport(): SduiTransport {
   return {

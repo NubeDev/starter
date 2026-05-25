@@ -1,8 +1,8 @@
 // `col` — 12-column grid cell. `span` (1–12, default 12) drives
 // `col-span-N`; children render stacked vertically inside.
 import { cn } from "@nube/starter-ui-kit";
-import { RenderChildren } from "./render.js";
-import { registerRenderer } from "./registry.js";
+import { RenderChildren } from "../headless/render.js";
+import { registerRenderer } from "../headless/registry.js";
 
 // Static Tailwind class map so the JIT picks the classes up at build
 // time — a dynamic `col-span-${n}` string would be tree-shaken away.

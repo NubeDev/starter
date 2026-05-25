@@ -8,8 +8,8 @@ import {
   Label,
   cn,
 } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
-import { usePageStateKey } from "../page-state.js";
+import { registerRenderer } from "../headless/registry.js";
+import { usePageStateKey } from "../headless/page-state.js";
 
 interface Opt { value: string; label?: string }
 

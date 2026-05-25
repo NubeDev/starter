@@ -4,7 +4,7 @@
 // with a richer chart library via the `customRenderers` registry.
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle, cn } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
+import { registerRenderer } from "../headless/registry.js";
 
 type Point = [number, number];
 

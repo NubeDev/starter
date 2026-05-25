@@ -4,8 +4,8 @@
 // (the resolver already inlines repeated trees server-side); this
 // is a thin client fallback.
 import { cn } from "@nube/starter-ui-kit";
-import { Render } from "./render.js";
-import { registerRenderer } from "./registry.js";
+import { Render } from "../headless/render.js";
+import { registerRenderer } from "../headless/registry.js";
 
 export function RenderRepeat({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const items = Array.isArray(node.items) ? (node.items as unknown[]) : [];

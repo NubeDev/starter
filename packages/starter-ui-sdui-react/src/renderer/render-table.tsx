@@ -2,7 +2,7 @@
 // paginated `transport.table()` flow is a v2 enhancement; v1 renders
 // whatever rows the resolve embedded.
 import { cn } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
+import { registerRenderer } from "../headless/registry.js";
 
 interface Col { key: string; label?: string }
 

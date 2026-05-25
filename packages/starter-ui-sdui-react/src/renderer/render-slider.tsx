@@ -1,7 +1,7 @@
 // `slider` — single-thumb numeric slider bound to `page_state`.
 import { Slider, Label, cn } from "@nube/starter-ui-kit";
-import { registerRenderer } from "./registry.js";
-import { usePageStateKey } from "../page-state.js";
+import { registerRenderer } from "../headless/registry.js";
+import { usePageStateKey } from "../headless/page-state.js";
 
 export function RenderSlider({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const key = typeof node.page_state_key === "string" ? node.page_state_key : null;

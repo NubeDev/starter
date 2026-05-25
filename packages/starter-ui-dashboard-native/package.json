@@ -1,0 +1,46 @@
+{
+  "name": "@nube/starter-ui-dashboard-native",
+  "version": "0.1.0",
+  "description": "React Native ports of the four `@nube/starter-ui-dashboard` widgets — MetricCard, RadialProgress, ActivityFeed, PerformanceChart — with identical prop APIs so a feature consumed on web can ship on mobile by changing only the import. Widget files import only `@nube/starter-ui-kit-native` + `react-native-svg` + `moti` — no direct react-native primitives.",
+  "license": "MIT OR Apache-2.0",
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./metric-card": "./src/metric-card.tsx",
+    "./radial-progress": "./src/radial-progress.tsx",
+    "./activity-feed": "./src/activity-feed.tsx",
+    "./performance-chart": "./src/performance-chart.tsx"
+  },
+  "files": ["src", "README.md"],
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run"
+  },
+  "peerDependencies": {
+    "react": "^18 || ^19",
+    "react-native": ">=0.74",
+    "react-native-svg": ">=15",
+    "moti": ">=0.29",
+    "lucide-react": "^0.469.0"
+  },
+  "peerDependenciesMeta": {
+    "lucide-react": { "optional": true }
+  },
+  "dependencies": {
+    "@nube/starter-ui-kit-native": "workspace:*"
+  },
+  "devDependencies": {
+    "@testing-library/react": "^16.1.0",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "jsdom": "^25.0.0",
+    "lucide-react": "^0.469.0",
+    "react": "^19",
+    "react-dom": "^19",
+    "typescript": "^5.4",
+    "vitest": "^2.1.0"
+  }
+}

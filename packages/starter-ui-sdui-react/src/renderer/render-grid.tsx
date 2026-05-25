@@ -1,7 +1,7 @@
 // `grid` / `kpi_grid` — responsive CSS grid; `columns` controls layout.
 import { cn } from "@nube/starter-ui-kit";
-import { RenderChildren } from "./render.js";
-import { registerRenderer } from "./registry.js";
+import { RenderChildren } from "../headless/render.js";
+import { registerRenderer } from "../headless/registry.js";
 
 export function RenderGrid({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   const cols = typeof node.columns === "number" ? node.columns : 3;

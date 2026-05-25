@@ -3,8 +3,8 @@
 // classes. Mirrors the Bootstrap-style row/col idiom the bundled
 // dashboard JSON uses (`crates/rubix-flows/dashboards/*.json`).
 import { cn } from "@nube/starter-ui-kit";
-import { RenderChildren } from "./render.js";
-import { registerRenderer } from "./registry.js";
+import { RenderChildren } from "../headless/render.js";
+import { registerRenderer } from "../headless/registry.js";
 
 export function RenderRow({ node }: { node: import("@nube/starter-ui-ir").UiComponent }) {
   return (
