@@ -117,9 +117,21 @@ impl Reversible for DashboardReversible {
                     .map_err(backend)?;
                 Ok(())
             }
+            Op::Delete => {
+                // Undo of a delete: re-insert the prior live row
+                // (carried in `before`). The store mints a fresh
+                // `revision_id`; the SDUI `page_id` is stable so
+                // any cached `page_ref` still resolves.
+                let snap: DashboardSnapshot = parse(ch.before.as_ref(), "before")?;
+                self.store
+                    .insert_revision(snap.into_new_revision())
+                    .await
+                    .map_err(backend)?;
+                Ok(())
+            }
             other => Err(Error::Invalid {
                 message: format!(
-                    "DashboardReversible: unsupported op {other:?} (expected Create or Update)"
+                    "DashboardReversible: unsupported op {other:?} (expected Create, Update or Delete)"
                 ),
             }),
         }
@@ -135,9 +147,19 @@ impl Reversible for DashboardReversible {
                     .map_err(backend)?;
                 Ok(())
             }
+            Op::Delete => {
+                // Redo of a delete: re-supersede the page using the
+                // tenant/page coordinates carried in `before`.
+                let snap: DashboardSnapshot = parse(ch.before.as_ref(), "before")?;
+                self.store
+                    .mark_superseded(&snap.tenant_id, &snap.page_id)
+                    .await
+                    .map_err(backend)?;
+                Ok(())
+            }
             other => Err(Error::Invalid {
                 message: format!(
-                    "DashboardReversible: unsupported op {other:?} (expected Create or Update)"
+                    "DashboardReversible: unsupported op {other:?} (expected Create, Update or Delete)"
                 ),
             }),
         }

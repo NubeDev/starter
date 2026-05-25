@@ -48,5 +48,9 @@
   "rubix.dashboard.created": "Panel {title} creado.",
   "rubix.dashboard.updated": "Panel {page_id} actualizado.",
   "rubix.dashboard.update.conflict": "El panel {page_id} fue modificado por otra persona — recargue y vuelva a intentarlo.",
-  "rubix.dashboard.create.duplicate_id": "El panel {page_id} ya existe — elija otro identificador."
+  "rubix.dashboard.create.duplicate_id": "El panel {page_id} ya existe — elija otro identificador.",
+  "rubix.dashboard.deleted": "Panel {page_id} eliminado.",
+  "rubix.dashboard.delete.refused_system": "El panel {page_id} viene incluido con el sistema — los paneles del sistema no pueden eliminarse.",
+  "rubix.dashboard.duplicated": "Panel {source_page_id} duplicado en {page_id}.",
+  "rubix.dashboard.duplicate.source_not_found": "No se puede duplicar el panel {source_page_id} — la página de origen no existe."
 }
