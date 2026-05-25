@@ -11,7 +11,7 @@
 //! per-variant Bindable dispatch (that's Phase 3+ work and lands in
 //! `starter-ui-builder` / the renderer).
 
-use starter_ui_ir::{Component, ComponentTree};
+use starter_ui_ir::{Bindable, Component, ComponentTree};
 
 use crate::eval::{evaluate, BindingError, EvalContext};
 use crate::graph::EntityGraph;
@@ -62,20 +62,64 @@ fn walk<G: EntityGraph + ?Sized>(
     node: &mut Component,
     ctx: &EvalContext<'_, G>,
 ) -> Result<(), SubstituteError> {
-    match node {
-        Component::Text { content, .. } | Component::Heading { content, .. } => {
-            *content = substitute_text(content, ctx)?;
+    // 1) Apply Bindable::visit_bindings on this node's own string
+    //    fields. The closure can't return Result, so we stash the
+    //    first error in a local Option and short-circuit after the
+    //    call. Subsequent visits no-op (the stashed error is checked).
+    let mut err: Option<SubstituteError> = None;
+    node.visit_bindings(&mut |s| {
+        if err.is_some() {
+            return;
         }
+        match substitute_text(s, ctx) {
+            Ok(rewritten) => *s = rewritten,
+            Err(e) => err = Some(e),
+        }
+    });
+    if let Some(e) = err {
+        return Err(e);
+    }
+
+    // 2) Recurse explicitly into child subtrees. visit_bindings is
+    //    intentionally per-node — child descent stays here so the
+    //    walker controls traversal order.
+    match node {
         Component::Page { children, .. }
         | Component::Row { children, .. }
-        | Component::Col { children, .. } => {
+        | Component::Col { children, .. }
+        | Component::Grid { children, .. }
+        | Component::Section { children, .. }
+        | Component::Card { children, .. }
+        | Component::Dialog { children, .. }
+        | Component::Drawer { children, .. } => {
             for c in children {
                 walk(c, ctx)?;
             }
         }
-        // Other variants pass through unchanged in Phase 2 — Phase 3
-        // (builder) and Phase 4 (renderer) port the full Bindable
-        // dispatch onto the rest of the IR.
+        Component::Tabs { tabs, .. } => {
+            for t in tabs {
+                for c in &mut t.children {
+                    walk(c, ctx)?;
+                }
+            }
+        }
+        Component::Wizard { steps, .. } => {
+            for step in steps {
+                for c in &mut step.children {
+                    walk(c, ctx)?;
+                }
+            }
+        }
+        Component::Repeat { template, .. } => {
+            walk(template, ctx)?;
+        }
+        Component::List { item, .. } => {
+            walk(item, ctx)?;
+        }
+        Component::FieldGroup { control, .. } => {
+            walk(control, ctx)?;
+        }
+        Component::Menu { trigger: Some(t), .. } => walk(t, ctx)?,
         _ => {}
     }
     Ok(())
