@@ -15,3 +15,4 @@ pub mod middleware;
 pub mod openapi;
 pub mod registry;
 pub mod routes;
+pub mod sdui;

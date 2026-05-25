@@ -24,6 +24,12 @@ pub use yaml::{parse_yaml, RubixFlowYaml, RubixLinkYaml, RubixNodeYaml, ALLOWED_
 /// All bundled rubix flows, embedded at compile time.
 pub static BUNDLED: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/flows");
 
+/// All bundled rubix SDUI dashboard pages, embedded at compile
+/// time. Each `<slug>.json` under `dashboards/` is seeded into
+/// `dashboards_definitions` on first boot by
+/// `rubix_agent::boot::dashboards_seed`.
+pub static BUNDLED_DASHBOARDS: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/dashboards");
+
 /// Return the embedded flow bundle. The agent binary wraps this in
 /// the starter-flow loader; rubix-flows itself does not depend on
 /// starter-flow to keep this crate tiny — content crates ship

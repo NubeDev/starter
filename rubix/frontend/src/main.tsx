@@ -6,6 +6,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthProvider, StarterClientProvider } from '@nube/starter-client-react'
 import { StarterError } from '@nube/starter-client-ts'
 import { RubixClientProvider } from '@nube/rubix-client-react'
+import { SduiProvider, createHttpSduiTransport } from '@nube/starter-ui-sdui-react'
 import { routeTree } from './routeTree.gen'
 import { DirectionProvider } from '@nube/starter-ui-core/layout'
 import { ThemeProvider } from '@/components/theme/theme-provider'
@@ -58,6 +59,7 @@ createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <StarterClientProvider client={getStarterClient()}>
         <RubixClientProvider client={getRubixClient()}>
+          <SduiProvider transport={createHttpSduiTransport({ client: getStarterClient() })}>
           <DirectionProvider>
             <ThemeProvider>
               <I18nProvider>
@@ -67,6 +69,7 @@ createRoot(document.getElementById('root')!).render(
               </I18nProvider>
             </ThemeProvider>
           </DirectionProvider>
+          </SduiProvider>
         </RubixClientProvider>
       </StarterClientProvider>
       {/* SCOPE OQ-3: devtools mount only in dev — Vite tree-shakes

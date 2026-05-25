@@ -1,0 +1,87 @@
+{
+  "ir_version": 5,
+  "title": "Disk overview",
+  "root": {
+    "type": "page",
+    "id": "page",
+    "title": "Disk overview",
+    "default_row_gap": "1rem",
+    "default_column_gap": "1rem",
+    "default_page_padding": "1.5rem",
+    "default_max_width": "80rem",
+    "children": [
+      {
+        "type": "row",
+        "id": "kpis",
+        "children": [
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-disk-used",
+                "label": "Disk used",
+                "format": "percent",
+                "unit_symbol": "%",
+                "source": {
+                  "type": "static",
+                  "points": [[0, 42.0]]
+                }
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-disk-free-gb",
+                "label": "Disk free",
+                "format": "number",
+                "unit_symbol": "GB",
+                "source": {
+                  "type": "static",
+                  "points": [[0, 58.0]]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "chart-row",
+        "children": [
+          {
+            "type": "col",
+            "span": 12,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-disk-history",
+                "kind": "line",
+                "page_state_key": "chart_range",
+                "sources": [
+                  {
+                    "type": "static",
+                    "points": [
+                      [1716595200000, 38.0],
+                      [1716681600000, 39.5],
+                      [1716768000000, 40.2],
+                      [1716854400000, 41.0],
+                      [1716940800000, 41.8],
+                      [1717027200000, 42.0],
+                      [1717113600000, 42.4]
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

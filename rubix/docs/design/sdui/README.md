@@ -1,40 +1,38 @@
-# SDUI — server-driven UI surface + per-user dynamic resource authz
+# SDUI — server-driven UI surface for rubix dashboards
 
-> Cites: SCOPE [Phase 3 entry gate Q3](../../SCOPE.md).
+> Cites: [`SCOPE.md`](../../SCOPE.md), [`THIN-SLICE.md`](../../scope/THIN-SLICE.md).
 
-## What rubix gets from `starter-sdui-routes`
+The SDUI surface lets operators *and* the dashboard-assistant AI
+flow author the same dashboard pages, rendered uniformly on web,
+mobile, and Tauri without per-platform widget code. Goal 1 of
+SCOPE landed via the branch `codeless/rubix-dashboards-goal-1` in
+five phases (A–E); this directory holds the present-tense design
+for every sub-area.
 
-`starter-sdui-routes` is the resolver: given an SDUI page id, it
-returns the page's widget tree. Rubix uses it for the Goal-1
-dashboard surface — dashboards are SDUI pages produced by the
-`rubix.dashboard.page_set` tool.
+## Sub-design index
 
-## Where pages physically live (Q3 — to resolve)
+| Area | Owns |
+|---|---|
+| [`storage/`](./storage/README.md) | `dashboards_definitions` PG table, revisions, NOTIFY, page-level authz registration. |
+| [`bindings/`](./bindings/README.md) | The six `starter-ui-bindings` / `starter-ui-ir` substrate fixes (per-variant `Bindable`, qualifiers, `Repeat`, synthetic ids, portable-subset flag, `$msg` source). |
+| [`host-glue/`](./host-glue/README.md) | Rubix's four trait impls (`EntityGraph`, `PageProvider`, `QueryEngine`, `HandlerRegistry`) and the `sdui_router` mount under `/api/v1/ui`. |
+| [`tools/`](./tools/README.md) | The seven `rubix.dashboard.*` verbs (`get`, `list`, `create`, `update`, `duplicate`, `delete`, `page_set`) with undo. |
+| [`renderer/`](./renderer/README.md) | `@nube/starter-ui-sdui-react` — `<SduiPage>`, transport seam, per-IR-variant renderers. |
+| [`ai-builder/`](./ai-builder/README.md) | The `com.rubix.dashboard-assistant` flow, the `dashboard-builder` skill, and the JSON dialect the LLM emits via tool args. |
 
-Two options, pick one before Phase 3 code lands:
+Phase 4 (batched historical pulls) is scoped but deferred — see
+[`docs/scope/dashboards/07-fetch-plan.md`](../../scope/dashboards/07-fetch-plan.md)
+for the v2 hand-off.
 
-**A. In starter-sdui-routes' own store.** Rubix calls a write API
-on the resolver. Pro: no rubix table. Con: depends on whether
-starter-sdui-routes ships a write path.
-
-**B. In a rubix-owned Postgres table.** `rubix.dashboard.page_set`
-writes here; the resolver reads via a `PageStore` trait rubix
-implements. Pro: rubix owns the data layout. Con: rubix
-re-implements what starter-sdui-routes might one day grow.
-
-**Default assumption pending verification:** option A if the
-resolver supports it; otherwise option B with an upstream issue.
-
-## Per-user dynamic resource authz (Q3 + SCOPE Phase 4 hint)
+## Per-user dynamic resource authz
 
 User-defined SDUI pages are **resources** in starter-authz's
 `ResourceRegistry`, not static routes. Each page registration adds
-a `ResourceSpec`; reads/writes go through `PolicyEngine::decide`
-with the calling principal. A user without grant on a page sees
-a 404, not a 403 (deny leakage).
-
-This makes "alice has dashboard X but bob doesn't" enforceable
-without a hand-rolled authz layer.
+a `ResourceSpec`; reads and writes go through
+`PolicyEngine::decide` with the calling principal. A user without
+grant on a page sees a 404, not a 403 (deny leakage). This makes
+"alice has dashboard X but bob doesn't" enforceable without a
+hand-rolled authz layer.
 
 ## Resource URI scheme intersection
 
@@ -46,5 +44,4 @@ overlaps SDUI page ids. Rubix's convention:
 - SDUI page ids are `dashboard.<slug>` (no `rubix://` prefix —
   that's MCP's namespace).
 
-Phase 3 design must keep these two namespaces explicit so
-extensions don't conflate them.
+The two namespaces stay explicit so extensions don't conflate them.

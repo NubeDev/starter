@@ -64,7 +64,7 @@ async fn served_document_declares_one_tag_per_goal() {
     assert_eq!(
         tags.len(),
         9,
-        "one tag per goal area (auth, system, user-admin, clickhouse-ruler, flow-programmer, mcp, undo, dashboard-stub, weekly-report-stub); got {tags:?}",
+        "one tag per goal area (auth, system, user-admin, clickhouse-ruler, flow-programmer, mcp, undo, dashboard, weekly-report-stub); got {tags:?}",
     );
     let names: Vec<&str> = tags
         .iter()
@@ -78,7 +78,7 @@ async fn served_document_declares_one_tag_per_goal() {
         "flow-programmer",
         "mcp",
         "undo",
-        "dashboard-stub",
+        "dashboard",
         "weekly-report-stub",
     ] {
         assert!(

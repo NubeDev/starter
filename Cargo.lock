@@ -6414,11 +6414,14 @@ dependencies = [
  "starter-i18n",
  "starter-mcp",
  "starter-observability",
+ "starter-sdui-routes",
  "starter-server",
  "starter-spi",
  "starter-store-clickhouse",
  "starter-store-postgres",
  "starter-store-sqlite",
+ "starter-ui-bindings",
+ "starter-ui-ir",
  "starter-undo",
  "tempfile",
  "thiserror 1.0.69",
@@ -6470,6 +6473,7 @@ dependencies = [
 name = "rubix-spi"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "serde",
  "serde_json",
  "starter-i18n",
@@ -6482,8 +6486,14 @@ dependencies = [
 name = "rubix-store-postgres"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
+ "chrono",
+ "rubix-spi",
+ "serde_json",
  "sqlx",
  "starter-store-postgres",
+ "thiserror 1.0.69",
+ "uuid",
 ]
 
 [[package]]
@@ -6501,6 +6511,7 @@ dependencies = [
  "serde",
  "serde_json",
  "starter-ai",
+ "starter-authz",
  "starter-blob-fs",
  "starter-changelog",
  "starter-export",

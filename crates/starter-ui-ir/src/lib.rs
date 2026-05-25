@@ -95,6 +95,37 @@ pub(crate) fn default_true() -> bool {
 /// the tree at the capability handshake.
 pub const IR_VERSION: u32 = 5;
 
+/// Names of variants in the portable IR subset — those a non-web
+/// renderer (react-native, SwiftUI, Flutter) can implement without
+/// DOM/CSS assumptions. The runtime equivalent of
+/// [`Component::is_portable`]; kept in lock-step with that match.
+///
+/// Variants NOT in this list either embed CSS-length fields, use
+/// HTML elements as their rendering contract, or carry verbatim
+/// platform-specific props. Non-web renderers must implement them
+/// with a documented platform mapping or downgrade to `Dangling` via
+/// the capability handshake.
+pub const IR_PORTABLE_VARIANTS: &[&str] = &[
+    "page",
+    "row",
+    "col",
+    "grid",
+    "card",
+    "tabs",
+    "divider",
+    "text",
+    "kpi",
+    "chart",
+    "table",
+    "form",
+    "select",
+    "toggle",
+    "slider",
+    "date_range",
+    "ref_picker",
+    "repeat",
+];
+
 /// Root of every component tree. Carries the IR version so clients can
 /// refuse to render incompatible trees.
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]

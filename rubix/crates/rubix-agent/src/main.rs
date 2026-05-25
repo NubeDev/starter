@@ -168,6 +168,11 @@ async fn main() -> Result<()> {
         }),
     )
     .await?;
+    // Clone the optional `ChClient` for the SDUI query engine before
+    // the registry consumes the original. Phase B.2: the SDUI
+    // `QueryEngine` honours `ch:<table>` prefixes against the same
+    // warehouse the disk tool persists history into.
+    let ch_client_for_sdui = ch_client.clone();
     let tools = registry::build_tool_registry(ch_client, cfg.insights.disk_warn_threshold);
 
     info!(
@@ -187,7 +192,7 @@ async fn main() -> Result<()> {
         "rubix-agent starting"
     );
 
-    let tools_state = routes::tools::ToolsState::new(tools, bundle.clone());
+    let tools_state = routes::tools::ToolsState::new(tools.clone(), bundle.clone());
     let tools_router = routes::tools::router(tools_state);
 
     // Phase C.2 — always-on flow runtime. Constructs the shared
@@ -259,6 +264,15 @@ async fn main() -> Result<()> {
                 starter_ext_server::router_with_auth(bundle.admin, auth.authenticator.clone());
             app = app.merge(Router::new().nest("/api/v1", ext_router));
         }
+
+        // Phase B.2 — mount the SDUI router under `/api/v1/ui`.
+        // `starter_sdui_routes::sdui_router` already roots its
+        // routes at the full path, so we `merge` (not `nest`). The
+        // four trait impls are composed inside
+        // [`boot::build_sdui_router`] — verb-per-file.
+        let sdui_router: Router =
+            boot::build_sdui_router(&cfg, pool.clone(), ch_client_for_sdui.clone(), &tools);
+        app = app.merge(sdui_router);
 
         // Layer order matters. The changelog middleware reads
         // `Principal` from request extensions, so it must run

@@ -14,3 +14,4 @@ serde = { workspace = true, features = ["derive"] }
 serde_json = { workspace = true }
 utoipa = { workspace = true }
 thiserror = { workspace = true }
+async-trait = { workspace = true }

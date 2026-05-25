@@ -11,11 +11,11 @@
 //! per-variant Bindable dispatch (that's Phase 3+ work and lands in
 //! `starter-ui-builder` / the renderer).
 
-use starter_ui_ir::{Component, ComponentTree};
+use starter_ui_ir::{Bindable, Component, ComponentTree};
 
 use crate::eval::{evaluate, BindingError, EvalContext};
 use crate::graph::EntityGraph;
-use crate::parse::{Binding, ParseError};
+use crate::parse::{Binding, ParseError, Qualifier};
 
 /// Substitute every `{{ ... }}` tag inside `input` with the
 /// evaluated binding's value. Non-string results are rendered with
@@ -38,7 +38,18 @@ pub fn substitute_text<G: EntityGraph + ?Sized>(
             .ok_or_else(|| SubstituteError::Unterminated(rest[open..].to_string()))?;
         let expr = &after_open[..close];
         let binding = Binding::parse(expr.trim()).map_err(SubstituteError::Parse)?;
-        let value = evaluate(&binding, ctx).map_err(SubstituteError::Eval)?;
+        let value = match evaluate(&binding, ctx) {
+            Ok(v) => v,
+            Err(e) if binding.qualifier == Qualifier::Optional => {
+                // Optional binding swallows lookup errors and renders
+                // as empty. Per the qualifier grammar (G2): a missing
+                // claim/slot/child collapses, leaving the surrounding
+                // template untouched.
+                let _ = e;
+                serde_json::Value::Null
+            }
+            Err(e) => return Err(SubstituteError::Eval(e)),
+        };
         out.push_str(&value_to_text(&value));
         rest = &after_open[close + 2..];
     }
@@ -58,24 +69,79 @@ pub fn substitute_tree<G: EntityGraph + ?Sized>(
     walk(&mut tree.root, ctx)
 }
 
+/// Same as [`substitute_tree`] but operates on a single `Component`
+/// subtree. Exposed for the Repeat expander which needs to substitute
+/// each cloned template against a per-iteration context before
+/// emitting it.
+pub fn substitute_subtree<G: EntityGraph + ?Sized>(
+    node: &mut Component,
+    ctx: &EvalContext<'_, G>,
+) -> Result<(), SubstituteError> {
+    walk(node, ctx)
+}
+
 fn walk<G: EntityGraph + ?Sized>(
     node: &mut Component,
     ctx: &EvalContext<'_, G>,
 ) -> Result<(), SubstituteError> {
-    match node {
-        Component::Text { content, .. } | Component::Heading { content, .. } => {
-            *content = substitute_text(content, ctx)?;
+    // 1) Apply Bindable::visit_bindings on this node's own string
+    //    fields. The closure can't return Result, so we stash the
+    //    first error in a local Option and short-circuit after the
+    //    call. Subsequent visits no-op (the stashed error is checked).
+    let mut err: Option<SubstituteError> = None;
+    node.visit_bindings(&mut |s| {
+        if err.is_some() {
+            return;
         }
+        match substitute_text(s, ctx) {
+            Ok(rewritten) => *s = rewritten,
+            Err(e) => err = Some(e),
+        }
+    });
+    if let Some(e) = err {
+        return Err(e);
+    }
+
+    // 2) Recurse explicitly into child subtrees. visit_bindings is
+    //    intentionally per-node — child descent stays here so the
+    //    walker controls traversal order.
+    match node {
         Component::Page { children, .. }
         | Component::Row { children, .. }
-        | Component::Col { children, .. } => {
+        | Component::Col { children, .. }
+        | Component::Grid { children, .. }
+        | Component::Section { children, .. }
+        | Component::Card { children, .. }
+        | Component::Dialog { children, .. }
+        | Component::Drawer { children, .. } => {
             for c in children {
                 walk(c, ctx)?;
             }
         }
-        // Other variants pass through unchanged in Phase 2 — Phase 3
-        // (builder) and Phase 4 (renderer) port the full Bindable
-        // dispatch onto the rest of the IR.
+        Component::Tabs { tabs, .. } => {
+            for t in tabs {
+                for c in &mut t.children {
+                    walk(c, ctx)?;
+                }
+            }
+        }
+        Component::Wizard { steps, .. } => {
+            for step in steps {
+                for c in &mut step.children {
+                    walk(c, ctx)?;
+                }
+            }
+        }
+        Component::Repeat { template, .. } => {
+            walk(template, ctx)?;
+        }
+        Component::List { item, .. } => {
+            walk(item, ctx)?;
+        }
+        Component::FieldGroup { control, .. } => {
+            walk(control, ctx)?;
+        }
+        Component::Menu { trigger: Some(t), .. } => walk(t, ctx)?,
         _ => {}
     }
     Ok(())
@@ -127,6 +193,10 @@ mod tests {
             user: &user,
             page: &page,
             access_log: None,
+            item: None,
+            index: None,
+            catalogue: &crate::NullBag,
+            locale: "en",
         };
         assert_eq!(
             substitute_text("Hi {{$user.name}}!", &ctx).unwrap(),

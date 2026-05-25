@@ -5,6 +5,7 @@ pub mod auth;
 pub mod authz;
 pub mod clickhouse;
 pub mod config;
+pub mod dashboards_seed;
 pub mod extensions;
 pub mod flow_notify;
 pub mod flow_runtime;
@@ -12,6 +13,7 @@ pub mod flows_seed;
 pub mod mcp;
 pub mod migrations;
 pub mod scheduler;
+pub mod sdui;
 pub mod tracing;
 pub mod undo_sweep;
 
@@ -29,6 +31,7 @@ pub use extensions::{
     SYSTEM_AUTOSTART_PRINCIPAL,
 };
 pub use scheduler::{spawn as spawn_scheduler, SchedulerHandle};
+pub use sdui::build_sdui_router;
 pub use flow_notify::spawn_flow_notify;
 pub use flows_seed::seed_and_load as seed_and_load_flow_definitions;
 pub use migrations::apply_migrations;

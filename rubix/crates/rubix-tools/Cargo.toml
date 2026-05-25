@@ -41,6 +41,10 @@ uuid                      = { workspace = true }
 starter-undo              = { workspace = true }
 starter-changelog         = { workspace = true }
 
+# dashboard.create re-asserts the `rubix.dashboard.page` ResourceSpec
+# on the authz registry per write (Phase C.2 of `dashboards`).
+starter-authz             = { workspace = true }
+
 # analytics.query bundles its named SQL templates via `include_dir!`
 # at compile time — same pattern as `rubix-flows` and `rubix-skills`.
 # See src/analytics/templates/.
@@ -52,6 +56,10 @@ include_dir               = "0.7"
 # See src/analytics/report.rs.
 starter-export            = { workspace = true, features = ["html", "csv", "json"] }
 bytes                     = { workspace = true }
+
+# dashboard.page_set funnels operator slot writes through the R2
+# chokepoint `starter_flow_spi::graph::GraphStore::write_slot`.
+starter-flow-spi          = { workspace = true }
 
 [dev-dependencies]
 # analytics.report integration test writes the rendered bytes to a

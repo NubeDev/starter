@@ -29,6 +29,23 @@ pub fn build_engine() -> anyhow::Result<Arc<dyn PolicyEngine>> {
         "Rubix tool",
         "Aggregate resource kind every `rubix.system.*` / `rubix.alert.*` tool dispatch passes through.",
     ));
+    // Goal 1, Phase A.1 — SDUI dashboard pages. Authored by
+    // operators (and the AI builder), persisted in
+    // `dashboards_definitions`, and surfaced as per-page resources
+    // through the engine. Per
+    // `rubix/docs/scope/dashboards/01-storage.md`: `view` is
+    // tenant-scoped, `edit`/`delete` require ownership or
+    // `rubix.dashboard:admin`. The `dashboards_seed` boot helper
+    // re-registers the same kind on every insert (idempotent via
+    // `try_register`); registering it here keeps the early-boot
+    // resource list complete before any seed call lands.
+    registry.register_spec(ResourceSpec::from_static_tenant_scoped(
+        "rubix.dashboard.page",
+        &["view", "edit", "delete"],
+        Ownership::Subject,
+        "Rubix dashboard page",
+        "An SDUI page persisted in `dashboards_definitions` and resolved by the page provider.",
+    ));
     let cfg = AuthzConfig::default();
     let engine = StaticRbacEngine::from_config(cfg, registry as Arc<dyn ResourceRegistry>)
         .map_err(|e| anyhow::anyhow!("build authz engine: {e}"))?;

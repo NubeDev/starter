@@ -2035,6 +2035,133 @@ pub enum MenuItem {
 }
 
 // -------------------------------------------------------------------
+// Portable subset (G5 — cross-platform contract)
+// -------------------------------------------------------------------
+
+impl Component {
+    /// `true` for variants in the portable IR subset — those a
+    /// non-web renderer (react-native, SwiftUI, Flutter) can
+    /// implement faithfully without DOM/CSS assumptions. Variants
+    /// that embed CSS-length strings, HTML elements as part of their
+    /// rendering contract, or verbatim platform-specific props are
+    /// not portable; non-web renderers must either implement them
+    /// with a documented platform mapping or downgrade them to
+    /// `Dangling` via the capability handshake.
+    ///
+    /// The same set is exported as the runtime-readable list
+    /// [`crate::IR_PORTABLE_VARIANTS`].
+    pub const fn is_portable(&self) -> bool {
+        matches!(
+            self,
+            Component::Page { .. }
+                | Component::Row { .. }
+                | Component::Col { .. }
+                | Component::Grid { .. }
+                | Component::Card { .. }
+                | Component::Tabs { .. }
+                | Component::Divider { .. }
+                | Component::Text { .. }
+                | Component::Kpi { .. }
+                | Component::Chart { .. }
+                | Component::Table { .. }
+                | Component::Form { .. }
+                | Component::Select { .. }
+                | Component::Toggle { .. }
+                | Component::Slider { .. }
+                | Component::DateRange { .. }
+                | Component::RefPicker { .. }
+                | Component::Repeat { .. }
+        )
+    }
+}
+
+// -------------------------------------------------------------------
+// Synthetic id helpers (G3/G5 — Repeat expansion stable keying)
+// -------------------------------------------------------------------
+
+impl Component {
+    /// Synthesize a deterministic id for a Repeat-expanded clone.
+    /// Format: `"<parent_id>-<index>"`. Used by the Repeat expander
+    /// so each per-item clone carries a stable id derived from the
+    /// authored parent — re-resolving the same tree produces the
+    /// same ids.
+    pub fn synthetic_id(parent_id: &str, index: usize) -> String {
+        format!("{parent_id}-{index}")
+    }
+
+    /// Set this component's id to the synthetic value
+    /// `synthetic_id(parent_id, index)` **only when the existing id
+    /// is blank** (i.e. `Option::None` or `String::new()` for
+    /// required-id variants). Existing ids are preserved.
+    pub fn assign_synthetic_id(&mut self, parent_id: &str, index: usize) {
+        let synth = Self::synthetic_id(parent_id, index);
+        match self {
+            // Optional-id variants.
+            Component::Row { id, .. }
+            | Component::Col { id, .. }
+            | Component::Grid { id, .. }
+            | Component::Tabs { id, .. }
+            | Component::Repeat { id, .. }
+            | Component::Text { id, .. }
+            | Component::Heading { id, .. }
+            | Component::Badge { id, .. }
+            | Component::Diff { id, .. }
+            | Component::Divider { id, .. }
+            | Component::FieldGroup { id, .. }
+            | Component::Section { id, .. }
+            | Component::Chart { id, .. }
+            | Component::Sparkline { id, .. }
+            | Component::Table { id, .. }
+            | Component::ArrayTable { id, .. }
+            | Component::JsonTable { id, .. }
+            | Component::List { id, .. }
+            | Component::Dialog { id, .. }
+            | Component::Menu { id, .. }
+            | Component::Tree { id, .. }
+            | Component::Timeline { id, .. }
+            | Component::Markdown { id, .. }
+            | Component::RichText { id, .. }
+            | Component::RefPicker { id, .. }
+            | Component::Select { id, .. }
+            | Component::Kpi { id, .. }
+            | Component::KpiGrid { id, .. }
+            | Component::Detail { id, .. }
+            | Component::Card { id, .. }
+            | Component::DateRange { id, .. }
+            | Component::Wizard { id, .. }
+            | Component::Drawer { id, .. }
+            | Component::Button { id, .. }
+            | Component::ActionWidget { id, .. }
+            | Component::Custom { id, .. }
+            | Component::Form { id, .. } => {
+                if id.is_none() {
+                    *id = Some(synth);
+                }
+            }
+            // Required-id variants: only fill when empty.
+            Component::Page { id, .. }
+            | Component::MarkdownEditor { id, .. }
+            | Component::Toggle { id, .. }
+            | Component::Slider { id, .. }
+            | Component::TextField { id, .. }
+            | Component::NumberField { id, .. }
+            | Component::Textarea { id, .. }
+            | Component::SelectField { id, .. }
+            | Component::RadioGroup { id, .. }
+            | Component::Segmented { id, .. }
+            | Component::DateField { id, .. }
+            | Component::Checkbox { id, .. }
+            | Component::Forbidden { id, .. }
+            | Component::Dangling { id, .. } => {
+                if id.is_empty() {
+                    *id = synth;
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------
 // Bindable trait impl
 // -------------------------------------------------------------------
 
@@ -2304,6 +2431,362 @@ impl crate::Bindable for Component {
                 let _ = (v, issues);
             }
         }
+    }
+
+    fn visit_bindings<F>(&mut self, visit: &mut F)
+    where
+        F: FnMut(&mut String),
+    {
+        // Per-node string visitor — does NOT recurse into children;
+        // the walker in `starter-ui-bindings::substitute` owns
+        // descent. Only fields that may carry a `{{...}}` tag are
+        // visited; pure layout-token strings (gap, columns, classes)
+        // are intentionally excluded.
+        match self {
+            Component::Page { title, .. } => {
+                if let Some(t) = title {
+                    visit(t);
+                }
+            }
+            Component::Text { content, .. } | Component::Heading { content, .. } => {
+                visit(content);
+            }
+            Component::Badge { label, .. } => visit(label),
+            Component::Section { title, subtitle, .. } => {
+                visit(title);
+                if let Some(s) = subtitle {
+                    visit(s);
+                }
+            }
+            Component::Card { title, subtitle, .. } => {
+                if let Some(t) = title {
+                    visit(t);
+                }
+                if let Some(s) = subtitle {
+                    visit(s);
+                }
+            }
+            Component::FieldGroup { label, helper, .. } => {
+                visit(label);
+                if let Some(h) = helper {
+                    visit(h);
+                }
+            }
+            Component::Tabs { tabs, default, .. } => {
+                for tab in tabs {
+                    visit(&mut tab.label);
+                    if let Some(id) = &mut tab.id {
+                        visit(id);
+                    }
+                }
+                if let Some(d) = default {
+                    visit(d);
+                }
+            }
+            Component::Repeat { source, .. } => {
+                visit(source);
+            }
+            Component::Chart { sources, .. } => {
+                for src in sources {
+                    match src {
+                        crate::ChartSource::Series { node_id, slot, field } => {
+                            visit(node_id);
+                            visit(slot);
+                            if let Some(f) = field {
+                                visit(f);
+                            }
+                        }
+                        crate::ChartSource::SeriesByKind { kind, slot, field, .. } => {
+                            visit(kind);
+                            visit(slot);
+                            if let Some(f) = field {
+                                visit(f);
+                            }
+                        }
+                        crate::ChartSource::Rows { rsql, group_by, .. } => {
+                            visit(rsql);
+                            if let Some(g) = group_by {
+                                visit(g);
+                            }
+                        }
+                        crate::ChartSource::SeriesFromRsql { rsql, group_by, .. } => {
+                            visit(rsql);
+                            if let Some(g) = group_by {
+                                visit(g);
+                            }
+                        }
+                        crate::ChartSource::Static { .. } | crate::ChartSource::Unknown => {}
+                    }
+                }
+            }
+            Component::Sparkline { subscribe, .. } => {
+                if let Some(s) = subscribe {
+                    visit(s);
+                }
+            }
+            Component::Table { source, columns, row_actions, .. } => {
+                visit(&mut source.query);
+                for col in columns {
+                    visit(&mut col.field);
+                    visit(&mut col.title);
+                }
+                for ra in row_actions {
+                    if let Some(args) = ra.action.args.as_mut() {
+                        visit_json_strings(args, visit);
+                    }
+                }
+            }
+            Component::ArrayTable { source, columns, row_actions, .. } => {
+                visit(source);
+                for col in columns {
+                    visit(&mut col.field);
+                    visit(&mut col.title);
+                }
+                for ra in row_actions {
+                    if let Some(args) = ra.action.args.as_mut() {
+                        visit_json_strings(args, visit);
+                    }
+                }
+            }
+            Component::JsonTable { .. } => {}
+            Component::List { source, .. } => {
+                visit(&mut source.query);
+            }
+            Component::Dialog { title, description, .. } => {
+                if let Some(t) = title {
+                    visit(t);
+                }
+                if let Some(d) = description {
+                    visit(d);
+                }
+            }
+            Component::Markdown { content, subscribe, .. } => {
+                if let Some(c) = content {
+                    visit(c);
+                }
+                if let Some(s) = subscribe {
+                    visit(s);
+                }
+            }
+            Component::RichText { value, .. } => {
+                if let Some(v) = value {
+                    visit(v);
+                }
+            }
+            Component::MarkdownEditor { label, value, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+                if let Some(v) = value {
+                    visit(v);
+                }
+            }
+            Component::RefPicker { query, value, .. } => {
+                if let Some(q) = query {
+                    visit(q);
+                }
+                if let Some(v) = value {
+                    visit(v);
+                }
+            }
+            Component::Select { options, .. } => {
+                for opt in options {
+                    visit(&mut opt.label);
+                }
+            }
+            Component::Kpi { label, source, unit_symbol, .. } => {
+                visit(label);
+                if let Some(u) = unit_symbol {
+                    visit(u);
+                }
+                // ChartSource — same logic as Chart, but for one source.
+                match source {
+                    crate::ChartSource::Series { node_id, slot, field } => {
+                        visit(node_id);
+                        visit(slot);
+                        if let Some(f) = field {
+                            visit(f);
+                        }
+                    }
+                    crate::ChartSource::SeriesByKind { kind, slot, field, .. } => {
+                        visit(kind);
+                        visit(slot);
+                        if let Some(f) = field {
+                            visit(f);
+                        }
+                    }
+                    crate::ChartSource::Rows { rsql, group_by, .. } => {
+                        visit(rsql);
+                        if let Some(g) = group_by {
+                            visit(g);
+                        }
+                    }
+                    crate::ChartSource::SeriesFromRsql { rsql, group_by, .. } => {
+                        visit(rsql);
+                        if let Some(g) = group_by {
+                            visit(g);
+                        }
+                    }
+                    crate::ChartSource::Static { .. } | crate::ChartSource::Unknown => {}
+                }
+            }
+            Component::KpiGrid { items, .. } => {
+                for item in items {
+                    visit(&mut item.label);
+                    if let Some(u) = &mut item.unit_symbol {
+                        visit(u);
+                    }
+                }
+            }
+            Component::Detail { items, .. } => {
+                for item in items {
+                    visit(&mut item.label);
+                    visit(&mut item.value);
+                    if let Some(u) = &mut item.unit_symbol {
+                        visit(u);
+                    }
+                }
+            }
+            Component::Button { label, .. } => visit(label),
+            Component::Toggle { label, .. }
+            | Component::Slider { label, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+            }
+            Component::TextField { label, placeholder, value, .. }
+            | Component::Textarea { label, placeholder, value, .. }
+            | Component::DateField { label, placeholder, value, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+                if let Some(p) = placeholder {
+                    visit(p);
+                }
+                if let Some(v) = value {
+                    visit(v);
+                }
+            }
+            Component::NumberField { label, placeholder, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+                if let Some(p) = placeholder {
+                    visit(p);
+                }
+            }
+            Component::SelectField { label, placeholder, options, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+                if let Some(p) = placeholder {
+                    visit(p);
+                }
+                for opt in options {
+                    visit(&mut opt.label);
+                }
+            }
+            Component::RadioGroup { label, options, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+                for opt in options {
+                    visit(&mut opt.label);
+                }
+            }
+            Component::Segmented { label, options, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+                for opt in options {
+                    visit(&mut opt.label);
+                }
+            }
+            Component::Checkbox { label, .. } => {
+                if let Some(l) = label {
+                    visit(l);
+                }
+            }
+            Component::Form { schema_ref, submit_label, .. } => {
+                visit(schema_ref);
+                if let Some(s) = submit_label {
+                    visit(s);
+                }
+            }
+            Component::ActionWidget {
+                action_ref,
+                target,
+                title,
+                description,
+                ..
+            } => {
+                visit(action_ref);
+                visit(target);
+                if let Some(t) = title {
+                    visit(t);
+                }
+                if let Some(d) = description {
+                    visit(d);
+                }
+            }
+            Component::Drawer { title, .. } => {
+                if let Some(t) = title {
+                    visit(t);
+                }
+            }
+            Component::Wizard { steps, .. } => {
+                for step in steps {
+                    visit(&mut step.label);
+                }
+            }
+            Component::Timeline { events, subscribe, .. } => {
+                for ev in events {
+                    visit(&mut ev.text);
+                }
+                if let Some(s) = subscribe {
+                    visit(s);
+                }
+            }
+            Component::Tree { nodes, .. } => {
+                for n in nodes {
+                    visit(&mut n.label);
+                }
+            }
+            Component::Menu { .. }
+            | Component::Diff { .. }
+            | Component::Divider { .. }
+            | Component::Row { .. }
+            | Component::Col { .. }
+            | Component::Grid { .. }
+            | Component::DateRange { .. }
+            | Component::Forbidden { .. }
+            | Component::Dangling { .. }
+            | Component::Custom { .. } => {
+                // No bindable string fields at this node level
+                // (children are visited by the walker, not here).
+                let _ = visit;
+            }
+        }
+    }
+}
+
+/// Recursively walk a `serde_json::Value` and apply `visit` to every
+/// string inside. Used for `Action.args` JSON which can carry
+/// `{{...}}` tokens in arbitrary nested positions.
+fn visit_json_strings<F: FnMut(&mut String)>(v: &mut JsonValue, visit: &mut F) {
+    match v {
+        JsonValue::String(s) => visit(s),
+        JsonValue::Array(arr) => {
+            for item in arr {
+                visit_json_strings(item, visit);
+            }
+        }
+        JsonValue::Object(map) => {
+            for (_k, val) in map.iter_mut() {
+                visit_json_strings(val, visit);
+            }
+        }
+        _ => {}
     }
 }
 

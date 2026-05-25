@@ -48,7 +48,7 @@ use utoipa::OpenApi;
         (name = "flow-programmer", description = "Flow programmer verbs (Goal 3): flow deploy, lint, list, duplicate."),
         (name = "mcp", description = "MCP JSON-RPC over HTTP (tools/list, tools/call)."),
         (name = "undo", description = "Undo dispatcher (`rubix.undo.last`) — reverses the most recent reversible change."),
-        (name = "dashboard-stub", description = "Goal 1 (dashboard-assistant) stub surface — `code = rubix.goal.not_wired`."),
+        (name = "dashboard", description = "Goal 1 (dashboards): create, update, get, list, duplicate, delete, page_set."),
         (name = "weekly-report-stub", description = "Goal 6 (weekly-report) stub surface — `code = rubix.goal.not_wired`."),
     ),
 )]

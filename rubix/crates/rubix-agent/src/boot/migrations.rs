@@ -10,7 +10,8 @@
 
 use anyhow::Result;
 use rubix_store_postgres::{
-    FLOWS_DEFINITIONS_MIGRATION_SOURCE, UNDO_SNAPSHOTS_MIGRATION_SOURCE,
+    DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE, FLOWS_DEFINITIONS_MIGRATION_SOURCE,
+    UNDO_SNAPSHOTS_MIGRATION_SOURCE,
 };
 use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
@@ -57,6 +58,7 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         postgres_migration_source(),
         UNDO_SNAPSHOTS_MIGRATION_SOURCE,
         FLOWS_DEFINITIONS_MIGRATION_SOURCE,
+        DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE,
         SCHEDULED_FLOWS_MIGRATION_SOURCE,
     ];
     let sources_applied = sources.len();

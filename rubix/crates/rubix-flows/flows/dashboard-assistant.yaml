@@ -1,8 +1,18 @@
-# Bundled rubix flow — see SCOPE Phase plan for which phase wires this.
+# Bundled rubix flow — Goal 1 (dashboard authoring).
+#
+# Rooted at a single `ai-agent` node. Per SCOPE R7 the flow itself
+# auto-surfaces as an MCP tool via FlowAsTool; the agent loop reaches
+# the seven `rubix.dashboard.*` verbs + `rubix.undo.last` through the
+# `tool_registry_snapshot` boot/mcp/register.rs threads in. See
+# rubix/docs/scope/dashboards/06-ai-builder.md.
 id: com.rubix.dashboard-assistant
 description: |
-  dashboard flow rooted at an ai-agent node. Auto-surfaces as an MCP
-  tool via FlowAsTool (no per-flow MCP wiring per SCOPE R7).
+  Operator + AI co-authored SDUI dashboards. The agent reads the
+  current page (rubix.dashboard.get), proposes a new revision
+  (rubix.dashboard.update / .create), can list, duplicate, delete
+  pages, and mutate one runtime slot (rubix.dashboard.page_set).
+  `rubix.undo.last` reverses the last reversible write so the
+  operator can roll back a bad suggestion without leaving the chat.
 trigger: explicit
 
 nodes:
@@ -12,12 +22,14 @@ nodes:
       session_policy: continue
       skill_hint: com.rubix.dashboard-builder
       cost_cap: 0.50_usd
-      # Goal 1 is deferred. Primary tool dispatch returns
-      # Diagnostic { code: rubix.goal.not_wired }. Replace with
-      # the real dashboard verbs once SDUI lands. See
-      # rubix-tools/src/dashboard/assistant.rs and
-      # docs/design/sdui/README.md.
       allowed_tools:
-        - com.rubix.dashboard-assistant
+        - rubix.dashboard.create
+        - rubix.dashboard.update
+        - rubix.dashboard.get
+        - rubix.dashboard.list
+        - rubix.dashboard.duplicate
+        - rubix.dashboard.delete
+        - rubix.dashboard.page_set
+        - rubix.undo.last
 
 links: []
