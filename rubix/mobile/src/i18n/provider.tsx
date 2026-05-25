@@ -21,7 +21,7 @@ const CATALOGUES: Record<string, Messages> = {
 };
 
 function deviceLocale(): string {
-  // Expo SDK 52+ ships full Intl; the OS locale is the obvious default.
+  // Expo SDK 54 ships full Intl; the OS locale is the obvious default.
   // We hand-roll the lookup so we don't pull `expo-localization` for one
   // string (every kB matters on a cold start).
   if (Platform.OS === 'ios') {

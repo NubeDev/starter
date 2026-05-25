@@ -1,7 +1,7 @@
 # Mobile — app shell
 
-The `rubix/mobile/` app is an Expo (SDK 52+) TypeScript app that
-mirrors the layered chassis of
+The `rubix/mobile/` app is an Expo (SDK 54, locked) TypeScript app
+that mirrors the layered chassis of
 [`docs/design/frontend/README.md`](../../design/frontend/README.md).
 
 ```
@@ -283,9 +283,9 @@ Installed in `rubix/mobile/package.json` (Expo doesn't ship these
 by default):
 
 - `@tanstack/react-query`
-- `react-intl` — pin minimum Expo SDK / Hermes that ships full
-  Intl (SDK 52+ does); add `@formatjs/intl-pluralrules` polyfill
-  if a lower target is ever needed.
+- `react-intl` — Expo SDK 54 / Hermes ships full Intl; no polyfill
+  needed. Add `@formatjs/intl-pluralrules` only if a lower target is
+  ever required.
 - `zustand`
 - `@react-native-async-storage/async-storage`
 - `expo-sqlite` — multi-instance connection store. See
@@ -301,10 +301,11 @@ by default):
 - `react-native-reanimated`, `moti` — animation in widgets and
   the kit. Reanimated 3 currently requires
   `'react-native-reanimated/plugin'` as the **last** entry in
-  `babel.config.js`. Verify against the live Expo SDK 52 +
-  Reanimated 3.16 docs at Block 4 — the worklets-plugin
-  migration may have flipped this to `react-native-worklets/plugin`;
-  if so, switch the pin and note it in the PR.
+  `babel.config.js`. As of Expo SDK 54 / Reanimated 4 the worklets-
+  plugin migration has landed: the live config uses
+  `react-native-worklets/plugin` as the last entry (see
+  `rubix/mobile/babel.config.js` and the `react-native-worklets`
+  dep in `rubix/mobile/package.json`).
 
 ## Theme + dark mode
 

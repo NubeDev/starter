@@ -23,10 +23,14 @@ nodes:
       skill_hint: com.rubix.dashboard-builder
       cost_cap: 0.50_usd
       allowed_tools:
+        # First entry is the zero-arg "primary tool" picked by
+        # boot/mcp/register.rs::primary_tool_for_root — must be a
+        # read verb so the agent has something to narrate on an
+        # empty MCP call.
+        - rubix.dashboard.list
+        - rubix.dashboard.get
         - rubix.dashboard.create
         - rubix.dashboard.update
-        - rubix.dashboard.get
-        - rubix.dashboard.list
         - rubix.dashboard.duplicate
         - rubix.dashboard.delete
         - rubix.dashboard.page_set

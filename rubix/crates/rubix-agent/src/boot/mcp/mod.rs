@@ -110,8 +110,11 @@ pub async fn build_mcp_surface(
     pg_pool: Option<starter_store_postgres::pool::Pool>,
     ext: Option<&ExtensionMcpContext>,
     runtime: Option<&crate::boot::FlowRuntime>,
+    shared_tools: Option<Vec<Arc<dyn starter_spi::tool::Tool>>>,
 ) -> anyhow::Result<McpSurface> {
-    let tools = Arc::new(build_tool_registry(ch_client, pg_pool, ext, runtime).await?);
+    let tools = Arc::new(
+        build_tool_registry(ch_client, pg_pool, ext, runtime, shared_tools).await?,
+    );
     let router: axum::Router =
         starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
     Ok(McpSurface { tools, router })
@@ -132,16 +135,50 @@ pub async fn build_tool_registry(
     pg_pool: Option<starter_store_postgres::pool::Pool>,
     ext: Option<&ExtensionMcpContext>,
     runtime: Option<&crate::boot::FlowRuntime>,
+    shared_tools: Option<Vec<Arc<dyn starter_spi::tool::Tool>>>,
 ) -> anyhow::Result<ToolRegistry> {
     let ext_registry = ext.map(|c| c.registry.as_ref());
+    // Snapshot the primitive-tool list before it is moved into the
+    // flow registry. Both surfaces need it: the flow registry uses
+    // it for in-process dispatch by `RubixAiAgentNode`, and the MCP
+    // tool catalogue needs it so an upstream Claude CLI run can call
+    // the *primitives* (`rubix.dashboard.create`, …) directly
+    // instead of being forced to recurse into a flow wrapper whose
+    // only effect is to call the same primitive on its behalf.
+    // Without this clone the chat surface saw only the 7 flow
+    // wrappers and would call `mcp__acme__com_rubix_dashboard-
+    // assistant` (itself) when asked to build a dashboard \u2014 see
+    // `rubix/docs/sessions/2026-05-25-dashboards-sidebar-sse-and-chat-gaps.md`.
+    let primitives_for_mcp: Vec<Arc<dyn starter_spi::tool::Tool>> =
+        shared_tools.clone().unwrap_or_default();
     let (registry, flows, engine) =
-        register::build_flow_registry(ch_client, pg_pool, runtime, ext_registry).await?;
+        register::build_flow_registry(ch_client, pg_pool, runtime, ext_registry, shared_tools)
+            .await?;
     let mut tools = ToolRegistry::new();
     for (flow_id, revision) in &flows {
         let tool = FlowAsTool::from_registry(&registry, flow_id, revision, engine.clone())
             .await
             .map_err(|e| anyhow::anyhow!("FlowAsTool::from_registry({flow_id}): {e}"))?;
         tools = tools.register(tool);
+    }
+    // Register the primitive tools. Skip any whose name collides
+    // with an already-registered flow wrapper \u2014 last-write would
+    // shadow the flow surface, which downstream code relies on.
+    let mut primitive_registered: usize = 0;
+    {
+        let existing: std::collections::HashSet<String> = tools
+            .list()
+            .iter()
+            .map(|t| t.name.clone())
+            .collect();
+        for tool in primitives_for_mcp {
+            let name = tool.definition().name.clone();
+            if existing.contains(&name) {
+                continue;
+            }
+            tools = tools.register_arc(tool);
+            primitive_registered += 1;
+        }
     }
 
     // SCOPE OQ-4: walk every validated process-flavour extension and
@@ -180,8 +217,9 @@ pub async fn build_tool_registry(
     }
 
     tracing::info!(
-        mcp_tools = flows.len() + ext_registered,
+        mcp_tools = flows.len() + ext_registered + primitive_registered,
         flow_tools = flows.len(),
+        primitive_tools = primitive_registered,
         extension_tools = ext_registered,
         "rubix MCP surface assembled",
     );

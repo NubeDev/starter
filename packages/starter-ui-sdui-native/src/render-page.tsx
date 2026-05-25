@@ -12,7 +12,6 @@ export function RenderPage({ node }: { node: UiComponent }) {
     <Column
       padding={16}
       gap={16}
-      accessibilityRole="main"
       testID={(node.id as string | undefined) ?? "sdui-page"}
     >
       {title ? (

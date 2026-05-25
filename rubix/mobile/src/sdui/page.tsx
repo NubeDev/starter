@@ -72,7 +72,7 @@ function SduiPageNativeInner({
   if (query.isError) {
     return (
       <View style={{ flex: 1, padding: 16, backgroundColor: theme.background }}>
-        <Text style={{ color: '#B91C1C' }} accessibilityRole="alert">
+        <Text style={{ color: '#B91C1C' }} accessibilityLiveRegion="assertive">
           {query.error?.message ?? 'resolve failed'}
         </Text>
       </View>

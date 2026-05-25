@@ -14,6 +14,9 @@
 
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react';
 import { Appearance } from 'react-native';
+import { useLayoutPreferences } from '@nube/starter-ui-core/theme-editor';
+
+const MOBILE_PALETTE = 'violet-bloom';
 
 export interface ThemeTokens {
   /** Either 'light' or 'dark' — never null at the consumer layer. */
@@ -50,9 +53,20 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     tokensFor(Appearance.getColorScheme()),
   );
 
+  // Mirror the OS colour scheme into the kit's layout-prefs store so
+  // every kit primitive (Card, Button, Input, …) flips dark/light in
+  // lockstep with this provider. We also force a friendly purple
+  // palette ("violet-bloom") on mobile so the app reads as polished
+  // out of the box.
   useEffect(() => {
+    const store = useLayoutPreferences.getState();
+    store.setPalette(MOBILE_PALETTE);
+    store.setMode(Appearance.getColorScheme() === 'dark' ? 'dark' : 'light');
     const sub = Appearance.addChangeListener(({ colorScheme }) => {
       setTokens(tokensFor(colorScheme));
+      useLayoutPreferences
+        .getState()
+        .setMode(colorScheme === 'dark' ? 'dark' : 'light');
     });
     return () => sub.remove();
   }, []);

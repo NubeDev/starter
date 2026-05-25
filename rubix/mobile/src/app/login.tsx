@@ -29,6 +29,7 @@ import { FormattedMessage, useIntl } from 'react-intl';
 import { useConnection } from '../connection/provider';
 import { expoSecureTokenStore } from '../local-db/token/expo-secure-store';
 import { loginWithCredentials } from '../auth/strategy';
+import { DEV_LOGIN_DEFAULTS, PREFILL_LOGIN_IN_DEV } from '../auth/dev-defaults';
 import { takePendingRoute } from '../state/pending-route';
 import { useTheme } from '../theme/provider';
 
@@ -37,8 +38,10 @@ export default function LoginScreen() {
   const router = useRouter();
   const intl = useIntl();
   const theme = useTheme();
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState(PREFILL_LOGIN_IN_DEV ? DEV_LOGIN_DEFAULTS.email : '');
+  const [password, setPassword] = useState(
+    PREFILL_LOGIN_IN_DEV ? DEV_LOGIN_DEFAULTS.password : '',
+  );
   const [tenantId, setTenantId] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [errorKey, setErrorKey] = useState<string | null>(null);

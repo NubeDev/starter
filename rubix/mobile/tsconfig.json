@@ -9,6 +9,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src/**/*", "src/**/*.json", "app.d.ts"],
+  "include": ["src/**/*", "src/**/*.json", "app.d.ts", "nativewind-env.d.ts"],
   "exclude": ["node_modules", ".expo"]
 }

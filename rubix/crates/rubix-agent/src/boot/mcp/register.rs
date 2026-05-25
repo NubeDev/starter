@@ -24,7 +24,7 @@ use starter_flow::definition::body::FlowBody;
 use starter_flow::engine::Engine;
 use starter_flow::registry::NodeKindRegistry;
 use starter_flow_spi::flow::{FlowId, FlowRevisionId};
-use starter_flow_spi::node::{KindId, NodeBehavior, SlotMap, SlotRef, SlotValue};
+use starter_flow_spi::node::{KindId, NodeBehavior, NodeId, SlotMap, SlotRef, SlotValue};
 use starter_flow_surfaces::{FlowRegistration, FlowRegistry};
 
 use starter_spi::ai::AiRunner;
@@ -58,6 +58,7 @@ pub async fn build_flow_registry(
     pg_pool: Option<Pool>,
     runtime: Option<&crate::boot::FlowRuntime>,
     extensions: Option<&ExtensionRegistry>,
+    shared_tools: Option<Vec<Arc<dyn Tool>>>,
 ) -> anyhow::Result<(Arc<FlowRegistry>, Vec<(FlowId, FlowRevisionId)>, Arc<Engine>)> {
     // -- 1. Engine on a fresh in-memory graph store. The terminal-
     //       slot read-back in `FlowAsTool` reads through this store.
@@ -74,12 +75,22 @@ pub async fn build_flow_registry(
     let cfg = AgentConfig::load().unwrap_or_default();
     let runner: Arc<dyn AiRunner> = ai::build_runner(&cfg)
         .map_err(|e| anyhow::anyhow!("boot::ai::build_runner: {e}"))?;
-    let tool_registry_snapshot: Vec<Arc<dyn Tool>> =
-        crate::registry::build_tool_registry(
+    // Reuse the caller-supplied tool registry when present so the
+    // MCP-side `ai-agent` node dispatches to the SAME `Arc<dyn Tool>`
+    // instances the REST `/api/v1/tools/*` router serves. Without
+    // this share, every backed-by-`InMemory*Store` tool family
+    // (dashboards, users, etc.) gets a second store the REST writes
+    // never reach. The laptop / no-shared path (the stdio
+    // `rubix-admin mcp` subcommand) falls back to rebuilding the
+    // registry locally so it keeps working standalone.
+    let tool_registry_snapshot: Vec<Arc<dyn Tool>> = match shared_tools {
+        Some(tools) => tools,
+        None => crate::registry::build_tool_registry(
             ch_client,
             cfg.insights.disk_warn_threshold,
             pg_pool.clone(),
-        );
+        ),
+    };
 
     // Source the flow definitions from PG when a pool is wired
     // in — that is the Phase D contract: PG is the source of
@@ -108,10 +119,33 @@ pub async fn build_flow_registry(
     let kinds = NodeKindRegistry::new();
     let ai_agent_kind = KindId::new(AI_AGENT_KIND_ID)
         .map_err(|e| anyhow::anyhow!("invalid {AI_AGENT_KIND_ID} kind id: {e}"))?;
+    // Snapshot the MCP service wiring once per boot. The agent
+    // node passes these into `CliCfg` for every narration call so
+    // the Claude wrapper attaches to the rubix `/api/v1/mcp`
+    // bridge and the model can dispatch host tools mid-turn
+    // (D-F5.6). Both unset = narration only (the legacy
+    // catalogue-less behaviour); see
+    // `rubix/docs/sessions/2026-05-25-dashboards-sidebar-sse-and-chat-gaps.md`
+    // §"Part 3" for why this is opt-in via env vars rather than
+    // auto-derived from the bind address — a follow-up will bake
+    // a service-token mechanism so operators do not have to
+    // copy-paste a bearer.
+    let mcp_url = std::env::var("RUBIX_SERVICE_MCP_URL")
+        .ok()
+        .filter(|s| !s.trim().is_empty());
+    let mcp_token = std::env::var("RUBIX_SERVICE_MCP_TOKEN")
+        .ok()
+        .filter(|s| !s.trim().is_empty());
+    // Clone the snapshot before handing it to the ai-agent node so
+    // the tool-call kind registration below can share the same
+    // `Arc<dyn Tool>` instances. Cheap — each entry is an Arc.
+    let tool_call_snapshot_for_kind = tool_registry_snapshot.clone();
     let ai_node: Arc<dyn NodeBehavior> = Arc::new(RubixAiAgentNode::new(
         ai_agent_kind.clone(),
         runner,
         tool_registry_snapshot,
+        mcp_url,
+        mcp_token,
     ));
     kinds
         .register(ai_node)
@@ -123,17 +157,42 @@ pub async fn build_flow_registry(
     );
 
     // Register the built-in starter-flow node kinds the bundled
-    // rubix flows reference (counter, log, trigger.schedule). Without
-    // these, flows like `com.rubix.tick-counter` (added in PR #38)
-    // fail topology resolution at boot with `unknown node kind
-    // starter.flow.trigger.schedule`. The kind set must stay in
-    // sync with `crate::registry::builtin_kind_behaviors`, which
-    // populates the `rubix.flow_ops.kinds` listing.
+    // rubix flows reference (counter, log, trigger.schedule,
+    // tool-call). Without these, flows like `com.rubix.tick-counter`
+    // (added in PR #38) fail topology resolution at boot with
+    // `unknown node kind starter.flow.trigger.schedule`. The kind
+    // set must stay in sync with `crate::registry::builtin_kind_behaviors`,
+    // which populates the `rubix.flow_ops.kinds` listing.
+    //
+    // `tool-call` reuses the same `tool_registry_snapshot` the
+    // ai-agent node was constructed with so REST writes, agent-
+    // dispatched tool calls, and flow-dispatched tool calls all
+    // share one `Arc<dyn Tool>` per id (avoids per-surface in-memory
+    // store divergence). See rubix/docs/sessions/data-flow/01-producer.md
+    // for the framework split this enables.
+    let mut tool_call_registry = starter_flow_nodes::tool_registry::StaticToolRegistry::new();
+    for tool in &tool_call_snapshot_for_kind {
+        let id = tool.definition().name;
+        match KindId::new(id.clone()) {
+            Ok(kid) => tool_call_registry.register(kid, tool.clone()),
+            Err(e) => tracing::warn!(
+                tool_id = %id,
+                error = %e,
+                "tool id is not a valid reverse-DNS KindId; skipping tool-call binding",
+            ),
+        }
+    }
+    let tool_call_registry: Arc<dyn starter_flow_nodes::tool_registry::ToolRegistry> =
+        Arc::new(tool_call_registry);
+
     for kind in [
         Arc::new(starter_flow_nodes::counter::Counter::new()) as Arc<dyn NodeBehavior>,
         Arc::new(starter_flow_nodes::log::Log::new()) as Arc<dyn NodeBehavior>,
         Arc::new(starter_flow_nodes::trigger_schedule::TriggerSchedule::new())
             as Arc<dyn NodeBehavior>,
+        Arc::new(starter_flow_nodes::tool_call::ToolCall::new(
+            tool_call_registry.clone(),
+        )) as Arc<dyn NodeBehavior>,
     ] {
         let kind_id = kind.kind_id().to_string();
         kinds
@@ -193,6 +252,53 @@ fn primary_tool_for_root(body: &FlowBody) -> Option<String> {
     Some(first.to_owned())
 }
 
+/// Read the SKILL.md body for a rubix bundled skill, stripping the
+/// YAML frontmatter so what remains is the actual playbook the
+/// model should be primed with. Returns `None` when the hint does
+/// not match a bundled skill, when the file is missing, or when
+/// the body after the frontmatter is empty.
+///
+/// Today the bundled-skill id (`com.rubix.<name>`) maps 1:1 to the
+/// directory layout exposed by [`rubix_skills::bundled()`]
+/// (`<name>/SKILL.md`); a future starter-skills migration can
+/// replace this lookup with `SkillRegistry::get(...)` without
+/// changing the seed-adapter call site.
+fn skill_body_for_hint(hint: &str) -> Option<String> {
+    // Strip the reverse-DNS namespace prefix (`com.rubix.`) to get
+    // the directory name; anything else is not a rubix bundled
+    // skill so we cannot resolve it from this crate.
+    let name = hint.strip_prefix("com.rubix.")?;
+    let dir = rubix_skills::bundled();
+    let file = dir.get_file(format!("{name}/SKILL.md"))?;
+    let raw = file.contents_utf8()?;
+    let body = strip_frontmatter(raw).trim();
+    if body.is_empty() {
+        None
+    } else {
+        Some(body.to_owned())
+    }
+}
+
+/// Strip a leading YAML frontmatter block (delimited by `---`
+/// lines) from a SKILL.md source. Returns the slice unchanged when
+/// no frontmatter is present; returns the body after the closing
+/// fence otherwise. Matches the loader convention documented in
+/// `rubix/docs/design/skills/README.md`.
+fn strip_frontmatter(src: &str) -> &str {
+    let rest = match src.strip_prefix("---\n") {
+        Some(rest) => rest,
+        None => return src,
+    };
+    match rest.find("\n---\n") {
+        Some(end) => &rest[end + "\n---\n".len()..],
+        // Unterminated frontmatter — degrade gracefully, return
+        // everything after the opening fence rather than the
+        // original (which would feed `---\n…` straight to the
+        // model).
+        None => rest,
+    }
+}
+
 /// Register one `(flow_id, revision, body)` triple with the shared
 /// adapter shape every bundled flow uses: a single seed slot
 /// (`payload`) carrying a JSON object snapshotting the caller's
@@ -222,6 +328,23 @@ async fn register_one(
     // NodeId-keyed lookup (node ids collide across flows).
     let primary_tool = primary_tool_for_root(&body);
 
+    // Per-flow skill body, captured at register time. The seed
+    // adapter embeds this into the seed payload so the agent node
+    // can prepend it to the LLM prompt as a system-style preamble.
+    // Until the upstream `AiAgent::with_kind_id` swap lands
+    // (rubix/docs/sessions/2026-05-25-dashboards-sidebar-sse-and-chat-gaps.md
+    // step 1+2), this is the only place the dashboard-builder /
+    // system-checker / … playbook actually reaches the model. The
+    // hint comes from the flow YAML's root-node `config.skill_hint`
+    // — see e.g. `flows/dashboard-assistant.yaml`. None when the
+    // hint is missing or unresolvable.
+    let skill_body = body
+        .nodes
+        .first()
+        .and_then(|n| n.settings.get("skill_hint"))
+        .and_then(|v| v.as_str())
+        .and_then(skill_body_for_hint);
+
     // If the root node is a `trigger.schedule`, project its
     // `settings.cron_expr` into the runtime `cron_expr` input slot
     // it expects. Until TopologyResolver/HR5 lands the projection
@@ -248,9 +371,39 @@ async fn register_one(
         None
     };
 
+    // Project each `starter.flow.tool-call` node's
+    // `settings.tool_id` / `settings.tool_input` into the runtime
+    // input slots its body reads. Same shape as the `cron_expr`
+    // projection above — until TopologyResolver/HR5 lands, the
+    // surface seeds these per fire so flows like
+    // `com.rubix.data-flow.producer` can declaratively name the
+    // tool to invoke from YAML rather than from an upstream link.
+    //
+    // `tick_epoch_ms` is auto-injected into the tool_input when the
+    // YAML omits it AND the input is a JSON object — this is the
+    // bridge from the schedule fire's wall-clock to the synth tool.
+    // Tool authors can override by setting `tick_epoch_ms` explicitly
+    // in YAML.
+    let tool_call_seeds: Vec<(NodeId, String, Value)> = body
+        .nodes
+        .iter()
+        .filter(|n| n.kind.as_str() == starter_flow_nodes::tool_call::KIND_ID)
+        .filter_map(|n| {
+            let tool_id = n.settings.get("tool_id").and_then(|v| v.as_str())?;
+            let tool_input = n
+                .settings
+                .get("tool_input")
+                .cloned()
+                .unwrap_or_else(|| Value::Object(serde_json::Map::new()));
+            Some((n.id.clone(), tool_id.to_owned(), tool_input))
+        })
+        .collect();
+
     let seed_slot_for_adapter = seed_slot.clone();
     let primary_tool_for_adapter = primary_tool.clone();
+    let skill_body_for_adapter = skill_body.clone();
     let trigger_cron_for_adapter = trigger_cron_seed.clone();
+    let tool_call_seeds_for_adapter = tool_call_seeds.clone();
     let seed: starter_flow_surfaces::SeedAdapter = Arc::new(move |input: &Value| {
         // The locale task-local is bound by starter-mcp's dispatch
         // wrapper before this closure runs; reading it here is the
@@ -261,6 +414,17 @@ async fn register_one(
         let lang = starter_mcp::current_locale()
             .unwrap_or_else(|| LanguageTag::parse("en").expect("'en' parses"));
         let prefs = prefs_from_locale(&lang);
+        // Capture the principal **here**, on the request task,
+        // before the engine spawns the flow run on a fresh task
+        // that does not inherit `starter_mcp::PRINCIPAL`. Without
+        // this snapshot the node body would always see
+        // `current_principal() == None` and the dashboard write
+        // verbs would 400 with `missing field tenant_id`. We
+        // enrich the `input` payload only — `or_insert`-style so
+        // explicit MCP `arguments` keep overriding session
+        // defaults — and fall back to `DEFAULT_TENANT` when the
+        // session is unbound (laptop dev path).
+        let enriched_input = enrich_input_with_principal(input.clone());
         // A per-call nonce keeps each seed write distinct from the
         // last so the engine slot store cannot deduplicate one run
         // against another (every FlowAsTool::invoke is meant to be a
@@ -275,10 +439,41 @@ async fn register_one(
             "lang": prefs.language,
             "locale": lang.as_str(),
             "prefs": prefs,
-            "input": input.clone(),
+            "input": enriched_input,
             "primary_tool": primary_tool_for_adapter,
+            "skill_body": skill_body_for_adapter,
             "_nonce": nonce.to_string(),
         });
+        // Wall-clock for tool_input.tick_epoch_ms auto-injection.
+        let now_epoch_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as i64)
+            .unwrap_or(0);
+        let tool_call_writes = tool_call_seeds_for_adapter
+            .iter()
+            .flat_map(|(node_id, tool_id, tool_input)| {
+                let mut input = tool_input.clone();
+                if let Value::Object(ref mut map) = input {
+                    map.entry("tick_epoch_ms".to_owned())
+                        .or_insert_with(|| json!(now_epoch_ms));
+                }
+                vec![
+                    (
+                        SlotRef::new(
+                            node_id.clone(),
+                            starter_flow_nodes::tool_call::TOOL_ID_SLOT,
+                        ),
+                        SlotValue::String(tool_id.clone()),
+                    ),
+                    (
+                        SlotRef::new(
+                            node_id.clone(),
+                            starter_flow_nodes::tool_call::TOOL_INPUT_SLOT,
+                        ),
+                        SlotValue::Json(input),
+                    ),
+                ]
+            });
         vec![(seed_slot_for_adapter.clone(), SlotValue::Json(payload))]
             .into_iter()
             .chain(
@@ -286,6 +481,7 @@ async fn register_one(
                     .clone()
                     .map(|(slot, cron)| (slot, SlotValue::String(cron))),
             )
+            .chain(tool_call_writes)
             .collect()
     });
 
@@ -309,5 +505,45 @@ async fn register_one(
         .await
         .map_err(|e| anyhow::anyhow!("register `{flow_id}`: {e}"))?;
     Ok(())
+}
+
+/// Conventional tenant id used when the session principal carries
+/// no tenant binding (current rubix login default — see
+/// `crates/starter-auth-users/src/routes/login.rs`). Matches the
+/// constant of the same name in `boot::mcp::agent_node` and in
+/// `routes::dashboard_events`; all three move together when real
+/// tenant binding lands.
+const DEFAULT_TENANT: &str = "system";
+
+/// Merge the request-task principal (tenant / subject) into a
+/// flow's caller `input` payload. Called from the seed adapter so
+/// it executes on the request task — where
+/// `starter_mcp::current_principal()` is still bound — rather than
+/// inside the spawned flow run task. Caller-supplied keys win;
+/// missing keys are filled from the principal, with a final
+/// fallback to [`DEFAULT_TENANT`] for the `tenant_id` field when
+/// the session is unbound.
+fn enrich_input_with_principal(input: Value) -> Value {
+    let principal = starter_mcp::current_principal();
+    let mut value = input;
+    let Some(obj) = value.as_object_mut() else {
+        return value;
+    };
+    if !obj.contains_key("tenant_id") {
+        let tid = principal
+            .as_ref()
+            .and_then(|p| p.tenant_id.as_deref())
+            .unwrap_or(DEFAULT_TENANT);
+        obj.insert("tenant_id".to_owned(), json!(tid));
+    }
+    if let Some(subject) = principal.as_ref().map(|p| p.subject.as_str()) {
+        if !subject.is_empty() {
+            obj.entry("owner_principal".to_owned())
+                .or_insert_with(|| json!(subject));
+            obj.entry("created_by".to_owned())
+                .or_insert_with(|| json!(subject));
+        }
+    }
+    value
 }
 

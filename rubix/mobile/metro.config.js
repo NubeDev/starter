@@ -14,6 +14,7 @@
 //      back up to its own package without hierarchical lookup.
 
 const { getDefaultConfig } = require('expo/metro-config');
+const { withNativeWind } = require('nativewind/metro');
 const path = require('path');
 
 const projectRoot = __dirname;
@@ -123,6 +124,12 @@ config.resolver.blockList = [
   // once triggers `[Reanimated] Another instance of Reanimated was
   // detected. Previous: 4.1.7, current: 4.3.1.`
   /\/node_modules\/\.pnpm\/react-native-reanimated@(?!4\.1\.)[^/]+\/.*/,
+  // Same defense for react itself. Workspace packages declare `react: ^19`
+  // and `react: ^18 || ^19`; pnpm hoists both 19.2.6 and 18.3.1 into the
+  // store alongside the 19.1.0 we pin. If Metro ever resolves through the
+  // wrong realpath we get "Invalid hook call / more than one copy of React".
+  /\/node_modules\/\.pnpm\/react@(?!19\.1\.)[^/]+\/.*/,
+  /\/node_modules\/\.pnpm\/react-dom@(?!19\.1\.)[^/]+\/.*/,
 ];
 
-module.exports = config;
+module.exports = withNativeWind(config, { input: './global.css' });

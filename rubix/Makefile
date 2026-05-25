@@ -58,8 +58,8 @@ bootstrap: deps-up
 	    bootstrap-user --email op@example.com --password rubix-dev-passwd
 
 agent:
-	@if ss -tlnp 2>/dev/null | grep -q '127.0.0.1:$(AGENT_PORT) '; then \
-	    echo "rubix-agent: 127.0.0.1:$(AGENT_PORT) already in use — skipping launch." >&2; \
+	@if ss -tlnp 2>/dev/null | grep -q ':$(AGENT_PORT) '; then \
+	    echo "rubix-agent: :$(AGENT_PORT) already in use — skipping launch." >&2; \
 	else \
 	    echo "==> rubix-agent → $(AGENT_LOG) (cwd=$(REPO_ROOT))"; \
 	    cd $(REPO_ROOT) && \
@@ -72,16 +72,24 @@ frontend:
 	@if ss -tlnp 2>/dev/null | grep -q '127.0.0.1:$(FRONTEND_PORT) '; then \
 	    echo "frontend: 127.0.0.1:$(FRONTEND_PORT) already in use — skipping launch." >&2; \
 	else \
+	    echo "==> clearing stale vite optimizer cache ($(FRONTEND_DIR)/node_modules/.vite)"; \
+	    rm -rf $(FRONTEND_DIR)/node_modules/.vite; \
 	    echo "==> vite dev → $(FRONTEND_LOG)"; \
-	    cd $(FRONTEND_DIR) && nohup pnpm dev --port $(FRONTEND_PORT) --host 127.0.0.1 > $(FRONTEND_LOG) 2>&1 & \
+	    cd $(FRONTEND_DIR) && nohup pnpm dev --port $(FRONTEND_PORT) --host 127.0.0.1 --force > $(FRONTEND_LOG) 2>&1 & \
 	    echo "    pid=$$!"; \
 	fi
 
 start: bootstrap agent frontend
-	@echo ""
-	@echo "rubix is starting:"
-	@echo "  backend : http://127.0.0.1:$(AGENT_PORT)   (log: $(AGENT_LOG))"
-	@echo "  frontend: http://127.0.0.1:$(FRONTEND_PORT)   (log: $(FRONTEND_LOG))"
+	@WIFI_IP=$$(ip -4 addr show scope global | awk '/inet /{print $$2}' | grep -v '172\.' | head -1 | cut -d/ -f1); \
+	echo ""; \
+	echo "rubix is starting:"; \
+	echo "  backend : http://127.0.0.1:$(AGENT_PORT)   (log: $(AGENT_LOG))"; \
+	echo "  frontend: http://127.0.0.1:$(FRONTEND_PORT)   (log: $(FRONTEND_LOG))"; \
+	if [ -n "$$WIFI_IP" ]; then \
+	    echo ""; \
+	    echo "  network (wifi/lan):"; \
+	    echo "  backend : http://$$WIFI_IP:$(AGENT_PORT)"; \
+	fi
 
 stop:
 	@echo "==> stop rubix-agent + vite"

@@ -16,6 +16,10 @@ type BaseNavItem = {
   title: string
   badge?: string
   icon?: React.ElementType
+  /** Fallback string when `title` is a synthetic key with no
+   *  registered translation (e.g. live dashboard titles fetched
+   *  from the server). Forwarded to `react-intl.formatMessage`. */
+  defaultMessage?: string
 }
 
 type NavLink = BaseNavItem & {

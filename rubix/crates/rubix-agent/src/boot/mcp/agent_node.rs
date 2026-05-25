@@ -34,7 +34,7 @@ use serde_json::{json, Value};
 use starter_ai_agent::{AgentLoop, ToolSet};
 use starter_flow_spi::node::{KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue};
 
-use starter_spi::ai::AiRunner;
+use starter_spi::ai::{AiRunner, PermissionMode};
 use starter_spi::tool::Tool;
 
 /// `com.rubix.ai-agent` node kind.
@@ -42,6 +42,20 @@ pub(super) struct RubixAiAgentNode {
     kind: KindId,
     runner: Arc<dyn AiRunner>,
     tools: Vec<Arc<dyn Tool>>,
+    /// Bearer-token-bridged MCP server URL the Claude CLI wrapper
+    /// attaches to so the model can dispatch *host* tools mid-turn
+    /// (orthogonal to the locally-dispatched [`Self::tools`] set
+    /// the [`AgentLoop`] owns). `None` keeps the legacy catalogue-
+    /// less behaviour, which is what every fixture test in this
+    /// crate exercises. Snapshotted at construction from
+    /// `RUBIX_SERVICE_MCP_URL` (see [`super::register`]); a follow-up
+    /// will auto-derive this from the agent's own bind address so
+    /// operators do not have to copy-paste a service token.
+    mcp_url: Option<String>,
+    /// Token paired with [`Self::mcp_url`]. Snapshotted at
+    /// construction from `RUBIX_SERVICE_MCP_TOKEN`. Only meaningful
+    /// when `mcp_url` is `Some`.
+    mcp_token: Option<String>,
 }
 
 impl RubixAiAgentNode {
@@ -49,11 +63,15 @@ impl RubixAiAgentNode {
         kind: KindId,
         runner: Arc<dyn AiRunner>,
         tools: Vec<Arc<dyn Tool>>,
+        mcp_url: Option<String>,
+        mcp_token: Option<String>,
     ) -> Self {
         Self {
             kind,
             runner,
             tools,
+            mcp_url,
+            mcp_token,
         }
     }
 
@@ -86,6 +104,17 @@ impl NodeBehavior for RubixAiAgentNode {
             .cloned()
             .unwrap_or_else(|| json!({}));
 
+        // Inject session-derived fields into the primary tool's
+        // input when the caller omitted them. The MCP HTTP transport
+        // binds the authenticated `Principal` on a task-local (see
+        // `starter_mcp::current_principal`); without this top-up the
+        // common case — a chat UI POST that only sends `{"prompt":
+        // "..."}` — would fail every dashboard / user / tenant verb
+        // with `missing field tenant_id`. Fields the caller did
+        // supply win, so explicit MCP `arguments` keep overriding
+        // the session defaults.
+        let tool_input = augment_tool_input_with_principal(tool_input);
+
         // Primary-tool dispatch — the deterministic part of the
         // output. For nodes with a mapped primary tool, the tool's
         // output IS the structured response; the LLM reply is a
@@ -101,18 +130,37 @@ impl NodeBehavior for RubixAiAgentNode {
         let primary_tool_name: Option<&str> = payload
             .get("primary_tool")
             .and_then(|v| v.as_str());
+        // Primary-tool dispatch failures (unknown tool, bad input, etc.)
+        // are NOT fatal: the node logs a warn and falls through to the
+        // narration-only path so the caller still gets a response. The
+        // common case driving this is an MCP `tools/call` with no
+        // arguments against a flow whose first allowed_tool requires
+        // fields (e.g. dashboard tools always need `tenant_id`). Failing
+        // the whole flow run on that would produce a silent null body —
+        // worse UX than a graceful "no tool output" narration.
         let tool_value: Option<Value> = match primary_tool_name {
-            Some(tool_name) => {
-                let tool = self.find_tool(tool_name).ok_or_else(|| {
-                    NodeError::Backend(format!(
-                        "ai-agent: primary tool `{tool_name}` not in registry"
-                    ))
-                })?;
-                let value = tool.invoke(tool_input).await.map_err(|e| {
-                    NodeError::Backend(format!("ai-agent: tool `{tool_name}` failed: {e}"))
-                })?;
-                Some(value)
-            }
+            Some(tool_name) => match self.find_tool(tool_name) {
+                None => {
+                    tracing::warn!(
+                        tool = %tool_name,
+                        node = %ctx.node,
+                        "ai-agent: primary tool not in registry; falling back to reply-only",
+                    );
+                    None
+                }
+                Some(tool) => match tool.invoke(tool_input).await {
+                    Ok(v) => Some(v),
+                    Err(e) => {
+                        tracing::warn!(
+                            tool = %tool_name,
+                            node = %ctx.node,
+                            error = %e,
+                            "ai-agent: primary tool failed; falling back to reply-only",
+                        );
+                        None
+                    }
+                },
+            },
             None => None,
         };
 
@@ -134,8 +182,24 @@ impl NodeBehavior for RubixAiAgentNode {
             .map(|v| !(v == "0" || v.eq_ignore_ascii_case("false") || v.eq_ignore_ascii_case("off")))
             .unwrap_or(true);
         let reply = if narration_enabled {
+            // Skill body (e.g. dashboard-builder playbook) lifted from
+            // the seed payload, written by `boot::mcp::register::
+            // skill_body_for_hint` when the flow YAML declared a
+            // `skill_hint`. Prepending the body to the CLI prompt
+            // primes the model with rubix's per-goal instructions;
+            // the `skill_hint` field by itself is dropped at
+            // `crates/starter-flow-nodes/src/ai_agent.rs:347` with a
+            // warn until the starter-skills loader lands. Empty when
+            // no skill is resolved; the surrounding prompt stays
+            // intelligible either way.
+            let skill_preamble = payload
+                .get("skill_body")
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .map(|s| format!("# Skill instructions (follow these)\n\n{s}\n\n---\n\n"))
+                .unwrap_or_default();
             let prompt = format!(
-                "Summarise this rubix flow result in one sentence for the operator. \
+                "{skill_preamble}Summarise this rubix flow result in one sentence for the operator. \
                  Respond in BCP-47 locale `{locale}` (translate the summary into \
                  the matching language; e.g. `es-AR` → Spanish, `en-US` → English). \
                  Caller context (JSON): {payload}\n\nTool output (JSON): {}",
@@ -144,7 +208,45 @@ impl NodeBehavior for RubixAiAgentNode {
                     .map(|v| v.to_string())
                     .unwrap_or_else(|| "<none>".to_owned())
             );
-            let agent = AgentLoop::new(self.runner.clone(), ToolSet::new(self.tools.clone()));
+
+            // Direct `AgentLoop` call carrying the MCP wiring so
+            // the upstream Claude CLI also attaches to the rubix
+            // `/api/v1/mcp` bridge and the model can dispatch host
+            // tools mid-turn. The `with_mcp` builder is a no-op for
+            // non-CLI runners (REST providers carry their tool list
+            // through `RestCfg::tools`) and for tests using
+            // `FixtureRunner` (both `mcp_url` and `mcp_token` stay
+            // `None` in CI since the env vars are unset). The
+            // local `ToolSet` is the in-process fallback the loop
+            // dispatches when the recorded transcript / model
+            // returns a `tool_uses` entry directly.
+            // Restrict the wrapped Claude CLI to MCP-bridged tools
+            // only. Without this, the binary's *built-in* tools are
+            // all in scope, and the model reaches for the worst of
+            // them (`AskUserQuestion`) instead of acting — turning
+            // "make me an iot dashboard" into a multi-turn survey.
+            // `mcp__acme__*` matches every tool exposed through the
+            // MCP server we generate in
+            // `crates/starter-ai/src/runners/claude.rs` (server name
+            // hard-coded to `"acme"` there). The pattern is a no-op
+            // for non-CLI runners and for `mcp_url == None` (no MCP
+            // bridge in scope), so test fixtures stay unaffected.
+            let allowed_pattern = self
+                .mcp_url
+                .as_ref()
+                .map(|_| "mcp__acme__*".to_owned());
+            let agent = AgentLoop::new(self.runner.clone(), ToolSet::new(self.tools.clone()))
+                .with_mcp(self.mcp_url.clone(), self.mcp_token.clone())
+                .with_allowed_tools(allowed_pattern)
+                // Bypass the CLI's interactive approval prompt. The
+                // host has already gated the request at the HTTP
+                // boundary (login + cookie); the model is acting on
+                // a tool the operator implicitly approved by signing
+                // in. Without this every `mcp__acme__*` call hangs
+                // on a stdin prompt the headless wrapper never
+                // answers, which surfaces in the UI as "needs your
+                // permission" no-op replies.
+                .with_permission_mode(Some(PermissionMode::Bypass));
             match agent.run(prompt).await {
                 Ok(reply) => Some(reply),
                 Err(e) => {
@@ -165,9 +267,16 @@ impl NodeBehavior for RubixAiAgentNode {
             (Some(t), None) => json!({ "tool": t }),
             (None, Some(r)) => json!({ "reply": r }),
             (None, None) => {
-                return Err(NodeError::Backend(
-                    "ai-agent: neither primary tool nor LLM reply produced output".to_owned(),
-                ));
+                // Both deterministic and narration paths produced no
+                // output. Rather than fail the flow run (silent null
+                // body for the caller), return a structured stub so
+                // the caller can see *what* went wrong. Common cause:
+                // narration disabled + the flow's primary tool needs
+                // arguments the zero-arg MCP call didn't supply.
+                let hint = primary_tool_name
+                    .map(|t| format!("primary tool `{t}` produced no output and narration is disabled"))
+                    .unwrap_or_else(|| "no primary tool mapped and narration is disabled".to_owned());
+                json!({ "reply": hint, "tool": null })
             }
         };
 
@@ -179,3 +288,43 @@ impl NodeBehavior for RubixAiAgentNode {
         Ok(out)
     }
 }
+
+/// Conventional tenant id used in single-tenant / laptop dev
+/// deployments. The bundled seed data
+/// (`rubix.dashboard.disk-overview`, etc.) is written under this
+/// tenant, and the rubix login flow does not yet bind sessions to
+/// a tenant (see `crates/starter-auth-users/src/routes/login.rs`).
+/// Falling back to this when `Principal.tenant_id` is `None` lets
+/// the chat surface author dashboards out of the box; the value
+/// stays a single source of truth so a follow-up that wires real
+/// tenant binding only has to remove the fallback.
+const DEFAULT_TENANT: &str = "system";
+
+/// Merge the authenticated session principal (tenant / owner /
+/// created_by) into `input` when those fields are absent. Returns
+/// `input` unchanged outside an HTTP MCP dispatch (no principal
+/// bound), or when the caller already provided values, or when the
+/// payload is not a JSON object. See the call site in
+/// `RubixAiAgentNode::invoke` for the rationale.
+fn augment_tool_input_with_principal(input: Value) -> Value {
+    let Some(principal) = starter_mcp::current_principal() else {
+        return input;
+    };
+    let mut value = input;
+    let Some(obj) = value.as_object_mut() else {
+        return value;
+    };
+    if !obj.contains_key("tenant_id") {
+        let tid = principal.tenant_id.as_deref().unwrap_or(DEFAULT_TENANT);
+        obj.insert("tenant_id".to_owned(), json!(tid));
+    }
+    let subject = principal.subject.as_str();
+    if !subject.is_empty() {
+        obj.entry("owner_principal".to_owned())
+            .or_insert_with(|| json!(subject));
+        obj.entry("created_by".to_owned())
+            .or_insert_with(|| json!(subject));
+    }
+    value
+}
+

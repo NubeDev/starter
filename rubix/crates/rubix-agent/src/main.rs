@@ -130,11 +130,29 @@ async fn main() -> Result<()> {
     let flow_runtime =
         boot::build_flow_runtime(mcp_pool.clone(), &cfg.flow_runtime).await?;
 
+    // Build the REST tool registry BEFORE the MCP surface so the
+    // exact same `Vec<Arc<dyn Tool>>` is threaded into both — the
+    // `ai-agent` node dispatches against the SAME store instances
+    // the REST `/api/v1/tools/*` router serves. Without the shared
+    // list, every `InMemory*Store`-backed tool family got a second
+    // store the REST writes never reached.
+    // Clones taken here mirror the previous boot order: `ch_client`
+    // is moved into the tool list; the SDUI + explorer routers need
+    // their own handles.
+    let ch_client_for_sdui = ch_client.clone();
+    let ch_client_for_explorer = ch_client.clone();
+    let tools = registry::build_tool_registry(
+        ch_client,
+        cfg.insights.disk_warn_threshold,
+        mcp_pool.clone(),
+    );
+
     let mcp = boot::mcp::build_mcp_surface(
-        ch_client.clone(),
+        None, // ch_client already consumed by the shared registry above
         mcp_pool.clone(),
         ext_mcp_ctx.as_ref(),
         Some(&flow_runtime),
+        Some(tools.clone()),
     )
     .await?;
 
@@ -187,15 +205,8 @@ async fn main() -> Result<()> {
     // the registry consumes the original. Phase B.2: the SDUI
     // `QueryEngine` honours `ch:<table>` prefixes against the same
     // warehouse the disk tool persists history into.
-    let ch_client_for_sdui = ch_client.clone();
-    // Second clone for the explorer sub-router mounted below — the
-    // registry call moves `ch_client` into the tool list.
-    let ch_client_for_explorer = ch_client.clone();
-    let tools = registry::build_tool_registry(
-        ch_client,
-        cfg.insights.disk_warn_threshold,
-        mcp_pool.clone(),
-    );
+    // (Tool registry + the `ch_client_for_*` clones were moved
+    // above so MCP and REST share one `Vec<Arc<dyn Tool>>`.)
 
     info!(
         crate_name = env!("CARGO_PKG_NAME"),
@@ -345,6 +356,46 @@ async fn main() -> Result<()> {
         let sdui_router: Router =
             boot::build_sdui_router(&cfg, pool.clone(), ch_client_for_sdui.clone(), &tools);
         app = app.merge(sdui_router);
+
+        // Live sidebar SSE — `GET /api/v1/dashboards/events`.
+        // Tenant-scoped tail of `starter_changes` projected into
+        // `created`/`updated`/`deleted` frames so the rubix frontend
+        // sidebar updates the moment the chat surface (or any
+        // operator) calls a `rubix.dashboard.*` write verb. See
+        // `rubix/docs/scope/dashboards/09-live-sidebar-sse.md` and
+        // [`routes::dashboard_events`]. Wrapped in `with_principal`
+        // so anonymous subscribers see 401 before any stream opens.
+        {
+            use rubix_store_postgres::PgDashboardStore;
+            use starter_changelog_postgres::PgListenTail;
+            use starter_server::auth::with_principal;
+            let tail = Arc::new(PgListenTail::new(pool.clone()));
+            let store = Arc::new(PgDashboardStore::new(pool.clone()));
+            let de_router = routes::dashboard_events::router(
+                routes::dashboard_events::DashboardEventsState { tail, store },
+            );
+            app = app.merge(with_principal(de_router, auth.authenticator.clone()));
+        }
+
+        // Chat streaming SSE — `POST /api/v1/chat/stream`. Direct
+        // bridge from the Claude CLI wrapper's per-chunk Event
+        // stream to the chat UI; bypasses the flow engine
+        // entirely. See `rubix/docs/sessions/2026-05-25-dashboards-
+        // sidebar-sse-and-chat-gaps.md` §"Part 3" and
+        // [`routes::chat_stream`]. AuthN-gated via `with_principal`
+        // so an anonymous POST sees 401 before any runner spawns.
+        // The MCP wiring (so the model can dispatch host tools
+        // mid-turn) reads `RUBIX_SERVICE_MCP_URL` +
+        // `RUBIX_SERVICE_MCP_TOKEN`; unset means narration only.
+        {
+            use starter_server::auth::with_principal;
+            let chat_runner = boot::ai::build_runner(&cfg)
+                .map_err(|e| anyhow::anyhow!("boot::ai::build_runner (chat): {e}"))?;
+            let chat_router = routes::chat_stream::router(
+                routes::chat_stream::ChatStreamState::from_env(chat_runner),
+            );
+            app = app.merge(with_principal(chat_router, auth.authenticator.clone()));
+        }
 
         // Layer order matters. The changelog middleware reads
         // `Principal` from request extensions, so it must run

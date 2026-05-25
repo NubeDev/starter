@@ -13,6 +13,9 @@ nodes:
       skill_hint: com.rubix.clickhouse-ruler
       cost_cap: 0.50_usd
       allowed_tools:
+        # First entry is the zero-arg "primary tool" — see
+        # boot/mcp/register.rs::primary_tool_for_root.
+        - rubix.clickhouse.rule.list
         - rubix.clickhouse.rule.write
         - rubix.clickhouse.mart.create
         - rubix.clickhouse.retention.set

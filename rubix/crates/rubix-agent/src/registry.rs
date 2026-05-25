@@ -65,11 +65,12 @@ use rubix_tools::flow_ops::lint::FlowLintTool;
 use rubix_tools::flow_ops::kinds::FlowKindsTool;
 use rubix_tools::flow_ops::list::FlowListTool;
 use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
-use rubix_store_postgres::PgFlowDefStore;
+use rubix_store_postgres::{PgDashboardStore, PgFlowDefStore};
 use rubix_tools::insights::rule_create::InsightsRuleCreateTool;
 use rubix_tools::insights::rule_list::InsightsRuleListTool;
 use rubix_tools::insights::rule_toggle::{InsightsRuleDisableTool, InsightsRuleEnableTool};
 use rubix_tools::insights::store::{InMemoryInsightsStore, InsightsRuleStore};
+use rubix_tools::dataflow::synth::SynthEmitTool;
 use rubix_tools::system::alert_send::AlertSendTool;
 use rubix_tools::system::db::DbTool;
 use rubix_tools::system::disk::DiskTool;
@@ -120,8 +121,8 @@ pub fn build_tool_registry(
     // `flows_seed::seed_and_load` populates on first boot. The
     // in-memory fallback only fires on the laptop / no-DB path —
     // see `rubix/docs/sessions/2026-05-25-tick-counter-r3-and-flow-ops-pg.md`.
-    let flow_store: Arc<dyn FlowDefStore> = match pg_pool {
-        Some(pool) => Arc::new(PgFlowDefStore::new(pool)),
+    let flow_store: Arc<dyn FlowDefStore> = match pg_pool.as_ref() {
+        Some(pool) => Arc::new(PgFlowDefStore::new(pool.clone())),
         None => Arc::new(seed_flow_store()),
     };
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
@@ -129,7 +130,19 @@ pub fn build_tool_registry(
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
     let ch_writer: Arc<dyn ChWriter> = Arc::new(InMemoryChWriter::new());
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
-    let dashboard_store: Arc<dyn DashboardStore> = Arc::new(InMemoryDashboardStore::new());
+    // Dashboard verbs share the SDUI page provider's store when a PG
+    // pool is wired in — that is the single source of truth for
+    // `dashboards_definitions`. The laptop / no-DB path falls back
+    // to the in-memory impl so `cargo run -p rubix-agent` without
+    // Postgres keeps the verbs runnable (writes simply do not
+    // survive restart). Without this swap, dashboards authored via
+    // the chat / REST tools landed in a process-local in-memory map
+    // that the SDUI `/api/v1/ui/resolve` route never reads from
+    // (see session note 2026-05-25-dashboard-e2e-three-bugs.md).
+    let dashboard_store: Arc<dyn DashboardStore> = match pg_pool.as_ref() {
+        Some(pool) => Arc::new(PgDashboardStore::new(pool.clone())),
+        None => Arc::new(InMemoryDashboardStore::new()),
+    };
     // Shared with `boot::authz`. The dashboard.create tool re-asserts
     // the `rubix.dashboard.page` ResourceSpec on this registry on
     // every successful write; the call is idempotent.
@@ -156,6 +169,8 @@ pub fn build_tool_registry(
         Arc::new(DbTool),
         Arc::new(FlowErrorsTool::default()),
         Arc::new(AlertSendTool),
+        // ---- dataflow (synth) -----------------------------------
+        Arc::new(SynthEmitTool::default()),
         // ---- flow_ops (read + write) ----------------------------
         Arc::new(FlowListTool::new(flow_store.clone())),
         Arc::new(FlowKindsTool::from_behaviors(&builtin_kind_behaviors())),
@@ -293,6 +308,11 @@ mod tests {
                 "registry missing {expected}",
             );
         }
+    }
+
+    #[test]
+    fn registry_contains_dataflow_synth_emit() {
+        assert!(names().contains(&"rubix.dataflow.synth.emit".to_owned()));
     }
 
     #[test]

@@ -6,20 +6,25 @@ import {
   SidebarHeader,
   SidebarRail,
 } from '@/components/ui/sidebar'
-import { sidebarData } from './data/sidebar-data'
+import { sidebarData, toSidebarNavGroups } from './data/sidebar-data'
 import { NavGroup } from './nav-group'
 import { NavUser } from './nav-user'
 import { TeamSwitcher } from './team-switcher'
+import { useNavGroups } from '@/lib/use-nav-groups'
 
 export function AppSidebar() {
   const { collapsible, variant } = useLayout()
+  // Live composition: static NAV_GROUPS + a dynamic Dashboards group
+  // fed by the rubix-agent SSE feed (see
+  // `rubix/docs/scope/dashboards/09-live-sidebar-sse.md`).
+  const navGroups = toSidebarNavGroups(useNavGroups())
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
       <SidebarHeader>
         <TeamSwitcher teams={sidebarData.teams} />
       </SidebarHeader>
       <SidebarContent>
-        {sidebarData.navGroups.map((props) => (
+        {navGroups.map((props) => (
           <NavGroup key={props.title} {...props} />
         ))}
       </SidebarContent>

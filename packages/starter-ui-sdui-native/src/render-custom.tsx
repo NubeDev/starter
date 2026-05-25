@@ -14,7 +14,7 @@ export function RenderCustom({ node }: { node: UiComponent }) {
   return (
     <Box
       padding={8}
-      accessibilityRole="alert"
+      accessibilityLiveRegion="assertive"
       accessibilityLabel={`Missing custom renderer: ${id || "(unset)"}`}
       testID={`sdui-custom-missing-${id || "unset"}`}
     >

@@ -47,6 +47,12 @@ starter-changelog         = { workspace = true }
 # on the authz registry per write (Phase C.2 of `dashboards`).
 starter-authz             = { workspace = true }
 
+# dashboard.{create,update} validate `body_json` against the
+# `ComponentTree` schema before persisting — otherwise garbage
+# bodies are accepted by the writer and only blow up later in the
+# SDUI resolver. See src/dashboard/create.rs.
+starter-ui-ir             = { workspace = true }
+
 # analytics.query bundles its named SQL templates via `include_dir!`
 # at compile time — same pattern as `rubix-flows` and `rubix-skills`.
 # See src/analytics/templates/.
@@ -58,6 +64,11 @@ include_dir               = "0.7"
 # See src/analytics/report.rs.
 starter-export            = { workspace = true, features = ["html", "csv", "json"] }
 bytes                     = { workspace = true }
+
+# Synth tool (`rubix.dataflow.synth.emit`) uses a seeded `StdRng` so
+# its mess-injection output is deterministic across calls. See
+# src/dataflow/synth.rs and docs/sessions/data-flow/01-producer.md.
+rand                      = { workspace = true }
 
 [dev-dependencies]
 # analytics.report integration test writes the rendered bytes to a

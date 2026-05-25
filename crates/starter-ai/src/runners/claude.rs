@@ -199,6 +199,17 @@ impl AiRunner for ClaudeRunner {
                 starter_spi::ai::PermissionMode::Bypass => P::BypassPermissions,
             };
             cmd = cmd.permission_mode(mapped);
+            // `--permission-mode bypassPermissions` alone still
+            // gates *MCP* tool calls behind a per-call prompt the
+            // headless wrapper never answers; the model just emits
+            // "Waiting on permission \u2026" and the call never reaches
+            // the MCP server. `--dangerously-skip-permissions` is the
+            // belt-and-braces flag that bypasses MCP prompts too.
+            // Only pair it with `Bypass` so the other modes keep
+            // their documented behaviour.
+            if matches!(mode, starter_spi::ai::PermissionMode::Bypass) {
+                cmd = cmd.dangerously_skip_permissions();
+            }
         }
 
         let start = Instant::now();

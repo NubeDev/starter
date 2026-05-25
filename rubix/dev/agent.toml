@@ -10,7 +10,7 @@
 # Loaded by `rubix_agent::boot::config::AgentConfig::load` with the
 # precedence: defaults < this file < RUBIX_* env < flags.
 
-bind = "127.0.0.1:8088"
+bind = "0.0.0.0:8088"
 database_url = "postgres://rubix:rubix-dev@127.0.0.1:5433/rubix"
 clickhouse_url = "http://127.0.0.1:8124"
 secrets_path = "rubix/dev/secrets.age"

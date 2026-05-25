@@ -13,12 +13,14 @@ nodes:
       skill_hint: com.rubix.user-admin
       cost_cap: 0.50_usd
       allowed_tools:
+        # First entry is the zero-arg "primary tool" — see
+        # boot/mcp/register.rs::primary_tool_for_root.
+        - rubix.user.list
+        - rubix.tenant.list
         - rubix.user.create
         - rubix.user.disable
-        - rubix.user.list
         - rubix.team.create
         - rubix.team.assign
-        - rubix.tenant.list
         - rubix.undo.last
 
 links: []

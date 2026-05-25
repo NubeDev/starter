@@ -1,0 +1,52 @@
+# Stage 01 producer flow — drives `rubix.dataflow.synth.emit` once
+# per minute and forwards the rows to the warehouse ingest path.
+#
+# See rubix/docs/sessions/data-flow/01-producer.md for the framework:
+# synthesis is a tool (rubix.dataflow.synth.emit), delivery is this
+# flow.
+#
+# Wiring: the host-side seed adapter
+# (rubix-agent/src/boot/mcp/register.rs `tool_call_seeds`) projects
+# each tool-call node's `settings.tool_id` and `settings.tool_input`
+# into the `tool_id` / `tool_input` input slots the body reads, and
+# auto-injects `tool_input.tick_epoch_ms` from wall-clock if absent.
+id: com.rubix.data-flow.producer
+description: |
+  Stage 01 messy energy + water producer. Schedule fires every 60s;
+  synth tool returns 0..N wire rows; log node emits the rows + stats
+  for visibility; ingest tool persists them. Stage 02 flips the
+  `ingest` node's tool_id to `rubix.warehouse.ingest`.
+trigger: schedule
+cron_expr: "0 * * * * *"
+
+nodes:
+  - id: tick
+    kind: starter.flow.trigger.schedule
+    config:
+      cron_expr: "0 * * * * *"
+  - id: synth
+    kind: starter.flow.tool-call
+    config:
+      tool_id: "rubix.dataflow.synth.emit"
+      tool_input:
+        tenant_id: "site-a"
+        meters:
+          - "site-a.elec.main"
+          - "site-a.water.main"
+          - "site-a.elec.hvac"
+        # tick_epoch_ms: auto-injected by the host seed adapter
+  - id: emit
+    kind: starter.flow.log
+    config:
+      level: info
+  - id: ingest
+    kind: starter.flow.tool-call
+    config:
+      # Stage 02's only edit to this YAML: flip to "rubix.warehouse.ingest".
+      tool_id: "rubix.system.disk"
+      tool_input: {}
+
+links:
+  - { from: "tick.fire",     to: "synth.in" }
+  - { from: "synth.output",  to: "emit.value" }
+  - { from: "emit.emitted",  to: "ingest.in" }

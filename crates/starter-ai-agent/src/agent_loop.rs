@@ -10,7 +10,8 @@
 use std::sync::Arc;
 
 use starter_spi::ai::{
-    AiRunner, Cancel, CliCfg, Provider, RestCfg, RunResult, RunnerInput, SessionId,
+    AiRunner, Cancel, CliCfg, PermissionMode, Provider, RestCfg, RunResult, RunnerInput,
+    SessionId,
 };
 use tokio::sync::mpsc;
 
@@ -22,12 +23,86 @@ use crate::tool_set::ToolSet;
 pub struct AgentLoop {
     runner: Arc<dyn AiRunner>,
     tools: ToolSet,
+    /// Optional MCP-bridge URL forwarded into [`CliCfg::mcp_url`]
+    /// when the runner is a CLI wrapper. When set the wrapped CLI
+    /// process attaches to the named MCP server and the upstream
+    /// model can dispatch *host* tools mid-turn — orthogonal to
+    /// the locally-dispatched [`tools`] set the loop owns (which
+    /// runs in this process and is what e.g. recorded fixtures
+    /// exercise). `None` keeps the legacy "CLI without a tool
+    /// catalogue" shape, which is what every unit/integration test
+    /// in this workspace exercises today.
+    mcp_url: Option<String>,
+    /// Bearer token paired with [`Self::mcp_url`]. Only meaningful
+    /// when `mcp_url` is `Some`.
+    mcp_token: Option<String>,
+    /// CLI tool-filter pattern forwarded as `--allowedTools` to
+    /// the wrapped binary. Restricts which tools the model may
+    /// call — including the CLI's *built-in* tools
+    /// (`Bash`, `Read`, `AskUserQuestion`, …) and the MCP-
+    /// bridged tools (`mcp__acme__*`). Empty / `None` keeps the
+    /// CLI default, which permits the full built-in catalogue —
+    /// suitable for ad-hoc Claude Code use, terrible for an
+    /// assistant whose only job is to dispatch our MCP tools
+    /// (the model will reach for `AskUserQuestion` instead of
+    /// acting). No-op for non-CLI runners.
+    allowed_tools: Option<String>,
+    /// CLI permission mode forwarded to `CliCfg::permission_mode`.
+    /// `None` keeps the CLI's interactive default — fatal for
+    /// headless surfaces because every tool call stalls waiting
+    /// for stdin approval. The chat surface sets this to
+    /// [`PermissionMode::Bypass`] because the host has already
+    /// authorised the principal at the HTTP boundary; the model
+    /// merely actuates tools the operator implicitly approved by
+    /// signing in.
+    permission_mode: Option<PermissionMode>,
 }
 
 impl AgentLoop {
     /// Build a loop bound to the supplied runner and tool set.
     pub fn new(runner: Arc<dyn AiRunner>, tools: ToolSet) -> Self {
-        Self { runner, tools }
+        Self {
+            runner,
+            tools,
+            mcp_url: None,
+            mcp_token: None,
+            allowed_tools: None,
+            permission_mode: None,
+        }
+    }
+
+    /// Restrict the wrapped CLI to a single tool-filter pattern
+    /// (e.g. `"mcp__acme__*"` to allow only MCP-bridged tools
+    /// and disable every built-in including `AskUserQuestion`).
+    /// Empty / whitespace-only is treated as unset.
+    pub fn with_allowed_tools(mut self, pattern: Option<String>) -> Self {
+        self.allowed_tools = pattern.filter(|s| !s.trim().is_empty());
+        self
+    }
+
+    /// Override the wrapped CLI's permission mode. The chat
+    /// surface uses [`PermissionMode::Bypass`] because the host
+    /// has already gated the request at the HTTP layer; without
+    /// this the CLI defaults to interactive approval and every
+    /// tool call stalls.
+    pub fn with_permission_mode(mut self, mode: Option<PermissionMode>) -> Self {
+        self.permission_mode = mode;
+        self
+    }
+
+    /// Attach an MCP bridge to every CLI runner call this loop
+    /// makes. Empty strings are treated as "unset" so callers can
+    /// pass raw env-var reads without filtering. No-op for non-CLI
+    /// runners — REST providers carry their own tool list via
+    /// [`RestCfg::tools`].
+    pub fn with_mcp(
+        mut self,
+        url: Option<String>,
+        token: Option<String>,
+    ) -> Self {
+        self.mcp_url = url.filter(|s| !s.trim().is_empty());
+        self.mcp_token = token.filter(|s| !s.trim().is_empty());
+        self
     }
 
     /// Drive the loop end-to-end and return the model's final reply.
@@ -86,6 +161,10 @@ impl AgentLoop {
                 };
                 RunnerInput::Cli(CliCfg {
                     prompt: combined,
+                    mcp_url: self.mcp_url.clone(),
+                    mcp_token: self.mcp_token.clone(),
+                    allowed_tools: self.allowed_tools.clone(),
+                    permission_mode: self.permission_mode,
                     ..Default::default()
                 })
             }

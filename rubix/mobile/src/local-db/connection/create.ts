@@ -5,7 +5,7 @@
 // single host serving two logical tenants). We warn in the result if a
 // duplicate is detected, but never reject.
 
-import { ulid } from 'ulid';
+import { localId } from '../local-id';
 
 import type { Database } from '../open';
 import { listConnections } from './list';
@@ -38,7 +38,7 @@ export async function createConnection(
     : 'ok';
 
   const connection: Connection = {
-    id: ulid(),
+    id: localId(),
     label: input.label.trim(),
     baseUrl: input.baseUrl.replace(/\/+$/, ''),
     colour: (input.colour ?? '').trim(),

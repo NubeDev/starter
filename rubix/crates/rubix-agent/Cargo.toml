@@ -60,7 +60,7 @@ starter-flow-node-loop    = { workspace = true }
 # Built-in node kinds used to seed `FlowKindsTool` at boot — the
 # `rubix.flow_ops.kinds` verb snapshots `kind_id` + `config_schema`
 # off each behaviour. See src/registry.rs.
-starter-flow-nodes        = { workspace = true, features = ["counter", "log", "trigger-schedule"] }
+starter-flow-nodes        = { workspace = true, features = ["counter", "log", "trigger-schedule", "tool-call"] }
 # SDUI substrate — IR + binding evaluator + the resolve/action/table router.
 # Consumed by `boot::sdui::build_sdui_router` per docs/design/sdui/host-glue.md.
 starter-ui-ir             = { workspace = true }

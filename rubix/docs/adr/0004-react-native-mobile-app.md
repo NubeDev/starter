@@ -122,7 +122,7 @@ but that decision is its own ADR.
 
 ### D. Bare React Native (no Expo)
 
-Rejected. **Expo (SDK 52+) is the locked-in runtime for `rubix/mobile`.**
+Rejected. **Expo (SDK 54, locked) is the runtime for `rubix/mobile`.**
 Expo supplies every runtime dep we need (`react-native-svg`,
 `react-native-reanimated`, the SSE polyfill, AsyncStorage,
 `expo-sqlite`, `expo-secure-store`), gives us EAS for signed

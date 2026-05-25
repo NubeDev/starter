@@ -26,6 +26,17 @@ impl ToolRegistry {
         self
     }
 
+    /// Register an already-`Arc`-wrapped tool. Same shape as
+    /// [`Self::register`] but for callers that need to share the
+    /// same `Arc<dyn Tool>` instance across multiple registries
+    /// (e.g. rubix surfaces the same tool list to both its REST
+    /// router and its MCP catalogue).
+    pub fn register_arc(mut self, tool: Arc<dyn Tool>) -> Self {
+        let def = tool.definition();
+        self.tools.insert(def.name.clone(), tool);
+        self
+    }
+
     /// All registered tool definitions, in registration order.
     pub fn list(&self) -> Vec<ToolDefinition> {
         self.tools.values().map(|t| t.definition()).collect()

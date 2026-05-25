@@ -1,0 +1,1586 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #17202a;
+      --muted: #5d6b7a;
+      --paper: #f7f8f5;
+      --surface: #ffffff;
+      --line: #ccd3d8;
+      --blue: #2f6f9f;
+      --teal: #1f8a70;
+      --amber: #b87815;
+      --red: #b54a3d;
+      --green: #5b7f2a;
+      --soft-blue: #e8f2f8;
+      --soft-teal: #e6f4ef;
+      --soft-amber: #fbf0df;
+      --soft-red: #f8e9e6;
+      --soft-green: #edf4e4;
+      --shadow: 0 20px 55px rgba(30, 45, 62, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.45;
+    }
+
+    a {
+      color: var(--blue);
+      text-decoration: none;
+    }
+
+    a:hover {
+      text-decoration: underline;
+    }
+
+    code {
+      border: 1px solid #d6dde2;
+      border-radius: 5px;
+      padding: 1px 5px;
+      background: #f1f4f6;
+      color: #24313f;
+      font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+      font-size: 0.92em;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      border-bottom: 1px solid var(--line);
+      background: rgba(247, 248, 245, 0.94);
+      backdrop-filter: blur(12px);
+    }
+
+    .topbar-inner {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 12px 0;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 180px;
+    }
+
+    .brand strong {
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .brand span {
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .nav {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .nav a {
+      display: inline-flex;
+      min-height: 36px;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: var(--surface);
+      font-size: 13px;
+    }
+
+    .page {
+      padding: 44px 0 56px;
+      scroll-margin-top: 72px;
+    }
+
+    .page + .page {
+      border-top: 1px solid var(--line);
+    }
+
+    .wrap {
+      width: min(1180px, calc(100vw - 32px));
+      margin: 0 auto;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+      margin: 0;
+    }
+
+    h1 {
+      font-size: clamp(34px, 5vw, 64px);
+      line-height: 0.98;
+      letter-spacing: 0;
+      max-width: 820px;
+    }
+
+    h2 {
+      font-size: 28px;
+      line-height: 1.12;
+      letter-spacing: 0;
+    }
+
+    h3 {
+      font-size: 16px;
+      letter-spacing: 0;
+    }
+
+    .lede {
+      margin-top: 18px;
+      max-width: 680px;
+      color: #334456;
+      font-size: 18px;
+    }
+
+    .audience-strip {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .audience {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 16px;
+    }
+
+    .audience .label {
+      display: inline-flex;
+      align-items: center;
+      min-height: 24px;
+      border-radius: 999px;
+      padding: 0 9px;
+      font-size: 12px;
+      font-weight: 700;
+      background: var(--soft-teal);
+      color: #145847;
+    }
+
+    .audience:nth-child(2) .label {
+      background: var(--soft-blue);
+      color: #254f71;
+    }
+
+    .audience p {
+      margin-top: 9px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .map-panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 18px;
+      box-shadow: var(--shadow);
+    }
+
+    .map-panel h2 {
+      margin-bottom: 14px;
+      font-size: 20px;
+    }
+
+    .flow-row {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .node {
+      min-height: 118px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: #fff;
+      position: relative;
+    }
+
+    .node:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -11px;
+      top: 50%;
+      width: 11px;
+      border-top: 2px solid #8f9ba5;
+    }
+
+    .node strong {
+      display: block;
+      font-size: 14px;
+      line-height: 1.2;
+    }
+
+    .node span {
+      display: block;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .node.source {
+      background: var(--soft-amber);
+      border-color: #e3c895;
+    }
+
+    .node.flow {
+      background: var(--soft-blue);
+      border-color: #b8d2e3;
+    }
+
+    .node.store {
+      background: var(--soft-teal);
+      border-color: #acd7ca;
+    }
+
+    .node.analytics {
+      background: var(--soft-green);
+      border-color: #c7daa7;
+    }
+
+    .node.dashboard {
+      background: var(--soft-red);
+      border-color: #e2bbb6;
+    }
+
+    .section {
+      margin-top: 38px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 18px;
+      margin-bottom: 16px;
+    }
+
+    .section-head p {
+      max-width: 610px;
+      color: var(--muted);
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 16px;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .card p {
+      margin-top: 8px;
+    }
+
+    .card ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+    }
+
+    .metric {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .metric b {
+      font-size: 26px;
+      color: var(--blue);
+    }
+
+    .swimlane {
+      display: grid;
+      grid-template-columns: 180px repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .lane-label {
+      display: flex;
+      align-items: center;
+      border-radius: 8px;
+      padding: 12px;
+      color: #fff;
+      font-weight: 700;
+      background: #334456;
+    }
+
+    .lane-cell {
+      min-height: 96px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 12px;
+    }
+
+    .lane-cell strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .lane-cell span {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .lane-cell.emphasis {
+      border-color: #9fc6ba;
+      background: var(--soft-teal);
+    }
+
+    .layers {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .layer {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .layer header {
+      padding: 12px 14px;
+      color: #fff;
+      background: #334456;
+      font-weight: 800;
+    }
+
+    .layer:nth-child(1) header {
+      background: var(--amber);
+    }
+
+    .layer:nth-child(2) header {
+      background: var(--teal);
+    }
+
+    .layer:nth-child(3) header {
+      background: var(--blue);
+    }
+
+    .layer div {
+      padding: 14px;
+      min-height: 122px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .tag-band {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .tag {
+      display: inline-flex;
+      align-items: center;
+      min-height: 28px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 0 10px;
+      background: var(--surface);
+      font-size: 12px;
+      color: #334456;
+    }
+
+    .dev-map {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      align-items: stretch;
+    }
+
+    .stack-column {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 16px;
+    }
+
+    .stack-column h3 {
+      margin-bottom: 12px;
+    }
+
+    .stack-item {
+      border-left: 4px solid var(--line);
+      padding: 10px 0 10px 12px;
+    }
+
+    .stack-item + .stack-item {
+      border-top: 1px solid #e5e9ec;
+    }
+
+    .stack-item strong {
+      display: block;
+      font-size: 14px;
+    }
+
+    .stack-item span {
+      display: block;
+      margin-top: 4px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .stack-item.blue {
+      border-left-color: var(--blue);
+    }
+
+    .stack-item.teal {
+      border-left-color: var(--teal);
+    }
+
+    .stack-item.amber {
+      border-left-color: var(--amber);
+    }
+
+    .stack-item.red {
+      border-left-color: var(--red);
+    }
+
+    .callout {
+      margin-top: 20px;
+      border: 1px solid #d8c08a;
+      border-radius: 8px;
+      padding: 14px 16px;
+      background: #fff7e8;
+      color: #58401b;
+      font-size: 14px;
+    }
+
+    .data-hero {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(460px, 1fr);
+      gap: 28px;
+      align-items: start;
+    }
+
+    .db-split {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+    }
+
+    .db-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      overflow: hidden;
+    }
+
+    .db-card header {
+      padding: 13px 16px;
+      color: #fff;
+      font-weight: 800;
+      background: var(--blue);
+    }
+
+    .db-card.clickhouse header {
+      background: var(--teal);
+    }
+
+    .db-card .db-body {
+      padding: 16px;
+    }
+
+    .db-card p,
+    .db-card li {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .db-card ul {
+      margin: 12px 0 0;
+      padding-left: 18px;
+    }
+
+    .pipeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      align-items: stretch;
+    }
+
+    .pipe-step {
+      min-height: 120px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 12px;
+      position: relative;
+    }
+
+    .pipe-step:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      right: -11px;
+      top: 50%;
+      width: 11px;
+      border-top: 2px solid #8f9ba5;
+    }
+
+    .pipe-step small {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      border-radius: 999px;
+      padding: 0 8px;
+      color: #fff;
+      background: #334456;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .pipe-step strong {
+      display: block;
+      margin-top: 10px;
+      font-size: 14px;
+    }
+
+    .pipe-step span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .pipe-step.extension {
+      background: var(--soft-amber);
+      border-color: #e3c895;
+    }
+
+    .pipe-step.pg {
+      background: var(--soft-blue);
+      border-color: #b8d2e3;
+    }
+
+    .pipe-step.ch {
+      background: var(--soft-teal);
+      border-color: #acd7ca;
+    }
+
+    .pipe-step.sdui {
+      background: var(--soft-red);
+      border-color: #e2bbb6;
+    }
+
+    .example-shell {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--surface);
+      padding: 16px;
+    }
+
+    .example-flow {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 14px;
+    }
+
+    .example-box {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      min-height: 110px;
+      padding: 12px;
+      background: #fff;
+    }
+
+    .example-box strong {
+      display: block;
+      font-size: 13px;
+    }
+
+    .example-box span {
+      display: block;
+      margin-top: 7px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .source-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+      font-size: 12px;
+    }
+
+    .source-list a {
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      padding: 6px 10px;
+      background: var(--surface);
+    }
+
+    .page-number {
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      text-transform: uppercase;
+    }
+
+    @media (max-width: 980px) {
+      .hero,
+      .data-hero,
+      .dev-map,
+      .db-split,
+      .grid-2,
+      .grid-3 {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-row,
+      .pipeline,
+      .example-flow,
+      .layers {
+        grid-template-columns: 1fr;
+      }
+
+      .node:not(:last-child)::after,
+      .pipe-step:not(:last-child)::after {
+        display: none;
+      }
+
+      .swimlane {
+        grid-template-columns: 1fr;
+      }
+
+      .lane-label {
+        min-height: 54px;
+      }
+    }
+
+    @media (max-width: 620px) {
+      .topbar-inner,
+      .section-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav {
+        justify-content: flex-start;
+      }
+
+      .audience-strip {
+        grid-template-columns: 1fr;
+      }
+
+      h1 {
+        font-size: 38px;
+      }
+    }
+
+    @media print {
+      .topbar {
+        display: none;
+      }
+
+      body {
+        background: #fff;
+      }
+
+      .page {
+        min-height: auto;
+        page-break-after: always;
+        padding: 24px 0;
+      }
+
+      .map-panel,
+      .card,
+      .stack-column,
+      .db-card,
+      .example-shell,
+      .lane-cell,
+      .layer {
+        box-shadow: none;
+        break-inside: avoid;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Six-page briefing for business, engineering, data flow, tags, and flows</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="#business">Page 1: Business View</a>
+        <a href="#developer">Page 2: Developer View</a>
+        <a href="#data-flow">Page 3: Data Flow</a>
+        <a href="#tagging">Page 4: Tagging</a>
+        <a href="#flows-tools">Page 5: Flows + Tools</a>
+        <a href="#flow-runtime">Page 6: Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section id="business" class="page">
+      <div class="wrap">
+        <div class="page-number">Page 1 / Business and Domain View</div>
+        <div class="hero">
+          <div>
+            <h1>From operational data to dashboards, reports, and alerts.</h1>
+            <p class="lede">
+              Rubix is the operator layer over the starter platform. It collects events, writes historical facts into ClickHouse, keeps dashboard definitions and permissions in Postgres, and uses SDUI so the same dashboard can render on web, mobile, and desktop shells.
+            </p>
+            <div class="audience-strip" aria-label="Audience summaries">
+              <div class="audience">
+                <span class="label">Business reader</span>
+                <p>Think of Rubix as the workflow and dashboard system that turns raw operational signals into governed pages, weekly reports, and threshold-driven alerts.</p>
+              </div>
+              <div class="audience">
+                <span class="label">Technical reader</span>
+                <p>The important split is simple: Postgres stores definitions and permissions; ClickHouse stores time-series history and marts; SDUI renders pages from typed JSON.</p>
+              </div>
+            </div>
+            <div class="callout">
+              Looking for PLC or Node-RED style long-running jobs? Open <a href="#flow-runtime">Page 6: Runtime Flows</a> for trigger → count → log, durable node state, live events, and hot-edit behavior.
+            </div>
+          </div>
+
+          <aside class="map-panel" aria-label="Business process diagram">
+            <h2>How the parts come together</h2>
+            <div class="flow-row">
+              <div class="node source">
+                <strong>Sources</strong>
+                <span>Agents, extensions, scheduled checks, and external feeds produce facts.</span>
+              </div>
+              <div class="node flow">
+                <strong>Flows</strong>
+                <span>AI-agent flows call typed Rubix tools for dashboards, rules, reports, users, and system checks.</span>
+              </div>
+              <div class="node store">
+                <strong>Warehouse</strong>
+                <span>ClickHouse stores raw history, curated rows, and query-ready marts.</span>
+              </div>
+              <div class="node analytics">
+                <strong>Analytics</strong>
+                <span>Named SQL templates return rows for charts, KPIs, reports, and trend summaries.</span>
+              </div>
+              <div class="node dashboard">
+                <strong>SDUI</strong>
+                <span>Dashboard pages are typed component trees, not hand-coded screens.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>The operating loop</h2>
+            <p>Rubix is built around six operator goals. The same tool and flow pattern appears behind dashboards, flow programming, ClickHouse rules, system checks, user management, and analytics reports.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <div class="metric"><h3>Warehouse</h3><b>L1-L3</b></div>
+              <p>ClickHouse is the history store. Data lands as raw facts, becomes curated and tenanted, then turns into narrow marts that answer specific business questions quickly.</p>
+            </article>
+            <article class="card">
+              <div class="metric"><h3>Analytics</h3><b>SQL</b></div>
+              <p>Rubix uses named query templates such as weekly disk history, alert counts, flow run summaries, user activity, ClickHouse writes, and undo counts.</p>
+            </article>
+            <article class="card">
+              <div class="metric"><h3>Dashboards</h3><b>SDUI</b></div>
+              <p>Dashboards are saved as revisions of a ComponentTree. The server resolves data and permissions; renderers display the same page across clients.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Where tags fit</h2>
+            <p>Tags are the vocabulary that lets people find and scope pages and data. The dedicated tags design doc is still a placeholder, but dashboard storage already reserves <code>tags[]</code> for filtering.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Business purpose</h3>
+              <p>Tags give non-technical users a shared language: region, product, customer tier, host class, team, or dashboard purpose. They make "show me finance dashboards for APAC" possible without asking users to know table names.</p>
+              <div class="tag-band" aria-label="Example tags">
+                <span class="tag">region:apac</span>
+                <span class="tag">team:ops</span>
+                <span class="tag">system:clickhouse</span>
+                <span class="tag">dashboard:weekly</span>
+              </div>
+            </article>
+            <article class="card">
+              <h3>System purpose</h3>
+              <p>Tags act as metadata beside dashboard definitions and, later, broader rubix resources. They help list, filter, duplicate, and govern dashboards without changing the ClickHouse warehouse schema.</p>
+              <div class="callout">Implementation note: the tags README describes intent only. Treat tags as a planned/consumed <code>starter-tags</code> substrate, not as a completed standalone rubix system.</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Data to dashboard flow</h2>
+            <p>This is the plain-language path from a measurement or event to something a user can act on.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Data to dashboard swimlane diagram">
+            <div class="lane-label">1. Collect</div>
+            <div class="lane-cell"><strong>System probe</strong><span>Example: disk usage returns percent used and free bytes.</span></div>
+            <div class="lane-cell"><strong>Extensions</strong><span>External systems can contribute tools, node kinds, skills, flows, and UI panels.</span></div>
+            <div class="lane-cell"><strong>Scheduled flows</strong><span>Weekly jobs or health checks fire without a human prompt.</span></div>
+            <div class="lane-cell"><strong>Operator action</strong><span>A person asks the AI flow to create or update a dashboard.</span></div>
+
+            <div class="lane-label">2. Store</div>
+            <div class="lane-cell emphasis"><strong>ClickHouse L1</strong><span>Raw history, short retention, one row per fact.</span></div>
+            <div class="lane-cell emphasis"><strong>ClickHouse L2</strong><span>Curated, typed, deduplicated, tenant-scoped rows.</span></div>
+            <div class="lane-cell emphasis"><strong>ClickHouse L3</strong><span>Marts designed for fast reads by dashboards and reports.</span></div>
+            <div class="lane-cell"><strong>Postgres</strong><span>Dashboard definitions, flow definitions, authz resources, and revisions.</span></div>
+
+            <div class="lane-label">3. Present</div>
+            <div class="lane-cell"><strong>Analytics query</strong><span>Named SQL templates read ClickHouse with typed parameters.</span></div>
+            <div class="lane-cell"><strong>Report</strong><span>Rows render to HTML, CSV, or JSON and are stored as blobs.</span></div>
+            <div class="lane-cell"><strong>Insight</strong><span>Threshold checks can dispatch alerts after tool results.</span></div>
+            <div class="lane-cell"><strong>Dashboard</strong><span>SDUI resolves a typed page and renders KPIs, charts, tables, and actions.</span></div>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="./overview/README.md">overview</a>
+          <a href="./warehouse/README.md">warehouse</a>
+          <a href="./reports/README.md">reports</a>
+          <a href="./insights/README.md">insights</a>
+          <a href="./sdui/README.md">sdui</a>
+          <a href="./tags/README.md">tags</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="developer" class="page">
+      <div class="wrap">
+        <div class="page-number">Page 2 / Developer Architecture View</div>
+        <div class="hero">
+          <div>
+            <h1>The stack is a typed tool system with separate definition and history stores.</h1>
+            <p class="lede">
+              Rubix keeps a strict dependency arrow: <code>starter-spi</code> under <code>rubix-spi</code>; then <code>rubix-tools</code>, <code>rubix-flows</code>, <code>rubix-skills</code>, and <code>rubix-client</code>; finally <code>rubix-agent</code> wires the binary. Tools are exposed over MCP and HTTP without bespoke dashboard wiring.
+            </p>
+          </div>
+          <aside class="map-panel" aria-label="Developer data plane diagram">
+            <h2>Developer mental model</h2>
+            <div class="layers">
+              <div class="layer">
+                <header>L1 raw</header>
+                <div>Ingest from agents, extensions, and feeds. Example: <code>system_disk_history</code> captures disk probes by <code>tenant_id</code>, host, percent used, free bytes, and epoch.</div>
+              </div>
+              <div class="layer">
+                <header>L2 curated</header>
+                <div>Rules convert raw rows into typed, deduplicated, tenant-aware data. This is the place for warehouse quality and retention discipline.</div>
+              </div>
+              <div class="layer">
+                <header>L3 marts</header>
+                <div>Small ClickHouse tables built for specific questions. Dashboard and report reads use L3 by default, with L2 allowed and L1 explicit.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Storage boundaries</h2>
+            <p>The most useful implementation rule is knowing which store owns which kind of truth.</p>
+          </div>
+          <div class="dev-map">
+            <div class="stack-column">
+              <h3>Postgres: definitions, control plane, permissions</h3>
+              <div class="stack-item blue">
+                <strong><code>dashboards_definitions</code></strong>
+                <span>Insert-only dashboard revisions: <code>page_id</code>, <code>revision_id</code>, <code>body_json</code>, tenant, owner, title, <code>tags[]</code>, and supersede state.</span>
+              </div>
+              <div class="stack-item blue">
+                <strong><code>flows_definitions</code></strong>
+                <span>Flow YAML revisions with <code>pg_notify('rubix_flows_definitions', ...)</code> so every agent reloads live flow revisions.</span>
+              </div>
+              <div class="stack-item blue">
+                <strong>Authz resources</strong>
+                <span>Dashboard pages register resource specs. A denied view returns 404 to avoid leaking page existence.</span>
+              </div>
+            </div>
+            <div class="stack-column">
+              <h3>ClickHouse: history, rules, marts</h3>
+              <div class="stack-item teal">
+                <strong><code>rubix</code> database</strong>
+                <span>Rubix-owned ClickHouse tables live in the <code>rubix</code> database and should be qualified as <code>rubix.&lt;table&gt;</code> by operators.</span>
+              </div>
+              <div class="stack-item teal">
+                <strong>Rule writer verbs</strong>
+                <span><code>rubix.clickhouse.rule.write</code>, <code>mart.create</code>, and <code>retention.set</code> capture snapshots for undo-aware changes.</span>
+              </div>
+              <div class="stack-item teal">
+                <strong>Tenant filter</strong>
+                <span>Tenancy is per-row <code>tenant_id</code>. Resolver-layer authz must apply the tenant filter on reads.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>End-to-end control flow</h2>
+            <p>The same pattern supports a user prompt, a scheduled report, or an extension-triggered workflow.</p>
+          </div>
+          <div class="flow-row">
+            <div class="node flow">
+              <strong><code>ai-agent</code> node</strong>
+              <span>Skill-driven flow chooses allowed tools and emits structured tool calls.</span>
+            </div>
+            <div class="node source">
+              <strong><code>rubix-tools</code></strong>
+              <span>Typed verbs implement <code>starter_spi::tool::Tool</code> and optional reversible changes.</span>
+            </div>
+            <div class="node store">
+              <strong>Stores</strong>
+              <span>PG stores definitions and dashboard bodies. ClickHouse stores time-series history and marts.</span>
+            </div>
+            <div class="node analytics">
+              <strong>Resolver/query</strong>
+              <span>SDUI resolve and analytics query bind user, page, target, and template parameters.</span>
+            </div>
+            <div class="node dashboard">
+              <strong>Renderer</strong>
+              <span><code>SduiPage</code> renders the resolved ComponentTree and dispatches actions back through transport.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>What each major piece owns</h2>
+            <p>This is the quick reference for conversations between the developer and domain stakeholder.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Flow programmer</h3>
+              <p>Deploys, duplicates, lints, and lists flow YAML. Deployed revisions notify every Rubix agent process, so the registry refreshes without an out-of-band reload RPC.</p>
+            </article>
+            <article class="card">
+              <h3>ClickHouse ruler</h3>
+              <p>Writes rules, creates marts, and sets retention. Mutations are undo-aware by storing before/after snapshots through the changelog.</p>
+            </article>
+            <article class="card">
+              <h3>Analytics reporter</h3>
+              <p>Runs named ClickHouse query templates, renders reports through <code>starter-export</code>, stores blobs, and records undo state for created report files.</p>
+            </article>
+            <article class="card">
+              <h3>SDUI tools</h3>
+              <p>Create, get, update, list, duplicate, delete, history, and <code>page_set</code> manage dashboard pages. The AI builder uses <code>page_set</code> for full-tree writes.</p>
+            </article>
+            <article class="card">
+              <h3>Bindings</h3>
+              <p>Bindings such as <code>$target</code>, <code>$user</code>, <code>$page</code>, <code>$stack</code>, and <code>$msg</code> connect the ComponentTree to live data, user context, page state, and localized text.</p>
+            </article>
+            <article class="card">
+              <h3>Extensions</h3>
+              <p>Bundles can contribute tools, node kinds, skills, flows, and Module-Federation UI panels while staying behind the extension trait surface.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Dashboard lifecycle</h2>
+            <p>Dashboard authoring is intentionally the same whether a human, AI flow, or bundled seed creates the page.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Dashboard lifecycle swimlane diagram">
+            <div class="lane-label">Author</div>
+            <div class="lane-cell"><strong>Bundled page</strong><span>Seeded from embedded JSON and owned by <code>system</code>.</span></div>
+            <div class="lane-cell"><strong>Operator</strong><span>Creates or edits a page with dashboard tools.</span></div>
+            <div class="lane-cell"><strong>AI builder</strong><span>Reads a template, emits one ComponentTree, calls <code>page_set</code>.</span></div>
+            <div class="lane-cell"><strong>Extension</strong><span>Can contribute a UI panel or tool feeding page data.</span></div>
+
+            <div class="lane-label">Persist</div>
+            <div class="lane-cell emphasis"><strong>Validate IR</strong><span>Rejects unknown variants, bad body shape, or unsupported IR version.</span></div>
+            <div class="lane-cell emphasis"><strong>Insert revision</strong><span>New row lands; previous active row is superseded.</span></div>
+            <div class="lane-cell emphasis"><strong>Register authz</strong><span>Page becomes a governed resource with view/edit/delete actions.</span></div>
+            <div class="lane-cell emphasis"><strong>Notify cache</strong><span>Dashboard notify invalidates provider cache when wired.</span></div>
+
+            <div class="lane-label">Render</div>
+            <div class="lane-cell"><strong>Resolve</strong><span>Server loads the ComponentTree and applies bindings.</span></div>
+            <div class="lane-cell"><strong>Fetch rows</strong><span>Tables/charts call query sources that read ClickHouse marts.</span></div>
+            <div class="lane-cell"><strong>Display</strong><span>React renderer paints KPIs, charts, forms, filters, and tables.</span></div>
+            <div class="lane-cell"><strong>Act</strong><span>Buttons/forms call handlers and refresh page state.</span></div>
+          </div>
+        </section>
+
+        <div class="callout">
+          Practical framing: explain ClickHouse as the analytical warehouse, analytics templates as the controlled query layer, tags as the business vocabulary for finding/scoping pages, and SDUI as the dashboard delivery mechanism that avoids custom frontend work per dashboard.
+        </div>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="./flow-programmer/README.md">flow programmer</a>
+          <a href="./clickhouse-rules/README.md">clickhouse rules</a>
+          <a href="./warehouse/README.md">warehouse</a>
+          <a href="./reports/README.md">reports</a>
+          <a href="./sdui/storage/README.md">sdui storage</a>
+          <a href="./sdui/renderer/README.md">sdui renderer</a>
+          <a href="./sdui/ai-builder/README.md">ai builder</a>
+          <a href="./extensions/README.md">extensions</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="data-flow" class="page">
+      <div class="wrap">
+        <div class="page-number">Page 3 / Data Flow, Databases, and Extensions</div>
+        <div class="data-hero">
+          <div>
+            <h1>Postgres runs the control plane. ClickHouse runs the data plane.</h1>
+            <p class="lede">
+              Use this page when the conversation is specifically about how data enters Rubix, where it is stored, and how an extension can add new signals without becoming part of the Rubix core.
+            </p>
+          </div>
+          <aside class="map-panel" aria-label="Two database split diagram">
+            <h2>The two database split</h2>
+            <div class="db-split">
+              <article class="db-card">
+                <header>Postgres</header>
+                <div class="db-body">
+                  <p>Stores definitions, revisions, permissions, schedules, extension metadata, and other control-plane records.</p>
+                  <ul>
+                    <li>Dashboard pages and <code>tags[]</code></li>
+                    <li>Flow YAML revisions</li>
+                    <li>Authz resource registrations</li>
+                    <li>Scheduler and extension host metadata</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="db-card clickhouse">
+                <header>ClickHouse</header>
+                <div class="db-body">
+                  <p>Stores high-volume history and analytics-ready marts in the <code>rubix</code> database.</p>
+                  <ul>
+                    <li>L1 raw events and probes</li>
+                    <li>L2 curated tenant-scoped rows</li>
+                    <li>L3 marts for dashboards and reports</li>
+                    <li>Retention rules and warehouse DDL</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </aside>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Focused data flow</h2>
+            <p>The extension can bring in a signal, but the platform still decides what is metadata, what is history, and what is rendered.</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Extension data flow through Postgres, ClickHouse, analytics, and SDUI">
+            <div class="pipe-step extension">
+              <small>1</small>
+              <strong>Extension bundle</strong>
+              <span>A bundle under <code>rubix/extensions/</code> declares tools, node kinds, skills, flows, and optional UI in <code>block.yaml</code>.</span>
+            </div>
+            <div class="pipe-step extension">
+              <small>2</small>
+              <strong>Tool or flow fires</strong>
+              <span>The extension handler returns structured data, or a flow node calls the extension as part of a scheduled or user-triggered workflow.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>3A</small>
+              <strong>Postgres metadata</strong>
+              <span>Rubix stores definitions, page revisions, flow revisions, permissions, and tags. This is the governed catalog.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>3B</small>
+              <strong>ClickHouse history</strong>
+              <span>Facts, probes, and events go to L1 raw history, then rules promote them to L2 curated rows and L3 marts.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>4</small>
+              <strong>Analytics query</strong>
+              <span>Named templates read ClickHouse marts with typed parameters instead of ad hoc SQL from dashboards.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>5</small>
+              <strong>SDUI dashboard</strong>
+              <span>The resolved ComponentTree uses Postgres page definitions and ClickHouse-backed data to render KPIs, charts, and tables.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Example extension: weather signal</h2>
+            <p>This mirrors the extension guide's <code>com.acme.weather</code> example and shows what each contribution changes in the wider stack.</p>
+          </div>
+          <div class="example-shell">
+            <h3>What the extension contributes</h3>
+            <div class="example-flow">
+              <div class="example-box">
+                <strong><code>com.acme.weather.current</code> tool</strong>
+                <span>Fetches current weather for a site, region, or asset group. The handler lives inside the extension process.</span>
+              </div>
+              <div class="example-box">
+                <strong><code>com.acme.weather.fetch</code> node kind</strong>
+                <span>Lets a Rubix flow call the extension on a schedule or as part of a larger operational workflow.</span>
+              </div>
+              <div class="example-box">
+                <strong>Skill bundle</strong>
+                <span>Teaches the AI flow when to call the weather tool and how to describe the result to an operator.</span>
+              </div>
+              <div class="example-box">
+                <strong>Optional UI panel</strong>
+                <span>Ships a Module-Federation panel mounted under the extension slot for a purpose-built operator view.</span>
+              </div>
+            </div>
+          </div>
+          <div class="grid-2 section">
+            <article class="card">
+              <h3>What lands in Postgres</h3>
+              <p>Extension identity, flow definitions that use the extension node, dashboard pages that display the weather signal, page tags such as <code>source:weather</code>, and authz resources for who can view or edit those pages.</p>
+            </article>
+            <article class="card">
+              <h3>What lands in ClickHouse</h3>
+              <p>Historical weather observations, joined or correlated with operational events, promoted through L1/L2/L3 so dashboards can show trends like site temperature versus equipment alerts.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Decision guide</h2>
+            <p>When explaining the architecture, this is the shortest way to decide where a new thing belongs.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Put it in Postgres when...</h3>
+              <p>It describes a thing, controls access, tracks a revision, configures a flow, or helps users find a resource.</p>
+            </article>
+            <article class="card">
+              <h3>Put it in ClickHouse when...</h3>
+              <p>It is historical, high-volume, time-based, aggregatable, or needs fast analytical reads across many rows.</p>
+            </article>
+            <article class="card">
+              <h3>Put it in an extension when...</h3>
+              <p>The source system or UI is domain-specific and should plug into Rubix without changing Rubix core crates.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="./extensions/README.md">extensions</a>
+          <a href="./warehouse/README.md">warehouse</a>
+          <a href="./sdui/storage/README.md">sdui storage</a>
+          <a href="./flow-programmer/README.md">flow programmer</a>
+          <a href="./reports/README.md">reports</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="tagging" class="page">
+      <div class="wrap">
+        <div class="page-number">Page 4 / Tagging and ClickHouse Query Path</div>
+        <div class="data-hero">
+          <div>
+            <h1>Analytical tags need to live where analytical queries run.</h1>
+            <p class="lede">
+              Rubix can keep tag vocabulary and dashboard page tags in Postgres, but anything used to filter time-series facts, marts, charts, and reports should be available inside ClickHouse. Otherwise every dashboard query becomes a two-database join in application code.
+            </p>
+            <div class="callout">
+              Current reality: the dedicated tags design doc is still a placeholder. Dashboard page tags already exist in Postgres for page listing. Warehouse docs already constrain analytical tag values to <code>Bool</code> and <code>Str</code>, which points toward a typed ClickHouse-friendly tag model.
+            </div>
+          </div>
+          <aside class="map-panel" aria-label="Tag placement diagram">
+            <h2>Two tag roles</h2>
+            <div class="db-split">
+              <article class="db-card">
+                <header>Catalog tags in Postgres</header>
+                <div class="db-body">
+                  <p>Used for governance and discovery of resources.</p>
+                  <ul>
+                    <li>Dashboard list filters</li>
+                    <li>Owner/team/resource metadata</li>
+                    <li>Allowed vocabulary and labels</li>
+                    <li>Authz-adjacent resource scoping</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="db-card clickhouse">
+                <header>Analytical tags in ClickHouse</header>
+                <div class="db-body">
+                  <p>Used inside report and dashboard queries.</p>
+                  <ul>
+                    <li>Fact row filters</li>
+                    <li>Mart dimensions</li>
+                    <li>Fast cohort/group-by queries</li>
+                    <li>No PG pre-read on hot query path</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </aside>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Preferred query path</h2>
+            <p>For dashboards and reports, the query API should bind tag filters directly into a ClickHouse template.</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Preferred tag query path">
+            <div class="pipe-step sdui">
+              <small>1</small>
+              <strong>Dashboard filter</strong>
+              <span>User selects tags such as <code>site:dc-1</code>, <code>asset:chiller</code>, or <code>critical:true</code>.</span>
+            </div>
+            <div class="pipe-step">
+              <small>2</small>
+              <strong><code>rubix.analytics.query</code></strong>
+              <span>The resolver calls a named template and passes tag parameters through typed bindings.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>3</small>
+              <strong>ClickHouse template</strong>
+              <span>SQL filters on tags already present in the L2 table or L3 mart. No application-side PG join.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>4</small>
+              <strong>Rows returned</strong>
+              <span>The query returns chart/table/KPI rows that already reflect tenant, time, and tag filters.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>5</small>
+              <strong>SDUI render</strong>
+              <span>The page renders the filtered result and can refresh when the user changes tag selections.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>PG</small>
+              <strong>Optional catalog read</strong>
+              <span>PG may populate tag picker options, but it should not be required for every analytical data read.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>What not to do</h2>
+            <p>This is the failure mode you called out: it adds latency, consistency risk, and app-level join logic.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Bad hot path</h3>
+              <p>Dashboard asks PG for matching tagged resources, receives a list of ids, then asks ClickHouse for historical facts matching those ids. This turns every analytics query into a cross-store orchestration problem.</p>
+            </article>
+            <article class="card">
+              <h3>Better hot path</h3>
+              <p>Ingest or mart rules copy the needed tag keys and values into ClickHouse. The dashboard sends <code>tag_key</code> / <code>tag_value</code> filters to <code>rubix.analytics.query</code>, and ClickHouse answers directly.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>ClickHouse tag shapes</h2>
+            <p>The exact schema belongs in the tags design doc, but the page should make the direction clear.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Raw event tags</h3>
+              <p>L1 rows can carry incoming tags from agents/extensions. A flexible shape such as a string map works for ingestion, with indexes on keys and hot values where needed.</p>
+            </article>
+            <article class="card">
+              <h3>Curated typed tags</h3>
+              <p>L2 should normalize allowed tag types to <code>Bool</code> and <code>Str</code>, matching the warehouse constraint and avoiding runtime type discovery.</p>
+            </article>
+            <article class="card">
+              <h3>Mart dimensions</h3>
+              <p>L3 marts should promote the highest-value tags into direct dimensions when they are used constantly in dashboards, reports, or alert cohorts.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Concrete example</h2>
+            <p>A weather extension or system probe can attach tags once during ingest, then every analytical consumer uses those tags from ClickHouse.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Tagging example across ingest and query">
+            <div class="lane-label">Ingest</div>
+            <div class="lane-cell"><strong>Extension emits row</strong><span><code>tenant_id</code>, timestamp, measurement, and tags such as <code>site</code>, <code>region</code>, <code>asset_type</code>.</span></div>
+            <div class="lane-cell"><strong>ClickHouse L1</strong><span>Stores the incoming fact and raw tag map in <code>rubix</code>.</span></div>
+            <div class="lane-cell"><strong>Rule promotes row</strong><span>Normalizes tag keys, validates allowed types, and writes L2.</span></div>
+            <div class="lane-cell"><strong>Mart builds view</strong><span>Copies hot tags to dimensions used by dashboards.</span></div>
+
+            <div class="lane-label">Query</div>
+            <div class="lane-cell"><strong>Tag picker</strong><span>Options may come from PG vocabulary or a ClickHouse distinct query, depending on freshness needs.</span></div>
+            <div class="lane-cell"><strong>Analytics template</strong><span>Binds <code>region</code> and <code>asset_type</code> as query params.</span></div>
+            <div class="lane-cell"><strong>ClickHouse filter</strong><span>Applies tenant, time window, and tag filters in one query plane.</span></div>
+            <div class="lane-cell"><strong>Dashboard result</strong><span>SDUI receives rows already scoped to the tag selection.</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Design rule</h2>
+            <p>The short version to carry into the actual tags design work.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>PG is the catalog</h3>
+              <p>Use Postgres to define tag names, labels, descriptions, ownership, allowed values, and page/resource metadata.</p>
+            </article>
+            <article class="card">
+              <h3>ClickHouse is the filter plane</h3>
+              <p>Use ClickHouse for tags that filter facts, trends, reports, alerts, cohorts, and warehouse marts.</p>
+            </article>
+            <article class="card">
+              <h3>Sync is ingest-time</h3>
+              <p>Copy or validate tags when data is written or promoted. Do not make every read query reconstruct tags from PG.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="./tags/README.md">tags placeholder</a>
+          <a href="./warehouse/README.md">warehouse</a>
+          <a href="./reports/README.md">analytics query</a>
+          <a href="./sdui/storage/README.md">dashboard tags</a>
+          <a href="./starter-changes/phase-2c.md">ClickHouse map index note</a>
+        </div>
+      </div>
+    </section>
+
+    <section id="flows-tools" class="page">
+      <div class="wrap">
+        <div class="page-number">Page 5 / Flows, Nodes, and Tools</div>
+        <div class="data-hero">
+          <div>
+            <h1>A flow is the recipe. Nodes are the steps. Tools are the actions.</h1>
+            <p class="lede">
+              The easiest mental model is: a flow describes what can happen, a node performs one part of that flow, and a tool is a callable operation such as listing dashboards, writing a ClickHouse rule, or deploying a new flow revision.
+            </p>
+            <div class="callout">
+              In the bundled Rubix goal flows, the root node is usually an <code>ai-agent</code>. That node receives a skill prompt plus an <code>allowed_tools</code> list. The agent can reason in text, but state changes still happen through typed tools.
+            </div>
+          </div>
+          <aside class="map-panel" aria-label="Flow hierarchy diagram">
+            <h2>Hierarchy</h2>
+            <div class="layers">
+              <div class="layer">
+                <header>Flow</header>
+                <div>A versioned YAML definition such as <code>com.rubix.dashboard-assistant</code> or <code>com.rubix.flow-programmer</code>.</div>
+              </div>
+              <div class="layer">
+                <header>Node</header>
+                <div>A step inside the flow. Rubix goal flows commonly use one <code>ai-agent</code> node, but extensions can add new node kinds.</div>
+              </div>
+              <div class="layer">
+                <header>Tool</header>
+                <div>A typed callable operation implementing <code>starter_spi::tool::Tool</code>, exposed over MCP/HTTP and optionally undo-aware.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>What happens when a user calls a goal</h2>
+            <p>This is the path behind prompts like "build me a disk dashboard" or "deploy this flow".</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Flow to tool execution path">
+            <div class="pipe-step sdui">
+              <small>1</small>
+              <strong>User starts goal</strong>
+              <span>The user invokes a flow such as <code>com.rubix.dashboard-assistant</code>.</span>
+            </div>
+            <div class="pipe-step">
+              <small>2</small>
+              <strong><code>FlowAsTool</code></strong>
+              <span>The flow itself auto-surfaces as a callable MCP tool, so there is no bespoke MCP wiring per flow.</span>
+            </div>
+            <div class="pipe-step extension">
+              <small>3</small>
+              <strong><code>ai-agent</code> node</strong>
+              <span>The node loads the skill, session policy, cost cap, and allowed tool list from the flow YAML.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>4</small>
+              <strong>Tool registry</strong>
+              <span>The agent can only call tools registered at boot and allowed by that node's config.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>5</small>
+              <strong>Typed tool call</strong>
+              <span>A concrete tool executes: dashboard write, flow deploy, ClickHouse rule, analytics query, or undo.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>6</small>
+              <strong>Result returned</strong>
+              <span>The flow returns a response, diagnostics, created resources, or a rendered dashboard/report path.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Dashboard assistant example</h2>
+            <p>The flow is short because the behavior lives in the node, skill, and tools.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Flow YAML says</h3>
+              <ul>
+                <li><code>id: com.rubix.dashboard-assistant</code></li>
+                <li><code>trigger: explicit</code></li>
+                <li>one node: <code>kind: ai-agent</code></li>
+                <li><code>skill_hint: com.rubix.dashboard-builder</code></li>
+                <li>allowed tools: <code>rubix.dashboard.list</code>, <code>get</code>, <code>create</code>, <code>update</code>, <code>page_set</code>, <code>undo.last</code></li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Runtime behavior is</h3>
+              <p>The AI node reads the skill, decides which dashboard operation is needed, calls one or more allowed tools, and returns a human-readable explanation. It does not directly mutate the database without a tool call.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Flow programmer example</h2>
+            <p>This is a flow that can create or change other flows, but it still uses tools to do it safely.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Flow programmer lifecycle">
+            <div class="lane-label">Author</div>
+            <div class="lane-cell"><strong>Draft YAML</strong><span>A user or AI proposes a flow definition with an <code>id</code>, trigger, nodes, and links.</span></div>
+            <div class="lane-cell"><strong>Lint</strong><span><code>rubix.flow_ops.lint</code> parses YAML and validates flow structure before deploy.</span></div>
+            <div class="lane-cell"><strong>Deploy</strong><span><code>rubix.flow_ops.deploy</code> writes a fresh flow revision.</span></div>
+            <div class="lane-cell"><strong>Undo</strong><span><code>rubix.undo.last</code> can retire the new revision and restore the prior live revision.</span></div>
+
+            <div class="lane-label">Store</div>
+            <div class="lane-cell"><strong>Postgres row</strong><span><code>flows_definitions</code> stores tenant, flow id, revision id, body YAML, creator, and supersede state.</span></div>
+            <div class="lane-cell"><strong>Notify</strong><span><code>pg_notify('rubix_flows_definitions', ...)</code> tells every agent process a live revision changed.</span></div>
+            <div class="lane-cell"><strong>Registry reload</strong><span>The agent re-reads the authoritative row and reloads the in-process flow registry.</span></div>
+            <div class="lane-cell"><strong>MCP update</strong><span>Clients see the new flow/tool shape on the next tool listing.</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Built-in tools vs extension tools</h2>
+            <p>Both are tools from the caller's point of view, but they come from different places.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Built-in Rubix tools</h3>
+              <p>Live in <code>rubix-tools</code> and implement the six product goals: dashboards, users, flow ops, ClickHouse rules, system checks, and analytics/reports.</p>
+              <div class="tag-band" aria-label="Built-in tool examples">
+                <span class="tag">rubix.dashboard.page_set</span>
+                <span class="tag">rubix.flow_ops.deploy</span>
+                <span class="tag">rubix.clickhouse.mart.create</span>
+                <span class="tag">rubix.analytics.query</span>
+              </div>
+            </article>
+            <article class="card">
+              <h3>Extension tools and nodes</h3>
+              <p>Declared by an extension <code>block.yaml</code>. Tools expose callable operations; node kinds let flows use extension behavior as a flow step.</p>
+              <div class="tag-band" aria-label="Extension examples">
+                <span class="tag">com.acme.weather.current</span>
+                <span class="tag">com.acme.weather.fetch</span>
+                <span class="tag">skills/weather/SKILL.md</span>
+                <span class="tag">ui/remoteEntry.js</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Decision guide</h2>
+            <p>Use this when deciding whether to add a flow, node, or tool.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Add a tool when...</h3>
+              <p>You need one concrete operation with typed input/output: write a dashboard, query analytics, create a mart, or deploy a flow.</p>
+            </article>
+            <article class="card">
+              <h3>Add a flow when...</h3>
+              <p>You need a user-facing workflow that combines reasoning, multiple tools, policy, and repeatable orchestration.</p>
+            </article>
+            <article class="card">
+              <h3>Add a node kind when...</h3>
+              <p>You need reusable flow behavior that is not just one tool call, especially if an extension owns that behavior.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="callout">
+          Short version: users call flows for outcomes; flows run nodes; AI-agent nodes choose from allowed tools; tools do the actual reads and writes; Postgres stores flow/dashboard definitions and revision state.
+        </div>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="./overview/README.md">overview</a>
+          <a href="./flow-programmer/README.md">flow programmer</a>
+          <a href="./extensions/README.md">extensions</a>
+          <a href="../../crates/rubix-flows/flows/dashboard-assistant.yaml">dashboard assistant YAML</a>
+          <a href="../../crates/rubix-flows/flows/flow-programmer.yaml">flow programmer YAML</a>
+        </div>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

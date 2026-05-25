@@ -45,6 +45,27 @@ impl DashboardCreateTool {
     }
 }
 
+/// Validate `body_json` against the `ComponentTree` schema.
+///
+/// The store accepts any `serde_json::Value` (the column is `jsonb`),
+/// so without this gate the writer happily persists garbage shapes
+/// that only fail later in the SDUI resolver — producing 404s at
+/// page-load time with no signal at create time. Validating here
+/// fails the tool call with `Invalid` so the caller (CLI, MCP,
+/// chat agent) sees the schema error immediately.
+fn validate_body_json(body: &Value) -> Result<()> {
+    match serde_json::from_value::<starter_ui_ir::ComponentTree>(body.clone()) {
+        Ok(_) => Ok(()),
+        Err(e) => Err(Error::Invalid {
+            message: format!(
+                "body_json does not match the `ComponentTree` schema: {e}. \
+                 Expected `{{\"ir_version\":1,\"root\":{{\"type\":\"page\",...}}}}` \
+                 — see `starter-ui-ir` for the full shape.",
+            ),
+        }),
+    }
+}
+
 /// Validate the SDUI page id shape. Mirrors the slug grammar the
 /// resolver expects: `dashboard.<lowercase-slug>`.
 fn valid_page_id(id: &str) -> bool {
@@ -121,6 +142,8 @@ impl Tool for DashboardCreateTool {
                 ),
             });
         }
+
+        validate_body_json(&req.body_json)?;
 
         // Duplicate-id probe. Surfaces a structured diagnostic via
         // Error::Conflict so the transport layer maps to HTTP 409.
@@ -339,7 +362,10 @@ mod tests {
             "owner_principal": "alice",
             "title":           "Ops",
             "tags":            ["custom"],
-            "body_json":       { "ir_version": 1, "root": {} },
+            "body_json":       {
+                "ir_version": 1,
+                "root": { "type": "page", "id": "p", "children": [] }
+            },
             "created_by":      "alice"
         })
     }

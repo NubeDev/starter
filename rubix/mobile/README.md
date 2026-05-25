@@ -6,17 +6,37 @@
 > the same files will be promoted to `rubix/docs/design/mobile/` once
 > the slice is integrated end-to-end.
 
-This package is **Block 4** of the mobile thin-slice:
+This package is the **mobile thin-slice**:
 
 1. ~~Block 0 — design docs landed~~
 2. ~~Pre-Block 4 — `POST /api/v1/auth/token` endpoint~~ (commit `33ed0ca`)
-3. **Block 4 — app shell** (this PR): Expo SDK 56 + expo-router 6,
-   local SQLite connection ledger, per-connection bearer auth via
+3. ~~Block 4 — app shell~~: Expo SDK 54 + expo-router 6, local
+   SQLite connection ledger, per-connection bearer auth via
    `expo-secure-store`, two-step login (`credentials` → `/auth/token`
    → install bearer), provider stack, login + connections screens.
-4. Block 5 — `<SduiPage>` renderer + the `/dashboards/[pageId]` body.
+4. ~~Block 5 — `<SduiPage>` renderer + `/dashboards/[pageId]`~~:
+   `SduiPageNative` (loading / error / dry-run / ok states) wired to
+   the dashboards route; `@nube/starter-ui-sdui-native` side-effect
+   registers the 16 RN renderers in `app/_layout.tsx`; boot redirect
+   resumes the last-opened page per connection.
 
-## What ships in this PR
+**Exit-gate work remaining** (the slice is not "done" until):
+
+- Maestro e2e under `rubix/mobile/e2e/` covering login → redirect →
+  dashboard render.
+- Manual smoke transcript captured on iOS simulator + Android
+  emulator.
+- EAS TestFlight (iOS) + Internal-track (Android) build link
+  attached to the PR.
+- Promote `rubix/docs/scope/mobile/*` → `rubix/docs/design/mobile/`
+  (per [README.md](../docs/scope/mobile/README.md#promotion-path)).
+- Delete `rubix/docs/scope/mobile/THIN-SLICE.md` once exit gate is
+  green.
+
+See [`THIN-SLICE.md` §Exit gate](../docs/scope/mobile/THIN-SLICE.md#exit-gate)
+for the canonical checklist.
+
+## What's in this package
 
 ```
 src/
@@ -40,11 +60,15 @@ src/
 │  └─ es.json
 ├─ lib/
 │  └─ client.ts             ← StarterClient/RubixClient factories
-├─ local-db/                ← SQLite schema + verbs (already landed)
+├─ local-db/                ← SQLite schema + verbs
 │  ├─ migrations/           ← 3 SQL files + index
 │  ├─ connection/           ← list/get/create/update/delete/active/touch/set-active
 │  ├─ state/                ← last-page, last-sync
 │  └─ token/                ← contract + expo-secure-store + get/put/clear
+├─ sdui/
+│  ├─ page.tsx              ← SduiPageNative (loading/error/dry-run/ok)
+│  ├─ provider.tsx          ← SduiProvider wired to per-connection transport
+│  └─ transport.ts          ← RN fetch/SSE transport
 ├─ state/
 │  └─ pending-route.ts      ← survives 401 mid-session
 ├─ theme/
@@ -107,16 +131,25 @@ constant. On first launch the operator is sent to
 effort; an unreachable server is still saved (mobile-data toggle,
 VPN dropped).
 
-## Out of scope for Block 4
+## Out of scope for the thin-slice
 
-- The dashboard renderer (`<SduiPage>`). `/dashboards/[pageId]` is a
-  stub that records `last_opened_page_ref` so deep-linking + resume can
-  be verified end-to-end ahead of Block 5.
-- Tenant picker UI for the 409 `tenant_required` response — the login
-  screen surfaces the message but does not yet enumerate memberships.
-  Tracked in [`THIN-SLICE.md`](../docs/scope/mobile/THIN-SLICE.md).
-- Push notifications, biometric unlock, offline reads. See
-  [`NON-GOALS.md`](../docs/scope/mobile/NON-GOALS.md).
+- The other 10 IR kind renderers — `starter-ui-sdui-native` ships
+  the 16 that match the web set; the remaining `stack, card, text,
+  heading, badge, kpi_grid, button, link, field, sparkline` are
+  deferred-with-web (see
+  [`NEW-PACKAGES.md` §Parity vs the IR Kind union](../docs/scope/mobile/NEW-PACKAGES.md)).
+- Tenant picker UI for the 409 `tenant_required` response — the
+  login screen surfaces the message but does not yet enumerate
+  memberships. Tracked in
+  [`THIN-SLICE.md`](../docs/scope/mobile/THIN-SLICE.md).
+- Bespoke `starter-ui-dashboard-native` widgets on a page —
+  `disk-overview` is built from generic IR kinds; widgets land when
+  a page needs them.
+- Push notifications, biometric unlock, offline reads, code-push,
+  TLS pinning. See [`NON-GOALS.md`](../docs/scope/mobile/NON-GOALS.md).
+- Replacing the in-house kit with Tamagui or gluestack — evaluated
+  and recommended against for now; see
+  [`UI-FOUNDATION-OPTIONS.md`](../docs/scope/mobile/UI-FOUNDATION-OPTIONS.md).
 
 ## Reference docs
 

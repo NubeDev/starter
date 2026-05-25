@@ -108,6 +108,24 @@ pub const INPUT_KIND_SLOT: &str = "input_kind";
 /// Input slot carrying the user message text.
 pub const INPUT_SLOT: &str = "input";
 
+/// Optional config slot — when [`AgentInputKind::Cli`] is in effect,
+/// forwarded to [`CliCfg::mcp_url`] so the wrapper binary attaches to
+/// the named MCP server and the model can dispatch host tools through
+/// it (D-F5.6). Ignored for the REST input kind.
+pub const MCP_URL_SLOT: &str = "mcp_url";
+
+/// Optional config slot — when [`AgentInputKind::Cli`] is in effect,
+/// forwarded to [`CliCfg::mcp_token`] as the bearer token the wrapper
+/// presents to the MCP server identified by [`MCP_URL_SLOT`]. Ignored
+/// for the REST input kind.
+pub const MCP_TOKEN_SLOT: &str = "mcp_token";
+
+/// Optional config slot — when [`AgentInputKind::Cli`] is in effect,
+/// forwarded to [`CliCfg::mcp_config_path`] so the wrapper writes its
+/// MCP client config to a caller-controlled path instead of the
+/// runner-default scratch file. Ignored for the REST input kind.
+pub const MCP_CONFIG_PATH_SLOT: &str = "mcp_config_path";
+
 /// Output slot the body writes the model's final assistant text into.
 pub const OUTPUT_SLOT: &str = "output";
 
@@ -301,6 +319,18 @@ impl AiAgent {
         self.default_input_kind = Some(kind);
         self
     }
+
+    /// Override the kind id this body advertises via
+    /// [`NodeBehavior::kind_id`]. The default is [`KIND_ID`]
+    /// (`starter.flow.ai-agent`). Downstream crates (e.g.
+    /// `rubix-agent`) re-register the same body under their own
+    /// reverse-DNS namespace (`com.rubix.ai-agent`) so existing flow
+    /// YAMLs can keep their `kind:` value while picking up the
+    /// upstream multi-turn loop.
+    pub fn with_kind_id(mut self, kind_id: KindId) -> Self {
+        self.kind_id = kind_id;
+        self
+    }
 }
 
 #[async_trait]
@@ -427,6 +457,9 @@ impl NodeBehavior for AiAgent {
                     cancel: &cancel,
                     system_prompt: cfg.system_prompt.as_deref(),
                     user_input: cfg.user_input,
+                    mcp_url: cfg.mcp_url.as_deref(),
+                    mcp_token: cfg.mcp_token.as_deref(),
+                    mcp_config_path: cfg.mcp_config_path.as_deref(),
                 })
                 .await
             }
@@ -516,6 +549,15 @@ struct AgentConfig {
     skill_hint: Option<String>,
     user_input: String,
     input_kind: AgentInputKind,
+    /// CLI-only — forwarded to [`CliCfg::mcp_url`]. Ignored when
+    /// [`Self::input_kind`] is [`AgentInputKind::Rest`].
+    mcp_url: Option<String>,
+    /// CLI-only — forwarded to [`CliCfg::mcp_token`]. Ignored when
+    /// [`Self::input_kind`] is [`AgentInputKind::Rest`].
+    mcp_token: Option<String>,
+    /// CLI-only — forwarded to [`CliCfg::mcp_config_path`]. Ignored
+    /// when [`Self::input_kind`] is [`AgentInputKind::Rest`].
+    mcp_config_path: Option<String>,
 }
 
 impl AgentConfig {
@@ -591,6 +633,14 @@ impl AgentConfig {
             })?,
         };
 
+        // CLI-only MCP plumbing. Read regardless of `input_kind` so a
+        // misconfigured flow surfaces typed parse errors up front; the
+        // values are simply unused on the REST path.
+        let mcp_url = read_string(input, MCP_URL_SLOT).filter(|s| !s.is_empty());
+        let mcp_token = read_string(input, MCP_TOKEN_SLOT).filter(|s| !s.is_empty());
+        let mcp_config_path =
+            read_string(input, MCP_CONFIG_PATH_SLOT).filter(|s| !s.is_empty());
+
         Ok(Self {
             provider_id,
             system_prompt,
@@ -599,6 +649,9 @@ impl AgentConfig {
             skill_hint,
             user_input,
             input_kind,
+            mcp_url,
+            mcp_token,
+            mcp_config_path,
         })
     }
 
@@ -887,6 +940,20 @@ struct CliInputs<'a> {
     cancel: &'a CancelAdapter<'a>,
     system_prompt: Option<&'a str>,
     user_input: String,
+    /// Forwarded into [`CliCfg::mcp_url`] so the wrapper binary can
+    /// attach to the named MCP server and dispatch host tools through
+    /// it. `None` means "don't write an MCP block" — the wrapper
+    /// behaves as before (no host-tool catalogue exposed to the
+    /// model).
+    mcp_url: Option<&'a str>,
+    /// Forwarded into [`CliCfg::mcp_token`] — the bearer token the
+    /// wrapper presents to the MCP server identified by
+    /// [`Self::mcp_url`]. Only meaningful when `mcp_url` is `Some`.
+    mcp_token: Option<&'a str>,
+    /// Forwarded into [`CliCfg::mcp_config_path`] — path the runner
+    /// should write its MCP client config to. `None` lets the runner
+    /// pick a scratch path.
+    mcp_config_path: Option<&'a str>,
 }
 
 /// Drive a CLI-shape runner exactly once.
@@ -910,6 +977,9 @@ async fn run_cli_once<'a>(inputs: CliInputs<'a>) -> LoopOutcome {
         cancel,
         system_prompt,
         user_input,
+        mcp_url,
+        mcp_token,
+        mcp_config_path,
     } = inputs;
 
     if cancel.is_cancelled() {
@@ -924,6 +994,9 @@ async fn run_cli_once<'a>(inputs: CliInputs<'a>) -> LoopOutcome {
     let cfg = CliCfg {
         prompt: user_input,
         system_prompt: system_prompt.map(|s| s.to_string()),
+        mcp_url: mcp_url.map(|s| s.to_string()),
+        mcp_token: mcp_token.map(|s| s.to_string()),
+        mcp_config_path: mcp_config_path.map(|s| s.to_string()),
         ..CliCfg::default()
     };
 

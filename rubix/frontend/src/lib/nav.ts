@@ -7,6 +7,7 @@ import {
   GitBranch,
   Home,
   Layers,
+  MessageSquare,
   Settings,
   ShieldCheck,
   Sparkles,
@@ -17,6 +18,9 @@ import {
 export interface NavItem {
   /** i18n message key — resolve via `useIntl().formatMessage({ id: labelKey })`. */
   labelKey: string
+  /** Fallback string when `labelKey` is a synthetic key with no
+   *  registered translation (e.g. live dashboard titles). */
+  defaultMessage?: string
   href: string
   icon: LucideIcon
   badge?: string
@@ -34,6 +38,7 @@ export const NAV_GROUPS: NavGroup[] = [
     items: [
       { labelKey: 'nav.item.home',      href: '/',          icon: Home },
       { labelKey: 'nav.item.dashboard', href: '/dashboard', icon: Gauge, badge: 'live' },
+      { labelKey: 'nav.item.chat',      href: '/chat',      icon: MessageSquare, badge: 'AI' },
     ],
   },
   {

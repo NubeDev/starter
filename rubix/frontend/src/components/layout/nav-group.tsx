@@ -97,7 +97,7 @@ function NavAnchor({
 function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
   const { setOpenMobile } = useSidebar()
   const intl = useIntl()
-  const label = intl.formatMessage({ id: item.title })
+  const label = intl.formatMessage({ id: item.title, defaultMessage: item.defaultMessage })
   return (
     <SidebarMenuItem>
       <SidebarMenuButton asChild isActive={checkIsActive(href, item)} tooltip={label}>
@@ -114,7 +114,7 @@ function SidebarMenuLink({ item, href }: { item: NavLink; href: string }) {
 function SidebarMenuCollapsible({ item, href }: { item: NavCollapsible; href: string }) {
   const { setOpenMobile } = useSidebar()
   const intl = useIntl()
-  const label = intl.formatMessage({ id: item.title })
+  const label = intl.formatMessage({ id: item.title, defaultMessage: item.defaultMessage })
   return (
     <Collapsible
       asChild
@@ -152,7 +152,7 @@ function SidebarMenuCollapsible({ item, href }: { item: NavCollapsible; href: st
 
 function SidebarMenuCollapsedDropdown({ item, href }: { item: NavCollapsible; href: string }) {
   const intl = useIntl()
-  const label = intl.formatMessage({ id: item.title })
+  const label = intl.formatMessage({ id: item.title, defaultMessage: item.defaultMessage })
   return (
     <SidebarMenuItem>
       <DropdownMenu>

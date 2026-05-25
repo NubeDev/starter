@@ -1,17 +1,27 @@
 // app/connections/index.tsx — list saved servers.
+//
+// Built on `@nube/starter-ui-kit-native` primitives so the look
+// matches the rest of the app (Card, Button, Badge, Text).
 
 import { Link, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import {
-  ActivityIndicator,
-  Alert,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, FlatList, RefreshControl, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { FormattedMessage, useIntl } from 'react-intl';
+
+import {
+  Badge,
+  Button,
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+  Row,
+  Spinner,
+  Text as KitText,
+  useTheme as useKitTheme,
+} from '@nube/starter-ui-kit-native';
 
 import { useLocalDb } from '../../local-db/provider';
 import { listConnections } from '../../local-db/connection/list';
@@ -19,11 +29,10 @@ import { deleteConnection } from '../../local-db/connection/delete';
 import { expoSecureTokenStore } from '../../local-db/token/expo-secure-store';
 import type { Connection } from '../../local-db/connection/types';
 import { useConnection } from '../../connection/provider';
-import { useTheme } from '../../theme/provider';
 
 export default function ConnectionsIndex() {
   const db = useLocalDb();
-  const theme = useTheme();
+  const t = useKitTheme();
   const intl = useIntl();
   const router = useRouter();
   const { setActiveId, active } = useConnection();
@@ -71,78 +80,114 @@ export default function ConnectionsIndex() {
 
   if (!rows) {
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-        <ActivityIndicator />
+      <View
+        style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: t.color('background'),
+        }}
+      >
+        <Spinner />
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: theme.background, padding: 16 }}>
-      <View
-        style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}
-      >
-        <Text style={{ fontSize: 24, fontWeight: '600', color: theme.foreground }}>
+    <View style={{ flex: 1, backgroundColor: t.color('background'), padding: 16 }}>
+      <Row style={{ justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        <KitText variant="title" weight="semibold">
           <FormattedMessage id="connections.title" />
-        </Text>
+        </KitText>
         <Link href="/connections/new" asChild>
-          <Pressable
-            style={{
-              backgroundColor: theme.accent,
-              paddingVertical: 8,
-              paddingHorizontal: 12,
-              borderRadius: 6,
-            }}
-            accessibilityRole="button"
+          <Button
+            accessibilityLabel={intl.formatMessage({ id: 'connections.add' })}
+            size="sm"
           >
-            <Text style={{ color: '#fff', fontWeight: '500' }}>
-              <FormattedMessage id="connections.add" />
-            </Text>
-          </Pressable>
+            <Row style={{ alignItems: 'center', gap: 6 }}>
+              <Ionicons name="add" size={18} color="#fff" />
+              <KitText weight="medium" style={{ color: '#fff' }}>
+                {intl.formatMessage({ id: 'connections.add' })}
+              </KitText>
+            </Row>
+          </Button>
         </Link>
-      </View>
+      </Row>
+
       <FlatList
         data={rows}
         keyExtractor={(c) => c.id}
+        contentContainerStyle={{ gap: 12, paddingBottom: 24 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={refresh} />}
         ListEmptyComponent={
-          <Text style={{ color: theme.foreground, opacity: 0.7 }}>
-            <FormattedMessage id="connections.empty" />
-          </Text>
+          <Card>
+            <CardContent>
+              <Row style={{ alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <Ionicons
+                  name="server-outline"
+                  size={20}
+                  color={t.color('muted-foreground')}
+                />
+                <KitText color="muted">
+                  <FormattedMessage id="connections.empty" />
+                </KitText>
+              </Row>
+            </CardContent>
+          </Card>
         }
-        renderItem={({ item }) => (
-          <View
-            style={{
-              padding: 12,
-              borderWidth: 1,
-              borderColor: active?.id === item.id ? theme.accent : theme.border,
-              borderRadius: 8,
-              marginBottom: 8,
-            }}
-          >
-            <Text style={{ fontWeight: '600', color: theme.foreground }}>{item.label}</Text>
-            <Text style={{ color: theme.foreground, opacity: 0.7, marginTop: 2 }}>
-              {item.baseUrl}
-            </Text>
-            <View style={{ flexDirection: 'row', marginTop: 8, gap: 12 }}>
-              <Pressable onPress={() => activate(item.id)} accessibilityRole="button">
-                <Text style={{ color: theme.accent }}>
-                  <FormattedMessage id="connections.activate" />
-                </Text>
-              </Pressable>
-              <Link href={`/connections/${item.id}` as never} asChild>
-                <Pressable accessibilityRole="button">
-                  <Text style={{ color: theme.accent }}>Edit</Text>
-                </Pressable>
-              </Link>
-              <Pressable onPress={() => confirmDelete(item)} accessibilityRole="button">
-                <Text style={{ color: '#B91C1C' }}>
-                  <FormattedMessage id="connections.delete" />
-                </Text>
-              </Pressable>
-            </View>
-          </View>
-        )}
+        renderItem={({ item }) => {
+          const isActive = active?.id === item.id;
+          return (
+            <Card>
+              <CardHeader>
+                <Row style={{ alignItems: 'center', justifyContent: 'space-between' }}>
+                  <CardTitle>{item.label}</CardTitle>
+                  {isActive ? (
+                    <Badge variant="default" accessibilityLabel="Active">
+                      {intl.formatMessage({ id: 'connections.active' })}
+                    </Badge>
+                  ) : null}
+                </Row>
+              </CardHeader>
+              <CardContent>
+                <KitText variant="caption" color="muted" numberOfLines={1}>
+                  {item.baseUrl}
+                </KitText>
+              </CardContent>
+              <CardFooter>
+                <Row style={{ gap: 8, flex: 1, justifyContent: 'flex-end' }}>
+                  {!isActive && (
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onPress={() => activate(item.id)}
+                      accessibilityLabel={intl.formatMessage({ id: 'connections.activate' })}
+                    >
+                      {intl.formatMessage({ id: 'connections.activate' })}
+                    </Button>
+                  )}
+                  <Link href={`/connections/${item.id}` as never} asChild>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      accessibilityLabel="Edit"
+                    >
+                      Edit
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onPress={() => confirmDelete(item)}
+                    accessibilityLabel={intl.formatMessage({ id: 'connections.delete' })}
+                  >
+                    {intl.formatMessage({ id: 'connections.delete' })}
+                  </Button>
+                </Row>
+              </CardFooter>
+            </Card>
+          );
+        }}
       />
     </View>
   );
