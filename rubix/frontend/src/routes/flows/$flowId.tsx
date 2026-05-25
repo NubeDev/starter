@@ -24,7 +24,7 @@ import { ArrowLeft } from 'lucide-react'
 import * as YAML from 'yaml'
 import { FlowCanvas } from '@nube/starter-ui-flow'
 import type { FlowGraph, RunOverlay } from '@nube/starter-ui-flow'
-import { Button, Skeleton } from '@nube/starter-ui-kit'
+import { Button, PageContainer, PageHeader, Skeleton } from '@nube/starter-ui-kit'
 import {
   FLOW_OPS_KEY,
   useFlowDeploy,
@@ -189,38 +189,38 @@ function FlowDetail() {
   }
 
   return (
-    <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
-      <header className="mb-6 flex items-end justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-3">
-            <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-              {tr('flows.detail.eyebrow', 'Flow')}
-            </span>
-          </div>
-          <h1 className="mt-3 text-3xl font-medium tracking-[-0.03em]">{flowId}</h1>
-          {item?.revision_id ? (
-            <p className="mt-2 font-mono text-xs text-[color:var(--color-muted)]">
-              {item.revision_id}
-            </p>
-          ) : null}
-        </div>
-        <Button asChild variant="ghost" size="sm">
-          <Link to="/flows">
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {tr('flows.detail.back', 'Back to flows')}
-          </Link>
-        </Button>
-      </header>
+    // The flow editor is a tool surface — three columns (palette + canvas +
+    // settings) only breathe at full viewport width. `width="full"` opts out
+    // of the standard `max-w-7xl` shell; the canvas grows to fill the
+    // remaining viewport height via `calc(100vh - …)` (top header ~6rem +
+    // this page's own header + padding ~7rem).
+    <PageContainer width="full">
+      <PageHeader
+        eyebrow={tr('flows.detail.eyebrow', 'Flow')}
+        title={flowId}
+        description={
+          item?.revision_id ? (
+            <span className="font-mono text-xs">{item.revision_id}</span>
+          ) : undefined
+        }
+        actions={
+          <Button asChild variant="ghost" size="sm">
+            <Link to="/flows">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {tr('flows.detail.back', 'Back to flows')}
+            </Link>
+          </Button>
+        }
+      />
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-[260px_1fr_320px]">
         <NodePalette flowId={flowId} bodyYaml={bodyYaml} />
 
         {list.isLoading ? (
-          <Skeleton className="h-[640px] w-full" />
+          <Skeleton className="h-[calc(100vh-13rem)] min-h-[480px] w-full" />
         ) : (
           <div
-            className="h-[640px] overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-1)]"
+            className="h-[calc(100vh-13rem)] min-h-[480px] overflow-hidden rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-surface-1)]"
             onDragOver={(e) => {
               // Calling preventDefault on dragover is what makes the
               // element a valid drop target. Without it, `onDrop`
@@ -257,7 +257,7 @@ function FlowDetail() {
           bodyYaml={bodyYaml}
         />
       </div>
-    </section>
+    </PageContainer>
   )
 }
 
