@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use serde_json::json;
 
 use starter_ui_bindings::{expand_repeats, substitute_tree, EvalContext, NullGraph};
-use starter_ui_ir::{Component, ComponentTree};
+use starter_ui_ir::{Bindable, Component, ComponentTree};
 
 fn ctx<'a>(
     g: &'a NullGraph,
@@ -75,6 +75,10 @@ fn repeat_expands_one_text_per_item() {
                 })
                 .collect();
             assert_eq!(texts, vec!["i=0 v=a", "i=1 v=b", "i=2 v=c"]);
+            // Each clone carries a synthetic id derived from the
+            // Repeat's id ("r") and the iteration index.
+            let ids: Vec<Option<&str>> = children.iter().map(|c| c.id()).collect();
+            assert_eq!(ids, vec![Some("r-0"), Some("r-1"), Some("r-2")]);
         }
         _ => unreachable!(),
     }

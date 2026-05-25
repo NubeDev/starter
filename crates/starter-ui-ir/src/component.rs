@@ -2035,6 +2035,92 @@ pub enum MenuItem {
 }
 
 // -------------------------------------------------------------------
+// Synthetic id helpers (G3/G5 — Repeat expansion stable keying)
+// -------------------------------------------------------------------
+
+impl Component {
+    /// Synthesize a deterministic id for a Repeat-expanded clone.
+    /// Format: `"<parent_id>-<index>"`. Used by the Repeat expander
+    /// so each per-item clone carries a stable id derived from the
+    /// authored parent — re-resolving the same tree produces the
+    /// same ids.
+    pub fn synthetic_id(parent_id: &str, index: usize) -> String {
+        format!("{parent_id}-{index}")
+    }
+
+    /// Set this component's id to the synthetic value
+    /// `synthetic_id(parent_id, index)` **only when the existing id
+    /// is blank** (i.e. `Option::None` or `String::new()` for
+    /// required-id variants). Existing ids are preserved.
+    pub fn assign_synthetic_id(&mut self, parent_id: &str, index: usize) {
+        let synth = Self::synthetic_id(parent_id, index);
+        match self {
+            // Optional-id variants.
+            Component::Row { id, .. }
+            | Component::Col { id, .. }
+            | Component::Grid { id, .. }
+            | Component::Tabs { id, .. }
+            | Component::Repeat { id, .. }
+            | Component::Text { id, .. }
+            | Component::Heading { id, .. }
+            | Component::Badge { id, .. }
+            | Component::Diff { id, .. }
+            | Component::Divider { id, .. }
+            | Component::FieldGroup { id, .. }
+            | Component::Section { id, .. }
+            | Component::Chart { id, .. }
+            | Component::Sparkline { id, .. }
+            | Component::Table { id, .. }
+            | Component::ArrayTable { id, .. }
+            | Component::JsonTable { id, .. }
+            | Component::List { id, .. }
+            | Component::Dialog { id, .. }
+            | Component::Menu { id, .. }
+            | Component::Tree { id, .. }
+            | Component::Timeline { id, .. }
+            | Component::Markdown { id, .. }
+            | Component::RichText { id, .. }
+            | Component::RefPicker { id, .. }
+            | Component::Select { id, .. }
+            | Component::Kpi { id, .. }
+            | Component::KpiGrid { id, .. }
+            | Component::Detail { id, .. }
+            | Component::Card { id, .. }
+            | Component::DateRange { id, .. }
+            | Component::Wizard { id, .. }
+            | Component::Drawer { id, .. }
+            | Component::Button { id, .. }
+            | Component::ActionWidget { id, .. }
+            | Component::Custom { id, .. }
+            | Component::Form { id, .. } => {
+                if id.is_none() {
+                    *id = Some(synth);
+                }
+            }
+            // Required-id variants: only fill when empty.
+            Component::Page { id, .. }
+            | Component::MarkdownEditor { id, .. }
+            | Component::Toggle { id, .. }
+            | Component::Slider { id, .. }
+            | Component::TextField { id, .. }
+            | Component::NumberField { id, .. }
+            | Component::Textarea { id, .. }
+            | Component::SelectField { id, .. }
+            | Component::RadioGroup { id, .. }
+            | Component::Segmented { id, .. }
+            | Component::DateField { id, .. }
+            | Component::Checkbox { id, .. }
+            | Component::Forbidden { id, .. }
+            | Component::Dangling { id, .. } => {
+                if id.is_empty() {
+                    *id = synth;
+                }
+            }
+        }
+    }
+}
+
+// -------------------------------------------------------------------
 // Bindable trait impl
 // -------------------------------------------------------------------
 

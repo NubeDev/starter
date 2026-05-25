@@ -115,9 +115,14 @@ fn expand_vec<G: EntityGraph + ?Sized>(
                     // clone before the outer substitute pass runs
                     // (which has no item/index frame).
                     substitute_subtree(&mut clone, &iter_ctx)?;
-                    // Synthetic-id assignment to clones is wired in C5
-                    // (per stage A.2 commit sequence).
-                    let _ = &id;
+                    // Stamp a synthetic id derived from the Repeat
+                    // node's id + iteration index, so each clone has
+                    // a stable, re-resolvable key. When the Repeat
+                    // itself was authored without an id, fall back to
+                    // the literal "repeat" so the index alone keys
+                    // the clones (better than nothing for SSE patch).
+                    let parent_key = id.as_deref().unwrap_or("repeat");
+                    clone.assign_synthetic_id(parent_key, i);
                     out.push(clone);
                 }
             }
