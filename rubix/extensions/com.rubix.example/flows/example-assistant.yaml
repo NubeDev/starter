@@ -1,6 +1,7 @@
 # Example extension-contributed flow. Auto-surfaces as an MCP tool
-# alongside the six rubix-bundled flows once starter-ext-flow loads
-# this block.
+# alongside the six rubix-bundled flows via the upstream
+# `starter-ext-flow` adapter (composed in `rubix-agent`'s
+# `boot::extensions_flow`).
 
 id: com.rubix.example.assistant
 description: |

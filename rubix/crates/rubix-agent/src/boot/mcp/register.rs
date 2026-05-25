@@ -19,6 +19,7 @@ use serde_json::{json, Value};
 
 use rubix_flows::AI_AGENT_KIND_ID;
 
+use starter_ext_host::ExtensionRegistry;
 use starter_flow::definition::body::FlowBody;
 use starter_flow::engine::Engine;
 use starter_flow::registry::NodeKindRegistry;
@@ -56,6 +57,7 @@ pub async fn build_flow_registry(
     ch_client: Option<Arc<ChClient>>,
     pg_pool: Option<Pool>,
     runtime: Option<&crate::boot::FlowRuntime>,
+    extensions: Option<&ExtensionRegistry>,
 ) -> anyhow::Result<(Arc<FlowRegistry>, Vec<(FlowId, FlowRevisionId)>, Arc<Engine>)> {
     // -- 1. Engine on a fresh in-memory graph store. The terminal-
     //       slot read-back in `FlowAsTool` reads through this store.
@@ -136,7 +138,28 @@ pub async fn build_flow_registry(
             .map_err(|e| anyhow::anyhow!("register `{kind_id}`: {e}"))?;
     }
 
-    // -- 3. FlowRegistry seeded from every bundled YAML.
+    // -- 3. Extension-contributed node kinds. Pure composition over
+    //       upstream `starter-ext-flow`; rubix owns no walker logic
+    //       (SCOPE R2). Slice A binds the upstream placeholder
+    //       behaviour. A failure to register one bundle does not abort
+    //       boot — log and continue so the remaining flows still load.
+    if let Some(ext_registry) = extensions {
+        match crate::boot::register_contributed_nodes(ext_registry, &kinds).await {
+            Ok(n) if n > 0 => tracing::info!(
+                target: "rubix.boot.extensions.flow",
+                contributed_node_kinds = n,
+                "extension-contributed node kinds registered"
+            ),
+            Ok(_) => {}
+            Err(e) => tracing::warn!(
+                target: "rubix.boot.extensions.flow",
+                error = %e,
+                "failed to register one or more extension-contributed node kinds; continuing"
+            ),
+        }
+    }
+
+    // -- 4. FlowRegistry seeded from every bundled YAML.
     let registry = Arc::new(FlowRegistry::new());
     let mut flows = Vec::new();
     for (flow_id, revision, body) in triples {

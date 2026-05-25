@@ -4,16 +4,18 @@ This is the layout template for third-party rubix extensions.
 A real block:
 
 1. Implements its handlers (`EchoTool` in this example) using the
-   planned `rubix-extensions-sdk` crate. Per SCOPE R8 the SDK is
-   the **only** rubix surface an extension depends on.
+   upstream `starter-ext-sdk` crate. Per SCOPE R8 the SDK is the
+   **only** rubix surface an extension depends on.
 2. Ships its `block.yaml` declaring what it contributes
    (`tools` / `skills` / `flows` / `nodes`).
-3. Lets the host load it via the planned `starter-ext-flow`
-   adapter (see [STARTER-CHANGES.md](../../docs/design/STARTER-CHANGES.md)).
-
-Until those upstream pieces land, this directory is structure-only
-— `process/src/main.rs` does not compile because the SDK doesn't
-exist yet. Phase 5 (per SCOPE) is when the full end-to-end works.
+3. Lets the host load it via the upstream `starter-ext-flow`
+   adapter — `rubix-agent`'s `boot::extensions_flow` composer
+   walks the sealed `ExtensionRegistry` and folds every
+   `contributes.nodes[]` entry into the live `NodeKindRegistry`
+   (slice A binds the placeholder behaviour that returns
+   `NodeError::Domain { code: "no_behaviour_bound" }` on invoke;
+   slice B's `ProcessNodeProxy` swap is owned upstream per
+   `starter-extensions/DOCS/extensions/scope/FLOW-NODES.md`).
 
 ## Layout
 

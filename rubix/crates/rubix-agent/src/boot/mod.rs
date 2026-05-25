@@ -7,6 +7,7 @@ pub mod clickhouse;
 pub mod config;
 pub mod dashboards_seed;
 pub mod extensions;
+pub mod extensions_flow;
 pub mod flow_notify;
 pub mod flow_runtime;
 pub mod flows_seed;
@@ -30,6 +31,7 @@ pub use extensions::{
     build_extension_admin, BootError as ExtensionsBootError, ExtensionAdminBundle,
     SYSTEM_AUTOSTART_PRINCIPAL,
 };
+pub use extensions_flow::{register_contributed_nodes, ExtensionsFlowError};
 pub use scheduler::{spawn as spawn_scheduler, SchedulerHandle};
 pub use sdui::build_sdui_router;
 pub use flow_notify::spawn_flow_notify;

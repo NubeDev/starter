@@ -1,12 +1,12 @@
 # Reference rubix extension — the layout template for third-party authors.
 #
-# Per SCOPE Phase 5: this block contributes one extra tool, one skill,
-# and one flow into the host's shared registries via starter-ext-flow
-# (planned upstream — see docs/design/STARTER-CHANGES.md).
+# This block contributes one extra tool, one skill, and one flow into
+# the host's shared registries via the upstream `starter-ext-flow`
+# adapter, composed in `rubix-agent`'s `boot::extensions_flow`.
 #
-# Per SCOPE R8: extensions depend ONLY on rubix-extensions-sdk (the
-# planned SDK) — never path-dep rubix-domain, rubix-tools, rubix-agent,
-# or anything in starter/crates/.
+# Per SCOPE R8: extensions depend ONLY on `starter-ext-sdk` (the
+# upstream SDK) — never path-dep rubix-domain, rubix-tools,
+# rubix-agent, or anything in starter/crates/.
 
 id: com.rubix.example
 version: 0.1.0

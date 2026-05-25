@@ -133,7 +133,9 @@ pub async fn build_tool_registry(
     ext: Option<&ExtensionMcpContext>,
     runtime: Option<&crate::boot::FlowRuntime>,
 ) -> anyhow::Result<ToolRegistry> {
-    let (registry, flows, engine) = register::build_flow_registry(ch_client, pg_pool, runtime).await?;
+    let ext_registry = ext.map(|c| c.registry.as_ref());
+    let (registry, flows, engine) =
+        register::build_flow_registry(ch_client, pg_pool, runtime, ext_registry).await?;
     let mut tools = ToolRegistry::new();
     for (flow_id, revision) in &flows {
         let tool = FlowAsTool::from_registry(&registry, flow_id, revision, engine.clone())

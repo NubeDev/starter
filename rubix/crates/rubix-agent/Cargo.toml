@@ -71,6 +71,11 @@ starter-ext-server    = { path = "../../../starter-extensions/crates/starter-ext
 starter-ext-supervisor = { path = "../../../starter-extensions/crates/starter-ext-supervisor" }
 starter-ext-store-pg  = { path = "../../../starter-extensions/crates/starter-ext-store-pg" }
 starter-ext-mcp       = { path = "../../../starter-extensions/crates/starter-ext-mcp" }
+# Adapter that surfaces extension-contributed flow node kinds (and,
+# in later upstream slices, flows + skills) into the host's
+# `NodeKindRegistry`. Consumed by `boot::extensions_flow`; the
+# walker logic itself lives upstream per SCOPE R2.
+starter-ext-flow      = { path = "../../../starter-extensions/crates/starter-ext-flow" }
 thiserror             = { workspace = true }
 # `sqlite` feature stays on for two reasons: (a) dev-dependencies
 # below still pull `starter-store-sqlite` for hermetic SPI-contract
