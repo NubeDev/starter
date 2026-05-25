@@ -39,7 +39,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::ConnectOptions;
-use tokio::sync::{broadcast, RwLock};
+use tokio::sync::broadcast;
+use std::sync::RwLock;
 use tracing::{info, warn};
 
 use starter_flow::state::in_memory::InMemoryNodeStateStore;
@@ -78,13 +79,18 @@ impl FlowSubscriptionRegistry {
     /// subscribe (matches the per-run broadcast semantics upstream).
     pub async fn subscribe_or_create(&self, flow_id: &FlowId) -> broadcast::Receiver<FlowEvent> {
         // Fast path: already-existing sender.
-        if let Some(tx) = self.inner.read().await.get(flow_id) {
+        if let Some(tx) = self
+            .inner
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(flow_id)
+        {
             return tx.subscribe();
         }
         // Slow path: install a fresh sender. The race window is
         // benign — a second concurrent caller may have inserted
         // first; we re-check under the write lock and reuse.
-        let mut map = self.inner.write().await;
+        let mut map = self.inner.write().unwrap_or_else(|e| e.into_inner());
         let tx = map
             .entry(flow_id.clone())
             .or_insert_with(|| broadcast::channel::<FlowEvent>(BROADCAST_CAPACITY).0)
@@ -96,13 +102,44 @@ impl FlowSubscriptionRegistry {
     /// engine-side event pump calls this when it wires a freshly-
     /// started run's `events_tx` into the per-flow fan-out.
     pub async fn sender(&self, flow_id: &FlowId) -> broadcast::Sender<FlowEvent> {
-        if let Some(tx) = self.inner.read().await.get(flow_id) {
+        if let Some(tx) = self
+            .inner
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(flow_id)
+        {
             return tx.clone();
         }
-        let mut map = self.inner.write().await;
+        let mut map = self.inner.write().unwrap_or_else(|e| e.into_inner());
         map.entry(flow_id.clone())
             .or_insert_with(|| broadcast::channel::<FlowEvent>(BROADCAST_CAPACITY).0)
             .clone()
+    }
+}
+
+/// `FlowEventSink` implementation: feeds every event into the
+/// per-flow broadcast that the SSE route subscribes to.
+impl starter_flow::FlowEventSink for FlowSubscriptionRegistry {
+    fn publish(&self, flow: &FlowId, event: FlowEvent) {
+        // Re-use the fast path of `sender()` synchronously —
+        // `tokio::sync::broadcast::Sender::send` itself is sync.
+        let tx = {
+            if let Some(tx) = self
+                .inner
+                .read()
+                .unwrap_or_else(|e| e.into_inner())
+                .get(flow)
+            {
+                tx.clone()
+            } else {
+                let mut map = self.inner.write().unwrap_or_else(|e| e.into_inner());
+                map.entry(flow.clone())
+                    .or_insert_with(|| broadcast::channel::<FlowEvent>(BROADCAST_CAPACITY).0)
+                    .clone()
+            }
+        };
+        // `Err` only when there are no receivers — fine to drop.
+        let _ = tx.send(event);
     }
 }
 

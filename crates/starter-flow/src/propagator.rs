@@ -336,6 +336,7 @@ pub fn spawn(
         None,
         Arc::new(SkillSelection::None),
         Arc::new(NoopNodeStateStore),
+        None,
     )
 }
 
@@ -354,6 +355,7 @@ pub fn spawn_with_checkpoint(
     checkpoint: Option<CheckpointHook>,
     skill: Arc<SkillSelection>,
     node_state: Arc<dyn NodeStateStore>,
+    flow_id: Option<starter_flow_spi::flow::FlowId>,
 ) -> JoinHandle<()> {
     // Subscribe *synchronously* before spawning the task so that any
     // writes the caller performs immediately after `spawn()` returns
@@ -361,7 +363,7 @@ pub fn spawn_with_checkpoint(
     // — no "did the spawned task get to `subscribe` first?" races.
     let sub = store.subscribe(SubscribeOpts::default());
     tokio::spawn(drive_with_checkpoint(
-        store, sub, topology, cancel, events, run, config, checkpoint, skill, node_state,
+        store, sub, topology, cancel, events, run, config, checkpoint, skill, node_state, flow_id,
     ))
 }
 
@@ -388,6 +390,7 @@ pub async fn drive(
         None,
         Arc::new(SkillSelection::None),
         Arc::new(NoopNodeStateStore),
+        None,
     )
     .await
 }
@@ -405,6 +408,7 @@ pub async fn drive_with_checkpoint(
     checkpoint: Option<CheckpointHook>,
     skill: Arc<SkillSelection>,
     node_state: Arc<dyn NodeStateStore>,
+    flow_id: Option<starter_flow_spi::flow::FlowId>,
 ) {
     let mut tick = TickCounter::new();
 
@@ -546,7 +550,14 @@ pub async fn drive_with_checkpoint(
                     run,
                     node: node_id.clone(),
                 });
-                let ctx = NodeCtx::new(run, &node_id, &*cancel, &skill, &*node_state);
+                // Thread the owning flow id into `NodeCtx` when the
+                // caller supplied one so stateful node kinds (e.g.
+                // `starter.flow.counter`) can build a `NodeStateKey`.
+                let ctx = if let Some(flow) = flow_id.as_ref() {
+                    NodeCtx::with_flow(flow, run, &node_id, &*cancel, &skill, &*node_state)
+                } else {
+                    NodeCtx::new(run, &node_id, &*cancel, &skill, &*node_state)
+                };
                 let invoke_res = behavior.invoke(ctx, input).await;
 
                 match invoke_res {

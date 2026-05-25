@@ -32,5 +32,5 @@ nodes:
       level: info
 
 links:
-  - { from: "tick.fire", to: "count.in" }
+  - { from: "tick.schedule", to: "count.in" }
   - { from: "count.out", to: "emit.value" }

@@ -848,6 +848,7 @@ async fn run_coordinator(
         // via `FlowRunner::with_node_state_store`. See
         // `DOCS/flow/scope/node-state.md`.
         node_state_store,
+        Some(flow.clone()),
     );
 
     // Seed writes — these enter through the single chokepoint per R2.

@@ -109,8 +109,9 @@ pub async fn build_mcp_surface(
     ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
     pg_pool: Option<starter_store_postgres::pool::Pool>,
     ext: Option<&ExtensionMcpContext>,
+    runtime: Option<&crate::boot::FlowRuntime>,
 ) -> anyhow::Result<McpSurface> {
-    let tools = Arc::new(build_tool_registry(ch_client, pg_pool, ext).await?);
+    let tools = Arc::new(build_tool_registry(ch_client, pg_pool, ext, runtime).await?);
     let router: axum::Router =
         starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
     Ok(McpSurface { tools, router })
@@ -130,8 +131,9 @@ pub async fn build_tool_registry(
     ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
     pg_pool: Option<starter_store_postgres::pool::Pool>,
     ext: Option<&ExtensionMcpContext>,
+    runtime: Option<&crate::boot::FlowRuntime>,
 ) -> anyhow::Result<ToolRegistry> {
-    let (registry, flows, engine) = register::build_flow_registry(ch_client, pg_pool).await?;
+    let (registry, flows, engine) = register::build_flow_registry(ch_client, pg_pool, runtime).await?;
     let mut tools = ToolRegistry::new();
     for (flow_id, revision) in &flows {
         let tool = FlowAsTool::from_registry(&registry, flow_id, revision, engine.clone())
@@ -187,7 +189,21 @@ pub async fn build_tool_registry(
 /// Construct the in-memory graph store and bind it on a fresh
 /// [`Engine`]. Both [`register::build_flow_registry`] and integration
 /// tests share this helper so the engine boot shape is uniform.
-pub(crate) fn build_engine() -> Arc<Engine> {
+///
+/// `runtime`, when provided, attaches its persistent
+/// `NodeStateStore` and `FlowEventSink` (the same
+/// `FlowSubscriptionRegistry` the SSE route subscribes to) so
+/// every surface-driven run (`FlowAsTool` / `FlowAsService`)
+/// shares state and event fan-out with the always-on flow runtime.
+pub(crate) fn build_engine(
+    runtime: Option<&crate::boot::FlowRuntime>,
+) -> Arc<Engine> {
     let graph_store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
-    Arc::new(Engine::new(graph_store))
+    let mut engine = Engine::new(graph_store);
+    if let Some(rt) = runtime {
+        engine = engine
+            .with_node_state_store(rt.state_store.clone())
+            .with_event_sink(rt.subscriptions.clone() as Arc<dyn starter_flow::FlowEventSink>);
+    }
+    Arc::new(engine)
 }

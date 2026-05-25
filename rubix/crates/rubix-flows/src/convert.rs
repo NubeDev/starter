@@ -106,6 +106,27 @@ pub fn convert(
         .into_iter()
         .map(|l| LinkDecl::new(qualify_endpoint(&l.from), qualify_endpoint(&l.to)))
         .collect();
+
+    // Every link's destination slot is, by construction, a slot
+    // the receiving node must wake on. Add each `to` endpoint to
+    // the corresponding node's `triggers` list so the propagator
+    // schedules the node when an upstream link delivers a value.
+    // Without this, scheduled flows like `com.rubix.tick-counter`
+    // never invoke the downstream counter / log nodes \u2014 the
+    // root tick node emits, the link forwards, but the propagator
+    // ignores the write because the destination's `triggers` set
+    // does not list the input slot.
+    for link in &body.links {
+        let Some((to_node, to_slot)) = link.to.rsplit_once('.') else {
+            continue;
+        };
+        for node in body.nodes.iter_mut() {
+            if node.id.as_str() == to_node && !node.triggers.iter().any(|t| t == to_slot) {
+                node.triggers.push(to_slot.to_owned());
+            }
+        }
+    }
+
     Ok((flow_id, FlowRevisionId::new(), body))
 }
 

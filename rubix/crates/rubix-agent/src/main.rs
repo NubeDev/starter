@@ -116,10 +116,21 @@ async fn main() -> Result<()> {
                 registry: b.registry.clone(),
                 process_handles: b.process_handles.clone(),
             });
+
+    // Build the always-on flow runtime BEFORE the MCP surface so
+    // the `FlowAsTool` engine can share its durable
+    // `NodeStateStore` and its `FlowEventSink` (the per-flow SSE
+    // broadcast registry). Without this hand-off, scheduled
+    // / MCP-triggered runs use a noop state store (counter state
+    // never persists) and their events never reach SSE.
+    let flow_runtime =
+        boot::build_flow_runtime(cfg.database_url.as_deref(), &cfg.flow_runtime).await?;
+
     let mcp = boot::mcp::build_mcp_surface(
         ch_client.clone(),
         mcp_pool.clone(),
         ext_mcp_ctx.as_ref(),
+        Some(&flow_runtime),
     )
     .await?;
 
@@ -195,23 +206,16 @@ async fn main() -> Result<()> {
     let tools_state = routes::tools::ToolsState::new(tools.clone(), bundle.clone());
     let tools_router = routes::tools::router(tools_state);
 
-    // Phase C.2 — always-on flow runtime. Constructs the shared
-    // `FlowSubscriptionRegistry` consumed by the SSE
-    // `/api/v1/flows/{flow_id}/events` route plus the `NodeStateStore`
-    // seam threaded into every `NodeCtx::state` call site (today the
-    // engine still owns its own store wiring; the runtime hands its
-    // `Arc<dyn NodeStateStore>` out for upstream engine reuse as the
-    // per-flow event pump lands in a follow-up stage).
-    let flow_runtime =
-        boot::build_flow_runtime(cfg.database_url.as_deref(), &cfg.flow_runtime).await?;
+    // Phase C.2 — flow_runtime was built earlier so its
+    // `NodeStateStore` + `FlowEventSink` could be attached to the
+    // MCP-side engine. Reuse the existing handle here to wire the
+    // SSE route.
     let flow_events_router =
         routes::flow_events::router(routes::flow_events::FlowEventsState {
             subscriptions: flow_runtime.subscriptions.clone(),
         });
     // Surface the runtime via the same `_` leak pattern as the other
-    // always-on boot pieces — the `Arc<dyn NodeStateStore>` rides on
-    // it so a future stage can hand it to the engine without another
-    // boot-time refactor.
+    // always-on boot pieces.
     let _flow_runtime = flow_runtime;
 
     // ----------------------------------------------------------------

@@ -55,10 +55,11 @@ use super::prefs::prefs_from_locale;
 pub async fn build_flow_registry(
     ch_client: Option<Arc<ChClient>>,
     pg_pool: Option<Pool>,
+    runtime: Option<&crate::boot::FlowRuntime>,
 ) -> anyhow::Result<(Arc<FlowRegistry>, Vec<(FlowId, FlowRevisionId)>, Arc<Engine>)> {
     // -- 1. Engine on a fresh in-memory graph store. The terminal-
     //       slot read-back in `FlowAsTool` reads through this store.
-    let engine = super::build_engine();
+    let engine = super::build_engine(runtime);
 
     // -- 2. NodeKindRegistry carrying the real `ai-agent` behaviour.
     //       Build the host's `AiRunner` per `boot::ai::build_runner`
