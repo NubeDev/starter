@@ -1,5 +1,10 @@
 # Mobile — local store (connections to remote agents)
 
+> **Design doc.** Promoted from `docs/scope/mobile/LOCAL-DB.md` after
+> [`rubix/mobile/src/local-db/`](../../../mobile/src/local-db/) landed
+> on master with schema + provider wired in. Per
+> [scope/mobile/README §Promotion path](../../scope/mobile/README.md#promotion-path).
+
 The mobile app is a **multi-instance client**: one operator phone
 talks to many rubix-agent servers (home lab, site A, site B,
 demo, …). The local store owns that connection list, the

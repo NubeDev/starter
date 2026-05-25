@@ -42,7 +42,7 @@ This is the same shape as [`docs/design/frontend/README.md`](../../design/fronte
   premature — they are one decision.
 - [APP-SHELL.md](./APP-SHELL.md) — the `rubix/mobile/` Expo app
   layout: provider stack, navigation, env, storage, auth strategy.
-- [LOCAL-DB.md](./LOCAL-DB.md) — the on-device SQLite store for
+- [LOCAL-DB.md](../../design/mobile/local-db.md) — **PROMOTED** — the on-device SQLite store for
   saved connections to remote rubix-agent servers (the app is
   multi-instance: one phone, many agents).
 - [THIN-SLICE.md](./THIN-SLICE.md) — the first milestone: a
@@ -62,7 +62,7 @@ once the implementation it describes is in `master`:
 | `REUSE.md` | `docs/design/mobile/dependencies.md` | First green CI on `rubix/mobile` |
 | `NEW-PACKAGES.md` | `docs/design/mobile/packages.md` | First version of all four new packages published from `master` |
 | `APP-SHELL.md` | `docs/design/mobile/app-shell.md` | Provider stack stable |
-| `LOCAL-DB.md` | `docs/design/mobile/local-db.md` | `src/local-db/` on master with schema + provider wired in |
+| `LOCAL-DB.md` | `docs/design/mobile/local-db.md` | **DONE** (commit landing this row) |
 | `THIN-SLICE.md` | — | Slice exit gates #1–#5 met (see [THIN-SLICE §Exit gate](./THIN-SLICE.md#exit-gate)); file deleted once the slice ships. Each block's design lands in the appropriate `docs/design/mobile/` file. |
 | `NON-GOALS.md` | `docs/design/mobile/non-goals.md` | Carries forward as-is |
 

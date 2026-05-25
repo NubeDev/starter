@@ -44,7 +44,7 @@ name so reviewers can reject scope creep with a one-line link.
   a bare self-signed cert in v1, and that is a known UX gap for
   the home-lab audience.** Per-connection pinning is a follow-up
   whose schema hook (`tls_pinned_fingerprint`) is already
-  reserved in [LOCAL-DB.md](./LOCAL-DB.md#deferred-not-in-v1).
+  reserved in [local-db.md](../../design/mobile/local-db.md#deferred-not-in-v1).
   *This is an open call: if home-lab UX matters more than v1
   ship date, TLS pinning gets promoted to Block 0.* See
   question to the author in the README.

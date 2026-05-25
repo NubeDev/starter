@@ -1,4 +1,4 @@
--- 0001_connections.sql — see rubix/docs/scope/mobile/LOCAL-DB.md
+-- 0001_connections.sql — see rubix/docs/design/mobile/local-db.md
 -- Saved connections to remote rubix-agent servers. The whole reason the
 -- mobile app is a multi-instance client.
 

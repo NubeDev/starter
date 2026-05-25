@@ -122,7 +122,7 @@ VPN dropped).
 
 - [`THIN-SLICE.md`](../docs/scope/mobile/THIN-SLICE.md) — block plan
 - [`APP-SHELL.md`](../docs/scope/mobile/APP-SHELL.md) — provider stack
-- [`LOCAL-DB.md`](../docs/scope/mobile/LOCAL-DB.md) — SQLite schema
+- [`local-db.md`](../docs/design/mobile/local-db.md) — SQLite schema (promoted from scope)
 - [`REUSE.md`](../docs/scope/mobile/REUSE.md) — upstream package map
 - [`NEW-PACKAGES.md`](../docs/scope/mobile/NEW-PACKAGES.md) — RN-only
   packages introduced for the slice

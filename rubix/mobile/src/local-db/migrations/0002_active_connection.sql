@@ -1,4 +1,4 @@
--- 0002_active_connection.sql — see rubix/docs/scope/mobile/LOCAL-DB.md
+-- 0002_active_connection.sql — see rubix/docs/design/mobile/local-db.md
 -- One-row-per-key bag for app-wide singletons. Today it carries exactly
 -- one key: 'active_connection_id'. If it grows past five keys, promote
 -- each to its own table per LOCAL-DB.md.

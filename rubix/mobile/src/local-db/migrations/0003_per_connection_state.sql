@@ -1,4 +1,4 @@
--- 0003_per_connection_state.sql — see rubix/docs/scope/mobile/LOCAL-DB.md
+-- 0003_per_connection_state.sql — see rubix/docs/design/mobile/local-db.md
 -- Per-connection resume state: where the operator was when they last
 -- left this server. Cascade-deleted when the connection is removed.
 
