@@ -11,5 +11,6 @@ export {
   BRANCH_SPEC,
   TRANSFORM_SPEC,
   SUBFLOW_SPEC,
+  COUNTER_SPEC,
   BUILTIN_NODE_KINDS,
 } from "./builtins.js";

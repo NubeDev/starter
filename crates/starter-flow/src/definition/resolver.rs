@@ -177,6 +177,7 @@ impl TopologyResolver {
             kind,
             settings,
             triggers: trigger_slots,
+            position: _,
         } in &body.nodes
         {
             if !seen.insert(id.clone()) {

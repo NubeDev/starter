@@ -14,6 +14,7 @@
 import {
   AI_AGENT_SPEC,
   BRANCH_SPEC,
+  COUNTER_SPEC,
   NodeKindRegistry,
   TOOL_CALL_SPEC,
   TRANSFORM_SPEC,
@@ -23,6 +24,10 @@ import {
 } from "@nube/starter-ui-flow";
 import { BUILTIN_NODE_KINDS } from "@nube/starter-ui-flow";
 import { RubixAiAgentNode } from "./flow-nodes/ai-agent-node.js";
+import {
+  STARTER_FLOW_LOG_ENTRY,
+  STARTER_FLOW_TRIGGER_SCHEDULE_ENTRY,
+} from "./flow-nodes/starter-builtins.js";
 
 /**
  * The set of built-in entries we re-export through the registry,
@@ -35,6 +40,7 @@ const BUILTIN_KINDS_KEPT: ReadonlyArray<string> = [
   BRANCH_SPEC.kind,
   TRANSFORM_SPEC.kind,
   SUBFLOW_SPEC.kind,
+  COUNTER_SPEC.kind,
 ];
 
 /** Rubix override for the `ai-agent` node kind. */
@@ -70,6 +76,12 @@ export function buildFlowRegistry(): NodeKindRegistry {
   }
 
   registry.register(RUBIX_AI_AGENT_ENTRY);
+  // Rubix-specific built-in kinds the upstream package doesn't ship
+  // a spec for. Without these xyflow falls back to its default node
+  // renderer, which has no slot handles — so edges can't connect to
+  // them and they look like a plain box on the canvas.
+  registry.register(STARTER_FLOW_LOG_ENTRY);
+  registry.register(STARTER_FLOW_TRIGGER_SCHEDULE_ENTRY);
   return registry;
 }
 

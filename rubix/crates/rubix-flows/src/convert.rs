@@ -92,7 +92,21 @@ pub fn convert(
     body.links = yaml
         .links
         .into_iter()
-        .map(|l| LinkDecl::new(l.from, l.to))
+        .map(|l| LinkDecl::new(qualify_endpoint(&l.from), qualify_endpoint(&l.to)))
         .collect();
     Ok((flow_id, FlowRevisionId::new(), body))
+}
+
+/// Rewrite a YAML link endpoint (`"<short_node>.<slot>"`) into the
+/// reverse-DNS form the topology resolver expects
+/// (`"<NODE_ID_PREFIX>.<short_node>.<slot>"`), matching the prefix
+/// applied to every node id by [`convert`]. Endpoints that already
+/// start with the prefix are passed through unchanged so flows
+/// authored against the qualified form keep working.
+fn qualify_endpoint(s: &str) -> String {
+    if s.starts_with(&format!("{NODE_ID_PREFIX}.")) {
+        s.to_owned()
+    } else {
+        format!("{NODE_ID_PREFIX}.{s}")
+    }
 }

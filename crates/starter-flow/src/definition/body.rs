@@ -99,6 +99,25 @@ pub struct NodeDecl {
     /// no trigger inputs is fired only via direct activation.
     #[serde(default)]
     pub triggers: Vec<String>,
+    /// Editor-only spatial hint for the graph canvas. Purely
+    /// metadata — the classifier ignores it (see
+    /// [`structural_delta`]) so dragging a node never reloads
+    /// topology. `None` means "no opinion; the canvas may
+    /// auto-layout".
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position: Option<NodePosition>,
+}
+
+/// Canvas-space coordinates for a node, in the same units the
+/// frontend `<FlowCanvas>` uses. Float so subpixel snapping survives
+/// a round-trip. Persisted purely as metadata; ignored by the
+/// engine.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+pub struct NodePosition {
+    /// X coordinate in canvas-space pixels.
+    pub x: f64,
+    /// Y coordinate in canvas-space pixels.
+    pub y: f64,
 }
 
 fn default_settings() -> serde_json::Value {
@@ -113,6 +132,7 @@ impl NodeDecl {
             kind,
             settings: default_settings(),
             triggers: Vec::new(),
+            position: None,
         }
     }
 }

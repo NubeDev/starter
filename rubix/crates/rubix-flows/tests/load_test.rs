@@ -188,6 +188,10 @@ fn bundled_tick_counter_parses_with_three_nodes_and_two_edges() {
 
     let froms: Vec<&str> = body.links.iter().map(|l| l.from.as_str()).collect();
     let tos: Vec<&str> = body.links.iter().map(|l| l.to.as_str()).collect();
-    assert_eq!(froms, vec!["tick.fire", "count.out"]);
-    assert_eq!(tos, vec!["count.in", "emit.value"]);
+    assert_eq!(
+        froms,
+        vec!["com.rubix.tick.fire", "com.rubix.count.out"],
+        "link endpoint node ids are reverse-DNS-prefixed to match the rewritten node ids"
+    );
+    assert_eq!(tos, vec!["com.rubix.count.in", "com.rubix.emit.value"]);
 }

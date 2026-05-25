@@ -30,7 +30,6 @@ nodes:
     kind: starter.flow.log
     config:
       level: info
-      message_template: "tick {value}"
 
 links:
   - { from: "tick.fire", to: "count.in" }

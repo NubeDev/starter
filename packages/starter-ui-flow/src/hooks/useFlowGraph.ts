@@ -56,8 +56,24 @@ export function useFlowGraph({
 }: UseFlowGraphArgs) {
   const [graph, setGraph] = useState<FlowGraph>(initial);
 
+  // Sync `initial` prop changes into local state. Parents that own
+  // the graph in a query cache (and recompute it via `useMemo` from
+  // a server-side YAML body) need this — otherwise the first render
+  // wins forever and the canvas drifts away from the source of
+  // truth after every deploy. The check is referential because
+  // callers should memoize the prop; if they don't, the cost is a
+  // redundant `setGraph` that React batches away.
+  useEffect(() => {
+    setGraph((prev) => (prev === initial ? prev : initial));
+  }, [initial]);
+
   const update = useCallback(
     (next: FlowGraph) => {
+      // Keep the ref in sync inside the same event batch so other
+      // handlers firing in the same tick (notably xyflow's cascading
+      // edge removal that pairs with a node remove) operate on the
+      // post-mutation state rather than the stale closure.
+      lastGraphRef.current = next;
       setGraph(next);
       onChange?.(next);
     },
@@ -182,11 +198,15 @@ export function useFlowGraph({
       setRfNodes(next);
 
       // Only sync mutations that affect the persisted wire graph.
-      // Skip `dimensions` / `select` / `dragging` so transient UI
-      // state never round-trips through the parent's onChange.
+      // Skip `dimensions` / `select` so transient UI state never
+      // round-trips through the parent's onChange. Position changes
+      // are fired continuously while dragging (`dragging: true`)
+      // and once more at drag-end (`dragging: false`); only the
+      // latter is persisted — otherwise every drag would spam the
+      // backend with a deploy per frame.
       const persistent = changes.some(
         (c) =>
-          c.type === "position" ||
+          (c.type === "position" && c.dragging === false) ||
           c.type === "add" ||
           c.type === "remove" ||
           c.type === "replace",
@@ -194,6 +214,7 @@ export function useFlowGraph({
       if (!persistent) return;
 
       const currentGraph = lastGraphRef.current;
+      const keepIds = new Set(next.map((rn) => rn.id));
       const updated: FlowGraph = {
         ...currentGraph,
         nodes: next.map((rn) => {
@@ -207,21 +228,27 @@ export function useFlowGraph({
           }
           return { ...orig, position: rn.position } satisfies FlowNode;
         }),
+        // Cascade-prune edges that reference a deleted node. Without
+        // this, xyflow's separate `onEdgesChange` cascade can race
+        // with this handler and the deploy round-trip ends up with
+        // dangling links the backend validator will reject.
+        edges: currentGraph.edges.filter(
+          (e) => keepIds.has(e.source) && keepIds.has(e.target),
+        ),
       };
-      lastGraphRef.current = updated;
-      setGraph(updated);
-      onChange?.(updated);
+      update(updated);
     },
-    [onChange],
+    [update],
   );
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      const currentGraph = lastGraphRef.current;
       const next = applyEdgeChanges(changes, rfEdges);
       update({
-        ...graph,
+        ...currentGraph,
         edges: next.map((re) => {
-          const orig = graph.edges.find((e) => e.id === re.id);
+          const orig = currentGraph.edges.find((e) => e.id === re.id);
           if (!orig) {
             return {
               id: re.id,
@@ -235,11 +262,12 @@ export function useFlowGraph({
         }),
       });
     },
-    [graph, rfEdges, update],
+    [rfEdges, update],
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      const currentGraph = lastGraphRef.current;
       const merged = addEdge({ ...connection, type: "typed" }, rfEdges);
       const newOnes = merged.filter((m) => !rfEdges.find((e) => e.id === m.id));
       const additions: FlowEdge[] = newOnes.map((re) => ({
@@ -249,26 +277,28 @@ export function useFlowGraph({
         target: re.target,
         targetSlot: re.targetHandle ?? "in",
       }));
-      update({ ...graph, edges: [...graph.edges, ...additions] });
+      update({ ...currentGraph, edges: [...currentGraph.edges, ...additions] });
     },
-    [graph, rfEdges, update],
+    [rfEdges, update],
   );
 
   const addNode = useCallback(
     (node: FlowNode) => {
-      update({ ...graph, nodes: [...graph.nodes, node] });
+      const currentGraph = lastGraphRef.current;
+      update({ ...currentGraph, nodes: [...currentGraph.nodes, node] });
     },
-    [graph, update],
+    [update],
   );
 
   const removeNode = useCallback(
     (id: string) => {
+      const currentGraph = lastGraphRef.current;
       update({
-        nodes: graph.nodes.filter((n) => n.id !== id),
-        edges: graph.edges.filter((e) => e.source !== id && e.target !== id),
+        nodes: currentGraph.nodes.filter((n) => n.id !== id),
+        edges: currentGraph.edges.filter((e) => e.source !== id && e.target !== id),
       });
     },
-    [graph, update],
+    [update],
   );
 
   return {

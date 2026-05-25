@@ -115,6 +115,26 @@ pub async fn build_flow_registry(
         "rubix ai-agent node kind registered"
     );
 
+    // Register the built-in starter-flow node kinds the bundled
+    // rubix flows reference (counter, log, trigger.schedule). Without
+    // these, flows like `com.rubix.tick-counter` (added in PR #38)
+    // fail topology resolution at boot with `unknown node kind
+    // starter.flow.trigger.schedule`. The kind set must stay in
+    // sync with `crate::registry::builtin_kind_behaviors`, which
+    // populates the `rubix.flow_ops.kinds` listing.
+    for kind in [
+        Arc::new(starter_flow_nodes::counter::Counter::new()) as Arc<dyn NodeBehavior>,
+        Arc::new(starter_flow_nodes::log::Log::new()) as Arc<dyn NodeBehavior>,
+        Arc::new(starter_flow_nodes::trigger_schedule::TriggerSchedule::new())
+            as Arc<dyn NodeBehavior>,
+    ] {
+        let kind_id = kind.kind_id().to_string();
+        kinds
+            .register_builtin(kind)
+            .await
+            .map_err(|e| anyhow::anyhow!("register `{kind_id}`: {e}"))?;
+    }
+
     // -- 3. FlowRegistry seeded from every bundled YAML.
     let registry = Arc::new(FlowRegistry::new());
     let mut flows = Vec::new();
