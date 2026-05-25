@@ -1,0 +1,56 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Tabs> > marks the active trigger as selected and hides inactive panel 1`] = `
+<div>
+  <rn-view
+    accessibilityrole="tablist"
+    data-slot="view"
+    data-style="{"gap":8,"flexDirection":"column"}"
+  >
+    <rn-view
+      data-slot="view"
+      data-style="{"flexDirection":"row","backgroundColor":"oklch(0.963 0.002 197.1)","borderRadius":26,"padding":4}"
+    >
+      <rn-pressable
+        accessibilitylabel="A"
+        accessibilityrole="tab"
+        accessibilitystate="[object Object]"
+        accessible="true"
+        data-slot="pressable"
+        data-style="{"paddingHorizontal":12,"paddingVertical":4,"borderRadius":26,"backgroundColor":"oklch(1 0 0)","opacity":1}"
+        disabled="false"
+      >
+        <rn-text
+          data-slot="text"
+          data-style="{"color":"oklch(0.148 0.004 228.8)","fontSize":14,"fontWeight":"500"}"
+        >
+          A
+        </rn-text>
+      </rn-pressable>
+      <rn-pressable
+        accessibilitylabel="B"
+        accessibilityrole="tab"
+        accessibilitystate="[object Object]"
+        accessible="true"
+        data-slot="pressable"
+        data-style="{"paddingHorizontal":12,"paddingVertical":4,"borderRadius":26,"backgroundColor":"transparent","opacity":1}"
+        disabled="false"
+      >
+        <rn-text
+          data-slot="text"
+          data-style="{"color":"oklch(0.56 0.021 213.5)","fontSize":14,"fontWeight":"500"}"
+        >
+          B
+        </rn-text>
+      </rn-pressable>
+    </rn-view>
+    <rn-view
+      accessibilityrole="tabpanel"
+      data-slot="view"
+      data-style="{"flex":1}"
+    >
+      content-a
+    </rn-view>
+  </rn-view>
+</div>
+`;

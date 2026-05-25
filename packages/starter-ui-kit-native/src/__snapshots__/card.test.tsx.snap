@@ -1,0 +1,30 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Card> > renders the composed structure with summary a11y role 1`] = `
+<div>
+  <rn-view
+    accessibilitylabel="Sensor card"
+    accessibilityrole="summary"
+    accessible="true"
+    data-slot="view"
+    data-style="{"flexDirection":"column","gap":24,"paddingVertical":24,"backgroundColor":"oklch(1 0 0)","borderRadius":26,"borderWidth":1,"borderColor":"oklch(0.925 0.005 214.3)","overflow":"hidden"}"
+  >
+    <rn-view
+      data-slot="view"
+      data-style="[{"paddingHorizontal":24},{"gap":8}]"
+    >
+      <rn-text
+        accessibilityrole="header"
+        data-slot="text"
+        data-style="{"color":"oklch(0.148 0.004 228.8)","fontSize":16,"fontWeight":"500"}"
+      >
+        Sensor
+      </rn-text>
+    </rn-view>
+    <rn-view
+      data-slot="view"
+      data-style="{"paddingHorizontal":24}"
+    />
+  </rn-view>
+</div>
+`;

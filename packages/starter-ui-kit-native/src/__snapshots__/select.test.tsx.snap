@@ -1,0 +1,22 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Select> > snapshot stable (closed) 1`] = `
+<div>
+  <rn-pressable
+    accessibilitylabel="Pick"
+    accessibilityrole="combobox"
+    accessibilitystate="[object Object]"
+    accessible="true"
+    data-slot="pressable"
+    data-style="{"minHeight":36,"paddingHorizontal":12,"borderRadius":22,"borderWidth":1,"borderColor":"oklch(0.925 0.005 214.3)","backgroundColor":"oklch(0.925 0.005 214.3)","flexDirection":"row","alignItems":"center","opacity":1}"
+    disabled="false"
+  >
+    <rn-text
+      data-slot="text"
+      data-style="{"color":"oklch(0.56 0.021 213.5)","fontSize":14}"
+    >
+      Pick
+    </rn-text>
+  </rn-pressable>
+</div>
+`;

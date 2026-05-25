@@ -1,0 +1,16 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Tooltip> > snapshot stable (closed) 1`] = `
+<div>
+  <rn-pressable
+    accessibilityhint="Long-press to see tooltip"
+    accessibilitylabel="?"
+    accessibilityrole="button"
+    accessible="true"
+    data-slot="pressable"
+    data-style="null"
+  >
+    ?
+  </rn-pressable>
+</div>
+`;

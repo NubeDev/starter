@@ -1,0 +1,55 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Sheet> > trigger gets a button role; content renders when open 1`] = `
+<div>
+  <rn-pressable
+    accessibilitylabel="Open"
+    accessibilityrole="button"
+    accessible="true"
+    data-slot="pressable"
+    data-style="null"
+  >
+    …
+  </rn-pressable>
+  <rn-modal
+    animationtype="slide"
+    data-slot="modal"
+    transparent="true"
+  >
+    <rn-pressable
+      accessibilitylabel="Close sheet"
+      accessibilityrole="button"
+      data-slot="pressable"
+      data-style="[{"position":"absolute","top":0,"left":0,"right":0,"bottom":0},{"backgroundColor":"rgba(0,0,0,0.4)"}]"
+    />
+    <moti-view
+      animate="[object Object]"
+      data-moti="view"
+      data-style="{"position":"absolute","left":0,"right":0,"bottom":0,"backgroundColor":"oklch(1 0 0)","borderTopLeftRadius":26,"borderTopRightRadius":26,"padding":24,"gap":16}"
+      from="[object Object]"
+      transition="[object Object]"
+    >
+      <rn-view
+        accessibilitylabel="Sheet content"
+        accessibilityrole="none"
+        accessible="true"
+        data-slot="view"
+        data-style="null"
+      >
+        <rn-view
+          data-slot="view"
+          data-style="{"gap":8}"
+        >
+          <rn-text
+            accessibilityrole="header"
+            data-slot="text"
+            data-style="{"color":"oklch(0.148 0.004 228.8)","fontSize":18,"fontWeight":"600"}"
+          >
+            Title
+          </rn-text>
+        </rn-view>
+      </rn-view>
+    </moti-view>
+  </rn-modal>
+</div>
+`;

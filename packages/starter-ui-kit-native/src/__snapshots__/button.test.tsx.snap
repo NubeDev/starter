@@ -1,0 +1,20 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Button> > forwards onPress and reports disabled state 1`] = `
+<rn-pressable
+  accessibilitylabel="Save"
+  accessibilityrole="button"
+  accessibilitystate="[object Object]"
+  accessible="true"
+  data-slot="pressable"
+  data-style="{"flexDirection":"row","alignItems":"center","justifyContent":"center","height":36,"borderRadius":26,"paddingHorizontal":12,"backgroundColor":"oklch(0.218 0.008 223.9)","borderWidth":0,"borderColor":"transparent","opacity":0.5}"
+  disabled="true"
+>
+  <rn-text
+    data-slot="text"
+    data-style="{"color":"oklch(0.987 0.002 197.1)","fontSize":14,"fontWeight":"500","textDecorationLine":"none"}"
+  >
+    Save
+  </rn-text>
+</rn-pressable>
+`;

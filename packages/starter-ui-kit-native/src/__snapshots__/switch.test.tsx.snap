@@ -1,0 +1,27 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Switch> > snapshot stable 1`] = `
+<div>
+  <rn-pressable
+    accessibilitylabel="Compact"
+    accessibilityrole="switch"
+    accessibilitystate="[object Object]"
+    accessible="true"
+    data-slot="pressable"
+    data-style="null"
+    disabled="false"
+  >
+    <rn-view
+      data-slot="view"
+      data-style="{"width":28,"height":16,"borderRadius":8,"backgroundColor":"oklch(0.925 0.005 214.3)","padding":2,"opacity":1,"justifyContent":"center"}"
+    >
+      <moti-view
+        animate="[object Object]"
+        data-moti="view"
+        data-style="{"width":12,"height":12,"borderRadius":6,"backgroundColor":"oklch(1 0 0)"}"
+        transition="[object Object]"
+      />
+    </rn-view>
+  </rn-pressable>
+</div>
+`;

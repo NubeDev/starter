@@ -1,0 +1,21 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Input> > snapshot stable 1`] = `
+<div>
+  <rn-view
+    data-slot="view"
+    data-style="{"borderRadius":22,"borderWidth":1,"borderColor":"oklch(0.925 0.005 214.3)","backgroundColor":"oklch(0.925 0.005 214.3)","opacity":1}"
+  >
+    <rn-textinput
+      accessibilitylabel="Search"
+      accessibilitystate="[object Object]"
+      accessible="true"
+      data-slot="textinput"
+      data-style="{"paddingHorizontal":12,"paddingVertical":8,"fontSize":14,"color":"oklch(0.148 0.004 228.8)","minHeight":36}"
+      editable="true"
+      placeholder="search"
+      placeholdertextcolor="oklch(0.56 0.021 213.5)"
+    />
+  </rn-view>
+</div>
+`;

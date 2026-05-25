@@ -1,0 +1,61 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Dialog> > renders content with accessibilityRole=alert when open 1`] = `
+<div>
+  <rn-pressable
+    accessibilitylabel="Open"
+    accessibilityrole="button"
+    accessible="true"
+    data-slot="pressable"
+    data-style="null"
+  >
+    …
+  </rn-pressable>
+  <rn-modal
+    animationtype="fade"
+    data-slot="modal"
+    transparent="true"
+  >
+    <rn-pressable
+      accessibilitylabel="Close dialog"
+      accessibilityrole="button"
+      data-slot="pressable"
+      data-style="[{"position":"absolute","top":0,"left":0,"right":0,"bottom":0},{"backgroundColor":"rgba(0,0,0,0.4)"}]"
+    />
+    <rn-view
+      accessibilitylabel="Confirm"
+      accessibilityrole="alert"
+      accessible="true"
+      data-slot="view"
+      data-style="{"flex":1,"alignItems":"center","justifyContent":"center","padding":24}"
+    >
+      <moti-view
+        animate="[object Object]"
+        data-moti="view"
+        data-style="{"width":"100%","maxWidth":480,"backgroundColor":"oklch(1 0 0)","borderRadius":26,"borderWidth":1,"borderColor":"oklch(0.925 0.005 214.3)","padding":24,"gap":16}"
+        from="[object Object]"
+        transition="[object Object]"
+      >
+        <rn-view
+          data-slot="view"
+          data-style="{"gap":8}"
+        >
+          <rn-text
+            accessibilityrole="header"
+            data-slot="text"
+            data-style="{"color":"oklch(0.148 0.004 228.8)","fontSize":18,"fontWeight":"600"}"
+          >
+            Confirm
+          </rn-text>
+          <rn-text
+            data-slot="text"
+            data-style="{"color":"oklch(0.56 0.021 213.5)","fontSize":14}"
+          >
+            Are you sure?
+          </rn-text>
+        </rn-view>
+      </moti-view>
+    </rn-view>
+  </rn-modal>
+</div>
+`;

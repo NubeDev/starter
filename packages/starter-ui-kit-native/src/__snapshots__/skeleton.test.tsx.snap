@@ -1,0 +1,15 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Skeleton> > snapshot stable 1`] = `
+<div>
+  <moti-view
+    accessibilityrole="none"
+    accessible="false"
+    animate="[object Object]"
+    data-moti="view"
+    data-style="{"width":100,"height":20,"borderRadius":18,"backgroundColor":"oklch(0.963 0.002 197.1)"}"
+    from="[object Object]"
+    transition="[object Object]"
+  />
+</div>
+`;

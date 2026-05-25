@@ -1,0 +1,28 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`<Slider> > snapshot stable 1`] = `
+<div>
+  <rn-view
+    accessibilitylabel="X"
+    accessibilityrole="adjustable"
+    accessibilitystate="[object Object]"
+    accessibilityvalue="[object Object]"
+    accessible="true"
+    data-slot="view"
+    data-style="{"width":"100%","height":32,"justifyContent":"center","opacity":1}"
+  >
+    <rn-view
+      data-slot="view"
+      data-style="{"height":8,"borderRadius":4,"backgroundColor":"oklch(0.925 0.005 214.3)"}"
+    />
+    <rn-view
+      data-slot="view"
+      data-style="[{"position":"absolute","left":0,"top":12,"height":8,"borderRadius":4,"backgroundColor":"oklch(0.218 0.008 223.9)"},{"width":0}]"
+    />
+    <rn-view
+      data-slot="view"
+      data-style="[{"position":"absolute","top":6,"width":20,"height":20,"borderRadius":10,"backgroundColor":"oklch(1 0 0)","borderWidth":1,"borderColor":"oklch(0.925 0.005 214.3)"},{"left":0}]"
+    />
+  </rn-view>
+</div>
+`;
