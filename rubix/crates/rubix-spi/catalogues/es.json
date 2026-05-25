@@ -44,5 +44,9 @@
   "rubix.extension.uninstall.not_found": "No se puede desinstalar la extensión {id} — no existe ningún directorio de paquete para ese id.",
   "rubix.dashboard.fetched": "Panel {page_id} obtenido.",
   "rubix.dashboard.listed": "Se listaron {count} paneles.",
-  "rubix.dashboard.get.not_found": "Panel {page_id} no encontrado."
+  "rubix.dashboard.get.not_found": "Panel {page_id} no encontrado.",
+  "rubix.dashboard.created": "Panel {title} creado.",
+  "rubix.dashboard.updated": "Panel {page_id} actualizado.",
+  "rubix.dashboard.update.conflict": "El panel {page_id} fue modificado por otra persona — recargue y vuelva a intentarlo.",
+  "rubix.dashboard.create.duplicate_id": "El panel {page_id} ya existe — elija otro identificador."
 }

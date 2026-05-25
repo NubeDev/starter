@@ -44,5 +44,9 @@
   "rubix.extension.uninstall.not_found": "Extension {id} cannot be uninstalled — no bundle directory exists for that id.",
   "rubix.dashboard.fetched": "Dashboard {page_id} fetched.",
   "rubix.dashboard.listed": "Listed {count} dashboards.",
-  "rubix.dashboard.get.not_found": "Dashboard {page_id} not found."
+  "rubix.dashboard.get.not_found": "Dashboard {page_id} not found.",
+  "rubix.dashboard.created": "Dashboard {title} created.",
+  "rubix.dashboard.updated": "Dashboard {page_id} updated.",
+  "rubix.dashboard.update.conflict": "Dashboard {page_id} was modified by someone else — reload and retry.",
+  "rubix.dashboard.create.duplicate_id": "Dashboard {page_id} already exists — pick a different id."
 }

@@ -41,6 +41,10 @@ uuid                      = { workspace = true }
 starter-undo              = { workspace = true }
 starter-changelog         = { workspace = true }
 
+# dashboard.create re-asserts the `rubix.dashboard.page` ResourceSpec
+# on the authz registry per write (Phase C.2 of `dashboards`).
+starter-authz             = { workspace = true }
+
 # analytics.query bundles its named SQL templates via `include_dir!`
 # at compile time — same pattern as `rubix-flows` and `rubix-skills`.
 # See src/analytics/templates/.
