@@ -6,8 +6,9 @@ superseded ADRs are marked `Status: superseded by ADR-NNNN`.
 | # | Decision |
 |---|---|
 | [0001](./0001-postgres-only.md) | Postgres only — no SQLite |
-| [0002](./0002-backend-only.md) | Backend only — no frontend in this tree |
+| [0002](./0002-backend-only.md) | Backend only — no frontend in this tree *(superseded by 0004)* |
 | [0003](./0003-agent-is-starter-ai-agent.md) | The agent is starter's `ai-agent` node kind |
+| [0004](./0004-react-native-mobile-app.md) | React Native mobile app reuses the chassis at the kit seam |
 
 ## Format
 

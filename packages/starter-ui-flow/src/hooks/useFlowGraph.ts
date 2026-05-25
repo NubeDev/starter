@@ -170,10 +170,10 @@ export function useFlowGraph({
     [overlay],
   );
 
-  const rfEdges = useMemo<Edge[]>(
-    () =>
-      graph.edges.map((e) => {
-        const src = graph.nodes.find((n) => n.id === e.source);
+  const buildRfEdges = useCallback(
+    (g: FlowGraph): Edge[] =>
+      g.edges.map((e) => {
+        const src = g.nodes.find((n) => n.id === e.source);
         const slotKind = src
           ? registry
               .get(src.kind)
@@ -189,8 +189,50 @@ export function useFlowGraph({
           data: { slotKind: slotKind ?? "any", active: activeEdgeSet.has(e.id) },
         };
       }),
-    [graph.edges, graph.nodes, registry, activeEdgeSet],
+    [registry, activeEdgeSet],
   );
+
+  // RF-shape authoritative edge state. Held in state (not `useMemo`)
+  // so xyflow's selection — applied via `EdgeChange { type: "select",
+  // selected: true }` and persisted on the edge object itself — is
+  // preserved across renders. Without this, every change rebuilds
+  // `rfEdges` from the wire graph and strips `selected`, which means
+  // Backspace has nothing to delete because nothing is ever truly
+  // selected from xyflow's point of view.
+  const [rfEdges, setRfEdges] = useState<Edge[]>(() => buildRfEdges(initial));
+
+  // Reconcile rfEdges with `graph.edges` (structural changes) while
+  // preserving `selected` and other RF-internal flags on edges that
+  // survive. Mirrors the rfNodes reconciliation.
+  useEffect(() => {
+    setRfEdges((prev) => {
+      const byId = new Map(prev.map((e) => [e.id, e]));
+      const fresh = buildRfEdges(graph);
+      return fresh.map((re) => {
+        const existing = byId.get(re.id);
+        if (!existing) return re;
+        return { ...existing, ...re, selected: existing.selected };
+      });
+    });
+  }, [graph, buildRfEdges]);
+
+  // Active-edge overlay updates: refresh `data.active` without
+  // disturbing selection / structure.
+  useEffect(() => {
+    setRfEdges((prev) =>
+      prev.map((re) => {
+        const prevData = (re.data ?? {}) as { slotKind?: string; active?: boolean };
+        const nextActive = activeEdgeSet.has(re.id);
+        if (prevData.active === nextActive) return re;
+        return { ...re, data: { ...prevData, active: nextActive } };
+      }),
+    );
+  }, [activeEdgeSet]);
+
+  const rfEdgesRef = useRef(rfEdges);
+  useEffect(() => {
+    rfEdgesRef.current = rfEdges;
+  }, [rfEdges]);
 
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
@@ -243,8 +285,20 @@ export function useFlowGraph({
 
   const onEdgesChange = useCallback(
     (changes: EdgeChange[]) => {
+      const next = applyEdgeChanges(changes, rfEdgesRef.current);
+      setRfEdges(next);
+
+      // Mirror onNodesChange's filter: `select` / `dimensions` are
+      // transient UI state and must not round-trip through `onChange`
+      // (which would spam the backend with a deploy every time the
+      // operator clicks an edge). Only structural mutations get
+      // propagated to the wire graph.
+      const persistent = changes.some(
+        (c) => c.type === "add" || c.type === "remove" || c.type === "replace",
+      );
+      if (!persistent) return;
+
       const currentGraph = lastGraphRef.current;
-      const next = applyEdgeChanges(changes, rfEdges);
       update({
         ...currentGraph,
         edges: next.map((re) => {
@@ -262,14 +316,18 @@ export function useFlowGraph({
         }),
       });
     },
-    [rfEdges, update],
+    [update],
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
       const currentGraph = lastGraphRef.current;
-      const merged = addEdge({ ...connection, type: "typed" }, rfEdges);
-      const newOnes = merged.filter((m) => !rfEdges.find((e) => e.id === m.id));
+      const merged = addEdge({ ...connection, type: "typed" }, rfEdgesRef.current);
+      const newOnes = merged.filter(
+        (m) => !rfEdgesRef.current.find((e) => e.id === m.id),
+      );
+      if (newOnes.length === 0) return;
+      setRfEdges(merged);
       const additions: FlowEdge[] = newOnes.map((re) => ({
         id: re.id,
         source: re.source,
@@ -279,7 +337,7 @@ export function useFlowGraph({
       }));
       update({ ...currentGraph, edges: [...currentGraph.edges, ...additions] });
     },
-    [rfEdges, update],
+    [update],
   );
 
   const addNode = useCallback(

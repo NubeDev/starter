@@ -374,4 +374,68 @@ test.describe('flow editor — round-trip', () => {
     const afterReload = (await readCountPos())!
     expect(afterReload).toEqual(persisted)
   })
+
+  test('deletes a selected edge with Backspace and persists the removal', async ({
+    page,
+  }) => {
+    await login(page)
+    await resetTickCounter(page)
+    await page.goto(`/flows/${FLOW_ID}`)
+
+    await expect(
+      page.getByRole('heading', { name: new RegExp(FLOW_ID), level: 1 }),
+    ).toBeVisible({ timeout: 10_000 })
+    await page
+      .locator('div.fixed.inset-0.z-\\[100\\]')
+      .waitFor({ state: 'detached', timeout: 5_000 })
+
+    // Helper: read the YAML link count straight from the backend.
+    const readLinkCount = async (): Promise<number> => {
+      const r = await page.context().request.post(
+        '/api/v1/tools/rubix.flow_ops.list',
+        { data: {} },
+      )
+      const j = (await r.json()) as {
+        flows: Array<{ flow_id: string; body_yaml: string }>
+      }
+      const y = j.flows.find((f) => f.flow_id === FLOW_ID)!.body_yaml
+      return (y.match(/^\s+-\s+\{?\s*from:/gm) ?? []).length
+    }
+
+    // The bundled flow ships with two links; that's the baseline.
+    const before = await readLinkCount()
+    expect(before).toBe(2)
+
+    await expect.poll(() => page.locator('.react-flow__edge').count(), {
+      timeout: 15_000,
+    }).toBe(2)
+
+    // Select the first edge — clicking the visible SVG path works
+    // for xyflow's selection in v12 (the wider hit-area path under
+    // the visible one is also part of `.react-flow__edge`).
+    const edge = page.locator('.react-flow__edge').first()
+    await edge.click({ force: true })
+    await expect(edge).toHaveClass(/selected/, { timeout: 5_000 })
+
+    await page.keyboard.press('Backspace')
+
+    // In-place update: one fewer edge on the canvas, and the
+    // backend YAML lost the same link.
+    await expect.poll(() => page.locator('.react-flow__edge').count(), {
+      timeout: 10_000,
+    }).toBe(1)
+    await expect.poll(readLinkCount, {
+      timeout: 15_000,
+      intervals: [200, 500, 1000],
+    }).toBe(before - 1)
+
+    // Hard reload — the removal must survive the round-trip.
+    await page.reload()
+    await expect(
+      page.getByRole('heading', { name: new RegExp(FLOW_ID), level: 1 }),
+    ).toBeVisible({ timeout: 10_000 })
+    await expect.poll(() => page.locator('.react-flow__edge').count(), {
+      timeout: 15_000,
+    }).toBe(1)
+  })
 })

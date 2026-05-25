@@ -21,6 +21,12 @@ Per [HOW-TO-CODE.md §0a](../../HOW-TO-CODE.md):
   end-to-end (storage, binding-engine gaps, host glue, tools,
   frontend renderer, AI builder, open questions). Eight files,
   one slice per file.
+- [mobile/](./mobile/README.md) — React Native (iOS + Android)
+  app plan. Reuses the chassis at the `starter-ui-kit` seam.
+  Adds four new packages (`starter-theme-tokens`,
+  `starter-ui-kit-native`, `starter-ui-sdui-native`,
+  `starter-ui-dashboard-native`) plus `rubix/mobile/` Expo app.
+  See [ADR 0004](../adr/0004-react-native-mobile-app.md).
 
 ## Active codeless jobs
 
