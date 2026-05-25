@@ -26,7 +26,21 @@ pub use sse::sse_router;
 pub use status::WarehouseStatusBody;
 
 /// Mount the full warehouse REST surface under `/api`.
+///
+/// The ClickHouse explorer sub-router (PR 1 of the explorer plan)
+/// is gated by the `warehouse.read` permission. The existing
+/// `/api/warehouse/*` handlers in this module are intentionally
+/// **not** gated here — the codebase did not previously apply
+/// `starter-authz` to them, and changing their gating is out of
+/// scope for the explorer PR. Bring-up callers that want
+/// `warehouse.read`/`warehouse.write` enforced on the existing
+/// handlers can layer it on the merged router themselves.
 pub fn router(rt: Arc<WarehouseRuntime>) -> Router {
+    let explorer = starter_authz::with_permission(
+        crate::explorer::routes(rt.ch.clone()),
+        "warehouse",
+        "read",
+    );
     Router::new()
         .route("/api/marts", post(create_mart))
         .route("/api/marts/{name}", delete(drop_mart))
@@ -39,6 +53,7 @@ pub fn router(rt: Arc<WarehouseRuntime>) -> Router {
         .route("/api/warehouse/audit", post(run_audit))
         .merge(sse::sse_router())
         .with_state(rt)
+        .merge(explorer)
 }
 
 async fn create_mart(

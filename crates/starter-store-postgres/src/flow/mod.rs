@@ -31,6 +31,7 @@
 //! gated by a single `flow` feature). See `Cargo.toml`.
 
 pub mod flow_store;
+pub mod node_state;
 pub mod run_store;
 mod schema;
 pub mod session_store;
@@ -39,6 +40,7 @@ pub mod session_store;
 pub mod agent_session_store;
 
 pub use flow_store::PgFlowStore;
+pub use node_state::PgNodeStateStore;
 pub use run_store::PgRunStore;
 pub use session_store::PgSessionStore;
 

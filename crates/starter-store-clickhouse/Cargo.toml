@@ -43,3 +43,4 @@ testing = ["dep:testcontainers", "dep:testcontainers-modules"]
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio-test = "0.4"

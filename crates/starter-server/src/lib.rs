@@ -31,6 +31,7 @@ pub mod middleware;
 pub mod openapi;
 pub mod routes;
 pub mod sse;
+pub mod static_assets;
 
 #[cfg(feature = "testing")]
 pub mod testing;

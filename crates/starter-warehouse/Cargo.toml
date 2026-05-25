@@ -18,6 +18,7 @@ starter-flow-spi   = { workspace = true, optional = true }
 starter-flow-nodes = { workspace = true, optional = true }
 # REST surface (W11 envelope, W14 structured 400, W15 manual GC trigger).
 starter-server = { workspace = true, optional = true }
+starter-authz  = { workspace = true, optional = true }
 sqlx           = { workspace = true, features = ["postgres", "macros", "chrono", "json"], optional = true }
 axum    = { workspace = true, optional = true }
 tower   = { workspace = true, optional = true }
@@ -48,6 +49,7 @@ warehouse = [
     "dep:starter-flow-spi",
     "dep:starter-flow-nodes",
     "dep:starter-server",
+    "dep:starter-authz",
     "dep:axum",
     "dep:tower",
     "dep:http",
@@ -71,3 +73,10 @@ mcp = ["warehouse"]
 [dev-dependencies]
 tokio = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
 serde_json = { workspace = true }
+# Explorer smoke + no-write-path tests drive the axum router via
+# `tower::ServiceExt::oneshot` and inspect the response body.
+tower            = { workspace = true }
+http-body-util   = "0.1"
+starter-spi      = { workspace = true }
+starter-authz    = { workspace = true }
+starter-store-clickhouse = { workspace = true, features = ["testing"] }

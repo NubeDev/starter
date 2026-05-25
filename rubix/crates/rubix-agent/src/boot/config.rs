@@ -92,30 +92,21 @@ pub struct AgentConfig {
 /// Tunables for the always-on flow runtime
 /// ([`crate::boot::flow_runtime`]).
 ///
-/// `state_db_path` selects the SQLite file the
-/// [`starter_store_sqlite::flow::node_state::SqliteNodeStateStore`]
-/// opens for the durable per-node state seam. The path is `~`-expanded
-/// against `$HOME` so the default `~/.rubix/node_state.db` works
-/// without a leaked tilde on the SQLite filename. When this knob is
-/// `None` *or* `RUBIX_DATABASE_URL` is unset the runtime falls back to
+/// Per-node durable state lives in the rubix Postgres database
+/// (table `node_state`, applied via the upstream
+/// `starter_store_postgres::flow::FLOW_MIGRATION_SOURCE`). When
+/// `RUBIX_DATABASE_URL` is unset the runtime falls back to
 /// [`starter_flow::state::in_memory::InMemoryNodeStateStore`] so a
-/// laptop boot keeps working.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// laptop boot without Postgres keeps working — at the cost of
+/// volatile node state.
+///
+/// The legacy SQLite path (`~/.rubix/node_state.db`) used by older
+/// rubix-agent builds is migrated into Postgres at first boot of
+/// the PG-backed runtime; see [`crate::boot::flow_runtime::build`]
+/// and `rubix/docs/scope/sqlite-to-postgres.md`.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(default)]
-pub struct FlowRuntimeConfig {
-    /// On-disk SQLite path for the per-node state store. Defaults to
-    /// `~/.rubix/node_state.db`; set to `None` (or empty in TOML) to
-    /// force the in-memory fallback even when a Postgres DSN is set.
-    pub state_db_path: Option<PathBuf>,
-}
-
-impl Default for FlowRuntimeConfig {
-    fn default() -> Self {
-        Self {
-            state_db_path: Some(PathBuf::from("~/.rubix/node_state.db")),
-        }
-    }
-}
+pub struct FlowRuntimeConfig {}
 
 /// Tunables for the extension host.
 ///

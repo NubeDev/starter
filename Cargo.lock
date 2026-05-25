@@ -3507,6 +3507,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "http-range-header"
+version = "0.4.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "9171a2ea8a68358193d15dd5d70c1c10a2afc3e7e4c5bc92bc9f025cebd7359c"
+
+[[package]]
 name = "httparse"
 version = "1.10.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -8741,6 +8747,7 @@ dependencies = [
  "serde_json",
  "starter-observability",
  "starter-spi",
+ "tempfile",
  "tokio",
  "tower 0.5.3",
  "tower-http",
@@ -8887,6 +8894,7 @@ dependencies = [
  "testcontainers-modules",
  "thiserror 1.0.69",
  "tokio",
+ "tokio-test",
  "tracing",
  "uuid",
 ]
@@ -9125,13 +9133,16 @@ dependencies = [
  "futures",
  "hex",
  "http 1.4.0",
+ "http-body-util",
  "serde",
  "serde_json",
  "sha2 0.10.9",
  "sqlx",
+ "starter-authz",
  "starter-flow-nodes",
  "starter-flow-spi",
  "starter-server",
+ "starter-spi",
  "starter-store-clickhouse",
  "starter-store-postgres",
  "starter-tags",
@@ -9885,6 +9896,17 @@ dependencies = [
 ]
 
 [[package]]
+name = "tokio-test"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "3f6d24790a10a7af737693a3e8f1d03faef7e6ca0cc99aae5066f533766de545"
+dependencies = [
+ "futures-core",
+ "tokio",
+ "tokio-stream",
+]
+
+[[package]]
 name = "tokio-tungstenite"
 version = "0.24.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -10162,10 +10184,19 @@ checksum = "4cfcf7e2740e6fc6d4d688b4ef00650406bb94adf4731e43c096c3a19fe40840"
 dependencies = [
  "bitflags 2.11.1",
  "bytes",
+ "futures-core",
  "futures-util",
  "http 1.4.0",
  "http-body 1.0.1",
+ "http-body-util",
+ "http-range-header",
+ "httpdate",
+ "mime",
+ "mime_guess",
+ "percent-encoding",
  "pin-project-lite",
+ "tokio",
+ "tokio-util",
  "tower 0.5.3",
  "tower-layer",
  "tower-service",
