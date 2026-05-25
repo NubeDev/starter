@@ -57,6 +57,10 @@ include_dir               = "0.7"
 starter-export            = { workspace = true, features = ["html", "csv", "json"] }
 bytes                     = { workspace = true }
 
+# dashboard.page_set funnels operator slot writes through the R2
+# chokepoint `starter_flow_spi::graph::GraphStore::write_slot`.
+starter-flow-spi          = { workspace = true }
+
 [dev-dependencies]
 # analytics.report integration test writes the rendered bytes to a
 # tempdir-backed FsBlobStore. Pulled into dev only — the verb itself

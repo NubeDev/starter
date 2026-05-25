@@ -52,5 +52,6 @@
   "rubix.dashboard.deleted": "Panel {page_id} eliminado.",
   "rubix.dashboard.delete.refused_system": "El panel {page_id} viene incluido con el sistema — los paneles del sistema no pueden eliminarse.",
   "rubix.dashboard.duplicated": "Panel {source_page_id} duplicado en {page_id}.",
-  "rubix.dashboard.duplicate.source_not_found": "No se puede duplicar el panel {source_page_id} — la página de origen no existe."
+  "rubix.dashboard.duplicate.source_not_found": "No se puede duplicar el panel {source_page_id} — la página de origen no existe.",
+  "rubix.dashboard.page_set.applied": "Se actualizó el slot {slot} en {node_id}."
 }

@@ -52,5 +52,6 @@
   "rubix.dashboard.deleted": "Dashboard {page_id} deleted.",
   "rubix.dashboard.delete.refused_system": "Dashboard {page_id} is bundled with the system — bundled dashboards cannot be deleted.",
   "rubix.dashboard.duplicated": "Dashboard {source_page_id} duplicated to {page_id}.",
-  "rubix.dashboard.duplicate.source_not_found": "Dashboard {source_page_id} cannot be duplicated — source page not found."
+  "rubix.dashboard.duplicate.source_not_found": "Dashboard {source_page_id} cannot be duplicated — source page not found.",
+  "rubix.dashboard.page_set.applied": "Slot {slot} on {node_id} updated."
 }
