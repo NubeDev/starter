@@ -55,9 +55,12 @@ branch** at the same time. Consequences you need to handle:
   `dashboard/` or `flow_ops/` — another session may be in there.
 - **Pull before commit, push fast.** Treat the branch as shared.
   If a push is rejected, rebase (don't force) and re-push.
-- **Do not run `make clean` or `make restart`** without checking
-  the terminal history first — those nuke the dev stack other
-  sessions may be using. If you need a fresh stack, ask the user.
+- **Bringing the stack up: always `make restart` first**, falling
+  back to `make start` if `restart` fails. The e2e success bar
+  needs the stack running off your freshly-built binary, and
+  `restart` is the only target that guarantees that. `make clean`
+  is still off-limits without asking — it wipes docker volumes
+  (Postgres + ClickHouse data) other sessions may depend on.
 - **Commit messages should name the stage** (e.g.
   `feat(data-flow/02): bind rubix.warehouse.ingest`) so the user
   can untangle parallel work in the log.

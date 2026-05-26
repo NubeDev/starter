@@ -27,13 +27,26 @@ that stage's doc.
 
 ## 1. Bring the stack up
 
-From [rubix/](../../../):
+From [rubix/](../../../), **always prefer `make restart`** — it is
+the only target that guarantees the agent runs off your freshly-
+built binary, which the e2e success bar requires:
 
 ```bash
 make restart
 ```
 
-That target wraps `mani` + docker compose + bootstrap + agent +
+If that fails (port conflict, stale state, mid-session crash),
+fall back to `make start`:
+
+```bash
+make start
+```
+
+`make clean` is the nuclear option — it drops the docker volumes
+(Postgres + ClickHouse). Do not run it without asking the user;
+another session on the same branch may depend on the data.
+
+Either target wraps `mani` + docker compose + bootstrap + agent +
 vite. After it returns, two things must be true:
 
 ```bash
