@@ -45,6 +45,10 @@ dependencies:
   wifi_scan: ^0.4.1+2
   mobile_scanner: ^7.2.0
 
+  # Generated OpenAPI Dio client (regen via `make api-client`).
+  rubix_api:
+    path: packages/rubix_api
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
@@ -68,6 +72,12 @@ dev_dependencies:
   # Asset generators
   flutter_launcher_icons: ^0.13.0
   flutter_native_splash: ^2.4.0
+
+  # OpenAPI client codegen — invoked via `make api-client`. Generates a
+  # standalone Dart/Dio package at `packages/rubix_api/` from
+  # `../openapi.json` (kept in sync by the backend). Hand-edits to the
+  # generated package are forbidden.
+  openapi_generator_cli: ^6.1.0
 
 flutter:
   generate: true

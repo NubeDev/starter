@@ -87,6 +87,8 @@ use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
 use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use rubix_tools::warehouse::clean_minute::WarehouseCleanMinuteTool;
+use rubix_tools::warehouse::rollup_15m::WarehouseRollup15mTool;
+use rubix_tools::analytics::query::AnalyticsQueryTool;
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
@@ -109,10 +111,15 @@ pub fn build_tool_registry(
     let mut disk = DiskTool::default().with_insights_threshold(insights_disk_threshold);
     let mut warehouse_ingest = WarehouseIngestTool::default();
     let mut warehouse_clean = WarehouseCleanMinuteTool::default();
+    let mut warehouse_rollup = WarehouseRollup15mTool::default();
+    let analytics_query: Option<Arc<dyn Tool>> = ch.as_ref().map(|client| {
+        Arc::new(AnalyticsQueryTool::new(client.clone())) as Arc<dyn Tool>
+    });
     if let Some(client) = ch.as_ref() {
         disk = disk.with_history(client.clone());
         warehouse_ingest = warehouse_ingest.with_client(client.clone());
         warehouse_clean = warehouse_clean.with_client(client.clone());
+        warehouse_rollup = warehouse_rollup.with_client(client.clone());
     }
 
     // ---- shared in-memory stores (see module docs) ---------------
@@ -197,6 +204,12 @@ pub fn build_tool_registry(
         // boot-applied 0004 migration. See
         // `docs/sessions/data-flow/03-clean-to-l2.md`.
         Arc::new(warehouse_clean),
+        // L3 rollup. One pass per call; the bundled
+        // `com.rubix.data-flow.rollup` flow drives it every 5
+        // minutes. Targets `rubix.meter_readings_15m` via the
+        // boot-applied 0005 migration. See
+        // `docs/sessions/data-flow/05-dashboard-at-scale.md`.
+        Arc::new(warehouse_rollup),
         // ---- flow_ops (read + write) ----------------------------
         Arc::new(FlowListTool::new(flow_store.clone())),
         Arc::new(FlowKindsTool::from_behaviors(&builtin_kind_behaviors())),
@@ -248,7 +261,18 @@ pub fn build_tool_registry(
         // `tool_registry_snapshot` boot/mcp/register.rs threads in
         // per R7. The stub `DashboardAssistantStub` it used to
         // dispatch to has been removed.
-    ]
+    ];
+    // ---- analytics (read-only) --------------------------------
+    // `AnalyticsQueryTool` needs a live `ChClient`; without one we
+    // skip registration so the verb does not appear in the
+    // catalogue at all. Stage 05 dashboards / report flows rely
+    // on this verb to read L3 buckets. See
+    // `docs/sessions/data-flow/05-dashboard-at-scale.md` and
+    // `docs/design/analytics/`.
+    if let Some(t) = analytics_query {
+        tools.push(t);
+    }
+    tools
 }
 
 /// Snapshot of the built-in [`NodeBehavior`] instances the kinds

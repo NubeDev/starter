@@ -177,6 +177,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "0.2.0"
+  cli_launcher:
+    dependency: transitive
+    description:
+      name: cli_launcher
+      sha256: "35cf15a3ffaeb9c11849eaa0afba761bb76dceb42d050532bfd3e1299c9748cd"
+      url: "https://pub.dev"
+    source: hosted
+    version: "0.3.3+1"
   cli_util:
     dependency: transitive
     description:
@@ -692,6 +700,30 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "2.0.2"
+  one_of:
+    dependency: transitive
+    description:
+      name: one_of
+      sha256: "25fe0fcf181e761c6fcd604caf9d5fdf952321be17584ba81c72c06bdaa511f0"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0"
+  one_of_serializer:
+    dependency: transitive
+    description:
+      name: one_of_serializer
+      sha256: "3f3dfb5c1578ba3afef1cb47fcc49e585e797af3f2b6c2cc7ed90aad0c5e7b83"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.5.0"
+  openapi_generator_cli:
+    dependency: "direct dev"
+    description:
+      name: openapi_generator_cli
+      sha256: a7b764d8b121ecb7cdd466c688da1e1a592f7fff73673dcdb35ee5009f49739b
+      url: "https://pub.dev"
+    source: hosted
+    version: "6.1.0"
   package_config:
     dependency: transitive
     description:
@@ -844,6 +876,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.5.0"
+  quiver:
+    dependency: transitive
+    description:
+      name: quiver
+      sha256: ea0b925899e64ecdfbf9c7becb60d5b50e706ade44a85b2363be2a22d88117d2
+      url: "https://pub.dev"
+    source: hosted
+    version: "3.2.2"
   recase:
     dependency: transitive
     description:
@@ -892,6 +932,13 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "3.0.3"
+  rubix_api:
+    dependency: "direct main"
+    description:
+      path: "packages/rubix_api"
+      relative: true
+    source: path
+    version: "1.0.0"
   rxdart:
     dependency: transitive
     description:

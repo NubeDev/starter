@@ -10,3 +10,4 @@
 pub mod ingest;
 pub mod synth;
 pub mod clean_minute;
+pub mod rollup_15m;
