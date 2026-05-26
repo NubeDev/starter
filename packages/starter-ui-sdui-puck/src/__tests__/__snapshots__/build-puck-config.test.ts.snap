@@ -1,0 +1,2355 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`buildPuckConfig > renders a stable snapshot of the generated config 1`] = `
+{
+  "categories": {
+    "custom": {
+      "components": [
+        "custom",
+      ],
+      "title": "Custom",
+    },
+    "display": {
+      "components": [
+        "action_widget",
+        "array_table",
+        "badge",
+        "chart",
+        "detail",
+        "diff",
+        "heading",
+        "json_table",
+        "kpi",
+        "kpi_grid",
+        "list",
+        "markdown",
+        "menu",
+        "rich_text",
+        "sparkline",
+        "table",
+        "text",
+        "timeline",
+        "tree",
+      ],
+      "title": "Display",
+    },
+    "interactive": {
+      "components": [
+        "button",
+        "checkbox",
+        "date_field",
+        "date_range",
+        "form",
+        "markdown_editor",
+        "number_field",
+        "radio_group",
+        "ref_picker",
+        "segmented",
+        "select",
+        "select_field",
+        "slider",
+        "text_field",
+        "textarea",
+        "toggle",
+      ],
+      "title": "Interactive",
+    },
+    "layout": {
+      "components": [
+        "card",
+        "col",
+        "dialog",
+        "divider",
+        "drawer",
+        "field_group",
+        "grid",
+        "page",
+        "repeat",
+        "row",
+        "section",
+        "tabs",
+        "wizard",
+      ],
+      "title": "Layout",
+    },
+  },
+  "components": {
+    "action_widget": {
+      "defaultProps": undefined,
+      "fields": {
+        "action_ref": {
+          "type": "text",
+        },
+        "description": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "target": {
+          "type": "text",
+        },
+        "title": {
+          "type": "text",
+        },
+      },
+      "label": "action_widget",
+    },
+    "array_table": {
+      "defaultProps": undefined,
+      "fields": {
+        "columns": {
+          "arrayFields": {
+            "field": {
+              "type": "text",
+            },
+            "render": {
+              "type": "text",
+            },
+            "sortable": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+            "title": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "row_actions": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "confirm": {
+              "objectFields": {
+                "cancel_label": {
+                  "type": "text",
+                },
+                "confirm_label": {
+                  "type": "text",
+                },
+                "description": {
+                  "type": "text",
+                },
+                "title": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+            "icon": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "source": {
+          "type": "text",
+        },
+      },
+      "label": "array_table",
+    },
+    "badge": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+      },
+      "label": "badge",
+    },
+    "button": {
+      "defaultProps": undefined,
+      "fields": {
+        "action": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+        "disabled": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+      },
+      "label": "button",
+    },
+    "card": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "actions": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "children": {
+          "type": "slot",
+        },
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+        "lead": {
+          "type": "text",
+        },
+        "subtitle": {
+          "type": "text",
+        },
+        "title": {
+          "type": "text",
+        },
+        "trailing": {
+          "type": "text",
+        },
+      },
+      "label": "card",
+    },
+    "chart": {
+      "defaultProps": {
+        "kind": "line",
+        "series": [],
+        "sources": [],
+      },
+      "fields": {
+        "agg": {
+          "type": "text",
+        },
+        "history": {
+          "objectFields": {
+            "presets": {
+              "arrayFields": {
+                "duration_ms": {
+                  "type": "number",
+                },
+                "label": {
+                  "type": "text",
+                },
+              },
+              "type": "array",
+            },
+            "range_ms": {
+              "type": "number",
+            },
+            "user_selectable": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+          },
+          "type": "object",
+        },
+        "id": {
+          "type": "text",
+        },
+        "kind": {
+          "type": "text",
+        },
+        "page_state_key": {
+          "type": "text",
+        },
+        "range": {
+          "objectFields": {
+            "from": {
+              "type": "number",
+            },
+            "to": {
+              "type": "number",
+            },
+          },
+          "type": "object",
+        },
+        "series": {
+          "arrayFields": {
+            "label": {
+              "type": "text",
+            },
+            "points": {
+              "arrayFields": {
+                "value": {
+                  "type": "text",
+                },
+              },
+              "type": "array",
+            },
+          },
+          "type": "array",
+        },
+        "sources": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "title": {
+          "type": "text",
+        },
+      },
+      "label": "chart",
+    },
+    "checkbox": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "value": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+      },
+      "label": "checkbox",
+    },
+    "col": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "align": {
+          "options": [
+            {
+              "label": "start",
+              "value": "start",
+            },
+            {
+              "label": "center",
+              "value": "center",
+            },
+            {
+              "label": "end",
+              "value": "end",
+            },
+            {
+              "label": "stretch",
+              "value": "stretch",
+            },
+          ],
+          "type": "select",
+        },
+        "children": {
+          "type": "slot",
+        },
+        "gap": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "justify": {
+          "options": [
+            {
+              "label": "start",
+              "value": "start",
+            },
+            {
+              "label": "center",
+              "value": "center",
+            },
+            {
+              "label": "end",
+              "value": "end",
+            },
+            {
+              "label": "between",
+              "value": "between",
+            },
+            {
+              "label": "around",
+              "value": "around",
+            },
+            {
+              "label": "evenly",
+              "value": "evenly",
+            },
+          ],
+          "type": "select",
+        },
+        "span": {
+          "type": "number",
+        },
+      },
+      "label": "col",
+    },
+    "custom": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "props": {
+          "type": "text",
+        },
+        "renderer_id": {
+          "type": "text",
+        },
+        "subscribe": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+      },
+      "label": "custom",
+    },
+    "date_field": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "max": {
+          "type": "text",
+        },
+        "min": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "required": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "date_field",
+    },
+    "date_range": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "page_state_key": {
+          "type": "text",
+        },
+        "presets": {
+          "arrayFields": {
+            "duration_ms": {
+              "type": "number",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+      },
+      "label": "date_range",
+    },
+    "detail": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "items": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+            "unit_symbol": {
+              "type": "text",
+            },
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+      },
+      "label": "detail",
+    },
+    "dialog": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "actions": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "children": {
+          "arrayFields": {
+            "type": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "description": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "page_state_key": {
+          "type": "text",
+        },
+        "title": {
+          "type": "text",
+        },
+      },
+      "label": "dialog",
+    },
+    "diff": {
+      "defaultProps": undefined,
+      "fields": {
+        "annotations": {
+          "arrayFields": {
+            "author": {
+              "type": "text",
+            },
+            "created_at": {
+              "type": "text",
+            },
+            "line": {
+              "type": "number",
+            },
+            "text": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "language": {
+          "type": "text",
+        },
+        "line_action": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+        "new_text": {
+          "type": "text",
+        },
+        "old_text": {
+          "type": "text",
+        },
+      },
+      "label": "diff",
+    },
+    "divider": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+        "orientation": {
+          "type": "text",
+        },
+        "spacing": {
+          "type": "text",
+        },
+      },
+      "label": "divider",
+    },
+    "drawer": {
+      "defaultProps": {
+        "children": [],
+        "open": false,
+      },
+      "fields": {
+        "children": {
+          "arrayFields": {
+            "type": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "open": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "page_state_key": {
+          "type": "text",
+        },
+        "title": {
+          "type": "text",
+        },
+      },
+      "label": "drawer",
+    },
+    "field_group": {
+      "defaultProps": undefined,
+      "fields": {
+        "control": {
+          "type": "text",
+        },
+        "error": {
+          "objectFields": {
+            "code": {
+              "type": "text",
+            },
+            "message": {
+              "type": "text",
+            },
+            "severity": {
+              "type": "text",
+            },
+          },
+          "type": "object",
+        },
+        "helper": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "required": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+      },
+      "label": "field_group",
+    },
+    "form": {
+      "defaultProps": undefined,
+      "fields": {
+        "bindings": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "schema_ref": {
+          "type": "text",
+        },
+        "submit": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+        "submit_label": {
+          "type": "text",
+        },
+      },
+      "label": "form",
+    },
+    "grid": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "children": {
+          "type": "slot",
+        },
+        "columns": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+      },
+      "label": "grid",
+    },
+    "heading": {
+      "defaultProps": undefined,
+      "fields": {
+        "content": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "level": {
+          "type": "number",
+        },
+        "subtitle": {
+          "type": "text",
+        },
+      },
+      "label": "heading",
+    },
+    "json_table": {
+      "defaultProps": undefined,
+      "fields": {
+        "columns": {
+          "arrayFields": {
+            "format": {
+              "type": "text",
+            },
+            "key": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "data": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "max_height_class": {
+          "type": "text",
+        },
+        "search_placeholder": {
+          "type": "text",
+        },
+        "searchable": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+      },
+      "label": "json_table",
+    },
+    "kpi": {
+      "defaultProps": undefined,
+      "fields": {
+        "delta": {
+          "objectFields": {
+            "amount": {
+              "type": "number",
+            },
+            "direction": {
+              "type": "text",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "unit": {
+              "type": "text",
+            },
+          },
+          "type": "object",
+        },
+        "format": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "source": {
+          "type": "text",
+        },
+        "unit_symbol": {
+          "type": "text",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "kpi",
+    },
+    "kpi_grid": {
+      "defaultProps": undefined,
+      "fields": {
+        "columns": {
+          "type": "number",
+        },
+        "id": {
+          "type": "text",
+        },
+        "items": {
+          "arrayFields": {
+            "delta": {
+              "objectFields": {
+                "amount": {
+                  "type": "number",
+                },
+                "direction": {
+                  "type": "text",
+                },
+                "intent": {
+                  "type": "text",
+                },
+                "unit": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+            "format": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+            "on_click": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "unit_symbol": {
+              "type": "text",
+            },
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "on_tile_click": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+      },
+      "label": "kpi_grid",
+    },
+    "list": {
+      "defaultProps": {
+        "subscribe": false,
+      },
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "item": {
+          "type": "text",
+        },
+        "page_size": {
+          "type": "number",
+        },
+        "row_action": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+        "source": {
+          "objectFields": {
+            "query": {
+              "type": "text",
+            },
+            "subscribe": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+          },
+          "type": "object",
+        },
+        "subscribe": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+      },
+      "label": "list",
+    },
+    "markdown": {
+      "defaultProps": undefined,
+      "fields": {
+        "content": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "mode": {
+          "type": "text",
+        },
+        "subscribe": {
+          "type": "text",
+        },
+      },
+      "label": "markdown",
+    },
+    "markdown_editor": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "rows": {
+          "type": "number",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "markdown_editor",
+    },
+    "menu": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "items": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "trigger": {
+          "type": "text",
+        },
+      },
+      "label": "menu",
+    },
+    "number_field": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "format": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "validate": {
+          "objectFields": {
+            "max": {
+              "type": "number",
+            },
+            "min": {
+              "type": "number",
+            },
+            "precision": {
+              "type": "number",
+            },
+            "required": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+          },
+          "type": "object",
+        },
+        "value": {
+          "type": "number",
+        },
+      },
+      "label": "number_field",
+    },
+    "page": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "children": {
+          "type": "slot",
+        },
+        "default_column_gap": {
+          "type": "text",
+        },
+        "default_max_width": {
+          "type": "text",
+        },
+        "default_page_padding": {
+          "type": "text",
+        },
+        "default_row_gap": {
+          "type": "text",
+        },
+        "header_actions": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "icon": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "title": {
+          "type": "text",
+        },
+      },
+      "label": "page",
+    },
+    "radio_group": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "options": {
+          "arrayFields": {
+            "label": {
+              "type": "text",
+            },
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "required": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "radio_group",
+    },
+    "ref_picker": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "query": {
+          "type": "text",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "ref_picker",
+    },
+    "repeat": {
+      "defaultProps": undefined,
+      "fields": {
+        "alias": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "source": {
+          "type": "text",
+        },
+        "template": {
+          "type": "text",
+        },
+      },
+      "label": "repeat",
+    },
+    "rich_text": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "rich_text",
+    },
+    "row": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "align": {
+          "options": [
+            {
+              "label": "start",
+              "value": "start",
+            },
+            {
+              "label": "center",
+              "value": "center",
+            },
+            {
+              "label": "end",
+              "value": "end",
+            },
+            {
+              "label": "stretch",
+              "value": "stretch",
+            },
+          ],
+          "type": "select",
+        },
+        "breakpoints": {
+          "objectFields": {
+            "stack_below": {
+              "type": "text",
+            },
+          },
+          "type": "object",
+        },
+        "children": {
+          "type": "slot",
+        },
+        "gap": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "justify": {
+          "options": [
+            {
+              "label": "start",
+              "value": "start",
+            },
+            {
+              "label": "center",
+              "value": "center",
+            },
+            {
+              "label": "end",
+              "value": "end",
+            },
+            {
+              "label": "between",
+              "value": "between",
+            },
+            {
+              "label": "around",
+              "value": "around",
+            },
+            {
+              "label": "evenly",
+              "value": "evenly",
+            },
+          ],
+          "type": "select",
+        },
+        "layout": {
+          "options": [
+            {
+              "label": "grid",
+              "value": "grid",
+            },
+            {
+              "label": "auto",
+              "value": "auto",
+            },
+          ],
+          "type": "select",
+        },
+        "wrap": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+      },
+      "label": "row",
+    },
+    "section": {
+      "defaultProps": {
+        "children": [],
+      },
+      "fields": {
+        "children": {
+          "type": "slot",
+        },
+        "id": {
+          "type": "text",
+        },
+        "landmark": {
+          "type": "text",
+        },
+        "level": {
+          "type": "number",
+        },
+        "subtitle": {
+          "type": "text",
+        },
+        "title": {
+          "type": "text",
+        },
+      },
+      "label": "section",
+    },
+    "segmented": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "options": {
+          "arrayFields": {
+            "label": {
+              "type": "text",
+            },
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "segmented",
+    },
+    "select": {
+      "defaultProps": undefined,
+      "fields": {
+        "default": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "options": {
+          "arrayFields": {
+            "label": {
+              "type": "text",
+            },
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "page_state_key": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+      },
+      "label": "select",
+    },
+    "select_field": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "options": {
+          "arrayFields": {
+            "label": {
+              "type": "text",
+            },
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "required": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "select_field",
+    },
+    "slider": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "max": {
+          "type": "number",
+        },
+        "min": {
+          "type": "number",
+        },
+        "step": {
+          "type": "number",
+        },
+        "value": {
+          "type": "number",
+        },
+      },
+      "label": "slider",
+    },
+    "sparkline": {
+      "defaultProps": {
+        "values": [],
+      },
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+        "subscribe": {
+          "type": "text",
+        },
+        "unit_symbol": {
+          "type": "text",
+        },
+        "values": {
+          "arrayFields": {
+            "value": {
+              "type": "number",
+            },
+          },
+          "type": "array",
+        },
+      },
+      "label": "sparkline",
+    },
+    "table": {
+      "defaultProps": undefined,
+      "fields": {
+        "columns": {
+          "arrayFields": {
+            "field": {
+              "type": "text",
+            },
+            "render": {
+              "type": "text",
+            },
+            "sortable": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+            "title": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "page_size": {
+          "type": "number",
+        },
+        "row_action": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+        "row_actions": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "confirm": {
+              "objectFields": {
+                "cancel_label": {
+                  "type": "text",
+                },
+                "confirm_label": {
+                  "type": "text",
+                },
+                "description": {
+                  "type": "text",
+                },
+                "title": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+            "icon": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "searchable": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "source": {
+          "objectFields": {
+            "query": {
+              "type": "text",
+            },
+            "subscribe": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+          },
+          "type": "object",
+        },
+        "toolbar_actions": {
+          "arrayFields": {
+            "action": {
+              "objectFields": {
+                "args": {
+                  "type": "text",
+                },
+                "handler": {
+                  "type": "text",
+                },
+                "optimistic": {
+                  "objectFields": {
+                    "fields": {
+                      "type": "text",
+                    },
+                    "target_component_id": {
+                      "type": "text",
+                    },
+                  },
+                  "type": "object",
+                },
+              },
+              "type": "object",
+            },
+            "icon": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "intent": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+      },
+      "label": "table",
+    },
+    "tabs": {
+      "defaultProps": {
+        "lazy": false,
+      },
+      "fields": {
+        "default": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "lazy": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+        "tabs": {
+          "arrayFields": {
+            "children": {
+              "arrayFields": {
+                "type": {
+                  "type": "text",
+                },
+              },
+              "type": "array",
+            },
+            "icon": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "url_param": {
+          "type": "text",
+        },
+      },
+      "label": "tabs",
+    },
+    "text": {
+      "defaultProps": undefined,
+      "fields": {
+        "content": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "intent": {
+          "type": "text",
+        },
+      },
+      "label": "text",
+    },
+    "text_field": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "format": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "validate": {
+          "objectFields": {
+            "max_length": {
+              "type": "number",
+            },
+            "min_length": {
+              "type": "number",
+            },
+            "regex": {
+              "type": "text",
+            },
+            "required": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+          },
+          "type": "object",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "text_field",
+    },
+    "textarea": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "form_id": {
+          "type": "text",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "placeholder": {
+          "type": "text",
+        },
+        "rows": {
+          "type": "number",
+        },
+        "validate": {
+          "objectFields": {
+            "max_length": {
+              "type": "number",
+            },
+            "min_length": {
+              "type": "number",
+            },
+            "regex": {
+              "type": "text",
+            },
+            "required": {
+              "options": [
+                {
+                  "label": "Yes",
+                  "value": true,
+                },
+                {
+                  "label": "No",
+                  "value": false,
+                },
+              ],
+              "type": "radio",
+            },
+          },
+          "type": "object",
+        },
+        "value": {
+          "type": "text",
+        },
+      },
+      "label": "textarea",
+    },
+    "timeline": {
+      "defaultProps": {
+        "events": [],
+      },
+      "fields": {
+        "events": {
+          "arrayFields": {
+            "intent": {
+              "type": "text",
+            },
+            "text": {
+              "type": "text",
+            },
+            "ts": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "mode": {
+          "type": "text",
+        },
+        "subscribe": {
+          "type": "text",
+        },
+      },
+      "label": "timeline",
+    },
+    "toggle": {
+      "defaultProps": undefined,
+      "fields": {
+        "bind": {
+          "arrayFields": {
+            "value": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "id": {
+          "type": "text",
+        },
+        "label": {
+          "type": "text",
+        },
+        "value": {
+          "options": [
+            {
+              "label": "Yes",
+              "value": true,
+            },
+            {
+              "label": "No",
+              "value": false,
+            },
+          ],
+          "type": "radio",
+        },
+      },
+      "label": "toggle",
+    },
+    "tree": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "node_action": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+        "nodes": {
+          "arrayFields": {
+            "children": {
+              "type": "text",
+            },
+            "icon": {
+              "type": "text",
+            },
+            "id": {
+              "type": "text",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+      },
+      "label": "tree",
+    },
+    "wizard": {
+      "defaultProps": undefined,
+      "fields": {
+        "id": {
+          "type": "text",
+        },
+        "steps": {
+          "arrayFields": {
+            "children": {
+              "arrayFields": {
+                "type": {
+                  "type": "text",
+                },
+              },
+              "type": "array",
+            },
+            "label": {
+              "type": "text",
+            },
+          },
+          "type": "array",
+        },
+        "submit": {
+          "objectFields": {
+            "args": {
+              "type": "text",
+            },
+            "handler": {
+              "type": "text",
+            },
+            "optimistic": {
+              "objectFields": {
+                "fields": {
+                  "type": "text",
+                },
+                "target_component_id": {
+                  "type": "text",
+                },
+              },
+              "type": "object",
+            },
+          },
+          "type": "object",
+        },
+      },
+      "label": "wizard",
+    },
+  },
+}
+`;

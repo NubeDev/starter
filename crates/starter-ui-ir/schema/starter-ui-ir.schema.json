@@ -797,6 +797,13 @@
                 "null"
               ]
             },
+            "title": {
+              "description": "Card header shown above the chart. Optional; renderers fall back to a generic placeholder when absent.",
+              "type": [
+                "string",
+                "null"
+              ]
+            },
             "sources": {
               "description": "One or more typed sources — V3 supports multi-series authoring. V2's single `source` becomes a one-element `sources` vector; the V3→V2 downgrader degrades multi-source charts to [`Component::Dangling`].",
               "default": [],
