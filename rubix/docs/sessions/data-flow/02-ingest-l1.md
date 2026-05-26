@@ -115,13 +115,28 @@ layer).
 
 Stage 02 is done when **all three** are true:
 
-1. `SELECT count() FROM rubix.meter_readings_raw` is ≥ 200 after a
-   5-minute producer run.
+1. The row-rate `count() / elapsed_minutes` is **≥ 1.0** after a
+   ≥ 5-minute producer run (and ≤ ~6.0 — anything higher means
+   the seed-adapter multi-fire bug regressed). The durable
+   scheduler claims at a 60-s `tick_interval_seconds` regardless
+   of the YAML cron, so the producer fires once per minute × 3
+   meters minus gaps; a rate-based bar is invariant to both the
+   run duration and the multi-fire residue tracked separately
+   in
+   [`2026-05-26-data-flow-01-producer-multi-fire-root-cause.md`](./2026-05-26-data-flow-01-producer-multi-fire-root-cause.md).
+   The prior `≥ 200 after 5 min` threshold assumed a sub-second
+   claim cadence that does not exist; see
+   [`02-ingest-l1-cadence-and-bars-2026-05-26.md`](./02-ingest-l1-cadence-and-bars-2026-05-26.md)
+   for the derivation.
 2. Three distinct `meter_id` values appear, matching the three
    meters in [README.md](./README.md).
 3. `countIf(quality='suspect')` is **non-zero** (the spike rows
    landed un-cleaned — proves the writer is faithful, not
-   accidentally filtering).
+   accidentally filtering). At default `spike_prob = 0.005` this
+   takes ~3 h to fire; for stage-close validation set
+   `DATA_FLOW_SPIKE_PROB=0.5` in the agent env before boot so
+   spikes appear within minutes, then dial back. The override is
+   the same trick stage 01 used.
 
 ## If it fails
 
@@ -146,6 +161,11 @@ and stop. Do not start stage 03 until the success bar is green.
 
 ## Decisions taken
 
-- [ ] Path A (bind `rubix.warehouse.ingest`)  /  [ ] Path B
+- [x] Path A (bind `rubix.warehouse.ingest`). DDL lives in
+      bundled migration `rubix-agent/migrations/0003_meter_readings_raw/up.sql`
+      rather than going through `rubix.clickhouse.rule.write` —
+      same precedent as `0002_history` for warehouse-owned core
+      schema; the rule.write verb is reserved for operator-
+      authored derived rules.
 - Table name: `rubix.meter_readings_raw` (do not rename — stage 03 reads this)
 - L1 retention: 14 days

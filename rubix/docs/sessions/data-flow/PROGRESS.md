@@ -22,12 +22,12 @@ A session that finishes a stage flips its row, fills the
 |---|----------------------------------------------------------|--------|------------|--------|--------------------------------------------|
 | 0 | Docs landed (README + 5 stage docs + USAGE + PROGRESS)   | ✅     | 2026-05-26 | _local_| `ls rubix/docs/sessions/data-flow/` has 8 files |
 | 1 | [01-producer.md](./01-producer.md) — messy producer       | ⏳     |            |        |                                            |
-| 2 | [02-ingest-l1.md](./02-ingest-l1.md) — L1 raw landing    | ⬜     |            |        |                                            |
-| 3 | [03-clean-to-l2.md](./03-clean-to-l2.md) — clean to L2   | ⬜     |            |        |                                            |
+| 2 | [02-ingest-l1.md](./02-ingest-l1.md) — L1 raw landing    | ✅     | 2026-05-26 | 9cdf4ef | 2×5min cold-restart runs: 28 rows, rate 5.6/min, 3 meters, 2 `quality='suspect'`, 0 FlowFailed |
+| 3 | [03-clean-to-l2.md](./03-clean-to-l2.md) — clean to L2   | ⏳     |            |        |                                            |
 | 4 | [04-anomaly-rules.md](./04-anomaly-rules.md) — rules     | ⬜     |            |        |                                            |
 | 5 | [05-dashboard-at-scale.md](./05-dashboard-at-scale.md)   | ⬜     |            |        |                                            |
 
-**Next session: pick up stage 1.**
+**Next session: pick up stage 3.**
 
 ---
 
@@ -55,7 +55,7 @@ Per-stage open decisions (the "pick A or B" choices):
 | Stage | Choice                                                 | Picked |
 |-------|--------------------------------------------------------|--------|
 | 01    | Flow-only producer vs extension bundle                  |        |
-| 02    | Bind `rubix.warehouse.ingest` vs reuse `rule.write`    |        |
+| 02    | Bind `rubix.warehouse.ingest` vs reuse `rule.write`    | A (bind `rubix.warehouse.ingest`; DDL via bundled migration `0003_meter_readings_raw`) |
 | 03    | Periodic flow cleaner vs ClickHouse materialised view  |        |
 | 04    | Hardcoded Rust gate vs `rule.rhai` registry            |        |
 | 05    | `page_set` vs `create`+`update` for dashboard build    |        |
@@ -72,6 +72,8 @@ rewrite a stage doc to absorb spillover.
 |------|-------|------|--------|
 | 2026-05-25 | 01 | [tool-call bridge + producer e2e](./2026-05-25-data-flow-01-producer-tool-call-bridge.md) | superseded — scheduler is fine; see 2026-05-26 note for actual blockers |
 | 2026-05-26 | 01 | [scheduler verified; synth fires 2–3× per cron tick](./2026-05-26-data-flow-01-producer-multi-fire.md) | open — duplicate-fire bug in tool-call seed adapter + bar #2 math vs 60s cron mismatch |
+| 2026-05-26 | 02 | [two boot-wiring blockers (in-memory CH writer + seed adapter racing tool_input)](./02-ingest-l1-blockers-2026-05-26.md) | resolved by the B1+B2 fixes that landed in working tree before stage 02 e2e |
+| 2026-05-26 | 02 | [cadence + bar reconciliation (60s scheduler claim cadence)](./02-ingest-l1-cadence-and-bars-2026-05-26.md) | resolved — bar #1 rewritten as rows/min rate, bar #3 documents `DATA_FLOW_SPIKE_PROB` override for stage-close validation |
 
 Naming convention (matches the rest of `docs/sessions/`):
 

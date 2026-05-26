@@ -281,7 +281,13 @@ Stage 01 is done when **all four** are true:
    (`rubix.flow_ops.list` shows it with non-null `revision_id` and
    no `FlowFailed` events in the agent log).
 2. The `synth` node's `stats.emitted` sum over 5 minutes is in
-   `[235, 300]` (3 meters × ~60 ticks − expected gaps).
+   `[10, 18]` (3 meters × ~5 fires − expected gaps). The durable
+   scheduler claims at a 60-s `tick_interval_seconds` regardless
+   of the YAML cron, so a `*/5 * * * * *` cron still fires the
+   producer once per minute. See
+   [`2026-05-26-data-flow-01-producer-multi-fire.md`](./2026-05-26-data-flow-01-producer-multi-fire.md)
+   for the derivation; the prior `[235, 300]` range assumed a
+   sub-second claim cadence that does not exist.
 3. `synth.stats.spikes` is `> 0` (spike injection fired at least
    once across the run).
 4. At least one tick across the run shows `stats.emitted < 3`
