@@ -102,9 +102,20 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
 
 ## Next tasks
 
-1. **Placeholder coverage.** Variants without per-variant fillers
-   fall through to the dangling tile. Add entries to
-   `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`.
+1. **Placeholder coverage.** ✅ Every IR variant that previously
+   fell through to the dangling tile now has a per-variant filler
+   in
+   `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`
+   — `VISUALS` map covers `text`, `heading`, `badge`, `diff`,
+   `field_group`, `section`, `array_table`, `json_table`, `list`,
+   `dialog`, `menu`, `tree`, `timeline`, `markdown`, `rich_text`,
+   `markdown_editor`, `ref_picker`, `detail`, `card`, `date_range`,
+   `wizard`, `drawer`, `button`, `text_field`, `number_field`,
+   `textarea`, `select_field`, `radio_group`, `segmented`,
+   `date_field`, `checkbox`, `action_widget` (resolver-only
+   variants `forbidden`/`dangling`/`unknown` remain excluded). Each
+   placeholder mirrors the live renderer's visual idiom and ships a
+   snapshot-style test.
 2. **§B6 runtime schema-hash banner.** CI-time drift guard only.
 3. **Scope 11** — live-canvas SSE
    ([`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md)).
