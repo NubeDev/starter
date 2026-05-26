@@ -47,17 +47,17 @@ import {
 import { Skeleton } from "../components/ui/skeleton";
 import { useTheme } from "../lib/theme";
 import {
-  useClickhouseTable,
-  useClickhouseTableData,
-  useClickhouseTables,
-} from "../hooks/use-warehouse-ch";
+  useWarehouseTable,
+  useWarehouseTableData,
+  useWarehouseTables,
+} from "../hooks/use-warehouse";
 import { InfoCard, InfoCardProps } from "../components/info-card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import type { Query as QueryResult, Table as TableMeta } from "../api";
 
 export function Tables() {
   const [selected, setSelected] = useState<string | undefined>(undefined);
-  const { data } = useClickhouseTables();
+  const { data } = useWarehouseTables();
 
   if (!data) return <TablesSkeleton />;
 
@@ -106,7 +106,7 @@ type Props = {
 };
 function Table({ name }: Props) {
   const currentTheme = useTheme();
-  const { data } = useClickhouseTable(name);
+  const { data } = useWarehouseTable(name);
 
   if (!data) return <TableSkeleton />;
 
@@ -219,7 +219,7 @@ type TableDataProps = {
 function TableDataView({ name }: TableDataProps) {
   const currentTheme = useTheme();
   const { isLoading, data, fetchNextPage, hasNextPage } =
-    useClickhouseTableData(name);
+    useWarehouseTableData(name);
 
   if (!data) return <Skeleton className="h-[400px]" />;
 
@@ -256,11 +256,12 @@ function TableDataView({ name }: TableDataProps) {
 //
 // Schema exports are synchronous (built from the already-loaded
 // `Table` metadata). Data exports run a one-off `SELECT * FROM
-// <table> LIMIT N FORMAT JSON` against `/api/warehouse/ch/query`
-// (already gated to SELECT/WITH/SHOW/DESCRIBE/EXPLAIN by the
-// backend's `classify`) and serialise the result client-side.
+// <table> LIMIT N` against `/api/warehouse/explorer/query` (the
+// backend executes every statement under a `READ ONLY DEFERRABLE`
+// txn, so mutations are engine-rejected) and serialise the result
+// client-side.
 //
-// The row cap is deliberate — pulling unbounded ClickHouse tables
+// The row cap is deliberate — pulling unbounded warehouse tables
 // into a browser tab is a foot-gun. 10_000 is the upstream sql-studio
 // default and is plenty for the explore-then-grab-a-sample workflow
 // the user is after; larger exports should go through the `query`
@@ -283,7 +284,7 @@ function ExportMenu({ meta }: ExportMenuProps) {
       const sql = `SELECT * FROM \`${meta.name}\` LIMIT ${EXPORT_ROW_CAP}`;
       const result = await fetchJson<QueryResult>(
         starter,
-        `/api/warehouse/ch/query`,
+        `/api/warehouse/explorer/query`,
         {
           method: "POST",
           headers: {

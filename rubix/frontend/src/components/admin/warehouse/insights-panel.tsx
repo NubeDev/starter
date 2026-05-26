@@ -28,7 +28,7 @@ import {
   useInsightsRuleEnable,
   useInsightsRulesList,
 } from '@nube/rubix-client-react'
-import { FreshnessTiles } from '@nube/starter-ui-ch-explorer/rubix'
+import { FreshnessTiles } from '@nube/starter-ui-warehouse-explorer/rubix'
 
 export function WarehouseInsightsPanel() {
   const intl = useIntl()

@@ -2,8 +2,10 @@
 // Upstream commit: 1a0736055a4647c18d0be19347e4325007c7bd52.
 // Local edits: re-skinned to rubix tokens; data layer swapped to @nube/rubix-client-react.
 //
-// Types only. The data layer lives in `./hooks/use-warehouse-ch.ts`
-// and hits the warehouse-ch sub-router at `/api/warehouse/ch/*`
+// Types only. The data layer lives in `./hooks/use-warehouse.ts`
+// and hits the warehouse explorer sub-router (mounted by
+// `starter-warehouse-explorer` at `/api/warehouse/explorer/*` — see
+// `rubix/docs/proposal/warehouse-engine-swap.md` phase 4)
 // through the host's `StarterClient`.
 
 export type Counts = { name: string; count: number }[];

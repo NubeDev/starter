@@ -1,0 +1,37 @@
+[package]
+name        = "starter-warehouse-explorer"
+description = "starter — read-only Postgres / TimescaleDB explorer REST surface (sql-studio-style). Phase 4 of `rubix/docs/proposal/warehouse-engine-swap.md` — admin surface mounted at `/api/warehouse/explorer/*` behind a TimescaleDB query backend."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+# Pool + types come from starter-store-warehouse — we deliberately
+# share the single PgPool the rest of the warehouse layer uses
+# rather than open a second one.
+starter-store-warehouse = { workspace = true }
+starter-server          = { workspace = true }
+starter-spi             = { workspace = true }
+
+axum        = { workspace = true }
+tower       = { workspace = true }
+sqlx        = { workspace = true, features = ["postgres", "macros", "chrono", "json", "uuid", "bigdecimal"] }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+chrono      = { workspace = true }
+tokio       = { workspace = true, features = ["sync", "macros", "rt-multi-thread"] }
+tracing     = { workspace = true }
+thiserror   = { workspace = true }
+
+[dev-dependencies]
+starter-store-warehouse = { workspace = true, features = ["testing"] }
+tokio                   = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tower                   = { workspace = true, features = ["util"] }
+http-body-util          = "0.1"
+hyper                   = "1"
+serde_json              = { workspace = true }
+
+[lints]
+workspace = true

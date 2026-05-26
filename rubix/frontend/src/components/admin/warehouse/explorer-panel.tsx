@@ -1,7 +1,7 @@
 // Explorer panel for the warehouse admin shell. Mounts
-// `<Explorer/>` from `@nube/starter-ui-ch-explorer` (the headless
-// library shared with the demo binary) and feeds it rubix i18n via
-// the `i18n` prop.
+// `<Explorer/>` from `@nube/starter-ui-warehouse-explorer` (the
+// headless library shared with the demo binary) and feeds it rubix
+// i18n via the `i18n` prop.
 //
 // The rubix-specific overlays (FreshnessTiles, MartTree) live
 // alongside the equivalent rubix-native panels rather than inside
@@ -17,7 +17,7 @@ import { useIntl } from 'react-intl'
 import {
   Explorer,
   type ExplorerMessages,
-} from '@nube/starter-ui-ch-explorer'
+} from '@nube/starter-ui-warehouse-explorer'
 
 export function WarehouseExplorerPanel() {
   const intl = useIntl()

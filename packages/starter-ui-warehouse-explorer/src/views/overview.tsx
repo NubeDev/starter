@@ -22,7 +22,7 @@ import {
   ValueType,
 } from "recharts/types/component/DefaultTooltipContent";
 
-import { useWarehouseStatus } from "../hooks/use-warehouse-ch";
+import { useWarehouseStatus } from "../hooks/use-warehouse";
 import {
   Card,
   CardTitle,

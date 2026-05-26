@@ -108,7 +108,7 @@ export function FreshnessTiles({ messages }: FreshnessTilesProps = {}) {
   const m: FreshnessTilesMessages = { ...DEFAULT_FRESHNESS_MESSAGES, ...messages };
 
   const { data, error } = useQuery({
-    queryKey: ["ch-explorer", "warehouse-status"],
+    queryKey: ["warehouse-explorer", "warehouse-status"],
     queryFn: async (): Promise<WarehouseStatus | null> => {
       try {
         const body = await fetchJson<unknown>(starter, "/api/warehouse/status");

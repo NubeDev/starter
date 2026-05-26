@@ -22,9 +22,10 @@ export default defineConfig({
     // `src/lib/client.ts`).
     proxy: {
       '/api/v1': { target: 'http://127.0.0.1:8088', changeOrigin: true },
-      // ClickHouse explorer read-only sub-router mounted by
-      // rubix-agent (`starter_warehouse::explorer::routes`). Powers
-      // `/admin/warehouse` → Explorer tab via `@nube/starter-ui-ch-explorer`.
+      // Warehouse explorer read-only sub-router mounted by
+      // rubix-agent (`starter_warehouse_explorer::router_with_auth`).
+      // Powers `/admin/warehouse-explorer` via
+      // `@nube/starter-ui-warehouse-explorer`.
       '/api/warehouse': { target: 'http://127.0.0.1:8088', changeOrigin: true },
       '/openapi.json': { target: 'http://127.0.0.1:8088', changeOrigin: true },
     },

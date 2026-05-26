@@ -1,8 +1,8 @@
 // Rubix overlay — lists materialised marts surfaced by the
 // `rubix.warehouse.mart.list` verb and offers a destructive
 // "Drop" action that delegates to `rubix.warehouse.mart.drop`.
-// Both calls go through the typed `useClickhouseMartsList` /
-// `useClickhouseMartDrop` hooks from `@nube/rubix-client-react`
+// Both calls go through the typed `useWarehouseMartsList` /
+// `useWarehouseMartDrop` hooks from `@nube/rubix-client-react`
 // so the snapshot-before-write + undo + changelog contract is
 // preserved.
 //
@@ -13,8 +13,9 @@
 
 import { useState } from "react";
 import {
-  useClickhouseMartDrop,
-  useClickhouseMartsList,
+  useWarehouseMartDrop,
+  useWarehouseMartsList,
+  type WarehouseMartSummary,
 } from "@nube/rubix-client-react";
 import {
   AlertDialog,
@@ -81,8 +82,8 @@ export interface MartTreeProps {
 
 export function MartTree({ messages }: MartTreeProps = {}) {
   const m: MartTreeMessages = { ...DEFAULT_MART_TREE_MESSAGES, ...messages };
-  const list = useClickhouseMartsList({ retry: false });
-  const drop = useClickhouseMartDrop();
+  const list = useWarehouseMartsList({ retry: false });
+  const drop = useWarehouseMartDrop();
   const [pending, setPending] = useState<string | null>(null);
 
   const rows = list.data?.marts ?? [];
@@ -113,7 +114,7 @@ export function MartTree({ messages }: MartTreeProps = {}) {
           </Empty>
         ) : (
           <ul className="divide-y divide-[color:var(--color-border)]">
-            {rows.map((row) => (
+            {rows.map((row: WarehouseMartSummary) => (
               <li
                 key={row.mart_name}
                 className="flex items-start justify-between gap-3 py-2"

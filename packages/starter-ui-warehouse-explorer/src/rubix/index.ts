@@ -1,8 +1,8 @@
-// Rubix overlays for the ClickHouse explorer. These components
+// Rubix overlays for the warehouse explorer. These components
 // depend on the rubix-agent surfaces (warehouse REST status,
 // `rubix.warehouse.*` verbs) and are intended for hosts that
-// mount `<RubixClientProvider>`. The demo binary
-// (`examples/ch-explorer`) does not mount these.
+// mount `<RubixClientProvider>`. The standalone demo binary does
+// not mount these.
 
 export {
   FreshnessTiles,

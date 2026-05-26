@@ -1,9 +1,9 @@
 export {
   useWarehouseStatus,
-  useClickhouseTables,
-  useClickhouseTable,
-  useClickhouseTableData,
-  useClickhouseQuery,
-  useClickhouseErd,
-  useClickhouseAutocomplete,
-} from "./use-warehouse-ch";
+  useWarehouseTables,
+  useWarehouseTable,
+  useWarehouseTableData,
+  useWarehouseQuery,
+  useWarehouseErd,
+  useWarehouseAutocomplete,
+} from "./use-warehouse";

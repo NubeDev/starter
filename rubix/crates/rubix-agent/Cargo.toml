@@ -45,6 +45,7 @@ starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
 starter-mcp               = { workspace = true, features = ["http"] }
 starter-store-warehouse  = { workspace = true }
+starter-warehouse-explorer = { workspace = true }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }

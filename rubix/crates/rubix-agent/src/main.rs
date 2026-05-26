@@ -256,6 +256,23 @@ async fn main() -> Result<()> {
         // `/api/warehouse/status` removed alongside the ClickHouse
         // engine deletion (stage 3 of warehouse-engine-swap).
 
+        // Warehouse explorer — phase 4 of warehouse-engine-swap.
+        // Reuses the boot PG pool (no second pool), mounts the
+        // read-only sql-studio-style surface at
+        // `/api/warehouse/explorer/*`, gated by `with_principal` +
+        // `with_role(Role::Admin)` to match the old explorer's
+        // posture. The URL `/ch` suffix was dropped now that the
+        // backend is Postgres/TimescaleDB.
+        {
+            let wh_client =
+                starter_store_warehouse::WarehouseClient::from_pool(pool.sqlx().clone());
+            let explorer_router = starter_warehouse_explorer::router_with_auth(
+                wh_client,
+                auth.authenticator.clone(),
+            );
+            app = app.merge(explorer_router);
+        }
+
         // Phase C.2 — mount the extension-host admin router. The
         // lifecycle endpoints (`/extensions`, `/extensions/{id}`,
         // `/extensions/{id}/{enable,disable,events}`) are sandwiched by

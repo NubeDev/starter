@@ -15,7 +15,7 @@ import {
 } from "./editor.config";
 
 import { Card } from "../components/ui/card";
-import { useClickhouseAutocomplete } from "../hooks/use-warehouse-ch";
+import { useWarehouseAutocomplete } from "../hooks/use-warehouse";
 import { useTheme } from "../lib/theme";
 import { useSqlFormattingProviders } from "../lib/sql-formatting";
 
@@ -29,7 +29,7 @@ export const Editor: FunctionComponent<Props> = ({ value, onChange }) => {
   const monacoInstance = useMonaco();
   const providerRef = useRef<IDisposable | null>(null);
 
-  const { data: autoCompleteData } = useClickhouseAutocomplete();
+  const { data: autoCompleteData } = useWarehouseAutocomplete();
 
   // Configure Monaco
   useEffect(() => {

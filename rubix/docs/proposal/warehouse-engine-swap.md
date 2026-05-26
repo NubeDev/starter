@@ -179,6 +179,95 @@ Pre-production, so the plan collapses to three phases. No dual-write, no backfil
 3. Remove the `entities_dict` materialized dictionary and its refresh job.
 4. Hard delete — no data preservation, no rollback path needed.
 
+### Phase 4 — Restore the warehouse explorer REST surface against TimescaleDB
+
+Context: phase 3 over-deleted `crates/starter-warehouse/src/explorer/` (the
+sql-studio-style read-only REST surface backing the `/admin/warehouse-explorer`
+tab) when it removed ClickHouse-specific code. The Axum router under
+`/api/warehouse/ch/*` is gone with no Timescale replacement. The frontend
+package `@nube/starter-ui-warehouse-explorer` and its hook layer
+(`use-warehouse-ch.ts`) still call those endpoints and 404 in the browser.
+
+This phase restores the surface with a Postgres / TimescaleDB query backend so
+the Explorer tab works end-to-end again, without re-introducing any ClickHouse
+artefacts.
+
+1. Recreate the explorer module as a TimescaleDB-backed crate (suggested:
+   `starter-warehouse-explorer`, owning only this read surface — keeps
+   `starter-store-warehouse` focused on writes + DDL). Reuse the existing
+   sqlx `PgPool` from `starter-store-warehouse`; no new connection pool.
+2. Re-implement the seven endpoints behind the same URL prefix
+   (`/api/warehouse/ch/*` is kept verbatim to avoid a frontend churn — the
+   path is an implementation detail, not user-facing; renaming it is a
+   separate concern tracked in the vendor-neutralisation followup):
+   - `GET /overview` — DB size, counts of tables / indexes / views /
+     triggers, row counts per table. Source: `pg_class`,
+     `pg_stat_user_tables`, `pg_stat_user_indexes`, `pg_database_size()`.
+     Augment with `timescaledb_information.hypertables` so hypertable rows
+     are counted from `approximate_row_count()` (cheap) rather than full
+     scans.
+   - `GET /tables` — list of user tables in the public schema, with row
+     counts. Source: `pg_stat_user_tables` joined with
+     `timescaledb_information.hypertables` (mark hypertables; `is_hypertable`
+     becomes a wire field — additive to the existing `Counts` shape via the
+     `Table` type already carrying `index_count` / `column_count`).
+   - `GET /tables/{name}` — per-table metadata + size. Use
+     `pg_relation_size` for regular tables and
+     `hypertable_size`/`chunks_detailed_size` for hypertables. SQL DDL via
+     `pg_get_tabledef`-equivalent (synthesise from `pg_attribute` +
+     `pg_constraint`; there is no built-in like ClickHouse `SHOW CREATE
+     TABLE`).
+   - `GET /tables/{name}/data?page=N` — paginated row dump. Server-side
+     enforced `LIMIT` matching the upstream sql-studio page size; the page
+     number is the only client-controlled param. Reject identifiers that
+     don't match `^[A-Za-z_][A-Za-z0-9_]*$` (no schema-qualified names —
+     `public` is implicit) before interpolating into the query. Use a
+     read-only transaction (`BEGIN READ ONLY`) so a malformed name cannot
+     accidentally mutate.
+   - `POST /query` — arbitrary SQL with `{ columns, rows }` shape. Critical:
+     run every statement in a `READ ONLY DEFERRABLE` transaction with a
+     short `statement_timeout` (e.g. 30 s) under a dedicated low-privilege
+     PG role that only has `SELECT` on `public` and the
+     `timescaledb_information` views. **No string-level SQL parsing.** The
+     engine itself enforces read-only — that is the only safe gate.
+   - `GET /autocomplete` — table + column list for the Monaco editor.
+     Source: `information_schema.columns` filtered to `public`. Cache for a
+     few seconds per process; this is hot.
+   - `GET /erd` — ERD nodes + FK relationships. Postgres FKs come from
+     `pg_constraint WHERE contype = 'f'` — unlike ClickHouse, this is
+     populated. Hypertables typically have no FKs; that's expected and
+     leaves the relationship array empty for them.
+3. Wire-format compatibility: keep the `OverviewWire` shape the frontend
+   already revives (`size_on_disk`, `created`, `modified` as ISO-8601). The
+   reviver in `packages/starter-ui-warehouse-explorer/src/hooks/use-warehouse-ch.ts`
+   does not change. `sqlite_version` stays `null` on the wire (the field is
+   vestigial from upstream sql-studio).
+4. Mount the router back into `rubix-agent` in `main.rs` next to the other
+   admin routers, behind the same `with_principal` + `with_role(Admin)`
+   guard the old explorer used. Failure to mount (no `database_url`) is
+   logged at WARN, not fatal — same pattern as the auth router.
+5. Tests:
+   - Unit tests per query against a TimescaleDB testcontainer with a seeded
+     hypertable, a seeded regular table, and a seeded FK pair.
+   - Integration test that asserts the `/overview` + `/tables` +
+     `/tables/{name}` round-trip parses cleanly through the frontend's
+     `OverviewWire` reviver shape (the wire contract is the API contract).
+   - Negative test: `POST /query` with `DROP TABLE` returns a 4xx (engine
+     rejects the write in the read-only txn) and the table still exists.
+   - Negative test: `GET /tables/{malicious; DROP}` is rejected at the
+     identifier-validation layer with 400, never reaches the DB.
+6. Frontend follow-up (in-scope for this phase, not a separate one): rename
+   the hook file from `use-warehouse-ch.ts` to `use-warehouse.ts`, drop the
+   `ch` token from `KEY` and `API_ROOT`, and rename
+   `useClickhouseTable*` / `useClickhouseTableData` → `useWarehouseTable*` /
+   `useWarehouseTableData` so the stage 1 rename is finally complete for the
+   explorer surface. Update the comments in `vite.config.ts`,
+   `warehouse-admin.tsx`, `explorer-panel.tsx` that still reference
+   `@nube/starter-ui-ch-explorer` while the file is open.
+7. Acceptance: `make build` green, `make test` green, and a manual smoke at
+   `/admin/warehouse-explorer` shows all four tabs (Overview, Tables,
+   Schema, Query) populated against a live TimescaleDB.
+
 ## Benchmarks (informational, not gating)
 
 No cutover to gate against — but worth measuring once on a synthetic load to set forward-looking expectations:

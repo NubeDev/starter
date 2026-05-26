@@ -10,7 +10,9 @@
     ".": "./src/index.ts",
     "./theme.css": "./src/theme.css",
     "./hooks": "./src/hooks/index.ts",
-    "./views": "./src/views/index.ts"
+    "./views": "./src/views/index.ts",
+    "./rubix": "./src/rubix/index.ts",
+    "./i18n": "./src/i18n/index.ts"
   },
   "files": [
     "README.md",
@@ -25,6 +27,7 @@
     "@nube/rubix-client-react": "workspace:*",
     "@nube/starter-client-react": "workspace:*",
     "@nube/starter-client-ts": "workspace:*",
+    "@nube/starter-ui-kit": "workspace:*",
     "@tanstack/react-query": "^5",
     "react": "^18 || ^19",
     "react-dom": "^18 || ^19"
@@ -64,6 +67,7 @@
     "@nube/rubix-client-react": "workspace:*",
     "@nube/starter-client-react": "workspace:*",
     "@nube/starter-client-ts": "workspace:*",
+    "@nube/starter-ui-kit": "workspace:*",
     "@tanstack/react-query": "^5.83.0",
     "@types/dagre": "^0.7.53",
     "@types/node": "^24.1.0",

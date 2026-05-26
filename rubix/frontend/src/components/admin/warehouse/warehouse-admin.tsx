@@ -20,8 +20,7 @@ import { WarehouseInsightsPanel } from './insights-panel'
 // The "explorer" tab moved to its own page at `/admin/warehouse-explorer`
 // (visual rebuild — see `@nube/starter-ui-warehouse-explorer`). The
 // `<WarehouseExplorerPanel>` component is still exported from
-// `./explorer-panel` until the old `@nube/starter-ui-ch-explorer`
-// package is removed alongside it.
+// `./explorer-panel` for hosts that prefer to embed it inline.
 export type WarehouseAdminTab =
   | 'rules'
   | 'marts'

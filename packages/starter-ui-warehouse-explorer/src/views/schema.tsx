@@ -4,7 +4,7 @@
 
 import { GitBranch, ShieldX } from "lucide-react";
 
-import { useClickhouseErd } from "../hooks/use-warehouse-ch";
+import { useWarehouseErd } from "../hooks/use-warehouse";
 import { Skeleton } from "../components/ui/skeleton";
 import { ErdDiagram } from "../components/erd/erd-diagram";
 import {
@@ -15,7 +15,7 @@ import {
 } from "../components/ui/card";
 
 export function Schema() {
-  const { data, isLoading, isError, error } = useClickhouseErd();
+  const { data, isLoading, isError, error } = useWarehouseErd();
 
   if (isLoading) return <SchemaSkeleton />;
 

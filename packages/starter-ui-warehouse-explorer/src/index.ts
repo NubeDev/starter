@@ -17,3 +17,8 @@ export type {
   ErdColumn,
   ErdRelationship,
 } from "./api";
+export type { ExplorerMessages } from "./i18n/messages";
+export {
+  ExplorerI18nProvider,
+  useExplorerMessages,
+} from "./i18n/context";

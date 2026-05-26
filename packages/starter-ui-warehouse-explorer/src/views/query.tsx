@@ -21,9 +21,9 @@ import {
 
 import { cn } from "../lib/utils";
 import {
-  useClickhouseErd,
-  useClickhouseQuery,
-} from "../hooks/use-warehouse-ch";
+  useWarehouseErd,
+  useWarehouseQuery,
+} from "../hooks/use-warehouse";
 import { useSql, useSqlDispatch } from "../providers/sql.provider";
 
 import {
@@ -66,7 +66,7 @@ export function Query() {
   // Skip the request when the editor is empty. The backend rejects
   // `""` with `empty_query`, which would otherwise fire on every
   // mount because auto-execute defaults to on.
-  const { data, error, refetch } = useClickhouseQuery(code, {
+  const { data, error, refetch } = useWarehouseQuery(code, {
     enabled: autoExecute && code.trim().length > 0,
   });
 
@@ -180,7 +180,7 @@ export function Query() {
 // FiltersPanel — schema-aware "query builder helper" sidebar.
 //
 // Pulls the full database schema (table + column + type) from the
-// metadata-only `/api/warehouse/ch/erd` endpoint and exposes three
+// metadata-only `/api/warehouse/explorer/erd` endpoint and exposes three
 // flavours of one-click query construction:
 //
 //   1. Snippet pills (WHERE, ORDER BY, LIMIT 100, count(*), now()-1h…)
@@ -190,8 +190,9 @@ export function Query() {
 //   3. Click any column row → appends the quoted column name at the
 //      end of the editor buffer.
 //
-// Backed by `useClickhouseErd`, which scans `system.columns` — no
-// dictionary loads, safe even when external sources are missing.
+// Backed by `useWarehouseErd`, which scans
+// `information_schema.columns` — no dictionary loads, safe even when
+// external sources are missing.
 // ---------------------------------------------------------------------------
 
 interface FiltersPanelProps {
@@ -201,7 +202,7 @@ interface FiltersPanelProps {
 }
 
 function FiltersPanel({ currentSql: _current, onSetSql, onAppend }: FiltersPanelProps) {
-  const { data, isLoading } = useClickhouseErd();
+  const { data, isLoading } = useWarehouseErd();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState<Record<string, boolean>>({});
 

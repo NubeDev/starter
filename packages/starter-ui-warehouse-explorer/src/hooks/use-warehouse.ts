@@ -1,11 +1,12 @@
-// Typed React Query hooks against the warehouse-ch sub-router served
-// by `starter-warehouse` at `/api/warehouse/ch/*`.
+// Typed React Query hooks against the warehouse explorer sub-router
+// served by `starter-warehouse-explorer` at
+// `/api/warehouse/explorer/*` (see
+// `rubix/docs/proposal/warehouse-engine-swap.md` phase 4 — the data
+// source is now Postgres/TimescaleDB and the URL is vendor-neutral).
 //
 // These wrap `fetchJson(starter, …)` from `@nube/starter-client-ts`,
 // reusing the host's `StarterClient` (base URL, credentials, error
-// envelope, CSRF). The transport surface intentionally matches the
-// old `@nube/starter-ui-ch-explorer/api.ts` 1:1; only the hook
-// wrapper is new.
+// envelope, CSRF).
 //
 // Naming follows the rubix-client-react convention so these can be
 // promoted into `@nube/rubix-client-react` later as a single move —
@@ -34,8 +35,8 @@ import type {
   Erd,
 } from "../api";
 
-const API_ROOT = "/api/warehouse/ch";
-const KEY = ["warehouse", "ch"] as const;
+const API_ROOT = "/api/warehouse/explorer";
+const KEY = ["warehouse", "explorer"] as const;
 
 // The wire format for `created` / `modified` is an ISO-8601 string or
 // null. Upstream views call `.toUTCString()` on them, so revive to
@@ -75,7 +76,7 @@ export function useWarehouseStatus(): UseQueryResult<Overview, StarterError> {
   });
 }
 
-export function useClickhouseTables(): UseQueryResult<Tables, StarterError> {
+export function useWarehouseTables(): UseQueryResult<Tables, StarterError> {
   const starter = useStarterClient();
   return useQuery<Tables, StarterError>({
     queryKey: [...KEY, "tables"],
@@ -83,7 +84,7 @@ export function useClickhouseTables(): UseQueryResult<Tables, StarterError> {
   });
 }
 
-export function useClickhouseTable(
+export function useWarehouseTable(
   name: string,
 ): UseQueryResult<Table, StarterError> {
   const starter = useStarterClient();
@@ -98,7 +99,7 @@ export function useClickhouseTable(
   });
 }
 
-export function useClickhouseTableData(
+export function useWarehouseTableData(
   name: string,
 ): UseInfiniteQueryResult<{ pages: TableData[]; pageParams: number[] }, StarterError> {
   const starter = useStarterClient();
@@ -122,7 +123,7 @@ export function useClickhouseTableData(
   });
 }
 
-export function useClickhouseQuery(
+export function useWarehouseQuery(
   sql: string,
   options?: { enabled?: boolean },
 ): UseQueryResult<Query, StarterError> {
@@ -140,7 +141,7 @@ export function useClickhouseQuery(
   });
 }
 
-export function useClickhouseErd(): UseQueryResult<Erd, StarterError> {
+export function useWarehouseErd(): UseQueryResult<Erd, StarterError> {
   const starter = useStarterClient();
   return useQuery<Erd, StarterError>({
     queryKey: [...KEY, "erd"],
@@ -148,7 +149,7 @@ export function useClickhouseErd(): UseQueryResult<Erd, StarterError> {
   });
 }
 
-export function useClickhouseAutocomplete(): UseQueryResult<Autocomplete, StarterError> {
+export function useWarehouseAutocomplete(): UseQueryResult<Autocomplete, StarterError> {
   const starter = useStarterClient();
   return useQuery<Autocomplete, StarterError>({
     queryKey: [...KEY, "autocomplete"],
