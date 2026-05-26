@@ -342,6 +342,7 @@ mod tests {
     async fn walk_fills_static_chart_series() {
         let mut tree = ComponentTree {
             ir_version: starter_ui_ir::IR_VERSION,
+            vars: Default::default(),
             root: Component::Page {
                 id: "p".into(),
                 title: None,

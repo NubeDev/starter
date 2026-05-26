@@ -11,11 +11,13 @@
 //! `WritePlanAcl` policy seam. This module only ships the four trait
 //! impls and their unit-test seams.
 
+pub mod analytics_bridge;
 pub mod entity_graph;
 pub mod handler_registry;
 pub mod page_provider;
 pub mod query_engine;
 
+pub use analytics_bridge::ToolAnalyticsBridge;
 pub use entity_graph::RubixEntityGraph;
 pub use handler_registry::{tool_action_handler, RubixHandlerRegistry};
 pub use page_provider::PgPageProvider;

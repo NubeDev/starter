@@ -32,7 +32,7 @@ use starter_store_postgres::pool::Pool;
 use crate::boot::AgentConfig;
 use crate::sdui::{
     entity_graph::StaticSystemReader, PgPageProvider, RubixEntityGraph,
-    RubixHandlerRegistry, RubixQueryEngine,
+    RubixHandlerRegistry, RubixQueryEngine, ToolAnalyticsBridge,
 };
 
 /// Build the SDUI sub-router wired to the rubix data plane.
@@ -83,11 +83,26 @@ where
 
     let handlers = RubixHandlerRegistry::build(tool_registry);
 
-    let state = SduiState::builder()
+    // Bridge `rubix.analytics.query` into the SDUI chart-source
+    // resolver so dashboards whose KPIs / charts use
+    // `analytics_template` sources resolve against the L3 mart.
+    // Absent tool ⇒ resolver collapses analytics_template payloads
+    // to empty (the tool is gated on ClickHouse — dev boots without
+    // CH still serve dashboards, just without live numbers).
+    let analytics_tool = tool_registry
+        .iter()
+        .find(|t| t.definition().name == "rubix.analytics.query")
+        .cloned();
+
+    let mut builder = SduiState::builder()
         .with_pages(pages)
         .with_entity_graph(graph)
         .with_query_engine(queries)
-        .with_handler_registry(handlers)
+        .with_handler_registry(handlers);
+    if let Some(tool) = analytics_tool {
+        builder = builder.with_analytics(Arc::new(ToolAnalyticsBridge::new(tool)));
+    }
+    let state = builder
         .build()
         .expect("SDUI state: every piece is wired above");
 

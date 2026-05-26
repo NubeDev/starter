@@ -25,8 +25,10 @@
                 "format": "number",
                 "unit_symbol": "kWh",
                 "source": {
-                  "type": "static",
-                  "points": [[0, 0.0]]
+                  "type": "analytics_template",
+                  "name": "meter_kwh_last_24h",
+                  "params": { "tenant_id": "site-a" },
+                  "map": { "value_field": "kwh" }
                 }
               }
             ]
@@ -42,8 +44,10 @@
                 "format": "number",
                 "unit_symbol": "L",
                 "source": {
-                  "type": "static",
-                  "points": [[0, 0.0]]
+                  "type": "analytics_template",
+                  "name": "meter_litres_last_24h",
+                  "params": { "tenant_id": "site-a" },
+                  "map": { "value_field": "litres" }
                 }
               }
             ]
@@ -65,8 +69,16 @@
                 "page_state_key": "elec_main_range",
                 "sources": [
                   {
-                    "type": "static",
-                    "points": []
+                    "type": "analytics_template",
+                    "name": "meter_value_30d_15m",
+                    "params": {
+                      "tenant_id": "site-a",
+                      "meter_id": "site-a.elec.main"
+                    },
+                    "map": {
+                      "ts_field": "bucket_start",
+                      "value_field": "value_avg"
+                    }
                   }
                 ]
               }
@@ -83,8 +95,16 @@
                 "page_state_key": "elec_hvac_range",
                 "sources": [
                   {
-                    "type": "static",
-                    "points": []
+                    "type": "analytics_template",
+                    "name": "meter_value_30d_15m",
+                    "params": {
+                      "tenant_id": "site-a",
+                      "meter_id": "site-a.elec.hvac"
+                    },
+                    "map": {
+                      "ts_field": "bucket_start",
+                      "value_field": "value_avg"
+                    }
                   }
                 ]
               }
@@ -101,8 +121,16 @@
                 "page_state_key": "water_main_range",
                 "sources": [
                   {
-                    "type": "static",
-                    "points": []
+                    "type": "analytics_template",
+                    "name": "meter_value_30d_15m",
+                    "params": {
+                      "tenant_id": "site-a",
+                      "meter_id": "site-a.water.main"
+                    },
+                    "map": {
+                      "ts_field": "bucket_start",
+                      "value_field": "value_avg"
+                    }
                   }
                 ]
               }
