@@ -9,3 +9,4 @@
 
 pub mod ingest;
 pub mod synth;
+pub mod clean_minute;

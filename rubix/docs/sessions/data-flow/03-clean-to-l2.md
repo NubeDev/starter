@@ -152,7 +152,9 @@ and stop.
 
 ## Decisions taken
 
-- [ ] Strategy A (periodic flow)  /  [ ] Strategy B (MV)
+- [x] Strategy A (periodic flow)  /  [ ] Strategy B (MV)
 - Mart name: `rubix.meter_readings_1m` (do not rename — stages 04, 05 read this)
-- L2 retention: 180 days
+- L2 retention: 180 days (TTL declared on the table in `0004_meter_readings_1m/up.sql`; the `rubix.clickhouse.retention.set` step in the stage doc is therefore a no-op when the table is created via the bundled migration path — keep it documented for operators authoring marts via `rubix.clickhouse.mart.create`)
 - Cleaner flow id: `com.rubix.data-flow.cleaner`
+- Cleaning verb: `rubix.warehouse.clean_minute` (one pass per call, 5-minute lookback; idempotent via `ReplacingMergeTree`)
+- Stuck-zero detection deferred — needs 5 same-value consecutive buckets; the 60-s producer cadence × 3 meters does not generate enough rows per 5-min cleaner window. Track in a follow-up at stage 04 if rules need it.

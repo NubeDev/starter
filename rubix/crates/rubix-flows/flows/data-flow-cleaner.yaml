@@ -1,0 +1,44 @@
+# Stage 03 cleaner flow — drives `rubix.warehouse.clean_minute` once
+# per minute. Each tick materialises 1-minute buckets from L1
+# (rubix.meter_readings_raw) into L2 (rubix.meter_readings_1m) over
+# a 5-minute lookback window; gaps become `quality='missing'`,
+# NaN-only buckets become `quality='nan'`, ×10-of-median spikes
+# get clipped to `quality='clipped'`. L2 is ReplacingMergeTree so
+# repeated passes refine the same bucket rather than duplicating.
+#
+# See rubix/docs/sessions/data-flow/03-clean-to-l2.md for the
+# success bar (4 bullets) this flow needs to satisfy.
+#
+# Wiring: matches `data-flow-producer.yaml` shape exactly — a
+# `schedule` trigger, a `tool-call` node, and a `log` node for
+# visibility. The cleaner takes no inputs; the host seed adapter
+# treats an empty `tool_input` literal as "send {}" so no link
+# from upstream is needed.
+id: com.rubix.data-flow.cleaner
+description: |
+  Stage 03 L2 cleaner. Schedule fires every 60s; clean_minute tool
+  inserts cleaned 1-minute buckets into rubix.meter_readings_1m
+  over a 5-minute lookback window. Idempotent thanks to
+  ReplacingMergeTree dedup on (tenant_id, meter_id, bucket_start).
+trigger: schedule
+cron_expr: "*/5 * * * * *"
+
+nodes:
+  - id: tick
+    kind: starter.flow.trigger.schedule
+    config:
+      cron_expr: "*/5 * * * * *"
+  - id: clean
+    kind: starter.flow.tool-call
+    config:
+      tool_id: "rubix.warehouse.clean_minute"
+      tool_input:
+        lookback_minutes: 5
+  - id: emit
+    kind: starter.flow.log
+    config:
+      level: info
+
+links:
+  - { from: "tick.fire",     to: "clean.in" }
+  - { from: "clean.output",  to: "emit.value" }

@@ -4,3 +4,4 @@
 //! framework: persistence is a tool, delivery is a flow.
 
 pub mod ingest;
+pub mod clean_minute;

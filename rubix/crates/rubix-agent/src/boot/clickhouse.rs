@@ -41,6 +41,12 @@ const RUBIX_0002_HISTORY_UP: &str =
 const RUBIX_0003_METER_READINGS_RAW_UP: &str =
     include_str!("../../migrations/0003_meter_readings_raw/up.sql");
 
+/// L2 cleaned mart for the data-flow scenario. See
+/// `migrations/0004_meter_readings_1m/up.sql` and
+/// `rubix/docs/sessions/data-flow/03-clean-to-l2.md`.
+const RUBIX_0004_METER_READINGS_1M_UP: &str =
+    include_str!("../../migrations/0004_meter_readings_1m/up.sql");
+
 /// Name of the ClickHouse database that owns every rubix-owned
 /// warehouse table (today: `system_disk_history`; tomorrow:
 /// L2/L3 marts). Matches `CLICKHOUSE_DB` in
@@ -132,6 +138,10 @@ pub async fn apply_ch_migrations(
         .with_extra_migration(
             "rubix/0003_meter_readings_raw/up.sql",
             RUBIX_0003_METER_READINGS_RAW_UP,
+        )
+        .with_extra_migration(
+            "rubix/0004_meter_readings_1m/up.sql",
+            RUBIX_0004_METER_READINGS_1M_UP,
         )
         .run()
         .await

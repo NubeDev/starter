@@ -23,11 +23,11 @@ A session that finishes a stage flips its row, fills the
 | 0 | Docs landed (README + 5 stage docs + USAGE + PROGRESS)   | ✅     | 2026-05-26 | _local_| `ls rubix/docs/sessions/data-flow/` has 8 files |
 | 1 | [01-producer.md](./01-producer.md) — messy producer       | ⏳     |            |        |                                            |
 | 2 | [02-ingest-l1.md](./02-ingest-l1.md) — L1 raw landing    | ✅     | 2026-05-26 | 9cdf4ef | 2×5min cold-restart runs: 28 rows, rate 5.6/min, 3 meters, 2 `quality='suspect'`, 0 FlowFailed |
-| 3 | [03-clean-to-l2.md](./03-clean-to-l2.md) — clean to L2   | ⏳     |            |        |                                            |
-| 4 | [04-anomaly-rules.md](./04-anomaly-rules.md) — rules     | ⬜     |            |        |                                            |
+| 3 | [03-clean-to-l2.md](./03-clean-to-l2.md) — clean to L2   | ✅     | 2026-05-26 | _local_| 2 cold-restart runs: every 1-min bucket in window has all 3 meters; `missing` present per meter; 0 `ok` rows exceed 10× median |
+| 4 | [04-anomaly-rules.md](./04-anomaly-rules.md) — rules     | ⏳     |            |        |                                            |
 | 5 | [05-dashboard-at-scale.md](./05-dashboard-at-scale.md)   | ⬜     |            |        |                                            |
 
-**Next session: pick up stage 3.**
+**Next session: pick up stage 4.**
 
 ---
 
@@ -56,7 +56,7 @@ Per-stage open decisions (the "pick A or B" choices):
 |-------|--------------------------------------------------------|--------|
 | 01    | Flow-only producer vs extension bundle                  |        |
 | 02    | Bind `rubix.warehouse.ingest` vs reuse `rule.write`    | A (bind `rubix.warehouse.ingest`; DDL via bundled migration `0003_meter_readings_raw`) |
-| 03    | Periodic flow cleaner vs ClickHouse materialised view  |        |
+| 03    | Periodic flow cleaner vs ClickHouse materialised view  | A (periodic flow `com.rubix.data-flow.cleaner` → `rubix.warehouse.clean_minute`; L2 DDL via bundled migration `0004_meter_readings_1m`) |
 | 04    | Hardcoded Rust gate vs `rule.rhai` registry            |        |
 | 05    | `page_set` vs `create`+`update` for dashboard build    |        |
 

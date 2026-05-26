@@ -86,6 +86,7 @@ use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
 use rubix_tools::warehouse::ingest::WarehouseIngestTool;
+use rubix_tools::warehouse::clean_minute::WarehouseCleanMinuteTool;
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
@@ -107,9 +108,11 @@ pub fn build_tool_registry(
 ) -> Vec<Arc<dyn Tool>> {
     let mut disk = DiskTool::default().with_insights_threshold(insights_disk_threshold);
     let mut warehouse_ingest = WarehouseIngestTool::default();
+    let mut warehouse_clean = WarehouseCleanMinuteTool::default();
     if let Some(client) = ch.as_ref() {
         disk = disk.with_history(client.clone());
         warehouse_ingest = warehouse_ingest.with_client(client.clone());
+        warehouse_clean = warehouse_clean.with_client(client.clone());
     }
 
     // ---- shared in-memory stores (see module docs) ---------------
@@ -183,11 +186,17 @@ pub fn build_tool_registry(
         Arc::new(AlertSendTool),
         // ---- dataflow (synth) -----------------------------------
         Arc::new(SynthEmitTool::default()),
-        // ---- warehouse (ingest) ---------------------------------
+        // ---- warehouse (ingest + cleaner) -----------------------
         // Append-only L1 writer; targets `rubix.meter_readings_raw`
         // via the boot-applied 0003 migration. See
         // `docs/sessions/data-flow/02-ingest-l1.md`.
         Arc::new(warehouse_ingest),
+        // L2 cleaner. One pass per call; the bundled
+        // `com.rubix.data-flow.cleaner` flow drives it once per
+        // minute. Targets `rubix.meter_readings_1m` via the
+        // boot-applied 0004 migration. See
+        // `docs/sessions/data-flow/03-clean-to-l2.md`.
+        Arc::new(warehouse_clean),
         // ---- flow_ops (read + write) ----------------------------
         Arc::new(FlowListTool::new(flow_store.clone())),
         Arc::new(FlowKindsTool::from_behaviors(&builtin_kind_behaviors())),
