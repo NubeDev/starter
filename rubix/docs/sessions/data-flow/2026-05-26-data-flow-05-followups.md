@@ -210,3 +210,54 @@ rubix.analytics.query meter_litres_last_24h {tenant_id:"site-a"}
 
 Everything below the SDUI chart resolver is live and correct.
 The only gap is the resolver ↔ analytics bridge described above.
+
+---
+
+## Update 2026-05-26 — L2 cross-over row landed
+
+Item 4 of the stage 05 success bar (zoom-to-L2) is split:
+
+- **Data path:** landed. New L2 template `meter_value_24h_1m.sql`
+  reads `rubix.meter_readings_1m` filtered by `tenant_id` +
+  `meter_id` with `bucket_start >= now() - INTERVAL 24 HOUR`. It
+  aliases L2's `value` column to `value_avg` so dashboards can
+  keep one `AnalyticsTemplateMap.value_field` across L2 and L3.
+- **Dashboard:** the bundled `data-flow-site-a.json` gains a
+  second `charts-l2-zoom` row with one chart per meter pointed
+  at `meter_value_24h_1m`. Live: each L2 chart resolves to
+  ~43–49 points over 24h vs ~7 on the L3 row — proves the
+  cross-over data path end-to-end.
+
+Live evidence (2026-05-26 after dashboard.update bump to revision
+`6e63447d-6a08-4532-8ac4-62256b371d3c`):
+
+```
+rubix.analytics.query meter_value_24h_1m
+  {tenant_id:"site-a", meter_id:"site-a.elec.main"} → row_count=43
+
+POST /api/v1/ui/resolve dashboard.data-flow-site-a →
+  CHART chart-elec-main      total_points=7    (L3 15-min)
+  CHART chart-elec-main-l2   total_points=43   (L2 1-min)
+  CHART chart-elec-hvac-l2   total_points=42
+  CHART chart-water-main-l2  total_points=49
+```
+
+**Still outstanding:** interactive zoom on a single chart — i.e.
+the same chart node swapping between L2 and L3 sources based on
+the user's pan/scroll window. That needs:
+
+1. A frontend chart kind that emits zoom events into
+   `page_state` (look for `onRangeChange` / `onZoom` hooks in
+   `packages/starter-ui-sdui-react/src/renderer/render-chart.tsx`
+   — none exist today).
+2. Resolver-side support for forwarding `page_state[*]` into
+   `AnalyticsTemplate.params`, plus a policy that picks L2 vs L3
+   based on the requested window size (≤ 6h → L2).
+
+The side-by-side row landed here is the pragmatic stand-in until
+both pieces are in. The plumbing it adds (L2 template + the
+24h-window param shape) is exactly what the interactive variant
+will need to re-use.
+
+**PROGRESS.md update:** stage 05 follow-up flipped to
+"resolved (data path); interactive zoom remains a follow-up".

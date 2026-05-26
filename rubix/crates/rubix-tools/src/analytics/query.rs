@@ -201,6 +201,7 @@ mod tests {
                 "flow_run_summary_weekly",
                 "meter_kwh_last_24h",
                 "meter_litres_last_24h",
+                "meter_value_24h_1m",
                 "meter_value_30d_15m",
                 "undo_count_weekly",
                 "user_activity_weekly",

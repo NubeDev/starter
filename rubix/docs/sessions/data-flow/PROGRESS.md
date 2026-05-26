@@ -74,7 +74,7 @@ rewrite a stage doc to absorb spillover.
 | 2026-05-26 | 01 | [scheduler verified; synth fires 2–3× per cron tick](./2026-05-26-data-flow-01-producer-multi-fire.md) | open — duplicate-fire bug in tool-call seed adapter + bar #2 math vs 60s cron mismatch |
 | 2026-05-26 | 02 | [two boot-wiring blockers (in-memory CH writer + seed adapter racing tool_input)](./02-ingest-l1-blockers-2026-05-26.md) | resolved by the B1+B2 fixes that landed in working tree before stage 02 e2e |
 | 2026-05-26 | 02 | [cadence + bar reconciliation (60s scheduler claim cadence)](./02-ingest-l1-cadence-and-bars-2026-05-26.md) | resolved — bar #1 rewritten as rows/min rate, bar #3 documents `DATA_FLOW_SPIKE_PROB` override for stage-close validation |
-| 2026-05-26 | 05 | [chart resolver ↔ analytics path + zoom](./2026-05-26-data-flow-05-followups.md) | resolved (charts) — `ChartSource::AnalyticsTemplate` variant + resolver branch landed in `ea68458`; `/dashboards/data-flow-site-a` paints KPIs 50,013 kWh / 250,076 L and 3×5-point lines from L3. Item 4 (zoom) still a separate follow-up. |
+| 2026-05-26 | 05 | [chart resolver ↔ analytics path + zoom](./2026-05-26-data-flow-05-followups.md) | resolved (charts + L2 cross-over data path) — `ChartSource::AnalyticsTemplate` (`ea68458`) + L2 template `meter_value_24h_1m` and side-by-side L2 row on `data-flow-site-a`; live resolve shows L3 7pts vs L2 43–49pts per meter. Interactive zoom (same chart node swapping L2↔L3 on user window change) remains a separate follow-up. |
 
 Naming convention (matches the rest of `docs/sessions/`):
 

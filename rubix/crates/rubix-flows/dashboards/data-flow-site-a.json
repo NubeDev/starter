@@ -137,6 +137,90 @@
             ]
           }
         ]
+      },
+      {
+        "type": "row",
+        "id": "charts-l2-zoom",
+        "children": [
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-elec-main-l2",
+                "kind": "line",
+                "page_state_key": "elec_main_zoom",
+                "sources": [
+                  {
+                    "type": "analytics_template",
+                    "name": "meter_value_24h_1m",
+                    "params": {
+                      "tenant_id": "site-a",
+                      "meter_id": "site-a.elec.main"
+                    },
+                    "map": {
+                      "ts_field": "bucket_start",
+                      "value_field": "value_avg"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-elec-hvac-l2",
+                "kind": "line",
+                "page_state_key": "elec_hvac_zoom",
+                "sources": [
+                  {
+                    "type": "analytics_template",
+                    "name": "meter_value_24h_1m",
+                    "params": {
+                      "tenant_id": "site-a",
+                      "meter_id": "site-a.elec.hvac"
+                    },
+                    "map": {
+                      "ts_field": "bucket_start",
+                      "value_field": "value_avg"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-water-main-l2",
+                "kind": "line",
+                "page_state_key": "water_main_zoom",
+                "sources": [
+                  {
+                    "type": "analytics_template",
+                    "name": "meter_value_24h_1m",
+                    "params": {
+                      "tenant_id": "site-a",
+                      "meter_id": "site-a.water.main"
+                    },
+                    "map": {
+                      "ts_field": "bucket_start",
+                      "value_field": "value_avg"
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
       }
     ]
   }
