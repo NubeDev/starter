@@ -28,6 +28,11 @@ pub mod migrate;
 pub mod raw;
 pub mod store;
 
+/// TimescaleDB backend (Stage 2 of warehouse-engine-swap). Lives
+/// alongside the legacy ClickHouse paths; Stage 3 deletes the old
+/// surface.
+pub mod tsdb;
+
 #[cfg(feature = "testing")]
 pub mod testing;
 

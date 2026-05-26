@@ -187,6 +187,53 @@ pub fn read_query(spec: &MartSpec, extra_where: &str, hide_unknown: bool) -> Str
     )
 }
 
+/// TimescaleDB twin of [`read_query`]. The cagg materialises the
+/// aggregates directly (no `*Merge(*_state)` wrap is needed
+/// because TimescaleDB stores the post-aggregation values, not
+/// CH-style intermediate state). The leading `group_by` column is
+/// joined against the `entities` dimension table in the same
+/// database — the proposal's §"What is replaced" line on the
+/// `entities_dict` dictionary going away.
+///
+/// The query uses Postgres `$1` / `$2` placeholders for the time
+/// range; `extra_where` is appended verbatim (callers are
+/// expected to have validated and parameterised any user input
+/// upstream — same contract as the CH variant).
+pub fn read_query_pg(spec: &MartSpec, extra_where: &str, hide_unknown: bool) -> String {
+    let mart_name = spec.name.strip_prefix("mart_").unwrap_or(&spec.name);
+    let view = format!("mart_{mart_name}");
+    let lead = &spec.group_by[0];
+    let mut select = vec![format!("m.bucket")];
+    select.push("m.tenant_id".to_string());
+    for g in &spec.group_by {
+        select.push(format!("m.{g}"));
+    }
+    for a in &spec.aggregations {
+        select.push(format!("m.{}", a.alias));
+    }
+    // Direct JOIN against the dimension table — replaces the old
+    // `dictGetOrNull('entities_dict', …)` lookups. The join key
+    // is the leading group_by column (the same role the CH
+    // `display_for_<lead>` projection served).
+    select.push(format!("d.display AS display_for_{lead}"));
+    let join = format!(
+        "LEFT JOIN entities AS d \
+         ON d.id = m.{lead} AND d.tenant_id = m.tenant_id"
+    );
+    let mut where_clause = String::from("m.bucket >= $1 AND m.bucket < $2");
+    if !extra_where.is_empty() {
+        where_clause.push_str(" AND ");
+        where_clause.push_str(extra_where);
+    }
+    if hide_unknown {
+        where_clause.push_str(" AND d.display IS NOT NULL");
+    }
+    format!(
+        "SELECT {select} FROM {view} AS m {join} WHERE {where_clause} ORDER BY m.bucket",
+        select = select.join(", "),
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -222,6 +269,22 @@ mod tests {
         let mut s = spec();
         s.group_by = vec!["valid".into(), "BAD-NAME".into()];
         assert!(build(&s).is_err());
+    }
+
+    #[test]
+    fn read_query_pg_uses_direct_join_no_dict() {
+        let q = read_query_pg(&spec(), "", false);
+        assert!(!q.contains("entities_dict"));
+        assert!(!q.contains("dictGet"));
+        assert!(q.contains("LEFT JOIN entities AS d"));
+        assert!(q.contains("d.display AS display_for_building"));
+        assert!(q.contains("m.bucket >= $1 AND m.bucket < $2"));
+    }
+
+    #[test]
+    fn read_query_pg_hide_unknown_filters_null_display() {
+        let q = read_query_pg(&spec(), "", true);
+        assert!(q.contains("d.display IS NOT NULL"));
     }
 
     #[test]

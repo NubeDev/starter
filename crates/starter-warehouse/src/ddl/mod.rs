@@ -17,7 +17,7 @@ pub mod dialect;
 pub mod mart;
 pub mod sandbox;
 
-pub use dialect::{ClickHouseDialect, DdlDialect};
+pub use dialect::{ClickHouseDialect, DdlDialect, TimescaleDbDialect};
 
 /// Validate an identifier (mart name, sandbox name, column name,
 /// `group_by` key, aggregation alias). Returns the input on success
