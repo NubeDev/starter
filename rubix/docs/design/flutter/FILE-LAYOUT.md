@@ -55,34 +55,39 @@ lib/features/connections/
                             and the model.
 ```
 
-**Correct** — one file per verb / per concern:
+**Correct** — one dir per concern, one file per verb:
 
 ```
 lib/features/connections/
   domain/
-    connection.dart                 ← the freezed model only
+    connection/
+      connection.dart               ← the freezed model only
   data/
     connection_repository.dart      ← interface + impl, calls the DAO + probe
   presentation/
-    connections_list_screen.dart    ← list, tap-to-activate, swipe-to-delete
-    add_connection_screen.dart      ← URL + label form, probe-before-save
-    edit_connection_screen.dart     ← edit label, delete confirm
-    connections_controller.dart     ← @riverpod, exposes list + active
-    add_connection_controller.dart  ← @riverpod, owns the probe + save flow
-    edit_connection_controller.dart ← @riverpod, owns the update + delete flow
-  connections.dart                  ← barrel; re-exports only
+    connections_list/
+      connections_list_screen.dart  ← list, tap-to-activate, swipe-to-delete
+      connections_controller.dart   ← @riverpod, exposes list + active
+    add_connection/
+      add_connection_screen.dart    ← URL + label form, probe-before-save
+      add_connection_controller.dart ← @riverpod, owns the probe + save flow
+    edit_connection/
+      edit_connection_screen.dart   ← edit label, delete confirm
+      edit_connection_controller.dart ← @riverpod, owns the update + delete flow
 ```
 
-The `connections.dart` barrel is the Dart equivalent of `mod.rs`:
+Each subdirectory groups a screen with its controller (and
+generated code). The directory name **is** the concept name — no
+barrel file needed inside the subdir. A feature-level barrel is
+optional:
 
 ```dart
 // Connections feature — barrel. Re-exports only; no logic.
 export 'data/connection_repository.dart';
-export 'domain/connection.dart';
-export 'presentation/add_connection_screen.dart';
-export 'presentation/connections_controller.dart';
-export 'presentation/connections_list_screen.dart';
-export 'presentation/edit_connection_screen.dart';
+export 'domain/connection/connection.dart';
+export 'presentation/connections_list/connections_list_screen.dart';
+export 'presentation/add_connection/add_connection_screen.dart';
+export 'presentation/edit_connection/edit_connection_screen.dart';
 ```
 
 ### Why an AI prefers this
@@ -153,8 +158,9 @@ lib/features/<feature>/
       <verb>_request.dart          ← per-verb DTO files (see DTOs below)
       <verb>_response.dart
   presentation/
-    <screen>_screen.dart           ← StatefulWidget/StatelessWidget + its private widgets
-    <screen>_controller.dart       ← @riverpod notifier driving the screen
+    <screen>/
+      <screen>_screen.dart         ← StatefulWidget/StatelessWidget + its private widgets
+      <screen>_controller.dart     ← @riverpod notifier driving the screen
 ```
 
 The rule: a screen file owns the widget tree and its **private**

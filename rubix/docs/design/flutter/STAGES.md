@@ -389,14 +389,14 @@ test green.
 
 ### Home screen
 
-- [ ] `lib/features/home/presentation/home_controller.dart`
+- [x] `lib/features/home/presentation/home_controller.dart`
   (`@riverpod`) exposes:
   - `agentHealthProvider` calling `GET /healthz` via
     `probeDio()` (no bearer required).
   - `currentUserProvider` calling `GET /api/v1/auth/me` via
     `apiClientProvider`.
   - The active connection (from `activeConnectionProvider`).
-- [ ] `lib/features/home/presentation/home_screen.dart` renders:
+- [x] `lib/features/home/presentation/home_screen.dart` renders:
   - Status pill for agent health (green ok, red unreachable).
   - Email + display name from `/auth/me`.
   - Active connection label + baseUrl.
@@ -405,13 +405,13 @@ test green.
 
 ### Integration test
 
-- [ ] `integration_test/smoke_test.dart` covers:
+- [x] `integration_test/smoke_test.dart` covers:
   1. Launch app with env-supplied URL + creds.
   2. Add a connection.
   3. Log in.
   4. Assert home screen renders: status pill green; email
      matches env-supplied value.
-- [ ] Env vars documented (which `--dart-define` flags the test
+- [x] Env vars documented (which `--dart-define` flags the test
   needs).
 
 ### CI
@@ -425,7 +425,7 @@ test green.
 
 - [ ] `flutter build ios --debug` succeeds.
 - [ ] `flutter build apk --debug` succeeds.
-- [ ] `flutter build web` succeeds.
+- [x] `flutter build web` succeeds.
 
 ### Block 5 acceptance gate
 
@@ -435,6 +435,30 @@ test green.
 - [ ] All three integration test CI jobs green.
 - [ ] Debug builds succeed on all three targets.
 - [ ] **Block 5 done.**
+
+---
+
+## Reusable libraries (landed outside block sequence)
+
+Utility libraries under `lib/core/network/` ported from
+`examples/rubix-app`. These are platform-native (not web).
+
+- [x] `lib/core/network/scanner_models.dart` — `ScannedHost`,
+  `OpenPort`, `ScanProgress` models.
+- [x] `lib/core/network/port_scanner.dart` — `PortScanner` class
+  (`checkPort`, `scanPorts`, `scanRange` via `dart:io` TCP).
+- [x] `lib/core/network/wifi/wifi_models.dart` — `WifiNetwork`,
+  `WifiScanResult`, enums (`WifiSecurity`, `WifiBand`,
+  `SignalStrength`).
+- [x] `lib/core/network/wifi/wifi_scanner.dart` — `WifiScanner`
+  class wrapping `wifi_scan` package (Android/iOS/Windows/Linux).
+- [x] `lib/core/network/barcode/barcode_models.dart` —
+  `BarcodeResult`, `BarcodeFormat` enum.
+- [x] `lib/core/network/barcode/barcode_scanner.dart` —
+  `BarcodeScannerScreen` widget wrapping `mobile_scanner`
+  (Android/iOS/macOS).
+- [x] `lib/core/network/network.dart` — barrel export.
+- [x] `pubspec.yaml` — `wifi_scan` and `mobile_scanner` added.
 
 ---
 
