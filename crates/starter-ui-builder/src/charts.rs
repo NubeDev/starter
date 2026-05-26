@@ -205,6 +205,7 @@ impl TimeSeriesChartBuilder {
     pub fn build(self) -> Component {
         Component::Chart {
             id: Some(self.id),
+            title: None,
             sources: self.sources,
             kind: self.kind,
             agg: None,
@@ -242,6 +243,7 @@ impl RowsChartBuilder {
     pub fn build(self) -> Component {
         Component::Chart {
             id: Some(self.id),
+            title: None,
             sources: self.sources,
             kind: self.kind,
             agg: None,

@@ -19,7 +19,7 @@ pub use convert::{
 };
 pub use error::LoadError;
 pub use load::{into_arcs, load_all};
-pub use yaml::{parse_yaml, RubixFlowYaml, RubixLinkYaml, RubixNodeYaml, ALLOWED_TOOLS_KEY};
+pub use yaml::{parse_yaml, RubixFlowYaml, RubixLinkYaml, RubixNodeYaml, ALLOWED_TOOLS_KEY, TOOLS_KEY};
 
 /// All bundled rubix flows, embedded at compile time.
 pub static BUNDLED: Dir<'_> = include_dir!("$CARGO_MANIFEST_DIR/flows");

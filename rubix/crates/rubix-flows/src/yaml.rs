@@ -53,6 +53,16 @@ pub struct RubixNodeYaml {
 /// in the list is allowed, not just `[0]`.
 pub const ALLOWED_TOOLS_KEY: &str = "allowed_tools";
 
+/// Key under `node.config` that carries the per-node CLI built-in
+/// tool restriction. Distinct from [`ALLOWED_TOOLS_KEY`]:
+/// `allowed_tools` is the MCP-bridged surface the model may dispatch
+/// (forwarded as `--allowedTools` to the wrapped Claude CLI);
+/// `tools` controls the CLI's own *built-in* catalogue (`Bash`,
+/// `Read`, `Edit`, …) and is forwarded as `--tools`. `tools: []`
+/// is the "MCP only, no built-ins" lockdown — the documented
+/// default for every `ai-agent` flow node per stage 07.
+pub const TOOLS_KEY: &str = "tools";
+
 impl RubixNodeYaml {
     /// Return the full `config.allowed_tools` list, in declaration
     /// order. An empty `Vec` means the YAML did not declare the key;
@@ -83,6 +93,38 @@ impl RubixNodeYaml {
             out.push(s.to_owned());
         }
         Ok(out)
+    }
+
+    /// Return the `config.tools` list as `Some(Vec<String>)` if the
+    /// key is present (even if the list is empty), or `None` if the
+    /// key is absent. The distinction matters: `tools: []` means
+    /// "lock down to MCP only — no built-ins", while an absent key
+    /// means "no per-node restriction, keep CLI default". Compare
+    /// with [`Self::allowed_tools`] which collapses absent and
+    /// empty into the same `Vec::new()`.
+    ///
+    /// Returns an error if `tools` is present but is not a YAML
+    /// sequence of strings.
+    pub fn tools(&self) -> Result<Option<Vec<String>>, LoadError> {
+        let Some(node) = self.config.as_mapping() else {
+            return Ok(None);
+        };
+        let Some(raw) = node.get(serde_yaml::Value::String(TOOLS_KEY.to_owned())) else {
+            return Ok(None);
+        };
+        let seq = raw.as_sequence().ok_or_else(|| LoadError::Tools {
+            node: self.id.clone(),
+            message: format!("`{TOOLS_KEY}` must be a sequence of strings"),
+        })?;
+        let mut out = Vec::with_capacity(seq.len());
+        for entry in seq {
+            let s = entry.as_str().ok_or_else(|| LoadError::Tools {
+                node: self.id.clone(),
+                message: format!("`{TOOLS_KEY}` entries must be strings"),
+            })?;
+            out.push(s.to_owned());
+        }
+        Ok(Some(out))
     }
 }
 

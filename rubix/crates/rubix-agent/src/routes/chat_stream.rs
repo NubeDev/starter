@@ -227,14 +227,14 @@ async fn chat_stream(
         // (`Bash`, `Read`, `AskUserQuestion`, ...) is in scope and
         // the model defaults to `AskUserQuestion`, turning "make
         // me an iot dashboard" into a multi-turn survey instead
-        // of an action. `mcp__acme__*` matches every rubix tool
+        // of an action. `mcp__rubix__*` matches every rubix tool
         // exposed via the MCP server we configure in
         // `crates/starter-ai/src/runners/claude.rs` (server name
-        // hard-coded to `"acme"` there).
+        // hard-coded to `"rubix"` there).
         allowed_tools: state
             .mcp_url
             .as_ref()
-            .map(|_| "mcp__acme__*".to_owned()),
+            .map(|_| "mcp__rubix__*".to_owned()),
         // The host has already gated the request at the HTTP layer
         // (login cookie + `with_principal`). Without `Bypass` the
         // CLI's `--permission-mode bypassPermissions` alone still

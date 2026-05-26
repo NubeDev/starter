@@ -146,7 +146,7 @@ pub async fn build_tool_registry(
     // instead of being forced to recurse into a flow wrapper whose
     // only effect is to call the same primitive on its behalf.
     // Without this clone the chat surface saw only the 7 flow
-    // wrappers and would call `mcp__acme__com_rubix_dashboard-
+    // wrappers and would call `mcp__rubix__com_rubix_dashboard-
     // assistant` (itself) when asked to build a dashboard \u2014 see
     // `rubix/docs/sessions/2026-05-25-dashboards-sidebar-sse-and-chat-gaps.md`.
     let primitives_for_mcp: Vec<Arc<dyn starter_spi::tool::Tool>> =

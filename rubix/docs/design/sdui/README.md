@@ -13,6 +13,7 @@ for every sub-area.
 
 | Area | Owns |
 |---|---|
+| [`components/`](./components/README.md) | The `Component` enum catalogue, JSON Schema emission, curated companion tables, and the missing-API gap (no runtime `list_widgets` verb yet). |
 | [`storage/`](./storage/README.md) | `dashboards_definitions` PG table, revisions, NOTIFY, page-level authz registration. |
 | [`bindings/`](./bindings/README.md) | The six `starter-ui-bindings` / `starter-ui-ir` substrate fixes (per-variant `Bindable`, qualifiers, `Repeat`, synthetic ids, portable-subset flag, `$msg` source). |
 | [`host-glue/`](./host-glue/README.md) | Rubix's four trait impls (`EntityGraph`, `PageProvider`, `QueryEngine`, `HandlerRegistry`) and the `sdui_router` mount under `/api/v1/ui`. |

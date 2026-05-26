@@ -20,6 +20,8 @@ nodes:
       session_policy: fresh
       skill_hint: com.rubix.analytics-reporter
       cost_cap: 0.50_usd
+      # Stage 07 lockdown — MCP only, no CLI built-ins.
+      tools: []
       allowed_tools:
         - analytics.query
         - analytics.report

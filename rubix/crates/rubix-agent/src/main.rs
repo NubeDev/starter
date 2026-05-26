@@ -399,6 +399,20 @@ async fn main() -> Result<()> {
             app = app.merge(with_principal(chat_router, auth.authenticator.clone()));
         }
 
+        // Stage 07 — `POST /api/v1/flows/{id}/run`. Synchronous
+        // human-driven flow invocation. Same `Arc<ToolRegistry>` the
+        // MCP surface dispatches against, so a flow fired here goes
+        // through the identical `FlowAsTool::invoke` path the AI uses
+        // via `mcp.tools/call`. AuthN-gated; no audit / changelog
+        // (those layers are tools-router specific).
+        {
+            use starter_server::auth::with_principal;
+            let flow_run_router = routes::flow_run::router(
+                routes::flow_run::FlowRunState { tools: mcp.tools.clone() },
+            );
+            app = app.merge(with_principal(flow_run_router, auth.authenticator.clone()));
+        }
+
         // Layer order matters. The changelog middleware reads
         // `Principal` from request extensions, so it must run
         // *inside* `with_principal`. We therefore audit the
@@ -425,7 +439,10 @@ async fn main() -> Result<()> {
             target: "rubix.boot",
             "RUBIX_DATABASE_URL unset — mounting tools router without auth/authz/audit gates",
         );
-        app = app.merge(tools_router);
+        let flow_run_router = routes::flow_run::router(
+            routes::flow_run::FlowRunState { tools: mcp.tools.clone() },
+        );
+        app = app.merge(tools_router).merge(flow_run_router);
     }
 
     // Apply a permissive CORS layer so browser clients (the Flutter

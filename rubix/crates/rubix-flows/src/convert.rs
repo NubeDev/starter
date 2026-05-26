@@ -6,7 +6,7 @@ use starter_flow_spi::flow::{FlowId, FlowRevisionId};
 use starter_flow_spi::node::{KindId, NodeId};
 
 use crate::error::LoadError;
-use crate::yaml::{RubixFlowYaml, ALLOWED_TOOLS_KEY};
+use crate::yaml::{RubixFlowYaml, ALLOWED_TOOLS_KEY, TOOLS_KEY};
 
 /// Surface string contributors type in YAML (`kind: ai-agent`).
 pub const AI_AGENT_KIND_YAML: &str = "ai-agent";
@@ -67,21 +67,40 @@ pub fn convert(
         let mut settings = serde_json::to_value(&node.config)
             .unwrap_or_else(|_| serde_json::Value::Object(serde_json::Map::new()));
         let allowed = node.allowed_tools()?;
-        if !allowed.is_empty() {
+        let cli_tools = node.tools()?;
+        if !allowed.is_empty() || cli_tools.is_some() {
             let obj = match settings {
                 serde_json::Value::Object(m) => m,
                 _ => serde_json::Map::new(),
             };
             let mut obj = obj;
-            obj.insert(
-                ALLOWED_TOOLS_KEY.to_owned(),
-                serde_json::Value::Array(
-                    allowed
-                        .iter()
-                        .map(|s| serde_json::Value::String(s.clone()))
-                        .collect(),
-                ),
-            );
+            if !allowed.is_empty() {
+                obj.insert(
+                    ALLOWED_TOOLS_KEY.to_owned(),
+                    serde_json::Value::Array(
+                        allowed
+                            .iter()
+                            .map(|s| serde_json::Value::String(s.clone()))
+                            .collect(),
+                    ),
+                );
+            }
+            // `tools` is preserved even when the list is empty: that
+            // is the "MCP only, no built-ins" lockdown the rubix
+            // ai-agent node forwards to `CliCfg::tools`. Collapsing
+            // empty into absent would silently re-enable Bash / Read
+            // / Edit and let the model curl around the MCP surface.
+            if let Some(tools) = cli_tools {
+                obj.insert(
+                    TOOLS_KEY.to_owned(),
+                    serde_json::Value::Array(
+                        tools
+                            .iter()
+                            .map(|s| serde_json::Value::String(s.clone()))
+                            .collect(),
+                    ),
+                );
+            }
             settings = serde_json::Value::Object(obj);
         }
         let mut decl = NodeDecl::new(node_id, kind);

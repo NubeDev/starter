@@ -11,5 +11,6 @@ pub mod auth;
 pub mod chat_stream;
 pub mod dashboard_events;
 pub mod flow_events;
+pub mod flow_run;
 pub mod openapi_doc;
 pub mod tools;

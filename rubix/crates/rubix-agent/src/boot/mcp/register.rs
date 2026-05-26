@@ -329,6 +329,25 @@ async fn register_one(
     // NodeId-keyed lookup (node ids collide across flows).
     let primary_tool = primary_tool_for_root(&body);
 
+    // Per-flow CLI built-in restriction, captured at register time.
+    // Surface contract: `Some(Vec<String>)` when the root node
+    // declares `config.tools` in YAML (empty Vec = "MCP only, no
+    // built-ins"); `None` when the key is absent (CLI default
+    // catalogue stays in scope). The seed adapter forwards this
+    // verbatim so the shared agent node body can hand it to
+    // `AgentLoop::with_cli_tools`. See stage 07 § "lock down the
+    // tool surface".
+    let cli_tools: Option<Vec<String>> = body
+        .nodes
+        .first()
+        .and_then(|n| n.settings.get(rubix_flows::yaml::TOOLS_KEY))
+        .and_then(|v| v.as_array())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(str::to_owned))
+                .collect()
+        });
+
     // Per-flow skill body, captured at register time. The seed
     // adapter embeds this into the seed payload so the agent node
     // can prepend it to the LLM prompt as a system-style preamble.
@@ -432,6 +451,7 @@ async fn register_one(
     let seed_slot_for_adapter = seed_slot.clone();
     let primary_tool_for_adapter = primary_tool.clone();
     let skill_body_for_adapter = skill_body.clone();
+    let cli_tools_for_adapter = cli_tools.clone();
     let trigger_cron_for_adapter = trigger_cron_seed.clone();
     let tool_call_seeds_for_adapter = tool_call_seeds.clone();
     let seed: starter_flow_surfaces::SeedAdapter = Arc::new(move |input: &Value| {
@@ -472,6 +492,7 @@ async fn register_one(
             "input": enriched_input,
             "primary_tool": primary_tool_for_adapter,
             "skill_body": skill_body_for_adapter,
+            "cli_tools": cli_tools_for_adapter,
             "_nonce": nonce.to_string(),
         });
         // Wall-clock for tool_input.tick_epoch_ms auto-injection.

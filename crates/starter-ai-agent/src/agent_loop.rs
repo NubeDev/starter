@@ -40,13 +40,21 @@ pub struct AgentLoop {
     /// the wrapped binary. Restricts which tools the model may
     /// call — including the CLI's *built-in* tools
     /// (`Bash`, `Read`, `AskUserQuestion`, …) and the MCP-
-    /// bridged tools (`mcp__acme__*`). Empty / `None` keeps the
+    /// bridged tools (`mcp__rubix__*`). Empty / `None` keeps the
     /// CLI default, which permits the full built-in catalogue —
     /// suitable for ad-hoc Claude Code use, terrible for an
     /// assistant whose only job is to dispatch our MCP tools
     /// (the model will reach for `AskUserQuestion` instead of
     /// acting). No-op for non-CLI runners.
     allowed_tools: Option<String>,
+    /// CLI built-in tool restriction forwarded to `CliCfg::tools`.
+    /// Distinct from [`Self::allowed_tools`]: `--tools` controls the
+    /// CLI's *built-in* catalogue (`Bash`, `Read`, `Edit`, …),
+    /// `--allowedTools` gates the MCP-bridged tools. `Some("")`
+    /// (empty list) means "no built-ins" — used by `ai-agent` flow
+    /// nodes that should only reach MCP. `None` keeps the CLI
+    /// default, which permits the full built-in catalogue.
+    cli_tools: Option<String>,
     /// CLI permission mode forwarded to `CliCfg::permission_mode`.
     /// `None` keeps the CLI's interactive default — fatal for
     /// headless surfaces because every tool call stalls waiting
@@ -67,12 +75,24 @@ impl AgentLoop {
             mcp_url: None,
             mcp_token: None,
             allowed_tools: None,
+            cli_tools: None,
             permission_mode: None,
         }
     }
 
+    /// Restrict the wrapped CLI's *built-in* tool catalogue. Pass
+    /// `Some(String::new())` to disable every built-in (the
+    /// `tools: []` shape from rubix flow YAML — the agent's only
+    /// reachable surface is the MCP bridge). `None` keeps the CLI
+    /// default, which permits the full built-in set. No-op for
+    /// non-CLI runners.
+    pub fn with_cli_tools(mut self, tools: Option<String>) -> Self {
+        self.cli_tools = tools;
+        self
+    }
+
     /// Restrict the wrapped CLI to a single tool-filter pattern
-    /// (e.g. `"mcp__acme__*"` to allow only MCP-bridged tools
+    /// (e.g. `"mcp__rubix__*"` to allow only MCP-bridged tools
     /// and disable every built-in including `AskUserQuestion`).
     /// Empty / whitespace-only is treated as unset.
     pub fn with_allowed_tools(mut self, pattern: Option<String>) -> Self {
@@ -164,6 +184,7 @@ impl AgentLoop {
                     mcp_url: self.mcp_url.clone(),
                     mcp_token: self.mcp_token.clone(),
                     allowed_tools: self.allowed_tools.clone(),
+                    tools: self.cli_tools.clone(),
                     permission_mode: self.permission_mode,
                     ..Default::default()
                 })

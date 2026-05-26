@@ -65,6 +65,7 @@
               {
                 "type": "chart",
                 "id": "chart-elec-main",
+                "title": "Electricity — main (30d, 15m)",
                 "kind": "line",
                 "page_state_key": "elec_main_range",
                 "sources": [
@@ -91,6 +92,7 @@
               {
                 "type": "chart",
                 "id": "chart-elec-hvac",
+                "title": "Electricity — HVAC (30d, 15m)",
                 "kind": "line",
                 "page_state_key": "elec_hvac_range",
                 "sources": [
@@ -117,6 +119,7 @@
               {
                 "type": "chart",
                 "id": "chart-water-main",
+                "title": "Water — main (30d, 15m)",
                 "kind": "line",
                 "page_state_key": "water_main_range",
                 "sources": [
@@ -149,6 +152,7 @@
               {
                 "type": "chart",
                 "id": "chart-elec-main-l2",
+                "title": "Electricity — main (24h, 1m)",
                 "kind": "line",
                 "page_state_key": "elec_main_zoom",
                 "sources": [
@@ -175,6 +179,7 @@
               {
                 "type": "chart",
                 "id": "chart-elec-hvac-l2",
+                "title": "Electricity — HVAC (24h, 1m)",
                 "kind": "line",
                 "page_state_key": "elec_hvac_zoom",
                 "sources": [
@@ -201,6 +206,7 @@
               {
                 "type": "chart",
                 "id": "chart-water-main-l2",
+                "title": "Water — main (24h, 1m)",
                 "kind": "line",
                 "page_state_key": "water_main_zoom",
                 "sources": [

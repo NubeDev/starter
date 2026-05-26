@@ -22,6 +22,10 @@ nodes:
       session_policy: continue
       skill_hint: com.rubix.dashboard-builder
       cost_cap: 0.50_usd
+      # Stage 07 lockdown — no built-in CLI tools (Bash / Read /
+      # Write / Edit / AskUserQuestion). The agent's only reachable
+      # surface is the MCP bridge listed under `allowed_tools`.
+      tools: []
       allowed_tools:
         # First entry is the zero-arg "primary tool" picked by
         # boot/mcp/register.rs::primary_tool_for_root — must be a

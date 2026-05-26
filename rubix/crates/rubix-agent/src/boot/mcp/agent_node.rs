@@ -225,24 +225,69 @@ impl NodeBehavior for RubixAiAgentNode {
             // all in scope, and the model reaches for the worst of
             // them (`AskUserQuestion`) instead of acting — turning
             // "make me an iot dashboard" into a multi-turn survey.
-            // `mcp__acme__*` matches every tool exposed through the
+            // `mcp__rubix__*` matches every tool exposed through the
             // MCP server we generate in
             // `crates/starter-ai/src/runners/claude.rs` (server name
-            // hard-coded to `"acme"` there). The pattern is a no-op
+            // hard-coded to `"rubix"` there). The pattern is a no-op
             // for non-CLI runners and for `mcp_url == None` (no MCP
             // bridge in scope), so test fixtures stay unaffected.
             let allowed_pattern = self
                 .mcp_url
                 .as_ref()
-                .map(|_| "mcp__acme__*".to_owned());
+                .map(|_| "mcp__rubix__*".to_owned());
+            // Per-flow CLI built-in restriction, snapshotted into the
+            // seed payload by `boot::mcp::register::register_one`.
+            // `Some([])` (the rubix `tools: []` lockdown — stage 07
+            // "MCP only, no built-ins") forwards an empty `--tools`
+            // list to the wrapped Claude CLI so Bash / Read / Edit /
+            // AskUserQuestion are all out of scope. Absent → `None`,
+            // CLI default catalogue stays in scope.
+            let cli_tools: Option<String> = payload
+                .get("cli_tools")
+                .and_then(|v| v.as_array())
+                .map(|arr| {
+                    arr.iter()
+                        .filter_map(|v| v.as_str())
+                        .collect::<Vec<&str>>()
+                        .join(",")
+                });
+            // Structured stage-07 self-check log line: confirms per
+            // run whether the skill loaded, whether the CLI built-in
+            // surface was locked down, and which MCP allow pattern
+            // the wrapper saw. One line is enough — when the next AI
+            // session does something weird, this tells us which of
+            // the three independent failure modes (skill body
+            // missing, Bash leaked back in, MCP allow pattern drift)
+            // is in play without re-running the flow.
+            let skill_body_len: usize = payload
+                .get("skill_body")
+                .and_then(|v| v.as_str())
+                .map(str::len)
+                .unwrap_or(0);
+            let skill_first_80: String = payload
+                .get("skill_body")
+                .and_then(|v| v.as_str())
+                .map(|s| s.chars().take(80).collect())
+                .unwrap_or_default();
+            tracing::info!(
+                target: "rubix.ai_agent.self_check",
+                node = %ctx.node,
+                skill_hint = ?payload.get("primary_tool").and_then(|v| v.as_str()),
+                skill_bytes_len = skill_body_len,
+                skill_first_80 = %skill_first_80,
+                cli_tools = ?cli_tools.as_deref(),
+                mcp_allowed_pattern = ?allowed_pattern.as_deref(),
+                "ai-agent run self-check"
+            );
             let agent = AgentLoop::new(self.runner.clone(), ToolSet::new(self.tools.clone()))
                 .with_mcp(self.mcp_url.clone(), self.mcp_token.clone())
                 .with_allowed_tools(allowed_pattern)
+                .with_cli_tools(cli_tools)
                 // Bypass the CLI's interactive approval prompt. The
                 // host has already gated the request at the HTTP
                 // boundary (login + cookie); the model is acting on
                 // a tool the operator implicitly approved by signing
-                // in. Without this every `mcp__acme__*` call hangs
+                // in. Without this every `mcp__rubix__*` call hangs
                 // on a stdin prompt the headless wrapper never
                 // answers, which surfaces in the UI as "needs your
                 // permission" no-op replies.

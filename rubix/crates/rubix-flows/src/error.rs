@@ -36,4 +36,9 @@ pub enum LoadError {
     /// sequence of strings).
     #[error("node `{node}`: {message}")]
     AllowedTools { node: String, message: String },
+    /// `config.tools` was present but malformed (not a sequence of
+    /// strings). `tools` is the CLI built-in restriction — distinct
+    /// from `allowed_tools` (the MCP-bridged surface).
+    #[error("node `{node}`: {message}")]
+    Tools { node: String, message: String },
 }

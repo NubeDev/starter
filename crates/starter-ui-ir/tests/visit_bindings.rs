@@ -71,6 +71,7 @@ fn visits_badge_label_and_kpi_label() {
 fn visits_chart_sources_and_tabs() {
     let mut c = Component::Chart {
         id: None,
+        title: None,
         sources: vec![ChartSource::Series {
             node_id: "{{$target}}-id".into(),
             slot: "{{$target}}-slot".into(),

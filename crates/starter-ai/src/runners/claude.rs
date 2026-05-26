@@ -128,7 +128,7 @@ impl AiRunner for ClaudeRunner {
                 let token = cfg.mcp_token.as_deref().unwrap_or("");
                 let json = serde_json::json!({
                     "mcpServers": {
-                        "acme": {
+                        "rubix": {
                             "type": "http",
                             "url": url,
                             "headers": { "Authorization": format!("Bearer {token}") }
@@ -178,7 +178,19 @@ impl AiRunner for ClaudeRunner {
         // (Bash, Read, Edit, …). `--tools` is distinct from `--allowed-tools`
         // which gates MCP server permissions; this controls what is callable.
         if let Some(tools) = &cfg.tools {
-            let tool_list: Vec<&str> = tools.split(',').map(str::trim).collect();
+            // Filter out empty segments so `Some("")` (the rubix-flows
+            // `tools: []` shape — "no built-ins, MCP only") forwards
+            // an empty list to the CLI rather than the single
+            // tool-name `""`. Splitting `""` on `,` produces `[""]`;
+            // without the filter that would surface as `--tools ""`,
+            // which Claude CLI treats as "tool named empty string"
+            // and ignores rather than as the all-built-ins-off knob
+            // we want.
+            let tool_list: Vec<&str> = tools
+                .split(',')
+                .map(str::trim)
+                .filter(|s| !s.is_empty())
+                .collect();
             cmd = cmd.tools(tool_list);
         }
         if let Some(path) = &mcp_tmp_path {

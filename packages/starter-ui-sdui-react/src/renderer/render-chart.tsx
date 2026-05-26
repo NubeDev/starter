@@ -19,17 +19,23 @@ function extractPoints(source: unknown): Point[] {
 }
 
 function extractSeries(node: import("@nube/starter-ui-ir").UiComponent): Point[][] {
-  if (Array.isArray(node.sources)) {
-    return node.sources.map(extractPoints).filter((s) => s.length > 0);
-  }
+  // Server-emitted `series` is authoritative — the chart-source
+  // resolver fills it from `Static` / `AnalyticsTemplate` /
+  // telemetry sources. Only fall back to inline `sources[*].points`
+  // when the server didn't emit any series (legacy authored
+  // dashboards that ship inline static points without a resolver).
   if (Array.isArray(node.series)) {
-    return node.series
+    const fromSeries = node.series
       .map((s) =>
         s && typeof s === "object" && Array.isArray((s as { points?: unknown }).points)
           ? extractPoints(s)
           : [],
       )
       .filter((s) => s.length > 0);
+    if (fromSeries.length > 0) return fromSeries;
+  }
+  if (Array.isArray(node.sources)) {
+    return node.sources.map(extractPoints).filter((s) => s.length > 0);
   }
   return [];
 }

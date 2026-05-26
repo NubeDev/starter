@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - SDUI</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html">Business</a>
+        <a href="developer.html">Developer</a>
+        <a href="data-flow.html">Data Flow</a>
+        <a href="tagging.html">Tagging</a>
+        <a href="flows-tools.html">Flows + Tools</a>
+        <a href="flow-runtime.html">Runtime Flows</a>
+        <a href="sdui.html" aria-current="page">SDUI</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+<section id="sdui" class="page">
+      <div class="wrap">
+        <div class="page-number">SDUI — Server-Driven UI</div>
+        <div class="data-hero">
+          <div>
+            <h1>One page definition. Web, mobile, and desktop render it the same.</h1>
+            <p class="lede">
+              SDUI lets operators <em>and</em> the dashboard-assistant AI flow author a single
+              dashboard tree that renders identically across the React web shell, the Flutter
+              mobile app, and the Tauri desktop wrapper — with no per-platform widget code.
+              The server stores the definition, resolves the data, and ships a typed
+              <code>ComponentTree</code>. The client just walks the tree and draws.
+            </p>
+          </div>
+          <aside class="map-panel" aria-label="SDUI pipeline summary">
+            <h2>Where the pieces live</h2>
+            <div class="db-split">
+              <article class="db-card">
+                <header>Postgres</header>
+                <div class="db-body">
+                  <p>Source of truth for the page definition — the unresolved tree.</p>
+                  <ul>
+                    <li><code>dashboards_definitions</code> rows</li>
+                    <li>Per-page revisions + NOTIFY on write</li>
+                    <li>Authz registration as a resource</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="db-card clickhouse">
+                <header>ClickHouse</header>
+                <div class="db-body">
+                  <p>Source of truth for the numbers a chart or KPI shows.</p>
+                  <ul>
+                    <li>L2 / L3 marts read via named templates</li>
+                    <li>Bucket-stitched time-series for charts</li>
+                    <li>Server-side downsampling before the wire</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </aside>
+        </div>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>What SDUI actually is</h2>
+            <p>A typed IR (the <code>Component</code> enum in <code>starter-ui-ir</code>), a resolver that turns an authored tree into a renderable tree, and per-platform renderers that walk it. The author never writes JSX, Dart widgets, or CSS.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Author</h3>
+              <p>An operator or the dashboard-assistant AI flow calls <code>rubix.dashboard.create</code> / <code>.update</code> / <code>.page_set</code> with a JSON tree. The tree is stored in Postgres with a revision id.</p>
+            </article>
+            <article class="card">
+              <h3>Resolve</h3>
+              <p>On <code>rubix.dashboard.get</code> the server walks the tree: it pulls data per chart/KPI source, applies bindings, and emits a fully-resolved <code>ComponentTree</code>. The client never sees raw SQL.</p>
+            </article>
+            <article class="card">
+              <h3>Render</h3>
+              <p>React (<code>@nube/starter-ui-sdui-react</code>), Flutter, and Tauri all share the same IR. Each platform ships per-variant renderers — adding a new widget means adding one variant and three renderers.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>The component tree, by layer</h2>
+            <p>Every SDUI page is a single root <code>Page</code> node with a tree of layout containers and leaf widgets underneath. The IR enforces what can nest where.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Layout containers</h3>
+              <ul>
+                <li><code>Page</code> — the root, owns title + page-level slots</li>
+                <li><code>Row</code> / <code>Col</code> — flex containers</li>
+                <li><code>Grid</code> — fixed-column responsive layout</li>
+                <li><code>Tabs</code> — labelled tab strip</li>
+                <li><code>Section</code> / <code>Divider</code> — grouping + visual breaks</li>
+                <li><code>Repeat</code> — fan-out one child template across a list source</li>
+                <li><code>Drawer</code> / <code>Dialog</code> — overlay surfaces</li>
+                <li><code>Wizard</code> — multi-step flow shell</li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Display widgets</h3>
+              <ul>
+                <li><code>Text</code> / <code>Heading</code> / <code>Markdown</code> / <code>RichText</code></li>
+                <li><code>Badge</code> — status pill with semantic intent</li>
+                <li><code>Kpi</code> / <code>KpiGrid</code> — scalar numbers with unit + delta</li>
+                <li><code>Chart</code> — time-series, bar, pie, donut, gauge, area, stacked-bar</li>
+                <li><code>Sparkline</code> — inline mini-chart</li>
+                <li><code>Table</code> / <code>ArrayTable</code> / <code>JsonTable</code></li>
+                <li><code>List</code> / <code>Tree</code> / <code>Timeline</code></li>
+                <li><code>Card</code> / <code>Detail</code> / <code>Diff</code></li>
+                <li><code>Menu</code> / <code>ActionWidget</code></li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Input widgets (write-path)</h3>
+              <ul>
+                <li><code>Form</code> + <code>FieldGroup</code> — grouped multi-field submit</li>
+                <li><code>TextField</code> / <code>NumberField</code> / <code>Textarea</code></li>
+                <li><code>Toggle</code> / <code>Slider</code> / <code>Checkbox</code></li>
+                <li><code>Select</code> / <code>SelectField</code> / <code>RadioGroup</code> / <code>Segmented</code></li>
+                <li><code>DateField</code> / <code>DateRange</code></li>
+                <li><code>RefPicker</code> — pick a node / entity by reference</li>
+                <li><code>MarkdownEditor</code></li>
+                <li><code>Button</code> — fires actions / tools</li>
+              </ul>
+            </article>
+          </div>
+          <p class="lede" style="margin-top: 1rem;">
+            Two fallback variants exist in every renderer for resilience: <code>Forbidden</code>
+            (ACL-redacted node — surfaces as a stub the user can't see through) and
+            <code>Dangling</code> (a widget the resolver couldn't satisfy, or a V3-only
+            variant reaching a V2 client). Both render as visible placeholders so a missing
+            chart can't crash the page.
+          </p>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Time-series data — how a chart gets its numbers</h2>
+            <p>The author never embeds SQL. They pick a <code>ChartSource</code> variant; the server's resolver does the rest. Six variants today, covering live telemetry, ad-hoc queries, and saved analytics templates.</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Chart data resolution pipeline">
+            <div class="pipe-step extension">
+              <small>1</small>
+              <strong>Author picks a source</strong>
+              <span>One <code>Chart</code> node names a <code>ChartSource</code> variant and a <code>ChartKind</code> (line, bar, gauge…). No SQL in the tree.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>2</small>
+              <strong>Resolver dispatches</strong>
+              <span>On <code>dashboard.get</code> the resolver matches the variant and routes to the right backend — domain history, RSQL, or analytics templates.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>3</small>
+              <strong>ClickHouse / RSQL fetch</strong>
+              <span>Marts are read through named templates with typed params; bucket-stitched series are built server-side so the browser never sees 100k rows.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>4</small>
+              <strong>Downsample + shape</strong>
+              <span>The resolver emits a <code>ChartSeries</code> list of <code>[ts_ms, value]</code> points per series, capped to a server-side ceiling.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>5</small>
+              <strong>Renderer draws</strong>
+              <span>The client gets a ready-to-plot tree. Live updates ride the <code>node.&lt;id&gt;.slot.&lt;slot&gt;</code> binding bus for sources that subscribe.</span>
+            </div>
+          </div>
+
+          <div class="grid-3 section">
+            <article class="card">
+              <h3><code>Series</code></h3>
+              <p>Time-series over a single node's slot — the V2 default. Live updates stream through the binding bus, so a gauge or line chart tracks the slot in real time without polling.</p>
+            </article>
+            <article class="card">
+              <h3><code>SeriesByKind</code></h3>
+              <p>Fans the same slot out across every node of a given kind (e.g. "CPU % per host"). The resolver returns one <code>ChartSeries</code> per node, capped by <code>top_n</code>.</p>
+            </article>
+            <article class="card">
+              <h3><code>Rows</code></h3>
+              <p>Categorical RSQL aggregation — <code>count</code>, <code>sum</code>, <code>avg</code>, <code>min</code>, <code>max</code> grouped by a slot field. Powers bar / pie / donut over current state and counter-style KPIs.</p>
+            </article>
+            <article class="card">
+              <h3><code>SeriesFromRsql</code></h3>
+              <p>Time-series of an RSQL aggregation. The resolver issues one <code>Rows</code> query per bucket and stitches the results — no write-time rollup needed. Optional <code>group_by</code> emits multi-series.</p>
+            </article>
+            <article class="card">
+              <h3><code>AnalyticsTemplate</code></h3>
+              <p>A named SQL template (e.g. <code>meter_value_24h_1m</code>) evaluated through <code>rubix.analytics.query</code>. <code>map.ts_field</code> / <code>map.value_field</code> tells the resolver which columns are time and value.</p>
+            </article>
+            <article class="card">
+              <h3><code>Static</code></h3>
+              <p>Server-authored <code>[ts_ms, value]</code> points passed through verbatim. Useful for fixtures, doc charts, and AI-built placeholders before the real data binding is wired.</p>
+            </article>
+          </div>
+
+          <article class="card section">
+            <h3>The data-flow example, end-to-end</h3>
+            <p>
+              The <code>dashboard.data-flow-site-a</code> page (stage 05 of the data-flow scenario) shows
+              two L3 line charts for kWh and litres over the last 24 h, plus an L2 1-minute cross-over
+              chart per meter. The kWh chart binds <code>AnalyticsTemplate{ name: "meter_kwh_last_24h" }</code>;
+              the resolver runs the template against <code>rubix.meter_readings_15m</code>, maps
+              <code>bucket_start</code> → <code>ts_ms</code> and <code>value_avg</code> → series points,
+              and the React renderer draws it. The L2 chart points at <code>meter_value_24h_1m</code>
+              against <code>rubix.meter_readings_1m</code> with the same shape. Same widget,
+              same renderer — only the template changes.
+            </p>
+          </article>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Bindings — the read &amp; write substrate</h2>
+            <p>Bindings are how a widget refers to data outside its own props. They power live updates, two-way controls, and the <code>Repeat</code> fan-out.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Read bindings</h3>
+              <p>Expressions like <code>$target.enabled</code> or <code>$self.value</code> resolve against the page's entity graph. Used by display widgets to pull live slot values; the binding bus pushes updates without re-fetching the tree.</p>
+            </article>
+            <article class="card">
+              <h3>Write bindings (S1)</h3>
+              <p><code>Toggle</code>, <code>Slider</code>, and form fields carry a <code>BindingSpec</code> naming the slot to write back to, with per-control <code>concurrency</code> (LWW / OCC) and <code>debounce_ms</code>. One control can fan out to many slots in a single submit.</p>
+            </article>
+            <article class="card">
+              <h3><code>Repeat</code></h3>
+              <p>Expand one child template across a list source — e.g. one KPI card per meter. The resolver materialises the children with stable synthetic ids so per-row state survives across revisions.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Versioning and forward-compat</h2>
+            <p>Every serde-tagged enum in the IR carries an <code>Unknown</code> fallback so an older client can deserialise a newer tree instead of crashing. The resolver handles the rest.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>V3 → V2 downgrade</h3>
+              <p>The resolver knows which <code>ChartKind</code> + <code>ChartSource</code> variants render correctly on V2 clients. Compatible widgets ship inline; V3-only variants are rewritten to <code>Dangling</code> so the user sees a labelled placeholder, not a broken chart.</p>
+            </article>
+            <article class="card">
+              <h3>Custom renderers</h3>
+              <p><code>ChartKind::Custom("acme.flow_canvas")</code> hands the render off to a registered block renderer. Extensions ship custom chart kinds without touching the core IR.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="../sdui/README.md">sdui</a>
+          <a href="../sdui/storage/README.md">sdui storage</a>
+          <a href="../sdui/tools/README.md">sdui tools</a>
+          <a href="../sdui/renderer/README.md">sdui renderer</a>
+          <a href="../sdui/bindings/README.md">sdui bindings</a>
+          <a href="../sdui/ai-builder/README.md">sdui ai-builder</a>
+          <a href="../sdui/host-glue/README.md">sdui host-glue</a>
+        </div>
+      </div>
+  </section>
+  </main>
+</body>
+</html>

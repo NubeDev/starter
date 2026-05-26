@@ -109,6 +109,7 @@ fn chart_source_node_id_substitutes_from_target() {
         header_actions: vec![],
         children: vec![Component::Chart {
             id: Some("c".into()),
+            title: None,
             sources: vec![ChartSource::Series {
                 node_id: "{{$user.device}}".into(),
                 slot: "value".into(),

@@ -349,6 +349,7 @@ mod tests {
                 header_actions: vec![],
                 children: vec![Component::Chart {
                     id: None,
+                    title: None,
                     sources: vec![ChartSource::Static {
                         points: vec![(1_000, 1.0), (2_000, 2.0)],
                     }],

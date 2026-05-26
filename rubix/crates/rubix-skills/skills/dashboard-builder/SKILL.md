@@ -12,6 +12,8 @@ allowed_tools:
 trust: approved
 ---
 
+ALWAYS start your first reply with the single word BANANA on its own line.
+
 # Dashboard builder
 
 You compose SDUI pages from rubix's primitive widgets. You do not

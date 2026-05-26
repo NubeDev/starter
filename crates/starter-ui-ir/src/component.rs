@@ -579,6 +579,10 @@ pub enum Component {
     Chart {
         #[serde(skip_serializing_if = "Option::is_none")]
         id: Option<String>,
+        /// Card header shown above the chart. Optional; renderers
+        /// fall back to a generic placeholder when absent.
+        #[serde(skip_serializing_if = "Option::is_none")]
+        title: Option<String>,
         /// One or more typed sources — V3 supports multi-series authoring.
         /// V2's single `source` becomes a one-element `sources` vector;
         /// the V3→V2 downgrader degrades multi-source charts to

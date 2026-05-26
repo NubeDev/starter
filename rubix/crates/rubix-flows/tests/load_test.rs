@@ -3,7 +3,7 @@
 
 use rubix_flows::{
     convert, load_all, parse_yaml, AI_AGENT_KIND_ID, AI_AGENT_KIND_YAML, ALLOWED_TOOLS_KEY,
-    BUNDLED, DEFAULT_SEED_SLOT, NODE_ID_PREFIX,
+    BUNDLED, DEFAULT_SEED_SLOT, NODE_ID_PREFIX, TOOLS_KEY,
 };
 
 const EXPECTED_FLOW_IDS: &[&str] = &[
@@ -136,6 +136,87 @@ links: []
             "rubix.alert.send".to_owned(),
         ],
         "NodeDecl.settings.allowed_tools must carry every entry post-convert"
+    );
+}
+
+/// Stage 07 — `config.tools` (the CLI built-in restriction, distinct
+/// from `allowed_tools` which gates MCP-bridged tools) must round-trip
+/// from YAML through `convert()` onto the NodeDecl settings,
+/// **preserving an empty list**. `tools: []` is the documented
+/// "MCP only, no built-ins" lockdown; collapsing empty to absent
+/// would silently re-enable Bash / Read / Edit and let the model
+/// curl around the MCP surface. Also asserts the absent-key case
+/// surfaces as `None` so callers can distinguish lockdown from
+/// "no per-flow restriction".
+#[test]
+fn tools_empty_list_round_trips_through_convert_as_empty_not_absent() {
+    const PATH: &str = "tests/fixtures/tools-empty.yaml";
+    let yaml_src = r#"
+id: com.rubix.tools-empty-test
+description: Stage 07 fixture — tools:[] lockdown round-trip.
+trigger: explicit
+nodes:
+  - id: agent
+    kind: ai-agent
+    config:
+      session_policy: fresh
+      skill_hint: com.rubix.dashboard-builder
+      tools: []
+      allowed_tools:
+        - rubix.dashboard.list
+links: []
+"#;
+
+    let parsed = parse_yaml(PATH, yaml_src.as_bytes()).expect("yaml parses");
+
+    // (a) Surface accessor distinguishes empty list from absent key.
+    let surface = parsed.nodes[0].tools().expect("tools parses");
+    assert_eq!(
+        surface,
+        Some(Vec::<String>::new()),
+        "RubixNodeYaml::tools must surface `tools: []` as Some(empty), \
+         not None — the empty-list lockdown shape"
+    );
+
+    // (b) After convert(), the NodeDecl settings carry an empty JSON
+    //     array (not a missing key).
+    let (_flow_id, _rev, body) = convert(PATH, parsed).expect("convert succeeds");
+    let root = &body.nodes[0];
+    let arr = root
+        .settings
+        .get(TOOLS_KEY)
+        .and_then(|v| v.as_array())
+        .expect("settings.tools must be present as a JSON array even when empty");
+    assert!(
+        arr.is_empty(),
+        "settings.tools must be an empty array for `tools: []` lockdown"
+    );
+
+    // (c) Absent `tools` key surfaces as `None`.
+    let absent_yaml = r#"
+id: com.rubix.tools-absent-test
+description: tools key omitted.
+trigger: explicit
+nodes:
+  - id: agent
+    kind: ai-agent
+    config:
+      session_policy: fresh
+      allowed_tools:
+        - rubix.dashboard.list
+links: []
+"#;
+    let parsed_absent = parse_yaml(PATH, absent_yaml.as_bytes()).expect("yaml parses");
+    assert_eq!(
+        parsed_absent.nodes[0].tools().expect("tools parses"),
+        None,
+        "absent `tools` key must surface as None — CLI default catalogue \
+         stays in scope when the YAML does not declare a lockdown"
+    );
+    let (_, _, body_absent) = convert(PATH, parsed_absent).expect("convert succeeds");
+    assert!(
+        body_absent.nodes[0].settings.get(TOOLS_KEY).is_none(),
+        "absent `tools` key must not synthesise a settings entry"
     );
 }
 
