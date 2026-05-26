@@ -14,13 +14,32 @@
 // by `<PlaceholderRender>` itself — visible breakage, not silent
 // drop.
 
-import { createElement, type ComponentType } from "react";
+import {
+  createElement,
+  Fragment,
+  isValidElement,
+  type ComponentType,
+  type ReactNode,
+} from "react";
 import type { UiComponent } from "@nube/starter-ui-ir";
 import { PlaceholderRender } from "@nube/starter-ui-sdui-react/headless";
 
+import { SLOTS } from "./curation/slots.js";
+
+// Puck 0.19 hands slot props to render functions as React
+// components (a `<Children/>`-style render fn), NOT as arrays of
+// nodes the way the IR dispatcher expects. We split the props into:
+//   * `slotElements` — rendered via Puck's slot component so dropped
+//     children appear inside the layout container in the canvas.
+//   * `irRest` — scalar / non-slot props that round-trip into the
+//     IR-shaped node the placeholder visualiser consumes.
 export function makePlaceholderRenderer(
   variant: string,
 ): ComponentType<Record<string, unknown>> {
+  const slotNames = new Set(
+    SLOTS.filter((s) => s.variant === variant).map((s) => s.propertyPath),
+  );
+
   const Placeholder = (props: Record<string, unknown>) => {
     const { id: _id, editMode: _em, puck: _p, ...rest } = props as Record<
       string,
@@ -29,11 +48,24 @@ export function makePlaceholderRenderer(
     void _id;
     void _em;
     void _p;
-    // Reconstruct the IR-shaped node from the Puck props. Slot
-    // fields arrive as `UiComponent[]`, array fields as `object[]`,
-    // scalar fields as primitives — exactly the IR shape the
-    // dispatcher expects.
-    const node: UiComponent = { type: variant, ...rest } as UiComponent;
+
+    const slotElements: Record<string, ReactNode> = {};
+    const irRest: Record<string, unknown> = {};
+    for (const [key, value] of Object.entries(rest)) {
+      if (slotNames.has(key) && typeof value === "function") {
+        const SlotComponent = value as ComponentType;
+        slotElements[key] = createElement(SlotComponent);
+      } else if (
+        slotNames.has(key) &&
+        isValidElement(value as unknown as ReactNode)
+      ) {
+        slotElements[key] = value as ReactNode;
+      } else {
+        irRest[key] = value;
+      }
+    }
+
+    const node: UiComponent = { type: variant, ...irRest } as UiComponent;
     return createElement(
       "div",
       {
@@ -41,6 +73,13 @@ export function makePlaceholderRenderer(
         style: { margin: "0.25rem 0" },
       },
       createElement(PlaceholderRender, { node }),
+      ...Object.entries(slotElements).map(([key, el]) =>
+        createElement(
+          Fragment,
+          { key: `slot:${key}` },
+          el,
+        ),
+      ),
     );
   };
   Placeholder.displayName = `PuckPlaceholder(${variant})`;

@@ -20,7 +20,7 @@
     "harness": "vite --config harness/vite.config.ts"
   },
   "peerDependencies": {
-    "@measured/puck": "^0.18.0",
+    "@measured/puck": "^0.19.0",
     "@nube/starter-ui-ir": "workspace:*",
     "@nube/starter-ui-sdui-react": "workspace:*",
     "react": "^19",
@@ -28,7 +28,7 @@
   },
   "dependencies": {},
   "devDependencies": {
-    "@measured/puck": "^0.18.0",
+    "@measured/puck": "^0.19.0",
     "@nube/starter-ui-ir": "workspace:*",
     "@nube/starter-ui-sdui-react": "workspace:*",
     "@types/react": "^19",

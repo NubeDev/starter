@@ -26,6 +26,8 @@ import {
   type ReactElement,
 } from "react";
 
+import { PageStateProvider } from "@nube/starter-ui-sdui-react/headless";
+
 import {
   componentTreeToPuckData,
   puckDataToComponentTree,
@@ -209,6 +211,7 @@ export function PuckBuilder({
         </div>
       ) : null}
       <div style={{ flex: 1, minHeight: 0 }}>
+        <PageStateProvider>
         <Puck
           config={resolvedConfig}
           data={initialPuckData}
@@ -224,6 +227,7 @@ export function PuckBuilder({
             }
           }}
         />
+        </PageStateProvider>
       </div>
       {conflict.open ? (
         <ConflictModal

@@ -6,11 +6,37 @@ Generates a Puck `Config` from the committed
 and renders a canvas + palette over the same widget vocabulary the
 AI builder emits and `@nube/starter-ui-sdui-react` renders.
 
-This package implements PR1 of the Puck builder per
+This package implements the Puck builder per
 [`rubix/docs/scope/dashboards/10-puck-builder.md`](../../rubix/docs/scope/dashboards/10-puck-builder.md).
-Scope §B1 / §B2 / §B6 (CI portion only) land here; the save path
-(§B4), data-source selectors (§B3), the dashboard route (§B5), and
-the live-canvas banner (scope 11) ship in subsequent PRs.
+
+## Status (2026-05-26)
+
+| Scope | Landed | Notes |
+|---|---|---|
+| §B1 schema → PuckConfig | ✅ | `buildPuckConfig` + curated tables |
+| §B2 PlaceholderRender + palette | ✅ | per-variant placeholders, taxonomy buckets |
+| §B4 save seam (Save button, 409 modal) | ✅ | `save.ts` + `PuckBuilder` toolbar |
+| §B5 `/dashboards/$pageId/edit` route | ✅ | lives in `rubix/frontend`, uses `$pageId_.edit.tsx` (non-nested) so it doesn't render inside the read route's layout |
+| §B6 CI drift guard | ✅ | `scripts/check-schema-drift.mjs` |
+| §B3 data-source selectors | ⏳ | next up — `$ref` leaves still render as text fields |
+| §B6 runtime schema-hash banner | ⏳ | CI-time guard only so far |
+| Scope 11 (live-canvas SSE) | ⏳ | unstarted |
+
+### Notable infra changes
+
+- **Puck `^0.19.0`** (was `^0.18.0`). 0.18 silently dropped the
+  `slot` field type the generator emits, so layout containers
+  never became drop zones and the canvas rendered blank. 0.19
+  passes slot props to render functions as React components, so
+  `placeholder-renderer.tsx` now splits Puck-supplied slot
+  components out of the IR-shaped node before delegating to
+  `PlaceholderRender`.
+- **`makeRubixSaveTransport(client, tenantId)`** — the Rust DTO
+  requires `tenant_id` on both `rubix.dashboard.get` and
+  `rubix.dashboard.update`; bundled pages use `"system"`. The
+  stale TS client (`rubix/packages/rubix-client-ts`) was patched
+  to add the field and to flatten `DashboardGetResponse` (the
+  response is not nested under `.page`).
 
 ## Public exports
 
@@ -73,23 +99,24 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
    assertions, resolver-only exclusion, and a serialisable snapshot
    of the generated config for diff visibility.
 
-## Out of scope for PR1 / PR2
+## Next tasks
 
-- **§B3** data-source selectors (templates, tool ids, kinds,
-  tenants, units). Every `$ref`-typed leaf currently renders as a
-  text field.
-- **§B4** save path. `PuckBuilder.onChange` writes the last payload
-  to `window.__rubixPuckLastChange` instead of calling
-  `rubix.dashboard.update`.
-- **§B5** `/dashboards/$pageId/edit` route. Lives in
-  `rubix/frontend/` and lands in its own PR.
-- **§B6** runtime schema-hash banner. PR1 shipped the CI-time
-  drift guard only.
-- Extending placeholder coverage to every variant beyond the §B2
-  baseline (`kpi`, `chart`, `table`, `kpi_grid`, `repeat`, `form`).
-  Variants without a per-variant filler fall through to the live
-  renderer; variants without a live renderer either show the
-  dangling-variant tile (`PlaceholderRender` fallback). Adding
-  fillers is one entry per variant in
-  `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`.
-- Anything in [`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md).
+1. **§B3 data-source selectors.** Replace the text-field fallback
+   for `$ref`-typed leaves (`AnalyticsTemplateRef`, `ToolRef`,
+   `TenantId`, unit symbols) with `select`/`autocomplete` fields
+   backed by `/api/v1/tools` and the analytics catalogue.
+2. **Multi-tenant.** Hardcoded `"system"` tenant in
+   `$pageId_.edit.tsx` + `useDashboardGet` needs to come from the
+   authed session once tenant scoping lands.
+3. **Discard bridge cleanup.** Edit route polls
+   `window.__rubixPuckDiscardRequested` every 250ms; replace with
+   a `useImperativeHandle` ref or callback prop on `PuckBuilder`.
+4. **Placeholder coverage.** Variants without per-variant fillers
+   fall through to the dangling tile. Add entries to
+   `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`.
+5. **§B6 runtime schema-hash banner.** CI-time drift guard only.
+6. **Pre-existing test failure** (not blocking the editor):
+   `packages/starter-ui-sdui-react/src/renderer/__tests__/render-chart.test.tsx`
+   asserts a stale `"3 series"` string.
+7. **Scope 11** — live-canvas SSE
+   ([`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md)).

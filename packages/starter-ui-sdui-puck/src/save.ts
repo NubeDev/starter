@@ -57,6 +57,7 @@ export type PuckSaveTransport = (req: PuckSaveRequest) => Promise<PuckSaveOutcom
  *  to the route in §B5 where the auth / cookie context is set up. */
 export interface DashboardUpdateLikeClient {
   dashboardUpdate(req: {
+    tenant_id: string;
     page_id: string;
     expected_revision_id: string;
     title?: string;
@@ -73,6 +74,7 @@ export interface DashboardUpdateLikeClient {
  *  Optional helper for consumers; the seam itself doesn't require it. */
 export function makeRubixSaveTransport(
   client: DashboardUpdateLikeClient,
+  tenantId: string,
 ): PuckSaveTransport {
   return async (req) => {
     if (!req.expectedRevisionId) {
@@ -84,6 +86,7 @@ export function makeRubixSaveTransport(
     }
     try {
       const res = await client.dashboardUpdate({
+        tenant_id: tenantId,
         page_id: req.pageRef,
         expected_revision_id: req.expectedRevisionId,
         title: req.title,

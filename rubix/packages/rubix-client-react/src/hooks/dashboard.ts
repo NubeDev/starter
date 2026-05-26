@@ -63,7 +63,7 @@ export function useDashboardGet(
   const client = useRubixClient();
   return useQuery<DashboardGetResponse, StarterError>({
     queryKey: [...DASHBOARD_KEY, "get", pageId],
-    queryFn: () => client.dashboardGet({ page_id: pageId }),
+    queryFn: () => client.dashboardGet({ tenant_id: "system", page_id: pageId }),
     enabled: Boolean(pageId),
     ...options,
   });

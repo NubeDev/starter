@@ -28,11 +28,20 @@ export interface DashboardPage extends DashboardPageSummary {
 }
 
 export interface DashboardGetRequest {
+  tenant_id: string;
   page_id: string;
 }
 export interface DashboardGetResponse {
   summary: Diagnostic;
-  page: DashboardPage;
+  page_id: string;
+  revision_id?: string;
+  tenant_id?: string;
+  owner_principal?: string;
+  title?: string;
+  tags?: string[];
+  body_json?: unknown;
+  created_by?: string;
+  created_at?: string;
 }
 
 export interface DashboardListRequest {
@@ -59,6 +68,7 @@ export interface DashboardCreateResponse {
 }
 
 export interface DashboardUpdateRequest {
+  tenant_id: string;
   page_id: string;
   expected_revision_id: string;
   title?: string;

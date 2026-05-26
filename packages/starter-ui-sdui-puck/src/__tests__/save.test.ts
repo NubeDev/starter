@@ -32,7 +32,7 @@ describe("makeRubixSaveTransport", () => {
         revision_id: "rev-2",
       }),
     };
-    const save = makeRubixSaveTransport(client);
+    const save = makeRubixSaveTransport(client, "system");
     const out = await save(request());
     expect(out).toEqual({ kind: "saved", revisionId: "rev-2" });
     expect(client.dashboardUpdate).toHaveBeenCalledWith(
@@ -54,7 +54,7 @@ describe("makeRubixSaveTransport", () => {
     const client: DashboardUpdateLikeClient = {
       dashboardUpdate: vi.fn().mockRejectedValue(err),
     };
-    const save = makeRubixSaveTransport(client);
+    const save = makeRubixSaveTransport(client, "system");
     const out = await save(request());
     expect(out.kind).toBe("conflict");
     if (out.kind === "conflict") {
@@ -67,7 +67,7 @@ describe("makeRubixSaveTransport", () => {
     const client: DashboardUpdateLikeClient = {
       dashboardUpdate: vi.fn().mockRejectedValue(err),
     };
-    const save = makeRubixSaveTransport(client);
+    const save = makeRubixSaveTransport(client, "system");
     const out = await save(request());
     expect(out).toEqual({ kind: "error", message: "boom" });
   });
@@ -76,7 +76,7 @@ describe("makeRubixSaveTransport", () => {
     const client: DashboardUpdateLikeClient = {
       dashboardUpdate: vi.fn(),
     };
-    const save = makeRubixSaveTransport(client);
+    const save = makeRubixSaveTransport(client, "system");
     const out = await save(request({ expectedRevisionId: undefined }));
     expect(out.kind).toBe("error");
     expect(client.dashboardUpdate).not.toHaveBeenCalled();
