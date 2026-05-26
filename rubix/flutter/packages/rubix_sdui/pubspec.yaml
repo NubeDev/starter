@@ -1,0 +1,33 @@
+name: rubix_sdui
+description: >-
+  Flutter renderer for the Rubix Server-Driven UI (SDUI) IR.
+  Turns ComponentTree JSON emitted by `/api/v1/ui/resolve` into
+  Flutter widgets. See ../../../docs/design/sdui/renderer/FLUTTER.md
+  for the implementation plan.
+version: 0.1.0
+publish_to: "none"
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # HTTP transport — the generated Dart-Dio client from rubix/openapi.json.
+  # Once `rubix-agent` mounts `starter-sdui-routes`, this gives us
+  # `RubixApi.getUiApi()` / `getUiTableApi()` automatically.
+  rubix_api:
+    path: ../rubix_api
+
+  # Markdown rendering for the `markdown` IR variant.
+  flutter_markdown: ^0.7.3
+
+  # Charts for the `chart` / `sparkline` IR variants.
+  fl_chart: ^0.69.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  very_good_analysis: ^7.0.0

@@ -1,21 +1,27 @@
-// Placeholder renderer used by PR1's generated PuckConfig.
+// Placeholder renderer used by the generated `PuckConfig`. Each
+// palette tile / canvas node dispatches through this. PR2 (scope
+// §B2) wired this to delegate to `<PlaceholderRender>` from
+// `@nube/starter-ui-sdui-react/headless`, which renders the same
+// per-variant placeholder visuals the live renderer uses when its
+// transport returns empty (kpi / chart / table / kpi_grid /
+// repeat / form) — so the canvas is visually faithful to runtime
+// without spinning up a transport.
 //
-// Scope §B2 ("Placeholder mode is **new work**") defers the real
-// PlaceholderRender to its own PR. PR1's placeholder is the
-// quick-and-dirty stringify path the user prompt explicitly calls
-// out — render the variant name + JSON.stringify of props so the
-// canvas works (drag, drop, see the node) without pretending to be
-// the real renderer.
+// The Puck-internal props (`id`, `editMode`, `puck`) are stripped
+// before building the IR node so the placeholder sees only the
+// author-edited subset. Variants without a registered renderer or
+// placeholder filler degrade to the dashed "variant tile" emitted
+// by `<PlaceholderRender>` itself — visible breakage, not silent
+// drop.
 
 import { createElement, type ComponentType } from "react";
+import type { UiComponent } from "@nube/starter-ui-ir";
+import { PlaceholderRender } from "@nube/starter-ui-sdui-react/headless";
 
 export function makePlaceholderRenderer(
   variant: string,
 ): ComponentType<Record<string, unknown>> {
   const Placeholder = (props: Record<string, unknown>) => {
-    // Strip Puck-internal props (`id`, `editMode`, `puck`) before
-    // stringifying so the placeholder displays the IR-shaped subset
-    // an author actually edited.
     const { id: _id, editMode: _em, puck: _p, ...rest } = props as Record<
       string,
       unknown
@@ -23,41 +29,20 @@ export function makePlaceholderRenderer(
     void _id;
     void _em;
     void _p;
+    // Reconstruct the IR-shaped node from the Puck props. Slot
+    // fields arrive as `UiComponent[]`, array fields as `object[]`,
+    // scalar fields as primitives — exactly the IR shape the
+    // dispatcher expects.
+    const node: UiComponent = { type: variant, ...rest } as UiComponent;
     return createElement(
       "div",
       {
         "data-puck-placeholder": variant,
-        style: {
-          padding: "0.5rem 0.75rem",
-          border: "1px dashed #94a3b8",
-          borderRadius: "0.375rem",
-          fontFamily: "ui-monospace, SFMono-Regular, monospace",
-          fontSize: "0.75rem",
-          background: "#f8fafc",
-          color: "#0f172a",
-          margin: "0.25rem 0",
-        },
+        style: { margin: "0.25rem 0" },
       },
-      createElement(
-        "div",
-        { style: { fontWeight: 600, marginBottom: "0.25rem" } },
-        variant,
-      ),
-      createElement(
-        "pre",
-        { style: { margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-all" } },
-        safeStringify(rest),
-      ),
+      createElement(PlaceholderRender, { node }),
     );
   };
   Placeholder.displayName = `PuckPlaceholder(${variant})`;
   return Placeholder;
-}
-
-function safeStringify(value: unknown): string {
-  try {
-    return JSON.stringify(value, null, 2) ?? "undefined";
-  } catch {
-    return "[unstringifiable]";
-  }
 }

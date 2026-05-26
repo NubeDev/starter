@@ -9,6 +9,25 @@ export { buildPuckConfig, type BuildPuckConfigOpts } from "./build-puck-config.j
 export { PuckBuilder, type PuckBuilderProps } from "./builder.js";
 export { IR_SCHEMA } from "./schema-loader.js";
 
+// IR ↔ Puck Data adapter (§B4). Exposed so the harness and the
+// rubix frontend route can build / inspect either shape.
+export {
+  componentTreeToPuckData,
+  puckDataToComponentTree,
+  IR_VERSION,
+  type ComponentTree,
+  type IrNode,
+} from "./adapter.js";
+
+// Save seam (§B4).
+export {
+  makeRubixSaveTransport,
+  type DashboardUpdateLikeClient,
+  type PuckSaveRequest,
+  type PuckSaveOutcome,
+  type PuckSaveTransport,
+} from "./save.js";
+
 // Curated companion tables — exported so consumers (tests, harness,
 // future runtime catalogue verb) can read them without re-deriving.
 export { SLOTS, isSlot, type SlotTuple } from "./curation/slots.js";

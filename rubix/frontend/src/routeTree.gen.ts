@@ -23,6 +23,7 @@ import { Route as AdminWarehouseExplorerRouteImport } from './routes/admin/wareh
 import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
+import { Route as DashboardsPageIdEditRouteImport } from './routes/dashboards/$pageId.edit'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -94,6 +95,11 @@ const AdminAccessRoute = AdminAccessRouteImport.update({
   path: '/admin/access',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DashboardsPageIdEditRoute = DashboardsPageIdEditRouteImport.update({
+  id: '/edit',
+  path: '/edit',
+  getParentRoute: () => DashboardsPageIdRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -106,10 +112,11 @@ export interface FileRoutesByFullPath {
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
-  '/dashboards/$pageId': typeof DashboardsPageIdRoute
+  '/dashboards/$pageId': typeof DashboardsPageIdRouteWithChildren
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards/': typeof DashboardsIndexRoute
   '/flows/': typeof FlowsIndexRoute
+  '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -122,10 +129,11 @@ export interface FileRoutesByTo {
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
-  '/dashboards/$pageId': typeof DashboardsPageIdRoute
+  '/dashboards/$pageId': typeof DashboardsPageIdRouteWithChildren
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards': typeof DashboardsIndexRoute
   '/flows': typeof FlowsIndexRoute
+  '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -139,10 +147,11 @@ export interface FileRoutesById {
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
-  '/dashboards/$pageId': typeof DashboardsPageIdRoute
+  '/dashboards/$pageId': typeof DashboardsPageIdRouteWithChildren
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards/': typeof DashboardsIndexRoute
   '/flows/': typeof FlowsIndexRoute
+  '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -161,6 +170,7 @@ export interface FileRouteTypes {
     | '/flows/$flowId'
     | '/dashboards/'
     | '/flows/'
+    | '/dashboards/$pageId/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -177,6 +187,7 @@ export interface FileRouteTypes {
     | '/flows/$flowId'
     | '/dashboards'
     | '/flows'
+    | '/dashboards/$pageId/edit'
   id:
     | '__root__'
     | '/'
@@ -193,6 +204,7 @@ export interface FileRouteTypes {
     | '/flows/$flowId'
     | '/dashboards/'
     | '/flows/'
+    | '/dashboards/$pageId/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -206,7 +218,7 @@ export interface RootRouteChildren {
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
   AdminWarehouseExplorerRoute: typeof AdminWarehouseExplorerRoute
-  DashboardsPageIdRoute: typeof DashboardsPageIdRoute
+  DashboardsPageIdRoute: typeof DashboardsPageIdRouteWithChildren
   FlowsFlowIdRoute: typeof FlowsFlowIdRoute
   DashboardsIndexRoute: typeof DashboardsIndexRoute
   FlowsIndexRoute: typeof FlowsIndexRoute
@@ -312,8 +324,26 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/dashboards/$pageId/edit': {
+      id: '/dashboards/$pageId/edit'
+      path: '/edit'
+      fullPath: '/dashboards/$pageId/edit'
+      preLoaderRoute: typeof DashboardsPageIdEditRouteImport
+      parentRoute: typeof DashboardsPageIdRoute
+    }
   }
 }
+
+interface DashboardsPageIdRouteChildren {
+  DashboardsPageIdEditRoute: typeof DashboardsPageIdEditRoute
+}
+
+const DashboardsPageIdRouteChildren: DashboardsPageIdRouteChildren = {
+  DashboardsPageIdEditRoute: DashboardsPageIdEditRoute,
+}
+
+const DashboardsPageIdRouteWithChildren =
+  DashboardsPageIdRoute._addFileChildren(DashboardsPageIdRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
@@ -326,7 +356,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,
   AdminWarehouseExplorerRoute: AdminWarehouseExplorerRoute,
-  DashboardsPageIdRoute: DashboardsPageIdRoute,
+  DashboardsPageIdRoute: DashboardsPageIdRouteWithChildren,
   FlowsFlowIdRoute: FlowsFlowIdRoute,
   DashboardsIndexRoute: DashboardsIndexRoute,
   FlowsIndexRoute: FlowsIndexRoute,

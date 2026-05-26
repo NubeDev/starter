@@ -73,7 +73,7 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
    assertions, resolver-only exclusion, and a serialisable snapshot
    of the generated config for diff visibility.
 
-## Out of scope for PR1
+## Out of scope for PR1 / PR2
 
 - **§B3** data-source selectors (templates, tool ids, kinds,
   tenants, units). Every `$ref`-typed leaf currently renders as a
@@ -83,9 +83,13 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
   `rubix.dashboard.update`.
 - **§B5** `/dashboards/$pageId/edit` route. Lives in
   `rubix/frontend/` and lands in its own PR.
-- **§B6** runtime schema-hash banner. PR1 covers the CI-time drift
-  guard only.
-- **`PlaceholderRender`** in `@nube/starter-ui-sdui-react`. PR1
-  uses a stringify placeholder; the real per-variant placeholders
-  ship in scope §B2's own PR.
+- **§B6** runtime schema-hash banner. PR1 shipped the CI-time
+  drift guard only.
+- Extending placeholder coverage to every variant beyond the §B2
+  baseline (`kpi`, `chart`, `table`, `kpi_grid`, `repeat`, `form`).
+  Variants without a per-variant filler fall through to the live
+  renderer; variants without a live renderer either show the
+  dangling-variant tile (`PlaceholderRender` fallback). Adding
+  fillers is one entry per variant in
+  `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`.
 - Anything in [`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md).
