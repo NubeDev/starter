@@ -37,11 +37,7 @@ impl AnalyticsBridge for ToolAnalyticsBridge {
         params: &BTreeMap<String, JsonValue>,
     ) -> Result<Vec<JsonValue>, String> {
         let input = json!({ "name": name, "params": params });
-        let resp = self
-            .tool
-            .invoke(input)
-            .await
-            .map_err(|e| format!("{e}"))?;
+        let resp = self.tool.invoke(input).await.map_err(|e| format!("{e}"))?;
         let rows = resp
             .get("rows")
             .and_then(|v| v.as_array())

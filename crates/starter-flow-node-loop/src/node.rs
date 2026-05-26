@@ -45,9 +45,8 @@ impl AiAgentNode {
     }
 
     fn kind(&self) -> &KindId {
-        self.kind.get_or_init(|| {
-            KindId::new(KIND_ID).expect("KIND_ID is a valid reverse-DNS kind id")
-        })
+        self.kind
+            .get_or_init(|| KindId::new(KIND_ID).expect("KIND_ID is a valid reverse-DNS kind id"))
     }
 
     fn prompt_from(input: &SlotMap) -> Result<String, NodeError> {

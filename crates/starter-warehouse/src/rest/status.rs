@@ -53,7 +53,7 @@ pub async fn warehouse_status(State(rt): State<Arc<WarehouseRuntime>>) -> impl I
 
 async fn query_ingest(
     rt: &WarehouseRuntime,
-) -> Result<IngestStatus, starter_store_clickhouse::ChClientError> {
+) -> Result<IngestStatus, starter_store_warehouse::ChClientError> {
     // W16: read-after-write bound = oldest pending part age. Query
     // `system.asynchronous_inserts`. The exact column shape varies
     // by CH version; we coerce defensively.

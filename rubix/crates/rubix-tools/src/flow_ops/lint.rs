@@ -31,7 +31,9 @@ impl Tool for FlowLintTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.flow_ops.lint".to_owned(),
-            description: rubix_spi::dto::flow_ops::lint::DESCRIPTOR.purpose.to_owned(),
+            description: rubix_spi::dto::flow_ops::lint::DESCRIPTOR
+                .purpose
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -44,10 +46,9 @@ impl Tool for FlowLintTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: FlowLintRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("FlowLintRequest: {e}"),
-            })?;
+        let req: FlowLintRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("FlowLintRequest: {e}"),
+        })?;
 
         let mut errors: Vec<LintDiagnostic> = Vec::new();
         match rubix_flows::parse_yaml("lint://input", req.body_yaml.as_bytes()) {
@@ -70,14 +71,10 @@ impl Tool for FlowLintTool {
                             if n.kind.as_str() != TOOL_CALL_KIND_ID {
                                 continue;
                             }
-                            let has_default = n
-                                .settings
-                                .get("tool_input")
-                                .is_some_and(|v| !v.is_null());
-                            let target =
-                                format!("{}.{}", n.id, TOOL_INPUT_SLOT);
-                            let has_link =
-                                body.links.iter().any(|l| l.to == target);
+                            let has_default =
+                                n.settings.get("tool_input").is_some_and(|v| !v.is_null());
+                            let target = format!("{}.{}", n.id, TOOL_INPUT_SLOT);
+                            let has_link = body.links.iter().any(|l| l.to == target);
                             if has_default || has_link {
                                 continue;
                             }
@@ -102,13 +99,10 @@ impl Tool for FlowLintTool {
         }
 
         let summary = if errors.is_empty() {
-            Diagnostic::new(
-                MessageKey::parse("rubix.flow.linted").expect("hard-coded key parses"),
-            )
+            Diagnostic::new(MessageKey::parse("rubix.flow.linted").expect("hard-coded key parses"))
         } else {
             Diagnostic::new(
-                MessageKey::parse("rubix.flow.lint.found_errors")
-                    .expect("hard-coded key parses"),
+                MessageKey::parse("rubix.flow.lint.found_errors").expect("hard-coded key parses"),
             )
             .with_param("count", DiagnosticParam::I64(errors.len() as i64))
         };
@@ -183,7 +177,10 @@ mod tests {
         let resp: FlowLintResponse = serde_json::from_value(out).unwrap();
         assert_eq!(resp.summary.code.as_str(), "rubix.flow.lint.found_errors");
         assert_eq!(resp.errors.len(), 1);
-        assert!(resp.errors[0].line.is_some(), "yaml errors should carry a line");
+        assert!(
+            resp.errors[0].line.is_some(),
+            "yaml errors should carry a line"
+        );
     }
 
     #[tokio::test]
@@ -219,7 +216,10 @@ links:
   - { from: "tick.fire", to: "ingest.in" }
 "#;
         let tool = FlowLintTool::new();
-        let out = tool.invoke(serde_json::json!({"body_yaml": bad})).await.unwrap();
+        let out = tool
+            .invoke(serde_json::json!({"body_yaml": bad}))
+            .await
+            .unwrap();
         let resp: FlowLintResponse = serde_json::from_value(out).unwrap();
         assert_eq!(
             resp.summary.code.as_str(),
@@ -227,8 +227,9 @@ links:
             "resp: {resp:?}",
         );
         assert!(
-            resp.errors.iter().any(|d| d.message.contains("ingest")
-                && d.message.contains("tool_input")),
+            resp.errors
+                .iter()
+                .any(|d| d.message.contains("ingest") && d.message.contains("tool_input")),
             "expected a tool_input lint for `ingest`; got {:?}",
             resp.errors,
         );
@@ -257,8 +258,15 @@ links:
   - { from: "synth.output", to: "ingest.in" }
 "#;
         let tool = FlowLintTool::new();
-        let out = tool.invoke(serde_json::json!({"body_yaml": good})).await.unwrap();
+        let out = tool
+            .invoke(serde_json::json!({"body_yaml": good}))
+            .await
+            .unwrap();
         let resp: FlowLintResponse = serde_json::from_value(out).unwrap();
-        assert_eq!(resp.summary.code.as_str(), "rubix.flow.linted", "resp: {resp:?}");
+        assert_eq!(
+            resp.summary.code.as_str(),
+            "rubix.flow.linted",
+            "resp: {resp:?}"
+        );
     }
 }

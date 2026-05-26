@@ -117,8 +117,7 @@ impl Tool for DashboardPageSetTool {
             })?;
 
         let summary = Diagnostic::new(
-            MessageKey::parse("rubix.dashboard.page_set.applied")
-                .expect("hard-coded key parses"),
+            MessageKey::parse("rubix.dashboard.page_set.applied").expect("hard-coded key parses"),
         )
         .with_param(
             "node_id",

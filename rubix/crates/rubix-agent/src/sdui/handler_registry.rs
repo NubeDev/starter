@@ -17,9 +17,7 @@
 use std::sync::Arc;
 
 use serde_json::Value as JsonValue;
-use starter_sdui_routes::handler::{
-    ActionFn, ActionFuture, HandlerContext, HandlerRegistry,
-};
+use starter_sdui_routes::handler::{ActionFn, ActionFuture, HandlerContext, HandlerRegistry};
 use starter_spi::tool::Tool;
 use starter_ui_ir::{ActionResponse, Diagnostic, Severity, ToastIntent};
 use tracing::warn;
@@ -116,10 +114,7 @@ impl RubixHandlerRegistry {
 /// publicly so the sibling integration tests under
 /// `rubix-agent/tests/` can reach it. The function carries no
 /// production state; downstream crates can ignore it.
-pub fn test_handler_context(
-    name: impl Into<String>,
-    args: JsonValue,
-) -> HandlerContext {
+pub fn test_handler_context(name: impl Into<String>, args: JsonValue) -> HandlerContext {
     use starter_sdui_routes::handler::Principal;
     use starter_ui_ir::ActionContext;
     HandlerContext {

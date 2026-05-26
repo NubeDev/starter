@@ -6,7 +6,7 @@ SELECT
     verb,
     count() AS n
 FROM changelog
-WHERE verb LIKE 'rubix.clickhouse.%'
+WHERE verb LIKE 'rubix.warehouse.%'
   AND epoch_ms >= toUnixTimestamp(now() - INTERVAL 7 DAY) * 1000
 GROUP BY verb
 ORDER BY n DESC

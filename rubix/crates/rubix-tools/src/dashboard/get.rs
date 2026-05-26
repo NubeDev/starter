@@ -71,8 +71,7 @@ impl Tool for DashboardGetTool {
         let response = match row {
             Some(r) => GetDashboardResponse {
                 summary: Diagnostic::new(
-                    MessageKey::parse("rubix.dashboard.fetched")
-                        .expect("hard-coded key parses"),
+                    MessageKey::parse("rubix.dashboard.fetched").expect("hard-coded key parses"),
                 )
                 .with_param("page_id", DiagnosticParam::String(r.page_id.clone())),
                 page_id: r.page_id,
@@ -113,9 +112,7 @@ impl Tool for DashboardGetTool {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use rubix_spi::dashboard::{
-        DashboardRevision, DashboardStoreError, ListFilter, NewRevision,
-    };
+    use rubix_spi::dashboard::{DashboardRevision, DashboardStoreError, ListFilter, NewRevision};
     use std::sync::Mutex;
 
     #[derive(Default)]

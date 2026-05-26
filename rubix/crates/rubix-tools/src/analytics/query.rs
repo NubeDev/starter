@@ -25,7 +25,7 @@ use serde_json::Value;
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::ChClient;
 
 /// All bundled analytics SQL templates, embedded at compile time.
 /// One file per named template (no subdirectories). Lookup is by
@@ -57,9 +57,7 @@ impl AnalyticsQueryTool {
                 f.path()
                     .file_stem()
                     .and_then(|s| s.to_str())
-                    .filter(|_| {
-                        f.path().extension().and_then(|e| e.to_str()) == Some("sql")
-                    })
+                    .filter(|_| f.path().extension().and_then(|e| e.to_str()) == Some("sql"))
             })
             .collect()
     }
@@ -96,8 +94,7 @@ impl Tool for AnalyticsQueryTool {
         let row_count = u32::try_from(rows.len()).unwrap_or(u32::MAX);
 
         let summary = Diagnostic::new(
-            MessageKey::parse("rubix.analytics.query.ran")
-                .expect("hard-coded key parses"),
+            MessageKey::parse("rubix.analytics.query.ran").expect("hard-coded key parses"),
         )
         .with_param("name", DiagnosticParam::String(req.name.clone()))
         .with_param("rows", DiagnosticParam::I64(i64::from(row_count)));
@@ -174,11 +171,10 @@ pub(crate) async fn run_query(
 /// Map a driver-level error into the stable bind-error MessageKey.
 /// Takes `impl Display` so this file does not need to depend on
 /// `clickhouse` directly — the concrete type travels through
-/// `starter-store-clickhouse::ChClient::inner()` and never appears
+/// `starter-store-warehouse::ChClient::inner()` and never appears
 /// in our signatures.
 fn bind_error<E: std::fmt::Display>(err: E) -> Error {
-    let key = MessageKey::parse("rubix.analytics.query.bind_error")
-        .expect("hard-coded key parses");
+    let key = MessageKey::parse("rubix.analytics.query.bind_error").expect("hard-coded key parses");
     Error::Invalid {
         message: format!("{}: {err}", key.as_str()),
     }
@@ -200,7 +196,9 @@ mod tests {
                 "disk_history_weekly",
                 "flow_run_summary_weekly",
                 "meter_kwh_last_24h",
+                "meter_kwh_site_a_weekly",
                 "meter_litres_last_24h",
+                "meter_litres_site_a_weekly",
                 "meter_value_24h_1m",
                 "meter_value_30d_15m",
                 "undo_count_weekly",

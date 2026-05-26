@@ -12,6 +12,5 @@ use starter_observability::tracing::{self as obs_tracing, Format};
 /// type — it isn't re-exported from the `tracing` module today.
 pub fn init_tracing() -> Result<impl Sized> {
     let filter = std::env::var("RUST_LOG").unwrap_or_else(|_| "info".into());
-    obs_tracing::init(&filter, Format::Pretty)
-        .map_err(|e| anyhow::anyhow!("init tracing: {e}"))
+    obs_tracing::init(&filter, Format::Pretty).map_err(|e| anyhow::anyhow!("init tracing: {e}"))
 }

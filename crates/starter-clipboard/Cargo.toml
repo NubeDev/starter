@@ -23,3 +23,6 @@ starter-server = { workspace = true }
 starter-undo   = { workspace = true }
 uuid        = { workspace = true }
 utoipa         = { workspace = true }
+
+[lints]
+workspace = true

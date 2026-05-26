@@ -1,4 +1,4 @@
-// ClickHouse projection rules panel. Lists `rubix.clickhouse.rule.*`
+// ClickHouse projection rules panel. Lists `rubix.warehouse.rule.*`
 // projection rules, supports inline DDL editing via `useRuleWrite`,
 // and "soft delete" via `useRuleWrite` with an empty/`-- deleted`
 // DDL marker (no dedicated drop verb exists today — see stage 9
@@ -18,7 +18,7 @@ import {
 } from '@nube/starter-ui-kit'
 import { Database, Pencil, Trash2 } from 'lucide-react'
 import {
-  useClickhouseRulesList,
+  useWarehouseRulesList,
   useRuleWrite,
 } from '@nube/rubix-client-react'
 
@@ -27,7 +27,7 @@ export function WarehouseRulesPanel() {
   const tr = (id: string, def: string) =>
     intl.formatMessage({ id, defaultMessage: def })
 
-  const list = useClickhouseRulesList()
+  const list = useWarehouseRulesList()
   const write = useRuleWrite()
   const [editing, setEditing] = useState<string | null>(null)
   const [draftDdl, setDraftDdl] = useState('')
@@ -82,7 +82,7 @@ export function WarehouseRulesPanel() {
           <EmptyDescription>
             {tr(
               'admin.warehouse.rules.empty.body',
-              'Use the rubix.clickhouse.rule.write tool to register a projection rule.',
+              'Use the rubix.warehouse.rule.write tool to register a projection rule.',
             )}
           </EmptyDescription>
         </EmptyHeader>

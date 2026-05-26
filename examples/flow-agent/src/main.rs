@@ -47,7 +47,7 @@ async fn main() -> Result<()> {
     // `/api/warehouse/{status,gc,audit}`) is then merged onto the
     // assembled router. flow-agent is still Postgres-only for
     // OLTP — the warehouse seam reaches ClickHouse only via
-    // `starter-store-clickhouse`, never directly.
+    // `starter-store-warehouse`, never directly.
     #[cfg(feature = "warehouse")]
     let built = {
         use std::sync::Arc;
@@ -63,7 +63,7 @@ async fn main() -> Result<()> {
         let ch_db = std::env::var("CLICKHOUSE_DB").unwrap_or_else(|_| "default".into());
         let ch_user = std::env::var("CLICKHOUSE_USER").unwrap_or_else(|_| "default".into());
         let ch_pass = std::env::var("CLICKHOUSE_PASSWORD").unwrap_or_default();
-        let ch_cfg = starter_store_clickhouse::ChConfig {
+        let ch_cfg = starter_store_warehouse::ChConfig {
             url: ch_url,
             database: ch_db.clone(),
             user: ch_user.clone(),
@@ -72,7 +72,7 @@ async fn main() -> Result<()> {
         };
         // 3. Best-effort CH migrations. Skipped on connect failure;
         //    operator can re-run via /api/warehouse/status guard.
-        let ch_client = starter_store_clickhouse::ChClient::connect(ch_cfg.clone());
+        let ch_client = starter_store_warehouse::ChClient::connect(ch_cfg.clone());
         {
             let pg_host = std::env::var("WAREHOUSE_PG_HOST").unwrap_or_else(|_| "127.0.0.1".into());
             let pg_port: u16 = std::env::var("WAREHOUSE_PG_PORT")
@@ -82,14 +82,14 @@ async fn main() -> Result<()> {
             let pg_user = std::env::var("WAREHOUSE_PG_USER").unwrap_or_else(|_| "postgres".into());
             let pg_pass = std::env::var("WAREHOUSE_PG_PASSWORD").unwrap_or_default();
             let pg_db = std::env::var("WAREHOUSE_PG_DB").unwrap_or_else(|_| "flow_agent".into());
-            let pg_src = starter_store_clickhouse::PgSource {
+            let pg_src = starter_store_warehouse::PgSource {
                 host: pg_host,
                 port: pg_port,
                 user: pg_user,
                 password: pg_pass,
                 db: pg_db,
             };
-            let res = starter_store_clickhouse::MigrationRunner::new(&ch_client)
+            let res = starter_store_warehouse::MigrationRunner::new(&ch_client)
                 .with_pg_source(pg_src)
                 .run()
                 .await;

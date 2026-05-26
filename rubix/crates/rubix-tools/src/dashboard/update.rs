@@ -213,9 +213,7 @@ impl ReversibleTool for DashboardUpdateTool {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use rubix_spi::dashboard::{
-        DashboardRevision, DashboardStoreError, ListFilter, NewRevision,
-    };
+    use rubix_spi::dashboard::{DashboardRevision, DashboardStoreError, ListFilter, NewRevision};
     use std::sync::Mutex;
 
     #[derive(Default)]
@@ -292,9 +290,7 @@ mod tests {
                 .unwrap()
                 .iter()
                 .find(|r| {
-                    r.tenant_id == tenant_id
-                        && r.page_id == page_id
-                        && r.superseded_at.is_none()
+                    r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none()
                 })
                 .cloned())
         }

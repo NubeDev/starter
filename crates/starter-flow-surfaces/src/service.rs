@@ -187,11 +187,12 @@ impl FlowAsService {
         // invalid expression would leave the tick loop unable to
         // recompute `next_run_at` after the first fire; bail now.
         let now = self.clock.now();
-        let next_run_at =
-            starter_cron::next_fire(now, cron_expr).map_err(|source| ServiceError::InvalidCron {
+        let next_run_at = starter_cron::next_fire(now, cron_expr).map_err(|source| {
+            ServiceError::InvalidCron {
                 expr: cron_expr.to_string(),
                 source,
-            })?;
+            }
+        })?;
 
         let id = ulid::Ulid::new().to_string();
 

@@ -1449,7 +1449,7 @@ dependencies = [
  "starter-observability",
  "starter-server",
  "starter-spi",
- "starter-store-clickhouse",
+ "starter-store-warehouse",
  "starter-warehouse",
  "tokio",
  "tracing",
@@ -2696,8 +2696,8 @@ dependencies = [
  "starter-prefs",
  "starter-server",
  "starter-spi",
- "starter-store-clickhouse",
  "starter-store-postgres",
+ "starter-store-warehouse",
  "starter-warehouse",
  "tempfile",
  "thiserror 1.0.69",
@@ -4060,8 +4060,8 @@ dependencies = [
  "rumqttc",
  "serde",
  "serde_json",
- "starter-store-clickhouse",
  "starter-store-postgres",
+ "starter-store-warehouse",
  "starter-tags",
  "starter-warehouse",
  "tokio",
@@ -6443,9 +6443,9 @@ dependencies = [
  "starter-sdui-routes",
  "starter-server",
  "starter-spi",
- "starter-store-clickhouse",
  "starter-store-postgres",
  "starter-store-sqlite",
+ "starter-store-warehouse",
  "starter-ui-bindings",
  "starter-ui-ir",
  "starter-undo",
@@ -6548,7 +6548,7 @@ dependencies = [
  "starter-flow-nodes",
  "starter-flow-spi",
  "starter-spi",
- "starter-store-clickhouse",
+ "starter-store-warehouse",
  "starter-tool-sysdiag",
  "starter-ui-ir",
  "starter-undo",
@@ -8905,26 +8905,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "starter-store-clickhouse"
-version = "0.1.0"
-dependencies = [
- "async-trait",
- "chrono",
- "clickhouse",
- "reqwest 0.12.28",
- "serde",
- "serde_json",
- "starter-tags",
- "testcontainers",
- "testcontainers-modules",
- "thiserror 1.0.69",
- "tokio",
- "tokio-test",
- "tracing",
- "uuid",
-]
-
-[[package]]
 name = "starter-store-postgres"
 version = "0.1.0"
 dependencies = [
@@ -8962,6 +8942,26 @@ dependencies = [
  "tempfile",
  "thiserror 1.0.69",
  "tokio",
+ "tracing",
+ "uuid",
+]
+
+[[package]]
+name = "starter-store-warehouse"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "clickhouse",
+ "reqwest 0.12.28",
+ "serde",
+ "serde_json",
+ "starter-tags",
+ "testcontainers",
+ "testcontainers-modules",
+ "thiserror 1.0.69",
+ "tokio",
+ "tokio-test",
  "tracing",
  "uuid",
 ]
@@ -9168,8 +9168,8 @@ dependencies = [
  "starter-flow-spi",
  "starter-server",
  "starter-spi",
- "starter-store-clickhouse",
  "starter-store-postgres",
+ "starter-store-warehouse",
  "starter-tags",
  "thiserror 1.0.69",
  "tokio",

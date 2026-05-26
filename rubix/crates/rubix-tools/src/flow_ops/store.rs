@@ -23,14 +23,12 @@ use async_trait::async_trait;
 use serde::Deserialize;
 use serde_json::Value;
 use starter_spi::authz::ResourceRef;
-use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 #[cfg(test)]
 use starter_spi::changelog::{Actor, ChangeId, GroupId};
+use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 use starter_spi::error::{Error, Result};
 
-pub use rubix_spi::flow_def::{
-    FlowDefChange, FlowDefStore, FlowRevisionRow, FLOW_DEFINITION_KIND,
-};
+pub use rubix_spi::flow_def::{FlowDefChange, FlowDefStore, FlowRevisionRow, FLOW_DEFINITION_KIND};
 
 /// In-memory [`FlowDefStore`] for tests and the in-process smoke
 /// session.
@@ -238,7 +236,10 @@ mod tests {
     #[tokio::test]
     async fn first_insert_records_no_prior() {
         let s = InMemoryFlowDefStore::new();
-        let (row, prior) = s.insert_revision("com.x.a", "id: com.x.a", 10).await.unwrap();
+        let (row, prior) = s
+            .insert_revision("com.x.a", "id: com.x.a", 10)
+            .await
+            .unwrap();
         assert!(prior.is_none());
         assert!(row.superseded_at_ms.is_none());
     }

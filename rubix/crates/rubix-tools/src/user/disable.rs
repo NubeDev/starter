@@ -69,14 +69,12 @@ impl Tool for UserDisableTool {
         } else {
             "rubix.user.disabled"
         };
-        let summary = Diagnostic::new(
-            MessageKey::parse(key).expect("hard-coded key parses"),
-        )
-        .with_param("email", DiagnosticParam::String(new.email.clone()))
-        .with_param(
-            "at",
-            DiagnosticParam::Timestamp(new.disabled_at_ms.unwrap_or(now_ms)),
-        );
+        let summary = Diagnostic::new(MessageKey::parse(key).expect("hard-coded key parses"))
+            .with_param("email", DiagnosticParam::String(new.email.clone()))
+            .with_param(
+                "at",
+                DiagnosticParam::Timestamp(new.disabled_at_ms.unwrap_or(now_ms)),
+            );
 
         let response = UserDisableResponse {
             summary,
@@ -125,17 +123,11 @@ impl ReversibleTool for UserDisableTool {
     }
 }
 
-async fn resolve_target(
-    store: &dyn UserAdminStore,
-    req: &UserDisableRequest,
-) -> Result<UserRow> {
+async fn resolve_target(store: &dyn UserAdminStore, req: &UserDisableRequest) -> Result<UserRow> {
     if let Some(id) = &req.user_id {
-        return store
-            .get(id)
-            .await?
-            .ok_or_else(|| Error::NotFound {
-                what: format!("user:{id}"),
-            });
+        return store.get(id).await?.ok_or_else(|| Error::NotFound {
+            what: format!("user:{id}"),
+        });
     }
     if let Some(email) = &req.email {
         return store

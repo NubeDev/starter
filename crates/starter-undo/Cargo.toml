@@ -40,3 +40,6 @@ tokio                = { workspace = true, features = ["macros", "rt-multi-threa
 [[test]]
 name              = "cursor_sqlite"
 required-features = ["sqlite"]
+
+[lints]
+workspace = true

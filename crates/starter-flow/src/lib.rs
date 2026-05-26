@@ -86,5 +86,9 @@ pub trait FlowEventSink: Send + Sync {
     /// task. Backpressure / lagged-subscriber handling is the
     /// implementation's responsibility (the upstream broadcast
     /// already drops lagged receivers).
-    fn publish(&self, flow: &starter_flow_spi::flow::FlowId, event: starter_flow_spi::flow::FlowEvent);
+    fn publish(
+        &self,
+        flow: &starter_flow_spi::flow::FlowId,
+        event: starter_flow_spi::flow::FlowEvent,
+    );
 }

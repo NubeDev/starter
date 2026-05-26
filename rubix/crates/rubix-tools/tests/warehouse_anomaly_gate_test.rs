@@ -94,7 +94,14 @@ async fn benign_fixture_dispatches_nothing() {
     let _guard = DISPATCH_LOCK.lock().unwrap_or_else(|e| e.into_inner());
     let bucket = 60_000i64;
     let cleaned: Vec<CleanedRow> = (0..10)
-        .map(|i| row("site-a.elec.hvac", bucket + i * bucket, Some(i as f64), "ok"))
+        .map(|i| {
+            row(
+                "site-a.elec.hvac",
+                bucket + i * bucket,
+                Some(i as f64),
+                "ok",
+            )
+        })
         .collect();
     let before = alert_send::dispatched_count();
     for d in check_spike(&[]) {
@@ -110,4 +117,3 @@ async fn benign_fixture_dispatches_nothing() {
         "benign fixture (no spike rows, all distinct cleaned values) must dispatch nothing",
     );
 }
-

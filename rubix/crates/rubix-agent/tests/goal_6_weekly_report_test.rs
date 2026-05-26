@@ -50,12 +50,10 @@ use starter_flow_surfaces::FlowRegistry;
 use starter_spi::blob::{BlobRef, BlobRefInternal, BlobStore, Etag};
 use starter_spi::changelog::Actor;
 use starter_spi::tool::Tool;
-use starter_store_clickhouse::testing::with_clickhouse;
-use starter_store_clickhouse::ChClient;
-use starter_store_postgres::{
-    migrate, testing::with_database, SCHEDULED_FLOWS_MIGRATION_SOURCE,
-};
+use starter_store_postgres::{migrate, testing::with_database, SCHEDULED_FLOWS_MIGRATION_SOURCE};
 use starter_store_sqlite::{migrate as sqlite_migrate, testing::ephemeral as sqlite_ephemeral};
+use starter_store_warehouse::testing::with_clickhouse;
+use starter_store_warehouse::ChClient;
 use starter_undo::{ReversibleRegistry, UndoService};
 
 const FLOW_ID: &str = "com.rubix.weekly-report";
@@ -173,10 +171,11 @@ impl FlowRunner for AnalyticsReportRunner {
             .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
                 Box::<dyn std::error::Error + Send + Sync>::from(format!("dispatch: {e}"))
             })?;
-        let resp: AnalyticsReportResponse =
-            serde_json::from_value(out).map_err(|e| -> Box<dyn std::error::Error + Send + Sync> {
+        let resp: AnalyticsReportResponse = serde_json::from_value(out).map_err(
+            |e| -> Box<dyn std::error::Error + Send + Sync> {
                 Box::<dyn std::error::Error + Send + Sync>::from(format!("decode: {e}"))
-            })?;
+            },
+        )?;
         // Stand-in for the ai-agent's terminal reply — production
         // wires this to the model's `text` turn after the
         // `analytics.report` tool_use, which the bundled skill
@@ -225,8 +224,8 @@ async fn weekly_report_fires_via_scheduler_renders_blob_and_undo_deletes_it() {
     // `rubix.analytics.report` integration test uses, same
     // backend production wires via `starter-blob-fs`.
     let tempdir = tempfile::tempdir().expect("tempdir");
-    let blob_store = FsBlobStore::open(tempdir.path(), PresignKey::ephemeral())
-        .expect("FsBlobStore::open");
+    let blob_store =
+        FsBlobStore::open(tempdir.path(), PresignKey::ephemeral()).expect("FsBlobStore::open");
     let blob_arc: Arc<dyn BlobStore> = Arc::new(blob_store.clone());
 
     // ----- 2. Tool wiring (analytics.report + undo.last) ----------------
@@ -267,12 +266,8 @@ async fn weekly_report_fires_via_scheduler_renders_blob_and_undo_deletes_it() {
     // pins.
     let t0 = Utc.with_ymd_and_hms(2026, 5, 24, 0, 0, 0).unwrap(); // Sun
     let clock = TestClock::new(t0);
-    let svc = FlowAsService::new(
-        pg_pool.clone(),
-        Arc::new(FlowRegistry::new()),
-        runner,
-    )
-    .with_clock(Arc::new(clock.clone()) as Arc<dyn Clock>);
+    let svc = FlowAsService::new(pg_pool.clone(), Arc::new(FlowRegistry::new()), runner)
+        .with_clock(Arc::new(clock.clone()) as Arc<dyn Clock>);
 
     let tenant = Uuid::nil();
     let first_next = svc
@@ -327,14 +322,20 @@ async fn weekly_report_fires_via_scheduler_renders_blob_and_undo_deletes_it() {
         .await
         .clone()
         .expect("runner recorded a reply");
-    assert!(!reply.trim().is_empty(), "agent reply is non-empty: {reply:?}");
+    assert!(
+        !reply.trim().is_empty(),
+        "agent reply is non-empty: {reply:?}"
+    );
 
     let resp = last_response
         .lock()
         .await
         .clone()
         .expect("runner recorded a response");
-    assert_eq!(resp.summary.code.as_str(), "rubix.analytics.report.rendered");
+    assert_eq!(
+        resp.summary.code.as_str(),
+        "rubix.analytics.report.rendered"
+    );
     assert_eq!(resp.format, ReportFormat::Html);
     assert!(resp.byte_count > 0, "non-zero byte_count");
     assert!(!resp.url.is_empty(), "presigned url non-empty");

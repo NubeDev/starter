@@ -25,7 +25,7 @@ export * from "./hooks/extensions.js";
 export * from "./hooks/use-extension-events.js";
 export * from "./hooks/teams.js";
 export * from "./hooks/tenants.js";
-export * from "./hooks/clickhouse.js";
+export * from "./hooks/warehouse.js";
 export * from "./hooks/flow-ops.js";
 export * from "./hooks/flow-events.js";
 export * from "./hooks/dashboard.js";

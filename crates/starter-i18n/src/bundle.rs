@@ -32,9 +32,9 @@ use starter_spi::i18n::{DiagnosticParam, LanguageTag, MessageKey};
 use starter_spi::preferences::ResolvedPreferences;
 
 use crate::catalog::Catalog;
+use crate::interpolate::interpolate_typed;
 #[cfg(feature = "preferences")]
 use crate::interpolate::interpolate_typed_with_prefs;
-use crate::interpolate::interpolate_typed;
 
 /// In-memory snapshot of every language catalog the binary knows
 /// about.

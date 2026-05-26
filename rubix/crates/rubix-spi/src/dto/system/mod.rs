@@ -4,7 +4,7 @@
 //! own file carrying request/response DTO structs and a static
 //! [`ToolDescriptor`](crate::descriptor::ToolDescriptor).
 
-pub mod disk;
-pub mod db;
-pub mod flow_errors;
 pub mod alert_send;
+pub mod db;
+pub mod disk;
+pub mod flow_errors;

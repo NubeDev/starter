@@ -10,9 +10,9 @@ use std::time::{Duration, Instant};
 
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
-use starter_store_clickhouse::{ChClient, ChConfig};
 use starter_store_postgres::dimensions as dim;
 use starter_store_postgres::pool::Pool;
+use starter_store_warehouse::{ChClient, ChConfig};
 use starter_tags::TagQuery;
 use thiserror::Error;
 
@@ -27,7 +27,7 @@ pub enum RuntimeError {
     #[error("postgres: {0}")]
     Pg(#[from] sqlx::Error),
     #[error("clickhouse: {0}")]
-    Ch(#[from] starter_store_clickhouse::ChClientError),
+    Ch(#[from] starter_store_warehouse::ChClientError),
     #[error("clickhouse: {0}")]
     ChNative(String),
     #[error("ddl: {0}")]
@@ -125,7 +125,7 @@ impl WarehouseRuntime {
         payload: String,
         tags: Vec<(String, String)>,
     ) -> Result<u64, RuntimeError> {
-        use starter_store_clickhouse::store::raw_events;
+        use starter_store_warehouse::store::raw_events;
         let row = raw_events::RawEventRow {
             id: snowflake_id(),
             source: source.to_string(),
@@ -159,7 +159,7 @@ impl WarehouseRuntime {
                 }
             }
         }
-        use starter_store_clickhouse::store::samples;
+        use starter_store_warehouse::store::samples;
         let row = samples::SampleRow {
             entity_id: entity_id.to_string(),
             ts,
@@ -179,9 +179,9 @@ impl WarehouseRuntime {
     pub async fn bulk_import_samples(
         &self,
         target: BulkTarget,
-        rows: Vec<starter_store_clickhouse::store::samples::SampleRow>,
+        rows: Vec<starter_store_warehouse::store::samples::SampleRow>,
     ) -> Result<u64, RuntimeError> {
-        use starter_store_clickhouse::store::samples;
+        use starter_store_warehouse::store::samples;
         const BATCH: usize = 10_000;
         let mut total: u64 = 0;
         let table = match &target {

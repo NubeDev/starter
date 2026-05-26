@@ -27,12 +27,8 @@ fn test_principal() -> Principal {
     }
 }
 
-fn gated_router(ch: starter_store_clickhouse::ChClient) -> axum::Router {
-    with_permission(
-        starter_warehouse::explorer::routes(ch),
-        "warehouse",
-        "read",
-    )
+fn gated_router(ch: starter_store_warehouse::ChClient) -> axum::Router {
+    with_permission(starter_warehouse::explorer::routes(ch), "warehouse", "read")
 }
 
 async fn send(
@@ -67,7 +63,7 @@ async fn send(
 #[tokio::test]
 #[ignore = "requires Docker for the ClickHouse testcontainer"]
 async fn query_round_trips_a_simple_select() {
-    let (ch, _g) = starter_store_clickhouse::testing::with_clickhouse().await;
+    let (ch, _g) = starter_store_warehouse::testing::with_clickhouse().await;
     let router = gated_router(ch);
 
     let (status, body) = send(
@@ -88,7 +84,7 @@ async fn query_round_trips_a_simple_select() {
 #[tokio::test]
 #[ignore = "requires Docker for the ClickHouse testcontainer"]
 async fn query_rejects_writes_at_the_handler() {
-    let (ch, _g) = starter_store_clickhouse::testing::with_clickhouse().await;
+    let (ch, _g) = starter_store_warehouse::testing::with_clickhouse().await;
     let router = gated_router(ch);
 
     let (status, body) = send(
@@ -105,7 +101,7 @@ async fn query_rejects_writes_at_the_handler() {
 #[tokio::test]
 #[ignore = "requires Docker for the ClickHouse testcontainer"]
 async fn table_data_returns_real_rows_after_pr2() {
-    let (ch, _g) = starter_store_clickhouse::testing::with_clickhouse().await;
+    let (ch, _g) = starter_store_warehouse::testing::with_clickhouse().await;
 
     // Seed a tiny table.
     let conn = ch.inner();

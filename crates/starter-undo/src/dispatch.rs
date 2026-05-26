@@ -16,9 +16,7 @@ use std::sync::Arc;
 
 use chrono::Utc;
 use starter_spi::authz::ResourceRef;
-use starter_spi::changelog::{
-    Actor, Change, ChangeId, ChangeRecorder, GroupId, Op, TraceId,
-};
+use starter_spi::changelog::{Actor, Change, ChangeId, ChangeRecorder, GroupId, Op, TraceId};
 use starter_spi::Result;
 use tokio::sync::Mutex;
 
@@ -273,14 +271,9 @@ mod tests {
             serde_json::json!({}),
         );
 
-        let result = record_if_reversible(
-            &registry,
-            &recorder,
-            Actor::System,
-            draft,
-        )
-        .await
-        .expect("never errors on unregistered kinds");
+        let result = record_if_reversible(&registry, &recorder, Actor::System, draft)
+            .await
+            .expect("never errors on unregistered kinds");
         assert!(result.is_none(), "unregistered kinds return None");
         assert!(
             recorder.rows.lock().unwrap().is_empty(),

@@ -52,8 +52,8 @@ use std::sync::Arc;
 use anyhow::Result;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use sqlx::{ConnectOptions, Row};
-use tokio::sync::broadcast;
 use std::sync::RwLock;
+use tokio::sync::broadcast;
 use tracing::{info, warn};
 
 use starter_flow::state::in_memory::InMemoryNodeStateStore;
@@ -185,10 +185,7 @@ pub struct FlowRuntime {
 /// runtime carries no per-instance tunables today (the previous
 /// `state_db_path` knob was removed when node state moved into
 /// Postgres — see `rubix/docs/scope/sqlite-to-postgres.md`).
-pub async fn build(
-    pg_pool: Option<PgPool>,
-    _cfg: &FlowRuntimeConfig,
-) -> Result<FlowRuntime> {
+pub async fn build(pg_pool: Option<PgPool>, _cfg: &FlowRuntimeConfig) -> Result<FlowRuntime> {
     let state_store: Arc<dyn NodeStateStore> = match pg_pool {
         Some(pool) => {
             migrate::migrate(&pool)
@@ -274,12 +271,10 @@ async fn migrate_legacy_node_state_db(pg: &PgPool) -> Result<()> {
         .await
         .map_err(|e| anyhow::anyhow!("open legacy sqlite `{}`: {e}", resolved.display()))?;
 
-    let rows = sqlx::query(
-        "SELECT flow_id, node_id, key, value, version FROM node_state",
-    )
-    .fetch_all(&sqlite_pool)
-    .await
-    .map_err(|e| anyhow::anyhow!("read legacy node_state rows: {e}"))?;
+    let rows = sqlx::query("SELECT flow_id, node_id, key, value, version FROM node_state")
+        .fetch_all(&sqlite_pool)
+        .await
+        .map_err(|e| anyhow::anyhow!("read legacy node_state rows: {e}"))?;
 
     let mut copied: u64 = 0;
     let mut skipped: u64 = 0;

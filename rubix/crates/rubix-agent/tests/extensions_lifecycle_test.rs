@@ -67,14 +67,16 @@ fn repo_root() -> PathBuf {
             break;
         }
     }
-    panic!("could not locate repo root from {}", env!("CARGO_MANIFEST_DIR"));
+    panic!(
+        "could not locate repo root from {}",
+        env!("CARGO_MANIFEST_DIR")
+    );
 }
 
 /// Ensure the example process binary exists; build it via cargo if
 /// not. The binary lands at `rubix/extensions/target/debug/rubix-example-extension`.
 fn ensure_example_binary(root: &Path) -> PathBuf {
-    let bin = root
-        .join("rubix/extensions/target/debug/rubix-example-extension");
+    let bin = root.join("rubix/extensions/target/debug/rubix-example-extension");
     if bin.exists() {
         return bin;
     }
@@ -281,13 +283,11 @@ async fn extension_lifecycle_full_roundtrip() {
     assert_eq!(body["enabled"], "disabled");
 
     // ---- (7) PG row reflects the final state. ----
-    let row = sqlx::query(
-        "SELECT state FROM extensions_enablement WHERE extension_id = $1",
-    )
-    .bind(EXAMPLE_ID)
-    .fetch_one(pool.sqlx())
-    .await
-    .expect("read enablement row");
+    let row = sqlx::query("SELECT state FROM extensions_enablement WHERE extension_id = $1")
+        .bind(EXAMPLE_ID)
+        .fetch_one(pool.sqlx())
+        .await
+        .expect("read enablement row");
     let pg_state: String = row.get(0);
     assert_eq!(
         pg_state, "disabled",

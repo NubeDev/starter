@@ -3,7 +3,7 @@
 //! Wiring composition site. Boots `starter-observability`, loads the
 //! layered [`boot::AgentConfig`], applies the rubix-owned Postgres +
 //! ClickHouse migrations, builds the tool registry (threading a live
-//! [`starter_store_clickhouse::ChClient`] through the disk tool), and
+//! [`starter_store_warehouse::ChClient`] through the disk tool), and
 //! composes one [`axum::Router`] from four sub-routers:
 //!
 //!   - `GET  /healthz`
@@ -28,8 +28,8 @@ use rubix_agent::boot::{self, AgentConfig};
 use rubix_agent::{health, middleware, openapi as rubix_openapi_mod, registry, routes};
 use starter_changelog_postgres::PgChangeRecorder;
 use starter_spi::changelog::ChangeRecorder;
-use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::connect as pg_connect;
+use starter_store_warehouse::ChClient;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -49,8 +49,7 @@ async fn main() -> Result<()> {
     // lifetime — `health::serve` blocks until shutdown, at which
     // point the runtime dropping aborts every task. See
     // [`boot::undo_sweep`] for the cadence + bound contract.
-    let _undo_sweep =
-        boot::spawn_undo_sweep(cfg.database_url.as_deref(), cfg.undo.clone()).await?;
+    let _undo_sweep = boot::spawn_undo_sweep(cfg.database_url.as_deref(), cfg.undo.clone()).await?;
     let ch_migrations = boot::apply_ch_migrations(
         cfg.clickhouse_url.as_deref(),
         cfg.database_url.as_deref(),
@@ -79,15 +78,14 @@ async fn main() -> Result<()> {
     // seed + load) so we don't open a second connection pool just
     // to read flow YAMLs. `None` is the laptop path — MCP falls
     // back to the embedded bundle.
-    let mcp_pool: Option<starter_store_postgres::pool::Pool> =
-        match cfg.database_url.as_deref() {
-            Some(dsn) => Some(
-                pg_connect(dsn)
-                    .await
-                    .map_err(|e| anyhow::anyhow!("connect for mcp pool: {e}"))?,
-            ),
-            None => None,
-        };
+    let mcp_pool: Option<starter_store_postgres::pool::Pool> = match cfg.database_url.as_deref() {
+        Some(dsn) => Some(
+            pg_connect(dsn)
+                .await
+                .map_err(|e| anyhow::anyhow!("connect for mcp pool: {e}"))?,
+        ),
+        None => None,
+    };
 
     // SCOPE OQ-4: build the extension admin BEFORE the MCP surface so
     // the surface can emit one MCP tool per
@@ -111,12 +109,10 @@ async fn main() -> Result<()> {
             (None, _) => None,
         };
     let ext_mcp_ctx: Option<boot::mcp::ExtensionMcpContext> =
-        ext_bundle
-            .as_ref()
-            .map(|b| boot::mcp::ExtensionMcpContext {
-                registry: b.registry.clone(),
-                process_handles: b.process_handles.clone(),
-            });
+        ext_bundle.as_ref().map(|b| boot::mcp::ExtensionMcpContext {
+            registry: b.registry.clone(),
+            process_handles: b.process_handles.clone(),
+        });
 
     // Build the always-on flow runtime BEFORE the MCP surface so
     // the `FlowAsTool` engine can share its durable
@@ -128,8 +124,7 @@ async fn main() -> Result<()> {
     // Reuses the `mcp_pool` opened above so we keep the
     // connection-pool count at one (the node_state seam used to
     // open a second pool from the DSN).
-    let flow_runtime =
-        boot::build_flow_runtime(mcp_pool.clone(), &cfg.flow_runtime).await?;
+    let flow_runtime = boot::build_flow_runtime(mcp_pool.clone(), &cfg.flow_runtime).await?;
 
     // Build the REST tool registry BEFORE the MCP surface so the
     // exact same `Vec<Arc<dyn Tool>>` is threaded into both — the
@@ -234,10 +229,9 @@ async fn main() -> Result<()> {
     // `NodeStateStore` + `FlowEventSink` could be attached to the
     // MCP-side engine. Reuse the existing handle here to wire the
     // SSE route.
-    let flow_events_router =
-        routes::flow_events::router(routes::flow_events::FlowEventsState {
-            subscriptions: flow_runtime.subscriptions.clone(),
-        });
+    let flow_events_router = routes::flow_events::router(routes::flow_events::FlowEventsState {
+        subscriptions: flow_runtime.subscriptions.clone(),
+    });
     // Surface the runtime via the same `_` leak pattern as the other
     // always-on boot pieces.
     let _flow_runtime = flow_runtime;
@@ -345,10 +339,7 @@ async fn main() -> Result<()> {
         let inserted = boot::dashboards_seed::seed(Some(&pool), &seed_registry)
             .await
             .map_err(|e| anyhow::anyhow!("dashboards_seed::seed: {e}"))?;
-        tracing::info!(
-            inserted,
-            "dashboards_definitions seed complete",
-        );
+        tracing::info!(inserted, "dashboards_definitions seed complete",);
 
         // Phase B.2 — mount the SDUI router under `/api/v1/ui`.
         // `starter_sdui_routes::sdui_router` already roots its
@@ -373,9 +364,11 @@ async fn main() -> Result<()> {
             use starter_server::auth::with_principal;
             let tail = Arc::new(PgListenTail::new(pool.clone()));
             let store = Arc::new(PgDashboardStore::new(pool.clone()));
-            let de_router = routes::dashboard_events::router(
-                routes::dashboard_events::DashboardEventsState { tail, store },
-            );
+            let de_router =
+                routes::dashboard_events::router(routes::dashboard_events::DashboardEventsState {
+                    tail,
+                    store,
+                });
             app = app.merge(with_principal(de_router, auth.authenticator.clone()));
         }
 
@@ -407,9 +400,9 @@ async fn main() -> Result<()> {
         // (those layers are tools-router specific).
         {
             use starter_server::auth::with_principal;
-            let flow_run_router = routes::flow_run::router(
-                routes::flow_run::FlowRunState { tools: mcp.tools.clone() },
-            );
+            let flow_run_router = routes::flow_run::router(routes::flow_run::FlowRunState {
+                tools: mcp.tools.clone(),
+            });
             app = app.merge(with_principal(flow_run_router, auth.authenticator.clone()));
         }
 
@@ -426,11 +419,7 @@ async fn main() -> Result<()> {
                 tool_path_prefix: "/api/v1/tools/".to_owned(),
             },
         );
-        let gated = middleware::gate_tools(
-            audited,
-            auth.authenticator.clone(),
-            engine,
-        );
+        let gated = middleware::gate_tools(audited, auth.authenticator.clone(), engine);
         app = app
             .merge(Router::new().nest("/api/v1", auth_routes))
             .merge(gated);
@@ -439,9 +428,9 @@ async fn main() -> Result<()> {
             target: "rubix.boot",
             "RUBIX_DATABASE_URL unset — mounting tools router without auth/authz/audit gates",
         );
-        let flow_run_router = routes::flow_run::router(
-            routes::flow_run::FlowRunState { tools: mcp.tools.clone() },
-        );
+        let flow_run_router = routes::flow_run::router(routes::flow_run::FlowRunState {
+            tools: mcp.tools.clone(),
+        });
         app = app.merge(tools_router).merge(flow_run_router);
     }
 

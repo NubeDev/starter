@@ -11,9 +11,9 @@ publish = false
 # `tap.write` against the warehouse capability, a cleaner promotes
 # raw_events → samples, and `mart.read` drives the anomaly verdict.
 # The binary **must not** reach ClickHouse directly — all CH I/O
-# is routed through `starter-warehouse` → `starter-store-clickhouse`.
+# is routed through `starter-warehouse` → `starter-store-warehouse`.
 # `cargo tree -p iot-anomaly-detector | grep -i clickhouse` should
-# show the clickhouse crate reachable only via `starter-store-clickhouse`,
+# show the clickhouse crate reachable only via `starter-store-warehouse`,
 # never as a direct `clickhouse = "…"` entry on this crate.
 
 [[bin]]
@@ -26,7 +26,7 @@ path = "src/main.rs"
 # filter validation are all available.
 starter-warehouse        = { workspace = true, features = ["warehouse"] }
 starter-store-postgres   = { workspace = true, features = ["dimensions"] }
-starter-store-clickhouse = { workspace = true }
+starter-store-warehouse = { workspace = true }
 starter-tags             = { workspace = true }
 
 # MQTT subscribe: same version the demo bundle under
@@ -41,3 +41,6 @@ anyhow   = { workspace = true }
 chrono   = { workspace = true }
 tracing  = { workspace = true }
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+
+[lints]
+workspace = true

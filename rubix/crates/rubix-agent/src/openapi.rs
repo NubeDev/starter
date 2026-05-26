@@ -67,9 +67,8 @@ pub struct RubixApi;
 /// the agent, so we pass `SignupMode::Disabled`.
 pub fn rubix_openapi() -> utoipa::openapi::OpenApi {
     let mut doc = RubixApi::openapi();
-    let mut auth = starter_auth_users::openapi::openapi(
-        &starter_auth_users::signup::SignupMode::Disabled,
-    );
+    let mut auth =
+        starter_auth_users::openapi::openapi(&starter_auth_users::signup::SignupMode::Disabled);
     prefix_paths(&mut auth, "/api/v1");
     doc.merge(auth);
     dedupe_tags(&mut doc);

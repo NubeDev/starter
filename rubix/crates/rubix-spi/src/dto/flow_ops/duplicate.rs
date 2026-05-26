@@ -62,10 +62,8 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
         "\"target_flow_id\": \"com.example.flow-programmer-copy\", ",
         "\"revision_id\": \"...\", \"created_at_ms\": 1764892800000 }"
     ),
-    siblings: &[
-        SiblingTool {
-            id: "rubix.flow_ops.deploy",
-            wins_when: "the caller already has the desired YAML body in hand.",
-        },
-    ],
+    siblings: &[SiblingTool {
+        id: "rubix.flow_ops.deploy",
+        wins_when: "the caller already has the desired YAML body in hand.",
+    }],
 };

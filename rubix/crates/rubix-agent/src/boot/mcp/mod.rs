@@ -106,15 +106,14 @@ pub struct McpSurface {
 /// wiring the REST composition uses, so MCP-triggered probes persist
 /// to the warehouse identically.
 pub async fn build_mcp_surface(
-    ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
+    ch_client: Option<Arc<starter_store_warehouse::ChClient>>,
     pg_pool: Option<starter_store_postgres::pool::Pool>,
     ext: Option<&ExtensionMcpContext>,
     runtime: Option<&crate::boot::FlowRuntime>,
     shared_tools: Option<Vec<Arc<dyn starter_spi::tool::Tool>>>,
 ) -> anyhow::Result<McpSurface> {
-    let tools = Arc::new(
-        build_tool_registry(ch_client, pg_pool, ext, runtime, shared_tools).await?,
-    );
+    let tools =
+        Arc::new(build_tool_registry(ch_client, pg_pool, ext, runtime, shared_tools).await?);
     let router: axum::Router =
         starter_mcp::mcp_router(tools.clone(), starter_mcp::McpHttpOptions::default());
     Ok(McpSurface { tools, router })
@@ -131,7 +130,7 @@ pub async fn build_mcp_surface(
 /// so the boot log shows `mcp_tools=N` (expected `N = 6` once the
 /// six bundled flows are present).
 pub async fn build_tool_registry(
-    ch_client: Option<Arc<starter_store_clickhouse::ChClient>>,
+    ch_client: Option<Arc<starter_store_warehouse::ChClient>>,
     pg_pool: Option<starter_store_postgres::pool::Pool>,
     ext: Option<&ExtensionMcpContext>,
     runtime: Option<&crate::boot::FlowRuntime>,
@@ -166,11 +165,8 @@ pub async fn build_tool_registry(
     // shadow the flow surface, which downstream code relies on.
     let mut primitive_registered: usize = 0;
     {
-        let existing: std::collections::HashSet<String> = tools
-            .list()
-            .iter()
-            .map(|t| t.name.clone())
-            .collect();
+        let existing: std::collections::HashSet<String> =
+            tools.list().iter().map(|t| t.name.clone()).collect();
         for tool in primitives_for_mcp {
             let name = tool.definition().name.clone();
             if existing.contains(&name) {
@@ -235,9 +231,7 @@ pub async fn build_tool_registry(
 /// `FlowSubscriptionRegistry` the SSE route subscribes to) so
 /// every surface-driven run (`FlowAsTool` / `FlowAsService`)
 /// shares state and event fan-out with the always-on flow runtime.
-pub(crate) fn build_engine(
-    runtime: Option<&crate::boot::FlowRuntime>,
-) -> Arc<Engine> {
+pub(crate) fn build_engine(runtime: Option<&crate::boot::FlowRuntime>) -> Arc<Engine> {
     let graph_store: Arc<dyn GraphStore> = Arc::new(InMemoryGraphStore::new());
     let mut engine = Engine::new(graph_store);
     if let Some(rt) = runtime {

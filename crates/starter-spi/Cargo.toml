@@ -85,3 +85,6 @@ preferences = ["units"]
 # don't use audit / undo / clipboard pay nothing for the seam.
 # See `DOCS/backend/undo-redo/SCOPE.md`.
 changelog   = []
+
+[lints]
+workspace = true

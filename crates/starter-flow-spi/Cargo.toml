@@ -38,3 +38,6 @@ jsonschema  = { workspace = true }
 # `[dependencies.starter-skills]` entry here.
 default = []
 skills  = []
+
+[lints]
+workspace = true

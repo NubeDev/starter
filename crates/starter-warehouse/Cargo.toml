@@ -11,7 +11,7 @@ rust-version.workspace = true
 # Tag layer + storage seam (W4 / W11 / W12).
 starter-tags             = { workspace = true }
 starter-store-postgres   = { workspace = true, features = ["dimensions"], optional = true }
-starter-store-clickhouse = { workspace = true, optional = true }
+starter-store-warehouse = { workspace = true, optional = true }
 clickhouse = { version = "0.13", default-features = false, features = ["lz4", "chrono"], optional = true }
 # Flow SPI (W9).
 starter-flow-spi   = { workspace = true, optional = true }
@@ -45,7 +45,7 @@ default = []
 # store, the ClickHouse store, the flow SPI, and the REST surface.
 warehouse = [
     "dep:starter-store-postgres",
-    "dep:starter-store-clickhouse",
+    "dep:starter-store-warehouse",
     "dep:starter-flow-spi",
     "dep:starter-flow-nodes",
     "dep:starter-server",
@@ -64,7 +64,7 @@ warehouse = [
 testing = [
     "warehouse",
     "starter-store-postgres/testing",
-    "starter-store-clickhouse/testing",
+    "starter-store-warehouse/testing",
 ]
 
 # AI agent / MCP tool surface (SCOPE "AI agent / MCP").
@@ -79,4 +79,7 @@ tower            = { workspace = true }
 http-body-util   = "0.1"
 starter-spi      = { workspace = true }
 starter-authz    = { workspace = true }
-starter-store-clickhouse = { workspace = true, features = ["testing"] }
+starter-store-warehouse = { workspace = true, features = ["testing"] }
+
+[lints]
+workspace = true

@@ -38,3 +38,6 @@ async-trait  = { workspace = true }
 starter-server  = { workspace = true, features = ["testing"] }
 reqwest         = { workspace = true, features = ["json"] }
 
+
+[lints]
+workspace = true

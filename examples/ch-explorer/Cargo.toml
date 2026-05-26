@@ -10,10 +10,10 @@ publish     = false
 
 # Hard rule (mirrors examples/iot-anomaly-detector): the binary must
 # not depend on the `clickhouse` crate directly — all CH I/O is
-# routed through `starter-warehouse` → `starter-store-clickhouse`.
+# routed through `starter-warehouse` → `starter-store-warehouse`.
 # `cargo tree -p ch-explorer-example | grep -i '^clickhouse '`
 # should show the upstream clickhouse crate reachable only via
-# `starter-store-clickhouse`.
+# `starter-store-warehouse`.
 
 [[bin]]
 name = "ch-explorer"
@@ -22,7 +22,7 @@ path = "src/main.rs"
 [dependencies]
 starter-server           = { workspace = true }
 starter-warehouse        = { workspace = true, features = ["warehouse"] }
-starter-store-clickhouse = { workspace = true }
+starter-store-warehouse = { workspace = true }
 starter-authz            = { workspace = true }
 starter-spi              = { workspace = true }
 starter-observability    = { workspace = true }
@@ -34,3 +34,6 @@ tokio        = { workspace = true, features = ["rt-multi-thread", "macros", "sig
 tracing      = { workspace = true }
 anyhow       = { workspace = true }
 clap         = { workspace = true }
+
+[lints]
+workspace = true

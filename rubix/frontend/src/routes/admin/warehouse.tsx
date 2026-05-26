@@ -2,7 +2,7 @@
 // rubix-side `<WarehouseAdmin>` tabbed shell from
 // `@/components/admin/warehouse`. The shell composes rules, marts,
 // retention, and insights panels — each reads/writes via
-// `@nube/rubix-client-react` hooks against `rubix.clickhouse.*` and
+// `@nube/rubix-client-react` hooks against `rubix.warehouse.*` and
 // `rubix.insights.*` tools.
 
 import { createFileRoute } from '@tanstack/react-router'

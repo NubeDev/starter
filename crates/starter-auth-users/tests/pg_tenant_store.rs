@@ -58,7 +58,12 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
         .await
         .expect("seed user-1");
     users
-        .create("user-2", "b@example.com", Some(ARGON2_FIXTURE), Role::Reader)
+        .create(
+            "user-2",
+            "b@example.com",
+            Some(ARGON2_FIXTURE),
+            Role::Reader,
+        )
         .await
         .expect("seed user-2");
 
@@ -240,13 +245,12 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
         .await
         .expect("remove membership cascades token revoke");
 
-    let revoked_at: Option<chrono::DateTime<chrono::Utc>> = sqlx::query_scalar(
-        "SELECT revoked_at FROM starter_auth_users_tokens WHERE id = $1",
-    )
-    .bind("tok-cascade")
-    .fetch_one(pool.sqlx())
-    .await
-    .expect("read tok-cascade");
+    let revoked_at: Option<chrono::DateTime<chrono::Utc>> =
+        sqlx::query_scalar("SELECT revoked_at FROM starter_auth_users_tokens WHERE id = $1")
+            .bind("tok-cascade")
+            .fetch_one(pool.sqlx())
+            .await
+            .expect("read tok-cascade");
     assert!(
         revoked_at.is_some(),
         "membership remove must revoke tokens in the same txn"
@@ -334,13 +338,12 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
     // ---------- trigger-enforced immutability (SQLSTATE 23514) ----------
 
     // Teams: slug change is refused.
-    let slug_err = sqlx::query(
-        "UPDATE starter_auth_users_teams SET slug = 'renamed' WHERE id = $1",
-    )
-    .bind("team-1")
-    .execute(pool.sqlx())
-    .await
-    .expect_err("team slug update must fail");
+    let slug_err =
+        sqlx::query("UPDATE starter_auth_users_teams SET slug = 'renamed' WHERE id = $1")
+            .bind("team-1")
+            .execute(pool.sqlx())
+            .await
+            .expect_err("team slug update must fail");
     assert_eq!(
         db_code(&slug_err).as_deref(),
         Some(SQLSTATE_CHECK_VIOLATION),
@@ -348,35 +351,31 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
     );
 
     // Teams: tenant_id change is refused.
-    let tenant_err = sqlx::query(
-        "UPDATE starter_auth_users_teams SET tenant_id = 't-2' WHERE id = $1",
-    )
-    .bind("team-1")
-    .execute(pool.sqlx())
-    .await
-    .expect_err("team tenant_id update must fail");
+    let tenant_err =
+        sqlx::query("UPDATE starter_auth_users_teams SET tenant_id = 't-2' WHERE id = $1")
+            .bind("team-1")
+            .execute(pool.sqlx())
+            .await
+            .expect_err("team tenant_id update must fail");
     assert_eq!(
         db_code(&tenant_err).as_deref(),
         Some(SQLSTATE_CHECK_VIOLATION)
     );
 
     // Teams: display_name change is allowed (mutable).
-    sqlx::query(
-        "UPDATE starter_auth_users_teams SET display_name = 'Renamed' WHERE id = $1",
-    )
-    .bind("team-1")
-    .execute(pool.sqlx())
-    .await
-    .expect("display_name is mutable");
+    sqlx::query("UPDATE starter_auth_users_teams SET display_name = 'Renamed' WHERE id = $1")
+        .bind("team-1")
+        .execute(pool.sqlx())
+        .await
+        .expect("display_name is mutable");
 
     // Tokens: (user_id, tenant_id) immutability.
-    let tok_err = sqlx::query(
-        "UPDATE starter_auth_users_tokens SET tenant_id = 't-2' WHERE id = $1",
-    )
-    .bind("tok-cascade")
-    .execute(pool.sqlx())
-    .await
-    .expect_err("token tenant_id update must fail");
+    let tok_err =
+        sqlx::query("UPDATE starter_auth_users_tokens SET tenant_id = 't-2' WHERE id = $1")
+            .bind("tok-cascade")
+            .execute(pool.sqlx())
+            .await
+            .expect_err("token tenant_id update must fail");
     assert_eq!(db_code(&tok_err).as_deref(), Some(SQLSTATE_CHECK_VIOLATION));
 
     // Sessions: user_id immutability. Seed a session first.
@@ -394,32 +393,28 @@ async fn pg_tenant_store_round_trips_every_method_against_live_postgres() {
     .expect("seed session");
 
     // NULL → set tenant_id is allowed (one-shot bind).
-    sqlx::query(
-        "UPDATE starter_auth_users_sessions SET tenant_id = 't-1' WHERE id = $1",
-    )
-    .bind("sess-1")
-    .execute(pool.sqlx())
-    .await
-    .expect("session tenant_id NULL → set is allowed");
+    sqlx::query("UPDATE starter_auth_users_sessions SET tenant_id = 't-1' WHERE id = $1")
+        .bind("sess-1")
+        .execute(pool.sqlx())
+        .await
+        .expect("session tenant_id NULL → set is allowed");
 
     // Re-bind (set → different value) is refused.
-    let rebind = sqlx::query(
-        "UPDATE starter_auth_users_sessions SET tenant_id = 't-2' WHERE id = $1",
-    )
-    .bind("sess-1")
-    .execute(pool.sqlx())
-    .await
-    .expect_err("session tenant_id rebind must fail");
+    let rebind =
+        sqlx::query("UPDATE starter_auth_users_sessions SET tenant_id = 't-2' WHERE id = $1")
+            .bind("sess-1")
+            .execute(pool.sqlx())
+            .await
+            .expect_err("session tenant_id rebind must fail");
     assert_eq!(db_code(&rebind).as_deref(), Some(SQLSTATE_CHECK_VIOLATION));
 
     // user_id change is refused.
-    let sess_user = sqlx::query(
-        "UPDATE starter_auth_users_sessions SET user_id = 'user-2' WHERE id = $1",
-    )
-    .bind("sess-1")
-    .execute(pool.sqlx())
-    .await
-    .expect_err("session user_id update must fail");
+    let sess_user =
+        sqlx::query("UPDATE starter_auth_users_sessions SET user_id = 'user-2' WHERE id = $1")
+            .bind("sess-1")
+            .execute(pool.sqlx())
+            .await
+            .expect_err("session user_id update must fail");
     assert_eq!(
         db_code(&sess_user).as_deref(),
         Some(SQLSTATE_CHECK_VIOLATION)

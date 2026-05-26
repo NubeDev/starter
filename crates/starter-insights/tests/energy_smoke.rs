@@ -50,7 +50,13 @@ impl Cancel for NoCancel {
 }
 
 fn make_ctx<'a>(node: &'a NodeId, cancel: &'a dyn Cancel) -> NodeCtx<'a> {
-    NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE, &starter_flow_spi::state::NOOP_NODE_STATE_STORE)
+    NodeCtx::new(
+        RunId::new(),
+        node,
+        cancel,
+        SkillSelection::NONE,
+        &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
+    )
 }
 
 fn build_registries() -> (Arc<RuleRegistry>, QualityFlagRegistry) {
@@ -315,7 +321,6 @@ async fn window_slide_emits_tz_aware_windows() {
 
 #[cfg(feature = "sqlite")]
 mod rollup_tests {
-    use super::*;
     use chrono::{TimeZone, Utc};
     use starter_insights::rollups::{RollupEngine, WindowClass};
     use starter_insights::sqlite::{VerdictStore, INSIGHTS_MIGRATION_SOURCE};

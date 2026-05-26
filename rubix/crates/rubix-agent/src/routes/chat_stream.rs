@@ -99,11 +99,7 @@ impl ChatStreamState {
     /// `export RUBIX_SERVICE_MCP_URL=` in a shell session does not
     /// accidentally enable the MCP path.
     pub fn from_env(runner: Arc<dyn AiRunner>) -> Self {
-        let snap = |key: &str| {
-            std::env::var(key)
-                .ok()
-                .filter(|s| !s.trim().is_empty())
-        };
+        let snap = |key: &str| std::env::var(key).ok().filter(|s| !s.trim().is_empty());
         Self {
             runner,
             mcp_url: snap("RUBIX_SERVICE_MCP_URL"),
@@ -231,10 +227,7 @@ async fn chat_stream(
         // exposed via the MCP server we configure in
         // `crates/starter-ai/src/runners/claude.rs` (server name
         // hard-coded to `"rubix"` there).
-        allowed_tools: state
-            .mcp_url
-            .as_ref()
-            .map(|_| "mcp__rubix__*".to_owned()),
+        allowed_tools: state.mcp_url.as_ref().map(|_| "mcp__rubix__*".to_owned()),
         // The host has already gated the request at the HTTP layer
         // (login cookie + `with_principal`). Without `Bypass` the
         // CLI's `--permission-mode bypassPermissions` alone still
@@ -244,10 +237,7 @@ async fn chat_stream(
         // the MCP server. The Claude runner pairs `Bypass` with
         // `--dangerously-skip-permissions` to also bypass MCP
         // prompts (see `runners/claude.rs`).
-        permission_mode: state
-            .mcp_url
-            .as_ref()
-            .map(|_| PermissionMode::Bypass),
+        permission_mode: state.mcp_url.as_ref().map(|_| PermissionMode::Bypass),
         ..CliCfg::default()
     };
 
@@ -262,8 +252,7 @@ async fn chat_stream(
     //       support lands) honours the auth identity. We do not
     //       persist sessions yet — chat is single-turn today.
     let runner = state.runner.clone();
-    let session_id: SessionId =
-        format!("chat:{}", principal.subject).into();
+    let session_id: SessionId = format!("chat:{}", principal.subject).into();
     tokio::spawn(async move {
         // `NoopCancel` keeps the loop running until the runner
         // returns or the client disconnects. When the client
@@ -427,7 +416,6 @@ fn _provider_type_used(_: &Provider) {}
 mod tests {
     use super::*;
     use starter_spi::ai::SessionId;
-    use tokio_stream::StreamExt as _;
 
     fn evt(kind: EventKind) -> Event {
         Event {
@@ -451,8 +439,7 @@ mod tests {
 
     #[test]
     fn skill_body_for_hint_resolves_bundled_skill() {
-        let body =
-            skill_body_for_hint("com.rubix.dashboard-builder").expect("bundled");
+        let body = skill_body_for_hint("com.rubix.dashboard-builder").expect("bundled");
         assert!(body.starts_with("# Dashboard builder"), "body: {body:.80?}");
         // Frontmatter should be stripped.
         assert!(!body.contains("trust: approved"));
@@ -521,9 +508,7 @@ mod tests {
 
     #[test]
     fn frame_to_sse_serialises_to_default_event() {
-        let frame = ChatFrame::Text {
-            delta: "hi".into(),
-        };
+        let frame = ChatFrame::Text { delta: "hi".into() };
         let sse = frame_to_sse(&frame);
         // `Sse::Event` has no public accessors for the data
         // payload, but `format!("{sse:?}")` reliably includes it.
@@ -537,9 +522,19 @@ mod tests {
     #[tokio::test]
     async fn build_stream_forwards_events_in_order() {
         let (tx, rx) = mpsc::channel::<Event>(4);
-        tx.send(evt(EventKind::Connected { model: None })).await.unwrap();
-        tx.send(evt(EventKind::Text { content: "hel".into() })).await.unwrap();
-        tx.send(evt(EventKind::Text { content: "lo".into() })).await.unwrap();
+        tx.send(evt(EventKind::Connected { model: None }))
+            .await
+            .unwrap();
+        tx.send(evt(EventKind::Text {
+            content: "hel".into(),
+        }))
+        .await
+        .unwrap();
+        tx.send(evt(EventKind::Text {
+            content: "lo".into(),
+        }))
+        .await
+        .unwrap();
         tx.send(evt(EventKind::Done {
             duration_ms: 1,
             cost_usd: 0.0,

@@ -6,9 +6,7 @@
 //! by the tool across calls so cumulative values monotonically rise
 //! between ticks and stuck stretches can span many ticks.
 
-use rubix_spi::dto::dataflow::synth::{
-    MeterKind, MeterUnit, ELEC_START_KWH, WATER_START_L,
-};
+use rubix_spi::dto::dataflow::synth::{MeterKind, MeterUnit, ELEC_START_KWH, WATER_START_L};
 
 /// Mess shapes a given meter is eligible for. Encoded here (not in
 /// the request) so callers can't accidentally inject a shape that

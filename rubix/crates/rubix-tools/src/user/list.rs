@@ -46,10 +46,9 @@ impl Tool for UserListTool {
     async fn invoke(&self, input: Value) -> Result<Value> {
         // Parse defensively so unknown fields fail loudly rather than
         // silently — matches the contract of the write verbs.
-        let _req: UserListRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("UserListRequest: {e}"),
-            })?;
+        let _req: UserListRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("UserListRequest: {e}"),
+        })?;
 
         let mut rows = self.store.list().await?;
         rows.sort_by(|a, b| a.email.cmp(&b.email));
@@ -64,10 +63,9 @@ impl Tool for UserListTool {
             .collect();
         let count = users.len();
 
-        let summary = Diagnostic::new(
-            MessageKey::parse("rubix.user.listed").expect("hard-coded key parses"),
-        )
-        .with_param("count", DiagnosticParam::I64(count as i64));
+        let summary =
+            Diagnostic::new(MessageKey::parse("rubix.user.listed").expect("hard-coded key parses"))
+                .with_param("count", DiagnosticParam::I64(count as i64));
 
         let response = UserListResponse {
             summary,

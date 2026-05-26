@@ -63,3 +63,6 @@ starter-store-postgres = { workspace = true, features = ["testing"] }
 sqlx  = { workspace = true, features = ["postgres", "macros", "runtime-tokio", "chrono"] }
 chrono = { workspace = true }
 uuid   = { workspace = true, features = ["v4"] }
+
+[lints]
+workspace = true

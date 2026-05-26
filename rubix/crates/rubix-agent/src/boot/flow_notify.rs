@@ -115,8 +115,8 @@ pub async fn spawn_flow_notify(
 }
 
 async fn handle_payload(pool: &Pool, payload: &str, on_reload: &ReloadFn) -> Result<()> {
-    let parsed: NotifyPayload = serde_json::from_str(payload)
-        .map_err(|e| anyhow::anyhow!("payload not json: {e}"))?;
+    let parsed: NotifyPayload =
+        serde_json::from_str(payload).map_err(|e| anyhow::anyhow!("payload not json: {e}"))?;
     if parsed.superseded_at.is_some() {
         debug!(flow_id = %parsed.flow_id, "flow_notify: superseded — skipping reload");
         return Ok(());
@@ -164,8 +164,8 @@ async fn handle_payload(pool: &Pool, payload: &str, on_reload: &ReloadFn) -> Res
     let path = format!("pg://flows_definitions/{}", parsed.flow_id);
     let yaml = rubix_flows::parse_yaml(&path, body_yaml.as_bytes())
         .map_err(|e| anyhow::anyhow!("parse pg yaml: {e}"))?;
-    let (flow_id, _rev, body) = rubix_flows::convert(&path, yaml)
-        .map_err(|e| anyhow::anyhow!("convert pg yaml: {e}"))?;
+    let (flow_id, _rev, body) =
+        rubix_flows::convert(&path, yaml).map_err(|e| anyhow::anyhow!("convert pg yaml: {e}"))?;
     let revision = parsed
         .revision_id
         .parse::<Uuid>()

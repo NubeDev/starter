@@ -532,7 +532,6 @@ pub enum RetentionPolicy {
     },
 }
 
-
 /// Report from [`AgentSessionStore::sweep_retention`].
 ///
 /// Counters are summed across the sweep; zero is a valid result

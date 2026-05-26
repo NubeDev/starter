@@ -19,7 +19,7 @@
 
 use axum::body::Body;
 use axum::http::{Method, Request, StatusCode};
-use starter_store_clickhouse::{ChClient, ChConfig};
+use starter_store_warehouse::{ChClient, ChConfig};
 use tower::ServiceExt;
 
 fn dummy_client() -> ChClient {
@@ -98,7 +98,11 @@ async fn explorer_query_endpoint_refuses_every_write_verb_with_400() {
             .header("content-type", "application/json")
             .body(Body::from(serde_json::to_vec(&payload).unwrap()))
             .unwrap();
-        let resp = router.clone().oneshot(req).await.expect("router infallible");
+        let resp = router
+            .clone()
+            .oneshot(req)
+            .await
+            .expect("router infallible");
         let status = resp.status();
         let bytes = resp.into_body().collect().await.unwrap().to_bytes();
         let body: serde_json::Value =

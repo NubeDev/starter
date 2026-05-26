@@ -63,13 +63,13 @@ impl Tool for DashboardListTool {
             owner: req.owner,
         };
 
-        let mut rows =
-            self.store
-                .list_active(&req.tenant_id, &filter)
-                .await
-                .map_err(|e| Error::Internal {
-                    source: Box::new(e),
-                })?;
+        let mut rows = self
+            .store
+            .list_active(&req.tenant_id, &filter)
+            .await
+            .map_err(|e| Error::Internal {
+                source: Box::new(e),
+            })?;
         rows.sort_by(|a, b| a.page_id.cmp(&b.page_id));
 
         let items: Vec<DashboardSummary> = rows
@@ -155,8 +155,7 @@ mod tests {
                 .iter()
                 .filter(|r| r.tenant_id == tenant_id)
                 .filter(|r| {
-                    filter.tags_any.is_empty()
-                        || r.tags.iter().any(|t| filter.tags_any.contains(t))
+                    filter.tags_any.is_empty() || r.tags.iter().any(|t| filter.tags_any.contains(t))
                 })
                 .filter(|r| match &filter.owner {
                     None => true,

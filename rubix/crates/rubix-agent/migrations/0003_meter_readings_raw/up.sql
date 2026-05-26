@@ -3,7 +3,7 @@
 -- One row per emitted reading; written from
 -- `rubix-tools::warehouse::ingest` via a multi-row INSERT after the
 -- producer flow's synth node fires. Single DDL statement per file
--- (CH DDL is non-transactional, so the starter-store-clickhouse
+-- (CH DDL is non-transactional, so the starter-store-warehouse
 -- migration runner sends one statement per HTTP round trip and
 -- `IF NOT EXISTS` keeps re-apply safe).
 --
@@ -19,7 +19,7 @@
 -- electricity.hvac mess), quality ('ok'|'suspect'|'missing').
 --
 -- Schema is **owned by warehouse-bundled migration**, not by the
--- operator-authored `rubix.clickhouse.rule.write` verb. Same
+-- operator-authored `rubix.warehouse.rule.write` verb. Same
 -- precedent as `0002_history/up.sql` (system_disk_history). The
 -- rule.write verb is reserved for operator-authored derived-state
 -- rules, not for the hard-coded core schema. See

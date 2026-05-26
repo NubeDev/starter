@@ -656,8 +656,7 @@ impl AgentConfig {
         // values are simply unused on the REST path.
         let mcp_url = read_string(input, MCP_URL_SLOT).filter(|s| !s.is_empty());
         let mcp_token = read_string(input, MCP_TOKEN_SLOT).filter(|s| !s.is_empty());
-        let mcp_config_path =
-            read_string(input, MCP_CONFIG_PATH_SLOT).filter(|s| !s.is_empty());
+        let mcp_config_path = read_string(input, MCP_CONFIG_PATH_SLOT).filter(|s| !s.is_empty());
 
         Ok(Self {
             provider_id,
@@ -1399,7 +1398,13 @@ mod tests {
     }
 
     fn ctx<'a>(node: &'a NodeId, cancel: &'a dyn FlowCancel) -> NodeCtx<'a> {
-        NodeCtx::new(RunId::new(), node, cancel, SkillSelection::NONE, &starter_flow_spi::state::NOOP_NODE_STATE_STORE)
+        NodeCtx::new(
+            RunId::new(),
+            node,
+            cancel,
+            SkillSelection::NONE,
+            &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
+        )
     }
 
     fn node(id: &str) -> NodeId {

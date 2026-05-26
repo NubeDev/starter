@@ -1,6 +1,6 @@
 // ClickHouse marts panel. Lists materialised marts, supports
 // creating a new mart via `useMartCreate` (modal with name + DDL),
-// and dropping a mart via `useClickhouseMartDrop` with a hard
+// and dropping a mart via `useWarehouseMartDrop` with a hard
 // data-loss warning surfaced through the kit's `<AlertDialog>`
 // (no `window.confirm`, per the explorer scope's code-standard
 // checklist).
@@ -35,8 +35,8 @@ import {
 } from '@nube/starter-ui-kit'
 import { Boxes, Plus, Trash2, AlertTriangle } from 'lucide-react'
 import {
-  useClickhouseMartDrop,
-  useClickhouseMartsList,
+  useWarehouseMartDrop,
+  useWarehouseMartsList,
   useMartCreate,
 } from '@nube/rubix-client-react'
 
@@ -45,9 +45,9 @@ export function WarehouseMartsPanel() {
   const tr = (id: string, def: string) =>
     intl.formatMessage({ id, defaultMessage: def })
 
-  const list = useClickhouseMartsList()
+  const list = useWarehouseMartsList()
   const create = useMartCreate()
-  const drop = useClickhouseMartDrop()
+  const drop = useWarehouseMartDrop()
 
   const [open, setOpen] = useState(false)
   const [name, setName] = useState('')

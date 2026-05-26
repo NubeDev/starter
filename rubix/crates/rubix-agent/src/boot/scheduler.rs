@@ -89,8 +89,7 @@ pub async fn spawn(
     let registry = Arc::new(FlowRegistry::new());
     let runner: Arc<dyn FlowRunner> = Arc::new(ToolRegistryRunner { tools });
 
-    let svc =
-        FlowAsService::new(pool, registry, runner).with_clock(Arc::new(SystemClock::new()));
+    let svc = FlowAsService::new(pool, registry, runner).with_clock(Arc::new(SystemClock::new()));
 
     // Single source of truth for the bundled `(flow_id,
     // cron_expr)` list — shared with the always-on

@@ -134,9 +134,9 @@ describe("RubixClient round-trip — one method per endpoint family", () => {
       // clickhouse
       {
         method: "POST",
-        path: "/api/v1/tools/rubix.clickhouse.rule.write",
+        path: "/api/v1/tools/rubix.warehouse.rule.write",
         handler: () =>
-          jsonResponse({ summary: { code: "rubix.clickhouse.rule.write.ok" } }),
+          jsonResponse({ summary: { code: "rubix.warehouse.rule.write.ok" } }),
       },
       // flow_ops
       {

@@ -18,11 +18,11 @@
 //!
 //! Hard rule: **no direct ClickHouse SQL anywhere in this binary**.
 //! Every CH read or write flows through `starter-warehouse` →
-//! `starter-store-clickhouse`. Verify with:
+//! `starter-store-warehouse`. Verify with:
 //!
 //! ```text
 //! cargo tree -p iot-anomaly-detector | grep -i clickhouse
-//! # clickhouse v0.13.x          ← reachable via starter-store-clickhouse
+//! # clickhouse v0.13.x          ← reachable via starter-store-warehouse
 //! ```
 //!
 //! No `clickhouse = "…"` line on this crate's `Cargo.toml`.
@@ -35,8 +35,8 @@ use chrono::Utc;
 use rumqttc::{AsyncClient, Event, EventLoop, MqttOptions, Packet, QoS};
 use serde::Deserialize;
 use serde_json::json;
-use starter_store_clickhouse::{ChConfig, PgSource};
 use starter_store_postgres::dimensions as dim;
+use starter_store_warehouse::{ChConfig, PgSource};
 use starter_tags::TagQuery;
 use starter_warehouse::catalog::mart_spec::{AggregationSpec, MartSpec};
 use starter_warehouse::nodes::runtime::WarehouseRuntime;
@@ -112,8 +112,8 @@ async fn main() -> Result<()> {
         password: ch_pass,
         async_insert: true,
     };
-    let ch_client = starter_store_clickhouse::ChClient::connect(ch_cfg.clone());
-    starter_store_clickhouse::MigrationRunner::new(&ch_client)
+    let ch_client = starter_store_warehouse::ChClient::connect(ch_cfg.clone());
+    starter_store_warehouse::MigrationRunner::new(&ch_client)
         .with_pg_source(pg_src)
         .run()
         .await

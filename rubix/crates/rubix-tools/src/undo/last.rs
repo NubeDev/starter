@@ -49,9 +49,8 @@ impl Tool for UndoLastTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.undo.last".to_owned(),
-            description:
-                "Undo the most recent reversible change made by the calling actor."
-                    .to_owned(),
+            description: "Undo the most recent reversible change made by the calling actor."
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {

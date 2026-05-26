@@ -14,8 +14,8 @@
 use std::sync::Arc;
 
 use chrono::{Duration, Utc};
-use starter_store_clickhouse::testing::with_clickhouse;
 use starter_store_postgres::testing::with_database;
+use starter_store_warehouse::testing::with_clickhouse;
 use starter_tags::TagQuery;
 use std::str::FromStr;
 
@@ -44,8 +44,8 @@ fn sample_spec(name: &str, created_by: &str) -> MartSpec {
 async fn boot() -> (
     starter_store_postgres::pool::Pool,
     starter_store_postgres::testing::ContainerGuard,
-    starter_store_clickhouse::ChClient,
-    starter_store_clickhouse::testing::ContainerGuard,
+    starter_store_warehouse::ChClient,
+    starter_store_warehouse::testing::ContainerGuard,
     Arc<WarehouseRuntime>,
 ) {
     let (pg, pg_guard) = with_database().await;

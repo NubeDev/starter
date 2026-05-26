@@ -23,9 +23,8 @@ impl Tool for DbTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.system.db".to_owned(),
-            description:
-                "Report database engine reachability and engine-reported storage usage."
-                    .to_owned(),
+            description: "Report database engine reachability and engine-reported storage usage."
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {

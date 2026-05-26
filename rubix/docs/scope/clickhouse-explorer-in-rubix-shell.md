@@ -98,7 +98,7 @@ consumer; the demo binary is a fallback for non-rubix hosts.
 | Library | `packages/starter-ui-ch-explorer/` flips from "Vite app" to "headless React component library" (same package name, new shape). Pattern: `@nube/starter-ui-authz`. |
 | Rubix shell | New route file `rubix/frontend/src/routes/admin/warehouse.explorer.tsx` mounts `<Explorer />` inside the existing `<WarehousePanel>` layout. New sidebar entry `nav.item.warehouseExplorer`. |
 | Demo binary | `examples/ch-explorer/` gains a tiny `examples/ch-explorer/ui/` host crate (or stays as-is if we can serve `rubix/frontend/dist/` from it — TBD in PR 1). |
-| HTTP | No backend changes. Same `/api/warehouse/ch/*` reads, same `rubix.clickhouse.*` verbs through `POST /api/v1/tools/{tool_id}`. |
+| HTTP | No backend changes. Same `/api/warehouse/ch/*` reads, same `rubix.warehouse.*` verbs through `POST /api/v1/tools/{tool_id}`. |
 | Data hooks | Migrate explorer fetchers off zod-fetch onto `@nube/starter-client-react` / `@nube/rubix-client-react`. |
 | i18n | All visible strings move to `DEFAULT_EXPLORER_MESSAGES` (mirror `DEFAULT_AUTHZ_MESSAGES`); rubix-frontend overrides via the provider. |
 | Theming | Drop the `SqlProvider` + `ThemeProvider` from the library; rubix shell already owns theme. Demo host re-adds them. |
@@ -109,7 +109,7 @@ consumer; the demo binary is a fallback for non-rubix hosts.
 |---|---|
 | Multiple package names | Stay with `@nube/starter-ui-ch-explorer` — same name, new exports surface. Avoids a deprecation cycle. |
 | New backend routes | Backend was finished in PRs 0–2 of the upstream plan; this is pure frontend work. |
-| New rubix verbs | Mart create/drop, retention set, rule write all already exist as `rubix.clickhouse.*` tools. |
+| New rubix verbs | Mart create/drop, retention set, rule write all already exist as `rubix.warehouse.*` tools. |
 | iframe embedding | Hard rejection. The rubix shell mounts `<Explorer />` as React. |
 | Monaco-as-default | Keep Monaco for the Query view, but lazy-load it behind a route boundary so the rubix admin bundle doesn't grow ~2.6 MB on cold load. |
 | Own router inside the library | The library exports components. The host (rubix-frontend or the demo) owns routing. |

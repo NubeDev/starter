@@ -33,6 +33,7 @@ pub(crate) fn text_to_json(s: Option<String>) -> Result<Option<serde_json::Value
 
 /// `(actor_kind, actor_id, actor_meta_json, actor_model)` tuple for
 /// the recorder's INSERT.
+#[allow(clippy::type_complexity)]
 pub(crate) fn actor_columns(
     actor: &Actor,
 ) -> Result<(String, Option<String>, Option<String>, Option<String>)> {

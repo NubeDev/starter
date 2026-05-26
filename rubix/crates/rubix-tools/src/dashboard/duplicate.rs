@@ -21,9 +21,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use rubix_spi::dashboard::{DashboardStore, NewRevision};
-use rubix_spi::dto::dashboard::duplicate::{
-    DuplicateDashboardRequest, DuplicateDashboardResponse,
-};
+use rubix_spi::dto::dashboard::duplicate::{DuplicateDashboardRequest, DuplicateDashboardResponse};
 use serde_json::Value;
 use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::Op;
@@ -121,7 +119,10 @@ impl Tool for DashboardDuplicateTool {
                 MessageKey::parse("rubix.dashboard.create.duplicate_id")
                     .expect("hard-coded key parses"),
             )
-            .with_param("page_id", DiagnosticParam::String(req.target_page_id.clone()));
+            .with_param(
+                "page_id",
+                DiagnosticParam::String(req.target_page_id.clone()),
+            );
             return Err(Error::Conflict {
                 message: format!("{}: {}", diag.code.as_str(), req.target_page_id),
             });
@@ -236,9 +237,7 @@ impl ReversibleTool for DashboardDuplicateTool {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use rubix_spi::dashboard::{
-        DashboardRevision, DashboardStoreError, ListFilter, NewRevision,
-    };
+    use rubix_spi::dashboard::{DashboardRevision, DashboardStoreError, ListFilter, NewRevision};
     use starter_spi::changelog::{Actor, Change, ChangeId, GroupId, Reversible};
     use std::sync::Mutex;
 
@@ -316,9 +315,7 @@ mod tests {
                 .unwrap()
                 .iter()
                 .find(|r| {
-                    r.tenant_id == tenant_id
-                        && r.page_id == page_id
-                        && r.superseded_at.is_none()
+                    r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none()
                 })
                 .cloned())
         }
@@ -336,10 +333,7 @@ mod tests {
         ) -> std::result::Result<u64, DashboardStoreError> {
             let mut n = 0u64;
             for r in self.rows.lock().unwrap().iter_mut() {
-                if r.tenant_id == tenant_id
-                    && r.page_id == page_id
-                    && r.superseded_at.is_none()
-                {
+                if r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none() {
                     r.superseded_at = Some("2026-05-25T00:00:03Z".into());
                     n += 1;
                 }
@@ -469,7 +463,7 @@ mod tests {
             patch: None,
         };
         let reversible = crate::dashboard::store::DashboardReversible::new(
-            store.clone() as Arc<dyn DashboardStore>,
+            store.clone() as Arc<dyn DashboardStore>
         );
         reversible.apply_inverse(&ch).await.unwrap();
         assert!(store

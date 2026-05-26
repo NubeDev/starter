@@ -56,12 +56,7 @@ impl InMemoryClient {
 
     /// Send a request built from method + params and await the matching
     /// response. The caller picks the JSON-RPC `id`.
-    pub async fn request(
-        &mut self,
-        id: i64,
-        method: &str,
-        params: Value,
-    ) -> io::Result<Response> {
+    pub async fn request(&mut self, id: i64, method: &str, params: Value) -> io::Result<Response> {
         #[derive(Serialize)]
         struct Req<'a> {
             jsonrpc: &'static str,

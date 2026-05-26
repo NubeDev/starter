@@ -28,3 +28,6 @@ subtle      = { workspace = true }
 [dev-dependencies]
 starter-store-sqlite = { workspace = true, features = ["testing"] }
 tokio        = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true

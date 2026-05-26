@@ -36,3 +36,6 @@ http           = { workspace = true }
 http-body-util = "0.1"
 tower          = { workspace = true }
 reqwest        = { workspace = true, features = ["json"] }
+
+[lints]
+workspace = true

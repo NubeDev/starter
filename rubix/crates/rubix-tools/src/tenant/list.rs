@@ -34,9 +34,7 @@ impl Tool for TenantListTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.tenant.list".to_owned(),
-            description: rubix_spi::dto::tenant::list::DESCRIPTOR
-                .purpose
-                .to_owned(),
+            description: rubix_spi::dto::tenant::list::DESCRIPTOR.purpose.to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {},

@@ -32,8 +32,7 @@ pub fn next_fire(now: DateTime<Utc>, expr: &str) -> Result<DateTime<Utc>, CronEr
         source: Box::new(e),
     })?;
 
-    schedule
-        .after(&now)
-        .next()
-        .ok_or_else(|| CronError::Past { expr: expr.to_owned() })
+    schedule.after(&now).next().ok_or_else(|| CronError::Past {
+        expr: expr.to_owned(),
+    })
 }

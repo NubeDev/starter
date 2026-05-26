@@ -40,9 +40,9 @@ use serde_json::Value;
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_store_clickhouse::clickhouse;
-use starter_store_clickhouse::clickhouse::Row;
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::clickhouse;
+use starter_store_warehouse::clickhouse::Row;
+use starter_store_warehouse::ChClient;
 
 /// Hard upper bound on the lookback knob. The cleaner runs every
 /// minute; a window wider than 60 minutes would re-clean the same
@@ -159,8 +159,7 @@ impl Tool for WarehouseCleanMinuteTool {
 
         let summary = if rows == 0 {
             Diagnostic::new(
-                MessageKey::parse("rubix.warehouse.clean.empty")
-                    .expect("hard-coded key parses"),
+                MessageKey::parse("rubix.warehouse.clean.empty").expect("hard-coded key parses"),
             )
             .with_param("lookback", DiagnosticParam::I64(i64::from(lookback)))
         } else {
@@ -311,10 +310,8 @@ mod tests {
     #[tokio::test]
     async fn invoke_without_client_returns_zero_rows() {
         let tool = WarehouseCleanMinuteTool::default();
-        let resp: WarehouseCleanMinuteResponse = serde_json::from_value(
-            tool.invoke(serde_json::json!({})).await.unwrap(),
-        )
-        .unwrap();
+        let resp: WarehouseCleanMinuteResponse =
+            serde_json::from_value(tool.invoke(serde_json::json!({})).await.unwrap()).unwrap();
         assert_eq!(resp.rows, 0);
         assert_eq!(resp.summary.code.as_str(), "rubix.warehouse.clean.empty");
         assert_eq!(resp.lookback_minutes, DEFAULT_LOOKBACK_MINUTES);

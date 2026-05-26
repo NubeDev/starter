@@ -11,7 +11,6 @@ pub use client::RubixClient;
 pub use error::RubixClientError;
 
 pub mod analytics;
-pub mod clickhouse;
 pub mod clipboard;
 pub mod dashboard;
 pub mod flow_ops;
@@ -21,3 +20,4 @@ pub mod team;
 pub mod tenant;
 pub mod undo;
 pub mod user;
+pub mod warehouse;

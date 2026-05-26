@@ -1,5 +1,5 @@
 // ClickHouse retention panel. Lists every `system.tables` row
-// from `useClickhouseTablesList`, exposes inline TTL editing via
+// from `useWarehouseTablesList`, exposes inline TTL editing via
 // `useRetentionSet`.
 
 import { useState } from 'react'
@@ -16,7 +16,7 @@ import {
 } from '@nube/starter-ui-kit'
 import { Clock, Save } from 'lucide-react'
 import {
-  useClickhouseTablesList,
+  useWarehouseTablesList,
   useRetentionSet,
 } from '@nube/rubix-client-react'
 
@@ -25,7 +25,7 @@ export function WarehouseRetentionPanel() {
   const tr = (id: string, def: string) =>
     intl.formatMessage({ id, defaultMessage: def })
 
-  const list = useClickhouseTablesList()
+  const list = useWarehouseTablesList()
   const setRetention = useRetentionSet()
   const [drafts, setDrafts] = useState<Record<string, string>>({})
 

@@ -54,10 +54,9 @@ impl Tool for TeamCreateTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: TeamCreateRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("TeamCreateRequest: {e}"),
-            })?;
+        let req: TeamCreateRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("TeamCreateRequest: {e}"),
+        })?;
         let name = req.name.trim();
         if name.is_empty() {
             return Err(Error::Invalid {

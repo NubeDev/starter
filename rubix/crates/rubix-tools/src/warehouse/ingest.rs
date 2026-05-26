@@ -20,7 +20,7 @@ use serde_json::Value;
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::ChClient;
 
 /// Concrete [`Tool`] for `rubix.warehouse.ingest`. Optionally holds
 /// a [`ChClient`]; without one the verb still validates input and
@@ -53,7 +53,9 @@ impl Tool for WarehouseIngestTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.warehouse.ingest".to_owned(),
-            description: rubix_spi::dto::dataflow::ingest::DESCRIPTOR.purpose.to_owned(),
+            description: rubix_spi::dto::dataflow::ingest::DESCRIPTOR
+                .purpose
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -90,8 +92,7 @@ impl Tool for WarehouseIngestTool {
 
         let summary = if inserted == 0 {
             Diagnostic::new(
-                MessageKey::parse("rubix.warehouse.ingest.empty")
-                    .expect("hard-coded key parses"),
+                MessageKey::parse("rubix.warehouse.ingest.empty").expect("hard-coded key parses"),
             )
         } else {
             Diagnostic::new(

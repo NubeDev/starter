@@ -87,7 +87,11 @@ fn visits_chart_sources_and_tabs() {
     c.visit_bindings(&mut rewrite);
     if let Component::Chart { sources, .. } = c {
         match &sources[0] {
-            ChartSource::Series { node_id, slot, field } => {
+            ChartSource::Series {
+                node_id,
+                slot,
+                field,
+            } => {
                 assert_eq!(node_id, "X-id");
                 assert_eq!(slot, "X-slot");
                 assert_eq!(field.as_deref(), Some("X-f"));

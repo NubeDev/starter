@@ -55,21 +55,16 @@ impl Tool for TeamAssignTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: TeamAssignRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("TeamAssignRequest: {e}"),
-            })?;
+        let req: TeamAssignRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("TeamAssignRequest: {e}"),
+        })?;
         let now_ms = now_epoch_ms();
         let (prior, new) = self
             .store
             .assign(&req.team_id, &req.user_id, now_ms)
             .await?;
         let already = prior.members.contains_key(&req.user_id);
-        let assigned_at = new
-            .members
-            .get(&req.user_id)
-            .copied()
-            .unwrap_or(now_ms);
+        let assigned_at = new.members.get(&req.user_id).copied().unwrap_or(now_ms);
 
         let summary = Diagnostic::new(
             MessageKey::parse("rubix.team.assigned").expect("hard-coded key parses"),

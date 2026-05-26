@@ -76,7 +76,9 @@ fn multipart_body(field: &str, filename: &str, payload: &[u8], boundary: &str) -
     out
 }
 
-fn build_admin(extensions_dir: std::path::PathBuf) -> (ExtensionAdmin, Arc<InMemoryEnablementStore>) {
+fn build_admin(
+    extensions_dir: std::path::PathBuf,
+) -> (ExtensionAdmin, Arc<InMemoryEnablementStore>) {
     let mut reg = ExtensionRegistry::new();
     reg.seal();
     let store = Arc::new(InMemoryEnablementStore::new());
@@ -120,7 +122,10 @@ async fn install_then_uninstall_roundtrip() {
 
     // Bundle is on disk under the configured root.
     let bundle_dir = tmp.path().join("com.acme.installed");
-    assert!(bundle_dir.join("block.yaml").exists(), "block.yaml must exist after install");
+    assert!(
+        bundle_dir.join("block.yaml").exists(),
+        "block.yaml must exist after install"
+    );
 
     // Persistence row marked Enabled.
     let ext_id = ExtensionId::new("com.acme.installed").unwrap();
@@ -168,7 +173,8 @@ async fn install_invalid_manifest_returns_code() {
     header.set_size(bytes.len() as u64);
     header.set_mode(0o644);
     header.set_cksum();
-    tar.append_data(&mut header, "block.yaml", &bytes[..]).unwrap();
+    tar.append_data(&mut header, "block.yaml", &bytes[..])
+        .unwrap();
     let payload = tar.into_inner().unwrap().finish().unwrap();
     let boundary = "----badmanifest";
     let body = multipart_body("file", "ext.tgz", &payload, boundary);

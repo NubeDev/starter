@@ -35,3 +35,6 @@ serde_yaml  = { version = "0.9", optional = true }
 [dev-dependencies]
 tokio = { workspace = true, features = ["full"] }
 tempfile = "3"
+
+[lints]
+workspace = true

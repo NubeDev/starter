@@ -123,7 +123,10 @@ impl FlowRegistration {
     pub fn with_default_adapters(mut self, seed_slot: SlotRef, output_slot: SlotRef) -> Self {
         let seed_slot_for_adapter = seed_slot.clone();
         let seed: SeedAdapter = Arc::new(move |input: &Value| {
-            vec![(seed_slot_for_adapter.clone(), SlotValue::Json(input.clone()))]
+            vec![(
+                seed_slot_for_adapter.clone(),
+                SlotValue::Json(input.clone()),
+            )]
         });
         let output_key = format!("{}.{}", output_slot.node, output_slot.slot);
         let output: OutputAdapter = Arc::new(move |out: &SlotMap| match out.get(&output_key) {

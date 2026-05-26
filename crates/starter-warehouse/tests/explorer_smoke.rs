@@ -26,15 +26,11 @@ use starter_authz::testing::DenyAll;
 use starter_authz::with_permission;
 use starter_spi::auth::{Principal, Role};
 use starter_spi::authz::PolicyEngine;
-use starter_store_clickhouse::{ChClient, ChConfig};
+use starter_store_warehouse::{ChClient, ChConfig};
 use tower::ServiceExt;
 
 fn gated_router(ch: ChClient) -> axum::Router {
-    with_permission(
-        starter_warehouse::explorer::routes(ch),
-        "warehouse",
-        "read",
-    )
+    with_permission(starter_warehouse::explorer::routes(ch), "warehouse", "read")
 }
 
 fn dummy_client() -> ChClient {
@@ -89,7 +85,7 @@ async fn explorer_returns_403_when_engine_denies_warehouse_read() {
 #[tokio::test]
 #[ignore = "requires Docker for the ClickHouse testcontainer"]
 async fn explorer_tables_returns_non_stub_rows_against_real_clickhouse() {
-    let (ch, _guard) = starter_store_clickhouse::testing::with_clickhouse().await;
+    let (ch, _guard) = starter_store_warehouse::testing::with_clickhouse().await;
 
     // Seed a couple of trivial tables so /tables returns more than
     // the empty default. We don't ship a fixture loader at the
@@ -126,10 +122,7 @@ async fn explorer_tables_returns_non_stub_rows_against_real_clickhouse() {
     let body = resp.into_body().collect().await.unwrap().to_bytes();
     let parsed: serde_json::Value = serde_json::from_slice(&body).unwrap();
     let tables = parsed["tables"].as_array().expect("tables array");
-    let names: Vec<&str> = tables
-        .iter()
-        .filter_map(|t| t["name"].as_str())
-        .collect();
+    let names: Vec<&str> = tables.iter().filter_map(|t| t["name"].as_str()).collect();
     assert!(
         names.iter().any(|n| *n == "smoke_one"),
         "expected smoke_one in /tables, got {names:?}",

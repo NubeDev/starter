@@ -93,7 +93,7 @@ A single backend that exposes:
 9. **SDUI backend** — server-driven UI route resolver. From
    `starter-sdui-routes`; dashboard pages produced by rubix tools.
 10. **Storage** — Postgres for state (`starter-store-postgres`),
-    ClickHouse for history (`starter-store-clickhouse` +
+    ClickHouse for history (`starter-store-warehouse` +
     `starter-warehouse`).
 
 That is the whole product. Anything not on that list is out.
@@ -512,7 +512,7 @@ rubix/
                                        starter-auth-users + oauth
                                        starter-authz
                                        starter-store-postgres
-                                       starter-store-clickhouse +
+                                       starter-store-warehouse +
                                          warehouse
 
   extensions/
@@ -593,7 +593,7 @@ rubix-spi
                   starter-ext-flow, starter-server, starter-grpc,
                   starter-mcp, starter-cli, starter-auth-users,
                   starter-auth-oauth, starter-authz, starter-ai,
-                  starter-store-postgres, starter-store-clickhouse,
+                  starter-store-postgres, starter-store-warehouse,
                   starter-warehouse, starter-sdui-routes, starter-i18n,
                   starter-prefs, starter-observability, starter-secrets-file,
                   starter-jsonrpc-stdio, starter-config, starter-tags,
@@ -617,7 +617,7 @@ rubix forks a starter capability.
 | AuthZ (tenants, teams, audit) | `starter-authz` |
 | Secrets | `starter-secrets-file` (default), `-keyring` (opt-in) |
 | Postgres | `starter-store-postgres` |
-| ClickHouse + warehouse | `starter-store-clickhouse`, `starter-warehouse` |
+| ClickHouse + warehouse | `starter-store-warehouse`, `starter-warehouse` |
 | Flow engine | `starter-flow`, `starter-flow-spi`, `starter-flow-nodes` |
 | Flow hot-reload | `starter-flow-watch` |
 | `ai-agent` node kind (LLM loop) | `starter-flow-node-loop` **(planned upstream — see [STARTER-CHANGES.md](docs/design/STARTER-CHANGES.md))** |
@@ -795,7 +795,7 @@ concept? Test at `tests/<same_name>_test.rs`? Any "no" → R1 slipped.
   `starter-auth-oauth`. OIDC consumers swap the `Authenticator`
   trait.
 - **No parallel storage layer.** `starter-store-postgres` +
-  `starter-store-clickhouse` are the only entry points.
+  `starter-store-warehouse` are the only entry points.
 - **No domain-specific verticals.** Devices, drivers, schedules,
   alarms, histories are *not* in v0. The six goals above are the
   scope. Verticals can ship later as extensions or as their own
@@ -1055,7 +1055,7 @@ they share dependencies.
   (GAPS #16).
 
 - **Goal 4 (ClickHouse):** `clickhouse.{rule.write,mart.create,
-  retention.set}` tools. `starter-store-clickhouse` +
+  retention.set}` tools. `starter-store-warehouse` +
   `starter-warehouse` wired. `flows/clickhouse-ruler.yaml` bundled.
 - **Goal 6 (analytics):** `analytics.{query,report}` tools.
   `flows/weekly-report.yaml`.

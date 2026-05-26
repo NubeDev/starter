@@ -2,7 +2,7 @@
 //!
 //! Read-only HTTP surface mounted at `/api/warehouse/ch/*` by
 //! [`crate::lib`]. Hands every request to the typed `ChClient` from
-//! `starter-store-clickhouse` — no second connection, no raw write
+//! `starter-store-warehouse` — no second connection, no raw write
 //! path. Authz (`warehouse.read`) is applied at the mount site in
 //! `lib.rs`, not here, so the router stays composable.
 //!
@@ -32,7 +32,7 @@ use axum::response::{IntoResponse, Json};
 use axum::routing::{get, post};
 use axum::Router;
 use serde::Deserialize;
-use starter_store_clickhouse::{ChClient, ChClientError};
+use starter_store_warehouse::{ChClient, ChClientError};
 
 use self::parse::{Reject, Verdict};
 
@@ -81,10 +81,7 @@ async fn tables_handler(State(ch): State<ChClient>) -> impl IntoResponse {
     }
 }
 
-async fn table_handler(
-    State(ch): State<ChClient>,
-    Path(name): Path<String>,
-) -> impl IntoResponse {
+async fn table_handler(State(ch): State<ChClient>, Path(name): Path<String>) -> impl IntoResponse {
     match queries::table(&ch, &name).await {
         Ok(v) => Json(v).into_response(),
         Err(e) => map_err(e).into_response(),
@@ -150,9 +147,7 @@ async fn query_handler(
         Verdict::Reject(reason) => {
             let msg = match reason {
                 Reject::Empty => "empty SQL statement",
-                Reject::NotReadOnly => {
-                    "read-only endpoint; use rubix.clickhouse.* verbs for writes"
-                }
+                Reject::NotReadOnly => "read-only endpoint; use rubix.warehouse.* verbs for writes",
             };
             return (
                 StatusCode::BAD_REQUEST,

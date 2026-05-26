@@ -381,9 +381,7 @@ impl Engine {
     /// if any. `FlowAsTool` calls this when constructing its
     /// per-call `FlowRunner` so node bodies see the host's durable
     /// state.
-    pub fn node_state_store(
-        &self,
-    ) -> Option<&Arc<dyn starter_flow_spi::state::NodeStateStore>> {
+    pub fn node_state_store(&self) -> Option<&Arc<dyn starter_flow_spi::state::NodeStateStore>> {
         self.node_state_store.as_ref()
     }
 

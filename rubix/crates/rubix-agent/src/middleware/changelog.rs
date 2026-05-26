@@ -187,9 +187,16 @@ fn redact(v: Value) -> Value {
 
 fn is_secret_key(key: &str) -> bool {
     let lower = key.to_ascii_lowercase();
-    ["password", "secret", "token", "api_key", "apikey", "authorization"]
-        .iter()
-        .any(|needle| lower.contains(needle))
+    [
+        "password",
+        "secret",
+        "token",
+        "api_key",
+        "apikey",
+        "authorization",
+    ]
+    .iter()
+    .any(|needle| lower.contains(needle))
 }
 
 /// Tiny adapter trait so `StatusCode::PAYLOAD_TOO_LARGE` can build

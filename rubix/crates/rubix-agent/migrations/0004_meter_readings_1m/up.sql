@@ -9,7 +9,7 @@
 --
 -- Schema is **owned by warehouse-bundled migration**, same
 -- precedent as `0003_meter_readings_raw`. The stage doc's call to
--- `rubix.clickhouse.mart.create` is the user-facing path; the
+-- `rubix.warehouse.mart.create` is the user-facing path; the
 -- core mart lands at boot via this migration so a cold start
 -- always has the table without operator intervention. See
 -- `rubix/docs/sessions/data-flow/03-clean-to-l2.md`.

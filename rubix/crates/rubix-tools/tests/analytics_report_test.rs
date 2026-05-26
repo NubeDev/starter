@@ -28,8 +28,8 @@ use serde_json::json;
 use starter_blob_fs::{FsBlobStore, PresignKey};
 use starter_spi::blob::{BlobRef, BlobRefInternal, BlobStore, Etag};
 use starter_spi::tool::Tool;
-use starter_store_clickhouse::testing::with_clickhouse;
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::testing::with_clickhouse;
+use starter_store_warehouse::ChClient;
 
 async fn exec(client: &ChClient, sql: &str) {
     client
@@ -106,7 +106,10 @@ async fn html_report_contains_table_with_disk_history_rows() {
         .expect("tool invoke");
 
     let resp: AnalyticsReportResponse = serde_json::from_value(out).unwrap();
-    assert_eq!(resp.summary.code.as_str(), "rubix.analytics.report.rendered");
+    assert_eq!(
+        resp.summary.code.as_str(),
+        "rubix.analytics.report.rendered"
+    );
     assert_eq!(resp.format, ReportFormat::Html);
     assert!(resp.byte_count > 0, "byte_count must be positive");
     assert!(!resp.url.is_empty(), "presigned url must be non-empty");
@@ -150,10 +153,7 @@ async fn pdf_format_yields_format_unsupported_messagekey() {
     let (client, _g) = with_clickhouse().await;
     let tempdir = tempfile::tempdir().unwrap();
     let store = FsBlobStore::open(tempdir.path(), PresignKey::ephemeral()).unwrap();
-    let tool = AnalyticsReportTool::new(
-        Arc::new(client),
-        Arc::new(store) as Arc<dyn BlobStore>,
-    );
+    let tool = AnalyticsReportTool::new(Arc::new(client), Arc::new(store) as Arc<dyn BlobStore>);
 
     let err = tool
         .invoke(json!({

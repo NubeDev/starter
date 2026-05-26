@@ -39,8 +39,8 @@ impl FlowKindsTool {
             .iter()
             .map(|b| {
                 let kind_id = b.kind_id().as_str().to_owned();
-                let schema =
-                    serde_json::to_value(b.config_schema()).unwrap_or(Value::Object(Default::default()));
+                let schema = serde_json::to_value(b.config_schema())
+                    .unwrap_or(Value::Object(Default::default()));
                 let default_label = default_label_for(&kind_id);
                 FlowKindItem {
                     kind_id,
@@ -80,7 +80,9 @@ impl Tool for FlowKindsTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.flow_ops.kinds".to_owned(),
-            description: rubix_spi::dto::flow_ops::kinds::DESCRIPTOR.purpose.to_owned(),
+            description: rubix_spi::dto::flow_ops::kinds::DESCRIPTOR
+                .purpose
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {},
@@ -90,10 +92,9 @@ impl Tool for FlowKindsTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let _req: FlowKindsRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("FlowKindsRequest: {e}"),
-            })?;
+        let _req: FlowKindsRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("FlowKindsRequest: {e}"),
+        })?;
         let count = self.kinds.len();
         let summary = Diagnostic::new(
             MessageKey::parse("rubix.flow.kinds.listed").expect("hard-coded key parses"),
@@ -117,7 +118,10 @@ mod tests {
     #[test]
     fn default_label_title_cases_last_segment() {
         assert_eq!(default_label_for("starter.flow.counter"), "Counter");
-        assert_eq!(default_label_for("starter.flow.trigger_schedule"), "Trigger Schedule");
+        assert_eq!(
+            default_label_for("starter.flow.trigger_schedule"),
+            "Trigger Schedule"
+        );
         assert_eq!(default_label_for("com.acme.http-out"), "Http Out");
     }
 
@@ -161,6 +165,9 @@ mod tests {
         let entry = &resp.kinds[0];
         assert_eq!(entry.kind_id, "starter.flow.counter");
         assert_eq!(entry.default_label, "Counter");
-        assert!(entry.config_schema.is_object(), "config_schema must serialise as a JSON object");
+        assert!(
+            entry.config_schema.is_object(),
+            "config_schema must serialise as a JSON object"
+        );
     }
 }

@@ -36,9 +36,7 @@ use uuid::Uuid;
 use starter_flow_surfaces::clock::{Clock, TestClock};
 use starter_flow_surfaces::service::{FlowAsService, FlowRunner};
 use starter_flow_surfaces::FlowRegistry;
-use starter_store_postgres::{
-    migrate, testing::with_database, SCHEDULED_FLOWS_MIGRATION_SOURCE,
-};
+use starter_store_postgres::{migrate, testing::with_database, SCHEDULED_FLOWS_MIGRATION_SOURCE};
 
 const FLOW_ID: &str = "com.rubix.weekly-report";
 /// 6-field every-minute cron (`sec min hour dom mon dow`).

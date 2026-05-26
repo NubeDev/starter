@@ -5,9 +5,9 @@
 //! [`ToolDescriptor`](crate::descriptor::ToolDescriptor).
 
 pub mod create;
+pub mod delete;
+pub mod duplicate;
 pub mod get;
-pub mod update;
 pub mod list;
 pub mod page_set;
-pub mod duplicate;
-pub mod delete;
+pub mod update;

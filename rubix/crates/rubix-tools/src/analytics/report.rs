@@ -46,7 +46,7 @@ use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::ChClient;
 use starter_undo::ChangeDraft;
 use uuid::Uuid;
 
@@ -203,13 +203,11 @@ impl Tool for AnalyticsReportTool {
         } else {
             "rubix.analytics.report.rendered"
         };
-        let summary = Diagnostic::new(
-            MessageKey::parse(code).expect("hard-coded key parses"),
-        )
-        .with_param("template", DiagnosticParam::String(req.template.clone()))
-        .with_param("format", DiagnosticParam::String(format_label(req.format)))
-        .with_param("bytes", DiagnosticParam::I64(byte_count as i64))
-        .with_param("queries", DiagnosticParam::I64(req.queries.len() as i64));
+        let summary = Diagnostic::new(MessageKey::parse(code).expect("hard-coded key parses"))
+            .with_param("template", DiagnosticParam::String(req.template.clone()))
+            .with_param("format", DiagnosticParam::String(format_label(req.format)))
+            .with_param("bytes", DiagnosticParam::I64(byte_count as i64))
+            .with_param("queries", DiagnosticParam::I64(req.queries.len() as i64));
 
         let response = AnalyticsReportResponse {
             summary,
@@ -263,13 +261,9 @@ impl AnalyticsReportReversible {
     }
 
     fn blob_ref_for(&self, ch: &Change) -> Result<BlobRef> {
-        let locator = ch
-            .resource
-            .id
-            .clone()
-            .ok_or_else(|| Error::Invalid {
-                message: "AnalyticsReportReversible: Change::resource.id is None".to_owned(),
-            })?;
+        let locator = ch.resource.id.clone().ok_or_else(|| Error::Invalid {
+            message: "AnalyticsReportReversible: Change::resource.id is None".to_owned(),
+        })?;
         // We do not persist the BackendId or etag in the changelog
         // snapshot — the BlobStore only needs the locator to route a
         // delete. Mint a synthetic ref with placeholders.
@@ -438,8 +432,7 @@ fn render_html_body(template: &str, per_query: &[(String, Vec<Value>)]) -> Strin
 /// objects" rule does not bite on numeric or boolean cells.
 fn csv_payload(per_query: &[(String, Vec<Value>)]) -> (Vec<Value>, Vec<Value>) {
     let headers = union_headers(per_query.iter().flat_map(|(_, r)| r.iter()));
-    let header_values: Vec<Value> =
-        headers.iter().map(|h| Value::String(h.clone())).collect();
+    let header_values: Vec<Value> = headers.iter().map(|h| Value::String(h.clone())).collect();
     let mut rows: Vec<Value> = Vec::new();
     for (_, query_rows) in per_query {
         for row in query_rows {
@@ -499,7 +492,9 @@ mod tests {
             "q1".to_owned(),
             vec![json!({"a": 1, "b": "x"}), json!({"a": 2, "c": "y"})],
         )];
-        let bytes = render("weekly", ReportFormat::Html, &per_query).await.unwrap();
+        let bytes = render("weekly", ReportFormat::Html, &per_query)
+            .await
+            .unwrap();
         let html = String::from_utf8(bytes).unwrap();
         assert!(html.contains("<h2>q1</h2>"), "html: {html}");
         assert!(html.contains("<th>a</th>"), "html: {html}");
@@ -511,7 +506,9 @@ mod tests {
     #[tokio::test]
     async fn render_empty_html_says_no_data() {
         let per_query = vec![("q1".to_owned(), Vec::new())];
-        let bytes = render("weekly", ReportFormat::Html, &per_query).await.unwrap();
+        let bytes = render("weekly", ReportFormat::Html, &per_query)
+            .await
+            .unwrap();
         let html = String::from_utf8(bytes).unwrap();
         assert!(html.contains("No data"), "html: {html}");
     }
@@ -522,7 +519,9 @@ mod tests {
             ("q1".to_owned(), vec![json!({"a": 1})]),
             ("q2".to_owned(), vec![json!({"b": 2})]),
         ];
-        let bytes = render("weekly", ReportFormat::Json, &per_query).await.unwrap();
+        let bytes = render("weekly", ReportFormat::Json, &per_query)
+            .await
+            .unwrap();
         let v: Value = serde_json::from_slice(&bytes).unwrap();
         assert_eq!(v["q1"][0]["a"], 1);
         assert_eq!(v["q2"][0]["b"], 2);
@@ -534,7 +533,9 @@ mod tests {
             ("q1".to_owned(), vec![json!({"a": 1, "b": "x"})]),
             ("q2".to_owned(), vec![json!({"a": 2, "c": "y"})]),
         ];
-        let bytes = render("weekly", ReportFormat::Csv, &per_query).await.unwrap();
+        let bytes = render("weekly", ReportFormat::Csv, &per_query)
+            .await
+            .unwrap();
         let csv = String::from_utf8(bytes).unwrap();
         let mut lines = csv.lines();
         let header = lines.next().unwrap();

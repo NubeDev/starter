@@ -10,7 +10,7 @@ This system is **not in production**. There are no real tenants, no historical d
 
 - No dual-write, no reconciliation, no cutover window.
 - No L1/L2/L3 history backfill — drop and recreate.
-- No deprecated verb aliases — old `rubix.clickhouse.*` names are removed, not forwarded.
+- No deprecated verb aliases — old `rubix.warehouse.*` names are removed, not forwarded.
 - No release-window deprecation cycle for renames.
 - `mart.create` undo data-loss caveats are immaterial against an empty store.
 - Benchmarks are still worth running for forward-looking sizing, but not gating cutover.
@@ -37,7 +37,7 @@ This split was a deliberate early choice, but it carries ongoing costs:
 - Two databases to operate, monitor, back up, and pay for
 - Joins between relational data (Postgres) and time-series data (ClickHouse) are impossible at query time; mart rules work around this with pre-joined snapshots
 - ClickHouse-specific async-insert discipline (`async_insert=1, wait_for_async_insert=1`) is a hidden invariant that breaks silently if a new write path skips it
-- The verb namespace is vendor-named (`rubix.clickhouse.*`) — any engine swap forces an API rename, and the current names lie about what the surface is for (warehouse operations, not ClickHouse-specific operations)
+- The verb namespace is vendor-named (`rubix.warehouse.*`) — any engine swap forces an API rename, and the current names lie about what the surface is for (warehouse operations, not ClickHouse-specific operations)
 
 TimescaleDB is a PostgreSQL extension. It adds hypertables, continuous aggregates, compression policies, and retention policies on top of standard PostgreSQL — same wire protocol, same client libraries, same migrations tooling already in use.
 
@@ -47,14 +47,14 @@ The current surface leaks the engine name everywhere. Before any engine work, th
 
 | Current (vendor-named) | New (neutral) |
 |---|---|
-| `rubix.clickhouse.rule.write` | `rubix.warehouse.rule.write` |
-| `rubix.clickhouse.mart.create` | `rubix.warehouse.mart.create` |
-| `rubix.clickhouse.retention.set` | `rubix.warehouse.retention.set` |
-| `ChWriter` trait | `WarehouseWriter` |
-| `ChRuleReversible` / `ChMartReversible` / `ChRetentionReversible` | `WarehouseRuleReversible` / `WarehouseMartReversible` / `WarehouseRetentionReversible` |
-| `starter-store-clickhouse` crate | `starter-store-warehouse` (engine-specific impls live behind it) |
+| `rubix.warehouse.rule.write` | `rubix.warehouse.rule.write` |
+| `rubix.warehouse.mart.create` | `rubix.warehouse.mart.create` |
+| `rubix.warehouse.retention.set` | `rubix.warehouse.retention.set` |
+| `WarehouseWriter` trait | `WarehouseWriter` |
+| `WarehouseRuleReversible` / `WarehouseMartReversible` / `WarehouseRetentionReversible` | `WarehouseRuleReversible` / `WarehouseMartReversible` / `WarehouseRetentionReversible` |
+| `starter-store-warehouse` crate | `starter-store-warehouse` (engine-specific impls live behind it) |
 | `clickhouse-ruler` skill / flow YAML | `warehouse-ruler` |
-| `rubix_tools::clickhouse::mart` | `rubix_tools::warehouse::mart` |
+| `rubix_tools::warehouse::mart` | `rubix_tools::warehouse::mart` |
 | `clickhouse-ruler.yaml` flow | `warehouse-ruler.yaml` |
 
 Old verb names are **removed outright** — no deprecated aliases, no forwarding shim. Pre-production, so there are no external callers to protect.

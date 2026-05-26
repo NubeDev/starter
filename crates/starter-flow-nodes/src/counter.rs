@@ -139,9 +139,8 @@ fn state_key(ctx: &NodeCtx<'_>) -> Result<NodeStateKey, NodeError> {
         message: "counter node requires NodeCtx::with_flow; engine wiring missing flow id"
             .to_owned(),
     })?;
-    NodeStateKey::new(flow.clone(), ctx.node.clone(), STATE_KEY).map_err(|e| NodeError::Backend(
-        format!("counter: failed to build NodeStateKey: {e}"),
-    ))
+    NodeStateKey::new(flow.clone(), ctx.node.clone(), STATE_KEY)
+        .map_err(|e| NodeError::Backend(format!("counter: failed to build NodeStateKey: {e}")))
 }
 
 async fn read_current(
@@ -155,9 +154,8 @@ async fn read_current(
     match value {
         None => Ok(None),
         Some(v) => {
-            let s = std::str::from_utf8(&v.bytes).map_err(|e| {
-                NodeError::Backend(format!("counter: state value not utf-8: {e}"))
-            })?;
+            let s = std::str::from_utf8(&v.bytes)
+                .map_err(|e| NodeError::Backend(format!("counter: state value not utf-8: {e}")))?;
             let n: i64 = s.parse().map_err(|e| {
                 NodeError::Backend(format!("counter: state value not i64 (`{s}`): {e}"))
             })?;

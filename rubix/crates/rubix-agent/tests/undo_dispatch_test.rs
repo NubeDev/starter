@@ -136,7 +136,10 @@ async fn dispatch_records_change_and_inverse_round_trips() {
         .invoke_with_group(input)
         .await
         .expect("dispatch succeeds");
-    assert_eq!(output.get("after"), Some(&serde_json::json!({"name": "new"})));
+    assert_eq!(
+        output.get("after"),
+        Some(&serde_json::json!({"name": "new"}))
+    );
     let group = group.expect("kind is registered so a group id is returned");
 
     // The recorder wrote one row, scoped to the group the dispatcher

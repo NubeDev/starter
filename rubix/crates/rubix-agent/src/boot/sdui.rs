@@ -26,13 +26,13 @@ use rubix_spi::dashboard::DashboardStore;
 use rubix_store_postgres::PgDashboardStore;
 use starter_sdui_routes::{sdui_router, SduiState};
 use starter_spi::tool::Tool;
-use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::Pool;
+use starter_store_warehouse::ChClient;
 
 use crate::boot::AgentConfig;
 use crate::sdui::{
-    entity_graph::StaticSystemReader, PgPageProvider, RubixEntityGraph,
-    RubixHandlerRegistry, RubixQueryEngine, ToolAnalyticsBridge,
+    entity_graph::StaticSystemReader, PgPageProvider, RubixEntityGraph, RubixHandlerRegistry,
+    RubixQueryEngine, ToolAnalyticsBridge,
 };
 
 /// Build the SDUI sub-router wired to the rubix data plane.
@@ -136,12 +136,8 @@ mod tests {
         // wiring; the live PG-backed assertion lives in the
         // integration tests under `rubix-agent/tests/`.
         // We compile-check the signature by referencing it.
-        let _ = build_sdui_router::<()> as fn(
-            &AgentConfig,
-            Pool,
-            Option<Arc<ChClient>>,
-            &[Arc<dyn Tool>],
-        ) -> Router<()>;
+        let _ = build_sdui_router::<()>
+            as fn(&AgentConfig, Pool, Option<Arc<ChClient>>, &[Arc<dyn Tool>]) -> Router<()>;
 
         // Build a bare axum router to ensure the merge target type
         // works in the same compile unit as `main.rs`.

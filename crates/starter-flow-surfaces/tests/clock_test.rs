@@ -16,7 +16,10 @@ fn system_clock_returns_recent_now() {
     let before = Utc::now();
     let observed = SystemClock::new().now();
     let after = Utc::now();
-    assert!(before <= observed && observed <= after, "now() out of bounds");
+    assert!(
+        before <= observed && observed <= after,
+        "now() out of bounds"
+    );
 }
 
 #[test]
@@ -34,7 +37,10 @@ fn test_clock_advance_moves_now_forward() {
     clock.advance(Duration::seconds(60));
     assert_eq!(clock.now(), seed + Duration::seconds(60));
     clock.advance(Duration::hours(1));
-    assert_eq!(clock.now(), seed + Duration::seconds(60) + Duration::hours(1));
+    assert_eq!(
+        clock.now(),
+        seed + Duration::seconds(60) + Duration::hours(1)
+    );
 }
 
 #[test]

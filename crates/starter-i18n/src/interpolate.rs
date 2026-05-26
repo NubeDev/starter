@@ -78,7 +78,10 @@ fn write_param(p: &DiagnosticParam, out: &mut String) {
             let _ = write!(out, "{ms}");
         }
         #[cfg(feature = "units")]
-        DiagnosticParam::Quantity { canonical, quantity: _ } => {
+        DiagnosticParam::Quantity {
+            canonical,
+            quantity: _,
+        } => {
             // Canonical-only render path (no prefs in scope here).
             // Callers that want prefs-aware unit conversion use
             // `MessageBundle::render_diagnostic` which threads a
@@ -160,7 +163,10 @@ fn write_param_with_prefs(
         DiagnosticParam::Timestamp(ms) => {
             write_timestamp_with_prefs(*ms, prefs, out);
         }
-        DiagnosticParam::Quantity { canonical, quantity } => {
+        DiagnosticParam::Quantity {
+            canonical,
+            quantity,
+        } => {
             let target = match quantity {
                 Quantity::Temperature => prefs.temperature_unit,
                 Quantity::Pressure => prefs.pressure_unit,
@@ -241,7 +247,12 @@ fn write_timestamp_with_prefs(
         TimeFormat::Auto => "%H:%M",
     };
 
-    let _ = write!(out, "{}, {}", local.format(date_fmt), local.format(time_fmt));
+    let _ = write!(
+        out,
+        "{}, {}",
+        local.format(date_fmt),
+        local.format(time_fmt)
+    );
 }
 
 #[cfg(test)]
@@ -285,8 +296,7 @@ mod tests {
     #[test]
     fn timestamp_renders_in_caller_timezone_and_format() {
         use starter_spi::preferences::{
-            DateFormat, NumberFormat, ResolvedPreferences, Theme, TimeFormat, UnitSystem,
-            WeekStart,
+            DateFormat, NumberFormat, ResolvedPreferences, Theme, TimeFormat, UnitSystem, WeekStart,
         };
         use starter_spi::units::Unit;
 

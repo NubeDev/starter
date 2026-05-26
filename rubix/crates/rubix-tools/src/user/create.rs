@@ -57,10 +57,9 @@ impl Tool for UserCreateTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: UserCreateRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("UserCreateRequest: {e}"),
-            })?;
+        let req: UserCreateRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("UserCreateRequest: {e}"),
+        })?;
         validate_role(&req.role)?;
         let user_id = format!("u-{}", Uuid::new_v4().simple());
         let created_at_ms = now_epoch_ms();

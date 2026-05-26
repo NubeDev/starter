@@ -19,9 +19,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use tokio::sync::RwLock;
 
-use starter_flow_spi::state::{
-    NodeStateError, NodeStateKey, NodeStateStore, NodeStateValue,
-};
+use starter_flow_spi::state::{NodeStateError, NodeStateKey, NodeStateStore, NodeStateValue};
 
 /// In-process [`NodeStateStore`] keyed by `(flow_id, node_id, key)`.
 ///
@@ -30,6 +28,7 @@ use starter_flow_spi::state::{
 /// builder (`spawn_with_checkpoint(.., node_state)`) to wire this as
 /// the per-engine default.
 #[derive(Debug, Default, Clone)]
+#[allow(clippy::type_complexity)]
 pub struct InMemoryNodeStateStore {
     inner: Arc<RwLock<HashMap<NodeStateKey, (Vec<u8>, u64)>>>,
 }

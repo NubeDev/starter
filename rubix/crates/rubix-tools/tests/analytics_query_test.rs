@@ -1,7 +1,7 @@
 //! Integration test for `rubix.analytics.query`.
 //!
 //! Boots an ephemeral ClickHouse container via
-//! `starter_store_clickhouse::testing::with_clickhouse`, seeds the
+//! `starter_store_warehouse::testing::with_clickhouse`, seeds the
 //! six tables the bundled templates read from with a handful of
 //! synthetic rows, then asserts every named template returns at
 //! least one row through the tool's `invoke` path. Live LLM calls
@@ -19,8 +19,8 @@ use std::sync::Arc;
 use rubix_tools::analytics::query::AnalyticsQueryTool;
 use serde_json::json;
 use starter_spi::tool::Tool;
-use starter_store_clickhouse::testing::with_clickhouse;
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::testing::with_clickhouse;
+use starter_store_warehouse::ChClient;
 
 /// Create the six tables the templates read from and seed each
 /// with rows inside the last 7 days. Schemas are the minimum the
@@ -65,8 +65,8 @@ async fn seed(client: &ChClient) {
             "INSERT INTO changelog VALUES \
              ('rubix.alert.send','error','u1',{now_ms}), \
              ('rubix.alert.send','warn','u2',{now_ms}), \
-             ('rubix.clickhouse.rule.write','info','u1',{now_ms}), \
-             ('rubix.clickhouse.mart.create','info','u1',{now_ms}), \
+             ('rubix.warehouse.rule.write','info','u1',{now_ms}), \
+             ('rubix.warehouse.mart.create','info','u1',{now_ms}), \
              ('rubix.undo.last','info','u2',{now_ms})"
         ),
     )
@@ -153,7 +153,8 @@ async fn every_template_runs_against_seeded_clickhouse() {
             .and_then(|c| c.as_str())
             .unwrap_or("");
         assert_eq!(
-            summary_code, "rubix.analytics.query.ran",
+            summary_code,
+            "rubix.analytics.query.ran",
             "template {name} must report ran; got summary={:?}",
             out.get("summary"),
         );

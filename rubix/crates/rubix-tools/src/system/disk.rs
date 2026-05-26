@@ -19,7 +19,7 @@ use serde_json::Value;
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::ChClient;
 use starter_tool_sysdiag::{disk_usage, DiskProbeError};
 use uuid::Uuid;
 
@@ -106,9 +106,9 @@ impl DiskTool {
     }
 
     fn host_str(&self) -> String {
-        self.host.clone().unwrap_or_else(|| {
-            std::env::var("HOSTNAME").unwrap_or_else(|_| "localhost".to_owned())
-        })
+        self.host
+            .clone()
+            .unwrap_or_else(|| std::env::var("HOSTNAME").unwrap_or_else(|_| "localhost".to_owned()))
     }
 }
 
@@ -117,9 +117,8 @@ impl Tool for DiskTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.system.disk".to_owned(),
-            description:
-                "Report disk usage for a filesystem mount point on the rubix-agent host."
-                    .to_owned(),
+            description: "Report disk usage for a filesystem mount point on the rubix-agent host."
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -142,7 +141,7 @@ impl Tool for DiskTool {
         // Write one row per probe; skipped when no ChClient is
         // bound. The history table is created by
         // `rubix/0002_history/up.sql` via the shared
-        // `starter-store-clickhouse::MigrationRunner`.
+        // `starter-store-warehouse::MigrationRunner`.
         if let Some(client) = &self.history {
             write_history(client, self.tenant_id, &self.host_str(), &response).await?;
         }
@@ -161,10 +160,7 @@ impl Tool for DiskTool {
 /// (the probe reads the host filesystem and cannot easily be made
 /// to report 95% used on demand). Returns `true` when the gate
 /// fired an alert.
-pub async fn run_insights_gate(
-    response: &DiskUsageResponse,
-    threshold: u8,
-) -> Result<bool> {
+pub async fn run_insights_gate(response: &DiskUsageResponse, threshold: u8) -> Result<bool> {
     // The literal `> threshold` is the v0 rule; the constant
     // [`INSIGHTS_DISK_ALERT_THRESHOLD`] is the configured default
     // the agent threads in via `cfg.insights.disk_warn_threshold`.
@@ -182,15 +178,13 @@ pub async fn run_insights_gate(
 /// alert sink renders the same message as the probe summary; param
 /// names match the catalogue entries.
 fn alert_diagnostic(response: &DiskUsageResponse) -> Diagnostic {
-    Diagnostic::new(
-        MessageKey::parse("rubix.system.disk.full").expect("hard-coded key parses"),
-    )
-    .with_param(
-        "percent",
-        DiagnosticParam::I64(i64::from(response.percent_used)),
-    )
-    .with_param("free", DiagnosticParam::I64(response.free_bytes as i64))
-    .with_param("at", DiagnosticParam::Timestamp(response.probed_at_ms))
+    Diagnostic::new(MessageKey::parse("rubix.system.disk.full").expect("hard-coded key parses"))
+        .with_param(
+            "percent",
+            DiagnosticParam::I64(i64::from(response.percent_used)),
+        )
+        .with_param("free", DiagnosticParam::I64(response.free_bytes as i64))
+        .with_param("at", DiagnosticParam::Timestamp(response.probed_at_ms))
 }
 
 /// Insert one row into `system_disk_history`. The columns mirror
@@ -207,7 +201,7 @@ async fn write_history(
     // hyphenated form via toUUID(). Keeping the row inline avoids
     // standing up a typed `Row` for one column set — when the
     // history table grows, the typed insert lifts into
-    // `starter-store-clickhouse::store::system_disk_history` and
+    // `starter-store-warehouse::store::system_disk_history` and
     // this function becomes a one-line forward.
     let sql = history_insert_sql(tenant_id, host, response);
     client
@@ -349,14 +343,8 @@ mod tests {
             "host stamp must reach the row; got {sql}"
         );
         assert!(sql.contains("95"), "percent_used must reach the row");
-        assert!(
-            sql.contains("100000000"),
-            "free_bytes must reach the row"
-        );
-        assert!(
-            sql.contains("1700000000000"),
-            "epoch_ms must reach the row"
-        );
+        assert!(sql.contains("100000000"), "free_bytes must reach the row");
+        assert!(sql.contains("1700000000000"), "epoch_ms must reach the row");
     }
 
     #[test]

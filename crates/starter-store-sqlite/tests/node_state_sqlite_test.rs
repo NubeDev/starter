@@ -69,10 +69,7 @@ async fn cas_success_against_current_version() {
 async fn cas_mismatch_returns_actual_version() {
     let store = SqliteNodeStateStore::new(boot_pool().await);
     store.put(&k("count"), b"1".to_vec()).await.unwrap();
-    let err = store
-        .cas(&k("count"), 99, b"x".to_vec())
-        .await
-        .unwrap_err();
+    let err = store.cas(&k("count"), 99, b"x".to_vec()).await.unwrap_err();
     match err {
         NodeStateError::CasMismatch { expected, actual } => {
             assert_eq!(expected, 99);

@@ -48,10 +48,7 @@ pub trait AnalyticsBridge: Send + Sync {
 /// Walk `tree` and fill every chart / KPI payload whose source we
 /// can resolve. `bridge` is optional — when absent, only `Static`
 /// sources are honoured; analytics templates collapse to empty.
-pub async fn resolve_chart_sources(
-    tree: &mut ComponentTree,
-    bridge: Option<&dyn AnalyticsBridge>,
-) {
+pub async fn resolve_chart_sources(tree: &mut ComponentTree, bridge: Option<&dyn AnalyticsBridge>) {
     walk(&mut tree.root, bridge).await;
 }
 
@@ -69,7 +66,9 @@ async fn walk(node: &mut Component, bridge: Option<&dyn AnalyticsBridge>) {
             Component::Kpi { source, value, .. } => {
                 *value = resolve_kpi(source, bridge).await;
             }
-            Component::Chart { sources, series, .. } => {
+            Component::Chart {
+                sources, series, ..
+            } => {
                 let mut out = Vec::new();
                 for src in sources.iter() {
                     if let Some(s) = resolve_chart(src, bridge).await {
@@ -123,7 +122,9 @@ async fn resolve_kpi(
             let map = map.as_ref()?;
             let bridge = bridge?;
             match bridge.invoke(name, params).await {
-                Ok(rows) => rows.first().and_then(|row| row.get(&map.value_field).cloned()),
+                Ok(rows) => rows
+                    .first()
+                    .and_then(|row| row.get(&map.value_field).cloned()),
                 Err(err) => {
                     tracing::warn!(
                         target: "rubix.sdui",
@@ -281,7 +282,11 @@ mod tests {
                 *value = resolve_kpi(source, None).await;
             }
         }
-        let v = if let Component::Kpi { value, .. } = &kpi { value.clone() } else { None };
+        let v = if let Component::Kpi { value, .. } = &kpi {
+            value.clone()
+        } else {
+            None
+        };
         assert_eq!(v, Some(json!(4.5)));
     }
 

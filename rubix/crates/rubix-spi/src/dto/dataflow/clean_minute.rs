@@ -58,8 +58,7 @@ pub struct WarehouseCleanMinuteResponse {
 
 /// Five-field descriptor for `rubix.warehouse.clean_minute`.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose:
-        "Materialise 1-minute cleaned buckets from L1 raw meter readings into the L2 mart.",
+    purpose: "Materialise 1-minute cleaned buckets from L1 raw meter readings into the L2 mart.",
     when_to_use: concat!(
         "Use as the only step in the bundled `com.rubix.data-flow.cleaner` ",
         "flow's scheduled tick (once per minute). The query is idempotent ",

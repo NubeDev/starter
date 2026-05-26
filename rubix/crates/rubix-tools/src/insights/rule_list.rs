@@ -61,8 +61,7 @@ impl Tool for InsightsRuleListTool {
         let count = rules.len();
 
         let summary = Diagnostic::new(
-            MessageKey::parse("rubix.insights.rule.listed")
-                .expect("hard-coded key parses"),
+            MessageKey::parse("rubix.insights.rule.listed").expect("hard-coded key parses"),
         )
         .with_param("count", DiagnosticParam::I64(count as i64));
 

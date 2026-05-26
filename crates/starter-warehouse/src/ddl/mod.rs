@@ -1,12 +1,23 @@
 //! DDL generators. Catalog rows in Postgres are the artefact of
-//! record; the ClickHouse DDL emitted from them is the
+//! record; the warehouse-engine DDL emitted from them is the
 //! implementation detail. Identifiers are validated against
 //! `^[a-z][a-z0-9_]{0,62}$` before they touch any SQL string —
 //! user input never reaches the SQL raw (W5).
+//!
+//! Engine-specific SQL bodies are produced through the
+//! [`DdlDialect`] trait so Stage 2 of the warehouse-engine-swap
+//! proposal (see `rubix/docs/proposal/warehouse-engine-swap.md`)
+//! can add a TimescaleDB impl without touching the call sites that
+//! consume the rendered strings. The Stage 1 implementation ships
+//! a single [`ClickHouseDialect`] that reproduces the historical
+//! byte-identical output of [`mart::build`].
 
 pub mod cleaner;
+pub mod dialect;
 pub mod mart;
 pub mod sandbox;
+
+pub use dialect::{ClickHouseDialect, DdlDialect};
 
 /// Validate an identifier (mart name, sandbox name, column name,
 /// `group_by` key, aggregation alias). Returns the input on success

@@ -20,8 +20,7 @@ async fn invoke_returns_well_formed_response_for_default_request() {
         .await
         .expect("disk tool succeeds on the test host");
 
-    let resp: DiskUsageResponse =
-        serde_json::from_value(raw).expect("response matches DTO shape");
+    let resp: DiskUsageResponse = serde_json::from_value(raw).expect("response matches DTO shape");
 
     assert!(resp.total_bytes > 0, "any real filesystem has bytes");
     assert!(resp.free_bytes <= resp.total_bytes);
@@ -45,9 +44,7 @@ async fn invoke_returns_well_formed_response_for_default_request() {
 #[tokio::test]
 async fn invoke_rejects_unknown_input_fields() {
     let tool = DiskTool::default();
-    let raw = tool
-        .invoke(serde_json::json!({ "nonexistent": 1 }))
-        .await;
+    let raw = tool.invoke(serde_json::json!({ "nonexistent": 1 })).await;
     // serde_json's default deserialization is permissive; the schema
     // gate lives in the transport. The dispatch itself still accepts
     // — this asserts we don't crash on extra fields, which lets the

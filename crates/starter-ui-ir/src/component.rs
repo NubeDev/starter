@@ -2462,13 +2462,17 @@ impl crate::Bindable for Component {
                 visit(content);
             }
             Component::Badge { label, .. } => visit(label),
-            Component::Section { title, subtitle, .. } => {
+            Component::Section {
+                title, subtitle, ..
+            } => {
                 visit(title);
                 if let Some(s) = subtitle {
                     visit(s);
                 }
             }
-            Component::Card { title, subtitle, .. } => {
+            Component::Card {
+                title, subtitle, ..
+            } => {
                 if let Some(t) = title {
                     visit(t);
                 }
@@ -2499,14 +2503,20 @@ impl crate::Bindable for Component {
             Component::Chart { sources, .. } => {
                 for src in sources {
                     match src {
-                        crate::ChartSource::Series { node_id, slot, field } => {
+                        crate::ChartSource::Series {
+                            node_id,
+                            slot,
+                            field,
+                        } => {
                             visit(node_id);
                             visit(slot);
                             if let Some(f) = field {
                                 visit(f);
                             }
                         }
-                        crate::ChartSource::SeriesByKind { kind, slot, field, .. } => {
+                        crate::ChartSource::SeriesByKind {
+                            kind, slot, field, ..
+                        } => {
                             visit(kind);
                             visit(slot);
                             if let Some(f) = field {
@@ -2536,7 +2546,12 @@ impl crate::Bindable for Component {
                     visit(s);
                 }
             }
-            Component::Table { source, columns, row_actions, .. } => {
+            Component::Table {
+                source,
+                columns,
+                row_actions,
+                ..
+            } => {
                 visit(&mut source.query);
                 for col in columns {
                     visit(&mut col.field);
@@ -2548,7 +2563,12 @@ impl crate::Bindable for Component {
                     }
                 }
             }
-            Component::ArrayTable { source, columns, row_actions, .. } => {
+            Component::ArrayTable {
+                source,
+                columns,
+                row_actions,
+                ..
+            } => {
                 visit(source);
                 for col in columns {
                     visit(&mut col.field);
@@ -2564,7 +2584,9 @@ impl crate::Bindable for Component {
             Component::List { source, .. } => {
                 visit(&mut source.query);
             }
-            Component::Dialog { title, description, .. } => {
+            Component::Dialog {
+                title, description, ..
+            } => {
                 if let Some(t) = title {
                     visit(t);
                 }
@@ -2572,7 +2594,9 @@ impl crate::Bindable for Component {
                     visit(d);
                 }
             }
-            Component::Markdown { content, subscribe, .. } => {
+            Component::Markdown {
+                content, subscribe, ..
+            } => {
                 if let Some(c) = content {
                     visit(c);
                 }
@@ -2606,21 +2630,32 @@ impl crate::Bindable for Component {
                     visit(&mut opt.label);
                 }
             }
-            Component::Kpi { label, source, unit_symbol, .. } => {
+            Component::Kpi {
+                label,
+                source,
+                unit_symbol,
+                ..
+            } => {
                 visit(label);
                 if let Some(u) = unit_symbol {
                     visit(u);
                 }
                 // ChartSource — same logic as Chart, but for one source.
                 match source {
-                    crate::ChartSource::Series { node_id, slot, field } => {
+                    crate::ChartSource::Series {
+                        node_id,
+                        slot,
+                        field,
+                    } => {
                         visit(node_id);
                         visit(slot);
                         if let Some(f) = field {
                             visit(f);
                         }
                     }
-                    crate::ChartSource::SeriesByKind { kind, slot, field, .. } => {
+                    crate::ChartSource::SeriesByKind {
+                        kind, slot, field, ..
+                    } => {
                         visit(kind);
                         visit(slot);
                         if let Some(f) = field {
@@ -2662,15 +2697,29 @@ impl crate::Bindable for Component {
                 }
             }
             Component::Button { label, .. } => visit(label),
-            Component::Toggle { label, .. }
-            | Component::Slider { label, .. } => {
+            Component::Toggle { label, .. } | Component::Slider { label, .. } => {
                 if let Some(l) = label {
                     visit(l);
                 }
             }
-            Component::TextField { label, placeholder, value, .. }
-            | Component::Textarea { label, placeholder, value, .. }
-            | Component::DateField { label, placeholder, value, .. } => {
+            Component::TextField {
+                label,
+                placeholder,
+                value,
+                ..
+            }
+            | Component::Textarea {
+                label,
+                placeholder,
+                value,
+                ..
+            }
+            | Component::DateField {
+                label,
+                placeholder,
+                value,
+                ..
+            } => {
                 if let Some(l) = label {
                     visit(l);
                 }
@@ -2681,7 +2730,9 @@ impl crate::Bindable for Component {
                     visit(v);
                 }
             }
-            Component::NumberField { label, placeholder, .. } => {
+            Component::NumberField {
+                label, placeholder, ..
+            } => {
                 if let Some(l) = label {
                     visit(l);
                 }
@@ -2689,7 +2740,12 @@ impl crate::Bindable for Component {
                     visit(p);
                 }
             }
-            Component::SelectField { label, placeholder, options, .. } => {
+            Component::SelectField {
+                label,
+                placeholder,
+                options,
+                ..
+            } => {
                 if let Some(l) = label {
                     visit(l);
                 }
@@ -2721,7 +2777,11 @@ impl crate::Bindable for Component {
                     visit(l);
                 }
             }
-            Component::Form { schema_ref, submit_label, .. } => {
+            Component::Form {
+                schema_ref,
+                submit_label,
+                ..
+            } => {
                 visit(schema_ref);
                 if let Some(s) = submit_label {
                     visit(s);
@@ -2753,7 +2813,9 @@ impl crate::Bindable for Component {
                     visit(&mut step.label);
                 }
             }
-            Component::Timeline { events, subscribe, .. } => {
+            Component::Timeline {
+                events, subscribe, ..
+            } => {
                 for ev in events {
                     visit(&mut ev.text);
                 }

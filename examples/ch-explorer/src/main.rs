@@ -43,7 +43,7 @@ use starter_observability::{metrics::StandardMetrics, tracing::Format};
 use starter_server::auth::{local_operator, with_anonymous_principal};
 use starter_server::ServerBuilder;
 use starter_spi::authz::PolicyEngine;
-use starter_store_clickhouse::{ChClient, ChConfig};
+use starter_store_warehouse::{ChClient, ChConfig};
 
 const DEFAULT_CH_URL: &str = "http://127.0.0.1:8123";
 const DEFAULT_CH_DATABASE: &str = "default";
@@ -82,8 +82,7 @@ async fn main() -> Result<()> {
                 ),
         )
         .subcommand(
-            Command::new("seed")
-                .about("Load a small fixture of tables + rows into ClickHouse."),
+            Command::new("seed").about("Load a small fixture of tables + rows into ClickHouse."),
         );
 
     let matches = app.get_matches();
@@ -148,9 +147,8 @@ async fn run_serve(matches: &ArgMatches) -> Result<()> {
     let explorer_routes = explorer_routes.layer(Extension(engine));
 
     let registry = Arc::new(prometheus::Registry::new());
-    let metrics = Arc::new(
-        StandardMetrics::register(&registry).context("register prometheus metrics")?,
-    );
+    let metrics =
+        Arc::new(StandardMetrics::register(&registry).context("register prometheus metrics")?);
 
     let router = ServerBuilder::<()>::new(())
         .merge_router(explorer_routes)

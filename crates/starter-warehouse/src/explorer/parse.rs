@@ -71,7 +71,7 @@ fn strip_leading_noise(mut s: &str) -> &str {
         s = s.trim_start();
         if let Some(rest) = s.strip_prefix("--") {
             // Line comment: drop through to end-of-line.
-            s = rest.splitn(2, '\n').nth(1).unwrap_or("");
+            s = rest.split_once('\n').map(|x| x.1).unwrap_or("");
         } else if let Some(rest) = s.strip_prefix("/*") {
             // Block comment: drop through matching `*/`. If
             // unterminated, treat the rest as comment.
@@ -166,7 +166,10 @@ mod tests {
     fn rejects_empty_and_whitespace_only() {
         assert_eq!(classify(""), Verdict::Reject(Reject::Empty));
         assert_eq!(classify("   \n\t  "), Verdict::Reject(Reject::Empty));
-        assert_eq!(classify("-- just a comment"), Verdict::Reject(Reject::Empty));
+        assert_eq!(
+            classify("-- just a comment"),
+            Verdict::Reject(Reject::Empty)
+        );
         assert_eq!(classify("/* only block */"), Verdict::Reject(Reject::Empty));
     }
 

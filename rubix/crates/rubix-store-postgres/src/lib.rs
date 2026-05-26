@@ -41,8 +41,7 @@ pub use starter_store_postgres::MigrationSource;
 /// `sqlx` migrator for the rubix `undo_snapshots` schema. Pair
 /// with `starter_store_postgres::migrate(pool)
 ///     .with_source(UNDO_SNAPSHOTS_MIGRATION_SOURCE)` at boot.
-pub static UNDO_SNAPSHOTS_MIGRATOR: sqlx::migrate::Migrator =
-    sqlx::migrate!("./migrations/undo");
+pub static UNDO_SNAPSHOTS_MIGRATOR: sqlx::migrate::Migrator = sqlx::migrate!("./migrations/undo");
 
 /// Convenience [`MigrationSource`] for the `undo_snapshots`
 /// table. The `name` field becomes the suffix of the source's

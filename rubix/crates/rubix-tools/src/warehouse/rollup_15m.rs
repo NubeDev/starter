@@ -26,16 +26,15 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use async_trait::async_trait;
 use rubix_spi::dto::dataflow::rollup_15m::{
-    WarehouseRollup15mRequest, WarehouseRollup15mResponse, BUCKET_MINUTES,
-    DEFAULT_LOOKBACK_MINUTES,
+    WarehouseRollup15mRequest, WarehouseRollup15mResponse, BUCKET_MINUTES, DEFAULT_LOOKBACK_MINUTES,
 };
 use serde_json::Value;
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_store_clickhouse::clickhouse;
-use starter_store_clickhouse::clickhouse::Row;
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::clickhouse;
+use starter_store_warehouse::clickhouse::Row;
+use starter_store_warehouse::ChClient;
 
 /// Hard upper bound on the lookback knob. A one-shot backfill of
 /// 7 days is the widest a developer would reasonably trigger
@@ -130,14 +129,12 @@ impl Tool for WarehouseRollup15mTool {
 
         let summary = if rows == 0 {
             Diagnostic::new(
-                MessageKey::parse("rubix.warehouse.rollup.empty")
-                    .expect("hard-coded key parses"),
+                MessageKey::parse("rubix.warehouse.rollup.empty").expect("hard-coded key parses"),
             )
             .with_param("lookback", DiagnosticParam::I64(i64::from(lookback)))
         } else {
             Diagnostic::new(
-                MessageKey::parse("rubix.warehouse.rolled_up")
-                    .expect("hard-coded key parses"),
+                MessageKey::parse("rubix.warehouse.rolled_up").expect("hard-coded key parses"),
             )
             .with_param("rows", DiagnosticParam::I64(i64::from(rows)))
             .with_param("lookback", DiagnosticParam::I64(i64::from(lookback)))
@@ -256,10 +253,8 @@ mod tests {
     #[tokio::test]
     async fn invoke_with_no_client_returns_zero_rows_with_empty_summary() {
         let tool = WarehouseRollup15mTool::default();
-        let resp: WarehouseRollup15mResponse = serde_json::from_value(
-            tool.invoke(serde_json::json!({})).await.unwrap(),
-        )
-        .unwrap();
+        let resp: WarehouseRollup15mResponse =
+            serde_json::from_value(tool.invoke(serde_json::json!({})).await.unwrap()).unwrap();
         assert_eq!(resp.rows, 0);
         assert_eq!(resp.lookback_minutes, DEFAULT_LOOKBACK_MINUTES);
         assert_eq!(resp.summary.code.as_str(), "rubix.warehouse.rollup.empty");

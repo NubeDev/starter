@@ -51,13 +51,15 @@ pub enum DiskProbeError {
 pub fn disk_usage(target: Option<&Path>) -> Result<DiskUsage, DiskProbeError> {
     let target: PathBuf = match target {
         Some(p) => p.to_path_buf(),
-        None => std::env::current_dir()
-            .map_err(|source| DiskProbeError::CwdUnavailable { source })?,
+        None => {
+            std::env::current_dir().map_err(|source| DiskProbeError::CwdUnavailable { source })?
+        }
     };
 
     let disks = Disks::new_with_refreshed_list();
-    let disk = pick_disk(&disks, &target)
-        .ok_or_else(|| DiskProbeError::NoMountForTarget { target: target.clone() })?;
+    let disk = pick_disk(&disks, &target).ok_or_else(|| DiskProbeError::NoMountForTarget {
+        target: target.clone(),
+    })?;
 
     let total = disk.total_space();
     let free = disk.available_space();
@@ -65,7 +67,9 @@ pub fn disk_usage(target: Option<&Path>) -> Result<DiskUsage, DiskProbeError> {
     let percent = if total == 0 {
         0
     } else {
-        ((used as f64 / total as f64) * 100.0).round().clamp(0.0, 100.0) as u8
+        ((used as f64 / total as f64) * 100.0)
+            .round()
+            .clamp(0.0, 100.0) as u8
     };
 
     Ok(DiskUsage {
@@ -82,7 +86,7 @@ fn pick_disk<'a>(disks: &'a Disks, target: &Path) -> Option<&'a Disk> {
         let mp = d.mount_point();
         if target.starts_with(mp) {
             let len = mp.as_os_str().len();
-            if best.as_ref().is_none_or(|(_, b)| len > *b) {
+            if best.as_ref().map_or(true, |(_, b)| len > *b) {
                 best = Some((d, len));
             }
         }

@@ -122,7 +122,12 @@ pub(crate) async fn dispatch(
             .into_response();
     };
     let result = tool.invoke(input).await;
-    shape_response(result, &state.bundle, locale.language().clone(), q.render.as_deref())
+    shape_response(
+        result,
+        &state.bundle,
+        locale.language().clone(),
+        q.render.as_deref(),
+    )
 }
 
 /// Map a tool result (`Result<Value, Error>`) onto a REST
@@ -173,11 +178,7 @@ fn shape_response(
 /// resolved preferences. Returns `None` if the body has no
 /// `summary` field or it isn't a Diagnostic — the caller falls
 /// through to the raw-JSON path.
-fn render_summary(
-    bundle: &MessageBundle,
-    lang: &LanguageTag,
-    body: &Value,
-) -> Option<String> {
+fn render_summary(bundle: &MessageBundle, lang: &LanguageTag, body: &Value) -> Option<String> {
     let summary = body.get("summary")?.clone();
     let diag: Diagnostic = serde_json::from_value(summary).ok()?;
     let prefs = prefs_from_locale(lang);

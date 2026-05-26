@@ -36,11 +36,8 @@ pub use status::WarehouseStatusBody;
 /// `warehouse.read`/`warehouse.write` enforced on the existing
 /// handlers can layer it on the merged router themselves.
 pub fn router(rt: Arc<WarehouseRuntime>) -> Router {
-    let explorer = starter_authz::with_permission(
-        crate::explorer::routes(rt.ch.clone()),
-        "warehouse",
-        "read",
-    );
+    let explorer =
+        starter_authz::with_permission(crate::explorer::routes(rt.ch.clone()), "warehouse", "read");
     Router::new()
         .route("/api/marts", post(create_mart))
         .route("/api/marts/{name}", delete(drop_mart))

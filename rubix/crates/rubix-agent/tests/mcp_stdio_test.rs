@@ -151,7 +151,9 @@ async fn drive_call(accept_language: &str, fixture_file: &str) -> Value {
         })
         .unwrap_or_default();
     assert!(
-        names.iter().any(|n| n == "com.rubix.scheduled-system-check"),
+        names
+            .iter()
+            .any(|n| n == "com.rubix.scheduled-system-check"),
         "tools/list must surface com.rubix.scheduled-system-check; saw {names:?}",
     );
     // After Block A the bundled-flow loader registers all six rubix

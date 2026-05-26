@@ -20,3 +20,6 @@ keyring = { version = "3.6", default-features = false, features = [
     "sync-secret-service",
     "crypto-rust",
 ] }
+
+[lints]
+workspace = true

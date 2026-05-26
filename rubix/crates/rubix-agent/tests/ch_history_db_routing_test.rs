@@ -31,7 +31,7 @@
 //! for the routing contract.
 
 use rubix_agent::boot::{apply_ch_migrations, rubix_ch_config, RUBIX_CH_DATABASE};
-use starter_store_clickhouse::{testing::with_clickhouse, ChClient};
+use starter_store_warehouse::{testing::with_clickhouse, ChClient};
 
 #[tokio::test]
 #[ignore = "requires Docker (ClickHouse testcontainer)"]

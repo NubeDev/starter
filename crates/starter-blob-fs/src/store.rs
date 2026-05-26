@@ -662,7 +662,11 @@ mod tests {
     #[tokio::test]
     async fn approximate_usage_walks_tree_and_skips_sidecars() {
         let (s, _d) = store();
-        for (key, body) in [("t/7/a", &b"aaaa"[..]), ("t/7/b", &b"bb"[..]), ("t/8/x", &b"xxxxxxxx"[..])] {
+        for (key, body) in [
+            ("t/7/a", &b"aaaa"[..]),
+            ("t/7/b", &b"bb"[..]),
+            ("t/8/x", &b"xxxxxxxx"[..]),
+        ] {
             s.put_bytes(&k(key), Bytes::copy_from_slice(body), PutOptions::default())
                 .await
                 .unwrap();

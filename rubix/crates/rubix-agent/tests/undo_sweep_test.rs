@@ -47,9 +47,7 @@ async fn sweep_prunes_per_resource_to_default_cap() {
     }
 
     let cfg = UndoConfig::default();
-    let deleted = sweep_undo_once(&pool, &cfg)
-        .await
-        .expect("sweep succeeds");
+    let deleted = sweep_undo_once(&pool, &cfg).await.expect("sweep succeeds");
     assert!(
         deleted >= 50,
         "expected ≥ 50 deleted rows under the default 50-row cap, got {deleted}",

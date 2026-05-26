@@ -6,8 +6,8 @@
 //! [docs/design/tools/](../../../../docs/design/tools/README.md)
 //! for the routing convention.
 
-use rubix_spi::dto::system::flow_errors::{FlowErrorsRequest, FlowErrorsResponse};
 use reqwest::Client as Reqwest;
+use rubix_spi::dto::system::flow_errors::{FlowErrorsRequest, FlowErrorsResponse};
 
 use crate::{client::RubixClient, error::RubixClientError};
 

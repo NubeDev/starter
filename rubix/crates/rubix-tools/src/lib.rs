@@ -10,7 +10,6 @@
 //! [docs/design/tools/](../../docs/design/tools/README.md).
 
 pub mod analytics;
-pub mod clickhouse;
 pub mod clipboard;
 pub mod dashboard;
 pub mod dataflow;

@@ -1,0 +1,26 @@
+services:
+  # Stage 1 of the warehouse-engine-swap proposal still uses the
+  # ClickHouse dialect inside `starter-store-warehouse`; the swap to
+  # TimescaleDB lands in Stage 2 (see
+  # `rubix/docs/proposal/warehouse-engine-swap.md`). The service is
+  # declared as `timescaledb` here so dependent scripts / CI already
+  # refer to the destination name. Port 5433 is exposed to avoid
+  # colliding with the relational Postgres on 5432.
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb_data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse -d warehouse"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  timescaledb_data:

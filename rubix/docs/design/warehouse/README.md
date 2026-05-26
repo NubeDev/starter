@@ -2,8 +2,8 @@
 
 The warehouse side of rubix is the ClickHouse half of the storage
 split (Postgres owns dimensions; ClickHouse owns history). All
-typed writes go through `starter-store-clickhouse::ChClient`; all
-DDL is applied through `starter-store-clickhouse::MigrationRunner`,
+typed writes go through `starter-store-warehouse::ChClient`; all
+DDL is applied through `starter-store-warehouse::MigrationRunner`,
 which accepts rubix-owned files via `with_extra_migration` so a
 single runner applies the union in declaration order.
 
@@ -11,7 +11,7 @@ single runner applies the union in declaration order.
 
 ```
 L1 raw          ingest from agents / extensions / external feeds
-   ↓ rules (flow node + rubix.clickhouse.rule_write)
+   ↓ rules (flow node + rubix.warehouse.rule_write)
 L2 curated      typed, deduplicated, tenanted
    ↓ mart rules
 L3 marts        narrow tables answering specific questions
@@ -89,7 +89,7 @@ per-tenant splits and this section gets a successor ADR.
 ## Retention
 
 Each layer has its own retention policy set via
-`rubix.clickhouse.retention_set`:
+`rubix.warehouse.retention_set`:
 
 - **L1**: days–weeks (raw, expensive).
 - **L2**: months (curated, indexed).
@@ -100,7 +100,7 @@ Rule: **never set L1 retention longer than L2.** The
 
 ## Mart authoring
 
-Marts are flow rules + the `rubix.clickhouse.mart_create` tool. A
+Marts are flow rules + the `rubix.warehouse.mart_create` tool. A
 mart that crosses tenants without the authz filter fails CI.
 
 ## Upstream candidates

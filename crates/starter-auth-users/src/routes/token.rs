@@ -110,10 +110,7 @@ pub struct MissingTenantIdResponse {
             body = TenantRequiredResponse),
     ),
 )]
-pub(crate) async fn handler(
-    state: Arc<AuthState>,
-    Json(body): Json<TokenRequest>,
-) -> Response {
+pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<TokenRequest>) -> Response {
     // --- 1. Resolve user + verify password (parity with login) ---
     let user = match state.users.find_by_email(&body.email).await {
         Ok(Some(u)) => u,

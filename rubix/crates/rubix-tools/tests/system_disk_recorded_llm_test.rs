@@ -93,8 +93,7 @@ async fn disk_tool_round_trips_through_the_ai_agent_loop() {
     let tools_arc: Arc<dyn ToolRegistry> = Arc::new(tool_registry);
 
     let ai_agent: Arc<dyn NodeBehavior> = Arc::new(
-        AiAgent::new(tools_arc, runners_arc)
-            .with_provider_id(KindId::new(PROVIDER_ID).unwrap()),
+        AiAgent::new(tools_arc, runners_arc).with_provider_id(KindId::new(PROVIDER_ID).unwrap()),
     );
 
     let topology = build_topology(ai_agent);

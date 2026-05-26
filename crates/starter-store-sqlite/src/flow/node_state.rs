@@ -17,9 +17,7 @@
 
 use async_trait::async_trait;
 
-use starter_flow_spi::state::{
-    NodeStateError, NodeStateKey, NodeStateStore, NodeStateValue,
-};
+use starter_flow_spi::state::{NodeStateError, NodeStateKey, NodeStateStore, NodeStateValue};
 
 use crate::pool::Pool;
 
@@ -125,10 +123,8 @@ impl NodeStateStore for SqliteNodeStateStore {
         .await
         .map_err(Self::backend)?;
         let current_u = current.map(|(v,)| v as u64);
-        let matches = matches!(
-            (expected, current_u),
-            (0, None)
-        ) || current_u == Some(expected) && expected != 0;
+        let matches = matches!((expected, current_u), (0, None))
+            || current_u == Some(expected) && expected != 0;
         if !matches {
             return Err(NodeStateError::CasMismatch {
                 expected,

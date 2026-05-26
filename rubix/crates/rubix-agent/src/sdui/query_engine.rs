@@ -28,8 +28,8 @@ use starter_sdui_routes::{
     query::{QueryEngine, QueryMeta, QueryRequest, QueryResponse, TableRow},
     SduiError,
 };
-use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::Pool;
+use starter_store_warehouse::ChClient;
 use tracing::warn;
 
 /// Backend selector parsed from `source_id`.
@@ -84,21 +84,13 @@ impl RubixQueryEngine {
     }
 
     /// Seed the in-memory backend (`mem:<id>`) for demos and tests.
-    pub fn with_memory_source(
-        mut self,
-        id: impl Into<String>,
-        rows: Vec<TableRow>,
-    ) -> Self {
+    pub fn with_memory_source(mut self, id: impl Into<String>, rows: Vec<TableRow>) -> Self {
         let map = Arc::make_mut(&mut self.memory);
         map.insert(id.into(), rows);
         self
     }
 
-    async fn query_pg(
-        &self,
-        _table: &str,
-        req: &QueryRequest,
-    ) -> Result<QueryResponse, SduiError> {
+    async fn query_pg(&self, _table: &str, req: &QueryRequest) -> Result<QueryResponse, SduiError> {
         // v1: the table is not parsed against any column whitelist
         // and RSQL → SQL translation has not landed (Phase B.4). We
         // return a deterministic empty page so static Table sources
@@ -110,11 +102,7 @@ impl RubixQueryEngine {
         Ok(empty_page(req))
     }
 
-    async fn query_ch(
-        &self,
-        _table: &str,
-        req: &QueryRequest,
-    ) -> Result<QueryResponse, SduiError> {
+    async fn query_ch(&self, _table: &str, req: &QueryRequest) -> Result<QueryResponse, SduiError> {
         // Mirror of `query_pg` — ClickHouse translation lands with
         // the RSQL → CH aggregator (Phase B.4).
         if self.ch.is_none() {
@@ -123,11 +111,7 @@ impl RubixQueryEngine {
         Ok(empty_page(req))
     }
 
-    fn query_memory(
-        &self,
-        id: &str,
-        req: &QueryRequest,
-    ) -> Result<QueryResponse, SduiError> {
+    fn query_memory(&self, id: &str, req: &QueryRequest) -> Result<QueryResponse, SduiError> {
         let rows = self.memory.get(id).cloned().unwrap_or_default();
         Ok(page_slice(rows, req))
     }
@@ -215,7 +199,12 @@ mod tests {
     #[tokio::test]
     async fn pg_and_ch_backends_return_empty_when_unwired() {
         let eng = RubixQueryEngine::new(None, None);
-        assert!(eng.query(&req("pg:flows_definitions")).await.unwrap().data.is_empty());
+        assert!(eng
+            .query(&req("pg:flows_definitions"))
+            .await
+            .unwrap()
+            .data
+            .is_empty());
         assert!(eng.query(&req("ch:samples")).await.unwrap().data.is_empty());
     }
 

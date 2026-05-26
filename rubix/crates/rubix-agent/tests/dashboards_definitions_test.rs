@@ -51,7 +51,10 @@ async fn insert_supersede_list_history_delete_round_trip() {
         .get_active("tenant-a", "dashboard.test")
         .await
         .expect("get active v1");
-    assert_eq!(active.as_ref().map(|r| r.revision_id.clone()), Some(v1.revision_id.clone()));
+    assert_eq!(
+        active.as_ref().map(|r| r.revision_id.clone()),
+        Some(v1.revision_id.clone())
+    );
 
     // 2) Insert v2 — supersedes v1.
     let v2 = store

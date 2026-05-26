@@ -26,3 +26,6 @@ starter-blob-memory = { workspace = true }
 starter-blob-fs     = { workspace = true }
 tempfile            = "3"
 tokio               = { workspace = true, features = ["macros", "rt-multi-thread", "time"] }
+
+[lints]
+workspace = true

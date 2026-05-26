@@ -28,7 +28,7 @@ starter-store-postgres  = { workspace = true, features = ["flow", "agent-session
 # ClickHouse client is constructed from `CLICKHOUSE_URL` etc.
 # When `warehouse` is OFF the binary boots exactly as before.
 starter-warehouse        = { workspace = true, features = ["warehouse"], optional = true }
-starter-store-clickhouse = { workspace = true, optional = true }
+starter-store-warehouse = { workspace = true, optional = true }
 starter-observability   = { workspace = true }
 starter-cache           = { workspace = true }
 
@@ -89,7 +89,7 @@ default = []
 # (`/api/marts`, `/api/sandboxes`, `/api/warehouse/{status,gc,audit}`)
 # alongside flow-agent's existing routes. Requires a ClickHouse
 # endpoint at `CLICKHOUSE_URL` (default `http://127.0.0.1:8123`).
-warehouse = ["dep:starter-warehouse", "dep:starter-store-clickhouse"]
+warehouse = ["dep:starter-warehouse", "dep:starter-store-warehouse"]
 
 [dev-dependencies]
 starter-server         = { workspace = true, features = ["testing"] }
@@ -98,3 +98,6 @@ starter-store-postgres = { workspace = true, features = ["testing"] }
 tower                  = { workspace = true, features = ["util"] }
 http-body-util         = "0.1"
 tempfile               = "3"
+
+[lints]
+workspace = true

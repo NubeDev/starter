@@ -26,3 +26,6 @@ default = []
 # Pulls Tauri 2 and enables `events`, `error`, and `rest` modules.
 ipc = ["dep:tauri", "dep:tokio", "dep:tokio-util", "dep:futures", "dep:parking_lot"]
 
+
+[lints]
+workspace = true

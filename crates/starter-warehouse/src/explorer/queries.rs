@@ -3,7 +3,7 @@
 //
 // Port of sql-studio's `mod clickhouse` query bodies (around
 // `src/main.rs` line 3925 upstream). Rewritten to run through the
-// existing `ChClient` from `starter-store-clickhouse` so the
+// existing `ChClient` from `starter-store-warehouse` so the
 // explorer reuses the warehouse's connection, auth, and W8
 // `async_insert` discipline rather than opening a fresh client.
 //
@@ -15,11 +15,11 @@
 //   * `table_data` is left stubbed to return `rows: []` exactly as
 //     upstream does. PR 2 finishes it via a new
 //     `ChClient::fetch_json` and is the only place in the explorer
-//     that touches `starter-store-clickhouse`.
+//     that touches `starter-store-warehouse`.
 //
 // Design notes: rubix/docs/design/warehouse/explorer/README.md.
 
-use starter_store_clickhouse::{raw::JsonRows, ChClient, ChClientError};
+use starter_store_warehouse::{raw::JsonRows, ChClient, ChClientError};
 
 use super::types::{
     Count, Erd, ErdColumn, ErdTable, Overview, Table, TableData, TableWithColumns, Tables,
@@ -277,11 +277,7 @@ pub async fn columns(ch: &ChClient, name: &str) -> Result<Vec<String>, ChClientE
 /// [`ChClient::fetch_json`]. The query executes under
 /// `SETTINGS readonly = 2` on the server (set by `fetch_json`),
 /// and `fetch_json` itself refuses any write verb client-side.
-pub async fn table_data(
-    ch: &ChClient,
-    name: &str,
-    page: i64,
-) -> Result<TableData, ChClientError> {
+pub async fn table_data(ch: &ChClient, name: &str, page: i64) -> Result<TableData, ChClientError> {
     let cols = columns(ch, name).await?;
     if cols.is_empty() {
         return Ok(TableData {

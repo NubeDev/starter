@@ -21,3 +21,6 @@ default = []
 # `mock` exposes a builder for recorded responses, used by CLI tests
 # and any consumer wanting to test against a captured server.
 mock    = []
+
+[lints]
+workspace = true

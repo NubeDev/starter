@@ -36,9 +36,9 @@ use rubix_spi::dto::system::alert_send::AlertSeverity;
 use serde::Deserialize;
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
-use starter_store_clickhouse::clickhouse;
-use starter_store_clickhouse::clickhouse::Row;
-use starter_store_clickhouse::ChClient;
+use starter_store_warehouse::clickhouse;
+use starter_store_warehouse::clickhouse::Row;
+use starter_store_warehouse::ChClient;
 
 use crate::system::alert_send;
 
@@ -152,10 +152,7 @@ fn spike_diagnostic(row: &SpikeRow) -> Diagnostic {
         MessageKey::parse("rubix.warehouse.meter.spike").expect("hard-coded key parses"),
     )
     .with_param("meter_id", DiagnosticParam::String(row.meter_id.clone()))
-    .with_param(
-        "bucket_start",
-        DiagnosticParam::Timestamp(row.epoch_ms),
-    )
+    .with_param("bucket_start", DiagnosticParam::Timestamp(row.epoch_ms))
     .with_param("clipped_to", DiagnosticParam::F64(row.value))
 }
 
@@ -303,11 +300,7 @@ mod tests {
             spike("site-a.water.main", 60_500, 5050.0),
         ];
         let diags = check_spike(&rows);
-        assert_eq!(
-            diags.len(),
-            2,
-            "one diagnostic per L1 suspect-finite row"
-        );
+        assert_eq!(diags.len(), 2, "one diagnostic per L1 suspect-finite row");
         for d in &diags {
             assert_eq!(d.code.as_str(), "rubix.warehouse.meter.spike");
             assert!(d.params.contains_key("meter_id"));
@@ -384,6 +377,9 @@ mod tests {
         let DiagnosticParam::I64(bc) = &diags[0].params["bucket_count"] else {
             panic!("bucket_count must be an i64 param");
         };
-        assert_eq!(*bc as usize, STUCK_RUN_MIN, "report the first qualifying run length");
+        assert_eq!(
+            *bc as usize, STUCK_RUN_MIN,
+            "report the first qualifying run length"
+        );
     }
 }

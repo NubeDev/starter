@@ -3,7 +3,7 @@
 This example is the canonical demonstration of the worked-example
 shape from the Warehouse SCOPE post-review walkthrough. **It does
 not contain a single line of ClickHouse SQL.** Every CH read or
-write flows through `starter-warehouse` → `starter-store-clickhouse`;
+write flows through `starter-warehouse` → `starter-store-warehouse`;
 the binary is a thin flow driver, not a polling loop.
 
 ## What it does
@@ -28,7 +28,7 @@ MQTT broker ──► tap.write   (raw_events; W7 — never refuses)
      — the W1 catalog (`entities`, `entity_refs`, `marts`,
      `cleaners`, `sandboxes`, `tag_definitions`,
      `tag_prefix_registry`, `ext_manifest_approvals`).
-   * `starter_store_clickhouse::MigrationRunner` — `raw_events`,
+   * `starter_store_warehouse::MigrationRunner` — `raw_events`,
      `samples`, `events`, `documents`, plus the `entities_dict`
      `Dictionary(SOURCE(POSTGRESQL(...)))` that bridges PG → CH
      read-side per W2.
@@ -123,7 +123,7 @@ cargo tree -p iot-anomaly-detector | grep -i clickhouse
 ```
 
 should show the `clickhouse` crate reachable **only** under
-`starter-store-clickhouse` (and transitively `starter-warehouse`).
+`starter-store-warehouse` (and transitively `starter-warehouse`).
 There is no `clickhouse = "…"` entry on this crate's
 `Cargo.toml`; the binary is a pure consumer of the warehouse
 capability.

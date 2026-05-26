@@ -3,7 +3,7 @@
 -- One row per `rubix.system.disk` probe; written from
 -- `rubix-tools::system::disk` after a successful probe. Single
 -- DDL statement per file (CH DDL is non-transactional, so the
--- starter-store-clickhouse migration runner sends one statement
+-- starter-store-warehouse migration runner sends one statement
 -- per HTTP round trip and `IF NOT EXISTS` keeps re-apply safe).
 --
 -- Multi-tenant isolation is the per-row `tenant_id` column — the

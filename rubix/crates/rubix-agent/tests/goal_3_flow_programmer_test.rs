@@ -115,7 +115,9 @@ async fn duplicate_via_mcp_writes_revision_lists_both_and_undo_reverts() {
         "new revision is live immediately after duplicate",
     );
     assert!(
-        new_rev.body_yaml.contains("id: com.rubix.scheduled-system-check-copy"),
+        new_rev
+            .body_yaml
+            .contains("id: com.rubix.scheduled-system-check-copy"),
         "body_yaml rewrote `id:` to the target",
     );
 

@@ -9,15 +9,14 @@
 
 use std::sync::Arc;
 
-use rubix_agent::sdui::entity_graph::{
-    RubixEntityGraph, StaticSystemReader, SystemSlotReader,
-};
+use rubix_agent::sdui::entity_graph::{RubixEntityGraph, StaticSystemReader, SystemSlotReader};
 use serde_json::json;
 use starter_ui_bindings::EntityGraph;
 
 #[test]
 fn system_slot_dispatches_through_reader() {
-    let reader = Arc::new(StaticSystemReader::new().with("disk_percent", json!(91))) as Arc<dyn SystemSlotReader>;
+    let reader = Arc::new(StaticSystemReader::new().with("disk_percent", json!(91)))
+        as Arc<dyn SystemSlotReader>;
     let graph = RubixEntityGraph::poolless(reader);
     assert_eq!(graph.read_slot("system", "disk_percent"), Some(json!(91)));
     assert_eq!(graph.read_slot("system", "unknown"), None);

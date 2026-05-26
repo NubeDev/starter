@@ -5,9 +5,7 @@
 //! defaults" test asserts the realistic shape stage 01's success
 //! bar reads.
 
-use rubix_spi::dto::dataflow::synth::{
-    ReadingQuality, SynthEmitRequest, SynthKnobs,
-};
+use rubix_spi::dto::dataflow::synth::{ReadingQuality, SynthEmitRequest, SynthKnobs};
 
 use super::synth::{new_state, tick};
 

@@ -44,7 +44,7 @@ crates:
   namespaces share the same Postgres database; the separation is
   about ownership and rollback isolation, not isolation at the
   database level.
-- `starter-store-clickhouse` — new crate. Owns `raw_events`,
+- `starter-store-warehouse` — new crate. Owns `raw_events`,
   `samples`, `events`, `documents`, and the generated `mart_*`
   materialized views. ClickHouse over HTTP via the official
   `clickhouse` Rust crate.
@@ -1318,7 +1318,7 @@ crates/starter-store-postgres/migrations/
     0007_sandboxes_catalog.sql
     0008_ext_manifest_approvals.sql
 
-crates/starter-store-clickhouse/migrations/
+crates/starter-store-warehouse/migrations/
   0001_raw_events.sql
   0002_samples.sql
   0003_events.sql
@@ -1332,7 +1332,7 @@ migrations run via a small in-crate runner (the ecosystem has no
 is one DDL statement (ClickHouse DDL is non-transactional, so each
 file must be safely re-runnable — `IF NOT EXISTS` everywhere).
 
-Cargo features: `warehouse` on `starter-store-clickhouse`,
+Cargo features: `warehouse` on `starter-store-warehouse`,
 `dimensions` on `starter-store-postgres`. Both default-off.
 
 ## Operator primer (ClickHouse shortlist)
@@ -1384,7 +1384,7 @@ Anything beyond this list is escalation territory.
 |-------|------------------------------------------------------------------------------------------------------------|
 | 1     | `starter-tags` crate lands with PG + CH compile targets (see Tags SCOPE T8).                               |
 | 2     | `starter-store-postgres["dimensions"]` migrations 0001–0007 land (entities, refs, tag_defs, marts, cleaners, sandboxes, ext_manifest_approvals). |
-| 3     | `starter-store-clickhouse` crate lands with migrations 0001–0005; CH testcontainer wired.                  |
+| 3     | `starter-store-warehouse` crate lands with migrations 0001–0005; CH testcontainer wired.                  |
 | 4     | `starter-warehouse` with `tap.write` + `curate.write` + `bulk.import` nodes; flow-agent ingests to L2.     |
 | 5     | `mart.define` + `mart.read` + `mart.drop` + `mart.promote` + `cleaner.define` + sandbox nodes; catalog endpoints; example mart, cleaner, and analyst-CSV sandbox workflow. `dimension_freshness` envelope wired (W11). W14 filter validation enforced. |
 | 6     | SDUI binding to `MartQuery`; example dashboard page driven by tags. SDUI surfaces `dimension_freshness` as an "as of" badge. |

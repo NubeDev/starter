@@ -39,7 +39,11 @@ struct ReadVsTriggerProbe {
 }
 
 impl ReadVsTriggerProbe {
-    fn new() -> (Self, Arc<AtomicUsize>, Arc<std::sync::Mutex<Option<SlotValue>>>) {
+    fn new() -> (
+        Self,
+        Arc<AtomicUsize>,
+        Arc<std::sync::Mutex<Option<SlotValue>>>,
+    ) {
         let invokes = Arc::new(AtomicUsize::new(0));
         let last = Arc::new(std::sync::Mutex::new(None));
         let me = Self {

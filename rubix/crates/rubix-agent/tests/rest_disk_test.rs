@@ -24,7 +24,7 @@ use rubix_agent::routes::tools::{router, ToolsState};
 
 fn app() -> axum::Router {
     let bundle = Arc::new(rubix_spi::i18n::rubix_bundle().expect("rubix bundle parses"));
-    let tools = build_tool_registry(None, 90, None);
+    let tools = build_tool_registry(None, 90, None, None);
     router(ToolsState::new(tools, bundle))
 }
 
@@ -52,7 +52,10 @@ fn post_disk(accept_language: &str, render_server: bool) -> Request<Body> {
 
 #[tokio::test]
 async fn render_server_round_trips_in_en_us() {
-    let resp = app().oneshot(post_disk("en-US", true)).await.expect("oneshot");
+    let resp = app()
+        .oneshot(post_disk("en-US", true))
+        .await
+        .expect("oneshot");
     assert_eq!(resp.status(), StatusCode::OK);
     let body = body_json(resp).await;
     let rendered = body
@@ -61,18 +64,28 @@ async fn render_server_round_trips_in_en_us() {
         .unwrap_or_else(|| panic!("expected `rendered_summary`: {body}"));
     // Every host hits one of these three EN openings (ok/warn/full).
     assert!(
-        ["Disk usage is normal", "Disk is nearly full", "Disk is full"]
-            .iter()
-            .any(|p| rendered.starts_with(p)),
+        [
+            "Disk usage is normal",
+            "Disk is nearly full",
+            "Disk is full"
+        ]
+        .iter()
+        .any(|p| rendered.starts_with(p)),
         "EN rendering must use English catalogue; got {rendered:?}",
     );
     // Raw summary still present for clients that want to re-render.
-    assert!(body.get("summary").is_some(), "raw summary preserved: {body}");
+    assert!(
+        body.get("summary").is_some(),
+        "raw summary preserved: {body}"
+    );
 }
 
 #[tokio::test]
 async fn render_server_round_trips_in_es_ar() {
-    let resp = app().oneshot(post_disk("es-AR", true)).await.expect("oneshot");
+    let resp = app()
+        .oneshot(post_disk("es-AR", true))
+        .await
+        .expect("oneshot");
     assert_eq!(resp.status(), StatusCode::OK);
     let body = body_json(resp).await;
     let rendered = body
@@ -80,16 +93,23 @@ async fn render_server_round_trips_in_es_ar() {
         .and_then(Value::as_str)
         .unwrap_or_else(|| panic!("expected `rendered_summary`: {body}"));
     assert!(
-        ["El uso del disco es normal", "El disco está casi lleno", "El disco está lleno"]
-            .iter()
-            .any(|p| rendered.starts_with(p)),
+        [
+            "El uso del disco es normal",
+            "El disco está casi lleno",
+            "El disco está lleno"
+        ]
+        .iter()
+        .any(|p| rendered.starts_with(p)),
         "ES rendering must use Spanish catalogue; got {rendered:?}",
     );
 }
 
 #[tokio::test]
 async fn render_off_by_default_carries_raw_diagnostic() {
-    let resp = app().oneshot(post_disk("en-US", false)).await.expect("oneshot");
+    let resp = app()
+        .oneshot(post_disk("en-US", false))
+        .await
+        .expect("oneshot");
     assert_eq!(resp.status(), StatusCode::OK);
     let body = body_json(resp).await;
     assert!(

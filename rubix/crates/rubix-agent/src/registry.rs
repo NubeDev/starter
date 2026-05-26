@@ -31,24 +31,18 @@
 //!   survive restart (already seeded from `rubix_flows::bundled()`
 //!   below so list/lint/duplicate work read-only today).
 //! * Replace `InMemoryTenantStore` / `InMemoryTeamStore` likewise.
-//! * Replace `InMemoryChWriter` with a `starter-store-clickhouse`
-//!   `ChClient`-backed impl so the seven `rubix.clickhouse.*` verbs
+//! * Replace `InMemoryWarehouseWriter` with a `starter-store-warehouse`
+//!   `ChClient`-backed impl so the seven `rubix.warehouse.*` verbs
 //!   land DDL against the live warehouse.
 //! * Replace `InMemoryInsightsStore` with a PG-backed adapter so
 //!   insights-rule writes survive restart.
 
 use std::sync::Arc;
 
-use rubix_tools::clickhouse::ch_client_writer::ChClientWriter;
-use rubix_tools::clickhouse::mart_create::ClickhouseMartCreateTool;
-use rubix_tools::clickhouse::mart_drop::ClickhouseMartDropTool;
-use rubix_tools::clickhouse::mart_list::ClickhouseMartListTool;
-use rubix_tools::clickhouse::retention_set::ClickhouseRetentionSetTool;
-use rubix_tools::clickhouse::rule_list::ClickhouseRuleListTool;
-use rubix_tools::clickhouse::rule_write::ClickhouseRuleWriteTool;
-use rubix_tools::clickhouse::store::{ChWriter, InMemoryChWriter};
-use rubix_tools::clickhouse::tables_list::ClickhouseTablesListTool;
 use rubix_spi::dashboard::DashboardStore;
+use rubix_store_postgres::{PgDashboardStore, PgFlowDefStore};
+use rubix_tools::analytics::query::AnalyticsQueryTool;
+use rubix_tools::analytics::report::AnalyticsReportTool;
 use rubix_tools::dashboard::create::DashboardCreateTool;
 use rubix_tools::dashboard::delete::DashboardDeleteTool;
 use rubix_tools::dashboard::duplicate::DashboardDuplicateTool;
@@ -57,21 +51,17 @@ use rubix_tools::dashboard::list::DashboardListTool;
 use rubix_tools::dashboard::page_set::DashboardPageSetTool;
 use rubix_tools::dashboard::store::InMemoryDashboardStore;
 use rubix_tools::dashboard::update::DashboardUpdateTool;
-use starter_authz::StaticRegistry;
-use starter_flow::graph::InMemoryGraphStore;
-use starter_flow_spi::graph::GraphStore;
+use rubix_tools::dataflow::synth::SynthEmitTool;
 use rubix_tools::flow_ops::deploy::FlowDeployTool;
 use rubix_tools::flow_ops::duplicate::FlowDuplicateTool;
-use rubix_tools::flow_ops::lint::FlowLintTool;
 use rubix_tools::flow_ops::kinds::FlowKindsTool;
+use rubix_tools::flow_ops::lint::FlowLintTool;
 use rubix_tools::flow_ops::list::FlowListTool;
 use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
-use rubix_store_postgres::{PgDashboardStore, PgFlowDefStore};
 use rubix_tools::insights::rule_create::InsightsRuleCreateTool;
 use rubix_tools::insights::rule_list::InsightsRuleListTool;
 use rubix_tools::insights::rule_toggle::{InsightsRuleDisableTool, InsightsRuleEnableTool};
 use rubix_tools::insights::store::{InMemoryInsightsStore, InsightsRuleStore};
-use rubix_tools::dataflow::synth::SynthEmitTool;
 use rubix_tools::system::alert_send::AlertSendTool;
 use rubix_tools::system::db::DbTool;
 use rubix_tools::system::disk::DiskTool;
@@ -85,17 +75,27 @@ use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
-use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use rubix_tools::warehouse::clean_minute::WarehouseCleanMinuteTool;
+use rubix_tools::warehouse::ingest::WarehouseIngestTool;
+use rubix_tools::warehouse::mart_create::WarehouseMartCreateTool;
+use rubix_tools::warehouse::mart_drop::WarehouseMartDropTool;
+use rubix_tools::warehouse::mart_list::WarehouseMartListTool;
+use rubix_tools::warehouse::retention_set::WarehouseRetentionSetTool;
 use rubix_tools::warehouse::rollup_15m::WarehouseRollup15mTool;
-use rubix_tools::analytics::query::AnalyticsQueryTool;
-use rubix_tools::analytics::report::AnalyticsReportTool;
+use rubix_tools::warehouse::rule_list::WarehouseRuleListTool;
+use rubix_tools::warehouse::rule_write::WarehouseRuleWriteTool;
+use rubix_tools::warehouse::store::{InMemoryWarehouseWriter, WarehouseWriter};
+use rubix_tools::warehouse::tables_list::WarehouseTablesListTool;
+use rubix_tools::warehouse::warehouse_client_writer::WarehouseClientWriter;
+use starter_authz::StaticRegistry;
 use starter_blob_fs::{FsBlobStore, PresignKey};
+use starter_flow::graph::InMemoryGraphStore;
+use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::blob::BlobStore;
 use starter_spi::tool::Tool;
-use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::Pool;
+use starter_store_warehouse::ChClient;
 use tracing::{info, warn};
 
 /// Build the tool registry the agent serves at boot.
@@ -116,9 +116,9 @@ pub fn build_tool_registry(
     let mut warehouse_ingest = WarehouseIngestTool::default();
     let mut warehouse_clean = WarehouseCleanMinuteTool::default();
     let mut warehouse_rollup = WarehouseRollup15mTool::default();
-    let analytics_query: Option<Arc<dyn Tool>> = ch.as_ref().map(|client| {
-        Arc::new(AnalyticsQueryTool::new(client.clone())) as Arc<dyn Tool>
-    });
+    let analytics_query: Option<Arc<dyn Tool>> = ch
+        .as_ref()
+        .map(|client| Arc::new(AnalyticsQueryTool::new(client.clone())) as Arc<dyn Tool>);
     let analytics_report: Option<Arc<dyn Tool>> = ch.as_ref().map(|client| {
         let root = blob_root.as_deref().unwrap_or("/tmp/rubix-blobs");
         let store: Arc<dyn BlobStore> = Arc::new(
@@ -154,12 +154,12 @@ pub fn build_tool_registry(
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
     let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::new());
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
-    let ch_writer: Arc<dyn ChWriter> = match ch.as_ref() {
-        Some(client) => Arc::new(ChClientWriter::new(
+    let ch_writer: Arc<dyn WarehouseWriter> = match ch.as_ref() {
+        Some(client) => Arc::new(WarehouseClientWriter::new(
             (**client).clone(),
-            crate::boot::clickhouse::RUBIX_CH_DATABASE,
+            crate::boot::warehouse::RUBIX_CH_DATABASE,
         )),
-        None => Arc::new(InMemoryChWriter::new()),
+        None => Arc::new(InMemoryWarehouseWriter::new()),
     };
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
     // Dashboard verbs share the SDUI page provider's store when a PG
@@ -238,13 +238,13 @@ pub fn build_tool_registry(
         Arc::new(TeamCreateTool::new(team_store.clone())),
         Arc::new(TeamAssignTool::new(team_store.clone())),
         // ---- clickhouse admin (read + write) --------------------
-        Arc::new(ClickhouseRuleListTool::new(ch_writer.clone())),
-        Arc::new(ClickhouseRuleWriteTool::new(ch_writer.clone())),
-        Arc::new(ClickhouseMartListTool::new(ch_writer.clone())),
-        Arc::new(ClickhouseMartCreateTool::new(ch_writer.clone())),
-        Arc::new(ClickhouseMartDropTool::new(ch_writer.clone())),
-        Arc::new(ClickhouseTablesListTool::new(ch_writer.clone())),
-        Arc::new(ClickhouseRetentionSetTool::new(ch_writer.clone())),
+        Arc::new(WarehouseRuleListTool::new(ch_writer.clone())),
+        Arc::new(WarehouseRuleWriteTool::new(ch_writer.clone())),
+        Arc::new(WarehouseMartListTool::new(ch_writer.clone())),
+        Arc::new(WarehouseMartCreateTool::new(ch_writer.clone())),
+        Arc::new(WarehouseMartDropTool::new(ch_writer.clone())),
+        Arc::new(WarehouseTablesListTool::new(ch_writer.clone())),
+        Arc::new(WarehouseRetentionSetTool::new(ch_writer.clone())),
         // ---- insights admin (read + write) ----------------------
         Arc::new(InsightsRuleListTool::new(insights_store.clone())),
         Arc::new(InsightsRuleCreateTool::new(insights_store.clone())),
@@ -349,7 +349,7 @@ mod tests {
     use super::*;
 
     fn names() -> Vec<String> {
-        build_tool_registry(None, 90, None)
+        build_tool_registry(None, 90, None, None)
             .iter()
             .map(|t| t.definition().name)
             .collect()
@@ -412,7 +412,11 @@ mod tests {
     #[test]
     fn registry_contains_tenant_and_team_verbs() {
         let names = names();
-        for expected in ["rubix.tenant.list", "rubix.team.create", "rubix.team.assign"] {
+        for expected in [
+            "rubix.tenant.list",
+            "rubix.team.create",
+            "rubix.team.assign",
+        ] {
             assert!(
                 names.contains(&expected.to_owned()),
                 "registry missing {expected}",
@@ -424,13 +428,13 @@ mod tests {
     fn registry_contains_every_clickhouse_verb() {
         let names = names();
         for expected in [
-            "rubix.clickhouse.rule.list",
-            "rubix.clickhouse.rule.write",
-            "rubix.clickhouse.mart.list",
-            "rubix.clickhouse.mart.create",
-            "rubix.clickhouse.mart.drop",
-            "rubix.clickhouse.tables.list",
-            "rubix.clickhouse.retention.set",
+            "rubix.warehouse.rule.list",
+            "rubix.warehouse.rule.write",
+            "rubix.warehouse.mart.list",
+            "rubix.warehouse.mart.create",
+            "rubix.warehouse.mart.drop",
+            "rubix.warehouse.tables.list",
+            "rubix.warehouse.retention.set",
         ] {
             assert!(
                 names.contains(&expected.to_owned()),

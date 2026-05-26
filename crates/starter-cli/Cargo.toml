@@ -49,3 +49,6 @@ async-trait           = { workspace = true }
 [[test]]
 name              = "prune"
 required-features = ["prune"]
+
+[lints]
+workspace = true

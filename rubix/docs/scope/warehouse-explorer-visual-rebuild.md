@@ -45,7 +45,7 @@ primitives have different paddings, radii, and no `DataGrid` analogue.
 - No replacing shadcn `Card`/`Button`/`Tabs`/`DataTable`/`DataGrid`
   with kit equivalents — they are the visual identity.
 - No backend changes. Same `/api/warehouse/ch/*` reads, same
-  `rubix.clickhouse.*` verbs.
+  `rubix.warehouse.*` verbs.
 - No new monaco/erd/data-grid dependencies — they already exist in
   the old package and move over verbatim.
 - No iframe, no standalone Vite dev server inside rubix-frontend.
