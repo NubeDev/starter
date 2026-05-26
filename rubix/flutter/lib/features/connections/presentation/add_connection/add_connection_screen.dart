@@ -1,15 +1,17 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
 import 'package:rubix_flutter/core/network/interfaces/interface_provider.dart';
 import 'package:rubix_flutter/core/network/interfaces/interface_selector.dart';
 import 'package:rubix_flutter/core/network/lan_scan_controller.dart';
 import 'package:rubix_flutter/core/network/lan_scanner.dart';
+import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/features/connections/presentation/add_connection/add_connection_controller.dart';
+import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 
 /// Dev-only placeholder credentials prefilled from a LAN scan hit.
-/// Will be removed once real auth-onboarding is wired in.
 const _devEmail = 'op@example.com';
 const _devPassword = 'rubix-dev-passwd';
 
@@ -66,100 +68,87 @@ class _AddConnectionScreenState extends ConsumerState<AddConnectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).nube;
     final state = ref.watch(addConnectionControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).addConnection)),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            children: [
-              _ScannerPanel(onApply: _applyHit),
-              const SizedBox(height: 24),
-              TextFormField(
-                controller: _urlController,
-                decoration: const InputDecoration(
-                  labelText: 'URL',
-                  hintText: 'http://192.168.1.10:8088',
-                  border: OutlineInputBorder(),
-                ),
-                keyboardType: TextInputType.url,
-                autocorrect: false,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _labelController,
-                decoration: const InputDecoration(
-                  labelText: 'Label',
-                  hintText: 'My Agent',
-                  border: OutlineInputBorder(),
-                ),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _emailController,
-                decoration: const InputDecoration(
-                  labelText: 'Email',
-                  hintText: 'op@example.com',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.email_outlined),
-                ),
-                keyboardType: TextInputType.emailAddress,
-                autocorrect: false,
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Required' : null,
-              ),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _passwordController,
-                obscureText: _obscurePassword,
-                validator: (v) =>
-                    (v == null || v.isEmpty) ? 'Required' : null,
-                decoration: InputDecoration(
-                  labelText: 'Password',
-                  border: const OutlineInputBorder(),
-                  prefixIcon: const Icon(Icons.lock_outline),
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_outlined
-                          : Icons.visibility_off_outlined,
+      backgroundColor: t.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            NubeTopBar(title: l.addConnection),
+            Expanded(
+              child: Form(
+                key: _formKey,
+                child: ListView(
+                  padding: const EdgeInsets.all(20),
+                  children: [
+                    _ScannerPanel(onApply: _applyHit),
+                    const SizedBox(height: 20),
+                    NubeField(
+                      controller: _urlController,
+                      label: 'URL',
+                      hint: 'http://192.168.1.10:8088',
+                      keyboardType: TextInputType.url,
+                      autocorrect: false,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Required'
+                          : null,
                     ),
-                    onPressed: () => setState(
-                      () => _obscurePassword = !_obscurePassword,
+                    const SizedBox(height: 16),
+                    NubeField(
+                      controller: _labelController,
+                      label: 'Label',
+                      hint: 'My Agent',
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Required'
+                          : null,
                     ),
-                  ),
+                    const SizedBox(height: 16),
+                    NubeField(
+                      controller: _emailController,
+                      label: 'Email',
+                      hint: 'op@example.com',
+                      prefixIcon: LucideIcons.mail,
+                      keyboardType: TextInputType.emailAddress,
+                      autocorrect: false,
+                      validator: (v) => (v == null || v.trim().isEmpty)
+                          ? 'Required'
+                          : null,
+                    ),
+                    const SizedBox(height: 16),
+                    NubeField(
+                      controller: _passwordController,
+                      label: 'Password',
+                      obscureText: _obscurePassword,
+                      prefixIcon: LucideIcons.lock,
+                      suffixIcon: _obscurePassword
+                          ? LucideIcons.eye
+                          : LucideIcons.eyeOff,
+                      onSuffixTap: () => setState(
+                        () => _obscurePassword = !_obscurePassword,
+                      ),
+                      validator: (v) =>
+                          (v == null || v.isEmpty) ? 'Required' : null,
+                    ),
+                    const SizedBox(height: 20),
+                    if (state is AsyncError) ...[
+                      NubeAlert.error(state.error.toString()),
+                      const SizedBox(height: 14),
+                    ],
+                    NubeButton(
+                      label: l.probeAndSave,
+                      icon: LucideIcons.plug,
+                      expand: true,
+                      loading: state is AsyncLoading,
+                      onPressed: state is AsyncLoading ? null : _submit,
+                    ),
+                  ],
                 ),
               ),
-              const SizedBox(height: 24),
-              if (state is AsyncError)
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: Text(
-                    state.error.toString(),
-                    style: TextStyle(
-                      color: Theme.of(context).colorScheme.error,
-                    ),
-                  ),
-                ),
-              FilledButton(
-                onPressed: state is AsyncLoading ? null : _submit,
-                child: state is AsyncLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
-                        child: CircularProgressIndicator(strokeWidth: 2),
-                      )
-                    : Text(AppLocalizations.of(context).probeAndSave),
-              ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -207,91 +196,91 @@ class _ScannerPanelState extends ConsumerState<_ScannerPanel> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final t = Theme.of(context).nube;
     final scanState = ref.watch(lanScanControllerProvider);
 
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(8),
-        side: BorderSide(color: theme.colorScheme.outlineVariant),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            InkWell(
+    return NubeCard(
+      padding: const EdgeInsets.all(12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          MouseRegion(
+            cursor: SystemMouseCursors.click,
+            child: GestureDetector(
+              behavior: HitTestBehavior.opaque,
               onTap: () => setState(() => _expanded = !_expanded),
               child: Row(
                 children: [
                   Icon(
-                    _expanded ? Icons.expand_less : Icons.expand_more,
-                    color: theme.colorScheme.primary,
+                    _expanded ? LucideIcons.chevronDown : LucideIcons.chevronRight,
+                    size: 16,
+                    color: t.muted,
                   ),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'Scan local network (optional)',
-                      style: theme.textTheme.titleSmall,
+                      'Scan local network',
+                      style: TextStyle(
+                        color: t.text,
+                        fontSize: 13.5,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
                   ),
                   if (scanState is LanScanRunning)
-                    const SizedBox(
-                      height: 16,
-                      width: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2),
+                    SizedBox(
+                      height: 14,
+                      width: 14,
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2,
+                        color: t.leaf,
+                      ),
                     ),
                 ],
               ),
             ),
-            if (_expanded) ...[
+          ),
+          if (_expanded) ...[
+            const SizedBox(height: 12),
+            if (kIsWeb)
+              const _WebUnsupportedNotice()
+            else ...[
+              const NetworkInterfaceSelector(),
               const SizedBox(height: 12),
-              if (kIsWeb)
-                const _WebUnsupportedNotice()
-              else ...[
-                const NetworkInterfaceSelector(),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    SizedBox(
-                      width: 100,
-                      child: TextFormField(
-                        controller: _portController,
-                        keyboardType: TextInputType.number,
-                        decoration: const InputDecoration(
-                          labelText: 'Port',
-                          border: OutlineInputBorder(),
-                          isDense: true,
-                        ),
-                      ),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SizedBox(
+                    width: 100,
+                    child: NubeField(
+                      controller: _portController,
+                      label: 'Port',
+                      keyboardType: TextInputType.number,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton.tonalIcon(
-                        onPressed: scanState is LanScanRunning
-                            ? () => ref
-                                .read(lanScanControllerProvider.notifier)
-                                .cancel()
-                            : _startScan,
-                        icon: Icon(
-                          scanState is LanScanRunning
-                              ? Icons.stop
-                              : Icons.radar,
-                        ),
-                        label: Text(
-                          scanState is LanScanRunning ? 'Stop' : 'Scan',
-                        ),
-                      ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NubeButton(
+                      label: scanState is LanScanRunning ? 'Stop' : 'Scan',
+                      icon: scanState is LanScanRunning
+                          ? LucideIcons.square
+                          : LucideIcons.radar,
+                      variant: NubeButtonVariant.secondary,
+                      expand: true,
+                      onPressed: scanState is LanScanRunning
+                          ? () => ref
+                              .read(lanScanControllerProvider.notifier)
+                              .cancel()
+                          : _startScan,
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                _ScanResults(state: scanState, onApply: widget.onApply),
-              ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              _ScanResults(state: scanState, onApply: widget.onApply),
             ],
           ],
-        ),
+        ],
       ),
     );
   }
@@ -305,22 +294,16 @@ class _ScanResults extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final t = Theme.of(context).nube;
 
     switch (state) {
       case LanScanIdle():
         return Text(
-          'Pick an interface and press Scan to discover rubix-agent '
-          'instances on this /24 subnet.',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.outline,
-          ),
+          'Pick an interface and press Scan to discover rubix-agent instances on this /24 subnet.',
+          style: TextStyle(color: t.muted, fontSize: 12.5, height: 1.4),
         );
       case LanScanFailed(:final message):
-        return Text(
-          message,
-          style: TextStyle(color: theme.colorScheme.error),
-        );
+        return NubeAlert.error(message);
       case LanScanRunning(:final progress):
         return _ProgressAndHits(
           progress: progress,
@@ -350,14 +333,20 @@ class _ProgressAndHits extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final t = Theme.of(context).nube;
     final hits = progress.hits;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        LinearProgressIndicator(
-          value: progress.total == 0 ? null : progress.percent,
+        ClipRRect(
+          borderRadius: BorderRadius.circular(999),
+          child: LinearProgressIndicator(
+            value: progress.total == 0 ? null : progress.percent,
+            minHeight: 4,
+            color: t.leaf,
+            backgroundColor: t.surface2,
+          ),
         ),
         const SizedBox(height: 6),
         Text(
@@ -365,27 +354,50 @@ class _ProgressAndHits extends StatelessWidget {
               ? '${progress.scanned}/${progress.total}'
                   '${progress.lastIp != null ? '  ·  ${progress.lastIp}' : ''}'
               : 'Done — ${hits.length} found',
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.outline,
-          ),
+          style: TextStyle(color: t.muted, fontSize: 12),
         ),
         const SizedBox(height: 8),
         if (hits.isEmpty && !running)
           Text(
             'No rubix-agent instances responded.',
-            style: theme.textTheme.bodySmall,
+            style: TextStyle(color: t.muted, fontSize: 12.5),
           )
         else
           ...hits.map(
-            (h) => Card(
-              margin: const EdgeInsets.only(bottom: 6),
-              child: ListTile(
-                dense: true,
-                leading: const Icon(Icons.dns_outlined),
-                title: Text(h.baseUrl),
-                subtitle: h.version != null ? Text('v${h.version}') : null,
-                trailing: const Icon(Icons.arrow_forward_ios, size: 14),
+            (h) => Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: NubeCard(
                 onTap: () => onApply(h),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                child: Row(
+                  children: [
+                    Icon(LucideIcons.server, size: 15, color: t.muted),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            h.baseUrl,
+                            style: TextStyle(
+                              color: t.text,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          if (h.version != null)
+                            Text(
+                              'v${h.version}',
+                              style:
+                                  TextStyle(color: t.muted, fontSize: 11.5),
+                            ),
+                        ],
+                      ),
+                    ),
+                    Icon(LucideIcons.chevronRight, size: 14, color: t.muted),
+                  ],
+                ),
               ),
             ),
           ),
@@ -394,38 +406,13 @@ class _ProgressAndHits extends StatelessWidget {
   }
 }
 
-/// Shown in place of the scanner UI on Flutter web, where
-/// `dart:io`'s `NetworkInterface.list` / `Socket` aren't available
-/// and the browser would block LAN probes via CORS / mixed-content
-/// anyway. Operators should enter the URL by hand or run the
-/// scanner from the desktop / mobile build.
 class _WebUnsupportedNotice extends StatelessWidget {
   const _WebUnsupportedNotice();
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(6),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(Icons.info_outline, color: theme.colorScheme.outline),
-          const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              'LAN scan is not available in the browser. Run rubix '
-              'from the desktop or mobile app to discover agents '
-              'automatically, or enter the URL by hand below.',
-              style: theme.textTheme.bodySmall,
-            ),
-          ),
-        ],
-      ),
+    return const NubeAlert.info(
+      'LAN scan is not available in the browser. Run rubix from the desktop or mobile app to discover agents automatically, or enter the URL by hand below.',
     );
   }
 }

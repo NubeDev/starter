@@ -45,6 +45,13 @@ dependencies:
   wifi_scan: ^0.4.1+2
   mobile_scanner: ^7.2.0
 
+  # Typography — Geist (matches the React app via @theme --font-sans).
+  google_fonts: ^6.2.1
+
+  # Iconography — Lucide icon set replaces Material Symbols so the UI
+  # stops looking like a Google product.
+  lucide_icons: ^0.257.0
+
   # Generated OpenAPI Dio client (regen via `make api-client`).
   rubix_api:
     path: packages/rubix_api

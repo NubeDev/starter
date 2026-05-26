@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/features/settings/data/settings_providers.dart';
+import 'package:rubix_flutter/shared/widgets/loading_indicator.dart';
+import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 
 /// Settings section that lets the user set, change, or remove the
 /// optional PIN that gates the `/connections` route.
@@ -12,57 +16,96 @@ class PinSettingsSection extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final pinAsync = ref.watch(connectionsPinProvider);
-    final theme = Theme.of(context);
+    final t = Theme.of(context).nube;
 
     return pinAsync.when(
       loading: () => const Padding(
         padding: EdgeInsets.all(16),
-        child: LinearProgressIndicator(),
+        child: LoadingIndicator(),
       ),
       error: (e, _) => Padding(
-        padding: const EdgeInsets.all(16),
-        child: Text(
-          'Failed to load PIN setting: $e',
-          style: TextStyle(color: theme.colorScheme.error),
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        child: NubeAlert.error('Failed to load PIN setting: $e'),
       ),
       data: (pin) {
         final hasPin = pin != null && pin.isNotEmpty;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            ListTile(
-              leading: Icon(
-                hasPin ? Icons.lock_outline : Icons.lock_open_outlined,
-              ),
-              title: const Text('Connections PIN'),
-              subtitle: Text(
-                hasPin
-                    ? 'A PIN is required to view or change connections.'
-                    : 'No PIN set — the connections page is unprotected.',
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Wrap(
-                spacing: 12,
+        return NubeCard(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
                 children: [
-                  FilledButton.tonalIcon(
-                    onPressed: () => _showSetPinDialog(context, ref,
-                        existing: hasPin),
-                    icon: Icon(hasPin ? Icons.edit : Icons.add),
-                    label: Text(hasPin ? 'Change PIN' : 'Set PIN'),
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: hasPin
+                          ? t.leaf.withValues(alpha: 0.12)
+                          : t.surface2,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      hasPin ? LucideIcons.lock : LucideIcons.unlock,
+                      size: 15,
+                      color: hasPin ? t.leaf : t.muted,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Connections PIN',
+                          style: TextStyle(
+                            color: t.text,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          hasPin
+                              ? 'A PIN is required to view or change connections.'
+                              : 'No PIN set — the connections page is unprotected.',
+                          style: TextStyle(
+                            color: t.muted,
+                            fontSize: 12.5,
+                            height: 1.35,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  NubeButton(
+                    label: hasPin ? 'Change PIN' : 'Set PIN',
+                    icon: hasPin ? LucideIcons.pencil : LucideIcons.plus,
+                    variant: NubeButtonVariant.secondary,
+                    size: NubeButtonSize.sm,
+                    onPressed: () =>
+                        _showSetPinDialog(context, ref, existing: hasPin),
                   ),
                   if (hasPin)
-                    OutlinedButton.icon(
+                    NubeButton(
+                      label: 'Remove PIN',
+                      icon: LucideIcons.trash2,
+                      variant: NubeButtonVariant.outline,
+                      size: NubeButtonSize.sm,
                       onPressed: () => _confirmRemove(context, ref),
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Remove PIN'),
                     ),
                 ],
               ),
-            ),
-          ],
+            ],
+          ),
         );
       },
     );
@@ -75,6 +118,7 @@ class PinSettingsSection extends ConsumerWidget {
   }) async {
     final result = await showDialog<String>(
       context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.45),
       builder: (_) => _SetPinDialog(replacing: existing),
     );
     if (result == null) return;
@@ -87,24 +131,12 @@ class PinSettingsSection extends ConsumerWidget {
   }
 
   Future<void> _confirmRemove(BuildContext context, WidgetRef ref) async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Remove PIN?'),
-        content: const Text(
-          'The connections page will no longer require a PIN.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
-          ),
-          FilledButton.tonal(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('Remove'),
-          ),
-        ],
-      ),
+    final ok = await showNubeConfirmDialog(
+      context,
+      title: 'Remove PIN?',
+      message: 'The connections page will no longer require a PIN.',
+      confirmLabel: 'Remove',
+      destructive: true,
     );
     if (ok != true) return;
     await setConnectionsPin(ref, null);
@@ -153,56 +185,73 @@ class _SetPinDialogState extends State<_SetPinDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.replacing ? 'Change PIN' : 'Set PIN'),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          TextField(
-            controller: _pin,
-            autofocus: true,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            maxLength: 12,
-            decoration: const InputDecoration(
-              labelText: 'PIN',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          const SizedBox(height: 8),
-          TextField(
-            controller: _confirm,
-            obscureText: true,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-            maxLength: 12,
-            onSubmitted: (_) => _submit(),
-            decoration: const InputDecoration(
-              labelText: 'Confirm PIN',
-              border: OutlineInputBorder(),
-            ),
-          ),
-          if (_error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 8),
-              child: Text(
-                _error!,
-                style: TextStyle(color: Theme.of(context).colorScheme.error),
-              ),
-            ),
-        ],
+    final t = Theme.of(context).nube;
+    return Dialog(
+      backgroundColor: t.surface,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: t.border),
       ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 360),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                widget.replacing ? 'Change PIN' : 'Set PIN',
+                style: TextStyle(
+                  color: t.text,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 16),
+              NubeField(
+                controller: _pin,
+                label: 'PIN',
+                autofocus: true,
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                maxLength: 12,
+              ),
+              const SizedBox(height: 12),
+              NubeField(
+                controller: _confirm,
+                label: 'Confirm PIN',
+                obscureText: true,
+                keyboardType: TextInputType.number,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                maxLength: 12,
+                onSubmitted: (_) => _submit(),
+                errorText: _error,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [
+                  NubeButton(
+                    label: 'Cancel',
+                    variant: NubeButtonVariant.ghost,
+                    size: NubeButtonSize.sm,
+                    onPressed: () => Navigator.of(context).pop(),
+                  ),
+                  const SizedBox(width: 8),
+                  NubeButton(
+                    label: 'Save',
+                    size: NubeButtonSize.sm,
+                    onPressed: _submit,
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
-        FilledButton(
-          onPressed: _submit,
-          child: const Text('Save'),
-        ),
-      ],
+      ),
     );
   }
 }

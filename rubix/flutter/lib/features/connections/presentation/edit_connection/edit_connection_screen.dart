@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
+import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/features/connections/data/connection_credentials_store.dart';
 import 'package:rubix_flutter/features/connections/domain/connection/connection.dart';
 import 'package:rubix_flutter/features/connections/presentation/edit_connection/edit_connection_controller.dart';
+import 'package:rubix_flutter/shared/widgets/loading_indicator.dart';
+import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 
 class EditConnectionScreen extends ConsumerStatefulWidget {
   const EditConnectionScreen({required this.connection, super.key});
@@ -68,24 +72,16 @@ class _EditConnectionScreenState extends ConsumerState<EditConnectionScreen> {
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(AppLocalizations.of(context).deleteConnection),
-        content: Text(AppLocalizations.of(context).deleteConnectionConfirm),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(false),
-            child: Text(AppLocalizations.of(context).cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(true),
-            child: Text(AppLocalizations.of(context).delete),
-          ),
-        ],
-      ),
+    final l = AppLocalizations.of(context);
+    final confirmed = await showNubeConfirmDialog(
+      context,
+      title: l.deleteConnection,
+      message: l.deleteConnectionConfirm,
+      confirmLabel: l.delete,
+      cancelLabel: l.cancel,
+      destructive: true,
     );
-    if (confirmed ?? false) {
+    if (confirmed == true) {
       await ref
           .read(editConnectionControllerProvider.notifier)
           .delete(widget.connection.id);
@@ -95,76 +91,86 @@ class _EditConnectionScreenState extends ConsumerState<EditConnectionScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l = AppLocalizations.of(context);
+    final t = Theme.of(context).nube;
     final state = ref.watch(editConnectionControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(AppLocalizations.of(context).editConnection),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.delete),
-            onPressed: _confirmDelete,
-          ),
-        ],
-      ),
-      body: !_credsLoaded
-          ? const Center(child: CircularProgressIndicator())
-          : Padding(
-              padding: const EdgeInsets.all(16),
-              child: Form(
-                key: _formKey,
-                child: ListView(
-                  children: [
-                    TextFormField(
-                      controller: _labelController,
-                      decoration: const InputDecoration(labelText: 'Label'),
-                      validator: (v) => (v == null || v.trim().isEmpty)
-                          ? 'Required'
-                          : null,
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      widget.connection.baseUrl,
-                      style: Theme.of(context).textTheme.bodySmall,
-                    ),
-                    const SizedBox(height: 24),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        prefixIcon: Icon(Icons.email_outlined),
-                      ),
-                      keyboardType: TextInputType.emailAddress,
-                      autocorrect: false,
-                    ),
-                    const SizedBox(height: 16),
-                    TextFormField(
-                      controller: _passwordController,
-                      obscureText: _obscurePassword,
-                      decoration: InputDecoration(
-                        labelText: 'Password',
-                        prefixIcon: const Icon(Icons.lock_outline),
-                        suffixIcon: IconButton(
-                          icon: Icon(
-                            _obscurePassword
-                                ? Icons.visibility_outlined
-                                : Icons.visibility_off_outlined,
-                          ),
-                          onPressed: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    FilledButton(
-                      onPressed: state is AsyncLoading ? null : _save,
-                      child: Text(AppLocalizations.of(context).save),
-                    ),
-                  ],
+      backgroundColor: t.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            NubeTopBar(
+              title: l.editConnection,
+              actions: [
+                NubeTopBarAction(
+                  icon: LucideIcons.trash2,
+                  tooltip: l.delete,
+                  danger: true,
+                  onTap: _confirmDelete,
                 ),
-              ),
+              ],
             ),
+            Expanded(
+              child: !_credsLoaded
+                  ? const LoadingIndicator()
+                  : Form(
+                      key: _formKey,
+                      child: ListView(
+                        padding: const EdgeInsets.all(20),
+                        children: [
+                          NubeField(
+                            controller: _labelController,
+                            label: 'Label',
+                            validator: (v) => (v == null || v.trim().isEmpty)
+                                ? 'Required'
+                                : null,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            widget.connection.baseUrl,
+                            style: TextStyle(
+                              color: t.muted,
+                              fontSize: 12.5,
+                              fontFamily: 'monospace',
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          NubeField(
+                            controller: _emailController,
+                            label: 'Email',
+                            prefixIcon: LucideIcons.mail,
+                            keyboardType: TextInputType.emailAddress,
+                            autocorrect: false,
+                          ),
+                          const SizedBox(height: 16),
+                          NubeField(
+                            controller: _passwordController,
+                            label: 'Password',
+                            obscureText: _obscurePassword,
+                            prefixIcon: LucideIcons.lock,
+                            suffixIcon: _obscurePassword
+                                ? LucideIcons.eye
+                                : LucideIcons.eyeOff,
+                            onSuffixTap: () => setState(
+                              () => _obscurePassword = !_obscurePassword,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          NubeButton(
+                            label: l.save,
+                            icon: LucideIcons.check,
+                            expand: true,
+                            loading: state is AsyncLoading,
+                            onPressed: state is AsyncLoading ? null : _save,
+                          ),
+                        ],
+                      ),
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

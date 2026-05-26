@@ -2,18 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:lucide_icons/lucide_icons.dart';
 
+import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/features/settings/data/settings_providers.dart';
+import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 
 /// Lock screen shown before `/connections*` when a PIN is set and
-/// the session has not yet been unlocked. Correct entry flips
-/// [pinUnlockedProvider] and routes the user on; the gate in
-/// `app_router.dart` then lets them through.
+/// the session has not yet been unlocked.
 class ConnectionsUnlockScreen extends ConsumerStatefulWidget {
   const ConnectionsUnlockScreen({super.key, this.redirectTo});
 
-  /// Where to send the user after a successful unlock. Defaults to
-  /// `/connections`.
   final String? redirectTo;
 
   @override
@@ -57,75 +56,100 @@ class _ConnectionsUnlockScreenState
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final t = Theme.of(context).nube;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Locked'),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.canPop()
-              ? context.pop()
-              : context.go('/home'),
-        ),
-      ),
-      body: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 320),
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Icon(
-                  Icons.lock,
-                  size: 56,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Enter PIN to access connections',
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.titleMedium,
-                ),
-                const SizedBox(height: 24),
-                TextField(
-                  controller: _controller,
-                  autofocus: true,
-                  obscureText: true,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                  maxLength: 12,
-                  textAlign: TextAlign.center,
-                  onSubmitted: (_) => _submit(),
-                  decoration: const InputDecoration(
-                    labelText: 'PIN',
-                    border: OutlineInputBorder(),
-                  ),
-                ),
-                if (_error != null) ...[
-                  const SizedBox(height: 8),
-                  Text(
-                    _error!,
-                    textAlign: TextAlign.center,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                ],
-                const SizedBox(height: 16),
-                FilledButton(
-                  onPressed: _checking ? null : _submit,
-                  child: _checking
-                      ? const SizedBox(
-                          height: 20,
-                          width: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Text('Unlock'),
-                ),
-              ],
+      backgroundColor: t.bg,
+      body: SafeArea(
+        child: Column(
+          children: [
+            NubeTopBar(
+              title: 'Locked',
+              onBack: () => context.canPop()
+                  ? context.pop()
+                  : context.go('/home'),
             ),
-          ),
+            Expanded(
+              child: Center(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 360),
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Container(
+                          width: 56,
+                          height: 56,
+                          decoration: BoxDecoration(
+                            color: t.leaf.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(
+                              color: t.leaf.withValues(alpha: 0.3),
+                            ),
+                          ),
+                          alignment: Alignment.center,
+                          child: Icon(LucideIcons.lock, size: 24, color: t.leaf),
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Enter PIN',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: t.text,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'A PIN is required to access connections.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: t.muted,
+                            fontSize: 13,
+                            height: 1.4,
+                          ),
+                        ),
+                        const SizedBox(height: 24),
+                        NubeField(
+                          controller: _controller,
+                          label: 'PIN',
+                          autofocus: true,
+                          obscureText: true,
+                          keyboardType: TextInputType.number,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.digitsOnly,
+                          ],
+                          maxLength: 12,
+                          textAlign: TextAlign.center,
+                          onSubmitted: (_) => _submit(),
+                          errorText: _error,
+                        ),
+                        const SizedBox(height: 16),
+                        NubeButton(
+                          label: 'Unlock',
+                          icon: LucideIcons.unlock,
+                          expand: true,
+                          loading: _checking,
+                          onPressed: _checking ? null : _submit,
+                        ),
+                        const SizedBox(height: 12),
+                        // Subtle hint to keep the page calm
+                        if (!isDark)
+                          const SizedBox.shrink()
+                        else
+                          const SizedBox.shrink(),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );
