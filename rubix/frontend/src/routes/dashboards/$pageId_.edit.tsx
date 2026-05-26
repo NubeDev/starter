@@ -6,19 +6,129 @@
 // builder's conflict modal. Discard re-fetches and remounts.
 
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { useEffect, useState } from 'react'
 import {
   PuckBuilder,
+  catalogueFromMap,
   makeRubixSaveTransport,
+  type Catalogue,
+  type CatalogueEntry,
   type ComponentTree,
 } from '@nube/starter-ui-sdui-puck'
-import { useRubixClient } from '@nube/rubix-client-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import {
+  useRubixClient,
+  useTenantList,
+  usePageLiveness,
+} from '@nube/rubix-client-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 function EditDashboardRoute() {
   const { pageId } = Route.useParams()
   const pageRef = pageId.includes('.') ? pageId : `dashboard.${pageId}`
   const client = useRubixClient()
+
+  // Active tenant for the session. The app convention (see
+  // `top-header.tsx`) is to treat the first entry returned by
+  // `rubix.tenant.list` as the active tenant — `MeResponse` does
+  // not carry a tenant field, so this list is the only session-
+  // scoped source we have. The dashboard fetch + save transport
+  // both stay disabled until this resolves.
+  const tenantListQuery = useTenantList()
+  const activeTenantId = tenantListQuery.data?.tenants?.[0]?.tenant_id ?? ''
+
+  // §B3 catalogue seam. Each kind hits a rubix verb (or the
+  // /api/v1/tools index for the tool catalogue). Failures bubble up
+  // and the picker degrades to a free-text input + warning. The
+  // analytics-template list verb is still under discovery — until it
+  // lands the kind rejects and operators get the free-text fallback.
+  const catalogue = useMemo<Catalogue>(() => {
+    return catalogueFromMap({
+      analytics_template: async () => {
+        // TODO: replace with the real verb once
+        // `rubix.analytics.template.list` (or equivalent) ships. For
+        // now we reject and let the picker degrade to a text input.
+        throw new Error(
+          'analytics-template list verb not yet wired — type the template stem',
+        )
+      },
+      tool: async () => {
+        const res = await fetch('/api/v1/tools', {
+          credentials: 'include',
+        })
+        if (!res.ok) throw new Error(`/api/v1/tools → ${res.status}`)
+        const body = (await res.json()) as {
+          tools?: Array<{ name?: string; description?: string }>
+        }
+        const tools = Array.isArray(body.tools) ? body.tools : []
+        return tools
+          .filter((t): t is { name: string; description?: string } =>
+            typeof t.name === 'string',
+          )
+          .map<CatalogueEntry>((t) => ({
+            value: t.name,
+            label: t.name,
+            hint: t.description,
+          }))
+      },
+      tenant: async () => {
+        const res = await client.tenantList({})
+        return (res.tenants ?? []).map<CatalogueEntry>((t) => ({
+          value: t.tenant_id,
+          label: t.name || t.tenant_id,
+        }))
+      },
+      unit_symbol: async () => [
+        { value: 'kWh', label: 'kWh — kilowatt hours' },
+        { value: 'W', label: 'W — watts' },
+        { value: 'L', label: 'L — litres' },
+        { value: 'L/min', label: 'L/min — litres per minute' },
+        { value: '°C', label: '°C — degrees Celsius' },
+        { value: '%', label: '% — percent' },
+        { value: 'kPa', label: 'kPa — kilopascals' },
+      ],
+      page_state_key: async () => [
+        { value: '$page.range_from', label: '$page.range_from' },
+        { value: '$page.range_to', label: '$page.range_to' },
+      ],
+    })
+  }, [client])
+
+  // §B6 runtime schema-hash banner. The route fetches the schema
+  // hash the live rubix-agent was built against and hands it to
+  // `<PuckBuilder>`; the builder compares against its bundled hash
+  // (`IR_SCHEMA_HASH`) and surfaces a non-blocking banner inside
+  // the canvas when they diverge — so the operator knows the
+  // palette is stale without us blocking the edit. The fetch is
+  // best-effort: when the verb doesn't exist on the agent (404,
+  // network error, missing key) we silently skip the banner; the
+  // CI drift guard at `packages/starter-ui-sdui-puck/scripts/check-
+  // schema-drift.mjs` is the belt-and-braces at PR time.
+  //
+  // Discovery: as of 2026-05-26 the rubix-agent does not yet expose
+  // a dedicated schema-hash verb. The fetch attempts the
+  // proposed endpoint `GET /api/v1/ui/schema/hash` (see
+  // `rubix/docs/design/sdui/components/README.md`); if it 404s the
+  // banner stays dormant.
+  const [liveSchemaHash, setLiveSchemaHash] = useState<string | undefined>(
+    undefined,
+  )
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/v1/ui/schema/hash', { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) return undefined
+        const body = (await res.json()) as { hash?: unknown }
+        return typeof body.hash === 'string' ? body.hash : undefined
+      })
+      .catch(() => undefined)
+      .then((hash) => {
+        if (cancelled) return
+        if (hash) setLiveSchemaHash(hash)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   // `reloadKey` forces a fresh fetch + builder remount when the
   // operator clicks "Discard my edits" in the conflict modal.
@@ -30,10 +140,11 @@ function EditDashboardRoute() {
   >({ kind: 'loading' })
 
   useEffect(() => {
+    if (!activeTenantId) return
     let cancelled = false
     setPage({ kind: 'loading' })
     client
-      .dashboardGet({ tenant_id: 'system', page_id: pageRef })
+      .dashboardGet({ tenant_id: activeTenantId, page_id: pageRef })
       .then((res) => {
         if (cancelled) return
         setPage({
@@ -49,22 +160,23 @@ function EditDashboardRoute() {
     return () => {
       cancelled = true
     }
-  }, [client, pageRef, reloadKey])
+  }, [client, pageRef, reloadKey, activeTenantId])
 
-  // Bridge the builder's `window.__rubixPuckDiscardRequested` drop
-  // into a real reload. This polling shim mirrors what the handover
-  // flagged as ugly; replacing it with a ref is a follow-up.
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      const w = window as unknown as Record<string, { pageRef?: string } | undefined>
-      const flag = w.__rubixPuckDiscardRequested
-      if (flag && flag.pageRef === pageRef) {
-        w.__rubixPuckDiscardRequested = undefined
-        setReloadKey((k) => k + 1)
-      }
-    }, 250)
-    return () => window.clearInterval(id)
-  }, [pageRef])
+  // Synchronous discard bridge — invoked by `<PuckBuilder>` when
+  // the operator picks "Discard my edits" in the conflict modal.
+  // Bumps `reloadKey` so the loader effect re-fetches and the
+  // builder remounts with the fresh `initialTree`.
+  const handleDiscard = useCallback(() => {
+    setReloadKey((k) => k + 1)
+  }, [])
+
+  // Scope 11 — per-page liveness. When the rubix-agent SSE channel
+  // announces a new revision for this `pageRef` (someone else, or
+  // the AI assistant, saved while we were editing), surface the
+  // same conflict modal the 409-on-save path uses, pre-emptively,
+  // so the operator gets the Discard / Keep-editing choice before
+  // they hit Save. The 409 path stays as the safety net.
+  const liveness = usePageLiveness(pageRef)
 
   return (
     <ErrorBoundary>
@@ -83,7 +195,21 @@ function EditDashboardRoute() {
           </div>
         </header>
         <div className="flex-1 min-h-0">
-          {page.kind === 'loading' ? (
+          {!activeTenantId ? (
+            tenantListQuery.isError ? (
+              <div className="p-6 text-sm text-red-600">
+                Failed to resolve active tenant:{' '}
+                {tenantListQuery.error?.message ?? 'unknown error'}
+              </div>
+            ) : tenantListQuery.isSuccess ? (
+              <div className="p-6 text-sm text-red-600">
+                No tenant is available for this session — ask an admin
+                to grant you access.
+              </div>
+            ) : (
+              <div className="p-6 text-sm text-slate-500">Resolving tenant…</div>
+            )
+          ) : page.kind === 'loading' ? (
             <div className="p-6 text-sm text-slate-500">Loading…</div>
           ) : page.kind === 'error' ? (
             <div className="p-6 text-sm text-red-600">
@@ -95,7 +221,13 @@ function EditDashboardRoute() {
               pageRef={pageRef}
               initialTree={page.tree}
               initialRevisionId={page.revisionId}
-              onSave={makeRubixSaveTransport(client, 'system')}
+              onSave={makeRubixSaveTransport(client, activeTenantId)}
+              onDiscardRequested={handleDiscard}
+              catalogue={catalogue}
+              liveSchemaHash={liveSchemaHash}
+              liveRevisionId={liveness.latestRevisionId}
+              liveChangeToken={liveness.changeToken}
+              liveActorKind={liveness.actorKind}
             />
           )}
         </div>

@@ -23,7 +23,20 @@ export type PuckFieldStub =
   // `external`/`custom` selector fields land in PR2 (B3 data-source
   // selectors). PR1 falls through to plain text for `$ref`-typed
   // leaves; this variant is reserved so consumers can pattern-match.
-  | { type: "custom"; render: (props: { name: string; value: unknown; onChange: (v: unknown) => void }) => unknown };
+  | {
+      type: "custom";
+      render: (props: {
+        name: string;
+        value: unknown;
+        onChange: (v: unknown) => void;
+      }) => unknown;
+      /**
+       * Optional tag used by the §B3 catalogue-backed pickers so
+       * tests/devtools can identify which catalogue kind a custom
+       * field is bound to. Puck itself ignores extra keys.
+       */
+      catalogueKind?: string;
+    };
 
 /** Subset of Puck's `ComponentConfig` the generator emits. */
 export interface PuckComponentConfigStub {

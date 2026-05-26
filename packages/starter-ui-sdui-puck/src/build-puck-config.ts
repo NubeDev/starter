@@ -9,6 +9,11 @@
 
 import { BINDABLE, type BindableTuple } from "./curation/bindable.js";
 import {
+  DATA_SOURCES,
+  dataSourceKindOf,
+  type DataSourceTuple,
+} from "./curation/data-sources.js";
+import {
   OVERRIDES,
   RESOLVER_ONLY_VARIANTS,
 } from "./curation/overrides.js";
@@ -17,6 +22,7 @@ import {
   type PaletteCategory,
 } from "./curation/palette-taxonomy.js";
 import { SLOTS, type SlotTuple } from "./curation/slots.js";
+import { makeDataSourceField } from "./data-source-field.js";
 import { makePlaceholderRenderer } from "./placeholder-renderer.js";
 import type {
   PuckComponentConfigStub,
@@ -41,6 +47,9 @@ export interface BuildPuckConfigOpts {
   overrides?: Readonly<Record<string, PuckComponentConfigStub | null>>;
   /** Bindable tuples — defaults to {@link BINDABLE}. */
   bindable?: readonly BindableTuple[];
+  /** Catalogue-backed data-source tuples — defaults to
+   *  {@link DATA_SOURCES}. Per scope §B3. */
+  dataSources?: readonly DataSourceTuple[];
   /** Palette taxonomy — defaults to {@link PALETTE_TAXONOMY}. */
   taxonomy?: Readonly<Record<string, PaletteCategory>>;
 }
@@ -63,6 +72,7 @@ export function buildPuckConfig(opts: BuildPuckConfigOpts): PuckConfigStub {
   const slots = opts.slots ?? SLOTS;
   const overrides = opts.overrides ?? OVERRIDES;
   const bindable = opts.bindable ?? BINDABLE;
+  const dataSources = opts.dataSources ?? DATA_SOURCES;
   const taxonomy = opts.taxonomy ?? PALETTE_TAXONOMY;
 
   const componentDef = schema.definitions?.["Component"];
@@ -99,6 +109,7 @@ export function buildPuckConfig(opts: BuildPuckConfigOpts): PuckConfigStub {
           variant,
           slots,
           bindable,
+          dataSources,
           refStack: new Set<string>(),
         });
 
@@ -136,6 +147,7 @@ interface ArmCtx {
   variant: string;
   slots: readonly SlotTuple[];
   bindable: readonly BindableTuple[];
+  dataSources: readonly DataSourceTuple[];
   /** $ref names currently being expanded on this branch — used to
    *  break cycles in self-referencing definitions (e.g. TreeItem,
    *  ShowWhen). When a ref reappears we collapse it to a text field
@@ -179,6 +191,20 @@ interface PropCtx {
 function propertyToField(p: PropCtx): PuckFieldStub | undefined {
   const { ctx, propName, propSchema } = p;
   const flat = flatten(ctx.schema, propSchema);
+
+  // §B3 catalogue-backed picker — checked FIRST so curation wins
+  // over the default type dispatch. The actual picker UI lives in
+  // `data-source-field.tsx`; here we only emit a `custom` field
+  // bound to the right `CatalogueKind`. Consulted via the curation
+  // tuples in `data-sources.ts`; defaults are wired by the caller.
+  for (const ds of ctx.dataSources) {
+    if (ds.variant === ctx.variant && ds.propertyPath === propName) {
+      return makeDataSourceField(ds.kind);
+    }
+  }
+  // Also consult the helper so tests can patch DATA_SOURCES via the
+  // default and still see the same outcome — costs nothing at runtime.
+  void dataSourceKindOf;
 
   // Slot — children-array of a layout container, per the curated
   // SLOTS table. Scope §B1: this is a drag-target, NOT an array

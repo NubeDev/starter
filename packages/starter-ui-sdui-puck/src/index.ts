@@ -8,6 +8,7 @@
 export { buildPuckConfig, type BuildPuckConfigOpts } from "./build-puck-config.js";
 export { PuckBuilder, type PuckBuilderProps } from "./builder.js";
 export { IR_SCHEMA } from "./schema-loader.js";
+export { IR_SCHEMA_HASH, IR_SCHEMA_HASH_ALGORITHM } from "./schema-hash.js";
 
 // IR ↔ Puck Data adapter (§B4). Exposed so the harness and the
 // rubix frontend route can build / inspect either shape.
@@ -45,6 +46,26 @@ export {
   categoryFor,
   type PaletteCategory,
 } from "./curation/palette-taxonomy.js";
+export {
+  DATA_SOURCES,
+  dataSourceKindOf,
+  type CatalogueKind,
+  type DataSourceTuple,
+} from "./curation/data-sources.js";
+
+// §B3 catalogue seam — the package stays rubix-agnostic; consumers
+// supply a `Catalogue` via `<CatalogueProvider>` mounted around
+// `<PuckBuilder>`.
+export {
+  CatalogueProvider,
+  useCatalogue,
+  catalogueFromMap,
+  DataSourceField,
+  makeDataSourceField,
+  type Catalogue,
+  type CatalogueEntry,
+  type CatalogueProviderProps,
+} from "./data-source-field.js";
 
 export type {
   PuckConfigStub,

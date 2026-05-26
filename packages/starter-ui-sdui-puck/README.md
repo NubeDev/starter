@@ -18,9 +18,9 @@ This package implements the Puck builder per
 | §B4 save seam (Save button, 409 modal) | ✅ | `save.ts` + `PuckBuilder` toolbar |
 | §B5 `/dashboards/$pageId/edit` route | ✅ | lives in `rubix/frontend`, uses `$pageId_.edit.tsx` (non-nested) so it doesn't render inside the read route's layout |
 | §B6 CI drift guard | ✅ | `scripts/check-schema-drift.mjs` |
-| §B3 data-source selectors | ⏳ | next up — `$ref` leaves still render as text fields |
-| §B6 runtime schema-hash banner | ⏳ | CI-time guard only so far |
-| Scope 11 (live-canvas SSE) | ⏳ | unstarted |
+| §B3 data-source selectors | ✅ | `curation/data-sources.ts` + `<CatalogueProvider>` seam — analytics templates, tool refs, tenants, unit symbols, page-state keys render as catalogue-backed pickers; degrades to free-text + warning when the host can't satisfy a kind |
+| §B6 runtime schema-hash banner | ✅ | `scripts/emit-schema-hash.mjs` writes `src/schema-hash.json`; `IR_SCHEMA_HASH` exported; `<PuckBuilder liveSchemaHash>` renders a non-blocking "schema drifted — refresh to reload the palette" banner when the host-supplied live hash differs from the bundled one. Host fetches the live hash from rubix-agent (`GET /api/v1/ui/schema/hash`, best-effort — banner stays dormant if absent) |
+| Scope 11 (live-canvas SSE) | ✅ | `<PuckBuilder liveRevisionId liveChangeToken liveActorKind>` reuses the §B4 conflict modal pre-emptively when the host-supplied `usePageLiveness` hook (in `@nube/rubix-client-react`, backed by `GET /api/v1/dashboards/events`) announces a new revision for this `pageRef`. The 409-on-save path stays as the safety net. The package itself does no HTTP. |
 
 ### Notable infra changes
 
@@ -64,6 +64,7 @@ fourth, per the table in §B1):
 | `overrides.ts` | Per-variant `ComponentConfig` overrides. PR1 entries are placeholder `null`s for `repeat` / `wizard` / `form` / `table`. |
 | `bindable.ts` | Typed leaves that also accept `{{$page.x}}` bindings. PR1 covers `chart.range.{from,to}`, `drawer.open`, `kpi.value`. |
 | `palette-taxonomy.ts` | Variant → `"layout" \| "display" \| "interactive" \| "custom"` bucket. |
+| `data-sources.ts` | §B3 — `(variant, propertyPath) → CatalogueKind` tuples that swap the default text fallback for a `<DataSourceField>` picker. The picker is rubix-agnostic; the host supplies a `Catalogue` via `<CatalogueProvider catalogue={…}>` (or `<PuckBuilder catalogue={…}>`). |
 
 `overrides.ts` includes a module-load assertion that the
 resolver-only variants (`forbidden`, `dangling`, `unknown`) are
@@ -101,22 +102,19 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
 
 ## Next tasks
 
-1. **§B3 data-source selectors.** Replace the text-field fallback
-   for `$ref`-typed leaves (`AnalyticsTemplateRef`, `ToolRef`,
-   `TenantId`, unit symbols) with `select`/`autocomplete` fields
-   backed by `/api/v1/tools` and the analytics catalogue.
-2. **Multi-tenant.** Hardcoded `"system"` tenant in
-   `$pageId_.edit.tsx` + `useDashboardGet` needs to come from the
-   authed session once tenant scoping lands.
-3. **Discard bridge cleanup.** Edit route polls
-   `window.__rubixPuckDiscardRequested` every 250ms; replace with
-   a `useImperativeHandle` ref or callback prop on `PuckBuilder`.
-4. **Placeholder coverage.** Variants without per-variant fillers
-   fall through to the dangling tile. Add entries to
-   `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`.
-5. **§B6 runtime schema-hash banner.** CI-time drift guard only.
-6. **Pre-existing test failure** (not blocking the editor):
-   `packages/starter-ui-sdui-react/src/renderer/__tests__/render-chart.test.tsx`
-   asserts a stale `"3 series"` string.
-7. **Scope 11** — live-canvas SSE
+1. **Placeholder coverage.** ✅ Every IR variant that previously
+   fell through to the dangling tile now has a per-variant filler
+   in
+   `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`
+   — `VISUALS` map covers `text`, `heading`, `badge`, `diff`,
+   `field_group`, `section`, `array_table`, `json_table`, `list`,
+   `dialog`, `menu`, `tree`, `timeline`, `markdown`, `rich_text`,
+   `markdown_editor`, `ref_picker`, `detail`, `card`, `date_range`,
+   `wizard`, `drawer`, `button`, `text_field`, `number_field`,
+   `textarea`, `select_field`, `radio_group`, `segmented`,
+   `date_field`, `checkbox`, `action_widget` (resolver-only
+   variants `forbidden`/`dangling`/`unknown` remain excluded). Each
+   placeholder mirrors the live renderer's visual idiom and ships a
+   snapshot-style test.
+2. **Scope 11** — live-canvas SSE
    ([`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md)).

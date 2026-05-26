@@ -78,7 +78,9 @@ exports[`buildPuckConfig > renders a stable snapshot of the generated config 1`]
       "defaultProps": undefined,
       "fields": {
         "action_ref": {
-          "type": "text",
+          "catalogueKind": "tool",
+          "render": [Function],
+          "type": "custom",
         },
         "description": {
           "type": "text",
@@ -811,17 +813,9 @@ exports[`buildPuckConfig > renders a stable snapshot of the generated config 1`]
           "type": "text",
         },
         "open": {
-          "options": [
-            {
-              "label": "Yes",
-              "value": true,
-            },
-            {
-              "label": "No",
-              "value": false,
-            },
-          ],
-          "type": "radio",
+          "catalogueKind": "page_state_key",
+          "render": [Function],
+          "type": "custom",
         },
         "page_state_key": {
           "type": "text",
@@ -1035,10 +1029,14 @@ exports[`buildPuckConfig > renders a stable snapshot of the generated config 1`]
           "type": "text",
         },
         "source": {
-          "type": "text",
+          "catalogueKind": "analytics_template",
+          "render": [Function],
+          "type": "custom",
         },
         "unit_symbol": {
-          "type": "text",
+          "catalogueKind": "unit_symbol",
+          "render": [Function],
+          "type": "custom",
         },
         "value": {
           "type": "text",
@@ -1803,7 +1801,9 @@ exports[`buildPuckConfig > renders a stable snapshot of the generated config 1`]
           "type": "text",
         },
         "unit_symbol": {
-          "type": "text",
+          "catalogueKind": "unit_symbol",
+          "render": [Function],
+          "type": "custom",
         },
         "values": {
           "arrayFields": {

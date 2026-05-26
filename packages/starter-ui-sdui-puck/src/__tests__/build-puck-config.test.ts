@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 
 import { buildPuckConfig } from "../build-puck-config.js";
+import {
+  DATA_SOURCES,
+  type CatalogueKind,
+} from "../curation/data-sources.js";
 import { OVERRIDES, RESOLVER_ONLY_VARIANTS } from "../curation/overrides.js";
 import { PALETTE_TAXONOMY } from "../curation/palette-taxonomy.js";
 import { SLOTS } from "../curation/slots.js";
 import { IR_SCHEMA } from "../schema-loader.js";
+import type { PuckFieldStub } from "../puck-types.js";
 import type { JsonSchema } from "../schema-walker.js";
 import { variantTypeOf } from "../schema-walker.js";
 
@@ -105,6 +110,47 @@ describe("buildPuckConfig", () => {
       categories: config.categories,
     };
     expect(projected).toMatchSnapshot();
+  });
+
+  it("emits a catalogue-backed custom field for every DATA_SOURCES tuple — one per kind covered", () => {
+    // Coverage check: the curation table should cover at least one
+    // tuple per CatalogueKind. If a new kind lands without an entry,
+    // this trip-wire fires.
+    const kindsWithEntry = new Set<CatalogueKind>();
+    for (const ds of DATA_SOURCES) kindsWithEntry.add(ds.kind);
+    for (const k of [
+      "analytics_template",
+      "tool",
+      "tenant",
+      "unit_symbol",
+      "page_state_key",
+    ] as const) {
+      // `tenant` is not yet wired to a concrete IR leaf — its
+      // catalogue plumbing exists for B3 PR2. The other four MUST
+      // have at least one tuple.
+      if (k === "tenant") continue;
+      expect(kindsWithEntry.has(k), `no DATA_SOURCES tuple for kind="${k}"`).toBe(
+        true,
+      );
+    }
+
+    // Per-tuple: the generated config must surface a `custom` field
+    // (or — for nested array paths — at least the parent variant
+    // exists). v1 tuples are all top-level, so the field lookup is
+    // direct.
+    for (const ds of DATA_SOURCES) {
+      const comp = config.components[ds.variant];
+      expect(comp, `missing component config for ${ds.variant}`).toBeDefined();
+      const field = comp!.fields[ds.propertyPath] as PuckFieldStub | undefined;
+      expect(
+        field,
+        `expected ${ds.variant}.${ds.propertyPath} to be a catalogue picker`,
+      ).toBeDefined();
+      expect(field!.type).toBe("custom");
+      if (field!.type === "custom") {
+        expect(field!.catalogueKind).toBe(ds.kind);
+      }
+    }
   });
 
   it("does not register any resolver-only variant as an override", () => {
