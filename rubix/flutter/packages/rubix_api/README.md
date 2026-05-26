@@ -47,15 +47,14 @@ Please follow the [installation procedure](#installation--usage) and then run th
 import 'package:rubix_api/rubix_api.dart';
 
 
-final api = RubixApi().getSystemApi();
-final String toolId = toolId_example; // String | Registered tool id (e.g. `rubix.system.disk`, `rubix.user.create`, `rubix.flow.deploy`, `rubix.undo.last`).
-final JsonObject body = ; // JsonObject | 
-final String render = render_example; // String | Pass `server` to ask the agent to render the `summary` Diagnostic against the negotiated locale and return it as `rendered_summary` alongside the raw structured form.
+final api = RubixApi().getAuthApi();
+final TokenRequest tokenRequest = ; // TokenRequest | 
 
 try {
-    api.dispatch(toolId, body, render);
+    final response = await api.issueToken(tokenRequest);
+    print(response);
 } catch on DioException (e) {
-    print("Exception when calling SystemApi->dispatch: $e\n");
+    print("Exception when calling AuthApi->issueToken: $e\n");
 }
 
 ```
@@ -66,12 +65,27 @@ All URIs are relative to *http://127.0.0.1:8088*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
+[*AuthApi*](doc/AuthApi.md) | [**issueToken**](doc/AuthApi.md#issuetoken) | **POST** /api/v1/auth/token | 
+[*AuthApi*](doc/AuthApi.md) | [**login**](doc/AuthApi.md#login) | **POST** /api/v1/auth/login | 
+[*AuthApi*](doc/AuthApi.md) | [**logout**](doc/AuthApi.md#logout) | **POST** /api/v1/auth/logout | 
+[*AuthApi*](doc/AuthApi.md) | [**me**](doc/AuthApi.md#me) | **GET** /api/v1/auth/me | 
 [*SystemApi*](doc/SystemApi.md) | [**dispatch**](doc/SystemApi.md#dispatch) | **POST** /api/v1/tools/{tool_id} | Handler — kept at ≤20 lines. Any growth here is a smell: domain logic belongs in &#x60;rubix-tools&#x60; (push into &#x60;probe()&#x60;), shaping logic belongs in [&#x60;shape_response&#x60;].
 [*SystemApi*](doc/SystemApi.md) | [**healthz**](doc/SystemApi.md#healthz) | **GET** /healthz | Liveness probe. Returns 200 with a tiny JSON body — no DB, no downstream calls. A reachable port is the entire signal.
 
 
 ## Documentation For Models
 
+ - [LoginRequest](doc/LoginRequest.md)
+ - [LoginResponse](doc/LoginResponse.md)
+ - [MeResponse](doc/MeResponse.md)
+ - [MissingTenantIdResponse](doc/MissingTenantIdResponse.md)
+ - [PasswordNotSetResponse](doc/PasswordNotSetResponse.md)
+ - [Problem](doc/Problem.md)
+ - [Role](doc/Role.md)
+ - [TenantMembershipEntry](doc/TenantMembershipEntry.md)
+ - [TenantRequiredResponse](doc/TenantRequiredResponse.md)
+ - [TokenRequest](doc/TokenRequest.md)
+ - [TokenResponse](doc/TokenResponse.md)
 
 
 ## Documentation For Authorization

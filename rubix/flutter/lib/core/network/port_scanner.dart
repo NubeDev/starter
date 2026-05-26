@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'scanner_models.dart';
+import 'package:rubix_flutter/core/network/scanner_models.dart';
 
 /// Checks specific TCP ports on a given host.
 class PortScanner {
-  /// Timeout for each port connection attempt.
-  final Duration timeout;
 
   const PortScanner({
     this.timeout = const Duration(milliseconds: 1500),
   });
+  /// Timeout for each port connection attempt.
+  final Duration timeout;
 
   /// Checks whether a single TCP port is open on [host].
   Future<OpenPort> checkPort(String host, int port) async {

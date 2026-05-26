@@ -14,6 +14,7 @@ use std::sync::Arc;
 
 use starter_ui_bindings::EntityGraph;
 
+use crate::chart_resolve::AnalyticsBridgeRef;
 use crate::handler::HandlerRegistry;
 use crate::page::PageProvider;
 use crate::query::QueryEngine;
@@ -26,6 +27,7 @@ pub struct SduiState {
     pub(crate) graph: Arc<dyn EntityGraph + Send + Sync>,
     pub(crate) handlers: Arc<HandlerRegistry>,
     pub(crate) query: Arc<dyn QueryEngine>,
+    pub(crate) analytics: Option<AnalyticsBridgeRef>,
 }
 
 impl SduiState {
@@ -57,6 +59,7 @@ pub struct SduiStateBuilder {
     graph: Option<Arc<dyn EntityGraph + Send + Sync>>,
     handlers: Option<Arc<HandlerRegistry>>,
     query: Option<Arc<dyn QueryEngine>>,
+    analytics: Option<AnalyticsBridgeRef>,
 }
 
 impl SduiStateBuilder {
@@ -87,6 +90,16 @@ impl SduiStateBuilder {
         self
     }
 
+    /// Wire the optional [`AnalyticsBridge`](crate::AnalyticsBridge)
+    /// the chart-source resolver uses to evaluate
+    /// `analytics_template` sources. Hosts that don't ship an
+    /// analytics tool can skip this — `analytics_template` sources
+    /// then collapse to empty payloads.
+    pub fn with_analytics(mut self, bridge: AnalyticsBridgeRef) -> Self {
+        self.analytics = Some(bridge);
+        self
+    }
+
     /// Finalise. Returns a descriptive `&'static str` error when a
     /// required piece was not wired.
     pub fn build(self) -> Result<SduiState, &'static str> {
@@ -97,6 +110,7 @@ impl SduiStateBuilder {
                 .handlers
                 .ok_or("SduiState requires a HandlerRegistry")?,
             query: self.query.ok_or("SduiState requires a QueryEngine")?,
+            analytics: self.analytics,
         })
     }
 }

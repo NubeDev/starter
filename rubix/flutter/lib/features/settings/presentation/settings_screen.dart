@@ -45,23 +45,25 @@ class SettingsScreen extends ConsumerWidget {
           ),
           const SizedBox(height: 24),
           const _SectionHeader('Language'),
-          RadioListTile<Locale?>(
-            title: Text(AppLocalizations.of(context).themeSystem),
-            value: null,
+          RadioGroup<Locale?>(
             groupValue: locale,
             onChanged: (v) => ref.read(localeProvider.notifier).set(v),
-          ),
-          RadioListTile<Locale?>(
-            title: Text(AppLocalizations.of(context).languageEnglish),
-            value: const Locale('en'),
-            groupValue: locale,
-            onChanged: (v) => ref.read(localeProvider.notifier).set(v),
-          ),
-          RadioListTile<Locale?>(
-            title: Text(AppLocalizations.of(context).languageSpanish),
-            value: const Locale('es'),
-            groupValue: locale,
-            onChanged: (v) => ref.read(localeProvider.notifier).set(v),
+            child: Column(
+              children: [
+                RadioListTile<Locale?>(
+                  title: Text(AppLocalizations.of(context).themeSystem),
+                  value: null,
+                ),
+                RadioListTile<Locale?>(
+                  title: Text(AppLocalizations.of(context).languageEnglish),
+                  value: const Locale('en'),
+                ),
+                RadioListTile<Locale?>(
+                  title: Text(AppLocalizations.of(context).languageSpanish),
+                  value: const Locale('es'),
+                ),
+              ],
+            ),
           ),
         ],
       ),

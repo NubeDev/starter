@@ -34,8 +34,8 @@ pub use bindable::{expected_shape, json_shape, Bindable, ResolveIssue};
 pub use diagnostic::{Diagnostic, Severity};
 
 pub use chart::{
-    AggSpec, ChartHistory, ChartHistoryPreset, ChartKind, ChartRange, ChartSeries, ChartSource,
-    DataPoint, OrderDirection, RowsOrder,
+    AggSpec, AnalyticsTemplateMap, ChartHistory, ChartHistoryPreset, ChartKind, ChartRange,
+    ChartSeries, ChartSource, DataPoint, OrderDirection, RowsOrder,
 };
 pub use component::{
     Action, BindingSpec, Bindings, ColumnRender, Component, Concurrency, ConfirmDialog,

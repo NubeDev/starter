@@ -56,7 +56,7 @@ class _EditConnectionScreenState extends ConsumerState<EditConnectionScreen> {
         ],
       ),
     );
-    if (confirmed == true) {
+    if (confirmed ?? false) {
       await ref
           .read(editConnectionControllerProvider.notifier)
           .delete(widget.connection.id);

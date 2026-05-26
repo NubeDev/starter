@@ -24,6 +24,14 @@ clean:
 api-client:
 	@echo "==> Regenerating rubix_api Dart/Dio client from ../openapi.json"
 	rm -rf packages/rubix_api
+	@# Seed a placeholder pubspec so `dart pub get` inside this
+	@# workspace (triggered by `dart run openapi_generator_cli:main`)
+	@# can resolve the `rubix_api: path:` dep that the root
+	@# pubspec.yaml declares. The generator overwrites the file in
+	@# the next step.
+	mkdir -p packages/rubix_api
+	@printf 'name: rubix_api\nversion: 0.0.0\nenvironment:\n  sdk: ">=2.15.0 <4.0.0"\n' \
+		> packages/rubix_api/pubspec.yaml
 	dart run openapi_generator_cli:main generate \
 		-i ../openapi.json \
 		-g dart-dio \

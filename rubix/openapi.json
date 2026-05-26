@@ -1,5 +1,218 @@
 {
-  "components": {},
+  "components": {
+    "schemas": {
+      "LoginRequest": {
+        "description": "Request body for `POST /auth/login`.",
+        "properties": {
+          "email": {
+            "description": "User's email (the primary identifier in `starter_auth_users`).",
+            "type": "string"
+          },
+          "password": {
+            "description": "Plaintext password.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "LoginResponse": {
+        "description": "Response body for `POST /auth/login`.",
+        "properties": {
+          "csrf_token": {
+            "description": "CSRF double-submit token. Send back as `X-CSRF-Token` on\nmutating cookie-authenticated requests.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "csrf_token"
+        ],
+        "type": "object"
+      },
+      "MeResponse": {
+        "description": "Response body for `GET /auth/me`.",
+        "properties": {
+          "email": {
+            "description": "User's email.",
+            "type": "string"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role",
+            "description": "Role: reader / writer / admin."
+          },
+          "subject": {
+            "description": "Stable user identifier (the `Principal.subject`).",
+            "type": "string"
+          }
+        },
+        "required": [
+          "subject",
+          "email",
+          "role"
+        ],
+        "type": "object"
+      },
+      "MissingTenantIdResponse": {
+        "description": "Body returned when `tenant_id` is required (no tenants store\nwired) and the client omitted it.",
+        "properties": {
+          "error": {
+            "description": "Always `\"missing_tenant_id\"`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "type": "object"
+      },
+      "PasswordNotSetResponse": {
+        "description": "Body returned by `POST /auth/login` when the matched user has no\nlocal password (`password_hash IS NULL`). The SPA reads\n`providers` to render \"Sign in with GitHub / Google\" buttons\nwithout a guess-and-check round trip.",
+        "properties": {
+          "error": {
+            "description": "Always `\"password_not_set\"`. Discriminator field; lets clients\npattern-match without inspecting the HTTP status alone.",
+            "type": "string"
+          },
+          "providers": {
+            "description": "Provider ids the user has linked. Empty list when no\nthird-party path is configured (the default\n[`crate::NoLinkedProviders`] impl).",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "error",
+          "providers"
+        ],
+        "type": "object"
+      },
+      "Problem": {
+        "description": "Machine-readable error body.\n\nMirrors RFC 7807 loosely. The `type` field is a stable string\nidentifier (`not_found`, `invalid_input`, …) that callers can\nswitch on; the HTTP status is set by the transport.",
+        "properties": {
+          "detail": {
+            "description": "Optional detailed explanation.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "title": {
+            "description": "Short human title for the problem.",
+            "type": "string"
+          },
+          "type": {
+            "description": "Stable identifier for the error class. Matches lower-case\nsnake-case of [`crate::error::Error`] variants.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title"
+        ],
+        "type": "object"
+      },
+      "Role": {
+        "description": "Coarse permission level. Three roles are enough for the common\ncase; consumers needing more wire their own `Authenticator` and\ntranslate to/from this set at the boundary.",
+        "enum": [
+          "reader",
+          "writer",
+          "admin"
+        ],
+        "type": "string"
+      },
+      "TenantMembershipEntry": {
+        "description": "One membership the user could pick on retry.",
+        "properties": {
+          "role": {
+            "description": "User's role within that tenant (`reader | writer | admin`).",
+            "type": "string"
+          },
+          "tenant_id": {
+            "description": "Tenant id to echo back in `TokenRequest.tenant_id`.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "tenant_id",
+          "role"
+        ],
+        "type": "object"
+      },
+      "TenantRequiredResponse": {
+        "description": "Body returned when the route cannot disambiguate the user's\ntenant — multiple memberships exist and the client did not pass\n`tenant_id`. The client re-POSTs with `tenant_id` set to one of\nthe entries below.",
+        "properties": {
+          "error": {
+            "description": "Always `\"tenant_required\"`. Discriminator string.",
+            "type": "string"
+          },
+          "memberships": {
+            "description": "One entry per membership row for the authenticated user.",
+            "items": {
+              "$ref": "#/components/schemas/TenantMembershipEntry"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "error",
+          "memberships"
+        ],
+        "type": "object"
+      },
+      "TokenRequest": {
+        "description": "Request body for `POST /auth/token`.",
+        "properties": {
+          "email": {
+            "description": "User's email — same identifier as `POST /auth/login`.",
+            "type": "string"
+          },
+          "password": {
+            "description": "Plaintext password.",
+            "type": "string"
+          },
+          "tenant_id": {
+            "description": "Optional tenant binding. When omitted, the route resolves\nthe tenant from the user's memberships (requires\n[`AuthState::with_tenants`]). See design doc §payload.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ],
+        "type": "object"
+      },
+      "TokenResponse": {
+        "description": "Successful response body for `POST /auth/token`.",
+        "properties": {
+          "expires_at": {
+            "description": "Absolute UTC expiry (RFC3339). Advisory in v1 — clients\nreact to 401 rather than pre-emptively refreshing.",
+            "format": "date-time",
+            "type": "string"
+          },
+          "token": {
+            "description": "The plaintext bearer (`sak_<id>.<secret>`). Shown once;\nthe server stores only the argon2id hash of the secret.",
+            "type": "string"
+          },
+          "token_type": {
+            "description": "Always `\"Bearer\"`. Reserved for the future refresh-token\nflow.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "token",
+          "expires_at",
+          "token_type"
+        ],
+        "type": "object"
+      }
+    }
+  },
   "info": {
     "description": "Rubix backend REST surface. See `rubix/docs/design/agent/README.md` for the runtime wiring picture.",
     "license": {
@@ -11,6 +224,144 @@
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/auth/login": {
+      "post": {
+        "operationId": "login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "description": "Logged in; session + CSRF cookies set"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordNotSetResponse"
+                }
+              }
+            },
+            "description": "Account has no local password; sign in via a linked provider"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/logout": {
+      "post": {
+        "operationId": "logout",
+        "responses": {
+          "204": {
+            "description": "Logged out (idempotent)"
+          },
+          "403": {
+            "description": "CSRF token missing or mismatched"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/me": {
+      "get": {
+        "operationId": "me",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            },
+            "description": "Current user identity"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/v1/auth/token": {
+      "post": {
+        "operationId": "issue_token",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/TokenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            },
+            "description": "Bearer issued"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PasswordNotSetResponse"
+                }
+              }
+            },
+            "description": "Account has no local password (parity with /auth/login), or tenants store unwired and tenant_id omitted"
+          },
+          "401": {
+            "description": "Invalid credentials"
+          },
+          "403": {
+            "description": "tenant_id mismatch with memberships, or no tenant resolvable for a non-admin user"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TenantRequiredResponse"
+                }
+              }
+            },
+            "description": "Multiple memberships exist; client must re-POST with explicit tenant_id"
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/v1/tools/{tool_id}": {
       "post": {
         "operationId": "dispatch",
@@ -122,8 +473,8 @@
       "name": "undo"
     },
     {
-      "description": "Goal 1 (dashboard-assistant) stub surface — `code = rubix.goal.not_wired`.",
-      "name": "dashboard-stub"
+      "description": "Goal 1 (dashboards): create, update, get, list, duplicate, delete, page_set.",
+      "name": "dashboard"
     },
     {
       "description": "Goal 6 (weekly-report) stub surface — `code = rubix.goal.not_wired`.",

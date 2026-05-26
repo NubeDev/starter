@@ -108,25 +108,39 @@ pub async fn handler(
     // also bounds the binding-substitution walk that follows.
     limits::enforce_tree_shape(&tree)?;
 
-    // 4. Binding substitution.
+    // 4. Binding substitution. Scoped so the non-Send `EvalContext`
+    // (it holds `&RefCell<SlotAccess>` and a `&dyn MessageBag`) is
+    // dropped before the next `.await` — keeping the handler future
+    // Send for axum.
     let log: RefCell<Vec<SlotAccess>> = RefCell::new(Vec::new());
     let page_obj = req.page_state.as_object().cloned().unwrap_or_default();
-    let graph_ref: &(dyn EntityGraph + Send + Sync) = &*state.graph;
-    let ctx = EvalContext {
-        graph: graph_ref,
-        target: req.target_ref.as_deref(),
-        self_id: None,
-        stack: &req.stack,
-        user: &req.user,
-        page: &page_obj,
-        access_log: Some(&log),
-        item: None,
-        index: None,
-        catalogue: &starter_ui_bindings::NullBag,
-        locale: "en",
-    };
-    substitute_tree(&mut tree, &ctx)
-        .map_err(|e| SduiError::BadRequest(format!("binding substitution failed: {e}")))?;
+    {
+        let graph_ref: &(dyn EntityGraph + Send + Sync) = &*state.graph;
+        let ctx = EvalContext {
+            graph: graph_ref,
+            target: req.target_ref.as_deref(),
+            self_id: None,
+            stack: &req.stack,
+            user: &req.user,
+            page: &page_obj,
+            access_log: Some(&log),
+            item: None,
+            index: None,
+            catalogue: &starter_ui_bindings::NullBag,
+            locale: "en",
+        };
+        substitute_tree(&mut tree, &ctx)
+            .map_err(|e| SduiError::BadRequest(format!("binding substitution failed: {e}")))?;
+    }
+
+    // 4b. Chart / KPI source resolver — turn `ChartSource::Static`
+    // and `ChartSource::AnalyticsTemplate` into the server-emitted
+    // `series` / `value` payloads the client renders verbatim.
+    crate::chart_resolve::resolve_chart_sources(
+        &mut tree,
+        state.analytics.as_deref(),
+    )
+    .await;
 
     // 5. Capability filter (R7). Run after substitution so any
     // `custom` nodes synthesised by the binding pass are also

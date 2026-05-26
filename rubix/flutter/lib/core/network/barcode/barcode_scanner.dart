@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart' as ms;
-import 'package:mobile_scanner/mobile_scanner.dart' show MobileScanner, MobileScannerController, DetectionSpeed, CameraFacing, BarcodeCapture, TorchState;
+import 'package:mobile_scanner/mobile_scanner.dart' show BarcodeCapture, MobileScanner, MobileScannerController, TorchState;
 
-import 'barcode_models.dart';
+import 'package:rubix_flutter/core/network/barcode/barcode_models.dart';
 
 export 'barcode_models.dart';
 
@@ -20,6 +20,13 @@ export 'barcode_models.dart';
 /// if (result != null) print('Scanned: ${result.value}');
 /// ```
 class BarcodeScannerScreen extends StatefulWidget {
+
+  const BarcodeScannerScreen({
+    super.key,
+    this.title = 'Scan Code',
+    this.confirmLabel = 'Use Code',
+    this.rescanLabel = 'Scan Again',
+  });
   /// Title shown in the top bar.
   final String title;
 
@@ -29,22 +36,12 @@ class BarcodeScannerScreen extends StatefulWidget {
   /// Label for the re-scan button.
   final String rescanLabel;
 
-  const BarcodeScannerScreen({
-    super.key,
-    this.title = 'Scan Code',
-    this.confirmLabel = 'Use Code',
-    this.rescanLabel = 'Scan Again',
-  });
-
   @override
   State<BarcodeScannerScreen> createState() => _BarcodeScannerScreenState();
 }
 
 class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
-  final MobileScannerController _controller = MobileScannerController(
-    detectionSpeed: DetectionSpeed.normal,
-    facing: CameraFacing.back,
-  );
+  final MobileScannerController _controller = MobileScannerController();
 
   bool _hasScanned = false;
   BarcodeResult? _result;
@@ -93,7 +90,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         return BarcodeFormat.code93;
       case ms.BarcodeFormat.code128:
         return BarcodeFormat.code128;
-      case ms.BarcodeFormat.itf:
+      case ms.BarcodeFormat.itf14:
         return BarcodeFormat.itf;
       case ms.BarcodeFormat.upcA:
         return BarcodeFormat.upcA;
@@ -105,7 +102,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
         return BarcodeFormat.aztec;
       case ms.BarcodeFormat.dataMatrix:
         return BarcodeFormat.dataMatrix;
-      default:
+      case _:
         return BarcodeFormat.unknown;
     }
   }
@@ -187,7 +184,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
                             size: 20,
                           ),
                           color: Colors.white,
-                          onPressed: () => _controller.toggleTorch(),
+                          onPressed: _controller.toggleTorch,
                         );
                       },
                     )
@@ -221,7 +218,7 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
             ),
           ),
           const SizedBox(height: 24),
-          Text(
+          const Text(
             'Point camera at a barcode or QR code',
             style: TextStyle(fontSize: 14, color: Colors.white70),
           ),
@@ -293,9 +290,9 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
 
 /// Draws corner brackets for the viewfinder.
 class _ViewfinderPainter extends CustomPainter {
-  final Color cornerColor;
 
   _ViewfinderPainter({required this.cornerColor});
+  final Color cornerColor;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -309,14 +306,15 @@ class _ViewfinderPainter extends CustomPainter {
     final w = size.width;
     final h = size.height;
 
-    canvas.drawLine(const Offset(0, 0), Offset(cl, 0), paint);
-    canvas.drawLine(const Offset(0, 0), Offset(0, cl), paint);
-    canvas.drawLine(Offset(w, 0), Offset(w - cl, 0), paint);
-    canvas.drawLine(Offset(w, 0), Offset(w, cl), paint);
-    canvas.drawLine(Offset(0, h), Offset(cl, h), paint);
-    canvas.drawLine(Offset(0, h), Offset(0, h - cl), paint);
-    canvas.drawLine(Offset(w, h), Offset(w - cl, h), paint);
-    canvas.drawLine(Offset(w, h), Offset(w, h - cl), paint);
+    canvas
+      ..drawLine(Offset.zero, const Offset(cl, 0), paint)
+      ..drawLine(Offset.zero, const Offset(0, cl), paint)
+      ..drawLine(Offset(w, 0), Offset(w - cl, 0), paint)
+      ..drawLine(Offset(w, 0), Offset(w, cl), paint)
+      ..drawLine(Offset(0, h), Offset(cl, h), paint)
+      ..drawLine(Offset(0, h), Offset(0, h - cl), paint)
+      ..drawLine(Offset(w, h), Offset(w - cl, h), paint)
+      ..drawLine(Offset(w, h), Offset(w, h - cl), paint);
   }
 
   @override

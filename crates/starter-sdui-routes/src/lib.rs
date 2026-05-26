@@ -54,6 +54,7 @@
 #![warn(missing_docs)]
 
 pub mod capability;
+pub mod chart_resolve;
 pub mod error;
 pub mod handler;
 pub mod limits;
@@ -64,6 +65,7 @@ pub mod routes;
 pub mod state;
 
 pub use capability::{CapabilityFilter, ClientCapabilities, SUPPORTED_IR_VERSION};
+pub use chart_resolve::{resolve_chart_sources, AnalyticsBridge, AnalyticsBridgeRef};
 pub use error::{SduiError, WhatTag};
 pub use handler::{
     ActionFn, ActionFuture, HandlerContext, HandlerNotFound, HandlerRegistry, Principal,

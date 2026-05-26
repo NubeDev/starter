@@ -1,15 +1,15 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:rubix_flutter/core/network/wifi/wifi_models.dart';
 import 'package:wifi_scan/wifi_scan.dart';
-
-import 'wifi_models.dart';
 
 export 'wifi_models.dart';
 
 /// Cross-platform WiFi network scanner.
 ///
-/// Uses [wifi_scan] package which supports Android, iOS, Windows, and Linux.
+/// Uses the `wifi_scan` package which supports Android, iOS, Windows,
+/// and Linux.
 ///
 /// Usage:
 /// ```dart
@@ -23,9 +23,9 @@ export 'wifi_models.dart';
 /// }
 /// ```
 class WifiScanner {
-  final WiFiScan _wifiScan;
 
   WifiScanner() : _wifiScan = WiFiScan.instance;
+  final WiFiScan _wifiScan;
 
   /// Whether the current platform supports WiFi scanning.
   bool get isPlatformSupported =>
@@ -38,7 +38,7 @@ class WifiScanner {
   Future<bool> canScan() async {
     if (!isPlatformSupported) return false;
     try {
-      final can = await _wifiScan.canStartScan(askPermissions: true);
+      final can = await _wifiScan.canStartScan();
       return can == CanStartScan.yes;
     } catch (_) {
       return false;
@@ -49,7 +49,7 @@ class WifiScanner {
   Future<bool> canGetResults() async {
     if (!isPlatformSupported) return false;
     try {
-      final can = await _wifiScan.canGetScannedResults(askPermissions: true);
+      final can = await _wifiScan.canGetScannedResults();
       return can == CanGetScannedResults.yes;
     } catch (_) {
       return false;
@@ -66,10 +66,10 @@ class WifiScanner {
     }
 
     try {
-      final canStart = await _wifiScan.canStartScan(askPermissions: true);
+      final canStart = await _wifiScan.canStartScan();
       if (canStart == CanStartScan.yes) {
         await _wifiScan.startScan();
-        await Future.delayed(const Duration(seconds: 2));
+        await Future<void>.delayed(const Duration(seconds: 2));
       }
 
       return await getLastResults();
@@ -92,7 +92,7 @@ class WifiScanner {
 
     try {
       final canGet =
-          await _wifiScan.canGetScannedResults(askPermissions: true);
+          await _wifiScan.canGetScannedResults();
       if (canGet != CanGetScannedResults.yes) {
         return WifiScanResult(
           scannedAt: DateTime.now(),

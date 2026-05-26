@@ -309,6 +309,7 @@ pub fn kpi(id: impl Into<String>, label: impl Into<String>, source: TimeSeriesSo
         id: Some(id.into()),
         label: label.into(),
         source: source.into_chart_source(),
+        value: None,
         format: None,
         intent: None,
         delta: None,

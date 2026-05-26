@@ -57,8 +57,51 @@ pub struct RubixApi;
 /// Assemble the OpenAPI document the rubix-agent binary serves at
 /// `GET /openapi.json`. Captured once at boot and served by value
 /// per the starter-server precedent.
+///
+/// Merges in `starter-auth-users`' utoipa document so the
+/// `/api/v1/auth/{login,logout,me,token}` routes the agent mounts
+/// (via `crate::routes::auth::auth_router`) are described in the
+/// served doc and picked up by downstream codegen
+/// (`pnpm --filter @nube/rubix-client-ts run codegen`, `make
+/// api-client` in `rubix/flutter/`). Signup is never mounted by
+/// the agent, so we pass `SignupMode::Disabled`.
 pub fn rubix_openapi() -> utoipa::openapi::OpenApi {
-    RubixApi::openapi()
+    let mut doc = RubixApi::openapi();
+    let mut auth = starter_auth_users::openapi::openapi(
+        &starter_auth_users::signup::SignupMode::Disabled,
+    );
+    prefix_paths(&mut auth, "/api/v1");
+    doc.merge(auth);
+    dedupe_tags(&mut doc);
+    doc
+}
+
+/// Re-key every entry in `doc.paths.paths` so it starts with
+/// `prefix`. utoipa's `OpenApi::merge` does NOT add path prefixes,
+/// and the rubix binary nests the `starter-auth-users` router
+/// under `/api/v1` in `main.rs` — without this step the served
+/// document would advertise `/auth/me` while the live route is
+/// `/api/v1/auth/me`.
+fn prefix_paths(doc: &mut utoipa::openapi::OpenApi, prefix: &str) {
+    let old = std::mem::take(&mut doc.paths.paths);
+    for (path, item) in old {
+        let new_path = format!("{prefix}{path}");
+        doc.paths.paths.insert(new_path, item);
+    }
+}
+
+/// Drop duplicate `tags[]` entries by `name`, keeping the first
+/// occurrence. The rubix doc already declares an `auth` tag with
+/// the goal-narrative description; the merged starter-auth-users
+/// doc also declares `auth`. Without this dedupe the tag list
+/// grows to 10 and the per-goal contract in
+/// `tests/openapi_test.rs` (`tags.len() == 9`) breaks.
+fn dedupe_tags(doc: &mut utoipa::openapi::OpenApi) {
+    let Some(tags) = doc.tags.as_mut() else {
+        return;
+    };
+    let mut seen = std::collections::HashSet::new();
+    tags.retain(|t| seen.insert(t.name.clone()));
 }
 
 #[cfg(test)]
@@ -83,6 +126,29 @@ mod tests {
         assert!(
             doc.paths.paths.contains_key("/api/v1/tools/{tool_id}"),
             "tools dispatcher canary path present",
+        );
+    }
+
+    #[test]
+    fn document_includes_auth_paths() {
+        let doc = rubix_openapi();
+        for path in [
+            "/api/v1/auth/login",
+            "/api/v1/auth/logout",
+            "/api/v1/auth/me",
+            "/api/v1/auth/token",
+        ] {
+            assert!(
+                doc.paths.paths.contains_key(path),
+                "auth path `{path}` merged from starter-auth-users; got keys {:?}",
+                doc.paths.paths.keys().collect::<Vec<_>>(),
+            );
+        }
+        // The bare unprefixed path must NOT appear — that would mean
+        // `prefix_paths` skipped an entry.
+        assert!(
+            !doc.paths.paths.contains_key("/auth/me"),
+            "unprefixed /auth/me leaked into served document",
         );
     }
 }

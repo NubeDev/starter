@@ -1,9 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:rubix_api/rubix_api.dart';
+import 'package:rubix_flutter/core/api/api_providers.dart';
 import 'package:rubix_flutter/core/auth/token_store/token_store_providers.dart';
-import 'package:rubix_flutter/core/network/network_providers.dart';
 import 'package:rubix_flutter/core/router/app_router/app_router.dart';
-import 'package:rubix_flutter/features/auth/data/dto/login_request/login_request.dart';
-import 'package:rubix_flutter/features/auth/data/dto/login_response/login_response.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 
 class AuthRepository {
@@ -11,29 +10,36 @@ class AuthRepository {
 
   final Ref _ref;
 
-  /// Issue a token and install it in the store.
+  /// Issue a token and install it in the store via the generated
+  /// `rubix_api` Dio client (`POST /api/v1/auth/token`).
   Future<void> login({
     required String email,
     required String password,
     String? tenantId,
   }) async {
-    final dio = _ref.read(dioProvider);
-    if (dio == null) throw StateError('No active connection');
+    final api = _ref.read(apiClientProvider);
+    if (api == null) throw StateError('No active connection');
 
-    final request = LoginRequest(
-      email: email,
-      password: password,
-      tenantId: tenantId,
-    );
+    final request = TokenRequest((b) {
+      b
+        ..email = email
+        ..password = password
+        ..tenantId = tenantId;
+    });
 
-    final response = await dio.post<Map<String, dynamic>>(
-      '/api/v1/auth/token',
-      data: request.toJson(),
-    );
+    final response = await api.getAuthApi().issueToken(
+          tokenRequest: request,
+        );
+    final tokenResponse = response.data;
+    if (tokenResponse == null) {
+      throw StateError('Empty /auth/token response');
+    }
 
-    final loginResponse = LoginResponse.fromJson(response.data!);
     final store = _ref.read(tokenStoreProvider);
-    await store.write(loginResponse.token, expiresAt: loginResponse.expiresAt);
+    await store.write(
+      tokenResponse.token,
+      expiresAt: tokenResponse.expiresAt,
+    );
 
     // Mark connection as used.
     final repo = _ref.read(connectionRepositoryProvider);

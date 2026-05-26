@@ -1,5 +1,11 @@
 /// Barcode/QR code scanning result model.
 class BarcodeResult {
+
+  BarcodeResult({
+    required this.value,
+    this.format = BarcodeFormat.unknown,
+    DateTime? scannedAt,
+  }) : scannedAt = scannedAt ?? DateTime.now();
   /// The raw decoded value from the barcode/QR code.
   final String value;
 
@@ -8,12 +14,6 @@ class BarcodeResult {
 
   /// Timestamp when the barcode was scanned.
   final DateTime scannedAt;
-
-  BarcodeResult({
-    required this.value,
-    this.format = BarcodeFormat.unknown,
-    DateTime? scannedAt,
-  }) : scannedAt = scannedAt ?? DateTime.now();
 
   @override
   String toString() => 'BarcodeResult($format: $value)';

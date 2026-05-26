@@ -1,8 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:rubix_flutter/core/network/dio_client.dart';
-import 'package:rubix_flutter/core/network/network_providers.dart';
-import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
+import 'package:rubix_flutter/core/api/api_providers.dart';
 import 'package:rubix_flutter/features/home/domain/me_response/me_response.dart';
 
 part 'home_controller.g.dart';
@@ -29,43 +27,49 @@ class AgentHealthBadStatus extends AgentHealth {
   final int statusCode;
 }
 
-/// Calls `GET /healthz` on the active connection.
-///
-/// Uses a bare [probeDio] (no bearer required) and joins the path
-/// against the active connection's `baseUrl`.
+/// Calls `GET /healthz` on the active connection via the generated
+/// `rubix_api` Dio client (see `apiClientProvider`). The shared Dio
+/// instance carries the AuthInterceptor, but `/healthz` is on the
+/// exempt list so no bearer is required.
 @riverpod
 Future<AgentHealth> agentHealth(Ref ref) async {
-  final active = await ref.watch(activeConnectionProvider.future);
-  if (active == null) {
+  final api = ref.watch(apiClientProvider);
+  if (api == null) {
     return const AgentHealthUnreachable('No active connection');
   }
 
-  final dio = probeDio();
-  final url = active.baseUrl.endsWith('/')
-      ? '${active.baseUrl}healthz'
-      : '${active.baseUrl}/healthz';
-
   try {
-    final response = await dio.get<dynamic>(url);
+    final response = await api.getSystemApi().healthz();
     final code = response.statusCode ?? 0;
     if (code >= 200 && code < 300) {
       return const AgentHealthOk();
     }
     return AgentHealthBadStatus(code);
   } on DioException catch (e) {
+    final code = e.response?.statusCode;
+    if (code != null && (code < 200 || code >= 300)) {
+      return AgentHealthBadStatus(code);
+    }
     return AgentHealthUnreachable(e.message ?? 'Network error');
-  } finally {
-    dio.close();
   }
 }
 
-/// Calls `GET /api/v1/auth/me` on the active connection with bearer auth.
+/// Calls `GET /api/v1/auth/me` on the active connection with bearer auth
+/// via the generated `rubix_api` Dio client.
 @riverpod
 Future<MeResponse> currentUser(Ref ref) async {
-  final dio = ref.watch(dioProvider);
-  if (dio == null) {
+  final api = ref.watch(apiClientProvider);
+  if (api == null) {
     throw StateError('No active connection');
   }
-  final response = await dio.get<Map<String, dynamic>>('/api/v1/auth/me');
-  return MeResponse.fromJson(response.data!);
+  final response = await api.getAuthApi().me();
+  final data = response.data;
+  if (data == null) {
+    throw StateError('Empty /auth/me response');
+  }
+  return MeResponse(
+    subject: data.subject,
+    email: data.email,
+    role: data.role.name,
+  );
 }

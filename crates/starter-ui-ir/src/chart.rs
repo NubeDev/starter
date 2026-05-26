@@ -319,9 +319,46 @@ pub enum ChartSource {
         points: Vec<DataPoint>,
     },
 
+    /// Named analytics SQL template, evaluated server-side via the
+    /// host's analytics-query tool (e.g. `rubix.analytics.query`).
+    /// `name` is the template stem; `params` are forwarded verbatim
+    /// to the tool. `map` tells the resolver how to walk the row
+    /// payload — for KPIs it picks the scalar column, for charts it
+    /// picks the timestamp + value columns.
+    AnalyticsTemplate {
+        /// Template stem (filename without `.sql`).
+        name: String,
+        /// Parameters bound through the tool's named-parameter
+        /// surface.
+        #[serde(default, skip_serializing_if = "std::collections::BTreeMap::is_empty")]
+        params: std::collections::BTreeMap<String, serde_json::Value>,
+        /// Row-shape mapping. Optional only because forward-compat
+        /// payloads may omit it; the resolver requires it to produce
+        /// any points.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        map: Option<AnalyticsTemplateMap>,
+    },
+
     /// Forward-compat fallback for variants this client doesn't know.
     #[serde(other)]
     Unknown,
+}
+
+/// Row-shape mapping for [`ChartSource::AnalyticsTemplate`].
+///
+/// `value_field` is required — it names the column the resolver
+/// reads to produce either the KPI scalar (row 0) or each chart
+/// point's y-value. `ts_field` is required for charts and ignored
+/// for KPIs.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize, JsonSchema)]
+pub struct AnalyticsTemplateMap {
+    /// Column name that carries the scalar / y-value.
+    pub value_field: String,
+    /// Column name that carries the bucket timestamp. May encode
+    /// ms-since-epoch or an ISO-8601 string; the resolver parses
+    /// both.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ts_field: Option<String>,
 }
 
 impl ChartSource {

@@ -957,6 +957,12 @@ pub enum Component {
         id: Option<String>,
         label: String,
         source: ChartSource,
+        /// Server-resolved scalar — filled by the chart-source
+        /// resolver from `source` at /resolve time. The client
+        /// renders this directly. Authors leave it unset; the
+        /// resolver overwrites whatever was authored.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        value: Option<JsonValue>,
         #[serde(skip_serializing_if = "Option::is_none")]
         format: Option<String>,
         #[serde(skip_serializing_if = "Option::is_none")]
@@ -2515,7 +2521,9 @@ impl crate::Bindable for Component {
                                 visit(g);
                             }
                         }
-                        crate::ChartSource::Static { .. } | crate::ChartSource::Unknown => {}
+                        crate::ChartSource::Static { .. }
+                        | crate::ChartSource::AnalyticsTemplate { .. }
+                        | crate::ChartSource::Unknown => {}
                     }
                 }
             }
@@ -2627,7 +2635,9 @@ impl crate::Bindable for Component {
                             visit(g);
                         }
                     }
-                    crate::ChartSource::Static { .. } | crate::ChartSource::Unknown => {}
+                    crate::ChartSource::Static { .. }
+                    | crate::ChartSource::AnalyticsTemplate { .. }
+                    | crate::ChartSource::Unknown => {}
                 }
             }
             Component::KpiGrid { items, .. } => {

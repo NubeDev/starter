@@ -47,6 +47,7 @@ fn visits_badge_label_and_kpi_label() {
             slot: "value".into(),
             field: None,
         },
+        value: None,
         format: None,
         intent: None,
         delta: None,

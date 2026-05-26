@@ -25,7 +25,7 @@ final dioProvider = Provider<Dio?>((ref) {
 
   if (kDebugMode) {
     dio.interceptors.add(
-      PrettyDioLogger(requestBody: true, responseBody: true),
+      PrettyDioLogger(requestBody: true),
     );
   }
 

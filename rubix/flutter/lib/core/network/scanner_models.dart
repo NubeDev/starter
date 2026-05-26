@@ -1,16 +1,17 @@
 /// Models for network scanning results.
+library;
 
 /// A device discovered on the local network.
 class ScannedHost {
-  final String ip;
-  final Duration? responseTime;
-  final List<OpenPort> openPorts;
 
   const ScannedHost({
     required this.ip,
     this.responseTime,
     this.openPorts = const [],
   });
+  final String ip;
+  final Duration? responseTime;
+  final List<OpenPort> openPorts;
 
   ScannedHost copyWithPorts(List<OpenPort> ports) =>
       ScannedHost(ip: ip, responseTime: responseTime, openPorts: ports);
@@ -22,15 +23,15 @@ class ScannedHost {
 
 /// An open TCP port on a host.
 class OpenPort {
-  final int port;
-  final bool isOpen;
-  final Duration? responseTime;
 
   const OpenPort({
     required this.port,
     required this.isOpen,
     this.responseTime,
   });
+  final int port;
+  final bool isOpen;
+  final Duration? responseTime;
 
   @override
   String toString() => 'OpenPort($port, open: $isOpen)';
@@ -38,13 +39,6 @@ class OpenPort {
 
 /// Progress of an ongoing scan.
 class ScanProgress {
-  final int scanned;
-  final int total;
-  final List<ScannedHost> found;
-
-  /// The last IP address that was checked — gives the UI something to show
-  /// between progress jumps so the scan always looks active.
-  final String? lastIp;
 
   const ScanProgress({
     required this.scanned,
@@ -52,6 +46,13 @@ class ScanProgress {
     this.found = const [],
     this.lastIp,
   });
+  final int scanned;
+  final int total;
+  final List<ScannedHost> found;
+
+  /// The last IP address that was checked — gives the UI something to show
+  /// between progress jumps so the scan always looks active.
+  final String? lastIp;
 
   double get percent => total > 0 ? scanned / total : 0;
 }

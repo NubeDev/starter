@@ -93,6 +93,16 @@ enum SignalStrength {
 
 /// A discovered WiFi network (access point).
 class WifiNetwork {
+
+  WifiNetwork({
+    required this.ssid,
+    required this.bssid,
+    this.rssi,
+    this.frequencyMhz,
+    this.capabilities = '',
+    this.channelWidthMhz,
+    DateTime? scannedAt,
+  }) : scannedAt = scannedAt ?? DateTime.now();
   /// Network name (SSID). Empty string means hidden network.
   final String ssid;
 
@@ -113,16 +123,6 @@ class WifiNetwork {
 
   /// Timestamp of when the network was seen.
   final DateTime scannedAt;
-
-  WifiNetwork({
-    required this.ssid,
-    required this.bssid,
-    this.rssi,
-    this.frequencyMhz,
-    this.capabilities = '',
-    this.channelWidthMhz,
-    DateTime? scannedAt,
-  }) : scannedAt = scannedAt ?? DateTime.now();
 
   /// Whether this is a hidden network.
   bool get isHidden => ssid.isEmpty;
@@ -162,15 +162,14 @@ class WifiNetwork {
 
 /// Result of a WiFi scan operation.
 class WifiScanResult {
+
+  const WifiScanResult({
+    required this.scannedAt, this.networks = const [],
+    this.error,
+  });
   final List<WifiNetwork> networks;
   final DateTime scannedAt;
   final String? error;
-
-  const WifiScanResult({
-    this.networks = const [],
-    required this.scannedAt,
-    this.error,
-  });
 
   bool get hasError => error != null;
   bool get isEmpty => networks.isEmpty && !hasError;
@@ -178,8 +177,8 @@ class WifiScanResult {
 
   /// Networks sorted by signal strength (strongest first).
   List<WifiNetwork> get sortedBySignal {
-    final sorted = List<WifiNetwork>.from(networks);
-    sorted.sort((a, b) => (b.rssi ?? -100).compareTo(a.rssi ?? -100));
+    final sorted = List<WifiNetwork>.from(networks)
+      ..sort((a, b) => (b.rssi ?? -100).compareTo(a.rssi ?? -100));
     return sorted;
   }
 

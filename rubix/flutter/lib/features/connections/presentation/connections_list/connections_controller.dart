@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rubix_flutter/app.dart';
 import 'package:rubix_flutter/core/storage/daos/connection_dao.dart';

@@ -58,6 +58,7 @@ fn kpi_label_substitutes_user_claim() {
                 slot: "value".into(),
                 field: None,
             },
+            value: None,
             format: None,
             intent: None,
             delta: None,
