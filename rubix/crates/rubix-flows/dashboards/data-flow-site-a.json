@@ -1,0 +1,115 @@
+{
+  "ir_version": 5,
+  "title": "Data flow — Site A",
+  "root": {
+    "type": "page",
+    "id": "page",
+    "title": "Site A — energy + water",
+    "default_row_gap": "1rem",
+    "default_column_gap": "1rem",
+    "default_page_padding": "1.5rem",
+    "default_max_width": "80rem",
+    "children": [
+      {
+        "type": "row",
+        "id": "kpis",
+        "children": [
+          {
+            "type": "col",
+            "span": 6,
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-kwh-24h",
+                "label": "Site A — last 24h kWh",
+                "format": "number",
+                "unit_symbol": "kWh",
+                "source": {
+                  "type": "static",
+                  "points": [[0, 0.0]]
+                }
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 6,
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-litres-24h",
+                "label": "Site A — last 24h L",
+                "format": "number",
+                "unit_symbol": "L",
+                "source": {
+                  "type": "static",
+                  "points": [[0, 0.0]]
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "type": "row",
+        "id": "charts",
+        "children": [
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-elec-main",
+                "kind": "line",
+                "page_state_key": "elec_main_range",
+                "sources": [
+                  {
+                    "type": "static",
+                    "points": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-elec-hvac",
+                "kind": "line",
+                "page_state_key": "elec_hvac_range",
+                "sources": [
+                  {
+                    "type": "static",
+                    "points": []
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "children": [
+              {
+                "type": "chart",
+                "id": "chart-water-main",
+                "kind": "line",
+                "page_state_key": "water_main_range",
+                "sources": [
+                  {
+                    "type": "static",
+                    "points": []
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

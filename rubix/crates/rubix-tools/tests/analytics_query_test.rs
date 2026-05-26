@@ -89,6 +89,33 @@ async fn seed(client: &ChClient) {
         ),
     )
     .await;
+
+    // rubix.meter_readings_15m — L3 mart the stage 05 dashboard
+    // templates read from. Mirrors rubix-agent migration 0005.
+    exec(client, "CREATE DATABASE IF NOT EXISTS rubix").await;
+    exec(
+        client,
+        "CREATE TABLE IF NOT EXISTS rubix.meter_readings_15m (\
+            tenant_id String, meter_id String, \
+            kind LowCardinality(String), unit LowCardinality(String), \
+            bucket_start DateTime, \
+            value_avg Nullable(Float64), value_min Nullable(Float64), \
+            value_max Nullable(Float64), \
+            quality_mix Map(LowCardinality(String), UInt32)\
+         ) ENGINE = ReplacingMergeTree \
+         ORDER BY (tenant_id, meter_id, bucket_start)",
+    )
+    .await;
+    exec(
+        client,
+        "INSERT INTO rubix.meter_readings_15m \
+           (tenant_id, meter_id, kind, unit, bucket_start, \
+            value_avg, value_min, value_max, quality_mix) VALUES \
+           ('system','elec.main','electricity','kWh',now() - INTERVAL 1 HOUR, 12.5, 10.0, 15.0, map()), \
+           ('system','elec.hvac','electricity','kWh',now() - INTERVAL 1 HOUR,  8.0,  7.0,  9.0, map()), \
+           ('system','water.main','water','L',      now() - INTERVAL 1 HOUR, 42.0, 40.0, 45.0, map())",
+    )
+    .await;
 }
 
 async fn exec(client: &ChClient, sql: &str) {
@@ -109,8 +136,14 @@ async fn every_template_runs_against_seeded_clickhouse() {
     let tool = AnalyticsQueryTool::new(Arc::new(client));
 
     for name in AnalyticsQueryTool::known_templates() {
+        let params = match name {
+            "meter_kwh_last_24h" | "meter_litres_last_24h" => {
+                json!({ "tenant_id": "system" })
+            }
+            _ => json!({}),
+        };
         let out = tool
-            .invoke(json!({ "name": name, "params": {} }))
+            .invoke(json!({ "name": name, "params": params }))
             .await
             .unwrap_or_else(|e| panic!("template {name} failed: {e:?}"));
 

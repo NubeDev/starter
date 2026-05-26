@@ -56,6 +56,8 @@
   "rubix.dashboard.page_set.applied": "Slot {slot} on {node_id} updated.",
   "rubix.warehouse.cleaned": "Cleaner materialised {rows} L2 bucket(s) over a {lookback}-minute window (at {at}).",
   "rubix.warehouse.clean.empty": "Cleaner found no L1 rows in the last {lookback} minute(s); nothing to materialise.",
+  "rubix.warehouse.rolled_up": "Rollup materialised {rows} L3 bucket(s) over a {lookback}-minute window (at {at}).",
+  "rubix.warehouse.rollup.empty": "Rollup found no L2 rows in the last {lookback} minute(s); nothing to materialise.",
   "rubix.warehouse.meter.spike": "Meter {meter_id} spiked at {bucket_start}; cleaner clipped the bucket to {clipped_to}.",
   "rubix.warehouse.meter.stuck": "Meter {meter_id} has been stuck since {bucket_start} ({bucket_count} consecutive same-value buckets)."
 }

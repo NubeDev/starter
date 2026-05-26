@@ -189,7 +189,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn known_templates_contains_all_six_scope_phase_c_names() {
+    fn known_templates_contains_all_bundled_names() {
         let mut names = known_templates_sorted();
         names.sort();
         assert_eq!(
@@ -199,10 +199,12 @@ mod tests {
                 "clickhouse_writes_weekly",
                 "disk_history_weekly",
                 "flow_run_summary_weekly",
+                "meter_kwh_last_24h",
+                "meter_litres_last_24h",
                 "undo_count_weekly",
                 "user_activity_weekly",
             ],
-            "Phase C ships exactly six named templates",
+            "Phase C + Stage 05 ship eight named templates",
         );
     }
 

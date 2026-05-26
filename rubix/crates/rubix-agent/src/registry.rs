@@ -185,7 +185,7 @@ pub fn build_tool_registry(
          to the in-memory writer.",
     );
 
-    vec![
+    let mut tools: Vec<Arc<dyn Tool>> = vec![
         // ---- system / insights ----------------------------------
         Arc::new(disk),
         Arc::new(DbTool),
@@ -262,6 +262,7 @@ pub fn build_tool_registry(
         // per R7. The stub `DashboardAssistantStub` it used to
         // dispatch to has been removed.
     ];
+
     // ---- analytics (read-only) --------------------------------
     // `AnalyticsQueryTool` needs a live `ChClient`; without one we
     // skip registration so the verb does not appear in the

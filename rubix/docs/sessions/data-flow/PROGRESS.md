@@ -25,9 +25,9 @@ A session that finishes a stage flips its row, fills the
 | 2 | [02-ingest-l1.md](./02-ingest-l1.md) — L1 raw landing    | ✅     | 2026-05-26 | 9cdf4ef | 2×5min cold-restart runs: 28 rows, rate 5.6/min, 3 meters, 2 `quality='suspect'`, 0 FlowFailed |
 | 3 | [03-clean-to-l2.md](./03-clean-to-l2.md) — clean to L2   | ✅     | 2026-05-26 | _local_| 2 cold-restart runs: every 1-min bucket in window has all 3 meters; `missing` present per meter; 0 `ok` rows exceed 10× median |
 | 4 | [04-anomaly-rules.md](./04-anomaly-rules.md) — rules     | ✅     | 2026-05-26 | _local_ | 2×cold-restart e2e: run1 spike=10 stuck=20; run2 spike=14 stuck=21; L2 207 rows (ok=147 missing=60); L1 24 suspect rows |
-| 5 | [05-dashboard-at-scale.md](./05-dashboard-at-scale.md)   | ⏳     |            |        |                                            |
+| 5 | [05-dashboard-at-scale.md](./05-dashboard-at-scale.md)   | ✅     | 2026-05-26 | _local_ | 2×cold-restart e2e: L3 12 rows / 3 meters; kwh template→2 rows, litres→1 row; dashboard.data-flow-site-a loads via dashboard.get (items 2–4 follow-ups) |
 
-**Next session: pick up stage 5.**
+**Next session: stage 1 (producer) — last ⏳ row remaining.**
 
 ---
 
@@ -58,7 +58,7 @@ Per-stage open decisions (the "pick A or B" choices):
 | 02    | Bind `rubix.warehouse.ingest` vs reuse `rule.write`    | A (bind `rubix.warehouse.ingest`; DDL via bundled migration `0003_meter_readings_raw`) |
 | 03    | Periodic flow cleaner vs ClickHouse materialised view  | A (periodic flow `com.rubix.data-flow.cleaner` → `rubix.warehouse.clean_minute`; L2 DDL via bundled migration `0004_meter_readings_1m`) |
 | 04    | Hardcoded Rust gate vs `rule.rhai` registry            | A (hardcoded `anomaly_gate.rs`; R-SPIKE reads L1 suspect rows, R-STUCK reads L2 same-value runs; promotion trigger — third rule — has not fired) |
-| 05    | `page_set` vs `create`+`update` for dashboard build    |        |
+| 05    | `page_set` vs `create`+`update` for dashboard build    | C (bundled JSON via `dashboards_seed.rs` — `data-flow-site-a.json`; charts are `Static` placeholders, L3 path proven via `rubix.analytics.query` templates `meter_kwh_last_24h` + `meter_litres_last_24h`) |
 
 ---
 
@@ -74,6 +74,7 @@ rewrite a stage doc to absorb spillover.
 | 2026-05-26 | 01 | [scheduler verified; synth fires 2–3× per cron tick](./2026-05-26-data-flow-01-producer-multi-fire.md) | open — duplicate-fire bug in tool-call seed adapter + bar #2 math vs 60s cron mismatch |
 | 2026-05-26 | 02 | [two boot-wiring blockers (in-memory CH writer + seed adapter racing tool_input)](./02-ingest-l1-blockers-2026-05-26.md) | resolved by the B1+B2 fixes that landed in working tree before stage 02 e2e |
 | 2026-05-26 | 02 | [cadence + bar reconciliation (60s scheduler claim cadence)](./02-ingest-l1-cadence-and-bars-2026-05-26.md) | resolved — bar #1 rewritten as rows/min rate, bar #3 documents `DATA_FLOW_SPIKE_PROB` override for stage-close validation |
+| 2026-05-26 | 05 | [chart resolver ↔ analytics path + zoom](./2026-05-26-data-flow-05-followups.md) | open — bar items 2–4 deferred; needs a `ChartSource::AnalyticsTemplate` variant (or L3 → slot-store materialisation) before timing/row-budget/zoom can be measured |
 
 Naming convention (matches the rest of `docs/sessions/`):
 

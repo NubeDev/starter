@@ -143,7 +143,7 @@ Write follow-up notes as
 
 ## Decisions taken
 
-- [ ] Built dashboard via `page_set` (AI builder)  /  [ ] via `create` + `update`
+- [ ] Built dashboard via `page_set` (AI builder)  /  [x] via bundled JSON seed (`dashboards_seed.rs` upserts `data-flow-site-a.json` on boot)
 - L3 mart name: `rubix.meter_readings_15m`
 - L3 retention: 730 days
 - Rollup flow id: `com.rubix.data-flow.rollup`
