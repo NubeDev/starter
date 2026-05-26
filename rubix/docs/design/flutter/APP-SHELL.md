@@ -251,6 +251,7 @@ as before: fall back to `/home` and toast.
 |---|---|---|
 | Saved connections (URL, label, last-used) | SQLite via drift | `connections` table |
 | Active-connection id + last-opened route | SQLite via drift | `connection_state` table (single row) |
+| Optional PIN gating `/connections*` | SQLite via drift | `app_settings` table (single row, `connections_pin` column) |
 | Per-connection bearer token | `flutter_secure_storage` (mobile) / in-memory (web) | `token_store_*.dart` |
 | Theme mode (light/dark/system) | `shared_preferences` | `theme_providers.dart` |
 | Locale (en/es) | `shared_preferences` | `intl_providers.dart` |
@@ -262,6 +263,13 @@ relational extensions later). It is overkill for a single enum
 ("light"). `shared_preferences` is one line per scalar and is the
 idiomatic Flutter choice.
 
+**On the PIN:** stored as plaintext in `app_settings.connections_pin`.
+This is a casual lock against shoulder-surfing, not an auth credential
+— anyone with filesystem access to the SQLite DB already has the
+stored bearer token, so hashing the PIN would not raise the security
+floor. The session-scoped unlock flag is held in memory in
+`pinUnlockedProvider` (cleared on logout / app restart).
+
 ## Navigation
 
 `go_router` (^14). File-equivalent route definitions live in
@@ -270,29 +278,33 @@ idiomatic Flutter choice.
 ```
 /                          ← splash; redirects based on active connection
 /connections               ← list, tap to activate, swipe to delete
-/connections/new           ← add connection (URL + label)
+/connections/new           ← add connection (URL + label + email + password + LAN scan)
+/connections/unlock        ← PIN entry; only reachable when a PIN is set
 /connections/:id           ← edit connection metadata, force re-login
 /login                     ← login against active connection
 /home                      ← the one hardcoded dashboard (v1)
-/settings                  ← theme + locale picker
+/settings                  ← theme + locale + optional connections PIN
 ```
 
 The redirect hook in `app_router.dart` is a pure function of
-three inputs: whether an active connection exists, whether a
-token is present, and which route the user was trying to reach.
-Spelling it out as a table prevents the "it works on the happy
-path but the wrong screen flashes on cold start" class of bugs.
+four inputs: whether an active connection exists, whether a
+token is present, whether a connections PIN is set + unlocked,
+and which route the user was trying to reach. Spelling it out as
+a table prevents the "it works on the happy path but the wrong
+screen flashes on cold start" class of bugs.
 
-| Active conn? | Token? | Requested route | Redirect to | Notes |
-|:-:|:-:|---|---|---|
-| no  | —   | any                | `/connections/new` | Cold install. Any deep link is dropped; user must add a server first. |
-| yes | no  | `/login`           | *(no redirect)*    | Already at the right place. |
-| yes | no  | `/connections*`    | *(no redirect)*    | Connections management is reachable without a token so the user can switch servers without logging into the broken one. |
-| yes | no  | anything else      | `/login`           | Sets `pendingRouteProvider` to the requested route so post-login restore works. |
-| yes | yes | `/login`           | `pendingRoute` or `/home` | Already authenticated; bounce off the login screen. |
-| yes | yes | `/`                | `pendingRoute` or `/home` | Splash route resolves. |
-| yes | yes | anything else      | *(no redirect)*    | Normal navigation. |
-| yes | yes | (after re-login, restored route returns 404) | `/home` + toast | See [401 re-entrancy](#401-re-entrancy). |
+| Active conn? | Token? | PIN set + unlocked? | Requested route | Redirect to | Notes |
+|:-:|:-:|:-:|---|---|---|
+| no  | —   | — | any                | `/connections/new` | Cold install. Any deep link is dropped; user must add a server first. The PIN gate is intentionally skipped here — the first-run path must reach `/connections` so the user can add one. |
+| yes | —   | set + locked | `/connections*` | `/connections/unlock` | PIN gate. Bypassed only when no connection exists yet (above row). |
+| yes | —   | unset ∨ unlocked | `/connections/unlock` | `/connections` | User landed on the lock screen but doesn't need it; hop through. |
+| yes | no  | — | `/login`           | *(no redirect)*    | Already at the right place. |
+| yes | no  | — | `/connections*` or `/connections/unlock` | *(no redirect)* | Connections management is reachable without a token so the user can switch servers without logging into the broken one. |
+| yes | no  | — | anything else      | `/login`           | Sets `pendingRouteProvider` to the requested route so post-login restore works. |
+| yes | yes | — | `/login`           | `pendingRoute` or `/home` | Already authenticated; bounce off the login screen. |
+| yes | yes | — | `/`                | `pendingRoute` or `/home` | Splash route resolves. |
+| yes | yes | — | anything else      | *(no redirect)*    | Normal navigation. |
+| yes | yes | — | (after re-login, restored route returns 404) | `/home` + toast | See [401 re-entrancy](#401-re-entrancy). |
 
 `go_router`'s `refreshListenable` is wired to a thin `Listenable`
 that fans in `activeConnectionProvider` + `tokenStoreProvider`

@@ -40,6 +40,7 @@ export type {
 } from "./transport/index.js";
 
 export { Render, RenderChildren } from "./render.js";
+export { PlaceholderRender } from "./placeholder-render.js";
 export {
   registerRenderer,
   lookupRenderer,

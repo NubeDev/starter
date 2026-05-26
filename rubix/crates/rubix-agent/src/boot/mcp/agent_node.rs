@@ -264,10 +264,21 @@ impl NodeBehavior for RubixAiAgentNode {
                 .and_then(|v| v.as_str())
                 .map(str::len)
                 .unwrap_or(0);
+            // Escape newlines/tabs so the field doesn't break the
+            // log line across multiple physical lines — without this
+            // a SKILL.md whose body starts within the first 80 chars
+            // (e.g. stage 07's BANANA preamble) splits the structured
+            // log into fragments that grep/journalctl filters miss.
             let skill_first_80: String = payload
                 .get("skill_body")
                 .and_then(|v| v.as_str())
-                .map(|s| s.chars().take(80).collect())
+                .map(|s| {
+                    s.chars()
+                        .take(80)
+                        .collect::<String>()
+                        .replace('\n', "\\n")
+                        .replace('\t', "\\t")
+                })
                 .unwrap_or_default();
             tracing::info!(
                 target: "rubix.ai_agent.self_check",
@@ -292,26 +303,65 @@ impl NodeBehavior for RubixAiAgentNode {
                 // answers, which surfaces in the UI as "needs your
                 // permission" no-op replies.
                 .with_permission_mode(Some(PermissionMode::Bypass));
-            match agent.run(prompt).await {
-                Ok(reply) => Some(reply),
-                Err(e) => {
-                    tracing::warn!(
-                        error = %e,
-                        node = %ctx.node,
-                        "ai-agent narration failed; returning tool output only"
-                    );
-                    None
-                }
+            // `run_with_outcome` always returns events collected up
+            // to the point of failure — switching from `run` (which
+            // dropped the events on `Err`) closes the live-feedback
+            // gap: the dashboard editor SSE channel can render the
+            // partial `Text` / `ToolUse` history even when the AI
+            // run errored, instead of silently going dark and
+            // leaving the operator confused.
+            let outcome = agent.run_with_outcome(prompt).await;
+            if let Some(e) = &outcome.error {
+                tracing::warn!(
+                    error = %e,
+                    node = %ctx.node,
+                    event_count = outcome.events.len(),
+                    "ai-agent narration failed; partial events preserved"
+                );
             }
+            // Surface the text only when the run produced something
+            // we can show. Events ride independently so a zero-text
+            // failure still carries its activity history.
+            let text = if outcome.text.is_empty() && outcome.error.is_some() {
+                None
+            } else {
+                Some(outcome.text)
+            };
+            Some((text, outcome.events))
         } else {
             None
         };
 
-        let body = match (tool_value, reply) {
-            (Some(t), Some(r)) => json!({ "tool": t, "reply": r }),
-            (Some(t), None) => json!({ "tool": t }),
-            (None, Some(r)) => json!({ "reply": r }),
-            (None, None) => {
+        // Split out the (text, events) pair so the per-step event
+        // array can be surfaced on the terminal slot alongside the
+        // text. Pre-projection contract was `{tool, reply}` only;
+        // adding `events` is purely additive — REST + MCP consumers
+        // that read only `reply` / `tool` keep working. The
+        // `agent-event-projection` follow-up
+        // (rubix/docs/sessions/data-flow/2026-05-26-data-flow-07-
+        // agent-event-projection.md) closes the live-feedback gap
+        // for scope 11 §B7 by letting the dashboard editor render
+        // per-step `Text` / `ToolUse` activity instead of waiting
+        // for the post-commit SSE banner.
+        let (reply, agent_events): (Option<String>, Vec<starter_spi::ai::Event>) = match reply {
+            Some((text, events)) => (text, events),
+            None => (None, Vec::new()),
+        };
+        let events_value: Option<serde_json::Value> = if agent_events.is_empty() {
+            None
+        } else {
+            serde_json::to_value(&agent_events).ok()
+        };
+
+        let body = match (tool_value, reply, events_value) {
+            (Some(t), Some(r), Some(ev)) => json!({ "tool": t, "reply": r, "events": ev }),
+            (Some(t), Some(r), None) => json!({ "tool": t, "reply": r }),
+            (Some(t), None, Some(ev)) => json!({ "tool": t, "events": ev }),
+            (Some(t), None, None) => json!({ "tool": t }),
+            (None, Some(r), Some(ev)) => json!({ "reply": r, "events": ev }),
+            (None, Some(r), None) => json!({ "reply": r }),
+            (None, None, Some(ev)) => json!({ "events": ev }),
+            (None, None, None) => {
                 // Both deterministic and narration paths produced no
                 // output. Rather than fail the flow run (silent null
                 // body for the caller), return a structured stub so

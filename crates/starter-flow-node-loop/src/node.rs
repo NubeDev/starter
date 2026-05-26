@@ -98,10 +98,16 @@ impl NodeBehavior for AiAgentNode {
         let prompt = Self::prompt_from(&input)?;
         let tools = ToolSet::new(self.filtered_tools(&input));
         let agent = AgentLoop::new(self.runner.clone(), tools);
-        let reply = agent.run(prompt).await.map_err(map_err)?;
+        // The loop-node body surfaces only the final text — the
+        // per-step `events` are not part of this node's wire
+        // contract today. Consumers that want them (e.g. the rubix
+        // ai-agent node feeding the dashboard editor SSE channel)
+        // call `AgentLoop` directly and surface `RunOutcome.events`
+        // alongside the text.
+        let outcome = agent.run(prompt).await.map_err(map_err)?;
 
         let mut out = SlotMap::new();
-        out.insert(OUT_SLOT_REPLY.to_owned(), SlotValue::String(reply));
+        out.insert(OUT_SLOT_REPLY.to_owned(), SlotValue::String(outcome.text));
         Ok(out)
     }
 }

@@ -553,3 +553,87 @@ The ARB-vs-ICU ADR from
 [APP-SHELL §i18n](./APP-SHELL.md#i18n) lands as the very first
 v2 item — the rule there is that no `lib/features/sdui/` PR
 merges without that ADR cited.
+
+---
+
+## Post-v1 additions (landed)
+
+Small enhancements that landed after v1's six blocks and don't yet
+warrant their own block. Recorded here so the next reviewer can see
+what changed since the v1 exit gate without diffing the repo.
+
+### Generated Dart API client
+
+- [x] `rubix/flutter/packages/rubix_api/` — Dart-Dio client generated
+  by `openapi-generator-cli 7.9.0` from `rubix/openapi.json`. Built
+  via `make api-client` in `rubix/flutter/` (deletes + reseeds a
+  placeholder `pubspec.yaml` before invoking the generator, then
+  runs `dart pub get && dart run build_runner build`).
+- [x] Backend OpenAPI doc expanded to include the auth endpoints —
+  `rubix/crates/rubix-agent/src/openapi.rs` now merges
+  `starter_auth_users::openapi::openapi(...)`, prefixes its paths
+  with `/api/v1`, and dedupes tags. Covered by
+  `tests/openapi_test.rs::document_includes_auth_paths`.
+- [x] `rubix/openapi.json` snapshot refreshed; ships with
+  `/api/v1/auth/{login,logout,me,token}` plus the existing
+  `/api/v1/tools/{tool_id}` and `/healthz`.
+- [x] Home screen + auth repository migrated from raw Dio calls to
+  `RubixApi.getAuthApi().{me,issueToken}` and
+  `getSystemApi().healthz()`. The pre-existing hand-rolled DTOs under
+  `lib/features/auth/data/dto/` were deleted.
+
+### Browser CORS
+
+- [x] `rubix-agent` wraps its assembled router in
+  `tower_http::cors::CorsLayer::very_permissive()` before
+  `health::serve` so the Flutter web build (served from a different
+  origin during `flutter run -d chrome`) can reach the REST surface.
+  Mirrors the `starter-server::ServerBuilder` default. To be tightened
+  once a non-dev deployment story exists.
+
+### Add Connection screen — email/password + LAN scan
+
+- [x] `lib/features/connections/presentation/add_connection/add_connection_screen.dart`
+  rebuilt: URL + Label + Email + Password fields, plus a collapsible
+  "Scan local network (optional)" panel.
+- [x] LAN scanner: `lib/core/network/lan_scanner.dart` sweeps the /24
+  derived from a selected interface's primary IPv4, probing
+  `http://<ip>:<port>/healthz` 32-way concurrently. Driven by
+  `lib/core/network/lan_scan_controller.dart`
+  (`NotifierProvider<LanScanController, LanScanState>` with sealed
+  `LanScanIdle | LanScanRunning | LanScanDone | LanScanFailed`).
+- [x] Browser fallback: `kIsWeb` swaps the scanner UI for a
+  `_WebUnsupportedNotice` (`dart:io`'s `NetworkInterface.list` isn't
+  available; CORS / mixed-content / Private Network Access would
+  block any in-browser sweep regardless).
+- [x] Tapping a scan hit prefills URL, Label, and the dev-only
+  placeholder credentials `op@example.com` / `rubix-dev-passwd`
+  (constants flagged for later removal).
+
+### Optional PIN gating `/connections*`
+
+- [x] New `app_settings` table (`lib/core/storage/tables/app_settings_table.dart`)
+  with a single `connections_pin` text column. Drift `schemaVersion`
+  bumped 1 → 2; `onUpgrade` 1→2 runs `createTable(appSettings)`.
+- [x] `lib/core/storage/daos/settings_dao.dart` exposes
+  `getConnectionsPin()` / `setConnectionsPin(String?)`.
+- [x] `lib/features/settings/data/settings_providers.dart` ships
+  `settingsDaoProvider`, the `FutureProvider<String?>`
+  `connectionsPinProvider`, the session-scoped
+  `pinUnlockedProvider` (`Notifier<bool>` with `unlock()` / `lock()`),
+  and a `setConnectionsPin(WidgetRef, String?)` mutator.
+- [x] Settings screen gains a "Security" section
+  (`lib/features/settings/presentation/pin_settings_section.dart`)
+  with Set / Change / Remove buttons and a digits-only ≥4-char PIN
+  dialog with confirm-field matching.
+- [x] `lib/features/connections/presentation/connections_unlock/connections_unlock_screen.dart`
+  hosts the PIN entry screen. On match it flips `pinUnlockedProvider`
+  and routes to `/connections`.
+- [x] `appRouterProvider` redirect gate updated: when a PIN is set,
+  the session isn't unlocked, **and** there's an active connection,
+  `/connections*` is bounced to `/connections/unlock`. The
+  first-run path (no connection yet) intentionally skips the gate.
+  The unlock screen self-redirects out once the PIN is cleared or
+  unlocked. See [APP-SHELL §Navigation](./APP-SHELL.md#navigation)
+  for the full table.
+

@@ -48,6 +48,6 @@ async fn tool_call_round_trip_yields_final_reply() {
     ]));
     let tools = ToolSet::new(vec![Arc::new(EchoTool)]);
     let agent = AgentLoop::new(runner, tools);
-    let reply = agent.run("call echo".to_owned()).await.expect("loop ok");
-    assert_eq!(reply, "done");
+    let outcome = agent.run("call echo".to_owned()).await.expect("loop ok");
+    assert_eq!(outcome.text, "done");
 }

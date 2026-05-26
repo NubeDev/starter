@@ -10,7 +10,7 @@
 use std::sync::Arc;
 
 use starter_spi::ai::{
-    AiRunner, Cancel, CliCfg, PermissionMode, Provider, RestCfg, RunResult, RunnerInput,
+    AiRunner, Cancel, CliCfg, Event, PermissionMode, Provider, RestCfg, RunResult, RunnerInput,
     SessionId,
 };
 use tokio::sync::mpsc;
@@ -125,26 +125,88 @@ impl AgentLoop {
         self
     }
 
-    /// Drive the loop end-to-end and return the model's final reply.
-    pub async fn run(&self, prompt: String) -> Result<String, AgentError> {
-        let first = self.call(prompt.clone(), Vec::new()).await?;
+    /// Drive the loop end-to-end and return the model's final reply
+    /// alongside every streamed [`Event`] the runner emitted.
+    ///
+    /// Thin wrapper around [`Self::run_with_outcome`] that preserves
+    /// the original `Result` shape for callers that don't need the
+    /// "events collected up to the point of failure" surface
+    /// (e.g. the 3-test suite in this crate, the
+    /// `starter-flow-node-loop` body). On `Err` the events from the
+    /// partial run are dropped on the floor; callers that want them
+    /// (today: the rubix `ai-agent` flow node feeding the dashboard
+    /// editor SSE channel) should use [`Self::run_with_outcome`]
+    /// directly.
+    pub async fn run(&self, prompt: String) -> Result<RunOutcome, AgentError> {
+        let outcome = self.run_with_outcome(prompt).await;
+        match outcome.error {
+            Some(err) => Err(err),
+            None => Ok(RunOutcome {
+                text: outcome.text,
+                events: outcome.events,
+                error: None,
+            }),
+        }
+    }
+
+    /// Always returns a populated [`RunOutcome`] — events collected
+    /// up to the point of failure are preserved on `outcome.error =
+    /// Some(_)`, so a surface that wants to render per-step activity
+    /// (e.g. live "AI is editing this page" UX for scope 11 §B7) can
+    /// always show the `Text` / `ToolUse` history regardless of
+    /// whether the run terminated cleanly.
+    ///
+    /// The internal control flow mirrors [`Self::run`] but each
+    /// failure point returns a partial outcome instead of `?`-ing
+    /// out: events accumulated during the first runner call survive
+    /// a subsequent `UnknownTool` / `Tool` / second-call failure.
+    pub async fn run_with_outcome(&self, prompt: String) -> RunOutcome {
+        let mut events: Vec<Event> = Vec::new();
+        let (first_res, mut first_events) = self.call(prompt.clone(), Vec::new()).await;
+        events.append(&mut first_events);
+        let first = match first_res {
+            Ok(rr) => rr,
+            Err(err) => {
+                return RunOutcome {
+                    text: String::new(),
+                    events,
+                    error: Some(err),
+                }
+            }
+        };
         if first.tool_uses.is_empty() {
-            return Ok(first.text);
+            return RunOutcome {
+                text: first.text,
+                events,
+                error: None,
+            };
         }
 
         let mut results = Vec::with_capacity(first.tool_uses.len());
         for call in &first.tool_uses {
-            let tool = self
-                .tools
-                .get(&call.name)
-                .ok_or_else(|| AgentError::UnknownTool(call.name.clone()))?;
-            let out = tool
-                .invoke(call.input.clone())
-                .await
-                .map_err(|e| AgentError::Tool {
-                    name: call.name.clone(),
-                    message: e.to_string(),
-                })?;
+            let tool = match self.tools.get(&call.name) {
+                Some(t) => t,
+                None => {
+                    return RunOutcome {
+                        text: first.text,
+                        events,
+                        error: Some(AgentError::UnknownTool(call.name.clone())),
+                    }
+                }
+            };
+            let out = match tool.invoke(call.input.clone()).await {
+                Ok(v) => v,
+                Err(e) => {
+                    return RunOutcome {
+                        text: first.text,
+                        events,
+                        error: Some(AgentError::Tool {
+                            name: call.name.clone(),
+                            message: e.to_string(),
+                        }),
+                    }
+                }
+            };
             results.push((call.name.clone(), out));
         }
 
@@ -152,15 +214,37 @@ impl AgentLoop {
             assistant_tool_use_message(&first.text, &first.tool_uses),
             user_tool_results_message(&results),
         ];
-        let second = self.call(prompt, history).await?;
-        Ok(second.text)
+        let (second_res, mut second_events) = self.call(prompt, history).await;
+        events.append(&mut second_events);
+        let second = match second_res {
+            Ok(rr) => rr,
+            Err(err) => {
+                return RunOutcome {
+                    text: first.text,
+                    events,
+                    error: Some(err),
+                }
+            }
+        };
+        RunOutcome {
+            text: second.text,
+            events,
+            error: None,
+        }
     }
 
+    /// Internal — drives one runner call and returns events
+    /// unconditionally alongside either the `RunResult` (Ok) or the
+    /// `AgentError` (Err). The previous `Result<(RunResult,
+    /// Vec<Event>), AgentError>` shape silently dropped events on
+    /// the Err branch because the early `?` skipped the collector
+    /// `.await`. Surfacing both lets `run_with_outcome` honour its
+    /// "events survive errors" contract.
     async fn call(
         &self,
         prompt: String,
         history: Vec<starter_spi::ai::HistoryMessage>,
-    ) -> Result<RunResult, AgentError> {
+    ) -> (Result<RunResult, AgentError>, Vec<Event>) {
         let input = match self.runner.provider() {
             Provider::Claude | Provider::Codex | Provider::Copilot => {
                 // CLI runners take a single combined prompt — they
@@ -196,16 +280,76 @@ impl AgentLoop {
                 ..Default::default()
             }),
         };
-        // The loop is non-streaming today; the channel is wired only
-        // because the trait requires it. Capacity 16 swallows the
-        // small bursts a runner emits without back-pressuring it.
-        let (tx, _rx) = mpsc::channel(16);
+        // Capacity 16 swallows the small bursts a runner emits
+        // without back-pressuring it. The receiver runs in a spawned
+        // task that drains every event into a `Vec` for the caller —
+        // until this change the receiver was named `_rx` and the
+        // events were silently discarded, which made the
+        // `/api/v1/flows/{id}/run` response a single concatenated
+        // `text` string with no visibility into per-step `Text` /
+        // `ToolUse` activity (see
+        // `rubix/docs/sessions/data-flow/2026-05-26-data-flow-07-agent-event-projection.md`).
+        let (tx, mut rx) = mpsc::channel::<Event>(16);
+        let collector = tokio::spawn(async move {
+            let mut out = Vec::new();
+            while let Some(ev) = rx.recv().await {
+                out.push(ev);
+            }
+            out
+        });
         let cancel = NoopCancel;
-        self.runner
+        let run_res = self
+            .runner
             .run(input, SessionId::from("starter-ai-agent"), tx, &cancel)
-            .await
-            .map_err(|e| AgentError::Runner(e.to_string()))
+            .await;
+        // **Always** await the collector — `run_res` can be `Err`,
+        // and in that case the events the runner emitted before
+        // failing are exactly what live-feedback surfaces need. The
+        // previous shape used `?` on `run_res` which short-circuited
+        // past the `.await` and lost the partial event stream. `tx`
+        // was moved into `runner.run` and dropped on return either
+        // way, so the collector sees channel close in both paths.
+        let events = collector.await.unwrap_or_default();
+        match run_res {
+            Ok(result) => (Ok(result), events),
+            Err(e) => (Err(AgentError::Runner(e.to_string())), events),
+        }
     }
+}
+
+/// Successful outcome of [`AgentLoop::run`].
+///
+/// Carries both the final assistant text and the ordered stream of
+/// runner [`Event`]s observed during the run (across every runner
+/// call the loop made — initial + post-tool-dispatch second call
+/// in the with-tools path). Consumers that only need the text can
+/// take `outcome.text`; consumers that want to render per-step
+/// activity (e.g. the `rubix-agent` SSE surface for the dashboard
+/// editor) read `outcome.events`.
+#[derive(Debug, Clone)]
+pub struct RunOutcome {
+    /// Concatenated final assistant text. Empty string if the run
+    /// failed before the first runner call produced any text.
+    pub text: String,
+    /// Ordered stream of runner events. May include
+    /// [`EventKind::Connected`], [`EventKind::Text`],
+    /// [`EventKind::ToolUse`], [`EventKind::Done`], and
+    /// [`EventKind::Error`] in arrival order.
+    ///
+    /// [`EventKind::Connected`]: starter_spi::ai::EventKind::Connected
+    /// [`EventKind::Text`]: starter_spi::ai::EventKind::Text
+    /// [`EventKind::ToolUse`]: starter_spi::ai::EventKind::ToolUse
+    /// [`EventKind::Done`]: starter_spi::ai::EventKind::Done
+    /// [`EventKind::Error`]: starter_spi::ai::EventKind::Error
+    pub events: Vec<Event>,
+    /// `Some(_)` when the run terminated abnormally (runner failure,
+    /// unknown tool the model invented, tool dispatch error, …).
+    /// Events collected up to the point of failure remain in
+    /// [`Self::events`] — this is the live-feedback contract
+    /// surfaces like the rubix `ai-agent` flow node depend on so the
+    /// dashboard editor can still render "AI got 3 chunks and then
+    /// errored" rather than silently going dark.
+    pub error: Option<crate::AgentError>,
 }
 
 /// Always-open [`Cancel`] impl used by the loop until cooperative

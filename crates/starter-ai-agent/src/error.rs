@@ -7,7 +7,7 @@ use thiserror::Error;
 /// [`AgentError::Tool`]; model-requested tools the [`crate::ToolSet`]
 /// does not carry through [`AgentError::UnknownTool`]; mis-shaped
 /// runner output through [`AgentError::Unparseable`].
-#[derive(Debug, Error)]
+#[derive(Debug, Clone, Error)]
 #[non_exhaustive]
 pub enum AgentError {
     /// Provider-side failure surfaced by the runner.

@@ -14,6 +14,6 @@ pub mod prompt;
 pub mod testing;
 pub mod tool_set;
 
-pub use agent_loop::AgentLoop;
+pub use agent_loop::{AgentLoop, RunOutcome};
 pub use error::AgentError;
 pub use tool_set::ToolSet;

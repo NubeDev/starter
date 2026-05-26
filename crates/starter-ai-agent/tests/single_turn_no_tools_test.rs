@@ -13,6 +13,6 @@ async fn single_turn_no_tools_returns_runner_text() {
         ..Default::default()
     }]));
     let agent = AgentLoop::new(runner, ToolSet::default());
-    let reply = agent.run("hi".to_owned()).await.expect("loop succeeds");
-    assert_eq!(reply, "hello world");
+    let outcome = agent.run("hi".to_owned()).await.expect("loop succeeds");
+    assert_eq!(outcome.text, "hello world");
 }
