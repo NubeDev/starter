@@ -58,6 +58,7 @@
   "nav.item.access": "Acceso",
   "nav.item.users": "Usuarios",
   "nav.item.warehouse": "Almacén",
+  "nav.item.warehouseExplorer": "Explorador",
   "warehouse.eyebrow": "Administración",
   "warehouse.title": "Almacén",
   "warehouse.stub.body": "La administración de ClickHouse e insights aparecerá aquí en la Fase C. Esta página existe para que la sección de Administración del menú apunte a una ruta real.",

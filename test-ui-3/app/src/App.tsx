@@ -31,6 +31,7 @@ import { FloatingSidebar } from '@/components/floating-sidebar'
 import { LayoutToggle } from '@/components/layout-toggle'
 import { NAV_GROUPS } from '@/lib/nav'
 import { cn } from '@/lib/utils'
+import { UplotDemoPage } from '@/pages/uplot-demo'
 
 const SPARK_AIR = [22, 18, 15, 14, 12, 11, 10, 9, 10, 8, 9, 8, 7]
 const SPARK_WATER = [88, 90, 89, 92, 94, 93, 95, 96, 95, 97, 96, 98, 99]
@@ -498,6 +499,10 @@ function AppShell() {
 }
 
 export default function App() {
+  if (window.location.pathname === '/uplot') {
+    return <UplotDemoPage />
+  }
+
   return (
     <LayoutProvider>
       <AppShell />

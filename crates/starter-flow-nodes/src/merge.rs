@@ -174,6 +174,10 @@ impl NodeBehavior for Merge {
         &self.kind
     }
 
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[STRATEGY_SLOT]
+    }
+
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         let strategy = match input.remove(STRATEGY_SLOT) {
             None => Strategy::Object,

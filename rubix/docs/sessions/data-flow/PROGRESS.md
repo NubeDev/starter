@@ -70,7 +70,8 @@ rewrite a stage doc to absorb spillover.
 
 | Date | Stage | Note | Status |
 |------|-------|------|--------|
-| —    | —     | _(none yet)_ |        |
+| 2026-05-25 | 01 | [tool-call bridge + producer e2e](./2026-05-25-data-flow-01-producer-tool-call-bridge.md) | superseded — scheduler is fine; see 2026-05-26 note for actual blockers |
+| 2026-05-26 | 01 | [scheduler verified; synth fires 2–3× per cron tick](./2026-05-26-data-flow-01-producer-multi-fire.md) | open — duplicate-fire bug in tool-call seed adapter + bar #2 math vs 60s cron mismatch |
 
 Naming convention (matches the rest of `docs/sessions/`):
 

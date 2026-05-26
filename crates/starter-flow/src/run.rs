@@ -852,16 +852,23 @@ async fn run_coordinator(
     );
 
     // Seed writes — these enter through the single chokepoint per R2.
-    for (slot, value) in seeds {
-        if cancel.is_cancelled() {
-            break;
-        }
-        if let Err(e) = store.write_slot(&slot, value, WriteSlotOpts::live()).await {
+    // Batched so that surface seed adapters that legitimately write
+    // multiple input slots of the same node on a single fire (e.g.
+    // tool-call nodes with seeded `tool_id` + `input`) wake the node
+    // exactly once instead of once per slot. The store's R3
+    // idempotent-write short-circuit and per-write `WriteSlotOpts`
+    // semantics are preserved per-entry; only the coalesced wake is
+    // batch-level. See store impl for the carrier-slot rule.
+    if !cancel.is_cancelled() && !seeds.is_empty() {
+        let batch: Vec<_> = seeds
+            .into_iter()
+            .map(|(slot, value)| (slot, value, WriteSlotOpts::live()))
+            .collect();
+        if let Err(e) = store.write_slot_batch(batch).await {
             tracing::warn!(
                 run = %run,
-                target = ?slot,
                 error = %e,
-                "run coordinator seed write failed",
+                "run coordinator seed batch write failed",
             );
         }
     }
@@ -1097,6 +1104,7 @@ mod tests {
             Arc::new(FlowTopology {
                 links,
                 triggers,
+                reads: BTreeMap::new(),
                 behaviors,
             }),
             b_calls,
@@ -1248,6 +1256,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 
@@ -1311,6 +1320,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 
@@ -1488,6 +1498,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links: HashMap::new(),
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 

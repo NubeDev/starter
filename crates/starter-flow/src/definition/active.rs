@@ -146,6 +146,7 @@ mod tests {
         Arc::new(FlowTopology {
             links: HashMap::new(),
             triggers: BTreeMap::new(),
+            reads: BTreeMap::new(),
             behaviors: BTreeMap::new(),
         })
     }

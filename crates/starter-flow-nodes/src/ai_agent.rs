@@ -339,6 +339,24 @@ impl NodeBehavior for AiAgent {
         &self.kind_id
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[INPUT_SLOT]
+    }
+
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[
+            PROVIDER_ID_SLOT,
+            SYSTEM_PROMPT_SLOT,
+            ALLOWED_TOOLS_SLOT,
+            SESSION_MODE_SLOT,
+            SKILL_HINT_SLOT,
+            INPUT_KIND_SLOT,
+            MCP_URL_SLOT,
+            MCP_TOKEN_SLOT,
+            MCP_CONFIG_PATH_SLOT,
+        ]
+    }
+
     fn config_schema(&self) -> &'static RootSchema {
         &AI_AGENT_SETTINGS_SCHEMA
     }

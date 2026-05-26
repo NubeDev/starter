@@ -22,3 +22,4 @@ pub mod team;
 pub mod tenant;
 pub mod undo;
 pub mod user;
+pub mod warehouse;

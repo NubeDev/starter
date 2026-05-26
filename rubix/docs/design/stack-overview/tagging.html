@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - Tagging</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html">Business</a>
+        <a href="developer.html">Developer</a>
+        <a href="data-flow.html">Data Flow</a>
+        <a href="tagging.html" aria-current="page">Tagging</a>
+        <a href="flows-tools.html">Flows + Tools</a>
+        <a href="flow-runtime.html">Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+<section id="tagging" class="page">
+      <div class="wrap">
+        <div class="page-number">Tagging and ClickHouse Query Path</div>
+        <div class="data-hero">
+          <div>
+            <h1>Analytical tags need to live where analytical queries run.</h1>
+            <p class="lede">
+              Rubix can keep tag vocabulary and dashboard page tags in Postgres, but anything used to filter time-series facts, marts, charts, and reports should be available inside ClickHouse. Otherwise every dashboard query becomes a two-database join in application code.
+            </p>
+            <div class="callout">
+              Current reality: the dedicated tags design doc is still a placeholder. Dashboard page tags already exist in Postgres for page listing. Warehouse docs already constrain analytical tag values to <code>Bool</code> and <code>Str</code>, which points toward a typed ClickHouse-friendly tag model.
+            </div>
+          </div>
+          <aside class="map-panel" aria-label="Tag placement diagram">
+            <h2>Two tag roles</h2>
+            <div class="db-split">
+              <article class="db-card">
+                <header>Catalog tags in Postgres</header>
+                <div class="db-body">
+                  <p>Used for governance and discovery of resources.</p>
+                  <ul>
+                    <li>Dashboard list filters</li>
+                    <li>Owner/team/resource metadata</li>
+                    <li>Allowed vocabulary and labels</li>
+                    <li>Authz-adjacent resource scoping</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="db-card clickhouse">
+                <header>Analytical tags in ClickHouse</header>
+                <div class="db-body">
+                  <p>Used inside report and dashboard queries.</p>
+                  <ul>
+                    <li>Fact row filters</li>
+                    <li>Mart dimensions</li>
+                    <li>Fast cohort/group-by queries</li>
+                    <li>No PG pre-read on hot query path</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </aside>
+        </div>
+
+      <section class="section">
+          <div class="section-head">
+            <h2>Preferred query path</h2>
+            <p>For dashboards and reports, the query API should bind tag filters directly into a ClickHouse template.</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Preferred tag query path">
+            <div class="pipe-step sdui">
+              <small>1</small>
+              <strong>Dashboard filter</strong>
+              <span>User selects tags such as <code>site:dc-1</code>, <code>asset:chiller</code>, or <code>critical:true</code>.</span>
+            </div>
+            <div class="pipe-step">
+              <small>2</small>
+              <strong><code>rubix.analytics.query</code></strong>
+              <span>The resolver calls a named template and passes tag parameters through typed bindings.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>3</small>
+              <strong>ClickHouse template</strong>
+              <span>SQL filters on tags already present in the L2 table or L3 mart. No application-side PG join.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>4</small>
+              <strong>Rows returned</strong>
+              <span>The query returns chart/table/KPI rows that already reflect tenant, time, and tag filters.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>5</small>
+              <strong>SDUI render</strong>
+              <span>The page renders the filtered result and can refresh when the user changes tag selections.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>PG</small>
+              <strong>Optional catalog read</strong>
+              <span>PG may populate tag picker options, but it should not be required for every analytical data read.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>What not to do</h2>
+            <p>This is the failure mode you called out: it adds latency, consistency risk, and app-level join logic.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Bad hot path</h3>
+              <p>Dashboard asks PG for matching tagged resources, receives a list of ids, then asks ClickHouse for historical facts matching those ids. This turns every analytics query into a cross-store orchestration problem.</p>
+            </article>
+            <article class="card">
+              <h3>Better hot path</h3>
+              <p>Ingest or mart rules copy the needed tag keys and values into ClickHouse. The dashboard sends <code>tag_key</code> / <code>tag_value</code> filters to <code>rubix.analytics.query</code>, and ClickHouse answers directly.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>ClickHouse tag shapes</h2>
+            <p>The exact schema belongs in the tags design doc, but the page should make the direction clear.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Raw event tags</h3>
+              <p>L1 rows can carry incoming tags from agents/extensions. A flexible shape such as a string map works for ingestion, with indexes on keys and hot values where needed.</p>
+            </article>
+            <article class="card">
+              <h3>Curated typed tags</h3>
+              <p>L2 should normalize allowed tag types to <code>Bool</code> and <code>Str</code>, matching the warehouse constraint and avoiding runtime type discovery.</p>
+            </article>
+            <article class="card">
+              <h3>Mart dimensions</h3>
+              <p>L3 marts should promote the highest-value tags into direct dimensions when they are used constantly in dashboards, reports, or alert cohorts.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Concrete example</h2>
+            <p>A weather extension or system probe can attach tags once during ingest, then every analytical consumer uses those tags from ClickHouse.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Tagging example across ingest and query">
+            <div class="lane-label">Ingest</div>
+            <div class="lane-cell"><strong>Extension emits row</strong><span><code>tenant_id</code>, timestamp, measurement, and tags such as <code>site</code>, <code>region</code>, <code>asset_type</code>.</span></div>
+            <div class="lane-cell"><strong>ClickHouse L1</strong><span>Stores the incoming fact and raw tag map in <code>rubix</code>.</span></div>
+            <div class="lane-cell"><strong>Rule promotes row</strong><span>Normalizes tag keys, validates allowed types, and writes L2.</span></div>
+            <div class="lane-cell"><strong>Mart builds view</strong><span>Copies hot tags to dimensions used by dashboards.</span></div>
+
+            <div class="lane-label">Query</div>
+            <div class="lane-cell"><strong>Tag picker</strong><span>Options may come from PG vocabulary or a ClickHouse distinct query, depending on freshness needs.</span></div>
+            <div class="lane-cell"><strong>Analytics template</strong><span>Binds <code>region</code> and <code>asset_type</code> as query params.</span></div>
+            <div class="lane-cell"><strong>ClickHouse filter</strong><span>Applies tenant, time window, and tag filters in one query plane.</span></div>
+            <div class="lane-cell"><strong>Dashboard result</strong><span>SDUI receives rows already scoped to the tag selection.</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Design rule</h2>
+            <p>The short version to carry into the actual tags design work.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>PG is the catalog</h3>
+              <p>Use Postgres to define tag names, labels, descriptions, ownership, allowed values, and page/resource metadata.</p>
+            </article>
+            <article class="card">
+              <h3>ClickHouse is the filter plane</h3>
+              <p>Use ClickHouse for tags that filter facts, trends, reports, alerts, cohorts, and warehouse marts.</p>
+            </article>
+            <article class="card">
+              <h3>Sync is ingest-time</h3>
+              <p>Copy or validate tags when data is written or promoted. Do not make every read query reconstruct tags from PG.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="../tags/README.md">tags placeholder</a>
+          <a href="../warehouse/README.md">warehouse</a>
+          <a href="../reports/README.md">analytics query</a>
+          <a href="../sdui/storage/README.md">dashboard tags</a>
+          <a href="../starter-changes/phase-2c.md">ClickHouse map index note</a>
+        </div>
+      </div>
+  </section>
+  </main>
+</body>
+</html>

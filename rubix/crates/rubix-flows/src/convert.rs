@@ -98,17 +98,16 @@ pub fn convert(
         if decl.kind.as_str() == "starter.flow.trigger.schedule" {
             triggers.push("cron_expr".to_owned());
         }
-        // `starter.flow.tool-call` reads `tool_id` + `tool_input`
-        // from its input SlotMap. The propagator only includes
-        // slots listed in `triggers` when assembling that map (see
-        // `crates/starter-flow/src/propagator.rs` build_input
-        // loop), so we list both so the host-side surface seeder
-        // (see `rubix-agent/src/boot/mcp/register.rs`,
-        // `tool_call_seeds`) reaches the body.
-        if decl.kind.as_str() == "starter.flow.tool-call" {
-            triggers.push("tool_id".to_owned());
-            triggers.push("input".to_owned());
-        }
+        // `starter.flow.tool-call` declares `tool_id` + `input` as
+        // *read* slots intrinsically (see
+        // `starter-flow-nodes/src/tool_call.rs` —
+        // `NodeBehavior::read_slots`). They are available in the
+        // input `SlotMap` at invoke time but writes to them do not
+        // wake the node. This is the long-term event-driven
+        // dataflow contract: triggers are the wake set, reads are
+        // configuration / reference inputs. Re-listing them here as
+        // YAML triggers would promote them back into the wake set
+        // and re-introduce the per-fire multi-wake bug — so don't.
         decl.triggers = triggers;
         body.nodes.push(decl);
     }

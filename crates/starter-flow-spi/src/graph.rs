@@ -32,6 +32,49 @@ pub trait GraphStore: Send + Sync + 'static {
         opts: WriteSlotOpts,
     ) -> Result<(), GraphError>;
 
+    /// Write a batch of slot values atomically with coalesced wakes.
+    ///
+    /// Semantically equivalent to calling [`Self::write_slot`] in
+    /// sequence for each entry, with one critical difference around
+    /// event coalescing:
+    ///
+    /// - Writes to the **same `(node, slot)`** within one batch
+    ///   each emit their own `SlotChanged` event — back-to-back
+    ///   edits to one slot are distinct value-over-time changes,
+    ///   matching what callers see from sequential `write_slot`
+    ///   calls.
+    /// - Writes to **different slots of the same node** within one
+    ///   batch coalesce to a single carrier event. The motivating
+    ///   case is a surface seed adapter populating several input
+    ///   slots of one node on a single fire (e.g. a tool-call
+    ///   node's `tool_id` + `input` seeded from YAML config).
+    ///   Without coalescing, the propagator would wake that node
+    ///   once per slot.
+    ///
+    /// Per-entry semantics still honour [`WriteSlotOpts::replay`]
+    /// (no event) and [`WriteSlotOpts::force`] / R3 idempotent
+    /// short-circuit (no event when value is unchanged and `force =
+    /// false`); a write that's suppressed by either rule
+    /// contributes no carrier. The carrier slot for the coalesced
+    /// event is the first non-suppressed write to that node —
+    /// subscribers must not rely on the specific carrier slot, only
+    /// on the wake itself, since the propagator's input-map
+    /// assembly reads every declared trigger slot from the store.
+    ///
+    /// Default implementation falls back to per-entry `write_slot`
+    /// for backends that don't need coalescing; storage backends
+    /// that share a broadcast channel (in-memory, Postgres-listen,
+    /// etc.) should override to actually dedupe.
+    async fn write_slot_batch(
+        &self,
+        writes: Vec<(SlotRef, SlotValue, WriteSlotOpts)>,
+    ) -> Result<(), GraphError> {
+        for (slot, value, opts) in writes {
+            self.write_slot(&slot, value, opts).await?;
+        }
+        Ok(())
+    }
+
     /// Read the current value of a slot.
     async fn read_slot(&self, slot: &SlotRef) -> Result<SlotValue, GraphError>;
 

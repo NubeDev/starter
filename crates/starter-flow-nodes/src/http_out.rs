@@ -272,6 +272,14 @@ impl NodeBehavior for HttpOut {
         &self.kind
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[BODY_SLOT]
+    }
+
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[URL_SLOT, METHOD_SLOT, HEADERS_SLOT, TIMEOUT_MS_SLOT]
+    }
+
     fn config_schema(&self) -> &'static RootSchema {
         &HTTP_OUT_SETTINGS_SCHEMA
     }

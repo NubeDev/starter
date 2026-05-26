@@ -176,6 +176,14 @@ impl NodeBehavior for Log {
         &self.kind
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[VALUE_SLOT]
+    }
+
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[LEVEL_SLOT]
+    }
+
     fn config_schema(&self) -> &'static RootSchema {
         &LOG_SETTINGS_SCHEMA
     }

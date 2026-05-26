@@ -281,6 +281,7 @@ impl FlowEngine {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 

@@ -59,10 +59,22 @@ pub static DESCRIPTOR: starter_flow_spi::node::NodeDescriptor =
         "starter.flow.node.tool-call.help",
     );
 
+/// Wake (trigger) slot. The body does not read it — its only role is
+/// to register the node in the propagator's subscription set so an
+/// upstream link delivering a value here drives one invocation per
+/// arrival. Held separate from [`TOOL_ID_SLOT`] / [`TOOL_INPUT_SLOT`]
+/// so the latter two stay declared as read-only configuration inputs
+/// (writing them does not wake the node).
+pub const TOOL_IN_SLOT: &str = "in";
+
 /// Input slot carrying the [`KindId`] of the tool to invoke. The slot
 /// value must be a [`SlotValue::String`] holding a reverse-DNS id; the
 /// body validates it through [`KindId::new`] and rejects malformed ids
 /// with [`ToolCallError::InvalidToolId`].
+///
+/// Declared as a *read* slot (see [`NodeBehavior::read_slots`]) — the
+/// surface seeds it from `settings.tool_id` per registration; writes
+/// alone do not wake the body.
 pub const TOOL_ID_SLOT: &str = "tool_id";
 
 /// Input slot carrying the tool's input JSON payload. The slot value
@@ -162,6 +174,14 @@ impl ToolCall {
 impl NodeBehavior for ToolCall {
     fn kind_id(&self) -> &KindId {
         &self.kind
+    }
+
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[TOOL_IN_SLOT]
+    }
+
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[TOOL_ID_SLOT, TOOL_INPUT_SLOT]
     }
 
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {

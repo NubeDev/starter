@@ -8,6 +8,7 @@
 //! for the snapshot-before-write contract and the data-loss caveat
 //! on mart.create undo.
 
+pub mod ch_client_writer;
 pub mod mart_create;
 pub mod mart_drop;
 pub mod mart_list;

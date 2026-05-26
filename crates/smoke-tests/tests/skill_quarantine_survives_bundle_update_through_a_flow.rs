@@ -111,6 +111,7 @@ fn build_three_node_topology(ai_agent: Arc<dyn NodeBehavior>) -> Arc<FlowTopolog
     Arc::new(FlowTopology {
         links,
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }

@@ -47,7 +47,7 @@ async fn history_row_lands_in_rubix_database() {
     // placeholders thanks to `parse_pg_dsn` returning `Some`
     // below.
     let pg_dsn = "postgres://rubix:rubix-dev@127.0.0.1:5433/rubix";
-    let report = apply_ch_migrations(Some(&url), Some(pg_dsn))
+    let report = apply_ch_migrations(Some(&url), Some(pg_dsn), None)
         .await
         .expect("apply_ch_migrations succeeds against a fresh container");
     assert!(!report.skipped, "migration step should run, not skip");

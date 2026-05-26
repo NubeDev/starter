@@ -118,6 +118,7 @@ async fn codeless_shape_trigger_ai_agent_log_chains_through_engine() {
     let topology = Arc::new(FlowTopology {
         links,
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     });
 

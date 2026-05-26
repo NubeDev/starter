@@ -68,6 +68,12 @@ export const NAV_GROUPS: NavGroup[] = [
       { labelKey: 'nav.item.access',    href: '/admin/access',    icon: ShieldCheck },
       { labelKey: 'nav.item.users',     href: '/admin/users',     icon: Users },
       { labelKey: 'nav.item.warehouse', href: '/admin/warehouse', icon: Database },
+      {
+        labelKey: 'nav.item.warehouseExplorer',
+        defaultMessage: 'Explorer',
+        href: '/admin/warehouse-explorer',
+        icon: Database,
+      },
     ],
   },
 ]

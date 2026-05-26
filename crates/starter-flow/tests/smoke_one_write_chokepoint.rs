@@ -29,6 +29,7 @@
 //! drops; if R3 idempotency swallows a write, the envelope counter
 //! drops. Either fails this test loudly.
 
+use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
 
@@ -172,6 +173,7 @@ async fn three_writers_share_one_chokepoint() {
     let topology = Arc::new(FlowTopology {
         links: Default::default(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     });
 

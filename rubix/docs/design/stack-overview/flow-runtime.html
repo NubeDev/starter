@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - Runtime Flows</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html">Business</a>
+        <a href="developer.html">Developer</a>
+        <a href="data-flow.html">Data Flow</a>
+        <a href="tagging.html">Tagging</a>
+        <a href="flows-tools.html">Flows + Tools</a>
+        <a href="flow-runtime.html" aria-current="page">Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+  <section id="flow-runtime" class="page">
+    <div class="wrap">
+      <div class="page-number">Runtime Flows, Long-Running Jobs, and Live Nodes</div>
+      <div class="data-hero">
+        <div>
+          <h1>Runtime flows are long-running graphs, not one-shot tool calls.</h1>
+          <p class="lede">
+            Use this model for PLC-style or Node-RED-style jobs: a trigger fires, values move through linked nodes, stateful nodes remember their last value, and operators watch slot values update live.
+          </p>
+          <div class="callout">
+            This is different from the AI/tool model. Tools manage the flow, deploy revisions, query status, and perform side effects. Runtime nodes keep running after boot and pass values through links.
+          </div>
+        </div>
+        <aside class="map-panel" aria-label="Two flow execution models">
+          <h2>Two execution models</h2>
+          <div class="db-split">
+            <article class="db-card">
+              <header>Tool-driven flow</header>
+              <div class="db-body">
+                <p>A user or AI asks for an outcome. The flow runs, calls tools, returns a result, then stops.</p>
+                <ul>
+                  <li>Dashboard assistant</li>
+                  <li>Flow programmer</li>
+                  <li>ClickHouse ruler</li>
+                  <li>Analytics reporter</li>
+                </ul>
+              </div>
+            </article>
+            <article class="db-card clickhouse">
+              <header>Runtime flow</header>
+              <div class="db-body">
+                <p>A graph is mounted at boot. Triggers fire repeatedly and node state survives across runs.</p>
+                <ul>
+                  <li>Schedule or event trigger</li>
+                  <li>Counter / transform / log nodes</li>
+                  <li>Durable node state</li>
+                  <li>Live canvas updates</li>
+                </ul>
+              </div>
+            </article>
+          </div>
+        </aside>
+      </div>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Tick counter runtime example</h2>
+          <p>The reference flow is <code>com.rubix.tick-counter</code>: schedule trigger -> counter -> log.</p>
+        </div>
+        <div class="pipeline" role="img" aria-label="Schedule trigger to counter to log runtime flow">
+          <div class="pipe-step extension">
+            <small>1</small>
+            <strong>Mounted at boot</strong>
+            <span>The agent loads the YAML and registers the live flow revision.</span>
+          </div>
+          <div class="pipe-step pg">
+            <small>2</small>
+            <strong>Schedule trigger</strong>
+            <span><code>starter.flow.trigger.schedule</code> fires every 5 seconds from cron <code>*/5 * * * * *</code>.</span>
+          </div>
+          <div class="pipe-step ch">
+            <small>3</small>
+            <strong>Counter node</strong>
+            <span><code>starter.flow.counter</code> reads prior count from <code>NodeStateStore</code>, adds <code>step</code>, and writes it back.</span>
+          </div>
+          <div class="pipe-step sdui">
+            <small>4</small>
+            <strong>Log node</strong>
+            <span><code>starter.flow.log</code> records the value and passes the latest slot value to subscribers.</span>
+          </div>
+          <div class="pipe-step">
+            <small>5</small>
+            <strong>Live canvas</strong>
+            <span>SSE events update the canvas with latest node status and slot values.</span>
+          </div>
+          <div class="pipe-step pg">
+            <small>6</small>
+            <strong>Hot edit</strong>
+            <span>Changing <code>step</code> from 1 to 10 updates the next tick without restarting the agent.</span>
+          </div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Runtime state and events</h2>
+          <p>Long-running flows need state, event streaming, and safe redeploy behavior.</p>
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <h3><code>NodeStateStore</code></h3>
+            <p>Stores per-node values under <code>(flow_id, node_id, key)</code>. The counter uses it so a restart does not reset the count.</p>
+          </article>
+          <article class="card">
+            <h3>Flow events</h3>
+            <p><code>GET /api/v1/flows/{flow_id}/events</code> streams node start, emit, and failure events for live operator views.</p>
+          </article>
+          <article class="card">
+            <h3>Hot reload</h3>
+            <p>Settings changes can affect the next tick. Topology changes swap the graph for future runs while in-flight runs finish on their current snapshot.</p>
+          </article>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>PLC / Node-RED style mental model</h2>
+          <p>Think of the runtime as scan/tick/event-driven node execution with visible wires.</p>
+        </div>
+        <div class="swimlane" role="img" aria-label="PLC style runtime flow lifecycle">
+          <div class="lane-label">Design</div>
+          <div class="lane-cell"><strong>Trigger node</strong><span>Starts the graph on schedule, event, webhook, or explicit fire.</span></div>
+          <div class="lane-cell"><strong>Processing node</strong><span>Counter, transform, branch, merge, HTTP out, or extension node.</span></div>
+          <div class="lane-cell"><strong>Output node</strong><span>Log, alert, analytics write, dashboard update, or external tool call.</span></div>
+          <div class="lane-cell"><strong>Links</strong><span>Wires connect output slots to input slots.</span></div>
+
+          <div class="lane-label">Run</div>
+          <div class="lane-cell"><strong>Fire</strong><span>The trigger emits a token/value.</span></div>
+          <div class="lane-cell"><strong>Propagate</strong><span>The engine moves the value across links.</span></div>
+          <div class="lane-cell"><strong>Persist</strong><span>Stateful nodes read/write <code>NodeStateStore</code>.</span></div>
+          <div class="lane-cell"><strong>Observe</strong><span>SSE pushes latest status and slot values to the UI.</span></div>
+        </div>
+      </section>
+
+      <section class="section">
+        <div class="section-head">
+          <h2>Where tools still fit</h2>
+          <p>Even in a long-running runtime, tools remain the controlled operations around the graph.</p>
+        </div>
+        <div class="grid-3">
+          <article class="card">
+            <h3>Deploy and edit</h3>
+            <p><code>rubix.flow_ops.deploy</code> writes a new flow revision. Hot-edit uses the same safe deploy path.</p>
+          </article>
+          <article class="card">
+            <h3>Inspect and list</h3>
+            <p><code>rubix.flow_ops.list</code> and flow event routes show what exists and what is currently running.</p>
+          </article>
+          <article class="card">
+            <h3>Undo changes</h3>
+            <p><code>rubix.undo.last</code> can roll back a deployed flow revision when the change was reversible.</p>
+          </article>
+        </div>
+      </section>
+
+      <div class="source-list" aria-label="Source docs">
+        <a href="../flows/README.md">flows</a>
+        <a href="../scheduling/README.md">scheduling</a>
+        <a href="../../../crates/rubix-flows/flows/tick-counter.yaml">tick counter YAML</a>
+        <a href="../../../crates/rubix-agent/src/boot/flow_runtime.rs">flow runtime code</a>
+        <a href="../../../crates/rubix-agent/src/routes/flow_events.rs">flow events route</a>
+      </div>
+    </div>
+  </section>
+  </main>
+</body>
+</html>

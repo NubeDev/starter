@@ -259,6 +259,7 @@ fn build_topology(node_a: &NodeId, node_b: &NodeId) -> Arc<FlowTopology> {
     Arc::new(FlowTopology {
         links,
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }

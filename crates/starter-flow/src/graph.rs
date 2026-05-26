@@ -189,6 +189,110 @@ impl GraphStore for InMemoryGraphStore {
         Ok(())
     }
 
+    /// Batched write with coalesced wakes — at most one `SlotChanged`
+    /// event per distinct destination node, regardless of how many
+    /// slots in the batch target that node.
+    ///
+    /// Without this override the default trait impl would loop
+    /// `write_slot` and emit N events for N writes to the same node,
+    /// which makes the propagator wake the node N times per batch.
+    /// Real example: the rubix surface seed adapter writes
+    /// `payload` + `tool_id` + `input` to a tool-call root on every
+    /// flow fire; the per-fire seed loop in the run coordinator then
+    /// triggers the node 3× instead of once. See
+    /// `rubix/docs/sessions/data-flow/2026-05-26-data-flow-01-producer-multi-fire.md`.
+    async fn write_slot_batch(
+        &self,
+        writes: Vec<(SlotRef, SlotValue, WriteSlotOpts)>,
+    ) -> Result<(), GraphError> {
+        if writes.is_empty() {
+            return Ok(());
+        }
+
+        // Coalescing rule: within one batch, writes targeting the
+        // **same slot** are sequential edits (each represents a
+        // distinct value-over-time change — tests and the future
+        // multi-tick seed path rely on this), so each emits its own
+        // `SlotChanged`. Writes targeting **different slots of the
+        // same node** are treated as one atomic node-input update
+        // and coalesce to a single carrier event. The carrier key is
+        // therefore `(NodeId, SlotName)` rather than `NodeId`.
+        //
+        // The motivating case is the surface seed adapter writing
+        // `tool_id` + `input` to a tool-call node on every flow
+        // fire — three slot writes, one logical node wake. See
+        // `rubix/docs/sessions/data-flow/2026-05-26-data-flow-01-producer-multi-fire.md`.
+        let mut emit: Vec<(SlotRef, SlotValue)> = Vec::with_capacity(writes.len());
+        let mut covered_nodes: std::collections::BTreeSet<NodeId> =
+            std::collections::BTreeSet::new();
+        let mut covered_slots: std::collections::BTreeSet<(NodeId, String)> =
+            std::collections::BTreeSet::new();
+
+        let mut nodes = self.nodes.write().await;
+        for (slot, value, opts) in &writes {
+            let span = tracing::info_span!(
+                "write_slot",
+                node_id = %slot.node,
+                slot_name = %slot.slot,
+                replay_flag = opts.replay,
+                force_flag = opts.force,
+                origin = opts.origin.as_str(),
+                prev_was_equal = tracing::field::Empty,
+                batched = true,
+            );
+            let _enter = span.enter();
+
+            let entry = nodes.entry(slot.node.clone()).or_default();
+            let prev_was_equal = entry
+                .slots
+                .get(&slot.slot)
+                .is_some_and(|prev| prev == value);
+            span.record("prev_was_equal", prev_was_equal);
+
+            // R3 idempotent-write short-circuit — same rule as the
+            // single-write path. A suppressed write contributes no
+            // carrier.
+            if prev_was_equal && !opts.force {
+                continue;
+            }
+
+            entry.slots.insert(slot.slot.clone(), value.clone());
+
+            // R2 replay rule — replay writes never emit events.
+            if opts.replay {
+                continue;
+            }
+
+            let slot_key = (slot.node.clone(), slot.slot.clone());
+            if covered_slots.contains(&slot_key) {
+                // Same (node, slot) already had a carrier earlier in
+                // the batch. Re-write its value but emit an
+                // additional event so sequential same-slot edits
+                // still represent distinct wakes — matches the
+                // per-write `write_slot` behaviour callers expect
+                // when they issue back-to-back writes to one slot.
+                emit.push((slot.clone(), value.clone()));
+                continue;
+            }
+            if covered_nodes.contains(&slot.node) {
+                // Different slot, same node, already covered by an
+                // earlier carrier in this batch — coalesce.
+                covered_slots.insert(slot_key);
+                continue;
+            }
+            covered_nodes.insert(slot.node.clone());
+            covered_slots.insert(slot_key);
+            emit.push((slot.clone(), value.clone()));
+        }
+        drop(nodes);
+
+        for (slot, value) in emit {
+            let _ = self.tx.send(GraphEvent::SlotChanged { slot, value });
+        }
+
+        Ok(())
+    }
+
     async fn read_slot(&self, slot: &SlotRef) -> Result<SlotValue, GraphError> {
         let nodes = self.nodes.read().await;
         let node = nodes
@@ -364,5 +468,120 @@ mod tests {
             .expect("post-subscribe write missing")
             .expect("stream ended");
         assert_eq!(ev.value, Some(SlotValue::Int(101)));
+    }
+
+    /// `write_slot_batch` emits at most one `SlotChanged` event per
+    /// distinct destination node, no matter how many slots in the
+    /// batch target that node. This is the property the run
+    /// coordinator's seed path relies on so a tool-call node whose
+    /// `tool_id` + `input` are seeded together wakes exactly once.
+    #[tokio::test]
+    async fn write_slot_batch_coalesces_per_node() {
+        let store = InMemoryGraphStore::new();
+        let mut sub = store.subscribe(SubscribeOpts::default());
+
+        let tool_id_slot = slot("com.acme.synth", "tool_id");
+        let input_slot = slot("com.acme.synth", "input");
+        let other_slot = slot("com.acme.other", "payload");
+
+        store
+            .write_slot_batch(vec![
+                (
+                    tool_id_slot.clone(),
+                    SlotValue::String("rubix.dataflow.synth.emit".into()),
+                    WriteSlotOpts::live(),
+                ),
+                (
+                    input_slot.clone(),
+                    SlotValue::Int(42),
+                    WriteSlotOpts::live(),
+                ),
+                (
+                    other_slot.clone(),
+                    SlotValue::Int(7),
+                    WriteSlotOpts::live(),
+                ),
+            ])
+            .await
+            .unwrap();
+
+        // Exactly two events: one carrier per distinct node.
+        let mut seen_nodes = std::collections::BTreeSet::new();
+        for _ in 0..2 {
+            let ev = timeout(Duration::from_millis(200), sub.next())
+                .await
+                .expect("batch event missing")
+                .expect("stream ended");
+            seen_nodes.insert(ev.slot.node);
+        }
+        assert_eq!(seen_nodes.len(), 2);
+
+        // No third event in flight.
+        let none = timeout(Duration::from_millis(50), sub.next()).await;
+        assert!(none.is_err(), "extra batch event: {none:?}");
+
+        // Both slots actually landed in the store for the
+        // multi-slot node — the carrier rule only controls events,
+        // not durability.
+        assert_eq!(
+            store.read_slot(&tool_id_slot).await.unwrap(),
+            SlotValue::String("rubix.dataflow.synth.emit".into()),
+        );
+        assert_eq!(
+            store.read_slot(&input_slot).await.unwrap(),
+            SlotValue::Int(42),
+        );
+    }
+
+    /// Replay-tagged entries in a batch never emit events, matching
+    /// the per-write R2 replay rule.
+    #[tokio::test]
+    async fn write_slot_batch_replay_emits_no_events() {
+        let store = InMemoryGraphStore::new();
+        let mut sub = store.subscribe(SubscribeOpts::default());
+
+        let a = slot("com.acme.n1", "x");
+        let b = slot("com.acme.n2", "y");
+        store
+            .write_slot_batch(vec![
+                (a.clone(), SlotValue::Int(1), WriteSlotOpts::replay()),
+                (b.clone(), SlotValue::Int(2), WriteSlotOpts::replay()),
+            ])
+            .await
+            .unwrap();
+
+        let none = timeout(Duration::from_millis(100), sub.next()).await;
+        assert!(none.is_err(), "replay batch must not emit: {none:?}");
+        assert_eq!(store.read_slot(&a).await.unwrap(), SlotValue::Int(1));
+        assert_eq!(store.read_slot(&b).await.unwrap(), SlotValue::Int(2));
+    }
+
+    /// Idempotent (already-equal) entries in a batch don't contribute
+    /// a carrier; if every entry for a node is short-circuited, no
+    /// event fires for that node.
+    #[tokio::test]
+    async fn write_slot_batch_honours_idempotent_short_circuit() {
+        let store = InMemoryGraphStore::new();
+
+        let s = slot("com.acme.n1", "x");
+        store
+            .write_slot(&s, SlotValue::Int(1), WriteSlotOpts::live())
+            .await
+            .unwrap();
+
+        // Subscribe *after* the first write so the batch is the only
+        // thing in the subscriber's queue.
+        let mut sub = store.subscribe(SubscribeOpts::default());
+
+        store
+            .write_slot_batch(vec![(s.clone(), SlotValue::Int(1), WriteSlotOpts::live())])
+            .await
+            .unwrap();
+
+        let none = timeout(Duration::from_millis(100), sub.next()).await;
+        assert!(
+            none.is_err(),
+            "all-idempotent batch must not emit: {none:?}"
+        );
     }
 }

@@ -131,6 +131,10 @@ impl NodeBehavior for Branch {
         &self.kind
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[CONDITION_SLOT, VALUE_SLOT]
+    }
+
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         let condition = input
             .remove(CONDITION_SLOT)

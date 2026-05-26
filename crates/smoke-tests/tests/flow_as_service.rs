@@ -77,6 +77,7 @@ fn build_topology() -> Arc<FlowTopology> {
     Arc::new(FlowTopology {
         links: HashMap::new(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }

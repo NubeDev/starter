@@ -59,6 +59,7 @@ fn one_node_transform_topology(registry: Arc<dyn TransformFunctionRegistry>) -> 
     Arc::new(FlowTopology {
         links: HashMap::new(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }

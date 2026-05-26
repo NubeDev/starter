@@ -39,6 +39,7 @@
 
 use std::sync::Arc;
 
+use rubix_tools::clickhouse::ch_client_writer::ChClientWriter;
 use rubix_tools::clickhouse::mart_create::ClickhouseMartCreateTool;
 use rubix_tools::clickhouse::mart_drop::ClickhouseMartDropTool;
 use rubix_tools::clickhouse::mart_list::ClickhouseMartListTool;
@@ -84,6 +85,7 @@ use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
+use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
@@ -104,8 +106,10 @@ pub fn build_tool_registry(
     pg_pool: Option<Pool>,
 ) -> Vec<Arc<dyn Tool>> {
     let mut disk = DiskTool::default().with_insights_threshold(insights_disk_threshold);
-    if let Some(client) = ch {
-        disk = disk.with_history(client);
+    let mut warehouse_ingest = WarehouseIngestTool::default();
+    if let Some(client) = ch.as_ref() {
+        disk = disk.with_history(client.clone());
+        warehouse_ingest = warehouse_ingest.with_client(client.clone());
     }
 
     // ---- shared in-memory stores (see module docs) ---------------
@@ -128,7 +132,13 @@ pub fn build_tool_registry(
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
     let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::new());
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
-    let ch_writer: Arc<dyn ChWriter> = Arc::new(InMemoryChWriter::new());
+    let ch_writer: Arc<dyn ChWriter> = match ch.as_ref() {
+        Some(client) => Arc::new(ChClientWriter::new(
+            (**client).clone(),
+            crate::boot::clickhouse::RUBIX_CH_DATABASE,
+        )),
+        None => Arc::new(InMemoryChWriter::new()),
+    };
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
     // Dashboard verbs share the SDUI page provider's store when a PG
     // pool is wired in — that is the single source of truth for
@@ -156,11 +166,13 @@ pub fn build_tool_registry(
 
     warn!(
         target: "rubix.registry",
-        "user/tenant/team/clickhouse/insights verbs are wired against \
+        "user/tenant/team/insights verbs are wired against \
          in-memory stores; mutations do not survive restart and do \
-         not reflect rows from auth/PG/ClickHouse — PG-backed and \
-         CH-backed adapters are tracked follow-ups (see registry.rs \
-         module docs)",
+         not reflect rows from auth/PG — PG-backed adapters are \
+         tracked follow-ups (see registry.rs module docs). The \
+         clickhouse.* verbs swap to the live ChClient when one is \
+         configured (RUBIX_CH_URL set); without it they fall back \
+         to the in-memory writer.",
     );
 
     vec![
@@ -171,6 +183,11 @@ pub fn build_tool_registry(
         Arc::new(AlertSendTool),
         // ---- dataflow (synth) -----------------------------------
         Arc::new(SynthEmitTool::default()),
+        // ---- warehouse (ingest) ---------------------------------
+        // Append-only L1 writer; targets `rubix.meter_readings_raw`
+        // via the boot-applied 0003 migration. See
+        // `docs/sessions/data-flow/02-ingest-l1.md`.
+        Arc::new(warehouse_ingest),
         // ---- flow_ops (read + write) ----------------------------
         Arc::new(FlowListTool::new(flow_store.clone())),
         Arc::new(FlowKindsTool::from_behaviors(&builtin_kind_behaviors())),

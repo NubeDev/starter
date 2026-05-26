@@ -129,6 +129,48 @@ body {
 
 .tabular { font-variant-numeric: tabular-nums; }
 
+.beautiful-uplot {
+  width: 100%;
+  color: var(--color-muted);
+  font-family: var(--font-sans);
+}
+
+.beautiful-uplot .u-wrap {
+  background: transparent;
+}
+
+.beautiful-uplot .u-title,
+.beautiful-uplot .u-legend {
+  display: none;
+}
+
+.beautiful-uplot .u-axis {
+  color: rgba(167, 208, 189, 0.64);
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+.beautiful-uplot .u-label {
+  color: rgba(167, 208, 189, 0.72);
+  font-size: 11px;
+}
+
+.beautiful-uplot .u-cursor-x,
+.beautiful-uplot .u-cursor-y {
+  border-color: rgba(240, 253, 244, 0.34);
+}
+
+.beautiful-uplot .u-cursor-pt {
+  border-radius: 999px;
+  box-shadow:
+    0 0 0 4px rgba(6, 16, 12, 0.86),
+    0 0 28px rgba(74, 222, 128, 0.28);
+}
+
+.beautiful-uplot canvas {
+  border-radius: 1.25rem;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

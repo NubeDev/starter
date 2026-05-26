@@ -229,6 +229,14 @@ impl NodeBehavior for TriggerExplicit {
         &self.kind
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[PAYLOAD_SLOT]
+    }
+
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[CHANNEL_ID_SLOT]
+    }
+
     fn config_schema(&self) -> &'static RootSchema {
         &TRIGGER_EXPLICIT_SETTINGS_SCHEMA
     }

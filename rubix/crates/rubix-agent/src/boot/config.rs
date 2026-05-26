@@ -42,6 +42,19 @@ pub struct AgentConfig {
     /// [`crate::boot::clickhouse`].
     pub clickhouse_url: Option<String>,
 
+    /// Postgres DSN that **ClickHouse itself** should use to reach
+    /// the dimensions database when the shared
+    /// `0005_entities_dict.sql` dictionary is queried. Differs from
+    /// [`Self::database_url`] when ClickHouse runs inside docker and
+    /// Postgres runs as a sibling container — `127.0.0.1` from the
+    /// CH container resolves to the CH container itself, not the
+    /// host, so the agent's own DSN does not work for the dictionary
+    /// host. Falls back to [`Self::database_url`] when `None`.
+    ///
+    /// Example (compose service name):
+    /// `postgres://rubix:rubix-dev@postgres:5432/rubix`.
+    pub clickhouse_pg_url: Option<String>,
+
     /// Path to the on-disk secrets directory. Reserved for the
     /// upcoming JWT signing key / OAuth client secret material.
     pub secrets_path: Option<PathBuf>,
@@ -255,6 +268,7 @@ impl Default for AgentConfig {
             bind: "127.0.0.1:8088".to_owned(),
             database_url: None,
             clickhouse_url: None,
+            clickhouse_pg_url: None,
             secrets_path: None,
             config_path: None,
             ai_provider: None,

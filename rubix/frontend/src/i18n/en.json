@@ -58,6 +58,7 @@
   "nav.item.access": "Access",
   "nav.item.users": "Users",
   "nav.item.warehouse": "Warehouse",
+  "nav.item.warehouseExplorer": "Explorer",
   "warehouse.eyebrow": "Admin",
   "warehouse.title": "Warehouse",
   "warehouse.stub.body": "ClickHouse + insights admin lands here in Phase C. This page exists so the Admin nav section resolves to a real route today.",

@@ -46,6 +46,7 @@ fn build_topology(ai_agent: Arc<dyn NodeBehavior>) -> Arc<FlowTopology> {
     Arc::new(FlowTopology {
         links: HashMap::new(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }

@@ -173,6 +173,10 @@ impl NodeBehavior for TriggerSchedule {
         &self.kind
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[CRON_EXPR_SLOT]
+    }
+
     fn config_schema(&self) -> &'static RootSchema {
         &TRIGGER_SCHEDULE_SETTINGS_SCHEMA
     }

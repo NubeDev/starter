@@ -116,6 +116,14 @@ impl NodeBehavior for Sleep {
         &self.kind
     }
 
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[VALUE_SLOT]
+    }
+
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[DURATION_MS_SLOT]
+    }
+
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         let duration_ms = match input.remove(DURATION_MS_SLOT) {
             None => return Err(SleepError::MissingDuration.into_node_error()),

@@ -35,6 +35,12 @@ use tracing::{info, warn};
 const RUBIX_0002_HISTORY_UP: &str =
     include_str!("../../migrations/0002_history/up.sql");
 
+/// L1 raw meter-readings table for the data-flow scenario. See
+/// `migrations/0003_meter_readings_raw/up.sql` and
+/// `rubix/docs/sessions/data-flow/02-ingest-l1.md`.
+const RUBIX_0003_METER_READINGS_RAW_UP: &str =
+    include_str!("../../migrations/0003_meter_readings_raw/up.sql");
+
 /// Name of the ClickHouse database that owns every rubix-owned
 /// warehouse table (today: `system_disk_history`; tomorrow:
 /// L2/L3 marts). Matches `CLICKHOUSE_DB` in
@@ -78,6 +84,7 @@ pub struct ChMigrationReport {
 pub async fn apply_ch_migrations(
     clickhouse_url: Option<&str>,
     database_url: Option<&str>,
+    clickhouse_pg_url: Option<&str>,
 ) -> Result<ChMigrationReport> {
     let Some(url) = clickhouse_url else {
         warn!(
@@ -87,7 +94,15 @@ pub async fn apply_ch_migrations(
         return Ok(ChMigrationReport { skipped: true });
     };
 
-    let Some(pg) = database_url.and_then(parse_pg_dsn) else {
+    // `entities_dict` is queried by ClickHouse itself, so the host
+    // in its `SOURCE(POSTGRESQL(...))` template must be reachable
+    // **from inside the CH container**. When operators provide
+    // `clickhouse_pg_url` (e.g. the docker-compose service name
+    // `postgres:5432`) we use that for the dictionary substitution;
+    // otherwise we fall back to the agent's own DSN, which works
+    // when CH runs on the host alongside the agent.
+    let dsn_for_dict = clickhouse_pg_url.or(database_url);
+    let Some(pg) = dsn_for_dict.and_then(parse_pg_dsn) else {
         warn!(
             target: "rubix.boot",
             "ClickHouse migrations require a parseable Postgres DSN for the shared entities_dict; skipping CH migrations",
@@ -114,6 +129,10 @@ pub async fn apply_ch_migrations(
     MigrationRunner::new(&client)
         .with_pg_source(pg)
         .with_extra_migration("rubix/0002_history/up.sql", RUBIX_0002_HISTORY_UP)
+        .with_extra_migration(
+            "rubix/0003_meter_readings_raw/up.sql",
+            RUBIX_0003_METER_READINGS_RAW_UP,
+        )
         .run()
         .await
         .map_err(|e| anyhow::anyhow!("apply rubix CH migrations: {e}"))?;
@@ -154,7 +173,7 @@ mod tests {
 
     #[tokio::test]
     async fn skips_when_ch_url_unset() {
-        let report = apply_ch_migrations(None, Some("postgres://u:p@h:5432/d"))
+        let report = apply_ch_migrations(None, Some("postgres://u:p@h:5432/d"), None)
             .await
             .expect("skip path succeeds");
         assert!(report.skipped);
@@ -162,7 +181,7 @@ mod tests {
 
     #[tokio::test]
     async fn skips_when_database_url_unset() {
-        let report = apply_ch_migrations(Some("http://127.0.0.1:8124"), None)
+        let report = apply_ch_migrations(Some("http://127.0.0.1:8124"), None, None)
             .await
             .expect("skip path succeeds");
         assert!(report.skipped);

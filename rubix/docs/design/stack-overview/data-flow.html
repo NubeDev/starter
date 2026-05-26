@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - Data Flow</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html">Business</a>
+        <a href="developer.html">Developer</a>
+        <a href="data-flow.html" aria-current="page">Data Flow</a>
+        <a href="tagging.html">Tagging</a>
+        <a href="flows-tools.html">Flows + Tools</a>
+        <a href="flow-runtime.html">Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+<section id="data-flow" class="page">
+      <div class="wrap">
+        <div class="page-number">Data Flow, Databases, and Extensions</div>
+        <div class="data-hero">
+          <div>
+            <h1>Postgres runs the control plane. ClickHouse runs the data plane.</h1>
+            <p class="lede">
+              Use this page when the conversation is specifically about how data enters Rubix, where it is stored, and how an extension can add new signals without becoming part of the Rubix core.
+            </p>
+          </div>
+          <aside class="map-panel" aria-label="Two database split diagram">
+            <h2>The two database split</h2>
+            <div class="db-split">
+              <article class="db-card">
+                <header>Postgres</header>
+                <div class="db-body">
+                  <p>Stores definitions, revisions, permissions, schedules, extension metadata, and other control-plane records.</p>
+                  <ul>
+                    <li>Dashboard pages and <code>tags[]</code></li>
+                    <li>Flow YAML revisions</li>
+                    <li>Authz resource registrations</li>
+                    <li>Scheduler and extension host metadata</li>
+                  </ul>
+                </div>
+              </article>
+              <article class="db-card clickhouse">
+                <header>ClickHouse</header>
+                <div class="db-body">
+                  <p>Stores high-volume history and analytics-ready marts in the <code>rubix</code> database.</p>
+                  <ul>
+                    <li>L1 raw events and probes</li>
+                    <li>L2 curated tenant-scoped rows</li>
+                    <li>L3 marts for dashboards and reports</li>
+                    <li>Retention rules and warehouse DDL</li>
+                  </ul>
+                </div>
+              </article>
+            </div>
+          </aside>
+        </div>
+
+      <section class="section">
+          <div class="section-head">
+            <h2>Focused data flow</h2>
+            <p>The extension can bring in a signal, but the platform still decides what is metadata, what is history, and what is rendered.</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Extension data flow through Postgres, ClickHouse, analytics, and SDUI">
+            <div class="pipe-step extension">
+              <small>1</small>
+              <strong>Extension bundle</strong>
+              <span>A bundle under <code>rubix/extensions/</code> declares tools, node kinds, skills, flows, and optional UI in <code>block.yaml</code>.</span>
+            </div>
+            <div class="pipe-step extension">
+              <small>2</small>
+              <strong>Tool or flow fires</strong>
+              <span>The extension handler returns structured data, or a flow node calls the extension as part of a scheduled or user-triggered workflow.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>3A</small>
+              <strong>Postgres metadata</strong>
+              <span>Rubix stores definitions, page revisions, flow revisions, permissions, and tags. This is the governed catalog.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>3B</small>
+              <strong>ClickHouse history</strong>
+              <span>Facts, probes, and events go to L1 raw history, then rules promote them to L2 curated rows and L3 marts.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>4</small>
+              <strong>Analytics query</strong>
+              <span>Named templates read ClickHouse marts with typed parameters instead of ad hoc SQL from dashboards.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>5</small>
+              <strong>SDUI dashboard</strong>
+              <span>The resolved ComponentTree uses Postgres page definitions and ClickHouse-backed data to render KPIs, charts, and tables.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Example extension: weather signal</h2>
+            <p>This mirrors the extension guide's <code>com.acme.weather</code> example and shows what each contribution changes in the wider stack.</p>
+          </div>
+          <div class="example-shell">
+            <h3>What the extension contributes</h3>
+            <div class="example-flow">
+              <div class="example-box">
+                <strong><code>com.acme.weather.current</code> tool</strong>
+                <span>Fetches current weather for a site, region, or asset group. The handler lives inside the extension process.</span>
+              </div>
+              <div class="example-box">
+                <strong><code>com.acme.weather.fetch</code> node kind</strong>
+                <span>Lets a Rubix flow call the extension on a schedule or as part of a larger operational workflow.</span>
+              </div>
+              <div class="example-box">
+                <strong>Skill bundle</strong>
+                <span>Teaches the AI flow when to call the weather tool and how to describe the result to an operator.</span>
+              </div>
+              <div class="example-box">
+                <strong>Optional UI panel</strong>
+                <span>Ships a Module-Federation panel mounted under the extension slot for a purpose-built operator view.</span>
+              </div>
+            </div>
+          </div>
+          <div class="grid-2 section">
+            <article class="card">
+              <h3>What lands in Postgres</h3>
+              <p>Extension identity, flow definitions that use the extension node, dashboard pages that display the weather signal, page tags such as <code>source:weather</code>, and authz resources for who can view or edit those pages.</p>
+            </article>
+            <article class="card">
+              <h3>What lands in ClickHouse</h3>
+              <p>Historical weather observations, joined or correlated with operational events, promoted through L1/L2/L3 so dashboards can show trends like site temperature versus equipment alerts.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Decision guide</h2>
+            <p>When explaining the architecture, this is the shortest way to decide where a new thing belongs.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Put it in Postgres when...</h3>
+              <p>It describes a thing, controls access, tracks a revision, configures a flow, or helps users find a resource.</p>
+            </article>
+            <article class="card">
+              <h3>Put it in ClickHouse when...</h3>
+              <p>It is historical, high-volume, time-based, aggregatable, or needs fast analytical reads across many rows.</p>
+            </article>
+            <article class="card">
+              <h3>Put it in an extension when...</h3>
+              <p>The source system or UI is domain-specific and should plug into Rubix without changing Rubix core crates.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="../extensions/README.md">extensions</a>
+          <a href="../warehouse/README.md">warehouse</a>
+          <a href="../sdui/storage/README.md">sdui storage</a>
+          <a href="../flow-programmer/README.md">flow programmer</a>
+          <a href="../reports/README.md">reports</a>
+        </div>
+      </div>
+  </section>
+  </main>
+</body>
+</html>

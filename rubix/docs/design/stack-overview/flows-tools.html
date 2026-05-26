@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - Flows + Tools</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html">Business</a>
+        <a href="developer.html">Developer</a>
+        <a href="data-flow.html">Data Flow</a>
+        <a href="tagging.html">Tagging</a>
+        <a href="flows-tools.html" aria-current="page">Flows + Tools</a>
+        <a href="flow-runtime.html">Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+<section id="flows-tools" class="page">
+      <div class="wrap">
+        <div class="page-number">Flows, Nodes, and Tools</div>
+        <div class="data-hero">
+          <div>
+            <h1>A flow is the recipe. Nodes are the steps. Tools are the actions.</h1>
+            <p class="lede">
+              The easiest mental model is: a flow describes what can happen, a node performs one part of that flow, and a tool is a callable operation such as listing dashboards, writing a ClickHouse rule, or deploying a new flow revision.
+            </p>
+            <div class="callout">
+              In the bundled Rubix goal flows, the root node is usually an <code>ai-agent</code>. That node receives a skill prompt plus an <code>allowed_tools</code> list. The agent can reason in text, but state changes still happen through typed tools.
+            </div>
+          </div>
+          <aside class="map-panel" aria-label="Flow hierarchy diagram">
+            <h2>Hierarchy</h2>
+            <div class="layers">
+              <div class="layer">
+                <header>Flow</header>
+                <div>A versioned YAML definition such as <code>com.rubix.dashboard-assistant</code> or <code>com.rubix.flow-programmer</code>.</div>
+              </div>
+              <div class="layer">
+                <header>Node</header>
+                <div>A step inside the flow. Rubix goal flows commonly use one <code>ai-agent</code> node, but extensions can add new node kinds.</div>
+              </div>
+              <div class="layer">
+                <header>Tool</header>
+                <div>A typed callable operation implementing <code>starter_spi::tool::Tool</code>, exposed over MCP/HTTP and optionally undo-aware.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+      <section class="section">
+          <div class="section-head">
+            <h2>What happens when a user calls a goal</h2>
+            <p>This is the path behind prompts like "build me a disk dashboard" or "deploy this flow".</p>
+          </div>
+          <div class="pipeline" role="img" aria-label="Flow to tool execution path">
+            <div class="pipe-step sdui">
+              <small>1</small>
+              <strong>User starts goal</strong>
+              <span>The user invokes a flow such as <code>com.rubix.dashboard-assistant</code>.</span>
+            </div>
+            <div class="pipe-step">
+              <small>2</small>
+              <strong><code>FlowAsTool</code></strong>
+              <span>The flow itself auto-surfaces as a callable MCP tool, so there is no bespoke MCP wiring per flow.</span>
+            </div>
+            <div class="pipe-step extension">
+              <small>3</small>
+              <strong><code>ai-agent</code> node</strong>
+              <span>The node loads the skill, session policy, cost cap, and allowed tool list from the flow YAML.</span>
+            </div>
+            <div class="pipe-step pg">
+              <small>4</small>
+              <strong>Tool registry</strong>
+              <span>The agent can only call tools registered at boot and allowed by that node's config.</span>
+            </div>
+            <div class="pipe-step ch">
+              <small>5</small>
+              <strong>Typed tool call</strong>
+              <span>A concrete tool executes: dashboard write, flow deploy, ClickHouse rule, analytics query, or undo.</span>
+            </div>
+            <div class="pipe-step sdui">
+              <small>6</small>
+              <strong>Result returned</strong>
+              <span>The flow returns a response, diagnostics, created resources, or a rendered dashboard/report path.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Dashboard assistant example</h2>
+            <p>The flow is short because the behavior lives in the node, skill, and tools.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Flow YAML says</h3>
+              <ul>
+                <li><code>id: com.rubix.dashboard-assistant</code></li>
+                <li><code>trigger: explicit</code></li>
+                <li>one node: <code>kind: ai-agent</code></li>
+                <li><code>skill_hint: com.rubix.dashboard-builder</code></li>
+                <li>allowed tools: <code>rubix.dashboard.list</code>, <code>get</code>, <code>create</code>, <code>update</code>, <code>page_set</code>, <code>undo.last</code></li>
+              </ul>
+            </article>
+            <article class="card">
+              <h3>Runtime behavior is</h3>
+              <p>The AI node reads the skill, decides which dashboard operation is needed, calls one or more allowed tools, and returns a human-readable explanation. It does not directly mutate the database without a tool call.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Flow programmer example</h2>
+            <p>This is a flow that can create or change other flows, but it still uses tools to do it safely.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Flow programmer lifecycle">
+            <div class="lane-label">Author</div>
+            <div class="lane-cell"><strong>Draft YAML</strong><span>A user or AI proposes a flow definition with an <code>id</code>, trigger, nodes, and links.</span></div>
+            <div class="lane-cell"><strong>Lint</strong><span><code>rubix.flow_ops.lint</code> parses YAML and validates flow structure before deploy.</span></div>
+            <div class="lane-cell"><strong>Deploy</strong><span><code>rubix.flow_ops.deploy</code> writes a fresh flow revision.</span></div>
+            <div class="lane-cell"><strong>Undo</strong><span><code>rubix.undo.last</code> can retire the new revision and restore the prior live revision.</span></div>
+
+            <div class="lane-label">Store</div>
+            <div class="lane-cell"><strong>Postgres row</strong><span><code>flows_definitions</code> stores tenant, flow id, revision id, body YAML, creator, and supersede state.</span></div>
+            <div class="lane-cell"><strong>Notify</strong><span><code>pg_notify('rubix_flows_definitions', ...)</code> tells every agent process a live revision changed.</span></div>
+            <div class="lane-cell"><strong>Registry reload</strong><span>The agent re-reads the authoritative row and reloads the in-process flow registry.</span></div>
+            <div class="lane-cell"><strong>MCP update</strong><span>Clients see the new flow/tool shape on the next tool listing.</span></div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Built-in tools vs extension tools</h2>
+            <p>Both are tools from the caller's point of view, but they come from different places.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Built-in Rubix tools</h3>
+              <p>Live in <code>rubix-tools</code> and implement the six product goals: dashboards, users, flow ops, ClickHouse rules, system checks, and analytics/reports.</p>
+              <div class="tag-band" aria-label="Built-in tool examples">
+                <span class="tag">rubix.dashboard.page_set</span>
+                <span class="tag">rubix.flow_ops.deploy</span>
+                <span class="tag">rubix.clickhouse.mart.create</span>
+                <span class="tag">rubix.analytics.query</span>
+              </div>
+            </article>
+            <article class="card">
+              <h3>Extension tools and nodes</h3>
+              <p>Declared by an extension <code>block.yaml</code>. Tools expose callable operations; node kinds let flows use extension behavior as a flow step.</p>
+              <div class="tag-band" aria-label="Extension examples">
+                <span class="tag">com.acme.weather.current</span>
+                <span class="tag">com.acme.weather.fetch</span>
+                <span class="tag">skills/weather/SKILL.md</span>
+                <span class="tag">ui/remoteEntry.js</span>
+              </div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Decision guide</h2>
+            <p>Use this when deciding whether to add a flow, node, or tool.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Add a tool when...</h3>
+              <p>You need one concrete operation with typed input/output: write a dashboard, query analytics, create a mart, or deploy a flow.</p>
+            </article>
+            <article class="card">
+              <h3>Add a flow when...</h3>
+              <p>You need a user-facing workflow that combines reasoning, multiple tools, policy, and repeatable orchestration.</p>
+            </article>
+            <article class="card">
+              <h3>Add a node kind when...</h3>
+              <p>You need reusable flow behavior that is not just one tool call, especially if an extension owns that behavior.</p>
+            </article>
+          </div>
+        </section>
+
+        <div class="callout">
+          Short version: users call flows for outcomes; flows run nodes; AI-agent nodes choose from allowed tools; tools do the actual reads and writes; Postgres stores flow/dashboard definitions and revision state.
+        </div>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="../overview/README.md">overview</a>
+          <a href="../flow-programmer/README.md">flow programmer</a>
+          <a href="../extensions/README.md">extensions</a>
+          <a href="../../../crates/rubix-flows/flows/dashboard-assistant.yaml">dashboard assistant YAML</a>
+          <a href="../../../crates/rubix-flows/flows/flow-programmer.yaml">flow programmer YAML</a>
+        </div>
+      </div>
+  </section>
+  </main>
+</body>
+</html>

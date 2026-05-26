@@ -384,7 +384,27 @@ async fn register_one(
     // bridge from the schedule fire's wall-clock to the synth tool.
     // Tool authors can override by setting `tick_epoch_ms` explicitly
     // in YAML.
-    let tool_call_seeds: Vec<(NodeId, String, Value)> = body
+    //
+    // **Link-driven `input` (B2 fix, 2026-05-26):** when the body
+    // declares any link writing into `<node>.input`, the YAML
+    // `settings.tool_input` is treated as a *default only* — the
+    // seed adapter skips the per-fire projection so the link's
+    // payload reaches the body without racing with the YAML seed.
+    // The YAML projection still wins for `<node>.tool_id` (no
+    // upstream link supplies it today). See
+    // `rubix/docs/sessions/data-flow/02-ingest-l1-blockers-2026-05-26.md`.
+    //
+    // Note (multi-fire fix, 2026-05-26): `tool_id` and `input` are
+    // declared as *read* slots by the `tool-call` kind
+    // (`NodeBehavior::read_slots`), not triggers. Re-writing them
+    // here per invoke therefore does **not** wake the node — only the
+    // upstream link (`tick.fire → synth.in`) does. The `tool_id`
+    // write is effectively a no-op under R3's idempotent
+    // short-circuit (same value, `force = false`), and the
+    // `tool_input` write differs each fire by `tick_epoch_ms` but
+    // still triggers no extra invocation. See
+    // `rubix/docs/sessions/data-flow/2026-05-26-data-flow-01-producer-multi-fire-root-cause.md`.
+    let tool_call_seeds: Vec<(NodeId, String, Value, bool)> = body
         .nodes
         .iter()
         .filter(|n| n.kind.as_str() == starter_flow_nodes::tool_call::KIND_ID)
@@ -395,7 +415,16 @@ async fn register_one(
                 .get("tool_input")
                 .cloned()
                 .unwrap_or_else(|| Value::Object(serde_json::Map::new()));
-            Some((n.id.clone(), tool_id.to_owned(), tool_input))
+            let input_link_target = format!(
+                "{}.{}",
+                n.id,
+                starter_flow_nodes::tool_call::TOOL_INPUT_SLOT,
+            );
+            let input_link_driven = body
+                .links
+                .iter()
+                .any(|l| l.to == input_link_target);
+            Some((n.id.clone(), tool_id.to_owned(), tool_input, input_link_driven))
         })
         .collect();
 
@@ -451,28 +480,29 @@ async fn register_one(
             .unwrap_or(0);
         let tool_call_writes = tool_call_seeds_for_adapter
             .iter()
-            .flat_map(|(node_id, tool_id, tool_input)| {
-                let mut input = tool_input.clone();
-                if let Value::Object(ref mut map) = input {
-                    map.entry("tick_epoch_ms".to_owned())
-                        .or_insert_with(|| json!(now_epoch_ms));
-                }
-                vec![
-                    (
-                        SlotRef::new(
-                            node_id.clone(),
-                            starter_flow_nodes::tool_call::TOOL_ID_SLOT,
-                        ),
-                        SlotValue::String(tool_id.clone()),
+            .flat_map(|(node_id, tool_id, tool_input, input_link_driven)| {
+                let mut writes = vec![(
+                    SlotRef::new(
+                        node_id.clone(),
+                        starter_flow_nodes::tool_call::TOOL_ID_SLOT,
                     ),
-                    (
+                    SlotValue::String(tool_id.clone()),
+                )];
+                if !*input_link_driven {
+                    let mut input = tool_input.clone();
+                    if let Value::Object(ref mut map) = input {
+                        map.entry("tick_epoch_ms".to_owned())
+                            .or_insert_with(|| json!(now_epoch_ms));
+                    }
+                    writes.push((
                         SlotRef::new(
                             node_id.clone(),
                             starter_flow_nodes::tool_call::TOOL_INPUT_SLOT,
                         ),
                         SlotValue::Json(input),
-                    ),
-                ]
+                    ));
+                }
+                writes
             });
         vec![(seed_slot_for_adapter.clone(), SlotValue::Json(payload))]
             .into_iter()

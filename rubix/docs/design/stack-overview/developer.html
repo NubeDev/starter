@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - Developer View</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html">Business</a>
+        <a href="developer.html" aria-current="page">Developer</a>
+        <a href="data-flow.html">Data Flow</a>
+        <a href="tagging.html">Tagging</a>
+        <a href="flows-tools.html">Flows + Tools</a>
+        <a href="flow-runtime.html">Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+<section id="developer" class="page">
+      <div class="wrap">
+        <div class="page-number">Developer Architecture View</div>
+        <div class="hero">
+          <div>
+            <h1>The stack is a typed tool system with separate definition and history stores.</h1>
+            <p class="lede">
+              Rubix keeps a strict dependency arrow: <code>starter-spi</code> under <code>rubix-spi</code>; then <code>rubix-tools</code>, <code>rubix-flows</code>, <code>rubix-skills</code>, and <code>rubix-client</code>; finally <code>rubix-agent</code> wires the binary. Tools are exposed over MCP and HTTP without bespoke dashboard wiring.
+            </p>
+          </div>
+          <aside class="map-panel" aria-label="Developer data plane diagram">
+            <h2>Developer mental model</h2>
+            <div class="layers">
+              <div class="layer">
+                <header>L1 raw</header>
+                <div>Ingest from agents, extensions, and feeds. Example: <code>system_disk_history</code> captures disk probes by <code>tenant_id</code>, host, percent used, free bytes, and epoch.</div>
+              </div>
+              <div class="layer">
+                <header>L2 curated</header>
+                <div>Rules convert raw rows into typed, deduplicated, tenant-aware data. This is the place for warehouse quality and retention discipline.</div>
+              </div>
+              <div class="layer">
+                <header>L3 marts</header>
+                <div>Small ClickHouse tables built for specific questions. Dashboard and report reads use L3 by default, with L2 allowed and L1 explicit.</div>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+      <section class="section">
+          <div class="section-head">
+            <h2>Storage boundaries</h2>
+            <p>The most useful implementation rule is knowing which store owns which kind of truth.</p>
+          </div>
+          <div class="dev-map">
+            <div class="stack-column">
+              <h3>Postgres: definitions, control plane, permissions</h3>
+              <div class="stack-item blue">
+                <strong><code>dashboards_definitions</code></strong>
+                <span>Insert-only dashboard revisions: <code>page_id</code>, <code>revision_id</code>, <code>body_json</code>, tenant, owner, title, <code>tags[]</code>, and supersede state.</span>
+              </div>
+              <div class="stack-item blue">
+                <strong><code>flows_definitions</code></strong>
+                <span>Flow YAML revisions with <code>pg_notify('rubix_flows_definitions', ...)</code> so every agent reloads live flow revisions.</span>
+              </div>
+              <div class="stack-item blue">
+                <strong>Authz resources</strong>
+                <span>Dashboard pages register resource specs. A denied view returns 404 to avoid leaking page existence.</span>
+              </div>
+            </div>
+            <div class="stack-column">
+              <h3>ClickHouse: history, rules, marts</h3>
+              <div class="stack-item teal">
+                <strong><code>rubix</code> database</strong>
+                <span>Rubix-owned ClickHouse tables live in the <code>rubix</code> database and should be qualified as <code>rubix.&lt;table&gt;</code> by operators.</span>
+              </div>
+              <div class="stack-item teal">
+                <strong>Rule writer verbs</strong>
+                <span><code>rubix.clickhouse.rule.write</code>, <code>mart.create</code>, and <code>retention.set</code> capture snapshots for undo-aware changes.</span>
+              </div>
+              <div class="stack-item teal">
+                <strong>Tenant filter</strong>
+                <span>Tenancy is per-row <code>tenant_id</code>. Resolver-layer authz must apply the tenant filter on reads.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>End-to-end control flow</h2>
+            <p>The same pattern supports a user prompt, a scheduled report, or an extension-triggered workflow.</p>
+          </div>
+          <div class="flow-row">
+            <div class="node flow">
+              <strong><code>ai-agent</code> node</strong>
+              <span>Skill-driven flow chooses allowed tools and emits structured tool calls.</span>
+            </div>
+            <div class="node source">
+              <strong><code>rubix-tools</code></strong>
+              <span>Typed verbs implement <code>starter_spi::tool::Tool</code> and optional reversible changes.</span>
+            </div>
+            <div class="node store">
+              <strong>Stores</strong>
+              <span>PG stores definitions and dashboard bodies. ClickHouse stores time-series history and marts.</span>
+            </div>
+            <div class="node analytics">
+              <strong>Resolver/query</strong>
+              <span>SDUI resolve and analytics query bind user, page, target, and template parameters.</span>
+            </div>
+            <div class="node dashboard">
+              <strong>Renderer</strong>
+              <span><code>SduiPage</code> renders the resolved ComponentTree and dispatches actions back through transport.</span>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>What each major piece owns</h2>
+            <p>This is the quick reference for conversations between the developer and domain stakeholder.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <h3>Flow programmer</h3>
+              <p>Deploys, duplicates, lints, and lists flow YAML. Deployed revisions notify every Rubix agent process, so the registry refreshes without an out-of-band reload RPC.</p>
+            </article>
+            <article class="card">
+              <h3>ClickHouse ruler</h3>
+              <p>Writes rules, creates marts, and sets retention. Mutations are undo-aware by storing before/after snapshots through the changelog.</p>
+            </article>
+            <article class="card">
+              <h3>Analytics reporter</h3>
+              <p>Runs named ClickHouse query templates, renders reports through <code>starter-export</code>, stores blobs, and records undo state for created report files.</p>
+            </article>
+            <article class="card">
+              <h3>SDUI tools</h3>
+              <p>Create, get, update, list, duplicate, delete, history, and <code>page_set</code> manage dashboard pages. The AI builder uses <code>page_set</code> for full-tree writes.</p>
+            </article>
+            <article class="card">
+              <h3>Bindings</h3>
+              <p>Bindings such as <code>$target</code>, <code>$user</code>, <code>$page</code>, <code>$stack</code>, and <code>$msg</code> connect the ComponentTree to live data, user context, page state, and localized text.</p>
+            </article>
+            <article class="card">
+              <h3>Extensions</h3>
+              <p>Bundles can contribute tools, node kinds, skills, flows, and Module-Federation UI panels while staying behind the extension trait surface.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Dashboard lifecycle</h2>
+            <p>Dashboard authoring is intentionally the same whether a human, AI flow, or bundled seed creates the page.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Dashboard lifecycle swimlane diagram">
+            <div class="lane-label">Author</div>
+            <div class="lane-cell"><strong>Bundled page</strong><span>Seeded from embedded JSON and owned by <code>system</code>.</span></div>
+            <div class="lane-cell"><strong>Operator</strong><span>Creates or edits a page with dashboard tools.</span></div>
+            <div class="lane-cell"><strong>AI builder</strong><span>Reads a template, emits one ComponentTree, calls <code>page_set</code>.</span></div>
+            <div class="lane-cell"><strong>Extension</strong><span>Can contribute a UI panel or tool feeding page data.</span></div>
+
+            <div class="lane-label">Persist</div>
+            <div class="lane-cell emphasis"><strong>Validate IR</strong><span>Rejects unknown variants, bad body shape, or unsupported IR version.</span></div>
+            <div class="lane-cell emphasis"><strong>Insert revision</strong><span>New row lands; previous active row is superseded.</span></div>
+            <div class="lane-cell emphasis"><strong>Register authz</strong><span>Page becomes a governed resource with view/edit/delete actions.</span></div>
+            <div class="lane-cell emphasis"><strong>Notify cache</strong><span>Dashboard notify invalidates provider cache when wired.</span></div>
+
+            <div class="lane-label">Render</div>
+            <div class="lane-cell"><strong>Resolve</strong><span>Server loads the ComponentTree and applies bindings.</span></div>
+            <div class="lane-cell"><strong>Fetch rows</strong><span>Tables/charts call query sources that read ClickHouse marts.</span></div>
+            <div class="lane-cell"><strong>Display</strong><span>React renderer paints KPIs, charts, forms, filters, and tables.</span></div>
+            <div class="lane-cell"><strong>Act</strong><span>Buttons/forms call handlers and refresh page state.</span></div>
+          </div>
+        </section>
+
+        <div class="callout">
+          Practical framing: explain ClickHouse as the analytical warehouse, analytics templates as the controlled query layer, tags as the business vocabulary for finding/scoping pages, and SDUI as the dashboard delivery mechanism that avoids custom frontend work per dashboard.
+        </div>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="../flow-programmer/README.md">flow programmer</a>
+          <a href="../clickhouse-rules/README.md">clickhouse rules</a>
+          <a href="../warehouse/README.md">warehouse</a>
+          <a href="../reports/README.md">reports</a>
+          <a href="../sdui/storage/README.md">sdui storage</a>
+          <a href="../sdui/renderer/README.md">sdui renderer</a>
+          <a href="../sdui/ai-builder/README.md">ai builder</a>
+          <a href="../extensions/README.md">extensions</a>
+        </div>
+      </div>
+  </section>
+  </main>
+</body>
+</html>

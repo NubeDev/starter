@@ -168,6 +168,10 @@ async fn read_current(
 
 #[async_trait]
 impl NodeBehavior for Counter {
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[IN_SLOT]
+    }
+
     fn kind_id(&self) -> &KindId {
         &self.kind
     }

@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rubix Stack Overview - Business View</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <strong>Rubix Stack Overview</strong>
+        <span>Split briefing for business, engineering, data flow, tags, and flow runtime</span>
+      </div>
+      <nav class="nav" aria-label="Page navigation">
+        <a href="index.html" aria-current="page">Business</a>
+        <a href="developer.html">Developer</a>
+        <a href="data-flow.html">Data Flow</a>
+        <a href="tagging.html">Tagging</a>
+        <a href="flows-tools.html">Flows + Tools</a>
+        <a href="flow-runtime.html">Runtime Flows</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+<section id="business" class="page">
+      <div class="wrap">
+        <div class="page-number">Business and Domain View</div>
+        <div class="hero">
+          <div>
+            <h1>From operational data to dashboards, reports, and alerts.</h1>
+            <p class="lede">
+              Rubix is the operator layer over the starter platform. It collects events, writes historical facts into ClickHouse, keeps dashboard definitions and permissions in Postgres, and uses SDUI so the same dashboard can render on web, mobile, and desktop shells.
+            </p>
+            <div class="audience-strip" aria-label="Audience summaries">
+              <div class="audience">
+                <span class="label">Business reader</span>
+                <p>Think of Rubix as the workflow and dashboard system that turns raw operational signals into governed pages, weekly reports, and threshold-driven alerts.</p>
+              </div>
+              <div class="audience">
+                <span class="label">Technical reader</span>
+                <p>The important split is simple: Postgres stores definitions and permissions; ClickHouse stores time-series history and marts; SDUI renders pages from typed JSON.</p>
+              </div>
+            </div>
+            <div class="callout">
+              Looking for PLC or Node-RED style long-running jobs? Open <a href="flow-runtime.html">Page 6: Runtime Flows</a> for trigger -> count -> log, durable node state, live events, and hot-edit behavior.
+            </div>
+          </div>
+
+          <aside class="map-panel" aria-label="Business process diagram">
+            <h2>How the parts come together</h2>
+            <div class="flow-row">
+              <div class="node source">
+                <strong>Sources</strong>
+                <span>Agents, extensions, scheduled checks, and external feeds produce facts.</span>
+              </div>
+              <div class="node flow">
+                <strong>Flows</strong>
+                <span>AI-agent flows call typed Rubix tools for dashboards, rules, reports, users, and system checks.</span>
+              </div>
+              <div class="node store">
+                <strong>Warehouse</strong>
+                <span>ClickHouse stores raw history, curated rows, and query-ready marts.</span>
+              </div>
+              <div class="node analytics">
+                <strong>Analytics</strong>
+                <span>Named SQL templates return rows for charts, KPIs, reports, and trend summaries.</span>
+              </div>
+              <div class="node dashboard">
+                <strong>SDUI</strong>
+                <span>Dashboard pages are typed component trees, not hand-coded screens.</span>
+              </div>
+            </div>
+          </aside>
+        </div>
+
+      <section class="section">
+          <div class="section-head">
+            <h2>The operating loop</h2>
+            <p>Rubix is built around six operator goals. The same tool and flow pattern appears behind dashboards, flow programming, ClickHouse rules, system checks, user management, and analytics reports.</p>
+          </div>
+          <div class="grid-3">
+            <article class="card">
+              <div class="metric"><h3>Warehouse</h3><b>L1-L3</b></div>
+              <p>ClickHouse is the history store. Data lands as raw facts, becomes curated and tenanted, then turns into narrow marts that answer specific business questions quickly.</p>
+            </article>
+            <article class="card">
+              <div class="metric"><h3>Analytics</h3><b>SQL</b></div>
+              <p>Rubix uses named query templates such as weekly disk history, alert counts, flow run summaries, user activity, ClickHouse writes, and undo counts.</p>
+            </article>
+            <article class="card">
+              <div class="metric"><h3>Dashboards</h3><b>SDUI</b></div>
+              <p>Dashboards are saved as revisions of a ComponentTree. The server resolves data and permissions; renderers display the same page across clients.</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Where tags fit</h2>
+            <p>Tags are the vocabulary that lets people find and scope pages and data. The dedicated tags design doc is still a placeholder, but dashboard storage already reserves <code>tags[]</code> for filtering.</p>
+          </div>
+          <div class="grid-2">
+            <article class="card">
+              <h3>Business purpose</h3>
+              <p>Tags give non-technical users a shared language: region, product, customer tier, host class, team, or dashboard purpose. They make "show me finance dashboards for APAC" possible without asking users to know table names.</p>
+              <div class="tag-band" aria-label="Example tags">
+                <span class="tag">region:apac</span>
+                <span class="tag">team:ops</span>
+                <span class="tag">system:clickhouse</span>
+                <span class="tag">dashboard:weekly</span>
+              </div>
+            </article>
+            <article class="card">
+              <h3>System purpose</h3>
+              <p>Tags act as metadata beside dashboard definitions and, later, broader rubix resources. They help list, filter, duplicate, and govern dashboards without changing the ClickHouse warehouse schema.</p>
+              <div class="callout">Implementation note: the tags README describes intent only. Treat tags as a planned/consumed <code>starter-tags</code> substrate, not as a completed standalone rubix system.</div>
+            </article>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <h2>Data to dashboard flow</h2>
+            <p>This is the plain-language path from a measurement or event to something a user can act on.</p>
+          </div>
+          <div class="swimlane" role="img" aria-label="Data to dashboard swimlane diagram">
+            <div class="lane-label">1. Collect</div>
+            <div class="lane-cell"><strong>System probe</strong><span>Example: disk usage returns percent used and free bytes.</span></div>
+            <div class="lane-cell"><strong>Extensions</strong><span>External systems can contribute tools, node kinds, skills, flows, and UI panels.</span></div>
+            <div class="lane-cell"><strong>Scheduled flows</strong><span>Weekly jobs or health checks fire without a human prompt.</span></div>
+            <div class="lane-cell"><strong>Operator action</strong><span>A person asks the AI flow to create or update a dashboard.</span></div>
+
+            <div class="lane-label">2. Store</div>
+            <div class="lane-cell emphasis"><strong>ClickHouse L1</strong><span>Raw history, short retention, one row per fact.</span></div>
+            <div class="lane-cell emphasis"><strong>ClickHouse L2</strong><span>Curated, typed, deduplicated, tenant-scoped rows.</span></div>
+            <div class="lane-cell emphasis"><strong>ClickHouse L3</strong><span>Marts designed for fast reads by dashboards and reports.</span></div>
+            <div class="lane-cell"><strong>Postgres</strong><span>Dashboard definitions, flow definitions, authz resources, and revisions.</span></div>
+
+            <div class="lane-label">3. Present</div>
+            <div class="lane-cell"><strong>Analytics query</strong><span>Named SQL templates read ClickHouse with typed parameters.</span></div>
+            <div class="lane-cell"><strong>Report</strong><span>Rows render to HTML, CSV, or JSON and are stored as blobs.</span></div>
+            <div class="lane-cell"><strong>Insight</strong><span>Threshold checks can dispatch alerts after tool results.</span></div>
+            <div class="lane-cell"><strong>Dashboard</strong><span>SDUI resolves a typed page and renders KPIs, charts, tables, and actions.</span></div>
+          </div>
+        </section>
+
+        <div class="source-list" aria-label="Source docs">
+          <a href="../overview/README.md">overview</a>
+          <a href="../warehouse/README.md">warehouse</a>
+          <a href="../reports/README.md">reports</a>
+          <a href="../insights/README.md">insights</a>
+          <a href="../sdui/README.md">sdui</a>
+          <a href="../tags/README.md">tags</a>
+        </div>
+      </div>
+  </section>
+  </main>
+</body>
+</html>

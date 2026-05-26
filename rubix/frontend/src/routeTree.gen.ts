@@ -19,6 +19,7 @@ import { Route as FlowsIndexRouteImport } from './routes/flows/index'
 import { Route as DashboardsIndexRouteImport } from './routes/dashboards/index'
 import { Route as FlowsFlowIdRouteImport } from './routes/flows/$flowId'
 import { Route as DashboardsPageIdRouteImport } from './routes/dashboards/$pageId'
+import { Route as AdminWarehouseExplorerRouteImport } from './routes/admin/warehouse-explorer'
 import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
@@ -73,6 +74,11 @@ const DashboardsPageIdRoute = DashboardsPageIdRouteImport.update({
   path: '/dashboards/$pageId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminWarehouseExplorerRoute = AdminWarehouseExplorerRouteImport.update({
+  id: '/admin/warehouse-explorer',
+  path: '/admin/warehouse-explorer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminWarehouseRoute = AdminWarehouseRouteImport.update({
   id: '/admin/warehouse',
   path: '/admin/warehouse',
@@ -99,6 +105,7 @@ export interface FileRoutesByFullPath {
   '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
+  '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards/': typeof DashboardsIndexRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
+  '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards': typeof DashboardsIndexRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/admin/access': typeof AdminAccessRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
+  '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards/': typeof DashboardsIndexRoute
@@ -147,6 +156,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/users'
     | '/admin/warehouse'
+    | '/admin/warehouse-explorer'
     | '/dashboards/$pageId'
     | '/flows/$flowId'
     | '/dashboards/'
@@ -162,6 +172,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/users'
     | '/admin/warehouse'
+    | '/admin/warehouse-explorer'
     | '/dashboards/$pageId'
     | '/flows/$flowId'
     | '/dashboards'
@@ -177,6 +188,7 @@ export interface FileRouteTypes {
     | '/admin/access'
     | '/admin/users'
     | '/admin/warehouse'
+    | '/admin/warehouse-explorer'
     | '/dashboards/$pageId'
     | '/flows/$flowId'
     | '/dashboards/'
@@ -193,6 +205,7 @@ export interface RootRouteChildren {
   AdminAccessRoute: typeof AdminAccessRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
+  AdminWarehouseExplorerRoute: typeof AdminWarehouseExplorerRoute
   DashboardsPageIdRoute: typeof DashboardsPageIdRoute
   FlowsFlowIdRoute: typeof FlowsFlowIdRoute
   DashboardsIndexRoute: typeof DashboardsIndexRoute
@@ -271,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardsPageIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/warehouse-explorer': {
+      id: '/admin/warehouse-explorer'
+      path: '/admin/warehouse-explorer'
+      fullPath: '/admin/warehouse-explorer'
+      preLoaderRoute: typeof AdminWarehouseExplorerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/warehouse': {
       id: '/admin/warehouse'
       path: '/admin/warehouse'
@@ -305,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminAccessRoute: AdminAccessRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,
+  AdminWarehouseExplorerRoute: AdminWarehouseExplorerRoute,
   DashboardsPageIdRoute: DashboardsPageIdRoute,
   FlowsFlowIdRoute: FlowsFlowIdRoute,
   DashboardsIndexRoute: DashboardsIndexRoute,

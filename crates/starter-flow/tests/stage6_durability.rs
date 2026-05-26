@@ -109,6 +109,7 @@ fn build_spec(seed: SlotValue) -> RunSpec {
     let topology = Arc::new(FlowTopology {
         links,
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     });
     let seeds = vec![(SlotRef::new(node.clone(), "in"), seed)];
@@ -345,6 +346,7 @@ async fn degraded_queue_evict_oldest_increments_dropped_count() {
     let topology = Arc::new(FlowTopology {
         links: HashMap::new(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     });
     let seeds = vec![
@@ -401,6 +403,7 @@ async fn engine_recovers_to_healthy_when_store_comes_back() {
     let topology = Arc::new(FlowTopology {
         links: HashMap::new(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     });
     // Two ticks: the first burns the 5-retry budget (queues the

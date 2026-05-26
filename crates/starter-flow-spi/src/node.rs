@@ -34,6 +34,43 @@ pub trait NodeBehavior: Send + Sync + 'static {
     /// the single `GraphStore::write_slot` chokepoint (R2).
     async fn invoke(&self, ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError>;
 
+    /// Slot names whose writes wake (invoke) this node.
+    ///
+    /// Event-driven runtime semantics: writes to any slot in this set
+    /// cause the propagator to re-fire the node's [`Self::invoke`].
+    /// Combined with [`Self::read_slots`] this set forms the node's
+    /// declared input surface — at invoke time the propagator reads
+    /// the union of both sets from the graph store and passes them in
+    /// as the input [`SlotMap`].
+    ///
+    /// Default impl returns `&[]`; kinds with no wake inputs are
+    /// triggered only by direct activation or by the body-level YAML
+    /// `triggers:` additive override (deprecated; here for transitional
+    /// compatibility).
+    fn trigger_slots(&self) -> &'static [&'static str] {
+        &[]
+    }
+
+    /// Slot names this node reads but does **not** wake on.
+    ///
+    /// Event-driven runtime semantics: writes to a `read_slots` slot
+    /// update the value in the graph store but do not cause the
+    /// propagator to invoke the node. The slot value is still
+    /// available in the [`SlotMap`] passed to [`Self::invoke`] at the
+    /// next wake (the propagator reads the union of trigger + read
+    /// slots from the store before each invocation).
+    ///
+    /// Canonical use: configuration-style inputs that the body needs
+    /// to read but whose changes alone should not drive a fire. The
+    /// tool-call kind declares `tool_id` and `input` here — the body
+    /// reads them per invocation, but only the upstream `in` slot
+    /// wakes the node.
+    ///
+    /// Default impl returns `&[]`.
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[]
+    }
+
     /// React to a lifecycle transition (Created → Active → Paused →
     /// Stopped → Removed per R1). The engine drives this; kinds that
     /// hold no per-lifecycle state ignore it.

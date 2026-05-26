@@ -169,14 +169,26 @@ impl TopologyResolver {
 
         // Pass 1: collect nodes + behaviors; refuse duplicates;
         // refuse unknown kinds; refuse bad settings.
+        //
+        // Trigger and read slot sets are taken from the kind's
+        // intrinsic `NodeBehavior::trigger_slots` /
+        // `NodeBehavior::read_slots` declarations — this is the
+        // event-driven runtime contract: each kind tells the engine
+        // which of its inputs wake (subscribe set) versus which are
+        // configuration / reference inputs read at invoke time. The
+        // YAML `NodeDecl.triggers` field is honoured as an *additive*
+        // override (union into the trigger set) for transitional
+        // compatibility with flows authored before the split, and is
+        // expected to fall out of use over time.
         let mut behaviors = BTreeMap::new();
-        let mut triggers = BTreeMap::new();
+        let mut triggers: BTreeMap<NodeId, BTreeSet<String>> = BTreeMap::new();
+        let mut reads: BTreeMap<NodeId, BTreeSet<String>> = BTreeMap::new();
         let mut seen: BTreeSet<NodeId> = BTreeSet::new();
         for NodeDecl {
             id,
             kind,
             settings,
-            triggers: trigger_slots,
+            triggers: yaml_triggers,
             position: _,
         } in &body.nodes
         {
@@ -198,12 +210,39 @@ impl TopologyResolver {
                     error,
                 }
             })?;
+
+            let kind_triggers: BTreeSet<String> = behavior
+                .trigger_slots()
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect();
+            let kind_reads: BTreeSet<String> = behavior
+                .read_slots()
+                .iter()
+                .map(|s| (*s).to_owned())
+                .collect();
+
             behaviors.insert(id.clone(), behavior);
-            if !trigger_slots.is_empty() {
-                triggers.insert(
-                    id.clone(),
-                    trigger_slots.iter().cloned().collect::<BTreeSet<_>>(),
-                );
+
+            // Merge: kind-declared triggers ∪ YAML additive overrides.
+            // A YAML-listed trigger that also appears in the kind's
+            // read set is treated as a trigger here (YAML's intent
+            // wins) — this only matters for flows mid-migration.
+            let mut node_triggers = kind_triggers;
+            for name in yaml_triggers {
+                node_triggers.insert(name.clone());
+            }
+            // Read slots: kind-declared, minus anything promoted to a
+            // trigger above.
+            let mut node_reads = kind_reads;
+            for t in &node_triggers {
+                node_reads.remove(t);
+            }
+            if !node_triggers.is_empty() {
+                triggers.insert(id.clone(), node_triggers);
+            }
+            if !node_reads.is_empty() {
+                reads.insert(id.clone(), node_reads);
             }
         }
 
@@ -224,6 +263,7 @@ impl TopologyResolver {
         Ok(Arc::new(FlowTopology {
             links,
             triggers,
+            reads,
             behaviors,
         }))
     }

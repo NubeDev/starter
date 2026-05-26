@@ -200,6 +200,10 @@ impl NodeBehavior for Transform {
         &self.kind
     }
 
+    fn read_slots(&self) -> &'static [&'static str] {
+        &[FN_ID_SLOT]
+    }
+
     async fn invoke(&self, ctx: NodeCtx<'_>, mut input: SlotMap) -> Result<SlotMap, NodeError> {
         // Pull `fn_id` out of the input map so the registered closure
         // sees only the actual payload slots. The flow definition

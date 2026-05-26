@@ -54,6 +54,7 @@ async fn main() -> Result<()> {
     let ch_migrations = boot::apply_ch_migrations(
         cfg.clickhouse_url.as_deref(),
         cfg.database_url.as_deref(),
+        cfg.clickhouse_pg_url.as_deref(),
     )
     .await?;
 

@@ -10,6 +10,17 @@
  * ...) end up in our CSS bundle.
  */
 
+/* The visual rebuild of the ClickHouse explorer lives in
+ * `@nube/starter-ui-warehouse-explorer`. Its own `theme.css` is
+ * imported by the route as a side-effect for the @theme tokens, but
+ * the Tailwind compiler only walks `@source` directives reachable
+ * from THIS entrypoint, so the package needs to be listed here too.
+ * Without this, classes like `h-[calc(100vh-8rem)]` and
+ * `max-h-[calc(100vh-6rem)]` defined inside the package are silently
+ * dropped, collapsing the schema diagram and filter sidebar.
+ */
+@source "../../../../packages/starter-ui-warehouse-explorer";
+
 /* ---------------------------------------------------------------------------
    Theme tokens
    ----------------------------------------------------------------------------

@@ -16,14 +16,17 @@ import { WarehouseRulesPanel } from './rules-panel'
 import { WarehouseMartsPanel } from './marts-panel'
 import { WarehouseRetentionPanel } from './retention-panel'
 import { WarehouseInsightsPanel } from './insights-panel'
-import { WarehouseExplorerPanel } from './explorer-panel'
 
+// The "explorer" tab moved to its own page at `/admin/warehouse-explorer`
+// (visual rebuild — see `@nube/starter-ui-warehouse-explorer`). The
+// `<WarehouseExplorerPanel>` component is still exported from
+// `./explorer-panel` until the old `@nube/starter-ui-ch-explorer`
+// package is removed alongside it.
 export type WarehouseAdminTab =
   | 'rules'
   | 'marts'
   | 'retention'
   | 'insights'
-  | 'explorer'
 
 export interface WarehouseAdminProps {
   defaultTab?: WarehouseAdminTab
@@ -50,9 +53,6 @@ export function WarehouseAdmin({ defaultTab = 'rules' }: WarehouseAdminProps) {
         <TabsTrigger value="insights">
           {tr('admin.warehouse.tabs.insights', 'Insights')}
         </TabsTrigger>
-        <TabsTrigger value="explorer">
-          {tr('admin.warehouse.tabs.explorer', 'Explorer')}
-        </TabsTrigger>
       </TabsList>
       <TabsContent value="rules" className="mt-6">
         <WarehouseRulesPanel />
@@ -65,9 +65,6 @@ export function WarehouseAdmin({ defaultTab = 'rules' }: WarehouseAdminProps) {
       </TabsContent>
       <TabsContent value="insights" className="mt-6">
         <WarehouseInsightsPanel />
-      </TabsContent>
-      <TabsContent value="explorer" className="mt-6">
-        <WarehouseExplorerPanel />
       </TabsContent>
     </Tabs>
   )

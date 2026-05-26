@@ -125,6 +125,7 @@ fn build_topology(behavior: Arc<dyn NodeBehavior>) -> Arc<FlowTopology> {
     Arc::new(FlowTopology {
         links,
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }

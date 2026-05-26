@@ -49,10 +49,16 @@ struct NamedCount64 {
 pub async fn overview(ch: &ChClient, database: &str) -> Result<Overview, ChClientError> {
     let conn = ch.inner();
 
+    // Exclude `Dictionary` engine entries: they're sourced from
+    // external systems (e.g. Postgres) and a `count(*)` against them
+    // forces a dictionary load. If the upstream source table is
+    // missing the whole overview 500s. The explorer describes
+    // tables, not dictionary sources, so this is also the right
+    // semantics for the KPI tile.
     let tables: i64 = conn
         .query(
             "SELECT count(*) FROM system.tables \
-             WHERE database = currentDatabase()",
+             WHERE database = currentDatabase() AND engine != 'Dictionary'",
         )
         .fetch_one()
         .await?;
@@ -76,11 +82,14 @@ pub async fn overview(ch: &ChClient, database: &str) -> Result<Overview, ChClien
 
     // Row counts: one `count(*)` per table. Same shape as upstream;
     // costly on a many-table database but acceptable for the
-    // operator-facing overview.
+    // operator-facing overview. Skip `Dictionary` engines: a
+    // `count(*)` against one forces ClickHouse to load the
+    // dictionary, which roundtrips to its external source and
+    // 500s the whole overview if that source is unavailable.
     let table_names: Vec<String> = conn
         .query(
             "SELECT name FROM system.tables \
-             WHERE database = currentDatabase()",
+             WHERE database = currentDatabase() AND engine != 'Dictionary'",
         )
         .fetch_all()
         .await?;
@@ -161,10 +170,13 @@ pub async fn overview(ch: &ChClient, database: &str) -> Result<Overview, ChClien
 /// Tables list with per-table row counts.
 pub async fn tables(ch: &ChClient) -> Result<Tables, ChClientError> {
     let conn = ch.inner();
+    // Skip `Dictionary` engines for the same reason as `overview`:
+    // `count(*)` against them would force a load against an
+    // external source that may be missing.
     let names: Vec<String> = conn
         .query(
             "SELECT name FROM system.tables \
-             WHERE database = currentDatabase()",
+             WHERE database = currentDatabase() AND engine != 'Dictionary'",
         )
         .fetch_all()
         .await?;

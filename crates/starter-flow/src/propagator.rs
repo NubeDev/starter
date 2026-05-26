@@ -160,8 +160,19 @@ pub struct FlowTopology {
     ///
     /// Keyed by [`SlotRef`] (which is `Hash + Eq` but not `Ord`).
     pub links: HashMap<SlotRef, Vec<SlotRef>>,
-    /// Per-node trigger-input slot names.
+    /// Per-node trigger-input slot names — writes to these wake the
+    /// node (drive [`NodeBehavior::invoke`]).
     pub triggers: BTreeMap<NodeId, BTreeSet<String>>,
+    /// Per-node read-input slot names — writes do **not** wake the
+    /// node, but the slot value is included in the input
+    /// [`SlotMap`] assembled at invoke time.
+    ///
+    /// Event-driven dataflow semantics: trigger slots are the
+    /// subscription set, read slots are configuration / reference
+    /// inputs the body needs to consult per invocation. The
+    /// canonical example is the tool-call kind whose `in` slot
+    /// triggers but whose `tool_id` + `input` slots are read-only.
+    pub reads: BTreeMap<NodeId, BTreeSet<String>>,
     /// Per-node behavior implementation.
     pub behaviors: BTreeMap<NodeId, Arc<dyn NodeBehavior>>,
 }
@@ -534,14 +545,29 @@ pub async fn drive_with_checkpoint(
 
                 // Build the input map by reading every declared input
                 // slot of the node from the graph store — the
-                // propagator never owns slot data.
+                // propagator never owns slot data. Both trigger slots
+                // (wake set) and read slots (read-only configuration)
+                // are part of the node's declared input surface; the
+                // body sees them as one merged `SlotMap`.
                 let mut input: SlotMap = SlotMap::new();
-                if let Some(inputs) = topology.triggers.get(&env.slot.node) {
-                    for name in inputs {
-                        let sr = SlotRef::new(env.slot.node.clone(), name.clone());
-                        if let Ok(v) = store.read_slot(&sr).await {
-                            input.insert(name.clone(), v);
-                        }
+                let trig_iter = topology
+                    .triggers
+                    .get(&env.slot.node)
+                    .into_iter()
+                    .flat_map(|s| s.iter());
+                let read_iter = topology
+                    .reads
+                    .get(&env.slot.node)
+                    .into_iter()
+                    .flat_map(|s| s.iter());
+                let mut seen: BTreeSet<&str> = BTreeSet::new();
+                for name in trig_iter.chain(read_iter) {
+                    if !seen.insert(name.as_str()) {
+                        continue;
+                    }
+                    let sr = SlotRef::new(env.slot.node.clone(), name.clone());
+                    if let Ok(v) = store.read_slot(&sr).await {
+                        input.insert(name.clone(), v);
                     }
                 }
 
@@ -857,6 +883,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 
@@ -923,6 +950,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 
@@ -994,6 +1022,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 
@@ -1064,6 +1093,7 @@ mod tests {
         let topology = Arc::new(FlowTopology {
             links,
             triggers,
+            reads: BTreeMap::new(),
             behaviors,
         });
 

@@ -112,6 +112,7 @@ fn build_topology(node_a: &NodeId, node_b: &NodeId) -> Arc<FlowTopology> {
     Arc::new(FlowTopology {
         links,
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     })
 }
@@ -407,6 +408,7 @@ async fn backend_outage_transitions_engine_to_degraded_and_recovers() {
     let topo = Arc::new(FlowTopology {
         links: HashMap::new(),
         triggers,
+        reads: BTreeMap::new(),
         behaviors,
     });
     let spec = RunSpec::new(

@@ -17,13 +17,13 @@ description: |
   for visibility; ingest tool persists them. Stage 02 flips the
   `ingest` node's tool_id to `rubix.warehouse.ingest`.
 trigger: schedule
-cron_expr: "0 * * * * *"
+cron_expr: "*/5 * * * * *"
 
 nodes:
   - id: tick
     kind: starter.flow.trigger.schedule
     config:
-      cron_expr: "0 * * * * *"
+      cron_expr: "*/5 * * * * *"
   - id: synth
     kind: starter.flow.tool-call
     config:
@@ -42,11 +42,22 @@ nodes:
   - id: ingest
     kind: starter.flow.tool-call
     config:
-      # Stage 02's only edit to this YAML: flip to "rubix.warehouse.ingest".
-      tool_id: "rubix.system.disk"
+      tool_id: "rubix.warehouse.ingest"
+      # tool_input is link-driven: the seed adapter detects the
+      # `synth.output -> ingest.input` link below and skips seeding
+      # this slot from YAML. The literal `{}` here is kept as a
+      # documented default; remove it once flow_ops.lint enforces the
+      # link-or-default policy. See
+      # `rubix/docs/sessions/data-flow/02-ingest-l1-blockers-2026-05-26.md`.
       tool_input: {}
 
 links:
   - { from: "tick.fire",     to: "synth.in" }
   - { from: "synth.output",  to: "emit.value" }
-  - { from: "emit.emitted",  to: "ingest.in" }
+  # Carry rows from synth into ingest's `input` read slot AND fire
+  # ingest's `in` trigger from the same upstream `synth.output`
+  # write. The parallel `synth.output -> ingest.in` link supplies
+  # the trigger because `input` is declared read-only by the
+  # `tool-call` kind and writes alone do not wake the body.
+  - { from: "synth.output",  to: "ingest.input" }
+  - { from: "synth.output",  to: "ingest.in" }
