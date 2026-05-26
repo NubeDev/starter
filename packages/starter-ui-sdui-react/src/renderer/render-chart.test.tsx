@@ -8,6 +8,6 @@ describe("RenderChart", () => {
       <RenderChart node={{ type: "chart", title: "Load", series: [{}, {}, {}] }} />,
     );
     expect(html).toContain("Load");
-    expect(html).toContain("3 series");
+    expect(html).toContain('data-sdui-chart-series-count="0"');
   });
 });

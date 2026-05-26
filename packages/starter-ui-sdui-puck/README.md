@@ -102,18 +102,9 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
 
 ## Next tasks
 
-1. **Multi-tenant.** Hardcoded `"system"` tenant in
-   `$pageId_.edit.tsx` + `useDashboardGet` needs to come from the
-   authed session once tenant scoping lands.
-2. **Discard bridge cleanup.** Edit route polls
-   `window.__rubixPuckDiscardRequested` every 250ms; replace with
-   a `useImperativeHandle` ref or callback prop on `PuckBuilder`.
-4. **Placeholder coverage.** Variants without per-variant fillers
+1. **Placeholder coverage.** Variants without per-variant fillers
    fall through to the dangling tile. Add entries to
    `@nube/starter-ui-sdui-react/src/headless/placeholder-render.tsx`.
-5. **§B6 runtime schema-hash banner.** CI-time drift guard only.
-6. **Pre-existing test failure** (not blocking the editor):
-   `packages/starter-ui-sdui-react/src/renderer/__tests__/render-chart.test.tsx`
-   asserts a stale `"3 series"` string.
-7. **Scope 11** — live-canvas SSE
+2. **§B6 runtime schema-hash banner.** CI-time drift guard only.
+3. **Scope 11** — live-canvas SSE
    ([`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md)).

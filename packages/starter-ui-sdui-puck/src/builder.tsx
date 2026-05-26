@@ -63,6 +63,11 @@ export interface PuckBuilderProps {
    *  page-state keys) can load their options. Without one, each
    *  picker degrades to a free-text input with an inline warning. */
   catalogue?: Catalogue;
+  /** Invoked when the operator clicks "Discard my edits" in the
+   *  conflict modal. The route owner is expected to re-fetch the
+   *  live revision and remount this builder. Replaces the legacy
+   *  `window.__rubixPuckDiscardRequested` polling drop. */
+  onDiscardRequested?: (pageRef: string) => void;
 }
 
 type SaveState =
@@ -84,6 +89,7 @@ export function PuckBuilder({
   config,
   onSave,
   catalogue,
+  onDiscardRequested,
 }: PuckBuilderProps): ReactElement {
   const resolvedConfig = useMemo<Config>(() => {
     if (config) return config;
@@ -161,14 +167,12 @@ export function PuckBuilder({
   const discardEdits = useCallback(() => {
     // No-op on the data — the route loader is responsible for
     // re-fetching the live revision and re-mounting <PuckBuilder>
-    // with the fresh `initialTree`. We just close the modal and
-    // drop a window flag the route can subscribe to.
+    // with the fresh `initialTree`. We close the modal and invoke
+    // the consumer-supplied callback synchronously so the route
+    // can trigger the reload without a polling shim.
     setConflict({ open: false, currentRevisionId: "" });
-    if (typeof window !== "undefined") {
-      (window as unknown as Record<string, unknown>).__rubixPuckDiscardRequested =
-        { pageRef, ts: Date.now() };
-    }
-  }, [pageRef]);
+    onDiscardRequested?.(pageRef);
+  }, [pageRef, onDiscardRequested]);
 
   return (
     <div

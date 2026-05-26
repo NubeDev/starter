@@ -55,16 +55,26 @@ export function useDashboardList(
   });
 }
 
-/** Get a single dashboard by `page_id`. Query key: `['rubix','dashboard','get', page_id]`. */
+/**
+ * Get a single dashboard by `page_id` scoped to `tenant_id`.
+ * Query key: `['rubix','dashboard','get', tenant_id, page_id]`.
+ *
+ * `tenantId` is required — pass the active tenant from the session
+ * (see `useTenantList` + first-tenant convention used by the
+ * top-header). The query is disabled until both `tenantId` and
+ * `pageId` are non-empty so callers can safely render before the
+ * tenant resolves.
+ */
 export function useDashboardGet(
+  tenantId: string,
   pageId: string,
   options?: ReadOptions<DashboardGetResponse>,
 ): UseQueryResult<DashboardGetResponse, StarterError> {
   const client = useRubixClient();
   return useQuery<DashboardGetResponse, StarterError>({
-    queryKey: [...DASHBOARD_KEY, "get", pageId],
-    queryFn: () => client.dashboardGet({ tenant_id: "system", page_id: pageId }),
-    enabled: Boolean(pageId),
+    queryKey: [...DASHBOARD_KEY, "get", tenantId, pageId],
+    queryFn: () => client.dashboardGet({ tenant_id: tenantId, page_id: pageId }),
+    enabled: Boolean(tenantId) && Boolean(pageId),
     ...options,
   });
 }

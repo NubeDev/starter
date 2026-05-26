@@ -14,14 +14,23 @@ import {
   type CatalogueEntry,
   type ComponentTree,
 } from '@nube/starter-ui-sdui-puck'
-import { useEffect, useMemo, useState } from 'react'
-import { useRubixClient } from '@nube/rubix-client-react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRubixClient, useTenantList } from '@nube/rubix-client-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 function EditDashboardRoute() {
   const { pageId } = Route.useParams()
   const pageRef = pageId.includes('.') ? pageId : `dashboard.${pageId}`
   const client = useRubixClient()
+
+  // Active tenant for the session. The app convention (see
+  // `top-header.tsx`) is to treat the first entry returned by
+  // `rubix.tenant.list` as the active tenant — `MeResponse` does
+  // not carry a tenant field, so this list is the only session-
+  // scoped source we have. The dashboard fetch + save transport
+  // both stay disabled until this resolves.
+  const tenantListQuery = useTenantList()
+  const activeTenantId = tenantListQuery.data?.tenants?.[0]?.tenant_id ?? ''
 
   // §B3 catalogue seam. Each kind hits a rubix verb (or the
   // /api/v1/tools index for the tool catalogue). Failures bubble up
@@ -90,10 +99,11 @@ function EditDashboardRoute() {
   >({ kind: 'loading' })
 
   useEffect(() => {
+    if (!activeTenantId) return
     let cancelled = false
     setPage({ kind: 'loading' })
     client
-      .dashboardGet({ tenant_id: 'system', page_id: pageRef })
+      .dashboardGet({ tenant_id: activeTenantId, page_id: pageRef })
       .then((res) => {
         if (cancelled) return
         setPage({
@@ -109,22 +119,15 @@ function EditDashboardRoute() {
     return () => {
       cancelled = true
     }
-  }, [client, pageRef, reloadKey])
+  }, [client, pageRef, reloadKey, activeTenantId])
 
-  // Bridge the builder's `window.__rubixPuckDiscardRequested` drop
-  // into a real reload. This polling shim mirrors what the handover
-  // flagged as ugly; replacing it with a ref is a follow-up.
-  useEffect(() => {
-    const id = window.setInterval(() => {
-      const w = window as unknown as Record<string, { pageRef?: string } | undefined>
-      const flag = w.__rubixPuckDiscardRequested
-      if (flag && flag.pageRef === pageRef) {
-        w.__rubixPuckDiscardRequested = undefined
-        setReloadKey((k) => k + 1)
-      }
-    }, 250)
-    return () => window.clearInterval(id)
-  }, [pageRef])
+  // Synchronous discard bridge — invoked by `<PuckBuilder>` when
+  // the operator picks "Discard my edits" in the conflict modal.
+  // Bumps `reloadKey` so the loader effect re-fetches and the
+  // builder remounts with the fresh `initialTree`.
+  const handleDiscard = useCallback(() => {
+    setReloadKey((k) => k + 1)
+  }, [])
 
   return (
     <ErrorBoundary>
@@ -143,7 +146,21 @@ function EditDashboardRoute() {
           </div>
         </header>
         <div className="flex-1 min-h-0">
-          {page.kind === 'loading' ? (
+          {!activeTenantId ? (
+            tenantListQuery.isError ? (
+              <div className="p-6 text-sm text-red-600">
+                Failed to resolve active tenant:{' '}
+                {tenantListQuery.error?.message ?? 'unknown error'}
+              </div>
+            ) : tenantListQuery.isSuccess ? (
+              <div className="p-6 text-sm text-red-600">
+                No tenant is available for this session — ask an admin
+                to grant you access.
+              </div>
+            ) : (
+              <div className="p-6 text-sm text-slate-500">Resolving tenant…</div>
+            )
+          ) : page.kind === 'loading' ? (
             <div className="p-6 text-sm text-slate-500">Loading…</div>
           ) : page.kind === 'error' ? (
             <div className="p-6 text-sm text-red-600">
@@ -155,7 +172,8 @@ function EditDashboardRoute() {
               pageRef={pageRef}
               initialTree={page.tree}
               initialRevisionId={page.revisionId}
-              onSave={makeRubixSaveTransport(client, 'system')}
+              onSave={makeRubixSaveTransport(client, activeTenantId)}
+              onDiscardRequested={handleDiscard}
               catalogue={catalogue}
             />
           )}
