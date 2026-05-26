@@ -1,0 +1,73 @@
+name: rubix_flutter
+description: Rubix Flutter client
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+  flutter: ">=3.32.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State + DI
+  flutter_riverpod: ^3.0.0
+  riverpod_annotation: ^3.0.0
+
+  # Navigation
+  go_router: ^14.0.0
+
+  # Network
+  dio: ^5.7.0
+  retrofit: ^4.6.0
+  pretty_dio_logger: ^1.4.0
+
+  # Models
+  freezed_annotation: ^3.0.0
+  json_annotation: ^4.9.0
+
+  # Database — drift
+  drift: ^2.28.0
+  drift_flutter: ^0.2.4
+  sqlite3_flutter_libs: ^0.5.0
+
+  # Secure credential storage
+  flutter_secure_storage: ^9.2.0
+
+  # Non-sensitive prefs
+  shared_preferences: ^2.3.0
+
+  # Platform metadata
+  package_info_plus: ^8.0.0
+  intl: ^0.20.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  integration_test:
+    sdk: flutter
+
+  # Lints
+  very_good_analysis: ^6.0.0
+  riverpod_lint: ^3.0.0
+
+  # Codegen
+  build_runner: ^2.4.13
+  freezed: ^3.0.0
+  json_serializable: ^6.8.0
+  retrofit_generator: ^10.0.0
+  drift_dev: ^2.28.0
+  riverpod_generator: ^3.0.0
+
+  # Testing
+  mocktail: ^1.0.0
+
+  # Asset generators
+  flutter_launcher_icons: ^0.13.0
+  flutter_native_splash: ^2.4.0
+
+flutter:
+  uses-material-design: true
