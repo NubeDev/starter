@@ -34,6 +34,7 @@ import {
   type ComponentTree,
 } from "./adapter.js";
 import { buildPuckConfig } from "./build-puck-config.js";
+import { CatalogueProvider, type Catalogue } from "./data-source-field.js";
 import { IR_SCHEMA } from "./schema-loader.js";
 import type { PuckConfigStub } from "./puck-types.js";
 import type { PuckSaveOutcome, PuckSaveTransport } from "./save.js";
@@ -56,6 +57,12 @@ export interface PuckBuilderProps {
   /** Consumer-supplied save transport. When omitted the Save
    *  button is hidden. */
   onSave?: PuckSaveTransport;
+  /** §B3 catalogue seam. Wraps the canvas in a `CatalogueProvider`
+   *  so the schema-derived data-source pickers
+   *  (analytics templates, tool refs, tenants, unit symbols,
+   *  page-state keys) can load their options. Without one, each
+   *  picker degrades to a free-text input with an inline warning. */
+  catalogue?: Catalogue;
 }
 
 type SaveState =
@@ -76,6 +83,7 @@ export function PuckBuilder({
   initialRevisionId,
   config,
   onSave,
+  catalogue,
 }: PuckBuilderProps): ReactElement {
   const resolvedConfig = useMemo<Config>(() => {
     if (config) return config;
@@ -211,6 +219,7 @@ export function PuckBuilder({
         </div>
       ) : null}
       <div style={{ flex: 1, minHeight: 0 }}>
+        <MaybeCatalogueProvider catalogue={catalogue}>
         <PageStateProvider>
         <Puck
           config={resolvedConfig}
@@ -228,6 +237,7 @@ export function PuckBuilder({
           }}
         />
         </PageStateProvider>
+        </MaybeCatalogueProvider>
       </div>
       {conflict.open ? (
         <ConflictModal
@@ -318,6 +328,17 @@ function ConflictModal({
       </div>
     </div>
   );
+}
+
+function MaybeCatalogueProvider({
+  catalogue,
+  children,
+}: {
+  catalogue: Catalogue | undefined;
+  children: ReactElement;
+}): ReactElement {
+  if (!catalogue) return children;
+  return <CatalogueProvider catalogue={catalogue}>{children}</CatalogueProvider>;
 }
 
 export type { PuckConfigStub };

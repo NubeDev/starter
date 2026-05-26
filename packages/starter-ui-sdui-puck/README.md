@@ -18,7 +18,7 @@ This package implements the Puck builder per
 | §B4 save seam (Save button, 409 modal) | ✅ | `save.ts` + `PuckBuilder` toolbar |
 | §B5 `/dashboards/$pageId/edit` route | ✅ | lives in `rubix/frontend`, uses `$pageId_.edit.tsx` (non-nested) so it doesn't render inside the read route's layout |
 | §B6 CI drift guard | ✅ | `scripts/check-schema-drift.mjs` |
-| §B3 data-source selectors | ⏳ | next up — `$ref` leaves still render as text fields |
+| §B3 data-source selectors | ✅ | `curation/data-sources.ts` + `<CatalogueProvider>` seam — analytics templates, tool refs, tenants, unit symbols, page-state keys render as catalogue-backed pickers; degrades to free-text + warning when the host can't satisfy a kind |
 | §B6 runtime schema-hash banner | ⏳ | CI-time guard only so far |
 | Scope 11 (live-canvas SSE) | ⏳ | unstarted |
 
@@ -64,6 +64,7 @@ fourth, per the table in §B1):
 | `overrides.ts` | Per-variant `ComponentConfig` overrides. PR1 entries are placeholder `null`s for `repeat` / `wizard` / `form` / `table`. |
 | `bindable.ts` | Typed leaves that also accept `{{$page.x}}` bindings. PR1 covers `chart.range.{from,to}`, `drawer.open`, `kpi.value`. |
 | `palette-taxonomy.ts` | Variant → `"layout" \| "display" \| "interactive" \| "custom"` bucket. |
+| `data-sources.ts` | §B3 — `(variant, propertyPath) → CatalogueKind` tuples that swap the default text fallback for a `<DataSourceField>` picker. The picker is rubix-agnostic; the host supplies a `Catalogue` via `<CatalogueProvider catalogue={…}>` (or `<PuckBuilder catalogue={…}>`). |
 
 `overrides.ts` includes a module-load assertion that the
 resolver-only variants (`forbidden`, `dangling`, `unknown`) are
@@ -101,14 +102,10 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
 
 ## Next tasks
 
-1. **§B3 data-source selectors.** Replace the text-field fallback
-   for `$ref`-typed leaves (`AnalyticsTemplateRef`, `ToolRef`,
-   `TenantId`, unit symbols) with `select`/`autocomplete` fields
-   backed by `/api/v1/tools` and the analytics catalogue.
-2. **Multi-tenant.** Hardcoded `"system"` tenant in
+1. **Multi-tenant.** Hardcoded `"system"` tenant in
    `$pageId_.edit.tsx` + `useDashboardGet` needs to come from the
    authed session once tenant scoping lands.
-3. **Discard bridge cleanup.** Edit route polls
+2. **Discard bridge cleanup.** Edit route polls
    `window.__rubixPuckDiscardRequested` every 250ms; replace with
    a `useImperativeHandle` ref or callback prop on `PuckBuilder`.
 4. **Placeholder coverage.** Variants without per-variant fillers

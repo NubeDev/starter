@@ -45,6 +45,26 @@ export {
   categoryFor,
   type PaletteCategory,
 } from "./curation/palette-taxonomy.js";
+export {
+  DATA_SOURCES,
+  dataSourceKindOf,
+  type CatalogueKind,
+  type DataSourceTuple,
+} from "./curation/data-sources.js";
+
+// §B3 catalogue seam — the package stays rubix-agnostic; consumers
+// supply a `Catalogue` via `<CatalogueProvider>` mounted around
+// `<PuckBuilder>`.
+export {
+  CatalogueProvider,
+  useCatalogue,
+  catalogueFromMap,
+  DataSourceField,
+  makeDataSourceField,
+  type Catalogue,
+  type CatalogueEntry,
+  type CatalogueProviderProps,
+} from "./data-source-field.js";
 
 export type {
   PuckConfigStub,
