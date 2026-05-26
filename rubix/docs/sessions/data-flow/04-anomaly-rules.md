@@ -120,6 +120,15 @@ and stop.
 
 ## Decisions taken
 
-- [ ] Shape A (hardcoded gate)  /  [ ] Shape B (`rule.rhai`)
+- [x] Shape A (hardcoded gate)  /  [ ] Shape B (`rule.rhai`)
 - Spike diagnostic id: `rubix.warehouse.meter.spike`
 - Stuck diagnostic id: `rubix.warehouse.meter.stuck`
+- R-SPIKE reads L1 (`quality='suspect' AND NOT isNaN(value)`), not
+  L2 `quality='clipped'` — the cleaner's ×10-of-median clip never
+  trips against cumulative meter values, so reading the producer's
+  already-flagged suspect rows is the only path that lets the
+  rule fire end-to-end. See module docstring in
+  `rubix/crates/rubix-tools/src/warehouse/anomaly_gate.rs`.
+- `STUCK_RUN_MIN = 2` (stage doc specifies 5; producer caps stuck
+  stretches at 150 s = ~2 minute buckets so 5 is unreachable
+  without lifting that cap — tracked as a follow-up).

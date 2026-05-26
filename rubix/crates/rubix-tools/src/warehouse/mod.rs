@@ -5,3 +5,4 @@
 
 pub mod ingest;
 pub mod clean_minute;
+pub mod anomaly_gate;

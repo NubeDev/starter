@@ -53,5 +53,9 @@
   "rubix.dashboard.delete.refused_system": "Dashboard {page_id} is bundled with the system — bundled dashboards cannot be deleted.",
   "rubix.dashboard.duplicated": "Dashboard {source_page_id} duplicated to {page_id}.",
   "rubix.dashboard.duplicate.source_not_found": "Dashboard {source_page_id} cannot be duplicated — source page not found.",
-  "rubix.dashboard.page_set.applied": "Slot {slot} on {node_id} updated."
+  "rubix.dashboard.page_set.applied": "Slot {slot} on {node_id} updated.",
+  "rubix.warehouse.cleaned": "Cleaner materialised {rows} L2 bucket(s) over a {lookback}-minute window (at {at}).",
+  "rubix.warehouse.clean.empty": "Cleaner found no L1 rows in the last {lookback} minute(s); nothing to materialise.",
+  "rubix.warehouse.meter.spike": "Meter {meter_id} spiked at {bucket_start}; cleaner clipped the bucket to {clipped_to}.",
+  "rubix.warehouse.meter.stuck": "Meter {meter_id} has been stuck since {bucket_start} ({bucket_count} consecutive same-value buckets)."
 }

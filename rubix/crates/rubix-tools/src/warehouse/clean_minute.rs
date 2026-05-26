@@ -133,6 +133,28 @@ impl Tool for WarehouseCleanMinuteTool {
                     source: Box::new(e),
                 })?;
             rows = count.first().map(|r| r.c as u32).unwrap_or(0);
+
+            // Stage 04 — run the deterministic anomaly gate against
+            // the freshly-materialised L2 snapshot. Failures here
+            // are logged + swallowed so a flaky CH read does not
+            // turn a successful cleaner pass into a failed verb;
+            // the next tick (60s later) tries again. See
+            // `docs/sessions/data-flow/04-anomaly-rules.md`.
+            match crate::warehouse::anomaly_gate::run_anomaly_gate(client).await {
+                Ok(fired) if fired > 0 => {
+                    tracing::info!(
+                        target: "rubix.warehouse.anomaly_gate",
+                        fired,
+                        "anomaly gate dispatched diagnostics",
+                    );
+                }
+                Ok(_) => {}
+                Err(e) => tracing::warn!(
+                    target: "rubix.warehouse.anomaly_gate",
+                    error = %e,
+                    "anomaly gate read failed; cleaner pass kept",
+                ),
+            }
         }
 
         let summary = if rows == 0 {

@@ -53,5 +53,9 @@
   "rubix.dashboard.delete.refused_system": "El panel {page_id} viene incluido con el sistema — los paneles del sistema no pueden eliminarse.",
   "rubix.dashboard.duplicated": "Panel {source_page_id} duplicado en {page_id}.",
   "rubix.dashboard.duplicate.source_not_found": "No se puede duplicar el panel {source_page_id} — la página de origen no existe.",
-  "rubix.dashboard.page_set.applied": "Se actualizó el slot {slot} en {node_id}."
+  "rubix.dashboard.page_set.applied": "Se actualizó el slot {slot} en {node_id}.",
+  "rubix.warehouse.cleaned": "El limpiador materializó {rows} bucket(s) de L2 en una ventana de {lookback} minuto(s) (el {at}).",
+  "rubix.warehouse.clean.empty": "El limpiador no encontró filas en L1 en los últimos {lookback} minuto(s); nada que materializar.",
+  "rubix.warehouse.meter.spike": "El medidor {meter_id} tuvo un pico en {bucket_start}; el limpiador recortó el bucket a {clipped_to}.",
+  "rubix.warehouse.meter.stuck": "El medidor {meter_id} lleva atascado desde {bucket_start} ({bucket_count} buckets consecutivos con el mismo valor)."
 }
