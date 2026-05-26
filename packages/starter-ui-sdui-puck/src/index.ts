@@ -8,6 +8,7 @@
 export { buildPuckConfig, type BuildPuckConfigOpts } from "./build-puck-config.js";
 export { PuckBuilder, type PuckBuilderProps } from "./builder.js";
 export { IR_SCHEMA } from "./schema-loader.js";
+export { IR_SCHEMA_HASH, IR_SCHEMA_HASH_ALGORITHM } from "./schema-hash.js";
 
 // IR ↔ Puck Data adapter (§B4). Exposed so the harness and the
 // rubix frontend route can build / inspect either shape.

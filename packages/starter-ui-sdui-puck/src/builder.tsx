@@ -36,6 +36,7 @@ import {
 import { buildPuckConfig } from "./build-puck-config.js";
 import { CatalogueProvider, type Catalogue } from "./data-source-field.js";
 import { IR_SCHEMA } from "./schema-loader.js";
+import { IR_SCHEMA_HASH } from "./schema-hash.js";
 import type { PuckConfigStub } from "./puck-types.js";
 import type { PuckSaveOutcome, PuckSaveTransport } from "./save.js";
 
@@ -68,6 +69,14 @@ export interface PuckBuilderProps {
    *  live revision and remount this builder. Replaces the legacy
    *  `window.__rubixPuckDiscardRequested` polling drop. */
   onDiscardRequested?: (pageRef: string) => void;
+  /** §B6 — sha256 of the schema rubix-agent was built against, as
+   *  reported by the live agent at mount time. When defined and
+   *  different from the bundled `IR_SCHEMA_HASH` the builder shows
+   *  a non-blocking banner telling the operator the palette is
+   *  stale (agent and frontend deployed against different schema
+   *  revisions). The host is responsible for fetching this; the
+   *  package does no HTTP. */
+  liveSchemaHash?: string;
 }
 
 type SaveState =
@@ -90,7 +99,12 @@ export function PuckBuilder({
   onSave,
   catalogue,
   onDiscardRequested,
+  liveSchemaHash,
 }: PuckBuilderProps): ReactElement {
+  const schemaDrift =
+    typeof liveSchemaHash === "string" &&
+    liveSchemaHash.length > 0 &&
+    liveSchemaHash !== IR_SCHEMA_HASH;
   const resolvedConfig = useMemo<Config>(() => {
     if (config) return config;
     return buildPuckConfig({ schema: IR_SCHEMA }) as unknown as Config;
@@ -220,6 +234,24 @@ export function PuckBuilder({
               Save failed: {saveState.message}
             </span>
           ) : null}
+        </div>
+      ) : null}
+      {schemaDrift ? (
+        <div
+          data-puck-builder-schema-drift=""
+          role="status"
+          style={{
+            padding: "0.5rem 0.75rem",
+            background: "#fef3c7",
+            borderBottom: "1px solid #f59e0b",
+            color: "#92400e",
+            fontFamily: "ui-sans-serif, system-ui",
+            fontSize: "0.8125rem",
+          }}
+        >
+          schema drifted — refresh to reload the palette (bundled{" "}
+          <code>{IR_SCHEMA_HASH.slice(0, 8)}</code> · live{" "}
+          <code>{(liveSchemaHash ?? "").slice(0, 8)}</code>)
         </div>
       ) : null}
       <div style={{ flex: 1, minHeight: 0 }}>

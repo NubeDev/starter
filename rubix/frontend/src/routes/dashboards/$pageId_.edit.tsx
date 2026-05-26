@@ -89,6 +89,43 @@ function EditDashboardRoute() {
     })
   }, [client])
 
+  // §B6 runtime schema-hash banner. The route fetches the schema
+  // hash the live rubix-agent was built against and hands it to
+  // `<PuckBuilder>`; the builder compares against its bundled hash
+  // (`IR_SCHEMA_HASH`) and surfaces a non-blocking banner inside
+  // the canvas when they diverge — so the operator knows the
+  // palette is stale without us blocking the edit. The fetch is
+  // best-effort: when the verb doesn't exist on the agent (404,
+  // network error, missing key) we silently skip the banner; the
+  // CI drift guard at `packages/starter-ui-sdui-puck/scripts/check-
+  // schema-drift.mjs` is the belt-and-braces at PR time.
+  //
+  // Discovery: as of 2026-05-26 the rubix-agent does not yet expose
+  // a dedicated schema-hash verb. The fetch attempts the
+  // proposed endpoint `GET /api/v1/ui/schema/hash` (see
+  // `rubix/docs/design/sdui/components/README.md`); if it 404s the
+  // banner stays dormant.
+  const [liveSchemaHash, setLiveSchemaHash] = useState<string | undefined>(
+    undefined,
+  )
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/v1/ui/schema/hash', { credentials: 'include' })
+      .then(async (res) => {
+        if (!res.ok) return undefined
+        const body = (await res.json()) as { hash?: unknown }
+        return typeof body.hash === 'string' ? body.hash : undefined
+      })
+      .catch(() => undefined)
+      .then((hash) => {
+        if (cancelled) return
+        if (hash) setLiveSchemaHash(hash)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // `reloadKey` forces a fresh fetch + builder remount when the
   // operator clicks "Discard my edits" in the conflict modal.
   const [reloadKey, setReloadKey] = useState(0)
@@ -175,6 +212,7 @@ function EditDashboardRoute() {
               onSave={makeRubixSaveTransport(client, activeTenantId)}
               onDiscardRequested={handleDiscard}
               catalogue={catalogue}
+              liveSchemaHash={liveSchemaHash}
             />
           )}
         </div>

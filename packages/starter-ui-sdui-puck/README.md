@@ -19,7 +19,7 @@ This package implements the Puck builder per
 | §B5 `/dashboards/$pageId/edit` route | ✅ | lives in `rubix/frontend`, uses `$pageId_.edit.tsx` (non-nested) so it doesn't render inside the read route's layout |
 | §B6 CI drift guard | ✅ | `scripts/check-schema-drift.mjs` |
 | §B3 data-source selectors | ✅ | `curation/data-sources.ts` + `<CatalogueProvider>` seam — analytics templates, tool refs, tenants, unit symbols, page-state keys render as catalogue-backed pickers; degrades to free-text + warning when the host can't satisfy a kind |
-| §B6 runtime schema-hash banner | ⏳ | CI-time guard only so far |
+| §B6 runtime schema-hash banner | ✅ | `scripts/emit-schema-hash.mjs` writes `src/schema-hash.json`; `IR_SCHEMA_HASH` exported; `<PuckBuilder liveSchemaHash>` renders a non-blocking "schema drifted — refresh to reload the palette" banner when the host-supplied live hash differs from the bundled one. Host fetches the live hash from rubix-agent (`GET /api/v1/ui/schema/hash`, best-effort — banner stays dormant if absent) |
 | Scope 11 (live-canvas SSE) | ⏳ | unstarted |
 
 ### Notable infra changes
@@ -116,6 +116,5 @@ mirrored to `window.__rubixPuckLastChange` for inspection.
    variants `forbidden`/`dangling`/`unknown` remain excluded). Each
    placeholder mirrors the live renderer's visual idiom and ships a
    snapshot-style test.
-2. **§B6 runtime schema-hash banner.** CI-time drift guard only.
-3. **Scope 11** — live-canvas SSE
+2. **Scope 11** — live-canvas SSE
    ([`rubix/docs/scope/dashboards/11-live-canvas-sse.md`](../../rubix/docs/scope/dashboards/11-live-canvas-sse.md)).
