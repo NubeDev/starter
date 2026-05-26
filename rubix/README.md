@@ -1,13 +1,13 @@
 # rubix — the backend product
 
 Backend-only product built on `starter`. One binary, every transport
-(REST + SSE + gRPC + MCP + CLI), Postgres + ClickHouse, six concrete
+(REST + SSE + gRPC + MCP + CLI), Postgres + TimescaleDB, six concrete
 operator-facing goals:
 
 1. Build dashboards
 2. Manage users + teams + tenants
 3. Program flows
-4. Write ClickHouse rules
+4. Write warehouse rules
 5. Background system checks
 6. Analytics + reports
 
@@ -61,7 +61,7 @@ The six-step thin-slice path (see
 On a fresh dev machine with only `docker` + `cargo` installed:
 
 ```bash
-# One-line setup — brings up Postgres + ClickHouse, seeds the
+# One-line setup — brings up Postgres + TimescaleDB, seeds the
 # bootstrap operator, then boots the rubix-agent against
 # rubix/dev/agent.toml. Tear down later with `mani run dev-deps-down`.
 mani run demo

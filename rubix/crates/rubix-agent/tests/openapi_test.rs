@@ -63,8 +63,8 @@ async fn served_document_declares_one_tag_per_goal() {
         .unwrap_or_else(|| panic!("tags array must be present: {body}"));
     assert_eq!(
         tags.len(),
-        9,
-        "one tag per goal area (auth, system, user-admin, clickhouse-ruler, flow-programmer, mcp, undo, dashboard, weekly-report-stub); got {tags:?}",
+        8,
+        "one tag per goal area (auth, system, user-admin, flow-programmer, mcp, undo, dashboard, weekly-report-stub); got {tags:?}",
     );
     let names: Vec<&str> = tags
         .iter()
@@ -74,7 +74,6 @@ async fn served_document_declares_one_tag_per_goal() {
         "auth",
         "system",
         "user-admin",
-        "clickhouse-ruler",
         "flow-programmer",
         "mcp",
         "undo",

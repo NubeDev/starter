@@ -1,20 +1,11 @@
 //! TimescaleDB `chunk_time_interval` constants per L1/L2 hypertable.
 //!
-//! Unused by Stage 1 of `rubix/docs/proposal/warehouse-engine-swap.md`
-//! — the engine is still ClickHouse and partition granularity is
-//! controlled by `toYYYYMM(...)`. Stage 2 wires these into
-//! `create_hypertable(...)` and `set_chunk_time_interval(...)`
-//! calls. Baked in now so the value choices live in the codebase
-//! and `cargo build` enforces they remain syntactically valid
-//! `INTERVAL` literals.
+//! Sizing rationale (proposal §"Chunk sizing"):
 //!
-//! Sizing rationale (from the proposal, §"Chunk sizing"):
-//!
-//! * **L1 (`raw_events`)** — monthly, matching the current
-//!   ClickHouse `toYYYYMM(ts)` partitioning. Raw event volume is
-//!   large; one chunk per month keeps compression and retention
-//!   drops cheap while keeping the per-chunk row count in the
-//!   sweet spot Timescale recommends (~25M rows).
+//! * **L1 (`raw_events`)** — monthly. Raw event volume is large;
+//!   one chunk per month keeps compression and retention drops
+//!   cheap while keeping per-chunk row counts in the Timescale-
+//!   recommended sweet spot (~25M rows).
 //! * **L2 (`samples`, `events`, `documents`)** — weekly. L2 has
 //!   ~30× fewer rows than L1 after cleaning so weekly granularity
 //!   keeps per-chunk row counts comparable to L1, and the cagg
@@ -32,10 +23,8 @@ pub const L2_CHUNK_INTERVAL: &str = "1 week";
 /// per-table divergence has a stable callsite.
 pub const L2_SAMPLES_CHUNK_INTERVAL: &str = L2_CHUNK_INTERVAL;
 
-/// L2 cadence as it applies to `events`. See
-/// [`L2_SAMPLES_CHUNK_INTERVAL`].
+/// L2 cadence as it applies to `events`.
 pub const L2_EVENTS_CHUNK_INTERVAL: &str = L2_CHUNK_INTERVAL;
 
-/// L2 cadence as it applies to `documents`. See
-/// [`L2_SAMPLES_CHUNK_INTERVAL`].
+/// L2 cadence as it applies to `documents`.
 pub const L2_DOCUMENTS_CHUNK_INTERVAL: &str = L2_CHUNK_INTERVAL;

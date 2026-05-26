@@ -31,7 +31,6 @@ use starter_spi::ai::AiRunner;
 use starter_spi::i18n::LanguageTag;
 use starter_spi::tool::Tool;
 use starter_store_postgres::pool::Pool;
-use starter_store_warehouse::ChClient;
 
 use crate::boot::ai;
 use crate::boot::config::AgentConfig;
@@ -54,7 +53,6 @@ use super::prefs::prefs_from_locale;
 /// path — history writes are skipped per the
 /// `DiskTool::with_history` contract.
 pub async fn build_flow_registry(
-    ch_client: Option<Arc<ChClient>>,
     pg_pool: Option<Pool>,
     runtime: Option<&crate::boot::FlowRuntime>,
     extensions: Option<&ExtensionRegistry>,
@@ -90,7 +88,6 @@ pub async fn build_flow_registry(
     let tool_registry_snapshot: Vec<Arc<dyn Tool>> = match shared_tools {
         Some(tools) => tools,
         None => crate::registry::build_tool_registry(
-            ch_client,
             cfg.insights.disk_warn_threshold,
             pg_pool.clone(),
             cfg.blob_root.clone(),

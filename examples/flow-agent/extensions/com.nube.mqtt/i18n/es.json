@@ -1,8 +1,0 @@
-{
-  "com.nube.mqtt.publish.label": "Publicar MQTT",
-  "com.nube.mqtt.publish.summary": "Publica un mensaje en un broker MQTT.",
-  "com.nube.mqtt.publish.help": "Envía un mensaje MQTT al broker configurado. Define el tema y el nivel QoS en los ajustes del nodo; el payload llega por el slot de entrada.",
-  "com.nube.mqtt.subscribe.label": "Suscribir MQTT",
-  "com.nube.mqtt.subscribe.summary": "Activa flujos con mensajes MQTT entrantes.",
-  "com.nube.mqtt.subscribe.help": "Abre una suscripción MQTT y dispara el flujo por cada mensaje entrante hasta que se cancele la ejecución."
-}

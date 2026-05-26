@@ -29,7 +29,6 @@ use rubix_agent::{health, middleware, openapi as rubix_openapi_mod, registry, ro
 use starter_changelog_postgres::PgChangeRecorder;
 use starter_spi::changelog::ChangeRecorder;
 use starter_store_postgres::pool::connect as pg_connect;
-use starter_store_warehouse::ChClient;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -50,30 +49,16 @@ async fn main() -> Result<()> {
     // point the runtime dropping aborts every task. See
     // [`boot::undo_sweep`] for the cadence + bound contract.
     let _undo_sweep = boot::spawn_undo_sweep(cfg.database_url.as_deref(), cfg.undo.clone()).await?;
-    let ch_migrations = boot::apply_ch_migrations(
+    // Stage 3 of warehouse-engine-swap: the ClickHouse engine is
+    // gone. The warehouse capability crate will be rebuilt on
+    // TimescaleDB in a follow-up stage; for now the boot wiring
+    // here is a no-op.
+    let ch_migrations = boot::apply_warehouse_migrations(
         cfg.clickhouse_url.as_deref(),
         cfg.database_url.as_deref(),
         cfg.clickhouse_pg_url.as_deref(),
     )
     .await?;
-
-    // The agent boots without a warehouse when `clickhouse_url` is
-    // unset OR when the CH migration step skipped (no RUBIX_CH_URL,
-    // no parseable DSN, etc.). Wiring a `ChClient` into the disk
-    // tool when the `system_disk_history` table was never created
-    // would 500 on every invocation — see
-    // docs/design/warehouse/README.md for the gate contract.
-    //
-    // Build the `ChClient` BEFORE the MCP surface so both the REST
-    // and the MCP/`ai-agent` tool snapshots persist history rows
-    // identically.
-    let ch_client: Option<Arc<ChClient>> = if ch_migrations.skipped {
-        None
-    } else {
-        cfg.clickhouse_url
-            .as_ref()
-            .map(|url| Arc::new(ChClient::connect(boot::rubix_ch_config(url.clone()))))
-    };
     // Reuse a single PG pool for the MCP surface (flows_definitions
     // seed + load) so we don't open a second connection pool just
     // to read flow YAMLs. `None` is the laptop path — MCP falls
@@ -135,17 +120,13 @@ async fn main() -> Result<()> {
     // Clones taken here mirror the previous boot order: `ch_client`
     // is moved into the tool list; the SDUI + explorer routers need
     // their own handles.
-    let ch_client_for_sdui = ch_client.clone();
-    let ch_client_for_explorer = ch_client.clone();
     let tools = registry::build_tool_registry(
-        ch_client,
         cfg.insights.disk_warn_threshold,
         mcp_pool.clone(),
         cfg.blob_root.clone(),
     );
 
     let mcp = boot::mcp::build_mcp_surface(
-        None, // ch_client already consumed by the shared registry above
         mcp_pool.clone(),
         ext_mcp_ctx.as_ref(),
         Some(&flow_runtime),
@@ -259,18 +240,10 @@ async fn main() -> Result<()> {
         // path leaves it open alongside the tools router.
         .merge(flow_events_router);
 
-    // ClickHouse explorer read-only sub-router. Mounts the seven
-    // `GET /api/warehouse/ch/*` + one `POST /api/warehouse/ch/query`
-    // endpoints powering `/admin/warehouse` → Explorer in the
-    // rubix-frontend shell. Ungated here mirrors the posture
-    // `starter_warehouse::rest::router` takes for the rest of the
-    // warehouse REST surface; the statement-shape parser inside the
-    // explorer sub-router refuses anything other than SELECT / SHOW
-    // / DESCRIBE / EXPLAIN / WITH server-side. Skipped when no
-    // ClickHouse URL is configured.
-    if let Some(ch) = ch_client_for_explorer {
-        app = app.merge(starter_warehouse::explorer::routes((*ch).clone()));
-    }
+    // Warehouse explorer + status routers were removed in stage 3
+    // of warehouse-engine-swap; the ClickHouse-backed REST surface
+    // is gone. A TimescaleDB equivalent will land in a follow-up
+    // stage once the warehouse capability crate is rebuilt.
 
     if let Some(dsn) = cfg.database_url.as_deref() {
         let pool = pg_connect(dsn)
@@ -280,31 +253,8 @@ async fn main() -> Result<()> {
         let auth_routes = routes::auth::auth_router(auth.state);
         let engine = boot::authz::build_engine()?;
 
-        // `GET /api/warehouse/status` — W11 dimension-freshness +
-        // W16 ingest-lag envelope consumed by the `<FreshnessTiles>`
-        // component now rendered at the top of the rubix admin
-        // shell's `/admin/warehouse` → Insights tab. Needs both a
-        // PG pool and a ClickHouse URL (the freshness probe joins
-        // PG-side `entities` against the CH dictionary refresh
-        // status), so it lands inside the DSN branch and only if
-        // `RUBIX_CH_URL` was parseable. Ungated — same posture as
-        // the explorer routes merged above; the handler is
-        // read-only and returns 503 on a failed dictionary refresh.
-        if let Some(url) = cfg.clickhouse_url.as_ref() {
-            use axum::routing::get;
-            let rt = std::sync::Arc::new(starter_warehouse::nodes::runtime::WarehouseRuntime::new(
-                pool.clone(),
-                boot::rubix_ch_config(url.clone()),
-                starter_warehouse::WarehouseConfig::default(),
-            ));
-            let status_router = Router::new()
-                .route(
-                    "/api/warehouse/status",
-                    get(starter_warehouse::rest::status::warehouse_status),
-                )
-                .with_state(rt);
-            app = app.merge(status_router);
-        }
+        // `/api/warehouse/status` removed alongside the ClickHouse
+        // engine deletion (stage 3 of warehouse-engine-swap).
 
         // Phase C.2 — mount the extension-host admin router. The
         // lifecycle endpoints (`/extensions`, `/extensions/{id}`,
@@ -346,8 +296,7 @@ async fn main() -> Result<()> {
         // routes at the full path, so we `merge` (not `nest`). The
         // four trait impls are composed inside
         // [`boot::build_sdui_router`] — verb-per-file.
-        let sdui_router: Router =
-            boot::build_sdui_router(&cfg, pool.clone(), ch_client_for_sdui.clone(), &tools);
+        let sdui_router: Router = boot::build_sdui_router(&cfg, pool.clone(), &tools);
         app = app.merge(sdui_router);
 
         // Live sidebar SSE — `GET /api/v1/dashboards/events`.

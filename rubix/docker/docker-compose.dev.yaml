@@ -2,12 +2,9 @@
 #
 # Brings up only the two stores the rubix-agent binary talks to:
 #   * Postgres 16   — sessions, authz, changelog, agent-log
-#   * TimescaleDB   — warehouse history (L1/L2/L3) per the Stage 2
-#                     swap target in
+#   * TimescaleDB   — warehouse history (L1/L2/L3). Sole engine
+#                     since stage 3 of
 #                     `rubix/docs/proposal/warehouse-engine-swap.md`.
-#                     Stage 1 still drives this service with the
-#                     ClickHouse dialect; the Phase-2 swap repoints
-#                     `starter-store-warehouse` at this container.
 #
 # Both ports are bound to 127.0.0.1 only so a laptop running this
 # does not expose itself to the LAN. Ports are non-standard
