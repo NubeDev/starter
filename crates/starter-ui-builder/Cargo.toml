@@ -29,3 +29,6 @@ thiserror   = { workspace = true }
 starter-ui-bindings = { workspace = true }
 jsonschema          = { workspace = true }
 serde_json          = { workspace = true }
+
+[lints]
+workspace = true

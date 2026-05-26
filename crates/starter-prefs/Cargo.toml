@@ -66,3 +66,6 @@ serde_json     = { workspace = true }
 # `starter_store_postgres::testing::with_database` to spin up an
 # ephemeral container for the `#[cfg(feature = "postgres")]` tests.
 starter-store-postgres = { workspace = true, features = ["testing"] }
+
+[lints]
+workspace = true

@@ -44,7 +44,6 @@ use utoipa::OpenApi;
         (name = "auth", description = "Cookie-session + API-token authentication (delegated to starter-auth-users)."),
         (name = "system", description = "System probes: disk, db, flow errors (Goal 5 — system-check + alert)."),
         (name = "user-admin", description = "User-admin verbs (Goal 2): user/team/tenant create + disable + list."),
-        (name = "clickhouse-ruler", description = "ClickHouse ruler verbs (Goal 4): rule write, mart create, retention set."),
         (name = "flow-programmer", description = "Flow programmer verbs (Goal 3): flow deploy, lint, list, duplicate."),
         (name = "mcp", description = "MCP JSON-RPC over HTTP (tools/list, tools/call)."),
         (name = "undo", description = "Undo dispatcher (`rubix.undo.last`) — reverses the most recent reversible change."),
@@ -67,9 +66,8 @@ pub struct RubixApi;
 /// the agent, so we pass `SignupMode::Disabled`.
 pub fn rubix_openapi() -> utoipa::openapi::OpenApi {
     let mut doc = RubixApi::openapi();
-    let mut auth = starter_auth_users::openapi::openapi(
-        &starter_auth_users::signup::SignupMode::Disabled,
-    );
+    let mut auth =
+        starter_auth_users::openapi::openapi(&starter_auth_users::signup::SignupMode::Disabled);
     prefix_paths(&mut auth, "/api/v1");
     doc.merge(auth);
     dedupe_tags(&mut doc);
@@ -95,7 +93,7 @@ fn prefix_paths(doc: &mut utoipa::openapi::OpenApi, prefix: &str) {
 /// the goal-narrative description; the merged starter-auth-users
 /// doc also declares `auth`. Without this dedupe the tag list
 /// grows to 10 and the per-goal contract in
-/// `tests/openapi_test.rs` (`tags.len() == 9`) breaks.
+/// `tests/openapi_test.rs` (`tags.len() == 8`) breaks.
 fn dedupe_tags(doc: &mut utoipa::openapi::OpenApi) {
     let Some(tags) = doc.tags.as_mut() else {
         return;
@@ -113,7 +111,7 @@ mod tests {
         let doc = rubix_openapi();
         assert_eq!(doc.info.title, "rubix-agent");
         let tags = doc.tags.as_ref().expect("tags block declared");
-        assert_eq!(tags.len(), 9, "one tag per goal area");
+        assert_eq!(tags.len(), 8, "one tag per goal area");
     }
 
     #[test]

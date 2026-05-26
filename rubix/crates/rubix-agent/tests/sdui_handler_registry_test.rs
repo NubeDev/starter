@@ -6,9 +6,7 @@
 use std::sync::Arc;
 
 use async_trait::async_trait;
-use rubix_agent::sdui::handler_registry::{
-    test_handler_context, RubixHandlerRegistry,
-};
+use rubix_agent::sdui::handler_registry::{test_handler_context, RubixHandlerRegistry};
 use serde_json::{json, Value as JsonValue};
 use starter_spi::error::{Error as ToolError, Result as ToolResult};
 use starter_spi::tool::{Tool, ToolDefinition};

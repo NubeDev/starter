@@ -51,6 +51,7 @@ pub enum PageSize {
     },
 }
 
+#[allow(clippy::derivable_impls)]
 impl Default for PageSize {
     fn default() -> Self {
         Self::A4

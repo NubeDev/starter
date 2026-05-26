@@ -256,7 +256,13 @@ async fn resource_hash_mismatch_aborts_the_run_then_reload_proceeds() {
         m
     };
 
-    let ctx_h1 = NodeCtx::new(RunId::new(), &n, &cancel, &sel_h1, &starter_flow_spi::state::NOOP_NODE_STATE_STORE);
+    let ctx_h1 = NodeCtx::new(
+        RunId::new(),
+        &n,
+        &cancel,
+        &sel_h1,
+        &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
+    );
     let out = agent
         .invoke(ctx_h1, inputs.clone())
         .await
@@ -271,7 +277,13 @@ async fn resource_hash_mismatch_aborts_the_run_then_reload_proceeds() {
     // selection is now stale — `read_and_verify` rejects it and the
     // body surfaces `Domain { code: "skill_resource_hash_mismatch" }`.
     write_file(&bundle, "greeting.md", "Hello, H2 (drifted)!\n");
-    let ctx_drifted = NodeCtx::new(RunId::new(), &n, &cancel, &sel_h1, &starter_flow_spi::state::NOOP_NODE_STATE_STORE);
+    let ctx_drifted = NodeCtx::new(
+        RunId::new(),
+        &n,
+        &cancel,
+        &sel_h1,
+        &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
+    );
     let err = agent
         .invoke(ctx_drifted, inputs.clone())
         .await
@@ -298,7 +310,13 @@ async fn resource_hash_mismatch_aborts_the_run_then_reload_proceeds() {
         .select(&SlotMap::new(), &principal())
         .await
         .expect("select H2 ok");
-    let ctx_h2 = NodeCtx::new(RunId::new(), &n, &cancel, &sel_h2, &starter_flow_spi::state::NOOP_NODE_STATE_STORE);
+    let ctx_h2 = NodeCtx::new(
+        RunId::new(),
+        &n,
+        &cancel,
+        &sel_h2,
+        &starter_flow_spi::state::NOOP_NODE_STATE_STORE,
+    );
     let out_h2 = agent
         .invoke(ctx_h2, inputs)
         .await

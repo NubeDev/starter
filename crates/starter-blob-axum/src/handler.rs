@@ -41,7 +41,9 @@ use axum::Router;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine as _;
 use serde::Deserialize;
-use starter_spi::blob::{meta_keys, BlobContext, BlobError, BlobMeta, BlobRange, BlobRef, BlobStore};
+use starter_spi::blob::{
+    meta_keys, BlobContext, BlobError, BlobMeta, BlobRange, BlobRef, BlobStore,
+};
 
 use crate::mapping::blob_error_to_status;
 
@@ -56,10 +58,8 @@ use crate::mapping::blob_error_to_status;
 /// [`crate::blob_error_to_status`] and short-circuits the
 /// pipeline. The typical "this viewer cannot see this blob"
 /// answer is [`BlobError::Forbidden`].
-pub type AuthzFn = dyn Fn(&BlobRef, &BlobContext, &Request<Body>) -> Result<(), BlobError>
-    + Send
-    + Sync
-    + 'static;
+pub type AuthzFn =
+    dyn Fn(&BlobRef, &BlobContext, &Request<Body>) -> Result<(), BlobError> + Send + Sync + 'static;
 
 /// Build an `axum::Router` that serves authenticated GET / HEAD
 /// requests for any [`BlobStore`].
@@ -85,10 +85,7 @@ pub type AuthzFn = dyn Fn(&BlobRef, &BlobContext, &Request<Body>) -> Result<(), 
 /// ```
 pub fn blob_proxy_handler<F>(store: Arc<dyn BlobStore>, authz: F) -> Router
 where
-    F: Fn(&BlobRef, &BlobContext, &Request<Body>) -> Result<(), BlobError>
-        + Send
-        + Sync
-        + 'static,
+    F: Fn(&BlobRef, &BlobContext, &Request<Body>) -> Result<(), BlobError> + Send + Sync + 'static,
 {
     let state = ProxyState {
         store,
@@ -177,7 +174,9 @@ fn matches_etag(header_value: &HeaderValue, etag: &str) -> bool {
     // Honour `*` and exact match. We don't implement weak/strong
     // comparison nuances — engines mint strong etags and the
     // proxy reflects them verbatim.
-    s.trim() == "*" || s.split(',').any(|part| part.trim().trim_matches('"') == etag)
+    s.trim() == "*"
+        || s.split(',')
+            .any(|part| part.trim().trim_matches('"') == etag)
 }
 
 fn parse_range(headers: &HeaderMap, size: u64) -> Option<BlobRange> {
@@ -221,7 +220,8 @@ fn build_headers(meta: &BlobMeta, q: &ServeQuery, range: Option<BlobRange>) -> H
         Some(r) => {
             let end = r.end.min(meta.size.saturating_sub(1));
             let len = end - r.start + 1;
-            if let Ok(v) = HeaderValue::from_str(&format!("bytes {}-{}/{}", r.start, end, meta.size))
+            if let Ok(v) =
+                HeaderValue::from_str(&format!("bytes {}-{}/{}", r.start, end, meta.size))
             {
                 headers.insert(header::CONTENT_RANGE, v);
             }
@@ -235,10 +235,7 @@ fn build_headers(meta: &BlobMeta, q: &ServeQuery, range: Option<BlobRange>) -> H
             .get(meta_keys::FILENAME)
             .map(String::as_str)
             .unwrap_or("download");
-        let cd = format!(
-            "attachment; filename=\"{}\"",
-            filename.replace('"', "\\\"")
-        );
+        let cd = format!("attachment; filename=\"{}\"", filename.replace('"', "\\\""));
         if let Ok(v) = HeaderValue::from_str(&cd) {
             headers.insert(header::CONTENT_DISPOSITION, v);
         }

@@ -43,3 +43,6 @@ provider-openai    = ["dep:async-openai"]
 # with `--features testing`; production binaries don't carry the
 # fake.
 testing            = []
+
+[lints]
+workspace = true

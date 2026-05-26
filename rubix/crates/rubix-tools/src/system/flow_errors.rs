@@ -52,7 +52,11 @@ impl FlowErrorRegistry {
             Ok(g) => g,
             Err(_) => return Vec::new(),
         };
-        guard.iter().filter(|s| s.at_ms >= cutoff).cloned().collect()
+        guard
+            .iter()
+            .filter(|s| s.at_ms >= cutoff)
+            .cloned()
+            .collect()
     }
 }
 
@@ -80,8 +84,8 @@ impl Tool for FlowErrorsTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.system.flow_errors".to_owned(),
-            description:
-                "Report how many flow executions have errored in a recent time window.".to_owned(),
+            description: "Report how many flow executions have errored in a recent time window."
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -97,10 +101,9 @@ impl Tool for FlowErrorsTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: FlowErrorsRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("FlowErrorsRequest: {e}"),
-            })?;
+        let req: FlowErrorsRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("FlowErrorsRequest: {e}"),
+        })?;
         let resp = probe(&self.registry, req)?;
         serde_json::to_value(resp).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -110,10 +113,7 @@ impl Tool for FlowErrorsTool {
 
 /// Pure dispatch — separated so integration tests can call it
 /// without spinning up the MCP transport.
-pub fn probe(
-    registry: &FlowErrorRegistry,
-    req: FlowErrorsRequest,
-) -> Result<FlowErrorsResponse> {
+pub fn probe(registry: &FlowErrorRegistry, req: FlowErrorsRequest) -> Result<FlowErrorsResponse> {
     let probed_at_ms = now_epoch_ms();
     let window_secs = req.window_secs.unwrap_or(DEFAULT_WINDOW_SECS);
 
@@ -176,7 +176,10 @@ mod tests {
     #[test]
     fn severity_key_picks_error_at_threshold() {
         assert_eq!(severity_key(10).as_str(), "rubix.system.flow_errors.error");
-        assert_eq!(severity_key(1_000).as_str(), "rubix.system.flow_errors.error");
+        assert_eq!(
+            severity_key(1_000).as_str(),
+            "rubix.system.flow_errors.error"
+        );
     }
 
     #[tokio::test]

@@ -96,10 +96,7 @@ impl RubixEntityGraph {
     /// `user:` lookup returns `None`. Used in tests and on the
     /// laptop boot path.
     pub fn poolless(system: Arc<dyn SystemSlotReader>) -> Self {
-        Self {
-            pool: None,
-            system,
-        }
+        Self { pool: None, system }
     }
 }
 

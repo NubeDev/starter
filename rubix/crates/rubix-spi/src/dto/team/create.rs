@@ -53,10 +53,8 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
         "\"team_id\": \"t-...\", \"name\": \"Ops\", ",
         "\"created_at_ms\": 1764892800000 }"
     ),
-    siblings: &[
-        SiblingTool {
-            id: "rubix.team.assign",
-            wins_when: "the team already exists and the caller wants to add a member.",
-        },
-    ],
+    siblings: &[SiblingTool {
+        id: "rubix.team.assign",
+        wins_when: "the team already exists and the caller wants to add a member.",
+    }],
 };

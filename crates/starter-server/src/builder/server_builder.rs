@@ -88,7 +88,8 @@ impl<S: Clone + Send + Sync + 'static> ServerBuilder<S> {
         mount_path: impl Into<String>,
         dist_dir: impl Into<PathBuf>,
     ) -> Self {
-        self.static_mounts.push((mount_path.into(), dist_dir.into()));
+        self.static_mounts
+            .push((mount_path.into(), dist_dir.into()));
         self
     }
 

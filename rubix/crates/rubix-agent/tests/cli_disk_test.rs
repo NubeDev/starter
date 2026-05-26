@@ -43,9 +43,13 @@ fn english_locale_renders_english() {
     let (stdout, stderr, code) = run_with("en_US.UTF-8", &[]);
     assert_eq!(code, 0, "stdout={stdout} stderr={stderr}");
     assert!(
-        ["Disk usage is normal", "Disk is nearly full", "Disk is full"]
-            .iter()
-            .any(|p| stdout.contains(p)),
+        [
+            "Disk usage is normal",
+            "Disk is nearly full",
+            "Disk is full"
+        ]
+        .iter()
+        .any(|p| stdout.contains(p)),
         "EN catalogue not reached: stdout={stdout}",
     );
 }

@@ -13,9 +13,7 @@
 use std::time::Duration;
 
 use sqlx::postgres::PgListener;
-use starter_store_postgres::{
-    migrate, testing::with_database, SCHEDULED_FLOWS_MIGRATION_SOURCE,
-};
+use starter_store_postgres::{migrate, testing::with_database, SCHEDULED_FLOWS_MIGRATION_SOURCE};
 
 const CHANNEL: &str = "starter_scheduled_flows";
 const SENTINEL_TENANT: &str = "00000000-0000-0000-0000-000000000000";
@@ -148,7 +146,9 @@ async fn scheduled_flows_unique_tenant_flow_enforced() {
         }
     };
 
-    insert("01HXYZSCHEDULE0000000000B1").await.expect("first insert");
+    insert("01HXYZSCHEDULE0000000000B1")
+        .await
+        .expect("first insert");
     let err = insert("01HXYZSCHEDULE0000000000B2")
         .await
         .expect_err("second insert violates UNIQUE(tenant_id, flow_id)");

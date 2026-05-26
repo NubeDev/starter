@@ -59,7 +59,10 @@ mod tests {
     #[test]
     fn cpu_usage_returns_sane_values() {
         let usage = cpu_usage().expect("local cpu probe succeeds");
-        assert!(usage.logical_cores >= 1, "real hosts have at least one core");
+        assert!(
+            usage.logical_cores >= 1,
+            "real hosts have at least one core"
+        );
         assert!(usage.percent_used <= 100);
     }
 }

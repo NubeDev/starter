@@ -6,9 +6,10 @@ name: rubix-frontend-e2e
 # REST or SSE regression that vitest never sees.
 #
 # Pattern follows the `example-admin (Playwright)` job in `ci.yml`,
-# extended with the Postgres + ClickHouse service containers and a
-# backgrounded `rubix-agent` boot — the same shape `mani run demo`
-# orchestrates locally.
+# extended with a Postgres service container and a backgrounded
+# `rubix-agent` boot — the same shape `mani run demo` orchestrates
+# locally. The ClickHouse service was removed in stage 3 of
+# `rubix/docs/proposal/warehouse-engine-swap.md`.
 
 on:
   pull_request:
@@ -40,16 +41,6 @@ jobs:
           - 5432:5432
         options: >-
           --health-cmd "pg_isready -U rubix"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 12
-      clickhouse:
-        image: clickhouse/clickhouse-server:24.3
-        ports:
-          - 8123:8123
-          - 9000:9000
-        options: >-
-          --health-cmd "wget -qO- http://localhost:8123/ping || exit 1"
           --health-interval 5s
           --health-timeout 5s
           --health-retries 12
@@ -89,7 +80,6 @@ jobs:
         # of the seed step inside `mani run demo`.
         env:
           DATABASE_URL: postgres://rubix:rubix-dev-passwd@127.0.0.1:5432/rubix
-          CLICKHOUSE_URL: http://127.0.0.1:8123
         run: |
           ./target/debug/rubix-agent seed-bootstrap \
             --email op@example.com \
@@ -98,7 +88,6 @@ jobs:
       - name: start rubix-agent (background)
         env:
           DATABASE_URL: postgres://rubix:rubix-dev-passwd@127.0.0.1:5432/rubix
-          CLICKHOUSE_URL: http://127.0.0.1:8123
           RUBIX_HTTP_ADDR: 127.0.0.1:8088
         run: |
           ./target/debug/rubix-agent serve &

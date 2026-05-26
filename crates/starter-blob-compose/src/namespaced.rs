@@ -469,9 +469,13 @@ mod tests {
             .unwrap()
             .with_quota(Quota::max_bytes(10));
         // 6 bytes — fits.
-        ns.put_bytes(&k("a"), Bytes::from_static(b"abcdef"), PutOptions::default())
-            .await
-            .unwrap();
+        ns.put_bytes(
+            &k("a"),
+            Bytes::from_static(b"abcdef"),
+            PutOptions::default(),
+        )
+        .await
+        .unwrap();
         // Adding 5 more would push us to 11; reject.
         let err = ns
             .put_bytes(&k("b"), Bytes::from_static(b"vwxyz"), PutOptions::default())
@@ -532,15 +536,27 @@ mod tests {
     async fn approximate_usage_forwards_combined_prefix() {
         let inner = Arc::new(MemoryBlobStore::new());
         let ns = Namespaced::new(inner.clone(), "tenant-7/").unwrap();
-        ns.put_bytes(&k("docs/a"), Bytes::from_static(b"abcd"), PutOptions::default())
-            .await
-            .unwrap();
-        ns.put_bytes(&k("docs/b"), Bytes::from_static(b"xy"), PutOptions::default())
-            .await
-            .unwrap();
-        ns.put_bytes(&k("imgs/x"), Bytes::from_static(b"!"), PutOptions::default())
-            .await
-            .unwrap();
+        ns.put_bytes(
+            &k("docs/a"),
+            Bytes::from_static(b"abcd"),
+            PutOptions::default(),
+        )
+        .await
+        .unwrap();
+        ns.put_bytes(
+            &k("docs/b"),
+            Bytes::from_static(b"xy"),
+            PutOptions::default(),
+        )
+        .await
+        .unwrap();
+        ns.put_bytes(
+            &k("imgs/x"),
+            Bytes::from_static(b"!"),
+            PutOptions::default(),
+        )
+        .await
+        .unwrap();
         // Caller asks for usage of a sub-prefix inside the
         // namespace; combinator prepends `tenant-7/` for the inner
         // store.

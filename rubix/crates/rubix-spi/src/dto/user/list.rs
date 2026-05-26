@@ -72,6 +72,7 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
     ),
     siblings: &[SiblingTool {
         id: "rubix.tenant.list",
-        wins_when: "the caller wants USERS, not tenants. tenant.list scopes the question one level up.",
+        wins_when:
+            "the caller wants USERS, not tenants. tenant.list scopes the question one level up.",
     }],
 };

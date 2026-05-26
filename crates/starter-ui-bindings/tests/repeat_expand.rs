@@ -122,4 +122,3 @@ fn repeat_with_empty_source_collapses_to_zero_children() {
         _ => unreachable!(),
     }
 }
-

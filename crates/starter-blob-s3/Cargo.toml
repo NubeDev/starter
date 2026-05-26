@@ -42,3 +42,6 @@ aws-smithy-runtime-api = "1"
 
 [dev-dependencies]
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true

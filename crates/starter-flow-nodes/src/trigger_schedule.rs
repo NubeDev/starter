@@ -333,7 +333,10 @@ mod tests {
             Some(SlotValue::Int(ms)) => *ms,
             other => panic!("second fire not Int: {other:?}"),
         };
-        assert!(b > a, "successive `fire` must strictly advance ({a} -> {b})");
+        assert!(
+            b > a,
+            "successive `fire` must strictly advance ({a} -> {b})"
+        );
     }
 
     /// Missing `cron_expr` slot returns

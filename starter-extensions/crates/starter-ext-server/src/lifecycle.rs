@@ -110,8 +110,7 @@ pub(crate) async fn install(
             Ok(Some(f)) => f,
             Ok(None) => break,
             Err(e) => {
-                return (StatusCode::BAD_REQUEST, format!("multipart field: {e}"))
-                    .into_response()
+                return (StatusCode::BAD_REQUEST, format!("multipart field: {e}")).into_response()
             }
         };
         let name = field.name().unwrap_or("").to_owned();
@@ -121,8 +120,7 @@ pub(crate) async fn install(
         match field.bytes().await {
             Ok(b) => tarball = Some(b.to_vec()),
             Err(e) => {
-                return (StatusCode::BAD_REQUEST, format!("read field bytes: {e}"))
-                    .into_response()
+                return (StatusCode::BAD_REQUEST, format!("read field bytes: {e}")).into_response()
             }
         }
         if name == "file" {
@@ -150,8 +148,7 @@ pub(crate) async fn install(
 
     if let Err(e) = extract_tarball(&tarball, &staging) {
         let _ = std::fs::remove_dir_all(&staging);
-        return (StatusCode::BAD_REQUEST, format!("tarball extract: {e}"))
-            .into_response();
+        return (StatusCode::BAD_REQUEST, format!("tarball extract: {e}")).into_response();
     }
 
     // Validate via the upstream loader. We point scan() at the staging
@@ -198,9 +195,9 @@ pub(crate) async fn install(
     }
     // The validated record's bundle_dir points inside scan_parent;
     // rename it (not staging) into the final slot.
-    let source = scan_parent.path().join(
-        record.bundle_dir.file_name().unwrap_or_default(),
-    );
+    let source = scan_parent
+        .path()
+        .join(record.bundle_dir.file_name().unwrap_or_default());
     if let Err(e) = std::fs::rename(&source, &final_dir) {
         tracing::warn!(err = %e, from = %source.display(), to = %final_dir.display(),
             "promote staging to final failed");
@@ -211,11 +208,7 @@ pub(crate) async fn install(
     let _ = std::fs::remove_dir_all(&staging);
     let _ = std::fs::remove_dir_all(scan_parent.path());
 
-    if let Err(e) = admin
-        .store()
-        .set(&ext_id, EnablementState::Enabled)
-        .await
-    {
+    if let Err(e) = admin.store().set(&ext_id, EnablementState::Enabled).await {
         tracing::warn!(err = %e.0, id = %ext_id.as_str(),
             "persist enablement after install failed");
         // Roll back the on-disk install so the next boot doesn't
@@ -335,16 +328,15 @@ fn make_solo_scan_root(bundle_root: &Path) -> std::io::Result<SoloScanRoot> {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let parent = bundle_root
-        .parent()
-        .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "bundle_root has no parent"))?;
+    let parent = bundle_root.parent().ok_or_else(|| {
+        std::io::Error::new(std::io::ErrorKind::Other, "bundle_root has no parent")
+    })?;
     let scan_root = parent.join(format!(".scan-{nanos}"));
     std::fs::create_dir(&scan_root)?;
-    let entry = scan_root.join(
-        bundle_root
-            .file_name()
-            .ok_or_else(|| std::io::Error::new(std::io::ErrorKind::Other, "bundle_root unnamed"))?,
-    );
+    let entry =
+        scan_root.join(bundle_root.file_name().ok_or_else(|| {
+            std::io::Error::new(std::io::ErrorKind::Other, "bundle_root unnamed")
+        })?);
     std::fs::rename(bundle_root, &entry)?;
     Ok(SoloScanRoot { path: scan_root })
 }

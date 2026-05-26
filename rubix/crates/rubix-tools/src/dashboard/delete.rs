@@ -172,9 +172,7 @@ impl ReversibleTool for DashboardDeleteTool {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use rubix_spi::dashboard::{
-        DashboardRevision, DashboardStoreError, ListFilter, NewRevision,
-    };
+    use rubix_spi::dashboard::{DashboardRevision, DashboardStoreError, ListFilter, NewRevision};
     use starter_spi::changelog::{Actor, Change, ChangeId, GroupId, Reversible};
     use std::sync::Mutex;
 
@@ -214,9 +212,7 @@ mod tests {
                 .lock()
                 .unwrap()
                 .iter()
-                .filter(|r| {
-                    r.tenant_id == tenant && r.page_id == page && r.superseded_at.is_none()
-                })
+                .filter(|r| r.tenant_id == tenant && r.page_id == page && r.superseded_at.is_none())
                 .count()
         }
     }
@@ -262,9 +258,7 @@ mod tests {
                 .unwrap()
                 .iter()
                 .find(|r| {
-                    r.tenant_id == tenant_id
-                        && r.page_id == page_id
-                        && r.superseded_at.is_none()
+                    r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none()
                 })
                 .cloned())
         }
@@ -282,10 +276,7 @@ mod tests {
         ) -> std::result::Result<u64, DashboardStoreError> {
             let mut n = 0u64;
             for r in self.rows.lock().unwrap().iter_mut() {
-                if r.tenant_id == tenant_id
-                    && r.page_id == page_id
-                    && r.superseded_at.is_none()
-                {
+                if r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none() {
                     r.superseded_at = Some("2026-05-25T00:00:03Z".into());
                     n += 1;
                 }
@@ -392,7 +383,7 @@ mod tests {
             patch: None,
         };
         let reversible = crate::dashboard::store::DashboardReversible::new(
-            store.clone() as Arc<dyn DashboardStore>,
+            store.clone() as Arc<dyn DashboardStore>
         );
         reversible.apply_inverse(&ch).await.unwrap();
         assert_eq!(

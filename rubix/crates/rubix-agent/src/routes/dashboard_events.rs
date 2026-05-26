@@ -116,7 +116,9 @@ struct SnapshotItem {
 #[derive(Debug, Clone, Serialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 enum Frame {
-    Snapshot { items: Vec<SnapshotItem> },
+    Snapshot {
+        items: Vec<SnapshotItem>,
+    },
     Created {
         page_id: String,
         title: String,
@@ -132,7 +134,10 @@ enum Frame {
         revision_id: Option<String>,
         tenant_id: String,
     },
-    Deleted { page_id: String, tenant_id: String },
+    Deleted {
+        page_id: String,
+        tenant_id: String,
+    },
 }
 
 async fn events(
@@ -188,7 +193,9 @@ async fn events(
                 Vec::new()
             }),
     };
-    let snapshot_frame = Frame::Snapshot { items: snapshot_items };
+    let snapshot_frame = Frame::Snapshot {
+        items: snapshot_items,
+    };
 
     // -- 3. Live tail. `subscribe` returns an `mpsc::Receiver` of
     //       every newly committed change row, regardless of kind;
@@ -201,8 +208,7 @@ async fn events(
                 error = %e,
                 "ChangeTail::subscribe failed",
             );
-            return (StatusCode::SERVICE_UNAVAILABLE, "tail unavailable")
-                .into_response();
+            return (StatusCode::SERVICE_UNAVAILABLE, "tail unavailable").into_response();
         }
     };
 
@@ -270,7 +276,10 @@ fn change_to_event(change: &Change, tenant_filter: Option<&str>) -> Option<Frame
         }
     }
     let page_id = payload.get("page_id").and_then(Value::as_str)?.to_owned();
-    let title = payload.get("title").and_then(Value::as_str).map(str::to_owned);
+    let title = payload
+        .get("title")
+        .and_then(Value::as_str)
+        .map(str::to_owned);
     let revision_id = payload
         .get("revision_id")
         .and_then(Value::as_str)
@@ -313,9 +322,7 @@ mod tests {
 
     use async_trait::async_trait;
     use chrono::Utc;
-    use rubix_spi::dashboard::{
-        DashboardRevision, DashboardStoreError, NewRevision,
-    };
+    use rubix_spi::dashboard::{DashboardRevision, DashboardStoreError, NewRevision};
     use serde_json::json;
     use starter_spi::authz::ResourceRef;
     use starter_spi::changelog::{Actor, ChangeId, GroupId};
@@ -349,17 +356,10 @@ mod tests {
         ) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
             Ok(self.0.clone())
         }
-        async fn mark_superseded(
-            &self,
-            _: &str,
-            _: &str,
-        ) -> Result<u64, DashboardStoreError> {
+        async fn mark_superseded(&self, _: &str, _: &str) -> Result<u64, DashboardStoreError> {
             unimplemented!()
         }
-        async fn history(
-            &self,
-            _: &str,
-        ) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
+        async fn history(&self, _: &str) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
             unimplemented!()
         }
     }
@@ -380,7 +380,9 @@ mod tests {
         Change {
             id: ChangeId("ch-test".into()),
             at: Utc::now(),
-            actor: Actor::User { subject: "u".into() },
+            actor: Actor::User {
+                subject: "u".into(),
+            },
             resource: ResourceRef::row("tool.invoke", tool_id),
             resource_version: None,
             op: Op::Custom("invoke".into()),
@@ -404,7 +406,12 @@ mod tests {
         );
         let f = change_to_event(&ch, Some("t1")).expect("frame");
         match f {
-            Frame::Created { page_id, title, tenant_id, .. } => {
+            Frame::Created {
+                page_id,
+                title,
+                tenant_id,
+                ..
+            } => {
                 assert_eq!(page_id, "dashboard.new");
                 assert_eq!(title, "Hello");
                 assert_eq!(tenant_id, "t1");
@@ -492,7 +499,10 @@ mod tests {
         let (tx, rx) = mpsc::channel::<Change>(1);
         let tail = Arc::new(FakeTail(tokio::sync::Mutex::new(Some(rx)))) as Arc<dyn ChangeTail>;
         let store = Arc::new(FakeStore(vec![])) as Arc<dyn DashboardStore>;
-        let _state = DashboardEventsState { tail: tail.clone(), store };
+        let _state = DashboardEventsState {
+            tail: tail.clone(),
+            store,
+        };
         tx.send(tool_invoke_change(
             "rubix.dashboard.delete",
             json!({"tenant_id":"t1","page_id":"dashboard.x"}),

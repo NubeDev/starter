@@ -38,7 +38,12 @@ async fn pg_user_store_round_trips_every_method_against_live_postgres() {
 
     // create() — happy path, both with and without a password hash.
     store
-        .create("user-1", "op@example.com", Some(ARGON2_FIXTURE), Role::Admin)
+        .create(
+            "user-1",
+            "op@example.com",
+            Some(ARGON2_FIXTURE),
+            Role::Admin,
+        )
         .await
         .expect("create local-password admin");
     store
@@ -48,7 +53,12 @@ async fn pg_user_store_round_trips_every_method_against_live_postgres() {
 
     // create() — Conflict on duplicate email.
     let dup = store
-        .create("user-3", "op@example.com", Some(ARGON2_FIXTURE), Role::Reader)
+        .create(
+            "user-3",
+            "op@example.com",
+            Some(ARGON2_FIXTURE),
+            Role::Reader,
+        )
         .await;
     assert!(matches!(dup, Err(UserStoreError::Conflict)));
 
@@ -75,7 +85,10 @@ async fn pg_user_store_round_trips_every_method_against_live_postgres() {
         .expect("find_by_id succeeds")
         .expect("oauth user exists");
     assert_eq!(by_id.email, "oauth@example.com");
-    assert!(by_id.password_hash.is_none(), "oauth user has no local password");
+    assert!(
+        by_id.password_hash.is_none(),
+        "oauth user has no local password"
+    );
 
     let miss = store
         .find_by_id("ghost")

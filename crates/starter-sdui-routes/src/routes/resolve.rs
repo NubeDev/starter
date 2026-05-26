@@ -136,11 +136,7 @@ pub async fn handler(
     // 4b. Chart / KPI source resolver — turn `ChartSource::Static`
     // and `ChartSource::AnalyticsTemplate` into the server-emitted
     // `series` / `value` payloads the client renders verbatim.
-    crate::chart_resolve::resolve_chart_sources(
-        &mut tree,
-        state.analytics.as_deref(),
-    )
-    .await;
+    crate::chart_resolve::resolve_chart_sources(&mut tree, state.analytics.as_deref()).await;
 
     // 5. Capability filter (R7). Run after substitution so any
     // `custom` nodes synthesised by the binding pass are also

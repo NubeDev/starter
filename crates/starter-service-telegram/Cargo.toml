@@ -26,3 +26,6 @@ prometheus  = { workspace = true }
 [dev-dependencies]
 tokio    = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
 wiremock = "0.6"
+
+[lints]
+workspace = true

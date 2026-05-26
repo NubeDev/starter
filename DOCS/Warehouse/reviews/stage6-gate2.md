@@ -7,7 +7,7 @@ out of scope for this gate (deferred to a later ramp step).
 ## Layer-1
 
 - R1: starter-warehouse → {starter-store-postgres[dimensions],
-  starter-store-clickhouse, starter-tags, starter-flow-spi,
+  starter-store-warehouse, starter-tags, starter-flow-spi,
   starter-flow-nodes, starter-server}. No back-edges. ✓
 - R2: REST handlers in `src/rest/mod.rs` forward into
   `WarehouseRuntime`. Nodes delegate to the same runtime
@@ -15,7 +15,7 @@ out of scope for this gate (deferred to a later ramp step).
 - R4/R5: W12 ext re-quarantine inside one tx in `mart_define`;
   W14 promoted-column filter check precedes any CH query;
   W7 honoured by `tap_write` (no payload refusal); W8 ingest
-  goes through `starter-store-clickhouse::store::*`. ✓
+  goes through `starter-store-warehouse::store::*`. ✓
 - Wire formats: no edits to slice A, slice B PG migrations,
   slice C CH migrations, or starter-store-sqlite. ✓
 

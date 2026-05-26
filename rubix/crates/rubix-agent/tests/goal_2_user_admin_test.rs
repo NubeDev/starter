@@ -114,8 +114,7 @@ async fn create_via_dispatcher_persists_row_and_emits_diagnostic() {
         .invoke(json!({"email": "ada@x", "role": "admin"}))
         .await
         .expect("create dispatch succeeds");
-    let resp: UserCreateResponse =
-        serde_json::from_value(out).expect("UserCreateResponse decodes");
+    let resp: UserCreateResponse = serde_json::from_value(out).expect("UserCreateResponse decodes");
 
     // Diagnostic code — verb output is structured, not a string.
     assert_eq!(

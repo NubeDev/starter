@@ -64,10 +64,9 @@ impl Tool for AlertSendTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: AlertSendRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("AlertSendRequest: {e}"),
-            })?;
+        let req: AlertSendRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("AlertSendRequest: {e}"),
+        })?;
         let resp = probe(req)?;
         serde_json::to_value(resp).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -97,7 +96,10 @@ pub fn probe(req: AlertSendRequest) -> Result<AlertSendResponse> {
     let probed_at_ms = now_epoch_ms();
     let code = MessageKey::parse("rubix.alert.send.ok").expect("hard-coded key parses");
     let summary = Diagnostic::new(code)
-        .with_param("severity", DiagnosticParam::String(severity_str(req.severity).to_owned()))
+        .with_param(
+            "severity",
+            DiagnosticParam::String(severity_str(req.severity).to_owned()),
+        )
         .with_param("at", DiagnosticParam::Timestamp(probed_at_ms));
 
     Ok(AlertSendResponse {
@@ -128,14 +130,10 @@ fn severity_str(s: AlertSeverity) -> &'static str {
 /// to a string twice. The tracing line carries `severity`, `key`
 /// and the param map as structured fields so log aggregators can
 /// filter on them.
-pub async fn dispatch(
-    severity: AlertSeverity,
-    diag: Diagnostic,
-) -> Result<AlertSendResponse> {
+pub async fn dispatch(severity: AlertSeverity, diag: Diagnostic) -> Result<AlertSendResponse> {
     let probed_at_ms = now_epoch_ms();
     let key = diag.code.as_str();
-    let params = serde_json::to_string(&diag.params)
-        .unwrap_or_else(|_| "{}".to_owned());
+    let params = serde_json::to_string(&diag.params).unwrap_or_else(|_| "{}".to_owned());
 
     match severity {
         AlertSeverity::Info => info!(
@@ -162,14 +160,13 @@ pub async fn dispatch(
     }
     ALERTS_FIRED.fetch_add(1, Ordering::Relaxed);
 
-    let summary = Diagnostic::new(
-        MessageKey::parse("rubix.alert.send.ok").expect("hard-coded key parses"),
-    )
-    .with_param(
-        "severity",
-        DiagnosticParam::String(severity_str(severity).to_owned()),
-    )
-    .with_param("at", DiagnosticParam::Timestamp(probed_at_ms));
+    let summary =
+        Diagnostic::new(MessageKey::parse("rubix.alert.send.ok").expect("hard-coded key parses"))
+            .with_param(
+                "severity",
+                DiagnosticParam::String(severity_str(severity).to_owned()),
+            )
+            .with_param("at", DiagnosticParam::Timestamp(probed_at_ms));
 
     let delivered_chars = u32::try_from(params.chars().count()).unwrap_or(u32::MAX);
 

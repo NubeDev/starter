@@ -64,8 +64,7 @@ pub const FULL_THRESHOLD: u8 = 95;
 
 /// Five-field descriptor for `rubix.system.disk`.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose:
-        "Report disk usage for a filesystem mount point on the rubix-agent host.",
+    purpose: "Report disk usage for a filesystem mount point on the rubix-agent host.",
     when_to_use: concat!(
         "Use when the operator asks 'how full is the disk?', when an agent ",
         "is investigating a degraded system, or as the first step in a ",

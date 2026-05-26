@@ -114,16 +114,14 @@ async fn weekly_cron_expr_passes_through_schedule_slot() {
     let collect = async {
         loop {
             match events_rx.recv().await {
-                Ok(FlowEvent::NodeEmitted { node, slot, value, .. })
-                    if node.as_str() == "flow.test.ts" && slot == SCHEDULE_SLOT =>
-                {
+                Ok(FlowEvent::NodeEmitted {
+                    node, slot, value, ..
+                }) if node.as_str() == "flow.test.ts" && slot == SCHEDULE_SLOT => {
                     saw_schedule_emit = true;
                     emitted_value = Some(value);
                     break;
                 }
-                Ok(FlowEvent::NodeFailed { node, .. })
-                    if node.as_str() == "flow.test.ts" =>
-                {
+                Ok(FlowEvent::NodeFailed { node, .. }) if node.as_str() == "flow.test.ts" => {
                     panic!("trigger.schedule body must not fail on a valid cron_expr");
                 }
                 Ok(_) => continue,

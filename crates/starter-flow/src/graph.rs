@@ -496,11 +496,7 @@ mod tests {
                     SlotValue::Int(42),
                     WriteSlotOpts::live(),
                 ),
-                (
-                    other_slot.clone(),
-                    SlotValue::Int(7),
-                    WriteSlotOpts::live(),
-                ),
+                (other_slot.clone(), SlotValue::Int(7), WriteSlotOpts::live()),
             ])
             .await
             .unwrap();

@@ -272,7 +272,7 @@ the closing smoke session note is
 |---|---|---|
 | T1 | Recorded-LLM harness shape — record-and-replay vs deterministic stub | PR 1 |
 | T2 | Bootstrap operator — first-run claim vs seeded credentials | PR 2 |
-| T3 | ClickHouse migration tooling — `starter-store-clickhouse` provides a runner? | PR 4 |
+| T3 | ClickHouse migration tooling — `starter-store-warehouse` provides a runner? | PR 4 |
 | T4 | Insights rule wire format — hardcoded Rust vs YAML on disk | PR 4 |
 
 T1 + T2 + T3 + T4 need an answer before their PR starts; surface

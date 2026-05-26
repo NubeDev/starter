@@ -34,18 +34,20 @@ fn with_test_principal<S>(router: Router<S>, subject: &'static str) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
 {
-    router.layer(from_fn(move |mut req: Request<Body>, next: Next| async move {
-        let exts: &mut Extensions = req.extensions_mut();
-        exts.insert(Principal {
-            subject: subject.to_owned(),
-            role: Role::Admin,
-            scopes: vec![],
-            tenant_id: None,
-            teams: vec![],
-            extra: serde_json::Value::Null,
-        });
-        next.run(req).await
-    }))
+    router.layer(from_fn(
+        move |mut req: Request<Body>, next: Next| async move {
+            let exts: &mut Extensions = req.extensions_mut();
+            exts.insert(Principal {
+                subject: subject.to_owned(),
+                role: Role::Admin,
+                scopes: vec![],
+                tenant_id: None,
+                teams: vec![],
+                extra: serde_json::Value::Null,
+            });
+            next.run(req).await
+        },
+    ))
 }
 
 async fn fresh_pool() -> Pool {
@@ -58,12 +60,9 @@ async fn fresh_pool() -> Pool {
     pool
 }
 
-fn audited_router(
-    pool: Pool,
-    subject: Option<&'static str>,
-) -> Router {
+fn audited_router(pool: Pool, subject: Option<&'static str>) -> Router {
     let bundle = Arc::new(rubix_spi::i18n::rubix_bundle().expect("rubix bundle parses"));
-    let tools = build_tool_registry(None, 90, None);
+    let tools = build_tool_registry(90, None, None);
     let inner = tools_router(ToolsState::new(tools, bundle));
 
     let recorder: Arc<dyn ChangeRecorder> = Arc::new(SqliteChangeRecorder::new(pool));
@@ -164,7 +163,10 @@ async fn audit_row_redacts_secret_keys_from_payload() {
         .expect("list changes");
     let row = page.items.first().expect("one audit row");
     let after = row.after.as_ref().expect("payload captured");
-    assert!(after.get("mount").is_some(), "payload retains non-secret keys: {after}");
+    assert!(
+        after.get("mount").is_some(),
+        "payload retains non-secret keys: {after}"
+    );
     assert!(
         after.get("password").is_none(),
         "redactor must drop `password`: {after}",

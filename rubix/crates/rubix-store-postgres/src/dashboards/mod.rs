@@ -197,10 +197,7 @@ impl DashboardStore for PgDashboardStore {
         Ok(res.rows_affected())
     }
 
-    async fn history(
-        &self,
-        page_id: &str,
-    ) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
+    async fn history(&self, page_id: &str) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
         let sql = format!(
             "SELECT {SELECT_COLS} FROM dashboards_definitions
               WHERE page_id = $1

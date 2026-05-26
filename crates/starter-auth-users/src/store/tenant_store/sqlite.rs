@@ -71,9 +71,7 @@ impl TenantStore for SqliteTenantStore {
             Err(sqlx::Error::Database(e)) if e.is_unique_violation() => {
                 Err(TenantStoreError::SlugConflict(row.slug.clone()))
             }
-            Err(sqlx::Error::Database(e))
-                if e.message().contains("CHECK constraint failed") =>
-            {
+            Err(sqlx::Error::Database(e)) if e.message().contains("CHECK constraint failed") => {
                 Err(TenantStoreError::ReservedSlug(row.slug.clone()))
             }
             Err(e) => Err(err(e)),
@@ -190,11 +188,7 @@ impl TenantStore for SqliteTenantStore {
         Ok(())
     }
 
-    async fn remove_member(
-        &self,
-        tenant_id: &str,
-        user_id: &str,
-    ) -> Result<(), TenantStoreError> {
+    async fn remove_member(&self, tenant_id: &str, user_id: &str) -> Result<(), TenantStoreError> {
         // SCOPE-EXT.md R12 — membership revoke cascades to
         // token_store.revoke_for_membership IN THE SAME TXN.
         // We open one transaction, delete the membership and
@@ -330,11 +324,7 @@ impl TenantStore for SqliteTenantStore {
             .collect())
     }
 
-    async fn add_team_member(
-        &self,
-        team_id: &str,
-        user_id: &str,
-    ) -> Result<(), TenantStoreError> {
+    async fn add_team_member(&self, team_id: &str, user_id: &str) -> Result<(), TenantStoreError> {
         let res = sqlx::query(
             "INSERT INTO starter_auth_users_team_members \
              (team_id, user_id) VALUES (?1, ?2)",

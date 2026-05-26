@@ -72,8 +72,5 @@ fn non_optional_missing_target_errors() {
     // surfaces structurally.
     assert!(substitute_text("{{$target/x.y}}", &ctx).is_err());
     // With `?` it collapses.
-    assert_eq!(
-        substitute_text("v={{$target/x.y?}}", &ctx).unwrap(),
-        "v="
-    );
+    assert_eq!(substitute_text("v={{$target/x.y?}}", &ctx).unwrap(), "v=");
 }

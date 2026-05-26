@@ -128,8 +128,14 @@ impl Tool for FlowDuplicateTool {
         let summary = Diagnostic::new(
             MessageKey::parse("rubix.flow.duplicated").expect("hard-coded key parses"),
         )
-        .with_param("source", DiagnosticParam::String(req.source_flow_id.clone()))
-        .with_param("target", DiagnosticParam::String(req.target_flow_id.clone()))
+        .with_param(
+            "source",
+            DiagnosticParam::String(req.source_flow_id.clone()),
+        )
+        .with_param(
+            "target",
+            DiagnosticParam::String(req.target_flow_id.clone()),
+        )
         .with_param("at", DiagnosticParam::Timestamp(now_ms));
 
         let response = FlowDuplicateResponse {
@@ -214,7 +220,10 @@ mod tests {
     #[tokio::test]
     async fn duplicate_copies_latest_revision_under_new_id() {
         let store = Arc::new(InMemoryFlowDefStore::new());
-        store.insert_revision("com.x.src", SRC_YAML, 1).await.unwrap();
+        store
+            .insert_revision("com.x.src", SRC_YAML, 1)
+            .await
+            .unwrap();
         let tool = FlowDuplicateTool::new(store.clone());
         let out = tool
             .invoke(serde_json::json!({
@@ -233,7 +242,10 @@ mod tests {
     #[tokio::test]
     async fn duplicate_refuses_overwrite() {
         let store = Arc::new(InMemoryFlowDefStore::new());
-        store.insert_revision("com.x.src", SRC_YAML, 1).await.unwrap();
+        store
+            .insert_revision("com.x.src", SRC_YAML, 1)
+            .await
+            .unwrap();
         let dst = "id: com.x.dst\ntrigger: explicit\nnodes:\n  - id: agent\n    kind: ai-agent\n    config: {}\nlinks: []\n";
         store.insert_revision("com.x.dst", dst, 2).await.unwrap();
         let tool = FlowDuplicateTool::new(store);
@@ -264,7 +276,10 @@ mod tests {
     #[tokio::test]
     async fn change_for_returns_create_with_no_prior() {
         let store = Arc::new(InMemoryFlowDefStore::new());
-        store.insert_revision("com.x.src", SRC_YAML, 1).await.unwrap();
+        store
+            .insert_revision("com.x.src", SRC_YAML, 1)
+            .await
+            .unwrap();
         let tool = FlowDuplicateTool::new(store);
         let input = serde_json::json!({
             "source_flow_id": "com.x.src",

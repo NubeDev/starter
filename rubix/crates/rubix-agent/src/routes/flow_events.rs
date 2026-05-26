@@ -134,9 +134,15 @@ mod tests {
         // Drop tx so the stream closes after we drain it.
         drop(tx);
         drop(reg);
-        let first = futures::StreamExt::next(&mut stream).await.expect("one event").unwrap();
+        let first = futures::StreamExt::next(&mut stream)
+            .await
+            .expect("one event")
+            .unwrap();
         let data = format!("{first:?}");
-        assert!(data.contains("\\\"count\\\""), "unexpected sse frame: {data}");
+        assert!(
+            data.contains("\\\"count\\\""),
+            "unexpected sse frame: {data}"
+        );
         assert!(data.contains("42"));
     }
 }

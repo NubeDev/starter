@@ -158,8 +158,5 @@ pub trait DashboardStore: Send + Sync + 'static {
 
     /// Return every revision (live and superseded) for `page_id`
     /// in `created_at DESC` order.
-    async fn history(
-        &self,
-        page_id: &str,
-    ) -> Result<Vec<DashboardRevision>, DashboardStoreError>;
+    async fn history(&self, page_id: &str) -> Result<Vec<DashboardRevision>, DashboardStoreError>;
 }

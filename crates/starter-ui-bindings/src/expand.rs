@@ -80,7 +80,9 @@ fn expand_children<G: EntityGraph + ?Sized>(
         }
         Component::FieldGroup { control, .. } => expand_node(control, ctx)?,
         Component::List { item, .. } => expand_node(item, ctx)?,
-        Component::Menu { trigger: Some(t), .. } => expand_node(t, ctx)?,
+        Component::Menu {
+            trigger: Some(t), ..
+        } => expand_node(t, ctx)?,
         // A bare Repeat at the root has no parent's `children` to be
         // replaced in. Recurse into its template only; the caller is
         // expected to have already handled it via expand_vec.

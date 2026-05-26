@@ -27,8 +27,7 @@ use starter_ext_spi::ExtensionId;
 use starter_ext_store_pg::PgEnablementStore;
 use starter_store_postgres::testing::with_database;
 
-const MIGRATION_SQL: &str =
-    include_str!("../src/migrations/0001_extensions_enablement.sql");
+const MIGRATION_SQL: &str = include_str!("../src/migrations/0001_extensions_enablement.sql");
 
 #[tokio::test]
 async fn pg_enablement_store_roundtrips_upserts_lists_and_audits() {
@@ -101,10 +100,7 @@ async fn pg_enablement_store_roundtrips_upserts_lists_and_audits() {
         "list_all returns rows ordered by extension_id",
     );
     assert_eq!(
-        listed
-            .iter()
-            .map(|(_, s)| *s)
-            .collect::<Vec<_>>(),
+        listed.iter().map(|(_, s)| *s).collect::<Vec<_>>(),
         vec![
             EnablementState::Disabled,
             EnablementState::Disabled,
@@ -114,13 +110,12 @@ async fn pg_enablement_store_roundtrips_upserts_lists_and_audits() {
 
     // --- updated_by audit: plain `set` records "system";       ---
     // --- `set_as("operator-7", ...)` records the operator id.  ---
-    let alpha_actor: String = sqlx::query_scalar(
-        "SELECT updated_by FROM extensions_enablement WHERE extension_id = $1",
-    )
-    .bind(alpha.as_str())
-    .fetch_one(pool.sqlx())
-    .await
-    .expect("read alpha updated_by");
+    let alpha_actor: String =
+        sqlx::query_scalar("SELECT updated_by FROM extensions_enablement WHERE extension_id = $1")
+            .bind(alpha.as_str())
+            .fetch_one(pool.sqlx())
+            .await
+            .expect("read alpha updated_by");
     assert_eq!(alpha_actor, "system", "plain set records 'system'");
 
     store
@@ -128,13 +123,12 @@ async fn pg_enablement_store_roundtrips_upserts_lists_and_audits() {
         .await
         .expect("set_as bravo");
 
-    let bravo_actor: String = sqlx::query_scalar(
-        "SELECT updated_by FROM extensions_enablement WHERE extension_id = $1",
-    )
-    .bind(bravo.as_str())
-    .fetch_one(pool.sqlx())
-    .await
-    .expect("read bravo updated_by");
+    let bravo_actor: String =
+        sqlx::query_scalar("SELECT updated_by FROM extensions_enablement WHERE extension_id = $1")
+            .bind(bravo.as_str())
+            .fetch_one(pool.sqlx())
+            .await
+            .expect("read bravo updated_by");
     assert_eq!(
         bravo_actor, "operator-7",
         "set_as records the supplied actor in updated_by",

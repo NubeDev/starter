@@ -27,11 +27,7 @@ pub fn fires(rng: &mut impl Rng, p: f64) -> bool {
 }
 
 /// Should this tick drop the row entirely?
-pub fn gap_fires(
-    rng: &mut impl Rng,
-    knobs: &Resolved,
-    profile: &MeterProfile,
-) -> bool {
+pub fn gap_fires(rng: &mut impl Rng, knobs: &Resolved, profile: &MeterProfile) -> bool {
     profile.mess.gap && fires(rng, knobs.gap_prob)
 }
 
@@ -66,20 +62,12 @@ pub fn spike_value(profile: &MeterProfile, state: &MeterState) -> f64 {
 }
 
 /// Returns true if a spike should fire this tick.
-pub fn spike_fires(
-    rng: &mut impl Rng,
-    knobs: &Resolved,
-    profile: &MeterProfile,
-) -> bool {
+pub fn spike_fires(rng: &mut impl Rng, knobs: &Resolved, profile: &MeterProfile) -> bool {
     profile.mess.spike && fires(rng, knobs.spike_prob)
 }
 
 /// Returns true if a NaN should fire this tick.
-pub fn nan_fires(
-    rng: &mut impl Rng,
-    knobs: &Resolved,
-    profile: &MeterProfile,
-) -> bool {
+pub fn nan_fires(rng: &mut impl Rng, knobs: &Resolved, profile: &MeterProfile) -> bool {
     profile.mess.nan && fires(rng, knobs.nan_prob)
 }
 
@@ -101,8 +89,8 @@ pub fn jittered_epoch(
 /// Knob resolution: request value wins, then env var, then default.
 pub fn resolve(knobs: &SynthKnobs) -> Resolved {
     use rubix_spi::dto::dataflow::synth::{
-        DEFAULT_GAP_PROB, DEFAULT_JITTER_MS, DEFAULT_NAN_PROB, DEFAULT_SEED,
-        DEFAULT_SPIKE_PROB, DEFAULT_STUCK_PROB,
+        DEFAULT_GAP_PROB, DEFAULT_JITTER_MS, DEFAULT_NAN_PROB, DEFAULT_SEED, DEFAULT_SPIKE_PROB,
+        DEFAULT_STUCK_PROB,
     };
     Resolved {
         seed: knobs

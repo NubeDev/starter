@@ -38,3 +38,6 @@ postgres = ["dep:starter-store-postgres", "dep:sqlx", "sqlx/postgres"]
 tokio = { workspace = true }
 starter-store-sqlite = { workspace = true, features = ["testing"] }
 sqlx  = { workspace = true, features = ["sqlite", "macros", "migrate"] }
+
+[lints]
+workspace = true

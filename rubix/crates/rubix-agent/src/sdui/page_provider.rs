@@ -98,9 +98,7 @@ impl PageProvider for PgPageProvider {
 mod tests {
     use super::*;
     use async_trait::async_trait;
-    use rubix_spi::dashboard::{
-        DashboardRevision, DashboardStoreError, ListFilter, NewRevision,
-    };
+    use rubix_spi::dashboard::{DashboardRevision, DashboardStoreError, ListFilter, NewRevision};
     use std::sync::Mutex;
 
     #[derive(Default)]
@@ -156,10 +154,7 @@ mod tests {
         async fn mark_superseded(&self, _: &str, _: &str) -> Result<u64, DashboardStoreError> {
             unimplemented!()
         }
-        async fn history(
-            &self,
-            _: &str,
-        ) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
+        async fn history(&self, _: &str) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
             unimplemented!()
         }
     }

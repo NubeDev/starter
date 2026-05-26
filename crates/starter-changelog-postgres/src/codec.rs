@@ -16,6 +16,7 @@ use starter_spi::{Error, Result};
 /// every column lives in one place (resolves SCOPE open
 /// question #3 — same shape as the SQLite backend's
 /// `actor_columns`).
+#[allow(clippy::type_complexity)]
 pub(crate) fn actor_columns(
     actor: &Actor,
 ) -> Result<(

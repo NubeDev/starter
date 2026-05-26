@@ -52,3 +52,6 @@ http-body-util  = "0.1"
 tower           = { workspace = true }
 tempfile        = "3"
 tokio           = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true

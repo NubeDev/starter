@@ -252,9 +252,7 @@ impl DashboardStore for InMemoryDashboardStore {
         let now = Self::now();
         let mut rows = self.rows.lock().unwrap();
         for r in rows.iter_mut() {
-            if r.tenant_id == new.tenant_id
-                && r.page_id == new.page_id
-                && r.superseded_at.is_none()
+            if r.tenant_id == new.tenant_id && r.page_id == new.page_id && r.superseded_at.is_none()
             {
                 r.superseded_at = Some(now.clone());
             }
@@ -288,11 +286,7 @@ impl DashboardStore for InMemoryDashboardStore {
             .lock()
             .unwrap()
             .iter()
-            .find(|r| {
-                r.tenant_id == tenant_id
-                    && r.page_id == page_id
-                    && r.superseded_at.is_none()
-            })
+            .find(|r| r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none())
             .cloned())
     }
 
@@ -311,8 +305,7 @@ impl DashboardStore for InMemoryDashboardStore {
             .iter()
             .filter(|r| r.tenant_id == tenant_id && r.superseded_at.is_none())
             .filter(|r| {
-                filter.tags_any.is_empty()
-                    || r.tags.iter().any(|t| filter.tags_any.contains(t))
+                filter.tags_any.is_empty() || r.tags.iter().any(|t| filter.tags_any.contains(t))
             })
             .filter(|r| match &filter.owner {
                 None => true,
@@ -330,10 +323,7 @@ impl DashboardStore for InMemoryDashboardStore {
         let now = Self::now();
         let mut n = 0u64;
         for r in self.rows.lock().unwrap().iter_mut() {
-            if r.tenant_id == tenant_id
-                && r.page_id == page_id
-                && r.superseded_at.is_none()
-            {
+            if r.tenant_id == tenant_id && r.page_id == page_id && r.superseded_at.is_none() {
                 r.superseded_at = Some(now.clone());
                 n += 1;
             }

@@ -11,7 +11,7 @@ const EXPECTED_FLOW_IDS: &[&str] = &[
     "com.rubix.weekly-report",
     "com.rubix.dashboard-assistant",
     "com.rubix.flow-programmer",
-    "com.rubix.clickhouse-ruler",
+    "com.rubix.warehouse-ruler",
     "com.rubix.user-admin",
     "com.rubix.tick-counter",
 ];
@@ -242,7 +242,11 @@ fn bundled_tick_counter_parses_with_three_nodes_and_two_edges() {
 
     let (flow_id, _rev, body) = convert(PATH, yaml).expect("tick-counter converts");
     assert_eq!(flow_id.as_str(), "com.rubix.tick-counter");
-    assert_eq!(body.nodes.len(), 3, "three nodes: trigger -> counter -> log");
+    assert_eq!(
+        body.nodes.len(),
+        3,
+        "three nodes: trigger -> counter -> log"
+    );
     assert_eq!(
         body.links.len(),
         2,

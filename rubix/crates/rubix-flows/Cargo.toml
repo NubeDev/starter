@@ -22,3 +22,6 @@ thiserror   = { workspace = true }
 # starter-flow is the typed projection it converts into.
 starter-flow     = { workspace = true }
 starter-flow-spi = { workspace = true }
+
+[lints]
+workspace = true

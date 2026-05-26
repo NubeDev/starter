@@ -53,22 +53,13 @@ pub trait InsightsRuleStore: Send + Sync {
     /// Enumerate every rule the store holds, sorted by `rule_id`.
     async fn list(&self) -> Result<Vec<InsightsRuleRow>>;
     /// Idempotent upsert. New rules default to `enabled = true`.
-    async fn upsert(
-        &self,
-        rule_id: &str,
-        body_yaml: &str,
-        now_ms: i64,
-    ) -> Result<UpsertOutcome>;
+    async fn upsert(&self, rule_id: &str, body_yaml: &str, now_ms: i64) -> Result<UpsertOutcome>;
     /// Flip the enabled flag. Returns [`ToggleOutcome::NotFound`]
     /// when the id is unknown so the verb can surface a
     /// `rubix.insights.rule.not_found` diagnostic instead of a
     /// generic error.
-    async fn set_enabled(
-        &self,
-        rule_id: &str,
-        enabled: bool,
-        now_ms: i64,
-    ) -> Result<ToggleOutcome>;
+    async fn set_enabled(&self, rule_id: &str, enabled: bool, now_ms: i64)
+        -> Result<ToggleOutcome>;
 }
 
 /// In-memory [`InsightsRuleStore`] for tests and the in-process
@@ -86,7 +77,10 @@ impl InMemoryInsightsStore {
 
     /// Test helper: row count.
     pub fn len(&self) -> usize {
-        self.rows.lock().expect("insights store mutex poisoned").len()
+        self.rows
+            .lock()
+            .expect("insights store mutex poisoned")
+            .len()
     }
 
     /// Test helper: emptiness probe.
@@ -109,12 +103,7 @@ impl InsightsRuleStore for InMemoryInsightsStore {
         Ok(rows)
     }
 
-    async fn upsert(
-        &self,
-        rule_id: &str,
-        body_yaml: &str,
-        now_ms: i64,
-    ) -> Result<UpsertOutcome> {
+    async fn upsert(&self, rule_id: &str, body_yaml: &str, now_ms: i64) -> Result<UpsertOutcome> {
         let mut guard = self.rows.lock().expect("insights store mutex poisoned");
         let outcome = if guard.contains_key(rule_id) {
             UpsertOutcome::Replaced

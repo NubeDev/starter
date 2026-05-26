@@ -19,8 +19,7 @@ async fn invoke_returns_well_formed_response_for_default_request() {
         .await
         .expect("db tool succeeds on the test host");
 
-    let resp: DbHealthResponse =
-        serde_json::from_value(raw).expect("response matches DTO shape");
+    let resp: DbHealthResponse = serde_json::from_value(raw).expect("response matches DTO shape");
 
     assert!(resp.reachable);
     assert_eq!(resp.dsn, "sqlite::memory:");

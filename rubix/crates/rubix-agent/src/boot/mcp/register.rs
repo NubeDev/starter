@@ -30,7 +30,6 @@ use starter_flow_surfaces::{FlowRegistration, FlowRegistry};
 use starter_spi::ai::AiRunner;
 use starter_spi::i18n::LanguageTag;
 use starter_spi::tool::Tool;
-use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::Pool;
 
 use crate::boot::ai;
@@ -54,12 +53,15 @@ use super::prefs::prefs_from_locale;
 /// path — history writes are skipped per the
 /// `DiskTool::with_history` contract.
 pub async fn build_flow_registry(
-    ch_client: Option<Arc<ChClient>>,
     pg_pool: Option<Pool>,
     runtime: Option<&crate::boot::FlowRuntime>,
     extensions: Option<&ExtensionRegistry>,
     shared_tools: Option<Vec<Arc<dyn Tool>>>,
-) -> anyhow::Result<(Arc<FlowRegistry>, Vec<(FlowId, FlowRevisionId)>, Arc<Engine>)> {
+) -> anyhow::Result<(
+    Arc<FlowRegistry>,
+    Vec<(FlowId, FlowRevisionId)>,
+    Arc<Engine>,
+)> {
     // -- 1. Engine on a fresh in-memory graph store. The terminal-
     //       slot read-back in `FlowAsTool` reads through this store.
     let engine = super::build_engine(runtime);
@@ -73,8 +75,8 @@ pub async fn build_flow_registry(
     //       `AiAgentNode` whose `kind_id()` matches the rubix flow
     //       YAML (`com.rubix.ai-agent`).
     let cfg = AgentConfig::load().unwrap_or_default();
-    let runner: Arc<dyn AiRunner> = ai::build_runner(&cfg)
-        .map_err(|e| anyhow::anyhow!("boot::ai::build_runner: {e}"))?;
+    let runner: Arc<dyn AiRunner> =
+        ai::build_runner(&cfg).map_err(|e| anyhow::anyhow!("boot::ai::build_runner: {e}"))?;
     // Reuse the caller-supplied tool registry when present so the
     // MCP-side `ai-agent` node dispatches to the SAME `Arc<dyn Tool>`
     // instances the REST `/api/v1/tools/*` router serves. Without
@@ -86,7 +88,6 @@ pub async fn build_flow_registry(
     let tool_registry_snapshot: Vec<Arc<dyn Tool>> = match shared_tools {
         Some(tools) => tools,
         None => crate::registry::build_tool_registry(
-            ch_client,
             cfg.insights.disk_warn_threshold,
             pg_pool.clone(),
             cfg.blob_root.clone(),
@@ -110,11 +111,8 @@ pub async fn build_flow_registry(
         );
         rows
     } else {
-        tracing::info!(
-            "no Postgres pool — loading flow definitions from the embedded bundle",
-        );
-        rubix_flows::load_all()
-            .map_err(|e| anyhow::anyhow!("rubix_flows::load_all: {e}"))?
+        tracing::info!("no Postgres pool — loading flow definitions from the embedded bundle",);
+        rubix_flows::load_all().map_err(|e| anyhow::anyhow!("rubix_flows::load_all: {e}"))?
     };
 
     let kinds = NodeKindRegistry::new();
@@ -372,24 +370,23 @@ async fn register_one(
     // scheduled dispatch of e.g. `com.rubix.tick-counter` fails
     // per tick with `trigger.schedule input missing cron_expr
     // slot`.
-    let trigger_cron_seed: Option<(SlotRef, String)> = if root.kind.as_str()
-        == starter_flow_nodes::trigger_schedule::KIND_ID
-    {
-        root.settings
-            .get("cron_expr")
-            .and_then(|v| v.as_str())
-            .map(|s| {
-                (
-                    SlotRef::new(
-                        root.id.clone(),
-                        starter_flow_nodes::trigger_schedule::CRON_EXPR_SLOT,
-                    ),
-                    s.to_owned(),
-                )
-            })
-    } else {
-        None
-    };
+    let trigger_cron_seed: Option<(SlotRef, String)> =
+        if root.kind.as_str() == starter_flow_nodes::trigger_schedule::KIND_ID {
+            root.settings
+                .get("cron_expr")
+                .and_then(|v| v.as_str())
+                .map(|s| {
+                    (
+                        SlotRef::new(
+                            root.id.clone(),
+                            starter_flow_nodes::trigger_schedule::CRON_EXPR_SLOT,
+                        ),
+                        s.to_owned(),
+                    )
+                })
+        } else {
+            None
+        };
 
     // Project each `starter.flow.tool-call` node's
     // `settings.tool_id` / `settings.tool_input` into the runtime
@@ -440,11 +437,13 @@ async fn register_one(
                 n.id,
                 starter_flow_nodes::tool_call::TOOL_INPUT_SLOT,
             );
-            let input_link_driven = body
-                .links
-                .iter()
-                .any(|l| l.to == input_link_target);
-            Some((n.id.clone(), tool_id.to_owned(), tool_input, input_link_driven))
+            let input_link_driven = body.links.iter().any(|l| l.to == input_link_target);
+            Some((
+                n.id.clone(),
+                tool_id.to_owned(),
+                tool_input,
+                input_link_driven,
+            ))
         })
         .collect();
 
@@ -500,14 +499,10 @@ async fn register_one(
             .duration_since(std::time::UNIX_EPOCH)
             .map(|d| d.as_millis() as i64)
             .unwrap_or(0);
-        let tool_call_writes = tool_call_seeds_for_adapter
-            .iter()
-            .flat_map(|(node_id, tool_id, tool_input, input_link_driven)| {
+        let tool_call_writes = tool_call_seeds_for_adapter.iter().flat_map(
+            |(node_id, tool_id, tool_input, input_link_driven)| {
                 let mut writes = vec![(
-                    SlotRef::new(
-                        node_id.clone(),
-                        starter_flow_nodes::tool_call::TOOL_ID_SLOT,
-                    ),
+                    SlotRef::new(node_id.clone(), starter_flow_nodes::tool_call::TOOL_ID_SLOT),
                     SlotValue::String(tool_id.clone()),
                 )];
                 if !*input_link_driven {
@@ -525,7 +520,8 @@ async fn register_one(
                     ));
                 }
                 writes
-            });
+            },
+        );
         vec![(seed_slot_for_adapter.clone(), SlotValue::Json(payload))]
             .into_iter()
             .chain(
@@ -598,4 +594,3 @@ fn enrich_input_with_principal(input: Value) -> Value {
     }
     value
 }
-

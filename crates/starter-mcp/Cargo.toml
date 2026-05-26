@@ -41,3 +41,6 @@ starter-server = { workspace = true, features = ["testing"] }
 # unification leaves a non-exhaustive match in `interpolate.rs`.
 starter-i18n   = { workspace = true, features = ["preferences"] }
 reqwest        = { workspace = true, features = ["json"] }
+
+[lints]
+workspace = true

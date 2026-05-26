@@ -47,3 +47,6 @@ serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
 starter-spi = { workspace = true, features = ["preferences"] }
 tempfile    = "3"
+
+[lints]
+workspace = true

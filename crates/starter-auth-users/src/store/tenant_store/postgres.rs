@@ -152,7 +152,11 @@ impl TenantStore for PgTenantStore {
              WHERE id = $4",
         )
         .bind(display_name)
-        .bind(if audit_allow_sample.is_some() { 1i32 } else { 0i32 })
+        .bind(if audit_allow_sample.is_some() {
+            1i32
+        } else {
+            0i32
+        })
         .bind(audit_allow_sample.flatten())
         .bind(id)
         .execute(self.pool.sqlx())
@@ -205,11 +209,7 @@ impl TenantStore for PgTenantStore {
         Ok(())
     }
 
-    async fn remove_member(
-        &self,
-        tenant_id: &str,
-        user_id: &str,
-    ) -> Result<(), TenantStoreError> {
+    async fn remove_member(&self, tenant_id: &str, user_id: &str) -> Result<(), TenantStoreError> {
         // Membership revoke cascades to token revoke in the same
         // transaction (see docs/design/auth/README.md).
         let mut tx = self.pool.sqlx().begin().await.map_err(err)?;
@@ -343,11 +343,7 @@ impl TenantStore for PgTenantStore {
             .collect())
     }
 
-    async fn add_team_member(
-        &self,
-        team_id: &str,
-        user_id: &str,
-    ) -> Result<(), TenantStoreError> {
+    async fn add_team_member(&self, team_id: &str, user_id: &str) -> Result<(), TenantStoreError> {
         let res = sqlx::query(
             "INSERT INTO starter_auth_users_team_members \
              (team_id, user_id) VALUES ($1, $2)",

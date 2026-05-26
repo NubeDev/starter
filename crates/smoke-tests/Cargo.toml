@@ -82,3 +82,6 @@ starter-blob-memory  = { workspace = true }
 starter-blob-fs      = { workspace = true }
 starter-blob-compose = { workspace = true }
 bytes                = { workspace = true }
+
+[lints]
+workspace = true

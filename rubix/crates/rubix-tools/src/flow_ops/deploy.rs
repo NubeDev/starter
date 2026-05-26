@@ -45,7 +45,9 @@ impl Tool for FlowDeployTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.flow_ops.deploy".to_owned(),
-            description: rubix_spi::dto::flow_ops::deploy::DESCRIPTOR.purpose.to_owned(),
+            description: rubix_spi::dto::flow_ops::deploy::DESCRIPTOR
+                .purpose
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -59,10 +61,9 @@ impl Tool for FlowDeployTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: FlowDeployRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("FlowDeployRequest: {e}"),
-            })?;
+        let req: FlowDeployRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("FlowDeployRequest: {e}"),
+        })?;
 
         let yaml = rubix_flows::parse_yaml(
             &format!("deploy://{}", req.flow_id),
@@ -132,8 +133,7 @@ impl ReversibleTool for FlowDeployTool {
 }
 
 fn invalid_message(detail: &str) -> String {
-    let key = MessageKey::parse("rubix.flow.deploy.invalid")
-        .expect("hard-coded key parses");
+    let key = MessageKey::parse("rubix.flow.deploy.invalid").expect("hard-coded key parses");
     format!("{}: {detail}", key.as_str())
 }
 
@@ -179,7 +179,10 @@ mod tests {
             .await
             .unwrap();
         let r2: FlowDeployResponse = serde_json::from_value(out2).unwrap();
-        assert_eq!(r2.prior_revision_id.as_deref(), Some(r1.revision_id.as_str()));
+        assert_eq!(
+            r2.prior_revision_id.as_deref(),
+            Some(r1.revision_id.as_str())
+        );
     }
 
     #[tokio::test]

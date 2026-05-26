@@ -1,0 +1,43 @@
+[package]
+name        = "starter-store-warehouse"
+description = "starter — typed building blocks (PgPool-backed `WarehouseClient`, hypertable migrations, COPY-based typed writers, continuous-aggregate + retention helpers) over TimescaleDB. Stage 3 of `rubix/docs/proposal/warehouse-engine-swap.md` — the ClickHouse engine has been removed."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+# TimescaleDB engine. `sqlx` drives the connection pool, COPY-based
+# typed writers, and ad-hoc SELECTs from the cagg/retention helpers.
+sqlx        = { workspace = true, features = ["postgres", "macros", "migrate", "chrono", "json", "uuid"] }
+futures     = "0.3"
+
+starter-tags = { workspace = true }
+
+tokio       = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
+serde       = { workspace = true }
+serde_json  = { workspace = true }
+chrono      = { workspace = true }
+uuid        = { workspace = true }
+thiserror   = { workspace = true }
+tracing     = { workspace = true }
+async-trait = { workspace = true }
+
+# `testing` feature — testcontainers + the Postgres module. The
+# TimescaleDB image runs through the generic-image escape hatch.
+testcontainers         = { version = "0.23", optional = true }
+testcontainers-modules = { version = "0.11", features = ["postgres"], optional = true }
+
+[features]
+default = []
+# Pulls testcontainers and exposes the `testing::with_timescale`
+# helper.
+testing = ["dep:testcontainers", "dep:testcontainers-modules"]
+
+[dev-dependencies]
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+tokio-test = "0.4"
+
+[lints]
+workspace = true

@@ -20,18 +20,37 @@ use utoipa::ToSchema;
 pub enum AgentEvent {
     /// New agent turn started. Carries the active skill so observers
     /// can correlate skill activity with downstream events.
-    TurnStart { turn_id: String, skill: Option<String> },
+    TurnStart {
+        turn_id: String,
+        skill: Option<String>,
+    },
     /// Partial LLM token stream. Transport maps to
     /// `notifications/progress` for MCP clients.
     Thinking { turn_id: String, delta: String },
     /// Tool dispatch starting.
-    ToolStart { turn_id: String, tool: String, args: serde_json::Value },
+    ToolStart {
+        turn_id: String,
+        tool: String,
+        args: serde_json::Value,
+    },
     /// Tool dispatch finished successfully.
-    ToolComplete { turn_id: String, tool: String, duration_ms: u64 },
+    ToolComplete {
+        turn_id: String,
+        tool: String,
+        duration_ms: u64,
+    },
     /// Tool dispatch failed (including `SkillForbidden` per R7).
-    ToolError { turn_id: String, tool: String, message_key: String },
+    ToolError {
+        turn_id: String,
+        tool: String,
+        message_key: String,
+    },
     /// Long-running tool progress (≥1 / 5s while running per R13).
-    Progress { turn_id: String, percent: Option<u8>, message_key: String },
+    Progress {
+        turn_id: String,
+        percent: Option<u8>,
+        message_key: String,
+    },
     /// Flow engine advanced to the next node.
     FlowStep { node_id: String },
     /// Slot was written (path / before / after — exact shape TBD when

@@ -35,8 +35,8 @@ use axum::routing::post;
 use axum::{Json, Router};
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use starter_mcp::registry::ToolRegistry;
 use starter_flow_spi::flow::FlowId;
+use starter_mcp::registry::ToolRegistry;
 use tracing::warn;
 
 /// State threaded into the handler.

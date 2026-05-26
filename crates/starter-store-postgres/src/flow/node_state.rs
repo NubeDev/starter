@@ -21,9 +21,7 @@
 
 use async_trait::async_trait;
 
-use starter_flow_spi::state::{
-    NodeStateError, NodeStateKey, NodeStateStore, NodeStateValue,
-};
+use starter_flow_spi::state::{NodeStateError, NodeStateKey, NodeStateStore, NodeStateValue};
 
 use crate::pool::Pool;
 

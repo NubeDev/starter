@@ -34,10 +34,10 @@ mod tests {
     use std::collections::BTreeMap;
 
     use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
-    use starter_spi::units::Quantity;
     use starter_spi::preferences::{
         DateFormat, NumberFormat, ResolvedPreferences, Theme, TimeFormat, UnitSystem, WeekStart,
     };
+    use starter_spi::units::Quantity;
     use starter_spi::units::Unit;
 
     use super::*;
@@ -73,10 +73,7 @@ mod tests {
     #[test]
     fn rubix_bundle_loads_en_and_es() {
         let bundle = rubix_bundle().expect("embedded catalogues parse");
-        let langs: Vec<&str> = bundle
-            .languages()
-            .map(|tag| tag.as_str())
-            .collect();
+        let langs: Vec<&str> = bundle.languages().map(|tag| tag.as_str()).collect();
         assert!(langs.contains(&"en"), "en catalogue must be registered");
         assert!(langs.contains(&"es"), "es catalogue must be registered");
     }
@@ -116,16 +113,8 @@ mod tests {
         // that does not yet exist.
         let mut bundle = rubix_bundle().expect("embedded catalogues parse");
         let mut ad_hoc = BTreeMap::new();
-        ad_hoc.insert(
-            key("rubix.test.length"),
-            "Free space: {free}.".to_owned(),
-        );
-        bundle.extend(
-            tag("en"),
-            Catalog {
-                messages: ad_hoc,
-            },
-        );
+        ad_hoc.insert(key("rubix.test.length"), "Free space: {free}.".to_owned());
+        bundle.extend(tag("en"), Catalog { messages: ad_hoc });
 
         // 12.5 GB expressed in canonical SI metres-equivalent for
         // Length is just metres; the renderer formats it per
@@ -185,8 +174,14 @@ mod tests {
         let us = bundle.render_diagnostic(&tag("en"), &diag, &us_prefs);
 
         // Paris is UTC+1 in January → 13:00; New York is UTC-5 → 07:00.
-        assert!(eu.contains("13:00"), "EU rendering missing 13:00 — got {eu:?}");
-        assert!(us.contains("07:00"), "US rendering missing 07:00 — got {us:?}");
+        assert!(
+            eu.contains("13:00"),
+            "EU rendering missing 13:00 — got {eu:?}"
+        );
+        assert!(
+            us.contains("07:00"),
+            "US rendering missing 07:00 — got {us:?}"
+        );
         assert!(eu.contains("89"));
         assert!(us.starts_with("Disk is nearly full"));
     }

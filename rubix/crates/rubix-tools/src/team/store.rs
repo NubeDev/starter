@@ -45,12 +45,8 @@ pub trait TeamAdminStore: Send + Sync {
     async fn create(&self, row: TeamRow) -> Result<TeamRow>;
     /// Add `user_id` to `team_id`. Returns `(prior_row, new_row)`;
     /// on a no-op re-assignment both halves are equal.
-    async fn assign(
-        &self,
-        team_id: &str,
-        user_id: &str,
-        now_ms: i64,
-    ) -> Result<(TeamRow, TeamRow)>;
+    async fn assign(&self, team_id: &str, user_id: &str, now_ms: i64)
+        -> Result<(TeamRow, TeamRow)>;
     /// Fetch by team_id.
     async fn get(&self, team_id: &str) -> Result<Option<TeamRow>>;
     /// Restore (or insert) a row to the supplied snapshot.

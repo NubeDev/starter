@@ -34,7 +34,9 @@ impl Tool for FlowListTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.flow_ops.list".to_owned(),
-            description: rubix_spi::dto::flow_ops::list::DESCRIPTOR.purpose.to_owned(),
+            description: rubix_spi::dto::flow_ops::list::DESCRIPTOR
+                .purpose
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {},
@@ -44,10 +46,9 @@ impl Tool for FlowListTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let _req: FlowListRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("FlowListRequest: {e}"),
-            })?;
+        let _req: FlowListRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("FlowListRequest: {e}"),
+        })?;
 
         let mut rows = self.store.list_live().await?;
         rows.sort_by(|a, b| a.flow_id.cmp(&b.flow_id));
@@ -61,10 +62,9 @@ impl Tool for FlowListTool {
             .collect();
         let count = flows.len();
 
-        let summary = Diagnostic::new(
-            MessageKey::parse("rubix.flow.listed").expect("hard-coded key parses"),
-        )
-        .with_param("count", DiagnosticParam::I64(count as i64));
+        let summary =
+            Diagnostic::new(MessageKey::parse("rubix.flow.listed").expect("hard-coded key parses"))
+                .with_param("count", DiagnosticParam::I64(count as i64));
 
         let response = FlowListResponse {
             summary,
@@ -94,11 +94,23 @@ mod tests {
     #[tokio::test]
     async fn live_rows_come_back_sorted_by_flow_id() {
         let store = Arc::new(InMemoryFlowDefStore::new());
-        store.insert_revision("com.x.zed", "id: com.x.zed", 1).await.unwrap();
-        store.insert_revision("com.x.ada", "id: com.x.ada", 2).await.unwrap();
-        store.insert_revision("com.x.kay", "id: com.x.kay", 3).await.unwrap();
+        store
+            .insert_revision("com.x.zed", "id: com.x.zed", 1)
+            .await
+            .unwrap();
+        store
+            .insert_revision("com.x.ada", "id: com.x.ada", 2)
+            .await
+            .unwrap();
+        store
+            .insert_revision("com.x.kay", "id: com.x.kay", 3)
+            .await
+            .unwrap();
         // Add a superseded row — it MUST NOT appear in the list.
-        store.insert_revision("com.x.ada", "id: com.x.ada", 4).await.unwrap();
+        store
+            .insert_revision("com.x.ada", "id: com.x.ada", 4)
+            .await
+            .unwrap();
         let tool = FlowListTool::new(store);
         let out = tool.invoke(serde_json::json!({})).await.unwrap();
         let resp: FlowListResponse = serde_json::from_value(out).unwrap();

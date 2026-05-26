@@ -96,3 +96,6 @@ dimensions = ["dep:starter-tags", "sqlx/chrono", "sqlx/json"]
 [dev-dependencies]
 sqlx  = { workspace = true, features = ["postgres", "macros", "migrate", "runtime-tokio"] }
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
+[lints]
+workspace = true

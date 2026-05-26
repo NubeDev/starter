@@ -84,10 +84,7 @@ async fn cas_mismatch_returns_actual_version() {
     let (pool, _guard) = boot().await;
     let store = PgNodeStateStore::new(pool);
     store.put(&k("count"), b"1".to_vec()).await.unwrap();
-    let err = store
-        .cas(&k("count"), 99, b"x".to_vec())
-        .await
-        .unwrap_err();
+    let err = store.cas(&k("count"), 99, b"x".to_vec()).await.unwrap_err();
     match err {
         NodeStateError::CasMismatch { expected, actual } => {
             assert_eq!(expected, 99);

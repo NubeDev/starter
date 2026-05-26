@@ -44,13 +44,7 @@ starter-authz             = { workspace = true }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
 starter-mcp               = { workspace = true, features = ["http"] }
-starter-store-clickhouse  = { workspace = true }
-# Mount-only consumer: rubix-agent merges
-# `starter_warehouse::explorer::routes(ch)` so the rubix admin
-# shell's `/admin/warehouse` → Explorer tab can talk to the
-# read-only ClickHouse explorer surface at `/api/warehouse/ch/*`.
-# Design notes in `rubix/docs/design/warehouse/explorer/README.md`.
-starter-warehouse         = { workspace = true, features = ["warehouse"] }
+starter-store-warehouse  = { workspace = true }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }
@@ -118,7 +112,7 @@ starter-mcp              = { workspace = true, features = ["http", "testing"] }
 starter-changelog-sqlite = { workspace = true }
 starter-store-sqlite     = { workspace = true, features = ["testing", "flow"] }
 starter-store-postgres   = { workspace = true, features = ["testing"] }
-starter-store-clickhouse = { workspace = true, features = ["testing"] }
+starter-store-warehouse = { workspace = true, features = ["testing"] }
 starter-undo             = { workspace = true }
 starter-blob-fs          = { workspace = true }
 bytes                    = { workspace = true }
@@ -129,3 +123,6 @@ sqlx                     = { workspace = true, features = ["postgres", "macros",
 async-trait              = { workspace = true }
 tokio                    = { workspace = true, features = ["macros", "rt-multi-thread", "process", "io-util", "time"] }
 tower                    = { workspace = true }
+
+[lints]
+workspace = true

@@ -30,3 +30,6 @@ url              = "2"
 tokio            = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time", "net"] }
 tokio-tungstenite = { version = "0.24", default-features = false, features = ["connect", "handshake"] }
 wiremock         = "0.6"
+
+[lints]
+workspace = true

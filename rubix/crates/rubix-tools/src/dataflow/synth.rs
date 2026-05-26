@@ -226,7 +226,10 @@ impl Tool for SynthEmitTool {
             message: format!("SynthEmitRequest: {e}"),
         })?;
         let mut guard = self.state.lock().map_err(|e| Error::Internal {
-            source: Box::new(std::io::Error::new(std::io::ErrorKind::Other, e.to_string())),
+            source: Box::new(std::io::Error::new(
+                std::io::ErrorKind::Other,
+                e.to_string(),
+            )),
         })?;
         let resp = tick(&mut guard, &req)?;
         serde_json::to_value(resp).map_err(|e| Error::Internal {

@@ -68,10 +68,8 @@ impl Tool for InsightsRuleCreateTool {
             UpsertOutcome::Created => "rubix.insights.rule.created",
             UpsertOutcome::Replaced => "rubix.insights.rule.replaced",
         };
-        let summary = Diagnostic::new(
-            MessageKey::parse(code).expect("hard-coded key parses"),
-        )
-        .with_param("rule", DiagnosticParam::String(req.rule_id.clone()));
+        let summary = Diagnostic::new(MessageKey::parse(code).expect("hard-coded key parses"))
+            .with_param("rule", DiagnosticParam::String(req.rule_id.clone()));
 
         let response = InsightsRuleCreateResponse {
             summary,

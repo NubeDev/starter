@@ -20,8 +20,7 @@ async fn invoke_emits_warn_alert_and_returns_summary() {
         }))
         .await
         .expect("alert_send tool succeeds");
-    let resp: AlertSendResponse =
-        serde_json::from_value(raw).expect("response matches DTO shape");
+    let resp: AlertSendResponse = serde_json::from_value(raw).expect("response matches DTO shape");
 
     assert_eq!(resp.severity, AlertSeverity::Warn);
     assert_eq!(resp.delivered_chars, 18);

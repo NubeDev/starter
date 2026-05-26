@@ -95,7 +95,8 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
         },
         SiblingTool {
             id: "rubix.dashboard.duplicate",
-            wins_when: "the caller wants to clone an existing page rather than author from scratch.",
+            wins_when:
+                "the caller wants to clone an existing page rather than author from scratch.",
         },
     ],
 };

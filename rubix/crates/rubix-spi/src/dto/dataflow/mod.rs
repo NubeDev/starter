@@ -7,7 +7,7 @@
 //! See `rubix/docs/sessions/data-flow/01-producer.md` for the
 //! framework split: synthesis is a tool, delivery is a flow.
 
-pub mod ingest;
-pub mod synth;
 pub mod clean_minute;
+pub mod ingest;
 pub mod rollup_15m;
+pub mod synth;

@@ -34,13 +34,10 @@
 
 use anyhow::Result;
 
-use std::sync::Arc;
-
 use rubix_agent::boot::{mcp::prefs_from_locale, AgentConfig};
 use starter_auth_users::store::{PgUserStore, UserStore};
 use starter_spi::auth::{Principal, Role};
 use starter_spi::i18n::{Diagnostic, LanguageTag, MessageKey};
-use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::connect as pg_connect;
 
 use super::Args;
@@ -56,8 +53,7 @@ pub async fn run(_args: Args) -> Result<()> {
         .and_then(parse_lang_env)
         .unwrap_or_else(|| LanguageTag::parse("en").expect("'en' parses"));
 
-    let cfg = AgentConfig::load()
-        .map_err(|e| anyhow::anyhow!("load AgentConfig: {e}"))?;
+    let cfg = AgentConfig::load().map_err(|e| anyhow::anyhow!("load AgentConfig: {e}"))?;
 
     // Resolve the actor. Errors here render through the rubix
     // bundle in the session locale and exit non-zero — `stdout`
@@ -70,25 +66,10 @@ pub async fn run(_args: Args) -> Result<()> {
         }
     };
 
-    // Build the same `ChClient` the HTTP binary threads into its
-    // tool registry so MCP-triggered disk probes persist to the
-    // warehouse identically. The agent boots without history when
-    // no ClickHouse URL is configured — same gate the HTTP path
-    // applies in `main.rs`. We do NOT run CH migrations here: the
-    // stdio binary assumes the HTTP binary (or the operator) has
-    // already applied them. Wiring the client against a missing
-    // table would 500 on every disk dispatch.
-    let ch_client: Option<Arc<ChClient>> = cfg
-        .clickhouse_url
-        .as_ref()
-        .map(|url| Arc::new(ChClient::connect(rubix_agent::boot::rubix_ch_config(url.clone()))));
-
     // Shared composition — identical tool catalogue to the HTTP
-    // surface. `run_stdio` consumes the registry by value.
-    // Stdio surface does not load extensions — pass `None` for the
-    // extension MCP context. Extension-contributed tools are surfaced
-    // by the long-running HTTP surface only (where supervisors live).
-    let tools = rubix_agent::boot::mcp::build_tool_registry(ch_client, None, None, None, None)
+    // surface. Stage 3 of warehouse-engine-swap removed the
+    // ClickHouse history writer; nothing to wire here today.
+    let tools = rubix_agent::boot::mcp::build_tool_registry(None, None, None, None)
         .await
         .map_err(|e| anyhow::anyhow!("build MCP tool registry: {e}"))?;
 
@@ -201,11 +182,7 @@ fn synthetic_principal(email: &str) -> Principal {
     }
 }
 
-fn render_error(
-    locale: &LanguageTag,
-    key: &str,
-    params: &[(&str, &str)],
-) -> PrincipalError {
+fn render_error(locale: &LanguageTag, key: &str, params: &[(&str, &str)]) -> PrincipalError {
     let bundle = match rubix_spi::i18n::rubix_bundle() {
         Ok(b) => b,
         Err(e) => {

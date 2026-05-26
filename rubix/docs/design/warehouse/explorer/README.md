@@ -43,14 +43,14 @@ behaviours are asserted in
 ## Storage seam
 
 Every read goes through the existing
-[`ChClient`](../../../../crates/starter-store-clickhouse/src/client.rs)
-from `starter-store-clickhouse`. The explorer opens no second
+[`ChClient`](../../../../crates/starter-store-warehouse/src/client.rs)
+from `starter-store-warehouse`. The explorer opens no second
 connection of its own, so the W8 `async_insert` discipline and the
 client's `database` / `user` settings apply uniformly.
 
 Dynamic-shape SELECTs (the `POST /query` body and the per-table
 `tables/{name}/data` pagination) flow through
-[`ChClient::fetch_json`](../../../../crates/starter-store-clickhouse/src/raw.rs),
+[`ChClient::fetch_json`](../../../../crates/starter-store-warehouse/src/raw.rs),
 which posts `… FORMAT JSONCompactEachRow` over the underlying HTTP
 transport. The function is the only read-side escape hatch on
 `ChClient`; it refuses any input whose leading non-comment token
@@ -124,7 +124,7 @@ for the full shape.
 Explorer reads are **not** audited by the router itself. Writes
 never go through the explorer — every mutation (mart create,
 retention set, projection-rule write, sandbox lifecycle) flows
-through the `rubix.clickhouse.*` verbs registered in
+through the `rubix.warehouse.*` verbs registered in
 [`rubix/crates/rubix-agent/src/registry.rs`](../../../../rubix/crates/rubix-agent/src/registry.rs),
 each of which already carries snapshot-before-write + undo +
 changelog.

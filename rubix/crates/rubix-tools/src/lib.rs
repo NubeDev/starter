@@ -9,8 +9,6 @@
 //! matching rubix submodule becomes a thin re-export. See
 //! [docs/design/tools/](../../docs/design/tools/README.md).
 
-pub mod analytics;
-pub mod clickhouse;
 pub mod clipboard;
 pub mod dashboard;
 pub mod dataflow;
@@ -22,4 +20,3 @@ pub mod team;
 pub mod tenant;
 pub mod undo;
 pub mod user;
-pub mod warehouse;

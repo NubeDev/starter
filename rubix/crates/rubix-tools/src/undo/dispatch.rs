@@ -81,20 +81,12 @@ impl<T: ReversibleTool> UndoDispatcher<T> {
     /// group id (when a draft was produced and the kind is
     /// registered). Useful for tests; production callers use the
     /// `Tool::invoke` path which discards the group id.
-    pub async fn invoke_with_group(
-        &self,
-        input: Value,
-    ) -> Result<(Value, Option<GroupId>)> {
+    pub async fn invoke_with_group(&self, input: Value) -> Result<(Value, Option<GroupId>)> {
         let output = self.inner.invoke(input.clone()).await?;
         let group = match self.inner.change_for(&input, &output) {
             Some(draft) => {
-                record_if_reversible(
-                    &self.registry,
-                    &*self.recorder,
-                    self.actor.actor(),
-                    draft,
-                )
-                .await?
+                record_if_reversible(&self.registry, &*self.recorder, self.actor.actor(), draft)
+                    .await?
             }
             None => None,
         };

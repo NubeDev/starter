@@ -12,3 +12,6 @@ starter-spi = { workspace = true }
 serde       = { workspace = true }
 thiserror   = { workspace = true }
 figment     = { workspace = true }
+
+[lints]
+workspace = true

@@ -82,26 +82,22 @@ fn toggle_schema() -> Value {
     })
 }
 
-async fn run_toggle(
-    store: &dyn InsightsRuleStore,
-    input: Value,
-    target: bool,
-) -> Result<Value> {
+async fn run_toggle(store: &dyn InsightsRuleStore, input: Value, target: bool) -> Result<Value> {
     let req: InsightsRuleToggleRequest =
         serde_json::from_value(input).map_err(|e| Error::Invalid {
             message: format!("InsightsRuleToggleRequest: {e}"),
         })?;
     let toggled_at_ms = now_epoch_ms();
-    let outcome = store.set_enabled(&req.rule_id, target, toggled_at_ms).await?;
+    let outcome = store
+        .set_enabled(&req.rule_id, target, toggled_at_ms)
+        .await?;
     let (code, enabled) = match outcome {
         ToggleOutcome::Applied if target => ("rubix.insights.rule.enabled", true),
         ToggleOutcome::Applied => ("rubix.insights.rule.disabled", false),
         ToggleOutcome::NotFound => ("rubix.insights.rule.not_found", target),
     };
-    let summary = Diagnostic::new(
-        MessageKey::parse(code).expect("hard-coded key parses"),
-    )
-    .with_param("rule", DiagnosticParam::String(req.rule_id.clone()));
+    let summary = Diagnostic::new(MessageKey::parse(code).expect("hard-coded key parses"))
+        .with_param("rule", DiagnosticParam::String(req.rule_id.clone()));
     let response = InsightsRuleToggleResponse {
         summary,
         rule_id: req.rule_id,

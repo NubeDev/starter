@@ -124,8 +124,7 @@ pub struct SynthEmitResponse {
 
 /// Five-field descriptor for `rubix.dataflow.synth.emit`.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose:
-        "Emit synthetic, deliberately-messy meter readings for one tick (energy + water).",
+    purpose: "Emit synthetic, deliberately-messy meter readings for one tick (energy + water).",
     when_to_use: concat!(
         "Use as the producer stage in the data-flow scenario, in load tests ",
         "of the warehouse ingest path, or anywhere a deterministic stream of ",
@@ -145,10 +144,8 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
         "\"stats\": { \"emitted\": 1, \"gaps\": 0, \"spikes\": 0, ",
         "\"stuck_active\": 0, \"nans\": 0 } }"
     ),
-    siblings: &[
-        SiblingTool {
-            id: "rubix.warehouse.ingest",
-            wins_when: "the caller is generating rows, not persisting them.",
-        },
-    ],
+    siblings: &[SiblingTool {
+        id: "rubix.warehouse.ingest",
+        wins_when: "the caller is generating rows, not persisting them.",
+    }],
 };

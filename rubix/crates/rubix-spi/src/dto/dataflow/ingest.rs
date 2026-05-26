@@ -61,8 +61,7 @@ pub struct WarehouseIngestResponse {
 
 /// Five-field descriptor for `rubix.warehouse.ingest`.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose:
-        "Persist a batch of synthetic or live meter readings into the L1 raw warehouse table.",
+    purpose: "Persist a batch of synthetic or live meter readings into the L1 raw warehouse table.",
     when_to_use: concat!(
         "Use as the terminal stage in the data-flow producer flow ",
         "(after rubix.dataflow.synth.emit) or in any pipeline that needs ",

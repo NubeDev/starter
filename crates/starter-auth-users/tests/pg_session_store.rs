@@ -38,7 +38,12 @@ async fn pg_session_store_round_trips_every_method_against_live_postgres() {
     // Sessions FK user_id → users(id); seed a user first.
     let users = PgUserStore::new(pool.clone());
     users
-        .create("user-1", "op@example.com", Some(ARGON2_FIXTURE), Role::Admin)
+        .create(
+            "user-1",
+            "op@example.com",
+            Some(ARGON2_FIXTURE),
+            Role::Admin,
+        )
         .await
         .expect("seed user");
 

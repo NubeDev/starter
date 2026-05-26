@@ -172,7 +172,7 @@ impl TagSet {
 }
 
 /// The single canonical `TagValue → String` conversion used by both
-/// `compile_ch` (binding query literals) and `starter-store-clickhouse`
+/// `compile_ch` (binding query literals) and `starter-store-warehouse`
 /// (writing rows). Defined here so it has exactly one definition (T2).
 pub fn tag_value_to_ch_string(v: &TagValue) -> String {
     match v {

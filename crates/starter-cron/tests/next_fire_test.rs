@@ -10,7 +10,7 @@
 //!    Sunday from a Friday-evening `now`.
 //! 4. **Malformed** — gibberish surfaces [`CronError::Parse`].
 
-use chrono::{TimeZone, Utc, Weekday, Datelike, Timelike};
+use chrono::{Datelike, TimeZone, Timelike, Utc, Weekday};
 use starter_cron::{next_fire, CronError};
 
 #[test]

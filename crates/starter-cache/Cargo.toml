@@ -35,3 +35,6 @@ moka = { version = "0.12", features = ["future"], optional = true }
 # dev-dep contract survives a future trim of workspace tokio
 # features.
 tokio = { workspace = true, features = ["macros", "rt", "rt-multi-thread", "time", "sync"] }
+
+[lints]
+workspace = true

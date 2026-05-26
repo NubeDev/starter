@@ -94,8 +94,7 @@ fn node_id() -> NodeId {
 }
 
 fn state_key() -> NodeStateKey {
-    NodeStateKey::new(flow_id(), node_id(), STATE_KEY)
-        .expect("counter state key constructs")
+    NodeStateKey::new(flow_id(), node_id(), STATE_KEY).expect("counter state key constructs")
 }
 
 /// Read the persisted `count` (`None` if unset).
@@ -123,14 +122,7 @@ async fn tick_once(
     let node = node_id();
     let run = RunId::new();
     let cancel = NoCancel;
-    let ctx = NodeCtx::with_flow(
-        &flow,
-        run,
-        &node,
-        &cancel,
-        SkillSelection::NONE,
-        store,
-    );
+    let ctx = NodeCtx::with_flow(&flow, run, &node, &cancel, SkillSelection::NONE, store);
     let out: SlotMap = counter
         .invoke(ctx, SlotMap::new())
         .await

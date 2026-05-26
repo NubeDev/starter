@@ -99,10 +99,7 @@ impl NodeBehavior for RubixAiAgentNode {
             Some(SlotValue::Json(v)) => v.clone(),
             _ => json!({}),
         };
-        let tool_input = payload
-            .get("input")
-            .cloned()
-            .unwrap_or_else(|| json!({}));
+        let tool_input = payload.get("input").cloned().unwrap_or_else(|| json!({}));
 
         // Inject session-derived fields into the primary tool's
         // input when the caller omitted them. The MCP HTTP transport
@@ -127,9 +124,7 @@ impl NodeBehavior for RubixAiAgentNode {
         // `super::register`). Keying off `ctx.node` is unsafe — every
         // rubix flow's root node uses the same id (`agent` / `check`),
         // so a NodeId-keyed lookup collides across flows.
-        let primary_tool_name: Option<&str> = payload
-            .get("primary_tool")
-            .and_then(|v| v.as_str());
+        let primary_tool_name: Option<&str> = payload.get("primary_tool").and_then(|v| v.as_str());
         // Primary-tool dispatch failures (unknown tool, bad input, etc.)
         // are NOT fatal: the node logs a warn and falls through to the
         // narration-only path so the caller still gets a response. The
@@ -179,7 +174,9 @@ impl NodeBehavior for RubixAiAgentNode {
             .and_then(|v| v.as_str())
             .unwrap_or("en");
         let narration_enabled = std::env::var("RUBIX_AI_NARRATION")
-            .map(|v| !(v == "0" || v.eq_ignore_ascii_case("false") || v.eq_ignore_ascii_case("off")))
+            .map(|v| {
+                !(v == "0" || v.eq_ignore_ascii_case("false") || v.eq_ignore_ascii_case("off"))
+            })
             .unwrap_or(true);
         let reply = if narration_enabled {
             // Skill body (e.g. dashboard-builder playbook) lifted from
@@ -231,10 +228,7 @@ impl NodeBehavior for RubixAiAgentNode {
             // hard-coded to `"rubix"` there). The pattern is a no-op
             // for non-CLI runners and for `mcp_url == None` (no MCP
             // bridge in scope), so test fixtures stay unaffected.
-            let allowed_pattern = self
-                .mcp_url
-                .as_ref()
-                .map(|_| "mcp__rubix__*".to_owned());
+            let allowed_pattern = self.mcp_url.as_ref().map(|_| "mcp__rubix__*".to_owned());
             // Per-flow CLI built-in restriction, snapshotted into the
             // seed payload by `boot::mcp::register::register_one`.
             // `Some([])` (the rubix `tools: []` lockdown — stage 07
@@ -369,8 +363,12 @@ impl NodeBehavior for RubixAiAgentNode {
                 // narration disabled + the flow's primary tool needs
                 // arguments the zero-arg MCP call didn't supply.
                 let hint = primary_tool_name
-                    .map(|t| format!("primary tool `{t}` produced no output and narration is disabled"))
-                    .unwrap_or_else(|| "no primary tool mapped and narration is disabled".to_owned());
+                    .map(|t| {
+                        format!("primary tool `{t}` produced no output and narration is disabled")
+                    })
+                    .unwrap_or_else(|| {
+                        "no primary tool mapped and narration is disabled".to_owned()
+                    });
                 json!({ "reply": hint, "tool": null })
             }
         };
@@ -422,4 +420,3 @@ fn augment_tool_input_with_principal(input: Value) -> Value {
     }
     value
 }
-

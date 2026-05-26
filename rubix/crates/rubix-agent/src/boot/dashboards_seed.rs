@@ -24,9 +24,7 @@
 //! doesn't need a boot-time eager load.
 
 use anyhow::Result;
-use rubix_spi::dashboard::{
-    DashboardStore, NewRevision, BUNDLED_PRINCIPAL, BUNDLED_TENANT,
-};
+use rubix_spi::dashboard::{DashboardStore, NewRevision, BUNDLED_PRINCIPAL, BUNDLED_TENANT};
 use rubix_store_postgres::PgDashboardStore;
 use starter_authz::error::Error as AuthzError;
 use starter_authz::StaticRegistry;
@@ -70,10 +68,7 @@ pub fn ensure_dashboard_resource(registry: &StaticRegistry) -> bool {
 ///
 /// Returns the count of rows inserted by this call. `None` pool
 /// short-circuits to `Ok(0)` for laptop boots.
-pub async fn seed(
-    pool: Option<&Pool>,
-    registry: &StaticRegistry,
-) -> Result<usize> {
+pub async fn seed(pool: Option<&Pool>, registry: &StaticRegistry) -> Result<usize> {
     // Always ensure the kind is registered, even on the laptop
     // path — the authz gate consults the registry independently of
     // whether any row exists.

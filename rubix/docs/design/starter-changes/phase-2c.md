@@ -55,9 +55,9 @@ interpolates a `Quantity` param.
 
 *Status.* Filed for fix-when-touched; not blocking PR 3.
 
-## `starter-store-clickhouse` TTL on `DateTime64` rejected by CH 24+ (latent)
+## `starter-store-warehouse` TTL on `DateTime64` rejected by CH 24+ (latent)
 
-`starter-store-clickhouse` fix · surfaced during the PR #28 smoke
+`starter-store-warehouse` fix · surfaced during the PR #28 smoke
 test · **landed (in-tree)**, three-line fix per file.
 
 *Bug.* `CREATE TABLE` with `TTL <DateTime64 column> + INTERVAL N
@@ -75,19 +75,19 @@ day-grained anyway, so the dropped sub-second precision is
 irrelevant for TTL.
 
 *Files changed.*
-- `crates/starter-store-clickhouse/migrations/0001_raw_events.sql`
-- `crates/starter-store-clickhouse/migrations/0002_samples.sql`
-- `crates/starter-store-clickhouse/migrations/0003_events.sql`
+- `crates/starter-store-warehouse/migrations/0001_raw_events.sql`
+- `crates/starter-store-warehouse/migrations/0002_samples.sql`
+- `crates/starter-store-warehouse/migrations/0003_events.sql`
 
 *Rationale for cast-not-pin.* Pinning the rubix compose image to
 ClickHouse 23.x would mask the same bug for every other consumer
-that boots starter-store-clickhouse against CH 24+. The cast keeps
+that boots starter-store-warehouse against CH 24+. The cast keeps
 the migration valid on every CH version the crate documents
 support for.
 
-## `starter-store-clickhouse` `bloom_filter` index on `Map` rejected by CH 24+ (latent)
+## `starter-store-warehouse` `bloom_filter` index on `Map` rejected by CH 24+ (latent)
 
-`starter-store-clickhouse` fix · surfaced alongside the TTL fix
+`starter-store-warehouse` fix · surfaced alongside the TTL fix
 above · **landed (in-tree)**, one-line fix per file.
 
 *Bug.* `CREATE TABLE ... INDEX <name> tags TYPE bloom_filter ...`

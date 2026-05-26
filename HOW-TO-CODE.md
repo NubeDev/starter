@@ -141,7 +141,7 @@ Then: `pnpm codegen` to regenerate `packages/starter-client-ts/`.
 
 ### Q3. Is this storage building blocks? (pool, migrations, query helpers)
 
-→ **`crates/starter-store-sqlite/`** or **`crates/starter-store-postgres/`** or **`crates/starter-store-clickhouse/`**
+→ **`crates/starter-store-sqlite/`** or **`crates/starter-store-postgres/`** or **`crates/starter-store-warehouse/`**
 
 ### Q4. Is this authentication or authorization?
 

@@ -1,0 +1,23 @@
+services:
+  # TimescaleDB-backed warehouse — sole engine since stage 3 of
+  # `rubix/docs/proposal/warehouse-engine-swap.md`. Port 5433 is
+  # exposed to avoid colliding with the relational Postgres on
+  # 5432.
+  timescaledb:
+    image: timescale/timescaledb-ha:pg16
+    environment:
+      POSTGRES_DB: warehouse
+      POSTGRES_USER: warehouse
+      POSTGRES_PASSWORD: warehouse
+    ports:
+      - "5433:5432"
+    volumes:
+      - timescaledb_data:/home/postgres/pgdata/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U warehouse -d warehouse"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  timescaledb_data:

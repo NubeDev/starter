@@ -233,7 +233,10 @@ async fn dashboard_crud_end_to_end_against_pg() {
             .iter()
             .any(|c| c.resource.kind == DASHBOARD_PAGE_KIND),
         "changelog contains at least one dashboard row; got {:?}",
-        page.items.iter().map(|c| &c.resource.kind).collect::<Vec<_>>(),
+        page.items
+            .iter()
+            .map(|c| &c.resource.kind)
+            .collect::<Vec<_>>(),
     );
 
     // -------- 6. delete -----------------------------------------
@@ -322,8 +325,7 @@ async fn dashboard_crud_end_to_end_against_pg() {
         }))
         .await
         .expect("dashboard.page_set dispatch");
-    let ps: PageSetResponse =
-        serde_json::from_value(ps_out).expect("PageSetResponse decodes");
+    let ps: PageSetResponse = serde_json::from_value(ps_out).expect("PageSetResponse decodes");
     assert_eq!(ps.summary.code.as_str(), "rubix.dashboard.page_set.applied");
     assert!(ps.written);
     let v = graph

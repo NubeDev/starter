@@ -5,8 +5,8 @@
 //! tool id one-to-one — see [docs/design/tools/](../../../../docs/design/tools/README.md)
 //! for the routing convention.
 
-use rubix_spi::dto::system::disk::{DiskUsageRequest, DiskUsageResponse};
 use reqwest::Client as Reqwest;
+use rubix_spi::dto::system::disk::{DiskUsageRequest, DiskUsageResponse};
 
 use crate::{client::RubixClient, error::RubixClientError};
 

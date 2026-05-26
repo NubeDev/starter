@@ -17,8 +17,7 @@ async fn invoke_returns_ok_summary_on_empty_registry() {
         .invoke(serde_json::json!({ "window_secs": 60 }))
         .await
         .expect("flow_errors tool succeeds");
-    let resp: FlowErrorsResponse =
-        serde_json::from_value(raw).expect("response matches DTO shape");
+    let resp: FlowErrorsResponse = serde_json::from_value(raw).expect("response matches DTO shape");
 
     assert_eq!(resp.error_count, 0);
     assert_eq!(resp.window_secs, 60);

@@ -77,7 +77,7 @@ pub fn tag_value_to_ch_string(v: &TagValue) -> String
 
 This function is the **only** place `TagValue` → `String` conversion
 for ClickHouse storage is defined. Both `compile_ch.rs` (when binding
-query literals) and `starter-store-clickhouse` (when writing rows)
+query literals) and `starter-store-warehouse` (when writing rows)
 call this function — never inline their own conversion.
 
 **Bool / Str reserved-string rule.** ClickHouse stores both
@@ -412,7 +412,7 @@ pub fn compile_to_ch(q: &TagQuery, opts: ChCompileOptions<'_>) -> SqlFragment;
 |--------------------------------|-------------------------------------------------------------------------------------------------------------------------------|
 | `starter-warehouse`            | `TagSet` on entity rows (PG) and history rows (CH). `compile_to_pg` for `/api/entities` filters; `compile_to_ch` for `mart.read` filters that aren't promoted into columns. |
 | `starter-store-postgres["dimensions"]` | Stores `TagSet` as JSONB on `entities`, GIN-indexed.                                                                  |
-| `starter-store-clickhouse`     | Stores `TagSet` as `Map(String, String)` on `samples` / `events` / `documents` / `raw_events` with `bloom_filter` skip index. |
+| `starter-store-warehouse`     | Stores `TagSet` as `Map(String, String)` on `samples` / `events` / `documents` / `raw_events` with `bloom_filter` skip index. |
 | `starter-insights`             | Tags on `Verdict` and `Dataset`, R-ins-8. `TagQuery` for verdict log filtering and rollup grouping.                            |
 | `starter-server`               | `?query=…` parsing on REST endpoints. Authz rules expressed as tag queries (PG side).                                          |
 | Pages / SDUI                   | Page bindings carry a `TagQuery`. Renderer passes it through to `mart.read` or `/api/entities`.                                |

@@ -115,11 +115,7 @@ impl AgentLoop {
     /// pass raw env-var reads without filtering. No-op for non-CLI
     /// runners — REST providers carry their own tool list via
     /// [`RestCfg::tools`].
-    pub fn with_mcp(
-        mut self,
-        url: Option<String>,
-        token: Option<String>,
-    ) -> Self {
+    pub fn with_mcp(mut self, url: Option<String>, token: Option<String>) -> Self {
         self.mcp_url = url.filter(|s| !s.trim().is_empty());
         self.mcp_token = token.filter(|s| !s.trim().is_empty());
         self

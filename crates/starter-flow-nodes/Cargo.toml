@@ -111,3 +111,6 @@ all-kinds = [
     "sleep",
     "counter",
 ]
+
+[lints]
+workspace = true

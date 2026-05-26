@@ -11,7 +11,7 @@ Give rubix users an actual **ClickHouse explorer UI** by cherry-picking
 from [`frectonz/sql-studio`](https://github.com/frectonz/sql-studio) (MIT)
 both the ClickHouse backend module and the entire frontend, narrowed to
 ClickHouse only, and grafting them onto our existing
-`starter-store-clickhouse` / `starter-warehouse` stack — without
+`starter-store-warehouse` / `starter-warehouse` stack — without
 breaking the `forbid_raw_insert` write policy or the snapshot-before-write
 contract of `rubix-tools/clickhouse`.
 
@@ -43,7 +43,7 @@ crates/starter-warehouse  (new axum sub-router: explorer::routes)
    POST /api/warehouse/ch/query   { sql }        read-only allow-list
        │
        ▼
-starter-store-clickhouse::ChClient    (existing typed client)
+starter-store-warehouse::ChClient    (existing typed client)
    system.tables • system.columns • system.parts queries
        │
        ▼              ┌────────────────────────────────────────────┐
@@ -51,9 +51,9 @@ ClickHouse            │  WRITES never go through the explorer.     │
                       │  "Drop mart", "Set retention",             │
                       │  "Promote sandbox" buttons in the UI call  │
                       │  existing rubix verbs:                     │
-                      │    rubix.clickhouse.mart.create            │
-                      │    rubix.clickhouse.retention.set          │
-                      │    rubix.clickhouse.rule.write             │
+                      │    rubix.warehouse.mart.create            │
+                      │    rubix.warehouse.retention.set          │
+                      │    rubix.warehouse.rule.write             │
                       │  → snapshot-before-write + undo + changelog│
                       └────────────────────────────────────────────┘
 ```
@@ -62,14 +62,14 @@ ClickHouse            │  WRITES never go through the explorer.     │
 
 | Layer | What lights up |
 |---|---|
-| Storage | `starter-store-clickhouse::ChClient` only — no new connection |
+| Storage | `starter-store-warehouse::ChClient` only — no new connection |
 | HTTP | New `explorer` sub-module inside `starter-warehouse` axum router |
 | Write policy | Read endpoints only; `POST /query` rejects non-`SELECT`/`SHOW`/`DESCRIBE`/`EXPLAIN`/`WITH` at the parser boundary |
 | Frontend | New workspace package `packages/starter-ui-ch-explorer/` (Vite + TanStack Router) |
 | Static serve | **No rail today.** `starter-server` only wires `/health`, `/metrics`, `openapi.json` — there is no `ServeDir` mount. See PR 0 below. |
 | Rubix integration | UI surfaces existing rubix verbs as buttons; calls go to the existing tool dispatch, not new code |
 | AuthN/Z | Reuse `starter-auth-users` session + `starter-authz` `warehouse.read` / `warehouse.write` permissions. Gating `/api/warehouse/ch/*` with `warehouse.read` is a PR 1 acceptance criterion, not optional. |
-| Audit | **Explorer reads are not audited in PR 0–4.** There is no axum read-log middleware in the tree today; building one is a separate follow-up. Writes still carry the existing verb-level changelog because they go through `rubix.clickhouse.*` verbs, not through this router. |
+| Audit | **Explorer reads are not audited in PR 0–4.** There is no axum read-log middleware in the tree today; building one is a separate follow-up. Writes still carry the existing verb-level changelog because they go through `rubix.warehouse.*` verbs, not through this router. |
 
 ## What is deliberately out
 
@@ -100,7 +100,7 @@ The **shapes of these queries** are the value — they encode CH's
   `is_in_primary_key` projected as `is_primary_key`.
 
 **Do not** port the `Client::default().with_url(...)` open path —
-inject the existing `ChClient` from `starter-store-clickhouse` so we
+inject the existing `ChClient` from `starter-store-warehouse` so we
 get one connection pool, one auth path, one TLS config.
 
 **Finish the stubs** that sql-studio left empty:
@@ -125,7 +125,7 @@ Accept exactly:
 - `EXPLAIN …`
 
 Reject everything else with HTTP 400 `{"error":"read-only endpoint;
-use rubix.clickhouse.* verbs for writes"}`. Enforce server-side, never
+use rubix.warehouse.* verbs for writes"}`. Enforce server-side, never
 trust the UI to filter.
 
 Defence-in-depth: execute under `SETTINGS readonly = 2`. Note that
@@ -166,9 +166,9 @@ Add (rubix-specific):
 - Overview tiles for **dim_freshness** (W11) and **W16 deltas** —
   feed from existing `/api/warehouse/status`.
 - Action buttons that POST to existing rubix verb endpoints:
-  - "Set retention" → `rubix.clickhouse.retention.set`
-  - "Promote sandbox → mart" → `rubix.clickhouse.mart.create`
-  - "Write insights rule" → `rubix.clickhouse.rule.write`
+  - "Set retention" → `rubix.warehouse.retention.set`
+  - "Promote sandbox → mart" → `rubix.warehouse.mart.create`
+  - "Write insights rule" → `rubix.warehouse.rule.write`
 
 Build wiring follows `packages/starter-client-react/` — Vite build
 into `dist/`, mounted by `starter-server` as static assets under
@@ -219,8 +219,8 @@ a list of paths derived from sql-studio.
   transport gets deleted in favour of typed
   `@nube/rubix-client-react` hooks:
   * `FreshnessTiles` (W11 dimension freshness + W16 ingest lag).
-  * `MartTree` — `rubix.clickhouse.mart.list` + drop via
-    `rubix.clickhouse.mart.drop`.
+  * `MartTree` — `rubix.warehouse.mart.list` + drop via
+    `rubix.warehouse.mart.drop`.
 
 ### What's left before "explorer works"
 
@@ -353,7 +353,7 @@ upstream.
 
 **Blast radius note.** `ChClient` today only exposes typed
 `.fetch_all::<Row>()` over the `clickhouse` crate — no raw HTTP
-escape hatch. PR 2 therefore **does** touch `starter-store-clickhouse`
+escape hatch. PR 2 therefore **does** touch `starter-store-warehouse`
 to add a `ChClient::fetch_json(sql) -> serde_json::Value` (or
 `fetch_rows_dynamic`) that runs `SELECT … FORMAT JSONCompactEachRow`
 over the underlying HTTP transport and parses the streamed JSON.
@@ -362,7 +362,7 @@ of the typed Row path; gate it behind `pub(crate)` + a feature flag
 if `forbid_raw_insert` reviewers want belt-and-braces.
 
 **Files touched:**
-- `crates/starter-store-clickhouse/src/raw.rs` — new
+- `crates/starter-store-warehouse/src/raw.rs` — new
   `ChClient::fetch_json` (read-only HTTP `POST` to CH with
   `query=… FORMAT JSONCompactEachRow`, returns parsed columns+rows).
   Doctest asserts it rejects anything starting with a write verb

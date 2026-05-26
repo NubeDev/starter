@@ -19,7 +19,7 @@ No third convention. No `#[cfg(test)] mod tests` blocks in
 - HTTP: `starter-server::testing` harness — never hand-rolled
   servers.
 - Postgres: testcontainers pattern from `starter-store-postgres`.
-- ClickHouse: testcontainers pattern from `starter-store-clickhouse`.
+- ClickHouse: testcontainers pattern from `starter-store-warehouse`.
 - Agent loop: **recorded-LLM-response harness** (planned upstream
   — see [STARTER-CHANGES.md](./STARTER-CHANGES.md)). Live LLM
   calls in CI are unaffordable; per-PR tests use recorded

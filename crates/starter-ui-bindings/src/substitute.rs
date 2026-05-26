@@ -141,7 +141,9 @@ fn walk<G: EntityGraph + ?Sized>(
         Component::FieldGroup { control, .. } => {
             walk(control, ctx)?;
         }
-        Component::Menu { trigger: Some(t), .. } => walk(t, ctx)?,
+        Component::Menu {
+            trigger: Some(t), ..
+        } => walk(t, ctx)?,
         _ => {}
     }
     Ok(())

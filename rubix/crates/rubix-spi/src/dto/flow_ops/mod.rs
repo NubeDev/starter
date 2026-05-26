@@ -5,8 +5,8 @@
 //! [`ToolDescriptor`](crate::descriptor::ToolDescriptor).
 
 pub mod deploy;
-pub mod validate;
+pub mod duplicate;
+pub mod kinds;
 pub mod lint;
 pub mod list;
-pub mod kinds;
-pub mod duplicate;
+pub mod validate;

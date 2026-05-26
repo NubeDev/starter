@@ -69,7 +69,7 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
     ),
     when_not_to_use: concat!(
         "Do not use to write/alter ClickHouse state (call ",
-        "rubix.clickhouse.rule.write or rubix.clickhouse.mart.create). ",
+        "rubix.warehouse.rule.write or rubix.warehouse.mart.create). ",
         "Do not use to render a multi-query report (call ",
         "rubix.analytics.report — it stitches several queries into a ",
         "single rendered artifact). Do not use for ad-hoc SQL — the ",
@@ -87,7 +87,7 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
             wins_when: "the caller wants a rendered HTML/CSV/JSON artifact that combines several named queries.",
         },
         SiblingTool {
-            id: "rubix.clickhouse.rule.write",
+            id: "rubix.warehouse.rule.write",
             wins_when: "the goal is to write or alter a derived-state object, not read from one.",
         },
     ],

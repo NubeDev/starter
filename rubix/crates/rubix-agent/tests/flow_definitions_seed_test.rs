@@ -29,8 +29,7 @@ async fn first_boot_seeds_bundled_yamls_second_boot_is_noop() {
         .expect("apply flows_definitions migration");
 
     // First boot: every bundled YAML lands as one row.
-    let (triples_first, inserted_first) =
-        seed_and_load(&pool).await.expect("first seed succeeds");
+    let (triples_first, inserted_first) = seed_and_load(&pool).await.expect("first seed succeeds");
     let bundled_count = rubix_flows::bundled()
         .entries()
         .iter()

@@ -34,8 +34,8 @@ rubix-flows               = { workspace = true }
 # write a `system_disk_history` row after a successful probe and
 # so the dispatcher can re-export the `MigrationRunner` consumers
 # need to apply `rubix/0002_history`. No direct `clickhouse` crate
-# dep — that lives transitively under starter-store-clickhouse.
-starter-store-clickhouse = { workspace = true }
+# dep — that lives transitively under starter-store-warehouse.
+starter-store-warehouse = { workspace = true }
 uuid                      = { workspace = true }
 
 # undo goal — Reversible-aware dispatch wrapper + rubix.undo.last verb.
@@ -86,6 +86,9 @@ chrono             = { workspace = true }
 starter-ai         = { workspace = true, features = ["testing"] }
 # testcontainers-based ClickHouse harness for the analytics.query
 # integration test. See tests/analytics_query_test.rs.
-starter-store-clickhouse = { workspace = true, features = ["testing"] }
+starter-store-warehouse = { workspace = true, features = ["testing"] }
 starter-flow       = { workspace = true }
 starter-flow-nodes = { workspace = true, features = ["ai-agent", "tool-call", "counter"] }
+
+[lints]
+workspace = true

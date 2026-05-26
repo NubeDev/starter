@@ -56,3 +56,6 @@ skill-approvals = ["dep:starter-skills", "dep:starter-flow-spi"]
 [dev-dependencies]
 tokio    = { workspace = true }
 tempfile = "3"
+
+[lints]
+workspace = true

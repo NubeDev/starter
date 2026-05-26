@@ -18,7 +18,7 @@ fn req(source: &str, page: usize, size: usize) -> QueryRequest {
 
 #[tokio::test]
 async fn unknown_backend_returns_deterministic_empty_page() {
-    let eng = RubixQueryEngine::new(None, None);
+    let eng = RubixQueryEngine::new(None);
     let r = eng.query(&req("xxx:nope", 1, 50)).await.unwrap();
     assert!(r.data.is_empty());
     assert_eq!(r.meta.total, 0);
@@ -27,7 +27,7 @@ async fn unknown_backend_returns_deterministic_empty_page() {
 
 #[tokio::test]
 async fn pg_and_ch_backends_return_empty_when_unwired() {
-    let eng = RubixQueryEngine::new(None, None);
+    let eng = RubixQueryEngine::new(None);
     for src in ["pg:flows_definitions", "ch:samples", "ch:raw_events"] {
         let r = eng.query(&req(src, 1, 50)).await.unwrap();
         assert!(r.data.is_empty(), "{src} returned non-empty rows");
@@ -43,7 +43,7 @@ async fn memory_backend_pages_through_seeded_rows() {
             m
         })
         .collect();
-    let eng = RubixQueryEngine::new(None, None).with_memory_source("demo", rows);
+    let eng = RubixQueryEngine::new(None).with_memory_source("demo", rows);
 
     let p1 = eng.query(&req("mem:demo", 1, 2)).await.unwrap();
     assert_eq!(p1.data.len(), 2);

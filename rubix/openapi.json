@@ -458,7 +458,7 @@
     },
     {
       "description": "ClickHouse ruler verbs (Goal 4): rule write, mart create, retention set.",
-      "name": "clickhouse-ruler"
+      "name": "warehouse-ruler"
     },
     {
       "description": "Flow programmer verbs (Goal 3): flow deploy, lint, list, duplicate.",

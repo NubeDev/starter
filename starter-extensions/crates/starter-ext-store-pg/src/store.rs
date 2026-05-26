@@ -111,7 +111,7 @@ impl EnablementStore for PgEnablementStore {
         .bind(id.as_str())
         .fetch_optional(&self.pool)
         .await
-                .map_err(|e| StoreError::new(format!("get: {e}")))?;
+        .map_err(|e| StoreError::new(format!("get: {e}")))?;
         Ok(row.and_then(|(s,)| state_from_str(&s)))
     }
 
