@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
@@ -44,6 +45,8 @@ class _AddConnectionScreenState extends ConsumerState<AddConnectionScreen> {
         .submit(
           label: _labelController.text.trim(),
           baseUrl: _urlController.text.trim(),
+          email: _emailController.text.trim(),
+          password: _passwordController.text,
         );
     if (success && mounted) {
       Navigator.of(context).pop();
@@ -109,11 +112,15 @@ class _AddConnectionScreenState extends ConsumerState<AddConnectionScreen> {
                 ),
                 keyboardType: TextInputType.emailAddress,
                 autocorrect: false,
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Required' : null,
               ),
               const SizedBox(height: 16),
               TextFormField(
                 controller: _passwordController,
                 obscureText: _obscurePassword,
+                validator: (v) =>
+                    (v == null || v.isEmpty) ? 'Required' : null,
                 decoration: InputDecoration(
                   labelText: 'Password',
                   border: const OutlineInputBorder(),
@@ -240,44 +247,48 @@ class _ScannerPanelState extends ConsumerState<_ScannerPanel> {
             ),
             if (_expanded) ...[
               const SizedBox(height: 12),
-              const NetworkInterfaceSelector(),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  SizedBox(
-                    width: 100,
-                    child: TextFormField(
-                      controller: _portController,
-                      keyboardType: TextInputType.number,
-                      decoration: const InputDecoration(
-                        labelText: 'Port',
-                        border: OutlineInputBorder(),
-                        isDense: true,
+              if (kIsWeb)
+                const _WebUnsupportedNotice()
+              else ...[
+                const NetworkInterfaceSelector(),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    SizedBox(
+                      width: 100,
+                      child: TextFormField(
+                        controller: _portController,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Port',
+                          border: OutlineInputBorder(),
+                          isDense: true,
+                        ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: FilledButton.tonalIcon(
-                      onPressed: scanState is LanScanRunning
-                          ? () => ref
-                              .read(lanScanControllerProvider.notifier)
-                              .cancel()
-                          : _startScan,
-                      icon: Icon(
-                        scanState is LanScanRunning
-                            ? Icons.stop
-                            : Icons.radar,
-                      ),
-                      label: Text(
-                        scanState is LanScanRunning ? 'Stop' : 'Scan',
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.tonalIcon(
+                        onPressed: scanState is LanScanRunning
+                            ? () => ref
+                                .read(lanScanControllerProvider.notifier)
+                                .cancel()
+                            : _startScan,
+                        icon: Icon(
+                          scanState is LanScanRunning
+                              ? Icons.stop
+                              : Icons.radar,
+                        ),
+                        label: Text(
+                          scanState is LanScanRunning ? 'Stop' : 'Scan',
+                        ),
                       ),
                     ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _ScanResults(state: scanState, onApply: widget.onApply),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                _ScanResults(state: scanState, onApply: widget.onApply),
+              ],
             ],
           ],
         ),
@@ -379,6 +390,42 @@ class _ProgressAndHits extends StatelessWidget {
             ),
           ),
       ],
+    );
+  }
+}
+
+/// Shown in place of the scanner UI on Flutter web, where
+/// `dart:io`'s `NetworkInterface.list` / `Socket` aren't available
+/// and the browser would block LAN probes via CORS / mixed-content
+/// anyway. Operators should enter the URL by hand or run the
+/// scanner from the desktop / mobile build.
+class _WebUnsupportedNotice extends StatelessWidget {
+  const _WebUnsupportedNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(Icons.info_outline, color: theme.colorScheme.outline),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'LAN scan is not available in the browser. Run rubix '
+              'from the desktop or mobile app to discover agents '
+              'automatically, or enter the URL by hand below.',
+              style: theme.textTheme.bodySmall,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

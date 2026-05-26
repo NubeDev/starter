@@ -14,7 +14,6 @@ class ConnectionsListScreen extends ConsumerWidget {
     final listAsync = ref.watch(connectionListControllerProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).connections)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
@@ -69,9 +68,27 @@ class _ConnectionTile extends ConsumerWidget {
         ),
         title: Text(connection.label),
         subtitle: Text(connection.baseUrl),
-        onTap: () => ref
-            .read(connectionListControllerProvider.notifier)
-            .activate(connection.id),
+        trailing: IconButton(
+          icon: const Icon(Icons.edit_outlined),
+          tooltip: 'Edit',
+          onPressed: () => Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => EditConnectionScreen(connection: connection),
+            ),
+          ),
+        ),
+        onTap: () async {
+          final messenger = ScaffoldMessenger.of(context);
+          try {
+            await ref
+                .read(connectionListControllerProvider.notifier)
+                .activate(connection.id);
+          } catch (e) {
+            messenger.showSnackBar(
+              SnackBar(content: Text('Sign-in failed: $e')),
+            );
+          }
+        },
         onLongPress: () => Navigator.of(context).push(
           MaterialPageRoute<void>(
             builder: (_) => EditConnectionScreen(connection: connection),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
 import 'package:rubix_flutter/core/theme/theme_providers.dart';
+import 'package:rubix_flutter/features/settings/presentation/pin_settings_section.dart';
 
 /// Settings screen — theme mode and locale picker.
 class SettingsScreen extends ConsumerWidget {
@@ -13,7 +14,6 @@ class SettingsScreen extends ConsumerWidget {
     final locale = ref.watch(localeProvider);
 
     return Scaffold(
-      appBar: AppBar(title: Text(AppLocalizations.of(context).settings)),
       body: ListView(
         children: [
           const _SectionHeader('Theme'),
@@ -65,6 +65,9 @@ class SettingsScreen extends ConsumerWidget {
               ],
             ),
           ),
+          const SizedBox(height: 24),
+          const _SectionHeader('Security'),
+          const PinSettingsSection(),
         ],
       ),
     );

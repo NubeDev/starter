@@ -3,6 +3,7 @@ import 'package:rubix_api/rubix_api.dart';
 import 'package:rubix_flutter/core/api/api_providers.dart';
 import 'package:rubix_flutter/core/auth/token_store/token_store_providers.dart';
 import 'package:rubix_flutter/core/router/app_router/app_router.dart';
+import 'package:rubix_flutter/features/connections/data/connection_credentials_store.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 
 class AuthRepository {
@@ -13,6 +14,24 @@ class AuthRepository {
   /// Issue a token and install it in the store via the generated
   /// `rubix_api` Dio client (`POST /api/v1/auth/token`).
   Future<void> login({
+    required String email,
+    required String password,
+    String? tenantId,
+  }) async {
+    await _loginInternal(email: email, password: password, tenantId: tenantId);
+    _ref.invalidate(currentTokenProvider);
+  }
+
+  /// Same as [login] but does not invalidate [currentTokenProvider].
+  /// Used from inside that provider's auto-login path to avoid recursion.
+  Future<void> loginWithoutInvalidate({
+    required String email,
+    required String password,
+    String? tenantId,
+  }) =>
+      _loginInternal(email: email, password: password, tenantId: tenantId);
+
+  Future<void> _loginInternal({
     required String email,
     required String password,
     String? tenantId,
@@ -47,9 +66,6 @@ class AuthRepository {
     if (activeId != null) {
       await repo.markUsed(activeId);
     }
-
-    // Notify token-dependent listeners.
-    _ref.invalidate(currentTokenProvider);
   }
 
   /// Explicit logout — clears pending route before evicting token.
@@ -64,9 +80,30 @@ class AuthRepository {
 }
 
 /// Provides the current token as a future — used by the router to decide
-/// redirect.
+/// redirect. If the store is empty but the active connection has stored
+/// credentials, transparently re-issue a token. Returns null if there is
+/// no active connection, no saved creds, or the auto-login attempt fails.
 final currentTokenProvider = FutureProvider<String?>((ref) async {
   final store = ref.watch(tokenStoreProvider);
+  final existing = await store.read();
+  if (existing != null) return existing;
+
+  final active = await ref.watch(activeConnectionProvider.future);
+  if (active == null) return null;
+
+  final creds = await ref
+      .read(connectionCredentialsStoreProvider)
+      .read(active.id);
+  if (creds == null) return null;
+
+  try {
+    await ref.read(authRepositoryProvider).loginWithoutInvalidate(
+          email: creds.email,
+          password: creds.password,
+        );
+  } catch (_) {
+    return null;
+  }
   return store.read();
 });
 

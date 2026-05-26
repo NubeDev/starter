@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
-import 'package:rubix_flutter/features/auth/data/auth_repository/auth_repository.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 import 'package:rubix_flutter/features/home/presentation/home_controller.dart';
 import 'package:rubix_flutter/shared/widgets/error_panel.dart';
@@ -26,23 +25,6 @@ class HomeScreen extends ConsumerWidget {
     final userAsync = ref.watch(currentUserProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: Text(l.home),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.settings_outlined),
-            tooltip: l.settings,
-            onPressed: () => context.push('/settings'),
-          ),
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: l.signOut,
-            onPressed: () async {
-              await ref.read(authRepositoryProvider).logout();
-            },
-          ),
-        ],
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref
