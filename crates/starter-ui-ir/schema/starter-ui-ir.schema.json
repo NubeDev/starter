@@ -1588,6 +1588,9 @@
             "source": {
               "$ref": "#/definitions/ChartSource"
             },
+            "value": {
+              "description": "Server-resolved scalar — filled by the chart-source resolver from `source` at /resolve time. The client renders this directly. Authors leave it unset; the resolver overwrites whatever was authored."
+            },
             "format": {
               "type": [
                 "string",
@@ -3377,6 +3380,42 @@
           }
         },
         {
+          "description": "Named analytics SQL template, evaluated server-side via the host's analytics-query tool (e.g. `rubix.analytics.query`). `name` is the template stem; `params` are forwarded verbatim to the tool. `map` tells the resolver how to walk the row payload — for KPIs it picks the scalar column, for charts it picks the timestamp + value columns.",
+          "type": "object",
+          "required": [
+            "name",
+            "type"
+          ],
+          "properties": {
+            "type": {
+              "type": "string",
+              "enum": [
+                "analytics_template"
+              ]
+            },
+            "name": {
+              "description": "Template stem (filename without `.sql`).",
+              "type": "string"
+            },
+            "params": {
+              "description": "Parameters bound through the tool's named-parameter surface.",
+              "type": "object",
+              "additionalProperties": true
+            },
+            "map": {
+              "description": "Row-shape mapping. Optional only because forward-compat payloads may omit it; the resolver requires it to produce any points.",
+              "anyOf": [
+                {
+                  "$ref": "#/definitions/AnalyticsTemplateMap"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
+          }
+        },
+        {
           "description": "Forward-compat fallback for variants this client doesn't know.",
           "type": "object",
           "required": [
@@ -3642,6 +3681,26 @@
         "asc",
         "desc"
       ]
+    },
+    "AnalyticsTemplateMap": {
+      "description": "Row-shape mapping for [`ChartSource::AnalyticsTemplate`].\n\n`value_field` is required — it names the column the resolver reads to produce either the KPI scalar (row 0) or each chart point's y-value. `ts_field` is required for charts and ignored for KPIs.",
+      "type": "object",
+      "required": [
+        "value_field"
+      ],
+      "properties": {
+        "value_field": {
+          "description": "Column name that carries the scalar / y-value.",
+          "type": "string"
+        },
+        "ts_field": {
+          "description": "Column name that carries the bucket timestamp. May encode ms-since-epoch or an ISO-8601 string; the resolver parses both.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     },
     "ChartKind": {
       "description": "What renderer to draw a [`Component::Chart`](crate::Component::Chart) with. The renderer reads this; the resolver uses it to pick the validation rules in [`ChartSource`] (see SDUI.md § \"Chart kind ↔ source compatibility\").\n\nWire shape: bare snake_case string (`\"line\"`, `\"stacked_bar\"`, …). `Custom(name)` carries the renderer-registry id verbatim. `Unknown` is the forward-compat fallback when a v4+ kind reaches a v3 client.\n\n`Heatmap` is reserved so we don't bump the IR version again later; the renderer and the source-compat rules for it are deferred.",
