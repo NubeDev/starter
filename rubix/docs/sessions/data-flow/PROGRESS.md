@@ -26,6 +26,7 @@ A session that finishes a stage flips its row, fills the
 | 3 | [03-clean-to-l2.md](./03-clean-to-l2.md) — clean to L2   | ✅     | 2026-05-26 | _local_| 2 cold-restart runs: every 1-min bucket in window has all 3 meters; `missing` present per meter; 0 `ok` rows exceed 10× median |
 | 4 | [04-anomaly-rules.md](./04-anomaly-rules.md) — rules     | ✅     | 2026-05-26 | _local_ | 2×cold-restart e2e: run1 spike=10 stuck=20; run2 spike=14 stuck=21; L2 207 rows (ok=147 missing=60); L1 24 suspect rows |
 | 5 | [05-dashboard-at-scale.md](./05-dashboard-at-scale.md)   | ✅     | 2026-05-26 | _local_ | 2×cold-restart e2e: L3 12 rows / 3 meters; kwh template→2 rows, litres→1 row; dashboard.data-flow-site-a loads via dashboard.get (items 2–4 follow-ups) |
+| 6 | [06-scheduled-report.md](./06-scheduled-report.md)       | ✅     | 2026-05-26 | _local_ | 2×cold-restart e2e: analytics.report registered; blob_id=reports/data-flow-weekly/…html; byte_count=748–751; 5 `<tr>` tags; scheduler row next_run_at=2026-06-01 |
 
 **Next session: stage 1 (producer) — last ⏳ row remaining.**
 
@@ -59,6 +60,7 @@ Per-stage open decisions (the "pick A or B" choices):
 | 03    | Periodic flow cleaner vs ClickHouse materialised view  | A (periodic flow `com.rubix.data-flow.cleaner` → `rubix.warehouse.clean_minute`; L2 DDL via bundled migration `0004_meter_readings_1m`) |
 | 04    | Hardcoded Rust gate vs `rule.rhai` registry            | A (hardcoded `anomaly_gate.rs`; R-SPIKE reads L1 suspect rows, R-STUCK reads L2 same-value runs; promotion trigger — third rule — has not fired) |
 | 05    | `page_set` vs `create`+`update` for dashboard build    | C (bundled JSON via `dashboards_seed.rs` — `data-flow-site-a.json`; charts are `Static` placeholders, L3 path proven via `rubix.analytics.query` templates `meter_kwh_last_24h` + `meter_litres_last_24h`) |
+| 06    | Report output format + blob location                    | HTML via `FsBlobStore` at `RUBIX_BLOB_ROOT` (default `/tmp/rubix-blobs`); templates `meter_kwh_site_a_weekly` + `meter_litres_site_a_weekly` (self-contained, hard-code `tenant_id='site-a'`); undo path deferred |
 
 ---
 

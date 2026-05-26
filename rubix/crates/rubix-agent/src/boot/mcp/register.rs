@@ -89,6 +89,7 @@ pub async fn build_flow_registry(
             ch_client,
             cfg.insights.disk_warn_threshold,
             pg_pool.clone(),
+            cfg.blob_root.clone(),
         ),
     };
 

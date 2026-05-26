@@ -89,7 +89,10 @@ use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use rubix_tools::warehouse::clean_minute::WarehouseCleanMinuteTool;
 use rubix_tools::warehouse::rollup_15m::WarehouseRollup15mTool;
 use rubix_tools::analytics::query::AnalyticsQueryTool;
+use rubix_tools::analytics::report::AnalyticsReportTool;
+use starter_blob_fs::{FsBlobStore, PresignKey};
 use starter_flow_spi::node::NodeBehavior;
+use starter_spi::blob::BlobStore;
 use starter_spi::tool::Tool;
 use starter_store_clickhouse::ChClient;
 use starter_store_postgres::pool::Pool;
@@ -107,6 +110,7 @@ pub fn build_tool_registry(
     ch: Option<Arc<ChClient>>,
     insights_disk_threshold: u8,
     pg_pool: Option<Pool>,
+    blob_root: Option<String>,
 ) -> Vec<Arc<dyn Tool>> {
     let mut disk = DiskTool::default().with_insights_threshold(insights_disk_threshold);
     let mut warehouse_ingest = WarehouseIngestTool::default();
@@ -114,6 +118,14 @@ pub fn build_tool_registry(
     let mut warehouse_rollup = WarehouseRollup15mTool::default();
     let analytics_query: Option<Arc<dyn Tool>> = ch.as_ref().map(|client| {
         Arc::new(AnalyticsQueryTool::new(client.clone())) as Arc<dyn Tool>
+    });
+    let analytics_report: Option<Arc<dyn Tool>> = ch.as_ref().map(|client| {
+        let root = blob_root.as_deref().unwrap_or("/tmp/rubix-blobs");
+        let store: Arc<dyn BlobStore> = Arc::new(
+            FsBlobStore::open(root, PresignKey::ephemeral())
+                .unwrap_or_else(|e| panic!("blob store init at {root:?}: {e}")),
+        );
+        Arc::new(AnalyticsReportTool::new(client.clone(), store)) as Arc<dyn Tool>
     });
     if let Some(client) = ch.as_ref() {
         disk = disk.with_history(client.clone());
@@ -263,14 +275,17 @@ pub fn build_tool_registry(
         // dispatch to has been removed.
     ];
 
-    // ---- analytics (read-only) --------------------------------
-    // `AnalyticsQueryTool` needs a live `ChClient`; without one we
-    // skip registration so the verb does not appear in the
-    // catalogue at all. Stage 05 dashboards / report flows rely
-    // on this verb to read L3 buckets. See
-    // `docs/sessions/data-flow/05-dashboard-at-scale.md` and
-    // `docs/design/analytics/`.
+    // ---- analytics (read + write) ----------------------------
+    // Both tools need a live `ChClient`; without one we skip
+    // registration so the verbs do not appear in the catalogue.
+    // `AnalyticsReportTool` additionally needs a `BlobStore` (wired
+    // above from `blob_root`, default `/tmp/rubix-blobs`).
+    // See `docs/sessions/data-flow/05-dashboard-at-scale.md` (query)
+    // and `docs/sessions/data-flow/06-scheduled-report.md` (report).
     if let Some(t) = analytics_query {
+        tools.push(t);
+    }
+    if let Some(t) = analytics_report {
         tools.push(t);
     }
     tools

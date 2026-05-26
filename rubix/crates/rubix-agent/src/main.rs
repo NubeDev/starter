@@ -146,6 +146,7 @@ async fn main() -> Result<()> {
         ch_client,
         cfg.insights.disk_warn_threshold,
         mcp_pool.clone(),
+        cfg.blob_root.clone(),
     );
 
     let mcp = boot::mcp::build_mcp_surface(
@@ -426,6 +427,14 @@ async fn main() -> Result<()> {
         );
         app = app.merge(tools_router);
     }
+
+    // Apply a permissive CORS layer so browser clients (the Flutter
+    // web build served from a different origin during `flutter run
+    // -d chrome`, plus any future SPA hosted off-host) can reach the
+    // REST surface. `very_permissive` mirrors the default that
+    // `starter-server::ServerBuilder` applies; tighten via a config
+    // knob once we have a non-dev deployment story.
+    let app = app.layer(tower_http::cors::CorsLayer::very_permissive());
 
     health::serve(&cfg.bind, app).await
 }

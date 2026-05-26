@@ -1,0 +1,27 @@
+# Bundled rubix flow — stage 06: data-flow weekly analytics report.
+# Fires Monday 08:00 UTC, calls rubix.analytics.report with the two
+# self-contained site-a meter templates (meter_kwh_site_a_weekly +
+# meter_litres_site_a_weekly), and stores an HTML blob under
+# $RUBIX_BLOB_ROOT/reports/data-flow-weekly/<ulid>.html.
+id: com.rubix.data-flow.weekly-report
+description: |
+  Weekly energy + water report for site-a. Fires Monday 08:00 UTC,
+  calls rubix.analytics.report with the data-flow meter templates and
+  renders an HTML blob to the BlobStore. See
+  rubix/docs/sessions/data-flow/06-scheduled-report.md.
+trigger: schedule
+# 6-field cron (sec min hour day month dow) — Monday 08:00 UTC.
+cron_expr: "0 0 8 * * Mon"
+
+nodes:
+  - id: agent
+    kind: ai-agent
+    config:
+      session_policy: fresh
+      skill_hint: com.rubix.analytics-reporter
+      cost_cap: 0.50_usd
+      allowed_tools:
+        - analytics.query
+        - analytics.report
+
+links: []

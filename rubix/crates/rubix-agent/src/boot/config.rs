@@ -100,6 +100,14 @@ pub struct AgentConfig {
     /// the shared SSE-subscription registry plus the per-node state
     /// store backing every `NodeCtx::state` call.
     pub flow_runtime: FlowRuntimeConfig,
+
+    /// Root directory for the filesystem blob store used by
+    /// `rubix.analytics.report`. Blobs land at
+    /// `<blob_root>/reports/<template>/<ulid>.<ext>`. Created on
+    /// first boot if it does not exist. When `None`, defaults to
+    /// `/tmp/rubix-blobs` so a developer can boot without any config.
+    /// Override via `RUBIX_BLOB_ROOT` env var.
+    pub blob_root: Option<String>,
 }
 
 /// Tunables for the always-on flow runtime
@@ -277,6 +285,7 @@ impl Default for AgentConfig {
             scheduler: SchedulerConfig::default(),
             extensions: ExtensionsConfig::default(),
             flow_runtime: FlowRuntimeConfig::default(),
+            blob_root: None,
         }
     }
 }

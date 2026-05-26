@@ -103,11 +103,15 @@ async-trait = { workspace = true }
 chrono      = { workspace = true }
 serde       = { workspace = true, features = ["derive"] }
 serde_json  = { workspace = true }
+tower-http  = { workspace = true, features = ["cors"] }
 
 # Async + utility
 tokio   = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
 tracing = { workspace = true }
 anyhow  = { workspace = true }
+
+# Blob store — used by rubix.analytics.report in registry.rs.
+starter-blob-fs = { workspace = true }
 
 [dev-dependencies]
 starter-mcp              = { workspace = true, features = ["http", "testing"] }
