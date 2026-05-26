@@ -15,7 +15,11 @@ import {
   type ComponentTree,
 } from '@nube/starter-ui-sdui-puck'
 import { useCallback, useEffect, useMemo, useState } from 'react'
-import { useRubixClient, useTenantList } from '@nube/rubix-client-react'
+import {
+  useRubixClient,
+  useTenantList,
+  usePageLiveness,
+} from '@nube/rubix-client-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 function EditDashboardRoute() {
@@ -166,6 +170,14 @@ function EditDashboardRoute() {
     setReloadKey((k) => k + 1)
   }, [])
 
+  // Scope 11 — per-page liveness. When the rubix-agent SSE channel
+  // announces a new revision for this `pageRef` (someone else, or
+  // the AI assistant, saved while we were editing), surface the
+  // same conflict modal the 409-on-save path uses, pre-emptively,
+  // so the operator gets the Discard / Keep-editing choice before
+  // they hit Save. The 409 path stays as the safety net.
+  const liveness = usePageLiveness(pageRef)
+
   return (
     <ErrorBoundary>
       <section className="flex h-[calc(100vh-4rem)] flex-col">
@@ -213,6 +225,9 @@ function EditDashboardRoute() {
               onDiscardRequested={handleDiscard}
               catalogue={catalogue}
               liveSchemaHash={liveSchemaHash}
+              liveRevisionId={liveness.latestRevisionId}
+              liveChangeToken={liveness.changeToken}
+              liveActorKind={liveness.actorKind}
             />
           )}
         </div>

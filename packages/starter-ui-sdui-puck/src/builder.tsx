@@ -20,6 +20,7 @@ import { Puck, type Config, type Data } from "@measured/puck";
 import "@measured/puck/puck.css";
 import {
   useCallback,
+  useEffect,
   useMemo,
   useRef,
   useState,
@@ -77,6 +78,27 @@ export interface PuckBuilderProps {
    *  revisions). The host is responsible for fetching this; the
    *  package does no HTTP. */
   liveSchemaHash?: string;
+  /** Scope 11 §B3 — the live revision id the rubix-agent's SSE
+   *  channel last announced for this `pageRef` (someone else, or
+   *  the AI assistant, saved while we were editing). Host fetches
+   *  this via `usePageLiveness` from `@nube/rubix-client-react`;
+   *  the package itself does no HTTP. When this differs from the
+   *  builder's loaded `expected_revision_id` after `liveChangeToken`
+   *  bumps, the same conflict modal that fires on a 409-on-save is
+   *  surfaced pre-emptively — the operator sees Discard / Keep
+   *  editing before they hit Save and 409. */
+  liveRevisionId?: string;
+  /** Scope 11 §B3 — bumps every time the SSE channel emits a
+   *  matching `created` / `updated` / `deleted` frame for this
+   *  `pageRef`. Used as the effect dependency so a rapid sequence
+   *  of AI-driven writes re-arms the banner if the operator
+   *  dismisses it with "Keep editing" and another save lands. */
+  liveChangeToken?: number;
+  /** Scope 11 §B4 — copy hint for the conflict modal. `"ai"` swaps
+   *  in "AI updated this page just now"; `"operator"` swaps in
+   *  "another operator updated …"; `undefined` falls back to the
+   *  neutral copy that ships today. */
+  liveActorKind?: "operator" | "ai" | "system";
 }
 
 type SaveState =
@@ -88,6 +110,12 @@ type SaveState =
 interface ConflictState {
   open: boolean;
   currentRevisionId: string;
+  /** Where the conflict was surfaced from — `"save"` is the
+   *  post-409 path that ships today; `"live"` is scope 11's
+   *  pre-emptive SSE-driven banner. The two paths reuse the same
+   *  modal mechanics but render different copy. */
+  source: "save" | "live";
+  actorKind?: "operator" | "ai" | "system";
 }
 
 export function PuckBuilder({
@@ -100,6 +128,9 @@ export function PuckBuilder({
   catalogue,
   onDiscardRequested,
   liveSchemaHash,
+  liveRevisionId,
+  liveChangeToken,
+  liveActorKind,
 }: PuckBuilderProps): ReactElement {
   const schemaDrift =
     typeof liveSchemaHash === "string" &&
@@ -129,7 +160,32 @@ export function PuckBuilder({
   const [conflict, setConflict] = useState<ConflictState>({
     open: false,
     currentRevisionId: "",
+    source: "save",
   });
+
+  // Scope 11 §B3 — pre-emptive conflict banner driven by the
+  // host-supplied `usePageLiveness` hook. When the SSE channel
+  // announces a new revision for our `pageRef` that differs from
+  // the one we loaded against (or last saved), open the same
+  // conflict modal the 409-on-save path uses. The effect keys on
+  // `liveChangeToken` so a *second* live write after the operator
+  // hits "Keep editing" re-arms the banner.
+  useEffect(() => {
+    if (liveChangeToken === undefined) return;
+    if (!liveRevisionId) return;
+    if (liveRevisionId === revisionRef.current) return;
+    // Ignore the initial snapshot-driven seeding — we only re-open
+    // on an actual delta, which is what `liveChangeToken > 0`
+    // signals. Snapshot frames don't bump the token (see
+    // `usePageLiveness`).
+    if (liveChangeToken === 0) return;
+    setConflict({
+      open: true,
+      currentRevisionId: liveRevisionId,
+      source: "live",
+      actorKind: liveActorKind,
+    });
+  }, [liveChangeToken, liveRevisionId, liveActorKind]);
 
   const handleSave = useCallback(async () => {
     if (!onSave) return;
@@ -159,6 +215,7 @@ export function PuckBuilder({
         setConflict({
           open: true,
           currentRevisionId: outcome.currentRevisionId,
+          source: "save",
         });
         setSaveState({ kind: "idle" });
         break;
@@ -175,7 +232,7 @@ export function PuckBuilder({
     // "stay on the in-editor tree, see a persistent warning
     // banner, and accept that the next Save will 409 again".
     revisionRef.current = conflict.currentRevisionId;
-    setConflict({ open: false, currentRevisionId: "" });
+    setConflict({ open: false, currentRevisionId: "", source: "save" });
   }, [conflict.currentRevisionId]);
 
   const discardEdits = useCallback(() => {
@@ -184,7 +241,7 @@ export function PuckBuilder({
     // with the fresh `initialTree`. We close the modal and invoke
     // the consumer-supplied callback synchronously so the route
     // can trigger the reload without a polling shim.
-    setConflict({ open: false, currentRevisionId: "" });
+    setConflict({ open: false, currentRevisionId: "", source: "save" });
     onDiscardRequested?.(pageRef);
   }, [pageRef, onDiscardRequested]);
 
@@ -278,6 +335,8 @@ export function PuckBuilder({
       {conflict.open ? (
         <ConflictModal
           currentRevisionId={conflict.currentRevisionId}
+          source={conflict.source}
+          actorKind={conflict.actorKind}
           onDiscard={discardEdits}
           onKeepEditing={keepEditing}
         />
@@ -288,16 +347,40 @@ export function PuckBuilder({
 
 function ConflictModal({
   currentRevisionId,
+  source,
+  actorKind,
   onDiscard,
   onKeepEditing,
 }: {
   currentRevisionId: string;
+  source: "save" | "live";
+  actorKind?: "operator" | "ai" | "system";
   onDiscard: () => void;
   onKeepEditing: () => void;
 }): ReactElement {
+  // Scope 11 §B3 banner copy varies by source + actor. The save
+  // path retains the existing "Someone else (or the AI assistant)"
+  // hedge — we don't know who saved when the server just returned
+  // 409. The live path knows via `actor_kind` (additive §B4 field;
+  // omitted by today's server → falls back to the same hedge).
+  const headline =
+    source === "live" ? "This page was just updated" : "This page was edited elsewhere";
+  const body =
+    source === "live"
+      ? livePathCopy(currentRevisionId, actorKind)
+      : (
+          <>
+            Someone else (or the AI assistant) saved a new revision
+            (<code>{currentRevisionId.slice(0, 8)}</code>) since you started
+            editing. You can either reload the server's revision and lose
+            your in-editor changes, or keep editing — every subsequent
+            Save will fail with the same conflict until you reload.
+          </>
+        );
   return (
     <div
       data-puck-builder-conflict-modal=""
+      data-puck-builder-conflict-source={source}
       role="dialog"
       aria-modal="true"
       style={{
@@ -321,14 +404,10 @@ function ConflictModal({
         }}
       >
         <h2 style={{ margin: 0, marginBottom: "0.5rem", fontSize: "1.125rem" }}>
-          This page was edited elsewhere
+          {headline}
         </h2>
         <p style={{ margin: 0, marginBottom: "1rem", color: "#475569" }}>
-          Someone else (or the AI assistant) saved a new revision
-          (<code>{currentRevisionId.slice(0, 8)}</code>) since you started
-          editing. You can either reload the server's revision and lose
-          your in-editor changes, or keep editing — every subsequent
-          Save will fail with the same conflict until you reload.
+          {body}
         </p>
         <div style={{ display: "flex", gap: "0.5rem", justifyContent: "flex-end" }}>
           <button
@@ -363,6 +442,27 @@ function ConflictModal({
         </div>
       </div>
     </div>
+  );
+}
+
+function livePathCopy(
+  revisionId: string,
+  actorKind: "operator" | "ai" | "system" | undefined,
+): ReactElement {
+  const who =
+    actorKind === "ai"
+      ? "The AI assistant"
+      : actorKind === "operator"
+        ? "Another operator"
+        : "Someone";
+  return (
+    <>
+      {who} just saved a new revision
+      (<code>{revisionId.slice(0, 8)}</code>) for this page. Reload to
+      load their changes (you will lose your in-editor edits), or
+      keep editing — your next Save will 409 with the same conflict
+      until you reload.
+    </>
   );
 }
 

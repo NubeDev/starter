@@ -20,7 +20,7 @@ This package implements the Puck builder per
 | §B6 CI drift guard | ✅ | `scripts/check-schema-drift.mjs` |
 | §B3 data-source selectors | ✅ | `curation/data-sources.ts` + `<CatalogueProvider>` seam — analytics templates, tool refs, tenants, unit symbols, page-state keys render as catalogue-backed pickers; degrades to free-text + warning when the host can't satisfy a kind |
 | §B6 runtime schema-hash banner | ✅ | `scripts/emit-schema-hash.mjs` writes `src/schema-hash.json`; `IR_SCHEMA_HASH` exported; `<PuckBuilder liveSchemaHash>` renders a non-blocking "schema drifted — refresh to reload the palette" banner when the host-supplied live hash differs from the bundled one. Host fetches the live hash from rubix-agent (`GET /api/v1/ui/schema/hash`, best-effort — banner stays dormant if absent) |
-| Scope 11 (live-canvas SSE) | ⏳ | unstarted |
+| Scope 11 (live-canvas SSE) | ✅ | `<PuckBuilder liveRevisionId liveChangeToken liveActorKind>` reuses the §B4 conflict modal pre-emptively when the host-supplied `usePageLiveness` hook (in `@nube/rubix-client-react`, backed by `GET /api/v1/dashboards/events`) announces a new revision for this `pageRef`. The 409-on-save path stays as the safety net. The package itself does no HTTP. |
 
 ### Notable infra changes
 
