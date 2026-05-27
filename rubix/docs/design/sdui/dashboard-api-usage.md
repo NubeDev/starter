@@ -382,21 +382,26 @@ curl -N -b /tmp/jar.txt http://127.0.0.1:8088/api/v1/dashboards/events
    cookie is dropped"). Kept here as a cross-reference for anyone
    landing on this section first.
 
-8. **MCP error channel is inconsistent.** Tool-level errors come back
-   in `structuredContent.error` rather than the JSON-RPC `error`
-   field. Clients written to the spec will treat failed calls as
-   successful.
+8. ~~**MCP error channel is inconsistent.**~~ Resolved 2026-05-27.
+   The dispatcher at
+   [`crates/starter-mcp/src/server/dispatch.rs`](../../../../crates/starter-mcp/src/server/dispatch.rs)
+   already routed tool errors to the JSON-RPC `error` field — the
+   real problem was that every `starter_spi::Error` variant
+   collapsed to `-32603 internal error`, hiding the distinction
+   between `Invalid`, `NotFound`, `Conflict`, etc. New
+   [`RpcError::from_spi`](../../../../crates/starter-mcp/src/protocol/error.rs)
+   maps:
+   - `Invalid` → `-32602`
+   - `NotFound` → `-32004`
+   - `Conflict` → `-32009`
+   - `Unauthenticated` → `-32001`
+   - `Forbidden` → `-32002`
+   - `Internal` → `-32603` (with the source chain in `data.chain`)
 
-   **Status: deferred — needs cross-tool change.** The fix lives in
-   the MCP dispatcher (search the agent for `tools/call` response
-   construction; the current path wraps every tool result in a
-   success envelope regardless of the inner `Error`). Mapping
-   `Error::Invalid` → JSON-RPC `-32602`, `Error::NotFound` →
-   `-32004` (custom), `Error::Conflict` → `-32009` (custom),
-   `Error::Internal` → `-32603`, with the diagnostic code in the
-   `error.data.code` field, is the right shape. This affects every
-   tool — verify with the existing tool tests that the diagnostic
-   code still surfaces somewhere a client can pattern-match on.
+   When a tool message starts with a diagnostic code (e.g.
+   `"rubix.dashboard.update.conflict: page_id=..."`) the code is
+   lifted into `error.data.code` so clients can pattern-match on a
+   stable string without parsing the human message.
 
 9. ~~**Layout container types are undocumented and silent on
    mistakes.**~~ Resolved 2026-05-27. Both

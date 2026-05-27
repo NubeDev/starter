@@ -118,7 +118,7 @@ async fn tools_call(registry: &ToolRegistry, params: &Value) -> Result<Value, Rp
                 error = %e,
                 "tool dispatch failed"
             );
-            Err(RpcError::internal_from_source(&e))
+            Err(RpcError::from_spi(&e))
         }
     }
 }
