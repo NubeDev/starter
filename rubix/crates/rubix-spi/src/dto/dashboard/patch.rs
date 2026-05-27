@@ -75,6 +75,14 @@ pub struct PatchDashboardResponse {
     /// Whether the verb wrote a new revision (`true`) or refused
     /// (`false`).
     pub written: bool,
+    /// The full post-patch `body_json` that landed in the new
+    /// revision. Carried in the response so the changelog
+    /// recorder can capture a byte-exact `after` snapshot for
+    /// `Op::Update` without re-fetching the row — patch undo is
+    /// therefore strictly precise. Omitted when `written = false`
+    /// (conflict / invalid).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub body_json: Option<serde_json::Value>,
 }
 
 /// `starter-authz` permission string the caller must hold.

@@ -166,6 +166,9 @@ impl Tool for DashboardPatchTool {
             revision_id: row.revision_id,
             tenant_id: row.tenant_id,
             written: true,
+            // Carried so `change_for` can record a byte-exact
+            // `after` snapshot without re-fetching the row.
+            body_json: Some(row.body_json),
         };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -186,21 +189,20 @@ impl ReversibleTool for DashboardPatchTool {
         let req: PatchDashboardRequest = serde_json::from_value(input.clone()).ok()?;
         let resp: PatchDashboardResponse = serde_json::from_value(output.clone()).ok()?;
 
-        // We don't carry the post-patch body in the response (the
-        // client already has it via the patch + prior body), so
-        // populate the `after` snapshot with the response metadata
-        // and an empty body — the changelog row still anchors
-        // page_id + revision_id for audit, and a follow-up that
-        // adds `body_json` to `PatchDashboardResponse` (or
-        // pre-computes the snapshot inside `invoke` and stashes it
-        // for the recorder) restores byte-exact undo.
+        // The response carries the full post-patch body, so the
+        // `after` snapshot is byte-exact. Title / tags are
+        // preserved across the patch boundary (patch never touches
+        // metadata), so a missing prior title is recorded as
+        // empty — title/tags belong to `Op::Update` via
+        // `rubix.dashboard.update` semantically, not to patch's
+        // audit trail.
         let after = DashboardSnapshot {
             page_id: resp.page_id.clone(),
             tenant_id: resp.tenant_id.clone(),
             owner_principal: req.created_by.clone(),
             title: String::new(),
             tags: Vec::new(),
-            body_json: Value::Null,
+            body_json: resp.body_json.unwrap_or(Value::Null),
             created_by: req.created_by,
             revision_id: Some(resp.revision_id.clone()),
         };
@@ -480,6 +482,38 @@ mod tests {
             .unwrap_err();
         // validate_layout returns Error::Invalid for non-page roots.
         assert!(matches!(err, Error::Invalid { .. }), "got {err:?}");
+    }
+
+    #[tokio::test]
+    async fn change_for_after_snapshot_is_byte_exact_post_patch_body() {
+        // The Phase C.2 caveat on `update` records an empty `after`
+        // body because `UpdateDashboardResponse` doesn't echo it.
+        // `patch` carries the post-patch body in its response, so
+        // the audit snapshot can be reconstructed exactly.
+        let store = InMemoryStore::arc();
+        let prior = store.seed("dashboard.ops", "tenant-a", seed_body());
+        let tool = DashboardPatchTool::new(store);
+        let input = serde_json::json!({
+            "tenant_id":            "tenant-a",
+            "page_id":              "dashboard.ops",
+            "expected_revision_id": prior,
+            "patch":                [
+                { "op": "add", "path": "/root/title", "value": "Ops (live)" }
+            ],
+            "created_by":           "alice"
+        });
+        let output = tool.invoke(input.clone()).await.unwrap();
+        let resp: PatchDashboardResponse = serde_json::from_value(output.clone()).unwrap();
+        let expected_body = serde_json::json!({
+            "ir_version": 5,
+            "root": { "type": "page", "id": "p", "children": [], "title": "Ops (live)" }
+        });
+        assert_eq!(resp.body_json.as_ref(), Some(&expected_body));
+
+        let draft = tool.change_for(&input, &output).expect("draft present");
+        let after = draft.after.expect("after present");
+        // The snapshot's body_json round-trips the post-patch body.
+        assert_eq!(after.get("body_json"), Some(&expected_body));
     }
 
     #[tokio::test]
