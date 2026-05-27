@@ -17,7 +17,7 @@ rust-version.workspace = true
 default = ["builtin"]
 builtin = []
 wasm    = []
-process = ["dep:starter-jsonrpc-stdio", "dep:sha2", "tokio/io-util", "tokio/io-std", "tokio/rt", "tokio/rt-multi-thread", "tokio/macros", "tokio/time"]
+process = ["dep:starter-jsonrpc-stdio", "dep:sha2", "dep:base64", "tokio/io-util", "tokio/io-std", "tokio/rt", "tokio/rt-multi-thread", "tokio/macros", "tokio/time"]
 
 [dependencies]
 starter-ext-spi        = { workspace = true }
@@ -41,6 +41,7 @@ tokio = { workspace = true }
 # them transitively.
 starter-jsonrpc-stdio = { workspace = true, optional = true }
 sha2                  = { workspace = true, optional = true }
+base64                = { workspace = true, optional = true }
 
 [dev-dependencies]
 # Tests in this crate exercise the declarative macros and the linker-symbol

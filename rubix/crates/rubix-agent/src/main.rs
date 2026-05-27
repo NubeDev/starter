@@ -177,10 +177,22 @@ async fn main() -> Result<()> {
                 // and a shared `RubixEventBus` are in hand. Likewise
                 // the sealed `ExtensionRegistry` is installed inside
                 // `build_extension_admin` (it doesn't exist yet).
-                Some(Arc::new(rubix_agent::extensions::RubixHostMethods::new(
+                //
+                // Secret store: pick the keyring backing when the
+                // platform service answers a probe (developer
+                // workstations); fall back to env-var lookup
+                // otherwise (CI, headless containers, …). Operators
+                // who need a different backing (Vault, age-encrypted
+                // file) can swap in their own `SecretStore` impl
+                // and call `install_secret_store(...)` themselves.
+                let handler = Arc::new(rubix_agent::extensions::RubixHostMethods::new(
                     dashboard_store,
                     engine,
-                )))
+                ));
+                handler.install_secret_store(
+                    rubix_agent::extensions::pick_default_secret_store(env!("CARGO_PKG_NAME")),
+                );
+                Some(handler)
             }
             None => None,
         };

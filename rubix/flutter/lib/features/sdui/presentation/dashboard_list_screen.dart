@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rubix_flutter/core/network/network_providers.dart';
 import 'package:rubix_flutter/core/network/sse_client.dart';
+import 'package:rubix_flutter/features/auth/data/auth_repository/auth_repository.dart';
 
 /// Lists dashboards for the `system` tenant by consuming the
 /// `GET /api/v1/dashboards/events` SSE stream. The first frame
@@ -28,11 +29,16 @@ class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
   bool _connecting = true;
   bool _hasSnapshot = false;
 
+  /// Token value the last `_open` was bound to. Used to avoid
+  /// re-opening the stream when an unrelated provider rebuild fires.
+  String? _boundToken;
+
   @override
   void initState() {
     super.initState();
-    final dio = ref.read(dioProvider);
-    if (dio != null) _open(dio);
+    // SSE open is driven by the `currentTokenProvider` listener in
+    // `build()` — opening here would fire before auto-login completes
+    // and 401 immediately.
   }
 
   void _open(Dio dio) {
@@ -115,6 +121,21 @@ class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
     });
   }
 
+  /// User-initiated retry. Clears the auth circuit breaker (the SSE
+  /// 401 may have tripped it), invalidates the token provider so
+  /// `currentTokenProvider` re-runs the auto-relogin path, and resets
+  /// `_boundToken` so the next build re-opens the stream.
+  void _retry(Dio dio) {
+    _boundToken = null;
+    ref.read(authGaveUpProvider.notifier).set(false);
+    ref.invalidate(currentTokenProvider);
+    setState(() {
+      _error = null;
+      _connecting = true;
+      _hasSnapshot = false;
+    });
+  }
+
   @override
   void dispose() {
     _sub?.cancel();
@@ -125,6 +146,7 @@ class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
   @override
   Widget build(BuildContext context) {
     final dio = ref.watch(dioProvider);
+    final tokenAsync = ref.watch(currentTokenProvider);
     final theme = Theme.of(context);
 
     if (dio == null) {
@@ -142,6 +164,17 @@ class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
       );
     }
 
+    // Open / re-open the SSE stream once we have a token, and re-open
+    // it if the token changes (post-relogin). Scheduled via
+    // addPostFrameCallback so we don't call setState during build.
+    final token = tokenAsync.value;
+    if (token != null && token != _boundToken) {
+      _boundToken = token;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _open(dio);
+      });
+    }
+
     final sorted = _items.values.toList()
       ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
 
@@ -152,17 +185,24 @@ class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
           IconButton(
             tooltip: 'Reconnect',
             icon: const Icon(Icons.refresh),
-            onPressed: () => _open(dio),
+            onPressed: () => _retry(dio),
           ),
         ],
       ),
       body: Builder(
         builder: (context) {
-          if (!_hasSnapshot && _error == null && _connecting) {
+          if (tokenAsync.isLoading ||
+              (!_hasSnapshot && _error == null && _connecting && token != null)) {
             return const Center(child: CircularProgressIndicator());
           }
+          if (token == null) {
+            return _ErrorView(
+              error: 'Not signed in to this connection.',
+              onRetry: () => _retry(dio),
+            );
+          }
           if (_error != null && !_hasSnapshot) {
-            return _ErrorView(error: _error, onRetry: () => _open(dio));
+            return _ErrorView(error: _error, onRetry: () => _retry(dio));
           }
           if (sorted.isEmpty) {
             return const Center(child: Text('No dashboards yet'));

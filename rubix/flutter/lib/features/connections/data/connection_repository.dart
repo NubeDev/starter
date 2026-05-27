@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'package:rubix_flutter/core/network/dio_client.dart';
 import 'package:rubix_flutter/core/storage/daos/connection_dao.dart';
 import 'package:rubix_flutter/features/connections/domain/connection/connection.dart';
@@ -32,7 +33,9 @@ class ConnectionRepository {
   final ConnectionDao _dao;
 
   Future<List<Connection>> list() async {
+    debugPrint('[REPO] list() called');
     final rows = await _dao.list();
+    debugPrint('[REPO] list() returning ${rows.length} connection(s)');
     return rows
         .map(
           (r) => Connection(
@@ -46,8 +49,10 @@ class ConnectionRepository {
         .toList();
   }
 
-  Future<int> add({required String label, required String baseUrl}) =>
-      _dao.insert(label: label, baseUrl: baseUrl);
+  Future<int> add({required String label, required String baseUrl}) {
+    debugPrint('[REPO] add(label=$label, baseUrl=$baseUrl)');
+    return _dao.insert(label: label, baseUrl: baseUrl);
+  }
 
   Future<bool> update(int id, {String? label, String? baseUrl}) =>
       _dao.updateConnection(id, label: label, baseUrl: baseUrl);

@@ -1,0 +1,7 @@
+=== TASKS (alive only, sorted by total busy time desc) ===
+polls    busy_ms    last_poll_ago_s wakes    self_wk  waker_op name
+
+=== RESOURCES (Mutex/RwLock/Semaphore/Channel) ===
+
+=== ASYNC OPS (outstanding awaits on resources) ===
+polls    busy_ms    task_id  resource   parent_op  name@source

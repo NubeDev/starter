@@ -1,0 +1,6 @@
+livez    status=000 time=3.002168s
+readyz   status=000 time=3.002331s
+healthz  status=000 time=3.002136s
+
+Recv-Q on 8088:
+LISTEN 4      128          0.0.0.0:8088       0.0.0.0:*          

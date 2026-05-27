@@ -261,6 +261,22 @@ impl GraphStore for InMemoryGraphStore {
 
         let mut nodes = self.nodes.write().await;
         for (slot, value, opts) in &writes {
+            // Span created but NOT entered. The single-write path
+            // (`write_slot`, ~line 184) had to switch from
+            // `span.enter()` to `.instrument(span).await` because
+            // holding a span guard across `.await` corrupts the
+            // thread-local span stack when the future migrates
+            // between tokio workers, eventually deadlocking
+            // `span.enter()` against tracing-subscriber's internal
+            // RwLock — see the comment at lines 175-181 above.
+            //
+            // This batch path doesn't `.await` inside the loop body
+            // so we don't need `.instrument()`, but we also must
+            // NOT enter the guard: a prior `let _enter` here was
+            // the second site of the same wedge (diagnosed via
+            // tokio-console on 2026-05-27, see
+            // `rubix/docs/freeze-evidence/wedge-20260527T044909Z/`).
+            // `span.record(...)` below works without entering.
             let span = tracing::info_span!(
                 "write_slot",
                 node_id = %slot.node,
@@ -271,7 +287,6 @@ impl GraphStore for InMemoryGraphStore {
                 prev_was_equal = tracing::field::Empty,
                 batched = true,
             );
-            let _enter = span.enter();
 
             let entry = nodes.entry(slot.node.clone()).or_default();
             let prev_was_equal = entry

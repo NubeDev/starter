@@ -51,6 +51,10 @@ class ConnectionListController extends _$ConnectionListController {
     ref.invalidate(activeConnectionProvider);
     await refresh();
 
+    // Fresh activation — clear the circuit breaker so currentTokenProvider
+    // will auto-relogin on the new connection.
+    ref.read(authGaveUpProvider.notifier).set(false);
+
     // Clear any existing token from the previous connection.
     await ref.read(tokenStoreProvider).clear();
 

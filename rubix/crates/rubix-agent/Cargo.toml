@@ -78,6 +78,14 @@ starter-ext-mcp       = { path = "../../../starter-extensions/crates/starter-ext
 # `NodeKindRegistry`. Consumed by `boot::extensions_flow`; the
 # walker logic itself lives upstream per SCOPE R2.
 starter-ext-flow      = { path = "../../../starter-extensions/crates/starter-ext-flow" }
+# Used by `extensions::host_methods` to back the
+# `http.request` host method (outbound HTTP) and `fs.read`
+# (base64 wire encoding of file bytes).
+reqwest               = { workspace = true }
+base64                = { workspace = true }
+# Concrete `SecretStore` impl wired at boot for the
+# `secrets.get` host method.
+starter-secrets-keyring = { workspace = true }
 thiserror             = { workspace = true }
 # `sqlite` feature stays on for two reasons: (a) dev-dependencies
 # below still pull `starter-store-sqlite` for hermetic SPI-contract

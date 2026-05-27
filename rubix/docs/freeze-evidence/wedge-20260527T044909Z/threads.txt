@@ -1,0 +1,35 @@
+=== thread wchan summary ===
+     29 futex_do_wait
+      1 ep_poll
+
+=== thread comm + wchan ===
+tid=2195596 comm=console_subscri wchan=ep_poll
+tid=2195499 comm=rubix-agent wchan=futex_do_wait
+tid=2195568 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195569 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195570 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195571 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195572 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195573 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195574 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195575 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195576 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195577 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195578 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195579 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195580 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195581 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195582 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195583 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195584 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195585 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195586 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195587 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195588 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195589 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195590 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195591 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195592 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195593 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195594 comm=tokio-rt-worker wchan=futex_do_wait
+tid=2195595 comm=tokio-rt-worker wchan=futex_do_wait

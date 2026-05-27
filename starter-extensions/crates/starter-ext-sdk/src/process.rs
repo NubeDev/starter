@@ -39,10 +39,11 @@ use tokio::io::BufReader;
 
 use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Result};
 
-use crate::ctx::{CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel};
+use crate::ctx::{CtxInner, EventSender, NeverCancel};
 use crate::host_backends::{
-    RealAuthzBackend, RealDashboardBackend, RealEventBusBackend, RealSecretsBackend,
-    RealTracingBackend, RealWallClockBackend, RealWarehouseReadBackend,
+    RealAuthzBackend, RealDashboardBackend, RealEventBusBackend, RealFsBackend,
+    RealHttpOutBackend, RealSecretsBackend, RealTracingBackend, RealWallClockBackend,
+    RealWarehouseReadBackend,
 };
 use crate::host_rpc::{self, HostRpc};
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
@@ -361,36 +362,16 @@ fn hex_encode(bytes: &[u8]) -> String {
 /// / `clock.now` / `tracing.event` can flip each one
 /// independently — same shape as the four real backends below.
 fn real_ctx_inner(events: EventSender, host_rpc: HostRpc) -> CtxInner {
-    // Seven of the nine categories now hop to the host over
-    // `HostRpc::call_sync`. The remaining two (`http_out`, `fs`)
-    // stay on `Stub<&'static str>` impls until their host methods
-    // light up (each needs real allowlist enforcement —
-    // authorities for http, path specs for fs — that's not yet
-    // wired on the host side).
-    #[derive(Debug)]
-    struct Stub(&'static str);
-    impl HttpOutBackend for Stub {
-        fn request(&self, _req: serde_json::Value) -> Result<serde_json::Value> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
-    impl FsBackend for Stub {
-        fn read(&self, _path: &str) -> Result<Vec<u8>> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
+    // All nine capability categories now hop to the host over
+    // `HostRpc::call_sync`. The host enforces each one's manifest
+    // allowlist (authorities for http, path specs for fs,
+    // prefixes for secrets, …) before fulfilling the call.
     CtxInner::new(
         events,
         Arc::new(NeverCancel),
         Arc::new(RealSecretsBackend::new(host_rpc.clone())),
-        Arc::new(Stub("http_out")),
-        Arc::new(Stub("fs")),
+        Arc::new(RealHttpOutBackend::new(host_rpc.clone())),
+        Arc::new(RealFsBackend::new(host_rpc.clone())),
         Arc::new(RealWallClockBackend::new(host_rpc.clone())),
         Arc::new(RealTracingBackend::new(host_rpc.clone())),
         Arc::new(RealWarehouseReadBackend::new(host_rpc.clone())),

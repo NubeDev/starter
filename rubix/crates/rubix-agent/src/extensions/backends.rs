@@ -541,6 +541,54 @@ pub(crate) fn event_bus_publish_grant(
     Some(topics)
 }
 
+pub(crate) fn secrets_prefixes_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut prefixes = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::Secrets { prefixes: grant } = cap {
+            prefixes.extend(grant.iter().cloned());
+        }
+    }
+    Some(prefixes)
+}
+
+pub(crate) fn http_authorities_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut authorities = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::HttpOut { authorities: grant } = cap {
+            authorities.extend(grant.iter().map(|a| a.as_str().to_owned()));
+        }
+    }
+    Some(authorities)
+}
+
+pub(crate) fn fs_paths_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut paths = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::Fs { paths: grant } = cap {
+            paths.extend(grant.iter().map(|p| p.as_str().to_owned()));
+        }
+    }
+    Some(paths)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

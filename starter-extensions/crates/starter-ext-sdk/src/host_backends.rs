@@ -34,6 +34,8 @@ use starter_ext_spi::dashboard::{
     DashboardReadRequest, DashboardReadResponse, DashboardWriteRequest,
 };
 use starter_ext_spi::event_bus::EventBusPublishRequest;
+use starter_ext_spi::fs_ext::{FsReadRequest, FsReadResponse};
+use starter_ext_spi::http_out::HttpRequest;
 use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
 use starter_ext_spi::tracing_ext::TracingEventRequest;
 use starter_ext_spi::wall_clock::{WallClockNowRequest, WallClockNowResponse};
@@ -41,8 +43,8 @@ use starter_ext_spi::warehouse::{Row, TemplateSpec, WarehouseReadRequest, Wareho
 use starter_ext_spi::{Error, Result};
 
 use crate::ctx::{
-    AuthzBackend, DashboardBackend, EventBusBackend, SecretsBackend, TracingBackend,
-    WallClockBackend, WarehouseReadBackend,
+    AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend,
+    TracingBackend, WallClockBackend, WarehouseReadBackend,
 };
 use crate::host_rpc::HostRpc;
 
@@ -280,6 +282,76 @@ impl TracingBackend for RealTracingBackend {
             return;
         };
         let _ = self.rpc.call_sync("tracing.event", params);
+    }
+}
+
+/// `HttpOutBackend` whose `request` hops to the host via
+/// `http.request`. The `req` JSON value is forwarded verbatim;
+/// the host validates it against the SPI `HttpRequest` shape
+/// and the manifest's `Capability::HttpOut { authorities }`
+/// allowlist before issuing the call.
+#[derive(Debug, Clone)]
+pub struct RealHttpOutBackend {
+    rpc: HostRpc,
+}
+
+impl RealHttpOutBackend {
+    /// Construct over the shared `HostRpc`.
+    pub fn new(rpc: HostRpc) -> Self {
+        Self { rpc }
+    }
+}
+
+impl HttpOutBackend for RealHttpOutBackend {
+    fn request(&self, req: serde_json::Value) -> Result<serde_json::Value> {
+        // Sanity-check the shape at the SDK boundary so an
+        // extension author that hand-rolls a malformed JSON gets
+        // a clear local error instead of a wire-side
+        // `Error::Validation`. Don't *re-serialise* — pass the
+        // original value through so unknown fields survive the
+        // round-trip (forwards-compatible with v2 fields the
+        // host might add).
+        let _: HttpRequest = serde_json::from_value(req.clone()).map_err(|e| {
+            Error::validation(format!(
+                "http.request body does not match HttpRequest shape: {e}"
+            ))
+        })?;
+        self.rpc.call_sync("http.request", req)
+    }
+}
+
+/// `FsBackend` whose `read` hops to the host via `fs.read`. The
+/// host returns base64 bytes; this backend decodes before
+/// returning so extensions see the same `Vec<u8>` shape that
+/// `std::fs::read` would yield.
+#[derive(Debug, Clone)]
+pub struct RealFsBackend {
+    rpc: HostRpc,
+}
+
+impl RealFsBackend {
+    /// Construct over the shared `HostRpc`.
+    pub fn new(rpc: HostRpc) -> Self {
+        Self { rpc }
+    }
+}
+
+impl FsBackend for RealFsBackend {
+    fn read(&self, path: &str) -> Result<Vec<u8>> {
+        let req = FsReadRequest {
+            path: path.to_owned(),
+        };
+        let params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding fs.read: {e}")))?;
+        let raw = self.rpc.call_sync("fs.read", params)?;
+        let res: FsReadResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding fs.read: {e}")))?;
+        // Decode base64 → bytes. Failure means the host emitted
+        // a malformed response — surface as transport.
+        use base64::Engine;
+        base64::engine::general_purpose::STANDARD
+            .decode(res.bytes_b64.as_bytes())
+            .map_err(|e| Error::transport(format!("fs.read body not valid base64: {e}")))
     }
 }
 

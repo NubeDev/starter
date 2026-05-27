@@ -24,9 +24,11 @@ pub mod caller_identity;
 pub mod dashboard_authz;
 pub mod event_bus;
 pub mod host_methods;
+pub mod secrets_store;
 
 pub use backends::{RubixCapabilityFactory, RubixWarehouseReadBackend};
 pub use caller_identity::with_caller_identity;
 pub use dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 pub use event_bus::{RubixEventBus, RubixEventBusBackend};
 pub use host_methods::RubixHostMethods;
+pub use secrets_store::{pick_default as pick_default_secret_store, EnvSecretStore};

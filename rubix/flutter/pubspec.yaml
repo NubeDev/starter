@@ -23,6 +23,8 @@ dependencies:
   # Network
   dio: ^5.7.0
   pretty_dio_logger: ^1.4.0
+  # Web SSE needs fetch() + ReadableStream (dio web adapter buffers).
+  web: ^1.0.0
 
   # Models
   freezed_annotation: ^3.0.0

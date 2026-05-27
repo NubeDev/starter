@@ -21,6 +21,23 @@ class AddConnectionController extends _$AddConnectionController {
     state = const AsyncLoading();
     final repo = ref.read(connectionRepositoryProvider);
 
+    // Shape check first — without this, bogus values like "aa" get treated
+    // as relative URLs by the browser and resolved against the Flutter dev
+    // server's origin, which happily returns its index.html with 200 OK.
+    // That tricks both the healthz probe and every later API call into
+    // "succeeding" with HTML payloads, producing an unrecoverable loop.
+    final parsed = Uri.tryParse(baseUrl);
+    if (parsed == null ||
+        !parsed.hasScheme ||
+        (parsed.scheme != 'http' && parsed.scheme != 'https') ||
+        !parsed.hasAuthority) {
+      state = AsyncError(
+        'baseUrl must be an absolute http(s) URL, e.g. http://192.168.1.10:8088',
+        StackTrace.current,
+      );
+      return false;
+    }
+
     final result = await repo.probe(baseUrl);
     if (result is! ProbeOk) {
       final msg = switch (result) {

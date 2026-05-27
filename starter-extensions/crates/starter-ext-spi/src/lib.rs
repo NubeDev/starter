@@ -22,6 +22,8 @@ pub mod capability;
 pub mod dashboard;
 pub mod error;
 pub mod event_bus;
+pub mod fs_ext;
+pub mod http_out;
 pub mod id;
 pub mod identity;
 pub mod jsonrpc;

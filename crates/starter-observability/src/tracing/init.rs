@@ -54,30 +54,39 @@ pub struct TracingGuard {
 /// lifetime of the process (typically `let _guard = init(...)?` in
 /// `main`). Installing twice in the same process is an error.
 pub fn init(filter: &str, format: Format) -> Result<TracingGuard, Box<dyn std::error::Error>> {
-    use tracing_subscriber::{fmt, prelude::*, EnvFilter};
+    use tracing_subscriber::{fmt, prelude::*, EnvFilter, Layer};
 
+    // CRITICAL: when the tokio-console feature is on, the EnvFilter
+    // must be a **per-layer filter on the fmt layer only**, not a
+    // registry-wide global filter. console_subscriber's own layer
+    // consumes the `tokio=trace` and `runtime=trace` targets that
+    // tokio's instrumentation emits — if a global EnvFilter at
+    // `info` level is wired (as `.with(env_filter)` on the registry
+    // would do), tokio's TRACE events are filtered out **before**
+    // the console layer ever sees them, and tokio-console clients
+    // receive empty heartbeats forever. We hit this in production:
+    // RUST_LOG=info silently disabled the entire console surface.
+    //
+    // Per-layer filters: `fmt_layer.with_filter(env_filter)` only
+    // affects the fmt layer. console_subscriber's `spawn()` returns
+    // a layer with its own internal filter that subscribes to
+    // tokio's targets at TRACE.
     let env_filter = match std::env::var("RUST_LOG") {
         Ok(env) if !env.trim().is_empty() => EnvFilter::try_new(&env)?,
         _ => EnvFilter::try_new(filter)?,
     };
 
-    // tokio-console layer. Only compiled in when the binary was
-    // built with `--features tokio-console` AND
-    // `RUSTFLAGS="--cfg tokio_unstable"`. The console layer ignores
-    // `env_filter` (it consumes its own dedicated `tracing` events
-    // emitted by tokio itself), so wiring order is: console first,
-    // then the env-filtered fmt layer for normal logs.
-    //
-    // Server binds 127.0.0.1:6669 by default; override with
-    // `TOKIO_CONSOLE_BIND`. Connect with `tokio-console`.
     let registry = tracing_subscriber::registry();
     #[cfg(feature = "tokio-console")]
     let registry = registry.with(console_subscriber::spawn());
-    let registry = registry.with(env_filter);
 
     match format {
-        Format::Pretty => registry.with(fmt::layer().compact()).try_init()?,
-        Format::Json => registry.with(fmt::layer().json()).try_init()?,
+        Format::Pretty => registry
+            .with(fmt::layer().compact().with_filter(env_filter))
+            .try_init()?,
+        Format::Json => registry
+            .with(fmt::layer().json().with_filter(env_filter))
+            .try_init()?,
     }
 
     #[cfg(feature = "tokio-console")]

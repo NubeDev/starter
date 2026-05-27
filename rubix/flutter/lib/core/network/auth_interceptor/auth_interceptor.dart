@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:rubix_flutter/core/auth/token_store/token_store.dart';
 import 'package:rubix_flutter/core/auth/token_store/token_store_providers.dart';
+import 'package:rubix_flutter/features/auth/data/auth_repository/auth_repository.dart';
 
 /// Paths where 401 is a credentials error, not a session expiry.
 const authExemptPaths = <String>{
@@ -58,7 +59,11 @@ class AuthInterceptor extends Interceptor {
       _evictionLock = completer;
       try {
         await _store.clear();
-        // Invalidate the token-dependent providers so router reacts.
+        // Trip the circuit breaker BEFORE invalidating tokenStore so the
+        // currentTokenProvider rebuild doesn't immediately auto-relogin
+        // (which would loop forever if the new token also 401s — e.g.
+        // when the server's /auth/me only accepts cookies, not bearer).
+        _ref.read(authGaveUpProvider.notifier).set(true);
         _ref.invalidate(tokenStoreProvider);
       } finally {
         completer.complete();
