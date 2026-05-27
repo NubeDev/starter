@@ -6,8 +6,9 @@
 //! with a structured [`Diagnostic`] keyed
 //! `rubix.dashboard.update.conflict` (transport maps to HTTP 409).
 //! Otherwise it inserts a new revision via
-//! [`DashboardStore::insert_revision`] (which atomically supersedes
-//! the prior head) and emits `rubix.dashboard.updated`.
+//! [`DashboardStore::insert_revision_with_prior`] (which atomically
+//! supersedes the prior head and returns it for audit) and emits
+//! `rubix.dashboard.updated`.
 //!
 //! The [`ReversibleTool`] impl records an `Op::Update` `ChangeDraft`
 //! whose `before` / `after` payloads are [`DashboardSnapshot`]s of
@@ -162,25 +163,16 @@ impl Tool for DashboardUpdateTool {
 
 impl ReversibleTool for DashboardUpdateTool {
     fn change_for(&self, input: &Value, output: &Value) -> Option<ChangeDraft> {
-        // Re-derive the "before" snapshot from the caller's input —
-        // by the time the change recorder runs the prior revision is
-        // already superseded in the store, so we cannot re-fetch it
-        // here. The tool body validated `expected_revision_id`
-        // against the store immediately before the insert, so the
-        // recorded `before` is the live state from the caller's
-        // perspective.
         let req: UpdateDashboardRequest = serde_json::from_value(input.clone()).ok()?;
         let resp: UpdateDashboardResponse = serde_json::from_value(output.clone()).ok()?;
 
-        // `prior_body_json` in the response is the prior row's
-        // body captured atomically by
-        // `DashboardStore::insert_revision_with_prior` — closes
-        // the Phase C.2 gap. `None` only when the page was
-        // brand-new, in which case `before` correctly stays
-        // `None` and undo falls back to the soft-delete inverse.
-        // owner_principal isn't echoed in the response (the store
-        // preserves it across revisions); the snapshot's
-        // `owner_principal` is informational for the audit row.
+        // `prior_body_json` is the superseded body captured
+        // atomically by `insert_revision_with_prior`. `None` only
+        // when the page was brand-new, in which case `before`
+        // stays `None` and undo falls back to the soft-delete
+        // inverse. owner_principal isn't echoed in the response
+        // (the store preserves it across revisions); the
+        // snapshot's `owner_principal` is informational only.
         let after = DashboardSnapshot {
             page_id: resp.page_id.clone(),
             tenant_id: resp.tenant_id.clone(),

@@ -2,12 +2,14 @@
 //!
 //! Partial-update verb. Applies an RFC 6902 JSON-Patch document to
 //! the live `body_json` for `(tenant_id, page_id)` and routes the
-//! synthesised body through `DashboardStore::insert_revision` — the
-//! *exact* same write path `rubix.dashboard.update` uses. The
-//! changelog therefore continues to record a full before/after
-//! snapshot for `Op::Update`, and undo round-trips byte-for-byte
-//! without having to invert the patch (which would be a class of
-//! silent-drift bugs we choose not to inherit).
+//! synthesised body through
+//! `DashboardStore::insert_revision_with_prior` — the *exact* same
+//! atomic write path `rubix.dashboard.update` uses. The chokepoint
+//! returns both the inserted row and the row it superseded so the
+//! changelog records a full before/after snapshot for `Op::Update`
+//! and undo round-trips byte-for-byte without having to invert the
+//! patch (which would be a class of silent-drift bugs we choose
+//! not to inherit).
 //!
 //! Concurrency contract: when the caller supplies an
 //! `expected_revision_id` that no longer matches the live revision,
@@ -183,14 +185,15 @@ impl Tool for DashboardPatchTool {
 
 impl ReversibleTool for DashboardPatchTool {
     fn change_for(&self, input: &Value, output: &Value) -> Option<ChangeDraft> {
-        // Same Phase C.2 limitation as `DashboardUpdateTool`: by the
-        // time `change_for` runs, the prior revision is already
-        // superseded and we cannot re-fetch it, so the recorded
-        // `before` snapshot is `None` and undo for `patch` is
-        // best-effort until a `prior_snapshot` capture seam ships.
-        // Routing through the same `Op::Update` keeps the changelog
-        // wire shape identical to `update` — downstream consumers
-        // (SSE emitter, undo stack) do not need a new variant.
+        // Routing through `Op::Update` keeps the changelog wire
+        // shape identical to `rubix.dashboard.update` — downstream
+        // consumers (SSE emitter, undo stack) do not need a new
+        // variant. The `before` / `after` snapshots are recorded
+        // byte-exactly: the chokepoint
+        // `DashboardStore::insert_revision_with_prior` captures
+        // both rows atomically and the verb echoes them in the
+        // response, so `change_for` can reconstruct them here
+        // without re-querying the store.
         let req: PatchDashboardRequest = serde_json::from_value(input.clone()).ok()?;
         let resp: PatchDashboardResponse = serde_json::from_value(output.clone()).ok()?;
 
@@ -531,10 +534,9 @@ mod tests {
 
     #[tokio::test]
     async fn change_for_after_snapshot_is_byte_exact_post_patch_body() {
-        // The Phase C.2 caveat on `update` records an empty `after`
-        // body because `UpdateDashboardResponse` doesn't echo it.
-        // `patch` carries the post-patch body in its response, so
-        // the audit snapshot can be reconstructed exactly.
+        // Patch carries the post-patch body in its response, so
+        // `change_for` reconstructs the `after` snapshot byte-
+        // exactly without re-fetching the row.
         let store = InMemoryStore::arc();
         let prior = store.seed("dashboard.ops", "tenant-a", seed_body());
         let tool = DashboardPatchTool::new(store);
