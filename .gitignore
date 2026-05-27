@@ -16,6 +16,10 @@ dist/
 .vscode/
 .DS_Store
 
+# Python (skill scripts compile bytecode caches)
+__pycache__/
+*.pyc
+
 # Env / local
 .env
 .env.*
