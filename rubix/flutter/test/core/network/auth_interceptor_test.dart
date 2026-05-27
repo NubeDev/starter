@@ -1,78 +1,91 @@
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:rubix_flutter/core/auth/token_store/token_store.dart';
-import 'package:rubix_flutter/core/auth/token_store/token_store_providers.dart';
 import 'package:rubix_flutter/core/network/auth_interceptor/auth_interceptor.dart';
+import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
+import 'package:rubix_flutter/features/auth/data/auth_state.dart';
 
-/// In-memory token store for testing.
-class _FakeTokenStore implements TokenStore {
-  String? _token;
-  int clearCount = 0;
+/// Spy AuthController — bypasses bootstrap entirely; the interceptor's
+/// contract is just "read currentToken on request, call markExpired
+/// on a non-exempt 401". Everything else (reissue lock, single-attempt
+/// policy) is now controller-side and covered separately.
+class _FakeAuthController extends AuthController {
+  _FakeAuthController({this.initialToken});
+
+  final String? initialToken;
+  int markExpiredCalls = 0;
 
   @override
-  Future<String?> read() async => _token;
-
-  @override
-  Future<void> write(String token, {DateTime? expiresAt}) async {
-    _token = token;
+  Future<AuthState> build() async {
+    return initialToken == null
+        ? const AuthUnauthenticated()
+        : AuthAuthenticated(initialToken!);
   }
 
   @override
-  Future<void> clear() async {
-    _token = null;
-    clearCount++;
+  String? currentToken() => initialToken;
+
+  @override
+  Future<void> markExpired() async {
+    markExpiredCalls++;
   }
 }
 
-/// Creates an AuthInterceptor wired to a test container with the fake store.
-({AuthInterceptor interceptor, _FakeTokenStore store, ProviderContainer container}) _setup() {
-  final fakeStore = _FakeTokenStore();
+({
+  AuthInterceptor interceptor,
+  _FakeAuthController controller,
+  ProviderContainer container,
+}) _setup({String? token}) {
+  final fake = _FakeAuthController(initialToken: token);
   final container = ProviderContainer(
     overrides: [
-      tokenStoreProvider.overrideWithValue(fakeStore),
+      authControllerProvider.overrideWith(() => fake),
     ],
   );
+  // Warm up the notifier so `currentToken()` reads its build() result.
+  container.read(authControllerProvider);
   late AuthInterceptor interceptor;
   container.read(Provider((ref) {
     interceptor = AuthInterceptor(ref);
     return null;
   }));
-  return (interceptor: interceptor, store: fakeStore, container: container);
+  return (interceptor: interceptor, controller: fake, container: container);
 }
 
 void main() {
-  test('bearer token is injected when token present', () async {
-    final (:interceptor, :store, :container) = _setup();
+  test('bearer header injected when controller reports a token',
+      () async {
+    final (:interceptor, controller: _, :container) =
+        _setup(token: 'test-token-123');
     addTearDown(container.dispose);
-    await store.write('test-token-123');
 
     final options = RequestOptions(path: '/api/v1/items');
     final handler = _FakeRequestHandler();
 
-    await interceptor.onRequest(options, handler);
+    interceptor.onRequest(options, handler);
 
     expect(options.headers['Authorization'], 'Bearer test-token-123');
     expect(handler.nextCalled, isTrue);
   });
 
-  test('no bearer header when no token', () async {
-    final (:interceptor, store: _, :container) = _setup();
+  test('no bearer header when controller has no token', () async {
+    final (:interceptor, controller: _, :container) = _setup();
     addTearDown(container.dispose);
 
     final options = RequestOptions(path: '/api/v1/items');
     final handler = _FakeRequestHandler();
 
-    await interceptor.onRequest(options, handler);
+    interceptor.onRequest(options, handler);
 
     expect(options.headers['Authorization'], isNull);
     expect(handler.nextCalled, isTrue);
   });
 
-  test('401 on auth-exempt path does not evict token', () async {
-    final (:interceptor, :store, :container) = _setup();
+  test('401 on auth-exempt path passes through without markExpired',
+      () async {
+    final (:interceptor, :controller, :container) =
+        _setup(token: 'my-token');
     addTearDown(container.dispose);
-    await store.write('my-token');
 
     final err = DioException(
       requestOptions: RequestOptions(path: '/api/v1/auth/token'),
@@ -83,40 +96,40 @@ void main() {
     );
     final handler = _FakeErrorHandler();
 
-    await interceptor.onError(err, handler);
+    interceptor.onError(err, handler);
+    // markExpired is unawaited; let microtasks drain.
+    await Future<void>.delayed(Duration.zero);
 
-    expect(store.clearCount, 0);
-    expect(await store.read(), 'my-token');
+    expect(controller.markExpiredCalls, 0);
+    expect(handler.nextCalled, isTrue);
   });
 
-  test('401 on normal path evicts token exactly once (stampede)', () async {
-    final (:interceptor, :store, :container) = _setup();
+  test('401 on normal path calls markExpired and passes the error on',
+      () async {
+    final (:interceptor, :controller, :container) =
+        _setup(token: 'my-token');
     addTearDown(container.dispose);
-    await store.write('my-token');
 
-    DioException makeErr() => DioException(
-          requestOptions: RequestOptions(path: '/api/v1/items'),
-          response: Response(
-            requestOptions: RequestOptions(path: '/api/v1/items'),
-            statusCode: 401,
-          ),
-        );
+    final err = DioException(
+      requestOptions: RequestOptions(path: '/api/v1/items'),
+      response: Response(
+        requestOptions: RequestOptions(path: '/api/v1/items'),
+        statusCode: 401,
+      ),
+    );
+    final handler = _FakeErrorHandler();
 
-    // Fire two 401s concurrently (stampede scenario).
-    await Future.wait([
-      interceptor.onError(makeErr(), _FakeErrorHandler()),
-      interceptor.onError(makeErr(), _FakeErrorHandler()),
-    ]);
+    interceptor.onError(err, handler);
+    await Future<void>.delayed(Duration.zero);
 
-    // Token cleared exactly once thanks to the eviction lock.
-    expect(store.clearCount, 1);
-    expect(await store.read(), isNull);
+    expect(controller.markExpiredCalls, 1);
+    expect(handler.nextCalled, isTrue);
   });
 
-  test('non-401 error passes through without eviction', () async {
-    final (:interceptor, :store, :container) = _setup();
+  test('non-401 error passes through without markExpired', () async {
+    final (:interceptor, :controller, :container) =
+        _setup(token: 'my-token');
     addTearDown(container.dispose);
-    await store.write('my-token');
 
     final err = DioException(
       requestOptions: RequestOptions(path: '/api/v1/items'),
@@ -127,10 +140,11 @@ void main() {
     );
     final handler = _FakeErrorHandler();
 
-    await interceptor.onError(err, handler);
+    interceptor.onError(err, handler);
+    await Future<void>.delayed(Duration.zero);
 
-    expect(store.clearCount, 0);
-    expect(await store.read(), 'my-token');
+    expect(controller.markExpiredCalls, 0);
+    expect(handler.nextCalled, isTrue);
   });
 }
 

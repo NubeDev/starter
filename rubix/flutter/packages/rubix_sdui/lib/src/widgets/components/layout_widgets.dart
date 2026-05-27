@@ -7,6 +7,7 @@ library;
 import 'package:flutter/material.dart';
 
 import '../../models/component.dart';
+import '../sdui_theme.dart';
 import '../sdui_renderer.dart';
 
 /// Parses `raw['children']` into a list of [SduiComponent]s. Returns
@@ -28,19 +29,50 @@ class SduiPageWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final t = SduiTheme.of(context);
     final title = component.raw['title'] as String?;
+    final eyebrow = component.raw['eyebrow'] as String?;
     final children = _children(component.raw);
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
       children: [
         if (title != null && title.isNotEmpty) ...[
-          Text(title, style: theme.textTheme.headlineSmall),
-          const SizedBox(height: 16),
+          if (eyebrow != null && eyebrow.isNotEmpty) ...[
+            Row(
+              children: [
+                Container(
+                  width: 32,
+                  height: 1,
+                  color: t.accentLeaf,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  eyebrow,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: t.accentLeaf,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: 2.2,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+          Text(
+            title,
+            style: theme.textTheme.headlineMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+              letterSpacing: -0.5,
+              height: 1.1,
+            ),
+          ),
+          const SizedBox(height: 24),
         ],
-        for (final child in children) ...[
-          buildComponent(context, child),
-          const SizedBox(height: 16),
+        for (var i = 0; i < children.length; i++) ...[
+          if (i > 0) const SizedBox(height: 20),
+          buildComponent(context, children[i]),
         ],
       ],
     );
@@ -64,7 +96,7 @@ class SduiRowWidget extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) const SizedBox(width: 12),
+          if (i > 0) const SizedBox(width: 16),
           Expanded(
             flex: _span(children[i]),
             child: buildComponent(context, children[i]),
@@ -97,7 +129,7 @@ class SduiColWidget extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         for (var i = 0; i < children.length; i++) ...[
-          if (i > 0) const SizedBox(height: 12),
+          if (i > 0) const SizedBox(height: 16),
           buildComponent(context, children[i]),
         ],
       ],

@@ -1,5 +1,27 @@
 # PROGRESS — data-flow scenario
 
+> **Engine swap notice (2026-05-27).** ClickHouse was deleted
+> wholesale in PR #44 and is **never coming back**. Every
+> reference to ClickHouse / `meter_readings_raw` /
+> `meter_readings_1m` / `meter_readings_15m` / `MergeTree` /
+> `toYYYYMM(...)` / `clean_minute` in this file (and the stage
+> docs it links to) is a **historical record of pre-deletion
+> work** — not the current spine.
+>
+> The live warehouse is **Timescale (Postgres hypertables)** via
+> [crates/starter-store-warehouse/src/tsdb/](../../../../crates/starter-store-warehouse/src/tsdb/).
+> Live L1 is the `samples` hypertable
+> `(tenant_id, entity_id, ts, value_num, value_str, value_bool, quality SMALLINT, tags JSONB)`.
+> Live ingest goes through
+> [`rubix.warehouse.ingest`](../../../../rubix/crates/rubix-tools/src/warehouse/ingest.rs)
+> (sqlx parameterised INSERTs).
+>
+> The cleaner / L2 / L3 path described below is **not currently
+> running**. New cleaner work in progress lives in
+> [rubix-tools/src/cleaner/](../../../crates/rubix-tools/src/cleaner/)
+> (rule trait + builtin rules); see
+> [extensions-north-star/PROGRESS.md §Phase B](../../scope/extensions-north-star/PROGRESS.md#phase-b-use-case-b-ad-hoc-data-custom-rules).
+
 Single source of truth for "which stage is done, which is next."
 A new AI session reads this **first**, then opens [USAGE.md](./USAGE.md),
 then opens the stage doc for the first ⏳ row below.

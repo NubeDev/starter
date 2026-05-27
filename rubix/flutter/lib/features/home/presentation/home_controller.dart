@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import 'package:riverpod_annotation/riverpod_annotation.dart';
 import 'package:rubix_flutter/core/api/api_providers.dart';
+import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
+import 'package:rubix_flutter/features/auth/data/auth_state.dart';
 import 'package:rubix_flutter/features/home/domain/me_response/me_response.dart';
 
 part 'home_controller.g.dart';
@@ -58,6 +60,13 @@ Future<AgentHealth> agentHealth(Ref ref) async {
 /// via the generated `rubix_api` Dio client.
 @riverpod
 Future<MeResponse> currentUser(Ref ref) async {
+  // Re-run when auth transitions — without this, the very first
+  // currentUser fetch (which races boot-time auto-login) errors with
+  // 401 and never retries until the user manually invalidates.
+  final auth = ref.watch(authControllerProvider).value;
+  if (auth is! AuthAuthenticated) {
+    throw StateError('Not authenticated');
+  }
   final api = ref.watch(apiClientProvider);
   if (api == null) {
     throw StateError('No active connection');

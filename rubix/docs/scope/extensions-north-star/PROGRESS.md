@@ -57,11 +57,24 @@ Phases mirror [README.md §"Critical path"](./README.md).
 | 6 | `BlobHandle` + `ExportHandle` | ❌ not started | — | — | — | — |
 | 7 | `CronHandle` | ❌ not started | — | — | — | — |
 
+### Phase B (Use-Case-B: ad-hoc data, custom rules)
+
+Lifted out of the "Future" backlog per the 2026-05-27 session.
+Drives the cleaner + extension-authored anomaly rules track.
+
+| # | Item | Status | Owner | PR(s) | Design doc | Last touched |
+|---|---|---|---|---|---|---|
+| B1 | `WarehouseWriteHandle` + `Capability::WarehouseWrite` + `contributes.warehouse_tables[]` + boot-time DDL | ✅ shipped (Postgres/Timescale; no ClickHouse) | — | _local_ | _inline in `rubix-agent/src/extensions/warehouse_write.rs` + `boot/extension_tables.rs`_ | 2026-05-27 |
+| B2 | `AnomalyRule` trait + builtin rules + `RuleRegistry` (in-process) | ✅ shipped | — | _local_ | _inline in `rubix-tools/src/cleaner/`_ | 2026-05-27 |
+| B3 | Cleaner tick: read L1 window → apply rules → write `samples_l2` | ❌ not started | — | — | — | — |
+| B4 | Cleaner tool wrapper + bundled flow YAML + 60s schedule | ❌ not started | — | — | — | — |
+| B5 | `contributes.anomaly_rules[]` manifest slot + tool-call dispatch adapter | ❌ not started | — | — | — | — |
+
 ### Plumbing (independent)
 
 | # | Item | Status | Owner | PR(s) | Design doc | Last touched |
 |---|---|---|---|---|---|---|
-| P1 | Mount `rest[]` / `sse[]` / `workers[]` / `cli[]` adapters in `rubix-agent` boot composer | ❌ not started | — | — | — | — |
+| P1 | Mount `rest[]` / `sse[]` / `workers[]` / `cli[]` adapters in `rubix-agent` boot composer | 🟡 partial — REST+SSE wired via `CompositeRestDispatcher`; `workers[]` + `cli[]` deferred | — | _local_ | _inline in `rubix-agent/src/extensions/rest_dispatcher.rs`_ | 2026-05-27 |
 | P2 | `HttpOutHandle` v2 — per-authority path allow-lists | ❌ not started | — | — | — | — |
 
 ## Gate checks
@@ -119,6 +132,152 @@ Keep entries terse. The session log is the audit trail; the
 tracker tables above are the source of truth for current state.
 
 ---
+
+### 2026-05-27 — Use-Case-B push: P1 (partial) + B1 + B2
+
+Three landings in one session driving the Use-Case-B path
+(ad-hoc data sources, custom rules, custom non-dashboard pages):
+
+**P1 partial — process-flavour REST/SSE mounting**
+
+- Rows moved: P1: ❌ → 🟡 partial (REST + SSE wired; workers + cli still pending).
+- Changes:
+  - New `CompositeRestDispatcher` in
+    `rubix-agent/src/extensions/rest_dispatcher.rs` — routes per
+    `RuntimeKind` to either the existing `BuiltinRestDispatcher` or
+    the upstream `ProcessRestDispatcher` (which was already built
+    in `starter-ext-server` but never wired in rubix).
+  - `rubix-agent/src/main.rs` now constructs the composite using
+    `bundle.process_handles` (already populated by
+    `boot::build_extension_admin`) + a 30s per-call timeout
+    mirroring `EXTENSION_TOOL_REQUEST_TIMEOUT` from the MCP side.
+  - `contributes.rest[]` and `contributes.tools[]` entries from
+    process-flavour extensions now mount at `/api/v1/...` and
+    `/api/v1/tools/...`. SSE/NDJSON unary path works;
+    process-flavour streaming dispatch is still NotWired upstream
+    (separate slice — needs the per-stream `stream.event/end`
+    demultiplexer).
+- Decisions:
+  - **No new upstream code.** Everything we need was already in
+    `starter-ext-server::rest::ProcessRestDispatcher`; the gap was
+    purely "rubix-agent installs only the builtin half." Composite
+    pattern keeps the wiring local to rubix-agent so a future
+    consumer can pick a different routing policy.
+  - **Empty `process_handles` is safe.** When no process extensions
+    are enabled the composite simply never picks the process branch
+    — no panic, no startup error.
+
+**B1 — `WarehouseWriteHandle` + tables contribution**
+
+- Rows moved: new row B1 lands at ✅ shipped (Postgres/Timescale).
+- Changes (~700 LOC across 12 files):
+  - `starter-ext-spi`:
+    - `Capability::WarehouseWrite { tables: Vec<String> }` variant
+      + round-trip tests.
+    - `ContributeWarehouseTable { name, columns, order_by, engine?, partition_by?, ttl? }`
+      and `TableColumn { name, type, default? }` in
+      `manifest.rs`; `Contributes.warehouse_tables: Vec<…>`.
+    - `WarehouseWriteRequest` / `WarehouseWriteResponse` wire types
+      in `warehouse.rs`.
+  - `starter-ext-sdk`:
+    - `WarehouseWriteHandle { insert(table, rows) -> Result<u64> }`
+      backed by a private `WarehouseWriteBackend` trait.
+    - `CtxInner` gains a 12th arg; `ctx.warehouse_write()` accessor.
+    - `RealWarehouseWriteBackend` (process-flavour) over JSON-RPC
+      method `warehouse.write`.
+    - All eight `CtxInner::new` callsites updated (wasm, process,
+      MCP stub, CLI, workers, gRPC, REST adapter, and the internal
+      test) — each gets a local `StubWarehouseWrite` that refuses.
+  - `starter-ext-server`:
+    - `CapabilityFactory::warehouse_write(...)` trait method with a
+      default fail-closed stub so existing factory impls keep
+      compiling. `BuiltinRestDispatcher::build_ctx` plumbs the new
+      backend through.
+  - `starter-ext-supervisor`: `category_of()` learns the
+    `WarehouseWrite` arm so the supervisor's category gate fires.
+  - `rubix-agent`:
+    - `RubixWarehouseWriteBackend` in
+      `extensions/warehouse_write.rs`: tenant clamp (overwrites
+      caller-supplied `tenant_id`), grant gate, column validation
+      against the manifest spec, typed column binding (text / int /
+      float / bool / jsonb), multi-row INSERT via `sqlx::query_with`.
+    - `extensions/backends.rs`:
+      `RubixCapabilityFactory::warehouse_write(...)` impl; new
+      `warehouse_write_grant()` + `warehouse_tables_for()`
+      resolvers (mirror of the read-side resolvers).
+    - `extensions/host_methods.rs`: `warehouse.write` JSON-RPC arm
+      for process-flavour extensions; mirrors `warehouse.query`.
+    - `boot/extension_tables.rs`: walks every Validated extension
+      at boot, runs `CREATE TABLE IF NOT EXISTS
+      "<sanitize(ext_id)>__<name>"(...)` + companion index on
+      `(tenant_id, ...order_by)`. Reserved `tenant_id` column
+      auto-prepended; column-type strings pass through verbatim.
+- Tests: 12 backend tests (refusal / clamp / grant gate / missing
+  column / unknown column / empty insert) + 4 DDL tests + 2 new
+  factory tests + 1 new host-method test. All green.
+- Decisions:
+  - **Tenant-scoped INSERT only** (no UPDATE / DELETE / DDL via
+    capability) — append-only invariant matches L1, DDL belongs in
+    install-time migrations, not runtime capability.
+  - **Wider scope chosen** (extension-declared table schemas) —
+    user picked "long term" over "minimal." Means extensions
+    declare `contributes.warehouse_tables[]` and the host runs
+    DDL at boot, instead of writing only to a host-defined
+    table set.
+  - **Postgres/Timescale only.** `WarehouseClient` wraps
+    `sqlx::PgPool`. ClickHouse was deleted in PR #44 and we
+    treat it as gone. Type strings in the manifest pass through
+    to Postgres DDL (`TEXT`, `DOUBLE PRECISION`, `JSONB`, …).
+    `engine` / `partition_by` / `ttl` SPI fields are accepted
+    but ignored today (kept for future Timescale-feature
+    expansion: hypertable + continuous-aggregate + retention).
+  - **Sanitised table names** are `<ext_id_with_dots_to_underscores>__<unprefixed_name>`
+    — two-underscore boundary so two extensions cannot collide on
+    a name even if their ids share a suffix.
+
+**B2 — `AnomalyRule` trait + builtin rules + `RuleRegistry`**
+
+- Rows moved: new row B2 lands at ✅ shipped.
+- Changes: new `rubix-tools/src/cleaner/` module (~700 LOC including
+  tests):
+  - `rule.rs` — `AnomalyRule` trait (sync, infallible),
+    `Reading { tenant_id, entity_id, ts_ms, value: Option<f64>, source_quality }`,
+    `WindowSlice<'a>`, `RuleOutcome { Ok | Flag { quality, note } | Drop }`,
+    `QualityTag { Ok | Spike | Stuck | Missing | Nan }`.
+  - `builtin.rs` — `NanRule`, `SpikeRule { factor: f64 }` (default
+    10×), `StuckRule { min_repeats: usize }` (default 3). Mirrors
+    the synth-side mess injectors in `dataflow::mess` (×50 spike,
+    stuck-stretch, NaN), with conservative real-world thresholds.
+  - `registry.rs` — `RuleRegistry`; first non-`Ok` outcome wins;
+    `builtin()` constructor preloads NaN → Spike → Stuck in
+    canonical order so `NanRule` short-circuits before numeric
+    checks see NaN.
+- Tests: 23 unit tests covering each rule's edge cases (no
+  history, null values, NaN handling, threshold boundaries) and
+  registry ordering semantics. All green.
+- Decisions:
+  - **Rules-as-trait, not rules-as-tools yet.** The trait is
+    sync/infallible for in-process throughput; the extension
+    contribution slot (B5) will wrap a contributed tool call into
+    an `AnomalyRule` adapter, so the cleaner doesn't have to know a
+    rule's origin.
+  - **First-non-Ok wins.** Composability via order; operators
+    control priority via registration sequence.
+  - **No `Missing` per-row rule.** Gap detection is window-level
+    (compare expected vs actual count) and belongs in the cleaner
+    tick (B3), not the rule trait.
+
+- Next:
+  1. **B3** — cleaner tick (read L1 window, walk per-entity, apply
+     rules, bulk-insert L2). Needs the `samples_l2` migration in
+     `starter-store-warehouse::tsdb::migrate` first.
+  2. **B4** — tool wrapper + bundled flow YAML + 60s schedule.
+  3. **B5** — `contributes.anomaly_rules[]` slot + tool-call
+     dispatch adapter. With B3 + B4 + B2 done, B5 is a thin
+     adapter (~150 LOC).
+  4. **P1 follow-up** — `workers[]` + `cli[]` adapter mounting.
+     Separate from the Use-Case-B push; pick up when an extension
+     needs it.
 
 ### 2026-05-27 — row 4 scaffolding: `EventBusHandle` (publish only)
 

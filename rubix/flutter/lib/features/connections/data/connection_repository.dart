@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
+import 'package:rubix_data/rubix_data.dart';
 import 'package:rubix_flutter/core/network/dio_client.dart';
-import 'package:rubix_flutter/core/storage/daos/connection_dao.dart';
 import 'package:rubix_flutter/features/connections/domain/connection/connection.dart';
 
 /// Result of probing a rubix-agent healthz endpoint.
@@ -27,14 +27,20 @@ class ProbeNetworkError extends ProbeResult {
   final String message;
 }
 
+/// Feature-level facade over [ConnectionsRepository].
+///
+/// The data-layer interface (`rubix_data`) returns plain DTOs and
+/// knows nothing about Freezed or rubix-agent health probes — those
+/// belong here. The concrete store (Drift on native, REST on web) is
+/// injected, so the same UI/controller code runs against both.
 class ConnectionRepository {
-  ConnectionRepository(this._dao);
+  ConnectionRepository(this._store);
 
-  final ConnectionDao _dao;
+  final ConnectionsRepository _store;
 
   Future<List<Connection>> list() async {
     debugPrint('[REPO] list() called');
-    final rows = await _dao.list();
+    final rows = await _store.list();
     debugPrint('[REPO] list() returning ${rows.length} connection(s)');
     return rows
         .map(
@@ -51,19 +57,19 @@ class ConnectionRepository {
 
   Future<int> add({required String label, required String baseUrl}) {
     debugPrint('[REPO] add(label=$label, baseUrl=$baseUrl)');
-    return _dao.insert(label: label, baseUrl: baseUrl);
+    return _store.add(label: label, baseUrl: baseUrl);
   }
 
   Future<bool> update(int id, {String? label, String? baseUrl}) =>
-      _dao.updateConnection(id, label: label, baseUrl: baseUrl);
+      _store.update(id, label: label, baseUrl: baseUrl);
 
-  Future<int> delete(int id) => _dao.deleteConnection(id);
+  Future<int> delete(int id) => _store.delete(id);
 
-  Future<void> setActive(int? connectionId) => _dao.setActive(connectionId);
+  Future<void> setActive(int? connectionId) => _store.setActive(connectionId);
 
-  Future<int?> getActiveId() => _dao.getActiveId();
+  Future<int?> getActiveId() => _store.getActiveId();
 
-  Future<bool> markUsed(int id) => _dao.markUsed(id);
+  Future<bool> markUsed(int id) => _store.markUsed(id);
 
   Future<ProbeResult> probe(String baseUrl) async {
     try {

@@ -44,12 +44,12 @@ type WriteOptions<TReq, TRes> = Omit<
 
 /** List dashboards. Query key: `['rubix','dashboard','list', filter?]`. */
 export function useDashboardList(
-  request: DashboardListRequest = {},
+  request: DashboardListRequest,
   options?: ReadOptions<DashboardListResponse>,
 ): UseQueryResult<DashboardListResponse, StarterError> {
   const client = useRubixClient();
   return useQuery<DashboardListResponse, StarterError>({
-    queryKey: [...DASHBOARD_KEY, "list", request.filter ?? null],
+    queryKey: [...DASHBOARD_KEY, "list", request.tenant_id, request.filter ?? null],
     queryFn: () => client.dashboardList(request),
     ...options,
   });

@@ -62,12 +62,13 @@ Widget buildComponent(BuildContext context, SduiComponent component) {
     RowComponent() => SduiRowWidget(component: component),
     ColComponent() => SduiColWidget(component: component),
     KpiComponent() => SduiKpiWidget(component: component),
+    KpiGridComponent() => SduiKpiGridWidget(component: component),
     ChartComponent() => SduiChartWidget(component: component),
     DanglingComponent() => const SduiDanglingWidget(),
     ForbiddenComponent() => const SduiForbiddenWidget(),
     CustomComponent() => SduiCustomWidget(component: component),
     // TODO(F6 Wave 1 follow-up): grid, tabs, section, divider, spacer,
-    //   text, heading, badge, markdown, kpi_grid, toggle, slider,
+    //   text, heading, badge, markdown, toggle, slider,
     //   select, text_field, number_field, checkbox, segmented, form,
     //   card, button.
     // TODO(F6 Wave 2): everything else.

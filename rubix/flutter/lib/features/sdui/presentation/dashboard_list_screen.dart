@@ -1,18 +1,13 @@
-import 'dart:async';
-import 'dart:convert';
-
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rubix_flutter/core/network/network_providers.dart';
-import 'package:rubix_flutter/core/network/sse_client.dart';
-import 'package:rubix_flutter/features/auth/data/auth_repository/auth_repository.dart';
+import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
+import 'package:rubix_flutter/features/auth/data/auth_state.dart';
 
-/// Lists dashboards for the `system` tenant by consuming the
-/// `GET /api/v1/dashboards/events` SSE stream. The first frame
-/// is a `snapshot` that seeds the list; subsequent `created` /
-/// `updated` / `deleted` frames mutate it live.
+/// Lists dashboards for the `system` tenant via
+/// `POST /api/v1/tools/rubix.dashboard.list`.
 class DashboardListScreen extends ConsumerStatefulWidget {
   const DashboardListScreen({super.key});
 
@@ -22,131 +17,66 @@ class DashboardListScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
-  StreamSubscription<String>? _sub;
-  CancelToken? _cancel;
-  final Map<String, _DashboardItem> _items = {};
+  List<_DashboardItem>? _items;
   Object? _error;
-  bool _connecting = true;
-  bool _hasSnapshot = false;
-
-  /// Token value the last `_open` was bound to. Used to avoid
-  /// re-opening the stream when an unrelated provider rebuild fires.
+  bool _loading = false;
   String? _boundToken;
 
-  @override
-  void initState() {
-    super.initState();
-    // SSE open is driven by the `currentTokenProvider` listener in
-    // `build()` — opening here would fire before auto-login completes
-    // and 401 immediately.
-  }
-
-  void _open(Dio dio) {
-    _cancel?.cancel();
-    _sub?.cancel();
+  Future<void> _load(Dio dio) async {
     setState(() {
-      _connecting = true;
+      _loading = true;
       _error = null;
-      _hasSnapshot = false;
     });
-
-    final cancel = CancelToken();
-    _cancel = cancel;
-    final stream = SseClient(dio: dio).connect(
-      '/api/v1/dashboards/events',
-      cancelToken: cancel,
-    );
-
-    _sub = stream.listen(
-      _handleFrame,
-      onError: (Object e) {
-        if (!mounted) return;
-        setState(() {
-          _error = e;
-          _connecting = false;
-        });
-      },
-      onDone: () {
-        if (!mounted) return;
-        setState(() => _connecting = false);
-      },
-    );
-  }
-
-  void _handleFrame(String raw) {
-    if (raw.isEmpty) return;
-    final Object? decoded;
     try {
-      decoded = jsonDecode(raw);
-    } catch (_) {
-      return;
-    }
-    if (decoded is! Map) return;
-    final map = decoded.cast<String, Object?>();
-    final kind = map['kind'] as String?;
-    if (kind == null) return;
-
-    setState(() {
-      _connecting = false;
-      _error = null;
-      switch (kind) {
-        case 'snapshot':
-          _items.clear();
-          final items = map['items'];
-          if (items is List) {
-            for (final item in items.whereType<Map<Object?, Object?>>()) {
-              final parsed =
-                  _DashboardItem.fromJson(item.cast<String, Object?>());
-              _items[parsed.pageId] = parsed;
-            }
+      final res = await dio.post<Map<String, dynamic>>(
+        '/api/v1/tools/rubix.dashboard.list',
+        data: const {'tenant_id': 'system'},
+      );
+      final data = res.data ?? const <String, dynamic>{};
+      final raw = data['items'];
+      final parsed = <_DashboardItem>[];
+      if (raw is List) {
+        for (final item in raw) {
+          if (item is Map) {
+            parsed.add(
+              _DashboardItem.fromJson(item.cast<String, Object?>()),
+            );
           }
-          _hasSnapshot = true;
-        case 'created':
-        case 'updated':
-          final parsed = _DashboardItem.fromJson(map);
-          if (parsed.pageId.isEmpty) return;
-          final existing = _items[parsed.pageId];
-          _items[parsed.pageId] = _DashboardItem(
-            pageId: parsed.pageId,
-            // `updated` frames may omit `title` if it didn't
-            // change — preserve the prior title in that case.
-            title: parsed.title.isEmpty && existing != null
-                ? existing.title
-                : parsed.title,
-          );
-        case 'deleted':
-          final pageId = map['page_id'] as String?;
-          if (pageId != null) _items.remove(pageId);
+        }
       }
-    });
+      parsed.sort(
+        (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+      );
+      if (!mounted) return;
+      setState(() {
+        _items = parsed;
+        _loading = false;
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _error = e;
+        _loading = false;
+      });
+    }
   }
 
-  /// User-initiated retry. Clears the auth circuit breaker (the SSE
-  /// 401 may have tripped it), invalidates the token provider so
-  /// `currentTokenProvider` re-runs the auto-relogin path, and resets
-  /// `_boundToken` so the next build re-opens the stream.
   void _retry(Dio dio) {
     _boundToken = null;
-    ref.read(authGaveUpProvider.notifier).set(false);
-    ref.invalidate(currentTokenProvider);
+    // Re-run AuthController.build() — that path silently re-issues a
+    // token from saved creds if there is one, or transitions to
+    // Unauthenticated otherwise.
+    ref.invalidate(authControllerProvider);
     setState(() {
+      _items = null;
       _error = null;
-      _connecting = true;
-      _hasSnapshot = false;
     });
-  }
-
-  @override
-  void dispose() {
-    _sub?.cancel();
-    _cancel?.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final dio = ref.watch(dioProvider);
-    final tokenAsync = ref.watch(currentTokenProvider);
+    final authAsync = ref.watch(authControllerProvider);
     final theme = Theme.of(context);
 
     if (dio == null) {
@@ -164,55 +94,56 @@ class _DashboardListScreenState extends ConsumerState<DashboardListScreen> {
       );
     }
 
-    // Open / re-open the SSE stream once we have a token, and re-open
-    // it if the token changes (post-relogin). Scheduled via
-    // addPostFrameCallback so we don't call setState during build.
-    final token = tokenAsync.value;
+    final authState = authAsync.value;
+    final token = authState is AuthAuthenticated ? authState.token : null;
     if (token != null && token != _boundToken) {
       _boundToken = token;
       WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (mounted) _open(dio);
+        if (mounted) _load(dio);
       });
     }
-
-    final sorted = _items.values.toList()
-      ..sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Dashboards'),
         actions: [
           IconButton(
-            tooltip: 'Reconnect',
+            tooltip: 'Reload',
             icon: const Icon(Icons.refresh),
-            onPressed: () => _retry(dio),
+            onPressed: () => _load(dio),
           ),
         ],
       ),
       body: Builder(
         builder: (context) {
-          if (tokenAsync.isLoading ||
-              (!_hasSnapshot && _error == null && _connecting && token != null)) {
+          if (authAsync.isLoading ||
+              (_items == null && _error == null && (token == null || _loading))) {
             return const Center(child: CircularProgressIndicator());
           }
           if (token == null) {
+            final reason = authState is AuthUnauthenticated
+                ? authState.reason
+                : null;
             return _ErrorView(
-              error: 'Not signed in to this connection.',
+              error: reason == null
+                  ? 'Not signed in to this connection.'
+                  : 'Not signed in: $reason',
               onRetry: () => _retry(dio),
             );
           }
-          if (_error != null && !_hasSnapshot) {
-            return _ErrorView(error: _error, onRetry: () => _retry(dio));
+          if (_error != null) {
+            return _ErrorView(error: _error, onRetry: () => _load(dio));
           }
-          if (sorted.isEmpty) {
+          final items = _items ?? const <_DashboardItem>[];
+          if (items.isEmpty) {
             return const Center(child: Text('No dashboards yet'));
           }
           return ListView.separated(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            itemCount: sorted.length,
+            itemCount: items.length,
             separatorBuilder: (_, __) => const Divider(height: 1),
             itemBuilder: (context, i) {
-              final item = sorted[i];
+              final item = items[i];
               return ListTile(
                 title: Text(item.title),
                 subtitle: Text(

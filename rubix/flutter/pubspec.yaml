@@ -63,6 +63,11 @@ dependencies:
   rubix_sdui:
     path: packages/rubix_sdui
 
+  # Repository interfaces + DTOs shared with the web-mode REST server
+  # at packages/rubix_server. See README → "Web vs native data layer".
+  rubix_data:
+    path: packages/rubix_data
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

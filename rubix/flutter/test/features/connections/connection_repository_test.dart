@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:rubix_flutter/core/storage/app_database.dart';
 import 'package:rubix_flutter/core/storage/daos/connection_dao.dart';
 import 'package:rubix_flutter/features/connections/data/connection_repository.dart';
+import 'package:rubix_flutter/features/connections/data/local_connections_repository.dart';
 
 void main() {
   late AppDatabase db;
@@ -10,7 +11,7 @@ void main() {
 
   setUp(() {
     db = AppDatabase.forTesting(NativeDatabase.memory());
-    repo = ConnectionRepository(ConnectionDao(db));
+    repo = ConnectionRepository(LocalConnectionsRepository(ConnectionDao(db)));
   });
 
   tearDown(() async {

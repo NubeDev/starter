@@ -1,0 +1,18 @@
+name: rubix_server
+description: Tiny Dart REST backend that fronts SQLite for the Flutter web build. Not used on mobile/desktop.
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+
+dependencies:
+  shelf: ^1.4.1
+  shelf_router: ^1.1.4
+  sqlite3: ^2.4.0
+  args: ^2.5.0
+  rubix_data:
+    path: ../rubix_data
+
+dev_dependencies:
+  lints: ^4.0.0

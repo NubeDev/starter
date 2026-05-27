@@ -19,8 +19,7 @@ export interface DashboardPageSummary {
   title: string;
   tags: string[];
   owner_principal: string;
-  created_by: string;
-  created_at_ms: number;
+  updated_at: string;
 }
 
 export interface DashboardPage extends DashboardPageSummary {
@@ -45,13 +44,14 @@ export interface DashboardGetResponse {
 }
 
 export interface DashboardListRequest {
+  tenant_id: string;
   /** Optional substring filter against `page_id`. */
   filter?: string;
 }
 export interface DashboardListResponse {
   summary: Diagnostic;
   count: number;
-  pages: DashboardPageSummary[];
+  items: DashboardPageSummary[];
 }
 
 export interface DashboardCreateRequest {
@@ -120,7 +120,7 @@ export interface DashboardPageSetResponse {
 declare module "../client/client.js" {
   interface RubixClient {
     dashboardGet(request: DashboardGetRequest): Promise<DashboardGetResponse>;
-    dashboardList(request?: DashboardListRequest): Promise<DashboardListResponse>;
+    dashboardList(request: DashboardListRequest): Promise<DashboardListResponse>;
     dashboardCreate(request: DashboardCreateRequest): Promise<DashboardCreateResponse>;
     dashboardUpdate(request: DashboardUpdateRequest): Promise<DashboardUpdateResponse>;
     dashboardDelete(request: DashboardDeleteRequest): Promise<DashboardDeleteResponse>;
@@ -148,7 +148,7 @@ RubixClient.prototype.dashboardGet = function dashboardGet(
 
 RubixClient.prototype.dashboardList = function dashboardList(
   this: RubixClient,
-  request: DashboardListRequest = {},
+  request: DashboardListRequest,
 ): Promise<DashboardListResponse> {
   return dispatch(this, "rubix.dashboard.list", request);
 };

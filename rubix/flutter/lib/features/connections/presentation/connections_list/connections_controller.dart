@@ -1,8 +1,7 @@
 import 'package:riverpod_annotation/riverpod_annotation.dart';
-import 'package:rubix_flutter/app.dart';
 import 'package:rubix_flutter/core/auth/token_store/token_store_providers.dart';
-import 'package:rubix_flutter/core/storage/daos/connection_dao.dart';
-import 'package:rubix_flutter/features/auth/data/auth_repository/auth_repository.dart';
+import 'package:rubix_flutter/core/storage/data_layer.dart';
+import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
 import 'package:rubix_flutter/features/connections/data/connection_credentials_store.dart';
 import 'package:rubix_flutter/features/connections/data/connection_repository.dart';
 import 'package:rubix_flutter/features/connections/domain/connection/connection.dart';
@@ -11,8 +10,7 @@ part 'connections_controller.g.dart';
 
 @riverpod
 ConnectionRepository connectionRepository(Ref ref) {
-  final db = ref.watch(appDatabaseProvider);
-  return ConnectionRepository(ConnectionDao(db));
+  return ConnectionRepository(ref.watch(connectionsRepositoryProvider));
 }
 
 @riverpod
@@ -46,25 +44,25 @@ class ConnectionListController extends _$ConnectionListController {
 
   /// Switch to a connection and auto-issue a token using its stored
   /// credentials. Throws if no creds are saved or login fails.
+  ///
+  /// The token-store clear + auth-state reset are deliberate side
+  /// effects of *connection* activation, not of the auth flow itself:
+  /// the new active connection means the previous server's token is
+  /// not valid here. `AuthController.login(...)` then runs a fresh
+  /// issue against the now-active baseUrl.
   Future<void> activate(int id) async {
     await ref.read(connectionRepositoryProvider).setActive(id);
     ref.invalidate(activeConnectionProvider);
     await refresh();
 
-    // Fresh activation — clear the circuit breaker so currentTokenProvider
-    // will auto-relogin on the new connection.
-    ref.read(authGaveUpProvider.notifier).set(false);
-
-    // Clear any existing token from the previous connection.
     await ref.read(tokenStoreProvider).clear();
 
     final creds = await ref.read(connectionCredentialsStoreProvider).read(id);
     if (creds == null) {
-      ref.invalidate(currentTokenProvider);
       throw StateError('No saved credentials for this connection');
     }
 
-    await ref.read(authRepositoryProvider).login(
+    await ref.read(authControllerProvider.notifier).login(
           email: creds.email,
           password: creds.password,
         );

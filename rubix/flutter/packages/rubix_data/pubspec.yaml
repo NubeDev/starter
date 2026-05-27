@@ -1,0 +1,13 @@
+name: rubix_data
+description: Shared repository interfaces + DTOs used by the Flutter app and the local Dart REST backend.
+publish_to: "none"
+version: 0.1.0
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+
+dependencies:
+  meta: ^1.15.0
+
+dev_dependencies:
+  lints: ^4.0.0

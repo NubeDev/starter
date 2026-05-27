@@ -41,3 +41,4 @@ export 'src/state/side_effect.dart';
 export 'src/widgets/components/custom_registry.dart';
 export 'src/widgets/sdui_provider.dart';
 export 'src/widgets/sdui_renderer.dart';
+export 'src/widgets/sdui_theme.dart';

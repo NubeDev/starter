@@ -22,8 +22,8 @@ function DashboardsTable() {
   const intl = useIntl()
   const tr = (id: string, def: string) =>
     intl.formatMessage({ id, defaultMessage: def })
-  const list = useDashboardList()
-  const rows = list.data?.pages ?? []
+  const list = useDashboardList({ tenant_id: 'system' })
+  const rows = list.data?.items ?? []
 
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">

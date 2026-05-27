@@ -1,7 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rubix_flutter/core/router/app_shell/app_shell.dart';
-import 'package:rubix_flutter/features/auth/data/auth_repository/auth_repository.dart';
 import 'package:rubix_flutter/features/connections/presentation/add_connection/add_connection_screen.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_list_screen.dart';
@@ -26,9 +25,12 @@ class PendingRouteNotifier extends Notifier<String?> {
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   final active = ref.watch(activeConnectionProvider);
-  // Watched so the router rebuilds when auto-login finishes — screens
-  // can then re-fetch user-scoped data.
-  ref.watch(currentTokenProvider);
+  // Intentionally NOT watching authControllerProvider. A new auth
+  // state would rebuild the GoRouter, which swaps MaterialApp's
+  // routerConfig and tears down the navigator — that disposes every
+  // autoDispose provider in the active screen and re-runs them on
+  // remount, racing with the just-reissued token. Screens that care
+  // about auth transitions watch authControllerProvider themselves.
   final pinAsync = ref.watch(connectionsPinProvider);
   final pinUnlocked = ref.watch(pinUnlockedProvider);
 

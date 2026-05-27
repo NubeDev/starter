@@ -3,16 +3,11 @@
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:rubix_flutter/app.dart';
-import 'package:rubix_flutter/core/storage/daos/settings_dao.dart';
-
-final settingsDaoProvider = Provider<SettingsDao>((ref) {
-  return SettingsDao(ref.watch(appDatabaseProvider));
-});
+import 'package:rubix_flutter/core/storage/data_layer.dart';
 
 /// Currently-stored connections PIN, or `null` if none is set.
 final connectionsPinProvider = FutureProvider<String?>((ref) async {
-  return ref.watch(settingsDaoProvider).getConnectionsPin();
+  return ref.watch(settingsRepositoryProvider).getConnectionsPin();
 });
 
 /// Session-scoped flag: `true` once the user has entered the PIN this
@@ -33,7 +28,7 @@ final pinUnlockedProvider =
 /// Mutator: set, replace, or clear the connections PIN. Pass `null`
 /// to remove it.
 Future<void> setConnectionsPin(WidgetRef ref, String? pin) async {
-  await ref.read(settingsDaoProvider).setConnectionsPin(pin);
+  await ref.read(settingsRepositoryProvider).setConnectionsPin(pin);
   ref.invalidate(connectionsPinProvider);
   if (pin == null) {
     // Clearing the PIN implicitly unlocks future navigations.
