@@ -9,6 +9,7 @@ pub mod duplicate;
 pub mod get;
 pub mod layout;
 pub mod list;
+pub mod page_id;
 pub mod page_set;
 pub mod patch;
 pub mod store;

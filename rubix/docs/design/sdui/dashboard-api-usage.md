@@ -355,20 +355,25 @@ curl -N -b /tmp/jar.txt http://127.0.0.1:8088/api/v1/dashboards/events
    missing-path, post-patch-layout-failure, and the `change_for`
    draft.
 
-5. **`page_id` vs URL slug mismatch.** Stored id is
-   `dashboard.<slug>`; URL uses `<slug>`. Easy to look up the wrong
-   one from logs or the address bar.
-
-   **Status: documented, structural change deferred.** Changing the
-   stored shape would touch `dashboards_definitions`, every store
-   implementation, every existing row, the resolver, the seed flows
-   under `rubix/crates/rubix-flows/dashboards/`, and the skill doc.
-   Not worth a migration. The mapping is: REST/MCP and the
-   `dashboards_definitions` `page_id` column always carry the
-   `dashboard.` prefix; the URL at `/dashboards/$slug` strips it; the
-   `valid_page_id` check in
-   [`rubix/crates/rubix-tools/src/dashboard/create.rs`](../../../crates/rubix-tools/src/dashboard/create.rs)
-   enforces the grammar. When in doubt, check the stored row.
+5. ~~**`page_id` vs URL slug mismatch.**~~ Resolved 2026-05-27 — the
+   prefix stays for namespace reasons (it distinguishes SDUI page
+   rows from other resource ids that may share grammar later), and a
+   full rename would touch `dashboards_definitions`, every store,
+   every existing row, the resolver, the seed flows under
+   `rubix/crates/rubix-flows/dashboards/`, and the skill doc — not
+   worth the churn. Instead, the slug validation at
+   [`rubix/crates/rubix-tools/src/dashboard/page_id.rs`](../../../crates/rubix-tools/src/dashboard/page_id.rs)
+   detects the specific URL-form mistake (caller passed `ops`
+   instead of `dashboard.ops`) and returns a structured `BareSlug`
+   error whose `Error::Invalid` message echoes both forms and the
+   corrected id — so a misuse round-trips a self-explanatory
+   diagnostic instead of the previous generic
+   "must match dashboard.<lowercase-slug>" error.
+   `rubix.dashboard.create` and `rubix.dashboard.duplicate` both
+   call into the shared validator. The mapping itself is
+   unchanged: REST/MCP and the `dashboards_definitions` `page_id`
+   column carry the `dashboard.` prefix; the URL at
+   `/dashboards/<slug>` strips it.
 
 6. ~~**SSE delta payload is too thin to drive live re-render.**~~
    Resolved 2026-05-27. The `created` / `updated` wire shape already

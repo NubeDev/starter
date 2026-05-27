@@ -66,18 +66,6 @@ fn validate_body_json(body: &Value) -> Result<()> {
     }
 }
 
-/// Validate the SDUI page id shape. Mirrors the slug grammar the
-/// resolver expects: `dashboard.<lowercase-slug>`.
-fn valid_page_id(id: &str) -> bool {
-    let Some(slug) = id.strip_prefix("dashboard.") else {
-        return false;
-    };
-    !slug.is_empty()
-        && slug.len() <= 128
-        && slug
-            .chars()
-            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
-}
 
 /// Build (and re-register) the `rubix.dashboard.page` `ResourceSpec`.
 /// `DuplicateResource` is treated as success — the kind is also
@@ -134,12 +122,9 @@ impl Tool for DashboardCreateTool {
                 message: format!("CreateDashboardRequest: {e}"),
             })?;
 
-        if !valid_page_id(&req.page_id) {
+        if let Err(e) = crate::dashboard::page_id::validate_stored_page_id(&req.page_id) {
             return Err(Error::Invalid {
-                message: format!(
-                    "page_id `{}` must match `dashboard.<lowercase-slug>`",
-                    req.page_id
-                ),
+                message: e.message("page_id"),
             });
         }
 
@@ -404,6 +389,33 @@ mod tests {
         input["page_id"] = serde_json::json!("not-a-dashboard-id");
         let err = tool.invoke(input).await.unwrap_err();
         assert!(matches!(err, Error::Invalid { .. }));
+    }
+
+    #[tokio::test]
+    async fn bare_slug_diagnostic_suggests_stored_form() {
+        // Issue #5: a caller passing the URL-form `ops` instead of
+        // the stored-form `dashboard.ops` should get a message that
+        // names both forms and the corrected id, not the previous
+        // generic "must match dashboard.<lowercase-slug>" error.
+        let store = InMemoryStore::arc();
+        let registry = Arc::new(StaticRegistry::new());
+        let tool = DashboardCreateTool::new(store, registry);
+        let mut input = sample_input();
+        input["page_id"] = serde_json::json!("ops");
+        let err = tool.invoke(input).await.unwrap_err();
+        match err {
+            Error::Invalid { message } => {
+                assert!(
+                    message.contains("dashboard.ops"),
+                    "expected message to suggest stored form, got: {message}"
+                );
+                assert!(
+                    message.contains("URL"),
+                    "expected message to mention URL form, got: {message}"
+                );
+            }
+            other => panic!("expected Invalid, got {other:?}"),
+        }
     }
 
     /// create→undo→deleted (i.e. soft-superseded) — the sibling

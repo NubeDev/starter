@@ -45,17 +45,6 @@ impl DashboardDuplicateTool {
     }
 }
 
-/// Same slug grammar `rubix.dashboard.create` validates against.
-fn valid_page_id(id: &str) -> bool {
-    let Some(slug) = id.strip_prefix("dashboard.") else {
-        return false;
-    };
-    !slug.is_empty()
-        && slug.len() <= 128
-        && slug
-            .chars()
-            .all(|c| c.is_ascii_lowercase() || c.is_ascii_digit() || c == '-' || c == '.')
-}
 
 #[async_trait]
 impl Tool for DashboardDuplicateTool {
@@ -93,12 +82,9 @@ impl Tool for DashboardDuplicateTool {
                 message: format!("DuplicateDashboardRequest: {e}"),
             })?;
 
-        if !valid_page_id(&req.target_page_id) {
+        if let Err(e) = crate::dashboard::page_id::validate_stored_page_id(&req.target_page_id) {
             return Err(Error::Invalid {
-                message: format!(
-                    "target_page_id `{}` must match `dashboard.<lowercase-slug>`",
-                    req.target_page_id
-                ),
+                message: e.message("target_page_id"),
             });
         }
 
