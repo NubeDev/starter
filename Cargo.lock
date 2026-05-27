@@ -6197,6 +6197,7 @@ dependencies = [
  "starter-ext-flow",
  "starter-ext-host",
  "starter-ext-mcp",
+ "starter-ext-sdk",
  "starter-ext-server",
  "starter-ext-spi",
  "starter-ext-store-pg",

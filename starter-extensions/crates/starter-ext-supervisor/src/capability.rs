@@ -43,6 +43,8 @@ pub const CAPABILITY_HOST_METHODS: &[(&str, &str)] = &[
     ("fs", "fs"),
     ("wall_clock", "wall_clock"),
     ("tracing", "tracing"),
+    ("warehouse", "warehouse_read"),
+    ("event_bus", "event_bus"),
 ];
 
 /// Per-extension capability gate. Cheap to clone — the granted set is
@@ -141,6 +143,8 @@ fn category_of(c: &Capability) -> &'static str {
         Capability::HttpOut { .. } => "http_out",
         Capability::Fs { .. } => "fs",
         Capability::WallClock { .. } => "wall_clock",
+        Capability::WarehouseRead { .. } => "warehouse_read",
+        Capability::EventBus { .. } => "event_bus",
         Capability::Custom { .. } => "custom",
     }
 }
@@ -163,6 +167,11 @@ mod tests {
                 },
                 "fs" => Capability::Fs { paths: vec![] },
                 "wall_clock" => Capability::WallClock { granted: true },
+                "warehouse_read" => Capability::WarehouseRead { tables: vec![] },
+                "event_bus" => Capability::EventBus {
+                    publish: vec![],
+                    subscribe: vec![],
+                },
                 other => Capability::Custom {
                     name: other.to_string(),
                     params: serde_json::Value::Null,
@@ -217,5 +226,29 @@ mod tests {
         c.inc();
         c.inc();
         assert_eq!(c.get(), 2);
+    }
+
+    #[test]
+    fn warehouse_read_namespace_gated() {
+        // Granted: warehouse.* passes.
+        let g = gate(&["warehouse_read"]);
+        let cat = g.check("warehouse.query").unwrap().unwrap();
+        assert_eq!(cat, "warehouse_read");
+        // Ungranted: same call refused.
+        let g = gate(&["secrets"]);
+        let err = g.check("warehouse.query").unwrap_err();
+        assert!(matches!(err, Error::Capability(_)));
+    }
+
+    #[test]
+    fn event_bus_namespace_gated() {
+        let g = gate(&["event_bus"]);
+        let cat = g.check("event_bus.publish").unwrap().unwrap();
+        assert_eq!(cat, "event_bus");
+        let cat = g.check("event_bus.subscribe").unwrap().unwrap();
+        assert_eq!(cat, "event_bus");
+        let g = gate(&["secrets"]);
+        let err = g.check("event_bus.publish").unwrap_err();
+        assert!(matches!(err, Error::Capability(_)));
     }
 }

@@ -39,6 +39,7 @@ use schemars::{schema::RootSchema, JsonSchema};
 use serde::Deserialize;
 use serde_json::Value as JsonValue;
 use thiserror::Error;
+use tracing::Instrument;
 
 use starter_flow_spi::node::{
     anyhow_compat, KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
@@ -347,121 +348,132 @@ impl NodeBehavior for HttpOut {
             status = tracing::field::Empty,
             cancel_observed = tracing::field::Empty,
         );
-        let _enter = span.enter();
-
-        // Build the request.
-        let mut req = self
-            .client
-            .request(method, &url)
-            .timeout(Duration::from_millis(timeout_ms));
-        for (k, v) in &headers {
-            req = req.header(k, v);
-        }
-        let json_ct = headers
-            .keys()
-            .any(|k| k.eq_ignore_ascii_case("content-type"));
-        if let Some(b) = body_slot {
-            req = match b {
-                SlotValue::String(s) => req.body(s),
-                SlotValue::Bytes(b) => {
-                    if !json_ct {
-                        req = req.header("content-type", "application/octet-stream");
-                    }
-                    req.body(b)
-                }
-                SlotValue::Json(j) => {
-                    if json_ct {
-                        // Caller already set Content-Type — send the
-                        // serialised body but don't re-set the header.
-                        req.body(j.to_string())
-                    } else {
-                        req.json(&j)
-                    }
-                }
-                other => req.body(format!("{other:?}")),
-            };
-        }
-
-        // Issue the request, racing against the cancel token.
-        let response = tokio::select! {
-            r = req.send() => r,
-            () = ctx.cancel.cancelled() => {
-                span.record("cancel_observed", true);
-                return Err(NodeError::Cancelled);
+        // `Instrument` (not `span.enter()`) — the body contains
+        // many `.await` points (request send, body read). A span
+        // guard across `.await` corrupts the thread-local span
+        // stack if the future migrates between tokio workers,
+        // later panicking `tracing-subscriber` on an unrelated
+        // emit.
+        let span_for_record = span.clone();
+        async move {
+            // Build the request.
+            let mut req = self
+                .client
+                .request(method, &url)
+                .timeout(Duration::from_millis(timeout_ms));
+            for (k, v) in &headers {
+                req = req.header(k, v);
             }
-        };
-        let response = match response {
-            Ok(r) => r,
-            Err(e) => {
-                span.record("cancel_observed", false);
-                return Err(NodeError::Backend(format!("http-out request failed: {e}")));
-            }
-        };
-
-        let status = response.status().as_u16();
-        span.record("status", status);
-
-        // Snapshot headers before consuming the body.
-        let mut resp_headers = serde_json::Map::new();
-        for (name, value) in response.headers() {
-            let key = name.as_str().to_owned();
-            let val = value.to_str().unwrap_or("<binary>").to_owned();
-            // Multi-valued: join with ", " (HTTP-spec idiomatic for
-            // most headers).
-            resp_headers
-                .entry(key)
-                .and_modify(|e| {
-                    if let JsonValue::String(prev) = e {
-                        *prev = format!("{prev}, {val}");
+            let json_ct = headers
+                .keys()
+                .any(|k| k.eq_ignore_ascii_case("content-type"));
+            if let Some(b) = body_slot {
+                req = match b {
+                    SlotValue::String(s) => req.body(s),
+                    SlotValue::Bytes(b) => {
+                        if !json_ct {
+                            req = req.header("content-type", "application/octet-stream");
+                        }
+                        req.body(b)
                     }
-                })
-                .or_insert_with(|| JsonValue::String(val.clone()));
-        }
-        let content_type = response
-            .headers()
-            .get("content-type")
-            .and_then(|v| v.to_str().ok())
-            .map(|s| s.to_ascii_lowercase())
-            .unwrap_or_default();
+                    SlotValue::Json(j) => {
+                        if json_ct {
+                            // Caller already set Content-Type — send the
+                            // serialised body but don't re-set the header.
+                            req.body(j.to_string())
+                        } else {
+                            req.json(&j)
+                        }
+                    }
+                    other => req.body(format!("{other:?}")),
+                };
+            }
 
-        // Body: parse as JSON when the response so advertises.
-        let body_slot_value = if content_type.starts_with("application/json") {
-            let bytes = tokio::select! {
-                b = response.bytes() => b,
+            // Issue the request, racing against the cancel token.
+            let response = tokio::select! {
+                r = req.send() => r,
                 () = ctx.cancel.cancelled() => {
-                    span.record("cancel_observed", true);
+                    span_for_record.record("cancel_observed", true);
                     return Err(NodeError::Cancelled);
                 }
             };
-            let bytes =
-                bytes.map_err(|e| NodeError::Backend(format!("http-out body read failed: {e}")))?;
-            match serde_json::from_slice::<JsonValue>(&bytes) {
-                Ok(j) => SlotValue::Json(j),
-                Err(_) => SlotValue::String(String::from_utf8_lossy(&bytes).into_owned()),
-            }
-        } else {
-            let text = tokio::select! {
-                t = response.text() => t,
-                () = ctx.cancel.cancelled() => {
-                    span.record("cancel_observed", true);
-                    return Err(NodeError::Cancelled);
+            let response = match response {
+                Ok(r) => r,
+                Err(e) => {
+                    span_for_record.record("cancel_observed", false);
+                    return Err(NodeError::Backend(format!("http-out request failed: {e}")));
                 }
             };
-            SlotValue::String(
-                text.map_err(|e| NodeError::Backend(format!("http-out body read failed: {e}")))?,
-            )
-        };
 
-        span.record("cancel_observed", false);
+            let status = response.status().as_u16();
+            span_for_record.record("status", status);
 
-        let mut out = SlotMap::new();
-        out.insert(STATUS_SLOT.to_owned(), SlotValue::Int(status as i64));
-        out.insert(
-            RESPONSE_HEADERS_SLOT.to_owned(),
-            SlotValue::Json(JsonValue::Object(resp_headers)),
-        );
-        out.insert(RESPONSE_BODY_SLOT.to_owned(), body_slot_value);
-        Ok(out)
+            // Snapshot headers before consuming the body.
+            let mut resp_headers = serde_json::Map::new();
+            for (name, value) in response.headers() {
+                let key = name.as_str().to_owned();
+                let val = value.to_str().unwrap_or("<binary>").to_owned();
+                // Multi-valued: join with ", " (HTTP-spec idiomatic for
+                // most headers).
+                resp_headers
+                    .entry(key)
+                    .and_modify(|e| {
+                        if let JsonValue::String(prev) = e {
+                            *prev = format!("{prev}, {val}");
+                        }
+                    })
+                    .or_insert_with(|| JsonValue::String(val.clone()));
+            }
+            let content_type = response
+                .headers()
+                .get("content-type")
+                .and_then(|v| v.to_str().ok())
+                .map(|s| s.to_ascii_lowercase())
+                .unwrap_or_default();
+
+            // Body: parse as JSON when the response so advertises.
+            let body_slot_value = if content_type.starts_with("application/json") {
+                let bytes = tokio::select! {
+                    b = response.bytes() => b,
+                    () = ctx.cancel.cancelled() => {
+                        span_for_record.record("cancel_observed", true);
+                        return Err(NodeError::Cancelled);
+                    }
+                };
+                let bytes = bytes
+                    .map_err(|e| NodeError::Backend(format!("http-out body read failed: {e}")))?;
+                match serde_json::from_slice::<JsonValue>(&bytes) {
+                    Ok(j) => SlotValue::Json(j),
+                    Err(_) => SlotValue::String(String::from_utf8_lossy(&bytes).into_owned()),
+                }
+            } else {
+                let text = tokio::select! {
+                    t = response.text() => t,
+                    () = ctx.cancel.cancelled() => {
+                        span_for_record.record("cancel_observed", true);
+                        return Err(NodeError::Cancelled);
+                    }
+                };
+                SlotValue::String(
+                    text.map_err(|e| {
+                        NodeError::Backend(format!("http-out body read failed: {e}"))
+                    })?,
+                )
+            };
+
+            span_for_record.record("cancel_observed", false);
+
+            let mut out = SlotMap::new();
+            out.insert(STATUS_SLOT.to_owned(), SlotValue::Int(status as i64));
+            out.insert(
+                RESPONSE_HEADERS_SLOT.to_owned(),
+                SlotValue::Json(JsonValue::Object(resp_headers)),
+            );
+            out.insert(RESPONSE_BODY_SLOT.to_owned(), body_slot_value);
+            Ok(out)
+        }
+        .instrument(span)
+        .await
     }
 }
 

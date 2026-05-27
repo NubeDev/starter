@@ -105,7 +105,7 @@ pub mod wasm;
 // regardless of which `use` statements the extension author wrote.
 // ---------------------------------------------------------------------------
 
-pub use ctx::{Cancel, EmitEvent, Event, EventReceiver, EventSender};
+pub use ctx::{Cancel, CallerIdentity, EmitEvent, Event, EventReceiver, EventSender};
 pub use meta::{ExtensionDispatch, ExtensionMeta};
 
 /// Re-export so extensions can construct `Event { stream_id, payload }`
@@ -113,6 +113,8 @@ pub use meta::{ExtensionDispatch, ExtensionMeta};
 /// author has zero starter-workspace deps beyond starter-ext-sdk +
 /// serde_json").
 pub use starter_ext_spi::jsonrpc::StreamId;
+pub use starter_ext_spi::warehouse::{Row, TemplateSpec, WarehouseReadRequest};
+pub use starter_ext_spi::event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use starter_ext_spi::{
     AuthGate, Authority, Backoff, Capability, CliStreaming, ContributeCli, ContributeGrpc,
     ContributeRest, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker,
@@ -232,6 +234,17 @@ macro_rules! requires {
                 self.inner.cancel()
             }
 
+            /// Identity of the principal this invocation is dispatched
+            /// on behalf of. `None` for host-internal frames (health,
+            /// init, lifecycle); populated for every tenant-scoped
+            /// frame the supervisor stamped. Always-present accessor
+            /// (no capability gate) — the kernel surfaces identity to
+            /// every extension so handlers can scope work to the
+            /// requesting tenant without re-deriving it from `params`.
+            pub fn caller(&self) -> ::core::option::Option<&$crate::CallerIdentity> {
+                self.inner.caller()
+            }
+
             $(
                 $crate::__requires_capability_method!($cap);
             )*
@@ -292,11 +305,30 @@ macro_rules! __requires_capability_method {
             self.inner.tracing()
         }
     };
+    (warehouse_read) => {
+        /// Named-template warehouse reads. Granted by
+        /// `capabilities.warehouse_read.tables:` in `block.yaml`; an
+        /// empty `tables` allowlist neutralises every call. The host
+        /// binds `$caller_tenant_id` from `ctx.caller()` so a tool
+        /// invoked without a tenant-scoped caller is refused.
+        pub fn warehouse_read(&self) -> &$crate::ctx::WarehouseReadHandle {
+            self.inner.warehouse_read()
+        }
+    };
+    (event_bus) => {
+        /// In-process publish/subscribe bus. Granted by
+        /// `capabilities.event_bus.publish:` / `subscribe:` in
+        /// `block.yaml`; empty allowlists neutralise the
+        /// corresponding direction. V1 exposes `publish` only.
+        pub fn event_bus(&self) -> &$crate::ctx::EventBusHandle {
+            self.inner.event_bus()
+        }
+    };
     ($other:ident) => {
         compile_error!(concat!(
             "starter_ext_sdk::requires!: unknown capability category `",
             stringify!($other),
-            "`. Known categories: secrets, http_out, fs, wall_clock, tracing. ",
+            "`. Known categories: secrets, http_out, fs, wall_clock, tracing, warehouse_read, event_bus. ",
             "If you need a host-specific category, declare it as `custom` in the manifest \
              and obtain it via the host's `Custom` capability variant — there is no untyped \
              `host_call` escape hatch (SCOPE R6)."

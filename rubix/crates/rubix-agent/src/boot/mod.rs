@@ -12,6 +12,8 @@ pub mod flow_runtime;
 pub mod flows_seed;
 pub mod mcp;
 pub mod migrations;
+pub mod pool_telemetry;
+pub mod runtime_canary;
 pub mod scheduler;
 pub mod sdui;
 pub mod tracing;

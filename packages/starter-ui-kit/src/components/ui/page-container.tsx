@@ -136,7 +136,7 @@ function PageHeader({
           {title}
         </h1>
         {description ? (
-          <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-muted)]">
+          <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-muted-foreground)]">
             {description}
           </p>
         ) : null}

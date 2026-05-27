@@ -84,7 +84,7 @@ export function ConfigDrawer({
     <SheetTrigger
       aria-label={i18n.triggerAriaLabel}
       className={cn(
-        "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]",
+        "flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted-foreground)] transition-colors hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]",
         triggerClassName,
       )}
     >
@@ -122,7 +122,7 @@ export function ConfigDrawer({
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]",
                   active
                     ? "text-[color:var(--color-text)]"
-                    : "text-[color:var(--color-subtle)] hover:text-[color:var(--color-muted)]",
+                    : "text-[color:var(--color-subtle)] hover:text-[color:var(--color-muted-foreground)]",
                 )}
               >
                 {Icon && <Icon className="size-3.5" aria-hidden="true" />}

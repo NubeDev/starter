@@ -116,3 +116,13 @@ When `<SduiPage>` calls `POST /ui/resolve`:
    ```
 2. Ensure the host's `catalogueFromMap()` has a handler for that `kind`.
 3. Done — the generator picks it up automatically.
+
+## See Also
+
+- **[Dashboard API Usage](../../rubix/docs/design/sdui/dashboard-api-usage.md)** —
+  REST & MCP usage for the dashboard system, including source shapes
+  (`static`, `analytics_template`), layout rules (`page → row → col`),
+  optimistic-concurrency update flow, and known issues.
+- **[Mock Server (starter-ui-core)](../starter-ui-core/src/testing/mock-server.ts)** —
+  dependency-free fetch shim for testing auth flows; strips `/api/v1`
+  prefix so routes match regardless of client prefix config.

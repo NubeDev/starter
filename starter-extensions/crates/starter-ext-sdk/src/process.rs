@@ -37,11 +37,11 @@ use std::time::Duration;
 use serde_json::json;
 use tokio::io::BufReader;
 
-use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, Result};
+use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Result};
 
 use crate::ctx::{
-    CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend, TracingBackend,
-    WallClockBackend,
+    CtxInner, EventBusBackend, EventSender, FsBackend, HttpOutBackend, NeverCancel, Row,
+    SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend,
 };
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
 
@@ -116,7 +116,10 @@ where
     // what actually enforces R8 today.
     let (event_tx, _event_rx) = tokio::sync::mpsc::channel(64);
     let ctx_inner = stub_ctx_inner(event_tx);
-    let ctx = wrap_ctx(ctx_inner);
+    // Construct an initial Ctx wrapper for the init handshake — system
+    // frame, no caller. Per-call Ctx newtypes are reconstructed in the
+    // dispatch loop below with `with_caller`.
+    let ctx = wrap_ctx(ctx_inner.clone());
 
     // SCOPE.md "What each crate / package owns: ExtensionBehavior"
     // describes a typed `on_init(ctx, cfg)` hook; v0.1's process flavour
@@ -191,7 +194,15 @@ where
             }
             m if m.starts_with("tools/") => {
                 let tool_id = &m["tools/".len()..];
-                let result = instance.dispatch_tool(tool_id, &ctx, params);
+                // Extract `_meta.caller` from the inbound frame (absent
+                // → host-internal call). Cloning per-invocation keeps
+                // the per-call Ctx newtype's identity view immutable.
+                let caller = value
+                    .get("_meta")
+                    .and_then(|m| serde_json::from_value::<FrameMeta>(m.clone()).ok())
+                    .and_then(|m| m.caller);
+                let per_call_ctx = wrap_ctx(ctx_inner.clone().with_caller(caller));
+                let result = instance.dispatch_tool(tool_id, &per_call_ctx, params);
                 let resp = match result {
                     Ok(v) => json!({
                         "jsonrpc": JSONRPC_VERSION,
@@ -313,6 +324,45 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
     impl TracingBackend for Stub {
         fn event(&self, _level: &str, _msg: &str, _fields: serde_json::Value) {}
     }
+    impl WarehouseReadBackend for Stub {
+        fn query(
+            &self,
+            _template: &str,
+            _params: serde_json::Value,
+        ) -> Result<Vec<Row>> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+        fn count(
+            &self,
+            _template: &str,
+            _params: serde_json::Value,
+        ) -> Result<u64> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+        fn describe(
+            &self,
+            _template: &str,
+        ) -> Result<Option<TemplateSpec>> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+    }
+    impl EventBusBackend for Stub {
+        fn publish(&self, _topic: &str, _payload: serde_json::Value) -> Result<()> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+    }
     CtxInner::new(
         events,
         Arc::new(NeverCancel),
@@ -321,6 +371,8 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
         Arc::new(Stub("fs")),
         Arc::new(Stub("wall_clock")),
         Arc::new(Stub("tracing")),
+        Arc::new(Stub("warehouse_read")),
+        Arc::new(Stub("event_bus")),
     )
 }
 

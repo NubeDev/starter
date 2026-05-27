@@ -37,7 +37,8 @@ use serde_json::json;
 use starter_ext_host::ExtensionRecord;
 use starter_ext_spi::{
     jsonrpc::{stream_methods, JSONRPC_VERSION},
-    Error, ExtensionId, LifecycleState, Result, StreamCancel, StreamId, StreamNotification,
+    CallerIdentity, Error, ExtensionId, FrameMeta, LifecycleState, Result, StreamCancel, StreamId,
+    StreamNotification,
 };
 use tokio::io::{AsyncBufReadExt, BufReader};
 use tokio::process::{Child, Command};
@@ -134,6 +135,24 @@ impl SupervisorHandle {
         self.inbound
             .send(envelope)
             .map_err(|_| Error::transport("supervisor task is no longer running"))
+    }
+
+    /// Send a JSON-RPC envelope with a [`CallerIdentity`] stamped onto
+    /// its `_meta.caller` field. Identical to [`Self::send`] otherwise.
+    ///
+    /// Adapters use this to stamp the requesting principal onto every
+    /// outbound frame the supervisor forwards to the child — the
+    /// north-star "Rule 3" plumbing that lets tenant-scoped capability
+    /// handles refuse a frame without an owning tenant. A pre-existing
+    /// `_meta.caller` on the envelope is overwritten so the supervisor
+    /// is the single source of truth.
+    pub fn send_with_caller(
+        &self,
+        mut envelope: serde_json::Value,
+        caller: CallerIdentity,
+    ) -> Result<()> {
+        stamp_caller(&mut envelope, caller);
+        self.send(envelope)
     }
 
     /// Request a graceful shutdown. The supervisor sends `SIGTERM`, waits
@@ -235,6 +254,36 @@ impl SupervisorHandle {
         params: serde_json::Value,
         timeout: Duration,
     ) -> Result<serde_json::Value> {
+        self.call_inner(method, params, None, timeout).await
+    }
+
+    /// Like [`Self::call`] but stamps a [`CallerIdentity`] onto the
+    /// request's `_meta.caller` field so the child's `ctx.caller()`
+    /// resolves it. Use from any dispatcher whose inbound transport
+    /// already carries an authenticated principal (REST middleware,
+    /// gRPC interceptor, MCP authn, …).
+    ///
+    /// A frame stamped with [`CallerIdentity::system`] is equivalent to
+    /// calling [`Self::call`] — the SDK reflects both as
+    /// `ctx.caller() == None` so handlers cannot accidentally treat a
+    /// system frame as a tenant frame.
+    pub async fn call_as(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+        caller: CallerIdentity,
+        timeout: Duration,
+    ) -> Result<serde_json::Value> {
+        self.call_inner(method, params, Some(caller), timeout).await
+    }
+
+    async fn call_inner(
+        &self,
+        method: &str,
+        params: serde_json::Value,
+        caller: Option<CallerIdentity>,
+        timeout: Duration,
+    ) -> Result<serde_json::Value> {
         let id = self.next_request_id.fetch_add(1, Ordering::Relaxed);
         let (tx, rx) = oneshot::channel();
         {
@@ -245,12 +294,15 @@ impl SupervisorHandle {
             guard.insert(id, tx);
         }
 
-        let envelope = json!({
+        let mut envelope = json!({
             "jsonrpc": JSONRPC_VERSION,
             "id": id,
             "method": method,
             "params": params,
         });
+        if let Some(c) = caller {
+            stamp_caller(&mut envelope, c);
+        }
         if let Err(e) = self.send(envelope) {
             // Remove our pending entry so the slot doesn't leak; the
             // task is gone so no one will complete it.
@@ -928,6 +980,24 @@ impl SupervisorTask {
     }
 }
 
+/// Stamp a [`CallerIdentity`] onto a JSON envelope's `_meta.caller`
+/// field. Used by [`SupervisorHandle::send_with_caller`] and the
+/// `call_as` path so the wire-shape lives in one place rather than
+/// being open-coded at every adapter.
+///
+/// Overwrites any pre-existing `_meta.caller` so the supervisor (or
+/// the adapter immediately above it) is the single source of truth
+/// — a child cannot launder a different identity by pre-stamping the
+/// envelope it asked to be relayed.
+fn stamp_caller(envelope: &mut serde_json::Value, caller: CallerIdentity) {
+    let meta = FrameMeta::with_caller(caller);
+    let meta_value =
+        serde_json::to_value(&meta).expect("FrameMeta always serialises to a JSON object");
+    if let Some(obj) = envelope.as_object_mut() {
+        obj.insert("_meta".to_string(), meta_value);
+    }
+}
+
 /// Helper: serialise a JSON value as a Content-Length-framed frame on
 /// `writer`. We do not pull the framing's `write_json` directly because
 /// the wire-loop uses `tokio::process::ChildStdin` which is `AsyncWrite`,
@@ -998,5 +1068,50 @@ mod tests {
         let h1 = manifest_hash(b"v: 1\nid: com.acme.h\n");
         let h2 = manifest_hash(b"v: 1\nid: com.acme.h\n");
         assert_eq!(h1, h2);
+    }
+
+    #[test]
+    fn stamp_caller_writes_meta_block() {
+        let mut env = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/x",
+            "params": { "a": 1 },
+        });
+        stamp_caller(
+            &mut env,
+            CallerIdentity {
+                tenant_id: Some("t-1".into()),
+                user_id: Some("u-2".into()),
+                roles: vec!["viewer".into()],
+                request_id: "r-7".into(),
+            },
+        );
+        let meta = env.get("_meta").expect("_meta written");
+        let caller = meta.get("caller").expect("caller present");
+        assert_eq!(caller.get("tenant_id").and_then(|v| v.as_str()), Some("t-1"));
+        assert_eq!(caller.get("request_id").and_then(|v| v.as_str()), Some("r-7"));
+    }
+
+    #[test]
+    fn stamp_caller_overwrites_existing_meta() {
+        let mut env = json!({
+            "jsonrpc": "2.0",
+            "id": 1,
+            "method": "tools/x",
+            "_meta": { "caller": { "tenant_id": "spoofed", "request_id": "x" } }
+        });
+        stamp_caller(
+            &mut env,
+            CallerIdentity {
+                tenant_id: Some("real".into()),
+                request_id: "r-1".into(),
+                ..Default::default()
+            },
+        );
+        let tenant = env
+            .pointer("/_meta/caller/tenant_id")
+            .and_then(|v| v.as_str());
+        assert_eq!(tenant, Some("real"));
     }
 }

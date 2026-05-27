@@ -36,7 +36,7 @@ export function SectionTitle({
 }: SectionTitleProps) {
   return (
     <div className={cn("mb-2", className)}>
-      <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--color-muted)]">
+      <div className="flex items-center gap-2 text-sm font-semibold text-[color:var(--color-muted-foreground)]">
         {title}
         {showReset && onReset && (
           <Button
@@ -102,7 +102,7 @@ export function RadioIconTile({ item, isTheme = false, ariaLabel }: RadioIconTil
         <item.icon
           className={cn(
             !isTheme &&
-              "fill-[color:var(--color-leaf)] stroke-[color:var(--color-leaf)] group-data-[state=unchecked]:fill-[color:var(--color-muted)] group-data-[state=unchecked]:stroke-[color:var(--color-muted)]",
+              "fill-[color:var(--color-leaf)] stroke-[color:var(--color-leaf)] group-data-[state=unchecked]:fill-[color:var(--color-muted-foreground)] group-data-[state=unchecked]:stroke-[color:var(--color-muted-foreground)]",
           )}
           aria-hidden="true"
         />

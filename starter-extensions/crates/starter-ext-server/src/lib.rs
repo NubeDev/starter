@@ -58,6 +58,7 @@
 #![warn(missing_docs)]
 
 mod admin;
+mod capabilities;
 mod etag;
 mod events;
 mod factory;
@@ -70,6 +71,7 @@ mod store;
 mod ui;
 
 pub use admin::{ExtensionAdmin, ExtensionAdminBuilder};
+pub use capabilities::{CapabilityFactory, StubCapabilityFactory};
 pub use factory::{DefaultSupervisorFactory, SupervisorFactory, SupervisorFactoryError};
 pub use rest::{
     rest_router, BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, ProcessRestDispatcher,

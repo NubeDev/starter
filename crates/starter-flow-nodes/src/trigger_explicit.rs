@@ -38,6 +38,7 @@ use async_trait::async_trait;
 use schemars::{schema::RootSchema, JsonSchema};
 use serde::Deserialize;
 use thiserror::Error;
+use tracing::Instrument;
 
 use starter_flow_spi::node::{
     anyhow_compat, KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
@@ -259,49 +260,58 @@ impl NodeBehavior for TriggerExplicit {
             channel_id = %channel_id,
             cancel_observed = tracing::field::Empty,
         );
-        let _enter = span.enter();
-
-        let channel = match self.registry.lookup(&channel_id) {
-            Some(c) => c,
-            None => {
-                tracing::warn!(channel_id = %channel_id, "channel not registered");
-                span.record("cancel_observed", false);
-                return Err(TriggerExplicitError::UnregisteredChannel(channel_id).into_node_error());
-            }
-        };
-
-        // R13 cancellation. Race the channel receive against
-        // `ctx.cancel.cancelled()` inside a `select!`. The receiver
-        // is behind a Mutex so concurrent invocations on the same
-        // channel serialise; the Mutex acquire is sub-millisecond in
-        // practice.
-        let cancelled = ctx.cancel.cancelled();
-        tokio::pin!(cancelled);
-        let mut rx = channel.inner.lock().await;
-
-        let payload = tokio::select! {
-            biased;
-            _ = &mut cancelled => {
-                span.record("cancel_observed", true);
-                tracing::info!(channel_id = %channel_id, "trigger.explicit cancelled before payload");
-                return Err(NodeError::Cancelled);
-            }
-            recv = rx.recv() => match recv {
-                Some(p) => p,
+        // `Instrument` (not `span.enter()`) — the body awaits a
+        // mutex acquire and a channel receive. A span guard
+        // across `.await` corrupts the thread-local span stack
+        // when the future migrates between tokio workers and
+        // later panics `tracing-subscriber` on an unrelated
+        // emit.
+        let span_for_record = span.clone();
+        async move {
+            let channel = match self.registry.lookup(&channel_id) {
+                Some(c) => c,
                 None => {
-                    span.record("cancel_observed", false);
-                    tracing::warn!(channel_id = %channel_id, "trigger.explicit channel closed");
-                    return Err(
-                        TriggerExplicitError::ChannelClosed(channel_id).into_node_error()
-                    );
+                    tracing::warn!(channel_id = %channel_id, "channel not registered");
+                    span_for_record.record("cancel_observed", false);
+                    return Err(TriggerExplicitError::UnregisteredChannel(channel_id).into_node_error());
                 }
-            },
-        };
-        span.record("cancel_observed", false);
+            };
 
-        let mut out = SlotMap::new();
-        out.insert(PAYLOAD_SLOT.to_owned(), SlotValue::Json(payload));
-        Ok(out)
+            // R13 cancellation. Race the channel receive against
+            // `ctx.cancel.cancelled()` inside a `select!`. The receiver
+            // is behind a Mutex so concurrent invocations on the same
+            // channel serialise; the Mutex acquire is sub-millisecond in
+            // practice.
+            let cancelled = ctx.cancel.cancelled();
+            tokio::pin!(cancelled);
+            let mut rx = channel.inner.lock().await;
+
+            let payload = tokio::select! {
+                biased;
+                _ = &mut cancelled => {
+                    span_for_record.record("cancel_observed", true);
+                    tracing::info!(channel_id = %channel_id, "trigger.explicit cancelled before payload");
+                    return Err(NodeError::Cancelled);
+                }
+                recv = rx.recv() => match recv {
+                    Some(p) => p,
+                    None => {
+                        span_for_record.record("cancel_observed", false);
+                        tracing::warn!(channel_id = %channel_id, "trigger.explicit channel closed");
+                        return Err(
+                            TriggerExplicitError::ChannelClosed(channel_id).into_node_error()
+                        );
+                    }
+                },
+            };
+            span_for_record.record("cancel_observed", false);
+
+            let mut out = SlotMap::new();
+            out.insert(PAYLOAD_SLOT.to_owned(), SlotValue::Json(payload));
+            Ok(out)
+        }
+        .instrument(span)
+        .await
     }
 }
 

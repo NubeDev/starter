@@ -19,15 +19,20 @@
 pub mod behavior;
 pub mod capability;
 pub mod error;
+pub mod event_bus;
 pub mod id;
+pub mod identity;
 pub mod jsonrpc;
 pub mod lifecycle;
 pub mod manifest;
+pub mod warehouse;
 
 pub use behavior::ExtensionBehavior;
 pub use capability::{Authority, Capability, PathSpec};
 pub use error::{Error, Result};
+pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use id::ExtensionId;
+pub use identity::{CallerIdentity, FrameMeta};
 pub use jsonrpc::{
     flow_node_error_codes, stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification,
     JsonRpcRequest, JsonRpcResponse, JsonRpcResponsePayload, StreamCancel, StreamEnd, StreamError,
@@ -41,3 +46,4 @@ pub use manifest::{
     RestStreaming, RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision,
     MANIFEST_VERSION,
 };
+pub use warehouse::{Row, TemplateSpec, WarehouseReadRequest};

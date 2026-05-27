@@ -67,6 +67,7 @@ starter-sdui-routes       = { workspace = true }
 # `exclude = [...]`) per SCOPE R8, so the crates land here as plain
 # path-deps. Versions / sqlx feature surface match upstream.
 starter-ext-spi       = { path = "../../../starter-extensions/crates/starter-ext-spi" }
+starter-ext-sdk       = { path = "../../../starter-extensions/crates/starter-ext-sdk" }
 starter-ext-host      = { path = "../../../starter-extensions/crates/starter-ext-host" }
 starter-ext-server    = { path = "../../../starter-extensions/crates/starter-ext-server" }
 starter-ext-supervisor = { path = "../../../starter-extensions/crates/starter-ext-supervisor" }
@@ -101,7 +102,9 @@ serde_json  = { workspace = true }
 tower-http  = { workspace = true, features = ["cors", "fs"] }
 
 # Async + utility
-tokio   = { workspace = true, features = ["rt-multi-thread", "macros", "signal"] }
+# `sync` is needed for `tokio::sync::broadcast`, which backs
+# `extensions::event_bus::RubixEventBus`.
+tokio   = { workspace = true, features = ["rt-multi-thread", "macros", "signal", "sync"] }
 tracing = { workspace = true }
 anyhow  = { workspace = true }
 

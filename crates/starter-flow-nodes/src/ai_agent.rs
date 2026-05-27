@@ -52,6 +52,7 @@ use schemars::{schema::RootSchema, JsonSchema};
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 use tracing::field;
+use tracing::Instrument;
 
 use starter_flow_spi::ai_runner::AiRunnerRegistry;
 use starter_flow_spi::flow::{FlowId, SessionId, SessionMode, SessionRecord, SessionStore};
@@ -391,13 +392,22 @@ impl NodeBehavior for AiAgent {
         }
 
         let _enter = span.enter();
-
-        if let Some(hint) = cfg.skill_hint.as_ref() {
-            tracing::warn!(
-                skill_hint = %hint,
-                "ai_agent: skill_hint override is no-op until starter-skills lands; using ctx.skill"
-            );
-        }
+        // NOTE: `_enter` is dropped immediately on the next line
+        // by shadowing. We use `Instrument` (not `span.enter()`)
+        // because the body contains many `.await` points
+        // (session store, run_agent_loop). A span guard across
+        // `.await` corrupts the thread-local span stack when
+        // the future migrates between tokio workers and later
+        // panics `tracing-subscriber` on an unrelated emit.
+        drop(_enter);
+        let span_for_record = span.clone();
+        async move {
+            if let Some(hint) = cfg.skill_hint.as_ref() {
+                tracing::warn!(
+                    skill_hint = %hint,
+                    "ai_agent: skill_hint override is no-op until starter-skills lands; using ctx.skill"
+                );
+            }
 
         // Phase 4b on-mount verification (R-skills-7). Before the body
         // does anything else with the frozen `SkillSelection`, read
@@ -496,9 +506,9 @@ impl NodeBehavior for AiAgent {
             }
         }
 
-        span.record("turn_count", loop_outcome.turn_count);
-        span.record("tool_call_count", loop_outcome.tool_call_count);
-        span.record("cancel_observed", cancel.observed());
+        span_for_record.record("turn_count", loop_outcome.turn_count);
+        span_for_record.record("tool_call_count", loop_outcome.tool_call_count);
+        span_for_record.record("cancel_observed", cancel.observed());
 
         let final_text = loop_outcome.result?;
         let mut out = SlotMap::new();
@@ -508,6 +518,9 @@ impl NodeBehavior for AiAgent {
             SlotValue::Int(loop_outcome.turn_count as i64),
         );
         Ok(out)
+        }
+        .instrument(span)
+        .await
     }
 }
 

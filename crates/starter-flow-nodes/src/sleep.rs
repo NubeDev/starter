@@ -30,6 +30,7 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use thiserror::Error;
+use tracing::Instrument;
 
 use starter_flow_spi::node::{
     anyhow_compat, KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
@@ -143,30 +144,38 @@ impl NodeBehavior for Sleep {
             duration_ms = duration_ms,
             cancel_observed = tracing::field::Empty,
         );
-        let _enter = span.enter();
-
-        // Fast path: a zero-ms wait is a no-op; skip the select! so a
-        // degenerate config doesn't pay an unnecessary yield.
-        if duration_ms == 0 {
-            span.record("cancel_observed", false);
-        } else {
-            let sleep = tokio::time::sleep(Duration::from_millis(duration_ms as u64));
-            tokio::select! {
-                () = sleep => {
-                    span.record("cancel_observed", false);
-                }
-                () = ctx.cancel.cancelled() => {
-                    span.record("cancel_observed", true);
-                    return Err(NodeError::Cancelled);
+        // `Instrument` (not `span.enter()`) — holding a span guard
+        // across `.await` corrupts the thread-local span stack when
+        // the future resumes on a different tokio worker, surfacing
+        // later as a `tracing-subscriber` clone-after-close panic on
+        // an unrelated emit.
+        let span_for_record = span.clone();
+        async move {
+            // Fast path: a zero-ms wait is a no-op; skip the select! so a
+            // degenerate config doesn't pay an unnecessary yield.
+            if duration_ms == 0 {
+                span_for_record.record("cancel_observed", false);
+            } else {
+                let sleep = tokio::time::sleep(Duration::from_millis(duration_ms as u64));
+                tokio::select! {
+                    () = sleep => {
+                        span_for_record.record("cancel_observed", false);
+                    }
+                    () = ctx.cancel.cancelled() => {
+                        span_for_record.record("cancel_observed", true);
+                        return Err(NodeError::Cancelled);
+                    }
                 }
             }
-        }
 
-        let mut out = SlotMap::new();
-        if let Some(v) = value {
-            out.insert(OUT_SLOT.to_owned(), v);
+            let mut out = SlotMap::new();
+            if let Some(v) = value {
+                out.insert(OUT_SLOT.to_owned(), v);
+            }
+            Ok(out)
         }
-        Ok(out)
+        .instrument(span)
+        .await
     }
 }
 

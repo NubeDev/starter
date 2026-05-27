@@ -528,53 +528,62 @@ impl DefinitionManager {
             source = %source.audit_tag(),
             cancelled_runs = tracing::field::Empty,
         );
-        let _enter = span.enter();
+        // `Instrument` (not `span.enter()`) — the body has many
+        // `.await` points (store head/load, active.remove, failed
+        // write). A span guard across `.await` corrupts the
+        // thread-local span stack when the future migrates
+        // between tokio workers and later panics
+        // `tracing-subscriber` on an unrelated emit.
+        let span_for_record = span.clone();
+        async move {
+            let prev_head = self.store.head(flow_id.clone()).await?;
+            let apply_policy = if let Some(head) = prev_head {
+                match self.store.load(flow_id.clone(), Some(head)).await {
+                    Ok(rev) => body::parse_body(&rev.body)
+                        .map(|b| b.apply_policy)
+                        .unwrap_or_default(),
+                    Err(_) => ApplyPolicy::default(),
+                }
+            } else {
+                ApplyPolicy::default()
+            };
 
-        let prev_head = self.store.head(flow_id.clone()).await?;
-        let apply_policy = if let Some(head) = prev_head {
-            match self.store.load(flow_id.clone(), Some(head)).await {
-                Ok(rev) => body::parse_body(&rev.body)
-                    .map(|b| b.apply_policy)
-                    .unwrap_or_default(),
-                Err(_) => ApplyPolicy::default(),
+            let cancelled = match (apply_policy, prev_head) {
+                (ApplyPolicy::Restart | ApplyPolicy::LiveMigrate, Some(prev)) => {
+                    self.runs.cancel_for(&flow_id, &prev)
+                }
+                _ => 0,
+            };
+            span_for_record.record("cancelled_runs", cancelled);
+
+            let removed = self.active.remove(&flow_id).await.is_some();
+            // HR-6: deleting a flow also drops any ResolveFailed
+            // bookkeeping for it; a subsequent re-register of the
+            // missing kind must NOT remount a flow that was deleted
+            // in the meantime.
+            self.failed.write().await.remove(&flow_id);
+            if removed {
+                info!(
+                    target: "starter_flow::definition",
+                    cancelled_runs = cancelled,
+                    policy = ?apply_policy,
+                    "flow removed via publish_delete"
+                );
+            } else {
+                debug!(
+                    target: "starter_flow::definition",
+                    "publish_delete: flow was not mounted; emitting Removed anyway"
+                );
             }
-        } else {
-            ApplyPolicy::default()
-        };
 
-        let cancelled = match (apply_policy, prev_head) {
-            (ApplyPolicy::Restart | ApplyPolicy::LiveMigrate, Some(prev)) => {
-                self.runs.cancel_for(&flow_id, &prev)
-            }
-            _ => 0,
-        };
-        span.record("cancelled_runs", cancelled);
-
-        let removed = self.active.remove(&flow_id).await.is_some();
-        // HR-6: deleting a flow also drops any ResolveFailed
-        // bookkeeping for it; a subsequent re-register of the
-        // missing kind must NOT remount a flow that was deleted
-        // in the meantime.
-        self.failed.write().await.remove(&flow_id);
-        if removed {
-            info!(
-                target: "starter_flow::definition",
-                cancelled_runs = cancelled,
-                policy = ?apply_policy,
-                "flow removed via publish_delete"
-            );
-        } else {
-            debug!(
-                target: "starter_flow::definition",
-                "publish_delete: flow was not mounted; emitting Removed anyway"
-            );
+            let _ = self.events.send(FlowDefinitionEvent::Removed {
+                flow: flow_id,
+                source,
+            });
+            Ok(())
         }
-
-        let _ = self.events.send(FlowDefinitionEvent::Removed {
-            flow: flow_id,
-            source,
-        });
-        Ok(())
+        .instrument(span)
+        .await
     }
 
     /// Install a freshly-resolved topology and emit the swap event.
@@ -604,67 +613,74 @@ impl DefinitionManager {
             to_revision = %new_revision,
             apply_policy = ?apply_policy,
         );
-        let _enter = span.enter();
+        // `Instrument` (not `span.enter()`) — the body awaits
+        // `active.install`. A span guard across `.await`
+        // corrupts the thread-local span stack when the future
+        // migrates between tokio workers and later panics
+        // `tracing-subscriber` on an unrelated emit.
+        async move {
+            self.active.install(flow_id.clone(), topology).await;
 
-        self.active.install(flow_id.clone(), topology).await;
+            match prev_head {
+                None => {
+                    info!(
+                        target: "starter_flow::definition",
+                        source = %source.audit_tag(),
+                        "flow mounted (initial publish)"
+                    );
+                    let _ = self.events.send(FlowDefinitionEvent::Mounted {
+                        flow: flow_id.clone(),
+                        revision: new_revision,
+                    });
+                }
+                Some(_) => {
+                    info!(
+                        target: "starter_flow::definition",
+                        edit_kind = ?edit.tag(),
+                        "active topology swapped"
+                    );
+                }
+            }
 
-        match prev_head {
-            None => {
+            // HR-4 apply_policy dispatch. The policy is read from the
+            // *previous* revision; the rules for what to do are:
+            //
+            // - `Drain`   — in-flight runs finish on their snapshot;
+            //               nothing extra to do here.
+            // - `Restart` — fire `RunCancel` for every run still
+            //               registered against `prev_head`.
+            // - `LiveMigrate` — falls back to `Restart` for the
+            //               structural piece of the swap. The settings
+            //               piece (`SettingsOnly`) takes the
+            //               apply_settings path below and does not
+            //               cancel in-flight runs.
+            let cancelled = match (apply_policy, prev_head) {
+                (ApplyPolicy::Restart, Some(prev)) => self.runs.cancel_for(&flow_id, &prev),
+                (ApplyPolicy::LiveMigrate, Some(prev))
+                    if matches!(edit, EditKind::Structural | EditKind::Mixed { .. }) =>
+                {
+                    self.runs.cancel_for(&flow_id, &prev)
+                }
+                _ => 0,
+            };
+            if cancelled > 0 {
                 info!(
                     target: "starter_flow::definition",
-                    source = %source.audit_tag(),
-                    "flow mounted (initial publish)"
-                );
-                let _ = self.events.send(FlowDefinitionEvent::Mounted {
-                    flow: flow_id.clone(),
-                    revision: new_revision,
-                });
-            }
-            Some(_) => {
-                info!(
-                    target: "starter_flow::definition",
-                    edit_kind = ?edit.tag(),
-                    "active topology swapped"
+                    cancelled_runs = cancelled,
+                    policy = ?apply_policy,
+                    "swap cancelled in-flight runs per apply_policy"
                 );
             }
-        }
 
-        // HR-4 apply_policy dispatch. The policy is read from the
-        // *previous* revision; the rules for what to do are:
-        //
-        // - `Drain`   — in-flight runs finish on their snapshot;
-        //               nothing extra to do here.
-        // - `Restart` — fire `RunCancel` for every run still
-        //               registered against `prev_head`.
-        // - `LiveMigrate` — falls back to `Restart` for the
-        //               structural piece of the swap. The settings
-        //               piece (`SettingsOnly`) takes the
-        //               apply_settings path below and does not
-        //               cancel in-flight runs.
-        let cancelled = match (apply_policy, prev_head) {
-            (ApplyPolicy::Restart, Some(prev)) => self.runs.cancel_for(&flow_id, &prev),
-            (ApplyPolicy::LiveMigrate, Some(prev))
-                if matches!(edit, EditKind::Structural | EditKind::Mixed { .. }) =>
-            {
-                self.runs.cancel_for(&flow_id, &prev)
-            }
-            _ => 0,
-        };
-        if cancelled > 0 {
-            info!(
-                target: "starter_flow::definition",
-                cancelled_runs = cancelled,
-                policy = ?apply_policy,
-                "swap cancelled in-flight runs per apply_policy"
-            );
+            let _ = self.events.send(FlowDefinitionEvent::SwapApplied {
+                flow: flow_id,
+                from_revision: prev_head,
+                to_revision: new_revision,
+                apply_policy,
+            });
         }
-
-        let _ = self.events.send(FlowDefinitionEvent::SwapApplied {
-            flow: flow_id,
-            from_revision: prev_head,
-            to_revision: new_revision,
-            apply_policy,
-        });
+        .instrument(span)
+        .await
     }
 
     /// Walk [`FlowStore::list`] and mount every flow's head per

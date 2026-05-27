@@ -34,11 +34,14 @@ use futures::stream::Stream;
 use starter_ext_host::ExtensionRegistry;
 use starter_ext_sdk::builtin::BuiltinTable;
 use starter_ext_sdk::ctx::{
-    Cancel, CtxInner, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend,
+    Cancel, CtxInner, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend,
+    WallClockBackend,
 };
 use starter_ext_spi::jsonrpc::{StreamId, StreamNotification};
 use starter_ext_spi::{Error, ExtensionId, RuntimeKind};
 use tokio::sync::{mpsc, watch};
+
+use crate::capabilities::{CapabilityFactory, StubCapabilityFactory};
 
 /// One streaming-event payload as it leaves the dispatcher. Carries the
 /// `stream_id` the initial dispatch allocated; the renderer (SSE or
@@ -215,6 +218,11 @@ pub struct BuiltinRestDispatcher {
     /// handler doesn't immediately backpressure on a slow client; the
     /// adapter's renderer drains at SSE / NDJSON wire speed.
     event_channel_capacity: usize,
+    /// Source of capability backends per call. Defaults to
+    /// [`StubCapabilityFactory`] (every backend refuses with
+    /// `Error::Capability`). Hosts opt in to real backends via
+    /// [`Self::with_capability_factory`].
+    capability_factory: Arc<dyn CapabilityFactory>,
 }
 
 impl BuiltinRestDispatcher {
@@ -224,7 +232,52 @@ impl BuiltinRestDispatcher {
             table,
             registry,
             event_channel_capacity: 16,
+            capability_factory: Arc::new(StubCapabilityFactory),
         }
+    }
+
+    /// Install a host-provided [`CapabilityFactory`]. Builder-style
+    /// so existing callers can keep their single-line construction
+    /// unchanged.
+    ///
+    /// The factory is consulted every time the dispatcher builds a
+    /// `Ctx` (once per dispatch). It's the host's job to make
+    /// per-call construction cheap (the rubix-side factory clones
+    /// `Arc`s only).
+    pub fn with_capability_factory(mut self, factory: Arc<dyn CapabilityFactory>) -> Self {
+        self.capability_factory = factory;
+        self
+    }
+
+    /// Construct a per-call `CtxInner`. The host-overridable
+    /// capabilities (`warehouse_read`, `event_bus`) come from
+    /// [`Self::capability_factory`]; everything else is the
+    /// substrate-default stub for now (lifting those to the factory
+    /// is a follow-up — `secrets`/`http_out`/`fs` each want their
+    /// own allowlist threading first).
+    ///
+    /// `caller` is the principal the inbound frame was dispatched
+    /// on behalf of. Today the dispatcher always passes `None` —
+    /// caller extraction off the HTTP request is the next slice.
+    /// A factory that refuses on `None` (e.g. the rubix-agent
+    /// shape) is the intentional fail-closed default until then.
+    fn build_ctx(
+        &self,
+        events: mpsc::Sender<StreamEvent>,
+        cancel: Arc<dyn Cancel>,
+        caller: Option<&starter_ext_spi::identity::CallerIdentity>,
+    ) -> CtxInner {
+        CtxInner::new(
+            events,
+            cancel,
+            Arc::new(StubSecrets),
+            Arc::new(StubHttpOut),
+            Arc::new(StubFs),
+            Arc::new(StubWallClock),
+            Arc::new(StubTracing),
+            self.capability_factory.warehouse_read(caller),
+            self.capability_factory.event_bus(caller),
+        )
     }
 
     fn ensure_builtin(&self, extension: &ExtensionId) -> Result<(), DispatchError> {
@@ -265,7 +318,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         // Non-streaming: stub event channel + cancel (handler may
         // ignore them).
         let (tx, _rx) = mpsc::channel(self.event_channel_capacity);
-        let ctx = build_ctx(tx, Arc::new(NeverCancel));
+        let ctx = self.build_ctx(tx, Arc::new(NeverCancel), None);
 
         // BuiltinEntry::dispatch is sync. Run on the blocking pool so
         // the async runtime isn't held up by a long handler. The
@@ -299,7 +352,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         let cancel = WatchCancel::new(cancel_rx);
         let (tx, rx) = mpsc::channel(self.event_channel_capacity);
 
-        let ctx = build_ctx(tx, Arc::new(cancel));
+        let ctx = self.build_ctx(tx, Arc::new(cancel), None);
         let entry_dispatch = entry.dispatch_arc();
         let contribute_id_owned = contribute_id.to_owned();
 
@@ -461,19 +514,10 @@ impl RestDispatcher for ProcessRestDispatcher {
 
 // ---------------------------------------------------------------------------
 // Internals: stub capability backends, NeverCancel-style cancel-on-disconnect
+//
+// `warehouse_read` and `event_bus` are no longer stubbed here — the
+// `CapabilityFactory` seam in `crate::capabilities` owns those.
 // ---------------------------------------------------------------------------
-
-fn build_ctx(events: mpsc::Sender<StreamEvent>, cancel: Arc<dyn Cancel>) -> CtxInner {
-    CtxInner::new(
-        events,
-        cancel,
-        Arc::new(StubSecrets),
-        Arc::new(StubHttpOut),
-        Arc::new(StubFs),
-        Arc::new(StubWallClock),
-        Arc::new(StubTracing),
-    )
-}
 
 #[derive(Debug)]
 struct StubSecrets;

@@ -29,7 +29,9 @@ pub mod loader;
 pub mod record;
 pub mod registry;
 pub mod validate;
+pub mod warehouse;
 
 pub use loader::{Loader, LoaderOutcome};
 pub use record::ExtensionRecord;
 pub use registry::ExtensionRegistry;
+pub use warehouse::TemplateRegistry;

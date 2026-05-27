@@ -16,6 +16,6 @@
 pub mod store;
 
 pub use store::{
-    DashboardRevision, DashboardStore, DashboardStoreError, ListFilter, NewRevision,
-    BUNDLED_PRINCIPAL, BUNDLED_TENANT,
+    DashboardRevision, DashboardStore, DashboardStoreError, InsertOutcome, ListFilter,
+    NewRevision, BUNDLED_PRINCIPAL, BUNDLED_TENANT,
 };

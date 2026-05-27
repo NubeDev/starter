@@ -10,6 +10,7 @@
 //! boot order this crate composes.
 
 pub mod boot;
+pub mod extensions;
 pub mod health;
 pub mod middleware;
 pub mod openapi;

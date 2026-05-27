@@ -37,10 +37,10 @@ use std::sync::Arc;
 
 use anyhow::Result;
 use serde::Deserialize;
-use sqlx::postgres::PgListener;
+use sqlx::postgres::{PgListener, PgPoolOptions};
 use starter_flow::definition::body::FlowBody;
 use starter_flow_spi::flow::{FlowId, FlowRevisionId};
-use starter_store_postgres::pool::{connect, Pool};
+use starter_store_postgres::pool::Pool;
 use tokio::task::JoinHandle;
 use tracing::{debug, info, warn};
 use uuid::Uuid;
@@ -81,9 +81,20 @@ pub async fn spawn_flow_notify(
         );
         return Ok(None);
     };
-    let pool = connect(dsn)
+    // Dedicated tiny pool: PgListener pins one connection for
+    // LISTEN, and we only need a second short-lived connection in
+    // `handle_payload` to re-read the body. A 16-connection pool
+    // (the default of `starter_store_postgres::pool::connect`) just
+    // burns FDs against `max_connections` on the Postgres side and
+    // makes the agent's pool-budget arithmetic harder to reason
+    // about during freeze investigations.
+    const FLOW_NOTIFY_POOL_SIZE: u32 = 2;
+    let inner = PgPoolOptions::new()
+        .max_connections(FLOW_NOTIFY_POOL_SIZE)
+        .connect(dsn)
         .await
         .map_err(|e| anyhow::anyhow!("connect for flow_notify: {e}"))?;
+    let pool = Pool::from_sqlx(inner);
     let mut listener = PgListener::connect_with(pool.sqlx())
         .await
         .map_err(|e| anyhow::anyhow!("PgListener::connect_with: {e}"))?;
@@ -95,6 +106,11 @@ pub async fn spawn_flow_notify(
         channel = FLOWS_DEFINITIONS_CHANNEL,
         "flows_definitions NOTIFY listener active"
     );
+
+    // Observability: trace this micro-pool alongside the main
+    // mcp/auth/warehouse pools so a starved listener pool is
+    // visible without a second debugging round-trip.
+    let _telemetry = super::pool_telemetry::spawn(pool.sqlx().clone(), "rubix-flow-notify");
 
     let handle = tokio::spawn(async move {
         loop {

@@ -27,7 +27,10 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
+pub use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::jsonrpc::StreamId;
+pub use starter_ext_spi::warehouse::{Row, TemplateSpec, WarehouseReadRequest};
+pub use starter_ext_spi::event_bus::{EventBusMessage, EventBusPublishRequest};
 
 // ---------------------------------------------------------------------------
 // Event stream (mirror of `starter-spi::ai::OnEvent + Cancel`)
@@ -185,6 +188,100 @@ impl TracingHandle {
     }
 }
 
+/// Named-template warehouse-read handle (granted by
+/// `capabilities.warehouse_read.tables: […]`).
+///
+/// The handle is **not** a SQL gateway. Templates are server-defined;
+/// extensions reference them by name and bind typed parameters. The
+/// host's registry rejects unknown templates and the supervisor's
+/// capability gate refuses templates touching tables outside the
+/// extension's grant.
+///
+/// Per Appendix A of the extension-architecture-north-star proposal,
+/// the host binds `$caller_tenant_id` from `ctx.caller()` before
+/// executing the template — extensions cannot override it. A frame
+/// without a caller (system frame) is refused by the host-side
+/// backend with `Error::Capability`.
+#[derive(Debug, Clone)]
+pub struct WarehouseReadHandle {
+    inner: Arc<dyn private::WarehouseReadBackend>,
+}
+
+impl WarehouseReadHandle {
+    /// Execute a named-template query, returning the rows.
+    ///
+    /// `template` must exist in the host's registry (a `block.yaml`
+    /// contribution under `contributes.warehouse_templates[]` once row
+    /// 3 lands, or one of the host's builtin templates). `params` is
+    /// validated against the template's parameter schema before
+    /// binding.
+    ///
+    /// v1 returns a `Vec<Row>` (sync). A future v2 will add
+    /// `query_stream(…) -> BoxStream<Row>` for large pulls without
+    /// pinning a host worker on the buffer; the v1 shape is preserved
+    /// per the proposal's "add v2 method, keep v1" deprecation rule.
+    pub fn query(
+        &self,
+        template: &str,
+        params: serde_json::Value,
+    ) -> starter_ext_spi::Result<Vec<Row>> {
+        self.inner.query(template, params)
+    }
+
+    /// Count of rows the template would yield. Cheaper than `query`
+    /// when the caller only needs a tally (KPI cards, pagination).
+    pub fn count(
+        &self,
+        template: &str,
+        params: serde_json::Value,
+    ) -> starter_ext_spi::Result<u64> {
+        self.inner.count(template, params)
+    }
+
+    /// Look up a template's catalog entry (parameter schema, allowed
+    /// tables, optional SQL body). Returns `None` if the template is
+    /// not registered. Useful for documentation surfaces and for
+    /// extensions that want to introspect their own grant before
+    /// invoking.
+    pub fn describe(&self, template: &str) -> starter_ext_spi::Result<Option<TemplateSpec>> {
+        self.inner.describe(template)
+    }
+}
+
+/// In-process publish/subscribe bus handle (granted by
+/// `capabilities.event_bus.publish:` / `subscribe:`).
+///
+/// Per [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+/// row 4. Cross-filter and live updates push through the bus
+/// instead of polling via N HTTP loopback round-trips.
+///
+/// V1 exposes `publish` only. The subscribe-side handle
+/// (`subscribe(topic) -> BoxStream<EventBusMessage>`) is a
+/// follow-up — the SPI wire request type for it
+/// (`EventBusSubscribeRequest`) ships in the same release so the
+/// shape doesn't break when the handle lands.
+#[derive(Debug, Clone)]
+pub struct EventBusHandle {
+    inner: Arc<dyn private::EventBusBackend>,
+}
+
+impl EventBusHandle {
+    /// Publish a message on `topic`.
+    ///
+    /// `topic` must be in the extension's grant `publish: [...]`
+    /// allowlist and must live under the extension's reverse-DNS
+    /// namespace; the supervisor refuses cross-namespace publishes.
+    /// The host stamps a `ts_unix_ms` value before fan-out so every
+    /// subscriber sees the same timestamp.
+    pub fn publish(
+        &self,
+        topic: &str,
+        payload: serde_json::Value,
+    ) -> starter_ext_spi::Result<()> {
+        self.inner.publish(topic, payload)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // CtxInner — the always-shared backing handle.
 //
@@ -202,11 +299,14 @@ impl TracingHandle {
 pub struct CtxInner {
     events: EventSender,
     cancel: Arc<dyn Cancel>,
+    caller: Option<Arc<CallerIdentity>>,
     secrets: SecretsHandle,
     http_out: HttpOutHandle,
     fs: FsHandle,
     wall_clock: WallClockHandle,
     tracing: TracingHandle,
+    warehouse_read: WarehouseReadHandle,
+    event_bus: EventBusHandle,
 }
 
 impl CtxInner {
@@ -223,16 +323,34 @@ impl CtxInner {
         fs: Arc<dyn private::FsBackend>,
         wall_clock: Arc<dyn private::WallClockBackend>,
         tracing: Arc<dyn private::TracingBackend>,
+        warehouse_read: Arc<dyn private::WarehouseReadBackend>,
+        event_bus: Arc<dyn private::EventBusBackend>,
     ) -> Self {
         Self {
             events,
             cancel,
+            caller: None,
             secrets: SecretsHandle { inner: secrets },
             http_out: HttpOutHandle { inner: http_out },
             fs: FsHandle { inner: fs },
             wall_clock: WallClockHandle { inner: wall_clock },
             tracing: TracingHandle { inner: tracing },
+            warehouse_read: WarehouseReadHandle {
+                inner: warehouse_read,
+            },
+            event_bus: EventBusHandle { inner: event_bus },
         }
+    }
+
+    /// Return a fresh `CtxInner` cloned from `self` with `caller` set
+    /// to the supplied value (or cleared with `None`).
+    ///
+    /// Per-flavour dispatch loops call this once per inbound frame so
+    /// every handler invocation sees its own immutable view of the
+    /// requesting principal. Cheap — every field is `Arc`-backed.
+    pub fn with_caller(mut self, caller: Option<CallerIdentity>) -> Self {
+        self.caller = caller.map(Arc::new);
+        self
     }
 
     /// Returns the always-present event sender.
@@ -243,6 +361,18 @@ impl CtxInner {
     /// Returns the always-present cancellation handle.
     pub fn cancel(&self) -> &dyn Cancel {
         &*self.cancel
+    }
+
+    /// Returns the identity of the principal this invocation is being
+    /// dispatched on behalf of, or `None` for a host-internal / system
+    /// frame (health, init, lifecycle).
+    ///
+    /// Populated by the per-flavour entry-point glue from the inbound
+    /// frame's `_meta.caller` sidecar. The reference is borrowed from
+    /// the `Arc` the SDK clones per invocation — callers wanting to
+    /// retain it past the handler's return should clone the value.
+    pub fn caller(&self) -> Option<&CallerIdentity> {
+        self.caller.as_deref()
     }
 
     /// Borrow the secrets handle (named by `requires!(secrets)`).
@@ -265,6 +395,15 @@ impl CtxInner {
     pub fn tracing(&self) -> &TracingHandle {
         &self.tracing
     }
+    /// Borrow the warehouse-read handle (named by
+    /// `requires!(warehouse_read)`).
+    pub fn warehouse_read(&self) -> &WarehouseReadHandle {
+        &self.warehouse_read
+    }
+    /// Borrow the event-bus handle (named by `requires!(event_bus)`).
+    pub fn event_bus(&self) -> &EventBusHandle {
+        &self.event_bus
+    }
 }
 
 impl std::fmt::Debug for CtxInner {
@@ -282,7 +421,7 @@ impl std::fmt::Debug for CtxInner {
 // its concrete backing (secret store, reqwest client, std::fs, …).
 // ---------------------------------------------------------------------------
 
-pub use private::{FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend};
+pub use private::{FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, EventBusBackend};
 
 mod private {
     /// Host-side backing for [`super::SecretsHandle`].
@@ -314,6 +453,39 @@ mod private {
         /// Emit a structured event at the given level.
         fn event(&self, level: &str, msg: &str, fields: serde_json::Value);
     }
+
+    /// Host-side backing for [`super::WarehouseReadHandle`].
+    pub trait WarehouseReadBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Execute a named-template query.
+        fn query(
+            &self,
+            template: &str,
+            params: serde_json::Value,
+        ) -> starter_ext_spi::Result<Vec<super::Row>>;
+
+        /// Count the rows the template would yield.
+        fn count(
+            &self,
+            template: &str,
+            params: serde_json::Value,
+        ) -> starter_ext_spi::Result<u64>;
+
+        /// Look up a template's catalog entry.
+        fn describe(
+            &self,
+            template: &str,
+        ) -> starter_ext_spi::Result<Option<super::TemplateSpec>>;
+    }
+
+    /// Host-side backing for [`super::EventBusHandle`].
+    pub trait EventBusBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Publish `payload` on `topic`.
+        fn publish(
+            &self,
+            topic: &str,
+            payload: serde_json::Value,
+        ) -> starter_ext_spi::Result<()>;
+    }
 }
 
 #[cfg(test)]
@@ -337,5 +509,87 @@ mod tests {
         let c = NeverCancel;
         assert!(!c.is_cancelled());
         // We do not poll the future — `pending()` would block forever.
+    }
+
+    #[test]
+    fn with_caller_sets_and_clears_the_field() {
+        // Build a CtxInner via the stub backends from process.rs would
+        // be circular — construct a bare one inline.
+        use crate::ctx::private::*;
+        #[derive(Debug)]
+        struct Noop;
+        impl SecretsBackend for Noop {
+            fn get(&self, _: &str) -> starter_ext_spi::Result<String> {
+                Ok(String::new())
+            }
+        }
+        impl HttpOutBackend for Noop {
+            fn request(&self, _: serde_json::Value) -> starter_ext_spi::Result<serde_json::Value> {
+                Ok(serde_json::Value::Null)
+            }
+        }
+        impl FsBackend for Noop {
+            fn read(&self, _: &str) -> starter_ext_spi::Result<Vec<u8>> {
+                Ok(Vec::new())
+            }
+        }
+        impl WallClockBackend for Noop {
+            fn now_unix_ms(&self) -> starter_ext_spi::Result<u64> {
+                Ok(0)
+            }
+        }
+        impl TracingBackend for Noop {
+            fn event(&self, _: &str, _: &str, _: serde_json::Value) {}
+        }
+        impl WarehouseReadBackend for Noop {
+            fn query(
+                &self,
+                _: &str,
+                _: serde_json::Value,
+            ) -> starter_ext_spi::Result<Vec<Row>> {
+                Ok(Vec::new())
+            }
+            fn count(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<u64> {
+                Ok(0)
+            }
+            fn describe(
+                &self,
+                _: &str,
+            ) -> starter_ext_spi::Result<Option<TemplateSpec>> {
+                Ok(None)
+            }
+        }
+        impl EventBusBackend for Noop {
+            fn publish(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<()> {
+                Ok(())
+            }
+        }
+        let (tx, _rx) = tokio::sync::mpsc::channel(1);
+        let inner = CtxInner::new(
+            tx,
+            Arc::new(NeverCancel),
+            Arc::new(Noop),
+            Arc::new(Noop),
+            Arc::new(Noop),
+            Arc::new(Noop),
+            Arc::new(Noop),
+            Arc::new(Noop),
+            Arc::new(Noop),
+        );
+        assert!(inner.caller().is_none(), "fresh CtxInner has no caller");
+        let stamped = inner.clone().with_caller(Some(CallerIdentity {
+            tenant_id: Some("t-1".into()),
+            request_id: "r-1".into(),
+            ..Default::default()
+        }));
+        let c = stamped.caller().expect("caller present after with_caller");
+        assert_eq!(c.tenant_id.as_deref(), Some("t-1"));
+        assert_eq!(c.request_id, "r-1");
+        // Original inner is unchanged (with_caller takes self by value
+        // but Clone is cheap).
+        assert!(inner.caller().is_none());
+        // Clearing.
+        let cleared = stamped.with_caller(None);
+        assert!(cleared.caller().is_none());
     }
 }

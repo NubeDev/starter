@@ -359,6 +359,21 @@ pub struct Contributes {
     /// self-approve a skill.
     #[serde(default)]
     pub skills: Vec<ContributeSkillsDir>,
+    /// Warehouse-read template contributions. Consumed by
+    /// `starter-ext-host::TemplateRegistry::extend_from_record`
+    /// during the host's post-commit wiring step.
+    ///
+    /// Each entry adds a [`TemplateSpec`](crate::warehouse::TemplateSpec)
+    /// to the in-process [`TemplateRegistry`] under the extension's
+    /// reverse-DNS namespace; the host's `WarehouseReadHandle` backend
+    /// then resolves `warehouse.query` calls against that registry.
+    /// Per
+    /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+    /// row 3: the manifest is the only way an extension widens the
+    /// warehouse-read catalog — there is no runtime `register_template`
+    /// SDK call.
+    #[serde(default)]
+    pub warehouse_templates: Vec<ContributeWarehouseTemplate>,
 }
 
 /// One `contributes.skills[]` entry — a directory of `SKILL.md`
@@ -378,6 +393,52 @@ pub struct ContributeSkillsDir {
     /// (e.g. `"skills/"`). The adapter resolves this against the
     /// extension's installed bundle root before walking.
     pub dir: String,
+}
+
+/// One `contributes.warehouse_templates[]` entry — a named
+/// warehouse-read template the extension adds to the host's
+/// [`TemplateRegistry`](crate::warehouse).
+///
+/// The extension ships:
+/// - a JSON Schema describing the template's bound parameters,
+///   resolved at load time from `params_schema` (relative to bundle
+///   root, R7: never templated at runtime);
+/// - an optional SQL body resolved from `sql_file` (also R7) —
+///   stored verbatim in [`TemplateSpec::sql`] for audit and admin
+///   surfaces. Per row 3 the host crate does not execute the SQL;
+///   the host integration crate (`rubix-agent`) is the resolver;
+///   `sql_file` is descriptive.
+///
+/// `tables` is the declared table allowlist for the template; the
+/// supervisor will cross-check this against the extension's
+/// `warehouse_read` grant when per-template enforcement lands
+/// alongside row 5's host dispatch wiring (today the grant's table
+/// allowlist gates the namespace).
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeWarehouseTemplate {
+    /// Template name. Must be the extension id or a dotted descendant
+    /// (R4 namespace ownership). Host-reserved prefixes (`starter.`,
+    /// `sys.`) are rejected outright at load time.
+    pub name: String,
+
+    /// Path (relative to bundle root) to a JSON Schema describing
+    /// the template's bound `params`. The loader reads this file at
+    /// commit time and embeds the parsed schema into the resulting
+    /// [`TemplateSpec::params`](crate::warehouse::TemplateSpec).
+    pub params_schema: String,
+
+    /// Tables the template touches. Used by the supervisor to gate
+    /// the call against the extension's `warehouse_read` grant
+    /// (the grant's `tables: [...]` must be a superset).
+    pub tables: Vec<String>,
+
+    /// Optional path (relative to bundle root) to a SQL file holding
+    /// the template body. Captured verbatim into
+    /// [`TemplateSpec::sql`](crate::warehouse::TemplateSpec) for
+    /// audit; R7 — the SQL is never templated at runtime.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sql_file: Option<String>,
 }
 
 /// The extension's i18n block.

@@ -662,6 +662,8 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
         Arc::new(StubFs),
         Arc::new(StubWallClock),
         Arc::new(StubTracing),
+        Arc::new(StubWarehouseRead),
+        Arc::new(StubEventBus),
     )
 }
 
@@ -707,6 +709,47 @@ impl WallClockBackend for StubWallClock {
 struct StubTracing;
 impl TracingBackend for StubTracing {
     fn event(&self, _level: &str, _msg: &str, _fields: serde_json::Value) {}
+}
+
+#[derive(Debug)]
+struct StubWarehouseRead;
+impl starter_ext_sdk::ctx::WarehouseReadBackend for StubWarehouseRead {
+    fn query(
+        &self,
+        _template: &str,
+        _params: serde_json::Value,
+    ) -> starter_ext_spi::Result<Vec<starter_ext_spi::warehouse::Row>> {
+        Err(Error::capability(
+            "warehouse_read not wired in CLI adapter Phase 6",
+        ))
+    }
+    fn count(
+        &self,
+        _template: &str,
+        _params: serde_json::Value,
+    ) -> starter_ext_spi::Result<u64> {
+        Err(Error::capability(
+            "warehouse_read not wired in CLI adapter Phase 6",
+        ))
+    }
+    fn describe(
+        &self,
+        _template: &str,
+    ) -> starter_ext_spi::Result<Option<starter_ext_spi::warehouse::TemplateSpec>> {
+        Err(Error::capability(
+            "warehouse_read not wired in CLI adapter Phase 6",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubEventBus;
+impl starter_ext_sdk::ctx::EventBusBackend for StubEventBus {
+    fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
+        Err(Error::capability(
+            "event_bus not wired in CLI adapter Phase 6",
+        ))
+    }
 }
 
 #[derive(Debug, Default)]

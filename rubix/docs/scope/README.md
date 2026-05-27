@@ -27,6 +27,13 @@ Per [HOW-TO-CODE.md §0a](../../HOW-TO-CODE.md):
   `starter-ui-kit-native`, `starter-ui-sdui-native`,
   `starter-ui-dashboard-native`) plus `rubix/mobile/` Expo app.
   See [ADR 0004](../adr/0004-react-native-mobile-app.md).
+- [extensions-north-star/](./extensions-north-star/README.md) —
+  the typed-capability extension architecture roadmap. Critical
+  path from today's five shipped handles to a Power-BI-style
+  dashboard-authoring extension. Companion proposal at
+  [docs/proposal/extension-architecture-north-star.md](../proposal/extension-architecture-north-star.md).
+  Status tracked per session in
+  [PROGRESS.md](./extensions-north-star/PROGRESS.md).
 
 ## Active codeless jobs
 

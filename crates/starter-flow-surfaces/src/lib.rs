@@ -30,6 +30,7 @@ use async_trait::async_trait;
 use tokio::sync::broadcast;
 use tokio::task::JoinHandle;
 use tokio::time::timeout;
+use tracing::Instrument;
 
 use starter_flow::engine::Engine;
 use starter_flow::propagator::FlowTopology;
@@ -145,13 +146,28 @@ impl FlowAsTool {
         input: serde_json::Value,
         cancel: Arc<RunCancel>,
     ) -> SpiResult<serde_json::Value> {
+        // `Instrument` (not `span.enter()`) because the body
+        // contains `.await` points. A span guard held across
+        // `.await` corrupts the thread-local span stack when the
+        // future resumes on a different worker — surfaces later
+        // as a `tracing-subscriber` panic
+        // (`tried to clone a span that already closed`) inside
+        // an unrelated emit on the poisoned worker.
         let span = tracing::info_span!(
             "flow_as_tool.call",
             flow_id = %self.flow_id,
             tool_id = %self.tool_id.as_str(),
         );
-        let _enter = span.enter();
+        self.invoke_with_cancel_inner(input, cancel)
+            .instrument(span)
+            .await
+    }
 
+    async fn invoke_with_cancel_inner(
+        &self,
+        input: serde_json::Value,
+        cancel: Arc<RunCancel>,
+    ) -> SpiResult<serde_json::Value> {
         let seeds = (self.seed_adapter)(&input);
         let spec = RunSpec::new(
             self.flow_id.clone(),

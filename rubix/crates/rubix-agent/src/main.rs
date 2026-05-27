@@ -29,10 +29,56 @@ use rubix_agent::{health, middleware, openapi as rubix_openapi_mod, registry, ro
 use starter_changelog_postgres::PgChangeRecorder;
 use starter_spi::changelog::ChangeRecorder;
 use starter_store_postgres::pool::connect as pg_connect;
-
 #[tokio::main]
 async fn main() -> Result<()> {
     let _guard = boot::init_tracing()?;
+
+    // Install a panic hook that logs every panic via `tracing`
+    // before the default hook runs. Without this, a panic inside
+    // a `tokio::spawn`'d task is silently caught by the runtime
+    // and printed to stderr in a format the operator can easily
+    // miss (and that does not interleave with the structured
+    // tracing log). Wrapping `take_hook` chains us in front of
+    // the default so the standard backtrace still fires.
+    //
+    // This was wired in after the freeze investigation surfaced
+    // a `tracing-subscriber` "tried to clone a span that already
+    // closed" assertion that was sitting silently in
+    // `/tmp/rubix-agent.log` for hours. With the hook installed,
+    // any future panic gets a `target="rubix.panic"` line that
+    // stands out alongside normal events.
+    {
+        let default_hook = std::panic::take_hook();
+        std::panic::set_hook(Box::new(move |info| {
+            let loc = info
+                .location()
+                .map(|l| format!("{}:{}:{}", l.file(), l.line(), l.column()))
+                .unwrap_or_else(|| "<unknown>".into());
+            let payload = info
+                .payload()
+                .downcast_ref::<&'static str>()
+                .map(|s| (*s).to_owned())
+                .or_else(|| info.payload().downcast_ref::<String>().cloned())
+                .unwrap_or_else(|| "<non-string panic payload>".into());
+            tracing::error!(
+                target: "rubix.panic",
+                location = %loc,
+                thread = %std::thread::current().name().unwrap_or("<unnamed>"),
+                payload = %payload,
+                "panic caught",
+            );
+            default_hook(info);
+        }));
+    }
+
+    // Runtime liveness canary. Bumps an atomic every 1s; the
+    // `/livez` route reads it. If the atomic stops advancing the
+    // tokio runtime itself is wedged (worker threads parked on
+    // futex, no tasks making progress) and `/livez` returns 503
+    // with the staleness. Distinct from `/healthz` (TCP listener
+    // alive) and `/readyz` (DB pool alive). See
+    // `boot::runtime_canary`.
+    let (runtime_canary, _runtime_canary_task) = boot::runtime_canary::spawn();
 
     let cfg = AgentConfig::load()?;
 
@@ -71,6 +117,16 @@ async fn main() -> Result<()> {
         ),
         None => None,
     };
+
+    // Observability: stream pool stats every 30s so a future
+    // "agent stopped responding" investigation can correlate the
+    // freeze with pool saturation without an out-of-band
+    // `pg_stat_activity` capture. The handle is intentionally
+    // leaked into the process lifetime — runtime shutdown drops
+    // the task. See `boot::pool_telemetry`.
+    if let Some(pool) = mcp_pool.as_ref() {
+        let _t = boot::pool_telemetry::spawn(pool.sqlx().clone(), "rubix-mcp");
+    }
 
     // SCOPE OQ-4: build the extension admin BEFORE the MCP surface so
     // the surface can emit one MCP tool per
@@ -125,6 +181,9 @@ async fn main() -> Result<()> {
     // is unset — the agent still boots, dashboards just render
     // empty values.
     let warehouse_client = boot::connect_warehouse(cfg.warehouse_url.as_deref()).await?;
+    if let Some(wh) = warehouse_client.as_ref() {
+        let _t = boot::pool_telemetry::spawn(wh.pool().clone(), "warehouse");
+    }
 
     let tools = registry::build_tool_registry(
         cfg.insights.disk_warn_threshold,
@@ -237,6 +296,7 @@ async fn main() -> Result<()> {
     let mcp_routes = Router::new().nest("/api/v1", mcp.router);
     let openapi_doc = routes::openapi_doc::openapi_router(rubix_openapi_mod::rubix_openapi());
     let mut app: Router = health::healthz_router()
+        .merge(health::livez_router(runtime_canary.clone()))
         .merge(mcp_routes)
         .merge(openapi_doc)
         // SSE flow-events route. CSRF-exempt (mirrors the
@@ -256,6 +316,16 @@ async fn main() -> Result<()> {
         let pool = pg_connect(dsn)
             .await
             .map_err(|e| anyhow::anyhow!("connect to RUBIX_DATABASE_URL: {e}"))?;
+        // Telemetry for the auth/changelog/explorer pool. Distinct
+        // label from `rubix-mcp` so a starved auth pool (the one
+        // that gates every `with_principal`-wrapped route) is
+        // visible separately in the log.
+        let _t_auth = boot::pool_telemetry::spawn(pool.sqlx().clone(), "rubix-auth");
+        // Readiness probe — uses this pool because every
+        // auth-gated request hits it. If this pool is saturated,
+        // /readyz returns 503 within 1 s instead of timing out
+        // alongside every browser request.
+        app = app.merge(health::readyz_router(pool.sqlx().clone()));
         let auth = boot::build_auth(pool.clone());
         let auth_routes = routes::auth::auth_router(auth.state);
         let engine = boot::authz::build_engine()?;

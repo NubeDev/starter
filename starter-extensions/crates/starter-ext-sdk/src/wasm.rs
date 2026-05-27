@@ -43,8 +43,8 @@ use serde_json::Value;
 use starter_ext_spi::{Error, Result};
 
 use crate::ctx::{
-    CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend, TracingBackend,
-    WallClockBackend,
+    CtxInner, EventBusBackend, EventSender, FsBackend, HttpOutBackend, NeverCancel, Row,
+    SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend,
 };
 use crate::meta::ExtensionDispatch;
 
@@ -145,6 +145,34 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
     impl TracingBackend for Stub {
         fn event(&self, _level: &str, _msg: &str, _fields: Value) {}
     }
+    impl WarehouseReadBackend for Stub {
+        fn query(&self, _template: &str, _params: Value) -> Result<Vec<Row>> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+        fn count(&self, _template: &str, _params: Value) -> Result<u64> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+        fn describe(&self, _template: &str) -> Result<Option<TemplateSpec>> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+    }
+    impl EventBusBackend for Stub {
+        fn publish(&self, _topic: &str, _payload: Value) -> Result<()> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+    }
     CtxInner::new(
         events,
         Arc::new(NeverCancel),
@@ -153,5 +181,7 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
         Arc::new(Stub("fs")),
         Arc::new(Stub("wall_clock")),
         Arc::new(Stub("tracing")),
+        Arc::new(Stub("warehouse_read")),
+        Arc::new(Stub("event_bus")),
     )
 }

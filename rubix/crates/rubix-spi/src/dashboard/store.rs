@@ -117,6 +117,21 @@ pub enum DashboardStoreError {
     Backend(String),
 }
 
+/// Outcome of an [`DashboardStore::insert_revision_with_prior`]
+/// call: the freshly-inserted revision plus the row it superseded,
+/// if any. Returned by the chokepoint variant so the changelog
+/// recorder can capture a byte-exact `before` snapshot without
+/// re-fetching the row (which would re-introduce a TOCTOU window
+/// between the supersede and the audit hand-off).
+#[derive(Debug, Clone)]
+pub struct InsertOutcome {
+    /// The row written by the insert.
+    pub inserted: DashboardRevision,
+    /// The row that was live immediately before the insert and is
+    /// now superseded — `None` if no prior row existed.
+    pub prior: Option<DashboardRevision>,
+}
+
 /// Async trait every consumer (tool bodies, page resolver,
 /// admin UI) dispatches through.
 #[async_trait::async_trait]
@@ -129,6 +144,30 @@ pub trait DashboardStore: Send + Sync + 'static {
         &self,
         new_revision: NewRevision,
     ) -> Result<DashboardRevision, DashboardStoreError>;
+
+    /// Atomic variant of [`Self::insert_revision`] that also
+    /// returns the row that was superseded (if any) so the
+    /// changelog recorder can capture a byte-exact `before`
+    /// snapshot for `Op::Update`. The default implementation calls
+    /// [`Self::get_active`] then [`Self::insert_revision`] in
+    /// sequence — backends that can do the read and the supersede
+    /// in one transaction (Postgres `UPDATE ... RETURNING`) should
+    /// override to eliminate the TOCTOU window. Tools that need
+    /// audit fidelity (`rubix.dashboard.update`,
+    /// `rubix.dashboard.patch`) call this; tools that don't (or
+    /// callers that have already fetched the prior row themselves,
+    /// like `rubix.dashboard.duplicate`) keep calling
+    /// `insert_revision`.
+    async fn insert_revision_with_prior(
+        &self,
+        new_revision: NewRevision,
+    ) -> Result<InsertOutcome, DashboardStoreError> {
+        let prior = self
+            .get_active(&new_revision.tenant_id, &new_revision.page_id)
+            .await?;
+        let inserted = self.insert_revision(new_revision).await?;
+        Ok(InsertOutcome { inserted, prior })
+    }
 
     /// Return the single live revision for `(tenant_id, page_id)`,
     /// or `None` if no live row exists.

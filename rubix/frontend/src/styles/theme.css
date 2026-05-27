@@ -93,6 +93,13 @@
   --color-primary-foreground: var(--tk-bg);
   --color-secondary: var(--tk-surface-2);
   --color-secondary-foreground: var(--tk-text);
+  /* shadcn convention: --muted is a low-contrast SURFACE, --muted-foreground
+   * is the text on it. We bridge `bg-muted` to `--tk-surface-2` (the
+   * existing muted-surface token) and keep `text-muted-foreground` on
+   * `--tk-muted` (the mid-tone text color). Previously both resolved to
+   * `--tk-muted`, so `bg-muted` painted the same color as text on it —
+   * invisible tab labels in the warehouse explorer, etc. */
+  --color-muted: var(--tk-surface-2);
   --color-muted-bg: var(--tk-surface-2);
   --color-muted-foreground: var(--tk-muted);
   --color-accent: var(--tk-surface-2);

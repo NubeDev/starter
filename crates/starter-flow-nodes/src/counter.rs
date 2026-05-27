@@ -32,6 +32,7 @@ use std::sync::LazyLock;
 use async_trait::async_trait;
 use schemars::{schema::RootSchema, JsonSchema};
 use serde::Deserialize;
+use tracing::Instrument;
 
 use starter_flow_spi::node::{
     EditKind, KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
@@ -189,7 +190,20 @@ impl NodeBehavior for Counter {
         let prior = current.unwrap_or(self.settings.initial);
         let next = prior.saturating_add(self.settings.step);
 
-        // R12 observability.
+        // R12 observability. The span must wrap the future via
+        // `Instrument`, not `span.enter()`, because the body
+        // contains an `.await` on `ctx.state.put`. Holding a
+        // span guard across `.await` is undefined: the future
+        // can suspend on one tokio worker thread and resume on
+        // another, but the guard's thread-local span stack is
+        // not. The corruption surfaces as the well-known
+        // `tracing-subscriber` panic at `registry/sharded.rs`:
+        // `tried to clone a span (Id(...)) that already closed`
+        // — emitted from an *unrelated* later span when the
+        // poisoned thread-local is next touched, which makes
+        // the bug appear far from the actual cause. The
+        // `Instrument` adapter manages enter/exit per poll
+        // correctly across all workers.
         let span = tracing::info_span!(
             "counter.invoke",
             node_id = %ctx.node,
@@ -197,16 +211,19 @@ impl NodeBehavior for Counter {
             prior = prior,
             next = next,
         );
-        let _enter = span.enter();
 
-        ctx.state
-            .put(&key, next.to_string().into_bytes())
-            .await
-            .map_err(|e| NodeError::Backend(format!("counter: state put failed: {e}")))?;
+        async {
+            ctx.state
+                .put(&key, next.to_string().into_bytes())
+                .await
+                .map_err(|e| NodeError::Backend(format!("counter: state put failed: {e}")))?;
 
-        let mut out = SlotMap::new();
-        out.insert(OUT_SLOT.to_owned(), SlotValue::Int(next));
-        Ok(out)
+            let mut out = SlotMap::new();
+            out.insert(OUT_SLOT.to_owned(), SlotValue::Int(next));
+            Ok(out)
+        }
+        .instrument(span)
+        .await
     }
 
     async fn on_redeploy(&self, ctx: NodeCtx<'_>, edit: EditKind) -> Result<(), NodeError> {

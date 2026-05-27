@@ -107,6 +107,28 @@ fn check_namespace(m: &Manifest) -> Result<()> {
             )));
         }
     }
+    // `contributes.warehouse_templates[].name` per
+    // `rubix/docs/scope/extensions-north-star` row 3. Same shape as
+    // `contributes.nodes[].kind`: reserved prefixes are reported
+    // distinctly from namespace-escape failures so an operator can
+    // act on the message.
+    for e in &m.contributes.warehouse_templates {
+        if let Some(prefix) = first_reserved_prefix(&e.name) {
+            return Err(Error::validation(format!(
+                "contributes.warehouse_templates[].name {:?} begins with host-reserved \
+                 prefix {:?} (rubix/docs/scope/extensions-north-star row 3)",
+                e.name, prefix
+            )));
+        }
+        if !owner.owns(&e.name) {
+            return Err(Error::validation(format!(
+                "contributes.warehouse_templates[].name {:?} escapes the extension's \
+                 namespace {:?} (rubix/docs/scope/extensions-north-star row 3)",
+                e.name,
+                owner.as_str()
+            )));
+        }
+    }
     Ok(())
 }
 
@@ -155,6 +177,8 @@ fn capability_matches(c: &Capability, category: &str) -> bool {
         (Capability::HttpOut { .. }, "http_out") => true,
         (Capability::Fs { .. }, "fs") => true,
         (Capability::WallClock { .. }, "wall_clock") => true,
+        (Capability::WarehouseRead { .. }, "warehouse_read") => true,
+        (Capability::EventBus { .. }, "event_bus") => true,
         (Capability::Custom { name, .. }, c) => {
             // `custom:<name>` in `requires:` matches `Capability::Custom { name }`.
             c.strip_prefix("custom:")
@@ -342,5 +366,106 @@ requires:
 "#,
         );
         validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn warehouse_templates_namespace_ok() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.charts
+version: 0.1.0
+display_name: "C"
+runtime: { kind: builtin, crate_name: charts }
+contributes:
+  warehouse_templates:
+    - name: com.acme.charts.daily
+      params_schema: schemas/daily.json
+      tables: [samples]
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn warehouse_templates_rejects_reserved_prefix() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.charts
+version: 0.1.0
+display_name: "C"
+runtime: { kind: builtin, crate_name: charts }
+contributes:
+  warehouse_templates:
+    - name: starter.flow.q
+      params_schema: x.json
+      tables: []
+"#,
+        );
+        let Error::Validation(msg) = validate_manifest(&m).unwrap_err() else {
+            panic!("expected Validation error");
+        };
+        assert!(
+            msg.contains("host-reserved prefix") && msg.contains("starter"),
+            "unexpected error: {msg}"
+        );
+    }
+
+    #[test]
+    fn warehouse_templates_rejects_non_descendant() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.charts
+version: 0.1.0
+display_name: "C"
+runtime: { kind: builtin, crate_name: charts }
+contributes:
+  warehouse_templates:
+    - name: com.other.thing.q
+      params_schema: x.json
+      tables: []
+"#,
+        );
+        let Error::Validation(msg) = validate_manifest(&m).unwrap_err() else {
+            panic!("expected Validation error");
+        };
+        assert!(msg.contains("escapes the extension's namespace"), "{msg}");
+    }
+
+    #[test]
+    fn cap_warehouse_read_grant_satisfies_require() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.charts
+version: 0.1.0
+display_name: "C"
+runtime: { kind: builtin, crate_name: charts }
+requires:
+  - { id: cap.warehouse_read, version: "^1" }
+capabilities:
+  - kind: warehouse_read
+    tables: [samples]
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn cap_warehouse_read_missing_grant_fails() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.charts
+version: 0.1.0
+display_name: "C"
+runtime: { kind: builtin, crate_name: charts }
+requires:
+  - { id: cap.warehouse_read, version: "^1" }
+"#,
+        );
+        assert!(matches!(validate_manifest(&m).unwrap_err(), Error::Validation(_)));
     }
 }

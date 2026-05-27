@@ -40,6 +40,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use thiserror::Error;
+use tracing::Instrument;
 
 use starter_flow_spi::node::{
     anyhow_compat, KindId, NodeBehavior, NodeCtx, NodeError, SlotMap, SlotValue,
@@ -212,49 +213,58 @@ impl NodeBehavior for ToolCall {
             principal_id_hash = tracing::field::Empty,
             cancel_observed = tracing::field::Empty,
         );
-        let _enter = span.enter();
+        // `Instrument` (not `span.enter()`) — the body awaits
+        // the user-supplied tool invocation. Holding a span
+        // guard across `.await` corrupts the thread-local span
+        // stack when the future migrates between tokio workers
+        // and later panics `tracing-subscriber` on an unrelated
+        // emit.
+        let span_for_record = span.clone();
+        async move {
+            let tool = match self.registry.lookup(&tool_id) {
+                Some(t) => t,
+                None => {
+                    tracing::warn!(tool_id = %tool_id, "tool_id not registered");
+                    span_for_record.record("cancel_observed", false);
+                    return Err(ToolCallError::UnregisteredTool(tool_id).into_node_error());
+                }
+            };
 
-        let tool = match self.registry.lookup(&tool_id) {
-            Some(t) => t,
-            None => {
-                tracing::warn!(tool_id = %tool_id, "tool_id not registered");
-                span.record("cancel_observed", false);
-                return Err(ToolCallError::UnregisteredTool(tool_id).into_node_error());
-            }
-        };
+            // R13 cancellation. The `Tool::invoke` signature does not
+            // accept a `Cancel` directly, so we race its future against
+            // `ctx.cancel.cancelled()` inside a `select!`. A fired cancel
+            // drops the in-flight future on the next yield point.
+            let cancelled = ctx.cancel.cancelled();
+            let invocation = tool.invoke(payload);
+            tokio::pin!(invocation);
+            tokio::pin!(cancelled);
 
-        // R13 cancellation. The `Tool::invoke` signature does not
-        // accept a `Cancel` directly, so we race its future against
-        // `ctx.cancel.cancelled()` inside a `select!`. A fired cancel
-        // drops the in-flight future on the next yield point.
-        let cancelled = ctx.cancel.cancelled();
-        let invocation = tool.invoke(payload);
-        tokio::pin!(invocation);
-        tokio::pin!(cancelled);
+            let result = tokio::select! {
+                biased;
+                _ = &mut cancelled => {
+                    span_for_record.record("cancel_observed", true);
+                    tracing::info!(tool_id = %tool_id, "tool_call cancelled mid-invocation");
+                    return Err(NodeError::Cancelled);
+                }
+                r = &mut invocation => r,
+            };
+            span_for_record.record("cancel_observed", false);
 
-        let result = tokio::select! {
-            biased;
-            _ = &mut cancelled => {
-                span.record("cancel_observed", true);
-                tracing::info!(tool_id = %tool_id, "tool_call cancelled mid-invocation");
-                return Err(NodeError::Cancelled);
-            }
-            r = &mut invocation => r,
-        };
-        span.record("cancel_observed", false);
-
-        match result {
-            Ok(value) => {
-                let mut out = SlotMap::new();
-                out.insert(TOOL_OUTPUT_SLOT.to_owned(), SlotValue::Json(value));
-                Ok(out)
-            }
-            Err(e) => {
-                let message = e.to_string();
-                tracing::warn!(tool_id = %tool_id, error = %message, "tool returned error");
-                Err(ToolCallError::ToolFailed { tool_id, message }.into_node_error())
+            match result {
+                Ok(value) => {
+                    let mut out = SlotMap::new();
+                    out.insert(TOOL_OUTPUT_SLOT.to_owned(), SlotValue::Json(value));
+                    Ok(out)
+                }
+                Err(e) => {
+                    let message = e.to_string();
+                    tracing::warn!(tool_id = %tool_id, error = %message, "tool returned error");
+                    Err(ToolCallError::ToolFailed { tool_id, message }.into_node_error())
+                }
             }
         }
+        .instrument(span)
+        .await
     }
 }
 

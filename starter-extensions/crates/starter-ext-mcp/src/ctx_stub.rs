@@ -19,8 +19,8 @@
 use std::sync::Arc;
 
 use starter_ext_sdk::ctx::{
-    CtxInner, FsBackend, HttpOutBackend, NeverCancel, SecretsBackend, TracingBackend,
-    WallClockBackend,
+    CtxInner, EventBusBackend, FsBackend, HttpOutBackend, NeverCancel, Row, SecretsBackend,
+    TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend,
 };
 use starter_ext_spi::Error;
 use tokio::sync::mpsc;
@@ -40,6 +40,8 @@ pub(crate) fn make_stub_ctx() -> CtxInner {
         Arc::new(StubFs),
         Arc::new(StubWallClock),
         Arc::new(StubTracing),
+        Arc::new(StubWarehouseRead),
+        Arc::new(StubEventBus),
     )
 }
 
@@ -90,5 +92,38 @@ impl TracingBackend for StubTracing {
         // Tracing is fire-and-forget; swallow the event silently rather
         // than panicking — a Phase 1 extension that emits diagnostics is
         // not a failure mode worth surfacing through the adapter.
+    }
+}
+
+#[derive(Debug)]
+struct StubWarehouseRead;
+impl WarehouseReadBackend for StubWarehouseRead {
+    fn query(
+        &self,
+        _template: &str,
+        _params: serde_json::Value,
+    ) -> starter_ext_spi::Result<Vec<Row>> {
+        Err(deny("warehouse_read"))
+    }
+    fn count(
+        &self,
+        _template: &str,
+        _params: serde_json::Value,
+    ) -> starter_ext_spi::Result<u64> {
+        Err(deny("warehouse_read"))
+    }
+    fn describe(
+        &self,
+        _template: &str,
+    ) -> starter_ext_spi::Result<Option<TemplateSpec>> {
+        Err(deny("warehouse_read"))
+    }
+}
+
+#[derive(Debug)]
+struct StubEventBus;
+impl EventBusBackend for StubEventBus {
+    fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
+        Err(deny("event_bus"))
     }
 }

@@ -16,6 +16,7 @@ pub mod entity_graph;
 pub mod handler_registry;
 pub mod page_provider;
 pub mod query_engine;
+pub mod template_resolver;
 
 pub use analytics_bridge::TimescaleAnalyticsBridge;
 pub use entity_graph::RubixEntityGraph;

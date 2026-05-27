@@ -20,7 +20,7 @@
 
 use async_trait::async_trait;
 use rubix_spi::dashboard::{
-    DashboardRevision, DashboardStore, DashboardStoreError, ListFilter, NewRevision,
+    DashboardRevision, DashboardStore, DashboardStoreError, InsertOutcome, ListFilter, NewRevision,
 };
 use starter_store_postgres::pool::Pool;
 use uuid::Uuid;

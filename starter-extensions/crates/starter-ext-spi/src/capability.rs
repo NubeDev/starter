@@ -50,6 +50,57 @@ pub enum Capability {
         granted: bool,
     },
 
+    /// Named-template warehouse reads against the host's time-series
+    /// store (`samples`, `events`, …). The grant enumerates the
+    /// tables the extension's templates are allowed to touch — a
+    /// template touching `events` cannot be invoked by an extension
+    /// whose grant was `tables: [samples]`. An empty `tables` vec is
+    /// the neutralised form: the extension loads, every query is
+    /// denied.
+    ///
+    /// Per
+    /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+    /// row 2, this is the lynchpin grant for Power-BI-style
+    /// dashboard authoring.
+    WarehouseRead {
+        /// Allowed table names. Cross-checked against each
+        /// invoked template's `TemplateSpec.tables` at the
+        /// supervisor's capability gate.
+        #[serde(default)]
+        tables: Vec<String>,
+    },
+
+    /// In-process publish/subscribe bus for cross-extension and
+    /// extension↔frontend coordination. Per
+    /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+    /// row 4: this is the cross-filter / live-update transport
+    /// that replaces N-per-click HTTP loopback round-trips.
+    ///
+    /// The grant carries two topic allowlists — `publish` and
+    /// `subscribe`. A topic in `publish: []` cannot be `.publish()`ed
+    /// even if the extension declared the capability; same for
+    /// `subscribe`. An empty list on either side is the legal
+    /// neutralised form for that direction (matches every other
+    /// allowlist capability).
+    ///
+    /// Topic strings are reverse-DNS. The supervisor enforces
+    /// namespace ownership the same way it enforces tool ids: an
+    /// extension may publish only on topics it owns. Subscription
+    /// is open across namespaces — that's the whole point of the
+    /// bus — but mediated by the topic allowlist on the grant.
+    EventBus {
+        /// Allowed publish topics (reverse-DNS, owned by the
+        /// extension). Empty vec is the neutralised form: the
+        /// extension loads, every publish is denied.
+        #[serde(default)]
+        publish: Vec<String>,
+        /// Allowed subscribe topics (any reverse-DNS topic the
+        /// host or another extension publishes). Empty vec is the
+        /// neutralised form for subscriptions.
+        #[serde(default)]
+        subscribe: Vec<String>,
+    },
+
     /// An opaque, host-defined capability. Used as the escape hatch for
     /// consumer-specific grants the kernel does not know about.
     Custom {
@@ -126,6 +177,48 @@ mod tests {
         let cap = Capability::Custom {
             name: "kv".to_string(),
             params: serde_json::json!({ "bucket": "weather" }),
+        };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn warehouse_read_round_trip() {
+        let cap = Capability::WarehouseRead {
+            tables: vec!["samples".into(), "events".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "warehouse_read");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn warehouse_read_empty_tables_is_legal() {
+        let cap = Capability::WarehouseRead { tables: vec![] };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn event_bus_round_trip() {
+        let cap = Capability::EventBus {
+            publish: vec!["com.acme.charts.filter".into()],
+            subscribe: vec!["com.acme.charts.*".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "event_bus");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn event_bus_empty_lists_are_legal() {
+        let cap = Capability::EventBus {
+            publish: vec![],
+            subscribe: vec![],
         };
         let j = serde_json::to_string(&cap).unwrap();
         let back: Capability = serde_json::from_str(&j).unwrap();

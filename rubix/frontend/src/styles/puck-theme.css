@@ -36,13 +36,26 @@
   --puck-color-grey-02: hsl(var(--foreground));
   --puck-color-grey-01: hsl(var(--foreground));
 
-  /* Accent (selected component frame, Save button background, links). */
+  /* Accent (selected component frame, Save button background, links).
+   * azure-08 + azure-09 are used by Puck for the selected/hover
+   * overlay fill, dashed area-selected outlines, and the
+   * `--overlay-background` mix (azure-08 @ 30%). Left at upstream's
+   * hard-coded light-blue stops they painted a washed-out blue
+   * rectangle over the selected card in dark mode — which is exactly
+   * what surfaced as "selected component has wrong/lighter bg" in
+   * the dashboard editor screenshots. */
   --puck-color-azure-04: hsl(var(--primary));
   --puck-color-azure-05: hsl(var(--primary));
   --puck-color-azure-06: hsl(var(--primary));
   --puck-color-azure-07: hsl(var(--primary));
+  --puck-color-azure-08: hsl(var(--primary));
+  --puck-color-azure-09: hsl(var(--primary));
   --puck-color-azure-11: hsl(var(--secondary));
   --puck-color-azure-12: hsl(var(--secondary));
+  /* Belt-and-braces: override the derived overlay so the 30% mix
+   * lands on the primary accent instead of azure-08 even if a Puck
+   * minor bump renames the stops. */
+  --overlay-background: color-mix(in srgb, hsl(var(--primary)) 18%, transparent);
 }
 
 /* The iframe Puck mounts the preview canvas in is same-origin, so it
@@ -67,6 +80,24 @@
   --puck-color-azure-05: hsl(var(--primary));
   --puck-color-azure-06: hsl(var(--primary));
   --puck-color-azure-07: hsl(var(--primary));
+  --puck-color-azure-08: hsl(var(--primary));
+  --puck-color-azure-09: hsl(var(--primary));
   --puck-color-azure-11: hsl(var(--secondary));
   --puck-color-azure-12: hsl(var(--secondary));
+  --overlay-background: color-mix(in srgb, hsl(var(--primary)) 18%, transparent);
+}
+
+/* Light mode — Puck's defaults are mostly fine, but the azure stops it
+ * uses for the selected/hover overlay are a hard-coded light blue
+ * (#abc7e5 / #cfdff0) that clashes with non-blue palettes (rose, peach,
+ * teal). Remap to the host primary so selections always pick up the
+ * active palette accent. */
+:root[data-mode='light'] {
+  --puck-color-azure-04: hsl(var(--primary));
+  --puck-color-azure-05: hsl(var(--primary));
+  --puck-color-azure-06: hsl(var(--primary));
+  --puck-color-azure-07: hsl(var(--primary));
+  --puck-color-azure-08: hsl(var(--primary));
+  --puck-color-azure-09: hsl(var(--primary));
+  --overlay-background: color-mix(in srgb, hsl(var(--primary)) 12%, transparent);
 }

@@ -26,6 +26,7 @@
 
 use serde::{Deserialize, Serialize};
 
+use crate::identity::FrameMeta;
 use crate::Error;
 
 /// The JSON-RPC version every envelope carries.
@@ -180,6 +181,12 @@ pub struct JsonRpcRequest {
     /// Method parameters; opaque JSON.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub params: Option<serde_json::Value>,
+    /// Kernel-level sidecar metadata (caller identity, future tracing
+    /// baggage). Absent on host-internal frames and on frames produced
+    /// by older hosts; present on every tenant-scoped frame stamped by
+    /// the supervisor. See [`FrameMeta`] for the schema.
+    #[serde(rename = "_meta", default, skip_serializing_if = "frame_meta_is_empty")]
+    pub meta: FrameMeta,
 }
 
 /// A JSON-RPC 2.0 response.
@@ -219,6 +226,16 @@ pub struct JsonRpcNotification {
     /// Method parameters; opaque JSON.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub params: Option<serde_json::Value>,
+    /// Kernel-level sidecar metadata. See [`JsonRpcRequest::meta`].
+    #[serde(rename = "_meta", default, skip_serializing_if = "frame_meta_is_empty")]
+    pub meta: FrameMeta,
+}
+
+/// `skip_serializing_if` predicate for the envelope `_meta` field — kept
+/// here so serde can name it through the `#[serde(skip_serializing_if =
+/// "…")]` attribute (which only accepts free-function paths).
+fn frame_meta_is_empty(m: &FrameMeta) -> bool {
+    m.is_empty()
 }
 
 // ---------------------------------------------------------------------------
@@ -297,13 +314,61 @@ mod tests {
             id: JsonRpcId::Number(1),
             method: "com.acme.weather.current".to_string(),
             params: Some(serde_json::json!({ "city": "Sydney" })),
+            meta: FrameMeta::default(),
         };
         let env = JsonRpcEnvelope::Request(req.clone());
         let j = serde_json::to_string(&env).unwrap();
+        // An empty meta sidecar never appears on the wire.
+        assert!(!j.contains("_meta"));
         let back: JsonRpcEnvelope = serde_json::from_str(&j).unwrap();
         match back {
             JsonRpcEnvelope::Request(r) => assert_eq!(r, req),
             other => panic!("expected request, got {:?}", other),
+        }
+    }
+
+    #[test]
+    fn request_with_caller_round_trip() {
+        use crate::identity::CallerIdentity;
+        let req = JsonRpcRequest {
+            jsonrpc: JSONRPC_VERSION.to_string(),
+            id: JsonRpcId::Number(7),
+            method: "tools/com.acme.chart.render".to_string(),
+            params: Some(serde_json::json!({})),
+            meta: FrameMeta::with_caller(CallerIdentity {
+                tenant_id: Some("t-42".into()),
+                user_id: Some("u-7".into()),
+                roles: vec!["viewer".into()],
+                request_id: "req-9c1f".into(),
+            }),
+        };
+        let j = serde_json::to_string(&req).unwrap();
+        assert!(j.contains("_meta"), "wire form must carry _meta: {j}");
+        assert!(j.contains("\"tenant_id\":\"t-42\""));
+        let back: JsonRpcRequest = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, req);
+        let caller = back.meta.caller.expect("caller present");
+        assert_eq!(caller.tenant_id.as_deref(), Some("t-42"));
+        assert_eq!(caller.request_id, "req-9c1f");
+    }
+
+    #[test]
+    fn envelope_with_meta_still_parses_as_request() {
+        // Demonstrates that adding _meta does not confuse the untagged
+        // dispatch in `JsonRpcEnvelope`.
+        let raw = r#"{
+            "jsonrpc":"2.0","id":1,"method":"foo.bar",
+            "_meta":{"caller":{"tenant_id":"t-1","request_id":"r-1"}}
+        }"#;
+        let env: JsonRpcEnvelope = serde_json::from_str(raw).unwrap();
+        match env {
+            JsonRpcEnvelope::Request(r) => {
+                assert_eq!(
+                    r.meta.caller.as_ref().unwrap().tenant_id.as_deref(),
+                    Some("t-1")
+                );
+            }
+            other => panic!("expected request, got {other:?}"),
         }
     }
 
