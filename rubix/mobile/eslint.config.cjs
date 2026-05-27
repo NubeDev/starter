@@ -10,8 +10,6 @@ const RESTRICTED = [
   { name: '@nube/starter-ui-flow', message: 'web-only flow editor. not in mobile scope.' },
   { name: '@nube/starter-ui-export', message: 'web-only.' },
   { name: '@nube/starter-ui-authz', message: 'web-only admin surface. not in mobile scope.' },
-  { name: '@nube/starter-ui-ai-builder', message: 'web-only.' },
-  { name: '@nube/starter-sdui-react', message: 'web-only.' },
   { name: '@nube/starter-ui-dashboard', message: 'web-only. use @nube/starter-ui-dashboard-native.' },
   { name: '@nube/starter-ui-sdui-react', message: "mobile must import the headless subpath: '@nube/starter-ui-sdui-react/headless'." },
   { name: '@nube/starter-ui-core/layout', message: 'web-only layout primitives.' },

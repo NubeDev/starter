@@ -102,20 +102,20 @@ starter-spi                       (Tool, AiRunner, Service — exists,
    │                               does NOT depend on this.)
    │
    ├── starter-ui-kit             (exists — shadcn primitives. SDUI
-   │                               renderer in @nube/starter-sdui-react
+   │                               renderer in @nube/starter-ui-sdui-react
    │                               renders IR variants against these.)
    ├── starter-ui-core            (exists — react-query/zustand hooks.
    │                               SDUI live-subscription hook lands
    │                               here.)
    │
-   ├── @nube/starter-sdui-react   (NEW — ported from rubix-ui-core's
+   ├── @nube/starter-ui-sdui-react   (NEW — ported from rubix-ui-core's
    │                               src/sdui/. <Renderer>, <SduiPage>,
    │                               16-30 component implementations,
    │                               action dispatcher, subscription
    │                               client, optimistic-patch helpers,
    │                               capability handshake. Renders against
    │                               starter-ui-kit primitives.)
-   └── @nube/starter-sdui-react-flutter
+   └── @nube/starter-ui-sdui-react-flutter
                                   (DEFERRED — Flutter port. IR is
                                    language-agnostic; only React in v1.)
 ```
@@ -167,7 +167,7 @@ renderer mirror this tolerance.
 ### R3 — The React app never knows what the domain is
 
 Zero domain-specific strings in `starter-ui-ir`, `starter-ui-bindings`,
-or `@nube/starter-sdui-react`. The renderer knows about `table`,
+or `@nube/starter-ui-sdui-react`. The renderer knows about `table`,
 `form`, `kpi`, `chart`, `diff`, `row`, `col`. It does not know about
 the consumer's entities, regardless of what those entities are.
 
@@ -177,7 +177,7 @@ consumer's domain is `vehicle|policy|claim|gate` and the denylist
 passes silently while R3 is violated. The check is:
 
 1. **An allowlist of vocabulary** in `crates/starter-ui-ir/words.txt`
-   and `packages/starter-sdui-react/words.txt` — IR variant names, IR
+   and `packages/starter-ui-sdui-react/words.txt` — IR variant names, IR
    field names, framework concepts (`subscribe`, `optimistic`,
    `capability`), HTML / CSS terms, library names. Any string literal
    or identifier in those crates that is not in the allowlist, not
@@ -481,7 +481,7 @@ period.
 ## Surface — React
 
 ```tsx
-import { SduiProvider, Renderer } from "@nube/starter-sdui-react";
+import { SduiProvider, Renderer } from "@nube/starter-ui-sdui-react";
 import { StarterClient } from "@nube/starter-client-ts";
 
 const client = new StarterClient({ baseUrl: "/" });
@@ -503,7 +503,7 @@ the live subscription wiring, the action dispatcher, and the
 optimistic patch helpers. Custom renderers register through:
 
 ```tsx
-import { registerCustomRenderer } from "@nube/starter-sdui-react";
+import { registerCustomRenderer } from "@nube/starter-ui-sdui-react";
 registerCustomRenderer("com.acme.floorplan", FloorPlanComponent);
 ```
 
@@ -581,7 +581,7 @@ Ported and adapted from Rubix SDUI's acceptance criteria.
 
 The CI script scans `crates/starter-ui-ir/src/`,
 `crates/starter-ui-bindings/src/`, and
-`packages/starter-sdui-react/src/` for any string literal or
+`packages/starter-ui-sdui-react/src/` for any string literal or
 identifier (in source, not comments / tests / fixtures) that is not
 present in the per-crate `words.txt` allowlist. Any unlisted token
 fails the build with a pointer to the file + line.
@@ -654,7 +654,7 @@ auth, server router) requires real work. Each phase is one session.
 | 1 | `starter-ui-ir` port + JSON Schema + version stamp | S | Crate compiles, schema emits, round-trips through serde, V5 chart dual-field tolerance preserved. Unit-tested in isolation. |
 | 2 | `starter-ui-bindings` port — grammar, EvalContext, subscription-plan derivation, EntityGraph trait | M | Worked-example test ("one page, N targets") passes against a fixture entity graph. |
 | 3 | `starter-ui-builder` port — typed constructors, `rsql()` builder, `seed_page()` | M | Builder DSL produces valid IR; example page authored from main.rs renders end-to-end against fixture data. |
-| 4 | `@nube/starter-sdui-react` port — `<Renderer>`, `<SduiPage>`, ~16 component implementations against `starter-ui-kit` primitives | L | Core renderer + 16 components under size budget; route `/ui/:pageRef` renders any authored page. Domain-leak grep passes. |
+| 4 | `@nube/starter-ui-sdui-react` port — `<Renderer>`, `<SduiPage>`, ~16 component implementations against `starter-ui-kit` primitives | L | Core renderer + 16 components under size budget; route `/ui/:pageRef` renders any authored page. Domain-leak grep passes. |
 | 5 | `starter-server` SDUI routes (`/resolve`, `/action`, `/table`) behind feature flag; `HandlerRegistry`; capability handshake | M | Action 404 test passes; pagination round-trip test passes; capability-mismatch test passes. |
 | 6 | Remaining IR components (`chart`, `sparkline`, `tree`, `timeline`, `markdown`, `wizard`, `drawer`, `rich_text`, `diff`) + streaming `text`/`markdown` via subscription | L | All R8 DoS limits enforced with stable tags; falsification suite (CRUD + diff + state-board) passes. |
 | 7 | `custom` escape-hatch wiring (registry, capability filter, fallback stub) | S | Custom-renderer fallback test passes; unknown `renderer_id` rewrites to `dangling` server-side per R7. |
@@ -669,7 +669,7 @@ blocked on Phase 5 here landing.
 
 - **Port wholesale; rename on import.** `rubix-ui-ir` →
   `starter-ui-ir`, `rubix-sdui-builder` → `starter-ui-builder`,
-  `rubix-ui-core/src/sdui/` → `@nube/starter-sdui-react`. Internal
+  `rubix-ui-core/src/sdui/` → `@nube/starter-ui-sdui-react`. Internal
   type names keep their Rubix-side spelling where the IR wire shape
   is visible (`ComponentTree`, `Component`, `ChartSource`) so a
   developer reading Rubix's SDUI.md and starter's source sees the
@@ -706,7 +706,7 @@ section wins.
 | **S-D1** | `EntityGraph` trait lives in `starter-ui-bindings`. Consumers implement against their own graph; no SPI promotion in v1. | A **second** consumer (beyond the first SDUI adopter) asks for the trait, or a non-bindings crate needs to name the trait in its public API. Promotion to `starter-spi` is mechanical; demotion isn't, so we wait for the second use. |
 | **S-D2** | RSQL query engine is a **trait + in-memory reference impl** in v1, shipped in `starter-sdui-routes` (or a sibling) for examples and tests. Production consumers wire their own backend against the trait. No port of Rubix's `crates/query`. | First production consumer hits the in-memory impl's limits (dataset size, push-down requirements, transactional reads), **or** a second consumer would otherwise reimplement the same backend adapter. Either signal promotes the engine to its own crate. |
 | **S-D3** | Visual drag-drop page editor is **deferred**. Builder DSL + AI authoring + hand-written JSON cover v1 authoring. Lands as a `starter-extension` (separate repo / MF bundle) when demanded. | A consumer explicitly requests end-user-driven page authoring inside a running product (not power-user JSON editing, not AI prompt-driven). At that point, scope a starter-extension; do not absorb into the SDUI core crates. |
-| **S-D4** | `oneOf` server-resolved variant sub-form helper lives on the **renderer side** (`@nube/starter-sdui-react`). The server emits the active variant; the renderer renders it like any other sub-form. No `oneOf` resolution logic in `starter-ui-builder`. | The renderer-side helper grows past ~200 LoC, **or** a non-React renderer (Flutter port) needs to re-implement the same variant-selection logic. Either signal pushes the helper down to `starter-ui-bindings` or `starter-ui-ir`. |
+| **S-D4** | `oneOf` server-resolved variant sub-form helper lives on the **renderer side** (`@nube/starter-ui-sdui-react`). The server emits the active variant; the renderer renders it like any other sub-form. No `oneOf` resolution logic in `starter-ui-builder`. | The renderer-side helper grows past ~200 LoC, **or** a non-React renderer (Flutter port) needs to re-implement the same variant-selection logic. Either signal pushes the helper down to `starter-ui-bindings` or `starter-ui-ir`. |
 | **S-D5** | Stream end-of-stream sentinel inherits Rubix verbatim: `{ "type": "stream_end", "channel": "...", "reason": "done"\|"error"\|"timeout"\|"gone" }`. Same field names, same reason values, no rename. | A reason value Rubix didn't define is needed (e.g. `"cancelled"`, `"backpressure"`), **or** the wire shape needs to carry per-stream diagnostics. Extending the `reason` enum is additive; reshaping the sentinel is a major IR bump per R2. |
 
 These decisions block code: Phase 1 lands assuming S-D1 placement,
@@ -799,7 +799,7 @@ appeals to Rubix authority go.
 in `starter-ui-ir`, a binding grammar + subscription planner in
 `starter-ui-bindings`, a typed Rust builder in
 `starter-ui-builder`, a React renderer against `starter-ui-kit`
-primitives in `@nube/starter-sdui-react`, three HTTP routes in
+primitives in `@nube/starter-ui-sdui-react`, three HTTP routes in
 `starter-server` behind a feature flag. Imported from Rubix, owned
 and maintained here. AI authoring (ai-builder), the Rust builder
 DSL, hand-written JSON, and a future visual editor all converge on

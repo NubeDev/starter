@@ -152,7 +152,5 @@ of this file again.
 | `@nube/starter-ui-flow` | `@xyflow/react`; not a phone surface. |
 | `@nube/starter-ui-export` | `html2canvas` + `jspdf`; DOM-only. |
 | `@nube/starter-ui-authz` | Admin panels; not a phone surface. |
-| `@nube/starter-ui-ai-builder` | Web split-pane composition. |
-| `@nube/starter-sdui-react` | Older D2 renderer set. Same web-only constraint as the current renderers, and we are not maintaining two on mobile. |
 | `@nube/starter-ui-dashboard` | Replaced by `starter-ui-dashboard-native` (same prop API, RN primitives). |
 | All of `rubix/frontend/src/{routes,components,styles,lib/flow-*}` | App-local shell, Tailwind CSS, flow editor wiring. |

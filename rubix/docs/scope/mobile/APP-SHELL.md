@@ -335,8 +335,6 @@ A lint rule in `rubix/mobile` forbids importing:
 - `@nube/starter-ui-flow`
 - `@nube/starter-ui-export`
 - `@nube/starter-ui-authz`
-- `@nube/starter-ui-ai-builder`
-- `@nube/starter-sdui-react`
 - `@nube/starter-ui-dashboard`
 - `@nube/starter-ui-core/layout`
 - `@nube/starter-ui-core/theme-editor/utils/apply-theme`

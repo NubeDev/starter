@@ -11,7 +11,6 @@ name so reviewers can reject scope creep with a one-line link.
 | Warehouse admin | [`rubix/frontend/src/components/admin/warehouse/`](../../../frontend/src/components/admin/warehouse/) | Data-heavy admin; operators use the web app for this. |
 | Extensions admin | [`rubix/frontend/src/routes/extensions.tsx`](../../../frontend/src/routes/extensions.tsx) | Same as above. |
 | Tenant / team / authz admin | [`@nube/starter-ui-authz`](../../../../packages/starter-ui-authz/) | Same as above. |
-| AI builder | [`@nube/starter-ui-ai-builder`](../../../../packages/starter-ui-ai-builder/) | Split-pane editor; not a phone-shaped interaction. |
 | Print / export to PDF | [`@nube/starter-ui-export`](../../../../packages/starter-ui-export/) | DOM-only stack (`html2canvas` + `jspdf`). If mobile needs export, that's a separate share-sheet feature with its own ADR. |
 
 ## Technical
@@ -57,9 +56,8 @@ name so reviewers can reject scope creep with a one-line link.
 - **No deep links into a specific connection's dashboard in v1.**
   Expo Router supports it; the per-connection resolution UX is a
   follow-up.
-- **No second SDUI renderer set.** `@nube/starter-sdui-react` (the
-  D2 / older renderers) stays web-only. Mobile maintains one
-  renderer surface, period.
+- **No second SDUI renderer set.** `@nube/starter-ui-sdui-react` is
+  the single renderer. Mobile maintains one renderer surface, period.
 - **No bespoke per-page React Native screens beyond the dashboard
   route.** Everything is SDUI-driven; if a screen needs a hand
   layout, that's a sign the IR needs a new kind, not a new screen.

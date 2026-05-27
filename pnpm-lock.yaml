@@ -240,82 +240,11 @@ importers:
         specifier: ^2.1.0
         version: 2.1.9(@types/node@24.12.4)(jsdom@25.0.1)(lightningcss@1.32.0)(terser@5.48.0)
 
-  packages/starter-sdui-react:
-    dependencies:
-      '@nube/starter-ui-core':
-        specifier: workspace:*
-        version: link:../starter-ui-core
-      '@nube/starter-ui-kit':
-        specifier: workspace:*
-        version: link:../starter-ui-kit
-      '@tanstack/react-query':
-        specifier: ^5.59.0
-        version: 5.100.11(react@19.1.0)
-      zustand:
-        specifier: ^5.0.0
-        version: 5.0.13(@types/react@19.2.14)(immer@11.1.8)(react@19.1.0)(use-sync-external-store@1.6.0(react@19.1.0))
-    devDependencies:
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.2.14)
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: 19.1.0
-        version: 19.1.0(react@19.1.0)
-      typescript:
-        specifier: ^5.4
-        version: 5.9.3
-      vitest:
-        specifier: ^2.1.0
-        version: 2.1.9(@types/node@24.12.4)(jsdom@25.0.1)(lightningcss@1.32.0)(terser@5.48.0)
-
   packages/starter-theme-tokens:
     devDependencies:
       typescript:
         specifier: ^5.4
         version: 5.9.3
-
-  packages/starter-ui-ai-builder:
-    dependencies:
-      clsx:
-        specifier: ^2.1.1
-        version: 2.1.1
-    devDependencies:
-      '@nube/starter-sdui-react':
-        specifier: workspace:*
-        version: link:../starter-sdui-react
-      '@nube/starter-ui-chat':
-        specifier: workspace:*
-        version: link:../starter-ui-chat
-      '@nube/starter-ui-kit':
-        specifier: workspace:*
-        version: link:../starter-ui-kit
-      '@tanstack/react-query':
-        specifier: ^5.59.0
-        version: 5.100.11(react@19.1.0)
-      '@types/react':
-        specifier: ^19.0.0
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: ^19.0.0
-        version: 19.2.3(@types/react@19.2.14)
-      react:
-        specifier: 19.1.0
-        version: 19.1.0
-      react-dom:
-        specifier: 19.1.0
-        version: 19.1.0(react@19.1.0)
-      typescript:
-        specifier: ^5.4
-        version: 5.9.3
-      vitest:
-        specifier: ^2.1.0
-        version: 2.1.9(@types/node@24.12.4)(jsdom@25.0.1)(lightningcss@1.32.0)(terser@5.48.0)
 
   packages/starter-ui-authz:
     dependencies:
@@ -10789,9 +10718,7 @@ snapshots:
       metro-runtime: 0.84.4
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

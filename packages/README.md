@@ -17,14 +17,13 @@ the layering below describes how they compose.
 | [`@nube/starter-client-ts`](./starter-client-ts) | OpenAPI-generated TypeScript HTTP client for `starter-server`. Zero React, no UI deps. | Wire |
 | [`@nube/starter-ui-core`](./starter-ui-core) | React glue: `AuthProvider`/`useAuth`, namespaced TanStack Query keys, `i18n` helpers, `preferences` store, testing utilities, theme-editor primitives. Wraps `client-ts`. | Glue |
 | [`@nube/starter-ui-kit`](./starter-ui-kit) | Design system: shadcn/ui primitives + Tailwind v4 tokens + a `theme-editor/config-drawer`. **Zero I/O.** | Design system |
-| [`@nube/starter-sdui-react`](./starter-sdui-react) | Renderer for server-driven-UI trees produced by `starter-sdui-routes`. Projects against `ui-kit` primitives. | Renderer |
+| [`@nube/starter-ui-sdui-react`](./starter-ui-sdui-react) | Renderer for server-driven-UI trees produced by `starter-sdui-routes`. Projects against `ui-kit` primitives. | Renderer |
 | [`@nube/starter-ui-chat`](./starter-ui-chat) | Reusable AI chat surface (composer, message list, tool calls) with a headless `ChatAdapter` transport. | Feature kit |
 | [`@nube/starter-ui-skills`](./starter-ui-skills) | UI for browsing and inspecting a `starter-skills` registry (SKILL.md bundles). | Feature kit |
 | [`@nube/starter-ui-dashboard`](./starter-ui-dashboard) | Dashboard primitives — metric tiles, radial progress, performance charts, live activity feeds. Theme-agnostic, props-driven. | Feature kit |
 | [`@nube/starter-ui-flow`](./starter-ui-flow) | React components for the `starter-flow` node graph. Wraps `@xyflow/react` with typed slots, nodes, and edges. | Feature kit |
 | [`@nube/starter-ui-blobs`](./starter-ui-blobs) | Hooks for direct-to-storage blob uploads + a markdown-editor integration. | Feature kit |
 | [`@nube/starter-ui-export`](./starter-ui-export) | Browser-side PDF export: `<PrintableContent>`, `<ExportButton>`, `usePrint`, `exportNodeToPdf`. | Feature kit |
-| [`@nube/starter-ui-ai-builder`](./starter-ui-ai-builder) | Split-pane composition: chat composer (`ui-chat`) driving a live SDUI canvas (`sdui-react`). | Composition |
 
 ---
 
@@ -47,11 +46,7 @@ the layering below describes how they compose.
                          │             │
         ┌────────────────┤             ├────────────────┐
         ▼                ▼             ▼                ▼
-  starter-ui-chat   starter-ui-skills  starter-sdui-react   starter-ui-dashboard
-        │                              │
-        └──────────────┬───────────────┘
-                       ▼
-            starter-ui-ai-builder        composition
+  starter-ui-chat   starter-ui-skills  starter-ui-sdui-react   starter-ui-dashboard
 
   starter-ui-flow   starter-ui-blobs   starter-ui-export
   (standalone — no @nube/* workspace deps)

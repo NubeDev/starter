@@ -11,7 +11,6 @@ can reject scope creep with a one-line link to this file.
 | Warehouse admin | [`rubix/frontend/src/components/admin/warehouse/`](../../../frontend/src/components/admin/warehouse/) | Data-heavy admin; operators use the web app. |
 | Extensions admin | [`rubix/frontend/src/routes/extensions.tsx`](../../../frontend/src/routes/extensions.tsx) | Same. |
 | Tenant / authz admin | [`@nube/starter-ui-authz`](../../../../packages/starter-ui-authz/) | Same. |
-| AI builder | [`@nube/starter-ui-ai-builder`](../../../../packages/starter-ui-ai-builder/) | Split-pane editor; not a phone-shaped interaction. |
 | PDF export | [`@nube/starter-ui-export`](../../../../packages/starter-ui-export/) | DOM-only stack; if Flutter needs export, that's a separate ADR. |
 
 ## SDUI

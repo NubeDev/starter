@@ -1,4 +1,0 @@
-/* Ensures Tailwind v4 scans this package's components when the host
- * imports this file. v4 skips node_modules, so a host's project-root
- * `@source` won't pick up this package without this shim. */
-@source "./src";

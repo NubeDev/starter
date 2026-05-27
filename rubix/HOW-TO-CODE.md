@@ -278,7 +278,7 @@ Then: `pnpm codegen` to regenerate `packages/starter-client-ts/`.
 → **`packages/starter-client-ts/`** — generated HTTP client, zero React.
 → **`packages/starter-ui-kit/`** — shadcn primitives, zero I/O.
 → **`packages/starter-ui-core/`** — hooks, stores, providers.
-→ **`packages/starter-sdui-react/`** — SDUI React renderer.
+→ **`packages/starter-ui-sdui-react/`** — SDUI React renderer.
 
 ### Q15. Is this a cross-cutting concern?
 

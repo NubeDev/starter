@@ -165,9 +165,6 @@ jobs:
     #   3. Consumer-opt-in (scripts/check-sdui-routes-isolation.sh) —
     #      starter-server must not transitively depend on
     #      starter-sdui-routes / starter-ui-* (M6 / D4).
-    #
-    #   4. Size budget (scripts/check-sdui-size-budget.sh) —
-    #      Renderer.tsx ≤ 800 lines, total components ≤ 4000 lines.
     name: sdui structural gates
     runs-on: ubuntu-latest
     steps:
@@ -184,8 +181,6 @@ jobs:
         run: scripts/check-sdui-ir-deps.sh
       - name: M6 / D4 — starter-server has no SDUI deps
         run: scripts/check-sdui-routes-isolation.sh
-      - name: size budget — Renderer.tsx + components total
-        run: scripts/check-sdui-size-budget.sh
 
   skills-dep-isolation:
     # Stage 12 of the starter-skills job (DOCS/agent/SKILLS.md +

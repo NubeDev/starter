@@ -18,7 +18,6 @@
 # Scope per SCOPE.md § R3:
 #   - `crates/starter-ui-ir/src/`
 #   - `crates/starter-ui-bindings/src/`
-#   - `packages/starter-sdui-react/src/`
 #
 # Excluded from scanning (also per SCOPE.md § R3 — "in source, not
 # comments / tests / fixtures"):
@@ -100,7 +99,6 @@ diff_added() {
 CRATES=(
     "crates/starter-ui-ir/src|crates/starter-ui-ir/words.txt"
     "crates/starter-ui-bindings/src|crates/starter-ui-bindings/words.txt"
-    "packages/starter-sdui-react/src|packages/starter-sdui-react/words.txt"
 )
 
 EXIT=0
