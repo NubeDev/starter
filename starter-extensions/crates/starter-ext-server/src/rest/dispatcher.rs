@@ -290,6 +290,7 @@ impl BuiltinRestDispatcher {
             Arc::new(StubWallClock),
             Arc::new(StubTracing),
             self.capability_factory.warehouse_read(extension, caller),
+            self.capability_factory.warehouse_write(extension, caller),
             self.capability_factory.event_bus(extension, caller),
             self.capability_factory.dashboard(extension, caller),
             self.capability_factory.authz(extension, caller),

@@ -21,7 +21,7 @@ use std::sync::Arc;
 use starter_ext_sdk::ctx::{
     AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend,
     NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend,
-    WarehouseReadBackend,
+    WarehouseReadBackend, WarehouseWriteBackend,
 };
 use starter_ext_spi::Error;
 use tokio::sync::mpsc;
@@ -42,6 +42,7 @@ pub(crate) fn make_stub_ctx() -> CtxInner {
         Arc::new(StubWallClock),
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
+        Arc::new(StubWarehouseWrite),
         Arc::new(StubEventBus),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
@@ -120,6 +121,14 @@ impl WarehouseReadBackend for StubWarehouseRead {
         _template: &str,
     ) -> starter_ext_spi::Result<Option<TemplateSpec>> {
         Err(deny("warehouse_read"))
+    }
+}
+
+#[derive(Debug)]
+struct StubWarehouseWrite;
+impl WarehouseWriteBackend for StubWarehouseWrite {
+    fn insert(&self, _table: &str, _rows: Vec<Row>) -> starter_ext_spi::Result<u64> {
+        Err(deny("warehouse_write"))
     }
 }
 

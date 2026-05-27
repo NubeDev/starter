@@ -9,6 +9,7 @@
 //! - `dashboard.write`  ⇒ [`RubixDashboardBackend::write`]
 //! - `authz.check`      ⇒ [`RubixAuthzBackend::check`]
 //! - `warehouse.query`  ⇒ [`RubixWarehouseReadBackend::query`]
+//! - `warehouse.write`  ⇒ [`RubixWarehouseWriteBackend::insert`]
 //! - `event_bus.publish`⇒ [`RubixEventBusBackend::publish`]
 //!
 //! Any other method name returns `Error::ExtensionInternal("host
@@ -35,7 +36,9 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use rubix_spi::dashboard::DashboardStore;
 use starter_ext_host::{ExtensionRegistry, TemplateRegistry};
-use starter_ext_sdk::ctx::{AuthzBackend, DashboardBackend, EventBusBackend, WarehouseReadBackend};
+use starter_ext_sdk::ctx::{
+    AuthzBackend, DashboardBackend, EventBusBackend, WarehouseReadBackend, WarehouseWriteBackend,
+};
 use starter_ext_spi::authz::{AuthzCheckRequest, AuthzCheckResponse};
 use starter_ext_spi::dashboard::{
     DashboardReadRequest, DashboardReadResponse, DashboardWriteRequest, DashboardWriteResponse,
@@ -47,7 +50,9 @@ use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
 use starter_ext_spi::tracing_ext::{TracingEventRequest, TracingEventResponse};
 use starter_ext_spi::wall_clock::{WallClockNowResponse};
-use starter_ext_spi::warehouse::{WarehouseReadRequest, WarehouseReadResponse};
+use starter_ext_spi::warehouse::{
+    WarehouseReadRequest, WarehouseReadResponse, WarehouseWriteRequest, WarehouseWriteResponse,
+};
 use starter_ext_spi::{Error, ExtensionId, Result};
 use starter_ext_supervisor::HostMethodHandler;
 use starter_spi::authz::PolicyEngine;
@@ -57,8 +62,9 @@ use starter_store_warehouse::WarehouseClient;
 use super::backends::{
     authz_kinds_grant, dashboard_read_grant, dashboard_write_grant, event_bus_publish_grant,
     fs_paths_grant, http_authorities_grant, secrets_prefixes_grant, warehouse_grant,
-    RubixWarehouseReadBackend,
+    warehouse_tables_for, warehouse_write_grant, RubixWarehouseReadBackend,
 };
+use super::warehouse_write::RubixWarehouseWriteBackend;
 use super::dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 use super::event_bus::{RubixEventBus, RubixEventBusBackend};
 
@@ -286,6 +292,36 @@ impl HostMethodHandler for RubixHostMethods {
                         .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
                 Ok(serde_json::to_value(WarehouseReadResponse { rows })
                     .expect("WarehouseReadResponse serialises"))
+            }
+            "warehouse.write" => {
+                let Some(wh) = self.warehouse.get().cloned() else {
+                    return Err(Error::extension_internal(
+                        "host method \"warehouse.write\" not wired: \
+                         no warehouse client attached to RubixHostMethods",
+                    ));
+                };
+                let req: WarehouseWriteRequest = serde_json::from_value(params)
+                    .map_err(|e| Error::validation(format!("warehouse.write params: {e}")))?;
+                let tenant = caller.and_then(|c| c.tenant_id.clone());
+                let granted_tables = warehouse_write_grant(registry, extension);
+                let table_specs =
+                    Arc::new(warehouse_tables_for(registry, extension));
+                let backend = RubixWarehouseWriteBackend::new(
+                    wh.client,
+                    tenant,
+                    extension.clone(),
+                    granted_tables,
+                    table_specs,
+                );
+                let table = req.table.clone();
+                let rows = req.rows;
+                let inserted = tokio::task::spawn_blocking(move || backend.insert(&table, rows))
+                    .await
+                    .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                Ok(serde_json::to_value(WarehouseWriteResponse {
+                    rows_inserted: inserted,
+                })
+                .expect("WarehouseWriteResponse serialises"))
             }
             "event_bus.publish" => {
                 let Some(bus) = self.event_bus.get().cloned() else {
@@ -753,6 +789,50 @@ mod tests {
             .await
             .expect_err("not wired without warehouse dep");
         assert!(matches!(err, Error::ExtensionInternal(_)), "got {err:?}");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn warehouse_write_not_wired_without_warehouse_dep() {
+        let h = handler();
+        let c = caller("t-1", "u-1");
+        let params = serde_json::to_value(WarehouseWriteRequest {
+            table: "solar_panels".into(),
+            rows: vec![],
+        })
+        .unwrap();
+        let err = h
+            .call(&ext(), "warehouse.write", params, Some(&c))
+            .await
+            .expect_err("not wired without warehouse dep");
+        assert!(matches!(err, Error::ExtensionInternal(_)), "got {err:?}");
+    }
+
+    #[tokio::test(flavor = "multi_thread")]
+    async fn warehouse_write_refuses_system_frame_when_wired() {
+        // Wire warehouse with a never-connect pool; the system-frame
+        // refusal fires before the backend touches the pool.
+        let dash_store: Arc<dyn DashboardStore> = Arc::new(MemStore::default());
+        let engine: Arc<dyn PolicyEngine> = Arc::new(AllowEngine);
+        let h = RubixHostMethods::new(dash_store, engine);
+        let pool = sqlx::postgres::PgPoolOptions::new()
+            .max_connections(1)
+            .connect_lazy("postgres://test:test@127.0.0.1:1/test")
+            .unwrap();
+        h.install_warehouse(
+            starter_store_warehouse::WarehouseClient::from_pool(pool),
+            Arc::new(starter_ext_host::TemplateRegistry::builtin()),
+        );
+        let params = serde_json::to_value(WarehouseWriteRequest {
+            table: "solar_panels".into(),
+            rows: vec![],
+        })
+        .unwrap();
+        // No caller → system frame → backend refuses with Capability.
+        let err = h
+            .call(&ext(), "warehouse.write", params, None)
+            .await
+            .expect_err("system frame must refuse");
+        assert!(matches!(err, Error::Capability(_)), "got {err:?}");
     }
 
     #[tokio::test(flavor = "multi_thread")]

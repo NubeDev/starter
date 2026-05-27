@@ -45,7 +45,7 @@ use starter_ext_spi::{Error, Result};
 use crate::ctx::{
     AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, EventSender, FsBackend,
     HttpOutBackend, NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend,
-    WallClockBackend, WarehouseReadBackend,
+    WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 use crate::meta::ExtensionDispatch;
 
@@ -166,6 +166,14 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
             )))
         }
     }
+    impl WarehouseWriteBackend for Stub {
+        fn insert(&self, _table: &str, _rows: Vec<Row>) -> Result<u64> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 wasm flavour",
+                self.0
+            )))
+        }
+    }
     impl EventBusBackend for Stub {
         fn publish(&self, _topic: &str, _payload: Value) -> Result<()> {
             Err(Error::capability(format!(
@@ -205,6 +213,7 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
         Arc::new(Stub("wall_clock")),
         Arc::new(Stub("tracing")),
         Arc::new(Stub("warehouse_read")),
+        Arc::new(Stub("warehouse_write")),
         Arc::new(Stub("event_bus")),
         Arc::new(Stub("dashboard")),
         Arc::new(Stub("authz")),

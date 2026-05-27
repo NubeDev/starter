@@ -39,12 +39,15 @@ use starter_ext_spi::http_out::HttpRequest;
 use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
 use starter_ext_spi::tracing_ext::TracingEventRequest;
 use starter_ext_spi::wall_clock::{WallClockNowRequest, WallClockNowResponse};
-use starter_ext_spi::warehouse::{Row, TemplateSpec, WarehouseReadRequest, WarehouseReadResponse};
+use starter_ext_spi::warehouse::{
+    Row, TemplateSpec, WarehouseReadRequest, WarehouseReadResponse, WarehouseWriteRequest,
+    WarehouseWriteResponse,
+};
 use starter_ext_spi::{Error, Result};
 
 use crate::ctx::{
     AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend,
-    TracingBackend, WallClockBackend, WarehouseReadBackend,
+    TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
 };
 use crate::host_rpc::HostRpc;
 
@@ -170,6 +173,35 @@ impl WarehouseReadBackend for RealWarehouseReadBackend {
         Err(Error::capability(
             "warehouse_read.describe: no host method in v0.1 process flavour",
         ))
+    }
+}
+
+/// `WarehouseWriteBackend` whose `insert` hops to the host via
+/// `warehouse.write`. Mirror of [`RealWarehouseReadBackend`].
+#[derive(Debug, Clone)]
+pub struct RealWarehouseWriteBackend {
+    rpc: HostRpc,
+}
+
+impl RealWarehouseWriteBackend {
+    /// Construct over the shared `HostRpc`.
+    pub fn new(rpc: HostRpc) -> Self {
+        Self { rpc }
+    }
+}
+
+impl WarehouseWriteBackend for RealWarehouseWriteBackend {
+    fn insert(&self, table: &str, rows: Vec<Row>) -> Result<u64> {
+        let req = WarehouseWriteRequest {
+            table: table.to_owned(),
+            rows,
+        };
+        let wire_params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding warehouse.write: {e}")))?;
+        let raw = self.rpc.call_sync("warehouse.write", wire_params)?;
+        let res: WarehouseWriteResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding warehouse.write: {e}")))?;
+        Ok(res.rows_inserted)
     }
 }
 

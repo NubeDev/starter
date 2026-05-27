@@ -25,9 +25,12 @@ use std::sync::Arc;
 use rubix_spi::dashboard::DashboardStore;
 use serde_json::Value as JsonValue;
 use starter_ext_host::{ExtensionRegistry, TemplateRegistry};
-use starter_ext_sdk::ctx::{AuthzBackend, DashboardBackend, WarehouseReadBackend};
+use starter_ext_sdk::ctx::{
+    AuthzBackend, DashboardBackend, WarehouseReadBackend, WarehouseWriteBackend,
+};
 use starter_ext_server::StubCapabilityFactory;
 use starter_ext_spi::capability::Capability;
+use starter_ext_spi::manifest::ContributeWarehouseTable;
 use starter_ext_spi::warehouse::{Row, TemplateSpec};
 use starter_ext_spi::{Error, ExtensionId, Result};
 use starter_spi::authz::PolicyEngine;
@@ -35,6 +38,7 @@ use starter_store_warehouse::WarehouseClient;
 
 use super::dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 use super::event_bus::{RubixEventBus, RubixEventBusBackend};
+use super::warehouse_write::RubixWarehouseWriteBackend;
 use crate::sdui::template_resolver;
 
 /// Per-call rubix [`WarehouseReadBackend`].
@@ -394,6 +398,26 @@ impl starter_ext_server::CapabilityFactory for RubixCapabilityFactory {
         ))
     }
 
+    fn warehouse_write(
+        &self,
+        extension: &starter_ext_spi::ExtensionId,
+        caller: Option<&starter_ext_spi::identity::CallerIdentity>,
+    ) -> Arc<dyn WarehouseWriteBackend> {
+        let tenant_id = caller.and_then(|c| c.tenant_id.clone());
+        let granted_tables = warehouse_write_grant(self.extension_registry.as_deref(), extension);
+        let table_specs = Arc::new(warehouse_tables_for(
+            self.extension_registry.as_deref(),
+            extension,
+        ));
+        Arc::new(RubixWarehouseWriteBackend::new(
+            self.client.clone(),
+            tenant_id,
+            extension.clone(),
+            granted_tables,
+            table_specs,
+        ))
+    }
+
     fn dashboard(
         &self,
         _extension: &starter_ext_spi::ExtensionId,
@@ -475,6 +499,42 @@ pub(crate) fn warehouse_grant(
         }
     }
     Some(tables)
+}
+
+pub(crate) fn warehouse_write_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut tables = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::WarehouseWrite { tables: grant } = cap {
+            tables.extend(grant.iter().cloned());
+        }
+    }
+    Some(tables)
+}
+
+/// Snapshot the calling extension's `contributes.warehouse_tables[]`
+/// for the write backend's per-call schema lookup. Returns an empty
+/// vec when the registry is absent or the extension has no manifest
+/// — the backend then refuses every `insert` with `Validation`
+/// (no matching spec), which is the right shape for host-internal
+/// frames that never declared tables.
+pub(crate) fn warehouse_tables_for(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Vec<ContributeWarehouseTable> {
+    let Some(registry) = registry else { return vec![] };
+    let Some(record) = registry.get(extension) else {
+        return vec![];
+    };
+    let Some(manifest) = record.manifest.as_ref() else {
+        return vec![];
+    };
+    manifest.contributes.warehouse_tables.clone()
 }
 
 pub(crate) fn dashboard_read_grant(
@@ -865,6 +925,58 @@ mod tests {
         let err = backend
             .query("meter_kwh_last_24h", JsonValue::Null)
             .expect_err("absent grant must refuse");
+        assert!(matches!(err, Error::Capability(_)), "got {err:?}");
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn warehouse_write_grant_pipeline_passes_tables_from_manifest() {
+        use starter_ext_server::CapabilityFactory as _;
+        use starter_ext_spi::identity::CallerIdentity;
+
+        let ext = "com.acme.power";
+        let rec = ext_record_with_capabilities(
+            ext,
+            vec![Capability::WarehouseWrite {
+                tables: vec!["solar_panels".into()],
+            }],
+        );
+        let reg = registry_with(vec![rec]);
+        let factory = rubix_factory_with_registry(reg);
+
+        let ext_id = ExtensionId::new(ext).unwrap();
+        let caller = CallerIdentity {
+            tenant_id: Some("t-1".into()),
+            ..Default::default()
+        };
+        let backend = factory.warehouse_write(&ext_id, Some(&caller));
+
+        // Table outside the grant must refuse with Capability.
+        let err = backend
+            .insert("nope", vec![])
+            .expect_err("table outside grant must refuse");
+        assert!(matches!(err, Error::Capability(_)), "got {err:?}");
+    }
+
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn warehouse_write_factory_refuses_system_frame() {
+        use starter_ext_server::CapabilityFactory as _;
+
+        let ext = "com.acme.power";
+        let rec = ext_record_with_capabilities(
+            ext,
+            vec![Capability::WarehouseWrite {
+                tables: vec!["solar_panels".into()],
+            }],
+        );
+        let reg = registry_with(vec![rec]);
+        let factory = rubix_factory_with_registry(reg);
+
+        let ext_id = ExtensionId::new(ext).unwrap();
+        let backend = factory.warehouse_write(&ext_id, None);
+
+        let err = backend
+            .insert("solar_panels", vec![])
+            .expect_err("system frame must refuse");
         assert!(matches!(err, Error::Capability(_)), "got {err:?}");
     }
 

@@ -70,6 +70,28 @@ pub enum Capability {
         tables: Vec<String>,
     },
 
+    /// Write rows into warehouse tables. Companion to
+    /// [`Capability::WarehouseRead`]. The grant enumerates the
+    /// unprefixed table names the extension may insert into; the
+    /// host clamps every row's `tenant_id` to the caller's tenant
+    /// and validates the row's columns against the table schema
+    /// declared in `contributes.warehouse_tables[]`. Empty list is
+    /// the neutralised form: the extension loads, every insert is
+    /// denied.
+    ///
+    /// Per the Use-Case-B design (extensions producing ad-hoc
+    /// schemas via cleaner flows / custom ingest), this is the
+    /// only sanctioned write path — the existing
+    /// `rubix.warehouse.ingest` tool bypasses capability gating and
+    /// is host-side machinery, not extension-reachable.
+    WarehouseWrite {
+        /// Allowed unprefixed table names. The host resolves each
+        /// to `<sanitized_extension_id>__<name>` before issuing the
+        /// INSERT, so two extensions cannot collide on a name.
+        #[serde(default)]
+        tables: Vec<String>,
+    },
+
     /// In-process publish/subscribe bus for cross-extension and
     /// extension↔frontend coordination. Per
     /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
@@ -249,6 +271,25 @@ mod tests {
     #[test]
     fn warehouse_read_empty_tables_is_legal() {
         let cap = Capability::WarehouseRead { tables: vec![] };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn warehouse_write_round_trip() {
+        let cap = Capability::WarehouseWrite {
+            tables: vec!["solar_panels".into(), "battery_state".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "warehouse_write");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn warehouse_write_empty_tables_is_legal() {
+        let cap = Capability::WarehouseWrite { tables: vec![] };
         let j = serde_json::to_string(&cap).unwrap();
         let back: Capability = serde_json::from_str(&j).unwrap();
         assert_eq!(back, cap);

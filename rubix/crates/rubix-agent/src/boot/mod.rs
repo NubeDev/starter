@@ -5,6 +5,7 @@ pub mod auth;
 pub mod authz;
 pub mod config;
 pub mod dashboards_seed;
+pub mod extension_tables;
 pub mod extensions;
 pub mod extensions_flow;
 pub mod flow_notify;
@@ -24,6 +25,7 @@ pub mod warehouse;
 
 pub use auth::{build_auth, AuthSurface};
 pub use config::{AgentConfig, ExtensionsConfig, FlowRuntimeConfig, SchedulerConfig, UndoConfig};
+pub use extension_tables::{create_extension_tables, ExtensionTablesOutcome};
 pub use extensions::{
     build_extension_admin, BootError as ExtensionsBootError, ExtensionAdminBundle,
     SYSTEM_AUTOSTART_PRINCIPAL,

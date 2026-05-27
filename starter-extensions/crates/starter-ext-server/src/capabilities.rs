@@ -53,7 +53,9 @@
 
 use std::sync::Arc;
 
-use starter_ext_sdk::ctx::{AuthzBackend, DashboardBackend, EventBusBackend, WarehouseReadBackend};
+use starter_ext_sdk::ctx::{
+    AuthzBackend, DashboardBackend, EventBusBackend, WarehouseReadBackend, WarehouseWriteBackend,
+};
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::warehouse::{Row, TemplateSpec};
 use starter_ext_spi::{Error, ExtensionId, Result};
@@ -88,6 +90,17 @@ pub trait CapabilityFactory: Send + Sync + 'static {
         extension: &ExtensionId,
         caller: Option<&CallerIdentity>,
     ) -> Arc<dyn EventBusBackend>;
+
+    /// Backend for `ctx.warehouse_write()`. Default returns a
+    /// fail-closed stub so hosts that haven't wired the write path
+    /// yet keep compiling — same shape as `dashboard` / `authz`.
+    fn warehouse_write(
+        &self,
+        _extension: &ExtensionId,
+        _caller: Option<&CallerIdentity>,
+    ) -> Arc<dyn WarehouseWriteBackend> {
+        Arc::new(StubWarehouseWrite)
+    }
 
     /// Backend for `ctx.dashboard()`. Default returns a fail-closed
     /// stub so hosts that haven't wired Row-5 yet keep compiling.
@@ -168,6 +181,17 @@ impl EventBusBackend for StubEventBus {
     fn publish(&self, _topic: &str, _payload: serde_json::Value) -> Result<()> {
         Err(Error::capability(
             "event_bus not wired: install a host CapabilityFactory",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubWarehouseWrite;
+
+impl WarehouseWriteBackend for StubWarehouseWrite {
+    fn insert(&self, _table: &str, _rows: Vec<Row>) -> Result<u64> {
+        Err(Error::capability(
+            "warehouse_write not wired: install a host CapabilityFactory",
         ))
     }
 }

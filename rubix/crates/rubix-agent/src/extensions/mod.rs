@@ -24,11 +24,17 @@ pub mod caller_identity;
 pub mod dashboard_authz;
 pub mod event_bus;
 pub mod host_methods;
+pub mod rest_dispatcher;
 pub mod secrets_store;
+pub mod warehouse_write;
 
 pub use backends::{RubixCapabilityFactory, RubixWarehouseReadBackend};
 pub use caller_identity::with_caller_identity;
 pub use dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 pub use event_bus::{RubixEventBus, RubixEventBusBackend};
 pub use host_methods::RubixHostMethods;
+pub use rest_dispatcher::{CompositeRestDispatcher, EXTENSION_REST_REQUEST_TIMEOUT};
 pub use secrets_store::{pick_default as pick_default_secret_store, EnvSecretStore};
+pub use warehouse_write::{
+    full_table_name, sanitize_extension_id, RubixWarehouseWriteBackend,
+};

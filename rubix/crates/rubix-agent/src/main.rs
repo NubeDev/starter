@@ -244,6 +244,13 @@ async fn main() -> Result<()> {
     let warehouse_client = boot::connect_warehouse(cfg.warehouse_url.as_deref()).await?;
     if let Some(wh) = warehouse_client.as_ref() {
         let _t = boot::pool_telemetry::spawn(wh.pool().clone(), "warehouse");
+        // Apply extension-declared `contributes.warehouse_tables[]`
+        // DDL once per boot. Idempotent (CREATE TABLE IF NOT EXISTS).
+        // Skipped silently when the extension bundle hasn't been
+        // built yet (e.g. extensions disabled).
+        if let Some(b) = ext_bundle.as_ref() {
+            let _ = boot::create_extension_tables(&b.registry, wh).await;
+        }
     }
 
     let tools = registry::build_tool_registry(
@@ -441,13 +448,14 @@ async fn main() -> Result<()> {
             // through real backends instead of fail-closed stubs.
             if let Some(wh_client) = warehouse_client.clone() {
                 use rubix_agent::extensions::{
-                    with_caller_identity, RubixCapabilityFactory, RubixEventBus,
+                    with_caller_identity, CompositeRestDispatcher, RubixCapabilityFactory,
+                    RubixEventBus, EXTENSION_REST_REQUEST_TIMEOUT,
                 };
                 use starter_ext_host::TemplateRegistry;
                 use starter_ext_sdk::builtin::BuiltinTable;
                 use starter_ext_server::{
-                    rest_router, BuiltinRestDispatcher, CapabilityFactory, RestDispatcher,
-                    RestRouterOptions,
+                    rest_router, BuiltinRestDispatcher, CapabilityFactory, ProcessRestDispatcher,
+                    RestDispatcher, RestRouterOptions,
                 };
                 use starter_server::auth::with_principal;
 
@@ -481,10 +489,26 @@ async fn main() -> Result<()> {
                         .with_dashboard_store(dashboard_store)
                         .with_authz_engine(engine.clone()),
                 );
-                let dispatcher: Arc<dyn RestDispatcher> = Arc::new(
+                // Builtin dispatcher: in-process extensions go through the
+                // capability factory above.
+                let builtin = Arc::new(
                     BuiltinRestDispatcher::new(table, bundle.registry.clone())
                         .with_capability_factory(factory),
                 );
+                // Process dispatcher: child-process extensions are dispatched
+                // through their supervisor handle, populated by
+                // `boot::extensions::build_extension_admin`. Empty handle
+                // map (no enabled process extensions) is fine — the
+                // composite simply never picks this branch.
+                let process = Arc::new(ProcessRestDispatcher::new(
+                    bundle.process_handles.clone(),
+                    EXTENSION_REST_REQUEST_TIMEOUT,
+                ));
+                let dispatcher: Arc<dyn RestDispatcher> = Arc::new(CompositeRestDispatcher::new(
+                    bundle.registry.clone(),
+                    builtin,
+                    process,
+                ));
                 match rest_router::<()>(
                     bundle.registry.clone(),
                     dispatcher,
@@ -548,9 +572,32 @@ async fn main() -> Result<()> {
         // so anonymous subscribers see 401 before any stream opens.
         {
             use rubix_store_postgres::PgDashboardStore;
+            use sqlx::postgres::PgPoolOptions;
             use starter_changelog_postgres::PgListenTail;
             use starter_server::auth::with_principal;
-            let tail = Arc::new(PgListenTail::new(pool.clone()));
+            use starter_store_postgres::pool::Pool;
+
+            // Dedicated tiny pool for the SSE listener: `PgListener`
+            // (used inside `PgListenTail::subscribe`) pins one
+            // connection for the lifetime of each subscription.
+            // Sharing the main 16-conn `pool` means every dashboard
+            // sidebar subscriber permanently consumes a slot — once
+            // 16 are open across browser tabs/reloads, every other
+            // auth-gated route blocks on `pool.acquire()` and the
+            // runtime cascades into a futex deadlock. Mirrors the
+            // pattern in `boot::flow_notify`.
+            let listen_inner = PgPoolOptions::new()
+                .max_connections(2)
+                .connect(dsn)
+                .await
+                .map_err(|e| {
+                    anyhow::anyhow!("connect for dashboard_events listen pool: {e}")
+                })?;
+            let listen_pool = Pool::from_sqlx(listen_inner);
+            let _t_dash_listen =
+                boot::pool_telemetry::spawn(listen_pool.sqlx().clone(), "rubix-dash-listen");
+
+            let tail = Arc::new(PgListenTail::new(listen_pool));
             let store = Arc::new(PgDashboardStore::new(pool.clone()));
             let de_router =
                 routes::dashboard_events::router(routes::dashboard_events::DashboardEventsState {

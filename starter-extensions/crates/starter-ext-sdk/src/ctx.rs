@@ -248,6 +248,46 @@ impl WarehouseReadHandle {
     }
 }
 
+/// Warehouse-write handle (granted by
+/// `capabilities.warehouse_write.tables: […]`).
+///
+/// Companion to [`WarehouseReadHandle`]. Lets an extension insert
+/// rows into tables it declared in `contributes.warehouse_tables[]`.
+/// The host:
+///
+/// - Refuses system-frame calls (no caller tenant) with
+///   `Error::Capability`.
+/// - Gates the call against the extension's grant — `table` must be
+///   in `capabilities.warehouse_write.tables`.
+/// - Stamps every row's `tenant_id` to the caller's tenant before
+///   issuing the INSERT, overwriting any value the extension tried
+///   to set. Extensions cannot spoof cross-tenant writes.
+/// - Validates the row's columns against the table schema declared
+///   in the manifest; unknown or mistyped columns refuse with
+///   `Error::Validation`.
+///
+/// `table` is the unprefixed name as declared in the manifest. The
+/// host resolves it to `<sanitized_extension_id>__<table>` before
+/// issuing DDL.
+#[derive(Debug, Clone)]
+pub struct WarehouseWriteHandle {
+    inner: Arc<dyn private::WarehouseWriteBackend>,
+}
+
+impl WarehouseWriteHandle {
+    /// Insert `rows` into `table`. Returns the number of rows the
+    /// engine acknowledged.
+    ///
+    /// Each row is a column-name → JSON value map. The host strips
+    /// any `tenant_id` field the extension supplied and replaces it
+    /// with the caller's tenant. Missing columns are filled from the
+    /// manifest's `default` expression when one is declared; otherwise
+    /// the call refuses with `Error::Validation`.
+    pub fn insert(&self, table: &str, rows: Vec<Row>) -> starter_ext_spi::Result<u64> {
+        self.inner.insert(table, rows)
+    }
+}
+
 /// In-process publish/subscribe bus handle (granted by
 /// `capabilities.event_bus.publish:` / `subscribe:`).
 ///
@@ -369,6 +409,7 @@ pub struct CtxInner {
     wall_clock: WallClockHandle,
     tracing: TracingHandle,
     warehouse_read: WarehouseReadHandle,
+    warehouse_write: WarehouseWriteHandle,
     event_bus: EventBusHandle,
     dashboard: DashboardHandle,
     authz: AuthzHandle,
@@ -389,6 +430,7 @@ impl CtxInner {
         wall_clock: Arc<dyn private::WallClockBackend>,
         tracing: Arc<dyn private::TracingBackend>,
         warehouse_read: Arc<dyn private::WarehouseReadBackend>,
+        warehouse_write: Arc<dyn private::WarehouseWriteBackend>,
         event_bus: Arc<dyn private::EventBusBackend>,
         dashboard: Arc<dyn private::DashboardBackend>,
         authz: Arc<dyn private::AuthzBackend>,
@@ -404,6 +446,9 @@ impl CtxInner {
             tracing: TracingHandle { inner: tracing },
             warehouse_read: WarehouseReadHandle {
                 inner: warehouse_read,
+            },
+            warehouse_write: WarehouseWriteHandle {
+                inner: warehouse_write,
             },
             event_bus: EventBusHandle { inner: event_bus },
             dashboard: DashboardHandle { inner: dashboard },
@@ -469,6 +514,12 @@ impl CtxInner {
     pub fn warehouse_read(&self) -> &WarehouseReadHandle {
         &self.warehouse_read
     }
+
+    /// Borrow the warehouse-write handle (granted by
+    /// `requires!(warehouse_write)`).
+    pub fn warehouse_write(&self) -> &WarehouseWriteHandle {
+        &self.warehouse_write
+    }
     /// Borrow the event-bus handle (named by `requires!(event_bus)`).
     pub fn event_bus(&self) -> &EventBusHandle {
         &self.event_bus
@@ -498,7 +549,7 @@ impl std::fmt::Debug for CtxInner {
 // its concrete backing (secret store, reqwest client, std::fs, …).
 // ---------------------------------------------------------------------------
 
-pub use private::{AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend};
+pub use private::{AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend};
 
 mod private {
     /// Host-side backing for [`super::SecretsHandle`].
@@ -552,6 +603,17 @@ mod private {
             &self,
             template: &str,
         ) -> starter_ext_spi::Result<Option<super::TemplateSpec>>;
+    }
+
+    /// Host-side backing for [`super::WarehouseWriteHandle`].
+    pub trait WarehouseWriteBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Insert `rows` into `table`. Returns the engine's
+        /// acknowledged row count.
+        fn insert(
+            &self,
+            table: &str,
+            rows: Vec<super::Row>,
+        ) -> starter_ext_spi::Result<u64>;
     }
 
     /// Host-side backing for [`super::EventBusHandle`].
@@ -656,6 +718,11 @@ mod tests {
                 Ok(None)
             }
         }
+        impl WarehouseWriteBackend for Noop {
+            fn insert(&self, _: &str, _: Vec<Row>) -> starter_ext_spi::Result<u64> {
+                Ok(0)
+            }
+        }
         impl EventBusBackend for Noop {
             fn publish(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<()> {
                 Ok(())
@@ -678,6 +745,7 @@ mod tests {
         let inner = CtxInner::new(
             tx,
             Arc::new(NeverCancel),
+            Arc::new(Noop),
             Arc::new(Noop),
             Arc::new(Noop),
             Arc::new(Noop),

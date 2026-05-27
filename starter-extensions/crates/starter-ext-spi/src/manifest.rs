@@ -374,6 +374,20 @@ pub struct Contributes {
     /// SDK call.
     #[serde(default)]
     pub warehouse_templates: Vec<ContributeWarehouseTemplate>,
+    /// Warehouse-table declarations the extension owns. The host
+    /// issues `CREATE TABLE IF NOT EXISTS <sanitized_id>__<name>`
+    /// at boot for each entry, then routes
+    /// `WarehouseWriteHandle::insert(name, rows)` calls against
+    /// the resulting table after stamping `tenant_id` from the
+    /// caller. See [`ContributeWarehouseTable`].
+    ///
+    /// Per
+    /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+    /// row 5 (Phase B): the lynchpin contribution for Use-Case-B
+    /// — extensions that produce ad-hoc data the host's L1/L2/L3
+    /// schema can't host directly.
+    #[serde(default)]
+    pub warehouse_tables: Vec<ContributeWarehouseTable>,
 }
 
 /// One `contributes.skills[]` entry — a directory of `SKILL.md`
@@ -439,6 +453,82 @@ pub struct ContributeWarehouseTemplate {
     /// audit; R7 — the SQL is never templated at runtime.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub sql_file: Option<String>,
+}
+
+/// One `contributes.warehouse_tables[]` entry — a warehouse table
+/// the extension declares for `WarehouseWriteHandle::insert(...)`.
+///
+/// The host (rubix-agent) issues
+/// `CREATE TABLE IF NOT EXISTS <sanitized_id>__<name>` at boot
+/// using the declared columns + engine. A `tenant_id String` column
+/// is always prepended by the host so the per-call tenant clamp
+/// has somewhere to write; the extension must not declare it
+/// itself.
+///
+/// The type strings are passed verbatim to the warehouse engine's
+/// DDL — the SPI does not enumerate types, so consumers can target
+/// ClickHouse (`Float64`, `DateTime`, `String`, …) or any other
+/// engine the host wires.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeWarehouseTable {
+    /// Unprefixed table name. The host namespaces it as
+    /// `<sanitized_extension_id>__<name>` (the extension id with
+    /// dots and dashes replaced by `_`) before issuing DDL. Must
+    /// match `^[a-zA-Z_][a-zA-Z0-9_]*$`; reserved name `tenant_id`
+    /// is rejected (it's a column, not a table).
+    pub name: String,
+
+    /// Ordered column definitions. The host prepends a
+    /// `tenant_id String` column at position 0 — the extension
+    /// must not declare it.
+    pub columns: Vec<TableColumn>,
+
+    /// Columns the engine sorts/orders rows by. Required because
+    /// the default ClickHouse engine (`MergeTree`) demands an
+    /// `ORDER BY` clause. Names must appear in `columns` or be
+    /// the host-prepended `tenant_id`.
+    pub order_by: Vec<String>,
+
+    /// Storage engine. Defaults to `MergeTree`. Consumers may
+    /// override (`ReplacingMergeTree`, `SummingMergeTree`, …) when
+    /// they want idempotent re-materialisation or pre-aggregation.
+    /// The string is passed through verbatim — the host does not
+    /// inspect engine arguments.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub engine: Option<String>,
+
+    /// Partition-key expression (e.g. `toYYYYMM(ts)`). Optional;
+    /// omitted ⇒ the host emits no `PARTITION BY` clause and the
+    /// engine uses one partition per table.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub partition_by: Option<String>,
+
+    /// TTL expression (e.g. `ts + INTERVAL 14 DAY`). Optional;
+    /// omitted ⇒ rows live indefinitely (operator-configurable
+    /// retention is the alternative path).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ttl: Option<String>,
+}
+
+/// One column in a [`ContributeWarehouseTable`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct TableColumn {
+    /// Column name. Must match `^[a-zA-Z_][a-zA-Z0-9_]*$` and
+    /// must not be `tenant_id` (host-reserved).
+    pub name: String,
+
+    /// Warehouse-engine column type, passed verbatim into DDL.
+    /// Examples for ClickHouse: `String`, `Float64`, `Int64`,
+    /// `DateTime`, `DateTime64(3)`, `Nullable(String)`.
+    #[serde(rename = "type")]
+    pub ty: String,
+
+    /// Optional default expression. Passed verbatim after
+    /// `DEFAULT` in the column DDL.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default: Option<String>,
 }
 
 /// The extension's i18n block.

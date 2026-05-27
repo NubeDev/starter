@@ -315,6 +315,7 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
         Arc::new(StubWallClock),
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
+        Arc::new(StubWarehouseWrite),
         Arc::new(StubEventBus),
         Arc::new(StubDashboard),
         Arc::new(StubAuthz),
@@ -392,6 +393,20 @@ impl starter_ext_sdk::ctx::WarehouseReadBackend for StubWarehouseRead {
     ) -> starter_ext_spi::Result<Option<starter_ext_spi::warehouse::TemplateSpec>> {
         Err(Error::capability(
             "warehouse_read not wired in workers adapter",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubWarehouseWrite;
+impl starter_ext_sdk::ctx::WarehouseWriteBackend for StubWarehouseWrite {
+    fn insert(
+        &self,
+        _table: &str,
+        _rows: Vec<starter_ext_spi::warehouse::Row>,
+    ) -> starter_ext_spi::Result<u64> {
+        Err(Error::capability(
+            "warehouse_write not wired in workers adapter",
         ))
     }
 }

@@ -121,6 +121,36 @@ pub struct WarehouseReadResponse {
     pub rows: Vec<Row>,
 }
 
+/// The wire payload an extension sends on `warehouse.write`.
+///
+/// Companion to [`WarehouseReadRequest`]. Carries the unprefixed
+/// `table` name (as declared in `contributes.warehouse_tables[]`)
+/// and the rows to insert. The host clamps `tenant_id` on every
+/// row before issuing the INSERT.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseWriteRequest {
+    /// Unprefixed table name (as in
+    /// `contributes.warehouse_tables[].name`). The host resolves
+    /// to `<sanitized_extension_id>__<table>` before DDL.
+    pub table: String,
+    /// Rows to insert. Empty vector is permitted (returns 0 rows
+    /// inserted); convenient for batched callers that occasionally
+    /// have nothing to flush.
+    #[serde(default)]
+    pub rows: Vec<Row>,
+}
+
+/// Wire response for `warehouse.write`. Wraps the engine's
+/// acknowledged row count so v2 can grow shape additively
+/// (per-row error map, last-insert id, etc.) without breaking the
+/// wire.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseWriteResponse {
+    /// Rows the engine acknowledged. Should match
+    /// `request.rows.len()` on success.
+    pub rows_inserted: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
