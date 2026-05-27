@@ -48,12 +48,12 @@
                 <ul>
                   <li>Dashboard assistant</li>
                   <li>Flow programmer</li>
-                  <li>ClickHouse ruler</li>
+                  <li>TimescaleDB ruler</li>
                   <li>Analytics reporter</li>
                 </ul>
               </div>
             </article>
-            <article class="db-card clickhouse">
+            <article class="db-card tsdb">
               <header>Runtime flow</header>
               <div class="db-body">
                 <p>A graph is mounted at boot. Triggers fire repeatedly and node state survives across runs.</p>
@@ -85,7 +85,7 @@
             <strong>Schedule trigger</strong>
             <span><code>starter.flow.trigger.schedule</code> fires every 5 seconds from cron <code>*/5 * * * * *</code>.</span>
           </div>
-          <div class="pipe-step ch">
+          <div class="pipe-step tsdb">
             <small>3</small>
             <strong>Counter node</strong>
             <span><code>starter.flow.counter</code> reads prior count from <code>NodeStateStore</code>, adds <code>step</code>, and writes it back.</span>

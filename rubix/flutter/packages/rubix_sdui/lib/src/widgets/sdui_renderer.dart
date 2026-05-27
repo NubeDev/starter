@@ -12,6 +12,8 @@ import '../models/component.dart';
 import '../models/component_tree.dart';
 import '../models/resolve.dart';
 import '../state/sdui_status.dart';
+import 'components/display_widgets.dart';
+import 'components/layout_widgets.dart';
 import 'components/sentinel_widgets.dart';
 import 'sdui_provider.dart';
 
@@ -56,14 +58,18 @@ class SduiRenderer extends StatelessWidget {
 /// arms are added incrementally per FLUTTER.md F6.
 Widget buildComponent(BuildContext context, SduiComponent component) {
   return switch (component) {
+    PageComponent() => SduiPageWidget(component: component),
+    RowComponent() => SduiRowWidget(component: component),
+    ColComponent() => SduiColWidget(component: component),
+    KpiComponent() => SduiKpiWidget(component: component),
+    ChartComponent() => SduiChartWidget(component: component),
     DanglingComponent() => const SduiDanglingWidget(),
     ForbiddenComponent() => const SduiForbiddenWidget(),
     CustomComponent() => SduiCustomWidget(component: component),
-    // TODO(F6 Wave 1): page, row, col, grid, tabs, section, divider,
-    //                  spacer, text, heading, badge, markdown, kpi,
-    //                  kpi_grid, toggle, slider, select, text_field,
-    //                  number_field, checkbox, segmented, form, card,
-    //                  button.
+    // TODO(F6 Wave 1 follow-up): grid, tabs, section, divider, spacer,
+    //   text, heading, badge, markdown, kpi_grid, toggle, slider,
+    //   select, text_field, number_field, checkbox, segmented, form,
+    //   card, button.
     // TODO(F6 Wave 2): everything else.
     _ => SduiUnknownWidget(type: component.type),
   };

@@ -48,7 +48,7 @@
               </div>
               <div class="layer">
                 <header>L3 marts</header>
-                <div>Small ClickHouse tables built for specific questions. Dashboard and report reads use L3 by default, with L2 allowed and L1 explicit.</div>
+                <div>Small TimescaleDB tables built for specific questions. Dashboard and report reads use L3 by default, with L2 allowed and L1 explicit.</div>
               </div>
             </div>
           </aside>
@@ -76,10 +76,10 @@
               </div>
             </div>
             <div class="stack-column">
-              <h3>ClickHouse: history, rules, marts</h3>
+              <h3>TimescaleDB: history, rules, marts</h3>
               <div class="stack-item teal">
                 <strong><code>rubix</code> database</strong>
-                <span>Rubix-owned ClickHouse tables live in the <code>rubix</code> database and should be qualified as <code>rubix.&lt;table&gt;</code> by operators.</span>
+                <span>Rubix-owned TimescaleDB tables live in the <code>rubix</code> database and should be qualified as <code>rubix.&lt;table&gt;</code> by operators.</span>
               </div>
               <div class="stack-item teal">
                 <strong>Rule writer verbs</strong>
@@ -109,7 +109,7 @@
             </div>
             <div class="node store">
               <strong>Stores</strong>
-              <span>PG stores definitions and dashboard bodies. ClickHouse stores time-series history and marts.</span>
+              <span>PG stores definitions and dashboard bodies. TimescaleDB stores time-series history and marts.</span>
             </div>
             <div class="node analytics">
               <strong>Resolver/query</strong>
@@ -133,12 +133,12 @@
               <p>Deploys, duplicates, lints, and lists flow YAML. Deployed revisions notify every Rubix agent process, so the registry refreshes without an out-of-band reload RPC.</p>
             </article>
             <article class="card">
-              <h3>ClickHouse ruler</h3>
+              <h3>TimescaleDB ruler</h3>
               <p>Writes rules, creates marts, and sets retention. Mutations are undo-aware by storing before/after snapshots through the changelog.</p>
             </article>
             <article class="card">
               <h3>Analytics reporter</h3>
-              <p>Runs named ClickHouse query templates, renders reports through <code>starter-export</code>, stores blobs, and records undo state for created report files.</p>
+              <p>Runs named TimescaleDB query templates, renders reports through <code>starter-export</code>, stores blobs, and records undo state for created report files.</p>
             </article>
             <article class="card">
               <h3>SDUI tools</h3>
@@ -175,19 +175,19 @@
 
             <div class="lane-label">Render</div>
             <div class="lane-cell"><strong>Resolve</strong><span>Server loads the ComponentTree and applies bindings.</span></div>
-            <div class="lane-cell"><strong>Fetch rows</strong><span>Tables/charts call query sources that read ClickHouse marts.</span></div>
+            <div class="lane-cell"><strong>Fetch rows</strong><span>Tables/charts call query sources that read TimescaleDB marts.</span></div>
             <div class="lane-cell"><strong>Display</strong><span>React renderer paints KPIs, charts, forms, filters, and tables.</span></div>
             <div class="lane-cell"><strong>Act</strong><span>Buttons/forms call handlers and refresh page state.</span></div>
           </div>
         </section>
 
         <div class="callout">
-          Practical framing: explain ClickHouse as the analytical warehouse, analytics templates as the controlled query layer, tags as the business vocabulary for finding/scoping pages, and SDUI as the dashboard delivery mechanism that avoids custom frontend work per dashboard.
+          Practical framing: explain TimescaleDB as the analytical warehouse, analytics templates as the controlled query layer, tags as the business vocabulary for finding/scoping pages, and SDUI as the dashboard delivery mechanism that avoids custom frontend work per dashboard.
         </div>
 
         <div class="source-list" aria-label="Source docs">
           <a href="../flow-programmer/README.md">flow programmer</a>
-          <a href="../clickhouse-rules/README.md">clickhouse rules</a>
+          <a href="../warehouse-rules/README.md">warehouse rules</a>
           <a href="../warehouse/README.md">warehouse</a>
           <a href="../reports/README.md">reports</a>
           <a href="../sdui/storage/README.md">sdui storage</a>

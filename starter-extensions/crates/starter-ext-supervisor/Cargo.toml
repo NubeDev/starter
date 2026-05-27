@@ -16,6 +16,7 @@ starter-ext-spi       = { workspace = true }
 starter-ext-host      = { workspace = true }
 starter-jsonrpc-stdio = { workspace = true }
 
+async-trait = { workspace = true }
 serde       = { workspace = true }
 serde_json  = { workspace = true }
 thiserror   = { workspace = true }

@@ -42,6 +42,12 @@ pub struct EventBusPublishRequest {
     pub payload: serde_json::Value,
 }
 
+/// Wire response for `event_bus.publish`. Empty struct so future
+/// fields (e.g. subscriber count, broadcast timestamp) can land
+/// additively without breaking the wire.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct EventBusPublishResponse {}
+
 /// Wire request for the `event_bus.subscribe` host method (row-4
 /// follow-up — the v1 handle only exposes `publish`).
 ///

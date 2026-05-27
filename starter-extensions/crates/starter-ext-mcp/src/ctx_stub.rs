@@ -19,8 +19,9 @@
 use std::sync::Arc;
 
 use starter_ext_sdk::ctx::{
-    CtxInner, EventBusBackend, FsBackend, HttpOutBackend, NeverCancel, Row, SecretsBackend,
-    TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend,
+    AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend,
+    NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend,
+    WarehouseReadBackend,
 };
 use starter_ext_spi::Error;
 use tokio::sync::mpsc;
@@ -42,6 +43,8 @@ pub(crate) fn make_stub_ctx() -> CtxInner {
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
         Arc::new(StubEventBus),
+        Arc::new(StubDashboard),
+        Arc::new(StubAuthz),
     )
 }
 
@@ -125,5 +128,24 @@ struct StubEventBus;
 impl EventBusBackend for StubEventBus {
     fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         Err(deny("event_bus"))
+    }
+}
+
+#[derive(Debug)]
+struct StubDashboard;
+impl DashboardBackend for StubDashboard {
+    fn read(&self, _page_id: &str) -> starter_ext_spi::Result<serde_json::Value> {
+        Err(deny("dashboard"))
+    }
+    fn write(&self, _page_id: &str, _body: serde_json::Value) -> starter_ext_spi::Result<()> {
+        Err(deny("dashboard"))
+    }
+}
+
+#[derive(Debug)]
+struct StubAuthz;
+impl AuthzBackend for StubAuthz {
+    fn check(&self, _action: &str, _resource: &str) -> starter_ext_spi::Result<bool> {
+        Err(deny("authz"))
     }
 }

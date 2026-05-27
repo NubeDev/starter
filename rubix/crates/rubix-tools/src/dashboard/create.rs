@@ -66,7 +66,6 @@ fn validate_body_json(body: &Value) -> Result<()> {
     }
 }
 
-
 /// Build (and re-register) the `rubix.dashboard.page` `ResourceSpec`.
 /// `DuplicateResource` is treated as success — the kind is also
 /// registered at boot, this call merely ensures it on every write.

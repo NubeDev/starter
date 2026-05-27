@@ -56,6 +56,11 @@ dependencies:
   rubix_api:
     path: packages/rubix_api
 
+  # SDUI renderer — typed component tree projector against
+  # /api/v1/ui/resolve. See packages/rubix_sdui/docs/PROOF.md.
+  rubix_sdui:
+    path: packages/rubix_sdui
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

@@ -64,10 +64,7 @@ impl Canary {
     /// timestamp.
     pub fn staleness(&self) -> Option<Duration> {
         let last = self.last_tick_unix_secs.load(Ordering::Relaxed);
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .ok()?
-            .as_secs();
+        let now = SystemTime::now().duration_since(UNIX_EPOCH).ok()?.as_secs();
         Some(Duration::from_secs(now.saturating_sub(last)))
     }
 }

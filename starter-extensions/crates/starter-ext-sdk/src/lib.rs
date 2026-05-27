@@ -93,6 +93,10 @@ pub mod meta;
 #[cfg(feature = "builtin")]
 pub mod builtin;
 #[cfg(feature = "process")]
+pub mod host_backends;
+#[cfg(feature = "process")]
+pub mod host_rpc;
+#[cfg(feature = "process")]
 pub mod process;
 #[cfg(feature = "wasm")]
 pub mod wasm;

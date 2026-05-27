@@ -1,4 +1,4 @@
-// ClickHouse marts panel. Lists materialised marts, supports
+// Warehouse marts panel. Lists materialised marts, supports
 // creating a new mart via `useMartCreate` (modal with name + DDL),
 // and dropping a mart via `useWarehouseMartDrop` with a hard
 // data-loss warning surfaced through the kit's `<AlertDialog>`
@@ -142,7 +142,7 @@ export function WarehouseMartsPanel() {
               <AlertTriangle className="h-3.5 w-3.5" />
               {tr(
                 'admin.warehouse.marts.createWarning',
-                'DDL is executed verbatim against ClickHouse.',
+                'DDL is executed verbatim against the warehouse.',
               )}
             </DialogDescription>
           </DialogHeader>

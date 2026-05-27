@@ -101,6 +101,58 @@ pub enum Capability {
         subscribe: Vec<String>,
     },
 
+    /// SDUI dashboard pages the extension is allowed to **read**.
+    /// Per
+    /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+    /// row 5: extensions that compose flows over the host's
+    /// dashboard store reach `ctx.dashboard().read(page_id)`;
+    /// this grant is the per-page allowlist the host enforces
+    /// before the read fans out. Page ids are stable strings the
+    /// host's SDUI page provider already keys off; the
+    /// `dashboards_definitions` `page_id` column is the source of
+    /// truth. Empty vec is the neutralised form: the extension
+    /// loads, every read is denied.
+    DashboardRead {
+        /// Allowed page ids. Cross-checked against
+        /// `ctx.dashboard().read(page_id)` at the host backend.
+        #[serde(default)]
+        pages: Vec<String>,
+    },
+
+    /// SDUI dashboard pages the extension is allowed to **write**.
+    /// Distinct from [`Capability::DashboardRead`] so an operator
+    /// can grant read-only access (the common posture for AI-builder
+    /// extensions that compose dashboards but should not mutate
+    /// the operator's authored pages). Empty vec is the neutralised
+    /// form: the extension loads, every write is denied.
+    DashboardWrite {
+        /// Allowed page ids. Cross-checked against
+        /// `ctx.dashboard().write(page_id, body)` at the host
+        /// backend.
+        #[serde(default)]
+        pages: Vec<String>,
+    },
+
+    /// Resource kinds the extension is allowed to ask the host's
+    /// authz engine about via `ctx.authz().check(action, resource)`.
+    ///
+    /// The grant is a **resource-kind allowlist**, not an action
+    /// allowlist: the authz engine itself decides which actions on
+    /// which kinds the calling principal may perform — the
+    /// extension's job is to *ask*. The kind allowlist exists so
+    /// an operator can keep an extension from peeking at the
+    /// engine for kinds outside its remit (e.g. an HVAC extension
+    /// has no business probing `secrets` decisions). Empty vec is
+    /// the neutralised form: the extension loads, every check is
+    /// denied.
+    AuthzCheck {
+        /// Allowed resource kinds (the `kind` half of a
+        /// `kind:id` resource reference). Cross-checked against
+        /// `ctx.authz().check(...)` at the host backend.
+        #[serde(default)]
+        kinds: Vec<String>,
+    },
+
     /// An opaque, host-defined capability. Used as the escape hatch for
     /// consumer-specific grants the kernel does not know about.
     Custom {
@@ -220,6 +272,55 @@ mod tests {
             publish: vec![],
             subscribe: vec![],
         };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn dashboard_read_round_trip() {
+        let cap = Capability::DashboardRead {
+            pages: vec!["dashboard.disk-overview".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "dashboard_read");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn dashboard_write_round_trip() {
+        let cap = Capability::DashboardWrite {
+            pages: vec!["dashboard.disk-overview".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "dashboard_write");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn dashboard_read_empty_pages_is_legal() {
+        let cap = Capability::DashboardRead { pages: vec![] };
+        let j = serde_json::to_string(&cap).unwrap();
+        let back: Capability = serde_json::from_str(&j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn authz_check_round_trip() {
+        let cap = Capability::AuthzCheck {
+            kinds: vec!["rubix.dashboard.page".into()],
+        };
+        let j = serde_json::to_value(&cap).unwrap();
+        assert_eq!(j["kind"], "authz_check");
+        let back: Capability = serde_json::from_value(j).unwrap();
+        assert_eq!(back, cap);
+    }
+
+    #[test]
+    fn authz_check_empty_kinds_is_legal() {
+        let cap = Capability::AuthzCheck { kinds: vec![] };
         let j = serde_json::to_string(&cap).unwrap();
         let back: Capability = serde_json::from_str(&j).unwrap();
         assert_eq!(back, cap);

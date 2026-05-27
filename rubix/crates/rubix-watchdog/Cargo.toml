@@ -1,0 +1,25 @@
+[package]
+name        = "rubix-watchdog"
+description = "External liveness watchdog for rubix-agent. Probes /livez; on sustained failure, force-kills and restarts the agent. Deliberately minimal-dep so a build break in rubix-agent cannot also break the supervisor."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[[bin]]
+name = "rubix-watchdog"
+path = "src/main.rs"
+
+[dependencies]
+# Single-threaded runtime — no shared fate with the agent's
+# multi-threaded runtime, and a tiny dep footprint.
+tokio   = { workspace = true, features = ["rt", "macros", "time", "signal", "process", "io-util"] }
+reqwest = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+anyhow  = { workspace = true }
+libc    = "0.2"
+
+[lints]
+workspace = true

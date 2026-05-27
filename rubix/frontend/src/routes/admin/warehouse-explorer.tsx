@@ -1,4 +1,4 @@
-// `/admin/warehouse-explorer` — visual rebuild of the ClickHouse
+// `/admin/warehouse-explorer` — visual rebuild of the warehouse
 // explorer, forked from sql-studio. Lives at a sibling URL to
 // `/admin/warehouse` (not nested as a tab) and takes the full page
 // width. The library at `@nube/starter-ui-warehouse-explorer` carries

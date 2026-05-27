@@ -15,9 +15,12 @@ dependencies:
   flutter:
     sdk: flutter
 
-  # HTTP transport — the generated Dart-Dio client from rubix/openapi.json.
-  # Once `rubix-agent` mounts `starter-sdui-routes`, this gives us
-  # `RubixApi.getUiApi()` / `getUiTableApi()` automatically.
+  # HTTP transport. The generated `rubix_api` Dio client is the
+  # long-term target (PENDING F1), but the proof slice in
+  # `docs/PROOF.md` uses Dio directly so it doesn't block on the
+  # codegen refresh. Swap the service body when F1 lands.
+  dio: ^5.7.0
+
   rubix_api:
     path: ../rubix_api
 

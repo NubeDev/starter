@@ -76,3 +76,47 @@ impl SupervisorFactory for DefaultSupervisorFactory {
 
 /// Convenience: `Arc<dyn SupervisorFactory>` used in `ExtensionAdmin`.
 pub(crate) type DynFactory = Arc<dyn SupervisorFactory>;
+
+/// `SupervisorFactory` that installs a host-provided
+/// [`starter_ext_supervisor::HostMethodHandler`] on every
+/// process-flavour spawn. Use when the consumer wants real
+/// capability-gated host-method bodies (e.g. rubix-agent's
+/// `RubixHostMethods` routing `dashboard.read` / `dashboard.write`
+/// / `authz.check` into its Row-5 backends).
+pub struct WithHostMethodsFactory {
+    host_methods: starter_ext_supervisor::SharedHostMethodHandler,
+}
+
+impl WithHostMethodsFactory {
+    /// New factory carrying `host_methods`. Every process-flavour
+    /// supervisor it spawns inherits the same `Arc` — cheap to
+    /// share, no per-spawn cloning of the underlying handler.
+    pub fn new(host_methods: starter_ext_supervisor::SharedHostMethodHandler) -> Self {
+        Self { host_methods }
+    }
+}
+
+impl std::fmt::Debug for WithHostMethodsFactory {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("WithHostMethodsFactory").finish_non_exhaustive()
+    }
+}
+
+#[async_trait]
+impl SupervisorFactory for WithHostMethodsFactory {
+    async fn spawn(
+        &self,
+        record: &ExtensionRecord,
+    ) -> Result<Option<SupervisorHandle>, SupervisorFactoryError> {
+        let manifest = match record.manifest.as_ref() {
+            Some(m) => m,
+            None => return Ok(None),
+        };
+        match manifest.runtime.kind {
+            RuntimeKind::Process => Supervisor::start_with(record, self.host_methods.clone())
+                .map(Some)
+                .map_err(SupervisorFactoryError::new),
+            RuntimeKind::Builtin | RuntimeKind::Wasm => Ok(None),
+        }
+    }
+}

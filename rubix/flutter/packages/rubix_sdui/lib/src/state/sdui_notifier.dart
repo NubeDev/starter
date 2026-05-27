@@ -1,11 +1,8 @@
 /// `SduiNotifier` — ChangeNotifier ViewModel for an SDUI page.
 ///
-/// Owns a `SduiState`, calls `SduiService` for resolve / action /
-/// table fetches, and emits `SduiSideEffect`s for the widget layer
+/// Owns a [SduiState], calls [SduiService] for resolve / action /
+/// table fetches, and emits [SduiSideEffect]s for the widget layer
 /// to consume.
-///
-/// **Scaffold only.** Method bodies throw `UnimplementedError`
-/// pointing back to the relevant FLUTTER.md stage.
 ///
 /// Pure Dart (only `package:flutter/foundation.dart` for
 /// `ChangeNotifier`).
@@ -17,13 +14,13 @@ import 'package:flutter/foundation.dart' show ChangeNotifier;
 
 import '../client/sdui_service.dart';
 import '../models/action.dart';
+import '../models/resolve.dart';
 import 'sdui_state.dart';
 import 'sdui_status.dart';
 import 'side_effect.dart';
 
 class SduiNotifier extends ChangeNotifier {
-  SduiNotifier({SduiService? service})
-      : _service = service ?? const SduiService();
+  SduiNotifier({required SduiService service}) : _service = service;
 
   final SduiService _service;
   final StreamController<SduiSideEffect> _sideEffects =
@@ -35,10 +32,6 @@ class SduiNotifier extends ChangeNotifier {
   /// Side-effect stream — toast / navigate / dialog / download.
   Stream<SduiSideEffect> get sideEffects => _sideEffects.stream;
 
-  // -------------------------------------------------------------------------
-  // Public API — stage F5
-  // -------------------------------------------------------------------------
-
   Future<void> load({
     required String pageRef,
     String? targetRef,
@@ -46,9 +39,35 @@ class SduiNotifier extends ChangeNotifier {
     Map<String, Object?>? pageState,
   }) async {
     _setState(_state.copyWith(status: SduiStatus.loading, clearError: true));
-    throw UnimplementedError(
-      'SduiNotifier.load — stage F5. See FLUTTER.md.',
-    );
+
+    try {
+      final result = await _service.resolve(
+        ResolveRequest(
+          pageRef: pageRef,
+          targetRef: targetRef,
+          stack: stack,
+          pageState: pageState ?? const <String, Object?>{},
+        ),
+      );
+      _setState(
+        _state.copyWith(
+          status: SduiStatus.loaded,
+          tree: result.tree,
+          subscriptions: result.subscriptions,
+          clearError: true,
+        ),
+      );
+    } catch (e) {
+      // SduiVersionMismatchError, SduiServerError, and anything else
+      // surface verbatim; the renderer handles version mismatch
+      // specially and falls through to a generic banner otherwise.
+      _setState(
+        _state.copyWith(
+          status: SduiStatus.error,
+          error: e,
+        ),
+      );
+    }
   }
 
   Future<void> dispatchAction(
@@ -56,36 +75,28 @@ class SduiNotifier extends ChangeNotifier {
     Map<String, Object?> context = const {},
   }) async {
     throw UnimplementedError(
-      'SduiNotifier.dispatchAction — stage F5. See FLUTTER.md.',
+      'SduiNotifier.dispatchAction — lands with the `button` widget. '
+      'See packages/rubix_sdui/docs/PROOF.md.',
     );
   }
 
-  /// Two-way bound control write (toggle, slider).
-  ///
-  /// Open question (FLUTTER.md §5 Q1): action-only path vs
-  /// resurrecting `/api/v1/slots`. Until that's resolved, this
-  /// stub throws.
+  /// Two-way bound control write (toggle, slider). Out of proof scope.
   Future<void> writeControl(String componentId, Object? value) async {
     throw UnimplementedError(
-      'SduiNotifier.writeControl — stage F5 + open question. See FLUTTER.md §5.',
+      'SduiNotifier.writeControl — open question in FLUTTER.md §5.',
     );
   }
 
-  /// SSE bridge entrypoint — called by the host when a
-  /// `slot_changed` event arrives.
+  /// SSE bridge entrypoint. Out of proof scope (resolver returns
+  /// empty subscriptions for the data-flow page).
   void pushSlotEvent({
     required String entityId,
     required String slot,
     required Object? value,
     required int ts,
   }) {
-    // TODO(F5): port reference repo's pushSlotEvent — walks
-    // subscription plan, updates liveValues + liveSeries.
+    // No-op until the SSE bridge lands.
   }
-
-  // -------------------------------------------------------------------------
-  // Internals
-  // -------------------------------------------------------------------------
 
   void _setState(SduiState next) {
     _state = next;
@@ -94,10 +105,6 @@ class SduiNotifier extends ChangeNotifier {
 
   // ignore: unused_element
   void _emit(SduiSideEffect e) => _sideEffects.add(e);
-
-  // Hint to the analyser that the service field will be read soon.
-  // ignore: unused_element
-  SduiService get _serviceRef => _service;
 
   @override
   void dispose() {

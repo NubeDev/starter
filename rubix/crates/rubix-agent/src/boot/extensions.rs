@@ -38,10 +38,13 @@ use tracing::{info, warn};
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_server::{
     DefaultSupervisorFactory, EnablementState, ExtensionAdmin, SupervisorFactory,
+    WithHostMethodsFactory,
 };
 use starter_ext_spi::ExtensionId;
 use starter_ext_store_pg::PgEnablementStore;
-use starter_ext_supervisor::SupervisorHandle;
+use starter_ext_supervisor::{SharedHostMethodHandler, SupervisorHandle};
+
+use crate::extensions::RubixHostMethods;
 
 /// Synthetic principal recorded as the actor for any audit / log entry
 /// emitted by the boot-time autostart path. SCOPE OQ-5: operators must
@@ -152,6 +155,7 @@ pub struct ExtensionAdminBundle {
 pub async fn build_extension_admin(
     cfg: &AgentConfig,
     pg_pool: &PgPool,
+    host_methods: Option<Arc<RubixHostMethods>>,
 ) -> Result<ExtensionAdminBundle, BootError> {
     // (1) Migration. Idempotent — the SQL uses CREATE TABLE IF NOT
     // EXISTS so a second boot is a no-op.
@@ -214,7 +218,25 @@ pub async fn build_extension_admin(
     // initial spawn loop and the admin route's later `enable` handler
     // — same `Arc` is handed to the builder via
     // `with_supervisor_factory`.
-    let factory: Arc<dyn SupervisorFactory> = Arc::new(DefaultSupervisorFactory);
+    // Pick the supervisor factory: when the host attached a
+    // `HostMethodHandler` (rubix-agent's `RubixHostMethods` for
+    // Row-5 routing), every process-flavour spawn — autostart and
+    // post-boot `enable` — inherits the same handler. Otherwise
+    // the default factory leaves host calls advisory-only.
+    //
+    // Order matters: install the sealed `ExtensionRegistry` into
+    // the handler *before* the factory wraps it, so by the time
+    // autostart spawns supervisors and any child issues its first
+    // host call the per-resource manifest gate has the registry
+    // it needs.
+    let factory: Arc<dyn SupervisorFactory> = match host_methods {
+        Some(handler) => {
+            handler.install_extension_registry(registry.clone());
+            let shared: SharedHostMethodHandler = handler;
+            Arc::new(WithHostMethodsFactory::new(shared))
+        }
+        None => Arc::new(DefaultSupervisorFactory),
+    };
     let mut supervisors: HashMap<String, SupervisorHandle> = HashMap::new();
     // Parallel map keyed by `ExtensionId`, surfaced in the returned
     // bundle so adapters (notably `starter-ext-mcp`'s

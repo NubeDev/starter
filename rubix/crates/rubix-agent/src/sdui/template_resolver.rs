@@ -85,10 +85,7 @@ pub fn known_template_names() -> &'static [&'static str] {
 }
 
 fn param_str(params: &JsonValue, key: &str) -> Option<String> {
-    params
-        .get(key)
-        .and_then(|v| v.as_str())
-        .map(str::to_owned)
+    params.get(key).and_then(|v| v.as_str()).map(str::to_owned)
 }
 
 async fn latest_for_kind(

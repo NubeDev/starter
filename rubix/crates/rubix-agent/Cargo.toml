@@ -128,5 +128,13 @@ async-trait              = { workspace = true }
 tokio                    = { workspace = true, features = ["macros", "rt-multi-thread", "process", "io-util", "time"] }
 tower                    = { workspace = true }
 
+[features]
+default = []
+# Forward to starter-observability so the tokio-console layer is
+# wired in `boot::init_tracing`. Requires the workspace to be
+# built with `RUSTFLAGS="--cfg tokio_unstable"`; see the
+# `agent-console` make target.
+tokio-console = ["starter-observability/tokio-console"]
+
 [lints]
 workspace = true

@@ -13,6 +13,17 @@ tracing            = { workspace = true }
 tracing-subscriber = { workspace = true }
 prometheus         = { workspace = true }
 uuid               = { workspace = true }
+# Optional: when the `tokio-console` feature is on, `init` adds a
+# `console_subscriber` layer that exposes the runtime on port 6669.
+# Requires the whole workspace to be built with
+# `RUSTFLAGS="--cfg tokio_unstable"`; the make target sets it.
+console-subscriber = { workspace = true, optional = true }
+
+[features]
+default = []
+# Enable the tokio-console layer in `tracing::init`. See module
+# docs in `src/tracing/init.rs` for the build-flag prerequisite.
+tokio-console = ["dep:console-subscriber"]
 
 [lints]
 workspace = true

@@ -21,8 +21,12 @@
 
 pub mod backends;
 pub mod caller_identity;
+pub mod dashboard_authz;
 pub mod event_bus;
+pub mod host_methods;
 
 pub use backends::{RubixCapabilityFactory, RubixWarehouseReadBackend};
 pub use caller_identity::with_caller_identity;
+pub use dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 pub use event_bus::{RubixEventBus, RubixEventBusBackend};
+pub use host_methods::RubixHostMethods;

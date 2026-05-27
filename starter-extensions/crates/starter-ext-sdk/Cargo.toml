@@ -17,7 +17,7 @@ rust-version.workspace = true
 default = ["builtin"]
 builtin = []
 wasm    = []
-process = ["dep:starter-jsonrpc-stdio", "dep:sha2", "tokio/io-util", "tokio/io-std", "tokio/rt", "tokio/macros", "tokio/time"]
+process = ["dep:starter-jsonrpc-stdio", "dep:sha2", "tokio/io-util", "tokio/io-std", "tokio/rt", "tokio/rt-multi-thread", "tokio/macros", "tokio/time"]
 
 [dependencies]
 starter-ext-spi        = { workspace = true }

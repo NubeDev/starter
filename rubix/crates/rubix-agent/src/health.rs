@@ -111,10 +111,7 @@ async fn readyz(State(pool): State<Arc<PgPool>>) -> (StatusCode, String) {
     match tokio::time::timeout(READYZ_PROBE_BUDGET, probe).await {
         Ok(Ok(_)) => {
             let ms = started.elapsed().as_millis();
-            (
-                StatusCode::OK,
-                format!(r#"{{"status":"ready","ms":{ms}}}"#),
-            )
+            (StatusCode::OK, format!(r#"{{"status":"ready","ms":{ms}}}"#))
         }
         Ok(Err(e)) => {
             warn!(

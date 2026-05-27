@@ -110,6 +110,17 @@ pub struct WarehouseReadRequest {
     pub params: serde_json::Value,
 }
 
+/// Wire response for `warehouse.query`. Wraps `Vec<Row>` so the
+/// shape can grow additively (cursor token, row count, etc.)
+/// without breaking the wire when v2 lands.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseReadResponse {
+    /// Rows the template yielded. Same `Row` shape the builtin
+    /// handle returns.
+    #[serde(default)]
+    pub rows: Vec<Row>,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

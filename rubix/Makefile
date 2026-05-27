@@ -18,6 +18,7 @@ FRONTEND_DIR   := frontend
 COMPOSE_FILE   := docker/docker-compose.dev.yaml
 AGENT_LOG      := /tmp/rubix-agent.log
 FRONTEND_LOG   := /tmp/rubix-frontend.log
+WATCHDOG_LOG   := /tmp/rubix-watchdog.log
 AGENT_PORT     := 8088
 FRONTEND_PORT  := 5173
 
@@ -33,6 +34,9 @@ help:
 	@echo "  make build    — build backend + frontend, pull docker images"
 	@echo "  make start    — bring up Postgres + ClickHouse, bootstrap, run agent + frontend"
 	@echo "  make restart  — stop + start"
+	@echo "  make restart-console — restart with tokio-console layer (port 6669)"
+	@echo "  make watchdog — run external liveness supervisor (foreground)"
+	@echo "  make watchdog-bg / watchdog-stop — daemonised variants"
 	@echo "  make clean    — stop, remove docker volumes, cargo + pnpm clean"
 
 build:
@@ -57,14 +61,36 @@ bootstrap: deps-up
 	RUBIX_DSN=$(RUBIX_DSN) cargo run -p rubix-agent --bin rubix-admin -- \
 	    bootstrap-user --email op@example.com --password rubix-dev-passwd
 
+# Set CONSOLE=1 to build + launch with the tokio-console layer
+# wired in. Adds the `--cfg tokio_unstable` rustflag and
+# `--features tokio-console` so the layer is compiled. The console
+# server binds 127.0.0.1:6669; connect with `tokio-console`.
+#
+# Trade-off: the cfg flag invalidates the cargo cache the first
+# time you toggle CONSOLE, so the next build with or without it
+# rebuilds the whole workspace. Keep CONSOLE=1 set across a debug
+# session to avoid bouncing the cache.
+CONSOLE ?= 0
+ifeq ($(CONSOLE),1)
+AGENT_CARGO_EXTRA    := --features tokio-console
+AGENT_RUSTFLAGS      := --cfg tokio_unstable
+AGENT_CONSOLE_BANNER := echo "    tokio-console : 127.0.0.1:6669  (connect: tokio-console)"
+else
+AGENT_CARGO_EXTRA    :=
+AGENT_RUSTFLAGS      :=
+AGENT_CONSOLE_BANNER := true
+endif
+
 agent:
 	@if ss -tlnp 2>/dev/null | grep -q ':$(AGENT_PORT) '; then \
 	    echo "rubix-agent: :$(AGENT_PORT) already in use — skipping launch." >&2; \
 	else \
 	    echo "==> rubix-agent → $(AGENT_LOG) (cwd=$(REPO_ROOT))"; \
+	    $(AGENT_CONSOLE_BANNER); \
 	    cd $(REPO_ROOT) && \
 	    RUBIX_DSN=$(RUBIX_DSN) RUBIX_CONFIG=$(RUBIX_CONFIG) RUBIX_CH_URL=$(RUBIX_CH_URL) \
-	        nohup cargo run -p rubix-agent > $(AGENT_LOG) 2>&1 & \
+	    RUSTFLAGS="$(AGENT_RUSTFLAGS)" \
+	        nohup cargo run -p rubix-agent $(AGENT_CARGO_EXTRA) > $(AGENT_LOG) 2>&1 & \
 	    echo "    pid=$$!"; \
 	fi
 
@@ -96,8 +122,59 @@ stop:
 	-@pkill -f 'target/debug/rubix-agent' 2>/dev/null || true
 	-@pkill -f 'cargo run -p rubix-agent' 2>/dev/null || true
 	-@fuser -k $(FRONTEND_PORT)/tcp 2>/dev/null || true
+	@# Block until port $(AGENT_PORT) is actually free before
+	@# returning. Without this, `make restart` races: `start` runs
+	@# `agent`, which skips launch when `ss` still sees the dying
+	@# listener in TIME_WAIT or LISTEN, and no new agent comes up.
+	@# 20 × 250ms = 5s ceiling — well past any realistic TIME_WAIT
+	@# on loopback. SO_REUSEADDR on the listener means TIME_WAIT
+	@# alone wouldn't normally block bind(), but the agent's TCP
+	@# listener doesn't set it, so we wait the full window.
+	@for i in $$(seq 1 20); do \
+	    if ! ss -tlnp 2>/dev/null | grep -q ':$(AGENT_PORT) '; then \
+	        exit 0; \
+	    fi; \
+	    sleep 0.25; \
+	done; \
+	echo "stop: port $(AGENT_PORT) still bound after 5s — restart may fail" >&2
 
 restart: stop start
+
+# Convenience: restart with the tokio-console layer wired. First
+# build re-compiles the workspace under `--cfg tokio_unstable`, so
+# expect ~30s extra. Subsequent restart-console calls are fast.
+# Connect from another terminal: `tokio-console`.
+restart-console:
+	$(MAKE) CONSOLE=1 restart
+
+# External liveness supervisor. Probes /livez every 10s; on 3
+# consecutive failures (~30s wedged), SIGUSR1 → SIGABRT → restart.
+# See `rubix/crates/rubix-watchdog/src/main.rs` for the env var
+# contract. Runs in the foreground so Ctrl+C stops it without
+# touching the agent. NOTE: if you Ctrl+C *while a restart is in
+# flight*, the terminal SIGINT propagates to the still-building
+# `cargo run` child and the new agent never starts — use
+# `watchdog-bg` if that's a concern.
+watchdog:
+	@echo "==> rubix-watchdog → stdout (Ctrl+C to stop; agent left running)"
+	@RUBIX_WATCHDOG_RESTART_CMD='cd $(CURDIR) && $(MAKE) restart' \
+	    cargo run -p rubix-watchdog
+
+# Daemonised variant. Logs to $(WATCHDOG_LOG). Use this when you
+# want the watchdog to survive your terminal closing.
+watchdog-bg:
+	@if pgrep -f 'target/debug/rubix-watchdog' >/dev/null; then \
+	    echo "rubix-watchdog already running — skipping launch." >&2; \
+	else \
+	    echo "==> rubix-watchdog → $(WATCHDOG_LOG)"; \
+	    RUBIX_WATCHDOG_RESTART_CMD='cd $(CURDIR) && $(MAKE) restart' \
+	        nohup cargo run -p rubix-watchdog > $(WATCHDOG_LOG) 2>&1 & \
+	    echo "    pid=$$!"; \
+	fi
+
+watchdog-stop:
+	@echo "==> stop rubix-watchdog (agent left running)"
+	-@pkill -f 'target/debug/rubix-watchdog' 2>/dev/null || true
 
 clean: stop
 	@echo "==> docker compose down -v (drops volumes)"

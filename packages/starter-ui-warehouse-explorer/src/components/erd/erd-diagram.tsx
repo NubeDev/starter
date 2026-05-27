@@ -98,7 +98,7 @@ export function ErdDiagram({ data }: Props) {
 
   // Run dagre layout for the with-edges case; otherwise fall back
   // to a tidy grid so disconnected tables don't pile up at (0, 0).
-  // ClickHouse warehouses very often have no FK metadata at all —
+  // Warehouses very often have no FK metadata at all —
   // the previous code path produced an empty-looking diagram in
   // that case because every node landed on the same coordinate.
   const dagreLayout = useLayout(initialNodes, initialEdges);

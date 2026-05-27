@@ -1,19 +1,33 @@
-//! Rubix warehouse verbs — Timescale-backed.
+//! Rubix warehouse verbs — TimescaleDB-backed.
 //!
-//! PR #44 deleted the previous ClickHouse-backed `rubix.warehouse.*`
-//! verbs. The producer + cleaner + rollup flows still reference the
-//! verb names, so the absence shows up as a per-tick WARN
-//! ("tool_id not registered") and the SDUI `analytics_template`
-//! chart sources resolve to empty.
+//! The previous ClickHouse-backed verbs were deleted in stage 3 of
+//! `rubix/docs/proposal/warehouse-engine-swap.md`. This module
+//! rebuilds them against the TimescaleDB engine, reading and
+//! writing through [`starter_store_warehouse::WarehouseClient`]:
 //!
-//! This module rebuilds the minimum needed for the bundled
-//! `data-flow-site-a` dashboard to render live numbers:
+//! - `ingest`          — append synth meter readings into `samples`.
+//! - `rule.list`       — enumerate continuous aggregates tagged as
+//!                       rules (derived-state views).
+//! - `mart.list`       — enumerate continuous aggregates tagged as
+//!                       marts (history / aggregate views).
+//! - `tables.list`     — enumerate hypertables with engine + retention.
+//! - `rule.write`      — execute CREATE/ALTER DDL for a rule; returns
+//!                       prior view definition in the response.
+//! - `mart.create`     — provision a new mart; idempotent.
+//! - `mart.drop`       — drop a mart; idempotent.
+//! - `retention.set`   — add / remove a retention policy.
 //!
-//! - `rubix.warehouse.ingest` — append synth meter readings into the
-//!   Timescale `samples` hypertable.
-//!
-//! The other verbs (`clean_minute`, `rollup_15m`, `mart.create`, …)
-//! remain absent; the analytics bridge queries raw `samples` via
-//! Timescale's `time_bucket()` so no rollup table is needed.
+//! Rule-vs-mart distinction is naming-convention only: caggs whose
+//! name starts with `rule_` or ends with `_rule` surface via
+//! `rule.list`; everything else surfaces via `mart.list`. A future
+//! registration table can replace this probe without changing the
+//! DTO shape.
 
 pub mod ingest;
+pub mod mart_create;
+pub mod mart_drop;
+pub mod mart_list;
+pub mod retention_set;
+pub mod rule_list;
+pub mod rule_write;
+pub mod tables_list;

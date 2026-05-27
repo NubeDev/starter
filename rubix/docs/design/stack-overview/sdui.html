@@ -54,8 +54,8 @@
                   </ul>
                 </div>
               </article>
-              <article class="db-card clickhouse">
-                <header>ClickHouse</header>
+              <article class="db-card tsdb">
+                <header>TimescaleDB</header>
                 <div class="db-body">
                   <p>Source of truth for the numbers a chart or KPI shows.</p>
                   <ul>
@@ -162,12 +162,12 @@
               <strong>Resolver dispatches</strong>
               <span>On <code>dashboard.get</code> the resolver matches the variant and routes to the right backend — domain history, RSQL, or analytics templates.</span>
             </div>
-            <div class="pipe-step ch">
+            <div class="pipe-step tsdb">
               <small>3</small>
-              <strong>ClickHouse / RSQL fetch</strong>
+              <strong>TimescaleDB / RSQL fetch</strong>
               <span>Marts are read through named templates with typed params; bucket-stitched series are built server-side so the browser never sees 100k rows.</span>
             </div>
-            <div class="pipe-step ch">
+            <div class="pipe-step tsdb">
               <small>4</small>
               <strong>Downsample + shape</strong>
               <span>The resolver emits a <code>ChartSeries</code> list of <code>[ts_ms, value]</code> points per series, capped to a server-side ceiling.</span>

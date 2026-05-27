@@ -1,4 +1,4 @@
-// ClickHouse retention panel. Lists every `system.tables` row
+// Warehouse retention panel. Lists every `system.tables` row
 // from `useWarehouseTablesList`, exposes inline TTL editing via
 // `useRetentionSet`.
 
@@ -71,7 +71,7 @@ export function WarehouseRetentionPanel() {
           <EmptyDescription>
             {tr(
               'admin.warehouse.retention.empty.body',
-              'ClickHouse has no user-owned tables yet.',
+              'The warehouse has no user-owned tables yet.',
             )}
           </EmptyDescription>
         </EmptyHeader>

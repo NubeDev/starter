@@ -32,7 +32,7 @@
           <div>
             <h1>From operational data to dashboards, reports, and alerts.</h1>
             <p class="lede">
-              Rubix is the operator layer over the starter platform. It collects events, writes historical facts into ClickHouse, keeps dashboard definitions and permissions in Postgres, and uses SDUI so the same dashboard can render on web, mobile, and desktop shells.
+              Rubix is the operator layer over the starter platform. It collects events, writes historical facts into TimescaleDB, keeps dashboard definitions and permissions in Postgres, and uses SDUI so the same dashboard can render on web, mobile, and desktop shells.
             </p>
             <div class="audience-strip" aria-label="Audience summaries">
               <div class="audience">
@@ -41,7 +41,7 @@
               </div>
               <div class="audience">
                 <span class="label">Technical reader</span>
-                <p>The important split is simple: Postgres stores definitions and permissions; ClickHouse stores time-series history and marts; SDUI renders pages from typed JSON.</p>
+                <p>The important split is simple: Postgres stores definitions and permissions; TimescaleDB stores time-series history and marts; SDUI renders pages from typed JSON.</p>
               </div>
             </div>
             <div class="callout">
@@ -62,7 +62,7 @@
               </div>
               <div class="node store">
                 <strong>Warehouse</strong>
-                <span>ClickHouse stores raw history, curated rows, and query-ready marts.</span>
+                <span>TimescaleDB stores raw history, curated rows, and query-ready marts.</span>
               </div>
               <div class="node analytics">
                 <strong>Analytics</strong>
@@ -79,16 +79,16 @@
       <section class="section">
           <div class="section-head">
             <h2>The operating loop</h2>
-            <p>Rubix is built around six operator goals. The same tool and flow pattern appears behind dashboards, flow programming, ClickHouse rules, system checks, user management, and analytics reports.</p>
+            <p>Rubix is built around six operator goals. The same tool and flow pattern appears behind dashboards, flow programming, TimescaleDB rules, system checks, user management, and analytics reports.</p>
           </div>
           <div class="grid-3">
             <article class="card">
               <div class="metric"><h3>Warehouse</h3><b>L1-L3</b></div>
-              <p>ClickHouse is the history store. Data lands as raw facts, becomes curated and tenanted, then turns into narrow marts that answer specific business questions quickly.</p>
+              <p>TimescaleDB is the history store. Data lands as raw facts, becomes curated and tenanted, then turns into narrow marts that answer specific business questions quickly.</p>
             </article>
             <article class="card">
               <div class="metric"><h3>Analytics</h3><b>SQL</b></div>
-              <p>Rubix uses named query templates such as weekly disk history, alert counts, flow run summaries, user activity, ClickHouse writes, and undo counts.</p>
+              <p>Rubix uses named query templates such as weekly disk history, alert counts, flow run summaries, user activity, TimescaleDB writes, and undo counts.</p>
             </article>
             <article class="card">
               <div class="metric"><h3>Dashboards</h3><b>SDUI</b></div>
@@ -109,13 +109,13 @@
               <div class="tag-band" aria-label="Example tags">
                 <span class="tag">region:apac</span>
                 <span class="tag">team:ops</span>
-                <span class="tag">system:clickhouse</span>
+                <span class="tag">system:tsdb</span>
                 <span class="tag">dashboard:weekly</span>
               </div>
             </article>
             <article class="card">
               <h3>System purpose</h3>
-              <p>Tags act as metadata beside dashboard definitions and, later, broader rubix resources. They help list, filter, duplicate, and govern dashboards without changing the ClickHouse warehouse schema.</p>
+              <p>Tags act as metadata beside dashboard definitions and, later, broader rubix resources. They help list, filter, duplicate, and govern dashboards without changing the TimescaleDB warehouse schema.</p>
               <div class="callout">Implementation note: the tags README describes intent only. Treat tags as a planned/consumed <code>starter-tags</code> substrate, not as a completed standalone rubix system.</div>
             </article>
           </div>
@@ -134,13 +134,13 @@
             <div class="lane-cell"><strong>Operator action</strong><span>A person asks the AI flow to create or update a dashboard.</span></div>
 
             <div class="lane-label">2. Store</div>
-            <div class="lane-cell emphasis"><strong>ClickHouse L1</strong><span>Raw history, short retention, one row per fact.</span></div>
-            <div class="lane-cell emphasis"><strong>ClickHouse L2</strong><span>Curated, typed, deduplicated, tenant-scoped rows.</span></div>
-            <div class="lane-cell emphasis"><strong>ClickHouse L3</strong><span>Marts designed for fast reads by dashboards and reports.</span></div>
+            <div class="lane-cell emphasis"><strong>TimescaleDB L1</strong><span>Raw history, short retention, one row per fact.</span></div>
+            <div class="lane-cell emphasis"><strong>TimescaleDB L2</strong><span>Curated, typed, deduplicated, tenant-scoped rows.</span></div>
+            <div class="lane-cell emphasis"><strong>TimescaleDB L3</strong><span>Marts designed for fast reads by dashboards and reports.</span></div>
             <div class="lane-cell"><strong>Postgres</strong><span>Dashboard definitions, flow definitions, authz resources, and revisions.</span></div>
 
             <div class="lane-label">3. Present</div>
-            <div class="lane-cell"><strong>Analytics query</strong><span>Named SQL templates read ClickHouse with typed parameters.</span></div>
+            <div class="lane-cell"><strong>Analytics query</strong><span>Named SQL templates read TimescaleDB with typed parameters.</span></div>
             <div class="lane-cell"><strong>Report</strong><span>Rows render to HTML, CSV, or JSON and are stored as blobs.</span></div>
             <div class="lane-cell"><strong>Insight</strong><span>Threshold checks can dispatch alerts after tool results.</span></div>
             <div class="lane-cell"><strong>Dashboard</strong><span>SDUI resolves a typed page and renders KPIs, charts, tables, and actions.</span></div>

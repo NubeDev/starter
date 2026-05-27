@@ -1,4 +1,4 @@
-// `/admin/warehouse` — ClickHouse + insights admin. Mounts the
+// `/admin/warehouse` — warehouse + insights admin. Mounts the
 // rubix-side `<WarehouseAdmin>` tabbed shell from
 // `@/components/admin/warehouse`. The shell composes rules, marts,
 // retention, and insights panels — each reads/writes via
@@ -30,7 +30,7 @@ function WarehousePanel() {
         <p className="mt-2 max-w-2xl text-sm text-[color:var(--color-muted)]">
           {tr(
             'admin.warehouse.subtitle',
-            'ClickHouse projection rules, materialised marts, retention policy, and insights rules.',
+            'Warehouse projection rules, materialised marts, retention policy, and insights rules.',
           )}
         </p>
       </header>

@@ -31,7 +31,7 @@ export function WarehouseExplorerPanel() {
     shell: {
       title: tr(
         'admin.warehouse.explorer.title',
-        'ClickHouse explorer',
+        'Warehouse explorer',
       ),
       tabs: {
         overview: tr(

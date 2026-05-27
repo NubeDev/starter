@@ -98,7 +98,7 @@ export interface ExplorerMessages {
 /** Default English messages. */
 export const DEFAULT_EXPLORER_MESSAGES: ExplorerMessages = {
   shell: {
-    title: "ClickHouse explorer",
+    title: "Warehouse explorer",
     tabs: {
       overview: "Overview",
       tables: "Tables",

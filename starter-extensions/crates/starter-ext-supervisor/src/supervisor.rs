@@ -346,6 +346,18 @@ impl Supervisor {
     /// `manifest.runtime.bin` path the supervisor can `exec` (resolved
     /// against the bundle dir).
     pub fn start(record: &ExtensionRecord) -> Result<SupervisorHandle> {
+        Self::start_with(record, Arc::new(crate::host_methods::NotImplementedHandler))
+    }
+
+    /// Like [`Self::start`] but installs a host-provided
+    /// [`crate::host_methods::HostMethodHandler`]. Hosts opt into
+    /// real Row-5 plumbing by passing a handler that routes
+    /// `dashboard.read|write` / `authz.check` (and future host
+    /// methods) into their concrete backends.
+    pub fn start_with(
+        record: &ExtensionRecord,
+        host_methods: crate::host_methods::SharedHostMethodHandler,
+    ) -> Result<SupervisorHandle> {
         let manifest = record
             .manifest
             .as_ref()
@@ -408,6 +420,7 @@ impl Supervisor {
             violations: violations.clone(),
             pending: pending.clone(),
             stream_subscribers: stream_subscribers.clone(),
+            host_methods,
         };
         tokio::spawn(task.run());
 
@@ -453,6 +466,10 @@ struct SupervisorTask {
     /// task exit so dangling proxies observe channel-closed instead
     /// of hanging on `recv`.
     stream_subscribers: StreamSubscribers,
+    /// Resolver for capability-gated host calls from the child.
+    /// `NotImplementedHandler` by default; hosts opt in via
+    /// [`Supervisor::start_with`].
+    host_methods: crate::host_methods::SharedHostMethodHandler,
 }
 
 impl Drop for SupervisorTask {
@@ -917,14 +934,41 @@ impl SupervisorTask {
         // capability-violation error or a not-implemented stub.
         match self.gate.check(method) {
             Ok(_) => {
-                // Allowed but not implemented in v0.1.
-                let resp = json!({
-                    "jsonrpc": JSONRPC_VERSION,
-                    "id": id,
-                    "error": Error::extension_internal(format!(
-                        "host method {method:?} not implemented in v0.1 supervisor"
-                    )),
-                });
+                // Capability gate allowed the call — hand it to the
+                // host-installed handler. The default
+                // (`NotImplementedHandler`) reproduces the prior
+                // inline "not implemented in v0.1 supervisor" reply;
+                // hosts that install a real handler (rubix-agent
+                // routes Row 5 here) get a concrete response.
+                let params = value
+                    .get("params")
+                    .cloned()
+                    .unwrap_or(serde_json::Value::Null);
+                // Extract `_meta.caller` so the handler can bind a
+                // tenancy-scoped backend. Malformed `_meta` is
+                // treated as "no caller" — same posture the SDK
+                // child uses when reading the inbound `_meta`.
+                let caller: Option<CallerIdentity> = value
+                    .get("_meta")
+                    .cloned()
+                    .and_then(|m| serde_json::from_value::<FrameMeta>(m).ok())
+                    .and_then(|m| m.caller);
+                let outcome = self
+                    .host_methods
+                    .call(&self.id, method, params, caller.as_ref())
+                    .await;
+                let resp = match outcome {
+                    Ok(result) => json!({
+                        "jsonrpc": JSONRPC_VERSION,
+                        "id": id,
+                        "result": result,
+                    }),
+                    Err(e) => json!({
+                        "jsonrpc": JSONRPC_VERSION,
+                        "id": id,
+                        "error": e,
+                    }),
+                };
                 let _ = write_value(writer, &resp).await;
             }
             Err(err) => {

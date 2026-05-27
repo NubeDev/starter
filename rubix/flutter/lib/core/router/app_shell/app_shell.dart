@@ -30,6 +30,7 @@ class AppShell extends ConsumerWidget {
 
     final destinations = <_Destination>[
       _Destination(icon: LucideIcons.home, label: l.home),
+      _Destination(icon: LucideIcons.layoutDashboard, label: 'Dashboards'),
       _Destination(icon: LucideIcons.link, label: l.connections),
       _Destination(icon: LucideIcons.settings, label: l.settings),
     ];

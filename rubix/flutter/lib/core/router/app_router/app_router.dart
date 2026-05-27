@@ -7,6 +7,8 @@ import 'package:rubix_flutter/features/connections/presentation/connections_list
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_list_screen.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_unlock/connections_unlock_screen.dart';
 import 'package:rubix_flutter/features/home/presentation/home_screen.dart';
+import 'package:rubix_flutter/features/sdui/presentation/dashboard_list_screen.dart';
+import 'package:rubix_flutter/features/sdui/presentation/sdui_page_screen.dart';
 import 'package:rubix_flutter/features/settings/data/settings_providers.dart';
 import 'package:rubix_flutter/features/settings/presentation/settings_screen.dart';
 
@@ -76,6 +78,12 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         path: '/connections/unlock',
         builder: (context, state) => const ConnectionsUnlockScreen(),
       ),
+      GoRoute(
+        path: '/sdui/:pageRef',
+        builder: (context, state) => SduiPageScreen(
+          pageRef: state.pathParameters['pageRef']!,
+        ),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) =>
             AppShell(navigationShell: navigationShell),
@@ -85,6 +93,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home',
                 builder: (context, state) => const HomeScreen(),
+              ),
+            ],
+          ),
+          StatefulShellBranch(
+            routes: [
+              GoRoute(
+                path: '/dashboards',
+                builder: (context, state) => const DashboardListScreen(),
               ),
             ],
           ),

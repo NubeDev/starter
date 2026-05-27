@@ -20,7 +20,7 @@
 //! shape every tenant-scoped capability uses for the
 //! "no-identity" refusal.
 
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
 
@@ -120,15 +120,56 @@ impl RubixEventBus {
 pub struct RubixEventBusBackend {
     bus: std::sync::Arc<RubixEventBus>,
     caller_namespace: Option<String>,
+    /// Topics the manifest's `event_bus.publish` grant permits.
+    /// `None` ⇒ host-internal frame (per-topic gate skipped — the
+    /// namespace check still fires); `Some(set)` ⇒ allowlist (the
+    /// empty set is the explicit neutralised grant — every publish
+    /// refused).
+    granted_publish_topics: Option<BTreeSet<String>>,
 }
 
 impl RubixEventBusBackend {
-    /// Construct a backend bound to `bus` and `caller_namespace`.
+    /// Construct a backend bound to `bus` and `caller_namespace`,
+    /// with no per-topic manifest gate.
+    ///
+    /// Prefer [`Self::with_grant`] from any flow that has a sealed
+    /// `ExtensionRegistry` — the grant is the manifest-side
+    /// allowlist that runs *before* the namespace check, so an
+    /// operator-neutralised grant refuses every publish even on
+    /// in-namespace topics.
     pub fn new(bus: std::sync::Arc<RubixEventBus>, caller_namespace: Option<String>) -> Self {
         Self {
             bus,
             caller_namespace,
+            granted_publish_topics: None,
         }
+    }
+
+    /// Construct with both the caller namespace and the resolved
+    /// manifest grant. Pass `None` for `granted_publish_topics`
+    /// to keep the host-internal posture (gate skipped).
+    pub fn with_grant(
+        bus: std::sync::Arc<RubixEventBus>,
+        caller_namespace: Option<String>,
+        granted_publish_topics: Option<BTreeSet<String>>,
+    ) -> Self {
+        Self {
+            bus,
+            caller_namespace,
+            granted_publish_topics,
+        }
+    }
+
+    fn check_publish_grant(&self, topic: &str) -> Result<(), Error> {
+        if let Some(grant) = &self.granted_publish_topics {
+            if !grant.contains(topic) {
+                return Err(Error::capability(format!(
+                    "event_bus.publish {topic:?} refused: not in calling extension's \
+                     `event_bus.publish` grant"
+                )));
+            }
+        }
+        Ok(())
     }
 
     /// `true` if `topic` is owned by `caller_namespace`.
@@ -152,6 +193,13 @@ impl RubixEventBusBackend {
 
 impl EventBusBackend for RubixEventBusBackend {
     fn publish(&self, topic: &str, payload: JsonValue) -> Result<(), Error> {
+        // Per-topic manifest grant first: an operator-neutralised
+        // grant refuses every publish, including on in-namespace
+        // topics. The namespace check is the second-layer kernel
+        // invariant (the supervisor can't trust a misconfigured
+        // host to set the grant correctly, but it *can* refuse
+        // cross-namespace publishes regardless).
+        self.check_publish_grant(topic)?;
         let Some(namespace) = self.caller_namespace.as_deref() else {
             return Err(Error::capability(
                 "event_bus.publish refused: no caller identity (system frame)",
@@ -176,7 +224,10 @@ mod tests {
     fn topic_ownership_rules() {
         let ns = "com.acme.charts";
         assert!(RubixEventBusBackend::topic_is_owned(ns, ns));
-        assert!(RubixEventBusBackend::topic_is_owned(ns, "com.acme.charts.filter"));
+        assert!(RubixEventBusBackend::topic_is_owned(
+            ns,
+            "com.acme.charts.filter"
+        ));
         assert!(RubixEventBusBackend::topic_is_owned(
             ns,
             "com.acme.charts.filter.site"
@@ -214,8 +265,7 @@ mod tests {
     async fn publish_fans_out_with_timestamp_stamped() {
         let bus = Arc::new(RubixEventBus::new());
         let mut rx = bus.subscribe("com.acme.charts.filter");
-        let backend =
-            RubixEventBusBackend::new(bus.clone(), Some("com.acme.charts".to_owned()));
+        let backend = RubixEventBusBackend::new(bus.clone(), Some("com.acme.charts".to_owned()));
 
         backend
             .publish("com.acme.charts.filter", serde_json::json!({"site": "s1"}))
@@ -228,6 +278,80 @@ mod tests {
         assert_eq!(msg.topic, "com.acme.charts.filter");
         assert_eq!(msg.payload, serde_json::json!({"site": "s1"}));
         assert!(msg.ts_unix_ms > 0, "host must stamp ts_unix_ms");
+    }
+
+    #[test]
+    fn publish_outside_grant_is_refused_even_in_namespace() {
+        let bus = Arc::new(RubixEventBus::new());
+        // Manifest granted publish on `com.acme.charts.filter` only —
+        // a sibling topic in the same namespace must still refuse.
+        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()]
+            .into_iter()
+            .collect();
+        let backend = RubixEventBusBackend::with_grant(
+            bus,
+            Some("com.acme.charts".to_owned()),
+            Some(grant),
+        );
+        let err = backend
+            .publish("com.acme.charts.other", JsonValue::Null)
+            .expect_err("out-of-grant topic must refuse");
+        assert!(matches!(err, Error::Capability(_)), "got {err:?}");
+    }
+
+    #[test]
+    fn publish_inside_grant_passes_to_namespace_check() {
+        let bus = Arc::new(RubixEventBus::new());
+        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()]
+            .into_iter()
+            .collect();
+        let backend = RubixEventBusBackend::with_grant(
+            bus,
+            Some("com.acme.charts".to_owned()),
+            Some(grant),
+        );
+        backend
+            .publish("com.acme.charts.filter", JsonValue::Null)
+            .expect("in-grant + in-namespace publishes");
+    }
+
+    #[test]
+    fn neutralised_grant_refuses_every_publish() {
+        let bus = Arc::new(RubixEventBus::new());
+        // Operator-neutralised grant: empty allowlist refuses
+        // every publish even on in-namespace topics. This is the
+        // same shape every other Row-5 grant uses.
+        let backend = RubixEventBusBackend::with_grant(
+            bus,
+            Some("com.acme.charts".to_owned()),
+            Some(BTreeSet::new()),
+        );
+        let err = backend
+            .publish("com.acme.charts.filter", JsonValue::Null)
+            .expect_err("neutralised grant must refuse");
+        assert!(matches!(err, Error::Capability(_)), "got {err:?}");
+    }
+
+    #[test]
+    fn grant_runs_before_namespace_check() {
+        // No namespace set + a permissive grant should still refuse
+        // because the per-topic gate fires first only when set —
+        // but the namespace check kicks in second. Conversely, when
+        // a non-empty grant *does* contain a cross-namespace topic
+        // (an over-broad operator grant), the kernel-side namespace
+        // check still refuses it. The two layers compose: the
+        // *tighter* one wins.
+        let bus = Arc::new(RubixEventBus::new());
+        let grant: BTreeSet<String> = ["com.evil.cross".to_string()].into_iter().collect();
+        let backend = RubixEventBusBackend::with_grant(
+            bus,
+            Some("com.acme.charts".to_owned()),
+            Some(grant),
+        );
+        let err = backend
+            .publish("com.evil.cross", JsonValue::Null)
+            .expect_err("namespace gate still refuses an over-broad operator grant");
+        assert!(matches!(err, Error::Capability(_)), "got {err:?}");
     }
 
     #[test]

@@ -22,14 +22,18 @@
 use std::collections::BTreeSet;
 use std::sync::Arc;
 
+use rubix_spi::dashboard::DashboardStore;
 use serde_json::Value as JsonValue;
 use starter_ext_host::{ExtensionRegistry, TemplateRegistry};
-use starter_ext_sdk::ctx::WarehouseReadBackend;
+use starter_ext_sdk::ctx::{AuthzBackend, DashboardBackend, WarehouseReadBackend};
+use starter_ext_server::StubCapabilityFactory;
 use starter_ext_spi::capability::Capability;
 use starter_ext_spi::warehouse::{Row, TemplateSpec};
 use starter_ext_spi::{Error, ExtensionId, Result};
+use starter_spi::authz::PolicyEngine;
 use starter_store_warehouse::WarehouseClient;
 
+use super::dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 use super::event_bus::{RubixEventBus, RubixEventBusBackend};
 use crate::sdui::template_resolver;
 
@@ -187,6 +191,16 @@ pub struct RubixCapabilityFactory {
     /// unscoped frames. Production wiring sets this to the
     /// registry the boot pipeline seals.
     extension_registry: Option<Arc<ExtensionRegistry>>,
+    /// Optional dashboard store. `None` ⇒ the
+    /// [`CapabilityFactory::dashboard`] override falls through to the
+    /// substrate's fail-closed `StubDashboard`. Set via
+    /// [`Self::with_dashboard_store`].
+    dashboard_store: Option<Arc<dyn DashboardStore>>,
+    /// Optional authz engine. `None` ⇒ the
+    /// [`CapabilityFactory::authz`] override falls through to the
+    /// substrate's fail-closed `StubAuthz`. Set via
+    /// [`Self::with_authz_engine`].
+    authz_engine: Option<Arc<dyn PolicyEngine>>,
 }
 
 impl std::fmt::Debug for RubixCapabilityFactory {
@@ -217,7 +231,25 @@ impl RubixCapabilityFactory {
             registry,
             bus,
             extension_registry: None,
+            dashboard_store: None,
+            authz_engine: None,
         }
+    }
+
+    /// Attach a [`DashboardStore`]. Once installed,
+    /// [`CapabilityFactory::dashboard`] returns a
+    /// [`RubixDashboardBackend`] bound to the caller's tenancy.
+    pub fn with_dashboard_store(mut self, store: Arc<dyn DashboardStore>) -> Self {
+        self.dashboard_store = Some(store);
+        self
+    }
+
+    /// Attach a [`PolicyEngine`]. Once installed,
+    /// [`CapabilityFactory::authz`] returns a
+    /// [`RubixAuthzBackend`] bound to the caller's principal.
+    pub fn with_authz_engine(mut self, engine: Arc<dyn PolicyEngine>) -> Self {
+        self.authz_engine = Some(engine);
+        self
     }
 
     /// Attach an [`ExtensionRegistry`]. Builder-style. Once
@@ -257,23 +289,23 @@ impl RubixCapabilityFactory {
     /// the fail-closed default for an extension that didn't ask
     /// for the grant.
     fn warehouse_grant(&self, extension: &ExtensionId) -> Option<BTreeSet<String>> {
-        let registry = self.extension_registry.as_ref()?;
-        let record = registry.get(extension)?;
-        let manifest = record.manifest.as_ref()?;
-        let mut tables = BTreeSet::new();
-        let mut found = false;
-        for cap in &manifest.capabilities {
-            if let Capability::WarehouseRead { tables: grant } = cap {
-                found = true;
-                tables.extend(grant.iter().cloned());
-            }
-        }
-        // `found = false` → the manifest didn't request the grant
-        // at all. Treat that as the empty allowlist (fail-closed).
-        // `found = true` with empty `grant` is the operator's
-        // explicit neutralised grant — same shape.
-        let _ = found;
-        Some(tables)
+        warehouse_grant(self.extension_registry.as_deref(), extension)
+    }
+
+    fn dashboard_read_grant(&self, extension: &ExtensionId) -> Option<BTreeSet<String>> {
+        dashboard_read_grant(self.extension_registry.as_deref(), extension)
+    }
+
+    fn dashboard_write_grant(&self, extension: &ExtensionId) -> Option<BTreeSet<String>> {
+        dashboard_write_grant(self.extension_registry.as_deref(), extension)
+    }
+
+    fn authz_kinds_grant(&self, extension: &ExtensionId) -> Option<BTreeSet<String>> {
+        authz_kinds_grant(self.extension_registry.as_deref(), extension)
+    }
+
+    fn event_bus_publish_grant(&self, extension: &ExtensionId) -> Option<BTreeSet<String>> {
+        event_bus_publish_grant(self.extension_registry.as_deref(), extension)
     }
 
     /// Mint backends bound to `caller_tenant_id` and
@@ -295,7 +327,10 @@ impl RubixCapabilityFactory {
                 caller_tenant_id,
                 granted_tables,
             )),
-            event_bus: Arc::new(RubixEventBusBackend::new(self.bus.clone(), caller_namespace)),
+            event_bus: Arc::new(RubixEventBusBackend::new(
+                self.bus.clone(),
+                caller_namespace,
+            )),
         }
     }
 }
@@ -340,7 +375,8 @@ impl starter_ext_server::CapabilityFactory for RubixCapabilityFactory {
     ) -> Arc<dyn WarehouseReadBackend> {
         let tenant_id = caller.and_then(|c| c.tenant_id.clone());
         let granted_tables = self.warehouse_grant(extension);
-        self.for_caller(tenant_id, None, granted_tables).warehouse_read
+        self.for_caller(tenant_id, None, granted_tables)
+            .warehouse_read
     }
 
     fn event_bus(
@@ -348,10 +384,161 @@ impl starter_ext_server::CapabilityFactory for RubixCapabilityFactory {
         extension: &starter_ext_spi::ExtensionId,
         caller: Option<&starter_ext_spi::identity::CallerIdentity>,
     ) -> Arc<dyn starter_ext_sdk::ctx::EventBusBackend> {
-        let tenant_id = caller.and_then(|c| c.tenant_id.clone());
+        let _ = caller; // tenant_id not consumed by the bus today
         let namespace = Some(extension.as_str().to_owned());
-        self.for_caller(tenant_id, namespace, None).event_bus
+        let granted = self.event_bus_publish_grant(extension);
+        Arc::new(RubixEventBusBackend::with_grant(
+            self.bus.clone(),
+            namespace,
+            granted,
+        ))
     }
+
+    fn dashboard(
+        &self,
+        _extension: &starter_ext_spi::ExtensionId,
+        caller: Option<&starter_ext_spi::identity::CallerIdentity>,
+    ) -> Arc<dyn DashboardBackend> {
+        // No store attached → fall back to the substrate's
+        // fail-closed default (`StubDashboard`). Lets a host wire
+        // the other Row-5 backends incrementally without paying for
+        // dashboard plumbing.
+        let Some(store) = self.dashboard_store.clone() else {
+            return StubCapabilityFactory.dashboard(_extension, caller);
+        };
+        let tenant = caller.and_then(|c| c.tenant_id.clone());
+        let user = caller.and_then(|c| c.user_id.clone());
+        let read_pages = self.dashboard_read_grant(_extension);
+        let write_pages = self.dashboard_write_grant(_extension);
+        Arc::new(RubixDashboardBackend::new(
+            store,
+            tenant,
+            user,
+            read_pages,
+            write_pages,
+        ))
+    }
+
+    fn authz(
+        &self,
+        _extension: &starter_ext_spi::ExtensionId,
+        caller: Option<&starter_ext_spi::identity::CallerIdentity>,
+    ) -> Arc<dyn AuthzBackend> {
+        let Some(engine) = self.authz_engine.clone() else {
+            return StubCapabilityFactory.authz(_extension, caller);
+        };
+        // Prefer the real `Principal` stashed by the rubix-side
+        // caller-identity middleware when available — preserves
+        // scopes / teams / extra that the lossy `CallerIdentity`
+        // flattening would discard. Falls back to
+        // `principal_from_caller` reconstruction for paths that
+        // don't go through that middleware (CLI dispatcher, future
+        // scheduler-driven frames). The middleware sets the
+        // task-local before the dispatcher invokes the factory, so
+        // this call runs on the correct task.
+        let granted_kinds = self.authz_kinds_grant(_extension);
+        match super::caller_identity::current_principal() {
+            Some(arc) => Arc::new(RubixAuthzBackend::with_principal(
+                engine,
+                (*arc).clone(),
+                granted_kinds,
+            )),
+            None => Arc::new(RubixAuthzBackend::new(engine, caller, granted_kinds)),
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Manifest-grant resolvers — pub(crate) so both `RubixCapabilityFactory`
+// (builtin-flavour) and `super::host_methods::RubixHostMethods`
+// (process-flavour) consult the same shape.
+//
+// Contract for all four:
+// - `None` registry ⇒ host-internal callers skip the per-resource
+//   gate. The supervisor's coarser category gate still fires.
+// - `Some(set)` ⇒ union of every matching `Capability::…` variant in
+//   the extension's manifest. An extension whose manifest declares
+//   none of the relevant variants gets `Some(empty)` — fail-closed.
+// ---------------------------------------------------------------------------
+
+pub(crate) fn warehouse_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut tables = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::WarehouseRead { tables: grant } = cap {
+            tables.extend(grant.iter().cloned());
+        }
+    }
+    Some(tables)
+}
+
+pub(crate) fn dashboard_read_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut pages = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::DashboardRead { pages: grant } = cap {
+            pages.extend(grant.iter().cloned());
+        }
+    }
+    Some(pages)
+}
+
+pub(crate) fn dashboard_write_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut pages = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::DashboardWrite { pages: grant } = cap {
+            pages.extend(grant.iter().cloned());
+        }
+    }
+    Some(pages)
+}
+
+pub(crate) fn authz_kinds_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut kinds = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::AuthzCheck { kinds: grant } = cap {
+            kinds.extend(grant.iter().cloned());
+        }
+    }
+    Some(kinds)
+}
+
+pub(crate) fn event_bus_publish_grant(
+    registry: Option<&ExtensionRegistry>,
+    extension: &ExtensionId,
+) -> Option<BTreeSet<String>> {
+    let registry = registry?;
+    let record = registry.get(extension)?;
+    let manifest = record.manifest.as_ref()?;
+    let mut topics = BTreeSet::new();
+    for cap in &manifest.capabilities {
+        if let Capability::EventBus { publish, .. } = cap {
+            topics.extend(publish.iter().cloned());
+        }
+    }
+    Some(topics)
 }
 
 #[cfg(test)]
@@ -516,7 +703,9 @@ mod tests {
         }
     }
 
-    fn registry_with(records: Vec<starter_ext_host::record::ExtensionRecord>) -> Arc<ExtensionRegistry> {
+    fn registry_with(
+        records: Vec<starter_ext_host::record::ExtensionRecord>,
+    ) -> Arc<ExtensionRegistry> {
         let mut reg = ExtensionRegistry::new();
         let map: std::collections::HashMap<_, _> = records
             .into_iter()

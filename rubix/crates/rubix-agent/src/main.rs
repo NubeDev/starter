@@ -155,9 +155,40 @@ async fn main() -> Result<()> {
     // missing from `tools/list`. The PG pool acquired here is reused
     // below for the auth + changelog sandwich — keeping the
     // connection-pool count at one.
+    // Build the rubix-side `HostMethodHandler` BEFORE the
+    // extension admin so autostarted process-flavour extensions
+    // inherit it from their first spawn. `RubixHostMethods`
+    // captures `Arc<PgDashboardStore>` over the same `mcp_pool`
+    // the SDUI page provider writes through, and the
+    // `StaticRbacEngine` built here (the same one `gate_tools`
+    // consults later — cloned cheaply because it's Arc-backed).
+    // Skipped when no PG pool is configured (laptop dev path) —
+    // process-flavour host calls then fall back to the
+    // supervisor's not-implemented default.
+    let ext_host_methods: Option<Arc<rubix_agent::extensions::RubixHostMethods>> =
+        match mcp_pool.as_ref() {
+            Some(pool) => {
+                let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
+                    Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
+                let engine: Arc<dyn starter_spi::authz::PolicyEngine> =
+                    boot::authz::build_engine()?;
+                // Build the bare handler now — warehouse + event-bus
+                // deps are bolted on below once the warehouse client
+                // and a shared `RubixEventBus` are in hand. Likewise
+                // the sealed `ExtensionRegistry` is installed inside
+                // `build_extension_admin` (it doesn't exist yet).
+                Some(Arc::new(rubix_agent::extensions::RubixHostMethods::new(
+                    dashboard_store,
+                    engine,
+                )))
+            }
+            None => None,
+        };
     let ext_bundle: Option<boot::ExtensionAdminBundle> =
         match (mcp_pool.as_ref(), cfg.extensions.enabled) {
-            (Some(pool), true) => Some(boot::build_extension_admin(&cfg, pool.sqlx()).await?),
+            (Some(pool), true) => Some(
+                boot::build_extension_admin(&cfg, pool.sqlx(), ext_host_methods.clone()).await?,
+            ),
             (Some(_), false) => {
                 info!(
                     target: "rubix.boot.extensions",
@@ -362,10 +393,8 @@ async fn main() -> Result<()> {
         {
             let wh_client =
                 starter_store_warehouse::WarehouseClient::from_pool(pool.sqlx().clone());
-            let explorer_router = starter_warehouse_explorer::router_with_auth(
-                wh_client,
-                auth.authenticator.clone(),
-            );
+            let explorer_router =
+                starter_warehouse_explorer::router_with_auth(wh_client, auth.authenticator.clone());
             app = app.merge(explorer_router);
         }
 
@@ -413,9 +442,32 @@ async fn main() -> Result<()> {
                 let table = Arc::new(BuiltinTable::new());
                 let template_registry = Arc::new(TemplateRegistry::builtin());
                 let event_bus = Arc::new(RubixEventBus::new());
+                // Wire the Row-5 dashboard + authz backends from the
+                // already-built rubix primitives:
+                // - `PgDashboardStore` over the boot PG pool (same
+                //   pool the SDUI page provider and the
+                //   `rubix.dashboard.*` tools dispatch against, so
+                //   extension writes are visible to the existing UI).
+                // - The `StaticRbacEngine` constructed in `boot::authz`
+                //   (same engine the `gate_tools` middleware consults).
+                //   Cloned cheaply — both are `Arc`-backed.
+                let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
+                    Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
+                // Share the same warehouse client + template registry +
+                // event bus with `RubixHostMethods` so the process-flavour
+                // host methods (`warehouse.query` / `event_bus.publish`)
+                // dispatch through the same primitives the builtin-flavour
+                // factory uses. Single source of truth for both flavours.
+                if let Some(host_methods) = ext_host_methods.as_ref() {
+                    host_methods
+                        .install_warehouse(wh_client.clone(), template_registry.clone());
+                    host_methods.install_event_bus(event_bus.clone());
+                }
                 let factory: Arc<dyn CapabilityFactory> = Arc::new(
                     RubixCapabilityFactory::new(wh_client, template_registry, event_bus)
-                        .with_extension_registry(bundle.registry.clone()),
+                        .with_extension_registry(bundle.registry.clone())
+                        .with_dashboard_store(dashboard_store)
+                        .with_authz_engine(engine.clone()),
                 );
                 let dispatcher: Arc<dyn RestDispatcher> = Arc::new(
                     BuiltinRestDispatcher::new(table, bundle.registry.clone())
@@ -427,8 +479,10 @@ async fn main() -> Result<()> {
                     RestRouterOptions::default(),
                 ) {
                     Ok(adapter) => {
-                        let gated =
-                            with_principal(with_caller_identity(adapter), auth.authenticator.clone());
+                        let gated = with_principal(
+                            with_caller_identity(adapter),
+                            auth.authenticator.clone(),
+                        );
                         app = app.merge(Router::new().nest("/api/v1", gated));
                     }
                     Err(e) => {

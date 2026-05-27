@@ -359,7 +359,7 @@ pub async fn table_data(
     let columns: Vec<String> = rows
         .first()
         .map(|r| r.columns().iter().map(|c| c.name().to_owned()).collect())
-        .unwrap_or_else(|| Vec::new());
+        .unwrap_or_else(Vec::new);
     let rows_json: Vec<Vec<J>> = rows.iter().map(row_to_json).collect();
 
     // Fall back to a metadata-only query when no rows came back

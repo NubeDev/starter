@@ -488,7 +488,7 @@ class NubeField extends StatelessWidget {
             suffixIcon: suffixIcon != null
                 ? IconButton(
                     icon: Icon(suffixIcon, size: 16, color: t.muted),
-                    splashRadius: 0,
+                    splashRadius: 16,
                     onPressed: onSuffixTap,
                   )
                 : null,

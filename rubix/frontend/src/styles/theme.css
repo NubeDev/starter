@@ -11,7 +11,7 @@
  * ...) end up in our CSS bundle.
  */
 
-/* The visual rebuild of the ClickHouse explorer lives in
+/* The visual rebuild of the warehouse explorer lives in
  * `@nube/starter-ui-warehouse-explorer`. Its own `theme.css` is
  * imported by the route as a side-effect for the @theme tokens, but
  * the Tailwind compiler only walks `@source` directives reachable

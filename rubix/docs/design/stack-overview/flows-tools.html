@@ -32,7 +32,7 @@
           <div>
             <h1>A flow is the recipe. Nodes are the steps. Tools are the actions.</h1>
             <p class="lede">
-              The easiest mental model is: a flow describes what can happen, a node performs one part of that flow, and a tool is a callable operation such as listing dashboards, writing a ClickHouse rule, or deploying a new flow revision.
+              The easiest mental model is: a flow describes what can happen, a node performs one part of that flow, and a tool is a callable operation such as listing dashboards, writing a TimescaleDB rule, or deploying a new flow revision.
             </p>
             <div class="callout">
               In the bundled Rubix goal flows, the root node is usually an <code>ai-agent</code>. That node receives a skill prompt plus an <code>allowed_tools</code> list. The agent can reason in text, but state changes still happen through typed tools.
@@ -83,10 +83,10 @@
               <strong>Tool registry</strong>
               <span>The agent can only call tools registered at boot and allowed by that node's config.</span>
             </div>
-            <div class="pipe-step ch">
+            <div class="pipe-step tsdb">
               <small>5</small>
               <strong>Typed tool call</strong>
-              <span>A concrete tool executes: dashboard write, flow deploy, ClickHouse rule, analytics query, or undo.</span>
+              <span>A concrete tool executes: dashboard write, flow deploy, TimescaleDB rule, analytics query, or undo.</span>
             </div>
             <div class="pipe-step sdui">
               <small>6</small>
@@ -147,7 +147,7 @@
           <div class="grid-2">
             <article class="card">
               <h3>Built-in Rubix tools</h3>
-              <p>Live in <code>rubix-tools</code> and implement the six product goals: dashboards, users, flow ops, ClickHouse rules, system checks, and analytics/reports.</p>
+              <p>Live in <code>rubix-tools</code> and implement the six product goals: dashboards, users, flow ops, TimescaleDB rules, system checks, and analytics/reports.</p>
               <div class="tag-band" aria-label="Built-in tool examples">
                 <span class="tag">rubix.dashboard.page_set</span>
                 <span class="tag">rubix.flow_ops.deploy</span>

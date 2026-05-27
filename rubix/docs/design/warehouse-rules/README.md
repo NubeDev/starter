@@ -1,16 +1,50 @@
-# clickhouse-rules
+# warehouse-rules
 
-Present-tense design note for the rubix clickhouse-ruler goal.
-Covers the three write verbs bound to the `com.rubix.clickhouse-ruler`
+> **Current state (2026-05-27):** this document was written against
+> the ClickHouse-era surface and has drifted from the
+> TimescaleDB-backed implementation that landed in PR #44
+> (warehouse-engine-swap) and the rebuild that followed. Specifically:
+>
+> - The engine is **TimescaleDB**, not ClickHouse. The
+>   `WarehouseWriter` trait / `InMemoryWarehouseWriter` /
+>   `ChClient` referenced below were deleted in stage 3 of the
+>   engine swap. Verbs now talk directly to
+>   `starter_store_warehouse::WarehouseClient` (a `sqlx::PgPool`
+>   wrapper) via the helpers in
+>   `starter_store_warehouse::{cagg, retention}`.
+> - The verb set is **four writes**, not three. `mart.drop` was
+>   added to give `mart.create` a forward inverse that doesn't
+>   depend on the undo path.
+> - **No `Reversible` impls exist in source** for any of the four
+>   writes. `WarehouseRuleReversible` / `WarehouseMartReversible` /
+>   `WarehouseRetentionReversible` are aspirational types named in
+>   doc comments but never written. The write verbs return
+>   `prior_ddl` / `prior_days` in their response payloads so
+>   callers can snapshot externally; nothing reaches
+>   `undo_snapshots`.
+> - **The production undo runtime is not wired at all.** See
+>   [`../undo/README.md`](../undo/README.md) for the full picture —
+>   `UndoDispatcher`, `ReversibleRegistry`, and `UndoLastTool` are
+>   never constructed in `main.rs`, so the "Reversible? yes"
+>   column below describes the intended shape, not the runtime.
+> - **Rule vs. mart is naming-convention only.** Both are
+>   TimescaleDB continuous aggregates; `rule.list` filters caggs
+>   whose `view_name` matches `_rule$` or `^rule_`, `mart.list`
+>   filters the complement. A registration table that records the
+>   kind explicitly (alongside other per-cagg metadata like the
+>   creating actor and the original DDL) is the natural follow-up
+>   when undo / governance lands.
+>
+> The remainder of this document describes the intended snapshot
+> shapes that the deferred Reversible impls will use. Treat it as
+> a design target, not as a description of running code.
+
+Present-tense design note for the rubix warehouse-ruler goal.
+Covers the four write verbs bound to the `com.rubix.warehouse-ruler`
 flow — `rubix.warehouse.rule.write`, `rubix.warehouse.mart.create`,
-`rubix.warehouse.retention.set` — plus `rubix.undo.last`, and the
-snapshot shape every write verb's `Reversible` impl reads and writes.
-End-to-end coverage lives in
-`rubix-agent/tests/goal_4_clickhouse_ruler_test.rs`: the single
-scenario dispatches `retention.set` through the `UndoDispatcher`,
-asserts the `ALTER TABLE … MODIFY TTL` ran, asserts the changelog
-carries a snapshot row with the prior/new TTL, then dispatches
-`rubix.undo.last` and asserts the prior TTL is restored.
+`rubix.warehouse.mart.drop`, `rubix.warehouse.retention.set` —
+plus `rubix.undo.last`, and the snapshot shape every write verb's
+`Reversible` impl will read and write once the runtime is wired.
 
 ## Verb surface
 

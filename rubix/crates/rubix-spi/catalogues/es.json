@@ -23,6 +23,11 @@
   "rubix.warehouse.mart.already_exists": "El mart de ClickHouse {mart} ya existe; sin cambios (el {at}).",
   "rubix.warehouse.retention.set": "Retención de la tabla ClickHouse {table} establecida en {days} días (el {at}).",
   "rubix.warehouse.retention.unchanged": "La retención de la tabla ClickHouse {table} ya es {days} días; sin cambios (el {at}).",
+  "rubix.warehouse.rule.listed": "Se listaron {count} reglas del almacén.",
+  "rubix.warehouse.mart.listed": "Se listaron {count} marts del almacén.",
+  "rubix.warehouse.tables.listed": "Se listaron {count} tablas del almacén.",
+  "rubix.warehouse.mart.dropped": "Mart {mart} eliminado (el {at}).",
+  "rubix.warehouse.mart.absent": "El mart {mart} no estaba presente; nada que eliminar (el {at}).",
   "rubix.flow.deployed": "Flujo {flow_id} desplegado (el {at}).",
   "rubix.flow.deploy.invalid": "Despliegue de flujo rechazado — el cuerpo YAML no es válido.",
   "rubix.flow.linted": "El cuerpo del flujo se analiza correctamente; sin errores de lint.",
@@ -53,11 +58,5 @@
   "rubix.dashboard.delete.refused_system": "El panel {page_id} viene incluido con el sistema — los paneles del sistema no pueden eliminarse.",
   "rubix.dashboard.duplicated": "Panel {source_page_id} duplicado en {page_id}.",
   "rubix.dashboard.duplicate.source_not_found": "No se puede duplicar el panel {source_page_id} — la página de origen no existe.",
-  "rubix.dashboard.page_set.applied": "Se actualizó el slot {slot} en {node_id}.",
-  "rubix.warehouse.cleaned": "El limpiador materializó {rows} bucket(s) de L2 en una ventana de {lookback} minuto(s) (el {at}).",
-  "rubix.warehouse.clean.empty": "El limpiador no encontró filas en L1 en los últimos {lookback} minuto(s); nada que materializar.",
-  "rubix.warehouse.rolled_up": "El rollup materializó {rows} bucket(s) de L3 en una ventana de {lookback} minuto(s) (el {at}).",
-  "rubix.warehouse.rollup.empty": "El rollup no encontró filas en L2 en los últimos {lookback} minuto(s); nada que materializar.",
-  "rubix.warehouse.meter.spike": "El medidor {meter_id} tuvo un pico en {bucket_start}; el limpiador recortó el bucket a {clipped_to}.",
-  "rubix.warehouse.meter.stuck": "El medidor {meter_id} lleva atascado desde {bucket_start} ({bucket_count} buckets consecutivos con el mismo valor)."
+  "rubix.dashboard.page_set.applied": "Se actualizó el slot {slot} en {node_id}."
 }

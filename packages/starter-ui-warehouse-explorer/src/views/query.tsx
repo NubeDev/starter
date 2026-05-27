@@ -350,7 +350,7 @@ function FiltersPanel({ currentSql: _current, onSetSql, onAppend }: FiltersPanel
   );
 }
 
-/// Collapse verbose ClickHouse type names (e.g. `Nullable(DateTime64(3))`)
+/// Collapse verbose warehouse type names (e.g. `Nullable(DateTime64(3))`)
 /// into a short tag the column row can fit (`DT64`).
 function shortType(t: string): string {
   // Strip Nullable() / LowCardinality() wrappers for display.

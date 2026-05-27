@@ -145,6 +145,9 @@ fn category_of(c: &Capability) -> &'static str {
         Capability::WallClock { .. } => "wall_clock",
         Capability::WarehouseRead { .. } => "warehouse_read",
         Capability::EventBus { .. } => "event_bus",
+        Capability::DashboardRead { .. } => "dashboard_read",
+        Capability::DashboardWrite { .. } => "dashboard_write",
+        Capability::AuthzCheck { .. } => "authz_check",
         Capability::Custom { .. } => "custom",
     }
 }

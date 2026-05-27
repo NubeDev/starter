@@ -50,7 +50,9 @@ fn sample(tenant: &str, kind: &str, value: f64) -> SampleRow {
 #[ignore = "requires Docker (testcontainers Timescale); run via the integration job"]
 async fn warehouse_backend_clamps_tenancy_from_caller() {
     let (client, _guard) = with_timescale().await;
-    run_migrations(&client).await.expect("run timescale migrations");
+    run_migrations(&client)
+        .await
+        .expect("run timescale migrations");
 
     // Three tenants × elec meter readings. Each tenant's most-
     // recent value is distinct so the test can prove the backend
@@ -76,12 +78,11 @@ async fn warehouse_backend_clamps_tenancy_from_caller() {
         Some("t-1".to_owned()),
         granted.clone(),
     );
-    let rows = tokio::task::spawn_blocking(move || {
-        backend_t1.query("meter_kwh_last_24h", json!({}))
-    })
-    .await
-    .expect("join")
-    .expect("query ok");
+    let rows =
+        tokio::task::spawn_blocking(move || backend_t1.query("meter_kwh_last_24h", json!({})))
+            .await
+            .expect("join")
+            .expect("query ok");
     assert_eq!(rows.len(), 1, "exactly one row for t-1: got {rows:?}");
     let kwh = rows[0]
         .as_map()
@@ -100,12 +101,11 @@ async fn warehouse_backend_clamps_tenancy_from_caller() {
         Some("t-2".to_owned()),
         granted.clone(),
     );
-    let rows = tokio::task::spawn_blocking(move || {
-        backend_t2.query("meter_kwh_last_24h", json!({}))
-    })
-    .await
-    .expect("join")
-    .expect("query ok");
+    let rows =
+        tokio::task::spawn_blocking(move || backend_t2.query("meter_kwh_last_24h", json!({})))
+            .await
+            .expect("join")
+            .expect("query ok");
     assert_eq!(rows.len(), 1, "exactly one row for t-2");
     let kwh = rows[0]
         .as_map()
@@ -119,18 +119,13 @@ async fn warehouse_backend_clamps_tenancy_from_caller() {
 
     // --- system frame (caller = None) is refused with
     //     Error::Capability, regardless of grant.
-    let backend_sys = RubixWarehouseReadBackend::new(
-        client.clone(),
-        registry.clone(),
-        None,
-        granted.clone(),
-    );
-    let err = tokio::task::spawn_blocking(move || {
-        backend_sys.query("meter_kwh_last_24h", json!({}))
-    })
-    .await
-    .expect("join")
-    .expect_err("system frame must be refused");
+    let backend_sys =
+        RubixWarehouseReadBackend::new(client.clone(), registry.clone(), None, granted.clone());
+    let err =
+        tokio::task::spawn_blocking(move || backend_sys.query("meter_kwh_last_24h", json!({})))
+            .await
+            .expect("join")
+            .expect_err("system frame must be refused");
     assert!(
         matches!(err, Error::Capability(_)),
         "expected Error::Capability, got {err:?}"
@@ -141,10 +136,7 @@ async fn warehouse_backend_clamps_tenancy_from_caller() {
     // so the bucketed query returns rows.
     insert_many(
         &client,
-        &[
-            sample("t-1", "water", 100.0),
-            sample("t-1", "water", 101.0),
-        ],
+        &[sample("t-1", "water", 100.0), sample("t-1", "water", 101.0)],
     )
     .await
     .expect("seed water samples");
@@ -169,12 +161,8 @@ async fn warehouse_backend_clamps_tenancy_from_caller() {
     );
 
     // --- count() honours the same gate.
-    let backend_for_count = RubixWarehouseReadBackend::new(
-        client.clone(),
-        registry,
-        Some("t-3".to_owned()),
-        granted,
-    );
+    let backend_for_count =
+        RubixWarehouseReadBackend::new(client.clone(), registry, Some("t-3".to_owned()), granted);
     let n = tokio::task::spawn_blocking(move || {
         backend_for_count.count("meter_kwh_last_24h", json!({}))
     })

@@ -23,6 +23,11 @@
   "rubix.warehouse.mart.already_exists": "ClickHouse mart {mart} already exists; no change made (at {at}).",
   "rubix.warehouse.retention.set": "Retention for ClickHouse table {table} set to {days} days (at {at}).",
   "rubix.warehouse.retention.unchanged": "Retention for ClickHouse table {table} already {days} days; no change made (at {at}).",
+  "rubix.warehouse.rule.listed": "Listed {count} warehouse rules.",
+  "rubix.warehouse.mart.listed": "Listed {count} warehouse marts.",
+  "rubix.warehouse.tables.listed": "Listed {count} warehouse tables.",
+  "rubix.warehouse.mart.dropped": "Warehouse mart {mart} dropped (at {at}).",
+  "rubix.warehouse.mart.absent": "Warehouse mart {mart} was not present; nothing to drop (at {at}).",
   "rubix.flow.deployed": "Flow {flow_id} deployed (at {at}).",
   "rubix.flow.deploy.invalid": "Flow deploy refused — the YAML body is invalid.",
   "rubix.flow.linted": "Flow body parses cleanly; no lint errors.",
@@ -53,11 +58,5 @@
   "rubix.dashboard.delete.refused_system": "Dashboard {page_id} is bundled with the system — bundled dashboards cannot be deleted.",
   "rubix.dashboard.duplicated": "Dashboard {source_page_id} duplicated to {page_id}.",
   "rubix.dashboard.duplicate.source_not_found": "Dashboard {source_page_id} cannot be duplicated — source page not found.",
-  "rubix.dashboard.page_set.applied": "Slot {slot} on {node_id} updated.",
-  "rubix.warehouse.cleaned": "Cleaner materialised {rows} L2 bucket(s) over a {lookback}-minute window (at {at}).",
-  "rubix.warehouse.clean.empty": "Cleaner found no L1 rows in the last {lookback} minute(s); nothing to materialise.",
-  "rubix.warehouse.rolled_up": "Rollup materialised {rows} L3 bucket(s) over a {lookback}-minute window (at {at}).",
-  "rubix.warehouse.rollup.empty": "Rollup found no L2 rows in the last {lookback} minute(s); nothing to materialise.",
-  "rubix.warehouse.meter.spike": "Meter {meter_id} spiked at {bucket_start}; cleaner clipped the bucket to {clipped_to}.",
-  "rubix.warehouse.meter.stuck": "Meter {meter_id} has been stuck since {bucket_start} ({bucket_count} consecutive same-value buckets)."
+  "rubix.dashboard.page_set.applied": "Slot {slot} on {node_id} updated."
 }

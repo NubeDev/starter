@@ -61,12 +61,31 @@ pub fn init(filter: &str, format: Format) -> Result<TracingGuard, Box<dyn std::e
         _ => EnvFilter::try_new(filter)?,
     };
 
-    let registry = tracing_subscriber::registry().with(env_filter);
+    // tokio-console layer. Only compiled in when the binary was
+    // built with `--features tokio-console` AND
+    // `RUSTFLAGS="--cfg tokio_unstable"`. The console layer ignores
+    // `env_filter` (it consumes its own dedicated `tracing` events
+    // emitted by tokio itself), so wiring order is: console first,
+    // then the env-filtered fmt layer for normal logs.
+    //
+    // Server binds 127.0.0.1:6669 by default; override with
+    // `TOKIO_CONSOLE_BIND`. Connect with `tokio-console`.
+    let registry = tracing_subscriber::registry();
+    #[cfg(feature = "tokio-console")]
+    let registry = registry.with(console_subscriber::spawn());
+    let registry = registry.with(env_filter);
 
     match format {
         Format::Pretty => registry.with(fmt::layer().compact()).try_init()?,
         Format::Json => registry.with(fmt::layer().json()).try_init()?,
     }
+
+    #[cfg(feature = "tokio-console")]
+    tracing::info!(
+        target: "starter.observability.tokio_console",
+        bind = "127.0.0.1:6669 (default; override via TOKIO_CONSOLE_BIND)",
+        "tokio-console layer active — connect with `tokio-console`",
+    );
 
     Ok(TracingGuard::default())
 }

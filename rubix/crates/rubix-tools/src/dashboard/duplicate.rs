@@ -45,7 +45,6 @@ impl DashboardDuplicateTool {
     }
 }
 
-
 #[async_trait]
 impl Tool for DashboardDuplicateTool {
     fn definition(&self) -> ToolDefinition {

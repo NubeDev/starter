@@ -664,6 +664,8 @@ fn build_ctx(events: EventSender, cancel: Arc<dyn Cancel>) -> CtxInner {
         Arc::new(StubTracing),
         Arc::new(StubWarehouseRead),
         Arc::new(StubEventBus),
+        Arc::new(StubDashboard),
+        Arc::new(StubAuthz),
     )
 }
 
@@ -748,6 +750,31 @@ impl starter_ext_sdk::ctx::EventBusBackend for StubEventBus {
     fn publish(&self, _topic: &str, _payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         Err(Error::capability(
             "event_bus not wired in CLI adapter Phase 6",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubDashboard;
+impl starter_ext_sdk::ctx::DashboardBackend for StubDashboard {
+    fn read(&self, _page_id: &str) -> starter_ext_spi::Result<serde_json::Value> {
+        Err(Error::capability(
+            "dashboard not wired in CLI adapter Phase 6",
+        ))
+    }
+    fn write(&self, _page_id: &str, _body: serde_json::Value) -> starter_ext_spi::Result<()> {
+        Err(Error::capability(
+            "dashboard not wired in CLI adapter Phase 6",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubAuthz;
+impl starter_ext_sdk::ctx::AuthzBackend for StubAuthz {
+    fn check(&self, _action: &str, _resource: &str) -> starter_ext_spi::Result<bool> {
+        Err(Error::capability(
+            "authz not wired in CLI adapter Phase 6",
         ))
     }
 }

@@ -72,7 +72,9 @@ mod ui;
 
 pub use admin::{ExtensionAdmin, ExtensionAdminBuilder};
 pub use capabilities::{CapabilityFactory, StubCapabilityFactory};
-pub use factory::{DefaultSupervisorFactory, SupervisorFactory, SupervisorFactoryError};
+pub use factory::{
+    DefaultSupervisorFactory, SupervisorFactory, SupervisorFactoryError, WithHostMethodsFactory,
+};
 pub use rest::{
     rest_router, BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, ProcessRestDispatcher,
     RestBuildError, RestDispatcher, RestRouterOptions, SchemaCheck, StreamResponse,

@@ -39,11 +39,12 @@ use tokio::io::BufReader;
 
 use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Result};
 
-use crate::ctx::{
-    AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, EventSender, FsBackend,
-    HttpOutBackend, NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend,
-    WallClockBackend, WarehouseReadBackend,
+use crate::ctx::{CtxInner, EventSender, FsBackend, HttpOutBackend, NeverCancel};
+use crate::host_backends::{
+    RealAuthzBackend, RealDashboardBackend, RealEventBusBackend, RealSecretsBackend,
+    RealTracingBackend, RealWallClockBackend, RealWarehouseReadBackend,
 };
+use crate::host_rpc::{self, HostRpc};
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
 
 /// Run the process-flavour main loop until the supervisor asks us to
@@ -110,13 +111,52 @@ where
         return Err(Error::spawn("manifest hash mismatch at child"));
     }
 
-    // Build the Ctx the handler will see. v0.1 host has no out-of-process
-    // capability backends wired (those land with the wasm + adapter
-    // phases); we hand the extension stub backends that always return
-    // `Error::Capability`. The capability gate at the supervisor side is
-    // what actually enforces R8 today.
+    // ----- Init response (still goes through a direct stdout write
+    // because the writer task hasn't spawned yet). -----
+    let resp = json!({
+        "jsonrpc": JSONRPC_VERSION,
+        "id": init_id,
+        "result": {
+            "manifest_hash": our_hash,
+            "ready": true,
+        },
+    });
+    write_value(&mut stdout, &resp).await?;
+
+    // ----- Wire the outbound JSON-RPC channel + writer task. -----
+    //
+    // Every frame the child sends after init goes through this
+    // mpsc channel: handler responses *and* outbound host calls
+    // (`dashboard.read`, `authz.check`, …) share one writer task
+    // so the two write halves can't race for stdout. The pending
+    // map is shared between the `HostRpc` (call-side inserts) and
+    // the inbound read loop (response-side removes via
+    // `host_rpc::route_response`).
+    let (writer_tx, mut writer_rx) = tokio::sync::mpsc::unbounded_channel::<serde_json::Value>();
+    let pending = host_rpc::new_pending_map();
+    let host_rpc = HostRpc::new(writer_tx.clone(), pending.clone());
+
+    let writer_task = tokio::spawn(async move {
+        while let Some(value) = writer_rx.recv().await {
+            if let Err(e) = write_value(&mut stdout, &value).await {
+                // stdout has broken — the supervisor will observe
+                // the closed pipe and treat this as a crash. We
+                // print to stderr so the supervisor's stderr ring
+                // captures the reason. No `tracing` dep on
+                // `starter-ext-sdk` at the `process` feature, so
+                // a plain `eprintln!` is the right tool here.
+                eprintln!("starter-ext-sdk::process writer task: {e}");
+                break;
+            }
+        }
+    });
+
+    // Build the Ctx the handler will see. Row-5-adjacent backends
+    // hop to the host via `HostRpc`; the other five categories
+    // still resolve to `Stub<Cap>` impls until their host methods
+    // light up.
     let (event_tx, _event_rx) = tokio::sync::mpsc::channel(64);
-    let ctx_inner = stub_ctx_inner(event_tx);
+    let ctx_inner = real_ctx_inner(event_tx, host_rpc.clone());
     // Construct an initial Ctx wrapper for the init handshake — system
     // frame, no caller. Per-call Ctx newtypes are reconstructed in the
     // dispatch loop below with `with_caller`.
@@ -133,25 +173,33 @@ where
     // stage alongside the unified `ExtensionBehavior` requirement.
     let _ = &ctx;
 
-    let resp = json!({
-        "jsonrpc": JSONRPC_VERSION,
-        "id": init_id,
-        "result": {
-            "manifest_hash": our_hash,
-            "ready": true,
-        },
-    });
-    write_value(&mut stdout, &resp).await?;
+    // Helper: send a frame through the writer task; surface a
+    // `Transport` error when the writer task has dropped (rare:
+    // means stdout broke or the task itself panicked).
+    let send_frame = |value: serde_json::Value| -> Result<()> {
+        writer_tx
+            .send(value)
+            .map_err(|_| Error::transport("writer task closed"))
+    };
 
     // ----- Main dispatch loop -----
-    loop {
+    let exit_reason = loop {
         let frame = match starter_jsonrpc_stdio::read_frame(&mut stdin).await {
             Ok(Some(b)) => b,
-            Ok(None) => return Ok(()), // clean EOF — supervisor closed us
-            Err(e) => return Err(Error::transport(format!("read frame: {e}"))),
+            Ok(None) => break Ok(()), // clean EOF — supervisor closed us
+            Err(e) => break Err(Error::transport(format!("read frame: {e}"))),
         };
-        let value: serde_json::Value = serde_json::from_slice(&frame)
-            .map_err(|e| Error::transport(format!("frame JSON: {e}")))?;
+        let value: serde_json::Value = match serde_json::from_slice(&frame) {
+            Ok(v) => v,
+            Err(e) => break Err(Error::transport(format!("frame JSON: {e}"))),
+        };
+
+        // Is this a response to one of our outbound host calls?
+        // If so, the demultiplexer wakes the awaiting caller and
+        // we go straight back to reading.
+        if host_rpc::route_response(&pending, &value) {
+            continue;
+        }
 
         let method = value
             .get("method")
@@ -169,7 +217,7 @@ where
             if method == "shutdown" {
                 // See note in init: on_shutdown lands with the unified
                 // `ExtensionBehavior` requirement. v0.1 exits cleanly.
-                return Ok(());
+                break Ok(());
             }
             continue;
         }
@@ -182,7 +230,9 @@ where
                     "id": id,
                     "result": { "ok": true },
                 });
-                write_value(&mut stdout, &resp).await?;
+                if let Err(e) = send_frame(resp) {
+                    break Err(e);
+                }
             }
             "shutdown" => {
                 let resp = json!({
@@ -190,11 +240,11 @@ where
                     "id": id,
                     "result": { "ok": true },
                 });
-                write_value(&mut stdout, &resp).await?;
-                return Ok(());
+                let _ = send_frame(resp);
+                break Ok(());
             }
             m if m.starts_with("tools/") => {
-                let tool_id = &m["tools/".len()..];
+                let tool_id = m["tools/".len()..].to_string();
                 // Extract `_meta.caller` from the inbound frame (absent
                 // → host-internal call). Cloning per-invocation keeps
                 // the per-call Ctx newtype's identity view immutable.
@@ -203,7 +253,18 @@ where
                     .and_then(|m| serde_json::from_value::<FrameMeta>(m.clone()).ok())
                     .and_then(|m| m.caller);
                 let per_call_ctx = wrap_ctx(ctx_inner.clone().with_caller(caller));
-                let result = instance.dispatch_tool(tool_id, &per_call_ctx, params);
+                // The handler runs synchronously *and* may invoke
+                // `HostRpc::call_sync`, which uses
+                // `block_in_place` + `block_on` internally. Run
+                // the dispatch on `spawn_blocking` so the
+                // multi-thread runtime can keep servicing the
+                // writer task (which we need to drain frames
+                // *out* of) and the response demultiplexer
+                // (which we need to drain frames *back in*).
+                let instance_ref = &instance;
+                let result = tokio::task::block_in_place(|| {
+                    instance_ref.dispatch_tool(&tool_id, &per_call_ctx, params)
+                });
                 let resp = match result {
                     Ok(v) => json!({
                         "jsonrpc": JSONRPC_VERSION,
@@ -216,7 +277,9 @@ where
                         "error": e,
                     }),
                 };
-                write_value(&mut stdout, &resp).await?;
+                if let Err(e) = send_frame(resp) {
+                    break Err(e);
+                }
             }
             other => {
                 let err = Error::validation(format!("unknown method {other:?}"));
@@ -225,10 +288,19 @@ where
                     "id": id,
                     "error": err,
                 });
-                write_value(&mut stdout, &resp).await?;
+                if let Err(e) = send_frame(resp) {
+                    break Err(e);
+                }
             }
         }
-    }
+    };
+
+    // Drop the call-side sender so the writer task observes the
+    // channel close and exits cleanly; await it so the runtime
+    // doesn't tear down mid-flush.
+    drop(writer_tx);
+    let _ = writer_task.await;
+    exit_reason
 }
 
 /// Read one frame or fail with a clear transport error. Wraps the
@@ -281,22 +353,22 @@ fn hex_encode(bytes: &[u8]) -> String {
     out
 }
 
-/// Build a `CtxInner` whose backends all return
-/// `Error::Capability(... "not wired in v0.1 ...")`. The supervisor is
-/// what enforces capability use at the wire boundary; what the
-/// extension's own `Ctx` does inside its address space is informational
-/// in v0.1.
-fn stub_ctx_inner(events: EventSender) -> CtxInner {
+/// Build a `CtxInner` whose Row-5-adjacent backends call the
+/// host via [`HostRpc::call_sync`] and whose other categories
+/// still resolve to the same `Stub<Cap>` impls
+/// [`stub_ctx_inner`] uses. The boundary lives here so a future
+/// slice that lights up `secrets.get` / `http.request` / `fs.read`
+/// / `clock.now` / `tracing.event` can flip each one
+/// independently — same shape as the four real backends below.
+fn real_ctx_inner(events: EventSender, host_rpc: HostRpc) -> CtxInner {
+    // Seven of the nine categories now hop to the host over
+    // `HostRpc::call_sync`. The remaining two (`http_out`, `fs`)
+    // stay on `Stub<&'static str>` impls until their host methods
+    // light up (each needs real allowlist enforcement —
+    // authorities for http, path specs for fs — that's not yet
+    // wired on the host side).
     #[derive(Debug)]
     struct Stub(&'static str);
-    impl SecretsBackend for Stub {
-        fn get(&self, _name: &str) -> Result<String> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
     impl HttpOutBackend for Stub {
         fn request(&self, _req: serde_json::Value) -> Result<serde_json::Value> {
             Err(Error::capability(format!(
@@ -313,91 +385,18 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
             )))
         }
     }
-    impl WallClockBackend for Stub {
-        fn now_unix_ms(&self) -> Result<u64> {
-            use std::time::{SystemTime, UNIX_EPOCH};
-            Ok(SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .map(|d| d.as_millis() as u64)
-                .unwrap_or(0))
-        }
-    }
-    impl TracingBackend for Stub {
-        fn event(&self, _level: &str, _msg: &str, _fields: serde_json::Value) {}
-    }
-    impl WarehouseReadBackend for Stub {
-        fn query(
-            &self,
-            _template: &str,
-            _params: serde_json::Value,
-        ) -> Result<Vec<Row>> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-        fn count(
-            &self,
-            _template: &str,
-            _params: serde_json::Value,
-        ) -> Result<u64> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-        fn describe(
-            &self,
-            _template: &str,
-        ) -> Result<Option<TemplateSpec>> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
-    impl EventBusBackend for Stub {
-        fn publish(&self, _topic: &str, _payload: serde_json::Value) -> Result<()> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
-    impl DashboardBackend for Stub {
-        fn read(&self, _page_id: &str) -> Result<serde_json::Value> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-        fn write(&self, _page_id: &str, _body: serde_json::Value) -> Result<()> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
-    impl AuthzBackend for Stub {
-        fn check(&self, _action: &str, _resource: &str) -> Result<bool> {
-            Err(Error::capability(format!(
-                "{}: capability backend not wired in v0.1 process flavour",
-                self.0
-            )))
-        }
-    }
     CtxInner::new(
         events,
         Arc::new(NeverCancel),
-        Arc::new(Stub("secrets")),
+        Arc::new(RealSecretsBackend::new(host_rpc.clone())),
         Arc::new(Stub("http_out")),
         Arc::new(Stub("fs")),
-        Arc::new(Stub("wall_clock")),
-        Arc::new(Stub("tracing")),
-        Arc::new(Stub("warehouse_read")),
-        Arc::new(Stub("event_bus")),
-        Arc::new(Stub("dashboard")),
-        Arc::new(Stub("authz")),
+        Arc::new(RealWallClockBackend::new(host_rpc.clone())),
+        Arc::new(RealTracingBackend::new(host_rpc.clone())),
+        Arc::new(RealWarehouseReadBackend::new(host_rpc.clone())),
+        Arc::new(RealEventBusBackend::new(host_rpc.clone())),
+        Arc::new(RealDashboardBackend::new(host_rpc.clone())),
+        Arc::new(RealAuthzBackend::new(host_rpc)),
     )
 }
 

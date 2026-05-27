@@ -1,5 +1,20 @@
 # UNDO
 
+> **Current state (2026-05-27):** the pieces below exist as a complete
+> design, but **the production runtime does not wire them up**. The
+> agent's `main.rs` mounts the `changelog_layer` HTTP middleware
+> (which records one `Op::Custom("invoke")` audit row per tool call),
+> but it does **not** construct a `ReversibleRegistry`, wrap any tool
+> in `UndoDispatcher`, build a `UndoService`, or register
+> `UndoLastTool` into the tool registry. The ~11 existing
+> `impl ReversibleTool` blocks (dashboard, user, team, flow_ops,
+> warehouse) are only exercised by integration tests
+> (`undo_dispatch_test.rs`, `goal_2_user_admin_test.rs`,
+> `goal_3_flow_programmer_test.rs`, `dashboard_crud_test.rs`). At
+> runtime, **`rubix.undo.last` is not a callable verb** and no
+> per-resource `before` snapshot ever reaches `undo_snapshots`. The
+> design below describes the intended shape once the boot wiring lands.
+
 Every reversible write the rubix backend dispatches lands in
 `starter_changes`, and any actor can roll back their last group with
 `rubix.undo.last`. The wiring has three pieces:
@@ -44,6 +59,24 @@ client contract does not change when the filter activates.
 
 Nothing else changes — the dispatcher, helper, and `rubix.undo.last`
 verb are kind-agnostic.
+
+## Outstanding gaps
+
+- **Production boot wiring.** `main.rs` needs to construct
+  `ReversibleRegistry`, `UndoService`, and `UndoLastTool` and wrap
+  every existing `ReversibleTool` in `UndoDispatcher` inside
+  `registry.rs`. Until this lands, the existing impls are unreachable
+  outside tests.
+- **Warehouse write verbs have no Reversible impls.** The four
+  TimescaleDB-backed writes — `rubix.warehouse.rule.write`,
+  `rubix.warehouse.mart.create`, `rubix.warehouse.mart.drop`,
+  `rubix.warehouse.retention.set` — return `prior_ddl` /
+  `prior_days` in their response payloads (so callers can snapshot
+  externally) but no `impl Reversible` exists for them and the
+  values are not persisted to `undo_snapshots`. Snapshot shapes are
+  documented in
+  [`../warehouse-rules/README.md`](../warehouse-rules/README.md);
+  the impls themselves are deferred until the boot wiring exists.
 
 ## Tests
 

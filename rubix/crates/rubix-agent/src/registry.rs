@@ -5,10 +5,12 @@
 //! the binary has wired.
 //!
 //! Stage 3 of `rubix/docs/proposal/warehouse-engine-swap.md`
-//! removed the seven `rubix.warehouse.*` verbs, the
+//! removed the ClickHouse-backed `rubix.warehouse.*` verbs, the
 //! `rubix.analytics.*` verbs, and the disk tool's ClickHouse
-//! history-write side. The TimescaleDB rebuild of those surfaces
-//! is tracked as a follow-up stage.
+//! history-write side. The seven `rubix.warehouse.*` verbs
+//! (rule/mart/tables list, rule.write, mart.create, mart.drop,
+//! retention.set) are now wired against TimescaleDB through
+//! [`WarehouseClient`] when a warehouse URL is configured.
 
 use std::sync::Arc;
 
@@ -48,6 +50,13 @@ use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
 use rubix_tools::warehouse::ingest::WarehouseIngestTool;
+use rubix_tools::warehouse::mart_create::WarehouseMartCreateTool;
+use rubix_tools::warehouse::mart_drop::WarehouseMartDropTool;
+use rubix_tools::warehouse::mart_list::WarehouseMartListTool;
+use rubix_tools::warehouse::retention_set::WarehouseRetentionSetTool;
+use rubix_tools::warehouse::rule_list::WarehouseRuleListTool;
+use rubix_tools::warehouse::rule_write::WarehouseRuleWriteTool;
+use rubix_tools::warehouse::tables_list::WarehouseTablesListTool;
 use starter_authz::StaticRegistry;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow_spi::graph::GraphStore;
@@ -71,13 +80,12 @@ pub fn build_tool_registry(
         None => Arc::new(seed_flow_store()),
     };
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
-    let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::seeded(vec![
-        TenantRow {
+    let tenant_store: Arc<dyn TenantStore> =
+        Arc::new(InMemoryTenantStore::seeded(vec![TenantRow {
             tenant_id: rubix_spi::dashboard::BUNDLED_TENANT.to_owned(),
             name: "System".to_owned(),
             locale: "en".to_owned(),
-        },
-    ]));
+        }]));
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
     let dashboard_store: Arc<dyn DashboardStore> = match pg_pool.as_ref() {
@@ -91,9 +99,8 @@ pub fn build_tool_registry(
         target: "rubix.registry",
         "user/tenant/team/insights verbs are wired against in-memory \
          stores; mutations do not survive restart. The rubix.warehouse.* \
-         and rubix.analytics.* verbs were removed in stage 3 of \
-         warehouse-engine-swap; the TimescaleDB rebuild is tracked as a \
-         follow-up.",
+         verbs run against TimescaleDB when warehouse_url is configured. \
+         The rubix.analytics.* verbs remain removed.",
     );
 
     let mut tools: Vec<Arc<dyn Tool>> = vec![
@@ -138,7 +145,14 @@ pub fn build_tool_registry(
     ];
 
     if let Some(wh) = warehouse {
-        tools.push(Arc::new(WarehouseIngestTool::new(wh)));
+        tools.push(Arc::new(WarehouseIngestTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseRuleListTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseMartListTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseTablesListTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseRuleWriteTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseMartCreateTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseMartDropTool::new(wh.clone())));
+        tools.push(Arc::new(WarehouseRetentionSetTool::new(wh)));
     }
 
     tools

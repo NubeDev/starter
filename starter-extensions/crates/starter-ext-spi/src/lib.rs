@@ -16,8 +16,10 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod authz;
 pub mod behavior;
 pub mod capability;
+pub mod dashboard;
 pub mod error;
 pub mod event_bus;
 pub mod id;
@@ -25,6 +27,9 @@ pub mod identity;
 pub mod jsonrpc;
 pub mod lifecycle;
 pub mod manifest;
+pub mod secrets;
+pub mod tracing_ext;
+pub mod wall_clock;
 pub mod warehouse;
 
 pub use behavior::ExtensionBehavior;

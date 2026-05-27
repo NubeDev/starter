@@ -46,8 +46,8 @@ impl Tool for WarehouseIngestTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.warehouse.ingest".to_owned(),
-            description:
-                "Append synth meter readings into the Timescale `samples` hypertable.".to_owned(),
+            description: "Append synth meter readings into the Timescale `samples` hypertable."
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {

@@ -526,7 +526,7 @@
       background: var(--blue);
     }
 
-    .db-card.clickhouse header {
+    .db-card.tsdb header {
       background: var(--teal);
     }
 
@@ -605,7 +605,7 @@
       border-color: #b8d2e3;
     }
 
-    .pipe-step.ch {
+    .pipe-step.tsdb {
       background: var(--soft-teal);
       border-color: #acd7ca;
     }

@@ -1,4 +1,4 @@
-// ClickHouse projection rules panel. Lists `rubix.warehouse.rule.*`
+// Warehouse projection rules panel. Lists `rubix.warehouse.rule.*`
 // projection rules, supports inline DDL editing via `useRuleWrite`,
 // and "soft delete" via `useRuleWrite` with an empty/`-- deleted`
 // DDL marker (no dedicated drop verb exists today — see stage 9

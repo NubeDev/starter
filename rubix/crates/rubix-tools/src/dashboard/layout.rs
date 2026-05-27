@@ -45,7 +45,10 @@ fn walk(node: &Value) -> Result<()> {
     if let Some(children) = node.get("children").and_then(Value::as_array) {
         if ty == "row" {
             for (i, child) in children.iter().enumerate() {
-                let ct = child.get("type").and_then(Value::as_str).unwrap_or("<missing>");
+                let ct = child
+                    .get("type")
+                    .and_then(Value::as_str)
+                    .unwrap_or("<missing>");
                 if ct != "col" {
                     return Err(Error::Invalid {
                         message: format!(

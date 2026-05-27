@@ -82,6 +82,7 @@ members = [
     "rubix/crates/rubix-client",
     "rubix/crates/rubix-store-postgres",
     "rubix/crates/rubix-agent",
+    "rubix/crates/rubix-watchdog",
 ]
 # `starter-extensions/` is a sibling cargo workspace (see its Cargo.toml).
 # `examples/notes` pulls a handful of its crates in via path dependencies
@@ -289,6 +290,13 @@ password-auth = "1"
 # Observability.
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
 prometheus  = "0.14"
+# tokio-console integration. Behind a feature flag on
+# `starter-observability` because it (a) drags in a hyper/h2/tonic
+# server, and (b) requires `--cfg tokio_unstable` at build time
+# which invalidates the cargo cache on toggle. See the
+# `tokio-console` feature on `starter-observability` + the
+# `agent-console` make target in `rubix/Makefile`.
+console-subscriber = "0.5"
 
 # Secret material handling. Re-exported from `starter-spi` so provider
 # crates don't pick up `secrecy` directly (SCOPE rule R5).

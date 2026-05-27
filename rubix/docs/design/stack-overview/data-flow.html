@@ -30,7 +30,7 @@
         <div class="page-number">Data Flow, Databases, and Extensions</div>
         <div class="data-hero">
           <div>
-            <h1>Postgres runs the control plane. ClickHouse runs the data plane.</h1>
+            <h1>Postgres runs the control plane. TimescaleDB runs the data plane.</h1>
             <p class="lede">
               Use this page when the conversation is specifically about how data enters Rubix, where it is stored, and how an extension can add new signals without becoming part of the Rubix core.
             </p>
@@ -50,8 +50,8 @@
                   </ul>
                 </div>
               </article>
-              <article class="db-card clickhouse">
-                <header>ClickHouse</header>
+              <article class="db-card tsdb">
+                <header>TimescaleDB</header>
                 <div class="db-body">
                   <p>Stores high-volume history and analytics-ready marts in the <code>rubix</code> database.</p>
                   <ul>
@@ -71,7 +71,7 @@
             <h2>Focused data flow</h2>
             <p>The extension can bring in a signal, but the platform still decides what is metadata, what is history, and what is rendered.</p>
           </div>
-          <div class="pipeline" role="img" aria-label="Extension data flow through Postgres, ClickHouse, analytics, and SDUI">
+          <div class="pipeline" role="img" aria-label="Extension data flow through Postgres, TimescaleDB, analytics, and SDUI">
             <div class="pipe-step extension">
               <small>1</small>
               <strong>Extension bundle</strong>
@@ -87,20 +87,20 @@
               <strong>Postgres metadata</strong>
               <span>Rubix stores definitions, page revisions, flow revisions, permissions, and tags. This is the governed catalog.</span>
             </div>
-            <div class="pipe-step ch">
+            <div class="pipe-step tsdb">
               <small>3B</small>
-              <strong>ClickHouse history</strong>
+              <strong>TimescaleDB history</strong>
               <span>Facts, probes, and events go to L1 raw history, then rules promote them to L2 curated rows and L3 marts.</span>
             </div>
-            <div class="pipe-step ch">
+            <div class="pipe-step tsdb">
               <small>4</small>
               <strong>Analytics query</strong>
-              <span>Named templates read ClickHouse marts with typed parameters instead of ad hoc SQL from dashboards.</span>
+              <span>Named templates read TimescaleDB marts with typed parameters instead of ad hoc SQL from dashboards.</span>
             </div>
             <div class="pipe-step sdui">
               <small>5</small>
               <strong>SDUI dashboard</strong>
-              <span>The resolved ComponentTree uses Postgres page definitions and ClickHouse-backed data to render KPIs, charts, and tables.</span>
+              <span>The resolved ComponentTree uses Postgres page definitions and TimescaleDB-backed data to render KPIs, charts, and tables.</span>
             </div>
           </div>
         </section>
@@ -137,7 +137,7 @@
               <p>Extension identity, flow definitions that use the extension node, dashboard pages that display the weather signal, page tags such as <code>source:weather</code>, and authz resources for who can view or edit those pages.</p>
             </article>
             <article class="card">
-              <h3>What lands in ClickHouse</h3>
+              <h3>What lands in TimescaleDB</h3>
               <p>Historical weather observations, joined or correlated with operational events, promoted through L1/L2/L3 so dashboards can show trends like site temperature versus equipment alerts.</p>
             </article>
           </div>
@@ -154,7 +154,7 @@
               <p>It describes a thing, controls access, tracks a revision, configures a flow, or helps users find a resource.</p>
             </article>
             <article class="card">
-              <h3>Put it in ClickHouse when...</h3>
+              <h3>Put it in TimescaleDB when...</h3>
               <p>It is historical, high-volume, time-based, aggregatable, or needs fast analytical reads across many rows.</p>
             </article>
             <article class="card">

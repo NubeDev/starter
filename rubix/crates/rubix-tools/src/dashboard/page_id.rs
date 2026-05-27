@@ -69,12 +69,10 @@ impl PageIdError<'_> {
                 "{field} `dashboard.` has an empty slug — expected \
                  `dashboard.<lowercase-slug>`."
             ),
-            Self::SlugTooLong { len } => format!(
-                "{field} slug is {len} chars; the cap is 128."
-            ),
-            Self::IllegalChar { ch } => format!(
-                "{field} slug contains `{ch}`; only [a-z0-9-.] are allowed."
-            ),
+            Self::SlugTooLong { len } => format!("{field} slug is {len} chars; the cap is 128."),
+            Self::IllegalChar { ch } => {
+                format!("{field} slug contains `{ch}`; only [a-z0-9-.] are allowed.")
+            }
         }
     }
 }
@@ -141,7 +139,9 @@ mod tests {
         }
         // The diagnostic message mentions both forms so the caller
         // can act without re-reading the docs.
-        let msg = validate_stored_page_id("ops").unwrap_err().message("page_id");
+        let msg = validate_stored_page_id("ops")
+            .unwrap_err()
+            .message("page_id");
         assert!(msg.contains("dashboard.ops"));
         assert!(msg.contains("URL"));
     }
