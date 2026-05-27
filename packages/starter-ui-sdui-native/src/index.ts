@@ -11,19 +11,19 @@
 //   import "@nube/starter-ui-sdui-native";
 //   import { SduiPage, SduiProvider } from "@nube/starter-ui-sdui-react/headless";
 //
-// The 10 IR kinds the web renderer does not register today
-// (`stack`, `card`, `text`, `heading`, `badge`, `kpi_grid`,
-// `button`, `link`, `field`, `sparkline`) are deferred-with-web by
-// design — see this package's README. They are NOT silently aliased
-// here even though the web file aliases `sparkline` to `chart` and
-// `kpi_grid` to `grid`; per spec we wait for an explicit web-first
-// registration before mirroring.
+// The remaining IR kinds the web renderer does not register today
+// (`stack`, `card`, `text`, `heading`, `badge`, `button`, `link`,
+// `field`, `sparkline`) are deferred-with-web by design — see this
+// package's README. They are NOT silently aliased here even though
+// the web file aliases `sparkline` to `chart`; per spec we wait for
+// an explicit web-first registration before mirroring.
 
 import "./render-page.js";
 import "./render-row.js";
 import "./render-col.js";
 import "./render-grid.js";
 import "./render-kpi.js";
+import "./render-kpi-grid.js";
 import "./render-chart.js";
 import "./render-divider.js";
 import "./render-tabs.js";
@@ -41,6 +41,7 @@ export { RenderRow } from "./render-row.js";
 export { RenderCol } from "./render-col.js";
 export { RenderGrid } from "./render-grid.js";
 export { RenderKpi } from "./render-kpi.js";
+export { RenderKpiGrid } from "./render-kpi-grid.js";
 export { RenderChart } from "./render-chart.js";
 export { RenderDivider } from "./render-divider.js";
 export { RenderTabs } from "./render-tabs.js";

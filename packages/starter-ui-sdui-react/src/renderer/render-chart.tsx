@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useRef } from "react";
 import uPlot from "uplot";
 import "uplot/dist/uPlot.min.css";
-import { Card, CardContent, CardHeader, CardTitle, cn } from "@nube/starter-ui-kit";
+import { cn } from "@nube/starter-ui-kit";
 import { registerRenderer } from "../headless/registry.js";
 
 type Point = [number, number];
@@ -41,7 +41,48 @@ function extractSeries(node: import("@nube/starter-ui-ir").UiComponent): Series[
   return [];
 }
 
-const PALETTE = ["#2563eb", "#16a34a", "#dc2626", "#ca8a04", "#9333ea"];
+// Static fallback palette — used only if theme tokens fail to resolve
+// (e.g. SSR or test env without computed styles).
+const FALLBACK_PALETTE = ["#2563eb", "#16a34a", "#dc2626", "#ca8a04", "#9333ea"];
+
+// Read the active rubix theme tokens off the host element. Live read
+// means a palette/mode switch on the next chart construction picks up
+// the new colors; series strokes within an existing chart instance
+// stay frozen (acceptable — palette swaps are user-initiated and
+// uncommon, and `series.length` change forces a rebuild anyway).
+function readThemePalette(host: HTMLElement): {
+  series: string[];
+  axis: string;
+  grid: string;
+  text: string;
+} {
+  if (typeof window === "undefined") {
+    return {
+      series: FALLBACK_PALETTE,
+      axis: "rgba(0,0,0,0.4)",
+      grid: "rgba(0,0,0,0.08)",
+      text: "rgba(0,0,0,0.6)",
+    };
+  }
+  const cs = getComputedStyle(host);
+  const get = (name: string): string | undefined => {
+    const v = cs.getPropertyValue(name).trim();
+    return v.length > 0 ? v : undefined;
+  };
+  const series = [
+    get("--color-leaf"),
+    get("--color-aqua"),
+    get("--color-sun"),
+    get("--color-sky"),
+    get("--color-warn"),
+  ].filter((c): c is string => !!c);
+  return {
+    series: series.length > 0 ? series : FALLBACK_PALETTE,
+    axis: get("--color-muted") ?? "rgba(0,0,0,0.4)",
+    grid: get("--color-border") ?? "rgba(0,0,0,0.08)",
+    text: get("--color-muted") ?? "rgba(0,0,0,0.6)",
+  };
+}
 
 // µPlot data shape: [xs, ys1, ys2, ...]. All series share the x
 // axis (union of timestamps, sorted, in seconds).
@@ -107,20 +148,42 @@ function UPlotChart({
     // 600 — the ResizeObserver below will fix this up immediately.
     const initialWidth = host.clientWidth > 0 ? host.clientWidth : 600;
 
+    const palette = readThemePalette(host);
+
     const opts: uPlot.Options = {
       width: initialWidth,
       height,
       scales: { x: { time: true } },
       cursor: { drag: { x: true, y: false } },
       legend: { show: showLegend },
-      axes: showAxes ? undefined : [{ show: false }, { show: false }],
+      axes: showAxes
+        ? [
+            {
+              stroke: palette.axis,
+              grid: { stroke: palette.grid, width: 1 },
+              ticks: { stroke: palette.grid, width: 1, size: 6 },
+              font: '11px var(--font-sans, system-ui)',
+            },
+            {
+              stroke: palette.axis,
+              grid: { stroke: palette.grid, width: 1 },
+              ticks: { stroke: palette.grid, width: 1, size: 6 },
+              font: '11px var(--font-sans, system-ui)',
+            },
+          ]
+        : [{ show: false }, { show: false }],
       series: [
         {},
-        ...series.map((s, i) => ({
-          label: s.label ?? `series ${i + 1}`,
-          stroke: PALETTE[i % PALETTE.length],
-          width: 1.5,
-        })),
+        ...series.map((s, i) => {
+          const color = palette.series[i % palette.series.length]!;
+          return {
+            label: s.label ?? `series ${i + 1}`,
+            stroke: color,
+            width: 2,
+            fill: `color-mix(in oklab, ${color} 14%, transparent)`,
+            points: { show: false },
+          };
+        }),
       ],
     };
 
@@ -171,34 +234,43 @@ export function RenderChart({ node }: { node: import("@nube/starter-ui-ir").UiCo
   const title = typeof node.title === "string" ? node.title : "Chart";
   const series = useMemo(() => extractSeries(node), [node]);
   const isSparkline = node.type === "sparkline";
-  const height = isSparkline ? 64 : 160;
+  const height = isSparkline ? 64 : 180;
 
   return (
-    <Card className={cn("sdui-chart", node.style?.className)}>
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {series.length === 0 ? (
-          <div
-            className={cn(
-              "w-full rounded border border-dashed border-muted-foreground/40 flex items-center justify-center text-xs text-muted-foreground",
-              isSparkline ? "h-16" : "h-40",
-            )}
-            data-sdui-chart-series-count={0}
-          >
-            no data
-          </div>
-        ) : (
-          <UPlotChart
-            series={series}
-            height={height}
-            showAxes={!isSparkline}
-            showLegend={series.length > 1}
-          />
-        )}
-      </CardContent>
-    </Card>
+    <div
+      className={cn(
+        "sdui-chart glass relative overflow-hidden rounded-3xl p-5 sm:p-6",
+        node.style?.className,
+      )}
+    >
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold tracking-[-0.01em] text-[color:var(--color-text)]">
+          {title}
+        </h3>
+      </div>
+      {series.length === 0 ? (
+        <div
+          className={cn(
+            "w-full rounded-2xl border border-dashed flex items-center justify-center text-xs",
+            isSparkline ? "h-16" : "h-44",
+          )}
+          style={{
+            borderColor: "color-mix(in oklab, var(--color-muted) 40%, transparent)",
+            color: "var(--color-muted)",
+          }}
+          data-sdui-chart-series-count={0}
+        >
+          no data
+        </div>
+      ) : (
+        <UPlotChart
+          series={series}
+          height={height}
+          showAxes={!isSparkline}
+          showLegend={series.length > 1}
+        />
+      )}
+    </div>
   );
 }
 

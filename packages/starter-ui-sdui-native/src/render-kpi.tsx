@@ -4,9 +4,15 @@
 // (last numeric point), so static fixtures like
 // `crates/rubix-flows/dashboards/disk-overview.json` work without
 // a transport.
+//
+// Visual contract: see `rubix/docs/design/sdui/visual-design-spec.md`.
+// The web renderer's glass + blur effect is approximated on RN with a
+// 2px accent border on top of the card; the KPI value is tinted in
+// the accent color and rendered with tabular figures.
 import type { UiComponent } from "@nube/starter-ui-ir";
-import { Card, CardContent, Column, Row, Text } from "@nube/starter-ui-kit-native";
-import { registerRenderer } from "@nube/starter-ui-sdui-react/headless";
+import { Box, Card, CardContent, Column, Row, Text, useTheme } from "@nube/starter-ui-kit-native";
+import { registerRenderer, resolveAccent } from "@nube/starter-ui-sdui-react/headless";
+import { accentHex, trendColor } from "./accent-colors.js";
 
 type Point = [number, number];
 
@@ -27,6 +33,7 @@ function formatValue(raw: number | string, format: string | undefined): string {
 }
 
 export function RenderKpi({ node }: { node: UiComponent }) {
+  const theme = useTheme();
   const label = typeof node.label === "string" ? node.label : "";
   const sourced = lastNumericPoint(node.source);
   const raw =
@@ -47,35 +54,64 @@ export function RenderKpi({ node }: { node: UiComponent }) {
         ? node.unit
         : undefined;
   const trend = typeof node.trend === "string" ? node.trend : undefined;
+  const accent = resolveAccent(node as Record<string, unknown>);
+  const accentColor = accentHex(accent, theme.mode);
+  const tColor = trendColor(trend, theme.mode);
+  // The web renderer paints a hairline gradient on top of the card;
+  // RN's Card primitive doesn't accept `style`, so we wrap it in a
+  // Box and paint a 2px accent strip above. Accent also tints the
+  // value text — same visual cue without a custom surface fork.
   return (
-    <Card
-      accessibilityRole="summary"
-      accessibilityLabel={label ? `${label}: ${value}${unit ? ` ${unit}` : ""}` : undefined}
-      testID={(node.id as string | undefined) ?? "sdui-kpi"}
-    >
-      <CardContent>
-        <Column gap={4}>
-          <Text variant="caption" color="muted">
-            {label}
-          </Text>
-          <Row gap={4}>
-            <Text variant="title" weight="semibold">
-              {value}
+    <Box>
+      <Box
+        style={{
+          height: 2,
+          backgroundColor: accentColor,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          marginBottom: -1,
+        }}
+      />
+      <Card
+        accessibilityRole="summary"
+        accessibilityLabel={label ? `${label}: ${value}${unit ? ` ${unit}` : ""}` : undefined}
+        testID={(node.id as string | undefined) ?? "sdui-kpi"}
+      >
+        <CardContent>
+          <Column gap={4}>
+            <Text variant="caption" color="muted">
+              {label}
             </Text>
-            {unit ? (
-              <Text variant="label" color="muted">
-                {unit}
+            <Row gap={4}>
+              <Text
+                variant="title"
+                weight="semibold"
+                style={{
+                  color: accentColor,
+                  fontVariant: ["tabular-nums"],
+                }}
+              >
+                {value}
+              </Text>
+              {unit ? (
+                <Text variant="label" color="muted">
+                  {unit}
+                </Text>
+              ) : null}
+            </Row>
+            {trend ? (
+              <Text
+                variant="caption"
+                color="muted"
+                style={tColor ? { color: tColor } : undefined}
+              >
+                {trend}
               </Text>
             ) : null}
-          </Row>
-          {trend ? (
-            <Text variant="caption" color="muted">
-              {trend}
-            </Text>
-          ) : null}
-        </Column>
-      </CardContent>
-    </Card>
+          </Column>
+        </CardContent>
+      </Card>
+    </Box>
   );
 }
 

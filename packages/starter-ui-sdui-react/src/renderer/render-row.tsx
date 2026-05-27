@@ -10,7 +10,7 @@ export function RenderRow({ node }: { node: import("@nube/starter-ui-ir").UiComp
   return (
     <div
       className={cn(
-        "sdui-row grid grid-cols-12 gap-4",
+        "sdui-row grid grid-cols-12 gap-4 sm:gap-5",
         node.style?.className,
       )}
     >

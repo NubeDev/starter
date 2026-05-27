@@ -27,7 +27,7 @@ export function RenderCol({ node }: { node: import("@nube/starter-ui-ir").UiComp
   return (
     <div
       className={cn(
-        "sdui-col flex flex-col gap-3",
+        "sdui-col flex flex-col gap-4",
         SPAN_CLASSES[span],
         node.style?.className,
       )}

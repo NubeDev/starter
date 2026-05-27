@@ -47,3 +47,13 @@ export {
   listRenderers,
 } from "./registry.js";
 export type { Renderer, RenderProps, CustomRendererRegistry } from "./registry.js";
+
+// Accent resolution — pure data helper, no DOM deps. Re-used by the
+// React Native package (`@nube/starter-ui-sdui-native`).
+export {
+  SDUI_ACCENTS,
+  accentByIndex,
+  accentVar,
+  resolveAccent,
+} from "../renderer/accent.js";
+export type { SduiAccent } from "../renderer/accent.js";
