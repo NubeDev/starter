@@ -149,16 +149,41 @@ pub struct WriteSlotOpts {
     /// Provenance tag stamped on the `write_slot` tracing span's
     /// `origin` field. Defaults to [`WriteOrigin::Live`].
     pub origin: WriteOrigin,
+    /// When `true`, the store must refuse to write to a slot on a
+    /// node that does not yet exist (returning
+    /// [`GraphError::UnknownNode`]). When `false` (the default), the
+    /// store autovivifies the node — preserving the historical
+    /// behaviour that propagator-driven writes rely on (the engine
+    /// can write to a freshly-introduced node mid-tick without a
+    /// pre-registration step).
+    ///
+    /// Operator-driven verbs that should *not* silently create
+    /// nodes (e.g. `rubix.dashboard.page_set`) opt in via
+    /// [`Self::live_strict`].
+    pub reject_unknown_node: bool,
 }
 
 impl WriteSlotOpts {
     /// Default options for a live write (`replay = false`, `force = false`,
-    /// `origin = Live`).
+    /// `origin = Live`). Autovivifies unknown nodes.
     pub fn live() -> Self {
         Self {
             replay: false,
             force: false,
             origin: WriteOrigin::Live,
+            reject_unknown_node: false,
+        }
+    }
+
+    /// Like [`Self::live`] but refuses to write to an unknown node —
+    /// returns [`GraphError::UnknownNode`] instead of autovivifying.
+    /// Use this for operator-driven writes (e.g. `page_set`) where
+    /// "the slot's node doesn't exist" is a real user error, not a
+    /// normal engine pattern.
+    pub fn live_strict() -> Self {
+        Self {
+            reject_unknown_node: true,
+            ..Self::live()
         }
     }
 
@@ -169,6 +194,7 @@ impl WriteSlotOpts {
             replay: true,
             force: false,
             origin: WriteOrigin::Replay,
+            reject_unknown_node: false,
         }
     }
 
@@ -180,6 +206,7 @@ impl WriteSlotOpts {
             replay: false,
             force: true,
             origin: WriteOrigin::Live,
+            reject_unknown_node: false,
         }
     }
 
@@ -197,6 +224,7 @@ impl WriteSlotOpts {
             replay: false,
             force: false,
             origin: WriteOrigin::Definition,
+            reject_unknown_node: false,
         }
     }
 }
@@ -240,6 +268,12 @@ impl GraphEventEnvelope {
 #[derive(Debug, Error)]
 #[non_exhaustive]
 pub enum GraphError {
+    /// The slot's node is not present in the store. Only returned
+    /// when [`WriteSlotOpts::reject_unknown_node`] is `true`; the
+    /// default behaviour autovivifies the node.
+    #[error("unknown node: {0}")]
+    UnknownNode(crate::node::NodeId),
+
     /// The named slot is not known to the store.
     #[error("unknown slot: {0:?}")]
     UnknownSlot(SlotRef),

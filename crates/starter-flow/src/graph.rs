@@ -22,6 +22,7 @@ use async_trait::async_trait;
 use futures::{stream::BoxStream, StreamExt};
 use tokio::sync::{broadcast, RwLock};
 use tokio_stream::wrappers::BroadcastStream;
+use tracing::Instrument;
 
 use starter_flow_spi::graph::{
     GraphError, GraphEventEnvelope, GraphStore, SubscribeOpts, SubscriptionStream, WriteSlotOpts,
@@ -122,6 +123,23 @@ impl InMemoryGraphStore {
             tx,
         }
     }
+
+    /// Register a node with no initial slot values.
+    ///
+    /// `write_slot` autovivifies missing nodes by default, so most
+    /// callers never need this — the engine introduces nodes
+    /// implicitly through the first write. The two cases that *do*
+    /// need it are:
+    ///
+    /// 1. Tests that exercise the
+    ///    [`WriteSlotOpts::reject_unknown_node`] strict-write path
+    ///    and need a node present before the call.
+    /// 2. A future explicit node-registration step in the engine
+    ///    (e.g. when surfaces want to enumerate "known nodes"
+    ///    before any slot has been written).
+    pub async fn ensure_node(&self, node: NodeId) {
+        self.nodes.write().await.entry(node).or_default();
+    }
 }
 
 #[async_trait]
@@ -154,39 +172,52 @@ impl GraphStore for InMemoryGraphStore {
             origin = opts.origin.as_str(),
             prev_was_equal = tracing::field::Empty,
         );
-        let _enter = span.enter();
+        // `Instrument` (not `span.enter()`) — the body awaits an
+        // RwLock acquire. Holding a span guard across `.await`
+        // corrupts the thread-local span stack when the future
+        // migrates between tokio workers and later panics
+        // `tracing-subscriber` on an unrelated emit. This is
+        // the hottest write path in the propagator; getting it
+        // wrong wedges the runtime.
+        let span_for_record = span.clone();
+        async move {
+            let mut nodes = self.nodes.write().await;
+            if opts.reject_unknown_node && !nodes.contains_key(&slot.node) {
+                return Err(GraphError::UnknownNode(slot.node.clone()));
+            }
+            let entry = nodes.entry(slot.node.clone()).or_default();
+            let prev_was_equal = entry
+                .slots
+                .get(&slot.slot)
+                .is_some_and(|prev| prev == &value);
+            span_for_record.record("prev_was_equal", prev_was_equal);
 
-        let mut nodes = self.nodes.write().await;
-        let entry = nodes.entry(slot.node.clone()).or_default();
-        let prev_was_equal = entry
-            .slots
-            .get(&slot.slot)
-            .is_some_and(|prev| prev == &value);
-        span.record("prev_was_equal", prev_was_equal);
+            // R3 idempotent-write short-circuit. `force = true` bypasses it.
+            if prev_was_equal && !opts.force {
+                return Ok(());
+            }
 
-        // R3 idempotent-write short-circuit. `force = true` bypasses it.
-        if prev_was_equal && !opts.force {
-            return Ok(());
+            entry.slots.insert(slot.slot.clone(), value.clone());
+            // Release the write lock before fanning out so subscribers that
+            // immediately call back into the store (e.g. the propagator
+            // reading downstream slots) don't deadlock.
+            drop(nodes);
+
+            // R2 replay rule: replay writes reconstruct state without
+            // re-firing subscribers.
+            if !opts.replay {
+                // `send` only errors when there are zero active receivers;
+                // a store with no subscribers is a perfectly valid state.
+                let _ = self.tx.send(GraphEvent::SlotChanged {
+                    slot: slot.clone(),
+                    value,
+                });
+            }
+
+            Ok(())
         }
-
-        entry.slots.insert(slot.slot.clone(), value.clone());
-        // Release the write lock before fanning out so subscribers that
-        // immediately call back into the store (e.g. the propagator
-        // reading downstream slots) don't deadlock.
-        drop(nodes);
-
-        // R2 replay rule: replay writes reconstruct state without
-        // re-firing subscribers.
-        if !opts.replay {
-            // `send` only errors when there are zero active receivers;
-            // a store with no subscribers is a perfectly valid state.
-            let _ = self.tx.send(GraphEvent::SlotChanged {
-                slot: slot.clone(),
-                value,
-            });
-        }
-
-        Ok(())
+        .instrument(span)
+        .await
     }
 
     /// Batched write with coalesced wakes — at most one `SlotChanged`

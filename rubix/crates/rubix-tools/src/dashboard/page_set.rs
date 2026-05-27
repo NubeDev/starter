@@ -16,7 +16,7 @@ use std::sync::Arc;
 use async_trait::async_trait;
 use rubix_spi::dto::dashboard::page_set::{PageSetRequest, PageSetResponse};
 use serde_json::Value;
-use starter_flow_spi::graph::GraphStore;
+use starter_flow_spi::graph::{GraphError, GraphStore};
 use starter_flow_spi::node::{NodeId, SlotRef, SlotValue};
 use starter_spi::error::{Error, Result};
 use starter_spi::i18n::{Diagnostic, DiagnosticParam, MessageKey};
@@ -102,18 +102,25 @@ impl Tool for DashboardPageSetTool {
         let slot_ref = SlotRef::new(node, req.slot.clone());
         let value = coerce(req.value);
 
-        // R2 chokepoint. The store's tracing span carries
-        // `node_id`/`slot_name`/`origin=live`; the change-log
-        // middleware higher up records the operator intent.
+        // R2 chokepoint. `live_strict()` makes the store refuse to
+        // autovivify an unknown node so a typo'd `node_id` surfaces
+        // as `Error::NotFound` instead of returning `applied: true`
+        // for a write that lands on nothing — issue #2 of
+        // `rubix/docs/design/sdui/dashboard-api-usage.md`.
         self.graph
             .write_slot(
                 &slot_ref,
                 value,
-                starter_flow_spi::graph::WriteSlotOpts::live(),
+                starter_flow_spi::graph::WriteSlotOpts::live_strict(),
             )
             .await
-            .map_err(|e| Error::Internal {
-                source: Box::new(e),
+            .map_err(|e| match e {
+                GraphError::UnknownNode(node) => Error::NotFound {
+                    what: format!("flow node `{node}` (no such node registered)"),
+                },
+                other => Error::Internal {
+                    source: Box::new(other),
+                },
             })?;
 
         let summary = Diagnostic::new(
@@ -151,6 +158,9 @@ mod tests {
     #[tokio::test]
     async fn applied_diagnostic_and_value_lands_through_chokepoint() {
         let graph = store();
+        graph
+            .ensure_node(NodeId::new("com.acme.thermostat").unwrap())
+            .await;
         let tool = DashboardPageSetTool::new(graph.clone());
         let out = tool
             .invoke(serde_json::json!({
@@ -180,6 +190,9 @@ mod tests {
     #[tokio::test]
     async fn write_emits_slotchanged_event_proving_chokepoint_path() {
         let graph = store();
+        graph
+            .ensure_node(NodeId::new("com.acme.thermostat").unwrap())
+            .await;
         let mut sub = graph.subscribe(SubscribeOpts::default());
         let tool = DashboardPageSetTool::new(graph);
         tool.invoke(serde_json::json!({
@@ -241,6 +254,29 @@ mod tests {
     }
 
     #[tokio::test]
+    async fn unknown_node_id_returns_not_found() {
+        // Issue #2: a typo'd `node_id` must surface as `NotFound`
+        // rather than autovivifying and returning `applied: true`
+        // for a write that lands on nothing.
+        let tool = DashboardPageSetTool::new(store());
+        let err = tool
+            .invoke(serde_json::json!({
+                "tenant_id":  "tenant-a",
+                "page_id":    "dashboard.ops",
+                "node_id":    "com.acme.does_not_exist",
+                "slot":       "x",
+                "value":      1,
+                "written_by": "alice"
+            }))
+            .await
+            .unwrap_err();
+        assert!(
+            matches!(err, Error::NotFound { .. }),
+            "expected NotFound, got {err:?}"
+        );
+    }
+
+    #[tokio::test]
     async fn empty_slot_is_rejected() {
         let tool = DashboardPageSetTool::new(store());
         let err = tool
@@ -269,6 +305,9 @@ mod tests {
         // `written = true` because the verb does not introspect the
         // chokepoint's short-circuit decision.
         let graph = store();
+        graph
+            .ensure_node(NodeId::new("com.acme.thermostat").unwrap())
+            .await;
         let tool = DashboardPageSetTool::new(graph.clone());
         let payload = serde_json::json!({
             "tenant_id":  "tenant-a",

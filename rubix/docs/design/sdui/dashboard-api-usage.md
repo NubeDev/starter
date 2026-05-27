@@ -303,22 +303,22 @@ curl -N -b /tmp/jar.txt http://127.0.0.1:8088/api/v1/dashboards/events
    flow slot values, not widget properties. `rubix.dashboard.get` is
    in the `allowed_tools` list.
 
-2. **`page_set` accepts unknown `node_id` silently.** Calling with
-   `node_id=com.acme.thermostat` (no such node registered) returns
-   `applied: true`. Should reject unknown nodes.
-
-   **Status: deferred — needs graph API.** `GraphStore` in
-   [`crates/starter-flow-spi/src/graph.rs`](../../../../crates/starter-flow-spi/src/graph.rs)
-   exposes only `write_slot`, `read_slot`, and `subscribe` — there is
-   no "does this node exist?" method, so adding the existence check
-   in [`rubix/crates/rubix-tools/src/dashboard/page_set.rs`](../../../crates/rubix-tools/src/dashboard/page_set.rs)
-   requires either (a) extending the trait with `node_exists` /
-   `list_nodes`, then implementing it on every backend (`InMemoryGraphStore`,
-   the Postgres-listen backend, etc.), or (b) probing via
-   `read_slot` against a known sentinel slot and catching
-   `GraphError::UnknownNode` — which requires the trait to actually
-   distinguish that case from "node exists, slot doesn't". Pick the
-   trait extension; the surface is small.
+2. ~~**`page_set` accepts unknown `node_id` silently.**~~ Resolved
+   2026-05-27. The R2 chokepoint itself learned the strict mode rather
+   than bolting a side-channel existence probe on the verb.
+   [`WriteSlotOpts`](../../../../crates/starter-flow-spi/src/graph.rs)
+   grew a `reject_unknown_node` flag (with a `live_strict()` helper)
+   and [`GraphError`](../../../../crates/starter-flow-spi/src/graph.rs)
+   grew an `UnknownNode(NodeId)` variant; the default options on every
+   other constructor (`live`, `replay`, `forced`, `config`) keep the
+   historical autovivify behaviour the propagator relies on.
+   [`rubix.dashboard.page_set`](../../../crates/rubix-tools/src/dashboard/page_set.rs)
+   now calls `WriteSlotOpts::live_strict()` and maps
+   `GraphError::UnknownNode` → `Error::NotFound`, so a typo'd
+   `node_id` surfaces as a real 404 instead of returning
+   `applied: true` for a write that lands on nothing. A new
+   `unknown_node_id_returns_not_found` test pins the behaviour;
+   the existing happy-path tests now call `ensure_node` first.
 
 3. ~~**`static` source schema is undocumented and surprising.**~~
    Partially resolved 2026-05-27. The KPI renderer at
