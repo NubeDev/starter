@@ -10,4 +10,5 @@ pub mod duplicate;
 pub mod get;
 pub mod list;
 pub mod page_set;
+pub mod patch;
 pub mod update;

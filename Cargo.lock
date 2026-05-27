@@ -6303,6 +6303,7 @@ dependencies = [
  "chrono",
  "futures",
  "include_dir",
+ "json-patch",
  "rand 0.8.6",
  "rubix-flows",
  "rubix-spi",

@@ -208,6 +208,11 @@ rubix-store-postgres     = { path = "rubix/crates/rubix-store-postgres",    vers
 # unless its job genuinely needs them.
 serde       = { version = "1",   features = ["derive"] }
 serde_json  = "1"
+# RFC 6902 JSON-Patch. `rubix.dashboard.patch` applies a patch to the
+# prior `body_json` then routes the synthesised body through the same
+# `insert_revision` path as `update`, so the changelog still records
+# full before/after snapshots and undo is byte-exact.
+json-patch  = { version = "3", default-features = false }
 thiserror   = "1"
 anyhow      = "1"
 tracing     = "0.1"

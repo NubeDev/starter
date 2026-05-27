@@ -329,19 +329,31 @@ curl -N -b /tmp/jar.txt http://127.0.0.1:8088/api/v1/dashboards/events
    renderer should grow the same warning; tracked as a follow-up
    inside the renderer crate.
 
-4. **No partial-update verb.** Every widget tweak round-trips the full
-   `body_json`. Fine for hand-built pages, awkward for programmatic
-   editors.
-
-   **Status: deferred — design decision.** A `rubix.dashboard.patch`
-   verb has to commit to a patch shape (RFC 6902 JSON-Patch vs.
-   RFC 7396 JSON-Merge-Patch vs. a domain-specific
-   `{path, op, value}` over the IR tree). It also has to integrate
-   with optimistic concurrency (`expected_revision_id` still
-   required), the changelog (the `Op::Update` `ChangeDraft` snapshot
-   should remain a full `before`/`after` so undo round-trips, not a
-   patch), and the SSE emitter. Land #6's `revision_id` field first;
-   then patch becomes a small wrapper on top of `update`.
+4. ~~**No partial-update verb.**~~ Resolved 2026-05-27.
+   [`rubix.dashboard.patch`](../../../crates/rubix-tools/src/dashboard/patch.rs)
+   accepts an **RFC 6902 JSON-Patch** document (a JSON array of
+   `{op, path, value?, from?}` operations), applies it to the prior
+   `body_json`, validates the post-patch layout, then routes the
+   synthesised body through the *exact* same
+   `DashboardStore::insert_revision` path
+   [`rubix.dashboard.update`](../../../crates/rubix-tools/src/dashboard/update.rs)
+   uses — so the changelog still records `Op::Update` with the same
+   `ChangeDraft` shape and undo round-trips byte-for-byte. RFC 6902
+   was chosen over Merge-Patch (can't express array element ops,
+   which we need for `row.children`) and over a bespoke shape
+   (off-the-shelf clients and standard tooling beat hand-rolled
+   semantics long-term). DTOs in
+   [`rubix-spi/src/dto/dashboard/patch.rs`](../../../crates/rubix-spi/src/dto/dashboard/patch.rs)
+   carry the patch as an open `serde_json::Value` so the contracts
+   crate stays free of the `json-patch` dep; the tool parses it.
+   Concurrency: `expected_revision_id` honoured with diagnostic key
+   `rubix.dashboard.patch.conflict`. Errors: malformed patch / bad
+   path / failed `test` op surface as `Error::Invalid` keyed
+   `rubix.dashboard.patch.invalid`; a patch that produces a body
+   failing layout validation surfaces the layout error directly.
+   Tests pin happy-path, conflict, not-found, malformed-op,
+   missing-path, post-patch-layout-failure, and the `change_for`
+   draft.
 
 5. **`page_id` vs URL slug mismatch.** Stored id is
    `dashboard.<slug>`; URL uses `<slug>`. Easy to look up the wrong

@@ -20,6 +20,7 @@ use rubix_tools::dashboard::duplicate::DashboardDuplicateTool;
 use rubix_tools::dashboard::get::DashboardGetTool;
 use rubix_tools::dashboard::list::DashboardListTool;
 use rubix_tools::dashboard::page_set::DashboardPageSetTool;
+use rubix_tools::dashboard::patch::DashboardPatchTool;
 use rubix_tools::dashboard::store::InMemoryDashboardStore;
 use rubix_tools::dashboard::update::DashboardUpdateTool;
 use rubix_tools::dataflow::synth::SynthEmitTool;
@@ -130,6 +131,7 @@ pub fn build_tool_registry(
             authz_registry.clone(),
         )),
         Arc::new(DashboardUpdateTool::new(dashboard_store.clone())),
+        Arc::new(DashboardPatchTool::new(dashboard_store.clone())),
         Arc::new(DashboardDuplicateTool::new(dashboard_store.clone())),
         Arc::new(DashboardDeleteTool::new(dashboard_store.clone())),
         Arc::new(DashboardPageSetTool::new(dashboard_graph.clone())),
