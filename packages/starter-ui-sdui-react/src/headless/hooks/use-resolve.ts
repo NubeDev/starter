@@ -17,6 +17,9 @@ export interface UseSduiResolveOptions {
   targetRef?: string;
   stack?: Record<string, string>;
   capabilities?: ClientCapabilities;
+  /** Opaque cache-busting token. Joined into the queryKey so a change
+   *  forces a fresh resolve. See `SduiPageProps.revalidateToken`. */
+  revalidateToken?: string | number;
 }
 
 export function useSduiResolve(
@@ -32,7 +35,7 @@ export function useSduiResolve(
     capabilities: opts.capabilities,
   };
   return useQuery<UiResolveResponse, Error>({
-    queryKey: ["sdui", "resolve", req],
+    queryKey: ["sdui", "resolve", req, opts.revalidateToken ?? null],
     // Intentionally drop the per-observer `signal`. In React 19
     // `<StrictMode>` dev mode the first mount's signal aborts on
     // the synthetic unmount, which makes the in-flight resolve

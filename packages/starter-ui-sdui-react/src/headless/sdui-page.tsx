@@ -22,6 +22,11 @@ export interface SduiPageProps {
   initialPageState?: Record<string, unknown>;
   /** Override the auto-built capability payload (test seam). */
   capabilities?: ClientCapabilities;
+  /** Opaque token that, when it changes, forces a fresh `/ui/resolve`.
+   *  Routes wire this to `usePageLiveness().changeToken` so an SSE
+   *  `updated` / `deleted` frame triggers a refetch without a hard
+   *  page reload. Absent = no live revalidation; queryKey is unchanged. */
+  revalidateToken?: string | number;
 }
 
 export function SduiPage(props: SduiPageProps) {
@@ -37,6 +42,7 @@ function SduiPageInner({
   targetRef,
   stack,
   capabilities,
+  revalidateToken,
 }: SduiPageProps) {
   const caps = useMemo<ClientCapabilities>(
     () =>
@@ -47,7 +53,7 @@ function SduiPageInner({
     [capabilities],
   );
 
-  const query = useSduiResolve({ pageRef, targetRef, stack, capabilities: caps });
+  const query = useSduiResolve({ pageRef, targetRef, stack, capabilities: caps, revalidateToken });
   const data = query.data;
   const ok = data && isOk(data) ? data : undefined;
 

@@ -7,6 +7,7 @@
 
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { SduiPage } from '@nube/starter-ui-sdui-react'
+import { usePageLiveness } from '@nube/rubix-client-react'
 import { ErrorBoundary } from '@/components/error-boundary'
 
 function DashboardPageRoute() {
@@ -15,6 +16,13 @@ function DashboardPageRoute() {
   // only the slug for cleaner deep links. Hand-authored ids that
   // already include a dot are passed through verbatim.
   const pageRef = pageId.includes('.') ? pageId : `dashboard.${pageId}`
+  // Subscribe to the dashboard SSE stream so an external write
+  // (chat-driven AI edit, another tab, the editor route) refetches
+  // `/ui/resolve` without a hard reload. The hook keeps a single
+  // EventSource open per tab regardless of how many surfaces
+  // subscribe. See issue #6 in
+  // `rubix/docs/design/sdui/dashboard-api-usage.md`.
+  const liveness = usePageLiveness(pageRef)
   return (
     <ErrorBoundary>
       <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
@@ -27,7 +35,7 @@ function DashboardPageRoute() {
             Edit
           </Link>
         </div>
-        <SduiPage pageRef={pageRef} />
+        <SduiPage pageRef={pageRef} revalidateToken={liveness.changeToken} />
       </section>
     </ErrorBoundary>
   )

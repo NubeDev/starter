@@ -99,13 +99,28 @@ async fn record_request(
         Ok(b) => b,
         Err(_) => return StatusCode::PAYLOAD_TOO_LARGE.into_response_body(),
     };
-    let payload = redact(parse_json(&bytes));
+    let mut payload = redact(parse_json(&bytes));
     let rebuilt = Request::from_parts(parts, Body::from(bytes.clone()));
 
     // -- 4. Run the handler first; only audit successful or
     //       failed-but-completed turns so panics-in-handler don't
     //       leave a misleading "success" row in the log.
     let response = next.run(rebuilt).await;
+
+    // -- 4a. For dashboard write verbs, the SSE event projector
+    //        needs the *new* `revision_id` from the response body
+    //        so the frontend can decide whether to refetch
+    //        `/ui/resolve`. The request body alone never has it
+    //        (it's freshly minted by the store on insert). Buffer
+    //        the response, extract the field, merge into the audit
+    //        payload, and rebuild the response. We only do this for
+    //        the three known dashboard write tools so the cost is
+    //        bounded.
+    let response = if needs_response_capture(&tool_id) {
+        merge_response_revision_id(response, &mut payload).await
+    } else {
+        response
+    };
 
     // `id` and `group_id` are placeholders here — both recorder
     // impls overwrite them inside `transaction(...)` with a freshly
@@ -199,6 +214,49 @@ fn is_secret_key(key: &str) -> bool {
     .any(|needle| lower.contains(needle))
 }
 
+/// Tool ids whose response body we buffer so the SSE event
+/// projector can read `revision_id` out of the audit row. Kept tiny
+/// on purpose — every tool listed here pays a `to_bytes` round-trip
+/// on its response.
+const RESPONSE_CAPTURE_TOOL_IDS: &[&str] = &[
+    "rubix.dashboard.create",
+    "rubix.dashboard.update",
+    "rubix.dashboard.delete",
+];
+
+fn needs_response_capture(tool_id: &str) -> bool {
+    RESPONSE_CAPTURE_TOOL_IDS.contains(&tool_id)
+}
+
+/// Buffer the response body, splice `revision_id` (and `page_id` /
+/// `title` when present and missing from the request) into the
+/// audit payload, and rebuild the response so the client still sees
+/// the same bytes. Used by the SSE dashboard-events route to drive
+/// "client should refetch /ui/resolve" decisions; see issue #6 in
+/// `rubix/docs/design/sdui/dashboard-api-usage.md`.
+async fn merge_response_revision_id(response: Response, payload: &mut Value) -> Response {
+    let (parts, body) = response.into_parts();
+    let bytes = match to_bytes(body, MAX_AUDIT_BODY_BYTES).await {
+        Ok(b) => b,
+        Err(_) => return Response::from_parts(parts, Body::empty()),
+    };
+    if let Value::Object(resp) = parse_json(&bytes) {
+        if !payload.is_object() {
+            *payload = Value::Object(serde_json::Map::new());
+        }
+        if let Value::Object(payload_map) = payload {
+            for key in ["revision_id", "page_id", "title", "tenant_id"] {
+                if let Some(v) = resp.get(key) {
+                    payload_map
+                        .entry(key.to_owned())
+                        .or_insert_with(|| v.clone());
+                }
+            }
+        }
+    }
+    Response::from_parts(parts, Body::from(bytes))
+}
+
 /// Tiny adapter trait so `StatusCode::PAYLOAD_TOO_LARGE` can build
 /// an [`axum::response::Response`] without pulling in the
 /// `IntoResponse` import at the call site.
@@ -237,5 +295,45 @@ mod tests {
         let r = redact(v);
         assert_eq!(r.get("mount").and_then(|v| v.as_str()), Some("/"));
         assert!(r.get("password").is_none());
+    }
+
+    #[tokio::test]
+    async fn merge_response_revision_id_splices_fields_into_payload() {
+        let resp = Response::builder()
+            .status(StatusCode::OK)
+            .body(Body::from(
+                br#"{"revision_id":"rev-7","page_id":"dashboard.x","title":"T","tenant_id":"sys"}"#
+                    .to_vec(),
+            ))
+            .unwrap();
+        let mut payload = serde_json::json!({
+            "tenant_id": "sys",
+            "page_id":   "dashboard.x",
+            "body_json": { "ir_version": 5 }
+        });
+        let merged = merge_response_revision_id(resp, &mut payload).await;
+        assert_eq!(merged.status(), StatusCode::OK);
+        assert_eq!(
+            payload.get("revision_id").and_then(Value::as_str),
+            Some("rev-7"),
+        );
+        // Request fields stay authoritative — the merge is `or_insert`.
+        assert_eq!(
+            payload.get("tenant_id").and_then(Value::as_str),
+            Some("sys"),
+        );
+        // Response body still flows downstream untouched.
+        let (_, body) = merged.into_parts();
+        let bytes = to_bytes(body, MAX_AUDIT_BODY_BYTES).await.unwrap();
+        assert!(std::str::from_utf8(&bytes).unwrap().contains("rev-7"));
+    }
+
+    #[test]
+    fn needs_response_capture_matches_dashboard_writes_only() {
+        assert!(needs_response_capture("rubix.dashboard.create"));
+        assert!(needs_response_capture("rubix.dashboard.update"));
+        assert!(needs_response_capture("rubix.dashboard.delete"));
+        assert!(!needs_response_capture("rubix.dashboard.list"));
+        assert!(!needs_response_capture("rubix.system.disk"));
     }
 }

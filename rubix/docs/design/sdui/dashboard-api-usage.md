@@ -358,19 +358,23 @@ curl -N -b /tmp/jar.txt http://127.0.0.1:8088/api/v1/dashboards/events
    [`rubix/crates/rubix-tools/src/dashboard/create.rs`](../../../crates/rubix-tools/src/dashboard/create.rs)
    enforces the grammar. When in doubt, check the stored row.
 
-6. **SSE delta payload is too thin to drive live re-render.** The
-   `updated` frame contains only `kind/page_id/title/tenant_id` — no
-   `revision_id`, no `body_json` diff.
-
-   **Status: deferred — needs schema bump.** Smallest fix is to add
-   `revision_id` to the `updated` frame in
-   [`rubix/crates/rubix-agent/src/routes/dashboard_events.rs`](../../../crates/rubix-agent/src/routes/dashboard_events.rs)
-   and have the client refetch `/ui/resolve` when the seen
-   `revision_id` differs from the rendered one. That's a one-field
-   addition on the wire, a client-side equality check, and a refresh
-   of the `useQuery` key. Body diffing is bigger and tied to #4 — do
-   `revision_id` first; diffing only if profiling shows the refetch
-   is too costly.
+6. ~~**SSE delta payload is too thin to drive live re-render.**~~
+   Resolved 2026-05-27. The `created` / `updated` wire shape already
+   carried an optional `revision_id` field, but the audit middleware
+   only saw the request body so the field never populated. The fix:
+   [`rubix/crates/rubix-agent/src/middleware/changelog.rs`](../../../crates/rubix-agent/src/middleware/changelog.rs)
+   now buffers the response body for the three dashboard write
+   verbs and splices `revision_id` / `page_id` / `title` /
+   `tenant_id` into the recorded `after` payload (request-side
+   fields stay authoritative). On the frontend,
+   [`packages/starter-ui-sdui-react/src/headless/sdui-page.tsx`](../../../../packages/starter-ui-sdui-react/src/headless/sdui-page.tsx)
+   grew a `revalidateToken` prop wired into the resolve queryKey;
+   the runtime route at
+   [`rubix/frontend/src/routes/dashboards/$pageId.tsx`](../../../frontend/src/routes/dashboards/$pageId.tsx)
+   feeds it `usePageLiveness().changeToken` so an SSE `updated`
+   frame triggers a `/ui/resolve` refetch without a hard reload.
+   Body diffing (originally option (b) here) remains out of scope —
+   tied to #4 and not needed once refetch is in place.
 
 7. ~~**Curl footgun.**~~ Resolved 2026-05-27. Already documented in
    §1 of this doc ("Both are session-scoped (no expiry), so curl
