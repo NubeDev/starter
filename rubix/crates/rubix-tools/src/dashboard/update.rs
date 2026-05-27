@@ -76,6 +76,8 @@ impl Tool for DashboardUpdateTool {
                 message: format!("UpdateDashboardRequest: {e}"),
             })?;
 
+        crate::dashboard::layout::validate_layout(&req.body_json)?;
+
         let prior = self
             .store
             .get_active(&req.tenant_id, &req.page_id)
@@ -327,7 +329,7 @@ mod tests {
                 "page_id":              "dashboard.ops",
                 "expected_revision_id": prior,
                 "title":                "New title",
-                "body_json":            { "v": 2 },
+                "body_json":            { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
                 "created_by":           "alice"
             }))
             .await
@@ -342,7 +344,10 @@ mod tests {
             .unwrap();
         assert_ne!(live.revision_id, "rev-1");
         assert_eq!(live.title, "New title");
-        assert_eq!(live.body_json, serde_json::json!({ "v": 2 }));
+        assert_eq!(
+            live.body_json,
+            serde_json::json!({ "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } })
+        );
     }
 
     /// update→conflict-on-stale — the sibling behavior the stage
@@ -357,7 +362,7 @@ mod tests {
                 "tenant_id":            "tenant-a",
                 "page_id":              "dashboard.ops",
                 "expected_revision_id": "rev-stale",
-                "body_json":            { "v": 2 },
+                "body_json":            { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
                 "created_by":           "alice"
             }))
             .await
@@ -379,7 +384,7 @@ mod tests {
             .invoke(serde_json::json!({
                 "tenant_id":  "tenant-a",
                 "page_id":    "dashboard.ghost",
-                "body_json":  { "v": 1 },
+                "body_json":  { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
                 "created_by": "alice"
             }))
             .await
@@ -395,7 +400,7 @@ mod tests {
         tool.invoke(serde_json::json!({
             "tenant_id":  "tenant-a",
             "page_id":    "dashboard.ops",
-            "body_json":  { "v": 2 },
+            "body_json":  { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
             "created_by": "alice"
         }))
         .await
@@ -419,7 +424,7 @@ mod tests {
             "page_id":              "dashboard.ops",
             "expected_revision_id": prior,
             "title":                "New title",
-            "body_json":            { "v": 2 },
+            "body_json":            { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
             "created_by":           "alice"
         });
         let output = tool.invoke(input.clone()).await.unwrap();

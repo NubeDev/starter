@@ -8,6 +8,7 @@ allowed_tools:
   - rubix.dashboard.create
   - rubix.dashboard.update
   - rubix.dashboard.list
+  - rubix.dashboard.get
   - rubix.dashboard.page_set
 trust: approved
 ---
@@ -67,9 +68,14 @@ Pick the closest match and ship it. Refine after the operator sees it.
    `page_id`, and the 1–2 things the operator will likely want to
    change (data source binding, chart type, time range). Keep it
    to two sentences.
-3. **Iterate.** On follow-up turns, prefer `dashboard.page_set`
-   with the changed widgets only; do not regenerate the whole
-   page from scratch — that loses the operator's manual edits.
+3. **Iterate.** On follow-up turns, edit a page by calling
+   `dashboard.get` to fetch the current `body_json` + `revision_id`,
+   mutating the tree in memory, then calling `dashboard.update`
+   with the same `revision_id` as `expected_revision_id`. Do not
+   regenerate the whole page from scratch — that loses the operator's
+   manual edits. **`dashboard.page_set` is not a widget editor**: it
+   writes runtime slot values (e.g. a thermostat setpoint) into the
+   flow graph, not into `body_json`.
 
 ## What not to do
 

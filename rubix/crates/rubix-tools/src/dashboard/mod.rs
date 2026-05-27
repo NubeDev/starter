@@ -7,6 +7,7 @@ pub mod create;
 pub mod delete;
 pub mod duplicate;
 pub mod get;
+pub mod layout;
 pub mod list;
 pub mod page_set;
 pub mod store;

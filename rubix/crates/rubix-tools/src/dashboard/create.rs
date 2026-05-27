@@ -144,6 +144,7 @@ impl Tool for DashboardCreateTool {
         }
 
         validate_body_json(&req.body_json)?;
+        crate::dashboard::layout::validate_layout(&req.body_json)?;
 
         // Duplicate-id probe. Surfaces a structured diagnostic via
         // Error::Conflict so the transport layer maps to HTTP 409.

@@ -1,0 +1,22 @@
+/* Tailwind v4 source-scanning shim for `@nube/starter-ui-sdui-react`.
+ *
+ * The SDUI renderer emits Tailwind utilities (notably `grid grid-cols-12`,
+ * `col-span-{1..12}`, and the layout / KPI / chart utilities) from
+ * `src/renderer/*.tsx`. Tailwind v4 skips `node_modules` by default, so
+ * without an `@source` directive the layout classes are tree-shaken and
+ * every dashboard page collapses to a vertical stack with no warning
+ * (see issue #10 in
+ * `rubix/docs/design/sdui/dashboard-api-usage.md`).
+ *
+ * Consumers should `@import` this file once from their main Tailwind
+ * stylesheet, after `@import "tailwindcss";`:
+ *
+ *   @import "tailwindcss";
+ *   @import "@nube/starter-ui-kit/scan-source.css";
+ *   @import "@nube/starter-ui-sdui-react/scan-source.css";
+ *
+ * The path resolves relative to this file inside
+ * `node_modules/@nube/starter-ui-sdui-react/src/styles/`, so `../..`
+ * walks up to the package root.
+ */
+@source "../..";

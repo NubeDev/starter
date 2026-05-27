@@ -86,10 +86,12 @@ curl -s -b /tmp/jar.txt -X POST http://127.0.0.1:8088/api/v1/tools/rubix.dashboa
     "tags":["test"],
     "body_json":{
       "ir_version":5,
-      "root":{"type":"row","id":"r","children":[
-        {"type":"col","span":12,"children":[
-          {"type":"kpi","id":"k1","label":"Answer","format":"number","unit_symbol":"",
-           "source":{"type":"static","points":[[0,42]]}}
+      "root":{"type":"page","id":"p","title":"Hello","children":[
+        {"type":"row","id":"r","children":[
+          {"type":"col","span":12,"children":[
+            {"type":"kpi","id":"k1","label":"Answer","format":"number","unit_symbol":"",
+             "source":{"type":"static","points":[[0,42]]}}
+          ]}
         ]}
       ]}
     },
@@ -181,19 +183,21 @@ Renders as:
 **Tailwind @source gotcha.** The grid utilities
 (`grid-cols-12`, `col-span-{1..12}`) live in
 `packages/starter-ui-sdui-react/src/renderer/render-{row,col}.tsx`.
-Tailwind v4 only scans files reachable from `@source` directives in
-`rubix/frontend/src/styles/theme.css`. The SDUI package **must** be
-listed there:
+Tailwind v4 only scans files reachable from `@source` directives.
+The SDUI package now ships a `scan-source.css` shim that consumer
+apps import once from their main Tailwind stylesheet:
 
 ```css
-@source "../../../../packages/starter-ui-sdui-react";
+@import 'tailwindcss';
+@import '@nube/starter-ui-kit/scan-source.css';
+@import '@nube/starter-ui-sdui-react/scan-source.css';
 ```
 
-Without that, the classes are tree-shaken, the DOM gets the class
-strings, but no CSS exists for them — every row collapses to default
-block layout and every col fills 100% width (KPIs stack one per row
-with no warning). Same fix applies to any future SDUI consumer
-package whose layout classes Tailwind needs to see.
+Without that import, the classes are tree-shaken, the DOM gets the
+class strings, but no CSS exists for them — every row collapses to
+default block layout and every col fills 100% width (KPIs stack one
+per row with no warning). Mirror this pattern for any future SDUI
+consumer app.
 
 **Puck editor preview is not the same renderer.** The route
 `/dashboards/$pageId/edit` mounts a Puck builder for visual editing;
@@ -291,71 +295,139 @@ curl -N -b /tmp/jar.txt http://127.0.0.1:8088/api/v1/dashboards/events
 
 ## Issues / TODOs
 
-1. **`page_set` is mis-documented as a page edit verb.**
-   `rubix/crates/rubix-skills/skills/dashboard-builder/SKILL.md` says
-   "prefer `dashboard.page_set` with the changed widgets only" — but
-   the tool writes flow node slot values (thermostat setpoints etc.),
-   not widget properties. The only way to edit a widget is
-   `get → mutate body_json → update`. Fix the skill doc.
+1. ~~**`page_set` is mis-documented as a page edit verb.**~~ Resolved
+   2026-05-27. The skill doc at
+   `rubix/crates/rubix-skills/skills/dashboard-builder/SKILL.md` now
+   describes the `get → mutate body_json → update` loop with
+   `expected_revision_id` and explicitly notes that `page_set` writes
+   flow slot values, not widget properties. `rubix.dashboard.get` is
+   in the `allowed_tools` list.
 
 2. **`page_set` accepts unknown `node_id` silently.** Calling with
    `node_id=com.acme.thermostat` (no such node registered) returns
    `applied: true`. Should reject unknown nodes.
 
-3. **`static` source schema is undocumented and surprising.**
-   `{"type":"static","value":42}` renders blank with no warning. The
-   real shape is `{"type":"static","points":[[ts_ms, value], …]}`.
-   Either accept `value` as a shorthand or log a render-side warning
-   when `points` is missing.
+   **Status: deferred — needs graph API.** `GraphStore` in
+   [`crates/starter-flow-spi/src/graph.rs`](../../../../crates/starter-flow-spi/src/graph.rs)
+   exposes only `write_slot`, `read_slot`, and `subscribe` — there is
+   no "does this node exist?" method, so adding the existence check
+   in [`rubix/crates/rubix-tools/src/dashboard/page_set.rs`](../../../crates/rubix-tools/src/dashboard/page_set.rs)
+   requires either (a) extending the trait with `node_exists` /
+   `list_nodes`, then implementing it on every backend (`InMemoryGraphStore`,
+   the Postgres-listen backend, etc.), or (b) probing via
+   `read_slot` against a known sentinel slot and catching
+   `GraphError::UnknownNode` — which requires the trait to actually
+   distinguish that case from "node exists, slot doesn't". Pick the
+   trait extension; the surface is small.
+
+3. ~~**`static` source schema is undocumented and surprising.**~~
+   Partially resolved 2026-05-27. The KPI renderer at
+   [`packages/starter-ui-sdui-react/src/renderer/render-kpi.tsx`](../../../../packages/starter-ui-sdui-react/src/renderer/render-kpi.tsx)
+   now emits a deduped `console.warn` when a `static` source is
+   supplied without `points` (and a different message when `value` is
+   present as a hint that the shorthand isn't supported). The chart
+   renderer should grow the same warning; tracked as a follow-up
+   inside the renderer crate.
 
 4. **No partial-update verb.** Every widget tweak round-trips the full
    `body_json`. Fine for hand-built pages, awkward for programmatic
-   editors. Consider a JSON-patch verb (`rubix.dashboard.patch`).
+   editors.
+
+   **Status: deferred — design decision.** A `rubix.dashboard.patch`
+   verb has to commit to a patch shape (RFC 6902 JSON-Patch vs.
+   RFC 7396 JSON-Merge-Patch vs. a domain-specific
+   `{path, op, value}` over the IR tree). It also has to integrate
+   with optimistic concurrency (`expected_revision_id` still
+   required), the changelog (the `Op::Update` `ChangeDraft` snapshot
+   should remain a full `before`/`after` so undo round-trips, not a
+   patch), and the SSE emitter. Land #6's `revision_id` field first;
+   then patch becomes a small wrapper on top of `update`.
 
 5. **`page_id` vs URL slug mismatch.** Stored id is
-   `dashboard.<slug>`; URL uses `<slug>`. Easy to look up the wrong one
-   from logs or the address bar. Either store without the prefix or
-   document the mapping prominently.
+   `dashboard.<slug>`; URL uses `<slug>`. Easy to look up the wrong
+   one from logs or the address bar.
+
+   **Status: documented, structural change deferred.** Changing the
+   stored shape would touch `dashboards_definitions`, every store
+   implementation, every existing row, the resolver, the seed flows
+   under `rubix/crates/rubix-flows/dashboards/`, and the skill doc.
+   Not worth a migration. The mapping is: REST/MCP and the
+   `dashboards_definitions` `page_id` column always carry the
+   `dashboard.` prefix; the URL at `/dashboards/$slug` strips it; the
+   `valid_page_id` check in
+   [`rubix/crates/rubix-tools/src/dashboard/create.rs`](../../../crates/rubix-tools/src/dashboard/create.rs)
+   enforces the grammar. When in doubt, check the stored row.
 
 6. **SSE delta payload is too thin to drive live re-render.** The
    `updated` frame contains only `kind/page_id/title/tenant_id` — no
-   `revision_id`, no `body_json` diff. Currently the dashboard *edit*
-   route does not refetch on the event, so users must hard-refresh.
-   Either (a) include `revision_id` and have the client refetch
-   `/ui/resolve` on mismatch, or (b) include a body diff. The sidebar
-   list updates fine; the page body does not.
+   `revision_id`, no `body_json` diff.
 
-7. **Curl footgun.** Session cookie has no expiry so `curl -c jar`
-   alone drops it. You must pass both `-c` and `-b` on the same call.
-   Worth a one-liner in the README.
+   **Status: deferred — needs schema bump.** Smallest fix is to add
+   `revision_id` to the `updated` frame in
+   [`rubix/crates/rubix-agent/src/routes/dashboard_events.rs`](../../../crates/rubix-agent/src/routes/dashboard_events.rs)
+   and have the client refetch `/ui/resolve` when the seen
+   `revision_id` differs from the rendered one. That's a one-field
+   addition on the wire, a client-side equality check, and a refresh
+   of the `useQuery` key. Body diffing is bigger and tied to #4 — do
+   `revision_id` first; diffing only if profiling shows the refetch
+   is too costly.
+
+7. ~~**Curl footgun.**~~ Resolved 2026-05-27. Already documented in
+   §1 of this doc ("Both are session-scoped (no expiry), so curl
+   needs `-c` and `-b` on the **same** invocation, or the session
+   cookie is dropped"). Kept here as a cross-reference for anyone
+   landing on this section first.
 
 8. **MCP error channel is inconsistent.** Tool-level errors come back
    in `structuredContent.error` rather than the JSON-RPC `error`
    field. Clients written to the spec will treat failed calls as
-   successful. Map domain errors onto JSON-RPC `error` with a stable
-   `code`.
+   successful.
 
-9. **Layout container types are undocumented and silent on mistakes.**
-   Using `row` at the root, nesting `row → row`, or omitting `page`
-   all produce a vertical stack with no warning. The resolver
-   passes the tree through; the renderer dispatches on `type`; a
-   tree that's "valid" but layout-wrong renders happily as a column
-   of cards. Either (a) validate at `create`/`update` (reject
-   non-`page` roots, reject `row` whose child is not `col`), or
-   (b) emit a render-time `data-sdui-layout-warning` attribute so
-   the page visually flags the mistake.
+   **Status: deferred — needs cross-tool change.** The fix lives in
+   the MCP dispatcher (search the agent for `tools/call` response
+   construction; the current path wraps every tool result in a
+   success envelope regardless of the inner `Error`). Mapping
+   `Error::Invalid` → JSON-RPC `-32602`, `Error::NotFound` →
+   `-32004` (custom), `Error::Conflict` → `-32009` (custom),
+   `Error::Internal` → `-32603`, with the diagnostic code in the
+   `error.data.code` field, is the right shape. This affects every
+   tool — verify with the existing tool tests that the diagnostic
+   code still surfaces somewhere a client can pattern-match on.
 
-10. **Tailwind `@source` is fragile.** SDUI layout classes
-    (`grid-cols-12`, `col-span-{1..12}`) only end up in the CSS
-    bundle if the consumer app's `theme.css` lists the SDUI package
-    under `@source`. Forgetting it produces the same silent
-    column-of-cards bug. New SDUI consumer apps will all hit this.
-    Options: ship a `scan-source.css` shim from
-    `starter-ui-sdui-react` (mirroring `starter-ui-kit`), or move
-    layout to inline styles so Tailwind isn't on the critical path.
+9. ~~**Layout container types are undocumented and silent on
+   mistakes.**~~ Resolved 2026-05-27. Both
+   [`rubix.dashboard.create`](../../../crates/rubix-tools/src/dashboard/create.rs)
+   and [`rubix.dashboard.update`](../../../crates/rubix-tools/src/dashboard/update.rs)
+   now run the structural validator in
+   [`rubix/crates/rubix-tools/src/dashboard/layout.rs`](../../../crates/rubix-tools/src/dashboard/layout.rs)
+   before persisting. It rejects (a) any root whose `type` is not
+   `page` and (b) any `row` with a direct child whose `type` is not
+   `col`, returning `Error::Invalid` so the transport surface
+   reports HTTP 400 with a clear message. Update also now runs
+   `validate_layout`; previously it skipped body validation entirely.
 
-11. **Two SDUI react packages exist.** ~~Resolved 2026-05-27~~ —
+10. ~~**Tailwind `@source` is fragile.**~~ Resolved 2026-05-27.
+    `@nube/starter-ui-sdui-react` now ships a `scan-source.css` shim
+    (mirroring `@nube/starter-ui-kit/scan-source.css`); the rubix
+    frontend imports it from
+    [`rubix/frontend/src/styles/theme.css`](../../../frontend/src/styles/theme.css).
+    New SDUI consumer apps should `@import "@nube/starter-ui-sdui-react/scan-source.css"`
+    right after the `@nube/starter-ui-kit` shim, instead of writing a
+    hand-rolled `@source` directive that points at the package
+    source tree.
+
+11. ~~**Two SDUI react packages exist.**~~ Resolved 2026-05-27 —
     `packages/starter-sdui-react` and `packages/starter-ui-ai-builder`
     were deleted as a closed dead-code subgraph;
     `packages/starter-ui-sdui-react` is the single SDUI react package.
     See [`sessions/sdui/2026-05-27-sdui-consolidation-final.md`](../../sessions/sdui/2026-05-27-sdui-consolidation-final.md).
+## See Also
+
+- **[Component Settings & Source Configuration](../../../../packages/starter-ui-sdui-puck/SETTINGS-AND-SOURCE.md)** —
+  how the Puck editor generates settings fields from the IR schema,
+  the `DATA_SOURCES` curation table, `<DataSourceField>` catalogue
+  picker, and server-side source resolution.
+- **[Mock Server (starter-ui-core)](../../../../packages/starter-ui-core/src/testing/mock-server.ts)** —
+  dependency-free fetch shim for testing `StarterClient` auth flows
+  without a running agent. Routes: `GET /auth/me`, `POST /auth/login`,
+  `POST /auth/logout`. Strips `/api/v1` prefix automatically.

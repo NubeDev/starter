@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '@nube/starter-ui-kit/scan-source.css';
+@import '@nube/starter-ui-sdui-react/scan-source.css';
 @import './primitives.css';
 @import './tokens.css';
 
@@ -20,6 +21,15 @@
  * dropped, collapsing the schema diagram and filter sidebar.
  */
 @source "../../../../packages/starter-ui-warehouse-explorer";
+
+/* The SDUI renderers' Tailwind classes are now picked up via the
+ * `@nube/starter-ui-sdui-react/scan-source.css` shim imported at the
+ * top of this file (see issue #10 in
+ * `rubix/docs/design/sdui/dashboard-api-usage.md`). New SDUI consumer
+ * apps should follow the same pattern: import both
+ * `@nube/starter-ui-kit/scan-source.css` and
+ * `@nube/starter-ui-sdui-react/scan-source.css`.
+ */
 
 /* ---------------------------------------------------------------------------
    Theme tokens

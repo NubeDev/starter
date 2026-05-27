@@ -15,11 +15,39 @@ type Point = [number, number];
 
 function lastNumericPoint(source: unknown): number | undefined {
   if (!source || typeof source !== "object") return undefined;
-  const points = (source as { points?: unknown }).points;
-  if (!Array.isArray(points) || points.length === 0) return undefined;
+  const s = source as { type?: unknown; points?: unknown; value?: unknown };
+  const points = s.points;
+  if (!Array.isArray(points) || points.length === 0) {
+    warnOnMalformedStaticSource(s);
+    return undefined;
+  }
   const last = points[points.length - 1] as Point | undefined;
   if (!Array.isArray(last) || typeof last[1] !== "number") return undefined;
   return last[1];
+}
+
+let warnedKeys: Set<string> | undefined;
+function warnOnMalformedStaticSource(s: {
+  type?: unknown;
+  points?: unknown;
+  value?: unknown;
+}): void {
+  if (s.type !== "static") return;
+  if (typeof console === "undefined") return;
+  // Dedup so a chart re-render storm doesn't spam the console.
+  const key = `static:${typeof s.value}:${Array.isArray(s.points) ? "empty-arr" : typeof s.points}`;
+  warnedKeys ??= new Set();
+  if (warnedKeys.has(key)) return;
+  warnedKeys.add(key);
+  if ("value" in s && typeof s.value !== "undefined") {
+    console.warn(
+      "[sdui] static source has `value` but no `points`; the renderer expects `{ type: 'static', points: [[ts_ms, value], ...] }`. The widget will render blank.",
+    );
+  } else {
+    console.warn(
+      "[sdui] static source has no `points` array; expected shape: `{ type: 'static', points: [[ts_ms, value], ...] }`.",
+    );
+  }
 }
 
 function formatValue(raw: number | string, format: string | undefined): string {

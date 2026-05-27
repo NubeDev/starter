@@ -14,7 +14,8 @@
     "./headless": {
       "types": "./src/headless/index.ts",
       "import": "./src/headless/index.ts"
-    }
+    },
+    "./scan-source.css": "./src/styles/scan-source.css"
   },
   "files": [
     "src",
