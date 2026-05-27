@@ -93,13 +93,15 @@
   --color-primary-foreground: var(--tk-bg);
   --color-secondary: var(--tk-surface-2);
   --color-secondary-foreground: var(--tk-text);
-  /* shadcn convention: --muted is a low-contrast SURFACE, --muted-foreground
-   * is the text on it. We bridge `bg-muted` to `--tk-surface-2` (the
-   * existing muted-surface token) and keep `text-muted-foreground` on
-   * `--tk-muted` (the mid-tone text color). Previously both resolved to
-   * `--tk-muted`, so `bg-muted` painted the same color as text on it —
-   * invisible tab labels in the warehouse explorer, etc. */
-  --color-muted: var(--tk-surface-2);
+  /* NOTE: rubix predates shadcn's surface/foreground naming and uses
+   * `--color-muted` as a MID-TONE TEXT token across the codebase
+   * (header icons, badges, card descriptions, etc.). Keep that
+   * mapping. shadcn-convention `bg-muted` usages in 3rd-party
+   * packages (warehouse-explorer, sdui-puck) won't render as a
+   * surface — those packages should use `bg-secondary` (= --tk-surface-2)
+   * instead. See warehouse-explorer/src/views/tables.tsx for the
+   * canonical example. */
+  --color-muted: var(--tk-muted);
   --color-muted-bg: var(--tk-surface-2);
   --color-muted-foreground: var(--tk-muted);
   --color-accent: var(--tk-surface-2);

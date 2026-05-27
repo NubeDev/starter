@@ -40,8 +40,9 @@ use tokio::io::BufReader;
 use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Result};
 
 use crate::ctx::{
-    CtxInner, EventBusBackend, EventSender, FsBackend, HttpOutBackend, NeverCancel, Row,
-    SecretsBackend, TemplateSpec, TracingBackend, WallClockBackend, WarehouseReadBackend,
+    AuthzBackend, CtxInner, DashboardBackend, EventBusBackend, EventSender, FsBackend,
+    HttpOutBackend, NeverCancel, Row, SecretsBackend, TemplateSpec, TracingBackend,
+    WallClockBackend, WarehouseReadBackend,
 };
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
 
@@ -363,6 +364,28 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
             )))
         }
     }
+    impl DashboardBackend for Stub {
+        fn read(&self, _page_id: &str) -> Result<serde_json::Value> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+        fn write(&self, _page_id: &str, _body: serde_json::Value) -> Result<()> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+    }
+    impl AuthzBackend for Stub {
+        fn check(&self, _action: &str, _resource: &str) -> Result<bool> {
+            Err(Error::capability(format!(
+                "{}: capability backend not wired in v0.1 process flavour",
+                self.0
+            )))
+        }
+    }
     CtxInner::new(
         events,
         Arc::new(NeverCancel),
@@ -373,6 +396,8 @@ fn stub_ctx_inner(events: EventSender) -> CtxInner {
         Arc::new(Stub("tracing")),
         Arc::new(Stub("warehouse_read")),
         Arc::new(Stub("event_bus")),
+        Arc::new(Stub("dashboard")),
+        Arc::new(Stub("authz")),
     )
 }
 

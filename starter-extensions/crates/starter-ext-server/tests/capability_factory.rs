@@ -102,7 +102,7 @@ async fn default_dispatcher_serves_stub_warehouse_read() {
 
     let ext = ExtensionId::new("com.acme.cap").unwrap();
     let out = dispatcher
-        .dispatch(&ext, "com.acme.cap.read", json!({}))
+        .dispatch(&ext, "com.acme.cap.read", json!({}), None)
         .await
         .expect("dispatch should succeed (handler surfaces the error itself)");
     let msg = out
@@ -126,7 +126,7 @@ async fn with_capability_factory_overrides_warehouse_read() {
 
     let ext = ExtensionId::new("com.acme.cap").unwrap();
     let out = dispatcher
-        .dispatch(&ext, "com.acme.cap.read", json!({}))
+        .dispatch(&ext, "com.acme.cap.read", json!({}), None)
         .await
         .expect("dispatch should succeed");
     let msg = out
@@ -149,12 +149,84 @@ async fn dispatcher_dispatch_unknown_extension_is_not_found() {
 
     let bogus = ExtensionId::new("com.acme.does-not-exist").unwrap();
     let err = dispatcher
-        .dispatch(&bogus, "com.acme.cap.read", json!({}))
+        .dispatch(&bogus, "com.acme.cap.read", json!({}), None)
         .await
         .expect_err("must report not-found");
     assert!(
         matches!(err, DispatchError::NotFound(_)),
         "got {err:?}"
+    );
+}
+
+#[tokio::test]
+async fn caller_identity_reaches_capability_factory() {
+    // Wire a factory that records the `CallerIdentity` it was
+    // given. Dispatch with a non-None caller and assert the
+    // factory observed the tenant id.
+    use std::sync::Mutex;
+
+    #[derive(Debug, Default)]
+    struct RecordingFactory {
+        seen_caller: Arc<Mutex<Option<CallerIdentity>>>,
+        seen_ext: Arc<Mutex<Option<ExtensionId>>>,
+    }
+    impl CapabilityFactory for RecordingFactory {
+        fn warehouse_read(
+            &self,
+            extension: &ExtensionId,
+            caller: Option<&CallerIdentity>,
+        ) -> Arc<dyn WarehouseReadBackend> {
+            *self.seen_caller.lock().unwrap() = caller.cloned();
+            *self.seen_ext.lock().unwrap() = Some(extension.clone());
+            Arc::new(MarkerWarehouse)
+        }
+        fn event_bus(
+            &self,
+            _extension: &ExtensionId,
+            _caller: Option<&CallerIdentity>,
+        ) -> Arc<dyn EventBusBackend> {
+            Arc::new(MarkerEventBus)
+        }
+    }
+
+    let (_tmp, root) = bundle_root();
+    let registry = load_registry(&root);
+    let table = read_calling_table();
+
+    let seen_caller: Arc<Mutex<Option<CallerIdentity>>> = Arc::new(Mutex::new(None));
+    let seen_ext: Arc<Mutex<Option<ExtensionId>>> = Arc::new(Mutex::new(None));
+    let factory = Arc::new(RecordingFactory {
+        seen_caller: seen_caller.clone(),
+        seen_ext: seen_ext.clone(),
+    });
+    let dispatcher =
+        BuiltinRestDispatcher::new(table, registry).with_capability_factory(factory);
+
+    let caller = CallerIdentity {
+        tenant_id: Some("t-acme".into()),
+        user_id: Some("u-alice".into()),
+        roles: vec!["operator".into()],
+        request_id: "req-1".into(),
+    };
+    let ext = ExtensionId::new("com.acme.cap").unwrap();
+    let _ = dispatcher
+        .dispatch(&ext, "com.acme.cap.read", json!({}), Some(caller.clone()))
+        .await
+        .expect("dispatch should succeed");
+
+    let observed_caller = seen_caller.lock().unwrap().clone();
+    assert_eq!(
+        observed_caller.as_ref().and_then(|c| c.tenant_id.as_deref()),
+        Some("t-acme"),
+        "factory did not receive the caller's tenant_id"
+    );
+    assert_eq!(observed_caller.expect("caller seen"), caller);
+
+    let observed_ext = seen_ext.lock().unwrap().clone();
+    assert_eq!(
+        observed_ext.as_ref().map(|e| e.as_str()),
+        Some("com.acme.cap"),
+        "factory did not receive the calling extension id"
     );
 }
 
@@ -191,12 +263,14 @@ impl EventBusBackend for MarkerEventBus {
 impl CapabilityFactory for MarkerFactory {
     fn warehouse_read(
         &self,
+        _extension: &ExtensionId,
         _caller: Option<&CallerIdentity>,
     ) -> Arc<dyn WarehouseReadBackend> {
         Arc::new(MarkerWarehouse)
     }
     fn event_bus(
         &self,
+        _extension: &ExtensionId,
         _caller: Option<&CallerIdentity>,
     ) -> Arc<dyn EventBusBackend> {
         Arc::new(MarkerEventBus)

@@ -20,7 +20,9 @@
 //! `event_bus.publish` host methods).
 
 pub mod backends;
+pub mod caller_identity;
 pub mod event_bus;
 
 pub use backends::{RubixCapabilityFactory, RubixWarehouseReadBackend};
+pub use caller_identity::with_caller_identity;
 pub use event_bus::{RubixEventBus, RubixEventBusBackend};

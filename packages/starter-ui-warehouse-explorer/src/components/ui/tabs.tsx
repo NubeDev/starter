@@ -19,7 +19,7 @@ const TabsList = ({
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      "inline-flex h-auto items-center justify-start rounded-md bg-muted p-1 text-muted-foreground flex-wrap",
+      "inline-flex h-auto items-center justify-start rounded-md bg-secondary p-1 text-muted-foreground flex-wrap",
       className,
     )}
     {...props}

@@ -15,6 +15,7 @@ import {
   FileText,
   HardDrive,
   DatabaseZap,
+  Search,
   TableProperties,
   Table as TableIcon,
 } from "lucide-react";
@@ -44,6 +45,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
+import { Input } from "../components/ui/input";
 import { Skeleton } from "../components/ui/skeleton";
 import { useTheme } from "../lib/theme";
 import {
@@ -52,11 +54,11 @@ import {
   useWarehouseTables,
 } from "../hooks/use-warehouse";
 import { InfoCard, InfoCardProps } from "../components/info-card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import type { Query as QueryResult, Table as TableMeta } from "../api";
 
 export function Tables() {
   const [selected, setSelected] = useState<string | undefined>(undefined);
+  const [filter, setFilter] = useState("");
   const { data } = useWarehouseTables();
 
   if (!data) return <TablesSkeleton />;
@@ -72,28 +74,85 @@ export function Tables() {
       </Card>
     );
 
+  // Filter case-insensitively. Even when the filter hides the currently
+  // selected table we keep showing its detail panel — clearing the
+  // filter brings it back into the list without losing context.
+  const needle = filter.trim().toLowerCase();
+  const filtered = needle
+    ? data.tables.filter((t) => t.name.toLowerCase().includes(needle))
+    : data.tables;
+
   const selectedTable =
-    selected && data.tables.some(({ name }) => name === selected)
+    (selected && data.tables.some(({ name }) => name === selected)
       ? selected
-      : data.tables[0].name;
+      : filtered[0]?.name) ?? data.tables[0].name;
 
   return (
-    <>
-      <Tabs value={selectedTable} onValueChange={setSelected}>
-        <TabsList>
-          {data.tables.map((n) => (
-            <TabsTrigger key={n.name} value={n.name}>
-              {n.name} [{n.count.toLocaleString()}]
-            </TabsTrigger>
-          ))}
-        </TabsList>
-        {data.tables.map(({ name }) => (
-          <TabsContent key={name} value={name} className="py-4">
-            <Table name={name} />
-          </TabsContent>
-        ))}
-      </Tabs>
-    </>
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      {/* Left rail — searchable vertical list. Sticky on desktop so it
+       * stays in view while the detail panel scrolls. Collapses to a
+       * full-width strip on small viewports. */}
+      <aside className="flex w-full shrink-0 flex-col gap-2 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-72">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden="true"
+          />
+          <Input
+            type="search"
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            placeholder={`Filter ${data.tables.length} tables…`}
+            aria-label="Filter tables"
+            className="h-9 pl-8"
+          />
+        </div>
+        <div
+          role="listbox"
+          aria-label="Tables"
+          className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-md border bg-card"
+        >
+          {filtered.length === 0 ? (
+            <div className="px-3 py-6 text-center text-xs text-muted-foreground">
+              No tables match &ldquo;{filter}&rdquo;
+            </div>
+          ) : (
+            filtered.map((t) => {
+              const active = t.name === selectedTable;
+              return (
+                <button
+                  key={t.name}
+                  type="button"
+                  role="option"
+                  aria-selected={active}
+                  onClick={() => setSelected(t.name)}
+                  className={cn(
+                    "group flex items-center justify-between gap-2 border-l-2 border-transparent px-3 py-1.5 text-left text-sm transition-colors",
+                    "hover:bg-secondary/60",
+                    active
+                      ? "border-l-primary bg-secondary font-medium text-foreground"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  <span className="truncate font-mono text-[12.5px]">
+                    {t.name}
+                  </span>
+                  <Badge
+                    variant={active ? "default" : "secondary"}
+                    className="shrink-0 px-1.5 py-0 text-[10px] font-normal tabular-nums"
+                  >
+                    {t.count.toLocaleString()}
+                  </Badge>
+                </button>
+              );
+            })
+          )}
+        </div>
+      </aside>
+      <div className="min-w-0 flex-1">
+        <Table name={selectedTable} />
+      </div>
+    </div>
   );
 }
 

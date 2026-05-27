@@ -282,6 +282,69 @@ impl EventBusHandle {
     }
 }
 
+/// SDUI dashboard read/write handle (granted by
+/// `capabilities.dashboard.{read,write}:` allowlists).
+///
+/// Row 5 of the extension-north-star: extensions that contribute
+/// SDUI surfaces reach the host's dashboard store through this
+/// handle instead of issuing loopback HTTP. The host binds the
+/// caller's `tenant_id` from `ctx.caller()` before resolving any
+/// page id — extensions cannot read or write rows from another
+/// tenant. A system frame (no caller) is refused with
+/// `Error::Capability`.
+#[derive(Debug, Clone)]
+pub struct DashboardHandle {
+    inner: Arc<dyn private::DashboardBackend>,
+}
+
+impl DashboardHandle {
+    /// Read the page body for `page_id` under the caller's tenant.
+    ///
+    /// Page bodies are opaque JSON to the SDK — the SDUI layer
+    /// keeps the schema. Returns the raw body the host stored;
+    /// `Error::NotFound` when the (tenant, page_id) pair does
+    /// not resolve.
+    pub fn read(&self, page_id: &str) -> starter_ext_spi::Result<serde_json::Value> {
+        self.inner.read(page_id)
+    }
+
+    /// Replace the page body for `page_id` under the caller's
+    /// tenant.
+    ///
+    /// Idempotent overwrite; the host appends a changelog entry
+    /// attributing the write to `ctx.caller().user_id`.
+    pub fn write(
+        &self,
+        page_id: &str,
+        body: serde_json::Value,
+    ) -> starter_ext_spi::Result<()> {
+        self.inner.write(page_id, body)
+    }
+}
+
+/// Authorization-check handle (granted by
+/// `capabilities.authz.check:` allowlists).
+///
+/// Row 5 of the extension-north-star: extensions that compose
+/// new flows on top of the host's authz engine ask "is the
+/// caller allowed to do X on Y?" through this handle, so the
+/// engine (and its rule set) stays the single source of truth.
+/// The host binds the caller's `Principal` from
+/// `ctx.caller()` before evaluating the rule; a system frame
+/// (no caller) is refused with `Error::Capability`.
+#[derive(Debug, Clone)]
+pub struct AuthzHandle {
+    inner: Arc<dyn private::AuthzBackend>,
+}
+
+impl AuthzHandle {
+    /// Evaluate `action` against `resource` for the calling
+    /// principal. `true` if the action is permitted.
+    pub fn check(&self, action: &str, resource: &str) -> starter_ext_spi::Result<bool> {
+        self.inner.check(action, resource)
+    }
+}
+
 // ---------------------------------------------------------------------------
 // CtxInner — the always-shared backing handle.
 //
@@ -307,6 +370,8 @@ pub struct CtxInner {
     tracing: TracingHandle,
     warehouse_read: WarehouseReadHandle,
     event_bus: EventBusHandle,
+    dashboard: DashboardHandle,
+    authz: AuthzHandle,
 }
 
 impl CtxInner {
@@ -325,6 +390,8 @@ impl CtxInner {
         tracing: Arc<dyn private::TracingBackend>,
         warehouse_read: Arc<dyn private::WarehouseReadBackend>,
         event_bus: Arc<dyn private::EventBusBackend>,
+        dashboard: Arc<dyn private::DashboardBackend>,
+        authz: Arc<dyn private::AuthzBackend>,
     ) -> Self {
         Self {
             events,
@@ -339,6 +406,8 @@ impl CtxInner {
                 inner: warehouse_read,
             },
             event_bus: EventBusHandle { inner: event_bus },
+            dashboard: DashboardHandle { inner: dashboard },
+            authz: AuthzHandle { inner: authz },
         }
     }
 
@@ -404,6 +473,14 @@ impl CtxInner {
     pub fn event_bus(&self) -> &EventBusHandle {
         &self.event_bus
     }
+    /// Borrow the dashboard handle (named by `requires!(dashboard)`).
+    pub fn dashboard(&self) -> &DashboardHandle {
+        &self.dashboard
+    }
+    /// Borrow the authz handle (named by `requires!(authz)`).
+    pub fn authz(&self) -> &AuthzHandle {
+        &self.authz
+    }
 }
 
 impl std::fmt::Debug for CtxInner {
@@ -421,7 +498,7 @@ impl std::fmt::Debug for CtxInner {
 // its concrete backing (secret store, reqwest client, std::fs, …).
 // ---------------------------------------------------------------------------
 
-pub use private::{FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, EventBusBackend};
+pub use private::{AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend};
 
 mod private {
     /// Host-side backing for [`super::SecretsHandle`].
@@ -485,6 +562,26 @@ mod private {
             topic: &str,
             payload: serde_json::Value,
         ) -> starter_ext_spi::Result<()>;
+    }
+
+    /// Host-side backing for [`super::DashboardHandle`].
+    pub trait DashboardBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Read the SDUI page body for `page_id` under the caller's
+        /// bound tenancy.
+        fn read(&self, page_id: &str) -> starter_ext_spi::Result<serde_json::Value>;
+        /// Overwrite the SDUI page body for `page_id` under the
+        /// caller's bound tenancy.
+        fn write(
+            &self,
+            page_id: &str,
+            body: serde_json::Value,
+        ) -> starter_ext_spi::Result<()>;
+    }
+
+    /// Host-side backing for [`super::AuthzHandle`].
+    pub trait AuthzBackend: std::fmt::Debug + Send + Sync + 'static {
+        /// Evaluate `action` on `resource` for the bound principal.
+        fn check(&self, action: &str, resource: &str) -> starter_ext_spi::Result<bool>;
     }
 }
 
@@ -564,10 +661,25 @@ mod tests {
                 Ok(())
             }
         }
+        impl DashboardBackend for Noop {
+            fn read(&self, _: &str) -> starter_ext_spi::Result<serde_json::Value> {
+                Ok(serde_json::Value::Null)
+            }
+            fn write(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<()> {
+                Ok(())
+            }
+        }
+        impl AuthzBackend for Noop {
+            fn check(&self, _: &str, _: &str) -> starter_ext_spi::Result<bool> {
+                Ok(false)
+            }
+        }
         let (tx, _rx) = tokio::sync::mpsc::channel(1);
         let inner = CtxInner::new(
             tx,
             Arc::new(NeverCancel),
+            Arc::new(Noop),
+            Arc::new(Noop),
             Arc::new(Noop),
             Arc::new(Noop),
             Arc::new(Noop),

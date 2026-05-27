@@ -53,10 +53,10 @@
 
 use std::sync::Arc;
 
-use starter_ext_sdk::ctx::{EventBusBackend, WarehouseReadBackend};
+use starter_ext_sdk::ctx::{AuthzBackend, DashboardBackend, EventBusBackend, WarehouseReadBackend};
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::warehouse::{Row, TemplateSpec};
-use starter_ext_spi::{Error, Result};
+use starter_ext_spi::{Error, ExtensionId, Result};
 
 /// One factory call returns the per-caller bundle of backends the
 /// SDK will wrap in its `*Handle`s for a single `Ctx`.
@@ -64,17 +64,50 @@ use starter_ext_spi::{Error, Result};
 /// Hosts implement this once and hand the resulting `Arc` to the
 /// dispatcher via
 /// [`super::BuiltinRestDispatcher::with_capability_factory`].
-/// The dispatcher passes `caller` derived from the inbound frame
-/// (today: always `None` — see module docs).
+/// The dispatcher passes:
+///
+/// - `extension` — the id of the extension whose `Ctx` is being
+///   built. Hosts use it as the publish-side namespace for the
+///   event bus (an extension may only publish on topics under its
+///   own id), as the lookup key for per-extension manifest
+///   grants, and for log/trace attribution.
+/// - `caller` — the principal the inbound HTTP frame was
+///   dispatched on behalf of (`None` for system / host-internal
+///   frames — see module docs).
 pub trait CapabilityFactory: Send + Sync + 'static {
     /// Backend for `ctx.warehouse_read()`.
     fn warehouse_read(
         &self,
+        extension: &ExtensionId,
         caller: Option<&CallerIdentity>,
     ) -> Arc<dyn WarehouseReadBackend>;
 
     /// Backend for `ctx.event_bus()`.
-    fn event_bus(&self, caller: Option<&CallerIdentity>) -> Arc<dyn EventBusBackend>;
+    fn event_bus(
+        &self,
+        extension: &ExtensionId,
+        caller: Option<&CallerIdentity>,
+    ) -> Arc<dyn EventBusBackend>;
+
+    /// Backend for `ctx.dashboard()`. Default returns a fail-closed
+    /// stub so hosts that haven't wired Row-5 yet keep compiling.
+    fn dashboard(
+        &self,
+        _extension: &ExtensionId,
+        _caller: Option<&CallerIdentity>,
+    ) -> Arc<dyn DashboardBackend> {
+        Arc::new(StubDashboard)
+    }
+
+    /// Backend for `ctx.authz()`. Default returns a fail-closed
+    /// stub so hosts that haven't wired Row-5 yet keep compiling.
+    fn authz(
+        &self,
+        _extension: &ExtensionId,
+        _caller: Option<&CallerIdentity>,
+    ) -> Arc<dyn AuthzBackend> {
+        Arc::new(StubAuthz)
+    }
 }
 
 /// Default [`CapabilityFactory`] returning capability-not-wired
@@ -87,12 +120,17 @@ pub struct StubCapabilityFactory;
 impl CapabilityFactory for StubCapabilityFactory {
     fn warehouse_read(
         &self,
+        _extension: &ExtensionId,
         _caller: Option<&CallerIdentity>,
     ) -> Arc<dyn WarehouseReadBackend> {
         Arc::new(StubWarehouseRead)
     }
 
-    fn event_bus(&self, _caller: Option<&CallerIdentity>) -> Arc<dyn EventBusBackend> {
+    fn event_bus(
+        &self,
+        _extension: &ExtensionId,
+        _caller: Option<&CallerIdentity>,
+    ) -> Arc<dyn EventBusBackend> {
         Arc::new(StubEventBus)
     }
 }
@@ -134,6 +172,33 @@ impl EventBusBackend for StubEventBus {
     }
 }
 
+#[derive(Debug)]
+struct StubDashboard;
+
+impl DashboardBackend for StubDashboard {
+    fn read(&self, _page_id: &str) -> Result<serde_json::Value> {
+        Err(Error::capability(
+            "dashboard not wired: install a host CapabilityFactory",
+        ))
+    }
+    fn write(&self, _page_id: &str, _body: serde_json::Value) -> Result<()> {
+        Err(Error::capability(
+            "dashboard not wired: install a host CapabilityFactory",
+        ))
+    }
+}
+
+#[derive(Debug)]
+struct StubAuthz;
+
+impl AuthzBackend for StubAuthz {
+    fn check(&self, _action: &str, _resource: &str) -> Result<bool> {
+        Err(Error::capability(
+            "authz not wired: install a host CapabilityFactory",
+        ))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,7 +206,8 @@ mod tests {
     #[test]
     fn stub_factory_warehouse_refuses_with_capability() {
         let f = StubCapabilityFactory;
-        let backend = f.warehouse_read(None);
+        let ext = ExtensionId::new("com.acme.cap").unwrap();
+        let backend = f.warehouse_read(&ext, None);
         let err = backend
             .query("anything", serde_json::Value::Null)
             .expect_err("stub must refuse");
@@ -151,7 +217,8 @@ mod tests {
     #[test]
     fn stub_factory_event_bus_refuses_with_capability() {
         let f = StubCapabilityFactory;
-        let backend = f.event_bus(None);
+        let ext = ExtensionId::new("com.acme.cap").unwrap();
+        let backend = f.event_bus(&ext, None);
         let err = backend
             .publish("any.topic", serde_json::Value::Null)
             .expect_err("stub must refuse");
@@ -189,12 +256,14 @@ mod tests {
     impl CapabilityFactory for MarkerFactory {
         fn warehouse_read(
             &self,
+            _extension: &ExtensionId,
             _caller: Option<&CallerIdentity>,
         ) -> Arc<dyn WarehouseReadBackend> {
             Arc::new(MarkerWarehouse)
         }
         fn event_bus(
             &self,
+            _extension: &ExtensionId,
             _caller: Option<&CallerIdentity>,
         ) -> Arc<dyn EventBusBackend> {
             Arc::new(MarkerEventBus)

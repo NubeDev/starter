@@ -78,7 +78,25 @@ async fn main() -> Result<()> {
     // with the staleness. Distinct from `/healthz` (TCP listener
     // alive) and `/readyz` (DB pool alive). See
     // `boot::runtime_canary`.
-    let (runtime_canary, _runtime_canary_task) = boot::runtime_canary::spawn();
+    let (runtime_canary, runtime_canary_task) = boot::runtime_canary::spawn();
+    let _runtime_canary_task = boot::task_watchdog::watch("runtime_canary", runtime_canary_task);
+
+    // On-demand tokio runtime metrics dump. `kill -USR1 <pid>`
+    // emits one `target=rubix.runtime_metrics` line with
+    // num_workers / num_alive_tasks. Pairs with the canary above:
+    // canary says *whether* the runtime is wedged, this says
+    // *how*. See `boot::runtime_metrics`.
+    let _runtime_metrics_task = match boot::runtime_metrics::spawn() {
+        Ok(h) => Some(boot::task_watchdog::watch("runtime_metrics", h)),
+        Err(e) => {
+            warn!(
+                target: "rubix.boot.runtime_metrics",
+                error = %e,
+                "failed to install SIGUSR1 handler — metrics dump disabled",
+            );
+            None
+        }
+    };
 
     let cfg = AgentConfig::load()?;
 
@@ -215,7 +233,7 @@ async fn main() -> Result<()> {
                     seeded = handle.seeded,
                     "durable scheduler running"
                 );
-                Some(handle)
+                Some(boot::task_watchdog::watch("scheduler", handle.task))
             }
             None => None,
         }
@@ -244,7 +262,8 @@ async fn main() -> Result<()> {
             })
         }),
     )
-    .await?;
+    .await?
+    .map(|h| boot::task_watchdog::watch("flow_notify", h));
     // Clone the optional `ChClient` for the SDUI query engine before
     // the registry consumes the original. Phase B.2: the SDUI
     // `QueryEngine` honours `ch:<table>` prefixes against the same
@@ -365,9 +384,68 @@ async fn main() -> Result<()> {
         // threaded into `tools/list`. Here we just consume the
         // pre-built `ExtensionAdmin` into the auth-gated router.
         if let Some(bundle) = ext_bundle {
+            // Admin lifecycle routes (list/detail/enable/disable/events).
             let ext_router: Router =
                 starter_ext_server::router_with_auth(bundle.admin, auth.authenticator.clone());
             app = app.merge(Router::new().nest("/api/v1", ext_router));
+
+            // Dispatcher-backed per-extension REST adapter (row 5 boot
+            // wiring). Builtin-flavour extensions get their contributed
+            // tools/REST verbs mounted here; the `RubixCapabilityFactory`
+            // is the host-side seam that hands real `WarehouseRead` +
+            // `EventBus` backends to each per-call `Ctx`. Today rubix
+            // ships no builtin extensions, so `rest_router` produces an
+            // empty `Router` — the wiring still lands the seam so the
+            // first builtin extension to land later is dispatched
+            // through real backends instead of fail-closed stubs.
+            if let Some(wh_client) = warehouse_client.clone() {
+                use rubix_agent::extensions::{
+                    with_caller_identity, RubixCapabilityFactory, RubixEventBus,
+                };
+                use starter_ext_host::TemplateRegistry;
+                use starter_ext_sdk::builtin::BuiltinTable;
+                use starter_ext_server::{
+                    rest_router, BuiltinRestDispatcher, CapabilityFactory, RestDispatcher,
+                    RestRouterOptions,
+                };
+                use starter_server::auth::with_principal;
+
+                let table = Arc::new(BuiltinTable::new());
+                let template_registry = Arc::new(TemplateRegistry::builtin());
+                let event_bus = Arc::new(RubixEventBus::new());
+                let factory: Arc<dyn CapabilityFactory> = Arc::new(
+                    RubixCapabilityFactory::new(wh_client, template_registry, event_bus)
+                        .with_extension_registry(bundle.registry.clone()),
+                );
+                let dispatcher: Arc<dyn RestDispatcher> = Arc::new(
+                    BuiltinRestDispatcher::new(table, bundle.registry.clone())
+                        .with_capability_factory(factory),
+                );
+                match rest_router::<()>(
+                    bundle.registry.clone(),
+                    dispatcher,
+                    RestRouterOptions::default(),
+                ) {
+                    Ok(adapter) => {
+                        let gated =
+                            with_principal(with_caller_identity(adapter), auth.authenticator.clone());
+                        app = app.merge(Router::new().nest("/api/v1", gated));
+                    }
+                    Err(e) => {
+                        warn!(
+                            target: "rubix.boot.extensions",
+                            error = %e,
+                            "extension REST adapter failed to build; per-extension \
+                             routes will not be served",
+                        );
+                    }
+                }
+            } else {
+                info!(
+                    target: "rubix.boot.extensions",
+                    "warehouse_url unset — skipping extension REST adapter wiring",
+                );
+            }
         }
 
         // Goal 1, Phase A.1 — seed bundled SDUI dashboard pages

@@ -64,7 +64,7 @@ export function TableNode({ data }: NodeProps) {
               {column.data_type}
             </span>
             {column.nullable && (
-              <span className="text-[9px] text-muted-foreground bg-muted px-1 rounded">
+              <span className="text-[9px] text-muted-foreground bg-secondary px-1 rounded">
                 NULL
               </span>
             )}

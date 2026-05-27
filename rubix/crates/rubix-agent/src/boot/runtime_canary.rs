@@ -91,6 +91,20 @@ pub fn spawn() -> (Canary, JoinHandle<()>) {
         // here: if we ever lag, we want the canary to tick as
         // fast as it can to catch up so /livez recovers
         // immediately once the runtime un-wedges.
+        //
+        // Every HEARTBEAT_EVERY ticks the loop also emits one
+        // INFO line. The line itself is observability redundancy:
+        // pool_telemetry already runs every 30s, so a missing
+        // heartbeat == missing pool_telemetry == "the runtime
+        // stopped logging." The point of *this* line is that it's
+        // emitted from the canary task itself, so its absence is
+        // unambiguous evidence the canary loop is parked (rather
+        // than the writer being blocked or the global subscriber
+        // wedging) — the next freeze investigation can compare the
+        // canary heartbeat cadence against the pool_telemetry
+        // cadence to localise the wedge.
+        const HEARTBEAT_EVERY: u64 = 60;
+        let mut tick_count: u64 = 0;
         loop {
             ticker.tick().await;
             let now = SystemTime::now()
@@ -98,6 +112,14 @@ pub fn spawn() -> (Canary, JoinHandle<()>) {
                 .map(|d| d.as_secs())
                 .unwrap_or(0);
             cloned.last_tick_unix_secs.store(now, Ordering::Relaxed);
+            tick_count = tick_count.wrapping_add(1);
+            if tick_count % HEARTBEAT_EVERY == 0 {
+                info!(
+                    target: "rubix.runtime_canary",
+                    tick_count = tick_count,
+                    "canary heartbeat",
+                );
+            }
         }
     });
     (canary, handle)

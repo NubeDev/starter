@@ -37,6 +37,7 @@ use starter_ext_sdk::ctx::{
     Cancel, CtxInner, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend,
     WallClockBackend,
 };
+use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::jsonrpc::{StreamId, StreamNotification};
 use starter_ext_spi::{Error, ExtensionId, RuntimeKind};
 use tokio::sync::{mpsc, watch};
@@ -181,6 +182,15 @@ impl std::fmt::Debug for CancelHandle {
 /// The adapter↔kernel seam. One method per call shape so the adapter
 /// reads the manifest's `streaming:` mode at build time and never has
 /// to inspect bodies at request time to decide which path to take.
+///
+/// `caller` carries the principal the inbound HTTP request was
+/// dispatched on behalf of. Hosts populate it by stuffing a
+/// [`CallerIdentity`] into the axum request extensions (typically
+/// from an auth middleware); the REST handler reads it back out and
+/// hands it to the dispatcher. `None` means the host did not
+/// authenticate / scope the request — capability backends that
+/// require a tenant refuse such frames with
+/// [`starter_ext_spi::Error::Capability`].
 #[async_trait]
 pub trait RestDispatcher: Send + Sync + 'static {
     /// Dispatch a non-streaming call. The dispatcher owns the lifetime
@@ -191,6 +201,7 @@ pub trait RestDispatcher: Send + Sync + 'static {
         extension: &ExtensionId,
         contribute_id: &str,
         input: serde_json::Value,
+        caller: Option<CallerIdentity>,
     ) -> Result<serde_json::Value, DispatchError>;
 
     /// Open a streaming dispatch. Same contract as [`Self::dispatch`]
@@ -201,6 +212,7 @@ pub trait RestDispatcher: Send + Sync + 'static {
         extension: &ExtensionId,
         contribute_id: &str,
         input: serde_json::Value,
+        caller: Option<CallerIdentity>,
     ) -> Result<StreamResponse, DispatchError>;
 }
 
@@ -257,12 +269,14 @@ impl BuiltinRestDispatcher {
     /// own allowlist threading first).
     ///
     /// `caller` is the principal the inbound frame was dispatched
-    /// on behalf of. Today the dispatcher always passes `None` —
-    /// caller extraction off the HTTP request is the next slice.
-    /// A factory that refuses on `None` (e.g. the rubix-agent
-    /// shape) is the intentional fail-closed default until then.
+    /// on behalf of (`None` for system / host-internal frames).
+    /// `extension` is the id of the extension whose `Ctx` is being
+    /// built — the factory uses it as the publish-side namespace
+    /// for the event bus and as the lookup key for per-extension
+    /// manifest grants.
     fn build_ctx(
         &self,
+        extension: &ExtensionId,
         events: mpsc::Sender<StreamEvent>,
         cancel: Arc<dyn Cancel>,
         caller: Option<&starter_ext_spi::identity::CallerIdentity>,
@@ -275,8 +289,10 @@ impl BuiltinRestDispatcher {
             Arc::new(StubFs),
             Arc::new(StubWallClock),
             Arc::new(StubTracing),
-            self.capability_factory.warehouse_read(caller),
-            self.capability_factory.event_bus(caller),
+            self.capability_factory.warehouse_read(extension, caller),
+            self.capability_factory.event_bus(extension, caller),
+            self.capability_factory.dashboard(extension, caller),
+            self.capability_factory.authz(extension, caller),
         )
     }
 
@@ -305,6 +321,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         extension: &ExtensionId,
         contribute_id: &str,
         input: serde_json::Value,
+        caller: Option<CallerIdentity>,
     ) -> Result<serde_json::Value, DispatchError> {
         self.ensure_builtin(extension)?;
         let entry = self.table.get(extension).ok_or_else(|| {
@@ -318,7 +335,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         // Non-streaming: stub event channel + cancel (handler may
         // ignore them).
         let (tx, _rx) = mpsc::channel(self.event_channel_capacity);
-        let ctx = self.build_ctx(tx, Arc::new(NeverCancel), None);
+        let ctx = self.build_ctx(extension, tx, Arc::new(NeverCancel), caller.as_ref());
 
         // BuiltinEntry::dispatch is sync. Run on the blocking pool so
         // the async runtime isn't held up by a long handler. The
@@ -337,6 +354,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         extension: &ExtensionId,
         contribute_id: &str,
         input: serde_json::Value,
+        caller: Option<CallerIdentity>,
     ) -> Result<StreamResponse, DispatchError> {
         self.ensure_builtin(extension)?;
         let entry = self.table.get(extension).ok_or_else(|| {
@@ -352,7 +370,7 @@ impl RestDispatcher for BuiltinRestDispatcher {
         let cancel = WatchCancel::new(cancel_rx);
         let (tx, rx) = mpsc::channel(self.event_channel_capacity);
 
-        let ctx = self.build_ctx(tx, Arc::new(cancel), None);
+        let ctx = self.build_ctx(extension, tx, Arc::new(cancel), caller.as_ref());
         let entry_dispatch = entry.dispatch_arc();
         let contribute_id_owned = contribute_id.to_owned();
 
@@ -404,6 +422,7 @@ impl RestDispatcher for NotWiredDispatcher {
         _extension: &ExtensionId,
         contribute_id: &str,
         _input: serde_json::Value,
+        _caller: Option<CallerIdentity>,
     ) -> Result<serde_json::Value, DispatchError> {
         Err(DispatchError::NotWired(format!(
             "no RestDispatcher wired for contribute {contribute_id:?}"
@@ -415,6 +434,7 @@ impl RestDispatcher for NotWiredDispatcher {
         _extension: &ExtensionId,
         contribute_id: &str,
         _input: serde_json::Value,
+        _caller: Option<CallerIdentity>,
     ) -> Result<StreamResponse, DispatchError> {
         Err(DispatchError::NotWired(format!(
             "no RestDispatcher wired for streaming contribute {contribute_id:?}"
@@ -477,6 +497,7 @@ impl RestDispatcher for ProcessRestDispatcher {
         extension: &ExtensionId,
         contribute_id: &str,
         input: serde_json::Value,
+        caller: Option<CallerIdentity>,
     ) -> Result<serde_json::Value, DispatchError> {
         let handle = self.handles.get(extension).ok_or_else(|| {
             DispatchError::NotFound(format!(
@@ -485,10 +506,22 @@ impl RestDispatcher for ProcessRestDispatcher {
             ))
         })?;
         let method = format!("tools/{contribute_id}");
-        handle
-            .call(&method, input, self.request_timeout)
-            .await
-            .map_err(DispatchError::from_kernel)
+        // Stamp the caller onto the outbound frame's `_meta.caller`
+        // when we have one. A `None` caller (system / host-internal
+        // frame) falls through to plain `call`, which omits `_meta`
+        // entirely; the child's `ctx.caller()` resolves to `None`,
+        // matching what every tenant-scoped capability handle uses
+        // as its fail-closed gate.
+        match caller {
+            Some(caller) => handle
+                .call_as(&method, input, caller, self.request_timeout)
+                .await
+                .map_err(DispatchError::from_kernel),
+            None => handle
+                .call(&method, input, self.request_timeout)
+                .await
+                .map_err(DispatchError::from_kernel),
+        }
     }
 
     async fn dispatch_stream(
@@ -496,6 +529,7 @@ impl RestDispatcher for ProcessRestDispatcher {
         extension: &ExtensionId,
         contribute_id: &str,
         _input: serde_json::Value,
+        _caller: Option<CallerIdentity>,
     ) -> Result<StreamResponse, DispatchError> {
         if self.handles.contains_key(extension) {
             Err(DispatchError::NotWired(format!(

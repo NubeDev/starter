@@ -307,7 +307,7 @@ function FiltersPanel({ currentSql: _current, onSetSql, onAppend }: FiltersPanel
                           `SELECT *\nFROM \`${t.name}\`\nLIMIT 100;`,
                         )
                       }
-                      className="opacity-0 group-hover:opacity-100 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border hover:bg-muted shrink-0"
+                      className="opacity-0 group-hover:opacity-100 text-[10px] font-mono px-1.5 py-0.5 rounded border border-border hover:bg-secondary shrink-0"
                       title={`SELECT * FROM ${t.name} LIMIT 100`}
                     >
                       use
@@ -320,7 +320,7 @@ function FiltersPanel({ currentSql: _current, onSetSql, onAppend }: FiltersPanel
                           <button
                             type="button"
                             onClick={() => onAppend(`\`${c.name}\``)}
-                            className="flex items-center gap-1.5 w-full text-left text-[11px] font-mono py-0.5 px-1 rounded hover:bg-muted text-foreground/70 hover:text-foreground"
+                            className="flex items-center gap-1.5 w-full text-left text-[11px] font-mono py-0.5 px-1 rounded hover:bg-secondary text-foreground/70 hover:text-foreground"
                             title={`Append \`${c.name}\` (${c.data_type})`}
                           >
                             {c.is_primary_key ? (

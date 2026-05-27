@@ -19,13 +19,14 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::body::{Body, Bytes};
-use axum::extract::State;
+use axum::extract::{Extension, State};
 use axum::http::{header, HeaderValue, Response, StatusCode};
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::IntoResponse;
 use axum::Json;
 use futures::StreamExt;
 use serde_json::Value;
+use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::ExtensionId;
 
 use super::dispatcher::{CancelHandle, DispatchError, RestDispatcher, StreamResponse};
@@ -81,8 +82,16 @@ fn dispatch_error_response(err: DispatchError) -> Response<Body> {
 
 /// Non-streaming handler. Validates the body, calls
 /// [`RestDispatcher::dispatch`], returns the JSON result.
+///
+/// `Option<Extension<CallerIdentity>>` reads a [`CallerIdentity`] off
+/// the axum request extensions. A host-side auth middleware
+/// (typically wrapping the [`crate::router_with_auth`] sub-router)
+/// stuffs it there; if no middleware is installed, the extractor
+/// yields `None` and the dispatcher's capability factory sees a
+/// system / unscoped frame.
 pub(crate) async fn non_streaming(
     State(spec): State<Arc<HandlerSpec>>,
+    caller: Option<Extension<CallerIdentity>>,
     body: Bytes,
 ) -> Response<Body> {
     let input = match parse_body(&body) {
@@ -102,9 +111,10 @@ pub(crate) async fn non_streaming(
         )
             .into_response();
     }
+    let caller = caller.map(|Extension(c)| c);
     match spec
         .dispatcher
-        .dispatch(&spec.extension, &spec.contribute_id, input)
+        .dispatch(&spec.extension, &spec.contribute_id, input, caller)
         .await
     {
         Ok(value) => (StatusCode::OK, Json(value)).into_response(),
@@ -117,18 +127,23 @@ pub(crate) async fn non_streaming(
 /// content-type + heartbeat for free, and we emit a `retry:` field on
 /// the first frame (browser `EventSource` reads it as the reconnect
 /// delay).
-pub(crate) async fn sse(State(spec): State<Arc<HandlerSpec>>, body: Bytes) -> Response<Body> {
+pub(crate) async fn sse(
+    State(spec): State<Arc<HandlerSpec>>,
+    caller: Option<Extension<CallerIdentity>>,
+    body: Bytes,
+) -> Response<Body> {
     let (input, schema_err) = parse_and_check(&spec, body);
     if let Some(resp) = schema_err {
         return resp;
     }
+    let caller = caller.map(|Extension(c)| c);
     let StreamResponse {
         stream_id,
         events,
         cancel,
     } = match spec
         .dispatcher
-        .dispatch_stream(&spec.extension, &spec.contribute_id, input)
+        .dispatch_stream(&spec.extension, &spec.contribute_id, input, caller)
         .await
     {
         Ok(r) => r,
@@ -183,18 +198,23 @@ pub(crate) async fn sse(State(spec): State<Arc<HandlerSpec>>, body: Bytes) -> Re
 }
 
 /// NDJSON handler — newline-delimited JSON streaming.
-pub(crate) async fn ndjson(State(spec): State<Arc<HandlerSpec>>, body: Bytes) -> Response<Body> {
+pub(crate) async fn ndjson(
+    State(spec): State<Arc<HandlerSpec>>,
+    caller: Option<Extension<CallerIdentity>>,
+    body: Bytes,
+) -> Response<Body> {
     let (input, schema_err) = parse_and_check(&spec, body);
     if let Some(resp) = schema_err {
         return resp;
     }
+    let caller = caller.map(|Extension(c)| c);
     let StreamResponse {
         stream_id,
         events,
         cancel,
     } = match spec
         .dispatcher
-        .dispatch_stream(&spec.extension, &spec.contribute_id, input)
+        .dispatch_stream(&spec.extension, &spec.contribute_id, input, caller)
         .await
     {
         Ok(r) => r,
