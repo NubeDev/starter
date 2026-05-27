@@ -6,7 +6,7 @@
 // rubix/docs/scope/dashboards/10-puck-builder.md.
 
 export { buildPuckConfig, type BuildPuckConfigOpts } from "./build-puck-config.js";
-export { PuckBuilder, type PuckBuilderProps } from "./builder.js";
+export { PuckBuilder, type PuckBuilderProps, type PuckBuilderHandle } from "./builder.js";
 export { IR_SCHEMA } from "./schema-loader.js";
 export { IR_SCHEMA_HASH, IR_SCHEMA_HASH_ALGORITHM } from "./schema-hash.js";
 

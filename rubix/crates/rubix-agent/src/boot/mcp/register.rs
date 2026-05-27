@@ -90,6 +90,7 @@ pub async fn build_flow_registry(
         None => crate::registry::build_tool_registry(
             cfg.insights.disk_warn_threshold,
             pg_pool.clone(),
+            None,
             cfg.blob_root.clone(),
         ),
     };

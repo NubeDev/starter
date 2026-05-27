@@ -37,9 +37,11 @@ use std::time::Duration;
 
 use async_trait::async_trait;
 use chrono::{DateTime, Utc};
+use futures::stream::{self, StreamExt};
 use sqlx::Row;
 use thiserror::Error;
 use tokio::task::JoinHandle;
+use tokio::time::timeout;
 use uuid::Uuid;
 
 use starter_cron::CronError;
@@ -118,6 +120,26 @@ pub struct FlowAsService {
     registry: Arc<FlowRegistry>,
     runner: Arc<dyn FlowRunner>,
     clock: Arc<dyn Clock>,
+    /// Cadence of the tick loop spawned by [`Self::start`].
+    /// Defaults to 60 s; tune lower when many fine-grained
+    /// schedules (e.g. `*/5 * * * * *`) would otherwise pile up
+    /// a large per-tick backlog.
+    tick_interval: Duration,
+    /// Maximum number of claimed flows dispatched concurrently
+    /// within a single tick. Defaults to 16 — comfortable for a
+    /// 16-connection pool while still leaving headroom for HTTP
+    /// (notably `/health`) and any flow-side DB writes
+    /// (e.g. `rubix.warehouse.ingest`). Bump higher if the pool
+    /// is bigger or scheduled flows are mostly I/O-bound.
+    max_concurrent_dispatch: usize,
+    /// Per-invocation wall-clock budget enforced via
+    /// [`tokio::time::timeout`]. A run that exceeds this budget
+    /// is cancelled (dropping the future) and bookkeeping
+    /// records `failed` with a timeout message — preventing a
+    /// single stuck flow from holding a dispatch slot (and any
+    /// pool connections it acquired) indefinitely. Defaults to
+    /// 30 s.
+    dispatch_timeout: Duration,
 }
 
 impl FlowAsService {
@@ -131,7 +153,35 @@ impl FlowAsService {
             registry,
             runner,
             clock: Arc::new(SystemClock::new()),
+            tick_interval: Duration::from_secs(60),
+            max_concurrent_dispatch: 16,
+            dispatch_timeout: Duration::from_secs(30),
         }
+    }
+
+    /// Override the tick-loop cadence (default 60 s). Lower
+    /// values reduce per-tick backlog for fine-grained
+    /// schedules; higher values reduce DB load.
+    #[must_use]
+    pub fn with_tick_interval(mut self, interval: Duration) -> Self {
+        self.tick_interval = interval;
+        self
+    }
+
+    /// Override the in-flight dispatch concurrency cap
+    /// (default 16). Values of `0` are clamped to `1` so the
+    /// dispatch stream always makes progress.
+    #[must_use]
+    pub fn with_max_concurrent_dispatch(mut self, max: usize) -> Self {
+        self.max_concurrent_dispatch = max.max(1);
+        self
+    }
+
+    /// Override the per-invocation timeout (default 30 s).
+    #[must_use]
+    pub fn with_dispatch_timeout(mut self, dispatch_timeout: Duration) -> Self {
+        self.dispatch_timeout = dispatch_timeout;
+        self
     }
 
     /// Replace the wall-clock seam. Used by `tests/clock_test.rs`
@@ -318,7 +368,7 @@ impl FlowAsService {
                 WHERE enabled = TRUE AND next_run_at <= $1
                 ORDER BY next_run_at
                 FOR UPDATE SKIP LOCKED
-                LIMIT 32"#,
+                LIMIT 128"#,
         )
         .bind(now)
         .fetch_all(&mut *tx)
@@ -350,33 +400,73 @@ impl FlowAsService {
         tx.commit().await?;
 
         let count = claimed.len();
-        for (id, tenant_id, flow_id, _cron) in claimed {
-            let result = self.runner.run(tenant_id, &flow_id).await;
-            let (status, message): (&'static str, Option<String>) = match result {
-                Ok(()) => ("succeeded", None),
-                Err(e) => ("failed", Some(truncate_message(&e.to_string()))),
-            };
-            if let Err(e) = sqlx::query(
-                r#"UPDATE starter_scheduled_flows
-                      SET last_run_at      = $1,
-                          last_run_status  = $2,
-                          last_run_message = $3
-                    WHERE id = $4"#,
+
+        // Bounded-concurrent dispatch. Sequential dispatch
+        // turns even a modest per-tick backlog into a wall-clock
+        // pile-up: with N claims at ~1 s each, the tick takes
+        // >N seconds, during which any flow that touches the
+        // shared PG pool (e.g. `rubix.warehouse.ingest`)
+        // competes with the bookkeeping `UPDATE` below for
+        // connections — a pool drained this way blocks unrelated
+        // callers including the HTTP `/health` endpoint. Capping
+        // in-flight dispatches at `max_concurrent_dispatch`
+        // keeps the pool from saturating while still draining
+        // backlogs in parallel. The per-invocation timeout
+        // prevents one stuck flow from holding a dispatch slot
+        // (and the connections it acquired) indefinitely.
+        let dispatch_timeout = self.dispatch_timeout;
+        let pool = self.pool.clone();
+        let runner = self.runner.clone();
+        let clock = self.clock.clone();
+
+        stream::iter(claimed)
+            .for_each_concurrent(
+                self.max_concurrent_dispatch,
+                |(id, tenant_id, flow_id, _cron)| {
+                    let pool = pool.clone();
+                    let runner = runner.clone();
+                    let clock = clock.clone();
+                    async move {
+                        let result = match timeout(
+                            dispatch_timeout,
+                            runner.run(tenant_id, &flow_id),
+                        )
+                        .await
+                        {
+                            Ok(inner) => inner,
+                            Err(_) => Err(format!(
+                                "flow dispatch exceeded {dispatch_timeout:?} budget"
+                            )
+                            .into()),
+                        };
+                        let (status, message): (&'static str, Option<String>) = match result {
+                            Ok(()) => ("succeeded", None),
+                            Err(e) => ("failed", Some(truncate_message(&e.to_string()))),
+                        };
+                        if let Err(e) = sqlx::query(
+                            r#"UPDATE starter_scheduled_flows
+                                  SET last_run_at      = $1,
+                                      last_run_status  = $2,
+                                      last_run_message = $3
+                                WHERE id = $4"#,
+                        )
+                        .bind(clock.now())
+                        .bind(status)
+                        .bind(message)
+                        .bind(&id)
+                        .execute(pool.sqlx())
+                        .await
+                        {
+                            tracing::warn!(
+                                flow_id = %flow_id,
+                                error = %e,
+                                "flow_as_service.tick.bookkeeping_failed",
+                            );
+                        }
+                    }
+                },
             )
-            .bind(self.clock.now())
-            .bind(status)
-            .bind(message)
-            .bind(&id)
-            .execute(self.pool.sqlx())
-            .await
-            {
-                tracing::warn!(
-                    flow_id = %flow_id,
-                    error = %e,
-                    "flow_as_service.tick.bookkeeping_failed",
-                );
-            }
-        }
+            .await;
 
         Ok(count)
     }
@@ -397,9 +487,10 @@ impl FlowAsService {
     /// The returned handle never resolves under normal operation;
     /// callers shut the loop down by `JoinHandle::abort`.
     pub fn start(self) -> JoinHandle<()> {
+        let tick_interval = self.tick_interval;
         let me = Arc::new(self);
         tokio::spawn(async move {
-            let mut interval = tokio::time::interval(Duration::from_secs(60));
+            let mut interval = tokio::time::interval(tick_interval);
             interval.set_missed_tick_behavior(tokio::time::MissedTickBehavior::Skip);
             loop {
                 interval.tick().await;

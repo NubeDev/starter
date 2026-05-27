@@ -36,6 +36,7 @@ rubix-flows               = { workspace = true }
 # need to apply `rubix/0002_history`. No direct `clickhouse` crate
 # dep — that lives transitively under starter-store-warehouse.
 starter-store-warehouse = { workspace = true }
+sqlx                      = { workspace = true, features = ["postgres", "json", "time"] }
 uuid                      = { workspace = true }
 
 # undo goal — Reversible-aware dispatch wrapper + rubix.undo.last verb.

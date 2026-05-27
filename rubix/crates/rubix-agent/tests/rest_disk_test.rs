@@ -24,7 +24,7 @@ use rubix_agent::routes::tools::{router, ToolsState};
 
 fn app() -> axum::Router {
     let bundle = Arc::new(rubix_spi::i18n::rubix_bundle().expect("rubix bundle parses"));
-    let tools = build_tool_registry(90, None, None);
+    let tools = build_tool_registry(90, None, None, None);
     router(ToolsState::new(tools, bundle))
 }
 

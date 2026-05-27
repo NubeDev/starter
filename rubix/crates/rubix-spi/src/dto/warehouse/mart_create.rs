@@ -49,11 +49,11 @@ pub struct WarehouseMartCreateResponse {
 }
 
 /// `starter-authz` permission string the caller must hold.
-pub const REQUIRED_PERMISSION: &str = "clickhouse.write";
+pub const REQUIRED_PERMISSION: &str = "warehouse.write";
 
 /// Five-field descriptor.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose: "Create a new ClickHouse mart (history/aggregate table) from a CREATE TABLE DDL.",
+    purpose: "Create a new warehouse mart (history/aggregate table) from a CREATE TABLE DDL.",
     when_to_use: concat!(
         "Use when an operator says \"add a new history table for X\" ",
         "or when a flow needs to provision the storage target for a ",
@@ -68,7 +68,7 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
     ),
     example: concat!(
         "Input:  { \"mart_name\": \"system_disk_history\", ",
-        "\"ddl\": \"CREATE TABLE system_disk_history (...) ENGINE = MergeTree ORDER BY ts\" }\n",
+        "\"ddl\": \"CREATE TABLE system_disk_history (ts TIMESTAMPTZ NOT NULL, ...)\" }\n",
         "Output: { \"summary\": { \"code\": \"rubix.warehouse.mart.created\", ",
         "\"params\": { \"mart\": \"system_disk_history\" } }, ",
         "\"mart_name\": \"system_disk_history\", \"prior_ddl\": null, ",

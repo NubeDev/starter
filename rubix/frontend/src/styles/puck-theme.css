@@ -1,0 +1,72 @@
+/* Puck editor theme bridge.
+ *
+ * Puck (@measured/puck) ships its own design tokens via `--puck-color-*`
+ * variables and hard-codes colour stops in its rules (grey-01..12,
+ * azure-01..12, white). When the app switches to dark mode (`.dark`
+ * on <html>), Puck stays light because nothing rewires those vars.
+ *
+ * This file remaps the surfaces, borders, text, and accent Puck reads
+ * onto the app's shadcn HSL tokens (--background, --foreground, --card,
+ * --border, --muted, --muted-foreground, --primary). Light mode keeps
+ * Puck's defaults intact (no overrides outside `.dark`); dark mode
+ * overrides the small set of stops that Puck actually paints surfaces
+ * with so the editor visually joins the rest of the app.
+ *
+ * If Puck's internal token set changes we'll need to revisit — the
+ * coverage here is empirical (mapped what the screenshots showed
+ * wrong), not exhaustive.
+ */
+
+:root.dark {
+  /* Surface stops — what Puck uses for canvas, panels, headers. */
+  --puck-color-white: hsl(var(--card));
+  --puck-color-grey-12: hsl(var(--background));
+  --puck-color-grey-11: hsl(var(--card));
+  --puck-color-grey-10: hsl(var(--secondary));
+  --puck-color-grey-09: hsl(var(--border));
+
+  /* Borders / dividers. */
+  --puck-color-grey-08: hsl(var(--border));
+  --puck-color-grey-07: hsl(var(--border));
+
+  /* Muted text + icons. */
+  --puck-color-grey-05: hsl(var(--muted-foreground));
+  --puck-color-grey-04: hsl(var(--foreground));
+  --puck-color-grey-03: hsl(var(--foreground));
+  --puck-color-grey-02: hsl(var(--foreground));
+  --puck-color-grey-01: hsl(var(--foreground));
+
+  /* Accent (selected component frame, Save button background, links). */
+  --puck-color-azure-04: hsl(var(--primary));
+  --puck-color-azure-05: hsl(var(--primary));
+  --puck-color-azure-06: hsl(var(--primary));
+  --puck-color-azure-07: hsl(var(--primary));
+  --puck-color-azure-11: hsl(var(--secondary));
+  --puck-color-azure-12: hsl(var(--secondary));
+}
+
+/* The iframe Puck mounts the preview canvas in is same-origin, so it
+ * inherits the parent document's <html data-mode> attribute via
+ * Puck's own CSS injection. Belt-and-braces: scope a copy of the
+ * dark-mode overrides under [data-mode='dark'] too, in case the
+ * iframe's root has the attribute but not the `.dark` class. */
+:root[data-mode='dark'] {
+  --puck-color-white: hsl(var(--card));
+  --puck-color-grey-12: hsl(var(--background));
+  --puck-color-grey-11: hsl(var(--card));
+  --puck-color-grey-10: hsl(var(--secondary));
+  --puck-color-grey-09: hsl(var(--border));
+  --puck-color-grey-08: hsl(var(--border));
+  --puck-color-grey-07: hsl(var(--border));
+  --puck-color-grey-05: hsl(var(--muted-foreground));
+  --puck-color-grey-04: hsl(var(--foreground));
+  --puck-color-grey-03: hsl(var(--foreground));
+  --puck-color-grey-02: hsl(var(--foreground));
+  --puck-color-grey-01: hsl(var(--foreground));
+  --puck-color-azure-04: hsl(var(--primary));
+  --puck-color-azure-05: hsl(var(--primary));
+  --puck-color-azure-06: hsl(var(--primary));
+  --puck-color-azure-07: hsl(var(--primary));
+  --puck-color-azure-11: hsl(var(--secondary));
+  --puck-color-azure-12: hsl(var(--secondary));
+}

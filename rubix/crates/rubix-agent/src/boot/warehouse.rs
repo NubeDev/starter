@@ -1,36 +1,61 @@
-//! Stage 3 of `rubix/docs/proposal/warehouse-engine-swap.md` —
-//! the ClickHouse engine has been removed. The previous boot-time
-//! migration step (rubix-owned `0002_history`, `0003_meter_readings_raw`,
-//! etc., plus the shared `entities_dict` dictionary) was strictly
-//! ClickHouse-specific and is gone.
+//! TimescaleDB warehouse plane wiring.
 //!
-//! A future stage will reintroduce a TimescaleDB-backed migration
-//! step that drives `starter_store_warehouse::run_migrations`
-//! through the same `boot` entry point.
+//! PR #44 deleted the ClickHouse engine and left the warehouse
+//! capability stubbed out. This module rebuilds the minimum needed
+//! to make `analytics_template` chart sources resolve against real
+//! data:
 //!
-//! The thin no-op surface below keeps the boot wiring in `main.rs`
-//! compiling while the warehouse capability crate is rebuilt.
+//! 1. Connect a `sqlx::PgPool` to `cfg.warehouse_url` (Timescale on
+//!    `:5434/warehouse` in dev).
+//! 2. Run `starter_store_warehouse::run_migrations` so the `samples`
+//!    hypertable + indexes exist.
+//! 3. Return a `WarehouseClient` handle the boot code threads into
+//!    the ingest tool and the SDUI analytics bridge.
+//!
+//! When `warehouse_url` is `None` the boot is a no-op and the agent
+//! still serves dashboards — KPIs and charts just render empty.
 
 use anyhow::Result;
+use starter_store_warehouse::{run_migrations, WarehouseClient};
+use tracing::info;
 
-/// Logical "warehouse" database name. Unused by the current
-/// engine; carried for downstream wiring that still references
-/// the constant.
+/// Logical "warehouse" database name. Carried so existing call
+/// sites that reference it still compile.
 pub const RUBIX_CH_DATABASE: &str = "rubix";
 
-/// Outcome of the (currently no-op) migration step.
+/// Outcome of the boot-time migration step.
 #[derive(Debug, Clone, Default)]
 pub struct WarehouseMigrationReport {
-    /// `true` when the step was a no-op (always today).
+    /// `true` when the step was a no-op (no `warehouse_url`).
     pub skipped: bool,
 }
 
-/// No-op stand-in for the historical CH migration step. Kept so
-/// `main.rs` can continue to await a single function during boot.
+/// Legacy no-arg entry point kept for `main.rs`. The historical
+/// signature took `(warehouse_url, database_url, clickhouse_pg_url)`;
+/// the warehouse-on-Timescale rebuild uses only the warehouse URL.
 pub async fn apply_warehouse_migrations(
     _warehouse_url: Option<&str>,
     _database_url: Option<&str>,
     _ignored: Option<&str>,
 ) -> Result<WarehouseMigrationReport> {
     Ok(WarehouseMigrationReport { skipped: true })
+}
+
+/// Connect to the Timescale warehouse DSN and run schema
+/// migrations. Returns a `WarehouseClient` callers use for ingest +
+/// analytics; returns `None` when no DSN was configured.
+pub async fn connect_warehouse(warehouse_url: Option<&str>) -> Result<Option<WarehouseClient>> {
+    let Some(url) = warehouse_url else {
+        info!(target: "rubix.boot.warehouse", "no warehouse_url configured — skipping Timescale wiring");
+        return Ok(None);
+    };
+
+    let client = WarehouseClient::connect(url)
+        .await
+        .map_err(|e| anyhow::anyhow!("connect warehouse {url}: {e}"))?;
+    run_migrations(&client)
+        .await
+        .map_err(|e| anyhow::anyhow!("warehouse migrations: {e}"))?;
+    info!(target: "rubix.boot.warehouse", url = %url, "warehouse plane wired");
+    Ok(Some(client))
 }

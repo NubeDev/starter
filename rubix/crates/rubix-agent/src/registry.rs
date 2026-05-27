@@ -41,23 +41,26 @@ use rubix_tools::team::assign::TeamAssignTool;
 use rubix_tools::team::create::TeamCreateTool;
 use rubix_tools::team::store::{InMemoryTeamStore, TeamAdminStore};
 use rubix_tools::tenant::list::TenantListTool;
-use rubix_tools::tenant::store::{InMemoryTenantStore, TenantStore};
+use rubix_tools::tenant::store::{InMemoryTenantStore, TenantRow, TenantStore};
 use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
+use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use starter_authz::StaticRegistry;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 use starter_store_postgres::pool::Pool;
+use starter_store_warehouse::WarehouseClient;
 use tracing::{info, warn};
 
 /// Build the tool registry the agent serves at boot.
 pub fn build_tool_registry(
     insights_disk_threshold: u8,
     pg_pool: Option<Pool>,
+    warehouse: Option<WarehouseClient>,
     _blob_root: Option<String>,
 ) -> Vec<Arc<dyn Tool>> {
     let disk = DiskTool::new().with_insights_threshold(insights_disk_threshold);
@@ -67,7 +70,13 @@ pub fn build_tool_registry(
         None => Arc::new(seed_flow_store()),
     };
     let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
-    let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::new());
+    let tenant_store: Arc<dyn TenantStore> = Arc::new(InMemoryTenantStore::seeded(vec![
+        TenantRow {
+            tenant_id: rubix_spi::dashboard::BUNDLED_TENANT.to_owned(),
+            name: "System".to_owned(),
+            locale: "en".to_owned(),
+        },
+    ]));
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
     let dashboard_store: Arc<dyn DashboardStore> = match pg_pool.as_ref() {
@@ -86,7 +95,7 @@ pub fn build_tool_registry(
          follow-up.",
     );
 
-    vec![
+    let mut tools: Vec<Arc<dyn Tool>> = vec![
         // ---- system / insights ----------------------------------
         Arc::new(disk),
         Arc::new(DbTool),
@@ -124,7 +133,13 @@ pub fn build_tool_registry(
         Arc::new(DashboardDuplicateTool::new(dashboard_store.clone())),
         Arc::new(DashboardDeleteTool::new(dashboard_store.clone())),
         Arc::new(DashboardPageSetTool::new(dashboard_graph.clone())),
-    ]
+    ];
+
+    if let Some(wh) = warehouse {
+        tools.push(Arc::new(WarehouseIngestTool::new(wh)));
+    }
+
+    tools
 }
 
 fn builtin_kind_behaviors() -> Vec<Arc<dyn NodeBehavior>> {
@@ -172,7 +187,7 @@ mod tests {
     use super::*;
 
     fn names() -> Vec<String> {
-        build_tool_registry(90, None, None)
+        build_tool_registry(90, None, None, None)
             .iter()
             .map(|t| t.definition().name)
             .collect()

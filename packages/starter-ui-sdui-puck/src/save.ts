@@ -63,6 +63,7 @@ export interface DashboardUpdateLikeClient {
     title?: string;
     tags?: string[];
     body_json: unknown;
+    created_by: string;
   }): Promise<{
     summary: { code: string };
     page_id: string;
@@ -75,6 +76,7 @@ export interface DashboardUpdateLikeClient {
 export function makeRubixSaveTransport(
   client: DashboardUpdateLikeClient,
   tenantId: string,
+  principal: string,
 ): PuckSaveTransport {
   return async (req) => {
     if (!req.expectedRevisionId) {
@@ -92,6 +94,7 @@ export function makeRubixSaveTransport(
         title: req.title,
         tags: req.tags,
         body_json: req.body as unknown,
+        created_by: principal,
       });
       return { kind: "saved", revisionId: res.revision_id };
     } catch (e) {

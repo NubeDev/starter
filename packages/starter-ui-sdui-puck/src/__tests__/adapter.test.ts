@@ -23,7 +23,7 @@ describe("componentTreeToPuckData / puckDataToComponentTree", () => {
     };
     expect(roundtrip(tree)).toEqual({
       ir_version: IR_VERSION,
-      root: { type: "page", children: [] },
+      root: { type: "page", id: "root", children: [] },
     });
   });
 
@@ -32,6 +32,7 @@ describe("componentTreeToPuckData / puckDataToComponentTree", () => {
       ir_version: IR_VERSION,
       root: {
         type: "page",
+        id: "root",
         title: "Data flow — Site A",
         tags: ["site-a", "ops"],
         children: [],
@@ -45,6 +46,7 @@ describe("componentTreeToPuckData / puckDataToComponentTree", () => {
       ir_version: IR_VERSION,
       root: {
         type: "page",
+        id: "root",
         children: [
           {
             type: "row",
@@ -64,6 +66,7 @@ describe("componentTreeToPuckData / puckDataToComponentTree", () => {
       ir_version: IR_VERSION,
       root: {
         type: "page",
+        id: "root",
         children: [
           { type: "kpi", id: "throughput-kpi", label: "Throughput" },
           { type: "kpi", label: "Errors" },
@@ -81,6 +84,7 @@ describe("componentTreeToPuckData / puckDataToComponentTree", () => {
       ir_version: IR_VERSION,
       root: {
         type: "page",
+        id: "root",
         children: [
           {
             type: "chart",
@@ -111,5 +115,14 @@ describe("componentTreeToPuckData / puckDataToComponentTree", () => {
     const data = componentTreeToPuckData(tree);
     expect(data.content).toHaveLength(1);
     expect((data.content[0] as { type: string }).type).toBe("kpi");
+  });
+
+  it("adds a fallback id of 'root' when the stored page has no id", () => {
+    const tree: ComponentTree = {
+      ir_version: IR_VERSION,
+      root: { type: "page", children: [] },
+    };
+    const back = roundtrip(tree);
+    expect(back.root.id).toBe("root");
   });
 });

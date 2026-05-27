@@ -120,9 +120,16 @@ async fn main() -> Result<()> {
     // Clones taken here mirror the previous boot order: `ch_client`
     // is moved into the tool list; the SDUI + explorer routers need
     // their own handles.
+    // Wire the Timescale warehouse plane (samples hypertable +
+    // analytics templates). Skipped silently when `warehouse_url`
+    // is unset — the agent still boots, dashboards just render
+    // empty values.
+    let warehouse_client = boot::connect_warehouse(cfg.warehouse_url.as_deref()).await?;
+
     let tools = registry::build_tool_registry(
         cfg.insights.disk_warn_threshold,
         mcp_pool.clone(),
+        warehouse_client.clone(),
         cfg.blob_root.clone(),
     );
 
@@ -313,7 +320,8 @@ async fn main() -> Result<()> {
         // routes at the full path, so we `merge` (not `nest`). The
         // four trait impls are composed inside
         // [`boot::build_sdui_router`] — verb-per-file.
-        let sdui_router: Router = boot::build_sdui_router(&cfg, pool.clone(), &tools);
+        let sdui_router: Router =
+            boot::build_sdui_router(&cfg, pool.clone(), warehouse_client.clone(), &tools);
         app = app.merge(sdui_router);
 
         // Live sidebar SSE — `GET /api/v1/dashboards/events`.

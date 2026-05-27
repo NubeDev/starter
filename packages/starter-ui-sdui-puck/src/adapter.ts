@@ -95,11 +95,15 @@ export function componentTreeToPuckData(tree: ComponentTree): Data {
       content: [irToPuckNode(root, "r")],
     } as Data;
   }
-  const { type: _type, id: _rootId, children, ...rootRest } = root;
+  const { type: _type, id: rootId, children, ...rootRest } = root;
   void _type;
-  void _rootId;
+  // Preserve the root id in props so puckDataToComponentTree can
+  // restore it. Component::Page.id is required (non-optional) on
+  // the server; dropping it makes saved body_json fail to deserialise.
+  // Fall back to "root" when the stored tree omits it.
+  const rootProps: Record<string, unknown> = { ...rootRest, __root_id: rootId ?? "root" };
   return {
-    root: { props: rootRest as Record<string, unknown> },
+    root: { props: rootProps },
     content: (Array.isArray(children)
       ? children.map((c, i) => irToPuckNode(c, `r.${i}`))
       : []) as unknown as Data["content"],
@@ -138,10 +142,13 @@ export function puckDataToComponentTree(
   options: { irVersion?: number } = {},
 ): ComponentTree {
   const content = (data.content ?? []) as PuckNode[];
-  const rootProps = (data.root?.props ?? {}) as Record<string, unknown>;
+  const { __root_id: rootId, ...restProps } = (data.root?.props ?? {}) as Record<string, unknown> & { __root_id?: string };
   const root: IrNode = {
     type: "page",
-    ...rootProps,
+    // Restore the preserved root id so the server can deserialise
+    // Component::Page whose id field is required (non-optional).
+    ...(rootId !== undefined ? { id: rootId } : { id: "root" }),
+    ...restProps,
     children: content.map((c, i) => puckNodeToIr(c, `r.${i}`)),
   };
   return {

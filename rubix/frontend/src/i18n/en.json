@@ -503,5 +503,14 @@
   "dashboard.chart.range.day": "1D",
   "dashboard.chart.range.week": "1W",
   "dashboard.chart.range.month": "1M",
-  "dashboard.chart.range.year": "1Y"
+  "dashboard.chart.range.year": "1Y",
+  "edit.save": "Save",
+  "edit.saving": "Saving…",
+  "edit.saved": "Saved",
+  "edit.saveFailed": "Save failed",
+  "edit.viewMode.editor": "Editor — edit layout in Puck",
+  "edit.viewMode.split": "Split — editor and live preview side-by-side",
+  "edit.viewMode.preview": "Preview — full-width live preview of saved revision",
+  "edit.refreshPreview": "Refresh — re-fetch preview against latest saved revision",
+  "edit.backToDashboard": "← Back to dashboard"
 }

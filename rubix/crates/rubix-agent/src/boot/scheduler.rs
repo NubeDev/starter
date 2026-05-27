@@ -89,6 +89,7 @@ pub async fn spawn(
     let registry = Arc::new(FlowRegistry::new());
     let runner: Arc<dyn FlowRunner> = Arc::new(ToolRegistryRunner { tools });
 
+    let pool_for_prune = pool.clone();
     let svc = FlowAsService::new(pool, registry, runner).with_clock(Arc::new(SystemClock::new()));
 
     // Single source of truth for the bundled `(flow_id,
@@ -96,6 +97,7 @@ pub async fn spawn(
     // `boot::flow_runtime` mounter so both surfaces never drift on
     // which flows are "scheduled today".
     let mut seeded = 0usize;
+    let mut bundled_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
     for entry in super::flow_runtime::bundled_schedule_pairs()? {
         let next_run_at = svc
             .register_schedule(SYSTEM_TENANT, &entry.flow_id, &entry.cron_expr)
@@ -104,6 +106,7 @@ pub async fn spawn(
                 anyhow::anyhow!("register_schedule(`{flow}`): {e}", flow = entry.flow_id)
             })?;
         seeded += 1;
+        bundled_ids.insert(entry.flow_id.clone());
         info!(
             target: "rubix.boot.scheduler",
             flow_id = %entry.flow_id,
@@ -113,9 +116,53 @@ pub async fn spawn(
         );
     }
 
+    // Orphan-prune pass. Any `starter_scheduled_flows` row owned
+    // by the bundled sentinel (`created_by = SYSTEM_TENANT`) whose
+    // `flow_id` is no longer in the bundled schedule set is a
+    // leftover from a previous binary version (the YAML was
+    // removed or had its `trigger: schedule` stripped). DELETE it
+    // so the tick loop stops claiming it every cycle and warning
+    // about a missing tool. User-deployed schedules
+    // (`created_by ≠ SYSTEM_TENANT`) are deliberately untouched.
+    let live_system_ids: Vec<String> = sqlx::query_scalar(
+        "SELECT flow_id
+           FROM starter_scheduled_flows
+          WHERE tenant_id = $1::uuid
+            AND created_by = $1::uuid",
+    )
+    .bind(SYSTEM_TENANT)
+    .fetch_all(pool_for_prune.sqlx())
+    .await?;
+    let mut pruned = 0usize;
+    for live_id in live_system_ids {
+        if bundled_ids.contains(&live_id) {
+            continue;
+        }
+        let result = sqlx::query(
+            "DELETE FROM starter_scheduled_flows
+              WHERE tenant_id = $1::uuid
+                AND created_by = $1::uuid
+                AND flow_id = $2",
+        )
+        .bind(SYSTEM_TENANT)
+        .bind(&live_id)
+        .execute(pool_for_prune.sqlx())
+        .await?;
+        let affected = result.rows_affected() as usize;
+        pruned += affected;
+        if affected > 0 {
+            info!(
+                target: "rubix.boot.scheduler",
+                flow_id = %live_id,
+                "pruned orphan bundled schedule (YAML removed from binary)",
+            );
+        }
+    }
+
     info!(
         target: "rubix.boot.scheduler",
         seeded,
+        pruned,
         tick_interval_seconds = cfg.tick_interval_seconds,
         "scheduler spawning tick task"
     );

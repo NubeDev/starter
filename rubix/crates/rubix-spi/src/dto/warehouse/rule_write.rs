@@ -15,9 +15,9 @@ use crate::descriptor::{SiblingTool, ToolDescriptor};
 
 /// Caller input for `rubix.warehouse.rule.write`.
 ///
-/// A "rule" is a derived-state ClickHouse object — typically a
-/// MATERIALIZED VIEW that aggregates raw samples into an L2/L3
-/// rollup, or a PROJECTION attached to a history table. The verb
+/// A "rule" is a derived-state warehouse object — typically a
+/// MATERIALIZED VIEW or continuous aggregate that aggregates raw
+/// samples into an L2/L3 rollup. The verb
 /// writes the supplied DDL verbatim; validation is parse-only
 /// (the verb refuses non-`CREATE`/`ALTER` statements).
 #[derive(Debug, Clone, Serialize, Deserialize, ToSchema)]
@@ -51,11 +51,11 @@ pub struct WarehouseRuleWriteResponse {
 }
 
 /// `starter-authz` permission string the caller must hold.
-pub const REQUIRED_PERMISSION: &str = "clickhouse.write";
+pub const REQUIRED_PERMISSION: &str = "warehouse.write";
 
 /// Five-field descriptor.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose: "Write or alter a ClickHouse derived-state rule (MATERIALIZED VIEW, PROJECTION).",
+    purpose: "Write or alter a warehouse derived-state rule (MATERIALIZED VIEW, continuous aggregate).",
     when_to_use: concat!(
         "Use when an operator says \"add a rollup\", \"change the ",
         "aggregation for X\", or when a flow needs to deploy a new ",

@@ -491,5 +491,14 @@
   "dashboard.chart.range.day": "1D",
   "dashboard.chart.range.week": "1S",
   "dashboard.chart.range.month": "1M",
-  "dashboard.chart.range.year": "1A"
+  "dashboard.chart.range.year": "1A",
+  "edit.save": "Guardar",
+  "edit.saving": "Guardando…",
+  "edit.saved": "Guardado",
+  "edit.saveFailed": "Error al guardar",
+  "edit.viewMode.editor": "Editor — editar diseño en Puck",
+  "edit.viewMode.split": "División — editor y vista previa en paralelo",
+  "edit.viewMode.preview": "Vista previa — vista previa completa de la revisión guardada",
+  "edit.refreshPreview": "Actualizar — recargar vista previa de la última revisión guardada",
+  "edit.backToDashboard": "← Volver al panel"
 }

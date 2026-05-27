@@ -55,6 +55,14 @@ pub struct AgentConfig {
     /// `postgres://rubix:rubix-dev@postgres:5432/rubix`.
     pub clickhouse_pg_url: Option<String>,
 
+    /// TimescaleDB DSN for the warehouse history plane (`samples`,
+    /// `events`, `raw_events`, `documents`). When `None` the binary
+    /// boots without the warehouse plane: the `rubix.warehouse.ingest`
+    /// tool degrades to a logging no-op and the SDUI `analytics_template`
+    /// resolver returns empty (KPIs show `—`, charts show "no data").
+    /// Honors the `RUBIX_WAREHOUSE_URL` env var as a fallback.
+    pub warehouse_url: Option<String>,
+
     /// Path to the on-disk secrets directory. Reserved for the
     /// upcoming JWT signing key / OAuth client secret material.
     pub secrets_path: Option<PathBuf>,
@@ -277,6 +285,7 @@ impl Default for AgentConfig {
             database_url: None,
             clickhouse_url: None,
             clickhouse_pg_url: None,
+            warehouse_url: None,
             secrets_path: None,
             config_path: None,
             ai_provider: None,
@@ -316,6 +325,9 @@ impl AgentConfig {
         }
         if loaded.clickhouse_url.is_none() {
             loaded.clickhouse_url = std::env::var("RUBIX_CH_URL").ok();
+        }
+        if loaded.warehouse_url.is_none() {
+            loaded.warehouse_url = std::env::var("RUBIX_WAREHOUSE_URL").ok();
         }
         if loaded.config_path.is_none() {
             loaded.config_path = Some(cfg_path);

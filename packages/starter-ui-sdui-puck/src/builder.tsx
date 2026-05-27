@@ -19,8 +19,10 @@ import { Puck, type Config, type Data } from "@measured/puck";
 // self-contained; vite / webpack will dedupe a duplicate import.
 import "@measured/puck/puck.css";
 import {
+  forwardRef,
   useCallback,
   useEffect,
+  useImperativeHandle,
   useMemo,
   useRef,
   useState,
@@ -40,6 +42,13 @@ import { IR_SCHEMA } from "./schema-loader.js";
 import { IR_SCHEMA_HASH } from "./schema-hash.js";
 import type { PuckConfigStub } from "./puck-types.js";
 import type { PuckSaveOutcome, PuckSaveTransport } from "./save.js";
+
+export interface PuckBuilderHandle {
+  /** Programmatically trigger save — same as clicking the Save button. */
+  save(): Promise<void>;
+  /** Current save state kind. */
+  saveStateKind: SaveState["kind"];
+}
 
 export interface PuckBuilderProps {
   /** Page identifier — `"dashboard.<slug>"`. Echoed in `onSave`. */
@@ -118,7 +127,8 @@ interface ConflictState {
   actorKind?: "operator" | "ai" | "system";
 }
 
-export function PuckBuilder({
+export const PuckBuilder = forwardRef<PuckBuilderHandle, PuckBuilderProps>(
+  function PuckBuilder({
   pageRef,
   initialTree,
   initialData,
@@ -131,7 +141,7 @@ export function PuckBuilder({
   liveRevisionId,
   liveChangeToken,
   liveActorKind,
-}: PuckBuilderProps): ReactElement {
+}: PuckBuilderProps, ref): ReactElement {
   const schemaDrift =
     typeof liveSchemaHash === "string" &&
     liveSchemaHash.length > 0 &&
@@ -225,6 +235,11 @@ export function PuckBuilder({
     }
   }, [onSave, pageRef]);
 
+  useImperativeHandle(ref, () => ({
+    save: handleSave,
+    get saveStateKind() { return saveState.kind; },
+  }), [handleSave, saveState.kind]);
+
   const keepEditing = useCallback(() => {
     // Adopt the server's current revision id so the next save
     // immediately 409s again until the operator either copies
@@ -250,47 +265,19 @@ export function PuckBuilder({
       data-puck-builder={pageRef}
       style={{ display: "flex", flexDirection: "column", height: "100%" }}
     >
-      {onSave ? (
+      {saveState.kind === "error" ? (
         <div
-          data-puck-builder-toolbar=""
+          data-puck-builder-save-status="error"
           style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
             padding: "0.5rem 0.75rem",
-            borderBottom: "1px solid #e5e7eb",
-            background: "#f8fafc",
+            background: "#fee2e2",
+            borderBottom: "1px solid #fca5a5",
+            color: "#dc2626",
             fontFamily: "ui-sans-serif, system-ui",
-            fontSize: "0.875rem",
+            fontSize: "0.8125rem",
           }}
         >
-          <button
-            type="button"
-            onClick={handleSave}
-            disabled={saveState.kind === "saving"}
-            data-puck-builder-save=""
-            style={{
-              padding: "0.375rem 0.75rem",
-              borderRadius: "0.375rem",
-              border: "1px solid #2563eb",
-              background: saveState.kind === "saving" ? "#bfdbfe" : "#2563eb",
-              color: "white",
-              cursor: saveState.kind === "saving" ? "wait" : "pointer",
-              fontWeight: 500,
-            }}
-          >
-            {saveState.kind === "saving" ? "Saving…" : "Save"}
-          </button>
-          {saveState.kind === "saved" ? (
-            <span style={{ color: "#16a34a" }} data-puck-builder-save-status="saved">
-              Saved — revision <code>{saveState.revisionId.slice(0, 8)}</code>
-            </span>
-          ) : null}
-          {saveState.kind === "error" ? (
-            <span style={{ color: "#dc2626" }} data-puck-builder-save-status="error">
-              Save failed: {saveState.message}
-            </span>
-          ) : null}
+          Save failed: {saveState.message}
         </div>
       ) : null}
       {schemaDrift ? (
@@ -317,6 +304,7 @@ export function PuckBuilder({
         <Puck
           config={resolvedConfig}
           data={initialPuckData}
+          overrides={{ headerActions: () => <></> }}
           onChange={(next) => {
             dataRef.current = next;
             if (typeof window !== "undefined") {
@@ -343,7 +331,7 @@ export function PuckBuilder({
       ) : null}
     </div>
   );
-}
+});
 
 function ConflictModal({
   currentRevisionId,

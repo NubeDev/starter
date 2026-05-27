@@ -24,6 +24,13 @@
 //!   always wins over a bundled upgrade. This closes the gap
 //!   where binary upgrades that changed a bundled YAML had no
 //!   effect because the prior bundled row sat untouched in PG.
+//! - **Orphan prune.** After the seed loop, any live row whose
+//!   `created_by = SYSTEM_TENANT` and `flow_id` is no longer in
+//!   the bundled set is soft-deleted (`superseded_at = now()`).
+//!   Binary downgrades / YAML removals self-heal so deleted
+//!   bundled flows stop being surfaced as tools and stop being
+//!   claimed by the durable scheduler. User-deployed rows
+//!   (`created_by ≠ SYSTEM_TENANT`) are deliberately untouched.
 //! - **Load from PG.** After seeding, `SELECT flow_id,
 //!   revision_id, body_yaml FROM flows_definitions WHERE
 //!   tenant_id = $0 AND superseded_at IS NULL`. Each `body_yaml`
@@ -62,10 +69,19 @@ pub async fn seed_and_load(
 ) -> Result<(Vec<(FlowId, FlowRevisionId, FlowBody)>, usize)> {
     let mut inserted = 0usize;
     let mut rolled_forward = 0usize;
+    // Track every bundled flow id so we can prune orphan
+    // system-owned rows below — i.e. flow definitions whose
+    // bundled YAML was removed in a binary upgrade. Without this
+    // pass orphans linger forever as live rows, get surfaced as
+    // tools, and (worse) keep firing their `starter_scheduled_flows`
+    // schedule rows, which then warn-log every tick because their
+    // referenced tools no longer exist.
+    let mut bundled_ids: std::collections::HashSet<String> = std::collections::HashSet::new();
     for (path, bytes) in bundled_pairs() {
         let yaml = rubix_flows::parse_yaml(&path, &bytes)
             .map_err(|e| anyhow::anyhow!("parse bundled yaml `{path}`: {e}"))?;
         let flow_id = yaml.id.clone();
+        bundled_ids.insert(flow_id.clone());
         let body_yaml = std::str::from_utf8(&bytes)
             .map_err(|e| anyhow::anyhow!("bundled yaml `{path}` not utf8: {e}"))?;
 
@@ -170,6 +186,51 @@ pub async fn seed_and_load(
         debug!(flow_id = %flow_id, revision = %revision, "flows_definitions seed: inserted");
     }
 
+    // Orphan-prune pass. Find every live row owned by the bundled
+    // sentinel (`created_by = SYSTEM_TENANT`) whose `flow_id` is
+    // no longer in the on-disk bundle, and supersede it. We
+    // soft-delete (`superseded_at = now()`) rather than DELETE to
+    // stay consistent with the roll-forward path above and to keep
+    // audit history intact. User-deployed rows
+    // (`created_by ≠ SYSTEM_TENANT`) are deliberately untouched —
+    // `flow_ops.deploy` ownership always wins over the bundle.
+    let live_system_ids: Vec<String> = sqlx::query_scalar(
+        "SELECT flow_id
+           FROM flows_definitions
+          WHERE tenant_id = $1::uuid
+            AND created_by = $1::uuid
+            AND superseded_at IS NULL",
+    )
+    .bind(SYSTEM_TENANT)
+    .fetch_all(pool.sqlx())
+    .await?;
+    let mut pruned = 0usize;
+    for live_id in live_system_ids {
+        if bundled_ids.contains(&live_id) {
+            continue;
+        }
+        let result = sqlx::query(
+            "UPDATE flows_definitions
+                SET superseded_at = now()
+              WHERE tenant_id = $1::uuid
+                AND created_by = $1::uuid
+                AND flow_id = $2
+                AND superseded_at IS NULL",
+        )
+        .bind(SYSTEM_TENANT)
+        .bind(&live_id)
+        .execute(pool.sqlx())
+        .await?;
+        let affected = result.rows_affected() as usize;
+        pruned += affected;
+        if affected > 0 {
+            info!(
+                flow_id = %live_id,
+                "flows_definitions seed: pruned orphan bundled row (YAML removed from binary)",
+            );
+        }
+    }
+
     // Load every live revision back. Order by `created_at` so
     // the boot log lists flows in the order they were first
     // seeded (deterministic in steady state).
@@ -208,6 +269,7 @@ pub async fn seed_and_load(
     info!(
         inserted,
         rolled_forward,
+        pruned,
         loaded = triples.len(),
         "flows_definitions seed-and-load complete"
     );

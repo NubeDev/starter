@@ -35,11 +35,11 @@ pub struct WarehouseMartDropResponse {
 }
 
 /// `starter-authz` permission string the caller must hold.
-pub const REQUIRED_PERMISSION: &str = "clickhouse.write";
+pub const REQUIRED_PERMISSION: &str = "warehouse.write";
 
 /// Five-field descriptor.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose: "Drop a ClickHouse mart. Idempotent; reports whether the table was present.",
+    purpose: "Drop a warehouse mart. Idempotent; reports whether the table was present.",
     when_to_use: "Use when an operator says \"remove the mart for X\" and is willing to accept row loss.",
     when_not_to_use: "Do not use to roll back a recent mart.create — call rubix.undo.last instead so the snapshot record stays consistent.",
     example: concat!(

@@ -47,11 +47,11 @@ pub struct WarehouseRetentionSetResponse {
 }
 
 /// `starter-authz` permission string the caller must hold.
-pub const REQUIRED_PERMISSION: &str = "clickhouse.write";
+pub const REQUIRED_PERMISSION: &str = "warehouse.write";
 
 /// Five-field descriptor.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose: "Set the TTL/retention (in days) on a ClickHouse history or mart table.",
+    purpose: "Set the retention (in days) on a warehouse history or mart table.",
     when_to_use: concat!(
         "Use when an operator says \"keep X for N days\", \"prune ",
         "older than\", or when a flow needs to align retention with ",

@@ -74,6 +74,7 @@ export interface DashboardUpdateRequest {
   title?: string;
   tags?: string[];
   body_json: unknown;
+  created_by: string;
 }
 export interface DashboardUpdateResponse {
   summary: Diagnostic;

@@ -18,6 +18,7 @@ import { LoginRoute } from '@/routes/login'
 import '@xyflow/react/dist/style.css'
 import '@nube/starter-ui-flow/styles.css'
 import './styles/theme.css'
+import './styles/puck-theme.css'
 
 const router = createRouter({ routeTree, defaultPreload: 'intent' })
 
