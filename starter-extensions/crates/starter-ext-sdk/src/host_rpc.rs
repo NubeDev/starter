@@ -117,12 +117,19 @@ impl HostRpc {
                 .expect("pending mutex poisoned");
             g.insert(id, tx);
         }
-        let envelope = json!({
+        let mut envelope = json!({
             "jsonrpc": JSONRPC_VERSION,
             "id": id,
             "method": method,
             "params": params,
         });
+        // Re-stamp `_meta.caller` from the per-call task-local so
+        // the supervisor's host-method handler sees the same
+        // tenant the tools/ call ran under. Absent ⇒ supervisor
+        // treats the call as a system frame.
+        if let Some(caller) = crate::caller_local::current() {
+            envelope["_meta"] = json!({ "caller": caller });
+        }
         if self.inner.writer.send(envelope).is_err() {
             // Writer task dropped — drain the entry we just inserted
             // so a subsequent retry doesn't see a stale sender.

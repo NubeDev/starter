@@ -93,6 +93,8 @@ pub mod meta;
 #[cfg(feature = "builtin")]
 pub mod builtin;
 #[cfg(feature = "process")]
+pub mod caller_local;
+#[cfg(feature = "process")]
 pub mod host_backends;
 #[cfg(feature = "process")]
 pub mod host_rpc;
@@ -328,11 +330,41 @@ macro_rules! __requires_capability_method {
             self.inner.event_bus()
         }
     };
+    (warehouse_write) => {
+        /// Warehouse-table writes. Granted by
+        /// `capabilities.warehouse_write.tables:` in `block.yaml`;
+        /// an empty `tables` allowlist neutralises every insert. The
+        /// host stamps `tenant_id` from `ctx.caller()` onto every
+        /// row, so a tool invoked without a tenant-scoped caller is
+        /// refused. Companion to `warehouse_read`.
+        pub fn warehouse_write(&self) -> &$crate::ctx::WarehouseWriteHandle {
+            self.inner.warehouse_write()
+        }
+    };
+    (dashboard) => {
+        /// SDUI dashboard read/write. Granted by
+        /// `capabilities.dashboard_read.pages:` /
+        /// `capabilities.dashboard_write.pages:` in `block.yaml`.
+        /// Each call is gated against the caller's tenancy from
+        /// `ctx.caller()`; cross-tenant reads or writes are refused.
+        pub fn dashboard(&self) -> &$crate::ctx::DashboardHandle {
+            self.inner.dashboard()
+        }
+    };
+    (authz) => {
+        /// Authorization-engine probe. Granted by
+        /// `capabilities.authz_check.kinds:` in `block.yaml`. The
+        /// host binds the calling principal from `ctx.caller()`
+        /// before evaluating `(action, resource)`.
+        pub fn authz(&self) -> &$crate::ctx::AuthzHandle {
+            self.inner.authz()
+        }
+    };
     ($other:ident) => {
         compile_error!(concat!(
             "starter_ext_sdk::requires!: unknown capability category `",
             stringify!($other),
-            "`. Known categories: secrets, http_out, fs, wall_clock, tracing, warehouse_read, event_bus. ",
+            "`. Known categories: secrets, http_out, fs, wall_clock, tracing, warehouse_read, warehouse_write, event_bus, dashboard, authz. ",
             "If you need a host-specific category, declare it as `custom` in the manifest \
              and obtain it via the host's `Custom` capability variant — there is no untyped \
              `host_call` escape hatch (SCOPE R6)."

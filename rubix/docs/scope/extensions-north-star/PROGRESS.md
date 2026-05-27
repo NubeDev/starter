@@ -133,7 +133,135 @@ tracker tables above are the source of truth for current state.
 
 ---
 
-### 2026-05-27 — Phase B gate test lands: contributed rule fires end-to-end
+### 2026-05-27 — Reference extension upgraded into a full Phase B demo (datablist CSVs)
+
+- Rows moved: none (no critical-path row state changed). What
+  changed is the *demonstration surface*: `rubix/extensions/com.rubix.example`
+  went from a single-tool `echo` placeholder to an end-to-end
+  demo exercising rows 2, 3, 4, B1, B5 simultaneously.
+- Why: the previous reference extension only contributed one
+  no-op tool, so an operator landing on `/extensions` saw nothing
+  resembling what a real third-party block would ship. The
+  contributions inventory in the manifest had drifted away from
+  what the host can actually accept. This session re-grounds the
+  reference block on the same datablist sample CSVs the public
+  docs use for `customers` / `products` examples
+  ([datablist/sample-csv-files](https://github.com/datablist/sample-csv-files)).
+- Changes (~1100 LOC across 16 files):
+  - **SDK macro extension** (`starter-extensions/crates/starter-ext-sdk/src/lib.rs`):
+    added the missing `warehouse_write`, `dashboard`, and `authz`
+    arms to `__requires_capability_method!`. The matching
+    `Capability` variants + `CtxInner` fields already existed
+    (rows B1, 5); the macro just hadn't been taught to expose
+    them. Updated the `compile_error!` catalog and bumped the
+    "known categories" message. Net: an extension that declares
+    `requires!(... warehouse_write ...)` now compiles; before this
+    session it errored "unknown capability category".
+  - **block.yaml** (`rubix/extensions/com.rubix.example/block.yaml`):
+    grew three new tool entries (`csv_ingest`, `customer_quality`,
+    plus the original `echo`), two `warehouse_tables[]` entries
+    (`customers`, `products`) shaped after the datablist schema,
+    two `warehouse_templates[]` entries with audit-only SQL bodies,
+    one `anomaly_rules[]` entry pointing at the
+    `customer_quality` tool, and the matching `capabilities[]`
+    grants (`warehouse_write.tables`, `warehouse_read.tables`).
+  - **kinds/**: 11 new files — JSON Schemas for csv_ingest (in/out),
+    customer_quality (in/out), template params (customers_by_country,
+    products_low_stock), description markdowns, and the two
+    audit-only `.sql` bodies.
+  - **data/**: shipped 30-row + 20-row slices of the datablist
+    customers / products CSVs so the demo works offline. The host
+    only serves `ui/*` to the browser; the bundle-level `data/*`
+    is available to server-side handlers via `ctx.fs()` and is
+    what the `make demo-ingest` (TBD) target would feed into
+    `csv_ingest`.
+  - **process/src/main.rs**: re-wrote with three handlers. The
+    `csv_ingest` handler is the canonical demo of
+    `ctx.warehouse_write().insert(table, rows)`: validates the
+    dataset against the manifest allowlist, coerces every row into
+    a `Row`, and forwards. The `customer_quality` handler delegates
+    to a pure `evaluate_customer_quality(row)` body that flags
+    `MissingCountry` → `MissingEmail` → `InvalidEmail` → `BadDate`
+    in that order. The pure body is covered by 6 unit tests; all
+    green.
+  - **ui/remoteEntry.js + ui/main.tsx**: replaced the manifest-only
+    panel with a four-section dashboard:
+    (a) header + contributions inventory pulled from the manifest
+        admin route;
+    (b) an SVG horizontal-bar chart "customers by country (top 10)"
+        synthesised from an inline 12-row sample (mirrors the
+        `customers_by_country` template's output shape);
+    (c) a compact "low-stock products (< 10)" table mirroring
+        `products_low_stock`;
+    (d) a "data-quality rule preview" that runs the same logic the
+        server-side `customer_quality` rule applies and lists every
+        flagged row.
+    Both files are kept in sync — `main.tsx` is the developer-facing
+    source the future vite-plugin-federation pipeline will compile;
+    `remoteEntry.js` is the hand-authored bundle the host serves
+    today.
+  - **README.md**: rewrote the layout table to cover every new
+    surface plus a curl demo for the ingest tool.
+- Tests:
+  - 6/6 new unit tests pass for `evaluate_customer_quality`
+    (`customer_quality_ok_when_all_fields_present`,
+    `_flags_missing_country_first`, `_flags_missing_email`,
+    `_flags_invalid_email`, `_flags_bad_date`,
+    `iso_date_parser_accepts_plausible_strings`).
+  - `cargo build --release -p rubix-example-extension`: clean.
+  - `cargo build --workspace --exclude starter-ext-wasm`: clean
+    (the wasm crate has a pre-existing non-exhaustive match on
+    `Capability` that this session didn't touch).
+- Decisions:
+  - **Sample data in-repo, not fetched at build time.** Vendoring
+    a 30-row slice (~7KB) of the datablist customers CSV keeps the
+    demo offline-installable and reproducible. The full datablist
+    archives are gigabyte-scale at the high end; we ship only the
+    columns the warehouse tables declare.
+  - **Three deliberately-bad rows in the UI inline sample.**
+    `BAD-NO-EMAIL-01`, `BAD-NO-CNTRY-01`, `BAD-DATE-001` are the
+    seeds that make the data-quality preview non-empty. The
+    server-side ingest tool sees only the clean CSV slice.
+  - **UI inlines the rule logic instead of round-tripping.** The
+    Module-Federation factory contract doesn't expose a host
+    `StarterClient` — the only thing the panel can do is `fetch`
+    same-origin `/api/v1/...`. Mirroring the rule client-side
+    avoids a round trip and proves the rule logic is portable
+    (Rust + TS implementations agree on the same flag taxonomy).
+    Drift risk is real and documented in both files' preambles:
+    the server-side rule is the authority.
+  - **`warehouse_write` macro arm added rather than worked around.**
+    The alternative — having the demo extension use a `requires!`
+    declaration that doesn't include `warehouse_write` and reaching
+    for the handle some other way — would have either failed
+    (there is no other way per SCOPE R6) or required a fork of the
+    SDK. The arm is 6 lines, the `CtxInner` field + backend trait
+    already exist, and the same fix unblocks the `dashboard` /
+    `authz` arms for row 5 work. Net: completes the macro surface
+    for every shipped capability category.
+  - **Capability `tracing` dropped from the manifest.** `tracing`
+    is in the `requires!` macro's known-categories list (it's
+    "always safe") but is NOT a `Capability` enum variant — the
+    manifest's `capabilities:` slot is for grants the operator
+    can revoke, and tracing isn't one. The previous draft of this
+    session declared it under `capabilities` and the loader
+    rejected the manifest; removing it is the right fix.
+- Next:
+  1. **Wire the `warehouse_read` host backend** so the two contributed
+     templates the demo declares actually return rows when the UI
+     calls `/api/v1/warehouse/read/com.rubix.example.customers_by_country`.
+     Today the panel synthesises the chart from inline samples;
+     the host-side resolver landing closes the loop.
+  2. **Row 5** (`DashboardHandle` + `AuthzHandle` with cross-tenant
+     grants) — the `dashboard` and `authz` macro arms added in this
+     session are the SDK-side prerequisite.
+  3. **vite-plugin-federation build for `ui/main.tsx`** — `remoteEntry.js`
+     remains hand-authored. The Phase E pipeline that compiles TSX
+     → MF bundle is unchanged.
+
+---
+
+
 
 - Rows moved: none (status unchanged). Phase B gate now has an
   executable proof: a fixture extension with

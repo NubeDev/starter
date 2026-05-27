@@ -362,20 +362,22 @@ the parent SCOPE.md is trying to prevent.
 #### Note — `contributes.warehouse` (planned, focus area)
 
 The near-term focus is integrating this framework with the
-[ClickHouse warehouse](../../Warehouse/SCOPE.md). A
+[TimescaleDB warehouse](../../Warehouse/SCOPE.md) (see
+[ADR-004](../../storage/ADR-004-timescaledb-warehouse.md)). A
 `contributes.warehouse` block in `block.yaml` will let extensions
-ship named **cleaners** (transform MVs between L1 `raw_events` and
+ship named **cleaners** (transforms between L1 `raw_events` and
 L2 `samples` / `events`), **rules** (parameterised SQL evaluated on
 demand, Insights-shaped), and **marts** (`MartSpec` catalog rows
-that generate `AggregatingMergeTree` targets). Each entry points to
+that generate **continuous aggregates** on TimescaleDB
+hypertables). Each entry points to
 a static SQL or TOML file in the bundle (per R7 — never templated
 at runtime); the `starter-ext-warehouse` adapter reads, hashes, and
 validates them at load, then registers them in the Postgres catalog
 with `created_by = 'ext:<extension-id>'`.
 
-Reverse-DNS ids (R4) become the catalog/MV names — namespace
-collisions between extensions are structurally impossible
-(`com.acme.energy.cleaner.normalise_kwh` is the cleaner's MV name).
+Reverse-DNS ids (R4) become the catalog / continuous-aggregate names
+— namespace collisions between extensions are structurally impossible
+(`com.acme.energy.cleaner.normalise_kwh` is the cleaner's name).
 A new `warehouse_write` capability (R6) scopes which tables an
 extension may register cleaners against, listed per-table the same
 way `http_out` is listed per-host.

@@ -11,6 +11,23 @@
   </head>
   <body class="antialiased">
     <div id="root"></div>
+    <!-- Importmap for extension `remoteEntry.js` bundles loaded via
+         dynamic `import()`. The host publishes its React instance on
+         `globalThis.__rubixReact*` in `main.tsx`, and these shims
+         re-export from those globals so extensions that externalise
+         `react` / `react-dom` / `react/jsx-runtime` get the host's
+         instance — required for SDK hooks (`useContext`) to work
+         across the host↔extension boundary. -->
+    <script type="importmap">
+      {
+        "imports": {
+          "react": "/shims/react.mjs",
+          "react-dom": "/shims/react-dom.mjs",
+          "react-dom/client": "/shims/react-dom-client.mjs",
+          "react/jsx-runtime": "/shims/react-jsx-runtime.mjs"
+        }
+      }
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

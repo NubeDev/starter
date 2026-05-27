@@ -34,8 +34,10 @@ use axum::{
 };
 use serde::Deserialize;
 use serde_json::{json, Value};
+use starter_ext_spi::identity::CallerIdentity;
 use starter_i18n::bundle::MessageBundle;
 use starter_i18n::middleware::{accept_language_layer, LocaleCtx};
+use starter_spi::auth::Principal;
 use starter_spi::error::Error;
 use starter_spi::i18n::{Diagnostic, LanguageTag};
 use starter_spi::tool::Tool;
@@ -112,6 +114,7 @@ pub(crate) async fn dispatch(
     Path(tool_id): Path<String>,
     Query(q): Query<RenderQuery>,
     Extension(locale): Extension<LocaleCtx>,
+    principal: Option<Extension<Principal>>,
     Json(input): Json<Value>,
 ) -> Response {
     let Some(tool) = state.tools.get(&tool_id).cloned() else {
@@ -121,7 +124,23 @@ pub(crate) async fn dispatch(
         )
             .into_response();
     };
-    let result = tool.invoke(input).await;
+    let result = match principal.map(|Extension(p)| p) {
+        Some(p) => {
+            let caller = CallerIdentity {
+                tenant_id: p.tenant_id.clone(),
+                user_id: Some(p.subject.clone()),
+                roles: vec![format!("{:?}", p.role)],
+                request_id: String::new(),
+            };
+            // Bind a tenant-scoped caller on the current task so
+            // extension-backed `Tool` impls
+            // (`ProcessExtensionToolBinding`) can upgrade to
+            // `SupervisorHandle::call_as` instead of an unscoped
+            // `call`. Native rubix tools ignore the scope.
+            starter_ext_supervisor::caller_local::scope(caller, tool.invoke(input)).await
+        }
+        None => tool.invoke(input).await,
+    };
     shape_response(
         result,
         &state.bundle,

@@ -18,7 +18,7 @@ lives elsewhere.
   shell, mobile admin, Spanish catalogues — none of which had
   shipped before the backend was usable.
 - The original SCOPE explicitly framed rubix as a backend product
-  ("the agent backs the dashboards / users / flows / ClickHouse
+  ("the agent backs the dashboards / users / flows / warehouse
   / jobs / analytics goals; the UI is a separate consumer").
 - Frontend rot is hard to reverse: once `ui-core` exists,
   every backend change is "and update the hook." Removing

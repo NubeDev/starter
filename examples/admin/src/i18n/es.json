@@ -153,7 +153,7 @@
   "home.feature.sdui.title": "UI dirigida por el servidor",
   "home.feature.sdui.body": "Diseña una vez, renderiza en web, móvil y panel. Sin recompilar nativo.",
   "home.feature.warehouse.eyebrow": "04 · Almacén",
-  "home.feature.warehouse.title": "Historia en ClickHouse",
+  "home.feature.warehouse.title": "Historia del warehouse",
   "home.feature.warehouse.body": "Consultas sub-segundo sobre millones de puntos y tags. Tags son Bool|Str — marts L1 a L3 bajo demanda.",
   "home.feature.authz.eyebrow": "05 · AuthZ",
   "home.feature.authz.title": "Control por usuario",

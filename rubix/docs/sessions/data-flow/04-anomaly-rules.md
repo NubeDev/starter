@@ -46,7 +46,9 @@ Diagnostic) → alert_send::dispatch`.
 
 Add the matching MessageKey entries to **both** `rubix-spi/
 catalogues/en.json` and `es.json` in the same commit (workspace
-rule R5 — see flow-programmer / clickhouse-rules docs).
+rule R5 — see flow-programmer / warehouse-rules docs; the
+legacy `clickhouse-rules` directory name is retained as a stable
+URL).
 
 ## Pre-flight
 

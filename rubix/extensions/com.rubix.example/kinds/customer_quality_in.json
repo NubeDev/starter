@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CustomerQualityInput",
+  "description": "Cleaner adapter wire shape — `{ row, window_tail }`. The cleaner invokes this tool once per row in the L1 window; the response feeds into the anomaly-rule pipeline (`builtin.nan` → `builtin.spike` → `builtin.stuck` → this rule).",
+  "type": "object",
+  "properties": {
+    "row": {
+      "type": "object",
+      "description": "The L1 row under inspection. Free-form for the CSV demo; the cleaner builtins assume a numeric `value` column but this rule inspects datablist-shaped customer fields."
+    },
+    "window_tail": {
+      "type": "array",
+      "description": "Recent rows for the same entity (cleaner-supplied context). Unused by this rule.",
+      "items": { "type": "object" }
+    }
+  },
+  "required": ["row"],
+  "additionalProperties": false
+}

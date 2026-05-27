@@ -9,7 +9,7 @@ const NODE_WIDTH = 280;
 const COLUMN_HEIGHT = 28;
 const HEADER_HEIGHT = 44;
 
-export function useLayout(
+export function layoutWithDagre(
   nodes: Node[],
   edges: Edge[],
 ): { nodes: Node[]; edges: Edge[] } {

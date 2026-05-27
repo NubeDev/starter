@@ -67,9 +67,35 @@ export interface SlotContext {
    * assume any particular flag exists.
    */
   flags: Readonly<Record<string, boolean>>;
+  /**
+   * Sub-route the host wants this extension to render, relative to
+   * the extension's own root. `null` when the slot is not
+   * route-driven (e.g. sidebar panels). When set, this is the path
+   * after the host's per-extension prefix — e.g. a URL
+   * `/extensions/com.rubix.example/customers/by-country` arrives as
+   * `"customers/by-country"`. The empty string represents the
+   * extension's index page.
+   */
+  route: string | null;
 }
 
-const Context = React.createContext<SlotContext | null>(null);
+// Stashed on `globalThis` so that bundles which transitively include
+// their own copy of this module (host + every dynamically-imported
+// extension remote) still observe the SAME `React.createContext`
+// instance. Without this, `useContext` in an extension reads from
+// the extension's copy of the context while the host's
+// `SlotContextProvider` writes into its own — silently returning
+// `null`. See rubix/frontend/public/shims/*.mjs for the matching
+// React identity-sharing strategy.
+const SLOT_CTX_KEY = "__starterExtSdkSlotContextV2";
+const Context: React.Context<SlotContext | null> =
+  ((globalThis as unknown as Record<string, unknown>)[SLOT_CTX_KEY] as
+    | React.Context<SlotContext | null>
+    | undefined) ??
+  (((globalThis as unknown as Record<string, unknown>)[SLOT_CTX_KEY] =
+    React.createContext<SlotContext | null>(null)) as React.Context<
+    SlotContext | null
+  >);
 
 export interface SlotContextProviderProps {
   value: SlotContext;
@@ -102,4 +128,15 @@ export function useSlotContext(): SlotContext {
     );
   }
   return ctx;
+}
+
+/**
+ * Read the current sub-route the host wants this extension to render.
+ * Returns the empty string when the slot is route-driven but the URL
+ * is at the extension's index, and `null` when the slot has no route
+ * dimension (sidebar panels, status widgets). See
+ * `SlotContext.route` for the full contract.
+ */
+export function useExtensionRoute(): string | null {
+  return useSlotContext().route;
 }

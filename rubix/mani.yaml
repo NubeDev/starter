@@ -40,12 +40,13 @@ tasks:
 
   dev-deps:
     desc: |
-      Bring up the Postgres + ClickHouse pair the thin-slice demo
-      needs, bound to 127.0.0.1 on non-standard ports.
+      Bring up the Postgres + warehouse (TimescaleDB) pair the
+      thin-slice demo needs, bound to 127.0.0.1 on non-standard
+      ports. (Pre-2026-05-27 this booted ClickHouse; see ADR-004.)
     cmd: docker compose -f docker/docker-compose.dev.yaml up -d
 
   dev-deps-down:
-    desc: Tear down the thin-slice Postgres + ClickHouse pair.
+    desc: Tear down the thin-slice Postgres + warehouse pair.
     cmd: docker compose -f docker/docker-compose.dev.yaml down
 
   bootstrap:
@@ -58,9 +59,10 @@ tasks:
   demo:
     desc: |
       First-boot aggregate for the six-step thin-slice demo:
-      check the agent port is free, bring up Postgres + ClickHouse,
-      wait until they accept connections (30s ceiling), seed the
-      bootstrap operator, then boot the rubix-agent.
+      check the agent port is free, bring up Postgres + warehouse
+      (TimescaleDB), wait until they accept connections (30s
+      ceiling), seed the bootstrap operator, then boot the
+      rubix-agent.
     cmd: |
       if ss -tlnp 2>/dev/null | grep -q '127.0.0.1:8088 '; then
         echo "rubix demo: 127.0.0.1:8088 is already in use by another process." >&2
@@ -100,7 +102,7 @@ tasks:
 
   warehouse-seed:
     desc: |
-      Seed the local ClickHouse with a small demo fixture
+      Seed the local warehouse with a small demo fixture
       (demo_buildings / demo_meters / demo_samples) so the
       explorer at http://127.0.0.1:3030/warehouse/explorer is
       non-empty on a fresh dev box. Idempotent: re-running the
@@ -108,7 +110,8 @@ tasks:
 
       Defaults to CH_EXPLORER_URL=http://127.0.0.1:8124 to match
       docker-compose.dev.yaml; override the env var to point
-      anywhere else.
+      anywhere else. (Env var name is legacy — kept until the
+      ch-explorer example is renamed; see ADR-004.)
     cmd: |
       : "${CH_EXPLORER_URL:=http://127.0.0.1:8124}"
       export CH_EXPLORER_URL
@@ -117,12 +120,13 @@ tasks:
   warehouse-explorer:
     desc: |
       Boot the ch-explorer example binary against the local dev
-      ClickHouse. Serves the SPA at
+      warehouse. Serves the SPA at
       http://127.0.0.1:3030/warehouse/explorer and the read-only
-      API at /api/warehouse/ch/*. Run `mani run warehouse-seed`
+      API at /api/warehouse/*. Run `mani run warehouse-seed`
       first on a fresh box, and
       `pnpm -F @nube/starter-ui-ch-explorer build` if dist/ is
-      empty.
+      empty. (Crate/package names retain the `ch-` prefix as a
+      historical artefact of the ClickHouse era; renames pending.)
     cmd: |
       : "${CH_EXPLORER_URL:=http://127.0.0.1:8124}"
       export CH_EXPLORER_URL

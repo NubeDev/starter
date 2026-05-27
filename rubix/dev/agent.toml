@@ -11,18 +11,10 @@
 # precedence: defaults < this file < RUBIX_* env < flags.
 
 bind = "0.0.0.0:8088"
+# Single TimescaleDB-enabled Postgres holds both OLTP tables and
+# warehouse hypertables. `warehouse_url` is intentionally absent —
+# the warehouse boot shares this pool via `WarehouseClient::from_pool`.
 database_url = "postgres://rubix:rubix-dev@127.0.0.1:5433/rubix"
-clickhouse_url = "http://127.0.0.1:8124"
-warehouse_url = "postgres://rubix:rubix-dev@127.0.0.1:5434/warehouse"
-
-# DSN that **ClickHouse itself** uses to reach Postgres for the
-# shared `entities_dict` (see `0005_entities_dict.sql`). The agent's
-# own `database_url` points at `127.0.0.1:5433` on the host, but
-# ClickHouse runs inside the docker-compose stack and from that
-# container `127.0.0.1` resolves to the CH container, not the host.
-# The compose service name `postgres` on port 5432 is reachable
-# across the compose network.
-clickhouse_pg_url = "postgres://rubix:rubix-dev@postgres:5432/rubix"
 
 secrets_path = "rubix/dev/secrets.age"
 

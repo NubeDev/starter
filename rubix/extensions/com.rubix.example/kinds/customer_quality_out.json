@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CustomerQualityOutput",
+  "description": "Anomaly-rule outcome envelope decoded by the cleaner's ToolAnomalyRule adapter.",
+  "type": "object",
+  "properties": {
+    "outcome": {
+      "type": "string",
+      "enum": ["ok", "flag", "drop"]
+    },
+    "quality": {
+      "type": "string",
+      "description": "Quality tag attached to the L2 row when outcome=flag. Free-form short string; conventionally one of Ok/Spike/Stuck/NaN, but extensions may use bespoke values."
+    },
+    "note": {
+      "type": "string",
+      "description": "Optional human-readable note merged into the L2 row's `tags` JSONB under `{ <rule_id>: <note> }`."
+    }
+  },
+  "required": ["outcome"],
+  "additionalProperties": false
+}

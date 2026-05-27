@@ -2,14 +2,12 @@
 // Upstream commit: 1a0736055a4647c18d0be19347e4325007c7bd52.
 // Local edits: re-skinned to rubix tokens; data layer swapped to @nube/rubix-client-react.
 
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import {
   ReactFlow,
   Background,
   Controls,
   MiniMap,
-  useNodesState,
-  useEdgesState,
   type Node,
   type Edge,
   type ColorMode,
@@ -19,7 +17,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useTheme } from "../../lib/theme";
 import { TableNode } from "./table-node";
-import { useLayout } from "./use-layout";
+import { layoutWithDagre } from "./use-layout";
 
 type Column = {
   name: string;
@@ -98,36 +96,18 @@ export function ErdDiagram({ data }: Props) {
 
   // Run dagre layout for the with-edges case; otherwise fall back
   // to a tidy grid so disconnected tables don't pile up at (0, 0).
-  // Warehouses very often have no FK metadata at all —
-  // the previous code path produced an empty-looking diagram in
-  // that case because every node landed on the same coordinate.
-  const dagreLayout = useLayout(initialNodes, initialEdges);
-  const gridLayout = useMemo(
-    () => ({ nodes: gridLayoutNodes(initialNodes), edges: initialEdges }),
-    [initialNodes, initialEdges],
-  );
-  const { nodes: layoutedNodes, edges: layoutedEdges } =
-    initialEdges.length > 0 ? dagreLayout : gridLayout;
-
-  const [nodes, setNodes, onNodesChange] = useNodesState(layoutedNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(layoutedEdges);
-
-  // The previous code seeded nodes/edges from `useNodesState`'s
-  // initial value only, so if `data` ever changed the diagram
-  // froze on the first snapshot. Resync explicitly on every layout
-  // change.
-  useEffect(() => {
-    setNodes(layoutedNodes);
-    setEdges(layoutedEdges);
-  }, [layoutedNodes, layoutedEdges, setNodes, setEdges]);
+  const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
+    if (initialEdges.length > 0) {
+      return layoutWithDagre(initialNodes, initialEdges);
+    }
+    return { nodes: gridLayoutNodes(initialNodes), edges: initialEdges };
+  }, [initialNodes, initialEdges]);
 
   return (
     <div className="w-full h-[calc(100vh-8rem)] min-h-[480px] rounded-lg border border-border overflow-hidden">
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        nodes={layoutedNodes}
+        edges={layoutedEdges}
         nodeTypes={nodeTypes}
         colorMode={theme as ColorMode}
         fitView

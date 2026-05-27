@@ -199,9 +199,19 @@ impl Tool for ProcessExtensionToolBinding {
 
     async fn invoke(&self, input: serde_json::Value) -> starter_spi::Result<serde_json::Value> {
         let method = format!("tools/{}", self.tool_id);
-        self.handle
-            .call(&method, input, self.request_timeout)
-            .await
-            .map_err(map_ext_error)
+        // Use the host-set caller scope (rubix-agent's tools router
+        // stamps it from `Principal`) so the child's `ctx.caller()`
+        // resolves to a real tenant frame. Absent ⇒ system frame,
+        // which is the correct fail-closed behaviour for
+        // unauthenticated callers.
+        let res = match starter_ext_supervisor::caller_local::current() {
+            Some(caller) => {
+                self.handle
+                    .call_as(&method, input, caller, self.request_timeout)
+                    .await
+            }
+            None => self.handle.call(&method, input, self.request_timeout).await,
+        };
+        res.map_err(map_ext_error)
     }
 }

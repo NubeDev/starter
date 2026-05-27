@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CsvIngestInput",
+  "description": "Insert datablist-shaped CSV rows into the extension-owned warehouse tables. The host stamps tenant_id from the caller before issuing the INSERT.",
+  "type": "object",
+  "properties": {
+    "dataset": {
+      "type": "string",
+      "enum": ["customers", "products"],
+      "description": "Target warehouse table declared in contributes.warehouse_tables[]."
+    },
+    "rows": {
+      "type": "array",
+      "description": "Column-value maps. Column names must match the warehouse_tables[] schema for the chosen dataset.",
+      "items": { "type": "object" },
+      "minItems": 1,
+      "maxItems": 1000
+    }
+  },
+  "required": ["dataset", "rows"],
+  "additionalProperties": false
+}

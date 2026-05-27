@@ -16,6 +16,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChatRouteImport } from './routes/chat'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as FlowsIndexRouteImport } from './routes/flows/index'
+import { Route as ExtensionsIndexRouteImport } from './routes/extensions.index'
 import { Route as DashboardsIndexRouteImport } from './routes/dashboards/index'
 import { Route as FlowsFlowIdRouteImport } from './routes/flows/$flowId'
 import { Route as DashboardsPageIdRouteImport } from './routes/dashboards/$pageId'
@@ -23,6 +24,7 @@ import { Route as AdminWarehouseExplorerRouteImport } from './routes/admin/wareh
 import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
+import { Route as ExtensionsExtIdSplatRouteImport } from './routes/extensions.$extId.$'
 import { Route as DashboardsPageIdEditRouteImport } from './routes/dashboards/$pageId_.edit'
 
 const SettingsRoute = SettingsRouteImport.update({
@@ -60,6 +62,11 @@ const FlowsIndexRoute = FlowsIndexRouteImport.update({
   path: '/flows/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExtensionsIndexRoute = ExtensionsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => ExtensionsRoute,
+} as any)
 const DashboardsIndexRoute = DashboardsIndexRouteImport.update({
   id: '/dashboards/',
   path: '/dashboards/',
@@ -95,6 +102,11 @@ const AdminAccessRoute = AdminAccessRouteImport.update({
   path: '/admin/access',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ExtensionsExtIdSplatRoute = ExtensionsExtIdSplatRouteImport.update({
+  id: '/$extId/$',
+  path: '/$extId/$',
+  getParentRoute: () => ExtensionsRoute,
+} as any)
 const DashboardsPageIdEditRoute = DashboardsPageIdEditRouteImport.update({
   id: '/dashboards/$pageId_/edit',
   path: '/dashboards/$pageId/edit',
@@ -105,7 +117,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
-  '/extensions': typeof ExtensionsRoute
+  '/extensions': typeof ExtensionsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
@@ -115,14 +127,15 @@ export interface FileRoutesByFullPath {
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards/': typeof DashboardsIndexRoute
+  '/extensions/': typeof ExtensionsIndexRoute
   '/flows/': typeof FlowsIndexRoute
   '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
+  '/extensions/$extId/$': typeof ExtensionsExtIdSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
-  '/extensions': typeof ExtensionsRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
@@ -132,15 +145,17 @@ export interface FileRoutesByTo {
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards': typeof DashboardsIndexRoute
+  '/extensions': typeof ExtensionsIndexRoute
   '/flows': typeof FlowsIndexRoute
   '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
+  '/extensions/$extId/$': typeof ExtensionsExtIdSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/chat': typeof ChatRoute
   '/dashboard': typeof DashboardRoute
-  '/extensions': typeof ExtensionsRoute
+  '/extensions': typeof ExtensionsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
@@ -150,8 +165,10 @@ export interface FileRoutesById {
   '/dashboards/$pageId': typeof DashboardsPageIdRoute
   '/flows/$flowId': typeof FlowsFlowIdRoute
   '/dashboards/': typeof DashboardsIndexRoute
+  '/extensions/': typeof ExtensionsIndexRoute
   '/flows/': typeof FlowsIndexRoute
   '/dashboards/$pageId_/edit': typeof DashboardsPageIdEditRoute
+  '/extensions/$extId/$': typeof ExtensionsExtIdSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -169,14 +186,15 @@ export interface FileRouteTypes {
     | '/dashboards/$pageId'
     | '/flows/$flowId'
     | '/dashboards/'
+    | '/extensions/'
     | '/flows/'
     | '/dashboards/$pageId/edit'
+    | '/extensions/$extId/$'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/chat'
     | '/dashboard'
-    | '/extensions'
     | '/login'
     | '/settings'
     | '/admin/access'
@@ -186,8 +204,10 @@ export interface FileRouteTypes {
     | '/dashboards/$pageId'
     | '/flows/$flowId'
     | '/dashboards'
+    | '/extensions'
     | '/flows'
     | '/dashboards/$pageId/edit'
+    | '/extensions/$extId/$'
   id:
     | '__root__'
     | '/'
@@ -203,15 +223,17 @@ export interface FileRouteTypes {
     | '/dashboards/$pageId'
     | '/flows/$flowId'
     | '/dashboards/'
+    | '/extensions/'
     | '/flows/'
     | '/dashboards/$pageId_/edit'
+    | '/extensions/$extId/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   ChatRoute: typeof ChatRoute
   DashboardRoute: typeof DashboardRoute
-  ExtensionsRoute: typeof ExtensionsRoute
+  ExtensionsRoute: typeof ExtensionsRouteWithChildren
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
   AdminAccessRoute: typeof AdminAccessRoute
@@ -276,6 +298,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FlowsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/extensions/': {
+      id: '/extensions/'
+      path: '/'
+      fullPath: '/extensions/'
+      preLoaderRoute: typeof ExtensionsIndexRouteImport
+      parentRoute: typeof ExtensionsRoute
+    }
     '/dashboards/': {
       id: '/dashboards/'
       path: '/dashboards'
@@ -325,6 +354,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminAccessRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/extensions/$extId/$': {
+      id: '/extensions/$extId/$'
+      path: '/$extId/$'
+      fullPath: '/extensions/$extId/$'
+      preLoaderRoute: typeof ExtensionsExtIdSplatRouteImport
+      parentRoute: typeof ExtensionsRoute
+    }
     '/dashboards/$pageId_/edit': {
       id: '/dashboards/$pageId_/edit'
       path: '/dashboards/$pageId/edit'
@@ -335,11 +371,25 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface ExtensionsRouteChildren {
+  ExtensionsIndexRoute: typeof ExtensionsIndexRoute
+  ExtensionsExtIdSplatRoute: typeof ExtensionsExtIdSplatRoute
+}
+
+const ExtensionsRouteChildren: ExtensionsRouteChildren = {
+  ExtensionsIndexRoute: ExtensionsIndexRoute,
+  ExtensionsExtIdSplatRoute: ExtensionsExtIdSplatRoute,
+}
+
+const ExtensionsRouteWithChildren = ExtensionsRoute._addFileChildren(
+  ExtensionsRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
   DashboardRoute: DashboardRoute,
-  ExtensionsRoute: ExtensionsRoute,
+  ExtensionsRoute: ExtensionsRouteWithChildren,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
   AdminAccessRoute: AdminAccessRoute,

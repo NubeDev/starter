@@ -26,7 +26,20 @@ import type { StarterClient } from "@nube/starter-client-ts";
  */
 export type ExtensionHostClient = StarterClient;
 
-const HostClientContext = React.createContext<ExtensionHostClient | null>(null);
+// See `slot-context.tsx` for the rationale of the `globalThis` stash:
+// multiple bundled copies of this module must share one context
+// instance, otherwise `useContext` returns `null` for extensions
+// whose remote bundle is dynamically imported into the host page.
+const HOST_CLIENT_CTX_KEY = "__starterExtSdkHostClientContextV1";
+const HostClientContext: React.Context<ExtensionHostClient | null> =
+  ((globalThis as unknown as Record<string, unknown>)[
+    HOST_CLIENT_CTX_KEY
+  ] as React.Context<ExtensionHostClient | null> | undefined) ??
+  (((globalThis as unknown as Record<string, unknown>)[
+    HOST_CLIENT_CTX_KEY
+  ] = React.createContext<ExtensionHostClient | null>(null)) as React.Context<
+    ExtensionHostClient | null
+  >);
 
 export interface ExtensionHostClientProviderProps {
   /** The host's `StarterClient` instance. */

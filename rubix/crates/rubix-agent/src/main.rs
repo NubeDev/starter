@@ -241,7 +241,11 @@ async fn main() -> Result<()> {
     // analytics templates). Skipped silently when `warehouse_url`
     // is unset — the agent still boots, dashboards just render
     // empty values.
-    let warehouse_client = boot::connect_warehouse(cfg.warehouse_url.as_deref()).await?;
+    let warehouse_client = boot::connect_warehouse(
+        cfg.warehouse_url.as_deref(),
+        mcp_pool.as_ref().map(|p| p.sqlx()),
+    )
+    .await?;
     if let Some(wh) = warehouse_client.as_ref() {
         let _t = boot::pool_telemetry::spawn(wh.pool().clone(), "warehouse");
         // Apply extension-declared `contributes.warehouse_tables[]`
@@ -404,15 +408,14 @@ async fn main() -> Result<()> {
         // engine deletion (stage 3 of warehouse-engine-swap).
 
         // Warehouse explorer — phase 4 of warehouse-engine-swap.
-        // Reuses the boot PG pool (no second pool), mounts the
-        // read-only sql-studio-style surface at
-        // `/api/warehouse/explorer/*`, gated by `with_principal` +
-        // `with_role(Role::Admin)` to match the old explorer's
-        // posture. The URL `/ch` suffix was dropped now that the
-        // backend is Postgres/TimescaleDB.
-        {
-            let wh_client =
-                starter_store_warehouse::WarehouseClient::from_pool(pool.sqlx().clone());
+        // Mounts the read-only sql-studio-style surface at
+        // `/api/warehouse/explorer/*` against the **warehouse** pool
+        // (the OLTP pool would expose `_sqlx_migrations_*`,
+        // `sessions`, `flow_*`, … and hide extension warehouse
+        // tables). Gated by `with_principal` + `with_role(Role::Admin)`
+        // to match the old explorer's posture. The URL `/ch` suffix
+        // was dropped now that the backend is Postgres/TimescaleDB.
+        if let Some(wh_client) = warehouse_client.clone() {
             let explorer_router =
                 starter_warehouse_explorer::router_with_auth(wh_client, auth.authenticator.clone());
             app = app.merge(explorer_router);

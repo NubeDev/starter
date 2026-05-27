@@ -47,6 +47,21 @@ export interface ExtensionSlotProps {
    * decides which flags surface where.
    */
   flags?: Readonly<Record<string, boolean>>;
+  /**
+   * Restrict the slot to a single extension. When set, only that
+   * extension's contributions to `props.id` render; everything else
+   * is filtered out. Used by per-extension route views where the host
+   * mounts the `main` slot for one extension at a time (see
+   * `rubix/frontend/src/routes/extensions.$extId.$.tsx`).
+   */
+  extensionId?: string;
+  /**
+   * Sub-route to expose to mounted components via
+   * `SlotContext.route`. Pass the path tail after the host's
+   * per-extension prefix (e.g. `"customers/by-country"`). Leave
+   * undefined for slots that have no route dimension (sidebar).
+   */
+  route?: string;
 }
 
 export function ExtensionSlot(props: ExtensionSlotProps): React.ReactElement {
@@ -61,9 +76,14 @@ export function ExtensionSlot(props: ExtensionSlotProps): React.ReactElement {
     React.useCallback(() => mgr.resolveSlot(props.id), [mgr, props.id]),
   );
 
+  const filtered = props.extensionId
+    ? resolved.filter((r) => r.extensionId === props.extensionId)
+    : resolved;
+  const route = props.route ?? null;
+
   return (
     <div data-ext-slot={props.id} className="starter-ext-slot">
-      {resolved.map((r) => {
+      {filtered.map((r) => {
         const Comp = r.component;
         if (!Comp) {
           // `init` not done yet, or registered no component by that
@@ -82,6 +102,7 @@ export function ExtensionSlot(props: ExtensionSlotProps): React.ReactElement {
               theme: props.theme ?? "light",
               themeTokens: props.themeTokens ?? null,
               flags: props.flags ?? {},
+              route,
             }}
           >
             <Comp />

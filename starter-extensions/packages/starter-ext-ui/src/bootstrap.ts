@@ -165,11 +165,16 @@ export async function bootstrapExtensions(
         continue;
       }
       // Build the remoteEntry URL relative to the bundle's `ui/` mount.
-      // The starter-ext-server route is `${basePath}/<id>/ui/*path` —
-      // `entry` is the bundle-relative path the manifest declared.
+      // The starter-ext-server route is `${basePath}/<id>/ui/*path` where
+      // `*path` is resolved against `<bundle_dir>/<dirname(entry)>`. So
+      // strip a leading `ui/` from the manifest entry to avoid building
+      // `/extensions/<id>/ui/ui/remoteEntry.js`.
+      const entrySuffix = ui.entry
+        .replace(/^\/+/, "")
+        .replace(/^ui\//, "");
       const entryUrl = `${client.baseUrl}${basePath}/${encodeURIComponent(
         sum.id,
-      )}/ui/${ui.entry.replace(/^\/+/, "")}`;
+      )}/ui/${entrySuffix}`;
       const mod = (await importRemote(entryUrl)) as
         | ExtensionRemoteFactory
         | { default: ExtensionRemoteFactory };

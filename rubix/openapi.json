@@ -457,7 +457,7 @@
       "name": "user-admin"
     },
     {
-      "description": "ClickHouse ruler verbs (Goal 4): rule write, mart create, retention set.",
+      "description": "Warehouse ruler verbs (Goal 4): rule write, mart create, retention set. Pre-2026-05-27 this was the clickhouse-ruler; see ADR-004.",
       "name": "warehouse-ruler"
     },
     {

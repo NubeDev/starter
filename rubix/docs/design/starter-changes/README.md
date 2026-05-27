@@ -49,7 +49,7 @@ PR / issue URL.
 | Phase 2b | [phase-2b.md](./phase-2b.md) | `starter-mcp` Accept-Language plumbing (U1), real `InMemoryTransport` (U2), `starter-flow-surfaces` `FlowRegistry::resolve` + `FlowAsTool::from_registry` (U3). **All complete.** |
 | Phase 2c | [phase-2c.md](./phase-2c.md) | gRPC/CLI rough edges; `starter-i18n` interpolate feature-gate mismatch (latent). |
 | Phase 3 | [phase-3.md](./phase-3.md) | `starter-tool-sdui` page-builder primitives, `starter-tool-flow-ops`. |
-| Phase 4 | [phase-4.md](./phase-4.md) | `cron-schedule` node kind, `starter-tool-clickhouse`, `clickhouse-query` node kind. |
+| Phase 4 | [phase-4.md](./phase-4.md) | `cron-schedule` node kind, warehouse tools (historical: planned as `starter-tool-clickhouse` / `clickhouse-query`; superseded by the TimescaleDB-backed `starter-store-warehouse` surface — see ADR-004). |
 | Phase 5 | [phase-5.md](./phase-5.md) | `starter-ext-flow` adapter, extension-author ergonomics. |
 
 ## Items filed (rolling log)

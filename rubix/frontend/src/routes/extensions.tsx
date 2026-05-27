@@ -11,7 +11,7 @@
 // mutations; success auto-invalidates `['rubix','extensions']` from
 // inside the hook so the table reflects authoritative state.
 
-import { createFileRoute } from '@tanstack/react-router'
+import { Outlet, createFileRoute } from '@tanstack/react-router'
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useIntl } from 'react-intl'
@@ -32,7 +32,6 @@ import {
   type ExtensionSummary,
 } from '@nube/rubix-client-react'
 import {
-  ExtensionSlot,
   useExtensionHost,
   type ExtensionRemoteFactory,
 } from '@nube/starter-ext-ui'
@@ -58,7 +57,7 @@ function StatusBadge({ state }: { state: string }) {
   )
 }
 
-function ExtensionsTable() {
+export function ExtensionsTable() {
   const intl = useIntl()
   const tr = (id: string, def: string) =>
     intl.formatMessage({ id, defaultMessage: def })
@@ -187,23 +186,17 @@ function ExtensionsTable() {
   )
 }
 
+/** `/extensions` and `/extensions/$extId/$rest` share this layout.
+ * It only renders `<Outlet />` so child routes (the admin index in
+ * `extensions.index.tsx` and the per-extension route in
+ * `extensions.$extId.$.tsx`) own the page body. Wrapping in
+ * `<ErrorBoundary>` here means a buggy child renders the fallback
+ * without unmounting the rest of the layout. */
 function ExtensionsRoute() {
   return (
     <ErrorBoundary>
-      <ExtensionsTable />
-      <ExtensionMainSlot />
+      <Outlet />
     </ErrorBoundary>
-  )
-}
-
-/** Render whatever federated extensions have registered into the
- * `main` slot. Loading is no longer automatic — operators trigger
- * a per-extension load from the table above. */
-function ExtensionMainSlot() {
-  return (
-    <section className="relative mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
-      <ExtensionSlot id="main" />
-    </section>
   )
 }
 

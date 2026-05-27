@@ -1,11 +1,19 @@
-# Stage 02 — raw landing in ClickHouse (L1)
+# Stage 02 — raw landing in the warehouse (TimescaleDB L1)
+
+> 🪦 Note: this doc was written when the warehouse ran on ClickHouse;
+> the engine swap (see [ADR-004](../../../../DOCS/storage/ADR-004-timescaledb-warehouse.md))
+> moved L1 to a **TimescaleDB hypertable** in the same Postgres
+> instance. The verb is `rubix.warehouse.rule.write` (post-rename);
+> `ClickHouse` / `rubix.clickhouse.*` references below describe the
+> historical surface and the design intent — read them with that
+> rename in mind.
 
 ## Scope
 
-**In:** an L1 table `rubix.meter_readings_raw` in the `rubix`
-ClickHouse database, defined via `rubix.clickhouse.rule.write`, and
-a write path that lands every row stage 01's producer emits — bit
-for bit, no cleaning. Tenancy is per-row.
+**In:** an L1 hypertable `rubix.meter_readings_raw` in the warehouse,
+defined via `rubix.warehouse.rule.write`, and a write path that
+lands every row stage 01's producer emits — bit for bit, no
+cleaning. Tenancy is per-row.
 
 **Out:** any normalisation, gap-fill, downsampling, mart creation,
 or alerting. Stage 03 owns L2.

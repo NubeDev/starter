@@ -1,24 +1,20 @@
 #!/usr/bin/env bash
-# Poll the rubix-dev Postgres + warehouse (TimescaleDB) endpoints
-# until both accept TCP connections, with a 30s ceiling.
+# Poll the rubix-dev Postgres endpoint until it accepts TCP
+# connections, with a 30s ceiling.
 #
 # Used by `mani run demo` between `dev-deps` and `bootstrap` so a
 # fresh `docker compose up -d` does not race the binary's first
 # connection. Intentionally does NOT shell out to `docker compose`
-# — it polls the host-bound ports directly, so it works the same
-# whether the stores are containerised, bare-metal, or remote.
+# — it polls the host-bound port directly, so it works the same
+# whether the store is containerised, bare-metal, or remote.
 #
-# Stage 1 of `rubix/docs/proposal/warehouse-engine-swap.md` ships
-# this script pointing at the TimescaleDB container (port 5434
-# per `rubix/docker/docker-compose.dev.yaml`); Stage 2 wires the
-# warehouse crate at it.
+# Single TimescaleDB-backed Postgres holds OLTP + warehouse tables;
+# there is only one port to wait on.
 
 set -euo pipefail
 
 PG_HOST="${RUBIX_DEV_PG_HOST:-127.0.0.1}"
 PG_PORT="${RUBIX_DEV_PG_PORT:-5433}"
-WH_HOST="${RUBIX_DEV_WAREHOUSE_HOST:-127.0.0.1}"
-WH_PORT="${RUBIX_DEV_WAREHOUSE_PORT:-5434}"
 TIMEOUT="${RUBIX_DEV_WAIT_TIMEOUT:-30}"
 
 probe() {
@@ -29,12 +25,12 @@ probe() {
 
 deadline=$(( $(date +%s) + TIMEOUT ))
 while :; do
-  if probe "$PG_HOST" "$PG_PORT" && probe "$WH_HOST" "$WH_PORT"; then
-    echo "rubix dev deps ready (pg=${PG_HOST}:${PG_PORT}, warehouse=${WH_HOST}:${WH_PORT})"
+  if probe "$PG_HOST" "$PG_PORT"; then
+    echo "rubix dev deps ready (pg=${PG_HOST}:${PG_PORT})"
     exit 0
   fi
   if [ "$(date +%s)" -ge "$deadline" ]; then
-    echo "wait-for-deps: timed out after ${TIMEOUT}s waiting for pg=${PG_HOST}:${PG_PORT} warehouse=${WH_HOST}:${WH_PORT}" >&2
+    echo "wait-for-deps: timed out after ${TIMEOUT}s waiting for pg=${PG_HOST}:${PG_PORT}" >&2
     exit 1
   fi
   sleep 1

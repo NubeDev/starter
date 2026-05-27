@@ -41,6 +41,7 @@
 #![warn(missing_docs)]
 
 pub mod backoff;
+pub mod caller_local;
 pub mod capability;
 pub mod event_ring;
 pub mod handshake;

@@ -1,6 +1,22 @@
 # Tags — Scope
 
-> ⚠ Read [ADR-003 — ClickHouse warehouse, Postgres OLTP](../storage/ADR-003-clickhouse-warehouse.md)
+> 🪦 **Historical note — ClickHouse references in this doc are
+> pre-2026-05-27.** The two canonical compilation targets below
+> still apply, but the **history-side target is now TimescaleDB**
+> (`jsonb @> '…'` against a `jsonb_path_ops` GIN index — same as the
+> dimension side, since both stores are the same Postgres). The
+> ClickHouse `Map(String, String)` + bloom-filter skip-index design
+> sketched in this document was retired when the warehouse engine was
+> swapped. See
+> [ADR-004](../storage/ADR-004-timescaledb-warehouse.md) and
+> [`warehouse-engine-swap.md`](../../rubix/docs/proposal/warehouse-engine-swap.md).
+> The tag *language* (TagSet, TagQuery, TagDefinition registry,
+> Bool/Str reserved-string rule, cross-store agreement) is unchanged
+> — only the second compilation target moved from ClickHouse to
+> TimescaleDB (which is just Postgres + extension, so the existing
+> `compile_pg.rs` path covers both).
+>
+> ⚠ Read [ADR-004 — TimescaleDB warehouse, Postgres OLTP](../storage/ADR-004-timescaledb-warehouse.md)
 > first. This document defines the tag language; the warehouse is its
 > first heavy consumer, but the tag types live in their own crate so
 > [Insights](../Insights/SCOPE.md), [authz](../auth/), pages, and the
@@ -10,13 +26,16 @@
 
 `starter-tags` is the workspace's **shared tag language**: a flat
 `TagSet`, a small `TagQuery` grammar, a `TagDefinition` registry, and
-**two canonical compilation targets** — Postgres (`jsonb @> '…'`
-against a `jsonb_path_ops` GIN index, for dimension tables) and
-ClickHouse (`tags['k'] = 'v'` against a `bloom_filter` skip index on
-`Map(String, String)`, for history tables). It is deliberately tiny
-and deliberately stable — every crate that filters, groups, or
-routes by tags depends on it, and a churn here ripples through the
-warehouse, Insights, pages, and the AI agent.
+**one canonical compilation target** — Postgres (`jsonb @> '…'`
+against a `jsonb_path_ops` GIN index), which covers both the dimension
+tables and the TimescaleDB hypertables (same database). An
+in-process matcher exists for tests and pre-flight validation. The
+ClickHouse `Map(String, String) + bloom_filter` target described
+below in §T8b is **retired** — kept as a historical reference for
+how the language was designed to compile to multiple SQL dialects.
+It is deliberately tiny and deliberately stable — every crate that
+filters, groups, or routes by tags depends on it, and a churn here
+ripples through the warehouse, Insights, pages, and the AI agent.
 
 The design follows Project Haystack's lesson learned the hard way:
 **tags are a flat dictionary, not a typed schema**, but **refs deserve

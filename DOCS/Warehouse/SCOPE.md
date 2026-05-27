@@ -1,17 +1,35 @@
 # Warehouse — Scope
 
-> ⚠ Read these first:
-> - [ADR-003 — ClickHouse warehouse, Postgres OLTP](../storage/ADR-003-clickhouse-warehouse.md) — the storage decision.
-> - [Tags SCOPE](../Tags/SCOPE.md) — the tag language this capability consumes (two compilation targets: Postgres + ClickHouse).
+> 🪦 **Historical record — ClickHouse design (pre-2026-05-27).**
+> This document was written when the warehouse ran on ClickHouse. The
+> warehouse now runs on **TimescaleDB** inside the same Postgres
+> instance — see
+> [ADR-004](../storage/ADR-004-timescaledb-warehouse.md) and the
+> authoritative
+> [`rubix/docs/proposal/warehouse-engine-swap.md`](../../rubix/docs/proposal/warehouse-engine-swap.md).
+> The three-layer data model (raw → curated → marts), the tag-driven
+> read contract, and the marts catalog in Postgres are all preserved
+> in the swap. What changed: history lives in **TimescaleDB
+> hypertables** (not ClickHouse MergeTree); rollups are **continuous
+> aggregates** (not `AggregatingMergeTree` materialized views);
+> retention is `add_retention_policy` (not `ALTER TABLE … MODIFY TTL`);
+> the `entities_dict` materialized dictionary is gone (mart queries
+> JOIN directly against dimension tables in the same database). Read
+> the rest of this document for the **design intent**, not for the
+> current engine choice.
+>
+> ⚠ Read first:
+> - [ADR-004 — TimescaleDB warehouse, Postgres OLTP](../storage/ADR-004-timescaledb-warehouse.md) — current storage decision.
+> - [warehouse-engine-swap proposal](../../rubix/docs/proposal/warehouse-engine-swap.md) — authoritative current design.
+> - [Tags SCOPE](../Tags/SCOPE.md) — the tag language this capability consumes.
 > - [Flow SCOPE](../flow/scope/SCOPE.md) — the engine that runs warehouse nodes.
 > - [Insights SCOPE](../Insights/SCOPE.md) — the verdicts/rules consumer downstream.
 >
-> The warehouse owns: a three-layer data model on ClickHouse
-> (raw → curated → marts), four flow node kinds, a marts catalog
-> stored in Postgres, and the read contract dashboards and Insights
-> bind to. It does **not** own: orchestration (flows), rule
-> evaluation (insights), the LLM loop (agent), or the dashboard
-> renderer (SDUI).
+> The warehouse owns: a three-layer data model (raw → curated → marts),
+> flow node kinds, a marts catalog stored in Postgres, and the read
+> contract dashboards and Insights bind to. It does **not** own:
+> orchestration (flows), rule evaluation (insights), the LLM loop
+> (agent), or the dashboard renderer (SDUI).
 
 ## One-line summary
 

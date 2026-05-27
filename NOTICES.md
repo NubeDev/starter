@@ -17,7 +17,9 @@ this notice. Derived paths:
 - `crates/starter-warehouse/src/explorer/types.rs`
 - `packages/starter-ui-ch-explorer/` (Vite + React app forked from
   the upstream `ui/` directory; per-file MIT headers, narrowed to
-  ClickHouse and rewired against `/api/warehouse/ch/*`)
+  the warehouse and rewired against `/api/warehouse/*` —
+  originally narrowed to ClickHouse before the engine swap; see
+  [ADR-004](DOCS/storage/ADR-004-timescaledb-warehouse.md))
 
 Original MIT licence text follows verbatim.
 

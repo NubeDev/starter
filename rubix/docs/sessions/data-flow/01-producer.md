@@ -27,7 +27,7 @@ Consequences of this split:
 - **Mess injection is `cargo test`-able.** A unit test with a
   fixed seed asserts that after K ticks, spike count / gap count /
   stuck-zero stretches fall in the expected bands. No flow engine,
-  no ClickHouse, no agent. CI gets a real regression gate.
+  no warehouse, no agent. CI gets a real regression gate.
 - **Flows stay declarative.** No new node kind, no scripting
   language to maintain, no "what's in scope for rhai inside the
   flow" debate.
@@ -217,7 +217,7 @@ across stages 01 → 02.
 
 ## Pre-flight
 
-- ClickHouse + Postgres are up:
+- Postgres + warehouse (TimescaleDB) are up:
   `mani run dev-deps` from [rubix/](../../../). Verify with
   `docker ps | grep rubix-`.
 - `cargo build -p rubix-tools -p rubix-agent` is clean.

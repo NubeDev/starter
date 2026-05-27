@@ -1,7 +1,19 @@
 # ADR-003 — Warehouse runs on ClickHouse; Postgres keeps OLTP
 
-- **Status:** Accepted
-- **Date:** 2026-05-23
+> 🪦 **RETIRED 2026-05-27** — superseded by
+> [ADR-004 — TimescaleDB warehouse, Postgres OLTP](./ADR-004-timescaledb-warehouse.md)
+> and implemented by the
+> [`warehouse-engine-swap`](../../rubix/docs/proposal/warehouse-engine-swap.md)
+> proposal. The ClickHouse engine was deleted in stage 3 of that
+> proposal; the warehouse now runs on TimescaleDB inside the existing
+> Postgres instance. ADR-002's "single database" thesis effectively
+> won — see ADR-004 for the current decision. The rest of this
+> document is kept verbatim as the historical record of why ClickHouse
+> was chosen at the time. **Do not cite for current design — cite
+> ADR-004.**
+
+- **Status:** Retired (superseded by ADR-004)
+- **Date:** 2026-05-23 (retired 2026-05-27)
 - **Scope:** The `starter-warehouse` capability and any consumer
   (starting with [`examples/flow-agent`](../../examples/flow-agent))
   that needs a tag-driven analytics layer with dashboard-grade read

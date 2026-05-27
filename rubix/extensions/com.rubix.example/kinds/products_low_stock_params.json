@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProductsLowStockParams",
+  "description": "Parameters for `com.rubix.example.products_low_stock`. Returns products whose stock falls below the threshold.",
+  "type": "object",
+  "properties": {
+    "threshold": {
+      "type": "integer",
+      "minimum": 0,
+      "default": 10,
+      "description": "Stock count below which a product is considered low."
+    },
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500,
+      "default": 50
+    }
+  },
+  "additionalProperties": false
+}

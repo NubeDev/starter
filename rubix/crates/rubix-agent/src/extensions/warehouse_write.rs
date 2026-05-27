@@ -109,11 +109,17 @@ impl RubixWarehouseWriteBackend {
     /// Run the INSERT against the pool. Sync trait + async pool ⇒
     /// the same `block_in_place` + `block_on` bridge the read
     /// backend uses.
-    fn run_insert(&self, full_table: &str, columns: &[&str], rows: &[Vec<JsonValue>]) -> Result<u64> {
+    fn run_insert(
+        &self,
+        full_table: &str,
+        columns: &[&str],
+        column_types: &[&str],
+        rows: &[Vec<JsonValue>],
+    ) -> Result<u64> {
         if rows.is_empty() {
             return Ok(0);
         }
-        let placeholders = build_multi_row_placeholders(columns.len(), rows.len());
+        let placeholders = build_multi_row_placeholders(column_types, rows.len());
         let col_list = columns
             .iter()
             .map(|c| quote_ident(c))
@@ -176,9 +182,12 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
 
         // Build the column list, tenant_id first.
         let mut column_names: Vec<&str> = Vec::with_capacity(spec.columns.len() + 1);
+        let mut column_types: Vec<&str> = Vec::with_capacity(spec.columns.len() + 1);
         column_names.push("tenant_id");
+        column_types.push("TEXT");
         for c in &spec.columns {
             column_names.push(c.name.as_str());
+            column_types.push(c.ty.as_str());
         }
 
         // Translate each input row into [tenant_id, col1, col2, ...]
@@ -232,7 +241,7 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
             value_rows.push(values);
         }
 
-        self.run_insert(&full_table, &column_names, &value_rows)
+        self.run_insert(&full_table, &column_names, &column_types, &value_rows)
     }
 }
 
@@ -277,7 +286,16 @@ fn quote_ident(name: &str) -> String {
 }
 
 /// Build `($1, $2, ..., $N), ($N+1, ...)` for a multi-row INSERT.
-fn build_multi_row_placeholders(cols: usize, rows: usize) -> String {
+///
+/// Per-column `column_types` drives an explicit `::<type>` cast on
+/// each placeholder for types that Postgres won't implicitly cast
+/// from `text` (DATE, TIMESTAMP, TIMESTAMPTZ, JSONB, UUID …). We
+/// bind every value as `text`/`i64`/`f64`/… from JSON, so without
+/// the cast inserts into a `DATE` column fail with
+/// `column is of type date but expression is of type text`.
+fn build_multi_row_placeholders(column_types: &[&str], rows: usize) -> String {
+    let cast_suffixes: Vec<&'static str> =
+        column_types.iter().map(|t| placeholder_cast(t)).collect();
     let mut s = String::new();
     let mut idx: usize = 1;
     for r in 0..rows {
@@ -285,16 +303,38 @@ fn build_multi_row_placeholders(cols: usize, rows: usize) -> String {
             s.push_str(", ");
         }
         s.push('(');
-        for c in 0..cols {
+        for (c, suffix) in cast_suffixes.iter().enumerate() {
             if c > 0 {
                 s.push_str(", ");
             }
-            s.push_str(&format!("${idx}"));
+            s.push_str(&format!("${idx}{suffix}"));
             idx += 1;
         }
         s.push(')');
     }
     s
+}
+
+/// Map a manifest column type to the `::<type>` suffix appended to
+/// the placeholder. Empty string ⇒ no cast (Postgres infers from
+/// the bound type or implicit-casts from text).
+fn placeholder_cast(ty: &str) -> &'static str {
+    // Case-insensitive match on the head of the type so
+    // `TIMESTAMP WITH TIME ZONE`, `timestamptz`, `DATE` all hit.
+    let head = ty.split(|c: char| c == '(' || c.is_whitespace()).next().unwrap_or(ty);
+    match head.to_ascii_uppercase().as_str() {
+        "DATE" => "::date",
+        "TIMESTAMP" => match ty.to_ascii_uppercase().contains("TIME ZONE") {
+            true => "::timestamptz",
+            false => "::timestamp",
+        },
+        "TIMESTAMPTZ" => "::timestamptz",
+        "TIME" => "::time",
+        "JSONB" => "::jsonb",
+        "JSON" => "::json",
+        "UUID" => "::uuid",
+        _ => "",
+    }
 }
 
 /// Bind one column value to `args` based on the column's declared
@@ -517,8 +557,17 @@ mod tests {
 
     #[test]
     fn multi_row_placeholders_for_2_cols_3_rows() {
-        let s = build_multi_row_placeholders(2, 3);
+        let s = build_multi_row_placeholders(&["TEXT", "DOUBLE PRECISION"], 3);
         assert_eq!(s, "($1, $2), ($3, $4), ($5, $6)");
+    }
+
+    #[test]
+    fn placeholder_casts_for_date_and_timestamptz() {
+        let s = build_multi_row_placeholders(
+            &["TEXT", "DATE", "TIMESTAMPTZ", "TIMESTAMP WITH TIME ZONE"],
+            1,
+        );
+        assert_eq!(s, "($1, $2::date, $3::timestamptz, $4::timestamptz)");
     }
 }
 

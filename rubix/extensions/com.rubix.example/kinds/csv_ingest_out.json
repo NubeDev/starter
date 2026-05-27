@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CsvIngestOutput",
+  "type": "object",
+  "properties": {
+    "dataset": { "type": "string" },
+    "inserted": { "type": "integer", "minimum": 0 }
+  },
+  "required": ["dataset", "inserted"],
+  "additionalProperties": false
+}

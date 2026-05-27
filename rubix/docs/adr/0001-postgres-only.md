@@ -5,15 +5,17 @@
 
 ## Decision
 
-Rubix uses **Postgres only** for state. SQLite is excluded. ClickHouse
-remains the analytical warehouse for history (a separate layer).
+Rubix uses **Postgres only** for state. SQLite is excluded. The
+analytical warehouse for history is layered on the same Postgres via
+the TimescaleDB extension (see
+[`DOCS/storage/ADR-004-timescaledb-warehouse.md`](../../../DOCS/storage/ADR-004-timescaledb-warehouse.md)).
 
 ## Context
 
 - Starter ships **both** `starter-store-sqlite` and
   `starter-store-postgres` deliberately; this is a *rubix* decision,
   not inherited.
-- Goal 4 (ClickHouse) and Goal 6 (analytics) demand the same
+- Goal 4 (warehouse) and Goal 6 (analytics) demand the same
   Postgres-tier consistency for state — running SQLite alongside
   would multiply migration surface area for no operator benefit.
 - Multi-tenant authz via `starter-authz` is more straightforward

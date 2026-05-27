@@ -1,6 +1,15 @@
 # Starter changes — Phase 4 gates
 
-ClickHouse + cron (Goals 4 and 5) gates.
+> 🪦 **Historical — pre-2026-05-27.** ClickHouse references below
+> describe the original Phase 4 plan. The warehouse engine was swapped
+> to TimescaleDB; the warehouse surface is now engine-neutral
+> (`starter-store-warehouse`, `rubix.warehouse.*` verbs,
+> `warehouse-ruler` flow). See
+> [ADR-004](../../../../DOCS/storage/ADR-004-timescaledb-warehouse.md)
+> and the [warehouse-engine-swap proposal](../../proposal/warehouse-engine-swap.md).
+
+Warehouse + cron (Goals 4 and 5) gates — written when the warehouse
+ran on ClickHouse; kept verbatim as historical context.
 
 See [README.md](./README.md) for the index and per-item format.
 

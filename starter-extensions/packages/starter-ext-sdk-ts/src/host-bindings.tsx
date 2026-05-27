@@ -31,7 +31,20 @@ export interface HostBindings {
   singletons: ResolvedSingletons;
 }
 
-const HostBindingsContext = React.createContext<HostBindings | null>(null);
+// See `slot-context.tsx` for the rationale of the `globalThis` stash:
+// multiple bundled copies of this module must share one context
+// instance, otherwise `useContext` returns `null` for extensions
+// whose remote bundle is dynamically imported into the host page.
+const HOST_BINDINGS_CTX_KEY = "__starterExtSdkHostBindingsContextV1";
+const HostBindingsContext: React.Context<HostBindings | null> =
+  ((globalThis as unknown as Record<string, unknown>)[
+    HOST_BINDINGS_CTX_KEY
+  ] as React.Context<HostBindings | null> | undefined) ??
+  (((globalThis as unknown as Record<string, unknown>)[
+    HOST_BINDINGS_CTX_KEY
+  ] = React.createContext<HostBindings | null>(null)) as React.Context<
+    HostBindings | null
+  >);
 
 export interface HostBindingsProviderProps {
   bindings: HostBindings;

@@ -38,18 +38,18 @@ the stack handles these, it handles real meters.
 ┌──────────────────────────┐
 │ 01-producer              │  flow OR extension that emits readings
 │ (synthetic, intentionally│  via rubix.warehouse.ingest (or direct
-│  messy)                  │  ChClient write — TBD per stage 01)
+│  messy)                  │  WarehouseClient write — TBD per stage 01)
 └────────────┬─────────────┘
              ▼
 ┌──────────────────────────┐
-│ 02-ingest-l1             │  rubix.clickhouse.rule.write defines the
+│ 02-ingest-l1             │  rubix.warehouse.rule.write defines the
 │ raw landing table        │  L1 table; producer rows land here as-is
 └────────────┬─────────────┘
              ▼
 ┌──────────────────────────┐
-│ 03-clean-to-l2           │  rubix.clickhouse.mart.create builds an
-│ normalise, gap-fill,     │  L2 curated mart; flow node periodically
-│ clip spikes, bucketise   │  materialises L1 → L2
+│ 03-clean-to-l2           │  rubix.warehouse.mart.create builds an
+│ normalise, gap-fill,     │  L2 curated mart (continuous aggregate);
+│ clip spikes, bucketise   │  refresh policy materialises L1 → L2
 └────────────┬─────────────┘
              ▼
 ┌──────────────────────────┐
@@ -67,7 +67,7 @@ Design anchors (read once at the start of any stage):
 
 - Overview: [rubix/docs/design/overview/README.md](../../design/overview/README.md)
 - Warehouse layers + tenancy: [rubix/docs/design/warehouse/README.md](../../design/warehouse/README.md)
-- ClickHouse rules / marts / retention verbs: [rubix/docs/design/clickhouse-rules/README.md](../../design/clickhouse-rules/README.md)
+- Warehouse rules / marts / retention verbs: [rubix/docs/design/clickhouse-rules/README.md](../../design/clickhouse-rules/README.md) (legacy directory name; content is `rubix.warehouse.*` since the engine swap — see ADR-004)
 - Flow programmer verbs: [rubix/docs/design/flow-programmer/README.md](../../design/flow-programmer/README.md)
 - Extension bundle layout: [rubix/docs/design/extensions/README.md](../../design/extensions/README.md)
 - Insights / alert dispatch shape: [rubix/docs/design/insights/README.md](../../design/insights/README.md)
@@ -94,7 +94,7 @@ Work them in order; each one assumes the previous stage's
 "Success bar" is met. If it isn't, stop and fix that stage first.
 
 1. [01-producer.md](./01-producer.md) — messy energy + water producer (flow OR extension)
-2. [02-ingest-l1.md](./02-ingest-l1.md) — raw landing in ClickHouse
+2. [02-ingest-l1.md](./02-ingest-l1.md) — raw landing in the warehouse (TimescaleDB L1)
 3. [03-clean-to-l2.md](./03-clean-to-l2.md) — normalise, gap-fill, clip
 4. [04-anomaly-rules.md](./04-anomaly-rules.md) — spike + stuck-zero rules
 5. [05-dashboard-at-scale.md](./05-dashboard-at-scale.md) — large dataset in the dashboard

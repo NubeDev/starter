@@ -1,0 +1,21 @@
+Index,Name,Description,Brand,Category,Price,Currency,Stock,EAN,Color,Size,Availability,Internal ID
+1,Slim-Fit Cotton Tee,Lightweight crew-neck t-shirt,Acme Apparel,Clothing,19.99,USD,420,4006381333931,Black,M,in_stock,SKU-0001
+2,Wireless Bluetooth Earbuds,Active noise cancellation 24h battery,SoundOrbit,Electronics,79.00,USD,12,4006381333932,White,One Size,low_stock,SKU-0002
+3,Stainless Travel Mug,16oz double-walled vacuum mug,Hearthware,Kitchen,24.50,USD,0,4006381333933,Steel,16oz,out_of_stock,SKU-0003
+4,Memory-Foam Pillow,Cooling-gel infused queen pillow,Dreamline,Home,49.95,USD,150,4006381333934,Grey,Queen,in_stock,SKU-0004
+5,Trail Running Shoes,Aggressive lugs Vibram outsole,Switchback,Footwear,129.00,USD,3,4006381333935,Olive,US 10,low_stock,SKU-0005
+6,LED Desk Lamp,USB-C dimmable touch control,Lumiq,Office,39.99,USD,210,4006381333936,Black,Small,in_stock,SKU-0006
+7,Yoga Mat 6mm,High-density TPE non-slip mat,Pranaflex,Fitness,32.00,USD,88,4006381333937,Purple,72in,in_stock,SKU-0007
+8,Insulated Water Bottle,32oz wide-mouth flask,Cascade,Outdoor,29.99,USD,2,4006381333938,Teal,32oz,low_stock,SKU-0008
+9,Mechanical Keyboard,Hot-swap 75% RGB,Keysmith,Electronics,149.00,USD,46,4006381333939,Black,75%,in_stock,SKU-0009
+10,Cast-Iron Skillet,12in pre-seasoned skillet,Hearthware,Kitchen,44.00,USD,0,4006381333940,Black,12in,out_of_stock,SKU-0010
+11,Organic Cotton Hoodie,Heavyweight 400gsm fleece,Acme Apparel,Clothing,69.00,USD,18,4006381333941,Heather,L,low_stock,SKU-0011
+12,Smart Plant Sensor,Bluetooth soil moisture monitor,Verdant,Garden,21.50,USD,330,4006381333942,Green,One Size,in_stock,SKU-0012
+13,Espresso Tamper,Calibrated 30lb 58mm,Caffeo,Kitchen,55.00,USD,7,4006381333943,Walnut,58mm,low_stock,SKU-0013
+14,Microfibre Towel Set,Quick-dry travel towel x3,Cascade,Outdoor,27.99,USD,144,4006381333944,Blue,M,in_stock,SKU-0014
+15,USB-C Power Bank,20000mAh 100W PD,Voltcell,Electronics,89.99,USD,0,4006381333945,Black,20000mAh,out_of_stock,SKU-0015
+16,Down Camp Quilt,650-fill 30°F rating,Switchback,Outdoor,189.00,USD,9,4006381333946,Crimson,Regular,low_stock,SKU-0016
+17,Linen Throw Pillow,18in cover and insert,Dreamline,Home,34.00,USD,260,4006381333947,Sand,18in,in_stock,SKU-0017
+18,Bamboo Cutting Board,End-grain butcher block,Hearthware,Kitchen,62.00,USD,41,4006381333948,Natural,Large,in_stock,SKU-0018
+19,Trail Running Vest,5L hydration vest two flasks,Switchback,Fitness,99.50,USD,4,4006381333949,Yellow,M,low_stock,SKU-0019
+20,Ceramic Pour-Over Dripper,02 size single-cup,Caffeo,Kitchen,28.00,USD,115,4006381333950,White,02,in_stock,SKU-0020

@@ -1,22 +1,21 @@
-# Local-dev compose for the rubix six-step thin-slice demo.
+# Local-dev compose for the rubix demo.
 #
-# Brings up only the two stores the rubix-agent binary talks to:
-#   * Postgres 16   — sessions, authz, changelog, agent-log
-#   * TimescaleDB   — warehouse history (L1/L2/L3). Sole engine
-#                     since stage 3 of
-#                     `rubix/docs/proposal/warehouse-engine-swap.md`.
+# One TimescaleDB instance, one database (`rubix`) holding both the
+# OLTP tables (sessions, authz, flows, dashboards, undo changelog)
+# and the warehouse hypertables (raw_events, samples, events,
+# documents) + continuous aggregates. Timescale is just a Postgres
+# extension — there is no reason to run a second container.
 #
-# Both ports are bound to 127.0.0.1 only so a laptop running this
-# does not expose itself to the LAN. Ports are non-standard
-# (5433/5434) so an already-running local Postgres instance on the
-# canonical port is left alone.
+# Port 5433 is bound to 127.0.0.1 only so a laptop running this does
+# not expose itself to the LAN, and is non-standard so an existing
+# local Postgres on 5432 is left alone.
 #
-# Matches `rubix/dev/agent.toml` byte-for-byte. If you change a
+# Matches `rubix/dev/agent.toml` byte-for-byte. If you change the
 # port, user, or db here, change it there too.
 
 services:
   postgres:
-    image: postgres:16-alpine
+    image: timescale/timescaledb-ha:pg16
     environment:
       POSTGRES_USER: rubix
       POSTGRES_PASSWORD: rubix-dev
@@ -24,29 +23,12 @@ services:
     ports:
       - "127.0.0.1:5433:5432"
     volumes:
-      - rubix_postgres_data:/var/lib/postgresql/data
+      - rubix_postgres_data:/home/postgres/pgdata/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U rubix -d rubix"]
       interval: 5s
       timeout: 3s
       retries: 20
 
-  timescaledb:
-    image: timescale/timescaledb-ha:pg16
-    environment:
-      POSTGRES_USER: rubix
-      POSTGRES_PASSWORD: rubix-dev
-      POSTGRES_DB: warehouse
-    ports:
-      - "127.0.0.1:5434:5432"
-    volumes:
-      - rubix_warehouse_data:/home/postgres/pgdata/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U rubix -d warehouse"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
 volumes:
   rubix_postgres_data:
-  rubix_warehouse_data:

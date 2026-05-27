@@ -110,7 +110,7 @@ describe("bootstrapExtensions", () => {
       failed: 0,
     });
     expect(importRemote).toHaveBeenCalledWith(
-      "http://host/api/v1/extensions/com.acme.a/ui/ui/remoteEntry.js",
+      "http://host/api/v1/extensions/com.acme.a/ui/remoteEntry.js",
     );
     expect(mgr.getRemote("com.acme.a")).toBeDefined();
     expect(mgr.getRemote("com.acme.b")).toBeUndefined();

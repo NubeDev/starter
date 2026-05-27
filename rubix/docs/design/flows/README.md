@@ -78,7 +78,7 @@ the next agent restart.
 | `com.rubix.weekly-report`          | Goal 6 — periodic analytics     |
 | `com.rubix.dashboard-assistant`    | Goal 1 — dashboard authoring    |
 | `com.rubix.flow-programmer`        | Goal 2 — flow editing assistant |
-| `com.rubix.clickhouse-ruler`       | Goal 3 — ad-hoc analytics       |
+| `com.rubix.warehouse-ruler`        | Goal 3 — ad-hoc analytics       |
 | `com.rubix.user-admin`             | Goal 4 — user / tenant admin    |
 
 All six register at boot; all six surface as MCP tools.

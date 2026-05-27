@@ -1,6 +1,24 @@
+import * as React from 'react'
 import { StrictMode } from 'react'
+import * as ReactDOM from 'react-dom'
+import * as ReactDOMClient from 'react-dom/client'
+import * as ReactJsxRuntime from 'react/jsx-runtime'
 import { createRoot } from 'react-dom/client'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
+
+// Publish React onto window globals BEFORE any dynamic `import()` of
+// an extension remoteEntry bundle. Extensions externalise `react` /
+// `react-dom` / `react/jsx-runtime` and resolve them through the
+// importmap declared in `index.html`, which forwards to the shims in
+// `public/shims/*` — those shims read from these globals. Without
+// this publishing step, the first extension to load throws
+// "globalThis.__rubixReact is unset".
+;(globalThis as unknown as Record<string, unknown>).__rubixReact = React
+;(globalThis as unknown as Record<string, unknown>).__rubixReactDom = ReactDOM
+;(globalThis as unknown as Record<string, unknown>).__rubixReactDomClient =
+  ReactDOMClient
+;(globalThis as unknown as Record<string, unknown>).__rubixReactJsxRuntime =
+  ReactJsxRuntime
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools'
 import { AuthProvider, StarterClientProvider } from '@nube/starter-client-react'
@@ -14,6 +32,7 @@ import { ThemeProvider } from '@/components/theme/theme-provider'
 import { I18nProvider } from '@/i18n/provider'
 import { getRubixClient, getStarterClient } from '@/lib/client'
 import { getExtensionHost } from '@/lib/extension-host'
+import { ExtensionAutoLoader } from '@/lib/extension-autoloader'
 import { LoginRoute } from '@/routes/login'
 import '@xyflow/react/dist/style.css'
 import '@nube/starter-ui-flow/styles.css'
@@ -68,6 +87,7 @@ createRoot(document.getElementById('root')!).render(
             <ThemeProvider>
               <I18nProvider>
                 <AuthProvider unauthenticatedSlot={<LoginRoute />}>
+                  <ExtensionAutoLoader />
                   <RouterProvider router={router} />
                 </AuthProvider>
               </I18nProvider>

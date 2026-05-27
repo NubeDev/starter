@@ -1,6 +1,6 @@
 [package]
 name = "rubix-tools"
-description = "Rubix-specific tool implementations (impl starter_spi::Tool) grouped by the six goals: dashboard, user, flow_ops, clickhouse, system, analytics. Per SCOPE R5: dispatch logic only — DTOs and descriptors live in rubix-spi."
+description = "Rubix-specific tool implementations (impl starter_spi::Tool) grouped by the six goals: dashboard, user, flow_ops, warehouse, system, analytics. Per SCOPE R5: dispatch logic only — DTOs and descriptors live in rubix-spi."
 version.workspace = true
 edition.workspace = true
 license.workspace = true
@@ -36,8 +36,8 @@ rubix-flows               = { workspace = true }
 # History side of the warehouse. Pulled in so the disk verb can
 # write a `system_disk_history` row after a successful probe and
 # so the dispatcher can re-export the `MigrationRunner` consumers
-# need to apply `rubix/0002_history`. No direct `clickhouse` crate
-# dep — that lives transitively under starter-store-warehouse.
+# need to apply `rubix/0002_history`. TimescaleDB-backed via
+# starter-store-warehouse (see ADR-004); no direct engine crate dep.
 starter-store-warehouse = { workspace = true }
 sqlx                      = { workspace = true, features = ["postgres", "json", "time"] }
 uuid                      = { workspace = true }
@@ -88,8 +88,8 @@ chrono             = { workspace = true }
 # the tool exercise the same NodeBehavior::invoke seam production
 # uses. See docs/design/tools/.
 starter-ai         = { workspace = true, features = ["testing"] }
-# testcontainers-based ClickHouse harness for the analytics.query
-# integration test. See tests/analytics_query_test.rs.
+# testcontainers-based warehouse (TimescaleDB) harness for the
+# analytics.query integration test. See tests/analytics_query_test.rs.
 starter-store-warehouse = { workspace = true, features = ["testing"] }
 starter-flow       = { workspace = true }
 starter-flow-nodes = { workspace = true, features = ["ai-agent", "tool-call", "counter"] }

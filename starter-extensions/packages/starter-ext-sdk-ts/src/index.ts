@@ -38,6 +38,7 @@ export {
 export {
   SlotContextProvider,
   useSlotContext,
+  useExtensionRoute,
   type SlotContext,
   type SlotContextProviderProps,
   type HostThemeMode,

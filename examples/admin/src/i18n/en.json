@@ -153,7 +153,7 @@
   "home.feature.sdui.title": "Server-driven UI",
   "home.feature.sdui.body": "Design once, render on web, mobile, and panel. No native rebuild required.",
   "home.feature.warehouse.eyebrow": "04 · Warehouse",
-  "home.feature.warehouse.title": "ClickHouse history",
+  "home.feature.warehouse.title": "Warehouse history",
   "home.feature.warehouse.body": "Sub-second queries across millions of points and tags. Tags are Bool|Str — L1 to L3 marts on demand.",
   "home.feature.authz.eyebrow": "05 · AuthZ",
   "home.feature.authz.title": "Per-user gating",

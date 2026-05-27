@@ -22,16 +22,122 @@ runtime:
 # `starter-extensions/crates/starter-ext-spi/src/manifest.rs::Contributes`).
 # Field shapes follow the upstream SPI's `#[serde(deny_unknown_fields)]`
 # structs — a typo here is a load-time error, never a silent ignore.
+# Runtime grants. Operator-supplied allowlists; an empty list is a
+# legal neutralised grant (the extension loads but every call refuses).
+# The cleaner-rule adapter runs the `customer_quality` tool inside the
+# host process, so even the rule path needs `warehouse_write` only for
+# the ingest tool, not for the rule itself.
+capabilities:
+  - kind: warehouse_write
+    # Unprefixed names — the host resolves each to
+    # `com_rubix_example__<name>` before issuing the INSERT.
+    tables: [customers, products]
+  - kind: warehouse_read
+    # The read grant cross-checks against each invoked template's
+    # `TemplateSpec.tables` allowlist (i.e. an extension that asks
+    # for `events` from a template whose grant was `[samples]` is
+    # refused at the supervisor gate).
+    tables:
+      - com_rubix_example__customers
+      - com_rubix_example__products
+
 contributes:
   # MCP-style tools (consumed by `starter-ext-mcp-adapter`).
-  # The handler body lives in `process/src/main.rs`; the tool id is
-  # mangled into the handler name `handle_com_rubix_example_echo` by
-  # the `register_process_main!` macro.
+  # The handler body lives in `process/src/main.rs`; each tool id is
+  # mangled into the handler name (e.g. `com.rubix.example.csv_ingest`
+  # → `handle_com_rubix_example_csv_ingest`) by the
+  # `register_process_main!` macro.
   tools:
+    # Reference: byte-for-byte echo. Kept so the smoke tests around
+    # this extension keep working.
     - id: com.rubix.example.echo
       input_schema: kinds/echo_in.json
       output_schema: kinds/echo_out.json
       description_file: kinds/echo.md
+
+    # Ingest datablist-shaped CSV rows into the extension-owned
+    # warehouse tables (customers, products). The host stamps
+    # `tenant_id` before the INSERT so extensions cannot spoof
+    # cross-tenant writes.
+    - id: com.rubix.example.csv_ingest
+      input_schema: kinds/csv_ingest_in.json
+      output_schema: kinds/csv_ingest_out.json
+      description_file: kinds/csv_ingest.md
+
+    # Per-row data-quality detector for the customers table. The
+    # cleaner's `ToolAnomalyRule` adapter dispatches this tool with
+    # `{ row, window_tail }` and interprets the response as a
+    # RuleOutcome — see contributes.anomaly_rules[] below.
+    - id: com.rubix.example.customer_quality
+      input_schema: kinds/customer_quality_in.json
+      output_schema: kinds/customer_quality_out.json
+      description_file: kinds/customer_quality.md
+
+  # Warehouse tables the extension owns. The host issues
+  # `CREATE TABLE IF NOT EXISTS com_rubix_example__<name>` at boot
+  # for each entry, prepending a `tenant_id String` column at
+  # position 0 (the extension must NOT declare it).
+  #
+  # Column types are passed verbatim into DDL — target Postgres /
+  # TimescaleDB via starter-store-warehouse (see ADR-004).
+  warehouse_tables:
+    # NOTE: the host's `boot::extension_tables` runs DDL against
+    # Postgres (see crates/rubix-agent/src/boot/extension_tables.rs).
+    # Column types are passed verbatim into the CREATE TABLE — use
+    # Postgres type names here.
+    - name: customers
+      order_by: [customer_id]
+      columns:
+        - { name: customer_id,       type: "TEXT" }
+        - { name: first_name,        type: "TEXT" }
+        - { name: last_name,         type: "TEXT" }
+        - { name: company,           type: "TEXT" }
+        - { name: city,              type: "TEXT" }
+        - { name: country,           type: "TEXT" }
+        - { name: email,             type: "TEXT" }
+        - { name: subscription_date, type: "DATE" }
+        - { name: website,           type: "TEXT" }
+        - { name: ingested_at,       type: "TIMESTAMPTZ",     default: "now()" }
+
+    - name: products
+      order_by: [internal_id]
+      columns:
+        - { name: internal_id,  type: "TEXT" }
+        - { name: name,         type: "TEXT" }
+        - { name: brand,        type: "TEXT" }
+        - { name: category,     type: "TEXT" }
+        - { name: price,        type: "DOUBLE PRECISION" }
+        - { name: currency,     type: "TEXT" }
+        - { name: stock,        type: "INTEGER" }
+        - { name: availability, type: "TEXT" }
+        - { name: color,        type: "TEXT" }
+        - { name: size,         type: "TEXT" }
+        - { name: ingested_at,  type: "TIMESTAMPTZ",     default: "now()" }
+
+  # Named warehouse-read templates the extension adds to the host's
+  # `TemplateRegistry`. R7: the host loads `params_schema` + `sql_file`
+  # at commit time; the SQL body is captured into `TemplateSpec.sql`
+  # for audit and is NEVER templated at runtime — the host integration
+  # crate (`rubix-agent`) is the resolver.
+  warehouse_templates:
+    - name: com.rubix.example.customers_by_country
+      params_schema: kinds/customers_by_country_params.json
+      sql_file: kinds/customers_by_country.sql
+      tables: [com_rubix_example__customers]
+    - name: com.rubix.example.products_low_stock
+      params_schema: kinds/products_low_stock_params.json
+      sql_file: kinds/products_low_stock.sql
+      tables: [com_rubix_example__products]
+
+  # Anomaly-rule contributions (Phase B5). Each entry names a tool
+  # the same extension exports above; the host wraps the dispatch in
+  # a `ToolAnomalyRule` adapter and appends it to the cleaner's
+  # `RuleRegistry` AFTER the three builtins (NaN → Spike → Stuck), so
+  # this rule only sees rows that passed the numeric-quality gates.
+  anomaly_rules:
+    - id: com.rubix.example.customer_quality
+      tool_id: com.rubix.example.customer_quality
+      priority: 100
 
   # `SKILL.md` bundle root(s). Each entry names a directory whose
   # immediate children are `<id>/SKILL.md` bundles. The adapter folds
@@ -51,13 +157,29 @@ contributes:
 
   # Module-Federation UI entry. The `entry` path is served by
   # `starter-ext-server` at `/extensions/<id>/ui/*`. The `name` of
-  # each `exposes[]` row must match a component registered through
-  # `handle.register({ components: { ... } })` in `ui/remoteEntry.js`.
-  # `slot: main` lines up with `<ExtensionSlot id="main"/>` on the
-  # rubix-frontend `/extensions` route.
+  # each `exposes[]` row must match an export from the federated
+  # module declared in `ui-src/vite.config.ts`.
+  #
+  # `slot:` is a free-form string in the starter SPI — the rubix
+  # frontend renders the following slots today:
+  #   - `main`    → `<ExtensionSlot id="main"/>` on the /extensions route
+  #   - `sidebar` → `<ExtensionSlot id="sidebar"/>` inside `AppSidebar`
   ui:
     entry: ui/remoteEntry.js
     exposes:
       - name: Main
         module: "./Main"
         slot: main
+      # Nav-tree contribution mounted into `<ExtensionSlot id="sidebar-nav"/>`.
+      # Renders the `Extension Name -> tab -> nested tab` hierarchy in
+      # the AppSidebar alongside the host's static / live NavGroups.
+      - name: NavTree
+        module: "./NavTree"
+        slot: sidebar-nav
+      # Compact panel mounted into `<ExtensionSlot id="sidebar"/>` in
+      # `rubix/frontend/src/components/layout/app-sidebar.tsx`. The
+      # `slot` field is a free-form string in the starter SPI — any
+      # value works as long as the host renders a matching slot.
+      - name: Sidebar
+        module: "./Sidebar"
+        slot: sidebar

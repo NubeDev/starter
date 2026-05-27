@@ -60,9 +60,11 @@ use crate::meta::{ExtensionDispatch, ExtensionMeta};
 /// child process exits non-zero and the supervisor records a crash.
 pub async fn run_process_main<E, Wrap>(instance: E, wrap_ctx: Wrap) -> Result<()>
 where
-    E: ExtensionDispatch,
+    E: ExtensionDispatch + Send + Sync + 'static,
+    E::Ctx: Send + 'static,
     Wrap: Fn(CtxInner) -> E::Ctx,
 {
+    let instance = std::sync::Arc::new(instance);
     let mut stdin = BufReader::new(tokio::io::stdin());
     let mut stdout = tokio::io::stdout();
 
@@ -253,34 +255,49 @@ where
                     .get("_meta")
                     .and_then(|m| serde_json::from_value::<FrameMeta>(m.clone()).ok())
                     .and_then(|m| m.caller);
-                let per_call_ctx = wrap_ctx(ctx_inner.clone().with_caller(caller));
-                // The handler runs synchronously *and* may invoke
-                // `HostRpc::call_sync`, which uses
-                // `block_in_place` + `block_on` internally. Run
-                // the dispatch on `spawn_blocking` so the
-                // multi-thread runtime can keep servicing the
-                // writer task (which we need to drain frames
-                // *out* of) and the response demultiplexer
-                // (which we need to drain frames *back in*).
-                let instance_ref = &instance;
-                let result = tokio::task::block_in_place(|| {
-                    instance_ref.dispatch_tool(&tool_id, &per_call_ctx, params)
+                let per_call_ctx = wrap_ctx(ctx_inner.clone().with_caller(caller.clone()));
+                // Dispatch on `spawn_blocking` so the read loop keeps
+                // reading frames while the handler runs. Critical for
+                // host-RPC categories (`warehouse.write`, etc.) whose
+                // `HostRpc::call_sync` blocks on a response that this
+                // very read loop must demultiplex — running the
+                // handler inline would deadlock the call.
+                let instance_arc = std::sync::Arc::clone(&instance);
+                let writer_tx_handler = writer_tx.clone();
+                let tool_id_for_task = tool_id.clone();
+                let id_for_task = id.clone();
+                tokio::task::spawn_blocking(move || {
+                    // Bind the caller on the blocking task so any
+                    // outbound `HostRpc::call_sync` in the handler
+                    // body re-stamps `_meta.caller` on the wire.
+                    let dispatch = || {
+                        instance_arc.dispatch_tool(
+                            &tool_id_for_task,
+                            &per_call_ctx,
+                            params,
+                        )
+                    };
+                    let result = match caller {
+                        Some(c) => crate::caller_local::scope_sync(c, dispatch),
+                        None => dispatch(),
+                    };
+                    let resp = match result {
+                        Ok(v) => json!({
+                            "jsonrpc": JSONRPC_VERSION,
+                            "id": id_for_task,
+                            "result": v,
+                        }),
+                        Err(e) => json!({
+                            "jsonrpc": JSONRPC_VERSION,
+                            "id": id_for_task,
+                            "error": e,
+                        }),
+                    };
+                    // Best-effort: a dropped writer means the
+                    // process is already winding down; the
+                    // supervisor will observe the closed pipe.
+                    let _ = writer_tx_handler.send(resp);
                 });
-                let resp = match result {
-                    Ok(v) => json!({
-                        "jsonrpc": JSONRPC_VERSION,
-                        "id": id,
-                        "result": v,
-                    }),
-                    Err(e) => json!({
-                        "jsonrpc": JSONRPC_VERSION,
-                        "id": id,
-                        "error": e,
-                    }),
-                };
-                if let Err(e) = send_frame(resp) {
-                    break Err(e);
-                }
             }
             other => {
                 let err = Error::validation(format!("unknown method {other:?}"));
