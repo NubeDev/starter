@@ -93,13 +93,18 @@ export function createMockServer(initial: Partial<MockServerState> = {}): MockSe
 }
 
 function pathOf(url: string): string {
+  let path: string;
   try {
-    return new URL(url).pathname;
+    path = new URL(url).pathname;
   } catch {
-    // Relative URL — strip query string and return as-is.
     const q = url.indexOf("?");
-    return q === -1 ? url : url.slice(0, q);
+    path = q === -1 ? url : url.slice(0, q);
   }
+  // StarterClient prepends `/api/v1` by default; the mock's routes are
+  // declared without that prefix so they work whether the client uses
+  // the default prefix or an empty one.
+  if (path.startsWith("/api/v1/")) return path.slice("/api/v1".length);
+  return path;
 }
 
 function parseJson<T>(body: BodyInit | null | undefined): T | undefined {

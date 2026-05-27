@@ -26,6 +26,8 @@ alice
 align
 align_self
 amount
+analyticstemplate
+analyticstemplatemap
 annotations
 area
 args
@@ -36,11 +38,13 @@ as_array
 as_builtin_str
 as_deref
 as_f64
+as_mut
 as_ref
 as_slice
 as_str
 assert
 assert_eq
+assign_synthetic_id
 auth_subject
 author
 auto
@@ -69,6 +73,7 @@ body
 bool
 breakpoints
 brightness
+btreemap
 bucket_ms
 button
 cancel_label
@@ -131,6 +136,7 @@ danglingbind
 data
 datapoint
 date
+date_range
 datefield
 daterange
 daterangepreset
@@ -206,6 +212,7 @@ floor
 floorplan
 flow
 flow_canvas
+fnmut
 forbidden
 forbidden_round_trip
 form
@@ -237,10 +244,12 @@ history
 hours
 icon
 impl
+index
 info
 intent
 intentpill
 into
+ir_portable_variants
 ir_version
 is_empty
 is_false
@@ -248,12 +257,14 @@ is_global
 is_none
 is_null
 is_phase_1_2
+is_portable
 is_some
 is_true
 issues
 item
 items
 iter
+iter_mut
 json
 json_schema_emits
 json_shape
@@ -339,6 +350,8 @@ page_size
 page_state
 page_state_key
 panic
+params
+parent_id
 partialeq
 past
 patch
@@ -368,6 +381,7 @@ range_ms
 rate
 read_binding
 reason
+ref_picker
 refpicker
 regex
 relativetime
@@ -467,6 +481,8 @@ subscribe
 subtitle
 super
 surface
+synth
+synthetic_id
 table
 table_row_actions_round_trip
 table_with_source_and_columns
@@ -515,6 +531,7 @@ tree
 treeitem
 trigger
 true
+ts_field
 type
 type_mismatch
 typemismatch
@@ -537,9 +554,13 @@ v2_compatibility_flags
 v2_compatible
 validate
 value
+value_field
 values
 variant
 vars
+visit
+visit_bindings
+visit_json_strings
 warn
 warning
 weather

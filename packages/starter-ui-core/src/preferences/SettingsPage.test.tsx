@@ -5,7 +5,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import type { ReactNode } from "react";
+import type { JSX, ReactNode } from "react";
 import { StarterClient } from "@nube/starter-client-ts";
 
 import { PreferencesProvider } from "./provider.js";
