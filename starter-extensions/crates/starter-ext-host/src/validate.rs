@@ -129,6 +129,35 @@ fn check_namespace(m: &Manifest) -> Result<()> {
             )));
         }
     }
+    // `contributes.anomaly_rules[].id` per
+    // `rubix/docs/scope/extensions-north-star` row B5. Same shape
+    // as `contributes.nodes[].kind` + an extra rejection of
+    // `builtin.*` so a manifest cannot shadow the in-process
+    // detectors the cleaner short-circuits.
+    for e in &m.contributes.anomaly_rules {
+        if e.id.split('.').next() == Some("builtin") {
+            return Err(Error::validation(format!(
+                "contributes.anomaly_rules[].id {:?} begins with rule-host-reserved \
+                 prefix \"builtin\" (rubix/docs/scope/extensions-north-star row B5)",
+                e.id
+            )));
+        }
+        if let Some(prefix) = first_reserved_prefix(&e.id) {
+            return Err(Error::validation(format!(
+                "contributes.anomaly_rules[].id {:?} begins with host-reserved \
+                 prefix {:?} (rubix/docs/scope/extensions-north-star row B5)",
+                e.id, prefix
+            )));
+        }
+        if !owner.owns(&e.id) {
+            return Err(Error::validation(format!(
+                "contributes.anomaly_rules[].id {:?} escapes the extension's \
+                 namespace {:?} (rubix/docs/scope/extensions-north-star row B5)",
+                e.id,
+                owner.as_str()
+            )));
+        }
+    }
     Ok(())
 }
 
@@ -236,6 +265,82 @@ contributes:
       input_schema: a.json
       output_schema: b.json
       description_file: c.md
+"#,
+        );
+        let err = validate_manifest(&m).unwrap_err();
+        assert!(matches!(err, Error::Validation(_)));
+    }
+
+    #[test]
+    fn anomaly_rule_id_ok_for_dotted_descendant() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.weather
+version: 0.1.0
+display_name: "W"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  anomaly_rules:
+    - id: com.acme.weather.spike
+      tool_id: com.acme.weather.spike_check
+"#,
+        );
+        validate_manifest(&m).unwrap();
+    }
+
+    #[test]
+    fn anomaly_rule_id_rejects_sibling_namespace() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.weather
+version: 0.1.0
+display_name: "W"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  anomaly_rules:
+    - id: com.other.thing.spike
+      tool_id: com.other.thing.spike_check
+"#,
+        );
+        let err = validate_manifest(&m).unwrap_err();
+        assert!(matches!(err, Error::Validation(_)));
+    }
+
+    #[test]
+    fn anomaly_rule_id_rejects_builtin_prefix() {
+        // A manifest must not be able to shadow `builtin.nan` / etc.
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.x
+version: 0.1.0
+display_name: "X"
+runtime: { kind: builtin, crate_name: x }
+contributes:
+  anomaly_rules:
+    - id: builtin.nan
+      tool_id: com.acme.x.tool
+"#,
+        );
+        let err = validate_manifest(&m).unwrap_err();
+        assert!(matches!(err, Error::Validation(_)));
+    }
+
+    #[test]
+    fn anomaly_rule_id_rejects_starter_prefix() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.x
+version: 0.1.0
+display_name: "X"
+runtime: { kind: builtin, crate_name: x }
+contributes:
+  anomaly_rules:
+    - id: starter.foo.rule
+      tool_id: com.acme.x.tool
 "#,
         );
         let err = validate_manifest(&m).unwrap_err();

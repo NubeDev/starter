@@ -1,0 +1,45 @@
+# Bundled rubix flow — B4 cleaner driver.
+#
+# A schedule trigger fires every 60 seconds; the tool-call node
+# invokes `rubix.cleaner.tick`, which reads a 60-second window of L1
+# `samples`, applies the builtin anomaly rules (NaN → Spike → Stuck),
+# and writes the result to `samples_l2`. The host's tool-call seed
+# adapter auto-injects `tool_input.tick_epoch_ms` from wall-clock so
+# the tool can derive its `[from, to)` window without YAML help.
+#
+# Output is funnelled to the log node so operators can `tail` the
+# tick stats (`rows_read`, `rows_written`, `by_quality`, etc.) at
+# /api/v1/flows/com.rubix.cleaner/events.
+#
+# See rubix/docs/scope/extensions-north-star/PROGRESS.md §"Phase B"
+# for the surrounding plan.
+
+id: com.rubix.cleaner
+description: |
+  L1 → L2 cleaner. Fires every 60s; runs one `rubix.cleaner.tick`
+  pass; logs the resulting stats. The tool reads a 60s window of
+  `samples`, applies the builtin anomaly rules, and writes the
+  cleaned rows to `samples_l2`.
+trigger: schedule
+cron_expr: "*/60 * * * * *"
+
+nodes:
+  - id: tick
+    kind: starter.flow.trigger.schedule
+    config:
+      cron_expr: "*/60 * * * * *"
+  - id: clean
+    kind: starter.flow.tool-call
+    config:
+      tool_id: "rubix.cleaner.tick"
+      # tick_epoch_ms is auto-injected by the host seed adapter;
+      # the tool derives [from, to) = [tick - 60_000, tick).
+      tool_input: {}
+  - id: emit
+    kind: starter.flow.log
+    config:
+      level: info
+
+links:
+  - { from: "tick.fire",    to: "clean.in" }
+  - { from: "clean.output", to: "emit.value" }

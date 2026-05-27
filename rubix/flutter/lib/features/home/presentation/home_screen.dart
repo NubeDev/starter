@@ -4,6 +4,9 @@ import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
 import 'package:rubix_flutter/core/theme/app_theme.dart';
+import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
+import 'package:rubix_flutter/features/auth/data/auth_state.dart';
+import 'package:rubix_flutter/features/connections/data/connection_credentials_store.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 import 'package:rubix_flutter/features/home/presentation/home_controller.dart';
 import 'package:rubix_flutter/shared/widgets/error_panel.dart';
@@ -21,6 +24,8 @@ class HomeScreen extends ConsumerWidget {
     final activeAsync = ref.watch(activeConnectionProvider);
     final healthAsync = ref.watch(agentHealthProvider);
     final userAsync = ref.watch(currentUserProvider);
+    final authState = ref.watch(authControllerProvider).value;
+    final unauthenticated = authState is AuthUnauthenticated;
 
     return RefreshIndicator(
       onRefresh: () async {
@@ -56,23 +61,26 @@ class HomeScreen extends ConsumerWidget {
 
           _SectionHeader(label: l.currentUserSection),
           const SizedBox(height: 10),
-          userAsync.when(
-            loading: () => const Padding(
-              padding: EdgeInsets.symmetric(vertical: 24),
-              child: LoadingIndicator(),
-            ),
-            error: (e, _) => ErrorPanel(
-              message: l.currentUserError,
-              onRetry: () => ref.invalidate(currentUserProvider),
-            ),
-            data: (user) => NubeCard(
-              child: _InfoRow(
-                icon: LucideIcons.user,
-                title: user.email,
-                subtitle: user.role,
+          if (unauthenticated)
+            _SignInPanel(reason: authState.reason)
+          else
+            userAsync.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.symmetric(vertical: 24),
+                child: LoadingIndicator(),
+              ),
+              error: (e, _) => ErrorPanel(
+                message: l.currentUserError,
+                onRetry: () => ref.invalidate(currentUserProvider),
+              ),
+              data: (user) => NubeCard(
+                child: _InfoRow(
+                  icon: LucideIcons.user,
+                  title: user.email,
+                  subtitle: user.role,
+                ),
               ),
             ),
-          ),
           const SizedBox(height: 28),
 
           _SectionHeader(label: l.activeConnectionSection),
@@ -264,6 +272,166 @@ class _PillSkeleton extends StatelessWidget {
         color: Theme.of(context).nube.surface2,
         borderRadius: BorderRadius.circular(6),
       ),
+    );
+  }
+}
+
+class _SignInPanel extends ConsumerWidget {
+  const _SignInPanel({this.reason});
+  final String? reason;
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final t = Theme.of(context).nube;
+    return NubeCard(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.userX, size: 16, color: t.muted),
+              const SizedBox(width: 8),
+              Text(
+                'Not signed in',
+                style: TextStyle(
+                  color: t.text,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+          if (reason != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              reason!,
+              style: TextStyle(color: t.muted, fontSize: 12),
+            ),
+          ],
+          const SizedBox(height: 12),
+          NubeButton(
+            label: 'Sign in',
+            icon: LucideIcons.logIn,
+            size: NubeButtonSize.sm,
+            onPressed: () => showDialog<void>(
+              context: context,
+              builder: (_) => const _SignInDialog(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SignInDialog extends ConsumerStatefulWidget {
+  const _SignInDialog();
+
+  @override
+  ConsumerState<_SignInDialog> createState() => _SignInDialogState();
+}
+
+/// Dev defaults — mirror the constants in add_connection_screen.dart so
+/// re-signing in on a connection whose creds got lost (e.g. the old
+/// flutter_secure_storage web blob became unreadable after the switch
+/// to localStorage) is one click.
+const _devEmail = 'op@example.com';
+const _devPassword = 'rubix-dev-passwd';
+
+class _SignInDialogState extends ConsumerState<_SignInDialog> {
+  final _emailController = TextEditingController(text: _devEmail);
+  final _passwordController = TextEditingController(text: _devPassword);
+  bool _busy = false;
+  String? _error;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _submit() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) {
+      setState(() => _error = 'Email and password are required');
+      return;
+    }
+    setState(() {
+      _busy = true;
+      _error = null;
+    });
+    try {
+      await ref.read(authControllerProvider.notifier).login(
+            email: email,
+            password: password,
+          );
+      // Persist creds against the active connection so subsequent
+      // launches auto-login.
+      final active = ref.read(activeConnectionProvider).value;
+      if (active != null) {
+        await ref.read(connectionCredentialsStoreProvider).write(
+              active.id,
+              ConnectionCredentials(email: email, password: password),
+            );
+      }
+      if (!mounted) return;
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _busy = false;
+        _error = e.toString();
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Sign in'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          NubeField(
+            controller: _emailController,
+            label: 'Email',
+            prefixIcon: LucideIcons.mail,
+            keyboardType: TextInputType.emailAddress,
+            autocorrect: false,
+          ),
+          const SizedBox(height: 12),
+          NubeField(
+            controller: _passwordController,
+            label: 'Password',
+            obscureText: true,
+            prefixIcon: LucideIcons.lock,
+          ),
+          if (_error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              _error!,
+              style: TextStyle(
+                color: Theme.of(context).nube.danger,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ],
+      ),
+      actions: [
+        TextButton(
+          onPressed: _busy ? null : () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        NubeButton(
+          label: 'Sign in',
+          size: NubeButtonSize.sm,
+          loading: _busy,
+          onPressed: _busy ? null : _submit,
+        ),
+      ],
     );
   }
 }

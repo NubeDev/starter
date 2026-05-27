@@ -92,6 +92,7 @@ pub async fn build_flow_registry(
             pg_pool.clone(),
             None,
             cfg.blob_root.clone(),
+            None,
         ),
     };
 

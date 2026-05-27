@@ -120,14 +120,14 @@ impl ChangeTail for PgListenTail {
                         // log and continue. The safety tick will
                         // still fire and pick up anything we
                         // missed during the reconnect window.
-                        tracing::warn!(error = %e, "changelog listen tail recv failed");
+                        tracing::warn!(error = ?e, "changelog listen tail recv failed");
                         tokio::time::sleep(Duration::from_secs(1)).await;
                         continue;
                     }
                 }
 
                 if let Err(e) = drain_since(&pool, &mut cursor, &tx).await {
-                    tracing::warn!(error = %e, "changelog listen tail drain failed");
+                    tracing::warn!(error = ?e, "changelog listen tail drain failed");
                 }
             }
         });

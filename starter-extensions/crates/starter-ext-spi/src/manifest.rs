@@ -388,6 +388,20 @@ pub struct Contributes {
     /// schema can't host directly.
     #[serde(default)]
     pub warehouse_tables: Vec<ContributeWarehouseTable>,
+    /// Anomaly-rule contributions. Each entry names a tool the
+    /// extension exports (under its reverse-DNS namespace); the host
+    /// wraps the tool dispatch in a [`ToolAnomalyRule`](
+    /// `https://docs.rs/`) adapter and appends it to the cleaner's
+    /// `RuleRegistry` after the builtins. See [`ContributeAnomalyRule`].
+    ///
+    /// Per
+    /// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+    /// row B5 (Phase B): the lynchpin contribution for the
+    /// Use-Case-B "custom rules" goal — extensions ship their own
+    /// detectors that plug into the same per-row pipeline the
+    /// builtin NaN/Spike/Stuck rules use.
+    #[serde(default)]
+    pub anomaly_rules: Vec<ContributeAnomalyRule>,
 }
 
 /// One `contributes.skills[]` entry — a directory of `SKILL.md`
@@ -529,6 +543,58 @@ pub struct TableColumn {
     /// `DEFAULT` in the column DDL.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub default: Option<String>,
+}
+
+/// One `contributes.anomaly_rules[]` entry — a per-row anomaly
+/// detector the extension contributes to the host's cleaner
+/// pipeline.
+///
+/// The host wraps each entry's `tool_id` (which must resolve in the
+/// host's tool registry — typically a verb the *same* extension
+/// also contributes via `contributes.tools[]`) inside a
+/// `ToolAnomalyRule` adapter and appends it to the cleaner's
+/// `RuleRegistry` after the three builtins (NaN → Spike → Stuck).
+/// Per-tick the cleaner invokes the tool with a `{ row,
+/// window_tail }` payload and interprets the JSON response as a
+/// `RuleOutcome` (`{ outcome: "ok" }` / `{ outcome: "flag",
+/// quality, note? }` / `{ outcome: "drop" }`).
+///
+/// Per
+/// [`docs/scope/extensions-north-star`](../../../../rubix/docs/scope/extensions-north-star/README.md)
+/// row B5 (Phase B): the contribution slot is the only way an
+/// extension extends the cleaner's per-row pipeline — there is no
+/// runtime `register_rule` SDK call. Builtin and extension rules
+/// share the same `AnomalyRule` trait so the cleaner doesn't know
+/// (or care) where a given rule's logic actually lives.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ContributeAnomalyRule {
+    /// Stable rule id. Must be the extension id or a dotted
+    /// descendant (R4 namespace ownership). Host-reserved prefixes
+    /// (`starter.`, `sys.`, `builtin.`) are rejected at load time
+    /// — `builtin.*` is reserved for the in-process detectors so
+    /// the cleaner can short-circuit them without consulting the
+    /// tool registry. Logged on every fire so operators can trace
+    /// which rule produced a tag.
+    pub id: String,
+
+    /// Tool id the host dispatches against for each row. Must be a
+    /// reverse-DNS string the host's tool registry can resolve.
+    /// Typical shape is the same extension contributing a tool
+    /// under `contributes.tools[]` whose `id` matches this field;
+    /// the host does not require this — a rule can dispatch to any
+    /// tool the supervisor permits, including builtins.
+    pub tool_id: String,
+
+    /// Optional ordering hint. Lower values run earlier. When
+    /// absent the host appends in declaration order *after* the
+    /// builtins so a manifest cannot accidentally shadow
+    /// `builtin.nan`. Two entries with the same priority preserve
+    /// declaration order. Negative priorities are accepted but
+    /// still run after the builtins (the builtins are not
+    /// addressable from this field).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub priority: Option<i32>,
 }
 
 /// The extension's i18n block.
@@ -1158,6 +1224,47 @@ contributes:
         assert_eq!(m.contributes.grpc.len(), 1);
         assert_eq!(m.contributes.workers.len(), 1);
         assert!(m.contributes.ui.is_some());
+    }
+
+    #[test]
+    fn anomaly_rules_round_trip_with_priority() {
+        let yaml = r#"
+v: 1
+id: com.acme.weather
+version: 0.0.1
+display_name: "Weather"
+runtime: { kind: builtin, crate_name: weather }
+contributes:
+  anomaly_rules:
+    - id: com.acme.weather.spike
+      tool_id: com.acme.weather.spike_check
+      priority: 10
+    - id: com.acme.weather.stale
+      tool_id: com.acme.weather.stale_check
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert_eq!(m.contributes.anomaly_rules.len(), 2);
+        assert_eq!(m.contributes.anomaly_rules[0].id, "com.acme.weather.spike");
+        assert_eq!(
+            m.contributes.anomaly_rules[0].tool_id,
+            "com.acme.weather.spike_check"
+        );
+        assert_eq!(m.contributes.anomaly_rules[0].priority, Some(10));
+        assert_eq!(m.contributes.anomaly_rules[1].priority, None);
+    }
+
+    #[test]
+    fn anomaly_rules_default_to_empty() {
+        let yaml = r#"
+v: 1
+id: com.acme.no-rules
+version: 0.0.1
+display_name: "NoRules"
+runtime: { kind: builtin, crate_name: no_rules }
+contributes: {}
+"#;
+        let m: Manifest = serde_yaml::from_str(yaml).unwrap();
+        assert!(m.contributes.anomaly_rules.is_empty());
     }
 
     #[test]

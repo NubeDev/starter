@@ -13,7 +13,8 @@ use serde::{Deserialize, Serialize};
 use utoipa::ToSchema;
 
 use crate::password;
-use crate::session::{issue, IssuedSession, SESSION_COOKIE};
+use crate::role::Role;
+use crate::session::{issue_for_tenant, IssuedSession, SESSION_COOKIE};
 
 use super::state::AuthState;
 
@@ -115,7 +116,30 @@ pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest
         }
     }
 
-    let issued: IssuedSession = match issue(state.sessions.as_ref(), &user.id).await {
+    // Resolve the tenant this session binds to. Mirrors the
+    // `POST /auth/token` resolution rules (see `token::resolve_tenant`)
+    // so cookie- and bearer-authenticated callers see the same
+    // principal `tenant_id` on identical inputs:
+    //   * 0 memberships + Admin role  -> "*" (super-admin sentinel)
+    //   * 0 memberships + non-admin   -> NULL (downstream tenant-
+    //                                     scoped routes reject with
+    //                                     `no_tenant_binding`)
+    //   * 1 membership                -> that tenant
+    //   * N>1 memberships + Admin     -> "*"
+    //   * N>1 memberships + non-admin -> first by created_at
+    //                                     (picker UX is future work)
+    //   * tenants store unwired       -> NULL (legacy single-tenant
+    //                                     deployments rely on
+    //                                     downstream defaults)
+    let bound_tenant = resolve_login_tenant(&state, &user.id, &user.role).await;
+
+    let issued: IssuedSession = match issue_for_tenant(
+        state.sessions.as_ref(),
+        &user.id,
+        bound_tenant.as_deref(),
+    )
+    .await
+    {
         Ok(i) => i,
         Err(e) => {
             tracing::warn!(target: "starter_auth_users", error = %e, "session issue failed");
@@ -147,4 +171,32 @@ pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest
         headers.append(SET_COOKIE, v);
     }
     resp
+}
+
+/// Decide which tenant a freshly-issued cookie session binds to.
+/// Returns `None` if the session should remain unbound (the user
+/// has no memberships and is not a global Admin, or the tenants
+/// store is not wired). See the call site for the full table.
+async fn resolve_login_tenant(state: &AuthState, user_id: &str, role: &Role) -> Option<String> {
+    let tenants = state.tenants.as_ref()?;
+    let memberships = match tenants.memberships_for_user(user_id).await {
+        Ok(m) => m,
+        Err(e) => {
+            tracing::warn!(
+                target: "starter_auth_users",
+                error = %e,
+                "memberships lookup failed during login; issuing unbound session",
+            );
+            return None;
+        }
+    };
+    if matches!(role, Role::Admin) {
+        // Global admins always get the super-admin sentinel so they
+        // see every tenant's resources. Cookie + bearer paths agree.
+        return Some("*".to_string());
+    }
+    match memberships.len() {
+        0 => None,
+        _ => Some(memberships[0].tenant_id.clone()),
+    }
 }

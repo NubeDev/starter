@@ -81,6 +81,11 @@ pub enum TenantStoreError {
 /// Reserved slugs — rejected by both the application and the
 /// DB-level CHECK constraint. Adding a new entry here is one
 /// migration + this list bump.
+///
+/// `system` was here historically but is now a real tenant row
+/// seeded by migration `0007_system_tenant.sql`; the UNIQUE
+/// constraint on `slug` prevents duplicates, so it does not need
+/// to live in this list.
 pub const RESERVED_SLUGS: &[&str] = &[
     "admin",
     "api",
@@ -95,7 +100,6 @@ pub const RESERVED_SLUGS: &[&str] = &[
     "mcp",
     "tools",
     "default",
-    "system",
 ];
 
 /// Returns true if `slug` is reserved (in the static list or

@@ -233,6 +233,26 @@ impl DashboardStore for PgDashboardStore {
         Ok(rows.into_iter().map(Into::into).collect())
     }
 
+    async fn list_all_active(
+        &self,
+        filter: &ListFilter,
+    ) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
+        let sql = format!(
+            "SELECT {SELECT_COLS} FROM dashboards_definitions
+              WHERE superseded_at IS NULL
+                AND ($1::text IS NULL OR owner_principal = $1)
+                AND (cardinality($2::text[]) = 0 OR tags && $2::text[])
+              ORDER BY created_at DESC"
+        );
+        let rows: Vec<Row> = sqlx::query_as(&sql)
+            .bind(filter.owner.as_deref())
+            .bind(&filter.tags_any)
+            .fetch_all(self.pool.sqlx())
+            .await
+            .map_err(backend)?;
+        Ok(rows.into_iter().map(Into::into).collect())
+    }
+
     async fn mark_superseded(
         &self,
         tenant_id: &str,

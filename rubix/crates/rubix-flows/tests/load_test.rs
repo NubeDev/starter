@@ -14,6 +14,8 @@ const EXPECTED_FLOW_IDS: &[&str] = &[
     "com.rubix.warehouse-ruler",
     "com.rubix.user-admin",
     "com.rubix.tick-counter",
+    "com.rubix.cleaner",
+    "com.rubix.data-flow.weekly-report",
 ];
 
 /// Bundled flows that do NOT root at `ai-agent` and therefore opt
@@ -21,8 +23,10 @@ const EXPECTED_FLOW_IDS: &[&str] = &[
 /// `tick-counter` flow is the first such flow: it roots at
 /// `starter.flow.trigger.schedule` and chains into the counter +
 /// log node kinds, exercising the always-on flow runtime + the
-/// new `NodeStateStore` seam end to end.
-const NON_AI_AGENT_FLOW_IDS: &[&str] = &["com.rubix.tick-counter"];
+/// new `NodeStateStore` seam end to end. The Phase B `cleaner`
+/// flow follows the same shape (schedule trigger → tool-call →
+/// log), driving the `rubix.cleaner.tick` tool on a 60s cadence.
+const NON_AI_AGENT_FLOW_IDS: &[&str] = &["com.rubix.tick-counter", "com.rubix.cleaner"];
 
 fn sorted(v: impl IntoIterator<Item = String>) -> Vec<String> {
     let mut out: Vec<String> = v.into_iter().collect();

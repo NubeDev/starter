@@ -73,13 +73,6 @@ const DASHBOARD_WRITE_TOOL_IDS: &[&str] = &[
 /// `DASHBOARD_PAGE_KIND` constant in `rubix-tools`.
 const DASHBOARD_PAGE_KIND: &str = "rubix.dashboard.page";
 
-/// Conventional tenant id used in single-tenant / laptop dev
-/// deployments. The bundled seed data is written under this
-/// tenant, and the rubix login flow does not yet bind sessions to
-/// a tenant. Mirrors the constant of the same name in
-/// `boot::mcp::agent_node`; both must move together.
-const DEFAULT_TENANT: &str = "system";
-
 /// State threaded into the SSE handler.
 #[derive(Clone)]
 pub struct DashboardEventsState {
@@ -150,49 +143,47 @@ async fn events(
     let Some(Extension(principal)) = principal else {
         return (StatusCode::UNAUTHORIZED, "authentication required").into_response();
     };
-    // Super-admins (`tenant_id == "*"`) see every tenant; a
-    // tenant-less principal (current rubix login default) falls
-    // back to `DEFAULT_TENANT` so the snapshot AND the delta
-    // filter both target the conventional single-tenant id the
-    // seed data + chat surface use.
-    let tenant_filter = principal
-        .tenant_id
-        .clone()
-        .or_else(|| Some(DEFAULT_TENANT.to_owned()));
+    // Tenant resolution:
+    //   `Some("*")` — global Admin; sees every tenant (cross-tenant
+    //                 listing via `list_all_active`).
+    //   `Some(t)`   — tenant-scoped principal; filtered to `t`.
+    //   `None`      — pre-Phase-7 session with no tenant binding.
+    //                 Treated as super-admin for read so existing
+    //                 unbound sessions keep working until they
+    //                 expire and re-bind via login.
+    let tenant_filter = principal.tenant_id.clone();
 
     // -- 2. Snapshot. We always emit it first so the client never
     //       sees an empty sidebar on connect and so a reconnect
     //       resync is free.
-    let snapshot_items = match tenant_filter.as_deref() {
-        Some("*") | None => {
-            // Super-admin sentinel — listing across every tenant
-            // would require iterating `TenantStore`; defer until
-            // a real super-admin UX needs it. Deltas still flow.
-            Vec::new()
+    let snapshot_rows = match tenant_filter.as_deref() {
+        Some("*") | None => state.store.list_all_active(&ListFilter::default()).await,
+        Some(tenant) => {
+            state
+                .store
+                .list_active(tenant, &ListFilter::default())
+                .await
         }
-        Some(tenant) => state
-            .store
-            .list_active(tenant, &ListFilter::default())
-            .await
-            .map(|rows| {
-                rows.into_iter()
-                    .map(|r| SnapshotItem {
-                        page_id: r.page_id,
-                        title: r.title,
-                        revision_id: r.revision_id,
-                        tags: r.tags,
-                    })
-                    .collect()
-            })
-            .unwrap_or_else(|e| {
-                warn!(
-                    target: "rubix.routes.dashboard_events",
-                    error = %e,
-                    "snapshot list_active failed; sending empty snapshot",
-                );
-                Vec::new()
-            }),
     };
+    let snapshot_items: Vec<SnapshotItem> = snapshot_rows
+        .map(|rows| {
+            rows.into_iter()
+                .map(|r| SnapshotItem {
+                    page_id: r.page_id,
+                    title: r.title,
+                    revision_id: r.revision_id,
+                    tags: r.tags,
+                })
+                .collect()
+        })
+        .unwrap_or_else(|e| {
+            warn!(
+                target: "rubix.routes.dashboard_events",
+                error = %e,
+                "snapshot list failed; sending empty snapshot",
+            );
+            Vec::new()
+        });
     let snapshot_frame = Frame::Snapshot {
         items: snapshot_items,
     };
@@ -205,7 +196,7 @@ async fn events(
         Err(e) => {
             warn!(
                 target: "rubix.routes.dashboard_events",
-                error = %e,
+                error = ?e,
                 "ChangeTail::subscribe failed",
             );
             return (StatusCode::SERVICE_UNAVAILABLE, "tail unavailable").into_response();

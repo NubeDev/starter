@@ -127,6 +127,35 @@ pub fn timescale_migrations() -> Vec<(&'static str, Vec<String>)> {
                     .to_string(),
             ],
         ),
+        (
+            "0006_samples_l2",
+            vec![
+                "CREATE TABLE IF NOT EXISTS samples_l2 (\n\
+                 tenant_id    TEXT NOT NULL,\n\
+                 entity_id    TEXT NOT NULL,\n\
+                 ts           TIMESTAMPTZ NOT NULL,\n\
+                 value_num    DOUBLE PRECISION,\n\
+                 quality      TEXT NOT NULL DEFAULT 'ok',\n\
+                 rule_id      TEXT,\n\
+                 tags         JSONB NOT NULL DEFAULT '{}'::jsonb\n\
+                 )"
+                .to_string(),
+                format!(
+                    "SELECT create_hypertable('samples_l2', 'ts', \
+                     chunk_time_interval => INTERVAL '{L2_CHUNK_INTERVAL}', \
+                     if_not_exists => TRUE)"
+                ),
+                "CREATE INDEX IF NOT EXISTS samples_l2_entity_idx \
+                 ON samples_l2 (entity_id, ts DESC)"
+                    .to_string(),
+                "CREATE INDEX IF NOT EXISTS samples_l2_quality_idx \
+                 ON samples_l2 (quality, ts DESC)"
+                    .to_string(),
+                "CREATE INDEX IF NOT EXISTS samples_l2_tags_gin \
+                 ON samples_l2 USING GIN (tags)"
+                    .to_string(),
+            ],
+        ),
     ]
 }
 
@@ -138,6 +167,7 @@ pub const TIMESCALE_MIGRATIONS: &[&str] = &[
     "0003_samples",
     "0004_events",
     "0005_documents",
+    "0006_samples_l2",
 ];
 
 /// Apply every migration in order. Idempotent: every statement

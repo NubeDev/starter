@@ -62,7 +62,7 @@ async fn fresh_pool() -> Pool {
 
 fn audited_router(pool: Pool, subject: Option<&'static str>) -> Router {
     let bundle = Arc::new(rubix_spi::i18n::rubix_bundle().expect("rubix bundle parses"));
-    let tools = build_tool_registry(90, None, None, None);
+    let tools = build_tool_registry(90, None, None, None, None);
     let inner = tools_router(ToolsState::new(tools, bundle));
 
     let recorder: Arc<dyn ChangeRecorder> = Arc::new(SqliteChangeRecorder::new(pool));

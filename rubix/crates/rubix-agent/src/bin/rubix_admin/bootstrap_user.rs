@@ -15,10 +15,21 @@ use anyhow::{anyhow, Result};
 use clap::Args as ClapArgs;
 use starter_auth_users::admin::{create_admin, AdminError};
 use starter_auth_users::migration::postgres_migration_source;
-use starter_auth_users::store::{PgUserStore, UserStore};
+use starter_auth_users::store::{
+    MembershipRecord, PgTenantStore, PgUserStore, TenantStore, TenantStoreError, UserStore,
+};
 use starter_auth_users::Role;
 use starter_store_postgres::{migrate, pool::connect};
 use tracing::{info, warn};
+
+/// The system tenant id every Admin user gets membership in. Matches
+/// `BUNDLED_TENANT` in `rubix-spi/src/dashboard/store.rs` — bundled
+/// resources (dashboards, flows) live under this tenant and the
+/// session-binding rules surface them to Admins via the super-admin
+/// sentinel `"*"`. Granting explicit membership here also lets a
+/// non-`*` session backstop work if the super-admin path is ever
+/// removed.
+const SYSTEM_TENANT_ID: &str = "system";
 
 /// CLI flags. `--password` / `--email` override the env vars when
 /// both are present (CLI wins).
@@ -55,8 +66,9 @@ pub async fn run(args: Args) -> Result<()> {
         .await
         .map_err(|e| anyhow!("apply starter_auth_users migrations: {e}"))?;
 
-    let store = PgUserStore::new(pool);
-    match create_admin(&store, &email, &password, Role::Admin).await {
+    let store = PgUserStore::new(pool.clone());
+    let tenants = PgTenantStore::new(pool);
+    let user_id = match create_admin(&store, &email, &password, Role::Admin).await {
         Ok(id) => {
             info!(
                 target: "rubix.admin.bootstrap",
@@ -65,18 +77,53 @@ pub async fn run(args: Args) -> Result<()> {
                 role = "admin",
                 "admin user created",
             );
+            id
+        }
+        Err(AdminError::Conflict) => reconcile_existing(&store, &email).await?,
+        Err(e) => return Err(anyhow!("create_admin failed: {e}")),
+    };
+    grant_system_membership(&tenants, &user_id, &email).await
+}
+
+/// Idempotently grant the admin user membership in the `system`
+/// tenant. The system tenant is seeded by migration
+/// `0007_system_tenant.sql`; `add_member` is a no-op on conflict
+/// at the PK so re-running `bootstrap-user` is safe.
+async fn grant_system_membership(
+    tenants: &PgTenantStore,
+    user_id: &str,
+    email: &str,
+) -> Result<()> {
+    let row = MembershipRecord {
+        tenant_id: SYSTEM_TENANT_ID.to_string(),
+        user_id: user_id.to_string(),
+        role: "admin".to_string(),
+    };
+    match tenants.add_member(&row).await {
+        Ok(()) => {
+            info!(
+                target: "rubix.admin.bootstrap",
+                user_id = %user_id,
+                email = %email,
+                tenant_id = SYSTEM_TENANT_ID,
+                "granted system-tenant admin membership",
+            );
             Ok(())
         }
-        Err(AdminError::Conflict) => reconcile_existing(&store, &email).await,
-        Err(e) => Err(anyhow!("create_admin failed: {e}")),
+        // `PgTenantStore::add_member` maps a `(tenant_id, user_id)`
+        // PK unique-violation onto `SlugConflict("<tenant>:<user>")`;
+        // re-bootstrap of the same admin is a no-op.
+        Err(TenantStoreError::SlugConflict(_)) => Ok(()),
+        Err(e) => Err(anyhow!("grant system membership: {e}")),
     }
 }
 
 /// On Conflict, re-read the existing row. Same email + admin role →
-/// log and exit 0. Different role → hard error; the operator must
+/// log and return the user id (so the caller can still reconcile
+/// memberships). Different role → hard error; the operator must
 /// resolve manually rather than have the CLI silently escalate or
 /// demote.
-async fn reconcile_existing(store: &PgUserStore, email: &str) -> Result<()> {
+async fn reconcile_existing(store: &PgUserStore, email: &str) -> Result<String> {
     let existing = store
         .find_by_email(email)
         .await
@@ -93,7 +140,7 @@ async fn reconcile_existing(store: &PgUserStore, email: &str) -> Result<()> {
             role = "admin",
             "admin user already exists; bootstrap is a no-op",
         );
-        Ok(())
+        Ok(existing.id)
     } else {
         Err(anyhow!(
             "user {email} already exists with role {:?}; refusing to overwrite",

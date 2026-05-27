@@ -9,15 +9,23 @@ This crate exists because the failure mode we built it for —
 inside the wedged runtime. The defense has to be an OS-level peer
 process.
 
-> **Status (2026-05-27):** The root cause of the recurring wedge was
-> diagnosed via tokio-console and fixed in
-> [`crates/starter-flow/src/graph.rs:262-274`][graph-fix]. See
-> [§ Root cause](#root-cause-diagnosed-2026-05-27) below. The
-> watchdog remains useful as a defense against future runtime
-> wedges of unrelated origin — that's its job — but it's no longer
-> compensating for a known bug.
+> **Status (2026-05-27, afternoon update):** The earlier diagnosis
+> below — that a `let _enter = span.enter()` across an `.await` in
+> [`crates/starter-flow/src/graph.rs`][graph-fix] was the root
+> cause — turned out to be **incorrect / incomplete**. After that
+> "fix" landed at 11:53, the agent still wedged within ~19 minutes
+> on the same futex signature. A second investigation (see
+> [§ Real root cause](#real-root-cause-2026-05-27-afternoon) below)
+> identified the actual culprit: a Postgres pool-connection leak
+> in the `/api/v1/dashboards/events` SSE route. Fix applied at
+> ~13:00 in [`rubix/crates/rubix-agent/src/main.rs:573-606`][de-fix].
+> The `rubix-auth` pool no longer bursts; the wedge cascade is
+> broken. A secondary leak (the listener itself doesn't release
+> its own dedicated-pool connection promptly on SSE disconnect)
+> remains as follow-up.
 
 [graph-fix]: ../../../crates/starter-flow/src/graph.rs
+[de-fix]: ../rubix-agent/src/main.rs
 
 ---
 
@@ -117,6 +125,122 @@ The minimal change is to simply not enter the span at all —
 `span.record(...)` below works without entering.
 
 100 tests still pass (incl. all `write_slot_batch_*` tests).
+
+### Real root cause (2026-05-27 afternoon)
+
+After the `graph.rs` change above landed at 11:53, the agent wedged
+again at 12:37 (~19 min uptime, post-fix binary confirmed by mtime).
+A second investigation reproduced the wedge with the producer flow
+**completely disabled** (`data-flow-producer.yaml` renamed aside),
+proving the producer/`write_slot_batch` path was not the trigger.
+
+What the second investigation found in the log immediately before
+the wedge:
+
+```
+WARN rubix.boot.pool_telemetry: pool near saturation
+     pool="rubix-auth" size=16 idle=0 in_use=16 max=16
+WARN rubix.routes.dashboard_events: ChangeTail::subscribe failed
+     error=internal error
+WARN sqlx::pool::acquire: acquired connection, but time to acquire
+     exceeded slow threshold acquired_after_secs=27.159
+WARN sqlx::pool::acquire: acquired_after_secs=25.251
+... ×19 more, descending from 25s to 15s
+```
+
+Twenty tasks had been parked in `sqlx::Pool::acquire().await` for
+15–27 seconds. The "futex_do_wait on every worker" signature in
+`/proc` is the same shape whether the lock is a `tracing` RwLock
+**or the semaphore inside `sqlx::Pool`** — the original diagnosis
+mis-identified which one.
+
+#### Where the leak lives
+
+[`crates/starter-changelog-postgres/src/tail_listen.rs:81`](../../../crates/starter-changelog-postgres/src/tail_listen.rs)
+calls:
+
+```rust
+let mut listener = PgListener::connect_with(self.pool.sqlx()).await?;
+```
+
+`PgListener::connect_with(&pool)` **permanently consumes one
+connection from the pool** for the lifetime of the listener. The
+spawned task at lines 102-135 then sits in a `listener.try_recv()`
+loop forever holding that connection.
+
+The team already knew this — explicit comments in
+[`boot/flow_notify.rs:84`](../rubix-agent/src/boot/flow_notify.rs)
+("Dedicated tiny pool: PgListener pins one connection for LISTEN")
+and
+[`boot/pool_telemetry.rs:60-64`](../rubix-agent/src/boot/pool_telemetry.rs)
+("the LISTEN listener uses max=2 with one connection pinned
+forever by PgListener") show the pattern was understood. The
+`flow_notify` listener was given its own dedicated 2-connection
+pool for exactly this reason. The **dashboard SSE listener wired
+in [`rubix-agent/src/main.rs:573`](../rubix-agent/src/main.rs)
+missed that mitigation** — it was constructed against the shared
+16-connection auth pool.
+
+So every dashboard sidebar SSE subscription (one per browser tab,
+one per reconnect, plus whatever the frontend opens implicitly)
+permanently consumed one slot of the 16-connection `rubix-auth`
+pool. Once 16 were held, every auth-gated route — every
+`with_principal`-wrapped handler in the agent — blocked on
+`pool.acquire().await`. The 32 tokio workers piled up on those
+acquires, parked on the sqlx pool semaphore's internal futex, and
+the runtime wedged.
+
+The previous "span guard" theory was on a code path that just
+happened to also be parked on the auth pool. Misled by symptom
+similarity to a real footgun documented elsewhere in the file.
+
+#### Fix applied
+
+Mirror the `flow_notify` pattern — give the dashboard SSE
+listener its own dedicated tiny pool, isolated from the shared
+auth pool. [`rubix-agent/src/main.rs:573-606`](../rubix-agent/src/main.rs):
+
+```rust
+let listen_inner = PgPoolOptions::new()
+    .max_connections(2)
+    .connect(dsn).await?;
+let listen_pool = Pool::from_sqlx(listen_inner);
+let _t_dash_listen =
+    boot::pool_telemetry::spawn(listen_pool.sqlx().clone(), "rubix-dash-listen");
+let tail = Arc::new(PgListenTail::new(listen_pool));
+let store = Arc::new(PgDashboardStore::new(pool.clone())); // unchanged
+```
+
+After restart with this fix:
+
+- `rubix-auth` pool stays at `in_use=0..4 / 16` — never bursts.
+- `/livez` healthy through the prior 14-18 min MTBF window and
+  beyond. No futex deadlock.
+- The dashboard SSE leak is now **bounded and visible**: the new
+  `rubix-dash-listen` pool saturates at 2/2 within a minute and
+  the operator sees `ChangeTail::subscribe failed` warnings as
+  the 3rd+ subscriber's acquire times out. The agent stays up.
+
+#### What this exposed about the SSE feature
+
+With the cascade severed, two distinct problems are now visible:
+
+1. **The leak itself.** [`tail_listen.rs:102-135`](../../../crates/starter-changelog-postgres/src/tail_listen.rs)
+   checks `tx.is_closed()` only at the top of each loop iteration,
+   and the loop's `tokio::select!` sleeps for `safety_interval`
+   (default 30s) on each idle tick. After an SSE client
+   disconnects it can take **up to 30 seconds** before the
+   spawned task notices and releases its pinned connection. If
+   the frontend reconnects faster than that, "old" listeners pile
+   up.
+
+2. **The subscription rate.** With a fresh agent, no operator
+   interaction, the new tiny pool was saturated within 60s — so
+   either the frontend opens multiple SSE connections per page,
+   or a reconnect loop is firing. Investigate before bumping
+   pool size as a band-aid.
+
+These are tracked in [§ Future work](#future-work-still-open-after-the-fix).
 
 ### Why no `acquire_timeout` saves us
 
@@ -379,54 +503,90 @@ tokio-console http://127.0.0.1:6669
 
 ---
 
-## Verification protocol for the graph.rs fix
+## Verification protocol
 
-The fix went in at 11:53:22 on 2026-05-27. Prior MTBF was
-**14-18 minutes**. Verification is straightforward:
+The `graph.rs` "span guard" fix at 11:53:22 on 2026-05-27 **did not
+hold** — the agent wedged again at 12:37 on the same signature.
+The real fix landed at ~13:00 in
+[`rubix-agent/src/main.rs:573-606`](../rubix-agent/src/main.rs)
+(dedicated `rubix-dash-listen` pool for `PgListenTail`).
 
-1. `make CONSOLE=1 restart`
-2. Wait 30+ minutes (≥2× prior MTBF).
-3. If still healthy → fix confirmed.
-4. Take a `/tmp/console-dump/target/release/console-dump
-   http://127.0.0.1:6669 8` snapshot. Compare task/resource/op
-   counts to the baseline at boot (~140 / 120 / 120). If they're
-   flat (within 10%), the leak is gone.
+**Quick verification (cascade is broken):**
 
-The pre-fix progression was:
-- t+ 4min:  148 tasks / 120 res / 120 ops
-- t+ 7min:  152 / 120 / 120
-- t+10min:  158 / 120 / 120
-- t+12min:  162 / 120 / 120
-- t+14min:  176 / 120 / 120
-- t+18min (wedge): 552 / 1300 / 6060
+1. `make restart` (no console rebuild needed).
+2. `grep 'rubix-auth' /tmp/rubix-agent.log | tail` — the auth pool
+   should stay in low single digits (`in_use=0..4`) and **never**
+   emit `pool near saturation`. Pre-fix it would burst to
+   `in_use=16` within ~5-19 minutes.
+3. `/livez` should keep returning 200 indefinitely past the prior
+   14-18 min MTBF window.
 
-If the post-fix curve stays at ~150 / 120 / 120 indefinitely, the
-diagnosis was correct and the fix complete.
+**Full verification (with tokio-console, leak count optional):**
+
+1. `make CONSOLE=1 restart`.
+2. Wait 30+ minutes.
+3. Take a `console-dump http://127.0.0.1:6669 8` snapshot.
+   Compare task/resource/op counts to baseline. Pre-wedge growth
+   curve was 148 → 552 tasks over 18 minutes; post-fix should be
+   flat near baseline (~150 / 120 / 120).
+
+**What the fix does NOT do:** it does not stop the SSE listener
+from leaking its own dedicated-pool connection — the leak is just
+isolated to a 2-connection blast radius. Expect to see
+`ChangeTail::subscribe failed` warnings as the 3rd+ concurrent
+dashboard subscriber's acquire times out. The agent stays up; the
+dashboard feature is degraded under load. See item 1 in
+[§ Future work](#future-work-still-open-after-the-fix).
 
 ---
 
 ## Future work (still open after the fix)
 
-1. **Cron expression interpretation.** The `*/5 * * * * *` schedule
+1. **Tighten the `PgListenTail` drop latency.** Today the spawned
+   task in
+   [`crates/starter-changelog-postgres/src/tail_listen.rs:98-135`](../../../crates/starter-changelog-postgres/src/tail_listen.rs)
+   only notices a dropped subscriber when the `safety_interval`
+   sleep (default 30s) wins the `tokio::select!`. SSE
+   reconnect-faster-than-30s = listener pile-up = `rubix-dash-listen`
+   pool saturates. Fix: select on `tx.closed()` alongside the
+   `try_recv` + safety sleep so connections are returned within ~1s
+   of client disconnect.
+2. **Investigate the SSE subscription rate.** Fresh agent, no
+   operator interaction → 3+ concurrent dashboard subscribers
+   within 60s. Either the frontend opens multiple SSE per page or
+   a reconnect loop is firing. Diagnose before bumping
+   `max_connections` on `rubix-dash-listen` as a band-aid.
+3. **Audit every other `PgListener::connect_with(shared_pool)`
+   site.** Today there are two known consumers — `dashboard_events`
+   (now fixed) and `flow_notify` (already dedicated). Any future
+   listener built against the shared 16-conn pool re-introduces
+   the cascade. Consider making `PgListenTail::new` reject
+   non-tiny pools at construction (debug_assert `max <= 4`) so
+   the mistake fails loudly during boot, not silently 19 minutes
+   later.
+4. **Revert or re-evaluate the `graph.rs` "fix".** The change at
+   [`crates/starter-flow/src/graph.rs:262-274`][graph-fix] was
+   landed on a wrong diagnosis. Inspect whether the `span.enter()`
+   call it removed was actually harmful — the original `tracing`
+   footgun about span guards across `.await` is real, but the
+   specific call site in `write_slot_batch` had no `.await` in
+   the guard's scope. Either way, the change is defensible on
+   tracing-hygiene grounds; just don't credit it with fixing the
+   wedge.
+5. **Cron expression interpretation.** The `*/5 * * * * *` schedule
    in producer.yaml is intended as "every 5 seconds" but actually
    fires once per minute (cron parser interprets it as "second-5
    of every minute"). Worth fixing for correctness even though it
    no longer correlates with the deadlock.
-2. **Coalesce the producer multi-fire.** Three identical
+6. **Coalesce the producer multi-fire.** Three identical
    `log.invoke` lines within microseconds is wasteful regardless
    of whether it's a wedge trigger; the rubix seed adapter should
    emit once per tick. Tracked in
    [`rubix/docs/sessions/data-flow/2026-05-26-data-flow-01-producer-multi-fire.md`](../../docs/sessions/data-flow/2026-05-26-data-flow-01-producer-multi-fire.md).
-3. **`SO_REUSEADDR` on the agent listener.** Would shrink the
+7. **`SO_REUSEADDR` on the agent listener.** Would shrink the
    `make stop` polling window from 5s to ~0s and make the race
    protection in the Makefile unnecessary.
-4. **Production systemd unit.** When the agent runs under systemd
+8. **Production systemd unit.** When the agent runs under systemd
    in prod, ship a `rubix-watchdog.service` peer unit with
    `Restart=on-failure` + `RestartSec=5` for both, with the
    agent's `Restart=no` so only the watchdog drives lifecycle.
-5. **Audit the rest of `starter-flow` for the same anti-pattern.**
-   The fix only addressed `write_slot_batch`. Run
-   `grep -rn 'let _enter\|let _g.*enter()' crates/starter-flow*`
-   and verify every site either (a) has no `.await` in scope OR
-   (b) uses `.instrument(span).await` instead. The single-write
-   and batch-write fixes show this footgun is easy to introduce.

@@ -351,6 +351,30 @@ impl DashboardStore for InMemoryDashboardStore {
             .collect())
     }
 
+    async fn list_all_active(
+        &self,
+        filter: &rubix_spi::dashboard::ListFilter,
+    ) -> std::result::Result<
+        Vec<rubix_spi::dashboard::DashboardRevision>,
+        rubix_spi::dashboard::DashboardStoreError,
+    > {
+        Ok(self
+            .rows
+            .lock()
+            .unwrap()
+            .iter()
+            .filter(|r| r.superseded_at.is_none())
+            .filter(|r| {
+                filter.tags_any.is_empty() || r.tags.iter().any(|t| filter.tags_any.contains(t))
+            })
+            .filter(|r| match &filter.owner {
+                None => true,
+                Some(o) => &r.owner_principal == o,
+            })
+            .cloned()
+            .collect())
+    }
+
     async fn mark_superseded(
         &self,
         tenant_id: &str,

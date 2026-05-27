@@ -49,6 +49,8 @@ use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
+use rubix_tools::cleaner::adapter::{build_registry_with_contributions, ContributedRule};
+use rubix_tools::cleaner::tool::CleanerTickTool;
 use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use rubix_tools::warehouse::mart_create::WarehouseMartCreateTool;
 use rubix_tools::warehouse::mart_drop::WarehouseMartDropTool;
@@ -58,6 +60,7 @@ use rubix_tools::warehouse::rule_list::WarehouseRuleListTool;
 use rubix_tools::warehouse::rule_write::WarehouseRuleWriteTool;
 use rubix_tools::warehouse::tables_list::WarehouseTablesListTool;
 use starter_authz::StaticRegistry;
+use starter_ext_host::ExtensionRegistry;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::NodeBehavior;
@@ -72,6 +75,7 @@ pub fn build_tool_registry(
     pg_pool: Option<Pool>,
     warehouse: Option<WarehouseClient>,
     _blob_root: Option<String>,
+    extensions: Option<&Arc<ExtensionRegistry>>,
 ) -> Vec<Arc<dyn Tool>> {
     let disk = DiskTool::new().with_insights_threshold(insights_disk_threshold);
 
@@ -152,10 +156,59 @@ pub fn build_tool_registry(
         tools.push(Arc::new(WarehouseRuleWriteTool::new(wh.clone())));
         tools.push(Arc::new(WarehouseMartCreateTool::new(wh.clone())));
         tools.push(Arc::new(WarehouseMartDropTool::new(wh.clone())));
-        tools.push(Arc::new(WarehouseRetentionSetTool::new(wh)));
+        tools.push(Arc::new(WarehouseRetentionSetTool::new(wh.clone())));
+        // Cleaner tick — driven by the bundled `com.rubix.cleaner`
+        // flow on a 60s schedule. Registry is the three builtins
+        // (NaN → Spike → Stuck) plus one `ToolAnomalyRule` per
+        // `contributes.anomaly_rules[]` entry across every Validated
+        // extension. Contributed rules whose `tool_id` does not
+        // resolve in the just-built `tools` list are dropped with a
+        // warn log inside the builder.
+        let contributions = collect_anomaly_rule_contributions(extensions);
+        let rule_registry = build_registry_with_contributions(&tools, contributions);
+        info!(
+            target: "rubix.registry",
+            rule_count = rule_registry.len(),
+            rules = ?rule_registry.ids().collect::<Vec<_>>(),
+            "cleaner rule registry built",
+        );
+        tools.push(Arc::new(CleanerTickTool::new(wh, rule_registry)));
     }
 
     tools
+}
+
+/// Project every Validated extension's
+/// `contributes.anomaly_rules[]` entry into the
+/// rubix-tools-internal [`ContributedRule`] shape. Declaration
+/// order is preserved across extensions in the order they appear
+/// in the sealed registry; the builder will re-sort by
+/// `(priority, declaration index)`.
+///
+/// Exposed for the Phase B gate integration test
+/// (`tests/extension_anomaly_rule_gate_test.rs`) so the test can
+/// drive the same projection the boot path uses without
+/// re-implementing it.
+pub fn collect_anomaly_rule_contributions(
+    extensions: Option<&Arc<ExtensionRegistry>>,
+) -> Vec<ContributedRule> {
+    let Some(registry) = extensions else {
+        return Vec::new();
+    };
+    let mut out = Vec::new();
+    for record in registry.iter_validated() {
+        let Some(manifest) = record.manifest.as_ref() else {
+            continue;
+        };
+        for entry in &manifest.contributes.anomaly_rules {
+            out.push(ContributedRule {
+                id: entry.id.clone(),
+                tool_id: entry.tool_id.clone(),
+                priority: entry.priority,
+            });
+        }
+    }
+    out
 }
 
 fn builtin_kind_behaviors() -> Vec<Arc<dyn NodeBehavior>> {
@@ -203,7 +256,7 @@ mod tests {
     use super::*;
 
     fn names() -> Vec<String> {
-        build_tool_registry(90, None, None, None)
+        build_tool_registry(90, None, None, None, None)
             .iter()
             .map(|t| t.definition().name)
             .collect()

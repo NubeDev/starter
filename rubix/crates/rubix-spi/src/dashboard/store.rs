@@ -185,6 +185,24 @@ pub trait DashboardStore: Send + Sync + 'static {
         filter: &ListFilter,
     ) -> Result<Vec<DashboardRevision>, DashboardStoreError>;
 
+    /// Return every live row across all tenants, filtered by
+    /// [`ListFilter`]. The cross-tenant variant of
+    /// [`Self::list_active`]; used by callers that already carry a
+    /// super-admin (`tenant_id == "*"`) authorisation context
+    /// (e.g. the dashboard-events SSE handler when the principal
+    /// is a global Admin).
+    ///
+    /// The default implementation returns an empty list — backends
+    /// that want to surface dashboards to super-admins (Postgres,
+    /// the in-memory store) override it. Test fakes that never see
+    /// a super-admin caller can rely on the default.
+    async fn list_all_active(
+        &self,
+        _filter: &ListFilter,
+    ) -> Result<Vec<DashboardRevision>, DashboardStoreError> {
+        Ok(Vec::new())
+    }
+
     /// Mark every live row for `(tenant_id, page_id)` as
     /// superseded *without* inserting a replacement (used by the
     /// `rubix.dashboard.delete` tool body). Returns the number of

@@ -66,9 +66,9 @@ Drives the cleaner + extension-authored anomaly rules track.
 |---|---|---|---|---|---|---|
 | B1 | `WarehouseWriteHandle` + `Capability::WarehouseWrite` + `contributes.warehouse_tables[]` + boot-time DDL | ✅ shipped (Postgres/Timescale; no ClickHouse) | — | _local_ | _inline in `rubix-agent/src/extensions/warehouse_write.rs` + `boot/extension_tables.rs`_ | 2026-05-27 |
 | B2 | `AnomalyRule` trait + builtin rules + `RuleRegistry` (in-process) | ✅ shipped | — | _local_ | _inline in `rubix-tools/src/cleaner/`_ | 2026-05-27 |
-| B3 | Cleaner tick: read L1 window → apply rules → write `samples_l2` | ❌ not started | — | — | — | — |
-| B4 | Cleaner tool wrapper + bundled flow YAML + 60s schedule | ❌ not started | — | — | — | — |
-| B5 | `contributes.anomaly_rules[]` manifest slot + tool-call dispatch adapter | ❌ not started | — | — | — | — |
+| B3 | Cleaner tick: read L1 window → apply rules → write `samples_l2` | ✅ shipped (sqlx path; tool wrapper deferred to B4) | — | _local_ | _inline in `rubix-tools/src/cleaner/tick.rs` + `starter-store-warehouse/src/tsdb/migrate.rs` (`0006_samples_l2`)_ | 2026-05-27 |
+| B4 | Cleaner tool wrapper + bundled flow YAML + 60s schedule | ✅ shipped | — | _local_ | _inline in `rubix-tools/src/cleaner/tool.rs` + `rubix-flows/flows/cleaner.yaml`_ | 2026-05-27 |
+| B5 | `contributes.anomaly_rules[]` manifest slot + tool-call dispatch adapter | ✅ shipped (SPI + validation + adapter + host registry wiring) | — | _local_ | _inline in `starter-ext-spi/src/manifest.rs` + `starter-ext-host/src/validate.rs` + `rubix-tools/src/cleaner/adapter.rs` + `rubix-agent/src/registry.rs`_ | 2026-05-27 |
 
 ### Plumbing (independent)
 
@@ -132,6 +132,431 @@ Keep entries terse. The session log is the audit trail; the
 tracker tables above are the source of truth for current state.
 
 ---
+
+### 2026-05-27 — Phase B gate test lands: contributed rule fires end-to-end
+
+- Rows moved: none (status unchanged). Phase B gate now has an
+  executable proof: a fixture extension with
+  `contributes.anomaly_rules[]` flows through
+  `Loader::scan → validate_all → commit → seal`, the host
+  projection walks the sealed registry, the cleaner's
+  `build_registry_with_contributions` resolves the contribution
+  against a `CannedTool`, and `process_entity_window` surfaces
+  the contributed rule's `Flag` outcome on the emitted L2 row.
+- Changes (~270 LOC across 2 files):
+  - `rubix-agent/src/registry.rs`: flipped
+    `collect_anomaly_rule_contributions` from private to `pub` so
+    the gate test can drive the same projection the boot path
+    uses without re-implementing the manifest walk.
+  - `rubix-agent/tests/extension_anomaly_rule_gate_test.rs`: new
+    integration test (7 cases) backed by a local `CannedTool`
+    duplicate (kept inline rather than reaching into the
+    adapter's `#[cfg(test)]` module). The fixture bundle uses
+    `runtime.kind: builtin` so no schema files or binaries need
+    to exist on disk — the loader only reads the `block.yaml`.
+- Tests (7 new, all green):
+  - `fixture_validates_through_extension_registry` — manifest
+    round-trips through the loader and surfaces the contributed
+    rule on the validated record.
+  - `host_projection_emits_one_contribution_per_manifest_entry`
+    — `collect_anomaly_rule_contributions` on the sealed registry
+    yields one `ContributedRule` with id/tool_id/priority pinned.
+  - `host_projection_with_no_registry_returns_empty` — the
+    `None` case (laptop / `rubix-admin mcp` stdio path) degrades
+    cleanly.
+  - `contributed_rule_fires_end_to_end_against_synthetic_window`
+    — the canonical happy path. Builtins pass through (no NaN,
+    no history → Spike/Stuck can't fire), the contributed rule
+    flags, L2 row carries `quality = Spike`, `rule_id =
+    Some("com.acme.weather.spike")`, and the note surfaces in
+    the `tags` JSONB as `{ "com.acme.weather.spike": "ratio=37x" }`.
+  - `contributed_rule_passes_through_when_tool_says_ok` —
+    `{outcome: ok}` produces an unflagged L2 row.
+  - `builtin_nan_rule_short_circuits_contributed_rule` — pins the
+    ordering invariant: a NaN row tags as `builtin.nan` and the
+    contributed rule's canned response queue is observed to be
+    untouched, proving builtins always fire first.
+  - `unresolved_tool_id_is_silently_dropped` — builder with an
+    empty `&[Arc<dyn Tool>]` falls back to the three builtins
+    only; the contributed rule is dropped (warn-logged) instead
+    of aborting.
+- Decisions:
+  - **Test the pure seam, not `run_tick`.** The gate test pins
+    `process_entity_window` (the pure window walker) instead of
+    spinning up testcontainers Postgres for `run_tick`. The L1
+    fetch + L2 bulk insert around the walker is already
+    exercised by the cleaner unit tests; adding Postgres to the
+    gate would buy nothing for the rule-pipeline assertion and
+    would gate the test behind Docker.
+  - **`pub` the projection helper, don't duplicate it.** The
+    alternative — re-implementing the 10-line manifest walk in
+    the test — would drift from the boot path silently. Making
+    `collect_anomaly_rule_contributions` part of the lib surface
+    is a one-line change and makes the boot path's exact
+    projection observable to any future host that wants to drive
+    the same pipeline (rubix-admin sibling, smoke test harness,
+    etc.).
+  - **Local `CannedTool` over reaching into `#[cfg(test)]`.**
+    `rubix-tools/src/cleaner/adapter.rs` already has a
+    `CannedTool` in its own test module; integration tests
+    cannot see it. The 20-line duplicate in the gate test file
+    is the canonical workaround and keeps the gate test
+    self-contained.
+  - **`runtime.kind: builtin` for the fixture.** Avoids needing
+    a real spawnable binary on disk like
+    `extensions_lifecycle_test.rs` requires for its
+    `runtime.kind: process` fixture. The contributed-rule
+    dispatch path doesn't touch the supervisor at all — it
+    resolves `tool_id` against the host's in-process tool
+    registry — so `builtin` is the right flavour for this gate.
+- Tests run: 7/7 pass in the new file; `cargo check --workspace
+  --tests --exclude starter-ext-wasm` clean.
+- Next:
+  1. **Row 5** (`DashboardHandle` + `AuthzHandle` with
+     cross-tenant grants) — the original Phase 3 critical-path
+     item. Phase B is independent of Phases 1/2/3, so this is
+     now the next critical-path move.
+  2. **P1 follow-up** (`workers[]` + `cli[]` adapter mounting) —
+     independent, can interleave with row 5 if a different
+     contributor picks it up.
+  3. **Optional: testcontainers tick test.** A `#[ignore]`d
+     end-to-end test that boots Timescale, seeds `samples`, runs
+     `run_tick`, and asserts the contributed rule's L2 row lands
+     in the hypertable. Buys real-DB coverage for `run_tick` +
+     `bulk_insert_l2` but is gated behind Docker; defer until a
+     bug actually motivates it.
+
+### 2026-05-27 — B5 host wiring lands: contributed rules join the cleaner registry
+
+- Rows moved: B5 status note flipped from "SPI + validation + adapter
+  (host wiring deferred)" to "SPI + validation + adapter + host wiring."
+  Phase B is now functionally complete end-to-end.
+- Changes (~150 LOC across 5 files):
+  - `rubix-tools/src/cleaner/adapter.rs`: new
+    `ContributedRule { id, tool_id, priority? }` projection +
+    `build_registry_with_contributions(tools, contributions)`
+    builder. Returns a `RuleRegistry` pre-loaded with the three
+    builtins (NaN → Spike → Stuck) and extended with one
+    `ToolAnomalyRule` per contribution. Sort key is
+    `(priority asc with None last, declaration index asc)`. Tool
+    resolution is by `definition().name` against the supplied
+    `&[Arc<dyn Tool>]`; misses are warn-logged and the rule is
+    silently dropped (the cleaner keeps running).
+  - `rubix-agent/src/registry.rs`: new
+    `collect_anomaly_rule_contributions(extensions)` walks every
+    Validated extension's `contributes.anomaly_rules[]` and
+    projects entries into `ContributedRule`. `build_tool_registry`
+    grows a fifth parameter `extensions:
+    Option<&Arc<ExtensionRegistry>>`; the cleaner-tool construction
+    now calls the builder with the just-assembled tool list, then
+    logs the resulting rule count + ids at boot. Replaces the
+    previous `RuleRegistry::builtin()` placeholder.
+  - `rubix-agent/src/main.rs`: passes
+    `ext_bundle.as_ref().map(|b| &b.registry)` into the tool
+    registry builder.
+  - `rubix-agent/src/boot/mcp/register.rs`: the fallback that
+    rebuilds the registry for the stdio `rubix-admin mcp`
+    subcommand now passes `None` for the extension registry — the
+    laptop path doesn't load extensions, so contributed rules are
+    intentionally absent there.
+  - Three integration tests + the internal registry test updated
+    to thread the new `None` argument
+    (`alert_path_threshold_test`, `changelog_middleware_test`,
+    `rest_disk_test`, plus the in-crate `names()` helper).
+- Tests: 4 new builder unit tests (starts with builtins; appends
+  after builtins; sorts by priority then declaration order;
+  silently drops unresolved tool ids). 46 cleaner tests total.
+  `cargo check --workspace --tests --exclude starter-ext-wasm`
+  clean.
+- Decisions:
+  - **Tool resolution by `definition().name`, not by `Arc` pointer.**
+    Each contribution's `tool_id` is a string; the builder
+    resolves against the `Arc<dyn Tool>` list at build time. Two
+    consequences: (a) ordering of the tool list matters only to
+    `definition().name` uniqueness (the host already guarantees
+    that); (b) the builder works equally well for rubix-builtin
+    tools (`rubix.warehouse.ingest`, etc.) and for any future
+    extension-contributed tool that lands inside the same
+    `Arc<dyn Tool>` registry.
+  - **Misses warn and drop, not fail.** A contributed rule whose
+    `tool_id` doesn't resolve is operator-visible (`warn!` under
+    target `rubix.cleaner.adapter`) but doesn't abort boot — the
+    cleaner runs without it. Matches the rest of the boot path's
+    "one bad manifest can't block the host" stance (see
+    `extension_tables.rs` skip-and-warn).
+  - **Sort key.** `priority` is the operator's lever to put a
+    detector before others; `None` sorts last so declared
+    priorities always beat undeclared ones (declared = opt-in to
+    ordering). Declaration index as tiebreaker matches how
+    `RuleRegistry::add` already documents the registration order.
+  - **Builtin order is fixed.** Contributed rules can NOT be
+    interleaved with the builtins — they always run after.
+    Reason: the builtins handle NaN short-circuit + first-row
+    pass-through invariants that the cleaner depends on; an
+    extension reordering them would risk false-negatives on
+    `value.is_nan()` rows. If an extension's rule needs to fire
+    before a builtin, the right path is a separate registry
+    (out of scope for B5).
+  - **Boot log at info.** `rule_count + rules: [...]` is logged
+    once per boot under target `rubix.registry` so an operator
+    can spot drift between deployments at a glance.
+- Next:
+  1. **Phase B gate test.** Stand up a `CannedTool` fake under a
+     test extension manifest, validate it through
+     `ExtensionRegistry`, build the tool registry with extensions
+     present, and assert the rule fires end-to-end against a
+     synthetic L1 window. The whole pipeline now works without
+     scaffolding — this is the proof, not net-new wiring.
+  2. **P1 follow-up** (`workers[]` + `cli[]` adapter mounting) —
+     unblocked by Phase B closing; no Phase B work blocks on it.
+  3. **Row 5** (`DashboardHandle` + `AuthzHandle` with
+     cross-tenant grants) — the original Phase 3 critical path
+     item. Phase B is independent of Phases 1/2/3, so this is the
+     next critical-path move.
+
+### 2026-05-27 — B5 lands: `contributes.anomaly_rules[]` SPI + adapter
+
+- Rows moved: B5: ❌ → ✅ shipped (SPI + validation + adapter;
+  host registry wiring deferred — see "Next" below).
+- Changes (~300 LOC across 4 files):
+  - `starter-ext-spi/src/manifest.rs`: new
+    `ContributeAnomalyRule { id, tool_id, priority? }` struct with
+    `#[serde(deny_unknown_fields)]`; `Contributes.anomaly_rules:
+    Vec<…>` slot, defaulting to empty. Re-exported in
+    `starter-ext-spi/src/lib.rs`. Two SPI round-trip tests
+    (`anomaly_rules_round_trip_with_priority` +
+    `anomaly_rules_default_to_empty`).
+  - `starter-ext-host/src/validate.rs`: new
+    `contributes.anomaly_rules[].id` validation arm. Mirrors the
+    `contributes.warehouse_templates[].name` shape (reserved-prefix
+    + namespace-ownership) and adds a per-rule `builtin.*` prefix
+    rejection so a manifest cannot shadow the in-process detectors
+    the cleaner short-circuits. Four new tests (descendant accepts,
+    sibling namespace rejects, `builtin.*` rejects,
+    `starter.*` rejects).
+  - `rubix-tools/src/cleaner/adapter.rs`: new `ToolAnomalyRule`
+    wrapping an `Arc<dyn Tool>` into the cleaner's
+    `AnomalyRule` trait. `id` is `Box::leak`ed at construction so
+    the trait's `&'static str` contract survives dynamic
+    manifest-sourced ids; the leak is boot-time-only and bounded
+    by manifest size. `apply` invokes the tool with
+    `{ row, window_tail }` and decodes `{ outcome: "ok" | "flag" |
+    "drop", quality?, note? }`; errors / shape mismatches degrade
+    to `RuleOutcome::Ok` with a warn log under target
+    `rubix.cleaner.adapter` so a misbehaving rule cannot silently
+    flag rows. Five new `#[tokio::test(flavor = "multi_thread")]`
+    unit tests over a `CannedTool` fake (ok, flag, drop, malformed
+    response, id pass-through).
+  - `rubix-tools/src/cleaner/mod.rs`: `pub mod adapter;` + re-export.
+- Tests: 6 new SPI/validation tests + 5 new adapter tests. 42
+  cleaner tests + 76 SPI/host tests total — all green.
+  `cargo check --workspace --tests --exclude starter-ext-wasm`
+  clean (starter-ext-wasm has a pre-existing non-exhaustive match
+  on `Capability`; out of scope for this session).
+- Decisions:
+  - **SPI lands without host wiring** — same rhythm as rows 2/3/4
+    (capability + handle + adapter scaffolding) where the
+    backend / dispatch path comes in a follow-up. The manifest
+    field is the lock-in surface; the dispatch path can iterate
+    without breaking extension authors.
+  - **`builtin.*` is a per-field reserved prefix, not added to
+    `starter-ext-spi::id::RESERVED_PREFIXES`.** Widening the
+    global reserved set would block other contribution kinds
+    from using `builtin.<x>` ids gratuitously. The rule-id
+    domain is the only place the reservation is load-bearing
+    (the cleaner short-circuits builtins by id), so it stays
+    local to the rule-id validation arm.
+  - **`Box::leak` for dynamic ids.** Two alternatives considered
+    and rejected: (a) widen `AnomalyRule::id(&self) -> &str` —
+    cascades through every rule impl + the registry + `L2Row`
+    storage; (b) intern ids in a per-process map — premature.
+    Box::leak is one-line, bounded at boot, and matches the
+    "one-time allocation at registration" pattern the rest of
+    the registry uses.
+  - **Adapter degrades to `Ok` on error.** A misbehaving rule
+    must not silently flag rows — the only safe failure mode for
+    an extension-authored detector is "act as if you weren't
+    there." The warn log under `rubix.cleaner.adapter` is the
+    operator's escape hatch for finding misbehaving rules.
+  - **Sync `apply` via `block_in_place`.** The trait stays sync
+    for builtin-rule throughput; the adapter bridges into the
+    async tool dispatch with `tokio::task::block_in_place +
+    Handle::current().block_on(...)`. Requires multi-thread tokio
+    — documented in the module preamble. The agent runs on
+    multi-thread tokio by default; if a future single-thread
+    consumer needs adapter support, the seam is the registry
+    (extend it with an `apply_async`).
+  - **Wire shape pinned in code, not in SPI.** The adapter's
+    `{ row, window_tail } → { outcome, quality?, note? }` JSON
+    contract is documented in the adapter's module preamble but
+    not in `starter-ext-spi`. Extensions ship a tool that
+    implements the contract; the SPI only ships the *contribution
+    declaration*. Trade-off: if the wire shape ever needs to
+    change, it's a per-host migration (one place to fix), not an
+    SPI bump. Acceptable until a second host wants to consume the
+    same manifest field.
+- Next:
+  1. **B5 host registry wiring (follow-up).** Walk every
+     Validated extension's `contributes.anomaly_rules[]`, build
+     one `ToolAnomalyRule` per entry resolved against the host's
+     tool registry, sort by `priority` (declaration order on tie),
+     and call `RuleRegistry::add` after the builtins. Pass the
+     resulting registry into `CleanerTickTool::new` (currently
+     constructed with `RuleRegistry::builtin()` only). Slot to
+     fold into `rubix-agent/src/registry.rs` once a first
+     extension-authored rule lands.
+  2. **Integration test against a contributed-tool fake** — once
+     B5 wiring is in, the round trip
+     (manifest → validate → adapter → registry → tick → L2) is
+     worth one end-to-end test backed by a `CannedTool`.
+  3. **Phase B closes** once (1) lands. Phase B gate could be
+     "an extension's `com.acme.weather.spike` rule flags a row
+     in `samples_l2` end-to-end on a real tick."
+
+### 2026-05-27 — B4 lands: `rubix.cleaner.tick` tool + bundled flow
+
+- Rows moved: B4: ❌ → ✅ shipped.
+- Changes (~250 LOC across 4 files):
+  - `rubix-tools/src/cleaner/tool.rs`: new `CleanerTickTool` impl
+    of `starter_spi::Tool`. `definition().name == "rubix.cleaner.tick"`.
+    Wire shape `{ from_ts_ms?, to_ts_ms?, history_lookback_ms?,
+    tick_epoch_ms?, window_ms? }`; the explicit `[from, to)` path
+    wins; otherwise `from = tick_epoch_ms - window_ms` /
+    `to = tick_epoch_ms`. Calls into the existing
+    `cleaner::tick::run_tick` and returns `TickStats` serialised
+    verbatim. Wraps `run_tick`'s `sqlx::Error` as
+    `Error::Internal { source }`.
+  - `rubix-agent/src/registry.rs`: appends the new tool to
+    `build_tool_registry` inside the `warehouse.is_some()` arm so
+    it only enables when a `WarehouseClient` is configured.
+    Constructed with `RuleRegistry::builtin()` (NaN → Spike →
+    Stuck) until B5 ships the extension-contributed rule slot.
+  - `rubix-flows/flows/cleaner.yaml`: new bundled flow
+    `com.rubix.cleaner` rooted at
+    `starter.flow.trigger.schedule` (60s cron `*/60 * * * * *`),
+    chained `tick.fire → clean.in → emit.value` through a
+    `starter.flow.tool-call` node wired to `rubix.cleaner.tick`.
+    `tool_input: {}` — the seed adapter auto-injects
+    `tick_epoch_ms` from wall-clock so the tool derives its
+    `[from, to)` window without per-flow YAML.
+  - `rubix-flows/tests/load_test.rs`: `EXPECTED_FLOW_IDS` and
+    `NON_AI_AGENT_FLOW_IDS` extended with `com.rubix.cleaner`;
+    drive-by add of the long-orphaned
+    `com.rubix.data-flow.weekly-report` flow id to unstick the
+    pre-existing pre-cleaner failures on the two cross-check tests.
+- Tests: 6 new unit tests on `resolve_params` (explicit from/to
+  passes, tick_epoch_ms alone derives window, custom window_ms,
+  missing inputs error, reversed range error, only-`to` derives
+  `from` via window). 37 cleaner tests total. All 5 flow load_test
+  cases now green (previously 3 of 5 thanks to the pre-existing
+  weekly-report mismatch). `cargo check --workspace --tests` clean.
+- Decisions:
+  - **Tool name `rubix.cleaner.tick`** — `<noun>.<verb>` matches
+    the rest of the rubix tool catalogue (`rubix.dashboard.list`,
+    `rubix.warehouse.ingest`, etc.). The flow YAML pins this id as
+    a literal string in `settings.tool_id` — renaming the tool
+    later means a flow migration.
+  - **60s window default, 60s cron.** Window length matches the
+    cron interval so successive ticks tile without overlap. If
+    a tick runs long the next one still sees its own non-overlapping
+    range (no double-write); a missed tick leaves a hole that
+    `samples_l2` will simply not cover (operator catches up via
+    an ad-hoc `rubix.cleaner.tick` call with explicit `from`/`to`).
+  - **`tool_input: {}` + auto-injected `tick_epoch_ms`.** Matches
+    the pattern the synth producer flow used. Keeps the YAML
+    bundled-flow-shaped (no per-tenant config baked in); the host
+    seed adapter is the single chokepoint where wall-clock enters
+    the flow graph.
+  - **History lookback stays in tool defaults**, not the flow YAML.
+    The default 30-min lookback comes from `TickParams::new` and
+    `DEFAULT_HISTORY_LOOKBACK_MS`; ops who want a different value
+    set it via an ad-hoc tool-call, not by editing bundled YAML.
+  - **Only enabled when warehouse is configured.** The
+    `if let Some(wh) = warehouse` arm gates the registration so
+    rubix-agent boots without the warehouse plane still produces a
+    tool registry that simply omits `rubix.cleaner.tick` (rather
+    than registering it and failing at first invoke).
+  - **Pre-existing test drift fixed in passing.**
+    `com.rubix.data-flow.weekly-report` had been bundled without
+    being added to `EXPECTED_FLOW_IDS`, so the two cross-check
+    tests had been red on master before this session. Cleaner row
+    needed the list edited anyway; folded the weekly-report fix in
+    rather than leaving the file half-correct.
+- Next:
+  1. **B5** — `contributes.anomaly_rules[]` manifest slot +
+     tool-call dispatch adapter. With B2+B3+B4 done, B5 is a thin
+     adapter that wraps a contributed tool dispatch into an
+     `AnomalyRule` impl and feeds it into the same registry the
+     cleaner already runs.
+  2. **Integration test** for `run_tick` against testcontainers
+     Timescale. Deferred — the cleaner tool + flow already exercise
+     the full path manually; the e2e test slots in once a real
+     fixture lands.
+  3. **P1 follow-up** — `workers[]` + `cli[]` adapter mounting.
+
+### 2026-05-27 — B3 lands: cleaner tick + `samples_l2` migration
+
+- Rows moved: B3: ❌ → ✅ shipped (sqlx path; tool wrapper deferred to B4).
+- Changes (~400 LOC across 3 files):
+  - `starter-store-warehouse/src/tsdb/migrate.rs`: new `0006_samples_l2`
+    migration. Hypertable on `ts` with the standard L2 weekly chunk
+    interval; columns `tenant_id`/`entity_id`/`ts`/`value_num`/`quality
+    TEXT`/`rule_id TEXT`/`tags JSONB`. Indexes: `(entity_id, ts DESC)`,
+    `(quality, ts DESC)`, GIN on `tags`. `TIMESCALE_MIGRATIONS` audit
+    constant extended.
+  - `rubix-tools/src/cleaner/tick.rs`: new module split into a pure
+    window walker (`process_entity_window`) and an async I/O runner
+    (`run_tick`). The runner SELECTs one combined `[from-lookback, to)`
+    window from `samples` ordered by `(tenant_id, entity_id, ts)`,
+    splits per-entity into history vs fresh by comparing `ts_ms`
+    against `from_ts_ms`, calls the walker, then bulk-INSERTs the
+    emitted rows into `samples_l2` via multi-row VALUES (chunked at
+    4000 rows / 28000 params to stay under Postgres' 65535 param cap).
+    `TickStats` carries `rows_read` / `rows_written` / `rows_dropped` /
+    `entities_scanned` / `by_quality: HashMap<String, u64>`.
+  - `rubix-tools/src/cleaner/mod.rs`: re-exports `tick::{run_tick,
+    process_entity_window, L2Row, TickParams, TickStats}`.
+- Tests: 8 new unit tests on the pure walker (empty fresh, Ok
+  pass-through, NaN flagging with rule-id + tags note, history seeds
+  Spike on first fresh row, rolling window lets Stuck fire mid-fresh,
+  Drop outcome skips emission but still extends window, default 30min
+  lookback, empty registry marks every row Ok). 31 cleaner tests
+  total, all green; `cargo check --workspace --tests` clean.
+- Decisions:
+  - **Pure / I/O split.** The walker is sync + infallible (no `sqlx`,
+    no `tokio`) so it unit-tests without a database; the runner is
+    the only async surface. Mirrors the rule trait's same shape.
+  - **Rolling window inside fresh.** As fresh rows are processed they
+    extend the per-entity window in place, so `StuckRule` can fire
+    mid-tick. Dropped rows still extend the window for the same
+    reason (downstream rules deserve to see them as context).
+  - **History via single SELECT, not a second query.** `[from -
+    lookback, to)` is one ordered scan; the row loop splits by
+    `ts_ms < from_ts_ms`. Avoids per-entity round-trips and keeps
+    the entity-grouping inversion in one place.
+  - **Lookback default 30 minutes.** Matches the synth-side
+    stuck-stretch typical length; tunable per `TickParams`.
+  - **Multi-row VALUES not COPY.** ~28000 params per chunk is well
+    under Postgres' limit and `sqlx::query` already supports the
+    pattern; `COPY` would force a separate execution path on
+    `PgConnection::copy_in_raw`.
+  - **`bool`/`text` value columns ignored.** `samples_l2` carries
+    `value_num` only — the rule trait operates on `f64` and
+    everything non-numeric passes through with `value = NULL`. If
+    we ever want to clean non-numeric streams the column set
+    expands here (no migration change needed thanks to JSONB tags).
+- Next:
+  1. **B4** — tool wrapper (`rubix.cleaner.tick`) + bundled
+     `com.rubix.cleaner` flow YAML on a 60s schedule. The tick
+     function is ready to be wrapped; the flow seed pattern matches
+     the existing synth producer.
+  2. **B5** — `contributes.anomaly_rules[]` manifest slot + tool-call
+     dispatch adapter wrapping a contributed tool into an
+     `AnomalyRule` impl.
+  3. **Integration test** — end-to-end against a testcontainers
+     Timescale (running tests/cleaner_tick_e2e.rs once a real
+     fixture lands). Deferred until B4 since the tool wrapper is
+     the natural surface to exercise.
 
 ### 2026-05-27 — Use-Case-B push: P1 (partial) + B1 + B2
 

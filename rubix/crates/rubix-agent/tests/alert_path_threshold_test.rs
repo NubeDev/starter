@@ -119,7 +119,7 @@ fn registry_threads_threshold_into_disk_tool() {
     // alert-firing assertion lives in the gate-level test above;
     // this one guards the boot-time plumbing so a typo in the
     // signature surfaces here rather than at agent startup.
-    let names: Vec<String> = build_tool_registry(50, None, None, None)
+    let names: Vec<String> = build_tool_registry(50, None, None, None, None)
         .iter()
         .map(|t| t.definition().name)
         .collect();

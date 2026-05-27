@@ -32,10 +32,15 @@
 //! that row. Operators control the order via the registry's add
 //! sequence.
 
+pub mod adapter;
 pub mod builtin;
 pub mod registry;
 pub mod rule;
+pub mod tick;
+pub mod tool;
 
+pub use adapter::ToolAnomalyRule;
 pub use builtin::{NanRule, SpikeRule, StuckRule};
 pub use registry::RuleRegistry;
 pub use rule::{AnomalyRule, QualityTag, Reading, RuleOutcome, WindowSlice};
+pub use tick::{process_entity_window, run_tick, L2Row, TickParams, TickStats};

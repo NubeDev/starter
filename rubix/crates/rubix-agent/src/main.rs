@@ -258,6 +258,7 @@ async fn main() -> Result<()> {
         mcp_pool.clone(),
         warehouse_client.clone(),
         cfg.blob_root.clone(),
+        ext_bundle.as_ref().map(|b| &b.registry),
     );
 
     let mcp = boot::mcp::build_mcp_surface(
@@ -577,17 +578,24 @@ async fn main() -> Result<()> {
             use starter_server::auth::with_principal;
             use starter_store_postgres::pool::Pool;
 
-            // Dedicated tiny pool for the SSE listener: `PgListener`
-            // (used inside `PgListenTail::subscribe`) pins one
-            // connection for the lifetime of each subscription.
-            // Sharing the main 16-conn `pool` means every dashboard
-            // sidebar subscriber permanently consumes a slot — once
-            // 16 are open across browser tabs/reloads, every other
-            // auth-gated route blocks on `pool.acquire()` and the
-            // runtime cascades into a futex deadlock. Mirrors the
-            // pattern in `boot::flow_notify`.
+            // Dedicated pool for the SSE listener: `PgListener`
+            // (used inside `PgListenTail::subscribe`) pins ONE
+            // connection PER SUBSCRIBER for the lifetime of that
+            // subscription. With N browser tabs (or rapid reloads
+            // before old subs drain) we need at least N slots — a
+            // cap below that makes `PgListener::connect_with` block
+            // on `pool.acquire()` for the 30s sqlx default and the
+            // SSE handler returns 503. Isolated from the main 16-
+            // conn pool so a sidebar storm cannot starve other
+            // auth-gated routes (mirrors `boot::flow_notify`).
+            //
+            // TODO: replace per-subscriber listeners with a single
+            // shared PgListener fanned out over a `broadcast`
+            // channel, which collapses N pinned connections to 1
+            // and removes this whole sizing concern. Until then,
+            // the cap below is the operating-cost knob.
             let listen_inner = PgPoolOptions::new()
-                .max_connections(2)
+                .max_connections(16)
                 .connect(dsn)
                 .await
                 .map_err(|e| {
