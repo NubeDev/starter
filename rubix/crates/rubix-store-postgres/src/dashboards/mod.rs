@@ -132,6 +132,62 @@ impl DashboardStore for PgDashboardStore {
         Ok(row.into())
     }
 
+    /// Atomic variant. Captures the prior row via
+    /// `UPDATE ... RETURNING` in the same transaction as the
+    /// supersede + insert, so the audit recorder sees the
+    /// before-state without any TOCTOU window. Falls back to the
+    /// default impl's two-step pattern only when no row was
+    /// superseded (in which case `prior` is `None` and no race is
+    /// possible by definition).
+    async fn insert_revision_with_prior(
+        &self,
+        new_revision: NewRevision,
+    ) -> Result<InsertOutcome, DashboardStoreError> {
+        let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
+
+        let supersede_sql = format!(
+            "UPDATE dashboards_definitions
+                SET superseded_at = NOW()
+              WHERE tenant_id = $1
+                AND page_id = $2
+                AND superseded_at IS NULL
+            RETURNING {SELECT_COLS}"
+        );
+        let prior_row: Option<Row> = sqlx::query_as(&supersede_sql)
+            .bind(&new_revision.tenant_id)
+            .bind(&new_revision.page_id)
+            .fetch_optional(&mut *tx)
+            .await
+            .map_err(backend)?;
+
+        let revision_id = Uuid::new_v4();
+        let insert_sql = format!(
+            "INSERT INTO dashboards_definitions
+                (page_id, revision_id, body_json, tenant_id, owner_principal,
+                 title, tags, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+             RETURNING {SELECT_COLS}"
+        );
+        let inserted_row: Row = sqlx::query_as(&insert_sql)
+            .bind(&new_revision.page_id)
+            .bind(revision_id)
+            .bind(&new_revision.body_json)
+            .bind(&new_revision.tenant_id)
+            .bind(&new_revision.owner_principal)
+            .bind(&new_revision.title)
+            .bind(&new_revision.tags)
+            .bind(&new_revision.created_by)
+            .fetch_one(&mut *tx)
+            .await
+            .map_err(backend)?;
+
+        tx.commit().await.map_err(backend)?;
+        Ok(InsertOutcome {
+            inserted: inserted_row.into(),
+            prior: prior_row.map(Into::into),
+        })
+    }
+
     async fn get_active(
         &self,
         tenant_id: &str,

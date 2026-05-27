@@ -147,13 +147,15 @@ impl Tool for DashboardPatchTool {
             body_json: next_body.clone(),
             created_by: req.created_by.clone(),
         };
-        let row = self
+        let outcome = self
             .store
-            .insert_revision(new)
+            .insert_revision_with_prior(new)
             .await
             .map_err(|e| Error::Internal {
                 source: Box::new(e),
             })?;
+        let row = outcome.inserted;
+        let prior_body = outcome.prior.map(|p| p.body_json);
 
         let summary = Diagnostic::new(
             MessageKey::parse("rubix.dashboard.patched").expect("hard-coded key parses"),
@@ -169,6 +171,9 @@ impl Tool for DashboardPatchTool {
             // Carried so `change_for` can record a byte-exact
             // `after` snapshot without re-fetching the row.
             body_json: Some(row.body_json),
+            // Paired with `body_json`, gives the recorder a
+            // byte-exact `before` for the changelog row.
+            prior_body_json: prior_body,
         };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -189,13 +194,14 @@ impl ReversibleTool for DashboardPatchTool {
         let req: PatchDashboardRequest = serde_json::from_value(input.clone()).ok()?;
         let resp: PatchDashboardResponse = serde_json::from_value(output.clone()).ok()?;
 
-        // The response carries the full post-patch body, so the
-        // `after` snapshot is byte-exact. Title / tags are
-        // preserved across the patch boundary (patch never touches
-        // metadata), so a missing prior title is recorded as
-        // empty — title/tags belong to `Op::Update` via
-        // `rubix.dashboard.update` semantically, not to patch's
-        // audit trail.
+        // Both response fields are populated atomically by the
+        // chokepoint: `body_json` is the post-patch body that
+        // landed, `prior_body_json` is the superseded body. Title
+        // and tags are preserved across the patch boundary
+        // (patch never touches metadata), so the snapshot's
+        // metadata fields are empty by design — the inverse path
+        // applies `body_json` and leaves the row's stored title /
+        // tags alone.
         let after = DashboardSnapshot {
             page_id: resp.page_id.clone(),
             tenant_id: resp.tenant_id.clone(),
@@ -203,10 +209,23 @@ impl ReversibleTool for DashboardPatchTool {
             title: String::new(),
             tags: Vec::new(),
             body_json: resp.body_json.unwrap_or(Value::Null),
-            created_by: req.created_by,
+            created_by: req.created_by.clone(),
             revision_id: Some(resp.revision_id.clone()),
         };
         let after_v = serde_json::to_value(&after).ok()?;
+        let before_v = resp.prior_body_json.as_ref().and_then(|body| {
+            let before = DashboardSnapshot {
+                page_id: resp.page_id.clone(),
+                tenant_id: resp.tenant_id.clone(),
+                owner_principal: req.created_by.clone(),
+                title: String::new(),
+                tags: Vec::new(),
+                body_json: body.clone(),
+                created_by: req.created_by.clone(),
+                revision_id: req.expected_revision_id.clone(),
+            };
+            serde_json::to_value(&before).ok()
+        });
         Some(ChangeDraft {
             resource: ResourceRef {
                 kind: DASHBOARD_PAGE_KIND.into(),
@@ -215,7 +234,7 @@ impl ReversibleTool for DashboardPatchTool {
                 tenant: Some(resp.tenant_id),
             },
             op: Op::Update,
-            before: None,
+            before: before_v,
             after: Some(after_v),
             resource_version: None,
             correlation: None,
@@ -482,6 +501,32 @@ mod tests {
             .unwrap_err();
         // validate_layout returns Error::Invalid for non-page roots.
         assert!(matches!(err, Error::Invalid { .. }), "got {err:?}");
+    }
+
+    #[tokio::test]
+    async fn change_for_records_byte_exact_before_from_prior_row() {
+        // The chokepoint variant `insert_revision_with_prior`
+        // captures the superseded body atomically; patch's
+        // `change_for` records it as the `before` snapshot.
+        let store = InMemoryStore::arc();
+        let prior_rev = store.seed("dashboard.ops", "tenant-a", seed_body());
+        let tool = DashboardPatchTool::new(store);
+        let input = serde_json::json!({
+            "tenant_id":            "tenant-a",
+            "page_id":              "dashboard.ops",
+            "expected_revision_id": prior_rev,
+            "patch":                [
+                { "op": "add", "path": "/root/title", "value": "x" }
+            ],
+            "created_by":           "alice"
+        });
+        let output = tool.invoke(input.clone()).await.unwrap();
+        let resp: PatchDashboardResponse = serde_json::from_value(output.clone()).unwrap();
+        assert_eq!(resp.prior_body_json.as_ref(), Some(&seed_body()));
+
+        let draft = tool.change_for(&input, &output).expect("draft present");
+        let before = draft.before.expect("before present");
+        assert_eq!(before.get("body_json"), Some(&seed_body()));
     }
 
     #[tokio::test]

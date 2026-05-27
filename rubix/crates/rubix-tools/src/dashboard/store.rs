@@ -273,6 +273,42 @@ impl DashboardStore for InMemoryDashboardStore {
         Ok(inserted)
     }
 
+    /// Atomic variant — captures the prior row in the same lock
+    /// scope as the supersede + insert, so the audit recorder
+    /// sees a coherent before-state without any race window.
+    async fn insert_revision_with_prior(
+        &self,
+        new: NewRevision,
+    ) -> std::result::Result<
+        rubix_spi::dashboard::InsertOutcome,
+        rubix_spi::dashboard::DashboardStoreError,
+    > {
+        let now = Self::now();
+        let mut rows = self.rows.lock().unwrap();
+        let mut prior: Option<rubix_spi::dashboard::DashboardRevision> = None;
+        for r in rows.iter_mut() {
+            if r.tenant_id == new.tenant_id && r.page_id == new.page_id && r.superseded_at.is_none()
+            {
+                prior = Some(r.clone());
+                r.superseded_at = Some(now.clone());
+            }
+        }
+        let inserted = rubix_spi::dashboard::DashboardRevision {
+            page_id: new.page_id,
+            revision_id: self.next_rev(),
+            tenant_id: new.tenant_id,
+            owner_principal: new.owner_principal,
+            title: new.title,
+            tags: new.tags,
+            body_json: new.body_json,
+            created_by: new.created_by,
+            created_at: now,
+            superseded_at: None,
+        };
+        rows.push(inserted.clone());
+        Ok(rubix_spi::dashboard::InsertOutcome { inserted, prior })
+    }
+
     async fn get_active(
         &self,
         tenant_id: &str,

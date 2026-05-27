@@ -83,6 +83,13 @@ pub struct PatchDashboardResponse {
     /// (conflict / invalid).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub body_json: Option<serde_json::Value>,
+    /// The `body_json` of the row that was superseded by this
+    /// patch. Paired with [`Self::body_json`], the recorder gets
+    /// a byte-exact `before` and `after` for the changelog row.
+    /// `None` on the conflict / not-found / invalid-patch paths
+    /// (no write happened).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_body_json: Option<serde_json::Value>,
 }
 
 /// `starter-authz` permission string the caller must hold.

@@ -62,6 +62,14 @@ pub struct UpdateDashboardResponse {
     /// Whether the verb wrote a new revision (`true`) or refused
     /// (`false`).
     pub written: bool,
+    /// The `body_json` of the row that was superseded by this
+    /// write, if any. Carried in the response so the changelog
+    /// recorder can capture a byte-exact `before` snapshot for
+    /// `Op::Update` without a follow-up store round-trip.
+    /// `None` on a brand-new page (no prior row) or on the
+    /// conflict / not-found paths (no write happened).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_body_json: Option<serde_json::Value>,
 }
 
 /// `starter-authz` permission string the caller must hold.

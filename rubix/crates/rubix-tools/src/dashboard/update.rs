@@ -128,13 +128,14 @@ impl Tool for DashboardUpdateTool {
             body_json: req.body_json.clone(),
             created_by: req.created_by.clone(),
         };
-        let row = self
+        let outcome = self
             .store
-            .insert_revision(new)
+            .insert_revision_with_prior(new)
             .await
             .map_err(|e| Error::Internal {
                 source: Box::new(e),
             })?;
+        let row = outcome.inserted;
 
         let summary = Diagnostic::new(
             MessageKey::parse("rubix.dashboard.updated").expect("hard-coded key parses"),
@@ -147,6 +148,11 @@ impl Tool for DashboardUpdateTool {
             revision_id: row.revision_id,
             tenant_id: row.tenant_id,
             written: true,
+            // Carried so `change_for` records a byte-exact
+            // `before` snapshot for the changelog without a
+            // follow-up store round-trip. `None` when the page
+            // was brand-new (no prior row).
+            prior_body_json: outcome.prior.map(|p| p.body_json),
         };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -166,15 +172,12 @@ impl ReversibleTool for DashboardUpdateTool {
         let req: UpdateDashboardRequest = serde_json::from_value(input.clone()).ok()?;
         let resp: UpdateDashboardResponse = serde_json::from_value(output.clone()).ok()?;
 
-        // We can't reconstruct the prior body from `input` alone —
-        // `expected_revision_id` carries only the id. To make undo
-        // work without re-querying, the recorder skips the draft
-        // when the caller did not supply an `expected_revision_id`
-        // *and* a prior body snapshot via the `prior_*` companion
-        // fields (which Phase C.2 leaves as a follow-up). Today the
-        // recorder always emits `after`-only and lets the
-        // `DashboardReversible::apply_inverse` path treat
-        // missing-before as a soft-delete fallback.
+        // `prior_body_json` in the response is the prior row's
+        // body captured atomically by
+        // `DashboardStore::insert_revision_with_prior` — closes
+        // the Phase C.2 gap. `None` only when the page was
+        // brand-new, in which case `before` correctly stays
+        // `None` and undo falls back to the soft-delete inverse.
         // owner_principal isn't echoed in the response (the store
         // preserves it across revisions); the snapshot's
         // `owner_principal` is informational for the audit row.
@@ -182,13 +185,32 @@ impl ReversibleTool for DashboardUpdateTool {
             page_id: resp.page_id.clone(),
             tenant_id: resp.tenant_id.clone(),
             owner_principal: req.created_by.clone(),
-            title: req.title.unwrap_or_default(),
-            tags: req.tags.unwrap_or_default(),
-            body_json: req.body_json,
-            created_by: req.created_by,
+            title: req.title.clone().unwrap_or_default(),
+            tags: req.tags.clone().unwrap_or_default(),
+            body_json: req.body_json.clone(),
+            created_by: req.created_by.clone(),
             revision_id: Some(resp.revision_id.clone()),
         };
         let after_v = serde_json::to_value(&after).ok()?;
+        let before_v = resp.prior_body_json.as_ref().and_then(|body| {
+            // Title / tags / owner_principal are not echoed in
+            // the response. The recorder's inverse path applies
+            // `before.body_json`; the metadata fields are
+            // informational, so seeding them from the request's
+            // post-update values keeps the snapshot shape
+            // symmetric with `after`.
+            let before = DashboardSnapshot {
+                page_id: resp.page_id.clone(),
+                tenant_id: resp.tenant_id.clone(),
+                owner_principal: req.created_by.clone(),
+                title: req.title.clone().unwrap_or_default(),
+                tags: req.tags.clone().unwrap_or_default(),
+                body_json: body.clone(),
+                created_by: req.created_by.clone(),
+                revision_id: req.expected_revision_id.clone(),
+            };
+            serde_json::to_value(&before).ok()
+        });
         Some(ChangeDraft {
             resource: ResourceRef {
                 kind: DASHBOARD_PAGE_KIND.into(),
@@ -197,13 +219,7 @@ impl ReversibleTool for DashboardUpdateTool {
                 tenant: Some(resp.tenant_id),
             },
             op: Op::Update,
-            // `before` intentionally `None` in Phase C.2 — see the
-            // doc comment above. The change recorder still produces
-            // a useful audit row; full reversibility for `update`
-            // lands when a `prior_snapshot` capture seam (the store
-            // returning the prior body alongside the insert) ships
-            // in a follow-up.
-            before: None,
+            before: before_v,
             after: Some(after_v),
             resource_version: None,
             correlation: None,
@@ -412,6 +428,39 @@ mod tests {
             .unwrap();
         assert_eq!(live.title, "Old title");
         assert_eq!(live.tags, vec!["custom".to_string()]);
+    }
+
+    #[tokio::test]
+    async fn change_for_records_byte_exact_before_from_prior_row() {
+        // Closes the Phase C.2 gap: with
+        // `insert_revision_with_prior` capturing the superseded
+        // row atomically, `change_for` records both `before` and
+        // `after` byte-exactly.
+        let store = InMemoryStore::arc();
+        let prior_rev = store.seed("dashboard.ops", "tenant-a");
+        let tool = DashboardUpdateTool::new(store);
+        let input = serde_json::json!({
+            "tenant_id":            "tenant-a",
+            "page_id":              "dashboard.ops",
+            "expected_revision_id": prior_rev,
+            "title":                "New title",
+            "body_json":            { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
+            "created_by":           "alice"
+        });
+        let output = tool.invoke(input.clone()).await.unwrap();
+        let resp: UpdateDashboardResponse = serde_json::from_value(output.clone()).unwrap();
+        // Response now echoes the superseded body.
+        assert_eq!(
+            resp.prior_body_json.as_ref(),
+            Some(&serde_json::json!({ "v": 1 }))
+        );
+
+        let draft = tool.change_for(&input, &output).expect("draft present");
+        let before = draft.before.expect("before present");
+        assert_eq!(
+            before.get("body_json"),
+            Some(&serde_json::json!({ "v": 1 }))
+        );
     }
 
     #[tokio::test]
