@@ -139,7 +139,11 @@ impl RubixWarehouseReadBackend {
                 "warehouse_read.query {template:?} refused: no caller identity (system frame)"
             )));
         };
-        let _spec = self.enforce_grant(template)?;
+        let spec = self.enforce_grant(template)?;
+        // Clone the spec out so we can drop the &self borrow before
+        // the async block_on (the spec is a small struct of strings
+        // + JSON, the clone is cheap and keeps the lifetimes tidy).
+        let spec = spec.clone();
         // The resolver is async; the SDK's trait is sync. The
         // builtin dispatcher runs handlers via `spawn_blocking`,
         // so a `block_on` here is safe (we're already off a
@@ -151,6 +155,7 @@ impl RubixWarehouseReadBackend {
                 template,
                 tenant_id,
                 &params,
+                Some(&spec),
             ))
         })
         .map_err(Error::extension_internal)

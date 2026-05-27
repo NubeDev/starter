@@ -51,7 +51,8 @@ use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
 use starter_ext_spi::tracing_ext::{TracingEventRequest, TracingEventResponse};
 use starter_ext_spi::wall_clock::{WallClockNowResponse};
 use starter_ext_spi::warehouse::{
-    WarehouseReadRequest, WarehouseReadResponse, WarehouseWriteRequest, WarehouseWriteResponse,
+    WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest, WarehouseReadResponse,
+    WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest, WarehouseWriteResponse,
 };
 use starter_ext_spi::{Error, ExtensionId, Result};
 use starter_ext_supervisor::HostMethodHandler;
@@ -322,6 +323,70 @@ impl HostMethodHandler for RubixHostMethods {
                     rows_inserted: inserted,
                 })
                 .expect("WarehouseWriteResponse serialises"))
+            }
+            "warehouse.update" => {
+                let Some(wh) = self.warehouse.get().cloned() else {
+                    return Err(Error::extension_internal(
+                        "host method \"warehouse.update\" not wired: \
+                         no warehouse client attached to RubixHostMethods",
+                    ));
+                };
+                let req: WarehouseUpdateRequest = serde_json::from_value(params)
+                    .map_err(|e| Error::validation(format!("warehouse.update params: {e}")))?;
+                let tenant = caller.and_then(|c| c.tenant_id.clone());
+                let granted_tables = warehouse_write_grant(registry, extension);
+                let table_specs = Arc::new(warehouse_tables_for(registry, extension));
+                let backend = RubixWarehouseWriteBackend::new(
+                    wh.client,
+                    tenant,
+                    extension.clone(),
+                    granted_tables,
+                    table_specs,
+                );
+                let table = req.table.clone();
+                let key_column = req.key_column.clone();
+                let rows = req.rows;
+                let affected = tokio::task::spawn_blocking(move || {
+                    backend.update(&table, &key_column, rows)
+                })
+                .await
+                .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                Ok(serde_json::to_value(WarehouseUpdateResponse {
+                    rows_affected: affected,
+                })
+                .expect("WarehouseUpdateResponse serialises"))
+            }
+            "warehouse.delete" => {
+                let Some(wh) = self.warehouse.get().cloned() else {
+                    return Err(Error::extension_internal(
+                        "host method \"warehouse.delete\" not wired: \
+                         no warehouse client attached to RubixHostMethods",
+                    ));
+                };
+                let req: WarehouseDeleteRequest = serde_json::from_value(params)
+                    .map_err(|e| Error::validation(format!("warehouse.delete params: {e}")))?;
+                let tenant = caller.and_then(|c| c.tenant_id.clone());
+                let granted_tables = warehouse_write_grant(registry, extension);
+                let table_specs = Arc::new(warehouse_tables_for(registry, extension));
+                let backend = RubixWarehouseWriteBackend::new(
+                    wh.client,
+                    tenant,
+                    extension.clone(),
+                    granted_tables,
+                    table_specs,
+                );
+                let table = req.table.clone();
+                let key_column = req.key_column.clone();
+                let keys = req.keys;
+                let affected = tokio::task::spawn_blocking(move || {
+                    backend.delete(&table, &key_column, keys)
+                })
+                .await
+                .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                Ok(serde_json::to_value(WarehouseDeleteResponse {
+                    rows_affected: affected,
+                })
+                .expect("WarehouseDeleteResponse serialises"))
             }
             "event_bus.publish" => {
                 let Some(bus) = self.event_bus.get().cloned() else {

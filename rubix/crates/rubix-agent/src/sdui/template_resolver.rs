@@ -1,53 +1,60 @@
-//! Single source of truth for resolving named warehouse-read
-//! templates against the Timescale `samples` hypertable.
+//! Resolves named warehouse-read templates against the Timescale
+//! warehouse pool.
 //!
-//! Two consumers call into this module today:
+//! Two template flavours flow through this module:
 //!
-//! 1. [`TimescaleAnalyticsBridge`][super::TimescaleAnalyticsBridge]
-//!    — the legacy SDUI chart-source path; tenant arrives in
-//!    `params["tenant_id"]` (the SDUI route layer binds it before
-//!    dispatch).
-//! 2. [`RubixWarehouseReadBackend`][crate::extensions::backends::RubixWarehouseReadBackend]
-//!    — the extension-substrate `ctx.warehouse_read().query(…)`
-//!    handle; tenant arrives from `ctx.caller().tenant_id` and is
-//!    passed in explicitly.
+//! 1. **Host-builtin templates** (`meter_kwh_last_24h`,
+//!    `meter_litres_last_24h`, `meter_value_30d_15m`,
+//!    `meter_value_24h_1m`) — the four `samples`-hypertable queries
+//!    the legacy SDUI bridge has always answered. These keep their
+//!    hand-written arms because the host owns the schema.
 //!
-//! Both paths hit the **same** registry-driven dispatch, so adding
-//! or removing a template is a one-place change. The registry gate
-//! (refusing unknown names) lives in the caller; this module
-//! assumes the caller has already verified the template is
-//! registered and its `tables` are inside the caller's grant.
+//! 2. **Extension-contributed templates** — every
+//!    `contributes.warehouse_templates[]` entry the loader folded
+//!    into [`TemplateRegistry`]. These have NO per-extension code
+//!    here: the resolver delegates to
+//!    [`super::contributed_template::execute`], which compiles the
+//!    extension-shipped SQL (`spec.sql`) once and runs it through
+//!    `sqlx::query` with bound parameters. Adding a new extension
+//!    that ships templates is a zero-touch change on the host
+//!    (SCOPE R7 — never string-template SQL — and R8 — extensions
+//!    are self-contained).
 //!
-//! Per Appendix A of
-//! [`docs/proposal/extension-architecture-north-star.md`](../../../../docs/proposal/extension-architecture-north-star.md)
-//! and row 2 of `docs/scope/extensions-north-star/README.md`, the
-//! resolver receives `tenant_id` as an immutable parameter — there
-//! is no path to override it from the caller's request body.
+//! Two consumers call into this module:
+//!
+//! - [`super::TimescaleAnalyticsBridge`] — legacy SDUI chart-source
+//!   path; tenant arrives via `params["tenant_id"]`.
+//! - [`crate::extensions::backends::RubixWarehouseReadBackend`] —
+//!   the extension-substrate `ctx.warehouse_read().query(…)` handle;
+//!   tenant arrives from `ctx.caller().tenant_id`.
+//!
+//! Both paths share the same registry-driven dispatch — adding,
+//! removing, or contributing a template is a one-place change.
 
 use serde_json::{json, Value as JsonValue};
+use starter_ext_spi::warehouse::TemplateSpec;
 use starter_store_warehouse::WarehouseClient;
 
-/// Resolve a named template against the warehouse and return the
-/// row vector the caller renders / hands back.
+use super::contributed_template;
+
+/// Resolve a named template against the warehouse.
 ///
-/// `params` is opaque JSON; only the keys the matched template
-/// documents are read (`meter_id` for the bucketed-series
-/// templates). `tenant_id` is bound from the *outside* — the
-/// extension caller path passes `ctx.caller().tenant_id`; the
-/// legacy SDUI path passes `params["tenant_id"]` after lifting it
-/// to the top.
+/// `spec` is the registry entry for `template` (the caller looked
+/// it up to enforce the grant gate; passing it in saves a second
+/// lookup and is the seam through which contributed-template SQL
+/// reaches this module). Pass `None` only from paths that
+/// definitely cannot have a registered spec — those will only ever
+/// match a host-builtin name.
 ///
-/// Unknown template names return `Ok(vec![])` so the bridge can
-/// log + render no-data without surfacing a hard error to the
-/// chart pipeline. (The extension-facing backend treats unknown
-/// templates as `Error::Validation` *before* calling this fn, so
-/// the empty-vec branch is only hit by the legacy bridge during
-/// `cfg.warehouse_url = None` shadow paths.)
+/// Unknown template names that aren't builtins and don't carry a
+/// spec return `Ok(vec![])` so the legacy SDUI bridge can log + render
+/// no-data without surfacing a hard error to the chart pipeline.
 pub async fn resolve(
     client: &WarehouseClient,
     template: &str,
     tenant_id: &str,
     params: &JsonValue,
+    spec: Option<&TemplateSpec>,
 ) -> Result<Vec<JsonValue>, String> {
     match template {
         "meter_kwh_last_24h" => latest_for_kind(client, tenant_id, "elec", "kwh").await,
@@ -64,17 +71,21 @@ pub async fn resolve(
             };
             bucketed_series(client, tenant_id, &meter, "1 minute", "24 hours").await
         }
-        _ => Ok(vec![]),
+        // Anything else is — by definition — a contribution. The
+        // host carries no per-extension code (SCOPE R8); we hand
+        // the registered spec to the generic compiler/executor.
+        _ => match spec {
+            Some(spec) => contributed_template::execute(client.pool(), spec, tenant_id, params).await,
+            None => Ok(vec![]),
+        },
     }
 }
 
-/// Names of every template this resolver knows how to execute.
-///
-/// Used by [`RubixWarehouseReadBackend`][crate::extensions::backends::RubixWarehouseReadBackend]
-/// to refuse, with a clear log line, a template that is in the
-/// `TemplateRegistry` but has no resolver wired here — the
-/// registry-vs-resolver mismatch the legacy bridge's defensive
-/// `other` arm already guards against.
+/// Names of every host-builtin template this resolver knows. Used
+/// by [`crate::extensions::backends::RubixWarehouseReadBackend`]
+/// and the analytics bridge for log / diagnostic surfaces.
+/// Contributed templates are NOT listed here — they are enumerated
+/// by walking the live [`starter_ext_host::TemplateRegistry`].
 pub fn known_template_names() -> &'static [&'static str] {
     &[
         "meter_kwh_last_24h",
@@ -122,10 +133,9 @@ async fn bucketed_series(
     bucket: &str,
     window: &str,
 ) -> Result<Vec<JsonValue>, String> {
-    // `time_bucket` is a Timescale function. Window is a SQL
-    // INTERVAL literal we splice into the query via a bound param.
-    // Both `bucket` and `window` are constants supplied by the
-    // matched template arm, never user input — no injection vector.
+    // `time_bucket` is a Timescale function. `bucket` and `window`
+    // are constants supplied by the matched arm above — never user
+    // input.
     let rows: Vec<(chrono::DateTime<chrono::Utc>, Option<f64>)> = sqlx::query_as(
         "SELECT time_bucket($1::interval, ts) AS bucket_start, \
                 AVG(value_num) AS value_avg \
@@ -162,10 +172,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn known_template_names_match_resolver_arms() {
-        // If you add an arm in `resolve()`, you must add the name
-        // here so the backend can refuse mis-registered templates
-        // with a clear error rather than silently returning `[]`.
+    fn known_template_names_lists_only_host_builtins() {
+        // Contributed templates are NOT listed here — they live in
+        // the runtime `TemplateRegistry` and reach the resolver via
+        // the `spec` parameter, not a hardcoded arm.
         assert_eq!(
             known_template_names(),
             &[

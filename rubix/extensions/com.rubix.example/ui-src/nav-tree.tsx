@@ -1,21 +1,10 @@
 // `ui/nav-tree.tsx` — Sidebar nav-tree contribution for `com.rubix.example`.
-//
-// Mounts into `<ExtensionSlot id="sidebar-nav">` in
-// rubix/frontend/src/components/layout/app-sidebar.tsx. Renders the
-//   Extension Name
-//     <tab>
-//       <nested tab>
-// hierarchy alongside the host's static + live NavGroups.
-//
-// Built with plain JSX + CSS variables (var(--color-*)) instead of the
-// host's shadcn `Sidebar*` primitives — those are project-aliased
-// (`@/components/ui/sidebar`) and not safely importable from an
-// extension bundle. Reading the host's CSS vars keeps the visual
-// language consistent without coupling to the host's component library.
 
 import * as React from "react";
 
 import { BlockShell } from "@nube/starter-ext-sdk-ts";
+import { EXTENSION_ID } from "./types";
+import { cn } from "./lib/utils";
 
 interface NavLeaf {
   title: string;
@@ -27,16 +16,14 @@ interface NavBranch {
   children: NavLeaf[];
 }
 
-// The tree this extension contributes. Static today; a future
-// iteration can pull this from `/api/v1/extensions/<id>` or the SSE
-// dashboards feed.
-// Per-extension routes resolve at `/extensions/<id>/<route>` via the
-// host's catch-all route file (extensions.$extId.$.tsx). The extension
-// reads the `<route>` tail with `useExtensionRoute()` and renders the
-// matching sub-view from `main.tsx`.
-import { EXTENSION_ID } from "./types";
+type NavItem = NavLeaf | NavBranch;
 
-const TREE: NavBranch[] = [
+function isBranch(item: NavItem): item is NavBranch {
+  return "children" in item;
+}
+
+const TREE: NavItem[] = [
+  { title: "Overview", href: `/extensions/${EXTENSION_ID}/overview` },
   {
     title: "Customers",
     children: [
@@ -63,32 +50,33 @@ export default function NavTree(): React.ReactElement {
 
 function NavTreeInner(): React.ReactElement {
   return (
-    <nav
-      aria-label="Rubix Example"
-      style={{
-        margin: "0.25rem 0.5rem",
-        fontSize: "0.8125rem",
-        color: "var(--color-foreground, inherit)",
-      }}
-    >
-      <div
-        style={{
-          padding: "0.25rem 0.5rem",
-          fontSize: "0.7rem",
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.04em",
-          opacity: 0.6,
-        }}
-      >
+    <nav aria-label="Rubix Example" className="mx-2 text-[0.8125rem] text-foreground">
+      <div className="px-2 py-1 text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground">
         Rubix Example
       </div>
-      <ul style={{ margin: 0, padding: 0, listStyle: "none" }}>
-        {TREE.map((branch) => (
-          <Branch key={branch.title} branch={branch} />
-        ))}
+      <ul className="m-0 p-0 list-none">
+        {TREE.map((item) =>
+          isBranch(item) ? (
+            <Branch key={item.title} branch={item} />
+          ) : (
+            <TopLeaf key={item.href} leaf={item} />
+          ),
+        )}
       </ul>
     </nav>
+  );
+}
+
+function TopLeaf({ leaf }: { leaf: NavLeaf }): React.ReactElement {
+  return (
+    <li>
+      <a
+        href={leaf.href}
+        className="block py-1 px-2 pl-4 no-underline text-foreground rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+      >
+        {leaf.title}
+      </a>
+    </li>
   );
 }
 
@@ -100,46 +88,18 @@ function Branch({ branch }: { branch: NavBranch }): React.ReactElement {
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        style={{
-          width: "100%",
-          display: "flex",
-          alignItems: "center",
-          gap: "0.4rem",
-          padding: "0.3rem 0.5rem",
-          background: "transparent",
-          border: 0,
-          color: "inherit",
-          font: "inherit",
-          cursor: "pointer",
-          borderRadius: "0.375rem",
-          textAlign: "left",
-        }}
+        className="w-full flex items-center gap-1.5 py-1 px-2 bg-transparent border-0 text-foreground font-inherit cursor-pointer rounded-md text-left hover:bg-accent hover:text-accent-foreground transition-colors"
       >
         <Chevron open={open} />
         <span>{branch.title}</span>
       </button>
       {open ? (
-        <ul
-          style={{
-            margin: 0,
-            paddingInlineStart: "1.25rem",
-            listStyle: "none",
-            borderInlineStart: "1px solid var(--color-border, rgba(0,0,0,0.12))",
-            marginInlineStart: "1rem",
-          }}
-        >
+        <ul className="m-0 pl-5 list-none border-l border-border ml-4">
           {branch.children.map((leaf) => (
             <li key={leaf.href}>
               <a
                 href={leaf.href}
-                style={{
-                  display: "block",
-                  padding: "0.25rem 0.5rem",
-                  textDecoration: "none",
-                  color: "inherit",
-                  borderRadius: "0.375rem",
-                  opacity: 0.85,
-                }}
+                className="block py-1 px-2 no-underline text-foreground/85 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
               >
                 {leaf.title}
               </a>
@@ -158,12 +118,10 @@ function Chevron({ open }: { open: boolean }): React.ReactElement {
       height="10"
       viewBox="0 0 10 10"
       aria-hidden="true"
-      style={{
-        transition: "transform 120ms",
-        transform: open ? "rotate(90deg)" : "rotate(0deg)",
-        flexShrink: 0,
-        opacity: 0.7,
-      }}
+      className={cn(
+        "shrink-0 opacity-70 transition-transform duration-150",
+        open && "rotate-90",
+      )}
     >
       <path d="M3 1.5 L7 5 L3 8.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
     </svg>

@@ -1,4 +1,6 @@
 import { defineConfig } from "vite";
+import tailwindcss from "@tailwindcss/vite";
+import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 
 // Build configuration for the `com.rubix.example` UI bundle.
 //
@@ -20,7 +22,14 @@ import { defineConfig } from "vite";
 // so `useContext` in the SDK's `BlockShell` and the context the
 // host renders with are the SAME instance. Bundling React would
 // reintroduce the two-React-copies hook-mismatch error.
+//
+// Tailwind CSS is processed at build time by @tailwindcss/vite and
+// injected into the JS bundle via vite-plugin-css-injected-by-js.
+// The generated utilities reference the host's CSS custom properties
+// (--background, --primary, etc.) so the extension inherits the
+// host's theme automatically.
 export default defineConfig({
+  plugins: [tailwindcss(), cssInjectedByJsPlugin()],
   build: {
     target: "esnext",
     outDir: "../ui",

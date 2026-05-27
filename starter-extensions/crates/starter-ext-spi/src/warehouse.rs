@@ -151,6 +151,64 @@ pub struct WarehouseWriteResponse {
     pub rows_inserted: u64,
 }
 
+/// The wire payload an extension sends on `warehouse.update`.
+///
+/// Each row must include the `key_column` and the columns to set.
+/// The host stamps `tenant_id` from the caller before issuing the
+/// UPDATE and gates `table` against the manifest grant the same
+/// way `warehouse.write` does.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseUpdateRequest {
+    /// Unprefixed table name (as in
+    /// `contributes.warehouse_tables[].name`).
+    pub table: String,
+    /// Column the host matches each row against (typically the
+    /// table's logical id, e.g. `internal_id`). The host refuses
+    /// any value other than a column declared in
+    /// `contributes.warehouse_tables[].columns[]` for `table`.
+    pub key_column: String,
+    /// Rows to update. Each row must carry `key_column` and any
+    /// number of other declared columns to overwrite. Empty vector
+    /// is permitted (returns 0 rows affected).
+    #[serde(default)]
+    pub rows: Vec<Row>,
+}
+
+/// Wire response for `warehouse.update`. Mirror of
+/// [`WarehouseWriteResponse`] with a more accurate field name.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseUpdateResponse {
+    /// Rows the engine reported as affected by the UPDATE.
+    pub rows_affected: u64,
+}
+
+/// The wire payload an extension sends on `warehouse.delete`.
+///
+/// Rows are addressed by an equality match on a single key column.
+/// The host scopes the DELETE to the caller's `tenant_id` so an
+/// extension cannot delete another tenant's rows.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseDeleteRequest {
+    /// Unprefixed table name (as in
+    /// `contributes.warehouse_tables[].name`).
+    pub table: String,
+    /// Column the host matches each id against. Must be a column
+    /// declared in `contributes.warehouse_tables[].columns[]`.
+    pub key_column: String,
+    /// Key values to delete. Each value is bound as JSON; the host
+    /// dispatches to the type appropriate for the column. Empty
+    /// vector returns 0 rows affected.
+    #[serde(default)]
+    pub keys: Vec<serde_json::Value>,
+}
+
+/// Wire response for `warehouse.delete`.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WarehouseDeleteResponse {
+    /// Rows the engine reported as affected by the DELETE.
+    pub rows_affected: u64,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProductsListParams",
+  "description": "Parameters for `com.rubix.example.products_list`. Returns full product rows newest-first for the CRUD panel.",
+  "type": "object",
+  "properties": {
+    "limit": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 500,
+      "default": 100
+    }
+  },
+  "additionalProperties": false
+}

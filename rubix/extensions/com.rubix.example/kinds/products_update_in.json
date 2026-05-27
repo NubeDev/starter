@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProductsUpdateIn",
+  "description": "Input for `com.rubix.example.products_update`. Updates one product row matched by `internal_id`. Only the supplied columns are overwritten.",
+  "type": "object",
+  "required": ["row"],
+  "properties": {
+    "row": {
+      "type": "object",
+      "required": ["internal_id"],
+      "properties": {
+        "internal_id":  { "type": "string", "minLength": 1 },
+        "name":         { "type": "string", "minLength": 1 },
+        "brand":        { "type": "string" },
+        "category":     { "type": "string" },
+        "price":        { "type": "number" },
+        "currency":     { "type": "string" },
+        "stock":        { "type": "integer", "minimum": 0 },
+        "availability": { "type": "string" },
+        "color":        { "type": "string" },
+        "size":         { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

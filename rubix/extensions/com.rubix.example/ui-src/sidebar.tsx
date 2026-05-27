@@ -1,16 +1,4 @@
 // `ui/sidebar.tsx` — compact Sidebar panel for `com.rubix.example`.
-//
-// Mounted into `<ExtensionSlot id="sidebar">` on the rubix frontend
-// (see rubix/frontend/src/components/layout/app-sidebar.tsx). The
-// host's Module Federation runtime loads this module via the
-// `./Sidebar` expose declared in vite.config.ts and surfaces it in
-// the AppSidebar once an operator presses "Load UI" on the
-// /extensions admin page.
-//
-// Kept intentionally small — the AppSidebar is a navigation surface,
-// not a dashboard. We render the extension id, version, a tiny live
-// "tools / tables" pill row, and a deep-link to the full `Main` panel
-// on /extensions. Heavy charts and tables live in `main.tsx`.
 
 import * as React from "react";
 
@@ -18,6 +6,8 @@ import { BlockShell, useSlotContext } from "@nube/starter-ext-sdk-ts";
 
 import { EXTENSION_ID } from "./types";
 import type { ExtensionDetail } from "./types";
+import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
+import { Badge } from "./components/ui/badge";
 
 export default function Sidebar(): React.ReactElement {
   return (
@@ -60,89 +50,44 @@ function SidebarInner(): React.ReactElement {
   const version = detail?.manifest?.version ?? null;
 
   return (
-    <section
+    <Card
       data-ext-id={EXTENSION_ID}
       data-ext-slot={slot.slotId}
-      style={{
-        margin: "0.25rem 0.5rem",
-        padding: "0.5rem 0.625rem",
-        borderRadius: "0.5rem",
-        border: "1px solid var(--color-border, rgba(0,0,0,0.1))",
-        background: "var(--color-surface, transparent)",
-        color: "var(--color-foreground, inherit)",
-        display: "flex",
-        flexDirection: "column",
-        gap: "0.35rem",
-        fontSize: "0.75rem",
-      }}
+      className="mx-2 my-1 py-3"
     >
-      <header
-        style={{
-          display: "flex",
-          alignItems: "baseline",
-          justifyContent: "space-between",
-          gap: "0.5rem",
-        }}
-      >
-        <strong style={{ fontSize: "0.78rem" }}>Rubix Example</strong>
-        {version ? (
-          <span style={{ opacity: 0.6 }}>v{version}</span>
-        ) : null}
-      </header>
+      <CardHeader className="px-3 py-0">
+        <div className="flex items-baseline justify-between gap-2">
+          <CardTitle className="text-xs">Rubix Example</CardTitle>
+          {version ? (
+            <span className="text-muted-foreground text-[0.65rem]">v{version}</span>
+          ) : null}
+        </div>
+      </CardHeader>
 
-      {error ? (
-        <p role="alert" style={{ margin: 0, opacity: 0.8 }}>
-          {error}
-        </p>
-      ) : (
-        <ul
-          style={{
-            margin: 0,
-            padding: 0,
-            listStyle: "none",
-            display: "flex",
-            flexWrap: "wrap",
-            gap: "0.25rem",
-          }}
+      <CardContent className="px-3 py-0">
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">{error}</p>
+        ) : (
+          <div className="flex flex-wrap gap-1.5">
+            <Badge variant="outline" className="text-[0.65rem] px-1.5 py-0">
+              tools: {toolCount}
+            </Badge>
+            <Badge variant="outline" className="text-[0.65rem] px-1.5 py-0">
+              tables: {tableCount}
+            </Badge>
+            <Badge variant="outline" className="text-[0.65rem] px-1.5 py-0">
+              rules: {ruleCount}
+            </Badge>
+          </div>
+        )}
+
+        <a
+          href="/extensions"
+          className="text-xs text-primary hover:underline mt-2 inline-block"
         >
-          <Pill label="tools" count={toolCount} />
-          <Pill label="tables" count={tableCount} />
-          <Pill label="rules" count={ruleCount} />
-        </ul>
-      )}
-
-      <a
-        href="/extensions"
-        style={{
-          alignSelf: "flex-start",
-          fontSize: "0.72rem",
-          textDecoration: "none",
-          opacity: 0.85,
-        }}
-      >
-        open full panel →
-      </a>
-    </section>
-  );
-}
-
-function Pill({
-  label,
-  count,
-}: {
-  label: string;
-  count: number;
-}): React.ReactElement {
-  return (
-    <li
-      style={{
-        padding: "0.1rem 0.4rem",
-        borderRadius: "999px",
-        border: "1px solid var(--color-border, rgba(0,0,0,0.12))",
-        opacity: count > 0 ? 1 : 0.5,
-      }}
-    >
-      {label}: <strong>{count}</strong>
-    </li>
+          open full panel →
+        </a>
+      </CardContent>
+    </Card>
   );
 }

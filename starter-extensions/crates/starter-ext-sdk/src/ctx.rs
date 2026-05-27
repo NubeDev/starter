@@ -286,6 +286,40 @@ impl WarehouseWriteHandle {
     pub fn insert(&self, table: &str, rows: Vec<Row>) -> starter_ext_spi::Result<u64> {
         self.inner.insert(table, rows)
     }
+
+    /// Update `rows` in `table`, matching each row by its
+    /// `key_column` value.
+    ///
+    /// Every row must carry the key column plus any subset of the
+    /// table's other declared columns; columns absent from a row
+    /// are left unchanged in the database. The host stamps the
+    /// caller's `tenant_id` into the WHERE clause so an extension
+    /// cannot touch another tenant's rows.
+    ///
+    /// Returns the number of rows the engine reported as affected
+    /// (rows in the table where the key matched **and** the tenant
+    /// matched).
+    pub fn update(
+        &self,
+        table: &str,
+        key_column: &str,
+        rows: Vec<Row>,
+    ) -> starter_ext_spi::Result<u64> {
+        self.inner.update(table, key_column, rows)
+    }
+
+    /// Delete rows from `table` where `key_column IN (keys)` and
+    /// the row belongs to the caller's tenant.
+    ///
+    /// Returns the engine's reported affected-row count.
+    pub fn delete(
+        &self,
+        table: &str,
+        key_column: &str,
+        keys: Vec<serde_json::Value>,
+    ) -> starter_ext_spi::Result<u64> {
+        self.inner.delete(table, key_column, keys)
+    }
 }
 
 /// In-process publish/subscribe bus handle (granted by
@@ -614,6 +648,40 @@ mod private {
             table: &str,
             rows: Vec<super::Row>,
         ) -> starter_ext_spi::Result<u64>;
+
+        /// Update `rows` in `table`, matching each row by its
+        /// `key_column` value. Returns the engine's reported
+        /// row-affected count.
+        ///
+        /// Default impl refuses with `Error::Capability` so legacy
+        /// backends (stubs, older host integrations) keep compiling
+        /// without change. Real backends override.
+        fn update(
+            &self,
+            _table: &str,
+            _key_column: &str,
+            _rows: Vec<super::Row>,
+        ) -> starter_ext_spi::Result<u64> {
+            Err(starter_ext_spi::Error::capability(
+                "warehouse_write.update not implemented by this backend",
+            ))
+        }
+
+        /// Delete rows from `table` where `key_column IN (keys)`.
+        /// Returns the engine's reported row-affected count.
+        ///
+        /// Default impl refuses with `Error::Capability` so legacy
+        /// backends keep compiling.
+        fn delete(
+            &self,
+            _table: &str,
+            _key_column: &str,
+            _keys: Vec<serde_json::Value>,
+        ) -> starter_ext_spi::Result<u64> {
+            Err(starter_ext_spi::Error::capability(
+                "warehouse_write.delete not implemented by this backend",
+            ))
+        }
     }
 
     /// Host-side backing for [`super::EventBusHandle`].

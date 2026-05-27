@@ -243,6 +243,193 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
 
         self.run_insert(&full_table, &column_names, &column_types, &value_rows)
     }
+
+    fn update(&self, table: &str, key_column: &str, rows: Vec<Row>) -> Result<u64> {
+        let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
+            return Err(Error::capability(format!(
+                "warehouse_write.update {table:?} refused: no caller identity (system frame)"
+            )));
+        };
+
+        if let Some(grant) = &self.granted_tables {
+            if !grant.contains(table) {
+                return Err(Error::capability(format!(
+                    "warehouse_write: table {table:?} is not in the calling extension's grant"
+                )));
+            }
+        }
+
+        let spec = self.find_spec(table)?;
+        let full_table = full_table_name(&self.extension_id, table);
+
+        // Resolve key column against the declared schema.
+        let key_spec = spec.columns.iter().find(|c| c.name == key_column).ok_or_else(|| {
+            Error::validation(format!(
+                "warehouse_write.update: key_column {key_column:?} is not declared in \
+                 contributes.warehouse_tables[{:?}].columns",
+                spec.name
+            ))
+        })?;
+        let key_type = key_spec.ty.clone();
+
+        if rows.is_empty() {
+            return Ok(0);
+        }
+
+        // Build per-row UPDATE … WHERE key = $k AND tenant_id = $t.
+        // We issue one statement per row because the SET list differs
+        // (each row may carry a different subset of columns); batching
+        // would need a CASE-per-column rewrite that's not worth the
+        // complexity at v0.1 CRUD volumes.
+        let pool = self.client.pool().clone();
+        let mut total_affected: u64 = 0;
+        for row in &rows {
+            let map = row.as_map();
+            let key_value = map.get(key_column).cloned().ok_or_else(|| {
+                Error::validation(format!(
+                    "warehouse_write.update: row missing key column {key_column:?}"
+                ))
+            })?;
+
+            // Validate set columns and collect them in declared
+            // order (excluding the key, tenant_id, and ingested_at).
+            let mut set_cols: Vec<&str> = Vec::new();
+            let mut set_types: Vec<&str> = Vec::new();
+            let mut set_values: Vec<JsonValue> = Vec::new();
+            for k in map.keys() {
+                if k == "tenant_id" || k == key_column {
+                    continue;
+                }
+                if !spec.columns.iter().any(|c| c.name == *k) {
+                    return Err(Error::validation(format!(
+                        "warehouse_write.update: row carries column {k:?} which is not declared in \
+                         contributes.warehouse_tables[{:?}].columns",
+                        spec.name
+                    )));
+                }
+            }
+            for col in &spec.columns {
+                if col.name == key_column {
+                    continue;
+                }
+                if let Some(v) = map.get(&col.name) {
+                    set_cols.push(col.name.as_str());
+                    set_types.push(col.ty.as_str());
+                    set_values.push(v.clone());
+                }
+            }
+            if set_cols.is_empty() {
+                return Err(Error::validation(
+                    "warehouse_write.update: row has no columns to SET (only the key was supplied)",
+                ));
+            }
+
+            // SET col1 = $1::t1, col2 = $2::t2, ... WHERE key = $N::kt AND tenant_id = $N+1
+            let mut sql = format!("UPDATE {full_table} SET ");
+            let mut idx: usize = 1;
+            for (i, (col, ty)) in set_cols.iter().zip(set_types.iter()).enumerate() {
+                if i > 0 {
+                    sql.push_str(", ");
+                }
+                let cast = placeholder_cast(ty);
+                sql.push_str(&format!("{} = ${idx}{cast}", quote_ident(col)));
+                idx += 1;
+            }
+            let key_cast = placeholder_cast(&key_type);
+            sql.push_str(&format!(
+                " WHERE {} = ${idx}{key_cast} AND tenant_id = ${}",
+                quote_ident(key_column),
+                idx + 1
+            ));
+
+            let mut args = PgArguments::default();
+            for (v, col) in set_values.iter().zip(set_cols.iter()) {
+                bind_column(&mut args, v, col)?;
+            }
+            bind_column(&mut args, &key_value, key_column)?;
+            args.add(tenant_id.to_owned()).map_err(|e| {
+                Error::extension_internal(format!("bind tenant_id: {e}"))
+            })?;
+
+            let pool_ref = pool.clone();
+            let affected = tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async move {
+                    sqlx::query_with::<Postgres, _>(&sql, args)
+                        .execute(&pool_ref)
+                        .await
+                        .map(|r| r.rows_affected())
+                        .map_err(|e| Error::extension_internal(format!("UPDATE failed: {e}")))
+                })
+            })?;
+            total_affected += affected;
+        }
+        Ok(total_affected)
+    }
+
+    fn delete(
+        &self,
+        table: &str,
+        key_column: &str,
+        keys: Vec<JsonValue>,
+    ) -> Result<u64> {
+        let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
+            return Err(Error::capability(format!(
+                "warehouse_write.delete {table:?} refused: no caller identity (system frame)"
+            )));
+        };
+
+        if let Some(grant) = &self.granted_tables {
+            if !grant.contains(table) {
+                return Err(Error::capability(format!(
+                    "warehouse_write: table {table:?} is not in the calling extension's grant"
+                )));
+            }
+        }
+
+        let spec = self.find_spec(table)?;
+        let full_table = full_table_name(&self.extension_id, table);
+
+        let key_spec = spec.columns.iter().find(|c| c.name == key_column).ok_or_else(|| {
+            Error::validation(format!(
+                "warehouse_write.delete: key_column {key_column:?} is not declared in \
+                 contributes.warehouse_tables[{:?}].columns",
+                spec.name
+            ))
+        })?;
+        let key_cast = placeholder_cast(&key_spec.ty);
+
+        if keys.is_empty() {
+            return Ok(0);
+        }
+
+        // DELETE FROM t WHERE key IN ($1::kt, $2::kt, ...) AND tenant_id = $N+1.
+        let mut sql = format!("DELETE FROM {full_table} WHERE {} IN (", quote_ident(key_column));
+        for i in 0..keys.len() {
+            if i > 0 {
+                sql.push_str(", ");
+            }
+            sql.push_str(&format!("${}{key_cast}", i + 1));
+        }
+        sql.push_str(&format!(") AND tenant_id = ${}", keys.len() + 1));
+
+        let mut args = PgArguments::default();
+        for k in &keys {
+            bind_column(&mut args, k, key_column)?;
+        }
+        args.add(tenant_id.to_owned())
+            .map_err(|e| Error::extension_internal(format!("bind tenant_id: {e}")))?;
+
+        let pool = self.client.pool().clone();
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                sqlx::query_with::<Postgres, _>(&sql, args)
+                    .execute(&pool)
+                    .await
+                    .map(|r| r.rows_affected())
+                    .map_err(|e| Error::extension_internal(format!("DELETE failed: {e}")))
+            })
+        })
+    }
 }
 
 // ---------------------------------------------------------------------------

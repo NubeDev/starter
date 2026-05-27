@@ -73,6 +73,35 @@ contributes:
       output_schema: kinds/customer_quality_out.json
       description_file: kinds/customer_quality.md
 
+    # Thin proxy over `ctx.warehouse_read().query(template, params)`
+    # for the bundled Module-Federation UI panel. The UI cannot reach
+    # `WarehouseReadHandle` directly from the browser, so it goes
+    # via this tool's `/api/v1/tools/com.rubix.example.warehouse_query`
+    # endpoint. Only templates this extension itself contributes are
+    # accepted (the handler refuses anything outside the
+    # `com.rubix.example.*` namespace before calling into the host).
+    - id: com.rubix.example.warehouse_query
+      input_schema: kinds/warehouse_query_in.json
+      output_schema: kinds/warehouse_query_out.json
+      description_file: kinds/warehouse_query.md
+
+    # CRUD over the `products` table. The host's
+    # WarehouseWriteHandle exposes `insert` / `update` / `delete`;
+    # these three tools are thin proxies the UI calls. Reads go
+    # through `warehouse_query` + the `products_list` template.
+    - id: com.rubix.example.products_create
+      input_schema: kinds/products_create_in.json
+      output_schema: kinds/products_write_out.json
+      description_file: kinds/products_crud.md
+    - id: com.rubix.example.products_update
+      input_schema: kinds/products_update_in.json
+      output_schema: kinds/products_write_out.json
+      description_file: kinds/products_crud.md
+    - id: com.rubix.example.products_delete
+      input_schema: kinds/products_delete_in.json
+      output_schema: kinds/products_write_out.json
+      description_file: kinds/products_crud.md
+
   # Warehouse tables the extension owns. The host issues
   # `CREATE TABLE IF NOT EXISTS com_rubix_example__<name>` at boot
   # for each entry, prepending a `tenant_id String` column at
@@ -89,30 +118,30 @@ contributes:
       order_by: [customer_id]
       columns:
         - { name: customer_id,       type: "TEXT" }
-        - { name: first_name,        type: "TEXT" }
-        - { name: last_name,         type: "TEXT" }
-        - { name: company,           type: "TEXT" }
-        - { name: city,              type: "TEXT" }
-        - { name: country,           type: "TEXT" }
-        - { name: email,             type: "TEXT" }
-        - { name: subscription_date, type: "DATE" }
-        - { name: website,           type: "TEXT" }
-        - { name: ingested_at,       type: "TIMESTAMPTZ",     default: "now()" }
+        - { name: first_name,        type: "TEXT",        default: "NULL" }
+        - { name: last_name,         type: "TEXT",        default: "NULL" }
+        - { name: company,           type: "TEXT",        default: "NULL" }
+        - { name: city,              type: "TEXT",        default: "NULL" }
+        - { name: country,           type: "TEXT",        default: "NULL" }
+        - { name: email,             type: "TEXT",        default: "NULL" }
+        - { name: subscription_date, type: "DATE",        default: "NULL" }
+        - { name: website,           type: "TEXT",        default: "NULL" }
+        - { name: ingested_at,       type: "TIMESTAMPTZ", default: "now()" }
 
     - name: products
       order_by: [internal_id]
       columns:
         - { name: internal_id,  type: "TEXT" }
         - { name: name,         type: "TEXT" }
-        - { name: brand,        type: "TEXT" }
-        - { name: category,     type: "TEXT" }
-        - { name: price,        type: "DOUBLE PRECISION" }
-        - { name: currency,     type: "TEXT" }
-        - { name: stock,        type: "INTEGER" }
-        - { name: availability, type: "TEXT" }
-        - { name: color,        type: "TEXT" }
-        - { name: size,         type: "TEXT" }
-        - { name: ingested_at,  type: "TIMESTAMPTZ",     default: "now()" }
+        - { name: brand,        type: "TEXT",             default: "NULL" }
+        - { name: category,     type: "TEXT",             default: "NULL" }
+        - { name: price,        type: "DOUBLE PRECISION", default: "NULL" }
+        - { name: currency,     type: "TEXT",             default: "NULL" }
+        - { name: stock,        type: "INTEGER",          default: "NULL" }
+        - { name: availability, type: "TEXT",             default: "NULL" }
+        - { name: color,        type: "TEXT",             default: "NULL" }
+        - { name: size,         type: "TEXT",             default: "NULL" }
+        - { name: ingested_at,  type: "TIMESTAMPTZ",      default: "now()" }
 
   # Named warehouse-read templates the extension adds to the host's
   # `TemplateRegistry`. R7: the host loads `params_schema` + `sql_file`
@@ -124,9 +153,17 @@ contributes:
       params_schema: kinds/customers_by_country_params.json
       sql_file: kinds/customers_by_country.sql
       tables: [com_rubix_example__customers]
+    - name: com.rubix.example.customers_sample
+      params_schema: kinds/customers_sample_params.json
+      sql_file: kinds/customers_sample.sql
+      tables: [com_rubix_example__customers]
     - name: com.rubix.example.products_low_stock
       params_schema: kinds/products_low_stock_params.json
       sql_file: kinds/products_low_stock.sql
+      tables: [com_rubix_example__products]
+    - name: com.rubix.example.products_list
+      params_schema: kinds/products_list_params.json
+      sql_file: kinds/products_list.sql
       tables: [com_rubix_example__products]
 
   # Anomaly-rule contributions (Phase B5). Each entry names a tool

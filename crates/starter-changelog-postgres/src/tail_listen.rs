@@ -105,12 +105,21 @@ impl ChangeTail for PgListenTail {
                     break;
                 }
 
-                // Wait for a NOTIFY or the safety tick, whichever
-                // fires first. We don't care about the payload —
-                // it's just a wakeup.
+                // Wait for a NOTIFY, the safety tick, or the
+                // subscriber dropping — whichever fires first. The
+                // `tx.closed()` arm bounds drop latency (and
+                // therefore how fast `PgListener` releases its
+                // pinned pool connection) to one scheduler hop
+                // after the consumer goes away. Without it, the
+                // loop could sit in `tokio::time::sleep(30s)` while
+                // a stale listener pinned a slot of the dedicated
+                // pool; combined with reconnect-faster-than-30s
+                // SSE clients, that's what saturates the
+                // `rubix-dash-listen` pool.
                 let wake = tokio::select! {
                     n = listener.try_recv() => n.map(|_| ()),
                     _ = tokio::time::sleep(safety_interval) => Ok(()),
+                    _ = tx.closed() => break,
                 };
 
                 match wake {

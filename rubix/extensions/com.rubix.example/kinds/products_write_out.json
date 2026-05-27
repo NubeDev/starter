@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProductsWriteOut",
+  "description": "Response for the three `products_*` CRUD tools. `affected` is the engine's reported row count.",
+  "type": "object",
+  "required": ["affected"],
+  "properties": {
+    "operation": { "type": "string", "enum": ["create", "update", "delete"] },
+    "affected":  { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

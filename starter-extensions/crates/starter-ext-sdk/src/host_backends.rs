@@ -40,7 +40,8 @@ use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
 use starter_ext_spi::tracing_ext::TracingEventRequest;
 use starter_ext_spi::wall_clock::{WallClockNowRequest, WallClockNowResponse};
 use starter_ext_spi::warehouse::{
-    Row, TemplateSpec, WarehouseReadRequest, WarehouseReadResponse, WarehouseWriteRequest,
+    Row, TemplateSpec, WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest,
+    WarehouseReadResponse, WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest,
     WarehouseWriteResponse,
 };
 use starter_ext_spi::{Error, Result};
@@ -202,6 +203,39 @@ impl WarehouseWriteBackend for RealWarehouseWriteBackend {
         let res: WarehouseWriteResponse = serde_json::from_value(raw)
             .map_err(|e| Error::transport(format!("decoding warehouse.write: {e}")))?;
         Ok(res.rows_inserted)
+    }
+
+    fn update(&self, table: &str, key_column: &str, rows: Vec<Row>) -> Result<u64> {
+        let req = WarehouseUpdateRequest {
+            table: table.to_owned(),
+            key_column: key_column.to_owned(),
+            rows,
+        };
+        let wire_params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding warehouse.update: {e}")))?;
+        let raw = self.rpc.call_sync("warehouse.update", wire_params)?;
+        let res: WarehouseUpdateResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding warehouse.update: {e}")))?;
+        Ok(res.rows_affected)
+    }
+
+    fn delete(
+        &self,
+        table: &str,
+        key_column: &str,
+        keys: Vec<serde_json::Value>,
+    ) -> Result<u64> {
+        let req = WarehouseDeleteRequest {
+            table: table.to_owned(),
+            key_column: key_column.to_owned(),
+            keys,
+        };
+        let wire_params = serde_json::to_value(&req)
+            .map_err(|e| Error::transport(format!("encoding warehouse.delete: {e}")))?;
+        let raw = self.rpc.call_sync("warehouse.delete", wire_params)?;
+        let res: WarehouseDeleteResponse = serde_json::from_value(raw)
+            .map_err(|e| Error::transport(format!("decoding warehouse.delete: {e}")))?;
+        Ok(res.rows_affected)
     }
 }
 

@@ -464,7 +464,35 @@ async fn main() -> Result<()> {
                 use starter_server::auth::with_principal;
 
                 let table = Arc::new(BuiltinTable::new());
-                let template_registry = Arc::new(TemplateRegistry::builtin());
+                let mut tmpl = TemplateRegistry::builtin();
+                // Fold every validated extension's
+                // `contributes.warehouse_templates[]` into the host
+                // registry so the extension-substrate
+                // `ctx.warehouse_read().query(...)` path (and the
+                // process-flavour `warehouse.query` proxy tool) can
+                // resolve names like `com.rubix.example.customers_by_country`.
+                for record in bundle.registry.iter_validated() {
+                    match tmpl.extend_from_record(record) {
+                        Ok(n) if n > 0 => {
+                            info!(
+                                target: "rubix.boot.extensions",
+                                extension = %record.id_hint,
+                                templates = n,
+                                "registered contributed warehouse templates",
+                            );
+                        }
+                        Ok(_) => {}
+                        Err(e) => {
+                            warn!(
+                                target: "rubix.boot.extensions",
+                                extension = %record.id_hint,
+                                error = %e,
+                                "failed to register contributed warehouse templates",
+                            );
+                        }
+                    }
+                }
+                let template_registry = Arc::new(tmpl);
                 let event_bus = Arc::new(RubixEventBus::new());
                 // Wire the Row-5 dashboard + authz backends from the
                 // already-built rubix primitives:
@@ -581,24 +609,30 @@ async fn main() -> Result<()> {
             use starter_server::auth::with_principal;
             use starter_store_postgres::pool::Pool;
 
-            // Dedicated pool for the SSE listener: `PgListener`
-            // (used inside `PgListenTail::subscribe`) pins ONE
+            // Dedicated tiny pool for the SSE listener: `PgListener`
+            // (used inside `PgListenTail::subscribe`) pins one
             // connection PER SUBSCRIBER for the lifetime of that
-            // subscription. With N browser tabs (or rapid reloads
-            // before old subs drain) we need at least N slots — a
-            // cap below that makes `PgListener::connect_with` block
-            // on `pool.acquire()` for the 30s sqlx default and the
-            // SSE handler returns 503. Isolated from the main 16-
-            // conn pool so a sidebar storm cannot starve other
-            // auth-gated routes (mirrors `boot::flow_notify`).
+            // subscription. Cap is intentionally low (2) so the
+            // SSE listener leak surfaces as visible 503s on the
+            // 3rd concurrent subscriber instead of silently piling
+            // up pinned listeners. Isolated from the main 16-conn
+            // pool so a sidebar storm cannot starve other auth-gated
+            // routes (mirrors `boot::flow_notify`).
+            //
+            // Do NOT raise this without first fixing the listener
+            // drop latency in `tail_listen.rs` (the spawned task
+            // only notices `tx.is_closed()` after the safety_interval
+            // sleep, default 30s). Raising the cap as a band-aid
+            // was tried on 2026-05-27 (commit 7211aa9) and reverted
+            // because it just hides the leak — see the watchdog
+            // README §"Future work" items 1+2.
             //
             // TODO: replace per-subscriber listeners with a single
             // shared PgListener fanned out over a `broadcast`
             // channel, which collapses N pinned connections to 1
-            // and removes this whole sizing concern. Until then,
-            // the cap below is the operating-cost knob.
+            // and removes this whole sizing concern.
             let listen_inner = PgPoolOptions::new()
-                .max_connections(16)
+                .max_connections(2)
                 .connect(dsn)
                 .await
                 .map_err(|e| {

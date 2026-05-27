@@ -12,6 +12,7 @@
 //! impls and their unit-test seams.
 
 pub mod analytics_bridge;
+pub mod contributed_template;
 pub mod entity_graph;
 pub mod handler_registry;
 pub mod page_provider;

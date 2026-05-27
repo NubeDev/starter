@@ -86,6 +86,7 @@ impl AnalyticsBridge for TimescaleAnalyticsBridge {
             );
             return Ok(vec![]);
         }
+        let spec = self.registry.get(name);
 
         let Some(tenant_id) = params.get("tenant_id").and_then(|v| v.as_str()) else {
             return Err(format!("{name}: tenant_id required"));
@@ -95,6 +96,6 @@ impl AnalyticsBridge for TimescaleAnalyticsBridge {
         // shape the SDUI layer uses is structurally compatible with
         // a JSON object; serialise once and pass the value through.
         let params_json: JsonValue = json!(params);
-        template_resolver::resolve(&self.client, name, tenant_id, &params_json).await
+        template_resolver::resolve(&self.client, name, tenant_id, &params_json, spec).await
     }
 }

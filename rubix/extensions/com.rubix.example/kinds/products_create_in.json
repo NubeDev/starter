@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ProductsCreateIn",
+  "description": "Input for `com.rubix.example.products_create`. Inserts a single product row into the extension's `products` table. The host stamps `tenant_id` from the caller before INSERT.",
+  "type": "object",
+  "required": ["row"],
+  "properties": {
+    "row": {
+      "type": "object",
+      "required": ["internal_id", "name"],
+      "properties": {
+        "internal_id":  { "type": "string", "minLength": 1 },
+        "name":         { "type": "string", "minLength": 1 },
+        "brand":        { "type": "string" },
+        "category":     { "type": "string" },
+        "price":        { "type": "number" },
+        "currency":     { "type": "string" },
+        "stock":        { "type": "integer", "minimum": 0 },
+        "availability": { "type": "string" },
+        "color":        { "type": "string" },
+        "size":         { "type": "string" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

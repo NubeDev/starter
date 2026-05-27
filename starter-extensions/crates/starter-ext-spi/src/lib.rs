@@ -56,6 +56,7 @@ pub use manifest::{
     MANIFEST_VERSION,
 };
 pub use warehouse::{
-    Row, TemplateSpec, WarehouseReadRequest, WarehouseReadResponse, WarehouseWriteRequest,
+    Row, TemplateSpec, WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest,
+    WarehouseReadResponse, WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest,
     WarehouseWriteResponse,
 };

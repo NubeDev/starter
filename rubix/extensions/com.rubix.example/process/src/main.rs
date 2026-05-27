@@ -39,7 +39,7 @@ pub struct Example;
 
 starter_ext_sdk::requires! {
     name = ExampleCtx,
-    capabilities = [warehouse_write, tracing],
+    capabilities = [warehouse_read, warehouse_write, tracing],
 }
 
 impl ExampleToolHandlers for Example {
@@ -174,6 +174,145 @@ impl ExampleToolHandlers for Example {
 
         Ok(evaluate_customer_quality(row))
     }
+
+    /// `com.rubix.example.warehouse_query` — thin proxy over
+    /// `ctx.warehouse_read().query(template, params)` for the
+    /// bundled UI panel.
+    ///
+    /// The browser cannot reach `WarehouseReadHandle` directly, so
+    /// the UI hits `/api/v1/tools/com.rubix.example.warehouse_query`
+    /// instead and the host's tool dispatcher routes it here.
+    ///
+    /// This handler refuses anything outside this extension's own
+    /// `com.rubix.example.*` template namespace — the host would
+    /// also reject foreign templates via the grant gate, but the
+    /// pre-check keeps the error surface friendly. Per R7 the SQL
+    /// body is never templated here: the host's resolver matches
+    /// by name and runs the corresponding `sqlx::query_as`.
+    fn handle_com_rubix_example_warehouse_query(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        let template = params
+            .get("template")
+            .and_then(Value::as_str)
+            .ok_or_else(|| {
+                starter_ext_sdk::Error::Validation(
+                    "warehouse_query: `template` (string) is required".into(),
+                )
+            })?
+            .to_owned();
+
+        if !template.starts_with("com.rubix.example.") {
+            return Err(starter_ext_sdk::Error::Validation(format!(
+                "warehouse_query: template `{template}` is outside this \
+                 extension's namespace (`com.rubix.example.*`)"
+            )));
+        }
+
+        let tpl_params = params
+            .get("params")
+            .cloned()
+            .unwrap_or_else(|| json!({}));
+
+        let rows = ctx.warehouse_read().query(&template, tpl_params)?;
+        let rows_json: Vec<Value> = rows
+            .into_iter()
+            .map(|r| Value::Object(r.0))
+            .collect();
+        let count = rows_json.len();
+
+        Ok(json!({
+            "template": template,
+            "rows": rows_json,
+            "count": count,
+        }))
+    }
+
+    /// `com.rubix.example.products_create` — INSERT one product
+    /// row. Wire shape: `{ "row": { "internal_id": ..., ... } }`.
+    fn handle_com_rubix_example_products_create(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        let row = take_row(&params, "products_create")?;
+        let affected = ctx
+            .warehouse_write()
+            .insert("products", vec![Row::from_map(row)])?;
+        Ok(json!({ "operation": "create", "affected": affected }))
+    }
+
+    /// `com.rubix.example.products_update` — UPDATE one product
+    /// row matched by `internal_id`.
+    fn handle_com_rubix_example_products_update(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        let row = take_row(&params, "products_update")?;
+        let has_key = row
+            .get("internal_id")
+            .and_then(Value::as_str)
+            .is_some_and(|s| !s.is_empty());
+        if !has_key {
+            return Err(starter_ext_sdk::Error::Validation(
+                "products_update: `row.internal_id` (non-empty string) is required".into(),
+            ));
+        }
+        let affected = ctx
+            .warehouse_write()
+            .update("products", "internal_id", vec![Row::from_map(row)])?;
+        Ok(json!({ "operation": "update", "affected": affected }))
+    }
+
+    /// `com.rubix.example.products_delete` — DELETE one or more
+    /// rows by `internal_id`.
+    fn handle_com_rubix_example_products_delete(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        let ids = params
+            .get("internal_ids")
+            .and_then(Value::as_array)
+            .ok_or_else(|| {
+                starter_ext_sdk::Error::Validation(
+                    "products_delete: `internal_ids` (array of strings) is required".into(),
+                )
+            })?;
+        if ids.is_empty() {
+            return Err(starter_ext_sdk::Error::Validation(
+                "products_delete: `internal_ids` must not be empty".into(),
+            ));
+        }
+        let keys: Vec<Value> = ids
+            .iter()
+            .map(|v| match v.as_str() {
+                Some(s) if !s.is_empty() => Ok(Value::String(s.to_owned())),
+                _ => Err(starter_ext_sdk::Error::Validation(
+                    "products_delete: every entry must be a non-empty string".into(),
+                )),
+            })
+            .collect::<starter_ext_sdk::Result<_>>()?;
+        let affected = ctx
+            .warehouse_write()
+            .delete("products", "internal_id", keys)?;
+        Ok(json!({ "operation": "delete", "affected": affected }))
+    }
+}
+
+/// Extract `params["row"]` as an owned JSON object map for the
+/// products CRUD handlers.
+fn take_row(params: &Value, tool: &str) -> starter_ext_sdk::Result<Map<String, Value>> {
+    params
+        .get("row")
+        .and_then(Value::as_object)
+        .cloned()
+        .ok_or_else(|| {
+            starter_ext_sdk::Error::Validation(format!("{tool}: `row` (object) is required"))
+        })
 }
 
 /// Pure rule body. Split out so it can be unit-tested without an
