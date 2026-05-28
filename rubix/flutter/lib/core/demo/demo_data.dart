@@ -2,6 +2,9 @@
 // Edit this file to change fake user, devices, agent, metrics, etc.
 // DEMO ONLY: safe to delete this entire file when removing demo mode.
 
+import 'package:flutter/widgets.dart';
+import 'package:lucide_icons/lucide_icons.dart';
+
 /// Simple fake user record.
 class DemoUser {
   const DemoUser({required this.id, required this.name, required this.email, this.avatarUrl});
@@ -58,5 +61,65 @@ final List<DemoMetricPoint> demoEnergySeries = List.generate(48, (i) =>
     value: (100 + (i * 7) % 40 + (i.isEven ? 10 : -10)).toDouble(),
   ),
 );
+
+// ---------------------------------------------------------------------------
+// Connections screen — connected-device rows (Figma node 6-79).
+// Status drives the dot colour; arrow direction is purely visual.
+
+enum DemoConnStatus { connected, warning, offline }
+
+class DemoConnectedDevice {
+  const DemoConnectedDevice({
+    required this.id,
+    required this.name,
+    required this.type,
+    required this.detail,
+    required this.status,
+    required this.icon,
+  });
+  final String id;
+  final String name;
+  /// e.g. 'Gateway', 'Sensor', 'Controller', 'Meter'.
+  final String type;
+  /// Short trailing detail — uptime, last-seen, latency.
+  final String detail;
+  final DemoConnStatus status;
+  final IconData icon;
+}
+
+const List<DemoConnectedDevice> kDemoConnectedDevices = [
+  DemoConnectedDevice(
+    id: 'dev-compute-lab01',
+    name: 'Rubix Compute Lab-01',
+    type: 'Gateway',
+    detail: '12ms',
+    status: DemoConnStatus.connected,
+    icon: LucideIcons.cpu,
+  ),
+  DemoConnectedDevice(
+    id: 'dev-hvac-2f-east',
+    name: 'HVAC Sensor 2F-East',
+    type: 'Sensor',
+    detail: '5min ago',
+    status: DemoConnStatus.connected,
+    icon: LucideIcons.thermometer,
+  ),
+  DemoConnectedDevice(
+    id: 'dev-lighting-3a',
+    name: 'Lighting Controller 3A',
+    type: 'Controller',
+    detail: '1hr ago',
+    status: DemoConnStatus.warning,
+    icon: LucideIcons.lightbulb,
+  ),
+  DemoConnectedDevice(
+    id: 'dev-energy-meter-main',
+    name: 'Energy Meter Main',
+    type: 'Meter',
+    detail: '3hr ago',
+    status: DemoConnStatus.offline,
+    icon: LucideIcons.gauge,
+  ),
+];
 
 // Add more fake data as needed for other screens.
