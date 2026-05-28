@@ -82,6 +82,8 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     required this.glowGreen,
     required this.glowAmber,
     required this.glowDanger,
+    required this.ghostBorder,
+    required this.ghostFill,
   });
 
   final Color bg;
@@ -113,6 +115,15 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
   final Color glowAmber;
   final Color glowDanger;
 
+  /// Ghost-button border — danger red at low alpha. Used for quiet
+  /// outlined buttons (e.g. Sign out) where the icon + label stay full
+  /// strength but the chrome reads as a soft halo. Figma node 6:232.
+  final Color ghostBorder;
+
+  /// Ghost-button fill — near-transparent neutral so the surface reads
+  /// as a faint tint rather than a hole in the layer above.
+  final Color ghostFill;
+
   static const light = NubeTokens(
     bg:        NubePrimitives.grey50,
     bg2:       NubePrimitives.grey100,
@@ -136,6 +147,10 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     glowGreen: Color(0x1A21C45D),
     glowAmber: Color(0x1AF59F0A),
     glowDanger: Color(0x1AEF4343),
+    // 40% red border + 4% black fill (light mode equivalent of the
+    // 4% white tint used in dark; both read as a faint surface).
+    ghostBorder: Color(0x66EF4343),
+    ghostFill:   Color(0x0A000000),
   );
 
   static const dark = NubeTokens(
@@ -161,6 +176,8 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     glowGreen: Color(0x4021C45D),
     glowAmber: Color(0x40F59F0A),
     glowDanger: Color(0x40EF4343),
+    ghostBorder: Color(0x66EF4343),
+    ghostFill:   Color(0x0AFFFFFF),
   );
 
   @override
@@ -171,6 +188,7 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     Color? success, Color? warning, Color? danger, Color? info,
     Color? accentBlue,
     Color? glowTeal, Color? glowGreen, Color? glowAmber, Color? glowDanger,
+    Color? ghostBorder, Color? ghostFill,
   }) {
     return NubeTokens(
       bg: bg ?? this.bg,
@@ -195,6 +213,8 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
       glowGreen: glowGreen ?? this.glowGreen,
       glowAmber: glowAmber ?? this.glowAmber,
       glowDanger: glowDanger ?? this.glowDanger,
+      ghostBorder: ghostBorder ?? this.ghostBorder,
+      ghostFill: ghostFill ?? this.ghostFill,
     );
   }
 
@@ -224,6 +244,8 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
       glowGreen: Color.lerp(glowGreen, other.glowGreen, t)!,
       glowAmber: Color.lerp(glowAmber, other.glowAmber, t)!,
       glowDanger: Color.lerp(glowDanger, other.glowDanger, t)!,
+      ghostBorder: Color.lerp(ghostBorder, other.ghostBorder, t)!,
+      ghostFill: Color.lerp(ghostFill, other.ghostFill, t)!,
     );
   }
 

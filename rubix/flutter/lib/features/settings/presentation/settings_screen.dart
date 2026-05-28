@@ -6,8 +6,7 @@ import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
 import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/core/theme/theme_providers.dart';
 import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
-import 'package:rubix_flutter/features/settings/presentation/pin_settings_section.dart';
-import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
+import 'package:rubix_flutter/features/home/presentation/home_controller.dart';
 import 'package:rubix_flutter/shared/widgets/scaffold/ambient_glow_background.dart';
 
 /// Settings — Figma-aligned: hero with serif-italic accent, dense
@@ -21,6 +20,7 @@ class SettingsScreen extends ConsumerWidget {
     final t = Theme.of(context).nube;
     final themeMode = ref.watch(themeModeProvider);
     final locale = ref.watch(localeProvider);
+    final email = ref.watch(currentUserProvider).value?.email ?? '—';
 
     return AmbientGlowBackground(
       child: Scaffold(
@@ -30,11 +30,13 @@ class SettingsScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             children: [
               const SizedBox(height: 6),
+              const _PreferencesGlassPill(),
+              const SizedBox(height: 18),
               const _Hero(),
               const SizedBox(height: 10),
               Text(
-                'Tune the console. Your preferences sync locally.',
-                style: TextStyle(color: t.muted, fontSize: 14, height: 1.45),
+                'Signed in as $email',
+                style: TextStyle(color: t.muted, fontSize: 13, height: 1.45),
               ),
               const SizedBox(height: 22),
 
@@ -67,26 +69,13 @@ class SettingsScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               const _SectionHeader('Security'),
               const SizedBox(height: 10),
-              const PinSettingsSection(),
+              const _AppLockRow(),
 
-              const SizedBox(height: 24),
-              const _SectionHeader('Account'),
-              const SizedBox(height: 10),
-              _SignOutRow(
-                label: l.signOut,
+              const SizedBox(height: 18),
+              _SignOutButton(
+                label: 'Sign out',
                 onTap: () async {
-                  final ok = await showNubeConfirmDialog(
-                    context,
-                    title: 'Sign out?',
-                    message: 'You\'ll need to re-enter credentials next time.',
-                    confirmLabel: l.signOut,
-                    destructive: true,
-                  );
-                  if (ok == true) {
-                    await ref
-                        .read(authControllerProvider.notifier)
-                        .logout();
-                  }
+                  await ref.read(authControllerProvider.notifier).logout();
                 },
               ),
             ],
@@ -111,7 +100,7 @@ class _Hero extends StatelessWidget {
       TextSpan(
         children: [
           TextSpan(
-            text: 'Settings &\n',
+            text: 'Settings\n',
             style: TextStyle(
               color: t.text,
               fontSize: 38,
@@ -120,8 +109,116 @@ class _Hero extends StatelessWidget {
               letterSpacing: -0.8,
             ),
           ),
-          TextSpan(text: 'account.', style: italic),
+          TextSpan(text: '& account.', style: italic),
         ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Preferences glass pill — node 6:206–6:208.
+// ─────────────────────────────────────────────────────────────────────
+
+class _PreferencesGlassPill extends StatelessWidget {
+  const _PreferencesGlassPill();
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    const dot = Color(0xFF21C45D);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: t.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: t.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: dot,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: dot.withValues(alpha: 0.55),
+                    blurRadius: 6,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'PREFERENCES',
+              style: TextStyle(
+                color: t.text,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2.0,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// App lock toggle — node 6:227–6:231.
+// ─────────────────────────────────────────────────────────────────────
+
+class _AppLockRow extends StatefulWidget {
+  const _AppLockRow();
+  @override
+  State<_AppLockRow> createState() => _AppLockRowState();
+}
+
+class _AppLockRowState extends State<_AppLockRow> {
+  // Defaults ON per design. Local state — backed by PIN preferences
+  // when the feature is wired up; for now this is purely visual.
+  bool _on = true;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return SizedBox(
+      height: 56,
+      child: Container(
+        decoration: BoxDecoration(
+          color: t.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: t.border),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                'App lock (PIN)',
+                style: TextStyle(
+                  color: t.text,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Switch(
+              value: _on,
+              onChanged: (v) => setState(() => _on = v),
+              activeColor: Colors.white,
+              activeTrackColor: t.leaf,
+              inactiveThumbColor: t.muted,
+              inactiveTrackColor: t.border,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -352,15 +449,19 @@ class _LangRowState extends State<_LangRow> {
 // Sign out — destructive row.
 // ────────────────────────────────────────────────────────────────────────
 
-class _SignOutRow extends StatefulWidget {
-  const _SignOutRow({required this.label, required this.onTap});
+// ─────────────────────────────────────────────────────────────────────
+// Sign out — full-width outlined danger button, node 6:232–6:237.
+// ─────────────────────────────────────────────────────────────────────
+
+class _SignOutButton extends StatefulWidget {
+  const _SignOutButton({required this.label, required this.onTap});
   final String label;
   final Future<void> Function() onTap;
   @override
-  State<_SignOutRow> createState() => _SignOutRowState();
+  State<_SignOutButton> createState() => _SignOutButtonState();
 }
 
-class _SignOutRowState extends State<_SignOutRow> {
+class _SignOutButtonState extends State<_SignOutButton> {
   bool _hover = false;
   @override
   Widget build(BuildContext context) {
@@ -374,42 +475,29 @@ class _SignOutRowState extends State<_SignOutRow> {
         onTap: () => widget.onTap(),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 120),
+          height: 52,
           decoration: BoxDecoration(
             color: _hover
-                ? t.danger.withValues(alpha: 0.06)
-                : t.surface,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(
-              color: _hover
-                  ? t.danger.withValues(alpha: 0.3)
-                  : t.border,
-            ),
+                ? t.danger.withValues(alpha: 0.08)
+                : t.ghostFill,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: t.ghostBorder, width: 1),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+          alignment: Alignment.center,
           child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: t.danger.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                alignment: Alignment.center,
-                child: Icon(LucideIcons.logOut, size: 15, color: t.danger),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  widget.label,
-                  style: TextStyle(
-                    color: t.danger,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
+              Icon(LucideIcons.logOut, size: 16, color: t.danger),
+              const SizedBox(width: 8),
+              Text(
+                widget.label,
+                style: TextStyle(
+                  color: t.danger,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              Icon(LucideIcons.chevronRight, size: 16, color: t.danger),
             ],
           ),
         ),
