@@ -82,6 +82,13 @@ impl DashboardSnapshot {
 }
 
 /// Single [`Reversible`] impl for the `rubix.dashboard.page` kind.
+/// Payload shape: **snapshot** (see
+/// [`starter_spi::changelog::Reversible`] choice matrix). Dashboard
+/// page revisions are append-only — a successful create/update
+/// inserts a new row keyed by `(page_id, revision_id)` and undo
+/// restores the previous head. Patch shape is not appropriate while
+/// revisions are the unit of change; revisit if per-widget undo
+/// granularity is ever required.
 pub struct DashboardReversible {
     store: Arc<dyn DashboardStore>,
 }

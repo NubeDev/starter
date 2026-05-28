@@ -5,3 +5,4 @@
 
 pub mod dispatch;
 pub mod last;
+pub mod redo;

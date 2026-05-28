@@ -38,11 +38,10 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::Router;
 use futures::stream::Stream;
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
@@ -53,6 +52,7 @@ use starter_flow_spi::event_dto::NodeSlotValue;
 use starter_flow_spi::flow::{FlowEvent, FlowId};
 
 use crate::boot::flow_runtime::FlowSubscriptionRegistry;
+use crate::routes::{RouteMeta, RouteRegistrar};
 
 /// State threaded into the SSE handler.
 #[derive(Clone)]
@@ -60,11 +60,23 @@ pub struct FlowEventsState {
     pub subscriptions: Arc<FlowSubscriptionRegistry>,
 }
 
-/// Build the router. Mount under `/api/v1`.
-pub fn router(state: FlowEventsState) -> Router {
-    Router::new()
-        .route("/api/v1/flows/{flow_id}/events", get(events))
-        .with_state(state)
+/// Build the registrar. Mounts under `/api/v1` (path is fully
+/// qualified).
+pub fn registrar(state: FlowEventsState) -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::GET,
+        "/api/v1/flows/{flow_id}/events",
+        get(events).with_state(state),
+        RouteMeta::new()
+            .describe("SSE live tail of FlowEvent::NodeEmitted frames for one flow.")
+            .tag("flow-programmer"),
+    )
+}
+
+/// Backwards-compatible alias for tests that expect an
+/// `axum::Router`.
+pub fn router(state: FlowEventsState) -> axum::Router {
+    registrar(state).into_router()
 }
 
 async fn events(

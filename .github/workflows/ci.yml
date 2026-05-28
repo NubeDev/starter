@@ -87,6 +87,44 @@ jobs:
       - name: test (starter-store-postgres, testing feature, --ignored)
         run: cargo test -p starter-store-postgres --features testing -- --ignored
 
+  undo-postgres:
+    # Docker-backed integration tests for the PG-backed undo/redo
+    # substrate. Both tests stand up an ephemeral Postgres via
+    # `testcontainers` (pinned to `17-alpine` in
+    # `starter-store-postgres::testing::with_database`) and exercise
+    # the §3.4 redo-clear-on-mutation contract plus the cross-process
+    # cursor persistence proof.
+    #
+    # Marked `--ignored` upstream so they never fire in plain
+    # `cargo test --workspace`. Pinned here so a regression in
+    # `PgUndoCursor` or `UndoDispatcher::with_cursor` turns the PR
+    # red instead of being caught months later by a developer
+    # remembering to run `--ignored` locally.
+    name: undo (postgres, --ignored)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: install toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: rust cache
+        uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: workspace
+
+      # Five tests covering epoch CAS round-trip, isolation,
+      # persistence, concurrent CAS, and agent-run-id keying.
+      - name: test (starter-undo, postgres feature, cursor_postgres --ignored)
+        run: cargo test -p starter-undo --features postgres --test cursor_postgres -- --ignored --test-threads=1
+
+      # End-to-end: create + update + undo + redo + restart-replay
+      # against testcontainers Postgres. Pins the wiring between
+      # `UndoDispatcher::with_cursor`, `PgUndoCursor`, and the
+      # `rubix.undo.{last,redo}` verbs.
+      - name: test (rubix-agent, undo_redo_e2e --ignored)
+        run: cargo test -p rubix-agent --test undo_redo_e2e_test -- --ignored
+
   pnpm:
     name: pnpm (build / typecheck)
     runs-on: ubuntu-latest

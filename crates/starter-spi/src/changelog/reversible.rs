@@ -14,6 +14,27 @@ use super::{Change, ChangeTx};
 /// Domain glue that lets a single resource kind participate in undo,
 /// redo, duplicate, and paste.
 ///
+/// # Choosing snapshot vs patch
+///
+/// Each [`Reversible`] picks one of two payload shapes per resource
+/// kind and stays with it; mixing within a kind is forbidden because
+/// undo dispatch becomes per-row guesswork. The choice is mandatory
+/// before merging any new impl. Use this matrix:
+///
+/// | Use **snapshot** (full `before` + `after`) when…             | Use **patch** (RFC 6902 in `patch`) when…                       |
+/// |--------------------------------------------------------------|------------------------------------------------------------------|
+/// | Resource is small (< ~10 KB serialized)                      | Resource is large and most edits touch a tiny slice              |
+/// | Resource has no useful intermediate state                    | Edits are naturally diff-shaped (rename, field flip, cell)       |
+/// | Lifecycle includes creation/deletion (`before` may be `{}`)  | Edits never create or destroy the resource                       |
+/// | Round-trip cost is dominated by network, not storage         | Storage cost of full snapshots × revision count would dominate   |
+///
+/// Worked references: `UserReversible` is snapshot (create/disable
+/// flip the row in/out of existence); `TeamReversible` is patch
+/// (membership flips are diff-shaped, the row itself never
+/// vanishes); `FlowDefReversible` stays snapshot today because the
+/// unit of change is the whole YAML on deploy — it is the candidate
+/// to flip to patch once node-level granularity lands.
+///
 /// # Payload contract
 ///
 /// A [`Change`] carries three optional payload columns —

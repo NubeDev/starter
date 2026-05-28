@@ -116,6 +116,13 @@ impl TeamAdminStore for InMemoryTeamStore {
 }
 
 /// Single [`Reversible`] impl for the `"team"` kind.
+///
+/// Payload shape: **patch** (see
+/// [`starter_spi::changelog::Reversible`] choice matrix). Membership
+/// edits are naturally diff-shaped — `before` carries the touched
+/// fields only and merges against the current row in
+/// `apply_inverse`, which is why two concurrent edits to unrelated
+/// fields do not clobber each other.
 pub struct TeamReversible {
     store: Arc<dyn TeamAdminStore>,
 }

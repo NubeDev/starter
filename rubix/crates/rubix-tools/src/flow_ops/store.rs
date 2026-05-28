@@ -151,6 +151,13 @@ impl FlowDefReversible {
     }
 }
 
+/// Payload shape: **snapshot** (see
+/// [`starter_spi::changelog::Reversible`] choice matrix). The unit
+/// of change is a whole flow revision (deploy / duplicate); undo
+/// retires the new revision and restores the prior head pointer.
+/// Candidate to flip to **patch** once per-node granularity lands —
+/// the design doc gates that flip on the Phase B relational flow
+/// storage.
 #[async_trait]
 impl Reversible for FlowDefReversible {
     fn kind(&self) -> &'static str {

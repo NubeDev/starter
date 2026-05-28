@@ -42,11 +42,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::IntoResponse;
 use axum::routing::get;
-use axum::{Extension, Router};
+use axum::Extension;
 use futures::stream::{self, Stream, StreamExt};
 use serde::Serialize;
 use serde_json::Value;
@@ -57,6 +57,8 @@ use rubix_spi::dashboard::{DashboardStore, ListFilter};
 use starter_changelog::ChangeTail;
 use starter_spi::auth::Principal;
 use starter_spi::changelog::{Change, Op};
+
+use crate::routes::{RouteMeta, RouteRegistrar};
 
 /// Tool ids whose `tool.invoke` audit rows we promote into
 /// dashboard-event frames. Kept as a `&[&str]` so the match in
@@ -84,12 +86,23 @@ pub struct DashboardEventsState {
     pub store: Arc<dyn DashboardStore>,
 }
 
-/// Build the router. Mount under `/` — the route already carries
-/// its full `/api/v1` prefix.
-pub fn router(state: DashboardEventsState) -> Router {
-    Router::new()
-        .route("/api/v1/dashboards/events", get(events))
-        .with_state(state)
+/// Build the registrar. The route already carries its full
+/// `/api/v1` prefix.
+pub fn registrar(state: DashboardEventsState) -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::GET,
+        "/api/v1/dashboards/events",
+        get(events).with_state(state),
+        RouteMeta::new()
+            .describe("SSE live tail of dashboard page-list mutations (tenant-scoped).")
+            .tag("dashboard"),
+    )
+}
+
+/// Backwards-compatible alias for tests that expect an
+/// `axum::Router`.
+pub fn router(state: DashboardEventsState) -> axum::Router {
+    registrar(state).into_router()
 }
 
 /// One item in the `snapshot` frame's `items` array; trimmed down

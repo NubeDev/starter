@@ -9,6 +9,7 @@
 //! [docs/design/agent/](../../docs/design/agent/README.md) for the
 //! boot order this crate composes.
 
+pub mod admin;
 pub mod boot;
 pub mod extensions;
 pub mod health;

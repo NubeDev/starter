@@ -17,6 +17,7 @@ use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
 use starter_store_postgres::flow::FLOW_MIGRATION_SOURCE;
 use starter_store_postgres::{migrate, pool::connect, SCHEDULED_FLOWS_MIGRATION_SOURCE};
+use starter_undo::cursor_postgres::migration_source as undo_cursor_migration_source;
 use tracing::{info, warn};
 
 /// What happened during the migrations step. Returned so the boot
@@ -58,6 +59,12 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         migration_source(),
         postgres_migration_source(),
         UNDO_SNAPSHOTS_MIGRATION_SOURCE,
+        // `starter_undo_cursors` — the per-actor durable redo
+        // stack proposal §3.4 calls for. Owned by `starter-undo`
+        // rather than rubix-store-postgres because the cursor is a
+        // starter primitive (the rubix dashboards / users / teams
+        // policy lives in `undo_snapshots`).
+        undo_cursor_migration_source(),
         FLOWS_DEFINITIONS_MIGRATION_SOURCE,
         DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE,
         SCHEDULED_FLOWS_MIGRATION_SOURCE,

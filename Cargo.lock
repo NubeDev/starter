@@ -8963,6 +8963,7 @@ dependencies = [
  "starter-changelog",
  "starter-server",
  "starter-spi",
+ "starter-store-postgres",
  "starter-store-sqlite",
  "thiserror 1.0.69",
  "tokio",

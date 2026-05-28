@@ -10,11 +10,13 @@
 //! For every `(tenant_id, resource_kind, resource_id)` the sweep
 //! keeps **the smaller of**
 //!
-//! - the most recent `cfg.max_rows_per_resource` rows
-//!   (default 50, configurable as `[undo] max_rows_per_resource`
-//!   in `agent.toml`), or
-//! - rows newer than `cfg.max_age_days` days
-//!   (default 90, configurable as `[undo] max_age_days`).
+//! - the most recent `policy.max_rows_per_resource` rows, or
+//! - rows newer than `policy.max_age_days` days.
+//!
+//! `policy` is the row from `undo_kind_policy` keyed on
+//! `resource_kind`. Kinds with no row inherit the boot-config
+//! defaults (`[undo] max_rows_per_resource`, default `50`, and
+//! `[undo] max_age_days`, default `90`).
 //!
 //! Both rules are implemented as a single `DELETE`. Superseded
 //! rows (the `superseded_at IS NOT NULL` ones the `rubix.undo.last`
@@ -56,16 +58,26 @@ const SWEEP_INTERVAL: Duration = Duration::from_secs(24 * 60 * 60);
 /// deterministically without waiting for the 24h tick. The query
 /// is one statement so it runs atomically per resource bucket
 /// from the planner's point of view.
+///
+/// Per-kind policy: `undo_kind_policy.resource_kind` overrides
+/// `cfg.max_rows_per_resource` / `cfg.max_age_days` when present.
+/// Kinds with no policy row inherit the boot-config defaults. See
+/// the `0003_undo_kind_policy.sql` migration for the rationale
+/// and the seeded curves.
 pub async fn sweep_once(pool: &Pool, cfg: &UndoConfig) -> Result<u64> {
-    // The CTE numbers each resource's rows newest-first; the
-    // outer DELETE removes every row whose row-number exceeds
-    // the per-resource cap OR whose age exceeds the day cap.
-    // `make_interval(days := $2::int)` is the Postgres-idiomatic
-    // way to bind a dynamic interval; `$1` is the bigint row cap.
+    // The CTE numbers each resource's rows newest-first; the outer
+    // DELETE removes every row whose row-number exceeds the
+    // per-resource cap OR whose age exceeds the day cap. Both caps
+    // resolve via LEFT JOIN against `undo_kind_policy` so a kind
+    // without a policy row falls back to the config defaults
+    // ($1 / $2). COALESCE returns the policy row when present,
+    // the default otherwise — no branch in Rust.
     let sql = r#"
         WITH ranked AS (
             SELECT
                 id,
+                resource_kind,
+                created_at,
                 row_number() OVER (
                     PARTITION BY tenant_id, resource_kind, resource_id
                     ORDER BY created_at DESC
@@ -74,10 +86,13 @@ pub async fn sweep_once(pool: &Pool, cfg: &UndoConfig) -> Result<u64> {
         )
         DELETE FROM undo_snapshots u
         USING ranked r
+        LEFT JOIN undo_kind_policy p ON p.resource_kind = r.resource_kind
         WHERE u.id = r.id
           AND (
-              r.rn > $1
-              OR u.created_at < NOW() - make_interval(days => $2)
+              r.rn > COALESCE(p.max_rows_per_resource, $1)
+              OR r.created_at < NOW() - make_interval(
+                     days => COALESCE(p.max_age_days, $2)
+                 )
           )
     "#;
 

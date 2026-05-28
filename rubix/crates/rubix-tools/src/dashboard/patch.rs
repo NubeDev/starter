@@ -157,7 +157,9 @@ impl Tool for DashboardPatchTool {
                 source: Box::new(e),
             })?;
         let row = outcome.inserted;
-        let prior_body = outcome.prior.map(|p| p.body_json);
+        let prior_body = outcome.prior.as_ref().map(|p| p.body_json.clone());
+        let prior_title = outcome.prior.as_ref().map(|p| p.title.clone());
+        let prior_tags = outcome.prior.as_ref().map(|p| p.tags.clone());
 
         let summary = Diagnostic::new(
             MessageKey::parse("rubix.dashboard.patched").expect("hard-coded key parses"),
@@ -176,6 +178,8 @@ impl Tool for DashboardPatchTool {
             // Paired with `body_json`, gives the recorder a
             // byte-exact `before` for the changelog row.
             prior_body_json: prior_body,
+            prior_title,
+            prior_tags,
         };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -199,18 +203,21 @@ impl ReversibleTool for DashboardPatchTool {
 
         // Both response fields are populated atomically by the
         // chokepoint: `body_json` is the post-patch body that
-        // landed, `prior_body_json` is the superseded body. Title
-        // and tags are preserved across the patch boundary
-        // (patch never touches metadata), so the snapshot's
-        // metadata fields are empty by design — the inverse path
-        // applies `body_json` and leaves the row's stored title /
-        // tags alone.
+        // landed, `prior_body_json` is the superseded body. Patch
+        // never mutates title or tags, so the snapshot's metadata
+        // fields carry the *prior* values on both sides \u2014 undo
+        // of the patch then leaves the row's metadata exactly as
+        // the patch found it. Pre-patch absence of `prior_title` /
+        // `prior_tags` (older response shapes) falls back to empty
+        // strings / lists; the renderer tolerates both.
+        let prior_title = resp.prior_title.clone().unwrap_or_default();
+        let prior_tags = resp.prior_tags.clone().unwrap_or_default();
         let after = DashboardSnapshot {
             page_id: resp.page_id.clone(),
             tenant_id: resp.tenant_id.clone(),
             owner_principal: req.created_by.clone(),
-            title: String::new(),
-            tags: Vec::new(),
+            title: prior_title.clone(),
+            tags: prior_tags.clone(),
             body_json: resp.body_json.unwrap_or(Value::Null),
             created_by: req.created_by.clone(),
             revision_id: Some(resp.revision_id.clone()),
@@ -221,8 +228,8 @@ impl ReversibleTool for DashboardPatchTool {
                 page_id: resp.page_id.clone(),
                 tenant_id: resp.tenant_id.clone(),
                 owner_principal: req.created_by.clone(),
-                title: String::new(),
-                tags: Vec::new(),
+                title: prior_title.clone(),
+                tags: prior_tags.clone(),
                 body_json: body.clone(),
                 created_by: req.created_by.clone(),
                 revision_id: req.expected_revision_id.clone(),

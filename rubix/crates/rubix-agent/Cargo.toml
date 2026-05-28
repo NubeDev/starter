@@ -40,6 +40,11 @@ starter-server           = { workspace = true }
 starter-store-postgres   = { workspace = true, features = ["flow"] }
 starter-changelog        = { workspace = true }
 starter-changelog-postgres = { workspace = true }
+# Postgres-backed undo cursor + per-actor `LocalActor` substrate.
+# The `postgres` feature pulls the `PgUndoCursor` impl and its
+# migration source; the boot wiring in `main.rs` constructs the
+# `UndoSubstrate` from these pieces.
+starter-undo              = { workspace = true, features = ["postgres"] }
 starter-authz             = { workspace = true }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
@@ -126,7 +131,6 @@ starter-changelog-sqlite = { workspace = true }
 starter-store-sqlite     = { workspace = true, features = ["testing", "flow"] }
 starter-store-postgres   = { workspace = true, features = ["testing"] }
 starter-store-warehouse = { workspace = true, features = ["testing"] }
-starter-undo             = { workspace = true }
 starter-blob-fs          = { workspace = true }
 bytes                    = { workspace = true }
 tempfile                 = "3"

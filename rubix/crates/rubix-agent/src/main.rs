@@ -257,13 +257,79 @@ async fn main() -> Result<()> {
         }
     }
 
+    // Build the undo substrate the reversible tools will be wrapped
+    // around. Only landed when a PG pool is wired — the substrate
+    // needs both the changelog (recorder + read-side query) and a
+    // durable cursor, neither of which has a useful in-memory
+    // approximation at boot scale.
+    //
+    // The substrate is constructed *before* `build_tool_registry`
+    // because the registry inlines the `UndoDispatcher` wrap on the
+    // reversible tools and appends `rubix.undo.{last,redo}`. See
+    // `registry::UndoSubstrate` for the three pieces.
+    let undo_substrate: Option<registry::UndoSubstrate> = match mcp_pool.as_ref() {
+        Some(pool) => {
+            use starter_changelog::ChangeLog;
+            use starter_changelog_postgres::PgChangeLog;
+            use starter_undo::cursor_postgres::PgUndoCursor;
+            // Migration for `starter_undo_cursors` is applied in
+            // `boot::migrations::apply_migrations` alongside
+            // every other rubix-owned source so the schema is
+            // provisioned atomically with the rest of the boot.
+            let recorder: Arc<dyn ChangeRecorder> =
+                Arc::new(PgChangeRecorder::new(pool.clone()));
+            let log: Arc<dyn ChangeLog> = Arc::new(PgChangeLog::new(pool.clone()));
+            let cursor: Arc<dyn starter_undo::UndoCursor> =
+                Arc::new(PgUndoCursor::new(pool.clone()));
+            Some(registry::UndoSubstrate { recorder, log, cursor })
+        }
+        None => None,
+    };
+
     let tools = registry::build_tool_registry(
         cfg.insights.disk_warn_threshold,
         mcp_pool.clone(),
         warehouse_client.clone(),
         cfg.blob_root.clone(),
         ext_bundle.as_ref().map(|b| &b.registry),
+        undo_substrate,
     );
+
+    // Admin introspection state — populated as each registry
+    // becomes available below. The router itself is mounted at
+    // the end of the auth-gated block so the
+    // [`with_role(Role::Admin)`] gate wraps every read.
+    // See docs/design/admin/README.md.
+    let mut admin_state = rubix_agent::admin::AdminState::empty();
+    {
+        use std::collections::HashMap;
+        let tool_map: HashMap<String, Arc<dyn starter_spi::tool::Tool>> = tools
+            .iter()
+            .map(|t| (t.definition().name, t.clone()))
+            .collect();
+        admin_state = admin_state
+            .with_tools(Arc::new(tool_map))
+            .with_node_behaviors(Arc::new(registry::builtin_kind_behaviors()));
+        if let Some(b) = ext_bundle.as_ref() {
+            admin_state = admin_state.with_extensions(b.registry.clone());
+        }
+        if let Some(wh) = warehouse_client.as_ref() {
+            // The same rule-set the cleaner runs against — built
+            // here a second time as a read-only projection for
+            // the admin surface. Cheap (per-rule construction is
+            // trivial); avoids threading the constructed registry
+            // out of `build_tool_registry`.
+            let _ = wh;
+            let contributions = registry::collect_anomaly_rule_contributions(
+                ext_bundle.as_ref().map(|b| &b.registry),
+            );
+            let rule_registry =
+                rubix_tools::cleaner::adapter::build_registry_with_contributions(
+                    &tools, contributions,
+                );
+            admin_state = admin_state.with_rules(Arc::new(rule_registry));
+        }
+    }
 
     let mcp = boot::mcp::build_mcp_surface(
         mcp_pool.clone(),
@@ -344,15 +410,16 @@ async fn main() -> Result<()> {
     );
 
     let tools_state = routes::tools::ToolsState::new(tools.clone(), bundle.clone());
-    let tools_router = routes::tools::router(tools_state);
+    let tools_registrar = routes::tools::registrar(tools_state);
 
     // Phase C.2 — flow_runtime was built earlier so its
     // `NodeStateStore` + `FlowEventSink` could be attached to the
     // MCP-side engine. Reuse the existing handle here to wire the
     // SSE route.
-    let flow_events_router = routes::flow_events::router(routes::flow_events::FlowEventsState {
-        subscriptions: flow_runtime.subscriptions.clone(),
-    });
+    let flow_events_registrar =
+        routes::flow_events::registrar(routes::flow_events::FlowEventsState {
+            subscriptions: flow_runtime.subscriptions.clone(),
+        });
     // Surface the runtime via the same `_` leak pattern as the other
     // always-on boot pieces.
     let _flow_runtime = flow_runtime;
@@ -363,23 +430,35 @@ async fn main() -> Result<()> {
     // serves /healthz + /api/v1/mcp + an ungated /api/v1/tools/*
     // surface so a developer can drive the agent on a laptop. The
     // production smoke path always sets RUBIX_DATABASE_URL.
+    //
+    // `app` is a [`routes::RouteRegistrar`] so every
+    // rubix-agent-owned mount records its (method, path,
+    // description) tuple alongside the live router. Upstream
+    // routers (`starter-auth-users`, `starter-ext-server`,
+    // `starter-warehouse-explorer`, `starter-sdui-routes`, MCP)
+    // are merged via `merge_external` — they keep their own
+    // OpenAPI projection; this catalog reflects only what
+    // rubix-agent owns. The catalog is projected into
+    // `GET /api/v1/admin/openapi.json` at the end of the wire-up.
     // ----------------------------------------------------------------
     // The MCP router builds its own `/mcp` route; nest under
     // `/api/v1` so the production surface lands at
     // `POST /api/v1/mcp` per docs/design/mcp-ux/README.md.
     let mcp_routes = Router::new().nest("/api/v1", mcp.router);
-    let openapi_doc = routes::openapi_doc::openapi_router(rubix_openapi_mod::rubix_openapi());
-    let mut app: Router = health::healthz_router()
-        .merge(health::livez_router(runtime_canary.clone()))
-        .merge(mcp_routes)
-        .merge(openapi_doc)
+    let openapi_doc_registrar =
+        routes::openapi_doc::openapi_registrar(rubix_openapi_mod::rubix_openapi());
+    let mut app: routes::RouteRegistrar = routes::RouteRegistrar::new()
+        .merge(health::healthz_registrar())
+        .merge(health::livez_registrar(runtime_canary.clone()))
+        .merge_external(mcp_routes)
+        .merge(openapi_doc_registrar)
         // SSE flow-events route. CSRF-exempt (mirrors the
         // extensions-events route): `EventSource` cannot send a CSRF
         // token and `text/event-stream` GETs carry no body. AuthN
         // still gates the route under the standard `with_principal`
         // sandwich when a DSN is set; without a DSN the laptop dev
         // path leaves it open alongside the tools router.
-        .merge(flow_events_router);
+        .merge(flow_events_registrar);
 
     // Warehouse explorer + status routers were removed in stage 3
     // of warehouse-engine-swap; the ClickHouse-backed REST surface
@@ -399,7 +478,7 @@ async fn main() -> Result<()> {
         // auth-gated request hits it. If this pool is saturated,
         // /readyz returns 503 within 1 s instead of timing out
         // alongside every browser request.
-        app = app.merge(health::readyz_router(pool.sqlx().clone()));
+        app = app.merge(health::readyz_registrar(pool.sqlx().clone()));
         let auth = boot::build_auth(pool.clone());
         let auth_routes = routes::auth::auth_router(auth.state);
         let engine = boot::authz::build_engine()?;
@@ -418,7 +497,7 @@ async fn main() -> Result<()> {
         if let Some(wh_client) = warehouse_client.clone() {
             let explorer_router =
                 starter_warehouse_explorer::router_with_auth(wh_client, auth.authenticator.clone());
-            app = app.merge(explorer_router);
+            app = app.merge_external(explorer_router);
         }
 
         // Phase C.2 — mount the extension-host admin router. The
@@ -439,7 +518,7 @@ async fn main() -> Result<()> {
             // Admin lifecycle routes (list/detail/enable/disable/events).
             let ext_router: Router =
                 starter_ext_server::router_with_auth(bundle.admin, auth.authenticator.clone());
-            app = app.merge(Router::new().nest("/api/v1", ext_router));
+            app = app.merge_external(Router::new().nest("/api/v1", ext_router));
 
             // Dispatcher-backed per-extension REST adapter (row 5 boot
             // wiring). Builtin-flavour extensions get their contributed
@@ -515,6 +594,11 @@ async fn main() -> Result<()> {
                         .install_warehouse(wh_client.clone(), template_registry.clone());
                     host_methods.install_event_bus(event_bus.clone());
                 }
+                // Hand the template registry to the admin
+                // introspection state so `GET /api/v1/admin/registry/templates`
+                // sees the same set the warehouse-read path
+                // resolves against.
+                admin_state = admin_state.with_templates(template_registry.clone());
                 let factory: Arc<dyn CapabilityFactory> = Arc::new(
                     RubixCapabilityFactory::new(wh_client, template_registry, event_bus)
                         .with_extension_registry(bundle.registry.clone())
@@ -551,7 +635,7 @@ async fn main() -> Result<()> {
                             with_caller_identity(adapter),
                             auth.authenticator.clone(),
                         );
-                        app = app.merge(Router::new().nest("/api/v1", gated));
+                        app = app.merge_external(Router::new().nest("/api/v1", gated));
                     }
                     Err(e) => {
                         warn!(
@@ -592,7 +676,7 @@ async fn main() -> Result<()> {
         // [`boot::build_sdui_router`] — verb-per-file.
         let sdui_router: Router =
             boot::build_sdui_router(&cfg, pool.clone(), warehouse_client.clone(), &tools);
-        app = app.merge(sdui_router);
+        app = app.merge_external(sdui_router);
 
         // Live sidebar SSE — `GET /api/v1/dashboards/events`.
         // Tenant-scoped tail of `starter_changes` projected into
@@ -609,28 +693,26 @@ async fn main() -> Result<()> {
             use starter_server::auth::with_principal;
             use starter_store_postgres::pool::Pool;
 
-            // Dedicated tiny pool for the SSE listener: `PgListener`
-            // (used inside `PgListenTail::subscribe`) pins one
-            // connection PER SUBSCRIBER for the lifetime of that
-            // subscription. Cap is intentionally low (2) so the
-            // SSE listener leak surfaces as visible 503s on the
-            // 3rd concurrent subscriber instead of silently piling
-            // up pinned listeners. Isolated from the main 16-conn
+            // Dedicated tiny pool for the SSE listener.
+            // `PgListenTail` now uses ONE shared `PgListener` per
+            // tail instance and fans out to N subscribers via a
+            // `tokio::broadcast`, so the connection cost is fixed
+            // regardless of how many browser tabs / hooks are
+            // subscribed. Cap is 2 because the listener pins one
+            // connection for its lifetime and the initial-cursor
+            // snapshot + any `Lagged` gap-fills need a second
+            // checkout (without it, a `subscribe()` that hits an
+            // already-running listener would block on its own
+            // cursor query forever). Isolated from the main 16-conn
             // pool so a sidebar storm cannot starve other auth-gated
             // routes (mirrors `boot::flow_notify`).
             //
-            // Do NOT raise this without first fixing the listener
-            // drop latency in `tail_listen.rs` (the spawned task
-            // only notices `tx.is_closed()` after the safety_interval
-            // sleep, default 30s). Raising the cap as a band-aid
-            // was tried on 2026-05-27 (commit 7211aa9) and reverted
-            // because it just hides the leak — see the watchdog
-            // README §"Future work" items 1+2.
-            //
-            // TODO: replace per-subscriber listeners with a single
-            // shared PgListener fanned out over a `broadcast`
-            // channel, which collapses N pinned connections to 1
-            // and removes this whole sizing concern.
+            // History: pre-fan-out this pool was sized "1 per
+            // subscriber" with all the documented hazards (silent
+            // pinning, freeze cascade through the auth pool). See
+            // `rubix/crates/rubix-watchdog/README.md` for the full
+            // story; commit 7211aa9 raised the cap to 16 as a
+            // band-aid before the fan-out refactor landed.
             let listen_inner = PgPoolOptions::new()
                 .max_connections(2)
                 .connect(dsn)
@@ -644,12 +726,11 @@ async fn main() -> Result<()> {
 
             let tail = Arc::new(PgListenTail::new(listen_pool));
             let store = Arc::new(PgDashboardStore::new(pool.clone()));
-            let de_router =
-                routes::dashboard_events::router(routes::dashboard_events::DashboardEventsState {
-                    tail,
-                    store,
-                });
-            app = app.merge(with_principal(de_router, auth.authenticator.clone()));
+            let de_registrar = routes::dashboard_events::registrar(
+                routes::dashboard_events::DashboardEventsState { tail, store },
+            )
+            .map_router(|r| with_principal(r, auth.authenticator.clone()));
+            app = app.merge(de_registrar);
         }
 
         // Chat streaming SSE — `POST /api/v1/chat/stream`. Direct
@@ -666,10 +747,11 @@ async fn main() -> Result<()> {
             use starter_server::auth::with_principal;
             let chat_runner = boot::ai::build_runner(&cfg)
                 .map_err(|e| anyhow::anyhow!("boot::ai::build_runner (chat): {e}"))?;
-            let chat_router = routes::chat_stream::router(
+            let chat_registrar = routes::chat_stream::registrar(
                 routes::chat_stream::ChatStreamState::from_env(chat_runner),
-            );
-            app = app.merge(with_principal(chat_router, auth.authenticator.clone()));
+            )
+            .map_router(|r| with_principal(r, auth.authenticator.clone()));
+            app = app.merge(chat_registrar);
         }
 
         // Stage 07 — `POST /api/v1/flows/{id}/run`. Synchronous
@@ -680,10 +762,11 @@ async fn main() -> Result<()> {
         // (those layers are tools-router specific).
         {
             use starter_server::auth::with_principal;
-            let flow_run_router = routes::flow_run::router(routes::flow_run::FlowRunState {
+            let flow_run_registrar = routes::flow_run::registrar(routes::flow_run::FlowRunState {
                 tools: mcp.tools.clone(),
-            });
-            app = app.merge(with_principal(flow_run_router, auth.authenticator.clone()));
+            })
+            .map_router(|r| with_principal(r, auth.authenticator.clone()));
+            app = app.merge(flow_run_registrar);
         }
 
         // Layer order matters. The changelog middleware reads
@@ -691,28 +774,135 @@ async fn main() -> Result<()> {
         // *inside* `with_principal`. We therefore audit the
         // tools router first, then wrap the audited router in
         // the auth + authz gate.
+        //
+        // The same recorder is shared with the admin invoke +
+        // streaming-invoke routers below — every successful
+        // dispatch through any rubix-agent-owned tool surface
+        // lands one `Change` row, attributed to the authenticated
+        // principal and scoped to the path's `tool_id` segment.
         let recorder: Arc<dyn ChangeRecorder> = Arc::new(PgChangeRecorder::new(pool));
-        let audited = middleware::changelog_layer(
-            tools_router,
-            middleware::ChangelogState {
-                recorder,
-                tool_path_prefix: "/api/v1/tools/".to_owned(),
-            },
-        );
-        let gated = middleware::gate_tools(audited, auth.authenticator.clone(), engine);
+        let tool_audit_prefixes = vec![
+            "/api/v1/tools/".to_owned(),
+            "/api/v1/admin/registry/tools/".to_owned(),
+        ];
+        let tools_recorder = recorder.clone();
+        let tools_audit_prefixes = tool_audit_prefixes.clone();
+        let tools_gated = tools_registrar.map_router(|r| {
+            let audited = middleware::changelog_layer(
+                r,
+                middleware::ChangelogState {
+                    recorder: tools_recorder,
+                    tool_path_prefixes: tools_audit_prefixes,
+                },
+            );
+            middleware::gate_tools(audited, auth.authenticator.clone(), engine)
+        });
         app = app
-            .merge(Router::new().nest("/api/v1", auth_routes))
-            .merge(gated);
+            .merge_external(Router::new().nest("/api/v1", auth_routes))
+            .merge(tools_gated);
+
+        // Admin introspection surface (`/api/v1/admin/*`).
+        //
+        // Two routers, gated independently:
+        //
+        // - **Read** (`admin_router`) — every `GET /admin/*`
+        //   endpoint. Gated by `with_role(Role::Admin)` because the
+        //   surface enumerates every tool, template, table and
+        //   rule the agent advertises.
+        // - **Invoke** (`admin_invoke_router`) — `POST
+        //   /api/v1/admin/registry/tools/{id}/invoke`. Same
+        //   `Role::Admin` gate plus an additional
+        //   `with_scope("admin:invoke")` so an `admin:read`-only
+        //   principal can browse the catalog but cannot fire
+        //   tools.
+        //
+        // See docs/design/admin/README.md "Security model".
+        {
+            use starter_server::auth::{with_principal, with_role, with_scope};
+            use starter_spi::auth::{Role, Scope};
+            let read = routes::admin::admin_registrar(admin_state.clone())
+                .map_router(|r| with_role(r, Role::Admin));
+            // Both invoke surfaces sit behind the same audit
+            // layer as the public dispatcher (see `tool_audit_*`
+            // above). Each request lands one `Change` row keyed
+            // on `tool.invoke` + the path's tool id, attributed
+            // to the admin's authenticated principal.
+            let admin_invoke_recorder = recorder.clone();
+            let admin_invoke_prefixes = tool_audit_prefixes.clone();
+            let invoke = routes::admin::admin_invoke_registrar(admin_state.clone())
+                .map_router(move |r| {
+                    let audited = middleware::changelog_layer(
+                        r,
+                        middleware::ChangelogState {
+                            recorder: admin_invoke_recorder,
+                            tool_path_prefixes: admin_invoke_prefixes,
+                        },
+                    );
+                    with_scope(with_role(audited, Role::Admin), Scope::new("admin:invoke"))
+                });
+            let admin_stream_recorder = recorder.clone();
+            let admin_stream_prefixes = tool_audit_prefixes.clone();
+            let invoke_stream = routes::admin::admin_invoke_stream_registrar(admin_state.clone())
+                .map_router(move |r| {
+                    let audited = middleware::changelog_layer(
+                        r,
+                        middleware::ChangelogState {
+                            recorder: admin_stream_recorder,
+                            tool_path_prefixes: admin_stream_prefixes,
+                        },
+                    );
+                    with_scope(with_role(audited, Role::Admin), Scope::new("admin:invoke"))
+                });
+            let gated_admin = read
+                .merge(invoke)
+                .merge(invoke_stream)
+                .map_router(|r| with_principal(r, auth.authenticator.clone()));
+            app = app.merge(gated_admin);
+        }
     } else {
         warn!(
             target: "rubix.boot",
             "RUBIX_DATABASE_URL unset — mounting tools router without auth/authz/audit gates",
         );
-        let flow_run_router = routes::flow_run::router(routes::flow_run::FlowRunState {
+        let flow_run_registrar = routes::flow_run::registrar(routes::flow_run::FlowRunState {
             tools: mcp.tools.clone(),
         });
-        app = app.merge(tools_router).merge(flow_run_router);
+        app = app.merge(tools_registrar).merge(flow_run_registrar);
+
+        // Even without DB auth, expose the admin introspection
+        // surface so a laptop dev session can browse the registry.
+        // Mounts ungated, mirroring the ungated `/api/v1/tools/*`
+        // path above; production always sets `RUBIX_DATABASE_URL`
+        // and lands in the gated branch. Invoke is exposed too —
+        // the dev loop needs to fire tools through the same code
+        // path the gated surface uses.
+        app = app
+            .merge(routes::admin::admin_registrar(admin_state.clone()))
+            .merge(routes::admin::admin_invoke_registrar(admin_state.clone()))
+            .merge(routes::admin::admin_invoke_stream_registrar(admin_state.clone()));
     }
+
+    // Project the final route catalog into the admin OpenAPI doc.
+    // The projection captures every rubix-agent-owned endpoint —
+    // upstream routers (`starter-auth-users`, `starter-ext-server`,
+    // `starter-warehouse-explorer`, `starter-sdui-routes`, MCP)
+    // are deliberately excluded; they own their own OpenAPI
+    // surface. The doc is snapshot here, *before* mounting the
+    // `/api/v1/admin/openapi.json` route itself, so the projection
+    // does not include a self-referential entry.
+    let admin_openapi_doc = std::sync::Arc::new(routes::catalog_to_openapi(
+        app.catalog(),
+        routes::OpenApiInfo {
+            title: "rubix-agent (admin projection)".to_owned(),
+            version: env!("CARGO_PKG_VERSION").to_owned(),
+            description: Some(
+                "Strict projection of routes mounted through RouteRegistrar — \
+                 the live router and this doc cannot drift."
+                    .to_owned(),
+            ),
+        },
+    ));
+    app = app.merge(routes::admin::admin_openapi_registrar(admin_openapi_doc));
 
     // Apply a permissive CORS layer so browser clients (the Flutter
     // web build served from a different origin during `flutter run
@@ -720,7 +910,9 @@ async fn main() -> Result<()> {
     // REST surface. `very_permissive` mirrors the default that
     // `starter-server::ServerBuilder` applies; tighten via a config
     // knob once we have a non-dev deployment story.
-    let app = app.layer(tower_http::cors::CorsLayer::very_permissive());
+    let app = app
+        .into_router()
+        .layer(tower_http::cors::CorsLayer::very_permissive());
 
     health::serve(&cfg.bind, app).await
 }

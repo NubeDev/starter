@@ -77,15 +77,28 @@ pub struct RenderQuery {
     render: Option<String>,
 }
 
-/// Build the tools router. Mounts `POST /api/v1/tools/{tool_id}`
+/// Build the tools registrar. Mounts `POST /api/v1/tools/{tool_id}`
 /// and wraps it with [`accept_language_layer`] so the handler can
 /// read the negotiated language from the [`LocaleCtx`] extension.
-pub fn router(state: ToolsState) -> Router {
+pub fn registrar(state: ToolsState) -> crate::routes::RouteRegistrar {
+    use crate::routes::{RouteMeta, RouteRegistrar};
+    use axum::http::Method;
     let layer = accept_language_layer(state.bundle.clone());
-    Router::new()
-        .route("/api/v1/tools/{tool_id}", post(dispatch))
-        .with_state(state)
-        .layer(layer)
+    RouteRegistrar::new()
+        .mount(
+            Method::POST,
+            "/api/v1/tools/{tool_id}",
+            post(dispatch).with_state(state),
+            RouteMeta::new()
+                .describe("Dispatch a registered tool by id with a JSON body.")
+                .tag("system"),
+        )
+        .map_router(|r| r.layer(layer))
+}
+
+/// Backwards-compatible alias for tests / existing call sites.
+pub fn router(state: ToolsState) -> Router {
+    registrar(state).into_router()
 }
 
 /// Handler — kept at ≤20 lines. Any growth here is a smell:
@@ -132,12 +145,26 @@ pub(crate) async fn dispatch(
                 roles: vec![format!("{:?}", p.role)],
                 request_id: String::new(),
             };
-            // Bind a tenant-scoped caller on the current task so
-            // extension-backed `Tool` impls
-            // (`ProcessExtensionToolBinding`) can upgrade to
-            // `SupervisorHandle::call_as` instead of an unscoped
-            // `call`. Native rubix tools ignore the scope.
-            starter_ext_supervisor::caller_local::scope(caller, tool.invoke(input)).await
+            // Bind two task-locals for the dispatch:
+            //   - `caller_local`: extension-backed `Tool` impls
+            //     (`ProcessExtensionToolBinding`) upgrade to
+            //     `SupervisorHandle::call_as` instead of an
+            //     unscoped `call`.
+            //   - `actor_local`: the `UndoDispatcher` wrappers
+            //     read this to stamp the `actor` field on the
+            //     reversible changelog row. `LocalActor` (in
+            //     `rubix_tools::undo::dispatch`) reads the same
+            //     task-local so an unwrapped tool dispatched
+            //     directly (no undo) still attributes correctly.
+            // Native rubix tools that need neither ignore both.
+            let actor = starter_spi::changelog::Actor::User {
+                subject: p.subject.clone(),
+            };
+            starter_ext_supervisor::caller_local::scope(
+                caller,
+                starter_undo::actor_local::scope(actor, tool.invoke(input)),
+            )
+            .await
         }
         None => tool.invoke(input).await,
     };

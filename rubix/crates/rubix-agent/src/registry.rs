@@ -23,7 +23,7 @@ use rubix_tools::dashboard::get::DashboardGetTool;
 use rubix_tools::dashboard::list::DashboardListTool;
 use rubix_tools::dashboard::page_set::DashboardPageSetTool;
 use rubix_tools::dashboard::patch::DashboardPatchTool;
-use rubix_tools::dashboard::store::InMemoryDashboardStore;
+use rubix_tools::dashboard::store::{DashboardReversible, InMemoryDashboardStore};
 use rubix_tools::dashboard::update::DashboardUpdateTool;
 use rubix_tools::dataflow::synth::SynthEmitTool;
 use rubix_tools::flow_ops::deploy::FlowDeployTool;
@@ -31,7 +31,7 @@ use rubix_tools::flow_ops::duplicate::FlowDuplicateTool;
 use rubix_tools::flow_ops::kinds::FlowKindsTool;
 use rubix_tools::flow_ops::lint::FlowLintTool;
 use rubix_tools::flow_ops::list::FlowListTool;
-use rubix_tools::flow_ops::store::{FlowDefStore, InMemoryFlowDefStore};
+use rubix_tools::flow_ops::store::{FlowDefReversible, FlowDefStore, InMemoryFlowDefStore};
 use rubix_tools::insights::rule_create::InsightsRuleCreateTool;
 use rubix_tools::insights::rule_list::InsightsRuleListTool;
 use rubix_tools::insights::rule_toggle::{InsightsRuleDisableTool, InsightsRuleEnableTool};
@@ -42,13 +42,16 @@ use rubix_tools::system::disk::DiskTool;
 use rubix_tools::system::flow_errors::FlowErrorsTool;
 use rubix_tools::team::assign::TeamAssignTool;
 use rubix_tools::team::create::TeamCreateTool;
-use rubix_tools::team::store::{InMemoryTeamStore, TeamAdminStore};
+use rubix_tools::team::store::{InMemoryTeamStore, TeamAdminStore, TeamReversible};
 use rubix_tools::tenant::list::TenantListTool;
 use rubix_tools::tenant::store::{InMemoryTenantStore, TenantRow, TenantStore};
+use rubix_tools::undo::dispatch::{ActorSource, LocalActor, ReversibleTool, UndoDispatcher};
+use rubix_tools::undo::last::UndoLastTool;
+use rubix_tools::undo::redo::UndoRedoTool;
 use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::list::UserListTool;
-use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore};
+use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore, UserReversible};
 use rubix_tools::cleaner::adapter::{build_registry_with_contributions, ContributedRule};
 use rubix_tools::cleaner::tool::CleanerTickTool;
 use rubix_tools::warehouse::ingest::WarehouseIngestTool;
@@ -60,14 +63,38 @@ use rubix_tools::warehouse::rule_list::WarehouseRuleListTool;
 use rubix_tools::warehouse::rule_write::WarehouseRuleWriteTool;
 use rubix_tools::warehouse::tables_list::WarehouseTablesListTool;
 use starter_authz::StaticRegistry;
+use starter_changelog::ChangeLog;
 use starter_ext_host::ExtensionRegistry;
 use starter_flow::graph::InMemoryGraphStore;
 use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::NodeBehavior;
+use starter_spi::changelog::ChangeRecorder;
 use starter_spi::tool::Tool;
 use starter_store_postgres::pool::Pool;
 use starter_store_warehouse::WarehouseClient;
+use starter_undo::{ReversibleRegistry, UndoCursor, UndoService};
 use tracing::{info, warn};
+
+/// Production undo wiring — the three substrate pieces the
+/// reversible tools and the `rubix.undo.{last,redo}` verbs need to
+/// reach beyond their own crate. Built once at boot and threaded
+/// into [`build_tool_registry`]; passing `None` keeps the registry
+/// undo-free (used by the `cargo run -p rubix-agent` no-PG path
+/// and by every unit test).
+pub struct UndoSubstrate {
+    /// Changelog recorder — every reversible mutation goes through
+    /// `record_if_reversible(recorder, ...)`. In production this is
+    /// `Arc<PgChangeRecorder>`; in tests, `Arc<SqliteChangeRecorder>`.
+    pub recorder: Arc<dyn ChangeRecorder>,
+    /// Changelog reader — [`UndoService`] walks the per-actor
+    /// changes via `log.list(filter_for_actor)` to pick the next
+    /// group to replay.
+    pub log: Arc<dyn ChangeLog>,
+    /// Per-actor redo stack. Production wires `Arc<PgUndoCursor>`
+    /// so the stack survives process restarts and crosses agent
+    /// instances.
+    pub cursor: Arc<dyn UndoCursor>,
+}
 
 /// Build the tool registry the agent serves at boot.
 pub fn build_tool_registry(
@@ -76,6 +103,7 @@ pub fn build_tool_registry(
     warehouse: Option<WarehouseClient>,
     _blob_root: Option<String>,
     extensions: Option<&Arc<ExtensionRegistry>>,
+    undo: Option<UndoSubstrate>,
 ) -> Vec<Arc<dyn Tool>> {
     let disk = DiskTool::new().with_insights_threshold(insights_disk_threshold);
 
@@ -107,6 +135,58 @@ pub fn build_tool_registry(
          The rubix.analytics.* verbs remain removed.",
     );
 
+    // Undo wiring. When `undo` is supplied the per-kind
+    // [`Reversible`] impls are mounted on the registry and every
+    // reversible tool is wrapped in [`UndoDispatcher`]. When `None`
+    // (no-PG dev boot, every unit test) the reversibles still
+    // construct against the same stores but skip the dispatcher
+    // wrapper, so `rubix.undo.last` is not advertised and writes
+    // do not record an undo row.
+    let undo_built = undo.as_ref().map(|w| {
+        let registry = Arc::new(
+            ReversibleRegistry::new()
+                .insert(Arc::new(UserReversible::new(user_store.clone())))
+                .insert(Arc::new(TeamReversible::new(team_store.clone())))
+                .insert(Arc::new(DashboardReversible::new(dashboard_store.clone())))
+                .insert(Arc::new(FlowDefReversible::new(flow_store.clone()))),
+        );
+        let service = Arc::new(UndoService::with_cursor(
+            w.log.clone(),
+            registry.clone(),
+            w.cursor.clone(),
+        ));
+        let actor: Arc<dyn ActorSource> = Arc::new(LocalActor::new());
+        (
+            registry,
+            service,
+            actor,
+            w.recorder.clone(),
+            w.cursor.clone(),
+        )
+    });
+
+    // Helper closure: wrap a concrete reversible tool in a
+    // [`UndoDispatcher`] when undo is wired, otherwise return it as
+    // a bare `Arc<dyn Tool>`. Kept inline so the verb list reads
+    // top-to-bottom; promoting it to a free function would obscure
+    // which tools are reversible.
+    //
+    // The cursor is threaded through so each successful mutation
+    // clears the actor's redo stack (proposal \u00a73.4: "any new
+    // mutation by an actor clears that actor's redo stack").
+    let wrap_rev = |t: Arc<dyn ReversibleTool>| -> Arc<dyn Tool> {
+        match &undo_built {
+            Some((registry, _, actor, recorder, cursor)) => Arc::new(UndoDispatcher::with_cursor(
+                t,
+                registry.clone(),
+                recorder.clone(),
+                actor.clone(),
+                cursor.clone(),
+            )),
+            None => t,
+        }
+    };
+
     let mut tools: Vec<Arc<dyn Tool>> = vec![
         // ---- system / insights ----------------------------------
         Arc::new(disk),
@@ -119,16 +199,16 @@ pub fn build_tool_registry(
         Arc::new(FlowListTool::new(flow_store.clone())),
         Arc::new(FlowKindsTool::from_behaviors(&builtin_kind_behaviors())),
         Arc::new(FlowLintTool::new()),
-        Arc::new(FlowDeployTool::new(flow_store.clone())),
-        Arc::new(FlowDuplicateTool::new(flow_store.clone())),
+        wrap_rev(Arc::new(FlowDeployTool::new(flow_store.clone()))),
+        wrap_rev(Arc::new(FlowDuplicateTool::new(flow_store.clone()))),
         // ---- user admin -----------------------------------------
         Arc::new(UserListTool::new(user_store.clone())),
-        Arc::new(UserCreateTool::new(user_store.clone())),
-        Arc::new(UserDisableTool::new(user_store.clone())),
+        wrap_rev(Arc::new(UserCreateTool::new(user_store.clone()))),
+        wrap_rev(Arc::new(UserDisableTool::new(user_store.clone()))),
         // ---- tenant + team admin --------------------------------
         Arc::new(TenantListTool::new(tenant_store.clone())),
-        Arc::new(TeamCreateTool::new(team_store.clone())),
-        Arc::new(TeamAssignTool::new(team_store.clone())),
+        wrap_rev(Arc::new(TeamCreateTool::new(team_store.clone()))),
+        wrap_rev(Arc::new(TeamAssignTool::new(team_store.clone()))),
         // ---- insights admin -------------------------------------
         Arc::new(InsightsRuleListTool::new(insights_store.clone())),
         Arc::new(InsightsRuleCreateTool::new(insights_store.clone())),
@@ -137,16 +217,26 @@ pub fn build_tool_registry(
         // ---- dashboard ------------------------------------------
         Arc::new(DashboardGetTool::new(dashboard_store.clone())),
         Arc::new(DashboardListTool::new(dashboard_store.clone())),
-        Arc::new(DashboardCreateTool::new(
+        wrap_rev(Arc::new(DashboardCreateTool::new(
             dashboard_store.clone(),
             authz_registry.clone(),
-        )),
-        Arc::new(DashboardUpdateTool::new(dashboard_store.clone())),
-        Arc::new(DashboardPatchTool::new(dashboard_store.clone())),
-        Arc::new(DashboardDuplicateTool::new(dashboard_store.clone())),
-        Arc::new(DashboardDeleteTool::new(dashboard_store.clone())),
+        ))),
+        wrap_rev(Arc::new(DashboardUpdateTool::new(dashboard_store.clone()))),
+        wrap_rev(Arc::new(DashboardPatchTool::new(dashboard_store.clone()))),
+        wrap_rev(Arc::new(DashboardDuplicateTool::new(dashboard_store.clone()))),
+        wrap_rev(Arc::new(DashboardDeleteTool::new(dashboard_store.clone()))),
         Arc::new(DashboardPageSetTool::new(dashboard_graph.clone())),
     ];
+
+    // ---- undo verbs -----------------------------------------
+    //
+    // Mounted only when undo wiring is supplied. Both verbs share
+    // the same [`LocalActor`] so they attribute to the calling
+    // principal installed by the tools route's task-local.
+    if let Some((_, service, actor, _, _)) = undo_built.as_ref() {
+        tools.push(Arc::new(UndoLastTool::new(service.clone(), actor.clone())));
+        tools.push(Arc::new(UndoRedoTool::new(service.clone(), actor.clone())));
+    }
 
     if let Some(wh) = warehouse {
         tools.push(Arc::new(WarehouseIngestTool::new(wh.clone())));
@@ -211,7 +301,11 @@ pub fn collect_anomaly_rule_contributions(
     out
 }
 
-fn builtin_kind_behaviors() -> Vec<Arc<dyn NodeBehavior>> {
+/// Built-in flow node behaviours the engine ships. Exposed so
+/// the admin introspection projection can walk the same list the
+/// boot path uses to seed the live
+/// [`NodeKindRegistry`](starter_flow::registry::NodeKindRegistry).
+pub fn builtin_kind_behaviors() -> Vec<Arc<dyn NodeBehavior>> {
     vec![
         Arc::new(starter_flow_nodes::counter::Counter::new()),
         Arc::new(starter_flow_nodes::log::Log::new()),
@@ -256,7 +350,7 @@ mod tests {
     use super::*;
 
     fn names() -> Vec<String> {
-        build_tool_registry(90, None, None, None, None)
+        build_tool_registry(90, None, None, None, None, None)
             .iter()
             .map(|t| t.definition().name)
             .collect()

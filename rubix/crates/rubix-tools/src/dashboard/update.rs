@@ -153,7 +153,9 @@ impl Tool for DashboardUpdateTool {
             // `before` snapshot for the changelog without a
             // follow-up store round-trip. `None` when the page
             // was brand-new (no prior row).
-            prior_body_json: outcome.prior.map(|p| p.body_json),
+            prior_body_json: outcome.prior.as_ref().map(|p| p.body_json.clone()),
+            prior_title: outcome.prior.as_ref().map(|p| p.title.clone()),
+            prior_tags: outcome.prior.as_ref().map(|p| p.tags.clone()),
         };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -185,18 +187,20 @@ impl ReversibleTool for DashboardUpdateTool {
         };
         let after_v = serde_json::to_value(&after).ok()?;
         let before_v = resp.prior_body_json.as_ref().and_then(|body| {
-            // Title / tags / owner_principal are not echoed in
-            // the response. The recorder's inverse path applies
-            // `before.body_json`; the metadata fields are
-            // informational, so seeding them from the request's
-            // post-update values keeps the snapshot shape
-            // symmetric with `after`.
+            // Metadata on the `before` snapshot comes from the
+            // superseded row carried in the response (`prior_title`
+            // / `prior_tags`), NOT from the post-update request.
+            // Without this, an undo of a rename would write the
+            // *new* title back into the row \u2014 a silent metadata
+            // clobber. `owner_principal` is preserved across
+            // revisions by the store; the snapshot's value is
+            // informational so we keep it aligned with `after`.
             let before = DashboardSnapshot {
                 page_id: resp.page_id.clone(),
                 tenant_id: resp.tenant_id.clone(),
                 owner_principal: req.created_by.clone(),
-                title: req.title.clone().unwrap_or_default(),
-                tags: req.tags.clone().unwrap_or_default(),
+                title: resp.prior_title.clone().unwrap_or_default(),
+                tags: resp.prior_tags.clone().unwrap_or_default(),
                 body_json: body.clone(),
                 created_by: req.created_by.clone(),
                 revision_id: req.expected_revision_id.clone(),
@@ -472,5 +476,52 @@ mod tests {
         let draft = tool.change_for(&input, &output).expect("draft present");
         assert!(matches!(draft.op, Op::Update));
         assert!(draft.after.is_some());
+    }
+
+    #[tokio::test]
+    async fn change_for_before_carries_prior_title_and_tags_not_new_ones() {
+        // Regression guard for the rename-undo metadata-clobber
+        // bug (proposal \u00a73.1). Before this fix, `change_for`
+        // populated `before.title` from the request \u2014 i.e. the
+        // *new* title \u2014 which meant an undo of a rename would
+        // restore the body but keep the new title. The fix
+        // sources `before.title` / `before.tags` from the
+        // superseded row carried in `prior_title` / `prior_tags`.
+        let store = InMemoryStore::arc();
+        let prior_rev = store.seed("dashboard.ops", "tenant-a");
+        let tool = DashboardUpdateTool::new(store);
+        let input = serde_json::json!({
+            "tenant_id":            "tenant-a",
+            "page_id":              "dashboard.ops",
+            "expected_revision_id": prior_rev,
+            "title":                "New title",
+            "tags":                 ["renamed"],
+            "body_json":            { "ir_version": 5, "root": { "type": "page", "id": "p", "children": [] } },
+            "created_by":           "alice"
+        });
+        let output = tool.invoke(input.clone()).await.unwrap();
+        let resp: UpdateDashboardResponse = serde_json::from_value(output.clone()).unwrap();
+        assert_eq!(resp.prior_title.as_deref(), Some("Old title"));
+        assert_eq!(resp.prior_tags.as_deref(), Some(&["custom".to_string()][..]));
+
+        let draft = tool.change_for(&input, &output).expect("draft present");
+        let before = draft.before.expect("before present");
+        assert_eq!(
+            before.get("title").and_then(|v| v.as_str()),
+            Some("Old title"),
+            "before.title must carry the superseded row's title, not the request's new title"
+        );
+        assert_eq!(
+            before.get("tags").and_then(|v| v.as_array()).map(Vec::len),
+            Some(1)
+        );
+        assert_eq!(
+            before
+                .get("tags")
+                .and_then(|v| v.as_array())
+                .and_then(|a| a.first())
+                .and_then(|v| v.as_str()),
+            Some("custom")
+        );
     }
 }

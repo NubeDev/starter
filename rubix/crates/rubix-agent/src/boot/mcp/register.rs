@@ -93,6 +93,7 @@ pub async fn build_flow_registry(
             None,
             cfg.blob_root.clone(),
             None,
+            None,
         ),
     };
 

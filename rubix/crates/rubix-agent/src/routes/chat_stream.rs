@@ -53,23 +53,24 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::response::sse::{Event as SseEvent, KeepAlive, Sse};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use axum::{Extension, Json, Router};
+use axum::{Extension, Json};
 use futures::stream::Stream;
-use serde::{Deserialize, Serialize};
-use serde_json::Value;
+use serde::Deserialize;
 use tokio::sync::mpsc;
 use tokio_stream::wrappers::ReceiverStream;
 use tokio_stream::StreamExt as _;
-use tracing::warn;
 
 use starter_spi::ai::{
     AiRunner, Cancel, CliCfg, Event, EventKind, PermissionMode, Provider, RunnerInput, SessionId,
 };
 use starter_spi::auth::Principal;
+
+use crate::routes::stream_frames::{frame_to_sse, StreamFrame};
+use crate::routes::{RouteMeta, RouteRegistrar};
 
 /// Default skill id used when the chat request does not specify
 /// one. Picked to be the goal-1 dashboard-builder so a brand-new
@@ -108,13 +109,23 @@ impl ChatStreamState {
     }
 }
 
-/// Build the router. Mount under `/` — the route already carries
-/// its full `/api/v1` prefix to match the sister event-stream
-/// routes ([`super::dashboard_events`], [`super::flow_events`]).
-pub fn router(state: ChatStreamState) -> Router {
-    Router::new()
-        .route("/api/v1/chat/stream", post(chat_stream))
-        .with_state(state)
+/// Build the registrar. The route already carries its full
+/// `/api/v1` prefix.
+pub fn registrar(state: ChatStreamState) -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::POST,
+        "/api/v1/chat/stream",
+        post(chat_stream).with_state(state),
+        RouteMeta::new()
+            .describe("SSE bridge from the configured AI runner to the chat UX.")
+            .tag("dashboard"),
+    )
+}
+
+/// Backwards-compatible alias for tests that expect an
+/// `axum::Router`.
+pub fn router(state: ChatStreamState) -> axum::Router {
+    registrar(state).into_router()
 }
 
 /// Inbound request body. Both fields are optional so the chat
@@ -133,37 +144,10 @@ pub struct ChatRequest {
     pub skill_id: Option<String>,
 }
 
-/// Outbound SSE frame. Mirrors the runner's [`EventKind`] in a
-/// flatter, type-tagged JSON shape so the React chat bubble can
-/// `switch (frame.type)` without re-deriving the runner's nested
-/// enum.
-#[derive(Debug, Clone, Serialize)]
-#[serde(tag = "type", rename_all = "snake_case")]
-enum ChatFrame {
-    Connected {
-        #[serde(skip_serializing_if = "Option::is_none")]
-        model: Option<String>,
-    },
-    Text {
-        delta: String,
-    },
-    ToolUse {
-        #[serde(skip_serializing_if = "Option::is_none")]
-        id: Option<String>,
-        name: String,
-        #[serde(skip_serializing_if = "Option::is_none")]
-        input: Option<Value>,
-    },
-    Done {
-        input_tokens: u32,
-        output_tokens: u32,
-        cost_usd: f64,
-        duration_ms: u64,
-    },
-    Error {
-        message: String,
-    },
-}
+/// Outbound SSE frame is the shared
+/// [`StreamFrame`](crate::routes::stream_frames::StreamFrame) —
+/// chat uses the `connected` / `text` / `tool_use` /
+/// `done(chat keys)` / `error` subset of variants.
 
 async fn chat_stream(
     State(state): State<ChatStreamState>,
@@ -297,7 +281,7 @@ async fn chat_stream(
 fn build_stream(
     rx: mpsc::Receiver<Event>,
 ) -> impl Stream<Item = Result<SseEvent, Infallible>> + Send + 'static {
-    ReceiverStream::new(rx).map(|ev| Ok(frame_to_sse(&event_to_frame(&ev))))
+    ReceiverStream::new(rx).map(|ev| frame_to_sse(&event_to_frame(&ev)))
 }
 
 /// Project a runner [`Event`] into the flatter wire shape the chat
@@ -305,15 +289,15 @@ fn build_stream(
 /// revision; for now everything lands on the default `message`
 /// channel so the `EventSource`-shaped reader on the frontend stays
 /// dead-simple.
-fn event_to_frame(ev: &Event) -> ChatFrame {
+fn event_to_frame(ev: &Event) -> StreamFrame {
     match &ev.kind {
-        EventKind::Connected { model } => ChatFrame::Connected {
+        EventKind::Connected { model } => StreamFrame::Connected {
             model: model.clone(),
         },
-        EventKind::Text { content } => ChatFrame::Text {
+        EventKind::Text { content } => StreamFrame::Text {
             delta: content.clone(),
         },
-        EventKind::ToolUse { id, name, input } => ChatFrame::ToolUse {
+        EventKind::ToolUse { id, name, input } => StreamFrame::ToolUse {
             id: id.clone(),
             name: name.clone(),
             input: input.clone(),
@@ -323,38 +307,15 @@ fn event_to_frame(ev: &Event) -> ChatFrame {
             output_tokens,
             cost_usd,
             duration_ms,
-        } => ChatFrame::Done {
-            input_tokens: *input_tokens,
-            output_tokens: *output_tokens,
-            cost_usd: *cost_usd,
-            duration_ms: *duration_ms,
-        },
-        EventKind::Error { message } => ChatFrame::Error {
+        } => StreamFrame::done_chat(
+            *input_tokens,
+            *output_tokens,
+            *cost_usd,
+            *duration_ms,
+        ),
+        EventKind::Error { message } => StreamFrame::Error {
             message: message.clone(),
         },
-    }
-}
-
-fn frame_to_sse(frame: &ChatFrame) -> SseEvent {
-    // Per-frame `serde_json::to_string` is fine here — chat is
-    // human-rate (one frame per few model tokens), nowhere near
-    // the throughput where per-event allocation would matter.
-    match serde_json::to_string(frame) {
-        Ok(s) => SseEvent::default().data(s),
-        Err(e) => {
-            // Serialisation of `ChatFrame` cannot realistically fail
-            // (all variants are POD-y); if it ever does, surface a
-            // visible error frame rather than dropping the stream.
-            warn!(
-                target: "rubix.routes.chat_stream",
-                error = %e,
-                "chat frame serialisation failed",
-            );
-            SseEvent::default().data(
-                serde_json::json!({"type": "error", "message": "frame serialisation failed"})
-                    .to_string(),
-            )
-        }
     }
 }
 
@@ -458,13 +419,13 @@ mod tests {
         match event_to_frame(&evt(EventKind::Connected {
             model: Some("claude".into()),
         })) {
-            ChatFrame::Connected { model } => assert_eq!(model.as_deref(), Some("claude")),
+            StreamFrame::Connected { model } => assert_eq!(model.as_deref(), Some("claude")),
             _ => panic!("expected Connected"),
         }
         match event_to_frame(&evt(EventKind::Text {
             content: "hi".into(),
         })) {
-            ChatFrame::Text { delta } => assert_eq!(delta, "hi"),
+            StreamFrame::Text { delta } => assert_eq!(delta, "hi"),
             _ => panic!("expected Text"),
         }
         match event_to_frame(&evt(EventKind::ToolUse {
@@ -472,7 +433,7 @@ mod tests {
             name: "rubix.dashboard.list".into(),
             input: Some(serde_json::json!({"tenant_id": "system"})),
         })) {
-            ChatFrame::ToolUse { id, name, input } => {
+            StreamFrame::ToolUse { id, name, input } => {
                 assert_eq!(id.as_deref(), Some("t1"));
                 assert_eq!(name, "rubix.dashboard.list");
                 assert_eq!(input, Some(serde_json::json!({"tenant_id": "system"})));
@@ -485,35 +446,32 @@ mod tests {
             input_tokens: 10,
             output_tokens: 20,
         })) {
-            ChatFrame::Done {
+            StreamFrame::Done {
                 input_tokens,
                 output_tokens,
                 cost_usd,
                 duration_ms,
+                ..
             } => {
-                assert_eq!(input_tokens, 10);
-                assert_eq!(output_tokens, 20);
-                assert!((cost_usd - 0.001).abs() < 1e-9);
-                assert_eq!(duration_ms, 100);
+                assert_eq!(input_tokens, Some(10));
+                assert_eq!(output_tokens, Some(20));
+                assert!((cost_usd.unwrap() - 0.001).abs() < 1e-9);
+                assert_eq!(duration_ms, Some(100));
             }
             _ => panic!("expected Done"),
         }
         match event_to_frame(&evt(EventKind::Error {
             message: "boom".into(),
         })) {
-            ChatFrame::Error { message } => assert_eq!(message, "boom"),
+            StreamFrame::Error { message } => assert_eq!(message, "boom"),
             _ => panic!("expected Error"),
         }
     }
 
     #[test]
     fn frame_to_sse_serialises_to_default_event() {
-        let frame = ChatFrame::Text { delta: "hi".into() };
-        let sse = frame_to_sse(&frame);
-        // `Sse::Event` has no public accessors for the data
-        // payload, but `format!("{sse:?}")` reliably includes it.
-        // The Debug impl escapes the embedded JSON's quotes, so we
-        // match against the escaped substring.
+        let frame = StreamFrame::Text { delta: "hi".into() };
+        let sse = frame_to_sse(&frame).expect("infallible");
         let debug = format!("{sse:?}");
         assert!(debug.contains(r#"\"type\":\"text\""#), "{debug}");
         assert!(debug.contains(r#"\"delta\":\"hi\""#), "{debug}");

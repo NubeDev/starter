@@ -3,6 +3,7 @@
 //! One subfolder per goal; one file per verb inside each goal (see
 //! [docs/design/tools/](../../../docs/design/tools/README.md)).
 
+pub mod admin;
 pub mod analytics;
 pub mod clipboard;
 pub mod dashboard;

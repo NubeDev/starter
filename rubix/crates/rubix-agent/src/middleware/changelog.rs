@@ -59,14 +59,23 @@ pub struct ChangelogState {
     /// integration tests can swap a SQLite recorder in without
     /// touching the binary's wiring.
     pub recorder: Arc<dyn ChangeRecorder>,
-    /// Path prefix that precedes the trailing `tool_id` segment in
-    /// the route — typically `"/api/v1/tools/"`. The middleware
-    /// derives the tool id by stripping this prefix from the URI
-    /// path; requests whose path does not start with it skip the
+    /// Path prefixes that precede the `tool_id` segment in any
+    /// tool-dispatch route. The middleware tries each prefix in
+    /// order; the first match wins. Typical contents:
+    ///
+    /// - `"/api/v1/tools/"` — the public MCP-facing
+    ///   dispatcher.
+    /// - `"/api/v1/admin/registry/tools/"` — the admin
+    ///   browse-and-invoke surface (covers both
+    ///   `…/{id}/invoke` and `…/{id}/invoke/stream` because
+    ///   the tool id is the segment immediately after the
+    ///   prefix).
+    ///
+    /// Requests whose path matches none of the prefixes skip the
     /// recorder (the middleware is layered above non-tool routes
     /// in the same composition, so the prefix check is its own
     /// scope filter).
-    pub tool_path_prefix: String,
+    pub tool_path_prefixes: Vec<String>,
 }
 
 /// Wrap `router` in the changelog middleware.
@@ -83,7 +92,8 @@ async fn record_request(
     next: Next,
 ) -> Response {
     // -- 1. Skip when the request isn't a tool dispatch.
-    let Some(tool_id) = tool_id_from_path(req.uri().path(), &state.tool_path_prefix) else {
+    let Some(tool_id) = tool_id_from_any_prefix(req.uri().path(), &state.tool_path_prefixes)
+    else {
         return next.run(req).await;
     };
 
@@ -174,6 +184,13 @@ fn tool_id_from_path(path: &str, prefix: &str) -> Option<String> {
         return None;
     }
     Some(id.to_owned())
+}
+
+/// Try each `prefix` in order; the first match wins.
+fn tool_id_from_any_prefix(path: &str, prefixes: &[String]) -> Option<String> {
+    prefixes
+        .iter()
+        .find_map(|p| tool_id_from_path(path, p))
 }
 
 /// Best-effort JSON parse for the audit payload. Non-JSON bodies
@@ -287,6 +304,35 @@ mod tests {
     fn tool_id_from_path_returns_none_outside_prefix() {
         assert!(tool_id_from_path("/healthz", "/api/v1/tools/").is_none());
         assert!(tool_id_from_path("/api/v1/tools/", "/api/v1/tools/").is_none());
+    }
+
+    #[test]
+    fn tool_id_from_any_prefix_matches_admin_invoke_paths() {
+        let prefixes = vec![
+            "/api/v1/tools/".to_owned(),
+            "/api/v1/admin/registry/tools/".to_owned(),
+        ];
+        assert_eq!(
+            tool_id_from_any_prefix(
+                "/api/v1/admin/registry/tools/rubix.system.disk/invoke",
+                &prefixes,
+            )
+            .as_deref(),
+            Some("rubix.system.disk"),
+        );
+        assert_eq!(
+            tool_id_from_any_prefix(
+                "/api/v1/admin/registry/tools/rubix.system.disk/invoke/stream",
+                &prefixes,
+            )
+            .as_deref(),
+            Some("rubix.system.disk"),
+        );
+        assert_eq!(
+            tool_id_from_any_prefix("/api/v1/tools/rubix.system.disk", &prefixes).as_deref(),
+            Some("rubix.system.disk"),
+        );
+        assert!(tool_id_from_any_prefix("/api/v1/admin/registry", &prefixes).is_none());
     }
 
     #[test]

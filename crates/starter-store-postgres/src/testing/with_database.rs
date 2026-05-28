@@ -5,23 +5,34 @@
 //! the crate `Cargo.toml` for the rationale.
 
 use testcontainers::runners::AsyncRunner;
-use testcontainers::ContainerAsync;
+use testcontainers::{ContainerAsync, ImageExt};
 use testcontainers_modules::postgres::Postgres;
 
 use crate::pool::{connect, Pool};
+
+/// Image tag the harness pins for every test. The
+/// `testcontainers-modules` 0.11 default is `postgres:11-alpine`
+/// which still requires the `pgcrypto` extension for
+/// `gen_random_uuid()`; pinning a modern Postgres line lifts that
+/// (it was promoted to core in PG 13) so migrations that default
+/// UUID columns to `gen_random_uuid()` don't need extension setup
+/// here. Bumped together with any production DSN target — keep in
+/// sync with the deployment matrix in `rubix/docs/scope/`.
+const POSTGRES_TAG: &str = "17-alpine";
 
 /// Start a Postgres container, connect, and return a pool plus a
 /// container handle.
 ///
 /// **Drop the returned [`ContainerGuard`] last** — when it drops, the
 /// container is torn down and the pool's connections become invalid.
-/// The default image is the `postgres` module's pinned tag; default
-/// credentials are `postgres` / `postgres`, database `postgres`.
+/// Image is pinned to [`POSTGRES_TAG`]; default credentials are
+/// `postgres` / `postgres`, database `postgres`.
 ///
 /// Panics on container startup or connection failure (this is a test
 /// helper, not a production API).
 pub async fn with_database() -> (Pool, ContainerGuard) {
     let container = Postgres::default()
+        .with_tag(POSTGRES_TAG)
         .start()
         .await
         .expect("start postgres container");

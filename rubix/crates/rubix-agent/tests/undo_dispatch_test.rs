@@ -167,3 +167,116 @@ async fn dispatch_records_change_and_inverse_round_trips() {
     assert_eq!(seen.len(), 1, "inverse reached the registered impl");
     assert_eq!(seen[0].before, Some(serde_json::json!({"name": "old"})));
 }
+
+/// Pins proposal §3.4: "any new mutation by an actor clears
+/// that actor's redo stack". Without this, an undo → mutate →
+/// redo sequence would re-apply the *original* mutation on top of
+/// the new one, silently corrupting the row.
+///
+/// Construct the dispatcher with `with_cursor`, push a fake redo
+/// entry onto the cursor for our actor, run one successful
+/// mutation, and assert the cursor was cleared.
+#[tokio::test]
+async fn dispatch_clears_redo_stack_on_successful_mutation() {
+    let pool = ephemeral().await;
+    migrate(&pool)
+        .with_source(changelog_migration_source())
+        .run()
+        .await
+        .expect("apply changelog migration");
+    let recorder = Arc::new(SqliteChangeRecorder::new(pool.clone()));
+
+    let reversible = Arc::new(CapturingReversible::default());
+    let registry = Arc::new(ReversibleRegistry::new().insert(reversible.clone()));
+
+    let actor = Actor::User {
+        subject: "alice".into(),
+    };
+
+    // Seed the cursor with a redo entry for alice — stands in for
+    // "alice just undid a previous mutation". The new mutation
+    // below must clear it.
+    let cursor: Arc<dyn starter_undo::UndoCursor> =
+        Arc::new(starter_undo::InMemoryUndoCursor::new());
+    cursor
+        .push_redo(
+            &actor,
+            starter_spi::changelog::GroupId("g-prior".to_owned()),
+        )
+        .await
+        .expect("seed redo");
+    assert!(
+        cursor.peek_redo(&actor).await.unwrap().is_some(),
+        "precondition: cursor has a redo entry"
+    );
+
+    let dispatcher = UndoDispatcher::with_cursor(
+        Arc::new(WidgetUpdateTool),
+        registry.clone(),
+        recorder.clone(),
+        Arc::new(StaticActor(actor.clone())),
+        cursor.clone(),
+    );
+
+    let (_output, group) = dispatcher
+        .invoke_with_group(serde_json::json!({"name": "new"}))
+        .await
+        .expect("dispatch succeeds");
+    assert!(group.is_some(), "mutation landed a changelog row");
+
+    assert!(
+        cursor.peek_redo(&actor).await.unwrap().is_none(),
+        "new mutation must clear actor's redo stack (proposal §3.4)"
+    );
+}
+
+/// Sibling guard: a verb whose kind is *not* registered as
+/// reversible must not clear the redo stack — read-only and
+/// non-undoable verbs are background noise to the cursor.
+#[tokio::test]
+async fn dispatch_preserves_redo_stack_on_unregistered_kind() {
+    let pool = ephemeral().await;
+    migrate(&pool)
+        .with_source(changelog_migration_source())
+        .run()
+        .await
+        .expect("apply changelog migration");
+    let recorder = Arc::new(SqliteChangeRecorder::new(pool.clone()));
+
+    // Empty registry: WidgetUpdateTool's "widgets" kind is not
+    // registered, so `record_if_reversible` short-circuits to
+    // `Ok(None)` and the dispatcher must NOT touch the cursor.
+    let registry = Arc::new(ReversibleRegistry::new());
+
+    let actor = Actor::User {
+        subject: "alice".into(),
+    };
+    let cursor: Arc<dyn starter_undo::UndoCursor> =
+        Arc::new(starter_undo::InMemoryUndoCursor::new());
+    let preserved_group = starter_spi::changelog::GroupId("g-keep".to_owned());
+    cursor
+        .push_redo(&actor, preserved_group.clone())
+        .await
+        .expect("seed redo");
+
+    let dispatcher = UndoDispatcher::with_cursor(
+        Arc::new(WidgetUpdateTool),
+        registry,
+        recorder,
+        Arc::new(StaticActor(actor.clone())),
+        cursor.clone(),
+    );
+
+    let (_output, group) = dispatcher
+        .invoke_with_group(serde_json::json!({"name": "new"}))
+        .await
+        .expect("dispatch succeeds");
+    assert!(group.is_none(), "unregistered kind → no row recorded");
+
+    let top = cursor.peek_redo(&actor).await.unwrap();
+    assert_eq!(
+        top.as_ref(),
+        Some(&preserved_group),
+        "redo stack must be preserved when the verb didn't land a reversible mutation"
+    );
+}

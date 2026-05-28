@@ -70,6 +70,19 @@ pub struct UpdateDashboardResponse {
     /// conflict / not-found paths (no write happened).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prior_body_json: Option<serde_json::Value>,
+    /// The `title` of the superseded row. Paired with
+    /// [`Self::prior_body_json`] so the `change_for` snapshot can
+    /// record the metadata that was live before the write — undo
+    /// of a rename then restores the old title instead of
+    /// inheriting the new one. `None` whenever `prior_body_json`
+    /// is `None`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_title: Option<String>,
+    /// The `tags` of the superseded row. Same rationale as
+    /// [`Self::prior_title`]: undo of a re-tag restores the prior
+    /// tag set rather than the post-update one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_tags: Option<Vec<String>>,
 }
 
 /// `starter-authz` permission string the caller must hold.

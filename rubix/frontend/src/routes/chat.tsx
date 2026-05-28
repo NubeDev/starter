@@ -257,7 +257,11 @@ function ChatPage() {
         <h1 className="text-2xl font-semibold">Dashboard assistant</h1>
         <p className="text-sm text-[color:var(--color-text-muted)]">
           Ask me to build a dashboard, summarise system state, or list what you
-          already have. Streamed via <code>POST {STREAM_PATH}</code>.
+          already have. Streamed via{' '}
+          <code className="rounded bg-[color:var(--color-bg-soft)] px-1 py-0.5 font-mono text-[color:var(--color-text)]">
+            POST {STREAM_PATH}
+          </code>
+          .
         </p>
       </header>
 
@@ -266,8 +270,13 @@ function ChatPage() {
         className="flex-1 space-y-3 overflow-y-auto rounded-2xl border border-[color:var(--color-border)] bg-[color:var(--color-bg-soft)] p-4"
       >
         {turns.length === 0 ? (
-          <div className="grid h-full place-items-center text-sm opacity-60">
-            Try: <code className="ml-1">make me an iot dashboard</code>
+          <div className="grid h-full place-items-center text-sm text-[color:var(--color-text-muted)]">
+            <span>
+              Try:{' '}
+              <code className="ml-1 rounded bg-[color:var(--color-card)] px-1.5 py-0.5 font-mono text-[color:var(--color-text)]">
+                make me an iot dashboard
+              </code>
+            </span>
           </div>
         ) : (
           turns.map((t) => <Bubble key={t.id} turn={t} />)

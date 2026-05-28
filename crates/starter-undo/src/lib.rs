@@ -10,6 +10,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod actor_local;
 pub mod dispatch;
 mod registry;
 pub mod routes;
@@ -17,6 +18,9 @@ mod service;
 
 #[cfg(feature = "sqlite")]
 pub mod cursor_sqlite;
+
+#[cfg(feature = "postgres")]
+pub mod cursor_postgres;
 
 pub use dispatch::{record_if_reversible, ChangeDraft};
 pub use registry::ReversibleRegistry;
@@ -37,4 +41,17 @@ pub async fn undo_last(
     _scope: Option<&starter_spi::authz::ResourceRef>,
 ) -> starter_spi::Result<starter_spi::changelog::GroupId> {
     service.undo(actor).await
+}
+
+/// Top-level convenience wrapper around [`UndoService::redo`] —
+/// the verb the `rubix.undo.redo` tool dispatches.
+///
+/// `_scope` mirrors [`undo_last`]'s reserved per-resource filter so
+/// the two verbs keep the same client contract.
+pub async fn redo_last(
+    service: &UndoService,
+    actor: &starter_spi::changelog::Actor,
+    _scope: Option<&starter_spi::authz::ResourceRef>,
+) -> starter_spi::Result<starter_spi::changelog::GroupId> {
+    service.redo(actor).await
 }

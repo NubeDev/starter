@@ -26,20 +26,31 @@ chrono         = { workspace = true }
 # the `sqlite` feature. Owns the `starter_undo_cursors` table under
 # its own migration source so cursor schema changes are independent
 # of the changelog migrations.
-starter-store-sqlite = { workspace = true, optional = true }
-sqlx                 = { workspace = true, features = ["sqlite", "macros", "migrate"], optional = true }
+starter-store-sqlite   = { workspace = true, optional = true }
+# Optional Postgres-backed [`UndoCursor`] — opt-in via the
+# `postgres` feature. Production rubix-agent boots with this enabled
+# so the per-actor redo stack survives restarts and crosses
+# instances (see `docs/design/undo/`).
+starter-store-postgres = { workspace = true, optional = true }
+sqlx                   = { workspace = true, features = ["macros", "migrate"], optional = true }
 
 [features]
-default = []
-sqlite  = ["dep:starter-store-sqlite", "dep:sqlx"]
+default  = []
+sqlite   = ["dep:starter-store-sqlite", "dep:sqlx", "sqlx/sqlite"]
+postgres = ["dep:starter-store-postgres", "dep:sqlx", "sqlx/postgres"]
 
 [dev-dependencies]
-starter-store-sqlite = { workspace = true, features = ["testing"] }
-tokio                = { workspace = true, features = ["macros", "rt-multi-thread"] }
+starter-store-sqlite   = { workspace = true, features = ["testing"] }
+starter-store-postgres = { workspace = true, features = ["testing"] }
+tokio                  = { workspace = true, features = ["macros", "rt-multi-thread"] }
 
 [[test]]
 name              = "cursor_sqlite"
 required-features = ["sqlite"]
+
+[[test]]
+name              = "cursor_postgres"
+required-features = ["postgres"]
 
 [lints]
 workspace = true

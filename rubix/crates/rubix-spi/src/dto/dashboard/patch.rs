@@ -90,6 +90,17 @@ pub struct PatchDashboardResponse {
     /// (no write happened).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub prior_body_json: Option<serde_json::Value>,
+    /// The `title` of the superseded row. Carried so the
+    /// `change_for` snapshot can record the metadata live before
+    /// the patch — patch never mutates title or tags, but the
+    /// snapshot still needs them so the undo path doesn't write
+    /// an empty title back into the row.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_title: Option<String>,
+    /// The `tags` of the superseded row. Same rationale as
+    /// [`Self::prior_title`].
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prior_tags: Option<Vec<String>>,
 }
 
 /// `starter-authz` permission string the caller must hold.

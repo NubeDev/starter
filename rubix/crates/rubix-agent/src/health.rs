@@ -20,10 +20,12 @@ use std::time::{Duration, Instant};
 
 use anyhow::Result;
 use axum::extract::State;
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::{routing::get, Router};
 use sqlx::PgPool;
 use tracing::{info, warn};
+
+use crate::routes::{RouteMeta, RouteRegistrar};
 
 /// Hard ceiling on how long `/readyz` waits for a pool
 /// acquire + `SELECT 1`. Picked to be shorter than every
@@ -34,8 +36,19 @@ const READYZ_PROBE_BUDGET: Duration = Duration::from_millis(1_000);
 
 /// The single liveness route — exported so `main.rs` can merge it
 /// alongside the tool routes without re-stating the endpoint here.
+pub fn healthz_registrar() -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::GET,
+        "/healthz",
+        get(healthz).with_state(()),
+        RouteMeta::new()
+            .describe("Process liveness canary; always 200 if the binary serves traffic.")
+            .tag("system"),
+    )
+}
+
 pub fn healthz_router() -> Router {
-    Router::new().route("/healthz", get(healthz))
+    healthz_registrar().into_router()
 }
 
 /// Runtime-canary route. Mounts `/livez`, which reports the
@@ -49,10 +62,19 @@ pub fn healthz_router() -> Router {
 /// Cheap: no allocations beyond the small response body, no
 /// futures::time::sleep, no I/O. Safe even when every other
 /// route is jammed.
+pub fn livez_registrar(canary: crate::boot::runtime_canary::Canary) -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::GET,
+        "/livez",
+        get(livez).with_state(Arc::new(canary)),
+        RouteMeta::new()
+            .describe("tokio runtime liveness; 503 when the per-second canary stops advancing.")
+            .tag("system"),
+    )
+}
+
 pub fn livez_router(canary: crate::boot::runtime_canary::Canary) -> Router {
-    Router::new()
-        .route("/livez", get(livez))
-        .with_state(Arc::new(canary))
+    livez_registrar(canary).into_router()
 }
 
 async fn livez(
@@ -94,10 +116,19 @@ async fn livez(
 /// Either outcome is logged at WARN with the same fields the
 /// pool-telemetry task emits, so an /readyz miss correlates with
 /// pool-stats lines from `boot::pool_telemetry`.
+pub fn readyz_registrar(pool: PgPool) -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::GET,
+        "/readyz",
+        get(readyz).with_state(Arc::new(pool)),
+        RouteMeta::new()
+            .describe("DB readiness probe; 503 if the pool cannot serve SELECT 1 within 1s.")
+            .tag("system"),
+    )
+}
+
 pub fn readyz_router(pool: PgPool) -> Router {
-    Router::new()
-        .route("/readyz", get(readyz))
-        .with_state(Arc::new(pool))
+    readyz_registrar(pool).into_router()
 }
 
 async fn readyz(State(pool): State<Arc<PgPool>>) -> (StatusCode, String) {

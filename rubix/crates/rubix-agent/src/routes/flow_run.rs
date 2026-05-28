@@ -29,15 +29,17 @@
 use std::sync::Arc;
 
 use axum::extract::{Path, State};
-use axum::http::StatusCode;
+use axum::http::{Method, StatusCode};
 use axum::response::IntoResponse;
 use axum::routing::post;
-use axum::{Json, Router};
+use axum::Json;
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use starter_flow_spi::flow::FlowId;
 use starter_mcp::registry::ToolRegistry;
 use tracing::warn;
+
+use crate::routes::{RouteMeta, RouteRegistrar};
 
 /// State threaded into the handler.
 #[derive(Clone)]
@@ -63,12 +65,29 @@ pub struct RunResponse {
     pub output: Value,
 }
 
-/// Build the router. Mount under the app root; the path is fully
+/// Build the registrar. Mounted at the app root — path is fully
 /// qualified.
-pub fn router(state: FlowRunState) -> Router {
-    Router::new()
-        .route("/api/v1/flows/{flow_id}/run", post(run))
-        .with_state(state)
+pub fn registrar(state: FlowRunState) -> RouteRegistrar {
+    RouteRegistrar::new().mount(
+        Method::POST,
+        "/api/v1/flows/{flow_id}/run",
+        post(run).with_state(state),
+        RouteMeta::new()
+            .describe("Synchronously invoke a flow by id; mirrors mcp.tools/call.")
+            .tag("flow-programmer")
+            .request_schema(json!({
+                "type": "object",
+                "properties": {
+                    "input": { "description": "Seed payload forwarded verbatim to the flow." }
+                }
+            })),
+    )
+}
+
+/// Backwards-compatible alias for tests that expect an
+/// `axum::Router`.
+pub fn router(state: FlowRunState) -> axum::Router {
+    registrar(state).into_router()
 }
 
 async fn run(

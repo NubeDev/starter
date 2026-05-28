@@ -138,6 +138,12 @@ impl UserAdminStore for InMemoryUserStore {
 
 /// Single [`Reversible`] impl for the `"user"` kind. Registered once
 /// per server build alongside the user-admin verbs.
+///
+/// Payload shape: **snapshot** (see
+/// [`starter_spi::changelog::Reversible`] choice matrix). The user
+/// row is small (< 1 KB) and the lifecycle includes create/disable —
+/// `before` is canonical full state, `before == {}` marks "did not
+/// exist". Do not flip to patch without flipping the whole kind.
 pub struct UserReversible {
     store: Arc<dyn UserAdminStore>,
 }

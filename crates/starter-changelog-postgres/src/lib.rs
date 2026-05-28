@@ -11,6 +11,7 @@
 mod codec;
 mod ids;
 mod migration;
+pub mod policy;
 mod prune;
 mod query;
 mod recorder;
@@ -18,6 +19,7 @@ mod tail;
 mod tail_listen;
 
 pub use migration::{migration_source, CHANGELOG_MIGRATOR};
+pub use policy::{apply_policy, PolicyReport};
 pub use prune::PgChangePrune;
 pub use query::PgChangeLog;
 pub use recorder::{PgChangeRecorder, PgChangeTx};
