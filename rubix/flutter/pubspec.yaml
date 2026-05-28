@@ -54,6 +54,16 @@ dependencies:
   # stops looking like a Google product.
   lucide_icons: ^0.257.0
 
+  # Animation — Flutter's answer to Framer Motion. Declarative .animate()
+  # API for staggers, springs, slides, fades, shimmers. Used by the app
+  # shell (sidebar/tab bar entrance + active indicator) and the router
+  # page transitions.
+  flutter_animate: ^4.5.0
+
+  # Charts — sparklines, area, donut. MIT, themable, used by the Live
+  # Dashboard surface. See lib/shared/widgets/dashboard/.
+  fl_chart: ^0.69.0
+
   # Generated OpenAPI Dio client (regen via `make api-client`).
   rubix_api:
     path: packages/rubix_api

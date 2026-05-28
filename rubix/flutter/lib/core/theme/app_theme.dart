@@ -12,6 +12,21 @@ export 'package:rubix_flutter/core/theme/nube_colors.dart';
 ThemeData get rubixLightTheme => _build(Brightness.light, NubeTokens.light);
 ThemeData get rubixDarkTheme  => _build(Brightness.dark,  NubeTokens.dark);
 
+/// Italic-serif accent style — used inline inside [Text.rich] for display
+/// accents like "operating layer for the *physical world.*". Pairs with
+/// Inter at the same font size; matches the mockups (Instrument Serif).
+TextStyle accentItalicTextStyle(BuildContext context, {double? fontSize}) {
+  final base = DefaultTextStyle.of(context).style;
+  return GoogleFonts.instrumentSerif(
+    fontStyle: FontStyle.italic,
+    fontWeight: FontWeight.w400,
+    fontSize: fontSize ?? base.fontSize,
+    color: base.color,
+    height: base.height,
+    letterSpacing: -0.5,
+  );
+}
+
 ThemeData _build(Brightness brightness, NubeTokens t) {
   final isDark = brightness == Brightness.dark;
 

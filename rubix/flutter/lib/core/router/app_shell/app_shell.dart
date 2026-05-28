@@ -1,4 +1,7 @@
+import 'dart:ui';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_animate/flutter_animate.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
@@ -6,22 +9,32 @@ import 'package:rubix_flutter/core/i18n/generated/app_localizations.dart';
 import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 import 'package:rubix_flutter/features/settings/data/settings_providers.dart';
+import 'package:rubix_flutter/shared/widgets/dashboard/dashboard.dart';
 
 /// Persistent in-app chrome around /home, /connections, /settings.
 ///
-/// Custom non-Material chrome: hairline-bordered top bar with brand mark on
-/// the left, custom sidebar on wide layouts (icon + label, teal-tinted
-/// selected pill), and a custom tab bar on narrow layouts. No Material
+/// shadcn/ui-flavoured chrome: hairline-bordered frosted top bar with brand
+/// mark, animated collapsible sidebar on wide layouts (sliding teal active
+/// indicator, spring icon hover, staggered mount), and a custom tab bar on
+/// narrow layouts with an animated sliding indicator. No Material
 /// [NavigationBar]/[NavigationRail]/[AppBar].
-class AppShell extends ConsumerWidget {
+class AppShell extends ConsumerStatefulWidget {
   const AppShell({required this.navigationShell, super.key});
 
   final StatefulNavigationShell navigationShell;
 
   static const double _railBreakpoint = 720;
+  static const double _railCollapseBreakpoint = 960;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<AppShell> createState() => _AppShellState();
+}
+
+class _AppShellState extends ConsumerState<AppShell> {
+  bool? _collapsedOverride;
+
+  @override
+  Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
     final t = Theme.of(context).nube;
     final activeAsync = ref.watch(activeConnectionProvider);
@@ -29,15 +42,35 @@ class AppShell extends ConsumerWidget {
     final pinSet = (pinAsync.value ?? '').isNotEmpty;
 
     final destinations = <_Destination>[
-      _Destination(icon: LucideIcons.home, label: l.home),
-      _Destination(icon: LucideIcons.layoutDashboard, label: 'Dashboards'),
-      _Destination(icon: LucideIcons.link, label: l.connections),
-      _Destination(icon: LucideIcons.settings, label: l.settings),
+      _Destination(
+        icon: LucideIcons.home,
+        label: l.home,
+        section: 'Overview',
+      ),
+      const _Destination(
+        icon: LucideIcons.layoutDashboard,
+        label: 'Dashboards',
+        section: 'Overview',
+        badge: (label: 'LIVE', tone: NubeGlowTone.green),
+      ),
+      _Destination(
+        icon: LucideIcons.link,
+        label: l.connections,
+        section: 'Fleet',
+      ),
+      _Destination(
+        icon: LucideIcons.settings,
+        label: l.settings,
+        section: 'Platform',
+      ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= _railBreakpoint;
+        final wide = constraints.maxWidth >= AppShell._railBreakpoint;
+        final autoCollapse =
+            constraints.maxWidth < AppShell._railCollapseBreakpoint;
+        final collapsed = _collapsedOverride ?? autoCollapse;
 
         final topBar = _TopBar(
           activeAsync: activeAsync,
@@ -45,6 +78,10 @@ class AppShell extends ConsumerWidget {
           onLock: () => ref.read(pinUnlockedProvider.notifier).lock(),
           onConnectionsTap: () => context.go('/connections'),
           fallbackLabel: l.home,
+          onToggleSidebar: wide
+              ? () => setState(() => _collapsedOverride = !collapsed)
+              : null,
+          sidebarCollapsed: collapsed,
         );
 
         if (wide) {
@@ -56,14 +93,20 @@ class AppShell extends ConsumerWidget {
                 children: [
                   _Sidebar(
                     destinations: destinations,
-                    selectedIndex: navigationShell.currentIndex,
+                    selectedIndex: widget.navigationShell.currentIndex,
+                    collapsed: collapsed,
                     onSelected: _go,
                   ),
                   Expanded(
                     child: Column(
                       children: [
                         topBar,
-                        Expanded(child: navigationShell),
+                        Expanded(
+                          child: _AnimatedRouteSwitcher(
+                            index: widget.navigationShell.currentIndex,
+                            child: widget.navigationShell,
+                          ),
+                        ),
                       ],
                     ),
                   ),
@@ -79,10 +122,15 @@ class AppShell extends ConsumerWidget {
             child: Column(
               children: [
                 topBar,
-                Expanded(child: navigationShell),
+                Expanded(
+                  child: _AnimatedRouteSwitcher(
+                    index: widget.navigationShell.currentIndex,
+                    child: widget.navigationShell,
+                  ),
+                ),
                 _TabBar(
                   destinations: destinations,
-                  selectedIndex: navigationShell.currentIndex,
+                  selectedIndex: widget.navigationShell.currentIndex,
                   onSelected: _go,
                 ),
               ],
@@ -94,21 +142,65 @@ class AppShell extends ConsumerWidget {
   }
 
   void _go(int index) {
-    navigationShell.goBranch(
+    widget.navigationShell.goBranch(
       index,
-      initialLocation: index == navigationShell.currentIndex,
+      initialLocation: index == widget.navigationShell.currentIndex,
     );
   }
 }
 
 class _Destination {
-  const _Destination({required this.icon, required this.label});
+  const _Destination({
+    required this.icon,
+    required this.label,
+    required this.section,
+    this.badge,
+  });
   final IconData icon;
   final String label;
+  final String section;
+  final ({String label, NubeGlowTone tone})? badge;
 }
 
 // ---------------------------------------------------------------------------
-// Top bar — flat, hairline border.
+// Animated branch switcher — fade + 8px slide between top-level routes.
+// ---------------------------------------------------------------------------
+class _AnimatedRouteSwitcher extends StatelessWidget {
+  const _AnimatedRouteSwitcher({required this.index, required this.child});
+
+  final int index;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 260),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, anim) {
+        final offset = Tween<Offset>(
+          begin: const Offset(0, 0.012),
+          end: Offset.zero,
+        ).animate(anim);
+        return FadeTransition(
+          opacity: anim,
+          child: SlideTransition(position: offset, child: child),
+        );
+      },
+      layoutBuilder: (currentChild, previousChildren) => Stack(
+        alignment: Alignment.topLeft,
+        children: [
+          ...previousChildren,
+          if (currentChild != null) currentChild,
+        ],
+      ),
+      child: KeyedSubtree(key: ValueKey<int>(index), child: child),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Top bar — frosted, hairline border, animated sidebar toggle.
 // ---------------------------------------------------------------------------
 class _TopBar extends StatelessWidget {
   const _TopBar({
@@ -117,6 +209,8 @@ class _TopBar extends StatelessWidget {
     required this.onLock,
     required this.onConnectionsTap,
     required this.fallbackLabel,
+    required this.onToggleSidebar,
+    required this.sidebarCollapsed,
   });
 
   final AsyncValue<dynamic> activeAsync;
@@ -124,64 +218,192 @@ class _TopBar extends StatelessWidget {
   final VoidCallback onLock;
   final VoidCallback onConnectionsTap;
   final String fallbackLabel;
+  final VoidCallback? onToggleSidebar;
+  final bool sidebarCollapsed;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    return Container(
-      height: 56,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: BoxDecoration(
-        color: t.bg,
-        border: Border(bottom: BorderSide(color: t.border)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              color: t.leaf,
-              borderRadius: BorderRadius.circular(7),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'R',
-              style: TextStyle(
-                color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-                fontWeight: FontWeight.w700,
-                fontSize: 14,
-                height: 1,
-              ),
-            ),
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
+        child: Container(
+          height: 56,
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: t.bg.withValues(alpha: 0.72),
+            border: Border(bottom: BorderSide(color: t.border)),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: GestureDetector(
-                behavior: HitTestBehavior.opaque,
-                onTap: onConnectionsTap,
-                child: activeAsync.maybeWhen(
-                  data: (conn) => conn == null
-                      ? _FallbackTitle(label: fallbackLabel)
-                      : _ConnectionLabel(
-                          label: (conn as dynamic).label as String,
-                          baseUrl: (conn as dynamic).baseUrl as String,
+          child: Row(
+            children: [
+              if (onToggleSidebar != null) ...[
+                _ChromeIconButton(
+                  icon: sidebarCollapsed
+                      ? LucideIcons.panelLeftOpen
+                      : LucideIcons.panelLeftClose,
+                  tooltip:
+                      sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
+                  onTap: onToggleSidebar!,
+                ),
+                const SizedBox(width: 6),
+              ],
+              Expanded(
+                child: Row(
+                  children: [
+                    Flexible(
+                      child: _CmdKTrigger(
+                        onTap: () => _showCommandPalette(context),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Flexible(
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onConnectionsTap,
+                          child: activeAsync.maybeWhen(
+                            data: (conn) => conn == null
+                                ? _FallbackTitle(label: fallbackLabel)
+                                : _ConnectionLabel(
+                                    label: (conn as dynamic).label as String,
+                                    baseUrl:
+                                        (conn as dynamic).baseUrl as String,
+                                  ),
+                            orElse: () =>
+                                _FallbackTitle(label: fallbackLabel),
+                          ),
                         ),
-                  orElse: () => _FallbackTitle(label: fallbackLabel),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
+              if (pinSet)
+                _ChromeIconButton(
+                  icon: LucideIcons.lock,
+                  tooltip: 'Lock',
+                  onTap: onLock,
+                ),
+              const SizedBox(width: 4),
+              _ChromeIconButton(
+                icon: LucideIcons.bell,
+                tooltip: 'Notifications',
+                onTap: () {},
+              ),
+              const SizedBox(width: 4),
+              _ChromeIconButton(
+                icon: LucideIcons.user,
+                tooltip: 'Account',
+                onTap: () {},
+              ),
+            ],
           ),
-          if (pinSet)
-            _ChromeIconButton(
-              icon: LucideIcons.lock,
-              tooltip: 'Lock',
-              onTap: onLock,
-            ),
+        ).animate().fadeIn(duration: 220.ms, curve: Curves.easeOutCubic),
+      ),
+    );
+  }
+}
+
+void _showCommandPalette(BuildContext context) {
+  // Placeholder — wire up to a real palette later.
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Command palette — coming soon'),
+      duration: Duration(milliseconds: 1400),
+    ),
+  );
+}
+
+class _CmdKTrigger extends StatefulWidget {
+  const _CmdKTrigger({required this.onTap});
+  final VoidCallback onTap;
+
+  @override
+  State<_CmdKTrigger> createState() => _CmdKTriggerState();
+}
+
+class _CmdKTriggerState extends State<_CmdKTrigger> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          curve: Curves.easeOutCubic,
+          constraints: const BoxConstraints(maxWidth: 280, minHeight: 34),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: _hover ? t.surface2 : t.surface,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: t.border),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(LucideIcons.search, size: 14, color: t.muted),
+              const SizedBox(width: 8),
+              Text(
+                'Search…',
+                style: TextStyle(
+                  color: t.muted,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const NubeKbd('⌘K'),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BrandMark extends StatelessWidget {
+  const _BrandMark({required this.isDark, required this.leaf});
+  final bool isDark;
+  final Color leaf;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [leaf, Color.lerp(leaf, Colors.black, 0.18)!],
+        ),
+        borderRadius: BorderRadius.circular(7),
+        boxShadow: [
+          BoxShadow(
+            color: leaf.withValues(alpha: 0.32),
+            blurRadius: 14,
+            spreadRadius: -2,
+            offset: const Offset(0, 2),
+          ),
         ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'R',
+        style: TextStyle(
+          color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 14,
+          height: 1,
+        ),
       ),
     );
   }
@@ -199,8 +421,14 @@ class _FallbackTitle extends StatelessWidget {
         color: t.text,
         fontSize: 15,
         fontWeight: FontWeight.w600,
+        letterSpacing: -0.2,
       ),
-    );
+    ).animate().fadeIn(duration: 240.ms).slideX(
+          begin: -0.06,
+          end: 0,
+          duration: 240.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -224,6 +452,7 @@ class _ConnectionLabel extends StatelessWidget {
             fontSize: 14,
             fontWeight: FontWeight.w600,
             height: 1.2,
+            letterSpacing: -0.1,
           ),
           overflow: TextOverflow.ellipsis,
         ),
@@ -238,7 +467,12 @@ class _ConnectionLabel extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
         ),
       ],
-    );
+    ).animate().fadeIn(duration: 240.ms).slideX(
+          begin: -0.04,
+          end: 0,
+          duration: 240.ms,
+          curve: Curves.easeOutCubic,
+        );
   }
 }
 
@@ -258,70 +492,340 @@ class _ChromeIconButton extends StatefulWidget {
 
 class _ChromeIconButtonState extends State<_ChromeIconButton> {
   bool _hover = false;
+  bool _press = false;
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
+    final scale = _press ? 0.92 : (_hover ? 1.04 : 1.0);
     final btn = MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          width: 36,
-          height: 36,
-          decoration: BoxDecoration(
-            color: _hover ? t.surface2 : Colors.transparent,
-            borderRadius: BorderRadius.circular(8),
+      onExit: (_) => setState(() {
+        _hover = false;
+        _press = false;
+      }),
+      child: Listener(
+        onPointerDown: (_) => setState(() => _press = true),
+        onPointerUp: (_) => setState(() => _press = false),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
+          child: AnimatedScale(
+            scale: scale,
+            duration: const Duration(milliseconds: 140),
+            curve: Curves.easeOutCubic,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 160),
+              curve: Curves.easeOutCubic,
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: _hover ? t.surface2 : Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: _hover ? t.border : Colors.transparent,
+                ),
+              ),
+              alignment: Alignment.center,
+              child: Icon(widget.icon, size: 18, color: t.muted),
+            ),
           ),
-          alignment: Alignment.center,
-          child: Icon(widget.icon, size: 18, color: t.muted),
         ),
       ),
     );
-    return widget.tooltip != null
-        ? Tooltip(message: widget.tooltip!, child: btn)
+    final tooltip = widget.tooltip;
+    return tooltip != null
+        ? Tooltip(message: tooltip, child: btn)
         : btn;
   }
 }
 
 // ---------------------------------------------------------------------------
-// Sidebar (wide layout) — vertical list, teal-tinted pill for selected.
+// Sidebar (wide layout) — workspace header, sectioned nav, footer user chip.
 // ---------------------------------------------------------------------------
 class _Sidebar extends StatelessWidget {
   const _Sidebar({
     required this.destinations,
     required this.selectedIndex,
+    required this.collapsed,
     required this.onSelected,
   });
 
   final List<_Destination> destinations;
   final int selectedIndex;
+  final bool collapsed;
   final ValueChanged<int> onSelected;
+
+  static const double _itemHeight = 38;
+  static const double _itemGap = 4;
+  static const double _vPad = 12;
+  static const double _expandedWidth = 240;
+  static const double _collapsedWidth = 64;
+  static const double _sectionHeight = 22;
+  static const double _sectionTopGap = 14;
+  static const double _sectionBottomGap = 8;
+
+  /// Computes the top-Y inside the nav stack for each destination so the
+  /// sliding pill can land on the correct row, accounting for section
+  /// headers when expanded.
+  List<double> _itemTops() {
+    final tops = <double>[];
+    double y = 4; // matches the leading SizedBox(height: 4)
+    String? lastSection;
+    for (var i = 0; i < destinations.length; i++) {
+      final d = destinations[i];
+      if (!collapsed && d.section != lastSection) {
+        if (lastSection != null) y += _sectionTopGap;
+        y += _sectionHeight + _sectionBottomGap;
+        lastSection = d.section;
+      }
+      tops.add(y);
+      y += _itemHeight + _itemGap;
+    }
+    return tops;
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    return Container(
-      width: 220,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final tops = _itemTops();
+    final pillTop = tops[selectedIndex];
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+      width: collapsed ? _collapsedWidth : _expandedWidth,
       decoration: BoxDecoration(
         color: t.surface,
         border: Border(right: BorderSide(color: t.border)),
       ),
-      padding: const EdgeInsets.all(12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          const SizedBox(height: 4),
-          for (var i = 0; i < destinations.length; i++) ...[
-            _NavItem(
-              destination: destinations[i],
-              selected: i == selectedIndex,
-              onTap: () => onSelected(i),
+          _WorkspaceHeader(collapsed: collapsed, isDark: isDark),
+          Container(height: 1, color: t.border),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: _vPad,
+              ),
+              child: Stack(
+                children: [
+                  // Sliding teal accent bar on the left edge.
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    top: pillTop + 9,
+                    left: -10,
+                    child: Container(
+                      width: 3,
+                      height: _itemHeight - 18,
+                      decoration: BoxDecoration(
+                        color: t.leaf,
+                        borderRadius: const BorderRadius.only(
+                          topRight: Radius.circular(2),
+                          bottomRight: Radius.circular(2),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: t.leaf.withValues(alpha: 0.45),
+                            blurRadius: 10,
+                            spreadRadius: -1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  // Sliding background pill — animates between selected items.
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 320),
+                    curve: Curves.easeOutCubic,
+                    top: pillTop,
+                    left: 0,
+                    right: 0,
+                    height: _itemHeight,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark
+                            ? const Color(0xFF142F33)
+                            : const Color(0xFFF2F7F7),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const SizedBox(height: 4),
+                      for (var i = 0; i < destinations.length; i++) ...[
+                        if (!collapsed &&
+                            (i == 0 ||
+                                destinations[i].section !=
+                                    destinations[i - 1].section)) ...[
+                          if (i != 0) const SizedBox(height: _sectionTopGap),
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 4,
+                              bottom: _sectionBottomGap,
+                            ),
+                            child: SizedBox(
+                              height: _sectionHeight,
+                              child: Align(
+                                alignment: Alignment.centerLeft,
+                                child: NubeEyebrow(destinations[i].section),
+                              ),
+                            ),
+                          ),
+                        ],
+                        _NavItem(
+                          destination: destinations[i],
+                          selected: i == selectedIndex,
+                          collapsed: collapsed,
+                          height: _itemHeight,
+                          onTap: () => onSelected(i),
+                        )
+                            .animate()
+                            .fadeIn(
+                              delay: (60 * i).ms,
+                              duration: 280.ms,
+                              curve: Curves.easeOutCubic,
+                            )
+                            .slideX(
+                              begin: -0.08,
+                              end: 0,
+                              delay: (60 * i).ms,
+                              duration: 280.ms,
+                              curve: Curves.easeOutCubic,
+                            ),
+                        const SizedBox(height: _itemGap),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 2),
+          ),
+          Container(height: 1, color: t.border),
+          _UserFooter(collapsed: collapsed),
+        ],
+      ),
+    );
+  }
+}
+
+class _WorkspaceHeader extends StatelessWidget {
+  const _WorkspaceHeader({required this.collapsed, required this.isDark});
+  final bool collapsed;
+  final bool isDark;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 14, 10, 14),
+      child: Row(
+        children: [
+          _BrandMark(isDark: isDark, leaf: t.leaf),
+          if (!collapsed) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Nube',
+                    style: TextStyle(
+                      color: t.text,
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.1,
+                      height: 1.15,
+                    ),
+                  ),
+                  Text(
+                    'IoT Console',
+                    style: TextStyle(
+                      color: t.muted,
+                      fontSize: 11.5,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.chevronsUpDown, size: 14, color: t.muted),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _UserFooter extends StatelessWidget {
+  const _UserFooter({required this.collapsed});
+  final bool collapsed;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
+      child: Row(
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: BoxDecoration(
+              color: t.leaf.withValues(alpha: 0.18),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: t.leaf.withValues(alpha: 0.30)),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'OP',
+              style: TextStyle(
+                color: t.leaf,
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.4,
+              ),
+            ),
+          ),
+          if (!collapsed) ...[
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Operator',
+                    style: TextStyle(
+                      color: t.text,
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w600,
+                      height: 1.15,
+                    ),
+                  ),
+                  Text(
+                    'ops@nube.io',
+                    style: TextStyle(
+                      color: t.muted,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                      height: 1.2,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
+              ),
+            ),
+            Icon(LucideIcons.chevronsUpDown, size: 14, color: t.muted),
           ],
         ],
       ),
@@ -333,10 +837,14 @@ class _NavItem extends StatefulWidget {
   const _NavItem({
     required this.destination,
     required this.selected,
+    required this.collapsed,
+    required this.height,
     required this.onTap,
   });
   final _Destination destination;
   final bool selected;
+  final bool collapsed;
+  final double height;
   final VoidCallback onTap;
 
   @override
@@ -345,44 +853,145 @@ class _NavItem extends StatefulWidget {
 
 class _NavItemState extends State<_NavItem> {
   bool _hover = false;
+  bool _press = false;
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     final selected = widget.selected;
-    final bg = selected
-        ? (isDark ? const Color(0xFF142F33) : const Color(0xFFF2F7F7))
-        : (_hover ? t.surface2 : Colors.transparent);
-    final fg = selected ? t.leaf : t.text;
+    final fg = selected ? t.leaf : (_hover ? t.text : t.muted);
+    final scale = _press ? 0.97 : 1.0;
 
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        behavior: HitTestBehavior.opaque,
-        onTap: widget.onTap,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: bg,
-            borderRadius: BorderRadius.circular(8),
-          ),
-          child: Row(
-            children: [
-              Icon(widget.destination.icon, size: 16, color: fg),
-              const SizedBox(width: 10),
-              Text(
-                widget.destination.label,
-                style: TextStyle(
-                  color: fg,
-                  fontSize: 13.5,
-                  fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
+    final row = Row(
+      children: [
+        AnimatedScale(
+          scale: selected ? 1.06 : (_hover ? 1.04 : 1.0),
+          duration: const Duration(milliseconds: 200),
+          curve: Curves.easeOutBack,
+          child: Icon(widget.destination.icon, size: 17, color: fg),
+        ),
+        Flexible(
+          child: ClipRect(
+            child: AnimatedAlign(
+              alignment: Alignment.centerLeft,
+              duration: const Duration(milliseconds: 260),
+              curve: Curves.easeOutCubic,
+              widthFactor: widget.collapsed ? 0 : 1,
+              child: AnimatedOpacity(
+                duration: const Duration(milliseconds: 200),
+                opacity: widget.collapsed ? 0 : 1,
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 10),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: AnimatedDefaultTextStyle(
+                          duration: const Duration(milliseconds: 200),
+                          style: TextStyle(
+                            color: fg,
+                            fontSize: 13.5,
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            letterSpacing: -0.1,
+                          ),
+                          child: Text(
+                            widget.destination.label,
+                            maxLines: 1,
+                            overflow: TextOverflow.fade,
+                            softWrap: false,
+                          ),
+                        ),
+                      ),
+                      if (widget.destination.badge != null) ...[
+                        const SizedBox(width: 8),
+                        _NavBadge(badge: widget.destination.badge!),
+                      ],
+                    ],
+                  ),
                 ),
               ),
-            ],
+            ),
           ),
+        ),
+      ],
+    );
+
+    final item = SizedBox(
+      height: widget.height,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        child: AnimatedScale(
+          scale: scale,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
+          child: Align(alignment: Alignment.centerLeft, child: row),
+        ),
+      ),
+    );
+
+    final hitArea = MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() {
+        _hover = false;
+        _press = false;
+      }),
+      child: Listener(
+        onPointerDown: (_) => setState(() => _press = true),
+        onPointerUp: (_) => setState(() => _press = false),
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: widget.onTap,
+          child: item,
+        ),
+      ),
+    );
+
+    return widget.collapsed
+        ? Tooltip(
+            message: widget.destination.label,
+            waitDuration: const Duration(milliseconds: 300),
+            child: hitArea,
+          )
+        : hitArea;
+  }
+}
+
+class _NavBadge extends StatelessWidget {
+  const _NavBadge({required this.badge});
+  final ({String label, NubeGlowTone tone}) badge;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    final Color color;
+    switch (badge.tone) {
+      case NubeGlowTone.green:
+        color = t.success;
+      case NubeGlowTone.amber:
+        color = t.warning;
+      case NubeGlowTone.danger:
+        color = t.danger;
+      case NubeGlowTone.none:
+      case NubeGlowTone.teal:
+        color = t.leaf;
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: color.withValues(alpha: 0.30)),
+      ),
+      child: Text(
+        badge.label.toUpperCase(),
+        style: TextStyle(
+          color: color,
+          fontSize: 9.5,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.8,
+          height: 1.1,
         ),
       ),
     );
@@ -390,7 +999,7 @@ class _NavItemState extends State<_NavItem> {
 }
 
 // ---------------------------------------------------------------------------
-// Tab bar (narrow layout) — flat, icon + label, no Material rail.
+// Tab bar (narrow layout) — animated sliding indicator + bouncing icon.
 // ---------------------------------------------------------------------------
 class _TabBar extends StatelessWidget {
   const _TabBar({
@@ -406,29 +1015,69 @@ class _TabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    return Container(
-      decoration: BoxDecoration(
-        color: t.surface,
-        border: Border(top: BorderSide(color: t.border)),
-      ),
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          for (var i = 0; i < destinations.length; i++)
-            Expanded(
-              child: _TabItem(
-                destination: destinations[i],
-                selected: i == selectedIndex,
-                onTap: () => onSelected(i),
-              ),
-            ),
-        ],
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          decoration: BoxDecoration(
+            color: t.surface.withValues(alpha: 0.85),
+            border: Border(top: BorderSide(color: t.border)),
+          ),
+          padding: const EdgeInsets.symmetric(vertical: 4),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final n = destinations.length;
+              final itemWidth = constraints.maxWidth / n;
+              return SizedBox(
+                height: 56,
+                child: Stack(
+                  children: [
+                    // Sliding indicator at the top.
+                    AnimatedPositioned(
+                      duration: const Duration(milliseconds: 320),
+                      curve: Curves.easeOutCubic,
+                      left: selectedIndex * itemWidth + itemWidth / 2 - 14,
+                      top: 4,
+                      child: Container(
+                        width: 28,
+                        height: 3,
+                        decoration: BoxDecoration(
+                          color: t.leaf,
+                          borderRadius: BorderRadius.circular(2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: t.leaf.withValues(alpha: 0.45),
+                              blurRadius: 8,
+                              spreadRadius: -1,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Row(
+                      children: [
+                        for (var i = 0; i < n; i++)
+                          Expanded(
+                            child: _TabItem(
+                              destination: destinations[i],
+                              selected: i == selectedIndex,
+                              onTap: () => onSelected(i),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
       ),
     );
   }
 }
 
-class _TabItem extends StatelessWidget {
+class _TabItem extends StatefulWidget {
   const _TabItem({
     required this.destination,
     required this.selected,
@@ -439,28 +1088,53 @@ class _TabItem extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
+  State<_TabItem> createState() => _TabItemState();
+}
+
+class _TabItemState extends State<_TabItem> {
+  bool _press = false;
+
+  @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    final fg = selected ? t.leaf : t.muted;
-    return GestureDetector(
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: SizedBox(
-        height: 52,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(destination.icon, size: 20, color: fg),
-            const SizedBox(height: 4),
-            Text(
-              destination.label,
-              style: TextStyle(
-                color: fg,
-                fontSize: 11,
-                fontWeight: selected ? FontWeight.w600 : FontWeight.w500,
-              ),
+    final fg = widget.selected ? t.leaf : t.muted;
+    return Listener(
+      onPointerDown: (_) => setState(() => _press = true),
+      onPointerUp: (_) => setState(() => _press = false),
+      onPointerCancel: (_) => setState(() => _press = false),
+      child: GestureDetector(
+        behavior: HitTestBehavior.opaque,
+        onTap: widget.onTap,
+        child: AnimatedScale(
+          scale: _press ? 0.94 : 1.0,
+          duration: const Duration(milliseconds: 120),
+          curve: Curves.easeOutCubic,
+          child: SizedBox(
+            height: 56,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                AnimatedScale(
+                  scale: widget.selected ? 1.12 : 1.0,
+                  duration: const Duration(milliseconds: 260),
+                  curve: Curves.easeOutBack,
+                  child: Icon(widget.destination.icon, size: 20, color: fg),
+                ),
+                const SizedBox(height: 4),
+                AnimatedDefaultTextStyle(
+                  duration: const Duration(milliseconds: 200),
+                  style: TextStyle(
+                    color: fg,
+                    fontSize: 11,
+                    fontWeight:
+                        widget.selected ? FontWeight.w600 : FontWeight.w500,
+                    letterSpacing: -0.1,
+                  ),
+                  child: Text(widget.destination.label),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:rubix_flutter/core/router/app_shell/app_shell.dart';
@@ -82,8 +83,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: '/sdui/:pageRef',
-        builder: (context, state) => SduiPageScreen(
-          pageRef: state.pathParameters['pageRef']!,
+        pageBuilder: (context, state) => _fadeScalePage(
+          state,
+          SduiPageScreen(pageRef: state.pathParameters['pageRef']!),
         ),
       ),
       StatefulShellRoute.indexedStack(
@@ -94,7 +96,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/home',
-                builder: (context, state) => const HomeScreen(),
+                pageBuilder: (context, state) =>
+                    _shellFadePage(state, const HomeScreen()),
               ),
             ],
           ),
@@ -102,7 +105,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/dashboards',
-                builder: (context, state) => const DashboardListScreen(),
+                pageBuilder: (context, state) =>
+                    _shellFadePage(state, const DashboardListScreen()),
               ),
             ],
           ),
@@ -110,7 +114,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/connections',
-                builder: (context, state) => const ConnectionsListScreen(),
+                pageBuilder: (context, state) =>
+                    _shellFadePage(state, const ConnectionsListScreen()),
               ),
             ],
           ),
@@ -118,7 +123,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(
                 path: '/settings',
-                builder: (context, state) => const SettingsScreen(),
+                pageBuilder: (context, state) =>
+                    _shellFadePage(state, const SettingsScreen()),
               ),
             ],
           ),
@@ -127,3 +133,60 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     ],
   );
 });
+
+// ---------------------------------------------------------------------------
+// Page transitions — Framer-Motion-ish fade + tiny slide/scale. The shell's
+// branch switcher handles tab swaps; these handle pushed routes (sdui, etc.)
+// and the initial branch render.
+// ---------------------------------------------------------------------------
+
+/// Subtle fade + 4px upward slide for in-shell branch screens.
+CustomTransitionPage<void> _shellFadePage(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 240),
+    reverseTransitionDuration: const Duration(milliseconds: 180),
+    transitionsBuilder: (context, animation, secondaryAnimation, c) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: SlideTransition(
+          position: Tween<Offset>(
+            begin: const Offset(0, 0.012),
+            end: Offset.zero,
+          ).animate(curved),
+          child: c,
+        ),
+      );
+    },
+  );
+}
+
+/// Fade + slight scale-in for pushed top-level pages (sdui details).
+CustomTransitionPage<void> _fadeScalePage(GoRouterState state, Widget child) {
+  return CustomTransitionPage<void>(
+    key: state.pageKey,
+    child: child,
+    transitionDuration: const Duration(milliseconds: 280),
+    reverseTransitionDuration: const Duration(milliseconds: 200),
+    transitionsBuilder: (context, animation, secondaryAnimation, c) {
+      final curved = CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+        reverseCurve: Curves.easeInCubic,
+      );
+      return FadeTransition(
+        opacity: curved,
+        child: ScaleTransition(
+          scale: Tween<double>(begin: 0.985, end: 1).animate(curved),
+          child: c,
+        ),
+      );
+    },
+  );
+}

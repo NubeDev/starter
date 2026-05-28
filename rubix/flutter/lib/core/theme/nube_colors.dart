@@ -77,6 +77,11 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     required this.warning,
     required this.danger,
     required this.info,
+    required this.accentBlue,
+    required this.glowTeal,
+    required this.glowGreen,
+    required this.glowAmber,
+    required this.glowDanger,
   });
 
   final Color bg;
@@ -97,6 +102,17 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
   final Color danger;
   final Color info;
 
+  /// Cool streaming-blue used for the "● STREAMING" live dot. Slightly
+  /// cooler than [info] so it reads as a real-time indicator.
+  final Color accentBlue;
+
+  /// Radial corner-glow tints for [NubeGlowCard]. Light-mode values use
+  /// very low alpha so they read as warmth, not bloom.
+  final Color glowTeal;
+  final Color glowGreen;
+  final Color glowAmber;
+  final Color glowDanger;
+
   static const light = NubeTokens(
     bg:        NubePrimitives.grey50,
     bg2:       NubePrimitives.grey100,
@@ -115,6 +131,11 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     warning:   NubePrimitives.amber500,
     danger:    NubePrimitives.red500,
     info:      NubePrimitives.blue500,
+    accentBlue: Color(0xFF38BDF8),
+    glowTeal:  Color(0x1A4497A2),
+    glowGreen: Color(0x1A21C45D),
+    glowAmber: Color(0x1AF59F0A),
+    glowDanger: Color(0x1AEF4343),
   );
 
   static const dark = NubeTokens(
@@ -135,6 +156,11 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     warning:   NubePrimitives.amber500,
     danger:    NubePrimitives.red500,
     info:      NubePrimitives.blue500,
+    accentBlue: Color(0xFF38BDF8),
+    glowTeal:  Color(0x4D4497A2),
+    glowGreen: Color(0x4021C45D),
+    glowAmber: Color(0x40F59F0A),
+    glowDanger: Color(0x40EF4343),
   );
 
   @override
@@ -143,6 +169,8 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
     Color? border, Color? borderHi, Color? text, Color? muted, Color? subtle,
     Color? leaf, Color? leaf2, Color? callout, Color? calloutForeground,
     Color? success, Color? warning, Color? danger, Color? info,
+    Color? accentBlue,
+    Color? glowTeal, Color? glowGreen, Color? glowAmber, Color? glowDanger,
   }) {
     return NubeTokens(
       bg: bg ?? this.bg,
@@ -162,6 +190,11 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
       warning: warning ?? this.warning,
       danger: danger ?? this.danger,
       info: info ?? this.info,
+      accentBlue: accentBlue ?? this.accentBlue,
+      glowTeal: glowTeal ?? this.glowTeal,
+      glowGreen: glowGreen ?? this.glowGreen,
+      glowAmber: glowAmber ?? this.glowAmber,
+      glowDanger: glowDanger ?? this.glowDanger,
     );
   }
 
@@ -186,9 +219,35 @@ class NubeTokens extends ThemeExtension<NubeTokens> {
       warning: Color.lerp(warning, other.warning, t)!,
       danger: Color.lerp(danger, other.danger, t)!,
       info: Color.lerp(info, other.info, t)!,
+      accentBlue: Color.lerp(accentBlue, other.accentBlue, t)!,
+      glowTeal: Color.lerp(glowTeal, other.glowTeal, t)!,
+      glowGreen: Color.lerp(glowGreen, other.glowGreen, t)!,
+      glowAmber: Color.lerp(glowAmber, other.glowAmber, t)!,
+      glowDanger: Color.lerp(glowDanger, other.glowDanger, t)!,
     );
   }
+
+  /// Radial-glow tint per [NubeGlowTone]. Returns [Colors.transparent] for
+  /// [NubeGlowTone.none] so the caller can paint unconditionally.
+  Color glowFor(NubeGlowTone tone) {
+    switch (tone) {
+      case NubeGlowTone.none:
+        return const Color(0x00000000);
+      case NubeGlowTone.teal:
+        return glowTeal;
+      case NubeGlowTone.green:
+        return glowGreen;
+      case NubeGlowTone.amber:
+        return glowAmber;
+      case NubeGlowTone.danger:
+        return glowDanger;
+    }
+  }
 }
+
+/// Status tone for cards / chips / charts. Drives the radial glow on
+/// [NubeGlowCard] and the line/area color on [NubeMiniSparkline].
+enum NubeGlowTone { none, teal, green, amber, danger }
 
 /// Convenience accessor: `Theme.of(context).nube`.
 extension NubeThemeX on ThemeData {

@@ -220,46 +220,49 @@ If a screen exists on web, **port the visual language wholesale**:
 same spacing, same hierarchy, same colour roles. Diverge only where a
 platform constraint forces it (e.g. bottom navigation on phones).
 
-### 4.4 Secondary visual reference — `holi-demo/rubix_app`
+### 4.4 Aspirational reference — `holi-demo/rubix_app` (do not port yet)
 
 A second Flutter app lives outside this repo at
-`/Users/linasilvera/code/holi-demo/rubix_app`. It is a **visual
-reference only** — we mine it for *application shell*, *menu/nav*,
-and *screen layouts*, but **never** import its logic, state, or
-theme files. The authoritative implementation, tokens, routing,
-data layer, and de-Material rules all stay in `rubix/flutter/`.
+`/Users/linasilvera/code/holi-demo/rubix_app`. It is a polished
+neumorphic smart-home demo that we keep around as **inspiration
+only** — a "this is roughly the direction we'd like to head" mood
+board, **not** a source of code, tokens, or patterns to mirror today.
 
-Use it to answer "what should this screen look/feel like?" when
-neither the React app (§4.3) nor `uipro` (§7) gives a clear answer.
+> **Do not port from this app for now.** A previous attempt to port
+> its app shell + home screen wholesale (frosted-glass bottom tab
+> bar, neumorphic cards, gradient hero, aurora backdrop) was
+> reverted because the visual language conflicts with §3
+> (de-Material) and §4.3 (mirror React) and would require a
+> parallel dark-only token layer to live alongside `NubeTokens`.
+> The trade-off was not worth taking at this stage.
 
-| What to take from `holi-demo/rubix_app`         | What to ignore                                  |
-|-------------------------------------------------|-------------------------------------------------|
-| Overall app shell (nav rail / bottom bar shape) | `lib/theme/` — use `rubix/flutter` tokens.      |
-| Menu structure and grouping                     | `lib/main.dart` bootstrap, routing wiring.       |
-| Screen layouts under `lib/screens/` (home, energy, security, thermostat, scan, add-device) | Any state mgmt, API calls, package choices. |
-| Widget composition patterns in `lib/widgets/` (charts, dials, sheets, toasts, animations) | Direct copies of widget code without re-theming. |
-| Iconography weight, spacing rhythm, motion feel | Material defaults it pulls in — apply §3 de-Material rules. |
+When that decision is revisited, the load-bearing points to weigh
+are recorded so we don't re-derive them:
 
-**Porting rule:** when adapting a screen from `holi-demo/rubix_app`
-into `rubix/flutter/`:
+- It is **dark only**. Light mode is not addressed.
+- It uses **neumorphic surfaces, gradients, and frosted glass**
+  that are explicitly rejected by §3.
+- It uses raw hex literals throughout `lib/theme/nube_colors.dart`
+  rather than a semantic layer — porting it cleanly means building
+  a second token layer (e.g. `NubePolish`) and accepting that
+  feature code chooses between two layers per screen.
+- Its app shell drops the top bar, sidebar, and PIN-lock
+  affordance currently in `AppShell`. Each of those would need a
+  new home.
 
-1. Re-implement against `NubeTokens` — no hex literals, no
-   `NubePrimitives.*` in feature code.
-2. Use `NubeButton` and the wrappers in
-   [`lib/shared/widgets/nube_widgets.dart`](../../../flutter/lib/shared/widgets/nube_widgets.dart),
-   not raw `ElevatedButton`/`FilledButton`.
-3. Strip ripples and tonal surface tints (§3 levers already applied
-   globally in `app_theme.dart` — don't re-introduce them per-screen).
-4. Swap any non-Lucide icons for `lucide_icons` equivalents.
-5. Record any non-obvious adaptation in
-   [`../flutter/DECISIONS.md`](../flutter/DECISIONS.md).
+If/when we decide to take the polish in, the work is captured under
+"Polish layer" in [`../flutter/DECISIONS.md`](../flutter/DECISIONS.md).
+Until that decision is taken, treat `holi-demo/rubix_app` the same
+way you'd treat a Dribbble shot: useful for "what good could look
+like," not for `git grep`-ing into a PR.
 
-Priority order when designing a Flutter screen:
+Priority order when designing a Flutter screen — **today**:
 
 1. **React app** (`rubix/frontend/`) — exact mirror if a screen exists.
-2. **`holi-demo/rubix_app`** — visual reference for app shell, menu,
-   and screens with no React equivalent.
-3. **`uipro` skill** — net-new surfaces with no precedent in either.
+2. **`uipro` skill** (§7) — net-new surfaces with no React equivalent.
+3. `holi-demo/rubix_app` — **inspiration only**, do not import code,
+   tokens, widgets, or layouts from it without an explicit decision
+   recorded in [`../flutter/DECISIONS.md`](../flutter/DECISIONS.md).
 
 ---
 
