@@ -118,7 +118,11 @@ class _AppShellState extends ConsumerState<AppShell> {
 
         return Scaffold(
           backgroundColor: t.bg,
+          // Let the body paint UNDER the bottom nav so the ambient teal
+          // glow can show through the frosted bar (Figma node 6:185).
+          extendBody: true,
           body: SafeArea(
+            bottom: false,
             child: Column(
               children: [
                 topBar,
@@ -128,13 +132,13 @@ class _AppShellState extends ConsumerState<AppShell> {
                     child: widget.navigationShell,
                   ),
                 ),
-                _TabBar(
-                  destinations: destinations,
-                  selectedIndex: widget.navigationShell.currentIndex,
-                  onSelected: _go,
-                ),
               ],
             ),
+          ),
+          bottomNavigationBar: _TabBar(
+            destinations: destinations,
+            selectedIndex: widget.navigationShell.currentIndex,
+            onSelected: _go,
           ),
         );
       },
@@ -1090,15 +1094,25 @@ class _TabBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
+    // Frosted-glass recipe — Figma node 6:185. White at 6% fill +
+    // 1px white-at-8% top hairline so the ambient teal glow reads
+    // THROUGH the bar instead of being capped by a solid plate.
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
         child: Container(
           decoration: BoxDecoration(
-            color: t.surface.withValues(alpha: 0.85),
-            border: Border(top: BorderSide(color: t.border)),
+            color: Colors.white.withValues(alpha: 0.06),
+            border: Border(
+              top: BorderSide(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
+            ),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 4),
+          padding: EdgeInsets.only(
+            top: 4,
+            bottom: 4 + MediaQuery.of(context).padding.bottom,
+          ),
           child: LayoutBuilder(
             builder: (context, constraints) {
               final n = destinations.length;
