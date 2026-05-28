@@ -7,5 +7,6 @@
 pub mod assign;
 pub mod create;
 pub mod delete;
+pub mod list;
 pub mod unassign;
 pub mod update;

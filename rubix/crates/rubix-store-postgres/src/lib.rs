@@ -31,12 +31,20 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod audit;
 pub mod dashboards;
 pub mod flows;
+pub mod teams;
+pub mod tenants;
+pub mod users;
 
+pub use audit::PgAuditPolicyStore;
 pub use dashboards::PgDashboardStore;
 pub use flows::PgFlowDefStore;
 pub use starter_store_postgres::MigrationSource;
+pub use teams::PgTeamAdminStore;
+pub use tenants::PgRubixTenantStore;
+pub use users::PgUserAdminStore;
 
 /// `sqlx` migrator for the rubix `undo_snapshots` schema. Pair
 /// with `starter_store_postgres::migrate(pool)
@@ -118,3 +126,55 @@ pub const DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE: MigrationSource = MigrationSo
 /// `rubix-agent::boot::dashboards_notify` to invalidate the
 /// in-process `PageProvider` cache cross-instance.
 pub const DASHBOARDS_DEFINITIONS_CHANNEL: &str = "rubix_dashboards_definitions";
+
+/// `sqlx` migrator for the rubix-owned `rubix_tenants` schema +
+/// the bundled `"system"` tenant seed. Pair with
+/// `starter_store_postgres::migrate(pool)
+///     .with_source(RUBIX_TENANTS_MIGRATION_SOURCE)` at boot.
+/// Backs [`tenants::PgRubixTenantStore`].
+pub static RUBIX_TENANTS_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/rubix_tenants");
+
+/// Convenience [`MigrationSource`] for the `rubix_tenants` table
+/// + seed. The `name` field becomes the suffix of the source's
+/// own `_sqlx_migrations_rubix_tenants` table, isolating this
+/// schema's migration history from the other rubix- and
+/// starter-owned sources in the boot chain.
+pub const RUBIX_TENANTS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "rubix_tenants",
+    migrator: &RUBIX_TENANTS_MIGRATOR,
+};
+
+/// `sqlx` migrator for the rubix-owned `rubix_users` schema.
+/// Pair with `starter_store_postgres::migrate(pool)
+///     .with_source(RUBIX_USERS_MIGRATION_SOURCE)` at boot,
+/// **after** [`RUBIX_TENANTS_MIGRATION_SOURCE`] because
+/// `rubix_users.tenant_id` FKs into `rubix_tenants(tenant_id)`.
+/// Backs [`users::PgUserAdminStore`].
+pub static RUBIX_USERS_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/rubix_users");
+
+/// Convenience [`MigrationSource`] for the `rubix_users` table.
+/// Records migration progress in its own
+/// `_sqlx_migrations_rubix_users` table.
+pub const RUBIX_USERS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "rubix_users",
+    migrator: &RUBIX_USERS_MIGRATOR,
+};
+
+/// `sqlx` migrator for the rubix-owned `rubix_teams` schema.
+/// Pair with `starter_store_postgres::migrate(pool)
+///     .with_source(RUBIX_TEAMS_MIGRATION_SOURCE)` at boot.
+/// Backs [`teams::PgTeamAdminStore`]. Independent of
+/// `rubix_users` (members live as a JSONB map on the team row;
+/// no FK into `rubix_users.user_id`).
+pub static RUBIX_TEAMS_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/rubix_teams");
+
+/// Convenience [`MigrationSource`] for the `rubix_teams` table.
+/// Records migration progress in its own
+/// `_sqlx_migrations_rubix_teams` table.
+pub const RUBIX_TEAMS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "rubix_teams",
+    migrator: &RUBIX_TEAMS_MIGRATOR,
+};

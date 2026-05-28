@@ -11,7 +11,9 @@
 use anyhow::Result;
 use rubix_store_postgres::{
     CHANGELOG_POLICY_MIGRATION_SOURCE, DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE,
-    FLOWS_DEFINITIONS_MIGRATION_SOURCE, UNDO_SNAPSHOTS_MIGRATION_SOURCE,
+    FLOWS_DEFINITIONS_MIGRATION_SOURCE, RUBIX_TEAMS_MIGRATION_SOURCE,
+    RUBIX_TENANTS_MIGRATION_SOURCE, RUBIX_USERS_MIGRATION_SOURCE,
+    UNDO_SNAPSHOTS_MIGRATION_SOURCE,
 };
 use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
@@ -74,6 +76,25 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         FLOWS_DEFINITIONS_MIGRATION_SOURCE,
         DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE,
         SCHEDULED_FLOWS_MIGRATION_SOURCE,
+        // Rubix-owned `rubix_tenants` table + bundled `"system"`
+        // seed. Backs `PgRubixTenantStore`; without this row the
+        // bundled SDUI pages (tenant_id = BUNDLED_TENANT) would
+        // resolve against an empty directory. See
+        // `rubix-store-postgres/migrations/rubix_tenants/`.
+        RUBIX_TENANTS_MIGRATION_SOURCE,
+        // Rubix-owned `rubix_users` table. Must run AFTER
+        // `RUBIX_TENANTS_MIGRATION_SOURCE` because
+        // `rubix_users.tenant_id` FKs into
+        // `rubix_tenants(tenant_id) ON DELETE RESTRICT`. Backs
+        // `PgUserAdminStore`. See
+        // `rubix-store-postgres/migrations/rubix_users/`.
+        RUBIX_USERS_MIGRATION_SOURCE,
+        // Rubix-owned `rubix_teams` table. No FK into
+        // `rubix_users` (members are a JSONB map on the team
+        // row -- see the migration's preamble for the
+        // tradeoff discussion). Position is independent;
+        // placed here for stable read order.
+        RUBIX_TEAMS_MIGRATION_SOURCE,
         // Upstream flow persistence schema — owns the
         // `node_state` table backing `PgNodeStateStore`
         // (`rubix/docs/scope/sqlite-to-postgres.md`). The

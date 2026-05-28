@@ -5,6 +5,7 @@
 //! [`ToolDescriptor`](crate::descriptor::ToolDescriptor).
 
 pub mod create;
+pub mod delete;
 pub mod disable;
 pub mod enable;
 pub mod list;

@@ -1,85 +1,32 @@
 //! In-memory backing store + [`Reversible`] glue for the tenant
 //! verbs.
 //!
-//! Companion to [`crate::user::store`] and [`crate::team::store`];
-//! same trait shape, same intent — the production binary swaps a
-//! PG-backed impl in without touching the verb files. See
+//! The trait + row type live in [`rubix_spi::tenant`] so this
+//! crate and `rubix-store-postgres` share the same contract
+//! without depending on each other (SCOPE R5: tools and
+//! store-postgres are siblings, both rooted in `rubix-spi`).
+//! The production binary swaps in
+//! `rubix_store_postgres::PgRubixTenantStore` without touching
+//! the verb files. See
 //! [docs/design/user-admin/](../../../../docs/design/user-admin/README.md)
-//! §"Snapshot shape" for the JSON layout.
+//! \u{00A7}"Snapshot shape" for the JSON layout.
 //!
 //! Note: a *separate* `TenantStore` exists in `starter-auth-users`
-//! covering the auth-side tenant directory. This rubix-tools
+//! covering the auth-side tenant directory. This rubix-side
 //! `TenantStore` is the verb-surface store; the two are
-//! intentionally separate today (the auth-side one is canonical
-//! for login, the rubix-side one is canonical for the tool
-//! surface). Unifying them is out of scope for this slice.
+//! intentionally separate today.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+// Re-export the contract from `rubix-spi::tenant` so existing verb
+// code (`use crate::tenant::store::{TenantRow, TenantStore, TENANT_KIND}`)
+// keeps compiling after the trait/row moved out of this crate.
+pub use rubix_spi::tenant::{TenantRow, TenantStore, TENANT_KIND};
 use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 use starter_spi::error::{Error, Result};
-
-/// Resource-kind discriminator for tenant rows.
-pub const TENANT_KIND: &str = "tenant";
-
-/// One tenant row as surfaced by `rubix.tenant.list` and
-/// mutated by `rubix.tenant.create` / `rubix.tenant.delete`.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TenantRow {
-    /// Stable id.
-    pub tenant_id: String,
-    /// Human-facing name.
-    pub name: String,
-    /// IETF locale tag (e.g. `en`, `es`). Returned so the caller
-    /// can localise per-tenant follow-up prompts.
-    pub locale: String,
-}
-
-/// Persistence surface the tenant verbs target.
-#[async_trait]
-pub trait TenantStore: Send + Sync {
-    /// List all tenant rows. Order is unspecified — callers sort
-    /// if they need stability.
-    async fn list(&self) -> Result<Vec<TenantRow>>;
-    /// Fetch a single tenant row by id. Returns `None` when the
-    /// id does not resolve. Used by the
-    /// `rubix.user.tenant.assign` verb to validate that the
-    /// assignment target exists before it writes — silently
-    /// assigning a user to a nonexistent tenant would be a
-    /// footgun. The default impl walks `list()` so simple
-    /// implementors keep working; production impls override with
-    /// an indexed lookup.
-    async fn get(&self, tenant_id: &str) -> Result<Option<TenantRow>> {
-        Ok(self
-            .list()
-            .await?
-            .into_iter()
-            .find(|r| r.tenant_id == tenant_id))
-    }
-    /// Insert a new tenant. Returns the row that landed. Returns
-    /// `Error::Conflict` when either `tenant_id` or `name`
-    /// already exists (both are operator-visible keys; uniqueness
-    /// is enforced on both to keep the tool surface predictable).
-    async fn create(&self, row: TenantRow) -> Result<TenantRow>;
-    /// Restore (or replace) a row to the supplied snapshot. Used
-    /// by [`TenantReversible::apply_inverse`] to walk a `Change`
-    /// backwards. Bypasses the uniqueness checks `create` enforces
-    /// — restoring a snapshot must succeed even if a transient
-    /// concurrent write briefly held the id/name.
-    async fn put(&self, row: TenantRow) -> Result<()>;
-    /// Hard-delete a row by id. Returns `Error::NotFound` when
-    /// the id does not resolve. The store does NOT enforce the
-    /// "no assigned users" check — that is a verb-level concern,
-    /// because the user store lives in a sibling module. See
-    /// [`crate::user::tenant_assign`] for the matching FK check
-    /// and [`crate::tenant::delete`] for the user-presence check
-    /// the verb wraps this call in.
-    async fn delete(&self, tenant_id: &str) -> Result<()>;
-}
 
 /// In-memory [`TenantStore`] for tests and the in-process smoke
 /// session.
@@ -107,7 +54,7 @@ impl InMemoryTenantStore {
         }
     }
 
-    /// Append a row, bypassing uniqueness. Test / smoke helper —
+    /// Append a row, bypassing uniqueness. Test / smoke helper \u{2014}
     /// production callers go through the [`TenantStore`] trait's
     /// `create`.
     pub fn insert(&self, row: TenantRow) {
@@ -163,24 +110,24 @@ impl TenantStore for InMemoryTenantStore {
 /// Payload shape: **snapshot** (see
 /// [`starter_spi::changelog::Reversible`] choice matrix). The
 /// tenant row is tiny (three string fields) and the lifecycle
-/// includes create/delete — `before` is canonical full state,
+/// includes create/delete \u{2014} `before` is canonical full state,
 /// `before == {}` marks "did not exist". Same posture as
 /// [`crate::user::store::UserReversible`].
 ///
 /// FK posture (cascade-on-undo): the verb `rubix.tenant.delete`
 /// refuses to delete a tenant that has users assigned to it; an
 /// operator must unassign first. `apply_inverse` here however
-/// does NOT re-check — undo replays the snapshot through
+/// does NOT re-check \u{2014} undo replays the snapshot through
 /// `store.put` / `store.delete` faithfully. Per-actor redo-stack
-/// semantics (proposal §3.4) keep this safe in the normal case:
-/// a single actor's undo chain walks back in reverse mutation
-/// order, so the user assignments are unwound before the tenant
-/// create is undone. If a different actor inserts user
-/// assignments between the create and the undo, the undo may
-/// delete a tenant that has users assigned — that's a cross-actor
-/// concurrency boundary, the same shape as every other
-/// Reversible in the codebase (see `DashboardReversible` for the
-/// precedent).
+/// semantics (proposal \u{00A7}3.4) keep this safe in the normal
+/// case: a single actor's undo chain walks back in reverse
+/// mutation order, so the user assignments are unwound before
+/// the tenant create is undone. If a different actor inserts
+/// user assignments between the create and the undo, the undo
+/// may delete a tenant that has users assigned \u{2014} that's a
+/// cross-actor concurrency boundary, the same shape as every
+/// other Reversible in the codebase (see `DashboardReversible`
+/// for the precedent).
 pub struct TenantReversible {
     store: Arc<dyn TenantStore>,
 }
@@ -240,7 +187,7 @@ impl Reversible for TenantReversible {
         _src: &ResourceRef,
         _overrides: serde_json::Value,
     ) -> Result<Vec<ResourceRef>> {
-        // Cloning tenants is intentionally out of scope — a
+        // Cloning tenants is intentionally out of scope \u{2014} a
         // duplicated tenant would silently bypass the
         // (id, name) uniqueness operators rely on.
         Err(Error::Invalid {

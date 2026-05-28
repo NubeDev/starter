@@ -13,6 +13,7 @@
 
 pub use starter_spi as starter;
 
+pub mod audit;
 pub mod dashboard;
 pub mod descriptor;
 pub mod dto;
@@ -20,6 +21,9 @@ pub mod error;
 pub mod events;
 pub mod flow_def;
 pub mod i18n;
+pub mod team;
+pub mod tenant;
+pub mod user;
 
 pub use descriptor::ToolDescriptor;
 pub use error::{Error, Result};

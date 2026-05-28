@@ -1,137 +1,31 @@
 //! In-memory backing store + [`Reversible`] glue for the user-admin
 //! verbs.
 //!
-//! The four write verbs (`user.create`, `user.disable`, `team.create`,
-//! `team.assign`) talk to a small [`UserAdminStore`] trait so the
-//! production binary can swap a PG-backed impl in without touching
-//! the verb files. Today only the [`InMemoryUserStore`] exists —
-//! it is enough for unit tests, the agent loop's recorded-LLM
-//! integration tests, and the smoke session that lights the verbs
-//! end-to-end. The PG impl lands in a follow-up phase that wires
-//! `starter-auth-users` to the same trait.
+//! The trait + row type live in [`rubix_spi::user`] so this crate
+//! and `rubix-store-postgres` share the same contract without
+//! depending on each other (SCOPE R5: tools and store-postgres
+//! are siblings, both rooted in `rubix-spi`). The production
+//! binary swaps in `rubix_store_postgres::PgUserAdminStore`
+//! without touching the verb files. See
+//! [docs/design/user-admin/](../../../../docs/design/user-admin/README.md)
+//! \u{00A7}"Snapshot shape" for the JSON layout in
+//! `Change::before` / `Change::after`.
 //!
 //! [`UserReversible`] is the single `Reversible` impl for resource
-//! kind `"user"`. See
-//! [docs/design/user-admin/](../../../../docs/design/user-admin/README.md)
-//! §"Snapshot shape" for the JSON layout in `Change::before` /
-//! `Change::after`.
+//! kind `"user"`.
 
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+// Re-export the contract from `rubix-spi::user` so existing verb
+// code (`use crate::user::store::{UserAdminStore, UserRow, USER_KIND}`)
+// keeps compiling after the trait/row moved out of this crate.
+pub use rubix_spi::user::{UserAdminStore, UserRow, USER_KIND};
 use serde_json::Value;
 use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 use starter_spi::error::{Error, Result};
-
-/// Resource-kind discriminator. Matches [`ResourceRef::kind`] on
-/// every recorded `Change` for a user row.
-pub const USER_KIND: &str = "user";
-
-/// One user row as persisted by the rubix user-admin verbs.
-///
-/// This is the snapshot shape `UserReversible` reads/writes via
-/// `Change::before` / `Change::after`. Mirrors the trimmed columns
-/// the four phase-B verbs need; the production PG impl is free to
-/// carry more columns as long as this subset round-trips.
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct UserRow {
-    /// Stable id (assigned at create time).
-    pub user_id: String,
-    /// Login email.
-    pub email: String,
-    /// Role string (`reader` / `writer` / `admin`).
-    pub role: String,
-    /// `Some(epoch_ms)` when the user is disabled, `None` when
-    /// enabled.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub disabled_at_ms: Option<i64>,
-    /// Free-form per-user preferences (locale, unit prefs, etc. —
-    /// see the `i18n_and_unit_prefs` design note). Stored opaquely
-    /// because the rubix tools don't reason about prefs content;
-    /// the UI / agent loop interprets them. `None` means "no prefs
-    /// row" — semantically different from `Some(Value::Null)`
-    /// which means "prefs explicitly cleared." `serde(default)`
-    /// keeps pre-existing serialized snapshots (which had no
-    /// `prefs_json` field) deserializing as `None`.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub prefs_json: Option<Value>,
-    /// Tenant assignment. `None` = unassigned (the default for
-    /// fresh rows from `rubix.user.create`); `Some(tenant_id)` =
-    /// assigned to that tenant. The `rubix.user.tenant.assign`
-    /// verb validates the id resolves in [`TenantStore`] before
-    /// writing (silently assigning to a nonexistent tenant is a
-    /// footgun). `serde(default)` keeps pre-existing serialized
-    /// snapshots (which had no `tenant_id` field) deserializing
-    /// as `None` — backwards compatible at the storage layer.
-    ///
-    /// Note: tenant deletion does NOT cascade to unassign users
-    /// today (there is no tenant-delete verb). When one lands,
-    /// the operator-visible decision is whether to refuse delete
-    /// while users are assigned, cascade-unassign, or block at
-    /// the FK; recorded here so the call gets debated rather
-    /// than implicitly made.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub tenant_id: Option<String>,
-}
-
-/// Persistence surface the four write verbs target.
-#[async_trait]
-pub trait UserAdminStore: Send + Sync {
-    /// Insert a new user. Returns the row that landed.
-    async fn create(&self, row: UserRow) -> Result<UserRow>;
-    /// Mark a user as disabled and return `(prior_row, new_row)`.
-    /// When the row is already disabled, both halves are equal and
-    /// the verb reports `was_already_disabled = true` to the caller.
-    async fn disable(&self, user_id: &str, now_ms: i64) -> Result<(UserRow, UserRow)>;
-    /// Clear the `disabled_at_ms` marker and return
-    /// `(prior_row, new_row)`. When the row was already enabled
-    /// (`disabled_at_ms = None`), both halves are equal and the
-    /// verb reports `was_already_enabled = true` — mirrors
-    /// `disable`'s idempotency posture so no audit row is
-    /// recorded for the no-op.
-    async fn enable(&self, user_id: &str) -> Result<(UserRow, UserRow)>;
-    /// Set the role on a user and return `(prior_row, new_row)`.
-    /// When the row already carries `role`, both halves are equal
-    /// and the verb reports `was_unchanged = true` to the caller —
-    /// no audit row is recorded for the no-op (mirrors `disable`).
-    async fn set_role(&self, user_id: &str, role: &str) -> Result<(UserRow, UserRow)>;
-    /// Replace the prefs blob on a user and return `(prior, new)`.
-    /// When the stored blob is byte-equal to `prefs` (after JSON
-    /// canonicalisation by the caller), both halves are equal and
-    /// the verb reports `was_unchanged = true`. Mirrors `set_role`
-    /// and `disable`.
-    async fn set_prefs(&self, user_id: &str, prefs: Value) -> Result<(UserRow, UserRow)>;
-    /// Assign (or unassign) the tenant on a user row and return
-    /// `(prior, new)`. `tenant_id = Some(id)` assigns, `None`
-    /// unassigns. When the row already carries the requested
-    /// value, both halves are equal and the verb reports
-    /// `was_unchanged = true` — no audit row is recorded for the
-    /// no-op (mirrors `set_role` / `set_prefs` / `disable`). The
-    /// store does NOT validate that `tenant_id` resolves in
-    /// [`crate::tenant::store::TenantStore`]; the verb does that
-    /// check before calling.
-    async fn set_tenant(
-        &self,
-        user_id: &str,
-        tenant_id: Option<String>,
-    ) -> Result<(UserRow, UserRow)>;
-    /// Fetch by user_id.
-    async fn get(&self, user_id: &str) -> Result<Option<UserRow>>;
-    /// Fetch by email.
-    async fn find_by_email(&self, email: &str) -> Result<Option<UserRow>>;
-    /// List all rows (read-only). Order is unspecified — callers
-    /// sort if they need stability.
-    async fn list(&self) -> Result<Vec<UserRow>>;
-    /// Restore (or insert) a row to the supplied snapshot. Used by
-    /// `UserReversible::apply_inverse` to walk a `Change` backwards.
-    async fn put(&self, row: UserRow) -> Result<()>;
-    /// Hard-delete a row by id. Used by `apply_inverse` to undo a
-    /// `Op::Create`.
-    async fn delete(&self, user_id: &str) -> Result<()>;
-}
 
 /// In-memory [`UserAdminStore`] for tests and the in-process smoke
 /// session.
@@ -256,9 +150,10 @@ impl UserAdminStore for InMemoryUserStore {
 ///
 /// Payload shape: **snapshot** (see
 /// [`starter_spi::changelog::Reversible`] choice matrix). The user
-/// row is small (< 1 KB) and the lifecycle includes create/disable —
-/// `before` is canonical full state, `before == {}` marks "did not
-/// exist". Do not flip to patch without flipping the whole kind.
+/// row is small (< 1 KB) and the lifecycle includes create/disable
+/// \u{2014} `before` is canonical full state, `before == {}` marks
+/// "did not exist". Do not flip to patch without flipping the
+/// whole kind.
 pub struct UserReversible {
     store: Arc<dyn UserAdminStore>,
 }
@@ -284,7 +179,8 @@ impl Reversible for UserReversible {
             Op::Create => self.store.delete(id).await,
             Op::Update => {
                 // Before-snapshot is a *full* UserRow per the verb
-                // contract — we trust it as the canonical prior state.
+                // contract \u{2014} we trust it as the canonical
+                // prior state.
                 let row: UserRow = parse_row(ch.before.as_ref(), "before")?;
                 self.store.put(row).await
             }
@@ -320,9 +216,10 @@ impl Reversible for UserReversible {
         _src: &ResourceRef,
         _overrides: serde_json::Value,
     ) -> Result<Vec<ResourceRef>> {
-        // Cloning users is intentionally out of scope — duplicating
-        // a user row would silently bypass email-uniqueness, which
-        // is precisely the constraint operators rely on.
+        // Cloning users is intentionally out of scope \u{2014}
+        // duplicating a user row would silently bypass
+        // email-uniqueness, which is precisely the constraint
+        // operators rely on.
         Err(Error::Invalid {
             message: "user kind does not support clone".to_owned(),
         })

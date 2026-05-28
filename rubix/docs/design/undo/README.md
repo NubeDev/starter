@@ -139,6 +139,13 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
     decision is recorded in the verb's DTO doc so it gets debated
     rather than implicitly made.
 
+  Pg backing for the seven user-admin verbs landed 2026-05-28.
+  `PgUserAdminStore` over `rubix_users` (PRIMARY KEY user_id,
+  UNIQUE email, FK `tenant_id REFERENCES rubix_tenants ON DELETE
+  RESTRICT` for defense in depth). Trait + row moved to
+  `rubix-spi::user`; registry selects via `match pg_pool`. See
+  [`../../sessions/undo/2026-05-28-pg-user-admin-store.md`](../../sessions/undo/2026-05-28-pg-user-admin-store.md).
+
   ### User account-state symmetry (`user.enable`)
 
   Shipped 2026-05-28 closing the cross-actor re-enable hole.
@@ -149,6 +156,28 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
   `disable`, byte-exact restoration of the prior
   `disabled_at_ms` timestamp on the `before` snapshot). See
   [`../../sessions/undo/2026-05-28-user-enable.md`](../../sessions/undo/2026-05-28-user-enable.md).
+
+  ### User hard-delete (`user.delete`)
+
+  Shipped 2026-05-28 closing the "you can disable a user but
+  not delete one" gap. Required for GDPR / right-to-be-
+  forgotten requests and for cleaning up typo'd or staging
+  accounts. Cascade decision mirrors `tenant.delete`: refuse
+  if the user is a member of any team (with a
+  `rubix.user.in_teams` diagnostic naming up to 10 teams
+  blocking the delete). Snapshot shape: `Op::Delete`,
+  full-row `before` carrying every identity-bearing field so
+  undo restores byte-exact (`disabled_at_ms`, `prefs_json`,
+  `tenant_id` all preserved). Tenant assignment does NOT
+  block delete (it's a column on the user row, vanishes with
+  the row, restored on undo). See
+  [`../../sessions/undo/2026-05-28-user-delete.md`](../../sessions/undo/2026-05-28-user-delete.md).
+  Cross-store Pg integration coverage landed same day in
+  [`../../sessions/undo/2026-05-28-user-delete-pg-integration.md`](../../sessions/undo/2026-05-28-user-delete-pg-integration.md):
+  one `#[ignore]`-gated scenario walks `PgUserAdminStore` +
+  `PgTeamAdminStore` end-to-end through `Tool::invoke`,
+  locking the cascade refuse-and-retry contract against
+  real Postgres.
 
   ### Audit policy operator surface (`audit.policy.list` + `audit.policy.set`)
 
@@ -167,6 +196,13 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
   observation — operators can pin `audit_policy` retention via
   the same verb).
   See [`../../sessions/undo/2026-05-28-audit-policy.md`](../../sessions/undo/2026-05-28-audit-policy.md).
+  Pg backing landed 2026-05-28 in
+  [`../../sessions/undo/2026-05-28-pg-audit-policy-store.md`](../../sessions/undo/2026-05-28-pg-audit-policy-store.md):
+  trait + row moved to `rubix-spi::audit`,
+  `PgAuditPolicyStore` in `rubix-store-postgres` mirrors the
+  `PgDashboardStore` shape, registry selects via
+  `match pg_pool` so the in-memory fake stays the dev-boot
+  default.
 
   ### Tenant lifecycle (`tenant.create` / `tenant.update` / `tenant.delete`)
 
@@ -184,6 +220,12 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
   - [`../../sessions/undo/2026-05-28-tenant-update.md`](../../sessions/undo/2026-05-28-tenant-update.md)
     — rename + relocale design, immutable-id rationale,
     self-rename regression guard.
+  - [`../../sessions/undo/2026-05-28-pg-rubix-tenant-store.md`](../../sessions/undo/2026-05-28-pg-rubix-tenant-store.md)
+    — Pg backing landed 2026-05-28. New `rubix_tenants` table +
+    bundled `"system"` seed migration; `PgRubixTenantStore`
+    mirrors the `PgAuditPolicyStore` shape; trait + row moved
+    to `rubix-spi::tenant`; registry selects via
+    `match pg_pool`.
 
   Notably:
 
@@ -223,6 +265,8 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
     — cascade-on-delete decision (allow-with-disclosure, contrasted with tenant's refuse-if-users-assigned), trait-surface changes (`TeamAdminStore::list` added, `delete` made strict).
   - [`../../sessions/undo/2026-05-28-team-unassign.md`](../../sessions/undo/2026-05-28-team-unassign.md)
     — closes the cascade-on-delete footgun by giving operators a drain-before-delete path. Locks in the patch-shape contract via the `undo_preserves_concurrent_rename` regression test.
+  - [`../../sessions/undo/2026-05-28-pg-team-admin-store.md`](../../sessions/undo/2026-05-28-pg-team-admin-store.md)
+    — Pg backing landed 2026-05-28. New `rubix_teams` table; members stored as JSONB on the team row (NOT a join table) so `TeamReversible`'s patch-shape stays single-row-atomic. Trait + row + patch moved to `rubix-spi::team`; registry selects via `match pg_pool`. Closes the four-slice Pg-backing arc (audit policy, tenants, users, teams).
 
   - `team.update` mutates `name` and/or `description` only — id
     is immutable. Patch carries only the flipped fields, so
@@ -235,6 +279,21 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
     (`already_not_member = true`, no draft) but hard-errors on
     missing teams. Reversible round-trip preserves the original
     `assigned_at_ms` timestamp.
+
+  ### Team enumeration (`team.list`)
+
+  Shipped 2026-05-28 closing the "no way to enumerate teams"
+  gap that the `rubix.user.delete` cascade diagnostic made
+  glaring (diagnostic caps echoed team names at 10; operator
+  needed a verb to see the full set). Read-only,
+  `teams.read` permission (mirrors the
+  `tenants.read` / `users.read` splits). Echoes
+  `member_count` per row rather than the full membership map
+  to keep response payloads bounded \u{2014} per-team detail
+  belongs in a future `rubix.team.get` with its own
+  pagination, not in a list response that's unbounded by
+  definition. See
+  [`../../sessions/undo/2026-05-28-team-list.md`](../../sessions/undo/2026-05-28-team-list.md).
 
 ## Tests
 

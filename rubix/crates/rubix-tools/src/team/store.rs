@@ -1,73 +1,31 @@
 //! In-memory backing store + [`Reversible`] glue for the team verbs.
 //!
-//! Companion to [`crate::user::store`]; same trait shape, same
-//! intent: the production binary swaps a PG-backed impl in without
-//! touching the verb files. See
+//! The trait + row + patch types live in [`rubix_spi::team`] so
+//! this crate and `rubix-store-postgres` share the same contract
+//! without depending on each other (SCOPE R5: tools and
+//! store-postgres are siblings, both rooted in `rubix-spi`). The
+//! production binary swaps in
+//! `rubix_store_postgres::PgTeamAdminStore` without touching the
+//! verb files. See
 //! [docs/design/user-admin/](../../../../docs/design/user-admin/README.md)
-//! §"Snapshot shape".
+//! \u{00A7}"Snapshot shape" for the JSON layout in
+//! `Change::before` / `Change::after`.
+//!
+//! [`TeamReversible`] is the single `Reversible` impl for
+//! resource kind `"team"`.
 
-use std::collections::{BTreeMap, HashMap};
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 
 use async_trait::async_trait;
-use serde::{Deserialize, Serialize};
+// Re-export the contract from `rubix-spi::team` so existing verb
+// code (`use crate::team::store::{TeamAdminStore, TeamRow, TEAM_KIND}`)
+// keeps compiling after the trait/row moved out of this crate.
+pub use rubix_spi::team::{TeamAdminStore, TeamPatch, TeamRow, TEAM_KIND};
 use serde_json::Value;
 use starter_spi::authz::ResourceRef;
 use starter_spi::changelog::{Change, ChangeTx, Op, Reversible};
 use starter_spi::error::{Error, Result};
-
-/// Resource-kind discriminator for team rows / memberships.
-pub const TEAM_KIND: &str = "team";
-
-/// One team row + its current membership map. The membership map
-/// is part of the team's snapshot so a single [`Change`] envelope
-/// can undo either a `create` (Op::Create, snapshot in `after`) or
-/// an `assign` (Op::Update, snapshots in `before` / `after`).
-#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
-pub struct TeamRow {
-    /// Stable id.
-    pub team_id: String,
-    /// Human-facing name.
-    pub name: String,
-    /// Optional description.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub description: Option<String>,
-    /// `user_id -> assigned_at_ms`. BTreeMap so the snapshot JSON is
-    /// deterministic (matching the choice in `Diagnostic::params`).
-    #[serde(default)]
-    pub members: BTreeMap<String, i64>,
-}
-
-/// Persistence surface the team verbs target.
-#[async_trait]
-pub trait TeamAdminStore: Send + Sync {
-    /// Insert a new team. Returns the row that landed.
-    async fn create(&self, row: TeamRow) -> Result<TeamRow>;
-    /// Add `user_id` to `team_id`. Returns `(prior_row, new_row)`;
-    /// on a no-op re-assignment both halves are equal.
-    async fn assign(&self, team_id: &str, user_id: &str, now_ms: i64)
-        -> Result<(TeamRow, TeamRow)>;
-    /// Remove `user_id` from `team_id`. Returns `(prior_row,
-    /// new_row)`; on a no-op (user was not a member) both halves
-    /// are equal. Returns `Error::NotFound` when the *team* does
-    /// not resolve — the absence of a member is a no-op, but the
-    /// absence of the team itself is a wire-shaped bug.
-    async fn unassign(&self, team_id: &str, user_id: &str)
-        -> Result<(TeamRow, TeamRow)>;
-    /// Fetch by team_id.
-    async fn get(&self, team_id: &str) -> Result<Option<TeamRow>>;
-    /// List all team rows. Order is unspecified. Used by
-    /// [`crate::team::update`] for the rename uniqueness check
-    /// and by [`crate::team::delete`] in cascade analysis.
-    async fn list(&self) -> Result<Vec<TeamRow>>;
-    /// Restore (or insert) a row to the supplied snapshot.
-    async fn put(&self, row: TeamRow) -> Result<()>;
-    /// Hard-delete a row by id. Returns `Error::NotFound` when
-    /// the id does not resolve — the verb relies on this signal
-    /// to distinguish a missing-target call from a successful
-    /// no-op.
-    async fn delete(&self, team_id: &str) -> Result<()>;
-}
 
 /// In-memory [`TeamAdminStore`].
 #[derive(Default, Clone)]
@@ -157,11 +115,11 @@ impl TeamAdminStore for InMemoryTeamStore {
 /// Single [`Reversible`] impl for the `"team"` kind.
 ///
 /// Payload shape: **patch** (see
-/// [`starter_spi::changelog::Reversible`] choice matrix). Membership
-/// edits are naturally diff-shaped — `before` carries the touched
-/// fields only and merges against the current row in
-/// `apply_inverse`, which is why two concurrent edits to unrelated
-/// fields do not clobber each other.
+/// [`starter_spi::changelog::Reversible`] choice matrix).
+/// Membership edits are naturally diff-shaped \u{2014} `before`
+/// carries the touched fields only and merges against the
+/// current row in `apply_inverse`, which is why two concurrent
+/// edits to unrelated fields do not clobber each other.
 pub struct TeamReversible {
     store: Arc<dyn TeamAdminStore>,
 }
@@ -241,23 +199,6 @@ impl Reversible for TeamReversible {
     }
 }
 
-/// Sparse update payload — only the fields the verb actually
-/// touched are populated; the rest stay as the current row had
-/// them. See [docs/design/user-admin/](../../../../docs/design/user-admin/README.md)
-/// §"Snapshot shape".
-#[derive(Debug, Clone, Default, Serialize, Deserialize)]
-pub struct TeamPatch {
-    /// Replace the `members` map verbatim.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub members: Option<BTreeMap<String, i64>>,
-    /// Replace the team name.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub name: Option<String>,
-    /// Replace the team description.
-    #[serde(default, skip_serializing_if = "Option::is_none")]
-    pub description: Option<Option<String>>,
-}
-
 fn parse_patch(payload: Option<&Value>, field: &str) -> Result<TeamPatch> {
     let v = payload.ok_or_else(|| Error::Invalid {
         message: format!("TeamReversible: Change::{field} is None"),
@@ -291,6 +232,8 @@ fn parse_row(payload: Option<&Value>, field: &str) -> Result<TeamRow> {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::BTreeMap;
+
     use super::*;
 
     fn row(id: &str, name: &str) -> TeamRow {

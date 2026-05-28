@@ -4,6 +4,7 @@
 //! verb modules and contains no logic of its own.
 
 pub mod create;
+pub mod delete;
 pub mod disable;
 pub mod enable;
 pub mod list;

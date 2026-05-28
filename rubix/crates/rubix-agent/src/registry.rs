@@ -15,7 +15,10 @@
 use std::sync::Arc;
 
 use rubix_spi::dashboard::DashboardStore;
-use rubix_store_postgres::{PgDashboardStore, PgFlowDefStore};
+use rubix_store_postgres::{
+    PgAuditPolicyStore, PgDashboardStore, PgFlowDefStore, PgRubixTenantStore,
+    PgTeamAdminStore, PgUserAdminStore,
+};
 use rubix_tools::dashboard::create::DashboardCreateTool;
 use rubix_tools::dashboard::delete::DashboardDeleteTool;
 use rubix_tools::dashboard::duplicate::DashboardDuplicateTool;
@@ -43,6 +46,7 @@ use rubix_tools::system::flow_errors::FlowErrorsTool;
 use rubix_tools::team::assign::TeamAssignTool;
 use rubix_tools::team::create::TeamCreateTool;
 use rubix_tools::team::delete::TeamDeleteTool;
+use rubix_tools::team::list::TeamListTool;
 use rubix_tools::team::store::{InMemoryTeamStore, TeamAdminStore, TeamReversible};
 use rubix_tools::team::unassign::TeamUnassignTool;
 use rubix_tools::team::update::TeamUpdateTool;
@@ -60,6 +64,7 @@ use rubix_tools::undo::dispatch::{ActorSource, LocalActor, ReversibleTool, UndoD
 use rubix_tools::undo::last::UndoLastTool;
 use rubix_tools::undo::redo::UndoRedoTool;
 use rubix_tools::user::create::UserCreateTool;
+use rubix_tools::user::delete::UserDeleteTool;
 use rubix_tools::user::disable::UserDisableTool;
 use rubix_tools::user::enable::UserEnableTool;
 use rubix_tools::user::list::UserListTool;
@@ -126,15 +131,30 @@ pub fn build_tool_registry(
         Some(pool) => Arc::new(PgFlowDefStore::new(pool.clone())),
         None => Arc::new(seed_flow_store()),
     };
-    let user_store: Arc<dyn UserAdminStore> = Arc::new(InMemoryUserStore::new());
-    let tenant_store: Arc<dyn TenantStore> =
-        Arc::new(InMemoryTenantStore::seeded(vec![TenantRow {
+    let user_store: Arc<dyn UserAdminStore> = match pg_pool.as_ref() {
+        Some(pool) => Arc::new(PgUserAdminStore::new(pool.clone())),
+        None => Arc::new(InMemoryUserStore::new()),
+    };
+    let tenant_store: Arc<dyn TenantStore> = match pg_pool.as_ref() {
+        Some(pool) => Arc::new(PgRubixTenantStore::new(pool.clone())),
+        // The bundled `"system"` tenant row matches the seed in
+        // `rubix_store_postgres::RUBIX_TENANTS_MIGRATION_SOURCE`
+        // so the in-memory fallback and Pg-backed boot present
+        // identical surfaces to the verbs.
+        None => Arc::new(InMemoryTenantStore::seeded(vec![TenantRow {
             tenant_id: rubix_spi::dashboard::BUNDLED_TENANT.to_owned(),
             name: "System".to_owned(),
             locale: "en".to_owned(),
-        }]));
-    let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
-    let audit_policy_store: Arc<dyn AuditPolicyStore> = Arc::new(InMemoryAuditPolicyStore::new());
+        }])),
+    };
+    let team_store: Arc<dyn TeamAdminStore> = match pg_pool.as_ref() {
+        Some(pool) => Arc::new(PgTeamAdminStore::new(pool.clone())),
+        None => Arc::new(InMemoryTeamStore::new()),
+    };
+    let audit_policy_store: Arc<dyn AuditPolicyStore> = match pg_pool.as_ref() {
+        Some(pool) => Arc::new(PgAuditPolicyStore::new(pool.clone())),
+        None => Arc::new(InMemoryAuditPolicyStore::new()),
+    };
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
     let dashboard_store: Arc<dyn DashboardStore> = match pg_pool.as_ref() {
         Some(pool) => Arc::new(PgDashboardStore::new(pool.clone())),
@@ -223,6 +243,10 @@ pub fn build_tool_registry(
         Arc::new(UserListTool::new(user_store.clone())),
         wrap_rev(Arc::new(UserCreateTool::new(user_store.clone()))),
         wrap_rev(Arc::new(UserDisableTool::new(user_store.clone()))),
+        wrap_rev(Arc::new(UserDeleteTool::new(
+            user_store.clone(),
+            team_store.clone(),
+        ))),
         wrap_rev(Arc::new(UserEnableTool::new(user_store.clone()))),
         wrap_rev(Arc::new(UserRoleSetTool::new(user_store.clone()))),
         wrap_rev(Arc::new(UserPrefsSetTool::new(user_store.clone()))),
@@ -243,6 +267,7 @@ pub fn build_tool_registry(
         wrap_rev(Arc::new(TeamDeleteTool::new(team_store.clone()))),
         wrap_rev(Arc::new(TeamAssignTool::new(team_store.clone()))),
         wrap_rev(Arc::new(TeamUnassignTool::new(team_store.clone()))),
+        Arc::new(TeamListTool::new(team_store.clone())),
         // ---- audit policy ---------------------------------------
         Arc::new(AuditPolicyListTool::new(audit_policy_store.clone())),
         wrap_rev(Arc::new(AuditPolicySetTool::new(audit_policy_store.clone()))),
