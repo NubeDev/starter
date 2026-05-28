@@ -164,6 +164,7 @@ fn audit(
             Error::Unauthenticated => "unauthenticated",
             Error::Forbidden => "forbidden",
             Error::Conflict { .. } => "conflict",
+            Error::Unavailable { .. } => "unavailable",
             Error::Internal { .. } => "internal",
             _ => "other",
         },

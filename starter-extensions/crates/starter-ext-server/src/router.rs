@@ -10,6 +10,7 @@
 //! | GET    | `/extensions/:id/events`          | `Role::Admin`  |
 //! | POST   | `/extensions/:id/enable`          | `Role::Admin`  |
 //! | POST   | `/extensions/:id/disable`         | `Role::Admin`  |
+//! | POST   | `/extensions/:id/restart`         | `Role::Admin`  |
 //! | GET    | `/extensions/:id/ui/*path`        | (unauthed)     |
 //! | GET    | `/extensions/:id/i18n/:lang`      | (unauthed)     |
 //!
@@ -36,7 +37,7 @@ use crate::admin::ExtensionAdmin;
 use crate::events::events;
 use crate::i18n::i18n;
 use crate::lifecycle::{install, uninstall};
-use crate::routes::{detail, disable, enable, list};
+use crate::routes::{detail, disable, enable, list, restart};
 use crate::ui::ui;
 
 /// Build options. Kept as a struct so future knobs (custom path prefix,
@@ -79,6 +80,7 @@ where
         .route("/extensions/{id}/events", get(events))
         .route("/extensions/{id}/enable", post(enable))
         .route("/extensions/{id}/disable", post(disable))
+        .route("/extensions/{id}/restart", post(restart))
         .route("/extensions/install", post(install))
         .route("/extensions/{id}", delete(uninstall))
         .with_state(admin)

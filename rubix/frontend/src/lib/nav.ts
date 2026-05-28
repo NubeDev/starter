@@ -11,6 +11,7 @@ import {
   Settings,
   ShieldCheck,
   Sparkles,
+  Terminal,
   Users,
   type LucideIcon,
 } from 'lucide-react'
@@ -74,6 +75,7 @@ export const NAV_GROUPS: NavGroup[] = [
         href: '/admin/warehouse-explorer',
         icon: Database,
       },
+      { labelKey: 'nav.item.console',   href: '/admin/console',   icon: Terminal },
     ],
   },
 ]

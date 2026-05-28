@@ -10,8 +10,8 @@
 
 use anyhow::Result;
 use rubix_store_postgres::{
-    DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE, FLOWS_DEFINITIONS_MIGRATION_SOURCE,
-    UNDO_SNAPSHOTS_MIGRATION_SOURCE,
+    CHANGELOG_POLICY_MIGRATION_SOURCE, DASHBOARDS_DEFINITIONS_MIGRATION_SOURCE,
+    FLOWS_DEFINITIONS_MIGRATION_SOURCE, UNDO_SNAPSHOTS_MIGRATION_SOURCE,
 };
 use starter_auth_users::migration::postgres_migration_source;
 use starter_changelog_postgres::migration_source;
@@ -57,6 +57,12 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
     // docs/design/migrations/README.md.
     let sources = [
         migration_source(),
+        // Rubix-side seed for `changelog_kind_policy` — pins
+        // security-relevant kinds (`user`, `team`) to the audit
+        // floor (`max_age_days = NULL` = keep forever). Must run
+        // AFTER the `changelog` source above which provisions
+        // the table. See `rubix/docs/proposal/audit-log.md`.
+        CHANGELOG_POLICY_MIGRATION_SOURCE,
         postgres_migration_source(),
         UNDO_SNAPSHOTS_MIGRATION_SOURCE,
         // `starter_undo_cursors` — the per-actor durable redo

@@ -47,11 +47,25 @@ pub trait TeamAdminStore: Send + Sync {
     /// on a no-op re-assignment both halves are equal.
     async fn assign(&self, team_id: &str, user_id: &str, now_ms: i64)
         -> Result<(TeamRow, TeamRow)>;
+    /// Remove `user_id` from `team_id`. Returns `(prior_row,
+    /// new_row)`; on a no-op (user was not a member) both halves
+    /// are equal. Returns `Error::NotFound` when the *team* does
+    /// not resolve — the absence of a member is a no-op, but the
+    /// absence of the team itself is a wire-shaped bug.
+    async fn unassign(&self, team_id: &str, user_id: &str)
+        -> Result<(TeamRow, TeamRow)>;
     /// Fetch by team_id.
     async fn get(&self, team_id: &str) -> Result<Option<TeamRow>>;
+    /// List all team rows. Order is unspecified. Used by
+    /// [`crate::team::update`] for the rename uniqueness check
+    /// and by [`crate::team::delete`] in cascade analysis.
+    async fn list(&self) -> Result<Vec<TeamRow>>;
     /// Restore (or insert) a row to the supplied snapshot.
     async fn put(&self, row: TeamRow) -> Result<()>;
-    /// Hard-delete a row by id.
+    /// Hard-delete a row by id. Returns `Error::NotFound` when
+    /// the id does not resolve — the verb relies on this signal
+    /// to distinguish a missing-target call from a successful
+    /// no-op.
     async fn delete(&self, team_id: &str) -> Result<()>;
 }
 
@@ -102,15 +116,40 @@ impl TeamAdminStore for InMemoryTeamStore {
         guard.insert(team_id.to_owned(), new.clone());
         Ok((prior, new))
     }
+    async fn unassign(
+        &self,
+        team_id: &str,
+        user_id: &str,
+    ) -> Result<(TeamRow, TeamRow)> {
+        let mut guard = self.lock();
+        let prior = guard.get(team_id).cloned().ok_or_else(|| Error::NotFound {
+            what: format!("team:{team_id}"),
+        })?;
+        if !prior.members.contains_key(user_id) {
+            return Ok((prior.clone(), prior));
+        }
+        let mut new = prior.clone();
+        new.members.remove(user_id);
+        guard.insert(team_id.to_owned(), new.clone());
+        Ok((prior, new))
+    }
     async fn get(&self, team_id: &str) -> Result<Option<TeamRow>> {
         Ok(self.lock().get(team_id).cloned())
+    }
+    async fn list(&self) -> Result<Vec<TeamRow>> {
+        Ok(self.lock().values().cloned().collect())
     }
     async fn put(&self, row: TeamRow) -> Result<()> {
         self.lock().insert(row.team_id.clone(), row);
         Ok(())
     }
     async fn delete(&self, team_id: &str) -> Result<()> {
-        self.lock().remove(team_id);
+        let mut guard = self.lock();
+        if guard.remove(team_id).is_none() {
+            return Err(Error::NotFound {
+                what: format!("team:{team_id}"),
+            });
+        }
         Ok(())
     }
 }

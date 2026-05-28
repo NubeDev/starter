@@ -51,8 +51,7 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
     when_not_to_use: concat!(
         "Do not use to create a team (call rubix.team.create first). ",
         "Do not use to create a user (call rubix.user.create first). ",
-        "Do not use to remove a member (that is rubix.team.unassign, ",
-        "not yet wired)."
+        "Do not use to remove a member (that is rubix.team.unassign)."
     ),
     example: concat!(
         "Input:  { \"team_id\": \"t-1\", \"user_id\": \"u-1\" }\n",

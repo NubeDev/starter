@@ -11,6 +11,7 @@
 
 pub mod cleaner;
 pub mod clipboard;
+pub mod audit;
 pub mod dashboard;
 pub mod dataflow;
 pub mod flow_ops;

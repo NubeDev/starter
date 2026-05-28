@@ -89,6 +89,8 @@ mod tests {
             email: email.into(),
             role: "reader".into(),
             disabled_at_ms: None,
+            prefs_json: None,
+            tenant_id: None,
         }
     }
 

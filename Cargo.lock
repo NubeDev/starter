@@ -8417,6 +8417,7 @@ dependencies = [
  "starter-i18n",
  "starter-jsonrpc-stdio",
  "starter-server",
+ "starter-skills",
  "starter-spi",
  "thiserror 1.0.69",
  "tokio",

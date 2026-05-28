@@ -38,6 +38,21 @@ pub struct UserDisableResponse {
     /// can reconstruct the full prior snapshot without a follow-up
     /// read).
     pub role: String,
+    /// Prefs blob carried by the row at the time of the disable.
+    /// Echoed so `change_for` reconstructs the full `before`
+    /// snapshot byte-exact — without this, undo of a disable would
+    /// silently clear prefs the operator never touched. See the
+    /// dashboard rename fix (proposal §3.1) for the prior bug
+    /// class this prevents.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prefs_json: Option<serde_json::Value>,
+    /// Tenant assignment carried by the row at the time of the
+    /// disable. Echoed for the same reason as `prefs_json` — undo
+    /// of a disable must restore the prior tenant assignment
+    /// rather than silently unassigning the user. See proposal
+    /// §3.1 / §3.3 for the bug class.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tenant_id: Option<String>,
     /// `true` when the row was already in the disabled state on
     /// entry — the verb is idempotent and reports the prior state.
     pub was_already_disabled: bool,
@@ -59,8 +74,9 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
     ),
     when_not_to_use: concat!(
         "Do not use to permanently delete a user (row stays for audit). ",
-        "Do not use to remove a user from a single team (that is ",
-        "rubix.team.unassign, not yet wired)."
+        "Do not use to re-enable a previously disabled user (that is ",
+        "rubix.user.enable). Do not use to remove a user from a single ",
+        "team (that is rubix.team.unassign)."
     ),
     example: concat!(
         "Input:  { \"email\": \"ada@example.com\" }\n",

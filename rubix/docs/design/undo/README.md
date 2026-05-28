@@ -112,9 +112,129 @@ Until then, the folded snapshot is correct and round-trips byte-exact.
   extend undo retention to substitute for audit. The audit-log
   proposal now exists at
   [`../../proposal/audit-log.md`](../../proposal/audit-log.md) —
-  recommendation is to add an `audit_only_*` floor on
-  `undo_kind_policy` so security-relevant kinds persist past undo
-  retention, then ship the §3.3 extension on top.
+  it landed the mechanism (steps 1–4 of the proposal's "Concrete
+  next steps") so §3.3 itself is now an isolated change:
+  - `changelog_kind_policy` table on `starter_changes` (provisioned
+    by `crates/starter-changelog-postgres/migrations/0004_…sql`).
+  - `starter_changelog_postgres::apply_policy` sweep helper.
+  - `rubix-agent::boot::changelog_sweep` (mirror of `undo_sweep`),
+    spawned from `main.rs`.
+  - Rubix-side seed
+    (`rubix/crates/rubix-store-postgres/migrations/changelog_policy/0001_…sql`)
+    pins `user` and `team` to `max_age_days = NULL` (keep forever).
+    The audit floor is recorded in SQL, not tribal memory.
+  §3.3 is **closed** (2026-05-28). All three verbs landed:
+  - `rubix.user.role.set` — see
+    [`../../sessions/undo/2026-05-28-user-role-set.md`](../../sessions/undo/2026-05-28-user-role-set.md).
+  - `rubix.user.prefs.set` — see
+    [`../../sessions/undo/2026-05-28-user-prefs-set.md`](../../sessions/undo/2026-05-28-user-prefs-set.md).
+    Also fixed the §3.1-bug-class snapshot bug that was silently
+    clearing identity-bearing fields on undo.
+  - `rubix.user.tenant.assign` — see
+    [`../../sessions/undo/2026-05-28-user-tenant-assign.md`](../../sessions/undo/2026-05-28-user-tenant-assign.md).
+    Model change: `UserRow` gained `tenant_id: Option<String>`;
+    the verb validates the tenant resolves in `TenantStore` before
+    writing (no silent FK violation). Cascade-on-tenant-delete is
+    out of scope today — there is no tenant-delete verb — and the
+    decision is recorded in the verb's DTO doc so it gets debated
+    rather than implicitly made.
+
+  ### User account-state symmetry (`user.enable`)
+
+  Shipped 2026-05-28 closing the cross-actor re-enable hole.
+  `rubix.undo.last` is per-actor — admin A could undo their own
+  `disable`, but admin B could not re-enable a user A had
+  disabled. `rubix.user.enable` is the canonical re-enable
+  surface (same `users.write` permission, idempotent mirror of
+  `disable`, byte-exact restoration of the prior
+  `disabled_at_ms` timestamp on the `before` snapshot). See
+  [`../../sessions/undo/2026-05-28-user-enable.md`](../../sessions/undo/2026-05-28-user-enable.md).
+
+  ### Audit policy operator surface (`audit.policy.list` + `audit.policy.set`)
+
+  Shipped 2026-05-28 closing the "policy is configurable only
+  via SQL seed" gap. `changelog_kind_policy` has had operator
+  significance since the audit-log proposal landed but no live
+  surface; the two new verbs let operators inspect and mutate
+  per-kind retention with full reversibility. New
+  `AuditPolicyReversible` for the `audit_policy` kind (snapshot
+  shape, full-row payload incl. `updated_at_ms` for byte-exact
+  restoration). Three positive diagnostic codes
+  (`set` / `pinned` / `unchanged`) so an operator reading the
+  audit log can tell whether retention loosened, tightened, or
+  pinned without inspecting params. Policy changes are
+  themselves audited under the `audit_policy` kind (recursive
+  observation — operators can pin `audit_policy` retention via
+  the same verb).
+  See [`../../sessions/undo/2026-05-28-audit-policy.md`](../../sessions/undo/2026-05-28-audit-policy.md).
+
+  ### Tenant lifecycle (`tenant.create` / `tenant.update` / `tenant.delete`)
+
+  Landed 2026-05-28 alongside the §3.3 close. Adds a new
+  `TenantReversible` (snapshot shape, full-row payload) for the
+  `tenant` kind and pins the kind to the audit floor
+  (`changelog_policy/0002_tenant_audit_floor.sql`). All three
+  verbs route through the single `TenantReversible`; the
+  `apply_inverse` matrix covers `Op::Create` / `Op::Update` /
+  `Op::Delete` symmetrically. See:
+
+  - [`../../sessions/undo/2026-05-28-tenant-lifecycle.md`](../../sessions/undo/2026-05-28-tenant-lifecycle.md)
+    — cascade-on-delete decision (refuse-if-users-assigned)
+    and the alternatives considered.
+  - [`../../sessions/undo/2026-05-28-tenant-update.md`](../../sessions/undo/2026-05-28-tenant-update.md)
+    — rename + relocale design, immutable-id rationale,
+    self-rename regression guard.
+
+  Notably:
+
+  - `tenant.create` is **not** silent-idempotent — duplicate id
+    or name returns `Error::Conflict`. Tenants are identity
+    boundaries; silent idempotency would let two operators think
+    they each "own" a tenant they share.
+  - `tenant.update` mutates `name` and/or `locale` only — id is
+    immutable. Per-field optionality; "update with no fields"
+    is rejected as `Error::Invalid` rather than collapsed to
+    unchanged. Rename uniqueness is enforced at the verb level
+    (uniqueness-excluding-self) so the store trait stays at
+    two write methods.
+  - `tenant.delete` refuses with the structured
+    `rubix.tenant.has_users` diagnostic when any `UserRow`
+    carries `tenant_id == target`. Operator unassigns first.
+  - Undo of `delete` restores the tenant row but does NOT
+    re-attach previously assigned users — those assignments live
+    in their own undo chain (`rubix.user.tenant.assign`) and
+    were unwound separately before the delete.
+
+  ### Team lifecycle (`team.create` / `team.update` / `team.delete` / `team.assign` / `team.unassign`)
+
+  Team CRUD landed 2026-05-28 in three slices: morning
+  (`team.create` + `team.assign`), midday (`team.update` +
+  `team.delete`), and the unassign closeout below. All five
+  verbs route through the same `TeamReversible` (patch-shape
+  payload — `assign`/`unassign` mutate only `members`, `update`
+  mutates only `name`/`description`, so patches address
+  disjoint fields and undo can't clobber concurrent edits).
+  `delete` uses snapshot shape (`Op::Delete` carries the full
+  row including members), matching
+  `TeamReversible::apply_inverse`'s existing `parse_row` arm.
+
+  See:
+  - [`../../sessions/undo/2026-05-28-team-crud-closeout.md`](../../sessions/undo/2026-05-28-team-crud-closeout.md)
+    — cascade-on-delete decision (allow-with-disclosure, contrasted with tenant's refuse-if-users-assigned), trait-surface changes (`TeamAdminStore::list` added, `delete` made strict).
+  - [`../../sessions/undo/2026-05-28-team-unassign.md`](../../sessions/undo/2026-05-28-team-unassign.md)
+    — closes the cascade-on-delete footgun by giving operators a drain-before-delete path. Locks in the patch-shape contract via the `undo_preserves_concurrent_rename` regression test.
+
+  - `team.update` mutates `name` and/or `description` only — id
+    is immutable. Patch carries only the flipped fields, so
+    membership stays untouched on undo. Rename uniqueness is
+    enforced verb-side (uniqueness-excluding-self).
+  - `team.delete` cascades through the membership map; the
+    operator sees the cascaded member count in the diagnostic
+    and undo restores members byte-exact.
+  - `team.unassign` is idempotent on missing members
+    (`already_not_member = true`, no draft) but hard-errors on
+    missing teams. Reversible round-trip preserves the original
+    `assigned_at_ms` timestamp.
 
 ## Tests
 

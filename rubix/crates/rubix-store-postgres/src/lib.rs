@@ -54,6 +54,27 @@ pub const UNDO_SNAPSHOTS_MIGRATION_SOURCE: MigrationSource = MigrationSource {
     migrator: &UNDO_SNAPSHOTS_MIGRATOR,
 };
 
+/// `sqlx` migrator for the rubix-side seed of
+/// `changelog_kind_policy` — the audit-floor markers for
+/// security-relevant kinds. The table itself is provisioned by
+/// the `changelog` source; this source only inserts rows. Pair
+/// with `starter_store_postgres::migrate(pool)
+///     .with_source(CHANGELOG_POLICY_MIGRATION_SOURCE)` at boot,
+/// **after** the changelog source so the target table exists.
+/// See `rubix/docs/proposal/audit-log.md`.
+pub static CHANGELOG_POLICY_MIGRATOR: sqlx::migrate::Migrator =
+    sqlx::migrate!("./migrations/changelog_policy");
+
+/// Convenience [`MigrationSource`] for the rubix-side
+/// `changelog_kind_policy` seed. The `name` field becomes the
+/// suffix of the source's own `_sqlx_migrations_changelog_policy`
+/// table, isolating the seed history from the upstream
+/// `changelog` source that owns the table itself.
+pub const CHANGELOG_POLICY_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "changelog_policy",
+    migrator: &CHANGELOG_POLICY_MIGRATOR,
+};
+
 /// `sqlx` migrator for the rubix `flows_definitions` schema. Pair
 /// with `starter_store_postgres::migrate(pool)
 ///     .with_source(FLOWS_DEFINITIONS_MIGRATION_SOURCE)` at boot.

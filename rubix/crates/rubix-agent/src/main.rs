@@ -113,6 +113,13 @@ async fn main() -> Result<()> {
     // point the runtime dropping aborts every task. See
     // [`boot::undo_sweep`] for the cadence + bound contract.
     let _undo_sweep = boot::spawn_undo_sweep(cfg.database_url.as_deref(), cfg.undo.clone()).await?;
+    // Per-kind retention sweep for `starter_changes` — the audit
+    // table's counterpart to `_undo_sweep` above. Kinds with no
+    // policy row, or with `max_age_days = NULL`, are skipped
+    // (today's implicit-unbounded baseline). The `changelog_policy`
+    // seed migration above pins `user`/`team` to NULL = keep
+    // forever. See `rubix/docs/proposal/audit-log.md`.
+    let _changelog_sweep = boot::spawn_changelog_sweep(cfg.database_url.as_deref()).await?;
     // Stage 3 of warehouse-engine-swap: the ClickHouse engine is
     // gone. The warehouse capability crate will be rebuilt on
     // TimescaleDB in a follow-up stage; for now the boot wiring

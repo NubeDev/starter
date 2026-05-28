@@ -3,6 +3,7 @@
 pub mod ai;
 pub mod auth;
 pub mod authz;
+pub mod changelog_sweep;
 pub mod config;
 pub mod dashboards_seed;
 pub mod extension_tables;
@@ -41,5 +42,6 @@ pub use migrations::apply_migrations;
 pub use scheduler::{spawn as spawn_scheduler, SchedulerHandle};
 pub use sdui::build_sdui_router;
 pub use tracing::init_tracing;
+pub use changelog_sweep::{spawn_changelog_sweep, sweep_once as sweep_changelog_once};
 pub use undo_sweep::{spawn_undo_sweep, sweep_once as sweep_undo_once};
 pub use warehouse::{apply_warehouse_migrations, connect_warehouse, RUBIX_CH_DATABASE};

@@ -201,6 +201,19 @@ fn shape_response(
             (StatusCode::OK, Json(body)).into_response()
         }
         Err(e) => {
+            // The `Unavailable` arm is special-cased before the
+            // generic mapper so we can build a structured 503 body
+            // (with a restart hint when the subject is an extension
+            // id). All other variants fall through to the status
+            // table below.
+            if let Error::Unavailable {
+                code,
+                subject,
+                message,
+            } = &e
+            {
+                return unavailable_response(code, subject.as_deref(), message);
+            }
             let status = match &e {
                 Error::NotFound { .. } => StatusCode::NOT_FOUND,
                 Error::Invalid { .. } => StatusCode::BAD_REQUEST,
@@ -216,6 +229,31 @@ fn shape_response(
             (status, Json(json!({"error": e.to_string()}))).into_response()
         }
     }
+}
+
+/// Build the structured 503 body returned for [`Error::Unavailable`].
+///
+/// When `code` matches the well-known supervisor sentinel and the
+/// subject is non-empty, the body carries a `restart` hint pointing
+/// at the matching admin endpoint so a UI can render an actionable
+/// "Restart extension" affordance without parsing the message text.
+/// Other unavailable kinds (no subject, unknown code) get the same
+/// status but no hint — the wire stays additive.
+fn unavailable_response(code: &str, subject: Option<&str>, message: &str) -> Response {
+    let mut body = json!({
+        "error":   message,
+        "code":    code,
+        "subject": subject,
+    });
+    if code == "extension.supervisor_unavailable" {
+        if let Some(id) = subject.filter(|s| !s.is_empty()) {
+            body["restart"] = json!({
+                "method": "POST",
+                "path":   format!("/extensions/{id}/restart"),
+            });
+        }
+    }
+    (StatusCode::SERVICE_UNAVAILABLE, Json(body)).into_response()
 }
 
 /// Pull `summary` from a tool result body, deserialise as
@@ -255,6 +293,50 @@ mod tests {
         let err = Error::Internal { source: boxed };
         let resp = shape_response(Err(err), &bundle(), en(), None);
         assert_eq!(resp.status(), StatusCode::INTERNAL_SERVER_ERROR);
+    }
+
+    #[tokio::test]
+    async fn shape_response_maps_unavailable_to_503_with_restart_hint() {
+        // Simulates the wire shape rubix-agent's tools router emits
+        // after `ProcessExtensionToolBinding` translates a supervisor-
+        // death `Transport` error. The frontend pattern-matches the
+        // `code` field and uses `restart.path` to wire a single-click
+        // recovery button — the wire shape is the contract.
+        let err = Error::unavailable_subject(
+            "extension.supervisor_unavailable",
+            "com.rubix.example",
+            "supervisor task is no longer running",
+        );
+        let resp = shape_response(Err(err), &bundle(), en(), None);
+        assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
+        let body = axum::body::to_bytes(resp.into_body(), 64 * 1024)
+            .await
+            .expect("body bytes");
+        let v: Value = serde_json::from_slice(&body).expect("body json");
+        assert_eq!(v["code"], "extension.supervisor_unavailable");
+        assert_eq!(v["subject"], "com.rubix.example");
+        assert_eq!(v["error"], "supervisor task is no longer running");
+        assert_eq!(v["restart"]["method"], "POST");
+        assert_eq!(
+            v["restart"]["path"],
+            "/extensions/com.rubix.example/restart",
+        );
+    }
+
+    #[tokio::test]
+    async fn shape_response_unavailable_without_subject_omits_restart_hint() {
+        // Unavailable errors with no subject (or unknown code) still
+        // return 503 but skip the restart hint — the caller has no
+        // id to act on.
+        let err = Error::unavailable("warehouse.unavailable", "connection lost");
+        let resp = shape_response(Err(err), &bundle(), en(), None);
+        assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
+        let body = axum::body::to_bytes(resp.into_body(), 64 * 1024)
+            .await
+            .expect("body bytes");
+        let v: Value = serde_json::from_slice(&body).expect("body json");
+        assert_eq!(v["code"], "warehouse.unavailable");
+        assert!(v.get("restart").is_none(), "no restart hint: {v}");
     }
 
     fn en() -> LanguageTag {

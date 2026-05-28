@@ -68,6 +68,8 @@ impl Tool for UserCreateTool {
             email: req.email.clone(),
             role: req.role.clone(),
             disabled_at_ms: None,
+            prefs_json: None,
+            tenant_id: None,
         };
         let row = self.store.create(row).await?;
 
@@ -99,6 +101,8 @@ impl ReversibleTool for UserCreateTool {
             email: resp.email,
             role: resp.role,
             disabled_at_ms: None,
+            prefs_json: None,
+            tenant_id: None,
         };
         let after = serde_json::to_value(&row).ok()?;
         Some(ChangeDraft {

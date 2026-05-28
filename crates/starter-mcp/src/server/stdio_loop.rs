@@ -13,6 +13,7 @@ use starter_spi::i18n::LanguageTag;
 use crate::registry::ToolRegistry;
 
 use super::dispatch::dispatch;
+use super::stdio_loop_locale::locale_from_initialize_frame;
 
 /// Run the MCP stdio loop until stdin closes.
 ///
@@ -78,53 +79,3 @@ pub async fn run_stdio(registry: ToolRegistry) -> std::io::Result<()> {
     }
 }
 
-/// Inspect a raw JSON-RPC frame; if it is an `initialize` request and
-/// carries `params._meta.acceptLanguage` (the MCP `_meta` convention
-/// for transport-level hints), pick the highest-quality BCP-47 tag.
-///
-/// Returns `None` for non-`initialize` frames, missing `_meta`, or
-/// values that fail BCP-47 validation. A garbled frame is a hint, not
-/// a contract — the caller falls back to no locale binding.
-fn locale_from_initialize_frame(raw: &str) -> Option<LanguageTag> {
-    let value: serde_json::Value = serde_json::from_str(raw).ok()?;
-    if value.get("method")?.as_str()? != "initialize" {
-        return None;
-    }
-    let header = value
-        .get("params")?
-        .get("_meta")?
-        .get("acceptLanguage")?
-        .as_str()?;
-    crate::locale_local::locale_from_accept_language(header)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn locale_from_initialize_frame_reads_meta_accept_language() {
-        let frame = r#"{"jsonrpc":"2.0","id":1,"method":"initialize",
-            "params":{"_meta":{"acceptLanguage":"es-AR"}}}"#;
-        let tag = locale_from_initialize_frame(frame).unwrap();
-        assert_eq!(tag.as_str(), "es-AR");
-    }
-
-    #[test]
-    fn locale_from_initialize_frame_ignores_non_initialize() {
-        let frame = r#"{"jsonrpc":"2.0","id":1,"method":"tools/list",
-            "params":{"_meta":{"acceptLanguage":"es-AR"}}}"#;
-        assert!(locale_from_initialize_frame(frame).is_none());
-    }
-
-    #[test]
-    fn locale_from_initialize_frame_none_when_meta_absent() {
-        let frame = r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#;
-        assert!(locale_from_initialize_frame(frame).is_none());
-    }
-
-    #[test]
-    fn locale_from_initialize_frame_none_for_malformed_json() {
-        assert!(locale_from_initialize_frame("not json").is_none());
-    }
-}

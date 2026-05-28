@@ -125,6 +125,23 @@ jobs:
       - name: test (rubix-agent, undo_redo_e2e --ignored)
         run: cargo test -p rubix-agent --test undo_redo_e2e_test -- --ignored
 
+      # Per-kind retention sweep for `starter_changes` — the audit
+      # floor mechanism from `rubix/docs/proposal/audit-log.md`.
+      # Four tests pin: implicit-unbounded today's behaviour, NULL
+      # `max_age_days` as the keep-forever marker, finite curve
+      # deletes older rows, and per-kind isolation (a sweep on one
+      # kind cannot collateral-damage another).
+      - name: test (starter-changelog-postgres, policy --ignored)
+        run: cargo test -p starter-changelog-postgres --test policy -- --ignored --test-threads=1
+
+      # End-to-end coverage of the rubix-side wiring for the audit
+      # floor: confirms the `changelog_policy` seed migration lands
+      # `user`/`team` as NULL (keep forever) and that
+      # `boot::sweep_changelog_once` respects the floor while still
+      # pruning opt-in kinds.
+      - name: test (rubix-agent, changelog_sweep --ignored)
+        run: cargo test -p rubix-agent --test changelog_sweep_test -- --ignored --test-threads=1
+
   pnpm:
     name: pnpm (build / typecheck)
     runs-on: ubuntu-latest

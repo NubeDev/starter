@@ -83,6 +83,17 @@ impl Tool for UserDisableTool {
             role: new.role,
             was_already_disabled: was_already,
             disabled_at_ms: new.disabled_at_ms.unwrap_or(now_ms),
+            // Echo prefs from the live row so `change_for`
+            // reconstructs the full prior snapshot. `prior` and
+            // `new` share `prefs_json` (disable doesn't touch
+            // prefs), so either side is correct — pick `prior`
+            // for clarity that this is the pre-mutation value.
+            prefs_json: prior.prefs_json.clone(),
+            // Echo tenant assignment for the same reason. disable
+            // doesn't touch the tenant, so `prior` carries the
+            // post-mutation value too. Required for byte-exact
+            // snapshot reconstruction in `change_for`.
+            tenant_id: prior.tenant_id.clone(),
         };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
@@ -103,12 +114,16 @@ impl ReversibleTool for UserDisableTool {
             email: resp.email.clone(),
             role: resp.role.clone(),
             disabled_at_ms: None,
+            prefs_json: resp.prefs_json.clone(),
+            tenant_id: resp.tenant_id.clone(),
         };
         let after = UserRow {
             user_id: resp.user_id.clone(),
             email: resp.email.clone(),
             role: resp.role.clone(),
             disabled_at_ms: Some(resp.disabled_at_ms),
+            prefs_json: resp.prefs_json.clone(),
+            tenant_id: resp.tenant_id.clone(),
         };
         Some(ChangeDraft::update(
             ResourceRef {
@@ -162,6 +177,8 @@ mod tests {
             email: "ada@x".into(),
             role: "admin".into(),
             disabled_at_ms: None,
+            prefs_json: None,
+            tenant_id: None,
         };
         store.create(row.clone()).await.unwrap();
         (store, row)

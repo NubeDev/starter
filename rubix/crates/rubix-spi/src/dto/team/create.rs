@@ -44,7 +44,9 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
     ),
     when_not_to_use: concat!(
         "Do not use to add a user to an existing team (that is ",
-        "rubix.team.assign). Do not use to rename an existing team."
+        "rubix.team.assign). Do not use to rename an existing team ",
+        "(that is rubix.team.update). Do not use to remove a team ",
+        "(that is rubix.team.delete)."
     ),
     example: concat!(
         "Input:  { \"name\": \"Ops\" }\n",

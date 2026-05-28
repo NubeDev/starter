@@ -43,7 +43,7 @@ pub mod skills_bridge;
 pub mod testing;
 
 pub use registry::ToolRegistry;
-pub use server::run_stdio;
+pub use server::{run_stdio, run_stdio_ndjson};
 
 #[cfg(feature = "http")]
 pub use server::{mcp_router, McpHttpOptions};

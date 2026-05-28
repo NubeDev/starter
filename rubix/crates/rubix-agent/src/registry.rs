@@ -42,15 +42,30 @@ use rubix_tools::system::disk::DiskTool;
 use rubix_tools::system::flow_errors::FlowErrorsTool;
 use rubix_tools::team::assign::TeamAssignTool;
 use rubix_tools::team::create::TeamCreateTool;
+use rubix_tools::team::delete::TeamDeleteTool;
 use rubix_tools::team::store::{InMemoryTeamStore, TeamAdminStore, TeamReversible};
+use rubix_tools::team::unassign::TeamUnassignTool;
+use rubix_tools::team::update::TeamUpdateTool;
+use rubix_tools::tenant::create::TenantCreateTool;
+use rubix_tools::tenant::delete::TenantDeleteTool;
 use rubix_tools::tenant::list::TenantListTool;
-use rubix_tools::tenant::store::{InMemoryTenantStore, TenantRow, TenantStore};
+use rubix_tools::tenant::update::TenantUpdateTool;
+use rubix_tools::tenant::store::{InMemoryTenantStore, TenantRow, TenantReversible, TenantStore};
+use rubix_tools::audit::store::{
+    AuditPolicyReversible, AuditPolicyStore, InMemoryAuditPolicyStore,
+};
+use rubix_tools::audit::policy_list::AuditPolicyListTool;
+use rubix_tools::audit::policy_set::AuditPolicySetTool;
 use rubix_tools::undo::dispatch::{ActorSource, LocalActor, ReversibleTool, UndoDispatcher};
 use rubix_tools::undo::last::UndoLastTool;
 use rubix_tools::undo::redo::UndoRedoTool;
 use rubix_tools::user::create::UserCreateTool;
 use rubix_tools::user::disable::UserDisableTool;
+use rubix_tools::user::enable::UserEnableTool;
 use rubix_tools::user::list::UserListTool;
+use rubix_tools::user::prefs_set::UserPrefsSetTool;
+use rubix_tools::user::role_set::UserRoleSetTool;
+use rubix_tools::user::tenant_assign::UserTenantAssignTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore, UserReversible};
 use rubix_tools::cleaner::adapter::{build_registry_with_contributions, ContributedRule};
 use rubix_tools::cleaner::tool::CleanerTickTool;
@@ -119,6 +134,7 @@ pub fn build_tool_registry(
             locale: "en".to_owned(),
         }]));
     let team_store: Arc<dyn TeamAdminStore> = Arc::new(InMemoryTeamStore::new());
+    let audit_policy_store: Arc<dyn AuditPolicyStore> = Arc::new(InMemoryAuditPolicyStore::new());
     let insights_store: Arc<dyn InsightsRuleStore> = Arc::new(InMemoryInsightsStore::new());
     let dashboard_store: Arc<dyn DashboardStore> = match pg_pool.as_ref() {
         Some(pool) => Arc::new(PgDashboardStore::new(pool.clone())),
@@ -147,6 +163,8 @@ pub fn build_tool_registry(
             ReversibleRegistry::new()
                 .insert(Arc::new(UserReversible::new(user_store.clone())))
                 .insert(Arc::new(TeamReversible::new(team_store.clone())))
+                .insert(Arc::new(TenantReversible::new(tenant_store.clone())))
+                .insert(Arc::new(AuditPolicyReversible::new(audit_policy_store.clone())))
                 .insert(Arc::new(DashboardReversible::new(dashboard_store.clone())))
                 .insert(Arc::new(FlowDefReversible::new(flow_store.clone()))),
         );
@@ -205,10 +223,29 @@ pub fn build_tool_registry(
         Arc::new(UserListTool::new(user_store.clone())),
         wrap_rev(Arc::new(UserCreateTool::new(user_store.clone()))),
         wrap_rev(Arc::new(UserDisableTool::new(user_store.clone()))),
+        wrap_rev(Arc::new(UserEnableTool::new(user_store.clone()))),
+        wrap_rev(Arc::new(UserRoleSetTool::new(user_store.clone()))),
+        wrap_rev(Arc::new(UserPrefsSetTool::new(user_store.clone()))),
+        wrap_rev(Arc::new(UserTenantAssignTool::new(
+            user_store.clone(),
+            tenant_store.clone(),
+        ))),
         // ---- tenant + team admin --------------------------------
         Arc::new(TenantListTool::new(tenant_store.clone())),
+        wrap_rev(Arc::new(TenantCreateTool::new(tenant_store.clone()))),
+        wrap_rev(Arc::new(TenantUpdateTool::new(tenant_store.clone()))),
+        wrap_rev(Arc::new(TenantDeleteTool::new(
+            tenant_store.clone(),
+            user_store.clone(),
+        ))),
         wrap_rev(Arc::new(TeamCreateTool::new(team_store.clone()))),
+        wrap_rev(Arc::new(TeamUpdateTool::new(team_store.clone()))),
+        wrap_rev(Arc::new(TeamDeleteTool::new(team_store.clone()))),
         wrap_rev(Arc::new(TeamAssignTool::new(team_store.clone()))),
+        wrap_rev(Arc::new(TeamUnassignTool::new(team_store.clone()))),
+        // ---- audit policy ---------------------------------------
+        Arc::new(AuditPolicyListTool::new(audit_policy_store.clone())),
+        wrap_rev(Arc::new(AuditPolicySetTool::new(audit_policy_store.clone()))),
         // ---- insights admin -------------------------------------
         Arc::new(InsightsRuleListTool::new(insights_store.clone())),
         Arc::new(InsightsRuleCreateTool::new(insights_store.clone())),

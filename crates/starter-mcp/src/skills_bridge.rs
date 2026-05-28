@@ -26,6 +26,9 @@ use starter_skills::{Skill, SkillRegistry};
 use starter_spi::error::{Error, Result};
 use starter_spi::tool::{Tool, ToolDefinition};
 
+use crate::registry::{
+    Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole,
+};
 use crate::ToolRegistry;
 
 /// One audit record emitted per `SkillTool::invoke` after the
@@ -160,6 +163,78 @@ pub fn register_approved_skills_with_audit(
             skills.clone(),
             audit.clone(),
         )))
+    })
+}
+
+// ---------- prompts surface ----------
+
+/// MCP `Prompt` adapter for an approved [`Skill`].
+///
+/// Mirrors [`SkillTool`] for the `prompts/*` surface: hosts that
+/// map prompts to slash commands (Claude Code's
+/// `/mcp__<server>__<name>`) only see prompts, not tools, so
+/// shipping a skill as **both** is what gives users a slash entry
+/// point without losing the model-driven tool path.
+///
+/// Argument schema is empty in v1 — skill bodies are static
+/// markdown. When skills grow argv-style placeholders, this
+/// adapter mirrors [`SkillTool`]'s frontmatter-driven schema work.
+pub struct SkillPrompt {
+    skill: Arc<Skill>,
+    skills: SkillRegistry,
+}
+
+impl SkillPrompt {
+    /// Wrap an approved [`Skill`] with the registry used to
+    /// re-check it at call time.
+    pub fn new(skill: Arc<Skill>, skills: SkillRegistry) -> Self {
+        Self { skill, skills }
+    }
+}
+
+#[async_trait]
+impl Prompt for SkillPrompt {
+    fn definition(&self) -> PromptDefinition {
+        PromptDefinition {
+            name: self.skill.id.to_string(),
+            description: self.skill.description.clone(),
+            arguments: Vec::new(),
+        }
+    }
+
+    async fn render(&self, _arguments: Value) -> Result<PromptResponse> {
+        // Same fail-closed re-check as `SkillTool::invoke`: a
+        // revoke or quarantining reload removes the bundle from
+        // the approved set, and this surface refuses to render.
+        let still_approved = self
+            .skills
+            .list()
+            .iter()
+            .any(|s| s.id == self.skill.id && s.bundle_hash == self.skill.bundle_hash);
+        if !still_approved {
+            return Err(Error::Forbidden);
+        }
+        Ok(PromptResponse {
+            description: Some(self.skill.description.clone()),
+            messages: vec![PromptMessage {
+                role: PromptRole::User,
+                text: self.skill.body.as_ref().to_string(),
+            }],
+        })
+    }
+}
+
+/// Fold every approved skill from `skills` into `registry` as an
+/// MCP prompt. Quarantined bundles are not exposed. Pair with
+/// [`register_approved_skills`] when the consumer wants both
+/// `tools/*` and `prompts/*` surfaces — typical for desktop hosts
+/// like Claude Code that only surface prompts as slash commands.
+pub fn register_approved_skills_as_prompts(
+    registry: ToolRegistry,
+    skills: &SkillRegistry,
+) -> ToolRegistry {
+    skills.list().into_iter().fold(registry, |reg, skill| {
+        reg.register_prompt_arc(Arc::new(SkillPrompt::new(skill, skills.clone())))
     })
 }
 

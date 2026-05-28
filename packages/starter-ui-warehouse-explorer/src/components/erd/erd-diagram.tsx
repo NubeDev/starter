@@ -17,6 +17,7 @@ import "@xyflow/react/dist/style.css";
 
 import { useTheme } from "../../lib/theme";
 import { TableNode } from "./table-node";
+import { GroupHeaderNode } from "./group-header-node";
 import { layoutWithDagre } from "./use-layout";
 
 type Column = {
@@ -45,6 +46,7 @@ type ErdData = {
 
 const nodeTypes = {
   tableNode: TableNode,
+  groupHeader: GroupHeaderNode,
 };
 
 type Props = {
@@ -75,32 +77,32 @@ export function ErdDiagram({ data }: Props) {
       animated: true,
       markerEnd: {
         type: MarkerType.ArrowClosed,
-        color: "var(--primary)",
+        color: "hsl(var(--primary))",
       },
       style: {
-        stroke: "var(--primary)",
+        stroke: "hsl(var(--primary))",
         strokeWidth: 2,
       },
       label: `${rel.from_column} → ${rel.to_column}`,
       labelStyle: {
-        fill: "var(--muted-foreground)",
+        fill: "hsl(var(--muted-foreground))",
         fontSize: 10,
       },
       labelBgStyle: {
-        fill: "var(--background)",
+        fill: "hsl(var(--background))",
       },
+      labelBgPadding: [4, 2],
+      labelBgBorderRadius: 2,
     }));
 
     return { initialNodes: nodes, initialEdges: edges };
   }, [data]);
 
-  // Run dagre layout for the with-edges case; otherwise fall back
-  // to a tidy grid so disconnected tables don't pile up at (0, 0).
+  // Group-aware dagre layout. `layoutWithDagre` buckets tables by
+  // extension prefix and lays each group out on its own swimlane,
+  // so disconnected tables no longer pile into a single column.
   const { nodes: layoutedNodes, edges: layoutedEdges } = useMemo(() => {
-    if (initialEdges.length > 0) {
-      return layoutWithDagre(initialNodes, initialEdges);
-    }
-    return { nodes: gridLayoutNodes(initialNodes), edges: initialEdges };
+    return layoutWithDagre(initialNodes, initialEdges);
   }, [initialNodes, initialEdges]);
 
   return (
@@ -121,35 +123,11 @@ export function ErdDiagram({ data }: Props) {
         <Background gap={16} size={1} />
         <Controls />
         <MiniMap
-          nodeStrokeColor="var(--primary)"
-          nodeColor="var(--card)"
+          nodeStrokeColor="hsl(var(--primary))"
+          nodeColor="hsl(var(--card))"
           nodeBorderRadius={4}
         />
       </ReactFlow>
     </div>
   );
-}
-
-/// Grid-pack nodes into N columns. Used when the dataset has no
-/// edges and dagre would otherwise stack everything on x = 0.
-function gridLayoutNodes(nodes: Node[]): Node[] {
-  const NODE_WIDTH = 280;
-  const HEADER_HEIGHT = 44;
-  const COLUMN_HEIGHT = 28;
-  const GAP_X = 60;
-  const GAP_Y = 60;
-  const cols = Math.max(1, Math.ceil(Math.sqrt(nodes.length)));
-  return nodes.map((node, i) => {
-    const col = i % cols;
-    const row = Math.floor(i / cols);
-    const columnCount = (node.data?.columns as unknown[] | undefined)?.length ?? 0;
-    const _h = HEADER_HEIGHT + columnCount * COLUMN_HEIGHT;
-    return {
-      ...node,
-      position: {
-        x: col * (NODE_WIDTH + GAP_X),
-        y: row * (HEADER_HEIGHT + 10 * COLUMN_HEIGHT + GAP_Y),
-      },
-    };
-  });
 }

@@ -1,15 +1,20 @@
 //! Map of tool-name → boxed [`Tool`]. Built at startup, immutable
-//! during the server's lifetime.
+//! during the server's lifetime. Also owns the parallel
+//! [`PromptRegistry`] so a single value carries both surfaces
+//! into [`crate::server::dispatch`].
 
 use std::collections::HashMap;
 use std::sync::Arc;
 
 use starter_spi::tool::{Tool, ToolDefinition};
 
+use super::prompt_registry::{Prompt, PromptRegistry};
+
 /// Mutable builder + immutable runtime registry of tools.
 #[derive(Default)]
 pub struct ToolRegistry {
     tools: HashMap<String, Arc<dyn Tool>>,
+    prompts: PromptRegistry,
 }
 
 impl ToolRegistry {
@@ -37,6 +42,18 @@ impl ToolRegistry {
         self
     }
 
+    /// Register a prompt for the MCP `prompts` capability.
+    pub fn register_prompt<P: Prompt>(mut self, prompt: P) -> Self {
+        self.prompts = self.prompts.register(prompt);
+        self
+    }
+
+    /// Register an already-`Arc`-wrapped prompt.
+    pub fn register_prompt_arc(mut self, prompt: Arc<dyn Prompt>) -> Self {
+        self.prompts = self.prompts.register_arc(prompt);
+        self
+    }
+
     /// All registered tool definitions, in registration order.
     pub fn list(&self) -> Vec<ToolDefinition> {
         self.tools.values().map(|t| t.definition()).collect()
@@ -45,5 +62,10 @@ impl ToolRegistry {
     /// Look up a tool by name.
     pub fn get(&self, name: &str) -> Option<Arc<dyn Tool>> {
         self.tools.get(name).cloned()
+    }
+
+    /// Borrow the embedded [`PromptRegistry`].
+    pub fn prompts(&self) -> &PromptRegistry {
+        &self.prompts
     }
 }

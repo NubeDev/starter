@@ -103,18 +103,37 @@ impl Tool for ExtensionToolBinding {
                     ),
                 })?;
         let result = entry.dispatch(&self.tool_id, &self.ctx, input);
-        result.map_err(map_ext_error)
+        result.map_err(|e| map_ext_error(e, self.extension_id.as_str()))
     }
 }
 
 /// Convert a kernel `Error` into the `starter_spi` `Error` the MCP
 /// transport surfaces. Kept here (not in `starter-ext-spi`) so the
 /// kernel does not depend on `starter-spi`'s error categories.
-fn map_ext_error(e: Error) -> starter_spi::Error {
+///
+/// `subject` is the extension id of the binding that produced the
+/// error — passed in so a `Transport` failure can be re-shaped as a
+/// recoverable `Unavailable` with a non-empty `subject` that the
+/// HTTP layer turns into a restart link. Bindings whose error has
+/// no specific subject (e.g. the builtin-flavour binding) pass an
+/// empty string and the resulting `Unavailable.subject` stays
+/// `Some("")`, which the transport will skip.
+fn map_ext_error(e: Error, subject: &str) -> starter_spi::Error {
     use starter_spi::Error as SE;
     match e {
         Error::Validation(m) => SE::Invalid { message: m },
         Error::Capability(_) => SE::Forbidden,
+        // Transport errors from a supervised process are the most
+        // common recoverable failure mode: the child crashed and the
+        // restart budget might still allow a respawn, or the operator
+        // can force one. Surfacing this as `Unavailable` (rather than
+        // `Internal`) lets transports map it to HTTP 503 and surface
+        // a restart affordance keyed on the extension id.
+        Error::Transport(m) => SE::unavailable_subject(
+            "extension.supervisor_unavailable",
+            subject,
+            m,
+        ),
         other => SE::Internal {
             source: Box::new(other),
         },
@@ -212,6 +231,56 @@ impl Tool for ProcessExtensionToolBinding {
             }
             None => self.handle.call(&method, input, self.request_timeout).await,
         };
-        res.map_err(map_ext_error)
+        res.map_err(|e| map_ext_error(e, self.extension_id.as_str()))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn map_ext_error_validation_becomes_invalid() {
+        let mapped = map_ext_error(Error::Validation("bad input".into()), "com.acme.x");
+        match mapped {
+            starter_spi::Error::Invalid { message } => assert_eq!(message, "bad input"),
+            other => panic!("expected Invalid, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn map_ext_error_capability_becomes_forbidden() {
+        let mapped = map_ext_error(Error::Capability("no http_out".into()), "com.acme.x");
+        assert!(matches!(mapped, starter_spi::Error::Forbidden));
+    }
+
+    #[test]
+    fn map_ext_error_transport_becomes_unavailable_with_subject() {
+        // Transport failures from a supervised process are the
+        // recoverable variant — must surface as `Unavailable` with
+        // the supplied subject so the HTTP layer can synthesise a
+        // restart URL keyed on the extension id.
+        let mapped = map_ext_error(
+            Error::Transport("supervisor task is no longer running".into()),
+            "com.rubix.example",
+        );
+        match mapped {
+            starter_spi::Error::Unavailable {
+                code,
+                subject,
+                message,
+            } => {
+                assert_eq!(code, "extension.supervisor_unavailable");
+                assert_eq!(subject.as_deref(), Some("com.rubix.example"));
+                assert_eq!(message, "supervisor task is no longer running");
+            }
+            other => panic!("expected Unavailable, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn map_ext_error_other_becomes_internal() {
+        let mapped = map_ext_error(Error::manifest("missing field"), "com.acme.x");
+        assert!(matches!(mapped, starter_spi::Error::Internal { .. }));
     }
 }

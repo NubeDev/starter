@@ -23,6 +23,7 @@ import { Route as DashboardsPageIdRouteImport } from './routes/dashboards/$pageI
 import { Route as AdminWarehouseExplorerRouteImport } from './routes/admin/warehouse-explorer'
 import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminConsoleRouteImport } from './routes/admin/console'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
 import { Route as ExtensionsExtIdSplatRouteImport } from './routes/extensions.$extId.$'
 import { Route as DashboardsPageIdEditRouteImport } from './routes/dashboards/$pageId_.edit'
@@ -97,6 +98,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminConsoleRoute = AdminConsoleRouteImport.update({
+  id: '/admin/console',
+  path: '/admin/console',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminAccessRoute = AdminAccessRouteImport.update({
   id: '/admin/access',
   path: '/admin/access',
@@ -121,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
+  '/admin/console': typeof AdminConsoleRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
@@ -139,6 +146,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
+  '/admin/console': typeof AdminConsoleRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
@@ -159,6 +167,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
+  '/admin/console': typeof AdminConsoleRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
@@ -180,6 +189,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/settings'
     | '/admin/access'
+    | '/admin/console'
     | '/admin/users'
     | '/admin/warehouse'
     | '/admin/warehouse-explorer'
@@ -198,6 +208,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/settings'
     | '/admin/access'
+    | '/admin/console'
     | '/admin/users'
     | '/admin/warehouse'
     | '/admin/warehouse-explorer'
@@ -217,6 +228,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/settings'
     | '/admin/access'
+    | '/admin/console'
     | '/admin/users'
     | '/admin/warehouse'
     | '/admin/warehouse-explorer'
@@ -237,6 +249,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
   AdminAccessRoute: typeof AdminAccessRoute
+  AdminConsoleRoute: typeof AdminConsoleRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
   AdminWarehouseExplorerRoute: typeof AdminWarehouseExplorerRoute
@@ -347,6 +360,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/console': {
+      id: '/admin/console'
+      path: '/admin/console'
+      fullPath: '/admin/console'
+      preLoaderRoute: typeof AdminConsoleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/access': {
       id: '/admin/access'
       path: '/admin/access'
@@ -393,6 +413,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
   AdminAccessRoute: AdminAccessRoute,
+  AdminConsoleRoute: AdminConsoleRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,
   AdminWarehouseExplorerRoute: AdminWarehouseExplorerRoute,

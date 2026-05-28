@@ -247,3 +247,82 @@ async fn ui_rejects_parent_traversal() {
     // never 200 (the manifest must not be reachable through ui/).
     assert_ne!(resp.status(), StatusCode::OK);
 }
+
+#[tokio::test]
+async fn restart_404_for_unknown_id() {
+    let (admin, _tmp) = build_admin();
+    let app = router::<()>(admin);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/extensions/com.nope.absent/restart")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn restart_returns_enabled_for_builtin_record() {
+    // Builtin records spawn no supervisor (`factory.spawn` returns
+    // `None`); restart is still a 200 because the operation is
+    // idempotent — the wire shape tells the caller the live state.
+    let (admin, _tmp) = build_admin();
+    let app = router::<()>(admin);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/extensions/com.acme.hello/restart")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = to_bytes(resp.into_body(), 1024).await.unwrap();
+    let j: Value = serde_json::from_slice(&body).unwrap();
+    assert_eq!(j["id"], "com.acme.hello");
+    assert_eq!(j["enabled"], "enabled");
+}
+
+#[tokio::test]
+async fn restart_409_when_extension_is_disabled() {
+    // An operator who explicitly disabled an extension shouldn't see
+    // it resurrected by a stray restart click — they must enable it
+    // first. The restart endpoint preserves the persisted state.
+    let (admin, _tmp) = build_admin();
+    let app = router::<()>(admin);
+
+    // First, disable the extension.
+    let resp = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/extensions/com.acme.hello/disable")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // Now try to restart.
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/extensions/com.acme.hello/restart")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::CONFLICT);
+}

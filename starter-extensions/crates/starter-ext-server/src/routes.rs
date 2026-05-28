@@ -247,6 +247,73 @@ pub(crate) async fn disable(
 }
 
 // ---------------------------------------------------------------------------
+// POST /extensions/<id>/restart
+// ---------------------------------------------------------------------------
+
+/// Force-restart a single extension: shut the live supervisor down (if
+/// any) and spawn a fresh one through the same factory the toggle
+/// endpoints use. Idempotent — a no-op when the record has no
+/// associated supervisor flavour (builtin / wasm).
+///
+/// The endpoint exists so a UI surfaced [`Error::Unavailable`] with
+/// `code = "extension.supervisor_unavailable"` can offer a single-
+/// click recovery action; the same handler is also useful for
+/// operators forcing a clean reload after a manifest swap.
+///
+/// Distinct from `disable + enable` because it preserves the
+/// persisted [`EnablementState`] — restarting a disabled extension
+/// would be a bug. A `409 Conflict` fires when the record is
+/// `Disabled`; the operator must `enable` it explicitly.
+pub(crate) async fn restart(
+    State(admin): State<ExtensionAdmin>,
+    Path(id): Path<String>,
+) -> Result<Json<ToggleResponse>, StatusCode> {
+    let rec = admin
+        .registry()
+        .get_by_id_str(&id)
+        .ok_or(StatusCode::NOT_FOUND)?
+        .clone();
+    let eid = rec.id.clone().ok_or(StatusCode::CONFLICT)?;
+
+    // Don't resurrect a disabled extension by accident.
+    if matches!(
+        admin.store().get(&eid).await.ok().flatten(),
+        Some(EnablementState::Disabled)
+    ) {
+        return Err(StatusCode::CONFLICT);
+    }
+
+    // Pop the existing handle first so a concurrent enable/disable
+    // doesn't race with our spawn.
+    if let Some(handle) = admin.replace_supervisor(&eid, None) {
+        handle.shutdown().await;
+    }
+
+    match admin.factory().spawn(&rec).await {
+        Ok(Some(handle)) => {
+            admin.replace_supervisor(&eid, Some(handle));
+        }
+        Ok(None) => {
+            // Builtin/wasm — nothing to spawn. The 200 response
+            // still communicates "we tried"; the lifecycle field
+            // tells the caller the runtime kind has no process to
+            // restart.
+        }
+        Err(e) => {
+            tracing::warn!(err = %e.0, ext = %id, "supervisor spawn on restart failed");
+            return Err(StatusCode::INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    let state = current_state(&admin, &eid, rec.state);
+    Ok(Json(ToggleResponse {
+        id,
+        enabled: EnablementState::Enabled,
+        state,
+    }))
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 

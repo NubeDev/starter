@@ -5,6 +5,7 @@
 
 pub mod admin;
 pub mod analytics;
+pub mod audit;
 pub mod clipboard;
 pub mod dashboard;
 pub mod dataflow;

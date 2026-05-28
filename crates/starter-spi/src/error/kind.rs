@@ -54,4 +54,52 @@ pub enum Error {
         #[source]
         source: Box<dyn std::error::Error + Send + Sync + 'static>,
     },
+
+    /// A downstream resource exists but cannot serve the call right
+    /// now and may be recoverable via an explicit restart, reconnect,
+    /// or retry. Distinct from [`Self::Internal`] because the caller
+    /// (and the transport above it) can do something about it —
+    /// surface a "restart" affordance, retry with backoff, or
+    /// failover. Maps to HTTP 503.
+    #[error("unavailable: {message}")]
+    Unavailable {
+        /// Stable, namespaced identifier of the failure class —
+        /// transports key recovery UI off this rather than parsing
+        /// `message`. Example: `"extension.supervisor_unavailable"`.
+        code: String,
+        /// Optional identifier of the unavailable subject (typically
+        /// an extension id, worker id, or connection name). When
+        /// present, transports can synthesise a recovery URL keyed
+        /// on it.
+        subject: Option<String>,
+        /// Human description of what is unavailable.
+        message: String,
+    },
+}
+
+impl Error {
+    /// Convenience constructor for [`Self::Unavailable`] without a
+    /// subject. Use [`Self::unavailable_subject`] when the caller has
+    /// an id (extension, worker, connection) to attach.
+    pub fn unavailable(code: impl Into<String>, message: impl Into<String>) -> Self {
+        Self::Unavailable {
+            code: code.into(),
+            subject: None,
+            message: message.into(),
+        }
+    }
+
+    /// Convenience constructor for [`Self::Unavailable`] with a
+    /// subject identifier (typically an extension id).
+    pub fn unavailable_subject(
+        code: impl Into<String>,
+        subject: impl Into<String>,
+        message: impl Into<String>,
+    ) -> Self {
+        Self::Unavailable {
+            code: code.into(),
+            subject: Some(subject.into()),
+            message: message.into(),
+        }
+    }
 }

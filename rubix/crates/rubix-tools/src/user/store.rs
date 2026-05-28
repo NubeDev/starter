@@ -48,6 +48,33 @@ pub struct UserRow {
     /// enabled.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub disabled_at_ms: Option<i64>,
+    /// Free-form per-user preferences (locale, unit prefs, etc. —
+    /// see the `i18n_and_unit_prefs` design note). Stored opaquely
+    /// because the rubix tools don't reason about prefs content;
+    /// the UI / agent loop interprets them. `None` means "no prefs
+    /// row" — semantically different from `Some(Value::Null)`
+    /// which means "prefs explicitly cleared." `serde(default)`
+    /// keeps pre-existing serialized snapshots (which had no
+    /// `prefs_json` field) deserializing as `None`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub prefs_json: Option<Value>,
+    /// Tenant assignment. `None` = unassigned (the default for
+    /// fresh rows from `rubix.user.create`); `Some(tenant_id)` =
+    /// assigned to that tenant. The `rubix.user.tenant.assign`
+    /// verb validates the id resolves in [`TenantStore`] before
+    /// writing (silently assigning to a nonexistent tenant is a
+    /// footgun). `serde(default)` keeps pre-existing serialized
+    /// snapshots (which had no `tenant_id` field) deserializing
+    /// as `None` — backwards compatible at the storage layer.
+    ///
+    /// Note: tenant deletion does NOT cascade to unassign users
+    /// today (there is no tenant-delete verb). When one lands,
+    /// the operator-visible decision is whether to refuse delete
+    /// while users are assigned, cascade-unassign, or block at
+    /// the FK; recorded here so the call gets debated rather
+    /// than implicitly made.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub tenant_id: Option<String>,
 }
 
 /// Persistence surface the four write verbs target.
@@ -59,6 +86,38 @@ pub trait UserAdminStore: Send + Sync {
     /// When the row is already disabled, both halves are equal and
     /// the verb reports `was_already_disabled = true` to the caller.
     async fn disable(&self, user_id: &str, now_ms: i64) -> Result<(UserRow, UserRow)>;
+    /// Clear the `disabled_at_ms` marker and return
+    /// `(prior_row, new_row)`. When the row was already enabled
+    /// (`disabled_at_ms = None`), both halves are equal and the
+    /// verb reports `was_already_enabled = true` — mirrors
+    /// `disable`'s idempotency posture so no audit row is
+    /// recorded for the no-op.
+    async fn enable(&self, user_id: &str) -> Result<(UserRow, UserRow)>;
+    /// Set the role on a user and return `(prior_row, new_row)`.
+    /// When the row already carries `role`, both halves are equal
+    /// and the verb reports `was_unchanged = true` to the caller —
+    /// no audit row is recorded for the no-op (mirrors `disable`).
+    async fn set_role(&self, user_id: &str, role: &str) -> Result<(UserRow, UserRow)>;
+    /// Replace the prefs blob on a user and return `(prior, new)`.
+    /// When the stored blob is byte-equal to `prefs` (after JSON
+    /// canonicalisation by the caller), both halves are equal and
+    /// the verb reports `was_unchanged = true`. Mirrors `set_role`
+    /// and `disable`.
+    async fn set_prefs(&self, user_id: &str, prefs: Value) -> Result<(UserRow, UserRow)>;
+    /// Assign (or unassign) the tenant on a user row and return
+    /// `(prior, new)`. `tenant_id = Some(id)` assigns, `None`
+    /// unassigns. When the row already carries the requested
+    /// value, both halves are equal and the verb reports
+    /// `was_unchanged = true` — no audit row is recorded for the
+    /// no-op (mirrors `set_role` / `set_prefs` / `disable`). The
+    /// store does NOT validate that `tenant_id` resolves in
+    /// [`crate::tenant::store::TenantStore`]; the verb does that
+    /// check before calling.
+    async fn set_tenant(
+        &self,
+        user_id: &str,
+        tenant_id: Option<String>,
+    ) -> Result<(UserRow, UserRow)>;
     /// Fetch by user_id.
     async fn get(&self, user_id: &str) -> Result<Option<UserRow>>;
     /// Fetch by email.
@@ -114,6 +173,62 @@ impl UserAdminStore for InMemoryUserStore {
         }
         let mut new = prior.clone();
         new.disabled_at_ms = Some(now_ms);
+        guard.insert(user_id.to_owned(), new.clone());
+        Ok((prior, new))
+    }
+    async fn enable(&self, user_id: &str) -> Result<(UserRow, UserRow)> {
+        let mut guard = self.lock();
+        let prior = guard.get(user_id).cloned().ok_or_else(|| Error::NotFound {
+            what: format!("user:{user_id}"),
+        })?;
+        if prior.disabled_at_ms.is_none() {
+            return Ok((prior.clone(), prior));
+        }
+        let mut new = prior.clone();
+        new.disabled_at_ms = None;
+        guard.insert(user_id.to_owned(), new.clone());
+        Ok((prior, new))
+    }
+    async fn set_role(&self, user_id: &str, role: &str) -> Result<(UserRow, UserRow)> {
+        let mut guard = self.lock();
+        let prior = guard.get(user_id).cloned().ok_or_else(|| Error::NotFound {
+            what: format!("user:{user_id}"),
+        })?;
+        if prior.role == role {
+            return Ok((prior.clone(), prior));
+        }
+        let mut new = prior.clone();
+        new.role = role.to_owned();
+        guard.insert(user_id.to_owned(), new.clone());
+        Ok((prior, new))
+    }
+    async fn set_prefs(&self, user_id: &str, prefs: Value) -> Result<(UserRow, UserRow)> {
+        let mut guard = self.lock();
+        let prior = guard.get(user_id).cloned().ok_or_else(|| Error::NotFound {
+            what: format!("user:{user_id}"),
+        })?;
+        if prior.prefs_json.as_ref() == Some(&prefs) {
+            return Ok((prior.clone(), prior));
+        }
+        let mut new = prior.clone();
+        new.prefs_json = Some(prefs);
+        guard.insert(user_id.to_owned(), new.clone());
+        Ok((prior, new))
+    }
+    async fn set_tenant(
+        &self,
+        user_id: &str,
+        tenant_id: Option<String>,
+    ) -> Result<(UserRow, UserRow)> {
+        let mut guard = self.lock();
+        let prior = guard.get(user_id).cloned().ok_or_else(|| Error::NotFound {
+            what: format!("user:{user_id}"),
+        })?;
+        if prior.tenant_id == tenant_id {
+            return Ok((prior.clone(), prior));
+        }
+        let mut new = prior.clone();
+        new.tenant_id = tenant_id;
         guard.insert(user_id.to_owned(), new.clone());
         Ok((prior, new))
     }
@@ -233,6 +348,8 @@ mod tests {
             email: email.into(),
             role: "reader".into(),
             disabled_at_ms: None,
+            prefs_json: None,
+            tenant_id: None,
         }
     }
 

@@ -148,6 +148,7 @@ fn audit(
             Error::Unauthenticated => "unauthenticated",
             Error::Forbidden => "forbidden",
             Error::Conflict { .. } => "conflict",
+            Error::Unavailable { .. } => "unavailable",
             Error::Internal { .. } => "internal",
             _ => "other",
         },
@@ -166,6 +167,31 @@ fn audit(
 fn shape_response(result: Result<Value, Error>) -> Response {
     match result {
         Ok(body) => (StatusCode::OK, Json(body)).into_response(),
+        Err(Error::Unavailable {
+            code,
+            subject,
+            message,
+        }) => {
+            // Mirrors `routes::tools::shape_response`: surface
+            // recoverable supervisor death as 503 with a restart
+            // hint instead of an opaque 500 the admin UI cannot act
+            // on. The same wire shape is consumed by the chat-side
+            // and admin consoles.
+            let mut body = json!({
+                "error":   message,
+                "code":    code,
+                "subject": subject,
+            });
+            if code == "extension.supervisor_unavailable" {
+                if let Some(id) = subject.as_deref().filter(|s| !s.is_empty()) {
+                    body["restart"] = json!({
+                        "method": "POST",
+                        "path":   format!("/extensions/{id}/restart"),
+                    });
+                }
+            }
+            (StatusCode::SERVICE_UNAVAILABLE, Json(body)).into_response()
+        }
         Err(e) => {
             let status = match &e {
                 Error::NotFound { .. } => StatusCode::NOT_FOUND,

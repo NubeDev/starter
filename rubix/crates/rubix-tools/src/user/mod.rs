@@ -5,5 +5,9 @@
 
 pub mod create;
 pub mod disable;
+pub mod enable;
 pub mod list;
+pub mod prefs_set;
+pub mod role_set;
 pub mod store;
+pub mod tenant_assign;

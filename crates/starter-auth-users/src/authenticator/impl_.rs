@@ -9,7 +9,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use starter_spi::{
-    auth::{Authenticator, Principal},
+    auth::{Authenticator, Principal, Role, Scope},
     error::Result,
     Error,
 };
@@ -18,6 +18,13 @@ use crate::principal_extras::{NoPrincipalExtras, PrincipalExtrasLookup};
 use crate::session::{verify_session_with_extras, SessionError};
 use crate::store::{SessionStore, TenantStore, TokenStore, UserStore};
 use crate::token::{verify as verify_token, TokenError, TOKEN_PREFIX};
+
+/// Type alias for the role→scope resolver applied to
+/// session-derived principals. Tokens carry explicit scopes from
+/// the DB and are not touched by this resolver — sessions
+/// represent interactive human logins where the user's role
+/// implies a set of granted scopes.
+pub type SessionScopeResolver = dyn Fn(Role) -> Vec<Scope> + Send + Sync;
 
 /// Default `Authenticator` impl. Recognises both `Bearer …` API
 /// tokens and cookie-derived session ids via the credential prefix.
@@ -32,6 +39,14 @@ pub struct AuthAuthenticator {
     /// carries an empty `teams` list and any rule referencing
     /// `principal.teams` simply does not match.
     tenants: Option<Arc<dyn TenantStore>>,
+    /// Optional role→scope resolver applied to session-derived
+    /// principals only. Cookie sessions hardcode an empty scope
+    /// list at the verify layer; this resolver lets the consuming
+    /// app expand the principal's scopes from its role so that
+    /// `with_scope` gates pass for interactive logins. Tokens are
+    /// untouched — they keep the explicit scope set minted in the
+    /// DB. Default: returns `Vec::new()` for every role.
+    session_scopes: Arc<SessionScopeResolver>,
 }
 
 impl AuthAuthenticator {
@@ -52,6 +67,7 @@ impl AuthAuthenticator {
             tokens,
             extras: Arc::new(NoPrincipalExtras),
             tenants: None,
+            session_scopes: Arc::new(|_| Vec::new()),
         }
     }
 
@@ -74,6 +90,22 @@ impl AuthAuthenticator {
         self.tenants = Some(tenants);
         self
     }
+
+    /// Wire a role→scope resolver applied to session-derived
+    /// principals. Interactive browser logins go through the
+    /// cookie path, which carries no explicit scope set; this
+    /// resolver expands the principal's `scopes` from its role
+    /// so `with_scope` gates accept the session. API tokens are
+    /// intentionally untouched — their scopes are the explicit
+    /// attenuation set minted in the DB. Builder-style so the
+    /// no-app-scopes wiring keeps a single `new` call.
+    pub fn with_session_scopes<F>(mut self, resolver: F) -> Self
+    where
+        F: Fn(Role) -> Vec<Scope> + Send + Sync + 'static,
+    {
+        self.session_scopes = Arc::new(resolver);
+        self
+    }
 }
 
 const SESSION_PREFIX: &str = "sas_";
@@ -86,14 +118,23 @@ impl Authenticator for AuthAuthenticator {
                 .await
                 .map_err(map_token_err)?
         } else if credential.starts_with(SESSION_PREFIX) {
-            verify_session_with_extras(
+            let mut p = verify_session_with_extras(
                 self.sessions.as_ref(),
                 self.users.as_ref(),
                 self.extras.as_ref(),
                 credential,
             )
             .await
-            .map_err(map_session_err)?
+            .map_err(map_session_err)?;
+            // Sessions carry an empty scope set from the verify
+            // layer (it has no app-level scope knowledge). Expand
+            // the principal's scopes from its role via the
+            // consumer-wired resolver so `with_scope` gates accept
+            // interactive logins. Default resolver returns an
+            // empty Vec — behaviour is unchanged for consumers
+            // that did not wire `with_session_scopes`.
+            p.scopes = (self.session_scopes)(p.role);
+            p
         } else {
             return Err(Error::Unauthenticated);
         };
