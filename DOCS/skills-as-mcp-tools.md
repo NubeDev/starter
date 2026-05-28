@@ -76,13 +76,13 @@ One type, in `crates/starter-mcp/src/skills_bridge.rs` (gated by
 ```rust
 use std::sync::Arc;
 use async_trait::async_trait;
-use starter_skills::{Skill, ApprovalStore};
+use starter_skills::{Skill, SkillRegistry};
 use starter_spi::tool::{Tool, ToolDefinition};
-use starter_spi::error::Result;
+use starter_spi::error::{Error, Result};
 
 pub struct SkillTool {
     skill: Arc<Skill>,
-    approvals: Arc<dyn ApprovalStore>,
+    skills: SkillRegistry,
 }
 
 #[async_trait]
@@ -96,14 +96,24 @@ impl Tool for SkillTool {
     }
 
     async fn invoke(&self, _input: serde_json::Value) -> Result<serde_json::Value> {
-        // Re-verify the approval at call time so a revoke takes
-        // effect immediately, without restarting the server.
-        let row = self.approvals
-            .lookup(&self.skill.id, &self.skill.bundle_hash)
-            .await
-            .map_err(to_spi_error)?;
-        if row.is_none() {
-            return Err(unapproved_error(&self.skill.id));
+        // Re-check membership in the approved set at call time, so
+        // a revoke (or a re-quarantining reload) takes effect
+        // immediately without restarting the server.
+        //
+        // We go through `SkillRegistry::list()` (not directly to
+        // `ApprovalStore::lookup`) because the registry encapsulates
+        // the trust matrix: a `load_dir(...)` bundle with
+        // `trust: approved` in its frontmatter has no row in the
+        // store, so a raw `lookup` would always return None and
+        // every call would fail. The registry's approved set is the
+        // single source of truth.
+        let still_approved = self
+            .skills
+            .list()
+            .iter()
+            .any(|s| s.id == self.skill.id && s.bundle_hash == self.skill.bundle_hash);
+        if !still_approved {
+            return Err(Error::Forbidden);
         }
         Ok(serde_json::json!({ "body": self.skill.body.as_ref() }))
     }
@@ -121,9 +131,11 @@ pub fn register_approved_skills(
     registry: ToolRegistry,
     skills: &SkillRegistry,
 ) -> ToolRegistry {
-    let approvals = skills.approval_store();
     skills.list().into_iter().fold(registry, |reg, skill| {
-        reg.register_arc(Arc::new(SkillTool { skill, approvals: approvals.clone() }))
+        reg.register_arc(Arc::new(SkillTool {
+            skill,
+            skills: skills.clone(),
+        }))
     })
 }
 ```
@@ -162,16 +174,28 @@ quarantined.
 
 ## Audit
 
-Every `invoke()` writes one row through `starter-audit`:
+Every `invoke()` emits one record after the approval check passes,
+through a small `SkillAuditSink` trait that ships in
+`starter-mcp::skills_bridge`:
 
-```
-ts, skill_id, bundle_hash, caller (mcp transport + session id),
-input (truncated), approval_row_id, outcome
+```rust
+pub trait SkillAuditSink: Send + Sync + 'static {
+    fn record(&self, invocation: SkillInvocation<'_>);
+}
 ```
 
-Wiring is one line inside `SkillTool::invoke` after the approval
-check passes. No new audit format; reuse what `starter-audit`
-already exposes.
+The default `TracingSkillAuditSink` writes one structured
+`tracing::info!` per call (`target = "starter_mcp::skills_bridge::audit"`,
+fields = `skill_id`, `bundle_hash`, `at_unix_ms`). Consumers that
+want a durable, changelog-backed audit row implement the trait
+themselves and pass the sink to `register_approved_skills_with_audit`.
+
+`starter-audit` is a read-only projection over the changelog and
+does not expose a "record a row" API, so the audit sink lives in
+`starter-mcp` rather than `starter-audit`. A changelog-backed
+`SkillAuditSink` impl (that calls into `starter-changelog::ChangeLog`)
+is a small follow-up in the consumer crate, not a starter-mcp
+concern.
 
 ## What changes in each crate
 
