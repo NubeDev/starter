@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PointsListParams",
+  "type": "object",
+  "properties": {
+    "limit":  { "type": "integer", "minimum": 1, "maximum": 1000, "default": 100 },
+    "offset": { "type": "integer", "minimum": 0, "default": 0 }
+  },
+  "additionalProperties": false
+}

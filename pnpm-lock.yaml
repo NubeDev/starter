@@ -873,6 +873,43 @@ importers:
         specifier: ^5.4
         version: 5.9.3
 
+  rubix/extensions/com.nubeio.rubixos/ui-src:
+    dependencies:
+      '@nube/starter-ext-sdk-ts':
+        specifier: workspace:*
+        version: link:../../../../starter-extensions/packages/starter-ext-sdk-ts
+      clsx:
+        specifier: ^2.1.1
+        version: 2.1.1
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4
+        version: 4.3.0(vite@5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0))
+      '@types/react':
+        specifier: ^19.0.0
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.0.0
+        version: 19.2.3(@types/react@19.2.14)
+      react:
+        specifier: 19.1.0
+        version: 19.1.0
+      react-dom:
+        specifier: 19.1.0
+        version: 19.1.0(react@19.1.0)
+      tailwindcss:
+        specifier: ^4
+        version: 4.3.0
+      typescript:
+        specifier: ^5.4.0
+        version: 5.9.3
+      vite:
+        specifier: ^5.4.0
+        version: 5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0)
+      vite-plugin-css-injected-by-js:
+        specifier: ^3.5.0
+        version: 3.5.2(vite@5.4.21(@types/node@24.12.4)(lightningcss@1.32.0)(terser@5.48.0))
+
   rubix/extensions/com.rubix.example/ui-src:
     dependencies:
       '@nube/starter-ext-sdk-ts':

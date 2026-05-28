@@ -1,0 +1,213 @@
+# `com.nubeio.rubixos` — Rubix-OS / Nube-iO BMS data extension.
+#
+# Owns the warehouse tables that hold a Nube-iO Rubix-OS Postgres
+# dump (points / devices / networks / tags / histories). The host
+# creates the tables empty at boot via `boot::extension_tables`
+# (prefixing each with `com_nubeio_rubixos__` and prepending
+# `tenant_id TEXT`); the bundled `scripts/load-dump.sh` then
+# pg_restores the upstream dump into a staging schema and bulk-
+# INSERTs into the host-owned tables, turning `histories` into a
+# Timescale hypertable before the load.
+#
+# Per SCOPE R8 the only dependency is `starter-ext-sdk`.
+
+id: com.nubeio.rubixos
+v: 1
+version: 0.1.0
+display_name: Nube-iO Rubix-OS BMS
+runtime:
+  kind: process
+  bin: rubix-nubeio-rubixos-extension
+
+capabilities:
+  # No write grant from the extension itself — the dump is loaded
+  # out-of-band by `scripts/load-dump.sh` using server-side SQL.
+  # If a follow-up adds a streaming-ingest tool (e.g. tail Rubix-OS
+  # MQTT into histories), append a `warehouse_write` grant here.
+  - kind: warehouse_read
+    tables:
+      - com_nubeio_rubixos__histories
+      - com_nubeio_rubixos__points
+      - com_nubeio_rubixos__device_tags
+      - com_nubeio_rubixos__device_meta_tags
+      - com_nubeio_rubixos__network_tags
+      - com_nubeio_rubixos__network_meta_tags
+      - com_nubeio_rubixos__point_tags
+      - com_nubeio_rubixos__point_meta_tags
+
+contributes:
+  tools:
+    - id: com.nubeio.rubixos.echo
+      input_schema: kinds/echo_in.json
+      output_schema: kinds/echo_out.json
+      description_file: kinds/echo.md
+
+    # Browser-facing proxy over WarehouseReadHandle. Refuses any
+    # template outside this extension's namespace.
+    - id: com.nubeio.rubixos.warehouse_query
+      input_schema: kinds/warehouse_query_in.json
+      output_schema: kinds/warehouse_query_out.json
+      description_file: kinds/warehouse_query.md
+
+  warehouse_tables:
+    # ------------------------------------------------------------------
+    # Time-series — the main payload (17M+ rows in production dumps).
+    # The host CREATEs this as a plain table; `scripts/load-dump.sh`
+    # converts it to a Timescale hypertable on `timestamp` before
+    # inserting from the staging schema.
+    # ------------------------------------------------------------------
+    - name: histories
+      order_by: [timestamp, point_uuid]
+      columns:
+        - { name: point_uuid, type: "TEXT" }
+        - { name: host_uuid,  type: "TEXT" }
+        - { name: value,      type: "NUMERIC",     default: "NULL" }
+        - { name: timestamp,  type: "TIMESTAMPTZ" }
+
+    # Catalog of points (a "point" is one BMS data tag — temperature
+    # sensor, setpoint, etc.). Shape mirrors `public.points` from the
+    # Rubix-OS dump.
+    - name: points
+      order_by: [host_uuid, uuid]
+      columns:
+        - { name: uuid,                 type: "TEXT" }
+        - { name: name,                 type: "TEXT", default: "NULL" }
+        - { name: description,          type: "TEXT", default: "NULL" }
+        - { name: device_uuid,          type: "TEXT", default: "NULL" }
+        - { name: device_name,          type: "TEXT", default: "NULL" }
+        - { name: device_description,   type: "TEXT", default: "NULL" }
+        - { name: network_uuid,         type: "TEXT", default: "NULL" }
+        - { name: network_name,         type: "TEXT", default: "NULL" }
+        - { name: network_description,  type: "TEXT", default: "NULL" }
+        - { name: global_uuid,          type: "TEXT", default: "NULL" }
+        - { name: host_uuid,            type: "TEXT" }
+        - { name: host_name,            type: "TEXT", default: "NULL" }
+        - { name: host_description,     type: "TEXT", default: "NULL" }
+        - { name: group_uuid,           type: "TEXT", default: "NULL" }
+        - { name: group_name,           type: "TEXT", default: "NULL" }
+        - { name: group_description,    type: "TEXT", default: "NULL" }
+        - { name: location_uuid,        type: "TEXT", default: "NULL" }
+        - { name: location_name,        type: "TEXT", default: "NULL" }
+        - { name: location_description, type: "TEXT", default: "NULL" }
+
+    # ------------------------------------------------------------------
+    # Tags + meta-tags (key/value pairs on devices / networks / points).
+    # ------------------------------------------------------------------
+    - name: device_tags
+      order_by: [host_uuid, device_uuid]
+      columns:
+        - { name: host_uuid,   type: "TEXT" }
+        - { name: device_uuid, type: "TEXT" }
+        - { name: tag,         type: "TEXT" }
+
+    - name: device_meta_tags
+      order_by: [host_uuid, device_uuid, key]
+      columns:
+        - { name: host_uuid,   type: "TEXT" }
+        - { name: device_uuid, type: "TEXT" }
+        - { name: key,         type: "TEXT" }
+        - { name: value,       type: "TEXT", default: "NULL" }
+
+    - name: network_tags
+      order_by: [host_uuid, network_uuid]
+      columns:
+        - { name: host_uuid,    type: "TEXT" }
+        - { name: network_uuid, type: "TEXT" }
+        - { name: tag,          type: "TEXT" }
+
+    - name: network_meta_tags
+      order_by: [host_uuid, network_uuid, key]
+      columns:
+        - { name: host_uuid,    type: "TEXT" }
+        - { name: network_uuid, type: "TEXT" }
+        - { name: key,          type: "TEXT" }
+        - { name: value,        type: "TEXT", default: "NULL" }
+
+    - name: point_tags
+      order_by: [host_uuid, point_uuid]
+      columns:
+        - { name: host_uuid,  type: "TEXT" }
+        - { name: point_uuid, type: "TEXT" }
+        - { name: tag,        type: "TEXT" }
+
+    - name: point_meta_tags
+      order_by: [host_uuid, point_uuid, key]
+      columns:
+        - { name: host_uuid,  type: "TEXT" }
+        - { name: point_uuid, type: "TEXT" }
+        - { name: key,        type: "TEXT" }
+        - { name: value,      type: "TEXT", default: "NULL" }
+
+  # Named warehouse-read templates. Per R7 each `sql_file` is
+  # captured verbatim for audit and resolved by name at the host;
+  # the SPI never templates the SQL at runtime. `$caller_tenant_id`
+  # is bound by the host from the operator session and cannot be
+  # spoofed by the caller.
+  warehouse_templates:
+    - name: com.nubeio.rubixos.points_list
+      params_schema: kinds/points_list_params.json
+      sql_file:      kinds/points_list.sql
+      tables: [com_nubeio_rubixos__points]
+
+    - name: com.nubeio.rubixos.points_search
+      params_schema: kinds/points_search_params.json
+      sql_file:      kinds/points_search.sql
+      tables: [com_nubeio_rubixos__points]
+
+    - name: com.nubeio.rubixos.points_by_device
+      params_schema: kinds/points_by_device_params.json
+      sql_file:      kinds/points_by_device.sql
+      tables: [com_nubeio_rubixos__points]
+
+    - name: com.nubeio.rubixos.devices_overview
+      params_schema: kinds/devices_overview_params.json
+      sql_file:      kinds/devices_overview.sql
+      tables: [com_nubeio_rubixos__points]
+
+    - name: com.nubeio.rubixos.networks_overview
+      params_schema: kinds/networks_overview_params.json
+      sql_file:      kinds/networks_overview.sql
+      tables: [com_nubeio_rubixos__points]
+
+    - name: com.nubeio.rubixos.hosts_overview
+      params_schema: kinds/hosts_overview_params.json
+      sql_file:      kinds/hosts_overview.sql
+      tables: [com_nubeio_rubixos__points]
+
+    # Histories — single-point recent samples (raw).
+    - name: com.nubeio.rubixos.history_recent
+      params_schema: kinds/history_recent_params.json
+      sql_file:      kinds/history_recent.sql
+      tables: [com_nubeio_rubixos__histories]
+
+    # Histories — time-bucketed aggregate for charting. Uses
+    # Timescale's `time_bucket()`; the loader script creates the
+    # hypertable so this resolves on real-sized data without table
+    # scans.
+    - name: com.nubeio.rubixos.history_bucketed
+      params_schema: kinds/history_bucketed_params.json
+      sql_file:      kinds/history_bucketed.sql
+      tables: [com_nubeio_rubixos__histories]
+
+    # KPIs for the overview dashboard (counts + freshness).
+    - name: com.nubeio.rubixos.histories_summary
+      params_schema: kinds/histories_summary_params.json
+      sql_file:      kinds/histories_summary.sql
+      tables: [com_nubeio_rubixos__histories]
+
+  # Module-Federation UI entry. The host serves `ui/remoteEntry.js`
+  # at `/api/v1/extensions/com.nubeio.rubixos/ui/*` and dynamic-
+  # imports it when the operator clicks "Load UI" on the
+  # `/extensions` route or when the matching slot renders.
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - name: Main
+        module: "./Main"
+        slot: main
+      - name: NavTree
+        module: "./NavTree"
+        slot: sidebar-nav
+      - name: Sidebar
+        module: "./Sidebar"
+        slot: sidebar

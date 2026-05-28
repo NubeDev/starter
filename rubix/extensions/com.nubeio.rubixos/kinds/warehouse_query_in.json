@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WarehouseQueryInput",
+  "description": "Invoke one of this extension's contributed warehouse_templates[] via the SDK's WarehouseReadHandle. `template` must be a name the extension declared. `tenant_id` is bound from the caller by the host and cannot be overridden.",
+  "type": "object",
+  "properties": {
+    "template": {
+      "type": "string",
+      "description": "Fully-qualified template name (e.g. `com.nubeio.rubixos.points_list`)."
+    },
+    "params": {
+      "type": "object",
+      "description": "Template-specific parameters, validated host-side against the template's params_schema.",
+      "default": {}
+    }
+  },
+  "required": ["template"],
+  "additionalProperties": false
+}

@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HistoryBucketedParams",
+  "description": "Server-side time-bucket aggregate over Timescale's hypertable. Returns one row per bucket with min/max/avg/count of the point's value. Designed to power chart widgets without round-tripping raw samples to the browser.",
+  "type": "object",
+  "properties": {
+    "point_uuid": { "type": "string", "minLength": 1 },
+    "from":       { "type": "string", "format": "date-time" },
+    "to":         { "type": "string", "format": "date-time" },
+    "bucket":     {
+      "type": "string",
+      "description": "Postgres interval string (e.g. `5 minutes`, `1 hour`, `1 day`).",
+      "default": "1 hour",
+      "pattern": "^[0-9]+ *(seconds?|minutes?|hours?|days?|weeks?|months?|years?)$"
+    }
+  },
+  "required": ["point_uuid", "from", "to"],
+  "additionalProperties": false
+}

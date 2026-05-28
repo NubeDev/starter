@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HistoryRecentParams",
+  "description": "Recent raw samples for a single point. Use `history_bucketed` for any chart whose horizontal range spans more than a few hours — that one is hypertable-aware and bucket-aggregates server-side.",
+  "type": "object",
+  "properties": {
+    "point_uuid": { "type": "string", "minLength": 1 },
+    "limit":      { "type": "integer", "minimum": 1, "maximum": 5000, "default": 500 }
+  },
+  "required": ["point_uuid"],
+  "additionalProperties": false
+}

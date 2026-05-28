@@ -12,6 +12,7 @@
 resolver = "2"
 members = [
     "com.rubix.example/process",
+    "com.nubeio.rubixos/process",
 ]
 
 [workspace.package]

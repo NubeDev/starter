@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PointsByDeviceParams",
+  "type": "object",
+  "properties": {
+    "device_uuid": { "type": "string", "minLength": 1 },
+    "limit":       { "type": "integer", "minimum": 1, "maximum": 1000, "default": 500 }
+  },
+  "required": ["device_uuid"],
+  "additionalProperties": false
+}

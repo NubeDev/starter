@@ -1,0 +1,7 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EchoInput",
+  "description": "Echo tool input — returned verbatim by the tool body. Smoke probe for end-to-end JSON-RPC plumbing.",
+  "type": "object",
+  "additionalProperties": true
+}
