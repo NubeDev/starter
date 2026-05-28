@@ -6,6 +6,7 @@ import { BlockShell, useSlotContext } from "@nube/starter-ext-sdk-ts";
 
 import { EXTENSION_ID } from "./types";
 import type { ExtensionDetail } from "./types";
+import { fetchExtensionDetail } from "./lib/detail";
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Badge } from "./components/ui/badge";
 
@@ -24,14 +25,7 @@ function SidebarInner(): React.ReactElement {
 
   React.useEffect(() => {
     let cancelled = false;
-    fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
-      credentials: "same-origin",
-      headers: { accept: "application/json" },
-    })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ExtensionDetail;
-      })
+    fetchExtensionDetail()
       .then((d) => {
         if (!cancelled) setDetail(d);
       })

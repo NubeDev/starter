@@ -22,6 +22,7 @@ import type {
 } from "./types";
 import { evaluateCustomerQuality } from "./quality";
 import { ContribRow, CountryBarChart } from "./components";
+import { fetchExtensionDetail, invalidateExtensionDetail } from "./lib/detail";
 import { Button } from "./components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "./components/ui/card";
 import { Badge } from "./components/ui/badge";
@@ -49,28 +50,45 @@ function MainRouter(): React.ReactElement {
 
 /* ----------------------------- helpers ------------------------------ */
 
-async function callTool<T>(toolId: string, params: unknown): Promise<T> {
-  const res = await fetch(`/api/v1/tools/${toolId}`, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify(params ?? {}),
+// Coalesce concurrent POSTs with identical (toolId, params) onto a
+// single in-flight promise. React StrictMode double-invokes effects in
+// dev, and unrelated components occasionally request the same template
+// simultaneously — either way, firing the same warehouse_query twice
+// wastes a round-trip and amplifies any backend slowness.
+const inFlight = new Map<string, Promise<unknown>>();
+
+function callTool<T>(toolId: string, params: unknown): Promise<T> {
+  const body = JSON.stringify(params ?? {});
+  const key = `${toolId}::${body}`;
+  const existing = inFlight.get(key);
+  if (existing) return existing as Promise<T>;
+  const p = (async (): Promise<T> => {
+    const res = await fetch(`/api/v1/tools/${toolId}`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body,
+    });
+    const text = await res.text();
+    let parsed: unknown = undefined;
+    try {
+      parsed = text ? JSON.parse(text) : undefined;
+    } catch {
+      parsed = text;
+    }
+    if (!res.ok) {
+      const msg =
+        parsed && typeof parsed === "object" && "error" in parsed
+          ? String((parsed as { error: unknown }).error)
+          : `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return parsed as T;
+  })().finally(() => {
+    inFlight.delete(key);
   });
-  const text = await res.text();
-  let body: unknown = undefined;
-  try {
-    body = text ? JSON.parse(text) : undefined;
-  } catch {
-    body = text;
-  }
-  if (!res.ok) {
-    const msg =
-      body && typeof body === "object" && "error" in body
-        ? String((body as { error: unknown }).error)
-        : `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-  return body as T;
+  inFlight.set(key, p);
+  return p;
 }
 
 async function fetchTemplate<R>(
@@ -103,13 +121,7 @@ function MainInner(): React.ReactElement {
     setLoading(true);
     setError(null);
     Promise.all([
-      fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
-        credentials: "same-origin",
-        headers: { accept: "application/json" },
-      }).then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return (await res.json()) as ExtensionDetail;
-      }),
+      fetchExtensionDetail(),
       fetchTemplate<CountryBucket>(`${EXTENSION_ID}.customers_by_country`, { limit: 10 }),
       fetchTemplate<ProductRow>(`${EXTENSION_ID}.products_low_stock`, { threshold: 10, limit: 50 }),
       fetchTemplate<CustomerRow>(`${EXTENSION_ID}.customers_sample`, { limit: 50 }),
@@ -180,7 +192,10 @@ function MainInner(): React.ReactElement {
         <Button
           variant="outline"
           size="sm"
-          onClick={() => setTick((t) => t + 1)}
+          onClick={() => {
+            invalidateExtensionDetail();
+            setTick((t) => t + 1);
+          }}
           disabled={loading}
         >
           {loading ? "loading…" : "refresh"}

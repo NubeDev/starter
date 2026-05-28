@@ -41,6 +41,7 @@ use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::jsonrpc::{StreamId, StreamNotification};
 use starter_ext_spi::{Error, ExtensionId, RuntimeKind};
 use tokio::sync::{mpsc, watch};
+use tracing::{debug, warn};
 
 use crate::capabilities::{CapabilityFactory, StubCapabilityFactory};
 
@@ -507,22 +508,48 @@ impl RestDispatcher for ProcessRestDispatcher {
             ))
         })?;
         let method = format!("tools/{contribute_id}");
+        let ext_str = extension.as_str().to_string();
+        let timeout = self.request_timeout;
+        debug!(
+            ext = %ext_str,
+            method = %method,
+            timeout_ms = timeout.as_millis() as u64,
+            "REST tool dispatch begin",
+        );
+        let started = std::time::Instant::now();
         // Stamp the caller onto the outbound frame's `_meta.caller`
         // when we have one. A `None` caller (system / host-internal
         // frame) falls through to plain `call`, which omits `_meta`
         // entirely; the child's `ctx.caller()` resolves to `None`,
         // matching what every tenant-scoped capability handle uses
         // as its fail-closed gate.
-        match caller {
+        let result = match caller {
             Some(caller) => handle
-                .call_as(&method, input, caller, self.request_timeout)
+                .call_as(&method, input, caller, timeout)
                 .await
                 .map_err(DispatchError::from_kernel),
             None => handle
-                .call(&method, input, self.request_timeout)
+                .call(&method, input, timeout)
                 .await
                 .map_err(DispatchError::from_kernel),
+        };
+        let elapsed_ms = started.elapsed().as_millis() as u64;
+        match &result {
+            Ok(_) => debug!(
+                ext = %ext_str,
+                method = %method,
+                elapsed_ms,
+                "REST tool dispatch ok",
+            ),
+            Err(e) => warn!(
+                ext = %ext_str,
+                method = %method,
+                elapsed_ms,
+                error = %e,
+                "REST tool dispatch failed",
+            ),
         }
+        result
     }
 
     async fn dispatch_stream(

@@ -249,6 +249,39 @@ function CountryBarChart({
   );
 }
 
+let cached = null;
+let inFlight$1 = null;
+function fetchExtensionDetail() {
+  if (cached) return Promise.resolve(cached);
+  if (inFlight$1) return inFlight$1;
+  const g = globalThis;
+  const fromHost = g.__starterExtensionDetailCache__?.[EXTENSION_ID];
+  if (fromHost) {
+    cached = fromHost;
+    return Promise.resolve(fromHost);
+  }
+  inFlight$1 = fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
+    credentials: "same-origin",
+    headers: { accept: "application/json" }
+  }).then(async (res) => {
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const detail = await res.json();
+    cached = detail;
+    return detail;
+  }).finally(() => {
+    inFlight$1 = null;
+  });
+  return inFlight$1;
+}
+function invalidateExtensionDetail() {
+  cached = null;
+  inFlight$1 = null;
+  const g = globalThis;
+  if (g.__starterExtensionDetailCache__) {
+    delete g.__starterExtensionDetailCache__[EXTENSION_ID];
+  }
+}
+
 function r(e){var t,f,n="";if("string"==typeof e||"number"==typeof e)n+=e;else if("object"==typeof e)if(Array.isArray(e)){var o=e.length;for(t=0;t<o;t++)e[t]&&(f=r(e[t]))&&(n&&(n+=" "),n+=f);}else for(f in e)e[f]&&(n&&(n+=" "),n+=f);return n}function clsx(){for(var e,t,f=0,n="",o=arguments.length;f<o;f++)(e=arguments[f])&&(t=r(e))&&(n&&(n+=" "),n+=t);return n}
 
 const falsyToString = (value)=>typeof value === "boolean" ? `${value}` : value === 0 ? "0" : value;
@@ -3793,25 +3826,36 @@ function MainRouter() {
   }
   return /* @__PURE__ */ jsx(MainInner, {});
 }
-async function callTool(toolId, params) {
-  const res = await fetch(`/api/v1/tools/${toolId}`, {
-    method: "POST",
-    credentials: "same-origin",
-    headers: { "content-type": "application/json", accept: "application/json" },
-    body: JSON.stringify(params ?? {})
+const inFlight = /* @__PURE__ */ new Map();
+function callTool(toolId, params) {
+  const body = JSON.stringify(params ?? {});
+  const key = `${toolId}::${body}`;
+  const existing = inFlight.get(key);
+  if (existing) return existing;
+  const p = (async () => {
+    const res = await fetch(`/api/v1/tools/${toolId}`, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "content-type": "application/json", accept: "application/json" },
+      body
+    });
+    const text = await res.text();
+    let parsed = void 0;
+    try {
+      parsed = text ? JSON.parse(text) : void 0;
+    } catch {
+      parsed = text;
+    }
+    if (!res.ok) {
+      const msg = parsed && typeof parsed === "object" && "error" in parsed ? String(parsed.error) : `HTTP ${res.status}`;
+      throw new Error(msg);
+    }
+    return parsed;
+  })().finally(() => {
+    inFlight.delete(key);
   });
-  const text = await res.text();
-  let body = void 0;
-  try {
-    body = text ? JSON.parse(text) : void 0;
-  } catch {
-    body = text;
-  }
-  if (!res.ok) {
-    const msg = body && typeof body === "object" && "error" in body ? String(body.error) : `HTTP ${res.status}`;
-    throw new Error(msg);
-  }
-  return body;
+  inFlight.set(key, p);
+  return p;
 }
 async function fetchTemplate(template, params = {}) {
   const res = await callTool(
@@ -3835,13 +3879,7 @@ function MainInner() {
     setLoading(true);
     setError(null);
     Promise.all([
-      fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
-        credentials: "same-origin",
-        headers: { accept: "application/json" }
-      }).then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return await res.json();
-      }),
+      fetchExtensionDetail(),
       fetchTemplate(`${EXTENSION_ID}.customers_by_country`, { limit: 10 }),
       fetchTemplate(`${EXTENSION_ID}.products_low_stock`, { threshold: 10, limit: 50 }),
       fetchTemplate(`${EXTENSION_ID}.customers_sample`, { limit: 50 })
@@ -3904,7 +3942,10 @@ function MainInner() {
             {
               variant: "outline",
               size: "sm",
-              onClick: () => setTick((t) => t + 1),
+              onClick: () => {
+                invalidateExtensionDetail();
+                setTick((t) => t + 1);
+              },
               disabled: loading,
               children: loading ? "loading…" : "refresh"
             }
@@ -4328,13 +4369,7 @@ function SidebarInner() {
   const [error, setError] = React.useState(null);
   React.useEffect(() => {
     let cancelled = false;
-    fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
-      credentials: "same-origin",
-      headers: { accept: "application/json" }
-    }).then(async (res) => {
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return await res.json();
-    }).then((d) => {
+    fetchExtensionDetail().then((d) => {
       if (!cancelled) setDetail(d);
     }).catch((e) => {
       if (!cancelled) setError(e instanceof Error ? e.message : String(e));

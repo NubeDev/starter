@@ -91,3 +91,62 @@ export function asNumber(v: unknown): number | null {
   const n = typeof v === "number" ? v : Number(v);
   return Number.isFinite(n) ? n : null;
 }
+
+/** Convert a warehouse-template TIMESTAMPTZ cell to epoch milliseconds.
+ *  The contributed-template bridge encodes TIMESTAMPTZ as a JSON number
+ *  (`timestamp_millis`), but defensively accept ISO strings too. */
+export function asEpochMs(v: unknown): number | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") {
+    const t = Date.parse(v);
+    return Number.isFinite(t) ? t : null;
+  }
+  return null;
+}
+
+// -----------------------------------------------------------------
+// Dashboard ("Energy & Water Overview") row shapes.
+// -----------------------------------------------------------------
+
+export type MeterKind = "elec" | "water";
+
+export interface MeterRow {
+  uuid: string;
+  name: string | null;
+  device_uuid: string | null;
+  device_name: string | null;
+  network_uuid: string | null;
+  network_name: string | null;
+  host_uuid: string;
+  host_name: string | null;
+  unit: string | null;
+}
+
+export interface UsageSiteTotalRow {
+  host_uuid: string;
+  host_name: string | null;
+  total_value: number | string | null;
+  point_count: number | string;
+  sample_count: number | string;
+}
+
+export interface UsageBucketRow {
+  /** TIMESTAMPTZ — encoded as epoch ms by the warehouse bridge. */
+  bucket: number | string;
+  host_uuid: string;
+  avg_value: number | string | null;
+  sample_count: number | string;
+}
+
+export interface UsagePerMeterRow {
+  point_uuid: string;
+  name: string | null;
+  host_uuid: string | null;
+  host_name: string | null;
+  device_name: string | null;
+  avg_value: number | string | null;
+  min_value: number | string | null;
+  max_value: number | string | null;
+  sample_count: number | string;
+}

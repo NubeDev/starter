@@ -89,18 +89,39 @@ function makeStore<T>(
 
   let stop: (() => void) | null = null;
   let refcount = 0;
+  // When the last subscriber leaves we defer teardown by one tick.
+  // React StrictMode double-invokes effects (mount → unmount → mount)
+  // and SPA route transitions briefly unmount one consumer before the
+  // next one mounts; tearing the EventSource down immediately on
+  // refcount=0 would reopen the connection both times. The defer is
+  // short (100ms) — long enough to bridge those gaps, short enough
+  // that a genuine "no one is listening" state still releases the
+  // network resource promptly.
+  let teardownTimer: ReturnType<typeof setTimeout> | null = null;
 
   return {
     subscribe(listener: Subscriber): () => void {
       subs.add(listener);
-      if (refcount === 0) stop = start(push, setStatus, setError);
+      if (teardownTimer !== null) {
+        clearTimeout(teardownTimer);
+        teardownTimer = null;
+      }
+      if (refcount === 0 && stop === null) {
+        stop = start(push, setStatus, setError);
+      }
       refcount += 1;
       return () => {
         subs.delete(listener);
         refcount -= 1;
         if (refcount === 0) {
-          stop?.();
-          stop = null;
+          if (teardownTimer !== null) clearTimeout(teardownTimer);
+          teardownTimer = setTimeout(() => {
+            teardownTimer = null;
+            if (refcount === 0) {
+              stop?.();
+              stop = null;
+            }
+          }, 100);
         }
       };
     },
@@ -110,11 +131,51 @@ function makeStore<T>(
   };
 }
 
+// Module-level store cache so that multiple `useEventStream(path)`
+// consumers — and the same consumer across unmount/remount cycles
+// (route navigation, StrictMode double-mount) — share ONE underlying
+// EventSource per (starter, path, generation) tuple. The store's own
+// refcount handles teardown only when the last subscriber unsubscribes;
+// without sharing, every component opened its own SSE channel and a
+// fresh `GET /api/v1/dashboards/events` fired on every navigation.
+//
+// Disabled subscriptions use a per-call throwaway no-op store and are
+// not cached: there is nothing to share, and caching them would leak.
+type AnyStore = ReturnType<typeof makeStore<unknown>>;
+const storeCache = new Map<string, AnyStore>();
+
+// Stable per-instance id for the `StarterClient` so the cache key can
+// distinguish two different clients in the same tab without serialising
+// the whole object.
+const starterIds = new WeakMap<object, string>();
+let starterIdCounter = 0;
+function getStarterKey(starter: object): string {
+  let id = starterIds.get(starter);
+  if (!id) {
+    starterIdCounter += 1;
+    id = `s${starterIdCounter}`;
+    starterIds.set(starter, id);
+  }
+  return id;
+}
+
+function getOrCreateStore<T>(
+  key: string,
+  factory: () => AnyStore,
+): ReturnType<typeof makeStore<T>> {
+  const existing = storeCache.get(key);
+  if (existing) return existing as ReturnType<typeof makeStore<T>>;
+  const created = factory();
+  storeCache.set(key, created);
+  return created as ReturnType<typeof makeStore<T>>;
+}
+
 /**
  * Subscribe to a server-sent event stream of typed JSON frames.
  *
  * The hook re-subscribes whenever `path` or `enabled` changes; on
- * unmount it aborts the underlying iterator.
+ * unmount it aborts the underlying iterator (via the shared store's
+ * refcount).
  */
 export function useEventStream<T>(
   path: string,
@@ -124,43 +185,46 @@ export function useEventStream<T>(
   const enabled = options.enabled ?? true;
   const [generation, setGeneration] = useState(0);
 
-  // One store per (path, generation, enabled) tuple. Disabled
-  // subscriptions get a no-op store so `useSyncExternalStore` still
-  // has something to read.
-  const store = useMemo(() => {
-    if (!enabled) {
-      return makeStore<T>(() => () => {});
-    }
-    return makeStore<T>((push, setStatus, setError) => {
-      const ctrl = new AbortController();
-      let cancelled = false;
-      setStatus("connecting");
+  // Key on (starter identity, path, generation). `forceFetch` /
+  // `eventSourceCtor` are test seams — bake them into the key so
+  // different test configurations don't collide, but in production
+  // both are undefined and every consumer collapses onto the same
+  // store.
+  const key = enabled
+    ? `${getStarterKey(starter)}::${path}::${generation}::${options.forceFetch ? "1" : "0"}::${options.eventSourceCtor ? "ctor" : "default"}`
+    : null;
+  const store = useMemo<ReturnType<typeof makeStore<T>>>(() => {
+    if (key === null) return makeStore<T>(() => () => {});
+    return getOrCreateStore<T>(key, () =>
+      makeStore<unknown>((push, setStatus, setError) => {
+        const ctrl = new AbortController();
+        let cancelled = false;
+        setStatus("connecting");
 
-      (async () => {
-        try {
-          for await (const frame of streamJson<T>(starter, path, {
-            signal: ctrl.signal,
-            forceFetch: options.forceFetch,
-            eventSourceCtor: options.eventSourceCtor,
-            onReconnecting: () => setStatus("reconnecting"),
-          })) {
-            if (cancelled) break;
-            push(frame);
+        (async () => {
+          try {
+            for await (const frame of streamJson<T>(starter, path, {
+              signal: ctrl.signal,
+              forceFetch: options.forceFetch,
+              eventSourceCtor: options.eventSourceCtor,
+              onReconnecting: () => setStatus("reconnecting"),
+            })) {
+              if (cancelled) break;
+              push(frame as unknown);
+            }
+            if (!cancelled) setStatus("closed");
+          } catch (err) {
+            if (!cancelled) setError(err instanceof Error ? err : new Error(String(err)));
           }
-          if (!cancelled) setStatus("closed");
-        } catch (err) {
-          if (!cancelled) setError(err instanceof Error ? err : new Error(String(err)));
-        }
-      })();
+        })();
 
-      return () => {
-        cancelled = true;
-        ctrl.abort();
-      };
-    });
-    // `starter` is stable per provider; including it here matches
-    // exhaustive-deps without causing extra resubscribes.
-  }, [starter, path, enabled, generation, options.forceFetch, options.eventSourceCtor]);
+        return () => {
+          cancelled = true;
+          ctrl.abort();
+        };
+      }) as AnyStore,
+    );
+  }, [key, starter, path, options.forceFetch, options.eventSourceCtor]);
 
   // Bridge into React's concurrent-safe external-store API.
   const snapshot = useSyncExternalStore(

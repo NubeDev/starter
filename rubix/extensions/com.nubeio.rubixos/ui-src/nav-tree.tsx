@@ -1,12 +1,13 @@
-// `nav-tree.tsx` — Sidebar nav-tree contribution for
-// `com.nubeio.rubixos`. Renders the BMS hierarchy links.
+// `nav-tree.tsx` — Sidebar nav-tree contribution for `com.nubeio.rubixos`.
+// Uses the same data-sidebar attributes and Tailwind classes as the host's
+// shadcn SidebarGroup/SidebarMenu components so it renders identically.
 
 import * as React from "react";
 
 import { BlockShell } from "@nube/starter-ext-sdk-ts";
 import { EXTENSION_ID } from "./types";
 
-interface NavLeaf  { title: string; href: string }
+interface NavLeaf   { title: string; href: string }
 interface NavBranch { title: string; children: NavLeaf[] }
 type NavItem = NavLeaf | NavBranch;
 function isBranch(item: NavItem): item is NavBranch { return "children" in item; }
@@ -24,6 +25,7 @@ const TREE: NavItem[] = [
   {
     title: "Data",
     children: [
+      { title: "Energy & Water",  href: `/extensions/${EXTENSION_ID}/usage`   },
       { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history` },
     ],
   },
@@ -38,74 +40,101 @@ export default function NavTree(): React.ReactElement {
 }
 
 function NavTreeInner(): React.ReactElement {
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
   return (
-    <nav aria-label="Rubix-OS" className="mx-2 text-[0.8125rem] text-foreground">
-      <div className="px-2 py-1 text-[0.7rem] font-semibold uppercase tracking-wider text-muted-foreground">
-        Rubix-OS
+    // Matches SidebarGroup: relative flex w-full min-w-0 flex-col p-2
+    <div data-slot="sidebar-group" data-sidebar="group" className="relative flex w-full min-w-0 flex-col p-2">
+      {/* Matches SidebarGroupLabel */}
+      <div
+        data-slot="sidebar-group-label"
+        data-sidebar="group-label"
+        className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70"
+      >
+        RUBIX-OS
       </div>
-      <ul className="m-0 p-0 list-none">
+      {/* Matches SidebarMenu */}
+      <ul data-slot="sidebar-menu" data-sidebar="menu" className="flex w-full min-w-0 flex-col gap-1">
         {TREE.map((item) =>
-          isBranch(item) ? <Branch key={item.title} branch={item} /> : <TopLeaf key={item.href} leaf={item} />,
+          isBranch(item)
+            ? <Branch key={item.title} branch={item} currentPath={path} />
+            : <Leaf key={item.href} leaf={item} currentPath={path} top />
         )}
       </ul>
-    </nav>
+    </div>
   );
 }
 
-function TopLeaf({ leaf }: { leaf: NavLeaf }): React.ReactElement {
+function Leaf({ leaf, currentPath, top }: { leaf: NavLeaf; currentPath: string; top?: boolean }): React.ReactElement {
+  const isActive = currentPath === leaf.href || currentPath.startsWith(leaf.href + "/");
+  if (top) {
+    return (
+      // Matches SidebarMenuItem
+      <li data-slot="sidebar-menu-item" data-sidebar="menu-item" className="group/menu-item relative">
+        <a
+          href={leaf.href}
+          data-slot="sidebar-menu-button"
+          data-sidebar="menu-button"
+          data-active={isActive}
+          className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground h-8 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground no-underline"
+        >
+          <span>{leaf.title}</span>
+        </a>
+      </li>
+    );
+  }
   return (
-    <li>
+    // Matches SidebarMenuSubItem + SidebarMenuSubButton
+    <li data-slot="sidebar-menu-sub-item" data-sidebar="menu-sub-item" className="group/menu-sub-item relative">
       <a
         href={leaf.href}
-        className="block py-1 px-2 pl-4 no-underline text-foreground rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+        data-slot="sidebar-menu-sub-button"
+        data-sidebar="menu-sub-button"
+        data-size="md"
+        data-active={isActive}
+        className="flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 text-sm data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground no-underline"
       >
-        {leaf.title}
+        <span>{leaf.title}</span>
       </a>
     </li>
   );
 }
 
-function Branch({ branch }: { branch: NavBranch }): React.ReactElement {
-  const [open, setOpen] = React.useState(true);
+function Branch({ branch, currentPath }: { branch: NavBranch; currentPath: string }): React.ReactElement {
+  const defaultOpen = branch.children.some(
+    (c) => currentPath === c.href || currentPath.startsWith(c.href + "/")
+  );
+  const [open, setOpen] = React.useState(defaultOpen || true);
   return (
-    <li>
+    <li data-slot="sidebar-menu-item" data-sidebar="menu-item" className="group/menu-item relative">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
-        className="w-full flex items-center gap-1.5 py-1 px-2 bg-transparent border-0 text-foreground font-inherit cursor-pointer rounded-md text-left hover:bg-accent hover:text-accent-foreground transition-colors"
+        data-slot="sidebar-menu-button"
+        data-sidebar="menu-button"
+        data-state={open ? "open" : "closed"}
+        className="group/collapsible peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 h-8 bg-transparent border-0 cursor-pointer"
       >
-        <Chevron open={open} />
-        <span>{branch.title}</span>
+        <span className="flex-1">{branch.title}</span>
+        <svg
+          width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"
+          className={"ms-auto shrink-0 transition-transform duration-200 " + (open ? "rotate-90" : "")}
+        >
+          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
       </button>
       {open ? (
-        <ul className="m-0 pl-5 list-none border-l border-border ml-4">
+        // Matches SidebarMenuSub
+        <ul
+          data-slot="sidebar-menu-sub"
+          data-sidebar="menu-sub"
+          className="mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-s border-sidebar-border px-2.5 py-0.5"
+        >
           {branch.children.map((leaf) => (
-            <li key={leaf.href}>
-              <a
-                href={leaf.href}
-                className="block py-1 px-2 no-underline text-foreground/85 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-              >
-                {leaf.title}
-              </a>
-            </li>
+            <Leaf key={leaf.href} leaf={leaf} currentPath={currentPath} />
           ))}
         </ul>
       ) : null}
     </li>
-  );
-}
-
-function Chevron({ open }: { open: boolean }): React.ReactElement {
-  return (
-    <svg
-      width="10"
-      height="10"
-      viewBox="0 0 10 10"
-      aria-hidden="true"
-      className={"shrink-0 opacity-70 transition-transform duration-150 " + (open ? "rotate-90" : "")}
-    >
-      <path d="M3 1.5 L7 5 L3 8.5" stroke="currentColor" strokeWidth="1.4" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
   );
 }

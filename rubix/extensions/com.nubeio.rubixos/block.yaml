@@ -195,6 +195,41 @@ contributes:
       sql_file:      kinds/histories_summary.sql
       tables: [com_nubeio_rubixos__histories]
 
+    # ----------------------------------------------------------------
+    # Energy & Water dashboard templates. `meters_list` filters the
+    # points catalog down to electrical or water meters by the
+    # Rubix-OS point-tags (`meter` + `elec`/`water` + optional
+    # channel like `power`/`energy`/`reading`). The other two
+    # aggregate the histories hypertable across an arbitrary set
+    # of meter point_uuids (per-site totals + per-bucket series).
+    # ----------------------------------------------------------------
+    - name: com.nubeio.rubixos.meters_list
+      params_schema: kinds/meters_list_params.json
+      sql_file:      kinds/meters_list.sql
+      tables:
+        - com_nubeio_rubixos__points
+        - com_nubeio_rubixos__point_tags
+        - com_nubeio_rubixos__point_meta_tags
+
+    - name: com.nubeio.rubixos.usage_site_totals
+      params_schema: kinds/usage_site_totals_params.json
+      sql_file:      kinds/usage_site_totals.sql
+      tables:
+        - com_nubeio_rubixos__histories
+        - com_nubeio_rubixos__points
+
+    - name: com.nubeio.rubixos.usage_bucketed
+      params_schema: kinds/usage_bucketed_params.json
+      sql_file:      kinds/usage_bucketed.sql
+      tables: [com_nubeio_rubixos__histories]
+
+    - name: com.nubeio.rubixos.usage_per_meter
+      params_schema: kinds/usage_per_meter_params.json
+      sql_file:      kinds/usage_per_meter.sql
+      tables:
+        - com_nubeio_rubixos__histories
+        - com_nubeio_rubixos__points
+
   # Module-Federation UI entry. The host serves `ui/remoteEntry.js`
   # at `/api/v1/extensions/com.nubeio.rubixos/ui/*` and dynamic-
   # imports it when the operator clicks "Load UI" on the

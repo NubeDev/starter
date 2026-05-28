@@ -303,6 +303,8 @@ impl SupervisorHandle {
         if let Some(c) = caller {
             stamp_caller(&mut envelope, c);
         }
+        debug!(ext = %self.id.as_str(), id, method, "dispatch → child");
+        let started = std::time::Instant::now();
         if let Err(e) = self.send(envelope) {
             // Remove our pending entry so the slot doesn't leak; the
             // task is gone so no one will complete it.
@@ -313,7 +315,16 @@ impl SupervisorHandle {
         }
 
         match tokio::time::timeout(timeout, rx).await {
-            Ok(Ok(result)) => result,
+            Ok(Ok(result)) => {
+                debug!(
+                    ext = %self.id.as_str(),
+                    id,
+                    method,
+                    elapsed_ms = started.elapsed().as_millis() as u64,
+                    "dispatch ← child",
+                );
+                result
+            }
             Ok(Err(_)) => {
                 if let Ok(mut g) = self.pending.lock() {
                     g.remove(&id);
@@ -323,11 +334,23 @@ impl SupervisorHandle {
                 ))
             }
             Err(_) => {
-                if let Ok(mut g) = self.pending.lock() {
+                let pending_len = self.pending.lock().map(|mut g| {
                     g.remove(&id);
-                }
+                    g.len()
+                }).unwrap_or(0);
+                let lifecycle = format!("{:?}", *self.state.borrow());
+                warn!(
+                    ext = %self.id.as_str(),
+                    id,
+                    method,
+                    timeout_ms = timeout.as_millis() as u64,
+                    pending_after = pending_len,
+                    lifecycle = %lifecycle,
+                    "jsonrpc request timed out — child never answered",
+                );
                 Err(Error::transport(format!(
-                    "jsonrpc request timed out after {timeout:?}"
+                    "jsonrpc request timed out after {timeout:?} \
+                     (method={method}, id={id}, lifecycle={lifecycle}, pending_after={pending_len})"
                 )))
             }
         }
@@ -860,10 +883,11 @@ impl SupervisorTask {
                         };
                         let _ = tx.send(payload);
                     } else {
-                        debug!(
+                        warn!(
                             ext = %self.id.as_str(),
                             id,
-                            "received response for unknown / cancelled dispatch id",
+                            "received response for unknown / cancelled dispatch id \
+                             (caller already timed out, or correlation bug)",
                         );
                     }
                 }

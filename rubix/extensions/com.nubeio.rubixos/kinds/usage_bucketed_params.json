@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UsageBucketedParams",
+  "description": "Per-host, per-bucket AVG of meter values over a set of point_uuids. `point_uuids` is a comma-separated string; `bucket` is a Postgres interval literal.",
+  "type": "object",
+  "properties": {
+    "point_uuids": { "type": "string", "minLength": 1 },
+    "from":        { "type": "string", "format": "date-time" },
+    "to":          { "type": "string", "format": "date-time" },
+    "bucket":      {
+      "type": "string",
+      "description": "Postgres interval string (e.g. `15 minutes`, `1 hour`, `1 day`).",
+      "default": "1 hour",
+      "pattern": "^[0-9]+ *(seconds?|minutes?|hours?|days?|weeks?|months?|years?)$"
+    }
+  },
+  "required": ["point_uuids", "from", "to"],
+  "additionalProperties": false
+}

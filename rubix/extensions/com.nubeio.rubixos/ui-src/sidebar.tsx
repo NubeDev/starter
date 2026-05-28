@@ -4,8 +4,8 @@ import * as React from "react";
 
 import { BlockShell, useSlotContext } from "@nube/starter-ext-sdk-ts";
 
-import { EXTENSION_ID, type ExtensionDetail, type HistoriesSummaryRow } from "./types";
-import { fetchTemplate } from "./api";
+import { EXTENSION_ID, type ExtensionDetail } from "./types";
+import { fetchExtensionDetail } from "./detail";
 
 export default function Sidebar(): React.ReactElement {
   return (
@@ -18,25 +18,19 @@ export default function Sidebar(): React.ReactElement {
 function SidebarInner(): React.ReactElement {
   const slot = useSlotContext();
   const [detail, setDetail] = React.useState<ExtensionDetail | null>(null);
-  const [summary, setSummary] = React.useState<HistoriesSummaryRow | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
+  // The sidebar mounts on every authed route (the host's AppSidebar slot
+  // is global). Do not fire warehouse_query here — `histories_summary`
+  // is an expensive aggregation against the histories table and would
+  // run on `/`, `/devices`, `/flows`, etc., where it has no business
+  // being. The dashboard page itself shows live counts; the sidebar
+  // only surfaces version + a deep-link.
   React.useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
-        credentials: "same-origin",
-        headers: { accept: "application/json" },
-      }).then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return (await r.json()) as ExtensionDetail;
-      }),
-      fetchTemplate<HistoriesSummaryRow>(`${EXTENSION_ID}.histories_summary`, {}).catch(() => []),
-    ])
-      .then(([d, s]) => {
-        if (cancelled) return;
-        setDetail(d);
-        setSummary((s as HistoriesSummaryRow[])[0] ?? null);
+    fetchExtensionDetail()
+      .then((d) => {
+        if (!cancelled) setDetail(d);
       })
       .catch((e: unknown) => {
         if (!cancelled) setError(e instanceof Error ? e.message : String(e));
@@ -45,8 +39,6 @@ function SidebarInner(): React.ReactElement {
   }, []);
 
   const version = detail?.manifest?.version;
-  const samples = summary ? Number(summary.sample_count) : null;
-  const points = summary ? Number(summary.point_count) : null;
 
   return (
     <div
@@ -60,12 +52,7 @@ function SidebarInner(): React.ReactElement {
       </div>
       {error ? (
         <p role="alert" className="text-sm text-destructive mt-1">{error}</p>
-      ) : (
-        <div className="text-[0.65rem] text-muted-foreground mt-1 space-y-0.5">
-          <div>samples: <span className="tabular-nums text-foreground">{fmtInt(samples)}</span></div>
-          <div>points:  <span className="tabular-nums text-foreground">{fmtInt(points)}</span></div>
-        </div>
-      )}
+      ) : null}
       <a
         href={`/extensions/${EXTENSION_ID}`}
         className="text-xs text-primary hover:underline mt-2 inline-block"
@@ -74,8 +61,4 @@ function SidebarInner(): React.ReactElement {
       </a>
     </div>
   );
-}
-
-function fmtInt(v: number | null): string {
-  return v === null || !Number.isFinite(v) ? "—" : v.toLocaleString();
 }

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "MetersListParams",
+  "description": "Filter the points catalog down to a meter category. `kind` is one of the Rubix-OS point-tags ('elec', 'water'); `secondary_tag` further narrows to a specific channel (e.g. 'power', 'energy', 'usage', 'reading'). Empty string for `secondary_tag` disables that filter.",
+  "type": "object",
+  "properties": {
+    "kind":          { "type": "string", "enum": ["elec", "water"] },
+    "secondary_tag": { "type": "string", "default": "" },
+    "limit":         { "type": "integer", "minimum": 1, "maximum": 5000, "default": 1000 }
+  },
+  "required": ["kind"],
+  "additionalProperties": false
+}

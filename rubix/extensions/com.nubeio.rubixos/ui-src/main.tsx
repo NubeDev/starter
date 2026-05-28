@@ -31,7 +31,9 @@ import {
   type PointRow,
 } from "./types";
 import { fetchTemplate } from "./api";
+import { fetchExtensionDetail, invalidateExtensionDetail } from "./detail";
 import { HistoryLineChart } from "./chart";
+import { DashboardPage } from "./dashboard";
 
 export default function Main(): React.ReactElement {
   return (
@@ -47,7 +49,36 @@ function MainRouter(): React.ReactElement {
   if (route === "networks") return <NetworksPage />;
   if (route === "devices")  return <DevicesPage />;
   if (route === "history" || route?.startsWith("history/")) return <HistoryPage />;
+  if (route === "usage" || route?.startsWith("usage/")) return <UsagePage />;
   return <OverviewPage />;
+}
+
+/* ============================== Usage =============================== */
+
+// Thin wrapper that frames `<DashboardPage />` inside the same
+// `Page`/`Header` chrome the other routes use, so it inherits the
+// theme + slot data-attrs and the refresh affordance (no-op here
+// since the dashboard manages its own data lifecycle).
+function UsagePage(): React.ReactElement {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  return (
+    <Page
+      slot={slot.slotId}
+      theme={theme.mode}
+      header={
+        <div>
+          <h3 className="text-lg font-semibold tracking-tight">Energy &amp; Water Overview</h3>
+          <p className="text-sm text-muted-foreground">
+            {EXTENSION_ID}.meters_list · usage_site_totals · usage_bucketed
+          </p>
+        </div>
+      }
+      error={null}
+    >
+      <DashboardPage />
+    </Page>
+  );
 }
 
 /* ============================== Overview =============================== */
@@ -68,13 +99,7 @@ function OverviewPage(): React.ReactElement {
     setLoading(true);
     setError(null);
     Promise.all([
-      fetch(`/api/v1/extensions/${EXTENSION_ID}`, {
-        credentials: "same-origin",
-        headers: { accept: "application/json" },
-      }).then(async (r) => {
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
-        return (await r.json()) as ExtensionDetail;
-      }),
+      fetchExtensionDetail(),
       fetchTemplate<HistoriesSummaryRow>(`${EXTENSION_ID}.histories_summary`, {}),
       fetchTemplate<HostOverviewRow>(`${EXTENSION_ID}.hosts_overview`, { limit: 25 }),
     ])
@@ -103,7 +128,7 @@ function OverviewPage(): React.ReactElement {
         <Header
           subtitle="Nube-iO Rubix-OS BMS — devices · points · histories"
           version={detail?.manifest?.version}
-          onRefresh={() => setTick((t) => t + 1)}
+          onRefresh={() => { invalidateExtensionDetail(); setTick((t) => t + 1); }}
           loading={loading}
         />
       }

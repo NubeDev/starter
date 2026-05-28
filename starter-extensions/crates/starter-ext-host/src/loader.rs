@@ -86,9 +86,18 @@ impl Loader {
             let bundle_dir = entry.path();
             let dir_name = entry.file_name().to_string_lossy().into_owned();
             let manifest_path = bundle_dir.join("block.yaml");
+            // A directory without a `block.yaml` is **not a bundle**
+            // — silently skip it. This filters out incidental siblings
+            // (a stray `target/` cargo cache, `node_modules/`, `.git/`,
+            // a dev workspace's `Cargo.toml` toolbox, etc.) that would
+            // otherwise surface as bogus `Failed` extension records in
+            // `GET /extensions`. A *present* but unreadable/malformed
+            // manifest still produces a Failed record — that signals a
+            // real broken bundle the operator wants to see.
             let parsed = match fs::read_to_string(&manifest_path) {
                 Ok(s) => serde_yaml::from_str::<Manifest>(&s)
                     .map_err(|e| Error::manifest(format!("{}: {}", manifest_path.display(), e))),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => continue,
                 Err(e) => Err(Error::manifest(format!(
                     "{}: {}",
                     manifest_path.display(),
@@ -279,6 +288,28 @@ contributes:
         let tmp = tempdir().unwrap();
         let recs = Loader::scan(tmp.path()).validate_all();
         assert!(recs.is_empty());
+    }
+
+    /// Sibling directories without a `block.yaml` (a stray cargo
+    /// `target/`, `node_modules/`, `.git/`, etc.) must not surface as
+    /// `Failed` extension records — they are not bundles at all.
+    #[test]
+    fn directories_without_block_yaml_are_skipped() {
+        let tmp = tempdir().unwrap();
+        write_bundle(tmp.path(), "com.acme.good", GOOD);
+        // Cargo build-cache lookalike: a directory with arbitrary
+        // contents but no `block.yaml`.
+        let target = tmp.path().join("target");
+        std::fs::create_dir(&target).unwrap();
+        std::fs::write(target.join("CACHEDIR.TAG"), b"Signature: 8a477f597d28d172789f06886806bc55").unwrap();
+        std::fs::create_dir(target.join("release")).unwrap();
+        // `.git`-style hidden dir.
+        std::fs::create_dir(tmp.path().join(".dotdir")).unwrap();
+
+        let recs = Loader::scan(tmp.path()).validate_all();
+        assert_eq!(recs.len(), 1, "only the bundle with block.yaml is recorded");
+        assert!(recs[0].is_validated());
+        assert_eq!(recs[0].id_hint, "com.acme.good");
     }
 
     #[test]

@@ -81,7 +81,23 @@ impl RubixOsToolHandlers for RubixOs {
             .cloned()
             .unwrap_or_else(|| json!({}));
 
+        let started = std::time::Instant::now();
+        eprintln!("warehouse_query: template={template} starting");
         let rows = ctx.warehouse_read().query(&template, tpl_params)?;
+        let elapsed = started.elapsed();
+        if elapsed > std::time::Duration::from_millis(500) {
+            eprintln!(
+                "warehouse_query SLOW: template={template} elapsed_ms={} rows={}",
+                elapsed.as_millis(),
+                rows.len(),
+            );
+        } else {
+            eprintln!(
+                "warehouse_query: template={template} elapsed_ms={} rows={}",
+                elapsed.as_millis(),
+                rows.len(),
+            );
+        }
         let rows_json: Vec<Value> = rows.into_iter().map(|r| Value::Object(r.0)).collect();
         let count = rows_json.len();
 

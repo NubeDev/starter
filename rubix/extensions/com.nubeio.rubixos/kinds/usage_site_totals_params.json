@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "UsageSiteTotalsParams",
+  "description": "Per-host aggregate over an arbitrary set of meter point_uuids and a time window. `point_uuids` is a comma-separated string of point UUIDs (the warehouse template bridge binds JSON arrays as TEXT).",
+  "type": "object",
+  "properties": {
+    "point_uuids": { "type": "string", "minLength": 1 },
+    "from":        { "type": "string", "format": "date-time" },
+    "to":          { "type": "string", "format": "date-time" }
+  },
+  "required": ["point_uuids", "from", "to"],
+  "additionalProperties": false
+}

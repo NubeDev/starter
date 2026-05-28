@@ -159,6 +159,20 @@ export async function bootstrapExtensions(
         throw new Error(`GET ${basePath}/${sum.id} failed: ${detailRes.status}`);
       }
       const detail = (await detailRes.json()) as BootstrapExtensionDetail;
+      // Publish the detail payload on a window-scoped cache so that the
+      // extension bundle's own `fetchExtensionDetail()` helpers (which
+      // run in a separate JS module scope and therefore can't see this
+      // function's locals) can read it without re-fetching the same
+      // endpoint. Keyed by extension id. The bundle is responsible for
+      // checking the cache before making a network request.
+      if (typeof globalThis !== "undefined") {
+        const g = globalThis as unknown as {
+          __starterExtensionDetailCache__?: Record<string, unknown>;
+        };
+        const bag = g.__starterExtensionDetailCache__ ?? {};
+        bag[sum.id] = detail;
+        g.__starterExtensionDetailCache__ = bag;
+      }
       const ui = detail.manifest?.contributes?.ui;
       if (!ui || !ui.entry) {
         result.skippedNoUi += 1;

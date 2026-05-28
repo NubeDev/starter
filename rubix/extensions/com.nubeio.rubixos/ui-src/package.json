@@ -20,6 +20,9 @@
   },
   "dependencies": {
     "@nube/starter-ext-sdk-ts": "workspace:*",
-    "clsx": "^2.1.1"
+    "clsx": "^2.1.1",
+    "maplibre-gl": "^4.7.1",
+    "react-map-gl": "^7.1.7",
+    "uplot": "^1.6.31"
   }
 }

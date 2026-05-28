@@ -1,1 +1,93 @@
 @import "tailwindcss";
+
+/* ---------------------------------------------------------------
+ * Energy & Water dashboard styling — glassmorphism, soft glow,
+ * teal accents. Designed for both light and dark host themes
+ * (the host swaps the `--background` / `--foreground` tokens via
+ * `dark` class on <html>).
+ * --------------------------------------------------------------- */
+
+/* Page shell — subtle radial wash. Sits behind the cards so the
+ * glass blur picks up real color. Strong enough to read as
+ * "dashboard" without competing with the data. */
+.ext-dash-shell {
+  position: relative;
+  isolation: isolate;
+}
+.ext-dash-shell::before {
+  content: "";
+  position: absolute;
+  inset: -20% -10% auto -10%;
+  height: 50%;
+  pointer-events: none;
+  z-index: -1;
+  background:
+    radial-gradient(60% 60% at 20% 0%, rgba(45, 212, 191, 0.18), transparent 70%),
+    radial-gradient(50% 60% at 95% 10%, rgba(99, 102, 241, 0.16), transparent 70%);
+  filter: blur(20px);
+}
+:root.dark .ext-dash-shell::before {
+  background:
+    radial-gradient(60% 60% at 20% 0%, rgba(45, 212, 191, 0.22), transparent 70%),
+    radial-gradient(50% 60% at 95% 10%, rgba(99, 102, 241, 0.20), transparent 70%);
+}
+
+/* Glass card primitive. Backdrop-blur + thin gradient border.
+ * Adapts to host theme: light bg becomes near-white frost, dark
+ * bg becomes near-black frost. */
+.ext-glass {
+  position: relative;
+  border-radius: 14px;
+  background: color-mix(in oklab, var(--color-card, white) 75%, transparent);
+  backdrop-filter: blur(14px) saturate(140%);
+  -webkit-backdrop-filter: blur(14px) saturate(140%);
+  border: 1px solid color-mix(in oklab, var(--color-border, rgba(0,0,0,0.1)) 70%, transparent);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.05) inset,
+    0 8px 24px -8px rgba(15, 23, 42, 0.15);
+}
+:root.dark .ext-glass {
+  background: color-mix(in oklab, var(--color-card, #0f172a) 70%, transparent);
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.04) inset,
+    0 12px 40px -12px rgba(0, 0, 0, 0.55);
+}
+
+/* "Hot" highlight border for the currently selected tile / pill. */
+.ext-glass--accent {
+  border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent),
+    0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);
+}
+
+/* Soft uppercase eyebrow label used throughout the dashboard. */
+.ext-eyebrow {
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);
+}
+
+/* Tabular numerals for KPI numbers. */
+.ext-num { font-variant-numeric: tabular-nums; }
+
+/* Map marker pulse animation. */
+@keyframes ext-site-pulse {
+  0%   { transform: scale(0.6); opacity: 0.9; }
+  80%  { transform: scale(1.6); opacity: 0; }
+  100% { transform: scale(1.6); opacity: 0; }
+}
+.site-pulse--on  { animation: ext-site-pulse 1.8s ease-out infinite; }
+.site-pulse--off { opacity: 0.35; }
+
+/* Respect users that prefer no motion. */
+@media (prefers-reduced-motion: reduce) {
+  .site-pulse--on { animation: none; opacity: 0.55; }
+}
+
+/* uPlot tweaks — make it inherit the dashboard's monochrome look. */
+.uplot { font-family: inherit; }
+.uplot .u-legend { font-size: 11px; color: var(--color-foreground); }
+.uplot .u-legend .u-marker { width: 10px; height: 10px; border-radius: 2px; }
+

@@ -70,7 +70,10 @@ describe("useEventStream", () => {
       screen.getByText("reconnect").click();
     });
     await waitFor(() => expect(MockEventSource.instances.length).toBe(2));
-    expect(first.closed).toBe(true);
+    // The shared-store cache defers teardown by 100ms so React StrictMode
+    // and route transitions don't reopen the connection between
+    // unmount/remount; wait that out before asserting close.
+    await waitFor(() => expect(first.closed).toBe(true), { timeout: 500 });
   });
 
   it("cleans up on unmount", async () => {
@@ -78,6 +81,6 @@ describe("useEventStream", () => {
     await waitFor(() => expect(MockEventSource.instances.length).toBe(1));
     const es = MockEventSource.instances[0]!;
     unmount();
-    expect(es.closed).toBe(true);
+    await waitFor(() => expect(es.closed).toBe(true), { timeout: 500 });
   });
 });
