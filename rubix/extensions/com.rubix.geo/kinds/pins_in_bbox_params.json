@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pins_in_bbox params",
+  "type": "object",
+  "required": ["min_lng", "min_lat", "max_lng", "max_lat"],
+  "properties": {
+    "min_lng": { "type": "number", "minimum": -180, "maximum": 180 },
+    "min_lat": { "type": "number", "minimum":  -90, "maximum":  90 },
+    "max_lng": { "type": "number", "minimum": -180, "maximum": 180 },
+    "max_lat": { "type": "number", "minimum":  -90, "maximum":  90 },
+    "limit":   { "type": "integer", "minimum": 1, "maximum": 10000, "default": 2000 }
+  },
+  "additionalProperties": false
+}

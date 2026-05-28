@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pin write output",
+  "type": "object",
+  "required": ["operation", "affected"],
+  "properties": {
+    "operation": { "type": "string", "enum": ["create", "update", "delete"] },
+    "affected":  { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

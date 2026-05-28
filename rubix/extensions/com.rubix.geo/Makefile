@@ -1,10 +1,6 @@
-# `com.nubeio.rubixos` — extension build & load Makefile. Mirrors
-# `com.rubix.example/Makefile`; see that file's comments for the
-# full agent boot/restart/test flow.
-
 SHELL          := /bin/bash
-EXT_ID         := com.nubeio.rubixos
-BIN_NAME       := rubix-nubeio-rubixos-extension
+EXT_ID         := com.rubix.geo
+BIN_NAME       := rubix-geo-extension
 BUNDLE_DIR     := $(CURDIR)
 WORKSPACE_DIR  := $(abspath $(BUNDLE_DIR)/..)
 REPO_ROOT      := $(abspath $(WORKSPACE_DIR)/../..)
@@ -22,35 +18,16 @@ ADMIN_PASSWORD ?= rubix-dev-passwd
 COOKIE_JAR     ?= /tmp/$(EXT_ID).cookies
 LOGIN_JSON     ?= /tmp/$(EXT_ID).login.json
 
-UI_SRC_DIR     := $(BUNDLE_DIR)/ui-src
-
-# pg dump loader knobs. Default container is the rubix-postgres
-# service from `rubix/docker/`. Override with `make load-dump
-# CONTAINER=… DUMP=…`.
-DUMP           ?= /home/user/Documents/db.dump
-CONTAINER      ?=
-TENANT_ID      ?= *
-
-.PHONY: all build install uninstall load test status logs clean help \
-        ui-build ui-dev load-dump
+.PHONY: all build install uninstall load test status logs clean help
 
 help:
 	@echo "$(EXT_ID) — make targets:"
-	@echo "  make build      compile the extension binary (release)"
-	@echo "  make install    copy built binary into bundle dir"
-	@echo "  make ui-build   vite build → ui/remoteEntry.js"
-	@echo "  make load       restart rubix-agent to pick up changes"
-	@echo "  make all        ui-build + build + install + load + test"
-	@echo "  make test       authenticate + GET /api/v1/extensions/$(EXT_ID)"
-	@echo "  make load-dump  pg_restore + ingest dump into com_nubeio_rubixos__* tables"
-	@echo "                    DUMP=$(DUMP)  CONTAINER=…  TENANT_ID=$(TENANT_ID)"
-
-ui-build:
-	@echo "==> vite build → ui/remoteEntry.js"
-	cd $(UI_SRC_DIR) && pnpm run build
-
-ui-dev:
-	cd $(UI_SRC_DIR) && pnpm run dev
+	@echo "  make build     compile the extension binary (release)"
+	@echo "  make install   copy built binary into bundle dir"
+	@echo "  make load      restart rubix-agent to pick up changes"
+	@echo "  make test      authenticate + GET /api/v1/extensions/$(EXT_ID)"
+	@echo "  make status    compact state summary"
+	@echo "  make all       build + install + load + test"
 
 build:
 	@echo "==> cargo build -p $(BIN_NAME) (release, target=$(CARGO_TARGET_DIR))"
@@ -65,7 +42,11 @@ install: build
 	@ls -lh $(INSTALLED_BIN)
 
 uninstall:
-	@if [[ -e $(INSTALLED_BIN) ]]; then rm -f $(INSTALLED_BIN); fi
+	@if [[ -e $(INSTALLED_BIN) ]]; then \
+	    echo "==> rm $(INSTALLED_BIN)"; rm -f $(INSTALLED_BIN); \
+	else \
+	    echo "    no installed binary at $(INSTALLED_BIN)"; \
+	fi
 
 load:
 	@echo "==> make -C $(REPO_ROOT)/rubix restart"
@@ -84,16 +65,22 @@ load:
 test:
 	@command -v jq  >/dev/null || { echo "test target needs jq";  exit 1; }
 	@command -v curl >/dev/null || { echo "test target needs curl"; exit 1; }
-	@echo "==> login"
+	@echo "==> POST $(AGENT_BASE)/api/v1/auth/login"
 	@curl -sS -c $(COOKIE_JAR) -H 'content-type: application/json' \
 	    -d '{"email":"$(ADMIN_EMAIL)","password":"$(ADMIN_PASSWORD)"}' \
 	    $(AGENT_BASE)/api/v1/auth/login > $(LOGIN_JSON)
-	@echo "==> GET $(AGENT_BASE)/api/v1/extensions/$(EXT_ID)"
+	@if ! jq -e '.csrf_token // .session_id // .principal' $(LOGIN_JSON) >/dev/null 2>&1; then \
+	    echo "login failed; response:"; cat $(LOGIN_JSON); exit 1; \
+	fi
+	@echo "    login ok"
+	@echo
+	@echo "==> GET  $(AGENT_BASE)/api/v1/extensions/$(EXT_ID)"
 	@curl -sS -b $(COOKIE_JAR) -H 'accept: application/json' \
 	    $(AGENT_BASE)/api/v1/extensions/$(EXT_ID) \
 	    | jq '{id, state, enabled, version: .manifest.version, contributes: {tools: (.manifest.contributes.tools // [] | map(.id)), tables: (.manifest.contributes.warehouse_tables // [] | map(.name)), templates: (.manifest.contributes.warehouse_templates // [] | map(.name)), ui_slots: (.manifest.contributes.ui.exposes // [] | map(.slot))}}'
 
 status:
+	@command -v jq >/dev/null || { echo "status target needs jq"; exit 1; }
 	@curl -sS -c $(COOKIE_JAR) -H 'content-type: application/json' \
 	    -d '{"email":"$(ADMIN_EMAIL)","password":"$(ADMIN_PASSWORD)"}' \
 	    $(AGENT_BASE)/api/v1/auth/login >/dev/null
@@ -105,24 +92,8 @@ logs:
 	@tail -F /tmp/rubix-agent.log
 
 clean: uninstall
+	@echo "==> cargo clean -p $(BIN_NAME)"
 	cd $(WORKSPACE_DIR) && CARGO_TARGET_DIR='$(CARGO_TARGET_DIR)' \
 	    cargo clean -p $(BIN_NAME) || true
 
-all: ui-build build install load test
-
-# pg_restore + INSERT...SELECT into com_nubeio_rubixos__*. Auto-
-# detects the rubix-postgres container if CONTAINER is unset.
-load-dump:
-	@if [[ -z "$(CONTAINER)" ]]; then \
-	    CONTAINER=$$(docker ps --format '{{.ID}} {{.Image}}' | awk '/postgres|timescale/ {print $$1; exit}'); \
-	    if [[ -z "$$CONTAINER" ]]; then \
-	        echo "no postgres/timescale container detected — pass CONTAINER=<id>"; exit 1; \
-	    fi; \
-	else \
-	    CONTAINER='$(CONTAINER)'; \
-	fi; \
-	echo "==> CONTAINER=$$CONTAINER  DUMP=$(DUMP)  TENANT_ID=$(TENANT_ID)"; \
-	$(BUNDLE_DIR)/scripts/load-dump.sh \
-	    --dump '$(DUMP)' \
-	    --container "$$CONTAINER" \
-	    --tenant-id '$(TENANT_ID)'
+all: build install load test

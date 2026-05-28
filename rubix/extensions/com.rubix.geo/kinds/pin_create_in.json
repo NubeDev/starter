@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pin_create input",
+  "type": "object",
+  "required": ["row"],
+  "properties": {
+    "row": {
+      "type": "object",
+      "required": ["pin_id", "lng", "lat"],
+      "properties": {
+        "pin_id":        { "type": "string", "minLength": 1 },
+        "layer_id":      { "type": ["string", "null"] },
+        "name":          { "type": ["string", "null"] },
+        "description":   { "type": ["string", "null"] },
+        "lng":           { "type": "number", "minimum": -180, "maximum": 180 },
+        "lat":           { "type": "number", "minimum":  -90, "maximum":  90 },
+        "geometry_type": { "type": ["string", "null"], "enum": ["Point", "LineString", "Polygon", null] },
+        "geometry":      { "type": ["object", "null"] },
+        "icon":          { "type": ["string", "null"] },
+        "color":         { "type": ["string", "null"] },
+        "actions":       { "type": ["array",  "null"] },
+        "props":         { "type": ["object", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

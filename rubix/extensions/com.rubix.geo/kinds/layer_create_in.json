@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "layer_create input",
+  "type": "object",
+  "required": ["row"],
+  "properties": {
+    "row": {
+      "type": "object",
+      "required": ["layer_id", "name"],
+      "properties": {
+        "layer_id":    { "type": "string", "minLength": 1 },
+        "name":        { "type": "string", "minLength": 1 },
+        "description": { "type": ["string", "null"] },
+        "style_url":   { "type": ["string", "null"] },
+        "visible":     { "type": ["boolean", "null"] },
+        "min_zoom":    { "type": ["integer", "null"], "minimum": 0, "maximum": 24 },
+        "max_zoom":    { "type": ["integer", "null"], "minimum": 0, "maximum": 24 },
+        "color":       { "type": ["string", "null"] },
+        "cluster":     { "type": ["boolean", "null"] },
+        "sort_order":  { "type": ["integer", "null"] }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

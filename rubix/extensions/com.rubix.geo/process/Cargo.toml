@@ -1,0 +1,20 @@
+# `com.rubix.geo` — process flavour. See sibling
+# `com.rubix.example/process/Cargo.toml` for the rationale (member of
+# `rubix/extensions/` workspace, path-dep on `starter-ext-sdk`, SCOPE
+# R2 / R8 compliance).
+
+[package]
+name        = "rubix-geo-extension"
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+publish.workspace      = true
+rust-version.workspace = true
+
+[[bin]]
+name = "rubix-geo-extension"
+path = "src/main.rs"
+
+[dependencies]
+starter-ext-sdk = { path = "../../../../starter-extensions/crates/starter-ext-sdk", default-features = false, features = ["process"] }
+tokio = { version = "1", default-features = false, features = ["rt", "macros", "io-std", "io-util", "time"] }

@@ -1,0 +1,59 @@
+@import "tailwindcss" layer(utilities) no-preflight;
+
+@theme reference {
+  --color-background: initial;
+  --color-foreground: initial;
+  --color-card: initial;
+  --color-card-foreground: initial;
+  --color-popover: initial;
+  --color-popover-foreground: initial;
+  --color-primary: initial;
+  --color-primary-foreground: initial;
+  --color-secondary: initial;
+  --color-secondary-foreground: initial;
+  --color-muted: initial;
+  --color-muted-foreground: initial;
+  --color-accent: initial;
+  --color-accent-foreground: initial;
+  --color-destructive: initial;
+  --color-border: initial;
+  --color-input: initial;
+  --color-ring: initial;
+  --color-sidebar: initial;
+  --color-sidebar-foreground: initial;
+  --color-sidebar-primary: initial;
+  --color-sidebar-primary-foreground: initial;
+  --color-sidebar-accent: initial;
+  --color-sidebar-accent-foreground: initial;
+  --color-sidebar-border: initial;
+  --color-sidebar-ring: initial;
+
+  --color-bg: initial;
+  --color-bg-2: initial;
+  --color-surface: initial;
+  --color-surface-2: initial;
+  --color-text: initial;
+  --color-subtle: initial;
+  --color-leaf: initial;
+  --color-leaf-2: initial;
+  --color-moss: initial;
+  --color-lime: initial;
+  --color-aqua: initial;
+  --color-aqua-2: initial;
+  --color-mist: initial;
+  --color-sky: initial;
+  --color-sun: initial;
+  --color-ok: initial;
+  --color-warn: initial;
+  --color-danger: initial;
+
+  --radius-sm: initial;
+  --radius-md: initial;
+  --radius-lg: initial;
+  --radius-xl: initial;
+  --radius-2xl: initial;
+  --radius-3xl: initial;
+
+  --font-sans: initial;
+  --font-mono: initial;
+}

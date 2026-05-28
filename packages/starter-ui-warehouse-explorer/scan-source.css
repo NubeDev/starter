@@ -1,0 +1,17 @@
+/* Tailwind v4 source-scanning shim for `@nube/starter-ui-warehouse-explorer`.
+ *
+ * Tailwind v4 skips `node_modules` by default, so without an `@source`
+ * directive the responsive utilities used inside this package (e.g.
+ * `lg:flex-row`, `lg:w-72`, `lg:sticky`) are never generated and the
+ * tables sidebar collapses to a full-width stack with no warning.
+ *
+ * Consumers should `@import` this file once from their main Tailwind
+ * stylesheet, after `@import "tailwindcss";`:
+ *
+ *   @import "tailwindcss";
+ *   @import "@nube/starter-ui-warehouse-explorer/scan-source.css";
+ *
+ * The path resolves relative to this file inside the package root, so
+ * `"."` scans all source files in the package.
+ */
+@source ".";

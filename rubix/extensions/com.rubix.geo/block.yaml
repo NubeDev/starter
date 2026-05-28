@@ -1,0 +1,129 @@
+# com.rubix.geo — generic map/pin extension.
+#
+# Stores pins + layers in two extension-owned warehouse tables and
+# renders them on a MapLibre map. Pins carry an `actions` JSONB
+# column — each action is either a warehouse_query (named template)
+# or an MCP tool call (any tool id the operator is allowed to call)
+# or a URL deep-link. The UI resolves actions client-side against
+# the existing /api/v1/tools/* endpoints, so the host's audit /
+# tenant / capability gates apply uniformly.
+#
+# See SCOPE R8: this block depends ONLY on `starter-ext-sdk`.
+
+id: com.rubix.geo
+v: 1
+version: 0.1.0
+display_name: Rubix Geo
+runtime:
+  kind: process
+  bin: rubix-geo-extension
+
+capabilities:
+  - kind: warehouse_write
+    tables: [pins, map_layers]
+  - kind: warehouse_read
+    tables:
+      - com_rubix_geo__pins
+      - com_rubix_geo__map_layers
+
+contributes:
+  tools:
+    # Thin proxy over ctx.warehouse_read().query() for the UI.
+    # Refuses any template outside the `com.rubix.geo.*` namespace.
+    - id: com.rubix.geo.warehouse_query
+      input_schema: kinds/warehouse_query_in.json
+      output_schema: kinds/warehouse_query_out.json
+      description_file: kinds/warehouse_query.md
+
+    # Pin CRUD.
+    - id: com.rubix.geo.pin_create
+      input_schema: kinds/pin_create_in.json
+      output_schema: kinds/pin_write_out.json
+      description_file: kinds/pin_crud.md
+    - id: com.rubix.geo.pin_update
+      input_schema: kinds/pin_update_in.json
+      output_schema: kinds/pin_write_out.json
+      description_file: kinds/pin_crud.md
+    - id: com.rubix.geo.pin_delete
+      input_schema: kinds/pin_delete_in.json
+      output_schema: kinds/pin_write_out.json
+      description_file: kinds/pin_crud.md
+
+    # Layer CRUD.
+    - id: com.rubix.geo.layer_create
+      input_schema: kinds/layer_create_in.json
+      output_schema: kinds/layer_write_out.json
+      description_file: kinds/layer_crud.md
+    - id: com.rubix.geo.layer_update
+      input_schema: kinds/layer_update_in.json
+      output_schema: kinds/layer_write_out.json
+      description_file: kinds/layer_crud.md
+    - id: com.rubix.geo.layer_delete
+      input_schema: kinds/layer_delete_in.json
+      output_schema: kinds/layer_write_out.json
+      description_file: kinds/layer_crud.md
+
+  warehouse_tables:
+    - name: pins
+      order_by: [pin_id]
+      columns:
+        - { name: pin_id,        type: "TEXT" }
+        - { name: layer_id,      type: "TEXT",             default: "NULL" }
+        - { name: name,          type: "TEXT",             default: "NULL" }
+        - { name: description,   type: "TEXT",             default: "NULL" }
+        - { name: lng,           type: "DOUBLE PRECISION" }
+        - { name: lat,           type: "DOUBLE PRECISION" }
+        - { name: geometry_type, type: "TEXT",             default: "'Point'" }
+        - { name: geometry,      type: "JSONB",            default: "NULL" }
+        - { name: icon,          type: "TEXT",             default: "NULL" }
+        - { name: color,         type: "TEXT",             default: "NULL" }
+        - { name: actions,       type: "JSONB",            default: "'[]'::jsonb" }
+        - { name: props,         type: "JSONB",            default: "'{}'::jsonb" }
+        - { name: created_at,    type: "TIMESTAMPTZ",      default: "now()" }
+        - { name: updated_at,    type: "TIMESTAMPTZ",      default: "now()" }
+
+    - name: map_layers
+      order_by: [layer_id]
+      columns:
+        - { name: layer_id,    type: "TEXT" }
+        - { name: name,        type: "TEXT" }
+        - { name: description, type: "TEXT",        default: "NULL" }
+        - { name: style_url,   type: "TEXT",        default: "NULL" }
+        - { name: visible,     type: "BOOLEAN",     default: "TRUE" }
+        - { name: min_zoom,    type: "INTEGER",     default: "NULL" }
+        - { name: max_zoom,    type: "INTEGER",     default: "NULL" }
+        - { name: color,       type: "TEXT",        default: "NULL" }
+        - { name: cluster,     type: "BOOLEAN",     default: "TRUE" }
+        - { name: sort_order,  type: "INTEGER",     default: "0" }
+        - { name: created_at,  type: "TIMESTAMPTZ", default: "now()" }
+
+  warehouse_templates:
+    - name: com.rubix.geo.pins_list
+      params_schema: kinds/pins_list_params.json
+      sql_file: kinds/pins_list.sql
+      tables: [com_rubix_geo__pins]
+    - name: com.rubix.geo.pins_by_layer
+      params_schema: kinds/pins_by_layer_params.json
+      sql_file: kinds/pins_by_layer.sql
+      tables: [com_rubix_geo__pins]
+    - name: com.rubix.geo.pins_in_bbox
+      params_schema: kinds/pins_in_bbox_params.json
+      sql_file: kinds/pins_in_bbox.sql
+      tables: [com_rubix_geo__pins]
+    - name: com.rubix.geo.layers_list
+      params_schema: kinds/layers_list_params.json
+      sql_file: kinds/layers_list.sql
+      tables: [com_rubix_geo__map_layers]
+
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - name: Main
+        module: "./Main"
+        slot: main
+      - name: NavTree
+        module: "./NavTree"
+        slot: sidebar-nav
+      - name: Sidebar
+        module: "./Sidebar"
+        slot: sidebar

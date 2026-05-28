@@ -33,5 +33,5 @@ __pycache__/
 coverage/
 test-ui
 rubix/frontend/.tanstack/tmp/
-rubix/extensions/com.rubix.example/rubix-example-extension
+.playwright-cli/
 rubix/.playwright-cli

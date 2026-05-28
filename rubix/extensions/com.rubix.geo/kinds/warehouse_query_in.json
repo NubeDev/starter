@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "warehouse_query input",
+  "type": "object",
+  "required": ["template"],
+  "properties": {
+    "template": { "type": "string", "pattern": "^com\\.rubix\\.geo\\." },
+    "params":   { "type": "object", "additionalProperties": true, "default": {} }
+  },
+  "additionalProperties": false
+}

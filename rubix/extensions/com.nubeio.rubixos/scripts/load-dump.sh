@@ -22,8 +22,9 @@
 #      `public` (where rubix-native tables live).
 #   4. Bulk `INSERT … SELECT` from `rubixos_import.<table>` into
 #      `com_nubeio_rubixos__<table>`, stamping `tenant_id`
-#      (defaults to 'system' — matches the bundled-dashboards
-#      sentinel; pass `--tenant-id <id>` to override).
+#      (defaults to '*' — matches a fresh dev session whose
+#      login is bound to the wildcard tenant; pass
+#      `--tenant-id <id>` to load under a specific tenant).
 #   5. (Optional) `--drop-staging` removes `rubixos_import` after
 #      ingest so it doesn't sit around eating disk.
 #
@@ -37,7 +38,7 @@
 #   ./load-dump.sh \
 #       --dump /home/user/Documents/db.dump \
 #       --container <pg-container-id>                       \
-#       [--tenant-id system]                                \
+#       [--tenant-id *]                                    \
 #       [--db rubix] [--user rubix]                         \
 #       [--drop-staging]
 #
@@ -49,7 +50,7 @@ set -euo pipefail
 
 DUMP=""
 CONTAINER=""
-TENANT_ID="system"
+TENANT_ID="*"
 DB="rubix"
 USER="rubix"
 NO_DOCKER=0
@@ -163,18 +164,35 @@ echo "==> pg_restore source dump into $STAGING_SCHEMA (this can take a few minut
 # psql.
 RESTORE_LIST_HOST="/tmp/com.nubeio.rubixos.restore.list"
 # pg_restore -l output (custom format) looks like:
-#   210; 1259 16846 TABLE public histories rubix
-#   4015; 0 16846 TABLE DATA public histories rubix
-# Fields: $4 = TABLE, $5 = ("-"|"DATA"), $6 = schema. Keep only
-# those two entry types, restricted to schema `public`.
+#   272; 1259 17951 TABLE public histories postgres
+#   7978; 0 17951 TABLE DATA public histories postgres
+# Two shapes. For TABLE entries the schema is in field 5; for
+# TABLE DATA entries field 5 is the literal "DATA" and the schema
+# is in field 6.
+#
+# We keep:
+#   - everything in schema `public` (regular tables + their data)
+#   - all `_hyper_1_*_chunk` tables + data in `_timescaledb_internal`
+#     — these are the per-time-range partitions of the source's
+#     `histories` hypertable. The parent `public.histories` table
+#     is empty in the dump; the rows live in these chunks.
+#
+# Both schemas are sed-rewritten to ${STAGING_SCHEMA} so the
+# restore lands in one flat staging schema.
 filter_toc() {
-    awk '$4 == "TABLE" && ($5 == "-" || $5 == "DATA") && $6 == "public" { print }'
+    awk '
+        $4 == "TABLE" && $5 == "public"                       { print; next }
+        $4 == "TABLE" && $5 == "DATA" && $6 == "public"       { print; next }
+        $4 == "TABLE" && $5 == "_timescaledb_internal" && $6 ~ /^_hyper_1_[0-9]+_chunk$/  { print; next }
+        $4 == "TABLE" && $5 == "DATA" && $6 == "_timescaledb_internal" && $7 ~ /^_hyper_1_[0-9]+_chunk$/ { print; next }
+    '
 }
 if [[ "$NO_DOCKER" -eq 1 ]]; then
     pg_restore -l "$DUMP" | filter_toc > "$RESTORE_LIST_HOST"
     echo "    TOC entries kept: $(wc -l < "$RESTORE_LIST_HOST")"
     pg_restore --no-owner --no-acl -L "$RESTORE_LIST_HOST" -f - "$DUMP" \
       | sed -E -e "s/public\\./${STAGING_SCHEMA}./g" \
+              -e "s/_timescaledb_internal\\./${STAGING_SCHEMA}./g" \
               -e "/^SET (default_table_access_method|search_path)/d" \
       | "${PSQL[@]}" >/dev/null
 else
@@ -186,6 +204,7 @@ else
     docker exec -i "$CONTAINER" pg_restore --no-owner --no-acl \
         -L "$RESTORE_LIST_PG" -f - "$DUMP_PATH_IN_PG" \
       | sed -E -e "s/public\\./${STAGING_SCHEMA}./g" \
+              -e "s/_timescaledb_internal\\./${STAGING_SCHEMA}./g" \
               -e "/^SET (default_table_access_method|search_path)/d" \
       | "${PSQL[@]}" >/dev/null
 fi
@@ -218,12 +237,35 @@ ingest network_meta_tags   network_meta_tags   "host_uuid, network_uuid, key, va
 ingest point_tags          point_tags          "host_uuid, point_uuid, tag"           "host_uuid, point_uuid, tag"
 ingest point_meta_tags     point_meta_tags     "host_uuid, point_uuid, key, value"    "host_uuid, point_uuid, key, value"
 
-# Histories last — by far the largest table. The `INSERT ... SELECT`
-# streams through PG's executor (no client-side round-trip) so the
-# only bottleneck is hypertable chunk creation.
-ingest histories histories \
-    "point_uuid, host_uuid, value, \"timestamp\""              \
-    "point_uuid, host_uuid, value, \"timestamp\""
+# Histories last — by far the largest table. In the source dump
+# `public.histories` is the empty hypertable parent; the rows live
+# in `_timescaledb_internal._hyper_1_*_chunk` partitions which the
+# pg_restore step landed in the staging schema under the same
+# `_hyper_1_*_chunk` names. Truncate the destination once, then
+# stream each chunk's rows into the hypertable in a single
+# `INSERT … SELECT`. Per-chunk loop avoids one giant transaction
+# and gives readable progress.
+echo "    histories -> com_nubeio_rubixos__histories  (chunked)"
+psql_run "DELETE FROM public.${EXT_TABLE_PREFIX}histories WHERE tenant_id = '$TENANT_ID'"
+CHUNKS=$(psql_one "SELECT tablename FROM pg_tables
+                   WHERE schemaname='$STAGING_SCHEMA'
+                     AND tablename ~ '^_hyper_1_[0-9]+_chunk$'
+                   ORDER BY tablename")
+CHUNK_COUNT=$(echo "$CHUNKS" | grep -c .) || true
+echo "      $CHUNK_COUNT chunks to stream"
+i=0
+for chunk in $CHUNKS; do
+    i=$((i+1))
+    rows=$(psql_one "
+        WITH ins AS (
+            INSERT INTO public.${EXT_TABLE_PREFIX}histories
+                (tenant_id, point_uuid, host_uuid, value, \"timestamp\")
+            SELECT '$TENANT_ID', point_uuid, host_uuid, value, \"timestamp\"
+            FROM $STAGING_SCHEMA.\"$chunk\"
+            RETURNING 1
+        ) SELECT count(*) FROM ins")
+    printf "      [%3d/%3d] %-32s  %10s rows\n" "$i" "$CHUNK_COUNT" "$chunk" "$rows"
+done
 
 echo "==> ANALYZE for fresh planner stats"
 psql_run "ANALYZE public.${EXT_TABLE_PREFIX}histories"

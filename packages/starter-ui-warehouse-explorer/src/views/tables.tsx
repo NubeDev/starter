@@ -10,6 +10,8 @@ import "react-data-grid/lib/styles.css";
 
 import { useState } from "react";
 import {
+  ChevronDown,
+  ChevronRight,
   Download,
   FileJson,
   FileText,
@@ -56,9 +58,26 @@ import {
 import { InfoCard, InfoCardProps } from "../components/info-card";
 import type { Query as QueryResult, Table as TableMeta } from "../api";
 
+// Derive a namespace group label from a table name.
+// Double-underscore acts as a namespace separator (e.g. `com_acme__orders` → `com_acme`).
+// Leading-underscore tables (migration internals) are grouped by their first two segments.
+// Plain names with a single underscore group by the first segment; bare names stand alone.
+function tableGroup(name: string): string {
+  const dbl = name.indexOf("__");
+  if (dbl > 0) return name.slice(0, dbl);
+  if (name.startsWith("_")) {
+    const parts = name.split("_").filter(Boolean);
+    return "_" + parts.slice(0, 2).join("_");
+  }
+  const under = name.indexOf("_");
+  return under > 0 ? name.slice(0, under) : name;
+}
+
 export function Tables() {
   const [selected, setSelected] = useState<string | undefined>(undefined);
   const [filter, setFilter] = useState("");
+  // Track which groups are collapsed; all start open.
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
   const { data } = useWarehouseTables();
 
   if (!data) return <TablesSkeleton />;
@@ -74,9 +93,6 @@ export function Tables() {
       </Card>
     );
 
-  // Filter case-insensitively. Even when the filter hides the currently
-  // selected table we keep showing its detail panel — clearing the
-  // filter brings it back into the list without losing context.
   const needle = filter.trim().toLowerCase();
   const filtered = needle
     ? data.tables.filter((t) => t.name.toLowerCase().includes(needle))
@@ -87,13 +103,31 @@ export function Tables() {
       ? selected
       : filtered[0]?.name) ?? data.tables[0].name;
 
+  // Build ordered group map: preserve the order groups first appear.
+  const groupMap = new Map<string, typeof filtered>();
+  for (const t of filtered) {
+    const g = tableGroup(t.name);
+    if (!groupMap.has(g)) groupMap.set(g, []);
+    groupMap.get(g)!.push(t);
+  }
+  // Only show groups if there are multiple distinct ones and no active filter.
+  const useGroups = !needle && groupMap.size > 1;
+
+  function toggleGroup(g: string) {
+    setCollapsed((prev) => {
+      const next = new Set(prev);
+      next.has(g) ? next.delete(g) : next.add(g);
+      return next;
+    });
+  }
+
   return (
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
-      {/* Left rail — searchable vertical list. Sticky on desktop so it
-       * stays in view while the detail panel scrolls. Collapses to a
-       * full-width strip on small viewports. */}
-      <aside className="flex w-full shrink-0 flex-col gap-2 lg:sticky lg:top-20 lg:max-h-[calc(100vh-6rem)] lg:w-72">
-        <div className="relative">
+      {/* Left rail — searchable vertical list. Fixed height at every
+       * viewport so it always scrolls independently of the detail panel. */}
+      <aside className="flex w-full shrink-0 flex-col gap-2 lg:sticky lg:top-16 lg:w-72"
+             style={{ height: "calc(100vh - 8rem)" }}>
+        <div className="relative shrink-0">
           <Search
             className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
             aria-hidden="true"
@@ -110,54 +144,112 @@ export function Tables() {
         <div
           role="listbox"
           aria-label="Tables"
-          className="flex min-h-0 flex-1 flex-col overflow-y-auto rounded-md border bg-card"
+          className="min-h-0 flex-1 overflow-y-auto rounded-md border bg-card"
         >
           {filtered.length === 0 ? (
             <div className="px-3 py-6 text-center text-xs text-muted-foreground">
               No tables match &ldquo;{filter}&rdquo;
             </div>
-          ) : (
-            filtered.map((t) => {
-              const active = t.name === selectedTable;
+          ) : useGroups ? (
+            Array.from(groupMap.entries()).map(([group, tables]) => {
+              const open = !collapsed.has(group);
               return (
-                <button
-                  key={t.name}
-                  type="button"
-                  role="option"
-                  aria-selected={active}
-                  onClick={() => setSelected(t.name)}
-                  className={cn(
-                    "group flex items-center justify-between gap-2 border-l-2 border-transparent px-3 py-1.5 text-left text-sm transition-colors",
-                    "hover:bg-secondary/60",
-                    active
-                      ? "border-l-primary bg-secondary font-medium text-foreground"
-                      : "text-muted-foreground",
-                  )}
-                >
-                  <span className="truncate font-mono text-[12.5px]">
-                    {t.name}
-                  </span>
-                  <Badge
-                    variant={active ? "default" : "secondary"}
-                    className="shrink-0 px-1.5 py-0 text-[10px] font-normal tabular-nums"
+                <div key={group}>
+                  <button
+                    type="button"
+                    onClick={() => toggleGroup(group)}
+                    className="flex w-full cursor-pointer items-center gap-1.5 border-b px-2 py-1.5 text-left transition-colors hover:bg-secondary/40"
                   >
-                    {t.count.toLocaleString()}
-                  </Badge>
-                </button>
+                    {open ? (
+                      <ChevronDown className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    ) : (
+                      <ChevronRight className="h-3 w-3 shrink-0 text-muted-foreground" />
+                    )}
+                    <span className="min-w-0 truncate font-mono text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {group}
+                    </span>
+                    <Badge
+                      variant="outline"
+                      className="ml-auto shrink-0 px-1 py-0 text-[10px] font-normal tabular-nums"
+                    >
+                      {tables.length}
+                    </Badge>
+                  </button>
+                  {open &&
+                    tables.map((t) => (
+                      <TableRow
+                        key={t.name}
+                        table={t}
+                        active={t.name === selectedTable}
+                        onSelect={setSelected}
+                        indent
+                      />
+                    ))}
+                </div>
               );
             })
+          ) : (
+            filtered.map((t) => (
+              <TableRow
+                key={t.name}
+                table={t}
+                active={t.name === selectedTable}
+                onSelect={setSelected}
+              />
+            ))
           )}
         </div>
       </aside>
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-y-auto" style={{ height: "calc(100vh - 8rem)" }}>
         <Table name={selectedTable} />
       </div>
     </div>
   );
 }
 
+type TableRowProps = {
+  table: { name: string; count: number };
+  active: boolean;
+  onSelect: (name: string) => void;
+  indent?: boolean;
+};
+
+function TableRow({ table: t, active, onSelect, indent }: TableRowProps) {
+  return (
+    <button
+      type="button"
+      role="option"
+      aria-selected={active}
+      onClick={() => onSelect(t.name)}
+      className={cn(
+        "group flex w-full items-center justify-between gap-2 border-l-2 border-transparent text-left text-sm transition-colors",
+        "hover:bg-secondary/60",
+        indent ? "px-3 py-1" : "px-3 py-1.5",
+        active
+          ? "border-l-primary bg-secondary font-medium text-foreground"
+          : "text-muted-foreground",
+      )}
+    >
+      <span className={cn("truncate font-mono", indent ? "text-[11.5px]" : "text-[12.5px]")}>
+        {t.name}
+      </span>
+      <Badge
+        variant={active ? "default" : "secondary"}
+        className="shrink-0 px-1.5 py-0 text-[10px] font-normal tabular-nums"
+      >
+        {t.count.toLocaleString()}
+      </Badge>
+    </button>
+  );
+}
+
 function TablesSkeleton() {
-  return <Skeleton className="w-[70vw] h-[30px]" />;
+  return (
+    <div className="flex flex-col gap-4 lg:flex-row lg:items-start">
+      <Skeleton className="h-[calc(100vh-8rem)] w-full shrink-0 lg:w-72" />
+      <Skeleton className="h-[calc(100vh-8rem)] flex-1" />
+    </div>
+  );
 }
 
 type Props = {

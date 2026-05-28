@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pins_by_layer params",
+  "type": "object",
+  "required": ["layer_id"],
+  "properties": {
+    "layer_id": { "type": "string", "minLength": 1 },
+    "limit":    { "type": "integer", "minimum": 1, "maximum": 10000, "default": 1000 }
+  },
+  "additionalProperties": false
+}

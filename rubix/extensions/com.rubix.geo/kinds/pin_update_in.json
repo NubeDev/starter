@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "pin_update input",
+  "type": "object",
+  "required": ["row"],
+  "properties": {
+    "row": {
+      "type": "object",
+      "required": ["pin_id"],
+      "properties": {
+        "pin_id":        { "type": "string", "minLength": 1 },
+        "layer_id":      { "type": ["string", "null"] },
+        "name":          { "type": ["string", "null"] },
+        "description":   { "type": ["string", "null"] },
+        "lng":           { "type": ["number", "null"] },
+        "lat":           { "type": ["number", "null"] },
+        "geometry_type": { "type": ["string", "null"] },
+        "geometry":      { "type": ["object", "null"] },
+        "icon":          { "type": ["string", "null"] },
+        "color":         { "type": ["string", "null"] },
+        "actions":       { "type": ["array",  "null"] },
+        "props":         { "type": ["object", "null"] },
+        "updated_at":    { "type": ["string", "null"], "format": "date-time" }
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

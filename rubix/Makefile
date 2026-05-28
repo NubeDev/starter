@@ -27,7 +27,7 @@ RUBIX_CONFIG   ?= rubix/dev/agent.toml
 RUBIX_CH_URL   ?= http://127.0.0.1:8124
 CH_EXPLORER_URL ?= http://127.0.0.1:8124
 
-.PHONY: build start restart clean stop deps-up deps-down bootstrap agent frontend help warehouse-seed warehouse-explorer
+.PHONY: build start restart clean stop deps-up deps-down bootstrap agent wait-agent frontend help warehouse-seed warehouse-explorer
 
 help:
 	@echo "rubix make targets:"
@@ -94,6 +94,45 @@ agent:
 	    echo "    pid=$$!"; \
 	fi
 
+# Block until the agent's HTTP listener is accepting connections.
+# Without this, Vite starts proxying before boot finishes and the
+# browser sees `500 Internal Server Error` (proxy ECONNREFUSED) for
+# every /api/* call until the agent logs `rubix-agent listening`.
+# Cold builds can take well over a minute, so we wait up to 5 min.
+wait-agent:
+	@echo "==> waiting for rubix-agent on 127.0.0.1:$(AGENT_PORT) (up to 300s; tail $(AGENT_LOG) for detail)"
+	@start=$$(date +%s); \
+	last_phase=""; \
+	for i in $$(seq 1 600); do \
+	    if curl -fsS -o /dev/null -m 1 http://127.0.0.1:$(AGENT_PORT)/livez 2>/dev/null \
+	       || curl -sS -o /dev/null -m 1 http://127.0.0.1:$(AGENT_PORT)/api/v1/auth/me 2>/dev/null; then \
+	        echo "    agent ready (after $$(( $$(date +%s) - start ))s)"; \
+	        exit 0; \
+	    fi; \
+	    if ! pgrep -f 'target/debug/rubix-agent' >/dev/null \
+	       && ! pgrep -f 'cargo.*run.*-p rubix-agent' >/dev/null; then \
+	        echo "wait-agent: rubix-agent process is not running — check $(AGENT_LOG)" >&2; \
+	        tail -n 30 $(AGENT_LOG) >&2 2>/dev/null || true; \
+	        exit 1; \
+	    fi; \
+	    if [ $$(( i % 20 )) -eq 0 ]; then \
+	        elapsed=$$(( $$(date +%s) - start )); \
+	        if pgrep -f 'target/debug/rubix-agent' >/dev/null; then \
+	            phase="booting (process up, waiting for HTTP listener)"; \
+	        else \
+	            phase="compiling (cargo build in progress)"; \
+	        fi; \
+	        if [ "$$phase" != "$$last_phase" ] || [ $$(( i % 60 )) -eq 0 ]; then \
+	            echo "    ... $${elapsed}s elapsed — $$phase"; \
+	            last_phase="$$phase"; \
+	        fi; \
+	    fi; \
+	    sleep 0.5; \
+	done; \
+	echo "wait-agent: timed out after 300s — check $(AGENT_LOG)" >&2; \
+	tail -n 30 $(AGENT_LOG) >&2 2>/dev/null || true; \
+	exit 1
+
 frontend:
 	@if ss -tlnp 2>/dev/null | grep -q '127.0.0.1:$(FRONTEND_PORT) '; then \
 	    echo "frontend: 127.0.0.1:$(FRONTEND_PORT) already in use — skipping launch." >&2; \
@@ -105,7 +144,7 @@ frontend:
 	    echo "    pid=$$!"; \
 	fi
 
-start: bootstrap agent frontend
+start: bootstrap agent wait-agent frontend
 	@WIFI_IP=$$(ip -4 addr show scope global | awk '/inet /{print $$2}' | grep -v '172\.' | head -1 | cut -d/ -f1); \
 	echo ""; \
 	echo "rubix is starting:"; \
