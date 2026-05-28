@@ -152,7 +152,6 @@ class _Hero extends StatelessWidget {
           TextSpan(
             text: '$name.',
             style: accentItalicTextStyle(context, fontSize: 38).copyWith(
-              color: t.text,
               height: 1.02,
             ),
           ),
@@ -266,6 +265,28 @@ class _DevicesOnlineTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        // Soft teal corner halo — Figma node 2:29. Only the DEVICES tile
+        // carries this; other cards stay flat against the ambient glow.
+        const Positioned(
+          top: -40,
+          right: -40,
+          child: CornerHalo(size: 120),
+        ),
+        _DevicesOnlineCard(t: t),
+      ],
+    );
+  }
+}
+
+class _DevicesOnlineCard extends StatelessWidget {
+  const _DevicesOnlineCard({required this.t});
+  final NubeTokens t;
+
+  @override
+  Widget build(BuildContext context) {
     return NubeGlowCard(
       tone: NubeGlowTone.teal,
       borderRadius: 18,

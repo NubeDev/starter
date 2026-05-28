@@ -15,13 +15,19 @@ ThemeData get rubixDarkTheme  => _build(Brightness.dark,  NubeTokens.dark);
 /// Italic-serif accent style — used inline inside [Text.rich] for display
 /// accents like "operating layer for the *physical world.*". Pairs with
 /// Inter at the same font size; matches the mockups (Instrument Serif).
+///
+/// Always renders in the brand teal ([NubeTokens.leaf]) — `#4497A2` on
+/// light, `#61A3AE` on dark — per the design system. Call sites must not
+/// override `color`; if they need a non-teal accent, use a plain serif
+/// `TextStyle` instead.
 TextStyle accentItalicTextStyle(BuildContext context, {double? fontSize}) {
   final base = DefaultTextStyle.of(context).style;
+  final t = Theme.of(context).nube;
   return GoogleFonts.instrumentSerif(
     fontStyle: FontStyle.italic,
     fontWeight: FontWeight.w400,
     fontSize: fontSize ?? base.fontSize,
-    color: base.color,
+    color: t.leaf,
     height: base.height,
     letterSpacing: -0.5,
   );

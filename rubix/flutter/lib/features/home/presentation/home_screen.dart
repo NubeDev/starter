@@ -10,6 +10,7 @@ import 'package:rubix_flutter/features/connections/data/connection_credentials_s
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 import 'package:rubix_flutter/features/home/presentation/home_controller.dart';
 import 'package:rubix_flutter/shared/widgets/error_panel.dart';
+import 'package:rubix_flutter/shared/widgets/human_error.dart';
 import 'package:rubix_flutter/shared/widgets/loading_indicator.dart';
 import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 import 'package:rubix_flutter/shared/widgets/unreachable_panel.dart';
@@ -92,7 +93,16 @@ class HomeScreenOld extends ConsumerWidget {
               padding: EdgeInsets.symmetric(vertical: 24),
               child: LoadingIndicator(),
             ),
-            error: (e, _) => ErrorPanel(message: e.toString()),
+            error: (e, _) {
+              final he = humanizeNetworkError(e);
+              return ErrorPanel(
+                title: he.headline,
+                message: he.body,
+                details: he.details,
+                intent: ErrorPanelIntent.destructive,
+                onRetry: () => ref.invalidate(activeConnectionProvider),
+              );
+            },
             data: (conn) {
               if (conn == null) {
                 return UnreachablePanel(

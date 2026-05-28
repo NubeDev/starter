@@ -51,7 +51,6 @@ class _AppShellState extends ConsumerState<AppShell> {
         icon: LucideIcons.layoutDashboard,
         label: 'Dashboards',
         section: 'Overview',
-        badge: (label: 'LIVE', tone: NubeGlowTone.green),
       ),
       _Destination(
         icon: LucideIcons.link,
@@ -155,12 +154,10 @@ class _Destination {
     required this.icon,
     required this.label,
     required this.section,
-    this.badge,
   });
   final IconData icon;
   final String label;
   final String section;
-  final ({String label, NubeGlowTone tone})? badge;
 }
 
 // ---------------------------------------------------------------------------
@@ -821,20 +818,7 @@ class _Sidebar extends StatelessWidget {
                           collapsed: collapsed,
                           height: _itemHeight,
                           onTap: () => onSelected(i),
-                        )
-                            .animate()
-                            .fadeIn(
-                              delay: (60 * i).ms,
-                              duration: 280.ms,
-                              curve: Curves.easeOutCubic,
-                            )
-                            .slideX(
-                              begin: -0.08,
-                              end: 0,
-                              delay: (60 * i).ms,
-                              duration: 280.ms,
-                              curve: Curves.easeOutCubic,
-                            ),
+                        ),
                         const SizedBox(height: _itemGap),
                       ],
                     ],
@@ -1038,10 +1022,6 @@ class _NavItemState extends State<_NavItem> {
                           ),
                         ),
                       ),
-                      if (widget.destination.badge != null) ...[
-                        const SizedBox(width: 8),
-                        _NavBadge(badge: widget.destination.badge!),
-                      ],
                     ],
                   ),
                 ),
@@ -1090,46 +1070,6 @@ class _NavItemState extends State<_NavItem> {
             child: hitArea,
           )
         : hitArea;
-  }
-}
-
-class _NavBadge extends StatelessWidget {
-  const _NavBadge({required this.badge});
-  final ({String label, NubeGlowTone tone}) badge;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    final Color color;
-    switch (badge.tone) {
-      case NubeGlowTone.green:
-        color = t.success;
-      case NubeGlowTone.amber:
-        color = t.warning;
-      case NubeGlowTone.danger:
-        color = t.danger;
-      case NubeGlowTone.none:
-      case NubeGlowTone.teal:
-        color = t.leaf;
-    }
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.30)),
-      ),
-      child: Text(
-        badge.label.toUpperCase(),
-        style: TextStyle(
-          color: color,
-          fontSize: 9.5,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.8,
-          height: 1.1,
-        ),
-      ),
-    );
   }
 }
 
