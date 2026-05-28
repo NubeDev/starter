@@ -82,6 +82,7 @@ class _AppShellState extends ConsumerState<AppShell> {
               ? () => setState(() => _collapsedOverride = !collapsed)
               : null,
           sidebarCollapsed: collapsed,
+          compact: !wide,
         );
 
         if (wide) {
@@ -188,10 +189,11 @@ class _AnimatedRouteSwitcher extends StatelessWidget {
         );
       },
       layoutBuilder: (currentChild, previousChildren) => Stack(
+        fit: StackFit.expand,
         alignment: Alignment.topLeft,
         children: [
           ...previousChildren,
-          if (currentChild != null) currentChild,
+          if (currentChild != null) Positioned.fill(child: currentChild),
         ],
       ),
       child: KeyedSubtree(key: ValueKey<int>(index), child: child),
@@ -211,6 +213,7 @@ class _TopBar extends StatelessWidget {
     required this.fallbackLabel,
     required this.onToggleSidebar,
     required this.sidebarCollapsed,
+    this.compact = false,
   });
 
   final AsyncValue<dynamic> activeAsync;
@@ -220,86 +223,218 @@ class _TopBar extends StatelessWidget {
   final String fallbackLabel;
   final VoidCallback? onToggleSidebar;
   final bool sidebarCollapsed;
+  final bool compact;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 14, sigmaY: 14),
         child: Container(
-          height: 56,
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          height: 64,
+          padding: EdgeInsets.symmetric(horizontal: compact ? 16 : 12),
           decoration: BoxDecoration(
             color: t.bg.withValues(alpha: 0.72),
             border: Border(bottom: BorderSide(color: t.border)),
           ),
-          child: Row(
-            children: [
-              if (onToggleSidebar != null) ...[
-                _ChromeIconButton(
-                  icon: sidebarCollapsed
-                      ? LucideIcons.panelLeftOpen
-                      : LucideIcons.panelLeftClose,
-                  tooltip:
-                      sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar',
-                  onTap: onToggleSidebar!,
-                ),
-                const SizedBox(width: 6),
-              ],
-              Expanded(
-                child: Row(
+          child: compact
+              ? _CompactBrandRow(
+                  isDark: isDark,
+                  leaf: t.leaf,
+                  onConnectionsTap: onConnectionsTap,
+                  onAccountTap: () {},
+                )
+              : Row(
                   children: [
-                    Flexible(
-                      child: _CmdKTrigger(
-                        onTap: () => _showCommandPalette(context),
+                    if (onToggleSidebar != null) ...[
+                      _ChromeIconButton(
+                        icon: sidebarCollapsed
+                            ? LucideIcons.panelLeftOpen
+                            : LucideIcons.panelLeftClose,
+                        tooltip: sidebarCollapsed
+                            ? 'Expand sidebar'
+                            : 'Collapse sidebar',
+                        onTap: onToggleSidebar!,
+                      ),
+                      const SizedBox(width: 6),
+                    ],
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: _CmdKTrigger(
+                              onTap: () => _showCommandPalette(context),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Flexible(
+                            child: MouseRegion(
+                              cursor: SystemMouseCursors.click,
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: onConnectionsTap,
+                                child: activeAsync.maybeWhen(
+                                  data: (conn) => conn == null
+                                      ? _FallbackTitle(label: fallbackLabel)
+                                      : _ConnectionLabel(
+                                          label: (conn as dynamic).label
+                                              as String,
+                                          baseUrl: (conn as dynamic).baseUrl
+                                              as String,
+                                        ),
+                                  orElse: () =>
+                                      _FallbackTitle(label: fallbackLabel),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: MouseRegion(
-                        cursor: SystemMouseCursors.click,
-                        child: GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: onConnectionsTap,
-                          child: activeAsync.maybeWhen(
-                            data: (conn) => conn == null
-                                ? _FallbackTitle(label: fallbackLabel)
-                                : _ConnectionLabel(
-                                    label: (conn as dynamic).label as String,
-                                    baseUrl:
-                                        (conn as dynamic).baseUrl as String,
-                                  ),
-                            orElse: () =>
-                                _FallbackTitle(label: fallbackLabel),
-                          ),
-                        ),
+                    if (pinSet)
+                      _ChromeIconButton(
+                        icon: LucideIcons.lock,
+                        tooltip: 'Lock',
+                        onTap: onLock,
                       ),
+                    const SizedBox(width: 4),
+                    _ChromeIconButton(
+                      icon: LucideIcons.bell,
+                      tooltip: 'Notifications',
+                      onTap: () {},
+                    ),
+                    const SizedBox(width: 4),
+                    _ChromeIconButton(
+                      icon: LucideIcons.user,
+                      tooltip: 'Account',
+                      onTap: () {},
                     ),
                   ],
                 ),
-              ),
-              if (pinSet)
-                _ChromeIconButton(
-                  icon: LucideIcons.lock,
-                  tooltip: 'Lock',
-                  onTap: onLock,
-                ),
-              const SizedBox(width: 4),
-              _ChromeIconButton(
-                icon: LucideIcons.bell,
-                tooltip: 'Notifications',
-                onTap: () {},
-              ),
-              const SizedBox(width: 4),
-              _ChromeIconButton(
-                icon: LucideIcons.user,
-                tooltip: 'Account',
-                onTap: () {},
-              ),
-            ],
-          ),
         ).animate().fadeIn(duration: 220.ms, curve: Curves.easeOutCubic),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Compact (mobile) top bar: brand mark + Rubix / IoT Console + user avatar.
+// Matches the Figma reference for the Rubix app.
+// ---------------------------------------------------------------------------
+class _CompactBrandRow extends StatelessWidget {
+  const _CompactBrandRow({
+    required this.isDark,
+    required this.leaf,
+    required this.onConnectionsTap,
+    required this.onAccountTap,
+  });
+
+  final bool isDark;
+  final Color leaf;
+  final VoidCallback onConnectionsTap;
+  final VoidCallback onAccountTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return Row(
+      children: [
+        _BrandSquare(leaf: leaf, isDark: isDark),
+        const SizedBox(width: 12),
+        Expanded(
+          child: GestureDetector(
+            behavior: HitTestBehavior.opaque,
+            onTap: onConnectionsTap,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Rubix',
+                  style: TextStyle(
+                    color: t.text,
+                    fontSize: 17,
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
+                    height: 1.1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'IoT Console',
+                  style: TextStyle(
+                    color: t.muted,
+                    fontSize: 12,
+                    height: 1.1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: onAccountTap,
+          child: Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              color: t.surface2,
+              shape: BoxShape.circle,
+              border: Border.all(color: t.border),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              'L',
+              style: TextStyle(
+                color: t.text,
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BrandSquare extends StatelessWidget {
+  const _BrandSquare({required this.leaf, required this.isDark});
+  final Color leaf;
+  final bool isDark;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 36,
+      height: 36,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [leaf, Color.lerp(leaf, Colors.black, 0.20)!],
+        ),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: leaf.withValues(alpha: 0.28),
+            blurRadius: 14,
+            spreadRadius: -2,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      alignment: Alignment.center,
+      child: Text(
+        'R',
+        style: TextStyle(
+          color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
+          fontWeight: FontWeight.w700,
+          fontSize: 16,
+          height: 1,
+        ),
       ),
     );
   }

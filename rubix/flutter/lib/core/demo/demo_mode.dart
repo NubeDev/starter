@@ -4,13 +4,16 @@
 ///
 /// Persisted in [SharedPreferences] under [_demoKey]. Boot-loaded from
 /// `main.dart` so the value is available before the first frame.
+/// DEMO ONLY: safe to delete this entire file when removing demo mode.
 library;
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
 import 'package:rubix_flutter/features/connections/domain/connection/connection.dart';
 import 'package:rubix_flutter/features/home/domain/me_response/me_response.dart';
+
+/// Compile-time flag: set via `--dart-define=DEMO_MODE=true`.
+const bool demoMode = bool.fromEnvironment('DEMO_MODE', defaultValue: false);
 
 const _demoKey = 'demo_mode';
 

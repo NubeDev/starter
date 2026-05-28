@@ -15,8 +15,10 @@ import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 import 'package:rubix_flutter/shared/widgets/unreachable_panel.dart';
 
 /// Pinned home screen — chassis validation for Block 5.
-class HomeScreen extends ConsumerWidget {
-  const HomeScreen({super.key});
+// Deprecated: Use the new Figma-aligned HomeScreen in home_screen_rethemed.dart
+@Deprecated('Use HomeScreen in home_screen_rethemed.dart')
+class HomeScreenOld extends ConsumerWidget {
+  const HomeScreenOld({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

@@ -6,7 +6,7 @@ import 'package:rubix_flutter/features/connections/presentation/add_connection/a
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_controller.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_list/connections_list_screen.dart';
 import 'package:rubix_flutter/features/connections/presentation/connections_unlock/connections_unlock_screen.dart';
-import 'package:rubix_flutter/features/home/presentation/home_screen.dart';
+import 'package:rubix_flutter/features/home/presentation/home_screen_rethemed.dart';
 import 'package:rubix_flutter/features/sdui/presentation/dashboard_list_screen.dart';
 import 'package:rubix_flutter/features/sdui/presentation/sdui_page_screen.dart';
 import 'package:rubix_flutter/features/settings/data/settings_providers.dart';

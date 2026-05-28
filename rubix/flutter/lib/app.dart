@@ -49,6 +49,7 @@ class _RubixAppState extends ConsumerState<RubixApp> {
 
     return MaterialApp.router(
       title: 'Rubix',
+      debugShowCheckedModeBanner: false,
       theme: rubixLightTheme,
       darkTheme: rubixDarkTheme,
       themeMode: themeMode,
