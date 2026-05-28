@@ -118,16 +118,7 @@ class NubeAreaChart extends StatelessWidget {
         LineChartData(
           minY: minV - pad,
           maxY: maxV + pad,
-          gridData: FlGridData(
-            show: true,
-            drawVerticalLine: false,
-            horizontalInterval: (maxV - minV) / 3,
-            getDrawingHorizontalLine: (_) => FlLine(
-              color: t.border.withValues(alpha: 0.6),
-              strokeWidth: 1,
-              dashArray: const [3, 4],
-            ),
-          ),
+          gridData: const FlGridData(show: false),
           titlesData: FlTitlesData(
             leftTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),
@@ -189,15 +180,7 @@ class NubeAreaChart extends StatelessWidget {
               color: color,
               barWidth: 2,
               isStrokeCapRound: true,
-              dotData: FlDotData(
-                show: true,
-                getDotPainter: (_, __, ___, ____) => FlDotCirclePainter(
-                  radius: 3,
-                  color: color,
-                  strokeWidth: 2,
-                  strokeColor: t.surface,
-                ),
-              ),
+              dotData: const FlDotData(show: false),
               belowBarData: BarAreaData(
                 show: true,
                 gradient: LinearGradient(

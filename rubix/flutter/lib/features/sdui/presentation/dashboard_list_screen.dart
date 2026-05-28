@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
 import 'package:lucide_icons/lucide_icons.dart';
 
 import 'package:rubix_flutter/core/demo/demo_mode.dart';
@@ -9,9 +8,6 @@ import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
 import 'package:rubix_flutter/features/auth/data/auth_state.dart';
 import 'package:rubix_flutter/shared/widgets/dashboard/dashboard.dart';
-import 'package:rubix_flutter/shared/widgets/error_panel.dart';
-import 'package:rubix_flutter/shared/widgets/human_error.dart';
-import 'package:rubix_flutter/shared/widgets/loading_indicator.dart';
 import 'package:rubix_flutter/shared/widgets/scaffold/ambient_glow_background.dart';
 
 /// Lists dashboards for the `system` tenant via
@@ -68,7 +64,6 @@ class DashboardListScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final t = Theme.of(context).nube;
-    final listAsync = ref.watch(dashboardListProvider);
 
     return AmbientGlowBackground(
       child: Scaffold(
@@ -78,66 +73,20 @@ class DashboardListScreen extends ConsumerWidget {
             padding: const EdgeInsets.fromLTRB(20, 12, 20, 32),
             children: [
               const SizedBox(height: 6),
+              const _LiveGlassPill(),
+              const SizedBox(height: 18),
               const _Hero(),
               const SizedBox(height: 10),
               Text(
-                'Live across every site. Pinned views below.',
-                style: TextStyle(color: t.muted, fontSize: 14, height: 1.45),
+                'Updated just now · 3 sites',
+                style: TextStyle(color: t.muted, fontSize: 13, height: 1.45),
               ),
               const SizedBox(height: 22),
               const _StatChipsRow(),
-              const SizedBox(height: 14),
+              const SizedBox(height: 12),
               const _EnergyCard(),
               const SizedBox(height: 12),
               const _HealthCard(),
-              const SizedBox(height: 22),
-              Text(
-                'YOUR DASHBOARDS',
-                style: TextStyle(
-                  color: t.muted,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  letterSpacing: 1.2,
-                ),
-              ),
-              const SizedBox(height: 10),
-              listAsync.when(
-                loading: () => const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: LoadingIndicator(),
-                ),
-                error: (e, _) {
-                  final he = humanizeNetworkError(e);
-                  return ErrorPanel(
-                    title: 'Could not load dashboards',
-                    message: he.body,
-                    details: he.details,
-                    intent: ErrorPanelIntent.destructive,
-                    onRetry: () => ref.invalidate(dashboardListProvider),
-                  );
-                },
-                data: (items) {
-                  if (items.isEmpty) {
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 24),
-                      child: Center(
-                        child: Text(
-                          'No dashboards yet',
-                          style: TextStyle(color: t.muted, fontSize: 13),
-                        ),
-                      ),
-                    );
-                  }
-                  return Column(
-                    children: [
-                      for (final item in items) ...[
-                        _DashboardRow(item: item),
-                        const SizedBox(height: 8),
-                      ],
-                    ],
-                  );
-                },
-              ),
             ],
           ),
         ),
@@ -184,6 +133,9 @@ class _StatChipsRow extends StatelessWidget {
   const _StatChipsRow();
   @override
   Widget build(BuildContext context) {
+    // Delta colour is SEMANTIC — `good` says whether the change is
+    // positive for the user. Arrow direction is independent. For
+    // latency, a *down* arrow is good, so `good: true` + `up: false`.
     return const IntrinsicHeight(
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -191,27 +143,30 @@ class _StatChipsRow extends StatelessWidget {
           Expanded(
             child: _StatChip(
               label: 'DEVICES',
-              value: '24',
-              delta: '+2',
+              value: '412',
+              delta: '2.4%',
               up: true,
+              good: true,
             ),
           ),
-          SizedBox(width: 10),
+          SizedBox(width: 12),
           Expanded(
             child: _StatChip(
               label: 'SITE LOAD',
-              value: '67%',
-              delta: '-4%',
+              value: '2.1k',
+              delta: '1.2%',
               up: false,
+              good: false,
             ),
           ),
-          SizedBox(width: 10),
+          SizedBox(width: 12),
           Expanded(
             child: _StatChip(
               label: 'LATENCY',
-              value: '12ms',
-              delta: '-3ms',
+              value: '42ms',
+              delta: '8.5%',
               up: false,
+              good: true,
             ),
           ),
         ],
@@ -226,62 +181,69 @@ class _StatChip extends StatelessWidget {
     required this.value,
     required this.delta,
     required this.up,
+    required this.good,
   });
   final String label;
   final String value;
   final String delta;
+  /// Arrow direction (visual only).
   final bool up;
+  /// Whether the change is good for the user (drives colour).
+  final bool good;
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    final deltaColor = up ? t.success : t.danger;
-    return NubeGlowCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: t.muted,
-              fontSize: 10.5,
-              fontWeight: FontWeight.w600,
-              letterSpacing: 1.1,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: TextStyle(
-              color: t.text,
-              fontSize: 26,
-              fontWeight: FontWeight.w700,
-              height: 1,
-              letterSpacing: -0.6,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Icon(
-                up ? LucideIcons.trendingUp : LucideIcons.trendingDown,
-                size: 11,
-                color: deltaColor,
+    final deltaColor = good ? t.leaf : t.danger;
+    return SizedBox(
+      height: 84,
+      child: NubeGlowCard(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: t.muted,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 1.2,
               ),
-              const SizedBox(width: 4),
-              Text(
-                delta,
-                style: TextStyle(
+            ),
+            Text(
+              value,
+              style: TextStyle(
+                color: t.text,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
+                height: 1,
+                letterSpacing: -0.6,
+                fontFeatures: const [FontFeature.tabularFigures()],
+              ),
+            ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  up ? LucideIcons.arrowUpRight : LucideIcons.arrowDownRight,
+                  size: 11,
                   color: deltaColor,
-                  fontSize: 11.5,
-                  fontWeight: FontWeight.w600,
                 ),
-              ),
-            ],
-          ),
-        ],
+                const SizedBox(width: 3),
+                Text(
+                  delta,
+                  style: TextStyle(
+                    color: deltaColor,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -296,47 +258,103 @@ class _EnergyCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    const values = <double>[12, 16, 14, 19, 22, 21, 27, 31, 28, 34, 36, 39];
-    const labels = <String>[
-      'jan', 'feb', 'mar', 'apr', 'may', 'jun',
-      'jul', 'aug', 'sep', 'oct', 'nov', 'dec',
-    ];
+    // 7-day series, Mon–Sun — the X-axis labels below match.
+    const values = <double>[28, 34, 31, 38, 42, 39, 42.3];
+    const labels = <String>['M', 'T', 'W', 'T', 'F', 'S', 'S'];
     return NubeGlowCard(
       tone: NubeGlowTone.teal,
-      padding: const EdgeInsets.fromLTRB(18, 18, 18, 12),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 12),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
-                child: Text(
-                  'ENERGY HARVESTED',
-                  style: TextStyle(
-                    color: t.muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
-                  ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'ENERGY HARVESTED',
+                      style: TextStyle(
+                        color: t.muted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.2,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          '42.3',
+                          style: TextStyle(
+                            color: t.text,
+                            fontSize: 30,
+                            fontWeight: FontWeight.w600,
+                            height: 1,
+                            letterSpacing: -0.8,
+                            fontFeatures: const [FontFeature.tabularFigures()],
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            'kWh',
+                            style: TextStyle(
+                              color: t.muted,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    // Yellow accent underline — node 6:61. Underline only.
+                    Container(
+                      width: 40,
+                      height: 2,
+                      decoration: BoxDecoration(
+                        color: t.callout,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-              Text(
-                '432 kWh',
-                style: TextStyle(
-                  color: t.text,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: -0.2,
+              Padding(
+                padding: const EdgeInsets.only(top: 2),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      LucideIcons.arrowUpRight,
+                      size: 12,
+                      color: t.leaf,
+                    ),
+                    const SizedBox(width: 3),
+                    Text(
+                      '12.4%',
+                      style: TextStyle(
+                        color: t.leaf,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           const NubeAreaChart(
             values: values,
             labels: labels,
             tone: NubeGlowTone.teal,
-            height: 200,
+            height: 132,
           ),
         ],
       ),
@@ -353,115 +371,129 @@ class _HealthCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    return NubeGlowCard(
-      tone: NubeGlowTone.teal,
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        children: [
-          const SizedBox(
-            width: 130,
-            height: 130,
-            child: NubeDonut(
-              percent: 94,
-              caption: 'HEALTHY',
-              tone: NubeGlowTone.teal,
-              size: 130,
+    return SizedBox(
+      height: 96,
+      child: NubeGlowCard(
+        tone: NubeGlowTone.teal,
+        padding: const EdgeInsets.fromLTRB(18, 14, 18, 14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'DEVICE HEALTH',
+                    style: TextStyle(
+                      color: t.muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 1.2,
+                    ),
+                  ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        '94%',
+                        style: TextStyle(
+                          color: t.text,
+                          fontSize: 28,
+                          fontWeight: FontWeight.w600,
+                          height: 1,
+                          letterSpacing: -0.6,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 2),
+                        child: Text(
+                          'online',
+                          style: TextStyle(
+                            color: t.muted,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 18),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  'DEVICE HEALTH',
-                  style: TextStyle(
-                    color: t.muted,
-                    fontSize: 11,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.2,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '22 of 24 nominal',
-                  style: TextStyle(
-                    color: t.text,
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.2,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  '1 warning · 1 offline',
-                  style: TextStyle(
-                    color: t.muted,
-                    fontSize: 12.5,
-                    height: 1.4,
-                  ),
-                ),
-              ],
+            const SizedBox(width: 12),
+            const SizedBox(
+              width: 64,
+              height: 64,
+              child: NubeDonut(
+                percent: 94,
+                caption: '',
+                tone: NubeGlowTone.teal,
+                size: 64,
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 }
 
-// ────────────────────────────────────────────────────────────────────────
-// Dashboard list row
-// ────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────
+// Live glass pill — green dot + LIVE label, node 6:38–6:40.
+// ─────────────────────────────────────────────────────────────────────
 
-class _DashboardRow extends StatelessWidget {
-  const _DashboardRow({required this.item});
-  final DashboardItem item;
+class _LiveGlassPill extends StatelessWidget {
+  const _LiveGlassPill();
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
-    return NubeGlowCard(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      onTap: () => context.push('/sdui/${item.pageId}'),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
-            decoration: BoxDecoration(
-              color: t.leaf.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(9),
-            ),
-            alignment: Alignment.center,
-            child: Icon(LucideIcons.layoutGrid, size: 16, color: t.leaf),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  item.title,
-                  style: TextStyle(
-                    color: t.text,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
+    const dot = Color(0xFF21C45D);
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: t.surface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: t.border),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: dot,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: dot.withValues(alpha: 0.55),
+                    blurRadius: 6,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  item.pageId,
-                  style: TextStyle(color: t.muted, fontSize: 11.5),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(LucideIcons.chevronRight, size: 16, color: t.muted),
-        ],
+            const SizedBox(width: 8),
+            Text(
+              'LIVE',
+              style: TextStyle(
+                color: t.text,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                letterSpacing: 2.0,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 }
+
+
