@@ -36,6 +36,9 @@ pub mod server;
 pub use locale_local::{current_locale, with_locale};
 pub use principal_local::{current_principal, with_principal};
 
+#[cfg(feature = "skills")]
+pub mod skills_bridge;
+
 #[cfg(feature = "testing")]
 pub mod testing;
 

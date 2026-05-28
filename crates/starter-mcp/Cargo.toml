@@ -24,10 +24,16 @@ thiserror   = { workspace = true }
 axum = { workspace = true, optional = true }
 http = { workspace = true, optional = true }
 
+# `skills` feature exposes the `skills_bridge` module that wraps an
+# approved `starter_skills::Skill` in a `Tool`. Off by default — pure
+# MCP consumers without skills don't drag starter-skills in.
+starter-skills = { workspace = true, optional = true }
+
 [features]
 default = []
 testing = []
 http    = ["dep:axum", "dep:http"]
+skills  = ["dep:starter-skills"]
 
 [dev-dependencies]
 tokio          = { workspace = true, features = ["macros", "rt-multi-thread"] }

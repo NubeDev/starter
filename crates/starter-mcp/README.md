@@ -67,8 +67,43 @@ request/response half is complete today. Tool authors should keep
 `StreamingTool` trait will opt in to chunked output without breaking
 this surface.
 
+## Skills bridge (`feature = "skills"`)
+
+Exposes approved `starter_skills::Skill` bundles as MCP tools so
+hosts (Claude Code, Copilot, Codex) can call them. Quarantined
+bundles are never registered; revoking an approval takes effect on
+the next invoke without restarting the server.
+
+```rust
+use starter_mcp::skills_bridge::{register_approved_skills, AddFavoriteTool};
+use starter_mcp::ToolRegistry;
+use starter_skills::{InMemoryApprovalStore, SkillRegistry};
+
+let skills = SkillRegistry::builder()
+    .with_approval_store(InMemoryApprovalStore::new())
+    .load_dir("./skills")                                  // repo skills
+    .load_dir_quarantined("/var/lib/starter/user-skills")  // user skills
+    .build()
+    .await?;
+
+let registry = register_approved_skills(ToolRegistry::new(), &skills)
+    // Optional: let the LLM mint new (quarantined) favourites.
+    .register(AddFavoriteTool::new("/var/lib/starter/user-skills"));
+
+// Hand `registry` to `run_stdio` or `mcp_router` as usual.
+```
+
+For a changelog-backed audit row per invoke, implement
+`SkillAuditSink` and pass it to `register_approved_skills_with_audit`.
+The default sink writes a `tracing::info!` per call.
+
+See [`DOCS/skills-as-mcp-tools.md`](../../DOCS/skills-as-mcp-tools.md)
+for the full design.
+
 ## Features
 
 - `http` — exposes `mcp_router` + `McpHttpOptions`. Pulls `axum` +
   `http`. Off by default — pure-stdio consumers don't need them.
+- `skills` — exposes `skills_bridge` (SkillTool + AddFavoriteTool +
+  SkillAuditSink). Pulls `starter-skills`. Off by default.
 - `testing` — in-memory transport pair for round-trip tests.
