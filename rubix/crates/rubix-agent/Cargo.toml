@@ -55,6 +55,9 @@ starter-warehouse-explorer = { workspace = true }
 starter-flow              = { workspace = true }
 starter-flow-spi          = { workspace = true }
 starter-flow-surfaces     = { workspace = true }
+# Live skill registry — the `SkillCleanupProvider` removes the entries an
+# uninstalled extension contributed via `contributes.skills[]`.
+starter-skills            = { workspace = true }
 starter-ai                = { workspace = true, features = ["provider-claude"] }
 starter-ai-agent          = { workspace = true }
 starter-flow-node-loop    = { workspace = true }
