@@ -56,6 +56,7 @@ mod stats;
 pub mod clock;
 pub mod invalidator;
 pub mod layer;
+pub mod per_spec_stats;
 pub mod spec;
 pub mod tracing_cache;
 
@@ -66,5 +67,6 @@ pub use stats::CacheStats;
 pub use clock::{Clock, MockClock, SystemClock};
 pub use invalidator::{InMemoryInvalidator, Invalidator, TokenSnapshot};
 pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig};
+pub use per_spec_stats::{PerSpecSnapshot, PerSpecStats};
 pub use spec::{CacheScope, CacheSidecar, CacheSpec, InvalidateOn, SpecParseError};
 pub use tracing_cache::{CacheEvent, TracingCache};

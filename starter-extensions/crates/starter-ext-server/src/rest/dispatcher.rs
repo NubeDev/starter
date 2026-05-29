@@ -397,13 +397,14 @@ impl RestDispatcher for BuiltinRestDispatcher {
         let layer = cache.layer.clone();
         let scope = caller_scope(caller.as_ref());
         let base_key = dispatch_base_key(extension, contribute_id, &input);
+        let spec_id = format!("{}::{}", extension.as_str(), contribute_id);
 
         let extension_owned = extension.clone();
         let contribute_id_owned = contribute_id.to_owned();
         let caller_for_load = caller.clone();
         let this = self;
         let bytes = layer
-            .get_or_load(&spec, &scope, &base_key, move || async move {
+            .get_or_load_labelled(&spec, Some(&spec_id), &scope, &base_key, move || async move {
                 let v = this
                     .dispatch_inner(
                         &extension_owned,
@@ -657,13 +658,14 @@ impl RestDispatcher for ProcessRestDispatcher {
         let layer = cache.layer.clone();
         let scope = caller_scope(caller.as_ref());
         let base_key = dispatch_base_key(extension, contribute_id, &input);
+        let spec_id = format!("{}::{}", extension.as_str(), contribute_id);
 
         let extension_owned = extension.clone();
         let contribute_id_owned = contribute_id.to_owned();
         let caller_for_load = caller.clone();
         let this = self;
         let bytes = layer
-            .get_or_load(&spec, &scope, &base_key, move || async move {
+            .get_or_load_labelled(&spec, Some(&spec_id), &scope, &base_key, move || async move {
                 let v = this
                     .dispatch_inner(
                         &extension_owned,

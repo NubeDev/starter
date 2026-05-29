@@ -185,3 +185,33 @@ async fn invalidate_drops_dispatcher_cache_entry() {
         .unwrap();
     assert_eq!(counter.load(Ordering::SeqCst), 2, "post-invalidate dispatch re-runs the loader");
 }
+
+#[tokio::test]
+async fn per_spec_stats_record_by_kind_id() {
+    let counter = Arc::new(AtomicU32::new(0));
+    let ext = ExtensionId::new("com.acme.cache").unwrap();
+    let spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
+        .scope(starter_cache::CacheScope::Tenant);
+    let (dispatch, layer, _tmp) = build_dispatcher_with_cache(
+        counter,
+        vec![((ext.clone(), "com.acme.cache.usage".to_string()), spec)],
+    );
+    let caller = starter_ext_spi::identity::CallerIdentity {
+        tenant_id: Some("tA".into()),
+        user_id: Some("uX".into()),
+        ..Default::default()
+    };
+
+    for _ in 0..4 {
+        let _ = dispatch
+            .dispatch(&ext, "com.acme.cache.usage", json!({}), Some(caller.clone()))
+            .await
+            .unwrap();
+    }
+
+    let snap = layer.per_spec_snapshot();
+    assert_eq!(snap.len(), 1);
+    assert_eq!(snap[0].spec_id, "com.acme.cache::com.acme.cache.usage");
+    assert_eq!(snap[0].misses, 1);
+    assert_eq!(snap[0].hits, 3);
+}

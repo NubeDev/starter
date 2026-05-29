@@ -23,6 +23,7 @@
 use crate::backends::moka::MokaCache;
 use crate::clock::{Clock, SystemClock};
 use crate::invalidator::{InMemoryInvalidator, Invalidator, TokenSnapshot};
+use crate::per_spec_stats::{PerSpecSnapshot, PerSpecStats};
 use crate::spec::{CacheScope, CacheSpec};
 use crate::stats::CacheStats;
 use crate::Cache;
@@ -103,6 +104,7 @@ struct Inner {
     invalidator: Arc<dyn Invalidator>,
     tenants: Mutex<HashMap<String, TenantCache>>,
     stats: Arc<CacheStats>,
+    per_spec: PerSpecStats,
 }
 
 impl CacheLayer {
@@ -129,6 +131,7 @@ impl CacheLayer {
                 invalidator,
                 tenants: Mutex::new(HashMap::new()),
                 stats: Arc::new(CacheStats::new()),
+                per_spec: PerSpecStats::new(),
             }),
         }
     }
@@ -203,8 +206,24 @@ impl CacheLayer {
         }
     }
 
+    /// Snapshot of per-spec stats. Sorted by `spec_id`.
+    pub fn per_spec_snapshot(&self) -> Vec<PerSpecSnapshot> {
+        self.inner.per_spec.snapshot()
+    }
+
+    /// Borrow the per-spec stats registry — useful for tests and for
+    /// admin endpoints that want to wire in their own snapshot
+    /// cadence.
+    pub fn per_spec_stats(&self) -> PerSpecStats {
+        self.inner.per_spec.clone()
+    }
+
     /// The v0 entry point. Returns the cached or freshly loaded
-    /// bytes.
+    /// bytes. Equivalent to
+    /// [`Self::get_or_load_labelled`] with `spec_id = None`;
+    /// callers that already know which spec they are evaluating
+    /// should use the labelled variant so per-spec stats are
+    /// recorded.
     ///
     /// `base_key` should encode whatever identifies the underlying
     /// query — for kind dispatch, the dispatcher passes
@@ -221,9 +240,36 @@ impl CacheLayer {
         Fut: Future<Output = Result<Bytes, E>> + Send,
         E: Send + Sync + 'static,
     {
+        self.get_or_load_labelled(spec, None, caller, base_key, load)
+            .await
+    }
+
+    /// Variant of [`Self::get_or_load`] that also tallies per-spec
+    /// hit/miss counters under `spec_id`. Pass the same `spec_id` on
+    /// every call for one logical spec — typically
+    /// `format!("{extension}::{contribute_id}")` at the dispatcher
+    /// site.
+    pub async fn get_or_load_labelled<F, Fut, E>(
+        &self,
+        spec: &CacheSpec,
+        spec_id: Option<&str>,
+        caller: &CallerScope,
+        base_key: &str,
+        load: F,
+    ) -> Result<Bytes, E>
+    where
+        F: FnOnce() -> Fut + Send,
+        Fut: Future<Output = Result<Bytes, E>> + Send,
+        E: Send + Sync + 'static,
+    {
         let bucket = Self::tenant_bucket(spec.scope, caller);
         let cache = self.tenant_cache(&bucket, spec.ttl);
         let key = Self::full_key(spec.scope, caller, base_key);
+
+        // Per-spec stats handle, materialised once per call so the
+        // mutex behind PerSpecStats is touched at most twice per
+        // dispatch (once here, never again on the hot path).
+        let per_spec = spec_id.map(|id| self.inner.per_spec.get_or_create(id));
 
         // Read path: hit only if a stored entry exists AND its
         // snapshot still matches. A token-moved entry is treated
@@ -232,6 +278,9 @@ impl CacheLayer {
         if let Some(entry) = cache.get(&key).await {
             if self.inner.invalidator.tokens_match(&entry.snapshot) {
                 self.inner.stats.record_hit();
+                if let Some(s) = &per_spec {
+                    s.record_hit();
+                }
                 return Ok(entry.value);
             } else {
                 tracing::debug!(
@@ -267,6 +316,9 @@ impl CacheLayer {
         }
 
         self.inner.stats.record_miss();
+        if let Some(s) = &per_spec {
+            s.record_miss();
+        }
         Ok(value)
     }
 }

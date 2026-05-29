@@ -227,6 +227,53 @@ async fn s4_loader_error_is_not_cached() {
     assert_eq!(calls.load(Ordering::SeqCst), 2);
 }
 
+/// Per-spec stats — when a caller labels its dispatches by spec id,
+/// the layer keeps a separate hit/miss tally per id. This is what
+/// the admin "is `usage_bucketed` paying off" panel reads.
+#[tokio::test]
+async fn per_spec_stats_accumulate_separately() {
+    let layer = CacheLayer::new(LayerConfig::default());
+    let spec = CacheSpec::ttl(Duration::from_secs(60)).scope(CacheScope::Tenant);
+    let caller = CallerScope::new("tA", "uX");
+
+    // Two distinct spec ids, two distinct base keys so the per-spec
+    // tallies are clean (the cache key derives only from scope +
+    // caller + base_key — spec_id is metadata, not key material).
+    for _ in 0..3 {
+        let _ = layer
+            .get_or_load_labelled::<_, _, std::convert::Infallible>(
+                &spec,
+                Some("ext.kind.alpha"),
+                &caller,
+                "alpha-k",
+                || async { Ok(b("v")) },
+            )
+            .await
+            .unwrap();
+    }
+    for _ in 0..5 {
+        let _ = layer
+            .get_or_load_labelled::<_, _, std::convert::Infallible>(
+                &spec,
+                Some("ext.kind.beta"),
+                &caller,
+                "beta-k",
+                || async { Ok(b("v")) },
+            )
+            .await
+            .unwrap();
+    }
+    let snap = layer.per_spec_snapshot();
+    assert_eq!(snap.len(), 2);
+    // Sorted by spec_id — alpha first, beta second.
+    assert_eq!(snap[0].spec_id, "ext.kind.alpha");
+    assert_eq!(snap[0].misses, 1);
+    assert_eq!(snap[0].hits, 2);
+    assert_eq!(snap[1].spec_id, "ext.kind.beta");
+    assert_eq!(snap[1].misses, 1);
+    assert_eq!(snap[1].hits, 4);
+}
+
 /// Scenario 5 — per-tenant weight cap evicts the noisy tenant's
 /// entries, not its neighbours'.
 ///
