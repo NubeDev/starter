@@ -1,7 +1,7 @@
 # Cache v0 — Progress Log
 
 ## Status
-2026-05-29 — v0 landed end-to-end **and a silent-no-op bug was caught + fixed mid-session**. The admin endpoint surfaces each spec's *config* (TTL, scope, invalidate tags) joined with the runtime counters, and shows registered-but-never-hit specs so "is this kind ever called?" is a one-curl question. Key invariants pinned by tests: object-key canonicalisation in `dispatch_base_key`, distinct-input separation, and streaming dispatch bypassing the cache. Operators now have three escape hatches: `POST /admin/cache/invalidate` (tag-fire), `DELETE /admin/cache/tenants/{id}` (per-tenant evict), and the tuning knob `RUBIX_CACHE_PER_TENANT_MAX_ENTRIES`. Numbers still TBD pending a workload replay.
+2026-05-29 — v0 landed end-to-end **and a silent-no-op bug was caught + fixed mid-session**. The admin endpoint surfaces each spec's *config* (TTL, scope, invalidate tags) joined with the runtime counters, and shows registered-but-never-hit specs so "is this kind ever called?" is a one-curl question. Key invariants pinned by tests: object-key canonicalisation in `dispatch_base_key`, distinct-input separation, and streaming dispatch bypassing the cache. Operators now have a complete admin surface: `GET /admin/cache/specs` (read), `POST /admin/cache/invalidate` (tag-scoped drop), `DELETE /admin/cache/tenants/{id}` (per-tenant drop), `POST /admin/cache/invalidate_all` (global last-resort drop), and the tuning knob `RUBIX_CACHE_PER_TENANT_MAX_ENTRIES`. The [operator runbook](../operations/cache-runbook.md) is the user-facing doc. Numbers still TBD pending a workload replay.
 
 **Operator-facing doc:** [`rubix/docs/operations/cache-runbook.md`](../operations/cache-runbook.md) — what every admin endpoint does, scenario playbooks, env-var tuning, and how to add a new cached kind. Update it whenever the wire shape or operator semantics change; this progress doc stays for design/decision history.
 
@@ -52,6 +52,16 @@ Building **only** the "Minimum viable v0" section of [fe-cache-opt-in.md](../pro
 - **What's blocked:** Real-workload hit-rate + latency numbers still pending the rig — but now there is a single endpoint to scrape that answers both "is the canary paying off" and "what is the cache shielding callers from".
 - **What's next:** Drive `/extensions/com.nubeio.rubixos/usage` at the dashboard refresh cadence and capture the snapshot. Two-line script: `while true; do curl …; sleep N; done | jq` against `GET /api/v1/admin/cache/specs`.
 - **Numbers:** Per-spec snapshot endpoint live with hit/miss + load-latency histogram. Hit-rate / latency from real traffic still pending environment time.
+
+### 2026-05-29 — operator runbook + invalidate_all (same day)
+- **What landed:**
+  - Commit `docs(cache): operator runbook` — `rubix/docs/operations/cache-runbook.md`. Six scenario playbooks, the response anatomy, env-var tuning, "add a new cached kind" walkthrough, and an explicit out-of-scope list. New `operations/` dir; future operational docs go here too.
+  - Commit `docs(cache): link the operator runbook from the progress log` — pointer at the top of this progress doc so anyone landing here is one click from the operator surface.
+  - Commit `feat(cache): invalidate_all (layer + POST /admin/cache/invalidate_all)` — last-resort escape hatch. `CacheLayer::invalidate_all() -> u64` walks every tenant cache; admin endpoint returns `{entries_dropped}`. Per-spec counters and tag tokens survive (so hit rate recovery is observable from a known baseline). 503 when no layer wired.
+- **Why this set together:** the runbook surface is the user-facing artifact; `invalidate_all` is the last missing piece of "every operationally-relevant cache action has an admin endpoint". Operators now have a complete trio for invalidation (tag-scoped, tenant-scoped, global) and full read visibility — there is no longer a cache action that requires SSH-ing into the box.
+- **What's blocked:** Same — real-workload numbers pending the dev rig.
+- **What's next:** Same — workload replay.
+- **Numbers:** No change; this session was the operator-facing capstone, not a perf change.
 
 ### 2026-05-29 — per-tenant eviction (same day)
 - **What landed:**
