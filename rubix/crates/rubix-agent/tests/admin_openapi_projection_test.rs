@@ -65,12 +65,8 @@ fn projection_includes_every_mounted_path() {
     assert_eq!(get_op["tags"], json!(["admin"]));
 
     let post_op = &doc["paths"]["/api/v1/admin/registry/tools/{id}/invoke"]["post"];
-    assert!(
-        post_op.is_object(),
-        "POST invoke path projected; doc={doc}"
-    );
-    let body_schema =
-        &post_op["requestBody"]["content"]["application/json"]["schema"];
+    assert!(post_op.is_object(), "POST invoke path projected; doc={doc}");
+    let body_schema = &post_op["requestBody"]["content"]["application/json"]["schema"];
     assert_eq!(body_schema["required"], json!(["tenant"]));
 }
 

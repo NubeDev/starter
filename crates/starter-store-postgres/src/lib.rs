@@ -18,6 +18,8 @@
 pub mod migrate;
 pub mod paging;
 pub mod pool;
+pub mod windowed;
+pub use windowed::PgWindowedFetcher;
 
 #[cfg(feature = "testing")]
 pub mod testing;

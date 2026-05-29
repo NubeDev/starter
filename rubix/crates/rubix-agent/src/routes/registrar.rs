@@ -358,7 +358,10 @@ mod tests {
 
     #[test]
     fn operation_id_is_method_plus_path_slug() {
-        assert_eq!(operation_id("GET", "/api/v1/admin/registry"), "get_api_v1_admin_registry");
+        assert_eq!(
+            operation_id("GET", "/api/v1/admin/registry"),
+            "get_api_v1_admin_registry"
+        );
         assert_eq!(
             operation_id("POST", "/api/v1/admin/registry/tools/{id}/invoke"),
             "post_api_v1_admin_registry_tools_id_invoke"

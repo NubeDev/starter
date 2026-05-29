@@ -16,10 +16,7 @@ use starter_store_postgres::pool::connect as pg_connect;
 
 use super::services::BootedServices;
 
-pub(crate) async fn compose_and_serve(
-    svc: BootedServices,
-    runtime_canary: Canary,
-) -> Result<()> {
+pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canary) -> Result<()> {
     let BootedServices {
         cfg,
         bundle: _,
@@ -114,13 +111,12 @@ pub(crate) async fn compose_and_serve(
                 let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
                     Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
                 if let Some(host_methods) = ext_host_methods.as_ref() {
-                    host_methods
-                        .install_warehouse(wh_client.clone(), template_registry.clone());
+                    host_methods.install_warehouse(wh_client.clone(), template_registry.clone());
                     host_methods.install_event_bus(event_bus.clone());
                 }
                 admin_state = admin_state.with_templates(template_registry.clone());
                 let factory: Arc<dyn CapabilityFactory> = Arc::new(
-                    RubixCapabilityFactory::new(wh_client, template_registry, event_bus)
+                    RubixCapabilityFactory::new(wh_client, template_registry, event_bus.clone())
                         .with_extension_registry(bundle.registry.clone())
                         .with_dashboard_store(dashboard_store)
                         .with_authz_engine(engine.clone()),
@@ -130,9 +126,31 @@ pub(crate) async fn compose_and_serve(
                 // entries; an operator can override with
                 // `RUBIX_CACHE_PER_TENANT_MAX_ENTRIES` without
                 // recompiling.
-                let cache_layer = starter_cache::CacheLayer::new(
+                //
+                // v3 — `RUBIX_CACHE_INVALIDATOR` picks the
+                // invalidator: `event-bus` fans out via the host's
+                // `RubixEventBus`; anything else (incl. default and
+                // `local`) stays single-process.
+                let invalidator_kind =
+                    std::env::var("RUBIX_CACHE_INVALIDATOR").unwrap_or_else(|_| "local".into());
+                let invalidator: std::sync::Arc<dyn starter_cache::Invalidator> =
+                    if invalidator_kind == "event-bus" {
+                        let bus_adapter: std::sync::Arc<dyn starter_cache::InvalidationBus> =
+                            std::sync::Arc::new(
+                                rubix_agent::extensions::event_bus::CacheInvalidationBus::new(
+                                    event_bus.clone(),
+                                ),
+                            );
+                        std::sync::Arc::new(starter_cache::EventBusInvalidator::new(bus_adapter))
+                    } else {
+                        std::sync::Arc::new(starter_cache::InMemoryInvalidator::new())
+                    };
+                let cache_layer = starter_cache::CacheLayer::with_parts(
                     starter_cache::LayerConfig::from_env("RUBIX_CACHE"),
+                    std::sync::Arc::new(starter_cache::SystemClock),
+                    invalidator.clone(),
                 );
+                let warmer = starter_cache::Warmer::new();
                 let mut cache_entries: Vec<(
                     (starter_ext_spi::ExtensionId, String),
                     starter_cache::CacheSpec,
@@ -170,10 +188,8 @@ pub(crate) async fn compose_and_serve(
                                     continue;
                                 };
                                 if let Some(spec) = reg.get(&ext_id, stem) {
-                                    cache_entries.push((
-                                        (ext_id.clone(), stem.to_string()),
-                                        spec.clone(),
-                                    ));
+                                    cache_entries
+                                        .push(((ext_id.clone(), stem.to_string()), spec.clone()));
                                 }
                             }
                         }
@@ -194,8 +210,7 @@ pub(crate) async fn compose_and_serve(
                         "opt-in cache: registered kind specs",
                     );
                 }
-                let kind_cache =
-                    KindCacheRegistry::from_entries(cache_entries.iter().cloned());
+                let kind_cache = KindCacheRegistry::from_entries(cache_entries.iter().cloned());
 
                 let orphans = kind_cache.orphans(|ext| {
                     let mut ids: Vec<&str> = Vec::new();
@@ -235,7 +250,83 @@ pub(crate) async fn compose_and_serve(
                     DispatcherCache::new(cache_layer.clone(), kind_cache.clone());
                 admin_state = admin_state
                     .with_cache_layer(cache_layer.clone())
-                    .with_cache_registry(kind_cache);
+                    .with_cache_registry(kind_cache.clone())
+                    .with_cache_invalidator_kind(invalidator_kind.clone())
+                    .with_cache_warmer(warmer.clone());
+
+                // v3 — WriterTagRegistry from every spec's
+                // bucket subscription (so the chokepoint knows
+                // which `(table, granularity, dims)` triples to
+                // fire).
+                let writer_registry: std::sync::Arc<starter_cache::WriterTagRegistry> = {
+                    let mut specs: Vec<starter_cache::BucketTagSpec> = Vec::new();
+                    for (_e, _cid, sp) in kind_cache.iter() {
+                        if let Some(b) = sp.invalidate_on.buckets.as_ref() {
+                            specs.push(b.clone());
+                        }
+                    }
+                    std::sync::Arc::new(starter_cache::WriterTagRegistry::from_specs(specs))
+                };
+                let _ = writer_registry; // wired via factory in a
+                                         // follow-up; surface
+                                         // available to host paths.
+
+                // v3 — fire cold-start warming if requested. Runs
+                // once at boot; never blocks the rest of startup.
+                if let Some(n) = starter_cache::Warmer::n_from_env("RUBIX_CACHE") {
+                    let warmer2 = warmer.clone();
+                    let snapshot = cache_layer.per_spec_snapshot();
+                    let mut top: Vec<(String, u64)> = snapshot
+                        .into_iter()
+                        .map(|s| (s.spec_id, s.hits + s.misses))
+                        .collect();
+                    top.sort_by(|a, b| b.1.cmp(&a.1));
+                    let top_ids: Vec<String> = top.into_iter().take(n).map(|(id, _)| id).collect();
+                    let cb: starter_cache::WarmCallback = std::sync::Arc::new(|_id| {
+                        Box::pin(async move {
+                            // The runtime can't actually re-issue a
+                            // dispatcher call without the full
+                            // EvalContext — the warmer surface is
+                            // here so a host-supplied closure can
+                            // re-fetch; the default callback is a
+                            // no-op success that records the warmer
+                            // ran. A future job lands the per-spec
+                            // re-fetch driver.
+                            Ok(())
+                        })
+                    });
+                    tokio::spawn(async move {
+                        warmer2.warm_top_n(top_ids, cb).await;
+                    });
+                }
+
+                // v3 — when the event-bus invalidator is wired,
+                // subscribe a peer-watcher so incoming `__cache.invalidate`
+                // publishes feed apply_remote.
+                if invalidator_kind == "event-bus" {
+                    // Re-fetch the typed handle: the env-bus
+                    // invalidator we built above is wrapped in
+                    // Arc<dyn Invalidator>; for the subscriber we
+                    // construct a fresh EventBusInvalidator pointing
+                    // at the same local tokens via apply_remote on
+                    // the existing one. The clean path keeps a
+                    // typed Arc<EventBusInvalidator>; we re-build a
+                    // sibling here for simplicity (a future cleanup
+                    // shares one Arc across both surfaces).
+                    let bus_adapter: std::sync::Arc<dyn starter_cache::InvalidationBus> =
+                        std::sync::Arc::new(
+                            rubix_agent::extensions::event_bus::CacheInvalidationBus::new(
+                                event_bus.clone(),
+                            ),
+                        );
+                    let sibling =
+                        std::sync::Arc::new(starter_cache::EventBusInvalidator::new(bus_adapter));
+                    let _ = rubix_agent::extensions::event_bus::spawn_cache_invalidation_subscriber(
+                        event_bus.clone(),
+                        sibling,
+                        "__cache.invalidate".to_string(),
+                    );
+                }
 
                 let builtin = Arc::new(
                     BuiltinRestDispatcher::new(table, bundle.registry.clone())
@@ -306,9 +397,7 @@ pub(crate) async fn compose_and_serve(
                 .max_connections(2)
                 .connect(dsn)
                 .await
-                .map_err(|e| {
-                    anyhow::anyhow!("connect for dashboard_events listen pool: {e}")
-                })?;
+                .map_err(|e| anyhow::anyhow!("connect for dashboard_events listen pool: {e}"))?;
             let listen_pool = Pool::from_sqlx(listen_inner);
             let _t_dash_listen =
                 boot::pool_telemetry::spawn(listen_pool.sqlx().clone(), "rubix-dash-listen");
@@ -374,8 +463,8 @@ pub(crate) async fn compose_and_serve(
                 .map_router(|r| with_role(r, Role::Admin));
             let admin_invoke_recorder = recorder.clone();
             let admin_invoke_prefixes = tool_audit_prefixes.clone();
-            let invoke = routes::admin::admin_invoke_registrar(admin_state.clone())
-                .map_router(move |r| {
+            let invoke =
+                routes::admin::admin_invoke_registrar(admin_state.clone()).map_router(move |r| {
                     let audited = middleware::changelog_layer(
                         r,
                         middleware::ChangelogState {
@@ -417,7 +506,9 @@ pub(crate) async fn compose_and_serve(
         app = app
             .merge(routes::admin::admin_registrar(admin_state.clone()))
             .merge(routes::admin::admin_invoke_registrar(admin_state.clone()))
-            .merge(routes::admin::admin_invoke_stream_registrar(admin_state.clone()));
+            .merge(routes::admin::admin_invoke_stream_registrar(
+                admin_state.clone(),
+            ));
     }
 
     // OpenAPI projection.

@@ -97,9 +97,7 @@ async fn apply_one(
     for col in &entry.columns {
         validate_identifier(&col.name, "column")?;
         if col.name == "tenant_id" {
-            return Err(
-                "column \"tenant_id\" is reserved (host stamps it on every insert)".into(),
-            );
+            return Err("column \"tenant_id\" is reserved (host stamps it on every insert)".into());
         }
     }
     for ob in &entry.order_by {

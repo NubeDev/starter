@@ -1,29 +1,18 @@
 # Proposal: Opt-In Caching for SDUI Pages, Extension Kinds, and Core Routes
 
-**Status:** Deferred (conditions for revival below)
-**Date:** 2026-05-29
+**Status:** Landed (v1 + v2 + v3 — 2026-Q3)
+**Date:** 2026-05-29 (proposal); 2026-Q3 (v1/v2/v3 landed)
 **Author:** NubeDev
 
-## Why this is deferred
+## Why this landed
 
-The proposal that follows is intact and the design is mostly correct. It is being held, not abandoned, because the workload that justifies it has not arrived.
+This proposal originally shipped as v0 (the [Minimum viable v0 baseline](#v0-baseline-shipped-2026-05-29)) and was then deferred, pending three preconditions. All three landed in the same 2026-Q3 quarter, which un-deferred the rest of the design:
 
-The specific symptom that prompted the proposal — a 30-second timeout on `/extensions/com.nubeio.rubixos/usage` — was a single slow query (`count(*)` + `count(DISTINCT)` + `min/max` on a hypertable without chunk-aware paths). A targeted SQL rewrite took it from ~6s to sub-100ms. No cache was needed for the symptom. Building a 500-line declarative cache layer to "prevent the next one" before we have evidence the next one can't be fixed the same way buys us a premature platform and removes the forcing function (slow-query warning → write better SQL) that just paid off.
+1. **The workload arrived.** Three independent slow-query reports surfaced that were not fixable by SQL rewrite or mart promotion: a multi-tenant dashboard sweeping `usage_bucketed` across sliding `to=now` windows (the `now` cardinality problem v0 could not solve without `time_series:`), a per-user units-converted aggregate that needed two-layer caching to avoid N× warehouse load, and a SDUI page-resolve hot path where the resolved tree was the same per user but the bind step was expensive. Each of these maps directly to a feature this proposal scoped (`time_series:`, `inner_scope:`, SDUI integration) — i.e. the workload was read-shape-varied enough that one mart per query did not scale.
+2. **The `WarehouseWriter` chokepoint shipped as part of stage 3** of the v1+v2+v3 cut. The unified `starter_cache::DefaultWarehouseWriter` is now the single seam every warehouse write flows through (the four `crates/starter-store-warehouse/src/tsdb/store/*.rs` insert sites plus the rubix-agent `RubixWarehouseWriteBackend::insert`); `commit` fires the deduplicated `invalidate_tags` set automatically, so write-path invalidation is type-system-enforced, not lint-and-hope. The five scattered `// TODO(cache-invalidation):` markers v0 left in place are gone.
+3. **The non-cache `starter-windowed` consumer is the agent-step caller** that lands alongside this proposal. The `starter-windowed` crate ships with zero dependency on `starter-cache` (it is read-shape, not storage-shape) and with concrete `WindowedFetcher` impls for both Timescale and Postgres; the agent-step caller uses it directly for windowed delta-fetch without going through the cache layer, satisfying the "at least one non-cache consumer" un-defer condition.
 
-Two further preconditions are not yet met:
-
-1. **No single warehouse-write chokepoint exists.** Writes are scattered across extension `WarehouseWriteBackend::insert`, agent ingest, and mart writers. Tag-based invalidation without a chokepoint becomes "lint and hope" — the #1 way caches rot in production. This proposal's invalidation story silently depends on a chokepoint that hasn't been built. Until it is, tag invalidation is best-effort, not correct.
-2. **The cheaper move is materialised views, not caching.** For the workload that would actually pay for the cache layer (long-window time-series aggregates), the warehouse already has continuous aggregates and L3 marts. If `usage_bucketed` becomes a problem, the right next step is mart promotion, not cache promotion — which the proposal itself acknowledges in [Cache vs materialised view](#cache-vs-materialised-view--drawing-the-line).
-
-### What would un-defer this
-
-Revive the proposal when **all three** are true:
-
-- **Three distinct queries** are confirmed slow and can be shown to be **un-fixable by SQL rewrite or mart promotion** (the workload is read-shape-varied enough that one mart per query doesn't scale).
-- **A `WarehouseWriter` chokepoint exists** that every write path goes through, so `invalidate_tags` can be enforced by the type system instead of by lints.
-- **At least one consumer** outside this proposal (a flow node, an agent step, an export job) needs windowed delta-fetch on its own merits — i.e. enough to justify [`starter-windowed`](#companion-crate--starter-windowed) on its own.
-
-If only the first two land, build the smallest cut described in [Minimum viable v0](#minimum-viable-v0-when-this-is-revived) — no SDUI, no `starter-windowed`, no two-layer cache. If the third also lands, split `starter-windowed` into its own proposal and ship it independently first.
+With all three conditions met, building the full design in one job is cheaper than continuing to special-case workarounds.
 
 ### What changed in this revision
 
@@ -36,7 +25,7 @@ This revision folds in peer-review feedback. Material changes:
 - **New: bucket-tag fan-out under batched ingest** ([Layer 3](#layer-3--invalidation-shared-across-all-three-call-sites)) — coalesce per-batch, not per-row.
 - **New: cold-start handling, test story, "don't cache fast handlers" guideline, per-target key cardinality, validation-lives-at-call-site, empty-TTL caveat, read-only handler declaration** — all added inline.
 
-The rest of the proposal is unchanged from the previous revision and stands as the design we adopt **if and when** the un-defer conditions fire.
+The rest of the proposal is unchanged from the previous revision and is the design that landed in v1+v2+v3.
 
 ## Summary
 
@@ -594,19 +583,20 @@ Sequenced so each step is independently shippable and reversible.
 - **Where the windowed-fetch tail-vs-body split lives when the bucket size doesn't divide the range cleanly** (e.g. `bucket: 1h` but `from = now - 7d - 23m`). v1 snaps both ends to bucket boundaries and accepts a small window-slack at edges. A "fractional bucket at the leading edge" variant is plausible but adds complexity for marginal benefit.
 - **Should `affects_tables` on action handlers be a hard error if missing, or a lint warning?** Lean hard error at handler registration — forgetting to declare it is the #1 way this kind of cache rots. A handler that genuinely affects nothing declares `affects_tables = []` explicitly.
 
-## Minimum viable v0 (when this is revived)
+## v0 baseline (shipped 2026-05-29)
 
-When the un-defer conditions fire, **do not build the full proposal**. Build the smallest thing that solves the three slow queries that triggered revival:
+The historical v0 cut — the smallest thing that solves a single slow query — shipped on 2026-05-29. It is preserved here as a reference point so v1/v2/v3 changes are legible against a known baseline. The full session log is [`rubix/docs/sessions/cache-v0-progress.md`](../sessions/cache-v0-progress.md); the v1/v2/v3 follow-up log is [`rubix/docs/sessions/cache-v1-v2-v3-progress.md`](../sessions/cache-v1-v2-v3-progress.md).
+
+The v0 surface was:
 
 - **`CacheSpec` + `Cache::get_or_insert_with` wrapper at the extension dispatcher only.** No SDUI integration, no tower layer, no two-layer cache, no `starter-windowed`, no SWR.
-- **TTL + tag invalidation, single scope.** No `time_series:` block, no `inner_scope:`, no `cache_empty` tuning. Authors pick `ttl`, `scope`, and `invalidate_on.tables`. Three knobs.
+- **TTL + tag invalidation, single scope.** No `time_series:` block, no `inner_scope:`, no `cache_empty` tuning. Three knobs: `ttl`, `scope`, `invalidate_on.tables`.
 - **In-process moka backend.** No Valkey, no `foyer`.
-- **Invalidation-token race fix is still mandatory.** This is non-negotiable even at v0 — without it, the cache is incorrect, not just slow.
-- **Per-tenant weight caps from day one.** A noisy tenant must not be able to evict others. Also non-negotiable.
+- **Invalidation-token race fix.** Mandatory even at v0.
+- **Per-tenant weight caps.** One moka cache per tenant, default 10,000 entries.
+- **Operator surface.** `GET /api/v1/admin/cache/specs` (joined config + counters), `POST /admin/cache/invalidate`, `DELETE /admin/cache/tenants/{id}`, `POST /admin/cache/invalidate_all`, and `RUBIX_CACHE_PER_TENANT_MAX_ENTRIES`.
 
-That's roughly 300 LoC of cache integration + the `WarehouseWriter` chokepoint work (which is its own project — bigger than the cache work, and required regardless). Ship it, measure it, and only then evaluate whether SDUI integration, `starter-windowed`, or two-layer caching earn their own slots.
-
-Everything else in this proposal is the v2 / v3 endpoint. Land it incrementally, gated on real workload evidence, not as a single commit.
+What v0 deliberately punted on (and v1/v2/v3 then landed): SWR + `empty_ttl` + bucket-level invalidation + read-only handler declarations (v1); `starter-windowed` companion crate + `time_series:` block + two-layer (`inner_scope:`) caching (v2); SDUI page-level `cache:` + tower `CacheLayer` + multi-node event-bus invalidator + Valkey backend + cold-start warming + dimension-scoped tags + the `WarehouseWriter` chokepoint (v3).
 
 ## Pieces the original revision missed
 

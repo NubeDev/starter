@@ -34,7 +34,7 @@
 //!   test in `tests/rest_streaming.rs` enforces this).
 
 mod auth;
-mod cache;
+pub mod cache;
 mod dispatcher;
 mod handler;
 mod router;

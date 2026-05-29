@@ -75,9 +75,7 @@ impl KindCacheRegistry {
 
     /// Iterate every registered `(extension, contribute_id, spec)`.
     /// Order is unspecified — `KindCacheRegistry` is `HashMap`-backed.
-    pub fn iter(
-        &self,
-    ) -> impl Iterator<Item = (&ExtensionId, &str, &CacheSpec)> + '_ {
+    pub fn iter(&self) -> impl Iterator<Item = (&ExtensionId, &str, &CacheSpec)> + '_ {
         self.entries
             .iter()
             .map(|((ext, id), spec)| (ext, id.as_str(), spec))
@@ -175,9 +173,7 @@ impl KindCacheRegistry {
                     continue;
                 }
             };
-            match starter_cache::CacheSidecar::from_yaml(&content)
-                .and_then(|s| s.into_spec())
-            {
+            match starter_cache::CacheSidecar::from_yaml(&content).and_then(|s| s.into_spec()) {
                 Ok(spec) => {
                     entries.insert((ext.clone(), stem), spec);
                 }
@@ -219,6 +215,163 @@ pub struct OrphanSidecar {
     pub contribute_id: String,
 }
 
+/// Per-(extension, contribute_id) handler metadata. Used by the
+/// dispatcher to decide whether a successful call should fire
+/// write-path invalidation tags.
+///
+/// v1 of the [opt-in caching proposal][1] makes this a real
+/// (not best-effort) invalidation hook for handlers the dispatcher
+/// owns. The warehouse-write chokepoint stays a v3 problem.
+///
+/// [1]: ../../../rubix/docs/proposal/fe-cache-opt-in.md
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct HandlerMeta {
+    /// `true` if the handler does no writes. `false` means it
+    /// writes and `affects_tables` must be non-empty.
+    pub read_only: bool,
+    /// Tables this handler writes to. Each entry fires
+    /// `invalidate_tags(["table:<name>"])` after a successful call.
+    pub affects_tables: Vec<String>,
+}
+
+impl HandlerMeta {
+    /// A read-only handler — no write-path invalidation.
+    pub fn read_only() -> Self {
+        Self {
+            read_only: true,
+            affects_tables: Vec::new(),
+        }
+    }
+
+    /// A writing handler. `affects_tables` must be non-empty —
+    /// constructing one without tables is a programming error
+    /// caught at [`HandlerCatalog::register`] time.
+    pub fn writing<I, S>(tables: I) -> Self
+    where
+        I: IntoIterator<Item = S>,
+        S: Into<String>,
+    {
+        Self {
+            read_only: false,
+            affects_tables: tables.into_iter().map(Into::into).collect(),
+        }
+    }
+
+    /// Convert to the v1 invalidation tag set.
+    pub fn invalidation_tags(&self) -> Vec<String> {
+        self.affects_tables
+            .iter()
+            .map(|t| format!("table:{t}"))
+            .collect()
+    }
+}
+
+/// Errors raised at [`HandlerCatalog::register`] time. The dispatcher
+/// fails fast on these — silently registering a writing handler
+/// without a tag declaration is the #1 way caches rot in production
+/// per §"Read-only handler declaration" of the proposal.
+#[derive(Debug, thiserror::Error, PartialEq, Eq)]
+pub enum HandlerRegistrationError {
+    /// A writing handler did not declare any `affects_tables`.
+    #[error(
+        "handler {extension:?}::{contribute_id:?}: writing handler must declare \
+         affects_tables; declare it read_only=true if it does no writes"
+    )]
+    WritingHandlerMissingTables {
+        /// The extension id.
+        extension: String,
+        /// The contribute id.
+        contribute_id: String,
+    },
+}
+
+/// Registry of handler metadata, keyed by `(extension, contribute_id)`.
+/// Built at host startup; cloned into [`DispatcherCache`].
+#[derive(Debug, Default, Clone)]
+pub struct HandlerCatalog {
+    entries: Arc<HashMap<(ExtensionId, String), HandlerMeta>>,
+}
+
+impl HandlerCatalog {
+    /// An empty catalog. Dispatchers wired without a populated
+    /// catalog treat every handler as undeclared — no write-path
+    /// invalidation fires.
+    pub fn empty() -> Self {
+        Self::default()
+    }
+
+    /// Build from a flat list of registrations. Equivalent to calling
+    /// [`Self::register`] for each entry in order; the **first**
+    /// invalid registration short-circuits with `Err`.
+    pub fn from_entries<I>(entries: I) -> Result<Self, HandlerRegistrationError>
+    where
+        I: IntoIterator<Item = (ExtensionId, String, HandlerMeta)>,
+    {
+        let mut builder = HandlerCatalogBuilder::new();
+        for (ext, cid, meta) in entries {
+            builder.register(ext, cid, meta)?;
+        }
+        Ok(builder.build())
+    }
+
+    /// Look up the meta for one handler.
+    pub fn get(&self, ext: &ExtensionId, contribute_id: &str) -> Option<&HandlerMeta> {
+        self.entries.get(&(ext.clone(), contribute_id.to_string()))
+    }
+
+    /// Number of registered entries.
+    pub fn len(&self) -> usize {
+        self.entries.len()
+    }
+
+    /// `true` if no entries are registered.
+    pub fn is_empty(&self) -> bool {
+        self.entries.is_empty()
+    }
+}
+
+/// Builder helper that enforces the registration invariants —
+/// "a writing handler that does not declare `affects_tables` is a
+/// hard error at registration".
+#[derive(Default)]
+pub struct HandlerCatalogBuilder {
+    entries: HashMap<(ExtensionId, String), HandlerMeta>,
+}
+
+impl HandlerCatalogBuilder {
+    /// Build an empty catalog builder.
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    /// Register one `(extension, contribute_id) -> meta`. Returns
+    /// `Err(HandlerRegistrationError::WritingHandlerMissingTables)`
+    /// when `read_only=false` and `affects_tables` is empty.
+    pub fn register(
+        &mut self,
+        extension: ExtensionId,
+        contribute_id: impl Into<String>,
+        meta: HandlerMeta,
+    ) -> Result<&mut Self, HandlerRegistrationError> {
+        let cid = contribute_id.into();
+        if !meta.read_only && meta.affects_tables.is_empty() {
+            return Err(HandlerRegistrationError::WritingHandlerMissingTables {
+                extension: extension.as_str().to_string(),
+                contribute_id: cid,
+            });
+        }
+        self.entries.insert((extension, cid), meta);
+        Ok(self)
+    }
+
+    /// Finalise the catalog.
+    pub fn build(self) -> HandlerCatalog {
+        HandlerCatalog {
+            entries: Arc::new(self.entries),
+        }
+    }
+}
+
 /// Bundle the dispatcher receives via [`super::BuiltinRestDispatcher::with_cache`].
 #[derive(Clone)]
 pub struct DispatcherCache {
@@ -226,12 +379,29 @@ pub struct DispatcherCache {
     pub layer: CacheLayer,
     /// Per-kind specs.
     pub registry: KindCacheRegistry,
+    /// Per-handler read-only / writing metadata. Empty by default;
+    /// when present, the dispatcher fires
+    /// `invalidate_tags(meta.invalidation_tags())` after every
+    /// successful call to a writing handler.
+    pub handlers: HandlerCatalog,
 }
 
 impl DispatcherCache {
-    /// Convenience builder.
+    /// Convenience builder. Defaults `handlers` to the empty
+    /// catalog — call [`Self::with_handlers`] to wire write-path
+    /// invalidation.
     pub fn new(layer: CacheLayer, registry: KindCacheRegistry) -> Self {
-        Self { layer, registry }
+        Self {
+            layer,
+            registry,
+            handlers: HandlerCatalog::empty(),
+        }
+    }
+
+    /// Attach a populated [`HandlerCatalog`].
+    pub fn with_handlers(mut self, handlers: HandlerCatalog) -> Self {
+        self.handlers = handlers;
+        self
     }
 }
 

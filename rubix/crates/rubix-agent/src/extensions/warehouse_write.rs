@@ -58,6 +58,13 @@ pub struct RubixWarehouseWriteBackend {
     /// unprefixed `name`. `Arc` so cloning the backend per call is
     /// cheap regardless of how many tables an extension declares.
     table_specs: Arc<Vec<ContributeWarehouseTable>>,
+    /// v3 — unified WarehouseWriter chokepoint. When `Some`, every
+    /// successful `insert` enqueues one `WriteRow` per row and
+    /// `commit()`s once, firing the deduplicated tag set through
+    /// the supplied invalidator. `None` keeps v0 best-effort
+    /// behaviour (no invalidation fires).
+    writer_registry: Option<Arc<starter_cache::WriterTagRegistry>>,
+    writer_invalidator: Option<Arc<dyn starter_cache::Invalidator>>,
 }
 
 impl std::fmt::Debug for RubixWarehouseWriteBackend {
@@ -88,7 +95,22 @@ impl RubixWarehouseWriteBackend {
             extension_id,
             granted_tables,
             table_specs,
+            writer_registry: None,
+            writer_invalidator: None,
         }
+    }
+
+    /// v3 — attach the unified WarehouseWriter chokepoint. Successful
+    /// `insert` calls deduplicate per-row tags through the supplied
+    /// registry and fire one `invalidate_tags` per commit.
+    pub fn with_writer(
+        mut self,
+        registry: Arc<starter_cache::WriterTagRegistry>,
+        invalidator: Arc<dyn starter_cache::Invalidator>,
+    ) -> Self {
+        self.writer_registry = Some(registry);
+        self.writer_invalidator = Some(invalidator);
+        self
     }
 
     /// Resolve `name` against the manifest declarations. Returns
@@ -139,9 +161,8 @@ impl RubixWarehouseWriteBackend {
                             "tenant_id stamp produced a non-string value (bug)",
                         )
                     })?;
-                    args.add(s.to_owned()).map_err(|e| {
-                        Error::extension_internal(format!("bind tenant_id: {e}"))
-                    })?;
+                    args.add(s.to_owned())
+                        .map_err(|e| Error::extension_internal(format!("bind tenant_id: {e}")))?;
                 } else {
                     bind_column(&mut args, value, columns[col_idx])?;
                 }
@@ -162,14 +183,11 @@ impl RubixWarehouseWriteBackend {
 }
 
 impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
-    // TODO(cache-invalidation): per-extension warehouse write site.
-    // starter-cache's opt-in cache wants
-    // `invalidate_tags(&[format!("table:{full_table}")])` here on
-    // successful commit. There is no unified `WarehouseWriter`
-    // chokepoint yet (see rubix/docs/sessions/cache-v0-progress.md);
-    // until one lands, tag invalidation here is best-effort and
-    // depends on the caller threading the layer's invalidator handle
-    // through.
+    // v3: unified chokepoint via `starter_cache::DefaultWarehouseWriter`
+    // — when `writer_invalidator` is set we enqueue per-row and
+    // commit once after a successful INSERT, firing one deduplicated
+    // `invalidate_tags`. See rubix/docs/operations/cache-runbook.md
+    // § "v3 WarehouseWriter".
     fn insert(&self, table: &str, rows: Vec<Row>) -> Result<u64> {
         let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
             return Err(Error::capability(format!(
@@ -249,7 +267,46 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
             value_rows.push(values);
         }
 
-        self.run_insert(&full_table, &column_names, &column_types, &value_rows)
+        let affected = self.run_insert(&full_table, &column_names, &column_types, &value_rows)?;
+        // v3 — fire deduped tags through the chokepoint.
+        if let (Some(reg), Some(inv)) = (
+            self.writer_registry.as_ref(),
+            self.writer_invalidator.as_ref(),
+        ) {
+            let mut wrows: Vec<starter_cache::WriteRow> = Vec::with_capacity(rows.len());
+            for row in &rows {
+                let map = row.as_map();
+                // Pull `ts` if present and a number (ms epoch).
+                let ts = map
+                    .get("ts")
+                    .and_then(|v| v.as_i64())
+                    .and_then(|ms| chrono::DateTime::<chrono::Utc>::from_timestamp_millis(ms));
+                let mut dims = std::collections::BTreeMap::new();
+                for d in reg
+                    .for_table(&full_table)
+                    .iter()
+                    .flat_map(|s| &s.dimensions)
+                {
+                    if let Some(v) = map.get(d) {
+                        dims.insert(d.clone(), v.to_string());
+                    }
+                }
+                wrows.push(starter_cache::WriteRow {
+                    table: full_table.clone(),
+                    ts,
+                    dimensions: dims,
+                });
+            }
+            use starter_cache::WarehouseWriter as _;
+            let writer = starter_cache::DefaultWarehouseWriter::new(inv.clone(), (**reg).clone());
+            tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async move {
+                    writer.enqueue_many(wrows).await;
+                    writer.commit().await;
+                });
+            });
+        }
+        Ok(affected)
     }
 
     fn update(&self, table: &str, key_column: &str, rows: Vec<Row>) -> Result<u64> {
@@ -271,13 +328,17 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         let full_table = full_table_name(&self.extension_id, table);
 
         // Resolve key column against the declared schema.
-        let key_spec = spec.columns.iter().find(|c| c.name == key_column).ok_or_else(|| {
-            Error::validation(format!(
-                "warehouse_write.update: key_column {key_column:?} is not declared in \
+        let key_spec = spec
+            .columns
+            .iter()
+            .find(|c| c.name == key_column)
+            .ok_or_else(|| {
+                Error::validation(format!(
+                    "warehouse_write.update: key_column {key_column:?} is not declared in \
                  contributes.warehouse_tables[{:?}].columns",
-                spec.name
-            ))
-        })?;
+                    spec.name
+                ))
+            })?;
         let key_type = key_spec.ty.clone();
 
         if rows.is_empty() {
@@ -355,9 +416,8 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
                 bind_column(&mut args, v, col)?;
             }
             bind_column(&mut args, &key_value, key_column)?;
-            args.add(tenant_id.to_owned()).map_err(|e| {
-                Error::extension_internal(format!("bind tenant_id: {e}"))
-            })?;
+            args.add(tenant_id.to_owned())
+                .map_err(|e| Error::extension_internal(format!("bind tenant_id: {e}")))?;
 
             let pool_ref = pool.clone();
             let affected = tokio::task::block_in_place(|| {
@@ -374,12 +434,7 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         Ok(total_affected)
     }
 
-    fn delete(
-        &self,
-        table: &str,
-        key_column: &str,
-        keys: Vec<JsonValue>,
-    ) -> Result<u64> {
+    fn delete(&self, table: &str, key_column: &str, keys: Vec<JsonValue>) -> Result<u64> {
         let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
             return Err(Error::capability(format!(
                 "warehouse_write.delete {table:?} refused: no caller identity (system frame)"
@@ -397,13 +452,17 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         let spec = self.find_spec(table)?;
         let full_table = full_table_name(&self.extension_id, table);
 
-        let key_spec = spec.columns.iter().find(|c| c.name == key_column).ok_or_else(|| {
-            Error::validation(format!(
-                "warehouse_write.delete: key_column {key_column:?} is not declared in \
+        let key_spec = spec
+            .columns
+            .iter()
+            .find(|c| c.name == key_column)
+            .ok_or_else(|| {
+                Error::validation(format!(
+                    "warehouse_write.delete: key_column {key_column:?} is not declared in \
                  contributes.warehouse_tables[{:?}].columns",
-                spec.name
-            ))
-        })?;
+                    spec.name
+                ))
+            })?;
         let key_cast = placeholder_cast(&key_spec.ty);
 
         if keys.is_empty() {
@@ -411,7 +470,10 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         }
 
         // DELETE FROM t WHERE key IN ($1::kt, $2::kt, ...) AND tenant_id = $N+1.
-        let mut sql = format!("DELETE FROM {full_table} WHERE {} IN (", quote_ident(key_column));
+        let mut sql = format!(
+            "DELETE FROM {full_table} WHERE {} IN (",
+            quote_ident(key_column)
+        );
         for i in 0..keys.len() {
             if i > 0 {
                 sql.push_str(", ");
@@ -516,7 +578,10 @@ fn build_multi_row_placeholders(column_types: &[&str], rows: usize) -> String {
 fn placeholder_cast(ty: &str) -> &'static str {
     // Case-insensitive match on the head of the type so
     // `TIMESTAMP WITH TIME ZONE`, `timestamptz`, `DATE` all hit.
-    let head = ty.split(|c: char| c == '(' || c.is_whitespace()).next().unwrap_or(ty);
+    let head = ty
+        .split(|c: char| c == '(' || c.is_whitespace())
+        .next()
+        .unwrap_or(ty);
     match head.to_ascii_uppercase().as_str() {
         "DATE" => "::date",
         "TIMESTAMP" => match ty.to_ascii_uppercase().contains("TIME ZONE") {
@@ -538,11 +603,7 @@ fn placeholder_cast(ty: &str) -> &'static str {
 ///
 /// v0.1 supports a small whitelist sufficient for the cleaner-flow
 /// L2 output table. Additional types land additively here.
-fn bind_column(
-    args: &mut PgArguments,
-    value: &JsonValue,
-    col_name: &str,
-) -> Result<()> {
+fn bind_column(args: &mut PgArguments, value: &JsonValue, col_name: &str) -> Result<()> {
     // `col_name` is the **column name**, not the type — the type
     // string is owned by the manifest spec and the caller of this
     // helper. For v0.1 we infer the type by inspecting the JSON
@@ -660,7 +721,11 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn system_frame_insert_refused() {
-        let b = backend(None, Some(BTreeSet::from(["solar_panels".into()])), spec_solar());
+        let b = backend(
+            None,
+            Some(BTreeSet::from(["solar_panels".into()])),
+            spec_solar(),
+        );
         let err = b
             .insert("solar_panels", vec![])
             .expect_err("system frame must refuse");

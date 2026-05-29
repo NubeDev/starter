@@ -7793,10 +7793,19 @@ name = "starter-cache"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "bytes",
+ "chrono",
+ "http 1.4.0",
+ "http-body 1.0.1",
+ "http-body-util",
  "moka",
  "serde",
+ "serde_json",
+ "starter-windowed",
  "thiserror 1.0.69",
  "tokio",
+ "tower-layer",
+ "tower-service",
  "tracing",
 ]
 
@@ -8551,6 +8560,8 @@ dependencies = [
  "http-body-util",
  "serde",
  "serde_json",
+ "sha2 0.10.9",
+ "starter-cache",
  "starter-ui-bindings",
  "starter-ui-ir",
  "thiserror 1.0.69",
@@ -8745,6 +8756,7 @@ dependencies = [
  "starter-skills",
  "starter-spi",
  "starter-tags",
+ "starter-windowed",
  "testcontainers",
  "testcontainers-modules",
  "thiserror 1.0.69",
@@ -8784,6 +8796,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "starter-tags",
+ "starter-windowed",
  "testcontainers",
  "testcontainers-modules",
  "thiserror 1.0.69",
@@ -8993,6 +9006,18 @@ dependencies = [
  "tokio",
  "tower 0.5.3",
  "tracing",
+]
+
+[[package]]
+name = "starter-windowed"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
+ "tokio",
 ]
 
 [[package]]

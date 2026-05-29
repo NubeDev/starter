@@ -49,7 +49,7 @@ use starter_ext_spi::http_out::{HttpRequest, HttpResponse};
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::secrets::{SecretsGetRequest, SecretsGetResponse};
 use starter_ext_spi::tracing_ext::{TracingEventRequest, TracingEventResponse};
-use starter_ext_spi::wall_clock::{WallClockNowResponse};
+use starter_ext_spi::wall_clock::WallClockNowResponse;
 use starter_ext_spi::warehouse::{
     WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest, WarehouseReadResponse,
     WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest, WarehouseWriteResponse,
@@ -65,9 +65,9 @@ use super::backends::{
     fs_paths_grant, http_authorities_grant, secrets_prefixes_grant, warehouse_grant,
     warehouse_tables_for, warehouse_write_grant, RubixWarehouseReadBackend,
 };
-use super::warehouse_write::RubixWarehouseWriteBackend;
 use super::dashboard_authz::{RubixAuthzBackend, RubixDashboardBackend};
 use super::event_bus::{RubixEventBus, RubixEventBusBackend};
+use super::warehouse_write::RubixWarehouseWriteBackend;
 
 /// Concrete [`HostMethodHandler`] for the rubix host. Cheap to
 /// clone — every field is `Arc`-backed.
@@ -208,8 +208,7 @@ impl HostMethodHandler for RubixHostMethods {
         // Cache the registry reference once — each arm hands it to
         // its grant resolver. `OnceLock::get()` returns
         // `Option<&Arc<_>>`; map through to `&ExtensionRegistry`.
-        let registry: Option<&ExtensionRegistry> =
-            self.extension_registry.get().map(Arc::as_ref);
+        let registry: Option<&ExtensionRegistry> = self.extension_registry.get().map(Arc::as_ref);
         match method {
             "dashboard.read" => {
                 let req: DashboardReadRequest = serde_json::from_value(params)
@@ -227,10 +226,9 @@ impl HostMethodHandler for RubixHostMethods {
                     // attempt. The backend gates per-method.
                     None,
                 );
-                let body =
-                    tokio::task::spawn_blocking(move || backend.read(&req.page_id))
-                        .await
-                        .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                let body = tokio::task::spawn_blocking(move || backend.read(&req.page_id))
+                    .await
+                    .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
                 Ok(serde_json::to_value(DashboardReadResponse { body })
                     .expect("DashboardReadResponse serialises"))
             }
@@ -257,16 +255,12 @@ impl HostMethodHandler for RubixHostMethods {
                 let req: AuthzCheckRequest = serde_json::from_value(params)
                     .map_err(|e| Error::validation(format!("authz.check params: {e}")))?;
                 let granted_kinds = authz_kinds_grant(registry, extension);
-                let backend = RubixAuthzBackend::new(
-                    self.authz_engine.clone(),
-                    caller,
-                    granted_kinds,
-                );
-                let allowed = tokio::task::spawn_blocking(move || {
-                    backend.check(&req.action, &req.resource)
-                })
-                .await
-                .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                let backend =
+                    RubixAuthzBackend::new(self.authz_engine.clone(), caller, granted_kinds);
+                let allowed =
+                    tokio::task::spawn_blocking(move || backend.check(&req.action, &req.resource))
+                        .await
+                        .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
                 Ok(serde_json::to_value(AuthzCheckResponse { allowed })
                     .expect("AuthzCheckResponse serialises"))
             }
@@ -305,8 +299,7 @@ impl HostMethodHandler for RubixHostMethods {
                     .map_err(|e| Error::validation(format!("warehouse.write params: {e}")))?;
                 let tenant = caller.and_then(|c| c.tenant_id.clone());
                 let granted_tables = warehouse_write_grant(registry, extension);
-                let table_specs =
-                    Arc::new(warehouse_tables_for(registry, extension));
+                let table_specs = Arc::new(warehouse_tables_for(registry, extension));
                 let backend = RubixWarehouseWriteBackend::new(
                     wh.client,
                     tenant,
@@ -346,11 +339,10 @@ impl HostMethodHandler for RubixHostMethods {
                 let table = req.table.clone();
                 let key_column = req.key_column.clone();
                 let rows = req.rows;
-                let affected = tokio::task::spawn_blocking(move || {
-                    backend.update(&table, &key_column, rows)
-                })
-                .await
-                .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                let affected =
+                    tokio::task::spawn_blocking(move || backend.update(&table, &key_column, rows))
+                        .await
+                        .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
                 Ok(serde_json::to_value(WarehouseUpdateResponse {
                     rows_affected: affected,
                 })
@@ -378,11 +370,10 @@ impl HostMethodHandler for RubixHostMethods {
                 let table = req.table.clone();
                 let key_column = req.key_column.clone();
                 let keys = req.keys;
-                let affected = tokio::task::spawn_blocking(move || {
-                    backend.delete(&table, &key_column, keys)
-                })
-                .await
-                .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
+                let affected =
+                    tokio::task::spawn_blocking(move || backend.delete(&table, &key_column, keys))
+                        .await
+                        .map_err(|e| Error::extension_internal(format!("join error: {e}")))??;
                 Ok(serde_json::to_value(WarehouseDeleteResponse {
                     rows_affected: affected,
                 })
@@ -467,8 +458,10 @@ impl HostMethodHandler for RubixHostMethods {
                     .duration_since(UNIX_EPOCH)
                     .map(|d| d.as_millis() as u64)
                     .unwrap_or(0);
-                Ok(serde_json::to_value(WallClockNowResponse { now_unix_ms: now })
-                    .expect("WallClockNowResponse serialises"))
+                Ok(
+                    serde_json::to_value(WallClockNowResponse { now_unix_ms: now })
+                        .expect("WallClockNowResponse serialises"),
+                )
             }
             "tracing.event" => {
                 let req: TracingEventRequest = serde_json::from_value(params)
@@ -542,10 +535,7 @@ impl HostMethodHandler for RubixHostMethods {
                 // panics only on egregious TLS misconfig (which
                 // would manifest at boot in production); fall
                 // back to the default on first call here.
-                let client = self
-                    .http_client
-                    .get_or_init(reqwest::Client::new)
-                    .clone();
+                let client = self.http_client.get_or_init(reqwest::Client::new).clone();
                 // Whitelist canonical HTTP verbs — `reqwest::Method`'s
                 // own parser admits any valid HTTP token (e.g.
                 // `"BOGUS"`), and we want stricter validation at the
@@ -579,7 +569,11 @@ impl HostMethodHandler for RubixHostMethods {
                 let resp_headers: Vec<(String, String)> = response
                     .headers()
                     .iter()
-                    .filter_map(|(k, v)| v.to_str().ok().map(|s| (k.as_str().to_owned(), s.to_owned())))
+                    .filter_map(|(k, v)| {
+                        v.to_str()
+                            .ok()
+                            .map(|s| (k.as_str().to_owned(), s.to_owned()))
+                    })
                     .collect();
                 // Try JSON first; fall back to a UTF-8 string;
                 // null for empty.
@@ -975,10 +969,7 @@ mod tests {
                 .insert(name.to_owned(), value.into_inner());
             Ok(())
         }
-        fn delete(
-            &self,
-            name: &str,
-        ) -> std::result::Result<(), starter_spi::secrets::SecretError> {
+        fn delete(&self, name: &str) -> std::result::Result<(), starter_spi::secrets::SecretError> {
             self.inner.lock().unwrap().remove(name);
             Ok(())
         }
@@ -1047,10 +1038,9 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn wall_clock_now_returns_recent_ms() {
         let h = handler();
-        let params = serde_json::to_value(
-            starter_ext_spi::wall_clock::WallClockNowRequest::default(),
-        )
-        .unwrap();
+        let params =
+            serde_json::to_value(starter_ext_spi::wall_clock::WallClockNowRequest::default())
+                .unwrap();
         let res = h
             .call(&ext(), "wall_clock.now_ms", params, None)
             .await
@@ -1135,8 +1125,7 @@ mod tests {
     fn format_authority_with_and_without_port() {
         use reqwest::Url;
         assert_eq!(
-            super::format_authority(&Url::parse("https://api.example.com/x").unwrap())
-                .as_deref(),
+            super::format_authority(&Url::parse("https://api.example.com/x").unwrap()).as_deref(),
             Some("api.example.com")
         );
         assert_eq!(

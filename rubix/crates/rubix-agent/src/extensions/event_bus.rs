@@ -215,6 +215,70 @@ impl EventBusBackend for RubixEventBusBackend {
     }
 }
 
+/// v3 — adapter between `starter_cache::InvalidationBus` and the
+/// host's [`RubixEventBus`]. Publishes a `[tag, …]` JSON payload on a
+/// dedicated topic; a peer replica subscribes at boot and feeds
+/// incoming payloads back into the local
+/// `EventBusInvalidator::apply_remote`. Single-node deployments
+/// leave the invalidator at `local` and never construct this
+/// adapter.
+pub struct CacheInvalidationBus {
+    bus: std::sync::Arc<RubixEventBus>,
+    topic: String,
+}
+
+impl CacheInvalidationBus {
+    /// Construct with the default `__cache.invalidate` topic.
+    pub fn new(bus: std::sync::Arc<RubixEventBus>) -> Self {
+        Self {
+            bus,
+            topic: "__cache.invalidate".to_string(),
+        }
+    }
+
+    /// The topic this adapter publishes on.
+    pub fn topic(&self) -> &str {
+        &self.topic
+    }
+}
+
+#[async_trait::async_trait]
+impl starter_cache::InvalidationBus for CacheInvalidationBus {
+    async fn publish(&self, tags: &[String]) {
+        let payload = serde_json::Value::Array(
+            tags.iter()
+                .map(|t| serde_json::Value::String(t.clone()))
+                .collect(),
+        );
+        let _ = self.bus.publish_raw(&self.topic, payload);
+    }
+}
+
+/// Wire a peer-subscriber on a fresh task that drives
+/// `EventBusInvalidator::apply_remote` for every cache-invalidation
+/// publish observed on the bus. `inv` is a clone of the cache
+/// layer's [`starter_cache::EventBusInvalidator`]. Returns the
+/// `JoinHandle` so the caller can abort on shutdown.
+pub fn spawn_cache_invalidation_subscriber(
+    bus: std::sync::Arc<RubixEventBus>,
+    inv: std::sync::Arc<starter_cache::EventBusInvalidator>,
+    topic: String,
+) -> tokio::task::JoinHandle<()> {
+    let mut rx = bus.subscribe(&topic);
+    tokio::spawn(async move {
+        while let Ok(msg) = rx.recv().await {
+            let tags: Vec<String> = match &msg.payload {
+                serde_json::Value::Array(items) => items
+                    .iter()
+                    .filter_map(|v| v.as_str().map(str::to_string))
+                    .collect(),
+                _ => continue,
+            };
+            inv.apply_remote(&tags).await;
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -285,14 +349,9 @@ mod tests {
         let bus = Arc::new(RubixEventBus::new());
         // Manifest granted publish on `com.acme.charts.filter` only —
         // a sibling topic in the same namespace must still refuse.
-        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()]
-            .into_iter()
-            .collect();
-        let backend = RubixEventBusBackend::with_grant(
-            bus,
-            Some("com.acme.charts".to_owned()),
-            Some(grant),
-        );
+        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()].into_iter().collect();
+        let backend =
+            RubixEventBusBackend::with_grant(bus, Some("com.acme.charts".to_owned()), Some(grant));
         let err = backend
             .publish("com.acme.charts.other", JsonValue::Null)
             .expect_err("out-of-grant topic must refuse");
@@ -302,14 +361,9 @@ mod tests {
     #[test]
     fn publish_inside_grant_passes_to_namespace_check() {
         let bus = Arc::new(RubixEventBus::new());
-        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()]
-            .into_iter()
-            .collect();
-        let backend = RubixEventBusBackend::with_grant(
-            bus,
-            Some("com.acme.charts".to_owned()),
-            Some(grant),
-        );
+        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()].into_iter().collect();
+        let backend =
+            RubixEventBusBackend::with_grant(bus, Some("com.acme.charts".to_owned()), Some(grant));
         backend
             .publish("com.acme.charts.filter", JsonValue::Null)
             .expect("in-grant + in-namespace publishes");
@@ -343,11 +397,8 @@ mod tests {
         // *tighter* one wins.
         let bus = Arc::new(RubixEventBus::new());
         let grant: BTreeSet<String> = ["com.evil.cross".to_string()].into_iter().collect();
-        let backend = RubixEventBusBackend::with_grant(
-            bus,
-            Some("com.acme.charts".to_owned()),
-            Some(grant),
-        );
+        let backend =
+            RubixEventBusBackend::with_grant(bus, Some("com.acme.charts".to_owned()), Some(grant));
         let err = backend
             .publish("com.evil.cross", JsonValue::Null)
             .expect_err("namespace gate still refuses an over-broad operator grant");

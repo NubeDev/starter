@@ -75,7 +75,9 @@ pub async fn resolve(
         // host carries no per-extension code (SCOPE R8); we hand
         // the registered spec to the generic compiler/executor.
         _ => match spec {
-            Some(spec) => contributed_template::execute(client.pool(), spec, tenant_id, params).await,
+            Some(spec) => {
+                contributed_template::execute(client.pool(), spec, tenant_id, params).await
+            }
             None => Ok(vec![]),
         },
     }

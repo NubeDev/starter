@@ -101,12 +101,7 @@ pub async fn execute(
 /// Validate `params` against `spec.params` (JSON Schema, draft
 /// 2020-12). An empty schema accepts anything.
 fn validate_params(spec: &TemplateSpec, params: &JsonValue) -> Result<(), String> {
-    if spec.params.is_null()
-        || spec
-            .params
-            .as_object()
-            .is_some_and(|m| m.is_empty())
-    {
+    if spec.params.is_null() || spec.params.as_object().is_some_and(|m| m.is_empty()) {
         return Ok(());
     }
     // The workspace pulls `jsonschema` with default-features off,
@@ -331,8 +326,8 @@ fn row_to_json(row: &PgRow) -> Result<JsonValue, String> {
         let name = col.name();
         let ord = col.ordinal();
         let ty = col.type_info().name();
-        let value = decode_cell(row, ord, ty)
-            .map_err(|e| format!("column `{name}` ({ty}): {e}"))?;
+        let value =
+            decode_cell(row, ord, ty).map_err(|e| format!("column `{name}` ({ty}): {e}"))?;
         out.insert(name.to_string(), value);
     }
     Ok(JsonValue::Object(out))
@@ -366,8 +361,7 @@ fn decode_cell(row: &PgRow, idx: usize, ty: &str) -> Result<JsonValue, String> {
             })
         }
         "TIMESTAMP" => {
-            let v: Option<chrono::NaiveDateTime> =
-                row.try_get(idx).map_err(|e| e.to_string())?;
+            let v: Option<chrono::NaiveDateTime> = row.try_get(idx).map_err(|e| e.to_string())?;
             Ok(match v {
                 Some(t) => JsonValue::String(t.format("%Y-%m-%dT%H:%M:%S").to_string()),
                 None => JsonValue::Null,
@@ -391,9 +385,9 @@ fn decode_cell(row: &PgRow, idx: usize, ty: &str) -> Result<JsonValue, String> {
         // Fall through: try string. Catches NUMERIC (rendered as
         // decimal text), unknown user-defined types, etc.
         _ => {
-            let v: Option<String> = row.try_get(idx).map_err(|e| {
-                format!("no JSON decoder for postgres type `{ty}`: {e}")
-            })?;
+            let v: Option<String> = row
+                .try_get(idx)
+                .map_err(|e| format!("no JSON decoder for postgres type `{ty}`: {e}"))?;
             Ok(match v {
                 Some(s) => JsonValue::String(s),
                 None => JsonValue::Null,
@@ -463,10 +457,7 @@ mod tests {
         // mode and swallow the real placeholders below.
         let body = "-- The host's note mentions $limit and $caller_tenant_id\n\
                     SELECT * FROM t WHERE tenant_id = $caller_tenant_id LIMIT $limit";
-        let s = spec(
-            body,
-            json!({ "limit": { "type": "integer" } }),
-        );
+        let s = spec(body, json!({ "limit": { "type": "integer" } }));
         let p = compile(&s, body).unwrap();
         // The real WHERE clause must use a numbered placeholder.
         assert!(p.sql.contains("tenant_id = $1"), "sql={}", p.sql);

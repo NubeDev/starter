@@ -69,24 +69,24 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
     }
 
     // Extension host methods.
-    let ext_host_methods: Option<Arc<rubix_agent::extensions::RubixHostMethods>> =
-        match mcp_pool.as_ref() {
-            Some(pool) => {
-                let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
-                    Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
-                let engine: Arc<dyn starter_spi::authz::PolicyEngine> =
-                    boot::authz::build_engine()?;
-                let handler = Arc::new(rubix_agent::extensions::RubixHostMethods::new(
-                    dashboard_store,
-                    engine,
-                ));
-                handler.install_secret_store(
-                    rubix_agent::extensions::pick_default_secret_store(env!("CARGO_PKG_NAME")),
-                );
-                Some(handler)
-            }
-            None => None,
-        };
+    let ext_host_methods: Option<Arc<rubix_agent::extensions::RubixHostMethods>> = match mcp_pool
+        .as_ref()
+    {
+        Some(pool) => {
+            let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
+                Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
+            let engine: Arc<dyn starter_spi::authz::PolicyEngine> = boot::authz::build_engine()?;
+            let handler = Arc::new(rubix_agent::extensions::RubixHostMethods::new(
+                dashboard_store,
+                engine,
+            ));
+            handler.install_secret_store(rubix_agent::extensions::pick_default_secret_store(env!(
+                "CARGO_PKG_NAME"
+            )));
+            Some(handler)
+        }
+        None => None,
+    };
 
     let ext_bundle: Option<boot::ExtensionAdminBundle> =
         match (mcp_pool.as_ref(), cfg.extensions.enabled) {
@@ -129,12 +129,15 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
             use starter_changelog::ChangeLog;
             use starter_changelog_postgres::PgChangeLog;
             use starter_undo::cursor_postgres::PgUndoCursor;
-            let recorder: Arc<dyn ChangeRecorder> =
-                Arc::new(PgChangeRecorder::new(pool.clone()));
+            let recorder: Arc<dyn ChangeRecorder> = Arc::new(PgChangeRecorder::new(pool.clone()));
             let log: Arc<dyn ChangeLog> = Arc::new(PgChangeLog::new(pool.clone()));
             let cursor: Arc<dyn starter_undo::UndoCursor> =
                 Arc::new(PgUndoCursor::new(pool.clone()));
-            Some(registry::UndoSubstrate { recorder, log, cursor })
+            Some(registry::UndoSubstrate {
+                recorder,
+                log,
+                cursor,
+            })
         }
         None => None,
     };
@@ -167,10 +170,10 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
             let contributions = registry::collect_anomaly_rule_contributions(
                 ext_bundle.as_ref().map(|b| &b.registry),
             );
-            let rule_registry =
-                rubix_tools::cleaner::adapter::build_registry_with_contributions(
-                    &tools, contributions,
-                );
+            let rule_registry = rubix_tools::cleaner::adapter::build_registry_with_contributions(
+                &tools,
+                contributions,
+            );
             admin_state = admin_state.with_rules(Arc::new(rule_registry));
         }
     }

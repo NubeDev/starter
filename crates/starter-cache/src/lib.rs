@@ -59,16 +59,28 @@ pub mod layer;
 pub mod per_spec_stats;
 pub mod spec;
 pub mod tracing_cache;
+pub mod warmer;
+pub mod writer;
+
+#[cfg(feature = "tower")]
+pub mod tower;
 
 pub use cache::Cache;
 pub use error::CacheError;
 pub use stats::CacheStats;
 
 pub use clock::{Clock, MockClock, SystemClock};
-pub use invalidator::{InMemoryInvalidator, Invalidator, TokenSnapshot};
-pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig};
+pub use invalidator::{
+    EventBusInvalidator, InMemoryInvalidator, InvalidationBus, Invalidator, TokenSnapshot,
+};
+pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig, LoadOutcome};
 pub use per_spec_stats::{
     LoadLatency, LoadLatencySnapshot, PerSpecSnapshot, PerSpecStats, SpecCounters,
 };
-pub use spec::{CacheScope, CacheSidecar, CacheSpec, InvalidateOn, SpecParseError};
+pub use spec::{
+    bucket_subscription_prefix, BucketTagSpec, CacheScope, CacheSidecar, CacheSpec, InvalidateOn,
+    SpecParseError, TimeSeriesBlock,
+};
 pub use tracing_cache::{CacheEvent, TracingCache};
+pub use warmer::{WarmCallback, Warmer, WarmerStatus};
+pub use writer::{DefaultWarehouseWriter, WarehouseWriter, WriteRow, WriterTagRegistry};

@@ -532,7 +532,9 @@ pub(crate) fn warehouse_tables_for(
     registry: Option<&ExtensionRegistry>,
     extension: &ExtensionId,
 ) -> Vec<ContributeWarehouseTable> {
-    let Some(registry) = registry else { return vec![] };
+    let Some(registry) = registry else {
+        return vec![];
+    };
     let Some(record) = registry.get(extension) else {
         return vec![];
     };

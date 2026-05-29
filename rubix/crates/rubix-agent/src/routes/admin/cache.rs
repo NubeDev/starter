@@ -38,7 +38,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post};
 use axum::Json;
 use serde::{Deserialize, Serialize};
-use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot};
+use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot, TimeSeriesBlock};
 use std::collections::BTreeMap;
 
 use crate::admin::AdminState;
@@ -120,14 +120,72 @@ struct SpecConfig {
     ttl_seconds: u64,
     scope: &'static str,
     invalidate_on_tables: Vec<String>,
+    /// v1: SWR window in seconds. `0` when SWR is disabled.
+    stale_while_revalidate_seconds: u64,
+    /// v1: cap on the empty-result cache window.
+    empty_ttl_seconds: u64,
+    /// v1: whether empty results are cached at all.
+    cache_empty: bool,
+    /// v1: write-path event tags this spec is subscribed to.
+    invalidate_on_events: Vec<String>,
+    /// v1: structured bucket subscription (`{table, granularity}`).
+    /// `null` when the spec declares no bucket subscription.
+    invalidate_on_buckets: Option<BucketSpecRow>,
+    /// v2: opt-in time-series block (`null` when absent).
+    time_series: Option<TimeSeriesRow>,
+    /// v2: two-layer cache `inner_scope` (`null` when absent).
+    inner_scope: Option<&'static str>,
+    /// v3: which invalidator the cache is wired with
+    /// (`"local"` or `"event-bus"`).
+    invalidator_kind: String,
+}
+
+#[derive(Serialize)]
+struct TimeSeriesRow {
+    time_param: String,
+    range_param: String,
+    bucket: String,
+    tail_ttl: String,
+    body_ttl: String,
+    align_to: String,
+}
+
+impl TimeSeriesRow {
+    fn from_block(b: &TimeSeriesBlock) -> Self {
+        Self {
+            time_param: b.time_param.clone(),
+            range_param: b.range_param.clone(),
+            bucket: b.bucket.clone(),
+            tail_ttl: b.tail_ttl.clone(),
+            body_ttl: b.body_ttl.clone(),
+            align_to: b.align_to.clone(),
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct BucketSpecRow {
+    table: String,
+    granularity: String,
 }
 
 impl SpecConfig {
-    fn from_spec(spec: &CacheSpec) -> Self {
+    fn from_spec(spec: &CacheSpec, invalidator_kind: &str) -> Self {
         Self {
             ttl_seconds: spec.ttl.as_secs(),
             scope: scope_str(spec.scope),
             invalidate_on_tables: spec.invalidate_on.tables.clone(),
+            stale_while_revalidate_seconds: spec.stale_while_revalidate.as_secs(),
+            empty_ttl_seconds: spec.empty_ttl.as_secs(),
+            cache_empty: spec.cache_empty,
+            invalidate_on_events: spec.invalidate_on.events.clone(),
+            invalidate_on_buckets: spec.invalidate_on.buckets.as_ref().map(|b| BucketSpecRow {
+                table: b.table.clone(),
+                granularity: b.granularity.clone(),
+            }),
+            time_series: spec.time_series.as_ref().map(TimeSeriesRow::from_block),
+            inner_scope: spec.inner_scope.map(scope_str),
+            invalidator_kind: invalidator_kind.to_string(),
         }
     }
 }
@@ -175,6 +233,34 @@ impl LoadLatencyRow {
 #[derive(Serialize)]
 struct ListBody {
     specs: Vec<SpecRow>,
+    /// v3 — cold-start warmer status.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    warmer: Option<WarmerRow>,
+}
+
+#[derive(Serialize)]
+struct WarmerRow {
+    /// Wall-clock seconds since epoch the last warm pass completed,
+    /// or `null` if no pass has run since boot.
+    last_run_at: Option<u64>,
+    /// Entries warmed in the last pass.
+    entries_warmed: u64,
+    /// Duration of the last pass, in milliseconds, or `null`.
+    last_duration_ms: Option<u64>,
+}
+
+impl WarmerRow {
+    fn from_status(s: &starter_cache::WarmerStatus) -> Self {
+        Self {
+            last_run_at: s.last_run_at.and_then(|t| {
+                t.duration_since(std::time::UNIX_EPOCH)
+                    .ok()
+                    .map(|d| d.as_secs())
+            }),
+            entries_warmed: s.entries_warmed,
+            last_duration_ms: s.last_duration.map(|d| d.as_millis() as u64),
+        }
+    }
 }
 
 fn split_spec_id(spec_id: &str) -> (String, String) {
@@ -188,8 +274,16 @@ fn split_spec_id(spec_id: &str) -> (String, String) {
 
 async fn list(State(state): State<AdminState>) -> Response {
     let Some(layer) = state.cache_layer.as_ref() else {
-        return Json(ListBody { specs: Vec::new() }).into_response();
+        return Json(ListBody {
+            specs: Vec::new(),
+            warmer: None,
+        })
+        .into_response();
     };
+    let kind = state
+        .cache_invalidator_kind
+        .clone()
+        .unwrap_or_else(|| "local".to_string());
 
     // Join: every registered spec + every spec that has been
     // touched (the touched set will normally be a subset of
@@ -205,7 +299,7 @@ async fn list(State(state): State<AdminState>) -> Response {
                     spec_id,
                     extension: ext.as_str().to_string(),
                     contribute_id: contribute_id.to_string(),
-                    config: Some(SpecConfig::from_spec(spec)),
+                    config: Some(SpecConfig::from_spec(spec, &kind)),
                     hits: 0,
                     misses: 0,
                     hit_ratio: 0.0,
@@ -240,8 +334,13 @@ async fn list(State(state): State<AdminState>) -> Response {
         row.load_latency = LoadLatencyRow::from_snapshot(&load_latency);
     }
 
+    let warmer = state
+        .cache_warmer
+        .as_ref()
+        .map(|w| WarmerRow::from_status(&w.snapshot()));
     Json(ListBody {
         specs: by_id.into_values().collect(),
+        warmer,
     })
     .into_response()
 }
@@ -263,10 +362,7 @@ struct InvalidateResponse {
     invalidated: usize,
 }
 
-async fn invalidate(
-    State(state): State<AdminState>,
-    Json(body): Json<InvalidateBody>,
-) -> Response {
+async fn invalidate(State(state): State<AdminState>, Json(body): Json<InvalidateBody>) -> Response {
     let Some(layer) = state.cache_layer.as_ref() else {
         // No cache wired — the request was a no-op from the layer's
         // perspective. 503 makes the wire shape unambiguous: the
@@ -323,10 +419,7 @@ struct EvictTenantResponse {
     entries_dropped: u64,
 }
 
-async fn evict_tenant(
-    State(state): State<AdminState>,
-    Path(tenant): Path<String>,
-) -> Response {
+async fn evict_tenant(State(state): State<AdminState>, Path(tenant): Path<String>) -> Response {
     let Some(layer) = state.cache_layer.as_ref() else {
         return (
             StatusCode::SERVICE_UNAVAILABLE,

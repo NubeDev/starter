@@ -25,6 +25,7 @@ pub mod undo_sweep;
 pub mod warehouse;
 
 pub use auth::{build_auth, AuthSurface};
+pub use changelog_sweep::{spawn_changelog_sweep, sweep_once as sweep_changelog_once};
 pub use config::{AgentConfig, ExtensionsConfig, FlowRuntimeConfig, SchedulerConfig, UndoConfig};
 pub use extension_tables::{create_extension_tables, ExtensionTablesOutcome};
 pub use extensions::{
@@ -42,6 +43,5 @@ pub use migrations::apply_migrations;
 pub use scheduler::{spawn as spawn_scheduler, SchedulerHandle};
 pub use sdui::build_sdui_router;
 pub use tracing::init_tracing;
-pub use changelog_sweep::{spawn_changelog_sweep, sweep_once as sweep_changelog_once};
 pub use undo_sweep::{spawn_undo_sweep, sweep_once as sweep_undo_once};
 pub use warehouse::{apply_warehouse_migrations, connect_warehouse, RUBIX_CH_DATABASE};

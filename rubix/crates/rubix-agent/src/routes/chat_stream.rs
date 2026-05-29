@@ -307,12 +307,7 @@ fn event_to_frame(ev: &Event) -> StreamFrame {
             output_tokens,
             cost_usd,
             duration_ms,
-        } => StreamFrame::done_chat(
-            *input_tokens,
-            *output_tokens,
-            *cost_usd,
-            *duration_ms,
-        ),
+        } => StreamFrame::done_chat(*input_tokens, *output_tokens, *cost_usd, *duration_ms),
         EventKind::Error { message } => StreamFrame::Error {
             message: message.clone(),
         },

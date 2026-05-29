@@ -13,7 +13,8 @@ rust-version.workspace = true
 sqlx        = { workspace = true, features = ["postgres", "macros", "migrate", "chrono", "json", "uuid"] }
 futures     = "0.3"
 
-starter-tags = { workspace = true }
+starter-tags     = { workspace = true }
+starter-windowed = { workspace = true }
 
 tokio       = { workspace = true, features = ["rt-multi-thread", "macros", "sync", "time"] }
 serde       = { workspace = true }

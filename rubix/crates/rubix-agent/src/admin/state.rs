@@ -61,6 +61,17 @@ pub struct AdminState {
     /// counters so an operator can see registered-but-never-hit
     /// specs (the "is this kind ever called?" diagnostic).
     pub cache_registry: Option<starter_ext_server::KindCacheRegistry>,
+
+    /// v3 — which invalidator the cache is wired with
+    /// (`"local"` or `"event-bus"`). Defaults to `"local"`. The
+    /// admin endpoint surfaces this as `config.invalidator_kind` on
+    /// every SpecRow so an operator can confirm at-a-glance how
+    /// invalidations propagate.
+    pub cache_invalidator_kind: Option<String>,
+
+    /// v3 — cold-start warmer. Surfaced on the admin endpoint as
+    /// `cache.warmer.last_run_at` + `cache.warmer.entries_warmed`.
+    pub cache_warmer: Option<starter_cache::Warmer>,
 }
 
 impl AdminState {
@@ -107,11 +118,20 @@ impl AdminState {
     }
 
     /// Builder: set the registered cache spec map.
-    pub fn with_cache_registry(
-        mut self,
-        registry: starter_ext_server::KindCacheRegistry,
-    ) -> Self {
+    pub fn with_cache_registry(mut self, registry: starter_ext_server::KindCacheRegistry) -> Self {
         self.cache_registry = Some(registry);
+        self
+    }
+
+    /// Builder: name the invalidator the cache is wired with.
+    pub fn with_cache_invalidator_kind(mut self, kind: impl Into<String>) -> Self {
+        self.cache_invalidator_kind = Some(kind.into());
+        self
+    }
+
+    /// Builder: attach the cold-start warmer.
+    pub fn with_cache_warmer(mut self, warmer: starter_cache::Warmer) -> Self {
+        self.cache_warmer = Some(warmer);
         self
     }
 }

@@ -58,11 +58,7 @@ async fn tenant_store_round_trip_against_postgres() {
         .await
         .expect("create acme");
     assert_eq!(inserted, row("acme", "Acme", "en"));
-    let echoed = store
-        .get("acme")
-        .await
-        .expect("get acme")
-        .expect("present");
+    let echoed = store.get("acme").await.expect("get acme").expect("present");
     assert_eq!(echoed, inserted);
 
     // 3) Duplicate id rejected with id-bearing message.
@@ -81,10 +77,7 @@ async fn tenant_store_round_trip_against_postgres() {
     }
 
     // 4) Duplicate name rejected with name-bearing message.
-    let dup_name = store
-        .create(row("other", "Acme", "en"))
-        .await
-        .unwrap_err();
+    let dup_name = store.create(row("other", "Acme", "en")).await.unwrap_err();
     match dup_name {
         Error::Conflict { message } => {
             assert!(

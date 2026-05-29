@@ -64,7 +64,7 @@ mod events;
 mod factory;
 mod i18n;
 mod lifecycle;
-mod rest;
+pub mod rest;
 mod router;
 mod routes;
 mod store;

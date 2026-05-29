@@ -9,8 +9,8 @@
 //! matching the starter-server precedent. See
 //! `rubix/docs/design/agent/README.md` for the boot wiring.
 
-use axum::routing::get;
 use axum::http::Method;
+use axum::routing::get;
 use axum::Json;
 use utoipa::openapi::OpenApi;
 

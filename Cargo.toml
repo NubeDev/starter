@@ -22,6 +22,7 @@ members = [
     "crates/starter-secrets-keyring",
     "crates/starter-secrets-file",
     "crates/starter-cache",
+    "crates/starter-windowed",
     "crates/starter-changelog",
     "crates/starter-changelog-sqlite",
     "crates/starter-changelog-postgres",
@@ -154,6 +155,7 @@ starter-authz            = { path = "crates/starter-authz",            version =
 starter-secrets-keyring  = { path = "crates/starter-secrets-keyring",  version = "0.1.0" }
 starter-secrets-file     = { path = "crates/starter-secrets-file",     version = "0.1.0" }
 starter-cache            = { path = "crates/starter-cache",            version = "0.1.0" }
+starter-windowed         = { path = "crates/starter-windowed",         version = "0.1.0" }
 starter-changelog        = { path = "crates/starter-changelog",        version = "0.1.0" }
 starter-changelog-sqlite = { path = "crates/starter-changelog-sqlite", version = "0.1.0" }
 starter-changelog-postgres = { path = "crates/starter-changelog-postgres", version = "0.1.0" }

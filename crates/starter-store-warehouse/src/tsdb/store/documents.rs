@@ -17,10 +17,9 @@ pub struct DocumentRow {
     pub tags: serde_json::Value,
 }
 
-// TODO(cache-invalidation): scattered warehouse write site —
-// starter-cache wants `invalidate_tags(&["table:documents"])` here
-// on commit. No unified `WarehouseWriter` chokepoint yet (see
-// rubix/docs/sessions/cache-v0-progress.md). Best-effort until then.
+// v3: unified chokepoint is `starter_cache::DefaultWarehouseWriter`.
+// Callers enqueue one `WriteRow { table: "documents", ts,
+// dimensions }` per row and `commit()`; the writer dedupes.
 pub async fn insert_many(
     client: &WarehouseClient,
     rows: &[DocumentRow],

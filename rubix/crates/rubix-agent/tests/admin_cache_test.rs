@@ -62,10 +62,7 @@ fn delete(uri: &str) -> Request<Body> {
 #[tokio::test]
 async fn cache_specs_empty_when_no_layer_wired() {
     let app = admin_router(AdminState::empty());
-    let resp = app
-        .oneshot(get("/api/v1/admin/cache/specs"))
-        .await
-        .unwrap();
+    let resp = app.oneshot(get("/api/v1/admin/cache/specs")).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
     let v = body_json(resp).await;
     assert_eq!(v["specs"], serde_json::json!([]));
@@ -93,10 +90,7 @@ async fn cache_specs_reflect_labelled_loads() {
     }
 
     let app = admin_router(AdminState::empty().with_cache_layer(layer));
-    let resp = app
-        .oneshot(get("/api/v1/admin/cache/specs"))
-        .await
-        .unwrap();
+    let resp = app.oneshot(get("/api/v1/admin/cache/specs")).await.unwrap();
     assert_eq!(resp.status(), StatusCode::OK);
 
     let v = body_json(resp).await;
@@ -128,8 +122,7 @@ async fn cache_specs_reflect_labelled_loads() {
 /// shape without reading YAML.
 #[tokio::test]
 async fn cache_specs_join_registry_and_counters() {
-    let ext =
-        starter_ext_spi::ExtensionId::new("com.example.ext").expect("ext id");
+    let ext = starter_ext_spi::ExtensionId::new("com.example.ext").expect("ext id");
     // Two specs registered, only one will be touched.
     let touched_spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
         .scope(starter_cache::CacheScope::User)
@@ -168,10 +161,7 @@ async fn cache_specs_join_registry_and_counters() {
             .with_cache_layer(layer)
             .with_cache_registry(registry),
     );
-    let resp = app
-        .oneshot(get("/api/v1/admin/cache/specs"))
-        .await
-        .unwrap();
+    let resp = app.oneshot(get("/api/v1/admin/cache/specs")).await.unwrap();
     let v = body_json(resp).await;
     let specs = v["specs"].as_array().unwrap();
 
@@ -191,7 +181,10 @@ async fn cache_specs_join_registry_and_counters() {
     );
 
     let touched = &specs[1];
-    assert_eq!(touched["spec_id"], "com.example.ext::com.example.ext.touched");
+    assert_eq!(
+        touched["spec_id"],
+        "com.example.ext::com.example.ext.touched"
+    );
     assert_eq!(touched["hits"], 1);
     assert_eq!(touched["misses"], 1);
     assert_eq!(touched["config"]["ttl_seconds"], 60);
@@ -359,12 +352,9 @@ async fn evict_tenant_drops_only_named_tenant() {
     for tenant in ["tA", "tB"] {
         let caller = starter_cache::CallerScope::new(tenant, "u");
         let _ = layer
-            .get_or_load::<_, _, std::convert::Infallible>(
-                &spec,
-                &caller,
-                "k",
-                || async { Ok(Arc::new(b"v".to_vec())) },
-            )
+            .get_or_load::<_, _, std::convert::Infallible>(&spec, &caller, "k", || async {
+                Ok(Arc::new(b"v".to_vec()))
+            })
             .await
             .unwrap();
     }
@@ -409,12 +399,9 @@ async fn invalidate_all_drops_every_tenant() {
     for tenant in ["tA", "tB"] {
         let caller = starter_cache::CallerScope::new(tenant, "u");
         let _ = layer
-            .get_or_load::<_, _, std::convert::Infallible>(
-                &spec,
-                &caller,
-                "k",
-                || async { Ok(Arc::new(b"v".to_vec())) },
-            )
+            .get_or_load::<_, _, std::convert::Infallible>(&spec, &caller, "k", || async {
+                Ok(Arc::new(b"v".to_vec()))
+            })
             .await
             .unwrap();
     }

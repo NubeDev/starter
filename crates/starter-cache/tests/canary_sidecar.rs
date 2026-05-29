@@ -33,4 +33,32 @@ fn canary_sidecar_parses() {
         spec.derived_tags(),
         vec!["table:com_nubeio_rubixos__histories".to_string()]
     );
+    // v1: smoke-test that the canary carries the SWR opt-in.
+    assert_eq!(
+        spec.stale_while_revalidate,
+        std::time::Duration::from_secs(30),
+        "canary sidecar must declare stale_while_revalidate: 30s"
+    );
+
+    // v2: smoke-test that the canary carries the time_series block
+    // and inner_scope = tenant.
+    assert_eq!(spec.inner_scope, Some(starter_cache::CacheScope::Tenant));
+    let ts = spec
+        .time_series
+        .as_ref()
+        .expect("canary must declare a time_series block");
+    assert_eq!(ts.time_param, "to");
+    assert_eq!(ts.range_param, "from");
+    assert_eq!(ts.bucket, "1h");
+    assert_eq!(ts.tail_ttl, "30s");
+    assert_eq!(ts.body_ttl, "24h");
+    assert_eq!(ts.align_to, "utc");
+
+    // Materialised WindowedSpec parses cleanly.
+    let ws = spec
+        .windowed_spec()
+        .expect("WindowedSpec must materialise from the canary");
+    assert_eq!(ws.bucket.num_seconds(), 3600);
+    assert_eq!(ws.tail_ttl, std::time::Duration::from_secs(30));
+    assert_eq!(ws.body_ttl, std::time::Duration::from_secs(24 * 3600));
 }

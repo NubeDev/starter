@@ -16,9 +16,16 @@ use std::sync::Arc;
 
 use rubix_spi::dashboard::DashboardStore;
 use rubix_store_postgres::{
-    PgAuditPolicyStore, PgDashboardStore, PgFlowDefStore, PgRubixTenantStore,
-    PgTeamAdminStore, PgUserAdminStore,
+    PgAuditPolicyStore, PgDashboardStore, PgFlowDefStore, PgRubixTenantStore, PgTeamAdminStore,
+    PgUserAdminStore,
 };
+use rubix_tools::audit::policy_list::AuditPolicyListTool;
+use rubix_tools::audit::policy_set::AuditPolicySetTool;
+use rubix_tools::audit::store::{
+    AuditPolicyReversible, AuditPolicyStore, InMemoryAuditPolicyStore,
+};
+use rubix_tools::cleaner::adapter::{build_registry_with_contributions, ContributedRule};
+use rubix_tools::cleaner::tool::CleanerTickTool;
 use rubix_tools::dashboard::create::DashboardCreateTool;
 use rubix_tools::dashboard::delete::DashboardDeleteTool;
 use rubix_tools::dashboard::duplicate::DashboardDuplicateTool;
@@ -53,13 +60,8 @@ use rubix_tools::team::update::TeamUpdateTool;
 use rubix_tools::tenant::create::TenantCreateTool;
 use rubix_tools::tenant::delete::TenantDeleteTool;
 use rubix_tools::tenant::list::TenantListTool;
+use rubix_tools::tenant::store::{InMemoryTenantStore, TenantReversible, TenantRow, TenantStore};
 use rubix_tools::tenant::update::TenantUpdateTool;
-use rubix_tools::tenant::store::{InMemoryTenantStore, TenantRow, TenantReversible, TenantStore};
-use rubix_tools::audit::store::{
-    AuditPolicyReversible, AuditPolicyStore, InMemoryAuditPolicyStore,
-};
-use rubix_tools::audit::policy_list::AuditPolicyListTool;
-use rubix_tools::audit::policy_set::AuditPolicySetTool;
 use rubix_tools::undo::dispatch::{ActorSource, LocalActor, ReversibleTool, UndoDispatcher};
 use rubix_tools::undo::last::UndoLastTool;
 use rubix_tools::undo::redo::UndoRedoTool;
@@ -70,10 +72,8 @@ use rubix_tools::user::enable::UserEnableTool;
 use rubix_tools::user::list::UserListTool;
 use rubix_tools::user::prefs_set::UserPrefsSetTool;
 use rubix_tools::user::role_set::UserRoleSetTool;
-use rubix_tools::user::tenant_assign::UserTenantAssignTool;
 use rubix_tools::user::store::{InMemoryUserStore, UserAdminStore, UserReversible};
-use rubix_tools::cleaner::adapter::{build_registry_with_contributions, ContributedRule};
-use rubix_tools::cleaner::tool::CleanerTickTool;
+use rubix_tools::user::tenant_assign::UserTenantAssignTool;
 use rubix_tools::warehouse::ingest::WarehouseIngestTool;
 use rubix_tools::warehouse::mart_create::WarehouseMartCreateTool;
 use rubix_tools::warehouse::mart_drop::WarehouseMartDropTool;
@@ -184,7 +184,9 @@ pub fn build_tool_registry(
                 .insert(Arc::new(UserReversible::new(user_store.clone())))
                 .insert(Arc::new(TeamReversible::new(team_store.clone())))
                 .insert(Arc::new(TenantReversible::new(tenant_store.clone())))
-                .insert(Arc::new(AuditPolicyReversible::new(audit_policy_store.clone())))
+                .insert(Arc::new(AuditPolicyReversible::new(
+                    audit_policy_store.clone(),
+                )))
                 .insert(Arc::new(DashboardReversible::new(dashboard_store.clone())))
                 .insert(Arc::new(FlowDefReversible::new(flow_store.clone()))),
         );
@@ -270,7 +272,9 @@ pub fn build_tool_registry(
         Arc::new(TeamListTool::new(team_store.clone())),
         // ---- audit policy ---------------------------------------
         Arc::new(AuditPolicyListTool::new(audit_policy_store.clone())),
-        wrap_rev(Arc::new(AuditPolicySetTool::new(audit_policy_store.clone()))),
+        wrap_rev(Arc::new(AuditPolicySetTool::new(
+            audit_policy_store.clone(),
+        ))),
         // ---- insights admin -------------------------------------
         Arc::new(InsightsRuleListTool::new(insights_store.clone())),
         Arc::new(InsightsRuleCreateTool::new(insights_store.clone())),
@@ -285,7 +289,9 @@ pub fn build_tool_registry(
         ))),
         wrap_rev(Arc::new(DashboardUpdateTool::new(dashboard_store.clone()))),
         wrap_rev(Arc::new(DashboardPatchTool::new(dashboard_store.clone()))),
-        wrap_rev(Arc::new(DashboardDuplicateTool::new(dashboard_store.clone()))),
+        wrap_rev(Arc::new(DashboardDuplicateTool::new(
+            dashboard_store.clone(),
+        ))),
         wrap_rev(Arc::new(DashboardDeleteTool::new(dashboard_store.clone()))),
         Arc::new(DashboardPageSetTool::new(dashboard_graph.clone())),
     ];

@@ -53,6 +53,7 @@
 #![forbid(unsafe_code)]
 #![warn(missing_docs)]
 
+pub mod cache_integration;
 pub mod capability;
 pub mod chart_resolve;
 pub mod error;

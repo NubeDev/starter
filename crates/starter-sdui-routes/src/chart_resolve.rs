@@ -348,6 +348,7 @@ mod tests {
         let mut tree = ComponentTree {
             ir_version: starter_ui_ir::IR_VERSION,
             vars: Default::default(),
+            cache: None,
             root: Component::Page {
                 id: "p".into(),
                 title: None,
