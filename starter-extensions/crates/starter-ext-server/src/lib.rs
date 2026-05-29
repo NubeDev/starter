@@ -59,11 +59,15 @@
 
 mod admin;
 mod capabilities;
+mod cleanup;
 mod etag;
 mod events;
 mod factory;
 mod i18n;
+mod issues;
 mod lifecycle;
+mod metrics;
+mod process;
 pub mod rest;
 mod router;
 mod routes;
@@ -72,6 +76,7 @@ mod ui;
 
 pub use admin::{ExtensionAdmin, ExtensionAdminBuilder};
 pub use capabilities::{CapabilityFactory, StubCapabilityFactory};
+pub use cleanup::{CleanupError, CleanupItem, CleanupKind, CleanupProvider, EnablementRowProvider};
 pub use factory::{
     DefaultSupervisorFactory, SupervisorFactory, SupervisorFactoryError, WithHostMethodsFactory,
 };

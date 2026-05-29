@@ -44,6 +44,16 @@ pub trait EnablementStore: Send + Sync + 'static {
     /// Write the state for one id. The store is responsible for an
     /// atomic upsert against the underlying storage.
     async fn set(&self, id: &ExtensionId, state: EnablementState) -> Result<(), StoreError>;
+
+    /// Remove the row for one id entirely.
+    ///
+    /// Distinct from `set(id, Disabled)`: today's uninstall flips the
+    /// state to `Disabled`, which leaves a **ghost row** behind. The
+    /// cleanup `EnablementRowProvider` calls this so a purge removes the
+    /// row outright (`DELETE FROM extensions_enablement WHERE
+    /// extension_id = $1`). Deleting a non-existent id is a no-op and
+    /// must return `Ok(())` so purge stays idempotent.
+    async fn delete(&self, id: &ExtensionId) -> Result<(), StoreError>;
 }
 
 /// Error type returned by [`EnablementStore`] implementations. Surfaced
@@ -91,6 +101,14 @@ impl EnablementStore for InMemoryEnablementStore {
             .lock()
             .expect("InMemoryEnablementStore poisoned")
             .insert(id.as_str().to_string(), state);
+        Ok(())
+    }
+
+    async fn delete(&self, id: &ExtensionId) -> Result<(), StoreError> {
+        self.inner
+            .lock()
+            .expect("InMemoryEnablementStore poisoned")
+            .remove(id.as_str());
         Ok(())
     }
 }

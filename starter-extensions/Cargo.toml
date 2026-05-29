@@ -6,6 +6,7 @@ members = [
     "crates/starter-ext-sdk-macros",
     "crates/starter-ext-host",
     "crates/starter-ext-mcp",
+    "crates/starter-ext-metrics",
     "crates/starter-ext-server",
     "crates/starter-ext-store-pg",
     "crates/starter-ext-supervisor",
@@ -51,6 +52,7 @@ starter-ext-sdk         = { path = "crates/starter-ext-sdk", version = "0.1.0", 
 starter-ext-sdk-macros  = { path = "crates/starter-ext-sdk-macros", version = "0.1.0" }
 starter-ext-host        = { path = "crates/starter-ext-host", version = "0.1.0" }
 starter-ext-mcp         = { path = "crates/starter-ext-mcp", version = "0.1.0" }
+starter-ext-metrics     = { path = "crates/starter-ext-metrics", version = "0.1.0" }
 starter-ext-server      = { path = "crates/starter-ext-server", version = "0.1.0" }
 starter-ext-supervisor  = { path = "crates/starter-ext-supervisor", version = "0.1.0" }
 starter-ext-wasm        = { path = "crates/starter-ext-wasm", version = "0.1.0" }
@@ -93,6 +95,7 @@ clap        = { version = "4", features = ["derive", "env", "string"] }
 # HTTP stack — aligned with parent workspace's pins so a consumer importing
 # both ends up with one major of each.
 axum        = { version = "0.8", features = ["macros", "multipart"] }
+dashmap     = "6"
 tar         = "0.4"
 flate2      = "1"
 tower       = "0.5"

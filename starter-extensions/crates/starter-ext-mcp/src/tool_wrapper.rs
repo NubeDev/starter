@@ -14,10 +14,23 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 
+use starter_ext_metrics::Counters;
 use starter_ext_sdk::builtin::BuiltinTable;
 use starter_ext_sdk::ctx::CtxInner;
 use starter_ext_spi::{ContributeTool, Error, ExtensionId};
 use starter_spi::tool::{Tool, ToolDefinition};
+
+/// Bump `tool_calls_total` on entry to a tool invocation, then
+/// `tool_errors_total` if the call returned an error. A no-op when no
+/// [`Counters`] handle is wired (`counters == None`).
+fn record_tool_invocation<T>(counters: &Option<Arc<Counters>>, result: &starter_spi::Result<T>) {
+    if let Some(c) = counters {
+        c.record_tool_call();
+        if result.is_err() {
+            c.record_tool_error();
+        }
+    }
+}
 
 /// One adapter-mounted tool. Implements [`starter_spi::tool::Tool`] so
 /// `starter_mcp::ToolRegistry::register` can take it directly.
@@ -39,6 +52,9 @@ pub struct ExtensionToolBinding {
     pub builtins: Arc<BuiltinTable>,
     /// Shared Ctx — stubbed in Phase 1; real backends in later phases.
     pub ctx: CtxInner,
+    /// Per-extension metrics counters, when a `MetricsRegistry` was wired
+    /// at registration. `None` ⇒ no metrics overhead on the call path.
+    pub counters: Option<Arc<Counters>>,
 }
 
 impl ExtensionToolBinding {
@@ -77,7 +93,17 @@ impl ExtensionToolBinding {
             input_schema,
             builtins,
             ctx,
+            counters: None,
         })
+    }
+
+    /// Attach a metrics-counter handle so `invoke` bumps
+    /// `tool_calls_total` / `tool_errors_total`. Builder-style so the
+    /// registration helpers can wire it only when a registry is present.
+    #[must_use]
+    pub fn with_counters(mut self, counters: Option<Arc<Counters>>) -> Self {
+        self.counters = counters;
+        self
     }
 }
 
@@ -102,8 +128,11 @@ impl Tool for ExtensionToolBinding {
                         self.extension_id.as_str()
                     ),
                 })?;
-        let result = entry.dispatch(&self.tool_id, &self.ctx, input);
-        result.map_err(|e| map_ext_error(e, self.extension_id.as_str()))
+        let result = entry
+            .dispatch(&self.tool_id, &self.ctx, input)
+            .map_err(|e| map_ext_error(e, self.extension_id.as_str()));
+        record_tool_invocation(&self.counters, &result);
+        result
     }
 }
 
@@ -165,6 +194,8 @@ pub struct ProcessExtensionToolBinding {
     pub handle: Arc<starter_ext_supervisor::SupervisorHandle>,
     /// Per-call request timeout.
     pub request_timeout: std::time::Duration,
+    /// Per-extension metrics counters, when wired. `None` ⇒ no overhead.
+    pub counters: Option<Arc<Counters>>,
 }
 
 impl ProcessExtensionToolBinding {
@@ -200,7 +231,16 @@ impl ProcessExtensionToolBinding {
             input_schema,
             handle,
             request_timeout,
+            counters: None,
         })
+    }
+
+    /// Attach a metrics-counter handle so `invoke` bumps
+    /// `tool_calls_total` / `tool_errors_total`.
+    #[must_use]
+    pub fn with_counters(mut self, counters: Option<Arc<Counters>>) -> Self {
+        self.counters = counters;
+        self
     }
 }
 
@@ -229,7 +269,9 @@ impl Tool for ProcessExtensionToolBinding {
             }
             None => self.handle.call(&method, input, self.request_timeout).await,
         };
-        res.map_err(|e| map_ext_error(e, self.extension_id.as_str()))
+        let result = res.map_err(|e| map_ext_error(e, self.extension_id.as_str()));
+        record_tool_invocation(&self.counters, &result);
+        result
     }
 }
 

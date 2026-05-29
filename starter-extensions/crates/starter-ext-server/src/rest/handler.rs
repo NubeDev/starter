@@ -26,6 +26,7 @@ use axum::response::IntoResponse;
 use axum::Json;
 use futures::StreamExt;
 use serde_json::Value;
+use starter_ext_metrics::Counters;
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::ExtensionId;
 
@@ -41,6 +42,9 @@ pub(crate) struct HandlerSpec {
     pub(crate) extension: ExtensionId,
     pub(crate) contribute_id: String,
     pub(crate) request_schema: SchemaCheck,
+    /// Per-extension metrics counters, when a `MetricsRegistry` was wired
+    /// into the REST router. `None` ⇒ no metrics overhead on dispatch.
+    pub(crate) counters: Option<Arc<Counters>>,
 }
 
 impl HandlerSpec {
@@ -49,13 +53,23 @@ impl HandlerSpec {
         extension: ExtensionId,
         contribute_id: impl Into<String>,
         request_schema: SchemaCheck,
+        counters: Option<Arc<Counters>>,
     ) -> Arc<Self> {
         Arc::new(Self {
             dispatcher,
             extension,
             contribute_id: contribute_id.into(),
             request_schema,
+            counters,
         })
+    }
+
+    /// Bump `rest_requests_total` for this entry's extension, if metrics
+    /// are wired. Called once per dispatched request.
+    fn record_request(&self) {
+        if let Some(c) = &self.counters {
+            c.record_rest_request();
+        }
     }
 }
 
@@ -94,6 +108,7 @@ pub(crate) async fn non_streaming(
     caller: Option<Extension<CallerIdentity>>,
     body: Bytes,
 ) -> Response<Body> {
+    spec.record_request();
     let input = match parse_body(&body) {
         Ok(v) => v,
         Err(msg) => {
@@ -132,6 +147,7 @@ pub(crate) async fn sse(
     caller: Option<Extension<CallerIdentity>>,
     body: Bytes,
 ) -> Response<Body> {
+    spec.record_request();
     let (input, schema_err) = parse_and_check(&spec, body);
     if let Some(resp) = schema_err {
         return resp;
@@ -203,6 +219,7 @@ pub(crate) async fn ndjson(
     caller: Option<Extension<CallerIdentity>>,
     body: Bytes,
 ) -> Response<Body> {
+    spec.record_request();
     let (input, schema_err) = parse_and_check(&spec, body);
     if let Some(resp) = schema_err {
         return resp;

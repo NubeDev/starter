@@ -261,6 +261,7 @@ async fn per_entry_permission_applied() {
         RestRouterOptions {
             path_prefix: None,
             resource_registry: Some(res_registry),
+            metrics: None,
         },
     )
     .expect("router builds");
@@ -353,6 +354,7 @@ async fn unknown_resource_is_build_error() {
         RestRouterOptions {
             path_prefix: None,
             resource_registry: Some(res_registry),
+            metrics: None,
         },
     )
     .expect_err("unknown resource must surface as build error");
@@ -390,6 +392,7 @@ async fn role_and_permission_compose_correctly() {
         RestRouterOptions {
             path_prefix: None,
             resource_registry: Some(res_registry),
+            metrics: None,
         },
     )
     .expect("router builds");

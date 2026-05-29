@@ -73,6 +73,8 @@ jobs:
         run: cargo test -p starter-ext-host --no-fail-fast
       - name: test starter-ext-mcp
         run: cargo test -p starter-ext-mcp --no-fail-fast
+      - name: test starter-ext-metrics
+        run: cargo test -p starter-ext-metrics --no-fail-fast
       - name: test starter-ext-supervisor
         run: cargo test -p starter-ext-supervisor --no-fail-fast
       - name: test starter-ext-server

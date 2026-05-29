@@ -26,16 +26,18 @@
 use std::io::Read;
 use std::path::{Path, PathBuf};
 
-use axum::extract::{Multipart, Path as AxumPath, State};
+use axum::extract::{Multipart, Path as AxumPath, Query, State};
 use axum::http::{header, HeaderMap, StatusCode};
 use axum::response::IntoResponse;
-use axum::Json;
+use axum::{Extension, Json};
 use flate2::read::GzDecoder;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use starter_ext_host::Loader;
 use starter_ext_spi::{ExtensionId, LifecycleState};
+use starter_spi::auth::Principal;
 
-use crate::admin::ExtensionAdmin;
+use crate::admin::{ExtensionAdmin, PendingInstall};
+use crate::cleanup::CleanupItem;
 use crate::store::EnablementState;
 
 /// JSON envelope returned by both install and uninstall handlers. The
@@ -50,6 +52,34 @@ pub(crate) struct LifecycleResponse {
     /// `install.succeeded`, `install.invalid_manifest`,
     /// `uninstall.succeeded`, `uninstall.not_found`.
     pub code: &'static str,
+    /// `Some(true)` on a successful install: the extension surfaces on
+    /// next boot (the sealed registry forbids hot-mount). Omitted from the
+    /// JSON otherwise.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub pending_restart: Option<bool>,
+}
+
+/// JSON envelope returned by `DELETE /extensions/<id>?purge=true`. Carries
+/// the items actually removed so the UI can show the operator exactly what
+/// was reclaimed. Idempotent: an already-uninstalled id returns
+/// `cleanup.succeeded` with whatever leftovers were found (possibly empty).
+#[derive(Debug, Serialize)]
+pub(crate) struct CleanupResponse {
+    /// Extension id purged.
+    pub id: String,
+    /// Always `cleanup.succeeded`.
+    pub code: &'static str,
+    /// Resources actually removed.
+    pub removed: Vec<CleanupItem>,
+}
+
+/// Query string for `DELETE /extensions/<id>`. `?purge=true` runs the full
+/// data cleanup after uninstall; the default (`false`) keeps today's
+/// behaviour (stop, remove bundle, flip the row to `Disabled`).
+#[derive(Debug, Default, Deserialize)]
+pub(crate) struct UninstallQuery {
+    #[serde(default)]
+    pub purge: bool,
 }
 
 // ---------------------------------------------------------------------------
@@ -176,6 +206,7 @@ pub(crate) async fn install(
             Json(LifecycleResponse {
                 id: String::new(),
                 code: "install.invalid_manifest",
+                pending_restart: None,
             }),
         )
             .into_response();
@@ -217,6 +248,18 @@ pub(crate) async fn install(
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     }
 
+    // Track as pending-restart so the list projection can badge it; the
+    // sealed registry won't surface it live until next boot. The validated
+    // record carries the manifest we summarise here.
+    admin.mark_pending_restart(
+        ext_id.as_str(),
+        PendingInstall {
+            version: record.manifest.as_ref().map(|m| m.version.to_string()),
+            display_name: record.manifest.as_ref().map(|m| m.display_name.clone()),
+            runtime_kind: record.manifest.as_ref().map(|m| m.runtime.kind),
+        },
+    );
+
     tracing::info!(
         target: "starter_ext_server::lifecycle",
         id = %ext_id.as_str(),
@@ -228,6 +271,7 @@ pub(crate) async fn install(
         Json(LifecycleResponse {
             id: ext_id.as_str().to_owned(),
             code: "install.succeeded",
+            pending_restart: Some(true),
         }),
     )
         .into_response()
@@ -240,6 +284,8 @@ pub(crate) async fn install(
 pub(crate) async fn uninstall(
     State(admin): State<ExtensionAdmin>,
     AxumPath(id): AxumPath<String>,
+    Query(q): Query<UninstallQuery>,
+    principal: Option<Extension<Principal>>,
 ) -> axum::response::Response {
     let Some(extensions_dir) = admin.extensions_dir() else {
         return (
@@ -249,47 +295,150 @@ pub(crate) async fn uninstall(
             .into_response();
     };
 
+    let bundle_dir = extensions_dir.join(sanitize_dirname(&id));
+    let parsed_id = ExtensionId::new(&id).ok();
+
     // Stop a live supervisor first so the process doesn't hold open
     // file handles inside the directory we're about to remove.
-    if let Ok(ext_id) = ExtensionId::new(&id) {
-        if let Some(handle) = admin.replace_supervisor(&ext_id, None) {
+    if let Some(ext_id) = &parsed_id {
+        if let Some(handle) = admin.replace_supervisor(ext_id, None) {
             handle.shutdown().await;
         }
-        // Persist disabled regardless of on-disk outcome so a future
-        // boot doesn't autostart a uninstalled-id ghost.
-        if let Err(e) = admin.store().set(&ext_id, EnablementState::Disabled).await {
-            tracing::warn!(err = %e.0, id = %id, "persist disabled on uninstall failed");
+        // Non-purge: persist disabled regardless of on-disk outcome so a
+        // future boot doesn't autostart an uninstalled-id ghost. Purge
+        // skips this — its `EnablementRowProvider` deletes the row
+        // outright, and re-writing `Disabled` here would just resurrect
+        // the row for purge to delete again (so a second idempotent purge
+        // would never report an empty `removed`).
+        if !q.purge {
+            if let Err(e) = admin.store().set(ext_id, EnablementState::Disabled).await {
+                tracing::warn!(err = %e.0, id = %id, "persist disabled on uninstall failed");
+            }
         }
     }
 
-    let bundle_dir = extensions_dir.join(sanitize_dirname(&id));
-    if !bundle_dir.exists() {
+    let bundle_existed = bundle_dir.exists();
+
+    // `?purge=false` (default) keeps today's behaviour: a missing bundle
+    // is a `404 uninstall.not_found`. Purge is idempotent and never 404s
+    // (it cleans up leftovers — e.g. a ghost enablement row — even for an
+    // already-uninstalled id).
+    if !q.purge && !bundle_existed {
         return (
             StatusCode::NOT_FOUND,
             Json(LifecycleResponse {
                 id,
                 code: "uninstall.not_found",
+                pending_restart: None,
             }),
         )
             .into_response();
     }
-    if let Err(e) = std::fs::remove_dir_all(&bundle_dir) {
-        tracing::warn!(err = %e, dir = %bundle_dir.display(),
-            "remove extension bundle failed");
-        return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+
+    if bundle_existed {
+        if let Err(e) = std::fs::remove_dir_all(&bundle_dir) {
+            tracing::warn!(err = %e, dir = %bundle_dir.display(),
+                "remove extension bundle failed");
+            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+        }
     }
+
+    // The bundle is gone (or was already), so it no longer surfaces on
+    // next boot — drop any pending-restart badge.
+    admin.clear_pending_restart(&id);
 
     tracing::info!(
         target: "starter_ext_server::lifecycle",
         id = %id,
         dir = %bundle_dir.display(),
+        purge = q.purge,
         "extension uninstalled",
     );
+
+    if !q.purge {
+        return (
+            StatusCode::OK,
+            Json(LifecycleResponse {
+                id,
+                code: "uninstall.succeeded",
+                pending_restart: None,
+            }),
+        )
+            .into_response();
+    }
+
+    // Purge: run every registered cleanup provider after uninstall. The
+    // in-memory registry record (sealed at boot) still carries the manifest
+    // even though the on-disk bundle is gone, so cache/warehouse providers
+    // can resolve their targets.
+    let caller = principal
+        .map(|Extension(p)| p.subject)
+        .unwrap_or_else(|| "anonymous".to_owned());
+    let manifest = admin
+        .registry()
+        .get_by_id_str(&id)
+        .and_then(|rec| rec.manifest.clone());
+
+    let removed = match &parsed_id {
+        Some(ext_id) => {
+            admin
+                .purge_cleanup(ext_id, manifest.as_ref(), &caller)
+                .await
+        }
+        None => Vec::new(),
+    };
+
     (
         StatusCode::OK,
-        Json(LifecycleResponse {
+        Json(CleanupResponse {
             id,
-            code: "uninstall.succeeded",
+            code: "cleanup.succeeded",
+            removed,
+        }),
+    )
+        .into_response()
+}
+
+// ---------------------------------------------------------------------------
+// GET /extensions/<id>/cleanup — dry-run manifest
+// ---------------------------------------------------------------------------
+
+/// JSON body of the dry-run endpoint: what `?purge=true` *would* remove,
+/// plus a best-effort total byte size for the operator's confirmation.
+#[derive(Debug, Serialize)]
+pub(crate) struct CleanupPreview {
+    /// Extension id.
+    pub id: String,
+    /// Every resource the registered providers would reclaim.
+    pub items: Vec<CleanupItem>,
+    /// Sum of the `bytes` fields that are known.
+    pub total_bytes: u64,
+}
+
+/// `GET /extensions/<id>/cleanup` — run every provider's `discover` (only)
+/// and return the manifest so the operator sees exactly what a purge would
+/// drop before confirming. Unknown ids that were never loaded this boot are
+/// a plain `404`; a known (even already-uninstalled) id returns its
+/// leftovers.
+pub(crate) async fn cleanup_preview(
+    State(admin): State<ExtensionAdmin>,
+    AxumPath(id): AxumPath<String>,
+) -> axum::response::Response {
+    let Ok(ext_id) = ExtensionId::new(&id) else {
+        return StatusCode::NOT_FOUND.into_response();
+    };
+    let manifest = admin
+        .registry()
+        .get_by_id_str(&id)
+        .and_then(|rec| rec.manifest.clone());
+    let items = admin.discover_cleanup(&ext_id, manifest.as_ref()).await;
+    let total_bytes = items.iter().filter_map(|i| i.bytes).sum();
+    (
+        StatusCode::OK,
+        Json(CleanupPreview {
+            id,
+            items,
+            total_bytes,
         }),
     )
         .into_response()
@@ -328,15 +477,16 @@ fn make_solo_scan_root(bundle_root: &Path) -> std::io::Result<SoloScanRoot> {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let parent = bundle_root.parent().ok_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::Other, "bundle_root has no parent")
-    })?;
+    let parent = bundle_root
+        .parent()
+        .ok_or_else(|| std::io::Error::other("bundle_root has no parent"))?;
     let scan_root = parent.join(format!(".scan-{nanos}"));
     std::fs::create_dir(&scan_root)?;
-    let entry =
-        scan_root.join(bundle_root.file_name().ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::Other, "bundle_root unnamed")
-        })?);
+    let entry = scan_root.join(
+        bundle_root
+            .file_name()
+            .ok_or_else(|| std::io::Error::other("bundle_root unnamed"))?,
+    );
     std::fs::rename(bundle_root, &entry)?;
     Ok(SoloScanRoot { path: scan_root })
 }

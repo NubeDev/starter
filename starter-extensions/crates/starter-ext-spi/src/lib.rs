@@ -26,9 +26,12 @@ pub mod fs_ext;
 pub mod http_out;
 pub mod id;
 pub mod identity;
+pub mod issue;
 pub mod jsonrpc;
 pub mod lifecycle;
 pub mod manifest;
+pub mod metrics;
+pub mod process;
 pub mod secrets;
 pub mod tracing_ext;
 pub mod wall_clock;
@@ -40,6 +43,7 @@ pub use error::{Error, Result};
 pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use id::ExtensionId;
 pub use identity::{CallerIdentity, FrameMeta};
+pub use issue::{ExtensionIssue, IssueCode, IssueSource, Severity};
 pub use jsonrpc::{
     flow_node_error_codes, stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification,
     JsonRpcRequest, JsonRpcResponse, JsonRpcResponsePayload, StreamCancel, StreamEnd, StreamError,
@@ -54,6 +58,8 @@ pub use manifest::{
     RestStreaming, RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision, TableColumn,
     MANIFEST_VERSION,
 };
+pub use metrics::ExtensionMetrics;
+pub use process::{ProcessFlavour, ProcessStats};
 pub use warehouse::{
     Row, TemplateSpec, WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest,
     WarehouseReadResponse, WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest,

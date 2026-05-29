@@ -37,7 +37,7 @@ use tracing::{info, warn};
 
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_server::{
-    DefaultSupervisorFactory, EnablementState, ExtensionAdmin, SupervisorFactory,
+    CleanupProvider, DefaultSupervisorFactory, EnablementState, ExtensionAdmin, SupervisorFactory,
     WithHostMethodsFactory,
 };
 use starter_ext_spi::ExtensionId;
@@ -156,6 +156,7 @@ pub async fn build_extension_admin(
     cfg: &AgentConfig,
     pg_pool: &PgPool,
     host_methods: Option<Arc<RubixHostMethods>>,
+    cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
 ) -> Result<ExtensionAdminBundle, BootError> {
     // (1) Migration. Idempotent — the SQL uses CREATE TABLE IF NOT
     // EXISTS so a second boot is a no-op.
@@ -288,12 +289,20 @@ pub async fn build_extension_admin(
     // the live-handle map so `GET /extensions/<id>` reports the
     // autostarted records as Running from the first request.
     let autostarted = supervisors.len();
-    let admin = ExtensionAdmin::builder(registry.clone())
+    // Register the rubix-supplied cleanup providers (warehouse-table +
+    // skill reclaimers). The built-in enablement-row + UI/i18n-cache
+    // providers auto-register inside `build()`; these are appended after
+    // them. See `crate::extensions::cleanup`.
+    let cleanup_provider_count = cleanup_providers.len();
+    let mut builder = ExtensionAdmin::builder(registry.clone())
         .with_supervisors(supervisors)
         .with_enablement_store(store)
         .with_supervisor_factory(factory)
-        .with_extensions_dir(dir.to_path_buf())
-        .build();
+        .with_extensions_dir(dir.to_path_buf());
+    for provider in cleanup_providers {
+        builder = builder.with_cleanup_provider(provider);
+    }
+    let admin = builder.build();
     // Summary boot line consumed by operators + the integration test.
     // Distinct target from the per-step lines above so log filters can
     // pin a single regex on the boot summary.
@@ -302,6 +311,7 @@ pub async fn build_extension_admin(
         loaded = outcome.validated,
         failed = outcome.failed,
         autostarted = autostarted,
+        cleanup_providers = cleanup_provider_count,
         actor = SYSTEM_AUTOSTART_PRINCIPAL,
         "extensions wired"
     );

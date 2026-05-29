@@ -294,12 +294,11 @@ mod tests {
         }
     }
 
-    /// Re-exported so `super::dispatcher` tests can use the same
-    /// marker factory without copy-pasting the impl.
+    /// Scaffolding so `super::dispatcher` tests can use the same marker
+    /// factory without copy-pasting the impl. Currently unused — kept as
+    /// the seam a later phase's dispatcher tests plug into.
+    #[allow(dead_code)]
     pub(crate) fn marker_factory() -> Arc<dyn CapabilityFactory> {
         Arc::new(MarkerFactory)
     }
 }
-
-#[cfg(test)]
-pub(crate) use tests::marker_factory;

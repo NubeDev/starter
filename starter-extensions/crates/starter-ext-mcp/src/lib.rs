@@ -36,7 +36,8 @@ mod tool_wrapper;
 
 pub use authzed::{AuthzedToolBinding, SURFACE as MCP_SURFACE};
 pub use register::{
-    register_process_tools, register_process_tools_with_engine, register_tools,
-    register_tools_with_engine, RegisterError, RegisterOutcome,
+    register_process_tools, register_process_tools_with_engine,
+    register_process_tools_with_metrics, register_tools, register_tools_with_engine,
+    register_tools_with_metrics, RegisterError, RegisterOutcome,
 };
 pub use tool_wrapper::{ExtensionToolBinding, ProcessExtensionToolBinding};

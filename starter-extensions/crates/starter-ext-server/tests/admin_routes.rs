@@ -183,6 +183,78 @@ async fn events_404_when_no_supervisor() {
 }
 
 #[tokio::test]
+async fn metrics_merges_counters_and_record_state_without_supervisor() {
+    use starter_ext_metrics::MetricsRegistry;
+    use starter_ext_spi::ExtensionId;
+
+    // Build an admin wired with a metrics registry, then bump a few
+    // counters as the transport adapters would.
+    let tmp = tempdir().unwrap();
+    write_bundle(tmp.path(), "com.acme.hello", HELLO_BUNDLE);
+    let recs = Loader::scan(tmp.path()).validate_all();
+    let mut reg = ExtensionRegistry::new();
+    Loader::commit(recs, &mut reg);
+    reg.seal();
+
+    let metrics = MetricsRegistry::new();
+    let id = ExtensionId::new("com.acme.hello").unwrap();
+    let counters = metrics.counters(&id);
+    counters.record_tool_call();
+    counters.record_tool_call();
+    counters.record_tool_error();
+    counters.record_rest_request();
+    counters.record_worker_run();
+
+    let admin = ExtensionAdmin::builder(Arc::new(reg))
+        .with_metrics(metrics)
+        .build();
+    let app = router::<()>(admin);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/extensions/com.acme.hello/metrics")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = to_bytes(resp.into_body(), 64 * 1024).await.unwrap();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+
+    // Builtin / no live supervisor: process is null, gauges fall back to
+    // the record's load-time state and zero.
+    assert!(json["process"].is_null());
+    assert_eq!(json["lifecycle_state"], "validated");
+    assert_eq!(json["restarts_total"], 0);
+    assert_eq!(json["events_dropped_total"], 0);
+    // Adapter counters are reflected from the shared registry.
+    assert_eq!(json["tool_calls_total"], 2);
+    assert_eq!(json["tool_errors_total"], 1);
+    assert_eq!(json["rest_requests_total"], 1);
+    assert_eq!(json["worker_runs_total"], 1);
+    assert_eq!(json["worker_failures_total"], 0);
+}
+
+#[tokio::test]
+async fn metrics_404_for_unknown_id() {
+    let (admin, _tmp) = build_admin();
+    let app = router::<()>(admin);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/extensions/com.nope.absent/metrics")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
 async fn ui_serves_with_strong_etag_and_304_revalidation() {
     let (admin, _tmp) = build_admin();
     let app = router::<()>(admin);

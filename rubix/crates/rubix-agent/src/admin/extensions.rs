@@ -10,7 +10,30 @@ use std::sync::Arc;
 use rubix_spi::dto::admin::{ItemSource, RegistryItem};
 use serde_json::json;
 use starter_ext_host::ExtensionRegistry;
-use starter_ext_spi::LifecycleState;
+use starter_ext_spi::{IssueCode, LifecycleState};
+
+/// Map a starter [`IssueCode`] (a stable, non-localised wire token such
+/// as `ext.issue.crashed`) onto the rubix `MessageKey` the admin console
+/// renders. The starter API deliberately carries no English; rubix owns
+/// the `rubix.extension.issue.*` catalog (see
+/// `rubix-spi/catalogues/en.json`). The console projects an extension's
+/// `/issues` feed through this map so each issue gets a localised title.
+///
+/// Returns a `&'static str` MessageKey for every variant — the mapping
+/// is total, so a new `IssueCode` upstream forces a compile error here
+/// rather than silently surfacing as an untranslated raw code.
+pub fn issue_code_message_key(code: IssueCode) -> &'static str {
+    match code {
+        IssueCode::ManifestInvalid => "rubix.extension.issue.manifest_invalid",
+        IssueCode::NamespaceViolation => "rubix.extension.issue.namespace_violation",
+        IssueCode::CapabilityMismatch => "rubix.extension.issue.capability_mismatch",
+        IssueCode::Crashed => "rubix.extension.issue.crashed",
+        IssueCode::RestartCapExceeded => "rubix.extension.issue.restart_cap_exceeded",
+        IssueCode::HealthTimeout => "rubix.extension.issue.health_timeout",
+        IssueCode::CapabilityViolation => "rubix.extension.issue.capability_violation",
+        IssueCode::WorkerFailed => "rubix.extension.issue.worker_failed",
+    }
+}
 
 /// Map a [`LifecycleState`] to the lowercase string carried in
 /// `metadata.state` on the wire.
@@ -91,4 +114,34 @@ pub fn extension_items(extensions: Option<&Arc<ExtensionRegistry>>) -> Vec<Regis
                 .with_metadata(metadata)
         })
         .collect()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Every `IssueCode` maps to a `rubix.extension.issue.*` MessageKey,
+    /// and the mapping is one-to-one (no two codes collide).
+    #[test]
+    fn issue_code_message_keys_are_unique_and_namespaced() {
+        let codes = [
+            IssueCode::ManifestInvalid,
+            IssueCode::NamespaceViolation,
+            IssueCode::CapabilityMismatch,
+            IssueCode::Crashed,
+            IssueCode::RestartCapExceeded,
+            IssueCode::HealthTimeout,
+            IssueCode::CapabilityViolation,
+            IssueCode::WorkerFailed,
+        ];
+        let mut seen = std::collections::HashSet::new();
+        for code in codes {
+            let key = issue_code_message_key(code);
+            assert!(
+                key.starts_with("rubix.extension.issue."),
+                "key {key} is not namespaced"
+            );
+            assert!(seen.insert(key), "duplicate key {key}");
+        }
+    }
 }

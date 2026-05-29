@@ -31,7 +31,7 @@ use std::path::PathBuf;
 use std::process::Stdio;
 use std::sync::atomic::{AtomicI64, Ordering};
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::time::{Duration, Instant};
 
 use serde_json::json;
 use starter_ext_host::ExtensionRecord;
@@ -73,6 +73,7 @@ use crate::backoff::BackoffSchedule;
 use crate::capability::{CapabilityGate, CapabilityViolationCounter};
 use crate::event_ring::{EventKind, EventRing, MAX_STDERR_LINE_BYTES};
 use crate::handshake::{manifest_hash, InitHandshake, InitReady};
+use crate::proc_stats::{self, LiveProcess, ProcessCell};
 use crate::restart::{ExitReason, RestartDecision, RestartTracker};
 use crate::stream::is_streaming_notification;
 
@@ -102,6 +103,10 @@ pub struct SupervisorHandle {
     pending: PendingMap,
     next_request_id: Arc<AtomicI64>,
     stream_subscribers: StreamSubscribers,
+    /// Live child pid + sampled process stats, populated next to the
+    /// `EventKind::Spawned` push and cleared on exit. Read by
+    /// [`Self::pid`] / [`Self::process_stats`].
+    process: ProcessCell,
 }
 
 impl SupervisorHandle {
@@ -125,6 +130,65 @@ impl SupervisorHandle {
     /// Read the capability-violation counter.
     pub fn capability_violations(&self) -> u64 {
         self.violations.get()
+    }
+
+    /// Consolidated diagnostics for the live process, derived from the
+    /// event ring + capability-violation counter this handle already
+    /// owns. See [`crate::issues::derive_issues`]. Bounded; safe to call
+    /// on the request path. Merged with `ExtensionRecord::issues()` by the
+    /// `GET /extensions/<id>/issues` handler.
+    pub fn issues(&self) -> Vec<starter_ext_spi::ExtensionIssue> {
+        crate::issues::derive_issues(&self.events.snapshot(), self.violations.get())
+    }
+
+    /// The current child's OS pid, or `None` when the extension is not
+    /// `Running` (starting, stopped, failed, or — for builtin/wasm — never
+    /// had a host process). The pid is stored live next to the supervisor's
+    /// `EventKind::Spawned` push and cleared on exit; this gates it on the
+    /// `Running` state so a stale pid is never reported during teardown.
+    pub fn pid(&self) -> Option<u32> {
+        if *self.state.borrow() != LifecycleState::Running {
+            return None;
+        }
+        self.process.lock().ok()?.as_ref().map(|p| p.pid)
+    }
+
+    /// Sampled [`ProcessStats`](starter_ext_spi::ProcessStats) for the
+    /// current child, or `None` when not `Running`. `rss_bytes` / `cpu_pct`
+    /// are best-effort and filled by the health-tick sampler (`/proc` on
+    /// Linux, `None` elsewhere). Bounded; safe on the request path.
+    pub fn process_stats(&self) -> Option<starter_ext_spi::ProcessStats> {
+        if *self.state.borrow() != LifecycleState::Running {
+            return None;
+        }
+        let guard = self.process.lock().ok()?;
+        guard.as_ref().map(|p| p.to_stats(Instant::now()))
+    }
+
+    /// Cumulative restarts the supervisor has scheduled over this handle's
+    /// lifetime, derived from the `RestartScheduled` events retained in the
+    /// ring (matching the `restart_count` already shown on
+    /// `GET /extensions/<id>`). Surfaced as `restarts_total` on
+    /// `GET /extensions/<id>/metrics`. Bounded; safe on the request path.
+    pub fn restarts_total(&self) -> u64 {
+        self.events
+            .snapshot()
+            .iter()
+            .filter(|e| matches!(e.kind, EventKind::RestartScheduled { .. }))
+            .count() as u64
+    }
+
+    /// Number of events evicted from the bounded ring over this handle's
+    /// lifetime. Surfaced as `events_dropped_total` on
+    /// `GET /extensions/<id>/metrics`.
+    pub fn events_dropped(&self) -> u64 {
+        self.events.dropped()
+    }
+
+    /// The current lifecycle state. A convenience over `state().borrow()`
+    /// for the metrics projection and similar read-only callers.
+    pub fn lifecycle_state(&self) -> LifecycleState {
+        *self.state.borrow()
     }
 
     /// Send a JSON-RPC envelope to the child (request or notification).
@@ -429,6 +493,7 @@ impl Supervisor {
         let pending: PendingMap = Arc::new(Mutex::new(HashMap::new()));
         let next_request_id = Arc::new(AtomicI64::new(DISPATCH_ID_FLOOR));
         let stream_subscribers: StreamSubscribers = Arc::new(Mutex::new(HashMap::new()));
+        let process = proc_stats::new_cell();
 
         let task = SupervisorTask {
             id: id.clone(),
@@ -448,6 +513,7 @@ impl Supervisor {
             pending: pending.clone(),
             stream_subscribers: stream_subscribers.clone(),
             host_methods,
+            process: process.clone(),
         };
         tokio::spawn(task.run());
 
@@ -461,6 +527,7 @@ impl Supervisor {
             pending,
             next_request_id,
             stream_subscribers,
+            process,
         })
     }
 }
@@ -497,6 +564,9 @@ struct SupervisorTask {
     /// `NotImplementedHandler` by default; hosts opt in via
     /// [`Supervisor::start_with`].
     host_methods: crate::host_methods::SharedHostMethodHandler,
+    /// Shared live-process cell (pid + sampled stats). Set on spawn,
+    /// updated on each health tick, cleared on exit.
+    process: ProcessCell,
 }
 
 impl Drop for SupervisorTask {
@@ -535,6 +605,13 @@ impl SupervisorTask {
                     ExitReason::Crash
                 }
             };
+
+            // The child for this cycle is gone — clear the live pid cell
+            // so `handle.pid()` / `process_stats()` stop reporting a stale
+            // process while we are between spawns (or shutting down).
+            if let Ok(mut g) = self.process.lock() {
+                *g = None;
+            }
 
             // Was a shutdown requested while we were live?
             if self.shutdown_drained() {
@@ -601,6 +678,12 @@ impl SupervisorTask {
             .map_err(|e| Error::spawn(format!("exec {:?}: {e}", self.bin)))?;
         let pid = child.id().unwrap_or(0);
         self.events.push(EventKind::Spawned { pid });
+        // Publish the live pid into the shared cell next to the `Spawned`
+        // push so `handle.pid()` / `process_stats()` see the current
+        // child. Cleared by `run()` when this cycle ends.
+        if let Ok(mut g) = self.process.lock() {
+            *g = Some(LiveProcess::new(pid, self.restart.total(), Instant::now()));
+        }
         debug!(ext = %self.id.as_str(), pid, "spawned child");
 
         let stdin = child
@@ -774,6 +857,11 @@ impl SupervisorTask {
                         return ExitReason::Crash;
                     }
                     health_deadline = Some(tokio::time::Instant::now() + health_timeout);
+
+                    // Piggyback RSS/CPU sampling on the health tick (no new
+                    // timer): read `/proc/<pid>` while Running and fold the
+                    // reading into the shared cell.
+                    self.sample_process();
                 }
 
                 // Inbound frame from the child.
@@ -819,6 +907,28 @@ impl SupervisorTask {
                         return ExitReason::Crash;
                     }
                 }
+            }
+        }
+    }
+
+    /// Sample the current child's `/proc` entry and fold RSS/CPU into the
+    /// shared live-process cell. Called on the existing health tick (no
+    /// extra timer). The `/proc` read is Linux-only; elsewhere
+    /// [`proc_stats::sample`] returns `(None, None)` and the gauges stay
+    /// `None`. The pid is read from the cell so a between-spawn tick is a
+    /// no-op.
+    fn sample_process(&self) {
+        let pid = match self.process.lock() {
+            Ok(g) => match g.as_ref() {
+                Some(p) => p.pid,
+                None => return,
+            },
+            Err(_) => return,
+        };
+        let (rss_bytes, total_ticks) = proc_stats::sample(pid);
+        if let Ok(mut g) = self.process.lock() {
+            if let Some(p) = g.as_mut() {
+                p.apply_sample(Instant::now(), rss_bytes, total_ticks);
             }
         }
     }

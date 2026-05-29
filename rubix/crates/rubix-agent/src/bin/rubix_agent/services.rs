@@ -88,11 +88,43 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
         None => None,
     };
 
+    // Warehouse — connected *before* the extension admin so the
+    // rubix-supplied `WarehouseCleanupProvider` can be registered on the
+    // builder with the live warehouse pool. (Per-extension DDL via
+    // `create_extension_tables` still runs after the bundle is built,
+    // once the registry exists.)
+    let warehouse_client = boot::connect_warehouse(
+        cfg.warehouse_url.as_deref(),
+        mcp_pool.as_ref().map(|p| p.sqlx()),
+    )
+    .await?;
+
     let ext_bundle: Option<boot::ExtensionAdminBundle> =
         match (mcp_pool.as_ref(), cfg.extensions.enabled) {
-            (Some(pool), true) => Some(
-                boot::build_extension_admin(&cfg, pool.sqlx(), ext_host_methods.clone()).await?,
-            ),
+            (Some(pool), true) => {
+                // The cleanup providers that need rubix-only knowledge.
+                // The warehouse-table reclaimer wires whenever a
+                // warehouse is configured; the skill reclaimer wires once
+                // rubix grows a live `SkillRegistry` (tracked in
+                // `extensions_flow.rs`). The built-in enablement-row +
+                // UI/i18n-cache providers auto-register upstream.
+                let mut cleanup_providers: Vec<Arc<dyn starter_ext_server::CleanupProvider>> =
+                    Vec::new();
+                if let Some(wh) = warehouse_client.as_ref() {
+                    cleanup_providers.push(Arc::new(
+                        rubix_agent::extensions::WarehouseCleanupProvider::new(wh.pool().clone()),
+                    ));
+                }
+                Some(
+                    boot::build_extension_admin(
+                        &cfg,
+                        pool.sqlx(),
+                        ext_host_methods.clone(),
+                        cleanup_providers,
+                    )
+                    .await?,
+                )
+            }
             (Some(_), false) => {
                 info!(
                     target: "rubix.boot.extensions",
@@ -110,12 +142,8 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
 
     let flow_runtime = boot::build_flow_runtime(mcp_pool.clone(), &cfg.flow_runtime).await?;
 
-    // Warehouse.
-    let warehouse_client = boot::connect_warehouse(
-        cfg.warehouse_url.as_deref(),
-        mcp_pool.as_ref().map(|p| p.sqlx()),
-    )
-    .await?;
+    // Warehouse (connected above). Spawn pool telemetry and apply the
+    // per-extension table DDL now that the sealed registry exists.
     if let Some(wh) = warehouse_client.as_ref() {
         let _t = boot::pool_telemetry::spawn(wh.pool().clone(), "warehouse");
         if let Some(b) = ext_bundle.as_ref() {

@@ -16,6 +16,7 @@ rust-version.workspace = true
 [dependencies]
 starter-ext-spi        = { workspace = true }
 starter-ext-host       = { workspace = true }
+starter-ext-metrics    = { workspace = true }
 starter-ext-sdk        = { workspace = true, features = ["builtin"] }
 starter-ext-supervisor = { workspace = true }
 starter-spi            = { workspace = true }

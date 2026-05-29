@@ -410,6 +410,24 @@ impl SkillRegistry {
             .or_else(|| inner.quarantined.get(id).cloned())
     }
 
+    /// Remove a skill from the live registry outright — dropping it
+    /// from both the approved and quarantined maps and forgetting its
+    /// bundle path. Returns `true` if the id was present in either map.
+    ///
+    /// This is the in-memory counterpart to uninstalling the extension
+    /// that contributed the skill: an extension-cleanup provider calls
+    /// it so the skill stops surfacing the moment the bundle is purged,
+    /// without waiting for a [`Self::reload`]. It does **not** touch the
+    /// approval store — a re-installed bundle with the same hash keeps
+    /// its prior approval row, matching `reload()`'s drift semantics.
+    pub fn remove(&self, id: &SkillId) -> bool {
+        let mut inner = self.inner.write().expect("registry poisoned");
+        let was_approved = inner.approved.remove(id).is_some();
+        let was_quarantined = inner.quarantined.remove(id).is_some();
+        inner.bundle_paths.remove(id);
+        was_approved || was_quarantined
+    }
+
     /// Record an approval row and promote the matching quarantined
     /// skill to approved if its current hash equals `bundle_hash`.
     ///
@@ -784,6 +802,40 @@ mod tests {
             Trust::Approved,
             "approved skill must reflect trust"
         );
+    }
+
+    /// `remove()` drops a skill from the live registry and returns
+    /// whether it was present — the in-memory hook an extension-cleanup
+    /// provider calls when its bundle is purged.
+    #[tokio::test]
+    async fn remove_drops_skill_from_live_registry() {
+        let tmp = TempDir::new("remove");
+        let bundle = tmp.path().join("bundle");
+        fs::create_dir_all(&bundle).unwrap();
+        write(
+            &bundle,
+            "SKILL.md",
+            &quarantined_skill_md("starter.ext.gone"),
+        );
+
+        let registry = SkillRegistry::builder()
+            .with_approval_store(InMemoryApprovalStore::new())
+            .extend(vec![ContributedSkill::new(&bundle)])
+            .build()
+            .await
+            .expect("build ok");
+
+        let skill_id = SkillId::new("starter.ext.gone").unwrap();
+        assert!(registry.get(&skill_id).is_some());
+
+        // First removal reports the id was present and clears it from
+        // every map.
+        assert!(registry.remove(&skill_id), "id was present");
+        assert!(registry.get(&skill_id).is_none());
+        assert!(registry.list_quarantined().is_empty());
+
+        // Idempotent: removing an absent id is a `false` no-op.
+        assert!(!registry.remove(&skill_id), "second removal is a no-op");
     }
 
     /// Smoke 2: "Hash mismatch re-quarantines."

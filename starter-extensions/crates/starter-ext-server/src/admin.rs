@@ -21,9 +21,13 @@ use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 use starter_ext_host::ExtensionRegistry;
-use starter_ext_spi::ExtensionId;
+use starter_ext_metrics::MetricsRegistry;
+use starter_ext_spi::{ExtensionId, Manifest, RuntimeKind};
 use starter_ext_supervisor::SupervisorHandle;
 
+use crate::cleanup::{
+    CleanupItem, CleanupProvider, EnablementRowProvider, I18nCacheProvider, UiCacheProvider,
+};
 use crate::etag::EtagCache;
 use crate::factory::{DefaultSupervisorFactory, DynFactory};
 use crate::store::{EnablementStore, InMemoryEnablementStore};
@@ -39,7 +43,21 @@ struct Inner {
     supervisors: RwLock<HashMap<String, SupervisorHandle>>,
     store: Arc<dyn EnablementStore>,
     factory: DynFactory,
-    etag_cache: EtagCache,
+    etag_cache: Arc<EtagCache>,
+    /// Registered cleanup providers, in run order. The built-in
+    /// enablement-row + UI/i18n-cache providers are prepended at
+    /// `build()`; consumer-supplied providers (rubix's warehouse + skill
+    /// reclaimers) follow.
+    cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
+    /// Ids installed during this process run that are not yet live in the
+    /// sealed registry — they surface on next boot. Surfaced as
+    /// `restart_required` on the list projection so the UI can badge them.
+    pending_restart: RwLock<HashMap<String, PendingInstall>>,
+    /// Per-extension counter registry. Shared with the transport adapters
+    /// (they bump it) and read by `GET /extensions/<id>/metrics`. Defaults
+    /// to a fresh empty registry so a `TestApp` that does not wire the
+    /// adapters still serves all-zero counters.
+    metrics: MetricsRegistry,
     worker_states: Option<WorkerStatesFn>,
     /// On-disk root that holds extension bundles. Required for the
     /// install / uninstall endpoints (Phase D.1); endpoints return
@@ -59,6 +77,17 @@ struct Inner {
 pub type WorkerStatesFn =
     Arc<dyn Fn(&ExtensionId) -> Vec<serde_json::Value> + Send + Sync + 'static>;
 
+/// A lightweight summary of an extension installed during this process run
+/// but not yet live in the sealed registry (it surfaces on next boot).
+/// Captured from the validated install record so the list projection can
+/// render a badge-able row without re-reading the bundle.
+#[derive(Debug, Clone)]
+pub(crate) struct PendingInstall {
+    pub version: Option<String>,
+    pub display_name: Option<String>,
+    pub runtime_kind: Option<RuntimeKind>,
+}
+
 impl ExtensionAdmin {
     /// Start building from a sealed registry.
     pub fn builder(registry: Arc<ExtensionRegistry>) -> ExtensionAdminBuilder {
@@ -67,8 +96,10 @@ impl ExtensionAdmin {
             supervisors: HashMap::new(),
             store: None,
             factory: None,
+            metrics: None,
             worker_states: None,
             extensions_dir: None,
+            cleanup_providers: Vec::new(),
         }
     }
 
@@ -118,6 +149,14 @@ impl ExtensionAdmin {
         &self.inner.etag_cache
     }
 
+    /// The shared per-extension metrics registry. The consumer hands the
+    /// same handle to the transport adapters at wiring time so their
+    /// counter bumps land in the registry `GET /extensions/<id>/metrics`
+    /// reads.
+    pub fn metrics(&self) -> &MetricsRegistry {
+        &self.inner.metrics
+    }
+
     /// Render the worker-state field for `GET /extensions/<id>`.
     /// Returns an empty vector when no provider is wired — the JSON
     /// response still includes a `workers: []` field, which is the
@@ -135,6 +174,108 @@ impl ExtensionAdmin {
             None => Vec::new(),
         }
     }
+
+    /// Record an extension installed during this run as pending a restart
+    /// (it surfaces on next boot). Surfaced via [`Self::pending_rows`].
+    pub(crate) fn mark_pending_restart(&self, id: &str, pending: PendingInstall) {
+        self.inner
+            .pending_restart
+            .write()
+            .expect("pending_restart poisoned")
+            .insert(id.to_owned(), pending);
+    }
+
+    /// Drop an id from the pending-restart set (e.g. on purge).
+    pub(crate) fn clear_pending_restart(&self, id: &str) {
+        self.inner
+            .pending_restart
+            .write()
+            .expect("pending_restart poisoned")
+            .remove(id);
+    }
+
+    /// Is this id awaiting a restart to go live?
+    pub(crate) fn is_pending_restart(&self, id: &str) -> bool {
+        self.inner
+            .pending_restart
+            .read()
+            .expect("pending_restart poisoned")
+            .contains_key(id)
+    }
+
+    /// Snapshot of the pending-restart ids and their captured summaries —
+    /// used by the list projection to append rows for freshly-installed
+    /// extensions not yet present in the sealed registry.
+    pub(crate) fn pending_rows(&self) -> Vec<(String, PendingInstall)> {
+        self.inner
+            .pending_restart
+            .read()
+            .expect("pending_restart poisoned")
+            .iter()
+            .map(|(k, v)| (k.clone(), v.clone()))
+            .collect()
+    }
+
+    /// Run every registered cleanup provider's `discover` and concatenate
+    /// the results — the dry-run manifest for `GET /extensions/<id>/cleanup`.
+    pub(crate) async fn discover_cleanup(
+        &self,
+        id: &ExtensionId,
+        manifest: Option<&Manifest>,
+    ) -> Vec<CleanupItem> {
+        let mut out = Vec::new();
+        for provider in &self.inner.cleanup_providers {
+            out.extend(provider.discover(id, manifest).await);
+        }
+        out
+    }
+
+    /// Run every registered cleanup provider's `purge`, returning the items
+    /// actually removed. Each provider discovers its own items, purges
+    /// them, and every removed item is logged with
+    /// `target: "starter_ext_server::cleanup"` and the caller principal. A
+    /// single provider failing logs a warning and never aborts the others —
+    /// purge is best-effort and idempotent.
+    pub(crate) async fn purge_cleanup(
+        &self,
+        id: &ExtensionId,
+        manifest: Option<&Manifest>,
+        principal: &str,
+    ) -> Vec<CleanupItem> {
+        let mut removed = Vec::new();
+        for provider in &self.inner.cleanup_providers {
+            let items = provider.discover(id, manifest).await;
+            if items.is_empty() {
+                continue;
+            }
+            match provider.purge(id, &items).await {
+                Ok(()) => {
+                    for item in &items {
+                        tracing::info!(
+                            target: "starter_ext_server::cleanup",
+                            id = %id.as_str(),
+                            principal = %principal,
+                            kind = ?item.kind,
+                            label = %item.label,
+                            bytes = item.bytes,
+                            "purged cleanup item",
+                        );
+                    }
+                    removed.extend(items);
+                }
+                Err(e) => {
+                    tracing::warn!(
+                        target: "starter_ext_server::cleanup",
+                        id = %id.as_str(),
+                        principal = %principal,
+                        err = %e,
+                        "cleanup provider purge failed",
+                    );
+                }
+            }
+        }
+        removed
+    }
 }
 
 /// Fluent builder. `registry` is the only required input; the rest
@@ -145,8 +286,10 @@ pub struct ExtensionAdminBuilder {
     supervisors: HashMap<String, SupervisorHandle>,
     store: Option<Arc<dyn EnablementStore>>,
     factory: Option<DynFactory>,
+    metrics: Option<MetricsRegistry>,
     worker_states: Option<WorkerStatesFn>,
     extensions_dir: Option<PathBuf>,
+    cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
 }
 
 impl ExtensionAdminBuilder {
@@ -172,6 +315,16 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Wire the shared per-extension [`MetricsRegistry`]. The same handle
+    /// must be passed to the transport adapters (mcp / REST router /
+    /// workers scheduler) so their counter bumps are visible to
+    /// `GET /extensions/<id>/metrics`. Defaults to a fresh empty registry
+    /// (all-zero counters) when unset.
+    pub fn with_metrics(mut self, metrics: MetricsRegistry) -> Self {
+        self.metrics = Some(metrics);
+        self
+    }
+
     /// Wire a periodic-worker state provider — typically the handle
     /// returned by `starter_ext_workers::WorkersScheduler::start`,
     /// adapted into a closure that serialises each `WorkerState`
@@ -194,19 +347,44 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Register a [`CleanupProvider`]. Consumer-supplied providers (rubix's
+    /// warehouse-table + skill reclaimers) are appended after the built-in
+    /// enablement-row + UI/i18n-cache providers, which auto-register at
+    /// [`Self::build`].
+    pub fn with_cleanup_provider(mut self, provider: Arc<dyn CleanupProvider>) -> Self {
+        self.cleanup_providers.push(provider);
+        self
+    }
+
     /// Materialise the [`ExtensionAdmin`].
     pub fn build(self) -> ExtensionAdmin {
+        let registry = self.registry;
+        let store = self
+            .store
+            .unwrap_or_else(|| Arc::new(InMemoryEnablementStore::new()));
+        let etag_cache = Arc::new(EtagCache::new());
+
+        // Built-in providers auto-register first; they need no rubix
+        // knowledge. Consumer-supplied providers follow.
+        let mut cleanup_providers: Vec<Arc<dyn CleanupProvider>> = vec![
+            Arc::new(EnablementRowProvider::new(store.clone())),
+            Arc::new(UiCacheProvider::new(registry.clone(), etag_cache.clone())),
+            Arc::new(I18nCacheProvider::new(registry.clone(), etag_cache.clone())),
+        ];
+        cleanup_providers.extend(self.cleanup_providers);
+
         ExtensionAdmin {
             inner: Arc::new(Inner {
-                registry: self.registry,
+                registry,
                 supervisors: RwLock::new(self.supervisors),
-                store: self
-                    .store
-                    .unwrap_or_else(|| Arc::new(InMemoryEnablementStore::new())),
+                store,
                 factory: self
                     .factory
                     .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory)),
-                etag_cache: EtagCache::new(),
+                etag_cache,
+                cleanup_providers,
+                pending_restart: RwLock::new(HashMap::new()),
+                metrics: self.metrics.unwrap_or_default(),
                 worker_states: self.worker_states,
                 extensions_dir: self.extensions_dir,
             }),
