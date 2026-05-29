@@ -32,6 +32,7 @@ starter-spi              = { workspace = true, features = ["i18n", "preferences"
 starter-config           = { workspace = true }
 starter-observability    = { workspace = true }
 starter-server           = { workspace = true }
+starter-cache            = { workspace = true }
 # `flow` feature pulls in `PgFlowStore`, `PgRunStore`,
 # `PgNodeStateStore`, and the `FLOW_MIGRATION_SOURCE` migrator.
 # Per `rubix/docs/scope/sqlite-to-postgres.md` rubix consolidates

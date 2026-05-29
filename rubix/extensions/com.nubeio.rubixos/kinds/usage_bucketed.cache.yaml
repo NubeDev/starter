@@ -1,0 +1,27 @@
+# Opt-in cache for usage_bucketed.
+#
+# v0 of rubix/docs/proposal/fe-cache-opt-in.md. Three knobs only —
+# ttl, scope, invalidate_on.tables. SDUI integration, time_series,
+# inner_scope, SWR, and bucket-level tags are explicitly out of scope
+# until the un-defer conditions fire.
+#
+# usage_bucketed is the documented canary: it is heavy enough to
+# justify caching (time-bucketed AVG over the histories hypertable)
+# and is queried far more often than the underlying histories table
+# changes. Scope `user` is the safe default — the platform's per-user
+# unit prefs / locale mean two users in the same tenant render
+# different output from the same raw query (see Layer 4 of the
+# proposal). 60s TTL ceiling matches the typical dashboard refresh
+# cadence.
+#
+# invalidate_on.tables: a write into the histories hypertable fires
+# `table:com_nubeio_rubixos__histories`, which drops every cached
+# usage_bucketed entry on next read. Best-effort until the unified
+# WarehouseWriter chokepoint lands (see TODO(cache-invalidation):
+# markers and rubix/docs/sessions/cache-v0-progress.md).
+cache:
+  ttl: 60s
+  scope: user
+  invalidate_on:
+    tables:
+      - com_nubeio_rubixos__histories

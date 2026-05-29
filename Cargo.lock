@@ -6284,6 +6284,7 @@ dependencies = [
  "starter-auth-users",
  "starter-authz",
  "starter-blob-fs",
+ "starter-cache",
  "starter-changelog",
  "starter-changelog-postgres",
  "starter-changelog-sqlite",
@@ -7793,6 +7794,7 @@ version = "0.1.0"
 dependencies = [
  "async-trait",
  "moka",
+ "serde",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
@@ -8141,6 +8143,7 @@ dependencies = [
  "serde_yaml",
  "sha2 0.10.9",
  "starter-authz",
+ "starter-cache",
  "starter-ext-host",
  "starter-ext-sdk",
  "starter-ext-spi",

@@ -544,8 +544,8 @@ async fn main() -> Result<()> {
                 use starter_ext_host::TemplateRegistry;
                 use starter_ext_sdk::builtin::BuiltinTable;
                 use starter_ext_server::{
-                    rest_router, BuiltinRestDispatcher, CapabilityFactory, ProcessRestDispatcher,
-                    RestDispatcher, RestRouterOptions,
+                    rest_router, BuiltinRestDispatcher, CapabilityFactory, DispatcherCache,
+                    KindCacheRegistry, ProcessRestDispatcher, RestDispatcher, RestRouterOptions,
                 };
                 use starter_server::auth::with_principal;
 
@@ -612,21 +612,109 @@ async fn main() -> Result<()> {
                         .with_dashboard_store(dashboard_store)
                         .with_authz_engine(engine.clone()),
                 );
+                // v0 opt-in cache: walk every validated extension's
+                // bundle and pick up `kinds/*.cache.yaml` sidecars
+                // into a single KindCacheRegistry shared by the
+                // builtin and process dispatchers. See
+                // rubix/docs/sessions/cache-v0-progress.md and
+                // rubix/docs/proposal/fe-cache-opt-in.md "Minimum
+                // viable v0". Per-tenant cap left at the default
+                // (10k entries / tenant) until production data tells
+                // us otherwise.
+                let cache_layer = starter_cache::CacheLayer::new(
+                    starter_cache::LayerConfig::default(),
+                );
+                let mut cache_entries: Vec<(
+                    (starter_ext_spi::ExtensionId, String),
+                    starter_cache::CacheSpec,
+                )> = Vec::new();
+                for record in bundle.registry.iter_validated() {
+                    let Some(ext_id) = record.id.clone() else {
+                        continue;
+                    };
+                    let kinds_dir = record.bundle_dir.join("kinds");
+                    if !kinds_dir.is_dir() {
+                        continue;
+                    }
+                    match KindCacheRegistry::load_from_dir(&ext_id, &kinds_dir) {
+                        Ok((reg, errors)) => {
+                            for err in &errors {
+                                warn!(
+                                    target: "rubix.boot.extensions",
+                                    extension = %ext_id.as_str(),
+                                    path = %err.path.display(),
+                                    error = %err.message,
+                                    "cache sidecar failed to load — kind will be uncached",
+                                );
+                            }
+                            // KindCacheRegistry doesn't expose its
+                            // entries; rebuild the (key, spec) pairs
+                            // by re-walking the dir is wasteful — but
+                            // load_from_dir already returns a Registry
+                            // typed for one extension. We merge by
+                            // re-loading sidecars one-by-one against
+                            // the merged vec.
+                            for ent in std::fs::read_dir(&kinds_dir)
+                                .into_iter()
+                                .flatten()
+                                .flatten()
+                            {
+                                let p = ent.path();
+                                let name = match p.file_name().and_then(|n| n.to_str()) {
+                                    Some(n) => n,
+                                    None => continue,
+                                };
+                                let Some(stem) = name.strip_suffix(".cache.yaml") else {
+                                    continue;
+                                };
+                                if let Some(spec) = reg.get(&ext_id, stem) {
+                                    cache_entries.push((
+                                        (ext_id.clone(), stem.to_string()),
+                                        spec.clone(),
+                                    ));
+                                }
+                            }
+                        }
+                        Err(e) => {
+                            warn!(
+                                target: "rubix.boot.extensions",
+                                extension = %ext_id.as_str(),
+                                error = %e,
+                                "failed to scan kinds/ for cache sidecars",
+                            );
+                        }
+                    }
+                }
+                if !cache_entries.is_empty() {
+                    info!(
+                        target: "rubix.boot.extensions",
+                        kinds = cache_entries.len(),
+                        "opt-in cache: registered kind specs",
+                    );
+                }
+                let kind_cache =
+                    KindCacheRegistry::from_entries(cache_entries.iter().cloned());
+                let dispatcher_cache = DispatcherCache::new(cache_layer.clone(), kind_cache);
+
                 // Builtin dispatcher: in-process extensions go through the
                 // capability factory above.
                 let builtin = Arc::new(
                     BuiltinRestDispatcher::new(table, bundle.registry.clone())
-                        .with_capability_factory(factory),
+                        .with_capability_factory(factory)
+                        .with_cache(dispatcher_cache.clone()),
                 );
                 // Process dispatcher: child-process extensions are dispatched
                 // through their supervisor handle, populated by
                 // `boot::extensions::build_extension_admin`. Empty handle
                 // map (no enabled process extensions) is fine — the
                 // composite simply never picks this branch.
-                let process = Arc::new(ProcessRestDispatcher::new(
-                    bundle.process_handles.clone(),
-                    EXTENSION_REST_REQUEST_TIMEOUT,
-                ));
+                let process = Arc::new(
+                    ProcessRestDispatcher::new(
+                        bundle.process_handles.clone(),
+                        EXTENSION_REST_REQUEST_TIMEOUT,
+                    )
+                    .with_cache(dispatcher_cache),
+                );
                 let dispatcher: Arc<dyn RestDispatcher> = Arc::new(CompositeRestDispatcher::new(
                     bundle.registry.clone(),
                     builtin,
