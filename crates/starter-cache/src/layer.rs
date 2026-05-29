@@ -77,6 +77,33 @@ impl Default for LayerConfig {
     }
 }
 
+impl LayerConfig {
+    /// Build a config by reading host env vars, falling back to the
+    /// default for any var that is unset or unparseable.
+    ///
+    /// `prefix` is the env-var prefix the host uses (e.g.
+    /// `"RUBIX_CACHE"`). Read keys:
+    ///
+    /// - `<prefix>_PER_TENANT_MAX_ENTRIES` — integer, > 0.
+    ///
+    /// Unparseable values fall through to the default; the layer
+    /// does not panic on bad operator input. Callers that want to
+    /// observe parse failures can pre-parse via `std::env::var(...)`
+    /// before calling this and emit their own warning.
+    pub fn from_env(prefix: &str) -> Self {
+        let mut cfg = Self::default();
+        let key = format!("{prefix}_PER_TENANT_MAX_ENTRIES");
+        if let Ok(raw) = std::env::var(&key) {
+            if let Ok(n) = raw.parse::<u64>() {
+                if n > 0 {
+                    cfg.per_tenant_max_entries = n;
+                }
+            }
+        }
+        cfg
+    }
+}
+
 /// Cached payload type. We pin to `Arc<Vec<u8>>` so any
 /// JSON-serialisable response can be cached behind one shape.
 pub type Bytes = Arc<Vec<u8>>;
@@ -390,6 +417,47 @@ mod tests {
             }
         }
         assert_eq!(calls.load(Ordering::SeqCst), 2);
+    }
+
+    #[test]
+    fn layer_config_from_env_reads_per_tenant_cap() {
+        // Use a unique prefix per test so env-var state across tests
+        // doesn't bleed. The `_TEST_<random>` suffix is enough — the
+        // helper takes the prefix verbatim.
+        let prefix = "STARTER_CACHE_TEST_OK";
+        // SAFETY: `set_var` is unsafe-without-warning on 2024 toolchains;
+        // tests run single-threaded for env mutation by convention here
+        // (no other test touches this prefix).
+        std::env::set_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"), "42");
+        let cfg = LayerConfig::from_env(prefix);
+        assert_eq!(cfg.per_tenant_max_entries, 42);
+        std::env::remove_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"));
+    }
+
+    #[test]
+    fn layer_config_from_env_falls_back_on_unparseable() {
+        let prefix = "STARTER_CACHE_TEST_BAD";
+        std::env::set_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"), "not-a-number");
+        let cfg = LayerConfig::from_env(prefix);
+        assert_eq!(
+            cfg.per_tenant_max_entries,
+            LayerConfig::default().per_tenant_max_entries
+        );
+        std::env::remove_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"));
+    }
+
+    #[test]
+    fn layer_config_from_env_rejects_zero() {
+        let prefix = "STARTER_CACHE_TEST_ZERO";
+        std::env::set_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"), "0");
+        let cfg = LayerConfig::from_env(prefix);
+        // Zero is meaningless (no entries ever stored); the helper
+        // falls through to the default rather than wedge the cache.
+        assert_eq!(
+            cfg.per_tenant_max_entries,
+            LayerConfig::default().per_tenant_max_entries
+        );
+        std::env::remove_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"));
     }
 
     #[tokio::test]
