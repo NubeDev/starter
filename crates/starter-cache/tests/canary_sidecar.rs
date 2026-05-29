@@ -1,5 +1,5 @@
 //! Smoke test that the v0 canary sidecar
-//! (`rubix/extensions/com.nubeio.rubixos/kinds/usage_bucketed.cache.yaml`)
+//! (`rubix/extensions/com.nubeio.rubixos/kinds/com.nubeio.rubixos.warehouse_query.cache.yaml`)
 //! parses with the exact `CacheSpec` the proposal expects. This
 //! pins the canary against silent edits — if someone changes the
 //! sidecar to a v1+ shape (time_series, inner_scope, …), this test
@@ -15,8 +15,10 @@ fn canary_sidecar_parses() {
         .parent()
         .and_then(|p| p.parent())
         .expect("workspace root has two ancestors above crate dir");
-    let yaml_path = workspace_root
-        .join("rubix/extensions/com.nubeio.rubixos/kinds/usage_bucketed.cache.yaml");
+    let yaml_path = workspace_root.join(
+        "rubix/extensions/com.nubeio.rubixos/kinds/\
+         com.nubeio.rubixos.warehouse_query.cache.yaml",
+    );
 
     let yaml = std::fs::read_to_string(&yaml_path)
         .unwrap_or_else(|e| panic!("read {}: {e}", yaml_path.display()));

@@ -40,7 +40,7 @@ mod handler;
 mod router;
 mod schema;
 
-pub use cache::{DispatcherCache, KindCacheRegistry, SidecarLoadError};
+pub use cache::{DispatcherCache, KindCacheRegistry, OrphanSidecar, SidecarLoadError};
 pub use dispatcher::{
     BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, ProcessRestDispatcher,
     RestDispatcher, StreamResponse,

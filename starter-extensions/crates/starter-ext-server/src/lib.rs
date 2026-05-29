@@ -77,8 +77,8 @@ pub use factory::{
 };
 pub use rest::{
     rest_router, BuiltinRestDispatcher, DispatchError, DispatcherCache, KindCacheRegistry,
-    NotWiredDispatcher, ProcessRestDispatcher, RestBuildError, RestDispatcher, RestRouterOptions,
-    SchemaCheck, SidecarLoadError, StreamResponse,
+    NotWiredDispatcher, OrphanSidecar, ProcessRestDispatcher, RestBuildError, RestDispatcher,
+    RestRouterOptions, SchemaCheck, SidecarLoadError, StreamResponse,
 };
 pub use router::{router, router_with_auth, AdminRouterOptions};
 pub use store::{EnablementState, EnablementStore, InMemoryEnablementStore, StoreError};

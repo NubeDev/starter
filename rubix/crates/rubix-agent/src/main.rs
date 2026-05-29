@@ -694,6 +694,46 @@ async fn main() -> Result<()> {
                 }
                 let kind_cache =
                     KindCacheRegistry::from_entries(cache_entries.iter().cloned());
+
+                // Catch sidecar typos / stale files before they
+                // silently degrade to a no-op. The orphan check
+                // compares every sidecar's `<stem>` against the
+                // declared contribute_ids in each extension's
+                // manifest (tools, rest, cli, grpc, workers).
+                let orphans = kind_cache.orphans(|ext| {
+                    let mut ids: Vec<&str> = Vec::new();
+                    if let Some(rec) = bundle.registry.get(ext) {
+                        if let Some(m) = rec.manifest.as_ref() {
+                            for t in &m.contributes.tools {
+                                ids.push(t.id.as_str());
+                            }
+                            for r in &m.contributes.rest {
+                                ids.push(r.id.as_str());
+                            }
+                            for c in &m.contributes.cli {
+                                ids.push(c.id.as_str());
+                            }
+                            for g in &m.contributes.grpc {
+                                ids.push(g.id.as_str());
+                            }
+                            for w in &m.contributes.workers {
+                                ids.push(w.id.as_str());
+                            }
+                        }
+                    }
+                    ids.into_iter()
+                });
+                for o in &orphans {
+                    warn!(
+                        target: "rubix.boot.extensions",
+                        extension = %o.extension.as_str(),
+                        sidecar_stem = %o.contribute_id,
+                        "cache sidecar references unknown contribute_id — \
+                         the sidecar will silently never fire. Check for a \
+                         typo or a stale file after a kind rename.",
+                    );
+                }
+
                 let dispatcher_cache = DispatcherCache::new(cache_layer.clone(), kind_cache);
                 // Thread the layer into the admin state so
                 // `GET /api/v1/admin/cache/specs` can render per-spec

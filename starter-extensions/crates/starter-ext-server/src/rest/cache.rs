@@ -73,10 +73,76 @@ impl KindCacheRegistry {
         self.entries.is_empty()
     }
 
+    /// Iterate every registered `(extension, contribute_id, spec)`.
+    /// Order is unspecified — `KindCacheRegistry` is `HashMap`-backed.
+    pub fn iter(
+        &self,
+    ) -> impl Iterator<Item = (&ExtensionId, &str, &CacheSpec)> + '_ {
+        self.entries
+            .iter()
+            .map(|((ext, id), spec)| (ext, id.as_str(), spec))
+    }
+
+    /// Check every registered spec against the set of contribute ids
+    /// the host knows about. A sidecar named for a kind that does
+    /// not exist in the manifest (typo: `useage_bucketed.cache.yaml`,
+    /// stale sidecar after a kind was renamed, …) silently degrades
+    /// to a no-op without this check — the dispatcher just never
+    /// finds a matching spec because the request's contribute_id
+    /// doesn't match the sidecar's stem.
+    ///
+    /// Returns the list of orphan sidecars. Hosts decide whether to
+    /// log, fail startup, or both — same posture as
+    /// [`load_from_dir`](Self::load_from_dir)'s parse errors.
+    ///
+    /// `known_ids_for_ext(ext)` should return the iterator of every
+    /// contribute id (`contributes.tools[].id`, `contributes.rest[].id`,
+    /// …) the manifest declares for `ext`. The validator does the
+    /// `HashSet` lookup; the caller picks how to walk the manifest.
+    pub fn orphans<'a, F, I>(&'a self, mut known_ids_for_ext: F) -> Vec<OrphanSidecar>
+    where
+        F: FnMut(&ExtensionId) -> I,
+        I: IntoIterator<Item = &'a str>,
+    {
+        use std::collections::HashSet;
+        let mut by_ext: HashMap<ExtensionId, HashSet<String>> = HashMap::new();
+        let mut out = Vec::new();
+        for (ext, id) in self.entries.keys() {
+            let known = by_ext.entry(ext.clone()).or_insert_with(|| {
+                known_ids_for_ext(ext)
+                    .into_iter()
+                    .map(|s| s.to_string())
+                    .collect()
+            });
+            if !known.contains(id) {
+                out.push(OrphanSidecar {
+                    extension: ext.clone(),
+                    contribute_id: id.clone(),
+                });
+            }
+        }
+        out.sort_by(|a, b| {
+            a.extension
+                .as_str()
+                .cmp(b.extension.as_str())
+                .then_with(|| a.contribute_id.cmp(&b.contribute_id))
+        });
+        out
+    }
+
     /// Load every `*.cache.yaml` file from the given directory and
     /// associate it with `(extension, <stem>)` — the stem is the
-    /// part of the filename before `.cache.yaml`, taken as the
-    /// contribute_id.
+    /// part of the filename before `.cache.yaml`, taken verbatim as
+    /// the contribute_id.
+    ///
+    /// **Filename convention:** the stem must be the **full
+    /// reverse-DNS contribute_id** the dispatcher uses
+    /// (`com.nubeio.rubixos.warehouse_query.cache.yaml`), not the
+    /// bare trailing segment (`warehouse_query.cache.yaml`). The
+    /// dispatcher looks up `(extension_id, contribute_id)` and
+    /// `contribute_id` is the full reverse-DNS one. A bare-name
+    /// sidecar parses fine but never matches anything — call
+    /// [`Self::orphans`] after loading to catch this.
     ///
     /// Returns the registry plus any parse errors (so a typo in one
     /// sidecar does not block the rest from loading). Hosts decide
@@ -142,6 +208,17 @@ pub struct SidecarLoadError {
     pub message: String,
 }
 
+/// A sidecar that parsed cleanly but whose stem does not match any
+/// declared contribute id in its extension's manifest. Sees the
+/// light of day only after `KindCacheRegistry::orphans` is called.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct OrphanSidecar {
+    /// The extension that owns the sidecar.
+    pub extension: ExtensionId,
+    /// The `<stem>` that did not match any manifest contribute id.
+    pub contribute_id: String,
+}
+
 /// Bundle the dispatcher receives via [`super::BuiltinRestDispatcher::with_cache`].
 #[derive(Clone)]
 pub struct DispatcherCache {
@@ -202,6 +279,24 @@ mod tests {
         assert_eq!(r.len(), 1);
         assert_eq!(r.get(&ext, "bar").unwrap().ttl, Duration::from_secs(30));
         assert!(r.get(&ext, "baz").is_none());
+    }
+
+    #[test]
+    fn orphans_flag_unknown_contribute_ids() {
+        let ext = ExtensionId::new("com.example.foo").unwrap();
+        let spec = CacheSpec::ttl(Duration::from_secs(30));
+        let reg = KindCacheRegistry::from_entries([
+            ((ext.clone(), "real_kind".to_string()), spec.clone()),
+            ((ext.clone(), "typo_kind".to_string()), spec.clone()),
+        ]);
+        let known = ["real_kind"];
+        let orphans = reg.orphans(|e| {
+            assert_eq!(e, &ext);
+            known.iter().copied()
+        });
+        assert_eq!(orphans.len(), 1);
+        assert_eq!(orphans[0].extension, ext);
+        assert_eq!(orphans[0].contribute_id, "typo_kind");
     }
 
     #[test]
