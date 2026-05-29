@@ -122,14 +122,40 @@ function SidebarMenuCollapsible({ item, href }: { item: NavCollapsible; href: st
       className='group/collapsible'
     >
       <SidebarMenuItem>
-        <CollapsibleTrigger asChild>
-          <SidebarMenuButton tooltip={label}>
-            {item.icon && <item.icon />}
-            <span>{label}</span>
-            {item.badge && <NavBadge>{item.badge}</NavBadge>}
-            <ChevronRight className='ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
-          </SidebarMenuButton>
-        </CollapsibleTrigger>
+        {item.url ? (
+          <div className='flex items-center'>
+            <SidebarMenuButton
+              asChild
+              isActive={checkIsActive(href, item as unknown as NavLink)}
+              tooltip={label}
+              className='flex-1'
+            >
+              <NavAnchor url={item.url} onClick={() => setOpenMobile(false)}>
+                {item.icon && <item.icon />}
+                <span>{label}</span>
+                {item.badge && <NavBadge>{item.badge}</NavBadge>}
+              </NavAnchor>
+            </SidebarMenuButton>
+            <CollapsibleTrigger asChild>
+              <button
+                type='button'
+                aria-label={`Toggle ${label}`}
+                className='grid size-7 place-items-center rounded-md text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+              >
+                <ChevronRight className='size-4 transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
+              </button>
+            </CollapsibleTrigger>
+          </div>
+        ) : (
+          <CollapsibleTrigger asChild>
+            <SidebarMenuButton tooltip={label}>
+              {item.icon && <item.icon />}
+              <span>{label}</span>
+              {item.badge && <NavBadge>{item.badge}</NavBadge>}
+              <ChevronRight className='ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
+            </SidebarMenuButton>
+          </CollapsibleTrigger>
+        )}
         <CollapsibleContent className='CollapsibleContent'>
           <SidebarMenuSub>
             {item.items.map((subItem) => (
@@ -137,7 +163,7 @@ function SidebarMenuCollapsible({ item, href }: { item: NavCollapsible; href: st
                 <SidebarMenuSubButton asChild isActive={checkIsActive(href, subItem)}>
                   <NavAnchor url={subItem.url as string} onClick={() => setOpenMobile(false)}>
                     {subItem.icon && <subItem.icon />}
-                    <span>{intl.formatMessage({ id: subItem.title })}</span>
+                    <span>{intl.formatMessage({ id: subItem.title, defaultMessage: subItem.defaultMessage })}</span>
                     {subItem.badge && <NavBadge>{subItem.badge}</NavBadge>}
                   </NavAnchor>
                 </SidebarMenuSubButton>

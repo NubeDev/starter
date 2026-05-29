@@ -29,7 +29,9 @@ type NavLink = BaseNavItem & {
 
 type NavCollapsible = BaseNavItem & {
   items: (BaseNavItem & { url: LinkProps['to'] | (string & {}) })[]
-  url?: never
+  /** Optional URL — when present, the collapsible row is also a link
+   *  (clicking the label navigates; the chevron still toggles). */
+  url?: LinkProps['to'] | (string & {})
 }
 
 type NavItem = NavCollapsible | NavLink

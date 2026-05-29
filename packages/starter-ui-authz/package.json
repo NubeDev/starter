@@ -10,7 +10,8 @@
     ".": "./src/index.ts",
     "./hooks": "./src/hooks/index.ts",
     "./panels": "./src/panels/index.ts",
-    "./i18n": "./src/i18n/index.ts"
+    "./i18n": "./src/i18n/index.ts",
+    "./scan-source.css": "./src/styles/scan-source.css"
   },
   "files": [
     "README.md",

@@ -9,8 +9,9 @@
 // under the always-on `/dashboard` link.
 
 import { useMemo } from 'react'
-import { Gauge, LayoutDashboard, MessageSquare } from 'lucide-react'
+import { Building2, Gauge, LayoutDashboard, MessageSquare } from 'lucide-react'
 import { useDashboardSidebar } from '@nube/rubix-client-react'
+import { useTenants } from '@nube/starter-ui-authz'
 
 import { NAV_GROUPS, type NavGroup, type NavItem } from './nav'
 
@@ -20,6 +21,7 @@ const RECONNECTING_BADGE = '…'
 
 export function useNavGroups(): NavGroup[] {
   const sidebar = useDashboardSidebar()
+  const tenants = useTenants()
 
   return useMemo(() => {
     const dashboardGroup = buildDashboardGroup(
@@ -36,8 +38,43 @@ export function useNavGroups(): NavGroup[] {
     const out = [...NAV_GROUPS]
     const insertAt = Math.min(1, out.length)
     out.splice(insertAt, 0, dashboardGroup)
+
+    // Expand the Admin / Access entry with live tenants as
+    // collapsible sub-items so an operator can deep-link from the
+    // sidebar straight into a tenant's Access surface.
+    const list = tenants.data ?? []
+    if (list.length > 0) {
+      const adminIdx = out.findIndex((g) => g.titleKey === 'nav.group.admin')
+      if (adminIdx >= 0) {
+        const group = out[adminIdx]
+        const accessIdx = group.items.findIndex(
+          (it) => it.href === '/admin/access',
+        )
+        if (accessIdx >= 0) {
+          const access = group.items[accessIdx]
+          const subItems: NavItem[] = list.map((t) => ({
+            labelKey: `access.tenant.${t.id}`,
+            defaultMessage: t.display_name || t.slug,
+            href: `/admin/access/t/${t.slug}`,
+            icon: Building2,
+          }))
+          const expanded: NavItem = {
+            labelKey: access.labelKey,
+            defaultMessage: access.defaultMessage,
+            href: access.href,
+            icon: access.icon,
+            badge: access.badge,
+            children: subItems,
+          }
+          const items = [...group.items]
+          items[accessIdx] = expanded
+          out[adminIdx] = { ...group, items }
+        }
+      }
+    }
+
     return out
-  }, [sidebar.items, sidebar.status])
+  }, [sidebar.items, sidebar.status, tenants.data])
 }
 
 interface SidebarEntry {

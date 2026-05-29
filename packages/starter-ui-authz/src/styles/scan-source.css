@@ -1,0 +1,7 @@
+/* Tailwind v4 source-scanning shim for `@nube/starter-ui-authz`.
+ *
+ * Tailwind v4 skips `node_modules` by default. Host apps that consume
+ * this package should `@import` this file after `@import "tailwindcss";`
+ * so the JIT picks up the panel utilities (responsive grids, etc.).
+ */
+@source "../..";

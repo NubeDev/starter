@@ -11,13 +11,30 @@ import { type SidebarData, type NavGroup as NavGroupShape } from '../types'
 export function toSidebarNavGroups(groups: RubixNavGroup[]): NavGroupShape[] {
   return groups.map((g) => ({
     title: g.titleKey,
-    items: g.items.map((item) => ({
-      title: item.labelKey,
-      defaultMessage: item.defaultMessage,
-      url: item.href,
-      icon: item.icon,
-      badge: item.badge,
-    })),
+    items: g.items.map((item) =>
+      item.children && item.children.length > 0
+        ? {
+            title: item.labelKey,
+            defaultMessage: item.defaultMessage,
+            url: item.href,
+            icon: item.icon,
+            badge: item.badge,
+            items: item.children.map((child) => ({
+              title: child.labelKey,
+              defaultMessage: child.defaultMessage,
+              url: child.href,
+              icon: child.icon,
+              badge: child.badge,
+            })),
+          }
+        : {
+            title: item.labelKey,
+            defaultMessage: item.defaultMessage,
+            url: item.href,
+            icon: item.icon,
+            badge: item.badge,
+          },
+    ),
   }))
 }
 

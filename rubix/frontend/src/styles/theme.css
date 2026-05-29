@@ -2,6 +2,7 @@
 @import '@nube/starter-ui-kit/scan-source.css';
 @import '@nube/starter-ui-sdui-react/scan-source.css';
 @import '@nube/starter-ui-warehouse-explorer/scan-source.css';
+@import '@nube/starter-ui-authz/scan-source.css';
 @import './primitives.css';
 @import './tokens.css';
 

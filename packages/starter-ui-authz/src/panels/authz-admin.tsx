@@ -186,58 +186,51 @@ function AuthzAdminInner({
   return (
     <div className="grid gap-6">
       {header}
-      <header className="flex flex-wrap items-end justify-between gap-3">
-        <div className="grid gap-1">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {m.shell.title}
-          </h1>
-          <p className="text-sm text-muted-foreground">
-            Tenants, teams, members, rules, and audit trail.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDrawer("resources")}
-          >
-            <Layers className="size-4" aria-hidden />
-            {m.shell.tabs.resources}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDrawer("check")}
-          >
-            <ShieldCheck className="size-4" aria-hidden />
-            {m.shell.tabs.check}
-          </Button>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDrawer("decisions")}
-          >
-            <FileSearch className="size-4" aria-hidden />
-            {m.shell.tabs.decisions}
-          </Button>
-        </div>
-      </header>
+      {!header && (
+        <header className="flex flex-wrap items-end justify-between gap-3">
+          <div className="grid gap-1">
+            <h1 className="text-2xl font-semibold tracking-tight">
+              {m.shell.title}
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Tenants, teams, members, rules, and audit trail.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDrawer("resources")}
+            >
+              <Layers className="size-4" aria-hidden />
+              {m.shell.tabs.resources}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDrawer("check")}
+            >
+              <ShieldCheck className="size-4" aria-hidden />
+              {m.shell.tabs.check}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDrawer("decisions")}
+            >
+              <FileSearch className="size-4" aria-hidden />
+              {m.shell.tabs.decisions}
+            </Button>
+          </div>
+        </header>
+      )}
 
-      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
-        <TenantRail
-          selected={sel}
-          onSelect={setSel}
-          enableTeamMode={!!enableTeamMode}
-        />
-        <div className="min-w-0">
-          <DetailPane
-            sel={sel}
-            onSelect={setSel}
-            enableTeamMode={!!enableTeamMode}
-            userDetailExtras={userDetailExtras}
-          />
-        </div>
-      </div>
+      <DetailPane
+        sel={sel}
+        onSelect={setSel}
+        enableTeamMode={!!enableTeamMode}
+        userDetailExtras={userDetailExtras}
+      />
 
       <Sheet open={drawer !== null} onOpenChange={(o) => !o && setDrawer(null)}>
         <SheetContent

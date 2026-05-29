@@ -24,6 +24,8 @@ export interface NavItem {
   href: string
   icon: LucideIcon
   badge?: string
+  /** Optional nested children rendered as a collapsible sub-list. */
+  children?: NavItem[]
 }
 
 export interface NavGroup {

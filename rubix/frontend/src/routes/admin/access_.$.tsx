@@ -21,6 +21,6 @@ function AccessSplatRoute() {
   )
 }
 
-export const Route = createFileRoute('/admin/access/$')({
+export const Route = createFileRoute('/admin/access_/$')({
   component: AccessSplatRoute,
 })

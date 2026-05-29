@@ -3,9 +3,27 @@
 // URL <-> selection mapping lives here so deep links such as
 // `/admin/access/t/acme/team/platform` round-trip cleanly.
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { useNavigate } from '@tanstack/react-router'
 import { useIntl } from 'react-intl'
+import { ChevronRight, UserPlus, Users } from 'lucide-react'
+import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@nube/starter-ui-kit'
+import { useCreateTeam } from '@nube/starter-ui-authz'
 import {
   AuthzAdmin,
   type AuthzMessages,
@@ -345,34 +363,72 @@ export function AccessControl({ splat }: AccessControlProps) {
     [splat, tenantList, teamsByTenant],
   )
 
+  const scopeSlug =
+    selected.kind === 'tenant' || selected.kind === 'team'
+      ? tenantList.find((x) => x.id === selected.tenantId)?.slug
+      : selected.kind === 'user' && selected.tenantId
+        ? tenantList.find((x) => x.id === selected.tenantId)?.slug
+        : undefined
+
+  const scopedTenantId =
+    selected.kind === 'tenant' || selected.kind === 'team'
+      ? selected.tenantId
+      : selected.kind === 'user'
+        ? selected.tenantId
+        : undefined
+
+  const [inviteOpen, setInviteOpen] = useState(false)
+  const [addTeamOpen, setAddTeamOpen] = useState(false)
+
   return (
-    <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
-      <header className="mb-8">
-        <div className="flex items-center gap-3">
-          <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
-          <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-            Admin / Access
-            {selected.kind === 'tenant' ||
-            selected.kind === 'team' ||
-            (selected.kind === 'user' && selected.tenantId)
-              ? (() => {
-                  const tid =
-                    selected.kind === 'user'
-                      ? selected.tenantId!
-                      : selected.tenantId
-                  const tn = tenantList.find((x) => x.id === tid)?.slug
-                  return tn ? ` / ${tn}` : ''
-                })()
-              : ''}
-          </span>
+    <section className="mx-auto w-full max-w-[1400px] px-6 pb-24 pt-8 lg:px-10">
+      <header className="mb-6 flex flex-wrap items-end justify-between gap-4">
+        <div className="grid gap-1.5">
+          <div className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+            <span>Admin</span>
+            <ChevronRight className="size-3" aria-hidden />
+            <span>Access</span>
+            {scopeSlug ? (
+              <>
+                <ChevronRight className="size-3" aria-hidden />
+                <span className="text-primary">{scopeSlug}</span>
+              </>
+            ) : null}
+          </div>
+          <h1 className="text-3xl font-semibold tracking-tight">
+            {i18n.shell?.title}
+          </h1>
+          <p className="max-w-2xl text-sm text-muted-foreground">
+            Manage tenants, teams, members, and define granular access rules.
+          </p>
         </div>
-        <h1 className="mt-3 text-4xl font-medium tracking-[-0.03em]">
-          {i18n.shell?.title}
-        </h1>
-        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
-          Manage tenants, teams, members, and policy from one place.
-        </p>
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" onClick={() => setInviteOpen(true)}>
+            <UserPlus className="size-4" aria-hidden />
+            Invite User
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!scopedTenantId}
+            title={scopedTenantId ? undefined : 'Select a tenant to add a team'}
+            onClick={() => setAddTeamOpen(true)}
+          >
+            <Users className="size-4" aria-hidden />
+            Add Team
+          </Button>
+        </div>
       </header>
+      <InviteUserDialog
+        open={inviteOpen}
+        onOpenChange={setInviteOpen}
+        userOps={userOps}
+      />
+      <AddTeamDialog
+        open={addTeamOpen}
+        onOpenChange={setAddTeamOpen}
+        tenantId={scopedTenantId}
+      />
       <AuthzAdmin
         i18n={i18n}
         header={<></>}
@@ -385,5 +441,190 @@ export function AccessControl({ splat }: AccessControlProps) {
         }}
       />
     </section>
+  )
+}
+
+// --------------------------------------------------------------------------
+// Dialogs — wired to the same hooks the rest of the surface uses
+// --------------------------------------------------------------------------
+
+function InviteUserDialog({
+  open,
+  onOpenChange,
+  userOps,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  userOps: UsersAdminOps
+}) {
+  const [email, setEmail] = useState('')
+  const [role, setRole] = useState<'admin' | 'operator' | 'viewer'>('operator')
+  const [error, setError] = useState<string | null>(null)
+
+  const reset = () => {
+    setEmail('')
+    setRole('operator')
+    setError(null)
+  }
+  const close = (v: boolean) => {
+    if (!v) reset()
+    onOpenChange(v)
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!userOps.create) {
+      setError('User creation is not available')
+      return
+    }
+    setError(null)
+    try {
+      await userOps.create({ email, role })
+      close(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to invite user')
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={submit} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>Invite user</DialogTitle>
+            <DialogDescription>
+              Create a Rubix account and assign a system role.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Label htmlFor="invite-email">Email</Label>
+            <Input
+              id="invite-email"
+              type="email"
+              required
+              autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.currentTarget.value)}
+              placeholder="alice@example.com"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="invite-role">Role</Label>
+            <Select value={role} onValueChange={(v) => setRole(v as typeof role)}>
+              <SelectTrigger id="invite-role">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="admin">Admin</SelectItem>
+                <SelectItem value="operator">Operator</SelectItem>
+                <SelectItem value="viewer">Viewer</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          {error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => close(false)}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={userOps.isCreating || !email}>
+              {userOps.isCreating ? 'Inviting…' : 'Invite'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+function AddTeamDialog({
+  open,
+  onOpenChange,
+  tenantId,
+}: {
+  open: boolean
+  onOpenChange: (v: boolean) => void
+  tenantId: string | undefined
+}) {
+  const [slug, setSlug] = useState('')
+  const [displayName, setDisplayName] = useState('')
+  const [error, setError] = useState<string | null>(null)
+  const createTeam = useCreateTeam()
+
+  const reset = () => {
+    setSlug('')
+    setDisplayName('')
+    setError(null)
+  }
+  const close = (v: boolean) => {
+    if (!v) reset()
+    onOpenChange(v)
+  }
+
+  const submit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!tenantId) return
+    setError(null)
+    try {
+      await createTeam.mutateAsync({
+        tenantId,
+        body: { slug, display_name: displayName },
+      })
+      close(false)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create team')
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={close}>
+      <DialogContent className="sm:max-w-md">
+        <form onSubmit={submit} className="grid gap-4">
+          <DialogHeader>
+            <DialogTitle>Add team</DialogTitle>
+            <DialogDescription>
+              Create a team in the selected tenant.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-2">
+            <Label htmlFor="team-slug">Slug</Label>
+            <Input
+              id="team-slug"
+              required
+              autoFocus
+              value={slug}
+              onChange={(e) => setSlug(e.currentTarget.value)}
+              placeholder="platform"
+              pattern="[a-z0-9-]+"
+            />
+          </div>
+          <div className="grid gap-2">
+            <Label htmlFor="team-name">Display name</Label>
+            <Input
+              id="team-name"
+              required
+              value={displayName}
+              onChange={(e) => setDisplayName(e.currentTarget.value)}
+              placeholder="Platform"
+            />
+          </div>
+          {error ? (
+            <p className="text-sm text-destructive">{error}</p>
+          ) : null}
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => close(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={createTeam.isPending || !slug || !displayName}
+            >
+              {createTeam.isPending ? 'Creating…' : 'Create team'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   )
 }
