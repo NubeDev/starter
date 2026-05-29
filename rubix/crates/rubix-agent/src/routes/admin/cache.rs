@@ -38,7 +38,7 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::{delete, get, post};
 use axum::Json;
 use serde::{Deserialize, Serialize};
-use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot};
+use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot, TimeSeriesBlock};
 use std::collections::BTreeMap;
 
 use crate::admin::AdminState;
@@ -131,6 +131,33 @@ struct SpecConfig {
     /// v1: structured bucket subscription (`{table, granularity}`).
     /// `null` when the spec declares no bucket subscription.
     invalidate_on_buckets: Option<BucketSpecRow>,
+    /// v2: opt-in time-series block (`null` when absent).
+    time_series: Option<TimeSeriesRow>,
+    /// v2: two-layer cache `inner_scope` (`null` when absent).
+    inner_scope: Option<&'static str>,
+}
+
+#[derive(Serialize)]
+struct TimeSeriesRow {
+    time_param: String,
+    range_param: String,
+    bucket: String,
+    tail_ttl: String,
+    body_ttl: String,
+    align_to: String,
+}
+
+impl TimeSeriesRow {
+    fn from_block(b: &TimeSeriesBlock) -> Self {
+        Self {
+            time_param: b.time_param.clone(),
+            range_param: b.range_param.clone(),
+            bucket: b.bucket.clone(),
+            tail_ttl: b.tail_ttl.clone(),
+            body_ttl: b.body_ttl.clone(),
+            align_to: b.align_to.clone(),
+        }
+    }
 }
 
 #[derive(Serialize)]
@@ -153,6 +180,8 @@ impl SpecConfig {
                 table: b.table.clone(),
                 granularity: b.granularity.clone(),
             }),
+            time_series: spec.time_series.as_ref().map(TimeSeriesRow::from_block),
+            inner_scope: spec.inner_scope.map(scope_str),
         }
     }
 }

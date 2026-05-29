@@ -42,6 +42,24 @@ cache:
   # WarehouseWriter chokepoint ships).
   stale_while_revalidate: 30s
   scope: user
+  # v2: two-layer cache (§Layer 6c). The canonical-units query
+  # result is shared at tenant scope; the rendered (units/locale
+  # converted) output lives at user scope. One DB hit serves every
+  # user in the tenant; per-user rendering is paid once per user
+  # per TTL.
+  inner_scope: tenant
+  # v2: time-series block (§Layer 4b). Decomposes a windowed
+  # `from..to` query against the `histories` hypertable into hourly
+  # buckets — closed buckets cache for 24h (effectively immutable),
+  # the open tail bucket caches for 30s. Aligning to UTC means two
+  # users in different timezones share the same bucket keys.
+  time_series:
+    time_param: to
+    range_param: from
+    bucket: 1h
+    tail_ttl: 30s
+    body_ttl: 24h
+    align_to: utc
   invalidate_on:
     tables:
       - com_nubeio_rubixos__histories

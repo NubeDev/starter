@@ -24,6 +24,9 @@ async-trait = { workspace = true }
 thiserror   = { workspace = true }
 tracing     = { workspace = true }
 serde       = { workspace = true }
+starter-windowed = { workspace = true }
+chrono      = { workspace = true }
+serde_json  = { workspace = true }
 
 # Optional backends. Each one is gated behind its own feature; the
 # `dep:` prefix keeps the bare crate name out of the public feature

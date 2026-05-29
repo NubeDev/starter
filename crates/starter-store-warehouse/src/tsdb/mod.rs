@@ -18,6 +18,7 @@ pub mod client;
 pub mod migrate;
 pub mod retention;
 pub mod store;
+pub mod windowed;
 
 #[cfg(feature = "testing")]
 pub mod testing;

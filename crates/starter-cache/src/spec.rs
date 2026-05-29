@@ -108,6 +108,43 @@ pub struct CacheSpec {
     /// When `false`, empty results are not cached at all (every miss
     /// re-runs the loader). Default `true`.
     pub cache_empty: bool,
+    /// v2: opt-in time-series block — enables bucket decomposition,
+    /// tail-vs-body TTLs, and bucket-level invalidation tag fan-out.
+    /// When `Some`, the layer's
+    /// [`get_or_load_windowed`][crate::layer::CacheLayer::get_or_load_windowed]
+    /// entry point is the right call site; other entry points ignore
+    /// the field.
+    pub time_series: Option<TimeSeriesBlock>,
+    /// v2: opt-in two-layer cache scope (§Layer 6c). When `Some` and
+    /// `scope: user`, the layer first performs a lookup at
+    /// `inner_scope` (typically `tenant`), runs the caller's
+    /// conversion closure against the user's prefs, and stores the
+    /// rendered output at `scope`.
+    pub inner_scope: Option<CacheScope>,
+}
+
+/// v2: structured time-series block. Mirrors the `time_series:`
+/// YAML block from the proposal and feeds straight into
+/// [`starter_windowed::WindowedSpec`].
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct TimeSeriesBlock {
+    /// Request param carrying the upper-bound timestamp ("now").
+    pub time_param: String,
+    /// Request param carrying the window start.
+    pub range_param: String,
+    /// Bucket granularity string (e.g. `"1h"`).
+    pub bucket: String,
+    /// Tail (open bucket) TTL string (e.g. `"30s"`).
+    pub tail_ttl: String,
+    /// Body (closed buckets) TTL string (e.g. `"24h"`).
+    pub body_ttl: String,
+    /// Bucket alignment. Today only `"utc"` is honoured.
+    #[serde(default = "default_align_to")]
+    pub align_to: String,
+}
+
+fn default_align_to() -> String {
+    "utc".to_string()
 }
 
 impl CacheSpec {
@@ -124,7 +161,44 @@ impl CacheSpec {
             max_stale: ttl.saturating_mul(2),
             empty_ttl,
             cache_empty: true,
+            time_series: None,
+            inner_scope: None,
         }
+    }
+
+    /// Attach a time-series block (v2).
+    pub fn time_series(mut self, ts: TimeSeriesBlock) -> Self {
+        self.time_series = Some(ts);
+        self
+    }
+
+    /// Set the inner-scope (v2 two-layer cache).
+    pub fn inner_scope(mut self, scope: CacheScope) -> Self {
+        self.inner_scope = Some(scope);
+        self
+    }
+
+    /// Materialise the time-series block as a
+    /// [`starter_windowed::WindowedSpec`]. `None` when the spec
+    /// has no `time_series:` declared, or the block carries an
+    /// unparseable duration.
+    pub fn windowed_spec(&self) -> Option<starter_windowed::WindowedSpec> {
+        let ts = self.time_series.as_ref()?;
+        let bucket = parse_chrono_duration(&ts.bucket).ok()?;
+        let tail_ttl = parse_duration(&ts.tail_ttl).ok()?;
+        let body_ttl = parse_duration(&ts.body_ttl).ok()?;
+        let align_to = match ts.align_to.as_str() {
+            "utc" | "UTC" => starter_windowed::AlignTo::Utc,
+            _ => starter_windowed::AlignTo::Utc,
+        };
+        Some(starter_windowed::WindowedSpec {
+            time_param: ts.time_param.clone(),
+            range_param: ts.range_param.clone(),
+            bucket,
+            tail_ttl,
+            body_ttl,
+            align_to,
+        })
     }
 
     /// Set the scope.
@@ -205,6 +279,21 @@ pub struct CacheSidecar {
     pub cache: CacheSidecarBody,
 }
 
+/// Bucket-tag enumeration helper. When a spec declares a
+/// `time_series:` block plus `invalidate_on.tables: [...]`, the
+/// registry can pre-derive every `bucket:<table>:<floor(t,bucket)>`
+/// tag at registration time so the bucket-tag invalidator (wired in
+/// v1) recognises a write firing one bucket key as touching one
+/// cached entry — not every entry for the table.
+///
+/// This helper returns the **subscription tag prefix**
+/// `bucket:<table>:` that the registry uses to map fan-out fires to
+/// spec entries; the per-bucket fire happens at write time and the
+/// match is by string prefix at invalidate time.
+pub fn bucket_subscription_prefix(table: &str) -> String {
+    format!("bucket:{table}:")
+}
+
 /// The fields inside the top-level `cache:` block.
 #[derive(Debug, Clone, Deserialize)]
 pub struct CacheSidecarBody {
@@ -229,6 +318,12 @@ pub struct CacheSidecarBody {
     /// Optional toggle for caching empty results.
     #[serde(default)]
     pub cache_empty: Option<bool>,
+    /// v2: optional `time_series:` block.
+    #[serde(default)]
+    pub time_series: Option<TimeSeriesBlock>,
+    /// v2: optional `inner_scope:` (two-layer cache).
+    #[serde(default)]
+    pub inner_scope: Option<CacheScope>,
 }
 
 /// Errors raised when parsing a sidecar's TTL / structure.
@@ -296,8 +391,15 @@ impl CacheSidecar {
             max_stale,
             empty_ttl,
             cache_empty,
+            time_series: self.cache.time_series,
+            inner_scope: self.cache.inner_scope,
         })
     }
+}
+
+fn parse_chrono_duration(s: &str) -> Result<chrono::Duration, SpecParseError> {
+    let d = parse_duration(s)?;
+    Ok(chrono::Duration::seconds(d.as_secs() as i64))
 }
 
 fn parse_duration(s: &str) -> Result<Duration, SpecParseError> {
@@ -321,10 +423,17 @@ fn parse_duration(s: &str) -> Result<Duration, SpecParseError> {
     Ok(Duration::from_secs(n * mul))
 }
 
-/// Hand-rolled YAML parser for the v1 sidecar shape. Keeps
-/// `serde_yaml` out of the workspace dependency surface.
-#[allow(unused_assignments)]
+/// Hand-rolled YAML parser for the v2 sidecar shape. Keeps
+/// `serde_yaml` out of the workspace dependency surface. Replaces
+/// the v1 closure-heavy parser with a path/indent-stack walker so
+/// the v2 `time_series:` + `inner_scope:` blocks slot in cleanly.
 fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
+    parse_sidecar_yaml_v2(yaml)
+}
+
+#[allow(dead_code)]
+#[allow(unused_assignments)]
+fn parse_sidecar_yaml_legacy(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
     let mut ttl: Option<String> = None;
     let mut scope: CacheScope = CacheScope::default();
     let mut tables: Vec<String> = Vec::new();
@@ -617,8 +726,277 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
             max_stale,
             empty_ttl,
             cache_empty,
+            time_series: None,
+            inner_scope: None,
         },
     })
+}
+
+/// v2 parser — path-stack walker. Accepts everything the v1 parser
+/// accepted plus the v2 `time_series:` block and `inner_scope:`
+/// field, and any future additive block without invasive rewrites.
+fn parse_sidecar_yaml_v2(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
+    use std::collections::HashMap;
+
+    // Walk the document into a nested map of scalar leaves and list
+    // values. Indentation defines structure. Leaves are stored under
+    // their full dotted path.
+    #[derive(Debug, Default)]
+    struct Doc {
+        scalars: HashMap<String, String>,
+        lists: HashMap<String, Vec<String>>,
+        // path -> first line it appeared on (1-indexed).
+        seen: HashMap<String, usize>,
+    }
+    let mut doc = Doc::default();
+
+    // Stack of (indent, dotted_path).
+    let mut stack: Vec<(usize, String)> = Vec::new();
+    let mut current_list_path: Option<(usize, String)> = None;
+
+    for (idx, raw) in yaml.lines().enumerate() {
+        let line_no = idx + 1;
+        let line = strip_comment(raw);
+        if line.trim().is_empty() {
+            continue;
+        }
+        let indent = line.len() - line.trim_start().len();
+        let trimmed = line.trim_start();
+
+        // Close out the current list if we've outdented.
+        if let Some((list_indent, _)) = &current_list_path {
+            if indent <= *list_indent || !trimmed.starts_with("- ") {
+                current_list_path = None;
+            }
+        }
+
+        // Pop the path stack down to the matching indent level.
+        while stack.last().map(|(i, _)| *i >= indent).unwrap_or(false) {
+            stack.pop();
+        }
+
+        // List item under an open list block.
+        if let Some(item) = trimmed.strip_prefix("- ") {
+            let Some((_, path)) = &current_list_path else {
+                return Err(SpecParseError::yaml_at(
+                    line_no,
+                    format!("unexpected list item outside a list: {trimmed:?}"),
+                ));
+            };
+            doc.lists
+                .entry(path.clone())
+                .or_default()
+                .push(item.trim().trim_matches('"').to_string());
+            continue;
+        }
+
+        // `key: value?`.
+        let (key, rest) = match trimmed.split_once(':') {
+            Some((k, v)) => (k.trim(), v.trim().trim_matches('"').to_string()),
+            None => {
+                return Err(SpecParseError::yaml_at(
+                    line_no,
+                    format!("expected `key: value`, got {trimmed:?}"),
+                ));
+            }
+        };
+
+        let parent = stack
+            .last()
+            .map(|(_, p)| format!("{p}."))
+            .unwrap_or_default();
+        let path = format!("{parent}{key}");
+        if doc.seen.insert(path.clone(), line_no).is_some() {
+            return Err(SpecParseError::yaml_at(
+                line_no,
+                format!("duplicate key {path:?}"),
+            ));
+        }
+
+        if rest.is_empty() {
+            // Nested block opens.
+            stack.push((indent, path.clone()));
+            current_list_path = Some((indent, path));
+        } else {
+            doc.scalars.insert(path, rest);
+        }
+    }
+
+    // Path-based extraction. Everything outside the `cache.` prefix
+    // is an error.
+    let mut cache_seen = false;
+    let mut ttl: Option<String> = None;
+    let mut scope = CacheScope::default();
+    let mut tables: Vec<String> = Vec::new();
+    let mut events: Vec<String> = Vec::new();
+    let mut buckets: Option<BucketTagSpec> = None;
+    let mut swr: Option<String> = None;
+    let mut max_stale: Option<String> = None;
+    let mut empty_ttl: Option<String> = None;
+    let mut cache_empty: Option<bool> = None;
+    let mut time_series: Option<TimeSeriesBlock> = None;
+    let mut inner_scope: Option<CacheScope> = None;
+
+    for (path, line) in doc.seen.iter() {
+        if path == "cache" {
+            cache_seen = true;
+        } else if !path.starts_with("cache.") {
+            return Err(SpecParseError::yaml_at(
+                *line,
+                format!("unexpected top-level path: {path:?} (only `cache:` allowed)"),
+            ));
+        }
+    }
+    if !cache_seen {
+        return Err(SpecParseError::yaml_file(
+            "missing `cache:` block at top level",
+        ));
+    }
+
+    // Direct cache fields.
+    for (path, v) in &doc.scalars {
+        match path.as_str() {
+            "cache.ttl" => ttl = Some(v.clone()),
+            "cache.stale_while_revalidate" => swr = Some(v.clone()),
+            "cache.max_stale" => max_stale = Some(v.clone()),
+            "cache.empty_ttl" => empty_ttl = Some(v.clone()),
+            "cache.cache_empty" => cache_empty = Some(matches!(v.as_str(), "true" | "yes" | "on")),
+            "cache.scope" => scope = parse_scope_at(v, doc.seen.get(path).copied().unwrap_or(0))?,
+            "cache.inner_scope" => {
+                inner_scope = Some(parse_scope_at(v, doc.seen.get(path).copied().unwrap_or(0))?)
+            }
+            "cache.invalidate_on.buckets.table" | "cache.invalidate_on.buckets.granularity" => { /* handled below */
+            }
+            "cache.time_series.time_param"
+            | "cache.time_series.range_param"
+            | "cache.time_series.bucket"
+            | "cache.time_series.tail_ttl"
+            | "cache.time_series.body_ttl"
+            | "cache.time_series.align_to" => { /* handled below */ }
+            other if other.starts_with("cache.invalidate_on.") => {
+                return Err(SpecParseError::yaml_at(
+                    doc.seen.get(other).copied().unwrap_or(0),
+                    format!("unknown invalidate_on field: {other:?}"),
+                ));
+            }
+            other if other.starts_with("cache.time_series.") => {
+                return Err(SpecParseError::yaml_at(
+                    doc.seen.get(other).copied().unwrap_or(0),
+                    format!("unknown time_series field: {other:?}"),
+                ));
+            }
+            other if other.starts_with("cache.") => {
+                return Err(SpecParseError::yaml_at(
+                    doc.seen.get(other).copied().unwrap_or(0),
+                    format!("unknown cache field: {other:?}"),
+                ));
+            }
+            _ => {}
+        }
+    }
+
+    // List fields.
+    for (path, items) in &doc.lists {
+        match path.as_str() {
+            "cache.invalidate_on.tables" => tables = items.clone(),
+            "cache.invalidate_on.events" => events = items.clone(),
+            other => {
+                return Err(SpecParseError::yaml_file(format!(
+                    "unknown list field: {other:?}"
+                )));
+            }
+        }
+    }
+
+    // Bucket subscription block.
+    let bt = doc
+        .scalars
+        .get("cache.invalidate_on.buckets.table")
+        .cloned();
+    let bg = doc
+        .scalars
+        .get("cache.invalidate_on.buckets.granularity")
+        .cloned();
+    match (bt, bg) {
+        (Some(t), Some(g)) => {
+            buckets = Some(BucketTagSpec {
+                table: t,
+                granularity: g,
+            })
+        }
+        (None, None) => {}
+        _ => {
+            return Err(SpecParseError::yaml_file(
+                "buckets block needs both `table` and `granularity`".to_string(),
+            ))
+        }
+    }
+
+    // time_series block.
+    let any_ts = [
+        "cache.time_series.time_param",
+        "cache.time_series.range_param",
+        "cache.time_series.bucket",
+        "cache.time_series.tail_ttl",
+        "cache.time_series.body_ttl",
+        "cache.time_series.align_to",
+    ]
+    .iter()
+    .any(|k| doc.scalars.contains_key(*k));
+    if any_ts {
+        let req = |k: &str| -> Result<String, SpecParseError> {
+            doc.scalars.get(k).cloned().ok_or_else(|| {
+                SpecParseError::yaml_file(format!(
+                    "time_series block missing `{}`",
+                    k.rsplit('.').next().unwrap_or(k)
+                ))
+            })
+        };
+        time_series = Some(TimeSeriesBlock {
+            time_param: req("cache.time_series.time_param")?,
+            range_param: req("cache.time_series.range_param")?,
+            bucket: req("cache.time_series.bucket")?,
+            tail_ttl: req("cache.time_series.tail_ttl")?,
+            body_ttl: req("cache.time_series.body_ttl")?,
+            align_to: doc
+                .scalars
+                .get("cache.time_series.align_to")
+                .cloned()
+                .unwrap_or_else(|| "utc".to_string()),
+        });
+    }
+
+    let ttl = ttl.ok_or_else(|| SpecParseError::yaml_file("missing `ttl:` in cache block"))?;
+
+    Ok(CacheSidecar {
+        cache: CacheSidecarBody {
+            ttl,
+            scope,
+            invalidate_on: InvalidateOn {
+                tables,
+                events,
+                buckets,
+            },
+            stale_while_revalidate: swr,
+            max_stale,
+            empty_ttl,
+            cache_empty,
+            time_series,
+            inner_scope,
+        },
+    })
+}
+
+fn parse_scope_at(v: &str, line: usize) -> Result<CacheScope, SpecParseError> {
+    match v.trim() {
+        "user" => Ok(CacheScope::User),
+        "tenant" => Ok(CacheScope::Tenant),
+        "global" => Ok(CacheScope::Global),
+        other => Err(SpecParseError::yaml_at(
+            line,
+            format!("invalid scope {other:?}: expected user|tenant|global"),
+        )),
+    }
 }
 
 fn strip_comment(line: &str) -> &str {

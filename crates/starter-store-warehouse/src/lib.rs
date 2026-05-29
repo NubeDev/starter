@@ -11,7 +11,7 @@ pub mod tsdb;
 
 pub use tsdb::{
     cagg, client::WarehouseClient, client::WarehouseError, migrate::run_migrations,
-    migrate::TIMESCALE_MIGRATIONS, retention, store,
+    migrate::TIMESCALE_MIGRATIONS, retention, store, windowed::TimescaleWindowedFetcher,
 };
 
 #[cfg(feature = "testing")]

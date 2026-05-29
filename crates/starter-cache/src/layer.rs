@@ -555,6 +555,256 @@ impl CacheLayer {
         Ok(outcome)
     }
 
+    /// v2 — two-layer cache adapter (§Layer 6c).
+    ///
+    /// When the spec has `inner_scope: Some(_)` and `scope: User`,
+    /// this entry point caches the **canonical-units** loader output
+    /// at `inner_scope` (typically `tenant`) and the rendered output
+    /// at `scope` (`user`). The caller passes `render` to convert
+    /// canonical bytes to user-rendered bytes — the conversion is
+    /// expected to use the host's `starter-i18n` / `starter-prefs`
+    /// units stack against the user's preferences (the layer doesn't
+    /// link those crates directly; the closure carries the
+    /// dependency).
+    ///
+    /// When `inner_scope` is `None` (or when scope is not `User`),
+    /// this is equivalent to a single-layer
+    /// [`Self::get_or_load_labelled`] at `spec.scope`.
+    pub async fn get_or_load_two_layer<F, FFut, R, RFut, E>(
+        &self,
+        spec: &CacheSpec,
+        spec_id: Option<&str>,
+        caller: &CallerScope,
+        base_key: &str,
+        canonical_load: F,
+        render: R,
+    ) -> Result<Bytes, E>
+    where
+        F: FnOnce() -> FFut + Send,
+        FFut: Future<Output = Result<Bytes, E>> + Send,
+        R: FnOnce(Bytes) -> RFut + Send,
+        RFut: Future<Output = Result<Bytes, E>> + Send,
+        E: Send + Sync + 'static,
+    {
+        // Single-layer fast path.
+        let Some(inner_scope) = spec.inner_scope else {
+            return self
+                .get_or_load_labelled(spec, spec_id, caller, base_key, canonical_load)
+                .await;
+        };
+        if !matches!(spec.scope, CacheScope::User) {
+            // inner_scope only meaningful when the outer scope is User.
+            return self
+                .get_or_load_labelled(spec, spec_id, caller, base_key, canonical_load)
+                .await;
+        }
+
+        // Outer (user-scope) lookup first.
+        let outer_key = Self::full_key(spec.scope, caller, base_key);
+        let outer_bucket = Self::tenant_bucket(spec.scope, caller);
+        let outer_ttl = spec.ttl.saturating_add(spec.max_stale);
+        let outer_cache = self.tenant_cache(&outer_bucket, outer_ttl);
+        if let Some(entry) = outer_cache.get(&outer_key).await {
+            if self.inner.invalidator.tokens_match(&entry.snapshot) {
+                let now = self.inner.clock.now();
+                let age = now.saturating_duration_since(entry.loaded_at);
+                if age < spec.ttl {
+                    self.inner.stats.record_hit();
+                    return Ok(entry.value.clone());
+                }
+                outer_cache.invalidate(&outer_key).await;
+            } else {
+                outer_cache.invalidate(&outer_key).await;
+            }
+        }
+
+        // Outer miss — drop through to inner (tenant-scope) lookup,
+        // then render, then store outer.
+        let inner_spec = {
+            let mut s = spec.clone();
+            s.scope = inner_scope;
+            s.inner_scope = None;
+            s
+        };
+        let inner_caller = match inner_scope {
+            CacheScope::Tenant => CallerScope {
+                tenant: caller.tenant.clone(),
+                user: None,
+            },
+            CacheScope::Global => CallerScope::system(),
+            CacheScope::User => caller.clone(),
+        };
+        let canonical = self
+            .get_or_load_labelled(
+                &inner_spec,
+                spec_id,
+                &inner_caller,
+                base_key,
+                canonical_load,
+            )
+            .await?;
+
+        let rendered = render(canonical).await?;
+
+        // Store outer.
+        let tags = spec.derived_tags();
+        let snap = self.inner.invalidator.snapshot_tokens(&tags);
+        outer_cache
+            .insert(
+                outer_key,
+                StoredEntry {
+                    value: rendered.clone(),
+                    snapshot: snap,
+                    loaded_at: self.inner.clock.now(),
+                    is_empty: false,
+                    needs_refresh: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                },
+            )
+            .await;
+        self.inner.stats.record_miss();
+        Ok(rendered)
+    }
+
+    /// v2 — windowed delta-fetch adapter (§Layer 4b).
+    ///
+    /// Decomposes the `[from, to]` window into per-bucket sub-fetches
+    /// against the supplied [`starter_windowed::WindowedFetcher`].
+    /// Each closed bucket is cached with `body_ttl` semantics; the
+    /// tail bucket uses `tail_ttl`. The request's `to` is snapped to
+    /// the bucket boundary before it enters the cache key so per-bucket
+    /// key cardinality is bounded.
+    ///
+    /// Bucket-level invalidation tags
+    /// (`bucket:<table>:<floor(t,bucket)>`) are wired through the
+    /// existing invalidator: each per-bucket store subscribes to the
+    /// exact `bucket:<table>:<bucket-rfc3339>` tag the writer would
+    /// fire — one write touches at most one cached bucket per
+    /// subscribed table.
+    pub async fn get_or_load_windowed<T>(
+        &self,
+        spec: &CacheSpec,
+        spec_id: Option<&str>,
+        caller: &CallerScope,
+        base_key: &str,
+        from: chrono::DateTime<chrono::Utc>,
+        to: chrono::DateTime<chrono::Utc>,
+        fetcher: &dyn starter_windowed::WindowedFetcher<T>,
+    ) -> Result<T, starter_windowed::FetchError>
+    where
+        T: starter_windowed::Stitchable
+            + serde::Serialize
+            + serde::de::DeserializeOwned
+            + Send
+            + Sync
+            + 'static,
+    {
+        let ws = spec.windowed_spec().ok_or_else(|| {
+            starter_windowed::FetchError::Other("spec has no time_series block".into())
+        })?;
+        let buckets = starter_windowed::decompose(&ws, from, to);
+        if buckets.is_empty() {
+            return Ok(T::stitch(Vec::new()));
+        }
+
+        let per_spec = spec_id.map(|id| self.inner.per_spec.get_or_create(id));
+        let bucket_scope = spec.inner_scope.unwrap_or(spec.scope);
+        let bucket_caller = match bucket_scope {
+            CacheScope::Tenant => CallerScope {
+                tenant: caller.tenant.clone(),
+                user: None,
+            },
+            CacheScope::Global => CallerScope::system(),
+            CacheScope::User => caller.clone(),
+        };
+        let cache_bucket = Self::tenant_bucket(bucket_scope, &bucket_caller);
+        // Use the larger of body/tail TTL so moka itself doesn't
+        // expire underneath us.
+        let moka_ttl = ws.body_ttl.max(ws.tail_ttl).saturating_add(spec.max_stale);
+        let cache = self.tenant_cache(&cache_bucket, moka_ttl);
+
+        // Per-table bucket-fire subscription tags. One per
+        // (table, bucket-key) pair.
+        let mut parts: Vec<T> = Vec::with_capacity(buckets.len());
+        for b in buckets {
+            let key_suffix = b.key();
+            let bucket_table_tags: Vec<String> = spec
+                .invalidate_on
+                .tables
+                .iter()
+                .map(|t| format!("bucket:{t}:{key_suffix}"))
+                .collect();
+            let mut all_tags = spec.derived_tags();
+            all_tags.extend(bucket_table_tags.iter().cloned());
+
+            let full_key = Self::full_key(
+                bucket_scope,
+                &bucket_caller,
+                &format!("{base_key}::bucket::{key_suffix}"),
+            );
+
+            // Read path.
+            let mut hit = false;
+            let mut hit_value: Option<T> = None;
+            if let Some(entry) = cache.get(&full_key).await {
+                if self.inner.invalidator.tokens_match(&entry.snapshot) {
+                    let now = self.inner.clock.now();
+                    let age = now.saturating_duration_since(entry.loaded_at);
+                    let ttl = if b.is_tail { ws.tail_ttl } else { ws.body_ttl };
+                    if age < ttl {
+                        if let Ok(v) = serde_json::from_slice::<T>(&entry.value) {
+                            hit = true;
+                            hit_value = Some(v);
+                        }
+                    }
+                }
+                if !hit {
+                    cache.invalidate(&full_key).await;
+                }
+            }
+            if let Some(v) = hit_value {
+                self.inner.stats.record_hit();
+                if let Some(s) = &per_spec {
+                    s.record_hit();
+                }
+                parts.push(v);
+                continue;
+            }
+
+            // Miss path.
+            let snap_before = self.inner.invalidator.snapshot_tokens(&all_tags);
+            let load_started = self.inner.clock.now();
+            let value = fetcher.fetch_bucket(b.clone()).await?;
+            let load_duration = self
+                .inner
+                .clock
+                .now()
+                .saturating_duration_since(load_started);
+            let bytes = serde_json::to_vec(&value).map_err(|e| {
+                starter_windowed::FetchError::Other(format!("serialize bucket: {e}"))
+            })?;
+            if self.inner.invalidator.tokens_match(&snap_before) {
+                cache
+                    .insert(
+                        full_key,
+                        StoredEntry {
+                            value: Arc::new(bytes),
+                            snapshot: snap_before,
+                            loaded_at: self.inner.clock.now(),
+                            is_empty: false,
+                            needs_refresh: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                        },
+                    )
+                    .await;
+            }
+            self.inner.stats.record_miss();
+            if let Some(s) = &per_spec {
+                s.record_miss(load_duration);
+            }
+            parts.push(value);
+        }
+        Ok(T::stitch(parts))
+    }
+
     fn outcome_from(&self, entry: &StoredEntry) -> LoadOutcome {
         if entry.is_empty {
             LoadOutcome::Empty

@@ -70,5 +70,8 @@ pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig, LoadOutcome};
 pub use per_spec_stats::{
     LoadLatency, LoadLatencySnapshot, PerSpecSnapshot, PerSpecStats, SpecCounters,
 };
-pub use spec::{BucketTagSpec, CacheScope, CacheSidecar, CacheSpec, InvalidateOn, SpecParseError};
+pub use spec::{
+    bucket_subscription_prefix, BucketTagSpec, CacheScope, CacheSidecar, CacheSpec, InvalidateOn,
+    SpecParseError, TimeSeriesBlock,
+};
 pub use tracing_cache::{CacheEvent, TracingCache};
