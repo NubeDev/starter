@@ -127,6 +127,15 @@ impl SupervisorHandle {
         self.violations.get()
     }
 
+    /// Consolidated diagnostics for the live process, derived from the
+    /// event ring + capability-violation counter this handle already
+    /// owns. See [`crate::issues::derive_issues`]. Bounded; safe to call
+    /// on the request path. Merged with `ExtensionRecord::issues()` by the
+    /// `GET /extensions/<id>/issues` handler.
+    pub fn issues(&self) -> Vec<starter_ext_spi::ExtensionIssue> {
+        crate::issues::derive_issues(&self.events.snapshot(), self.violations.get())
+    }
+
     /// Send a JSON-RPC envelope to the child (request or notification).
     /// Caller is responsible for constructing valid JSON-RPC; this is the
     /// outbound side of the bidirectional channel, used by adapters to

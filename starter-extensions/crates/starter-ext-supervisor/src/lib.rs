@@ -46,6 +46,7 @@ pub mod capability;
 pub mod event_ring;
 pub mod handshake;
 pub mod host_methods;
+pub mod issues;
 pub mod restart;
 pub mod stream;
 pub mod supervisor;
@@ -55,6 +56,7 @@ pub use capability::{CapabilityGate, CapabilityViolationCounter, CAPABILITY_HOST
 pub use event_ring::{Event as RingEvent, EventKind, EventRing};
 pub use handshake::{manifest_hash, InitHandshake, InitReady};
 pub use host_methods::{HostMethodHandler, NotImplementedHandler, SharedHostMethodHandler};
+pub use issues::derive_issues;
 pub use restart::{RestartDecision, RestartTracker};
 pub use stream::is_streaming_notification;
 pub use supervisor::{ShutdownReason, Supervisor, SupervisorHandle};

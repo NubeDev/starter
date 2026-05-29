@@ -63,6 +63,7 @@ mod etag;
 mod events;
 mod factory;
 mod i18n;
+mod issues;
 mod lifecycle;
 pub mod rest;
 mod router;

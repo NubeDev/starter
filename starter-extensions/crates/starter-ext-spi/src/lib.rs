@@ -26,6 +26,7 @@ pub mod fs_ext;
 pub mod http_out;
 pub mod id;
 pub mod identity;
+pub mod issue;
 pub mod jsonrpc;
 pub mod lifecycle;
 pub mod manifest;
@@ -40,6 +41,7 @@ pub use error::{Error, Result};
 pub use event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use id::ExtensionId;
 pub use identity::{CallerIdentity, FrameMeta};
+pub use issue::{ExtensionIssue, IssueCode, IssueSource, Severity};
 pub use jsonrpc::{
     flow_node_error_codes, stream_methods, JsonRpcEnvelope, JsonRpcId, JsonRpcNotification,
     JsonRpcRequest, JsonRpcResponse, JsonRpcResponsePayload, StreamCancel, StreamEnd, StreamError,

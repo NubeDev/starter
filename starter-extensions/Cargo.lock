@@ -3797,9 +3797,13 @@ name = "starter-cache"
 version = "0.1.0"
 dependencies = [
  "async-trait",
+ "chrono",
  "moka",
  "serde",
+ "serde_json",
+ "starter-windowed",
  "thiserror 1.0.69",
+ "tokio",
  "tracing",
 ]
 
@@ -4305,11 +4309,23 @@ dependencies = [
  "starter-flow-spi",
  "starter-skills",
  "starter-spi",
+ "starter-windowed",
  "testcontainers",
  "testcontainers-modules",
  "thiserror 1.0.69",
  "tokio",
  "tracing",
+]
+
+[[package]]
+name = "starter-windowed"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "chrono",
+ "serde",
+ "serde_json",
+ "thiserror 1.0.69",
 ]
 
 [[package]]

@@ -8,6 +8,7 @@
 //! | GET    | `/extensions`                     | `Role::Admin`  |
 //! | GET    | `/extensions/:id`                 | `Role::Admin`  |
 //! | GET    | `/extensions/:id/events`          | `Role::Admin`  |
+//! | GET    | `/extensions/:id/issues`          | `Role::Admin`  |
 //! | POST   | `/extensions/:id/enable`          | `Role::Admin`  |
 //! | POST   | `/extensions/:id/disable`         | `Role::Admin`  |
 //! | POST   | `/extensions/:id/restart`         | `Role::Admin`  |
@@ -36,6 +37,7 @@ use starter_spi::auth::{Authenticator, Role};
 use crate::admin::ExtensionAdmin;
 use crate::events::events;
 use crate::i18n::i18n;
+use crate::issues::issues;
 use crate::lifecycle::{install, uninstall};
 use crate::routes::{detail, disable, enable, list, restart};
 use crate::ui::ui;
@@ -78,6 +80,7 @@ where
         .route("/extensions", get(list))
         .route("/extensions/{id}", get(detail))
         .route("/extensions/{id}/events", get(events))
+        .route("/extensions/{id}/issues", get(issues))
         .route("/extensions/{id}/enable", post(enable))
         .route("/extensions/{id}/disable", post(disable))
         .route("/extensions/{id}/restart", post(restart))

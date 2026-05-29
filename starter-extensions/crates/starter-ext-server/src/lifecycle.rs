@@ -328,15 +328,16 @@ fn make_solo_scan_root(bundle_root: &Path) -> std::io::Result<SoloScanRoot> {
         .duration_since(UNIX_EPOCH)
         .map(|d| d.as_nanos())
         .unwrap_or(0);
-    let parent = bundle_root.parent().ok_or_else(|| {
-        std::io::Error::new(std::io::ErrorKind::Other, "bundle_root has no parent")
-    })?;
+    let parent = bundle_root
+        .parent()
+        .ok_or_else(|| std::io::Error::other("bundle_root has no parent"))?;
     let scan_root = parent.join(format!(".scan-{nanos}"));
     std::fs::create_dir(&scan_root)?;
-    let entry =
-        scan_root.join(bundle_root.file_name().ok_or_else(|| {
-            std::io::Error::new(std::io::ErrorKind::Other, "bundle_root unnamed")
-        })?);
+    let entry = scan_root.join(
+        bundle_root
+            .file_name()
+            .ok_or_else(|| std::io::Error::other("bundle_root unnamed"))?,
+    );
     std::fs::rename(bundle_root, &entry)?;
     Ok(SoloScanRoot { path: scan_root })
 }
