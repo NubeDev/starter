@@ -1,0 +1,18 @@
+[package]
+name        = "starter-paths"
+description = "starter — OS-aware application data-root resolver. Single source of truth for where durable state lives. Domain-agnostic."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+[dependencies]
+thiserror = { workspace = true }
+dirs      = "5"
+
+[dev-dependencies]
+tempfile = "3"
+
+[lints]
+workspace = true
