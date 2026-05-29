@@ -1,24 +1,39 @@
-# Opt-in cache for usage_bucketed.
+# Opt-in cache for the rubixos `warehouse_query` tool.
 #
 # v0 of rubix/docs/proposal/fe-cache-opt-in.md. Three knobs only —
 # ttl, scope, invalidate_on.tables. SDUI integration, time_series,
 # inner_scope, SWR, and bucket-level tags are explicitly out of scope
 # until the un-defer conditions fire.
 #
-# usage_bucketed is the documented canary: it is heavy enough to
-# justify caching (time-bucketed AVG over the histories hypertable)
-# and is queried far more often than the underlying histories table
-# changes. Scope `user` is the safe default — the platform's per-user
-# unit prefs / locale mean two users in the same tenant render
-# different output from the same raw query (see Layer 4 of the
-# proposal). 60s TTL ceiling matches the typical dashboard refresh
-# cadence.
+# Filename convention: `<full reverse-DNS contribute_id>.cache.yaml`.
+# Bare names (e.g. `warehouse_query.cache.yaml`) won't match: the
+# dispatcher looks up `(extension_id, contribute_id)` and
+# `contribute_id` is the full reverse-DNS one — see the v0 decisions
+# log entry "sidecar naming" in rubix/docs/sessions/cache-v0-progress.md.
+#
+# Why `warehouse_query` and not `usage_bucketed`:
+# `com.nubeio.rubixos.usage_bucketed` is a contributes.warehouse_templates[]
+# entry, not a dispatcher contribute_id — the dispatcher never sees
+# it directly. The tool that actually evaluates it is
+# `com.nubeio.rubixos.warehouse_query`, which takes
+# `{ template, params }` as input. The cache layer mixes the input
+# hash into the key automatically, so caching `warehouse_query`
+# caches every (template, params) combination independently. Caveat:
+# every template shares the *same* spec (TTL, scope, invalidate
+# tags); when one template needs different invalidation behaviour
+# (e.g. dimension data with longer TTL), the right move is to split
+# its dispatch off the shared tool — out of scope for v0.
+#
+# Scope `user` is the safe default — the platform's per-user unit
+# prefs / locale mean two users in the same tenant render different
+# output from the same raw query. 60s TTL matches the typical
+# dashboard refresh cadence.
 #
 # invalidate_on.tables: a write into the histories hypertable fires
 # `table:com_nubeio_rubixos__histories`, which drops every cached
-# usage_bucketed entry on next read. Best-effort until the unified
-# WarehouseWriter chokepoint lands (see TODO(cache-invalidation):
-# markers and rubix/docs/sessions/cache-v0-progress.md).
+# warehouse_query entry on next read. Best-effort until the unified
+# WarehouseWriter chokepoint lands — see TODO(cache-invalidation):
+# markers and rubix/docs/sessions/cache-v0-progress.md.
 cache:
   ttl: 60s
   scope: user

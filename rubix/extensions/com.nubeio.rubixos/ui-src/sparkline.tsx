@@ -57,11 +57,12 @@ export function Sparkline({
   return (
     <svg
       viewBox={`0 0 ${width} ${height}`}
-      width={width}
+      width="100%"
       height={height}
+      preserveAspectRatio="none"
       role="img"
       aria-label="trend"
-      className="overflow-visible"
+      className="block"
     >
       <defs>
         <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">

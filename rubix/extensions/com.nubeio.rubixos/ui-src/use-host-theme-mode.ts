@@ -7,11 +7,13 @@
 // hook reports `"light"` even when the host is in dark mode.
 //
 // Until the host wires that through, the most reliable cross-
-// theme signal is the `.dark` class the host toggles on
-// `<html>` (the same one Tailwind v4 `:root.dark` and our own
-// `.ext-dash-shell::before` overrides read). We subscribe with a
-// `MutationObserver` on `class` so a live theme toggle in the
-// host's settings drawer flips the map basemap without a refresh.
+// theme signal is the `data-mode="dark|light"` attribute the
+// host writes on `<html>` (the same attribute the host's own
+// theme provider sets from `useLayoutPreferences()`, and the
+// same one our `:root[data-mode="dark"]` CSS reads). We
+// subscribe with a `MutationObserver` on `attributes` so a live
+// theme toggle in the host's settings drawer flips the map
+// basemap without a refresh.
 
 import * as React from "react";
 
@@ -19,7 +21,9 @@ export type HostThemeMode = "light" | "dark";
 
 function readMode(): HostThemeMode {
   if (typeof document === "undefined") return "dark";
-  return document.documentElement.classList.contains("dark") ? "dark" : "light";
+  return document.documentElement.getAttribute("data-mode") === "dark"
+    ? "dark"
+    : "light";
 }
 
 export function useHostThemeMode(): HostThemeMode {
@@ -27,13 +31,13 @@ export function useHostThemeMode(): HostThemeMode {
 
   React.useEffect(() => {
     if (typeof document === "undefined") return;
-    // Re-read on every `class` mutation to <html>; covers manual
+    // Re-read on every attribute mutation to <html>; covers manual
     // toggle, system-pref change, theme-store hydration.
     const update = () => setMode(readMode());
     const obs = new MutationObserver(update);
     obs.observe(document.documentElement, {
       attributes: true,
-      attributeFilter: ["class"],
+      attributeFilter: ["data-mode", "class"],
     });
     // Catch any change that happened between initial state and
     // effect mount (theme store hydration can race the first

@@ -19,6 +19,22 @@ import {
   useSlotContext,
 } from "@nube/starter-ext-sdk-ts";
 
+// Cache-bust verifier. The string is rewritten by vite on every
+// build (timestamp = build time). If the page in the browser is
+// running the bundle that was just rebuilt, this will appear in
+// the devtools console AND on `window.__rubixosBuild`. If the
+// browser is still on a cached bundle, the value will be stale
+// and you'll know to bypass module/HTTP cache (Network →
+// Disable cache + reload, or open in a fresh incognito window).
+declare const __BUILD_STAMP__: string;
+const RUBIXOS_BUILD_STAMP = `build-${__BUILD_STAMP__}`;
+if (typeof window !== "undefined") {
+  // eslint-disable-next-line no-console
+  console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
+  (window as unknown as { __rubixosBuild?: string }).__rubixosBuild = RUBIXOS_BUILD_STAMP;
+  document.documentElement.setAttribute("data-rubixos-build", RUBIXOS_BUILD_STAMP);
+}
+
 import {
   EXTENSION_ID,
   asNumber,

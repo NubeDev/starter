@@ -9,6 +9,13 @@ import cssInjectedByJsPlugin from "vite-plugin-css-injected-by-js";
 // emitted at `ui/remoteEntry.js`.
 export default defineConfig({
   plugins: [tailwindcss(), cssInjectedByJsPlugin()],
+  define: {
+    // Surfaces in the browser console + on `window.__rubixosBuild`
+    // so you can verify the page is running the freshly-built
+    // remoteEntry.js (and not a cached older one) before chasing
+    // CSS / specificity ghosts.
+    __BUILD_STAMP__: JSON.stringify(new Date().toISOString()),
+  },
   build: {
     target: "esnext",
     outDir: "../ui",

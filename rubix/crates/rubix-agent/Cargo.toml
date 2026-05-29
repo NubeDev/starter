@@ -10,7 +10,7 @@ rust-version.workspace = true
 
 [[bin]]
 name = "rubix-agent"
-path = "src/main.rs"
+path = "src/bin/rubix_agent/main.rs"
 
 # Admin CLI sibling binary. Verb-per-file under `src/bin/rubix_admin/`.
 # See docs/design/auth/README.md for the bootstrap-user contract.

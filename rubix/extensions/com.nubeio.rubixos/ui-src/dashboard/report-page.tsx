@@ -146,13 +146,13 @@ function ReportCover({
   const now = latestSampleMs ? new Date(latestSampleMs) : new Date();
   const periodFrom = new Date(now.getTime() - (RANGES[rangeIdx]!.hours * 3600_000));
   return (
-    <header className="ext-report-cover flex items-end justify-between gap-6 pb-4 border-b border-slate-200/80 print:border-slate-300">
+    <header className="ext-report-cover flex items-end justify-between gap-6 pb-4 border-b border-border print:border-slate-300">
       <div>
-        <div className="ext-eyebrow text-slate-500">Rubix-OS · Portfolio report</div>
-        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-slate-900">
+        <div className="ext-eyebrow text-muted-foreground">Rubix-OS · Portfolio report</div>
+        <h1 className="mt-1 text-3xl font-semibold tracking-tight text-foreground">
           Energy &amp; Water — {rangeLabel}
         </h1>
-        <p className="mt-2 text-sm text-slate-600">
+        <p className="mt-2 text-sm text-muted-foreground">
           {periodFrom.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
           {" → "}
           {now.toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}
@@ -168,8 +168,8 @@ function ReportCover({
               className={
                 "px-3 py-1 text-xs rounded-md border cursor-pointer transition-colors " +
                 (i === rangeIdx
-                  ? "bg-slate-900 text-white border-slate-900"
-                  : "bg-white text-slate-700 border-slate-300 hover:bg-slate-100")
+                  ? "bg-primary text-primary-foreground border-primary"
+                  : "bg-card text-foreground border-border hover:bg-accent")
               }
             >
               {r.label}
@@ -181,7 +181,7 @@ function ReportCover({
           onClick={() => window.print()}
           className={
             "inline-flex items-center gap-1.5 px-3 py-1 text-xs rounded-md border cursor-pointer " +
-            "bg-white text-slate-700 border-slate-300 hover:bg-slate-100"
+            "bg-card text-foreground border-border hover:bg-accent"
           }
         >
           <IconPrint size={14} /> Print / PDF
@@ -345,7 +345,7 @@ function ReportChannel({
       <h2 className={"flex items-center gap-2 text-xl font-semibold tracking-tight " + accent.text}>
         <Icon size={20} />
         {accent.label}
-        <span className="ml-2 text-xs font-normal text-slate-500 tracking-normal">
+        <span className="ml-2 text-xs font-normal text-muted-foreground tracking-normal">
           {allHosts.length} sites · {meters.length} meters
         </span>
       </h2>
@@ -361,11 +361,11 @@ function ReportChannel({
           periodLabel={rangeLabel}
         />
         <div className="ext-glass p-3 print:!shadow-none print:!bg-white print:border-slate-200">
-          <div className="flex items-center gap-1.5 ext-eyebrow text-slate-500 mb-1">
+          <div className="flex items-center gap-1.5 ext-eyebrow text-muted-foreground mb-1">
             <IconTrend size={12} /> Trend · bucket {bucket}
           </div>
           {bucketRows.length === 0 ? (
-            <div className="text-sm text-slate-500 italic p-6">Loading data…</div>
+            <div className="text-sm text-muted-foreground italic p-6">Loading data…</div>
           ) : (
             <UsageTimeSeries
               rows={bucketRows}
@@ -383,7 +383,7 @@ function ReportChannel({
       {/* Region rollup — pure read-only in the report (no focus/select buttons). */}
       {regions.length > 0 ? (
         <div>
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-slate-800 mb-2">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-foreground mb-2">
             <IconRegion size={14} className={accent.text} /> Regional breakdown
           </h3>
           <RegionRollup
@@ -400,7 +400,7 @@ function ReportChannel({
       {/* Top meters with z-score outlier flags. */}
       {perMeter.length > 0 ? (
         <div className="print:break-inside-avoid">
-          <h3 className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-slate-800 mb-2">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold tracking-tight text-foreground mb-2">
             <IconAlert size={14} className={accent.text} /> Top meters by AVG
           </h3>
           <div className="ext-glass p-3 print:!shadow-none print:!bg-white print:border-slate-200">
@@ -419,7 +419,7 @@ function ReportChannel({
 
 function ReportFooter(): React.ReactElement {
   return (
-    <footer className="pt-4 border-t border-slate-200/80 text-xs text-slate-500 print:text-[10px]">
+    <footer className="pt-4 border-t border-border text-xs text-muted-foreground print:text-[10px]">
       Generated {new Date().toLocaleString()} · Rubix-OS · {EXTENSION_ID}
       <span className="float-right">Source: warehouse_query · usage_site_totals · usage_bucketed · usage_per_meter</span>
     </footer>

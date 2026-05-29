@@ -2,25 +2,21 @@ import { motion } from 'motion/react'
 import {
   ChevronDown,
   Languages,
-  Monitor,
-  Moon,
   Search,
-  Sun,
 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { useIntl } from 'react-intl'
-import { useTheme, type Mode, type Palette } from '@/stores/theme-store'
+import { useTheme, type Palette } from '@/stores/theme-store'
 import { useLocale, LOCALES, type Locale } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { ConfigDrawer } from '@/components/config-drawer'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 
 const PALETTES: { id: Palette; labelKey: string; swatch: string }[] = [
   { id: 'nube',   labelKey: 'palette.nube',   swatch: 'linear-gradient(135deg,#339999,#184171)' },
   { id: 'ocean',  labelKey: 'palette.ocean',  swatch: 'linear-gradient(135deg,#3b82f6,#1e3a8a)' },
   { id: 'sunset', labelKey: 'palette.sunset', swatch: 'linear-gradient(135deg,#f97316,#b21368)' },
 ]
-
-const MODE_ICON: Record<Mode, typeof Sun> = { light: Sun, dark: Moon, system: Monitor }
 
 function SearchPill() {
   const intl = useIntl()
@@ -43,22 +39,7 @@ function SearchPill() {
 }
 
 function ModeSwitcher() {
-  const { mode, setMode } = useTheme()
-  const intl = useIntl()
-  const Icon = MODE_ICON[mode]
-  const next: Mode = mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'
-  const modeLabel = intl.formatMessage({ id: `mode.${mode}` })
-  const nextLabel = intl.formatMessage({ id: `mode.${next}` })
-  return (
-    <button
-      onClick={() => setMode(next)}
-      aria-label={intl.formatMessage({ id: 'a11y.themeMode' }, { mode: modeLabel })}
-      title={intl.formatMessage({ id: 'a11y.themeModeTitle' }, { mode: modeLabel, next: nextLabel })}
-      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]"
-    >
-      <Icon className="h-4 w-4" />
-    </button>
-  )
+  return <ThemeSwitcher />
 }
 
 function PaletteMenu() {

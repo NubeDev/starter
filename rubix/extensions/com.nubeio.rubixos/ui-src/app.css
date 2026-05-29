@@ -26,31 +26,38 @@
     radial-gradient(50% 60% at 95% 10%, rgba(99, 102, 241, 0.16), transparent 70%);
   filter: blur(20px);
 }
-:root.dark .ext-dash-shell::before {
+:root[data-mode="dark"] .ext-dash-shell::before {
   background:
     radial-gradient(60% 60% at 20% 0%, rgba(45, 212, 191, 0.22), transparent 70%),
     radial-gradient(50% 60% at 95% 10%, rgba(99, 102, 241, 0.20), transparent 70%);
 }
 
-/* Glass card primitive. Backdrop-blur + thin gradient border.
- * Adapts to host theme: light bg becomes near-white frost, dark
- * bg becomes near-black frost. */
+/* Glass card primitive. Solid card surface (was previously a
+ * color-mix transparency, which washed out on dark host themes
+ * and made cards look like flat outlines). Border picks up the
+ * host's `--color-border` so the card sits naturally inside both
+ * light and dark host palettes. */
 .ext-glass {
   position: relative;
   border-radius: 14px;
-  background: color-mix(in oklab, var(--color-card, white) 75%, transparent);
-  backdrop-filter: blur(14px) saturate(140%);
-  -webkit-backdrop-filter: blur(14px) saturate(140%);
-  border: 1px solid color-mix(in oklab, var(--color-border, rgba(0,0,0,0.1)) 70%, transparent);
+  overflow: hidden;
+  background: var(--color-card, #ffffff);
+  border: 1px solid var(--color-border, rgba(15, 23, 42, 0.10));
   box-shadow:
-    0 1px 0 0 rgba(255,255,255,0.05) inset,
-    0 8px 24px -8px rgba(15, 23, 42, 0.15);
+    0 1px 0 0 rgba(255, 255, 255, 0.55) inset,
+    0 1px 2px 0 rgba(15, 23, 42, 0.06),
+    0 12px 28px -12px rgba(15, 23, 42, 0.22);
 }
-:root.dark .ext-glass {
-  background: color-mix(in oklab, var(--color-card, #0f172a) 70%, transparent);
+:root[data-mode="dark"] .ext-glass {
+  /* Slate-900-ish card on slate-950-ish page, with a thin
+   * white inner highlight so the edge reads as a raised
+   * surface rather than a flat panel. */
+  background: var(--color-card, #0f172a);
+  border-color: var(--color-border, rgba(148, 163, 184, 0.18));
   box-shadow:
-    0 1px 0 0 rgba(255,255,255,0.04) inset,
-    0 12px 40px -12px rgba(0, 0, 0, 0.55);
+    0 1px 0 0 rgba(255, 255, 255, 0.06) inset,
+    0 1px 2px 0 rgba(0, 0, 0, 0.45),
+    0 18px 44px -16px rgba(0, 0, 0, 0.70);
 }
 
 /* "Hot" highlight border for the currently selected tile / pill. */
@@ -93,100 +100,30 @@
 
 
 /* =====================================================================
- * Report page — force a light, paper-like surface even when the host
- * theme is dark, and tune print output for A4 PDFs.
+ * Report page — inherits the host theme. Do NOT override `--color-*`
+ * tokens here; the report uses the same `bg-card`, `text-foreground`,
+ * `border-border` utilities as every other extension page, so the host's
+ * light/dark palette flows through unchanged.
  * =================================================================== */
 .ext-report {
-  background:
-    radial-gradient(1200px 600px at 50% -100px, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
-  color: #0f172a;
   min-height: 100%;
   padding: 1rem 1.25rem;
-  --color-foreground: #0f172a;
-  --color-muted-foreground: #64748b;
-  --color-border: #e2e8f0;
-}
-:root.dark .ext-report {
-  background:
-    radial-gradient(1200px 600px at 50% -100px, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
-  color: #0f172a;
-}
-.ext-report .ext-glass {
-  background:
-    linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
-  border: 1px solid #cbd5e1;
-  border-radius: 0.875rem;
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.6) inset,
-    0 1px 2px 0 rgb(15 23 42 / 0.06),
-    0 8px 24px -10px rgb(15 23 42 / 0.18),
-    0 16px 40px -16px rgb(15 23 42 / 0.16);
-  backdrop-filter: none;
-  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
-}
-.ext-report .ext-glass:hover {
-  border-color: #94a3b8;
-  transform: translateY(-1px);
-  box-shadow:
-    0 0 0 1px rgb(255 255 255 / 0.7) inset,
-    0 2px 6px 0 rgb(15 23 42 / 0.08),
-    0 16px 36px -12px rgb(15 23 42 / 0.22),
-    0 28px 56px -20px rgb(15 23 42 / 0.18);
-}
-.ext-report .ext-glass--accent {
-  background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
-  border-color: #14b8a6;
-  box-shadow:
-    0 0 0 1px rgb(20 184 166 / 0.25),
-    0 1px 0 0 rgba(255,255,255,0.9) inset,
-    0 10px 24px -8px rgb(20 184 166 / 0.30);
-}
-
-/* Pills (`PillBtn`) — outline by default, soft teal "secondary" when active.
- * Mirrors shadcn `Button` size="sm" variant="outline" / "secondary". */
-.ext-report button[class*="rounded-full"] {
-  border: 1px solid #cbd5e1 !important;
-  background: #ffffff !important;
-  color: #475569 !important;
-  font-weight: 500;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
-}
-.ext-report button[class*="rounded-full"]:hover {
-  background: #f1f5f9 !important;
-  border-color: #94a3b8 !important;
-  color: #0f172a !important;
-}
-.ext-report button[class*="rounded-full"][aria-pressed="true"],
-.ext-report button[class*="bg-primary/15"] {
-  background: #ccfbf1 !important;
-  border-color: #5eead4 !important;
-  color: #0f766e !important;
-  box-shadow: 0 1px 2px 0 rgb(13 148 136 / 0.10) !important;
-}
-
-/* Segmented buttons (`SegBtn`) — primary fill on the light report surface,
- * matches shadcn `Button` size="sm" variant="default". */
-.ext-report button[class*="rounded-md"][class*="bg-primary"] {
-  background: #0d9488 !important;
-  border-color: #0d9488 !important;
-  color: #ffffff !important;
-  box-shadow:
-    0 1px 0 0 rgba(255,255,255,0.20) inset,
-    0 1px 2px 0 rgb(13 148 136 / 0.35) !important;
-}
-.ext-report .ext-eyebrow {
-  color: #64748b;
-}
-.ext-report .text-muted-foreground {
-  color: #64748b;
 }
 
 @media print {
   @page { size: A4; margin: 14mm; }
   html, body { background: #ffffff !important; color: #0f172a !important; }
   .no-print, nav, header[data-block-shell], aside { display: none !important; }
-  .ext-report { padding: 0; background: #ffffff; }
-  .ext-report .ext-glass { box-shadow: none; border-color: #cbd5e1; }
+  .ext-report {
+    padding: 0;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    --color-foreground: #0f172a;
+    --color-muted-foreground: #64748b;
+    --color-border: #e2e8f0;
+    --color-card: #ffffff;
+  }
+  .ext-report .ext-glass { box-shadow: none; background: #ffffff !important; }
   section, .ext-report-channel { break-inside: avoid; page-break-inside: avoid; }
   a { color: inherit; text-decoration: none; }
 }

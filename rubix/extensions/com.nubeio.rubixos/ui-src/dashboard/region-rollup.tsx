@@ -133,7 +133,7 @@ export function RegionRollup({
                 {(r.share * 100).toFixed(0)}%
               </span>
             </div>
-            <div className="h-7 -mx-1 text-primary">
+            <div className="h-7 -mx-1 text-primary overflow-hidden">
               <Sparkline values={r.spark} width={240} height={28} color="currentColor" />
             </div>
             <div className="flex gap-1 pt-1">

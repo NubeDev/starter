@@ -1,5 +1,5 @@
 import { motion } from 'motion/react'
-import { Sparkles, LogOut, ChevronDown, Building2, Sun, Moon, Monitor } from 'lucide-react'
+import { Sparkles, LogOut, ChevronDown, Building2 } from 'lucide-react'
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu'
 import { Link, useRouterState } from '@tanstack/react-router'
 import { useIntl } from 'react-intl'
@@ -7,9 +7,10 @@ import { useAuth } from '@nube/starter-client-react'
 import { useTenants } from '@nube/starter-ui-authz'
 import { NAV_GROUPS } from '@/lib/nav'
 import { useLayout } from '@nube/starter-ui-core/layout'
-import { useTheme, type Mode } from '@/stores/theme-store'
+import { useTheme } from '@/stores/theme-store'
 import { cn } from '@/lib/utils'
 import { ActionDock } from '@/components/action-dock'
+import { ThemeSwitcher } from '@/components/theme-switcher'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
 function Brand() {
@@ -61,34 +62,12 @@ function HeaderNav() {
   )
 }
 
-const MODE_ICON: Record<Mode, typeof Sun> = { light: Sun, dark: Moon, system: Monitor }
-
 /**
- * Theme toggle wired to `useTheme().setMode`. SCOPE OQ-7 confirmed:
- * starter-ui-kit does not export a `useTheme` of its own — rubix
- * already owns the theme store on top of `@nube/starter-ui-core`'s
- * `useLayoutPreferences`. So we consume the rubix-side hook here.
- * Cycles light → dark → system → light.
+ * Theme switcher: three-segment pill (system / light / dark) inspired
+ * by kibo-ui's ThemeSwitcher, wired to `useTheme().setMode`.
  */
 function ThemeToggle() {
-  const { mode, setMode } = useTheme()
-  const intl = useIntl()
-  const Icon = MODE_ICON[mode]
-  const next: Mode = mode === 'light' ? 'dark' : mode === 'dark' ? 'system' : 'light'
-  return (
-    <button
-      type="button"
-      onClick={() => setMode(next)}
-      aria-label={intl.formatMessage({ id: 'header.themeToggle' })}
-      title={intl.formatMessage({ id: 'a11y.themeModeTitle' }, {
-        mode: intl.formatMessage({ id: `mode.${mode}` }),
-        next: intl.formatMessage({ id: `mode.${next}` }),
-      })}
-      className="flex h-9 w-9 cursor-pointer items-center justify-center rounded-full text-[color:var(--color-muted)] transition-colors hover:bg-[color:var(--color-surface-2)]/50 hover:text-[color:var(--color-text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[color:var(--color-ring)]"
-    >
-      <Icon className="h-4 w-4" />
-    </button>
-  )
+  return <ThemeSwitcher />
 }
 
 /**
