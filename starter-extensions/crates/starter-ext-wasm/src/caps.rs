@@ -154,7 +154,22 @@ impl WasiCategory {
             Capability::HttpOut { .. } => Some(WasiCategory::HttpOut),
             Capability::Fs { .. } => Some(WasiCategory::Fs),
             Capability::WallClock { .. } => Some(WasiCategory::WallClock),
-            Capability::Secrets { .. } | Capability::Custom { .. } => None,
+            // Host-side grants without a WASI binding: warehouse
+            // read/write goes through the host RPC surface; the event
+            // bus, scheduler, and KV store are reserved WIT imports
+            // whose host implementations are not wired through the
+            // wasmtime linker in v0.1. Secrets / Custom likewise have
+            // no public WASI binding. All collapse to `None`; the
+            // capability gate still enforces them at the host call
+            // boundary.
+            Capability::WarehouseRead { .. }
+            | Capability::WarehouseWrite { .. }
+            | Capability::EventBus { .. }
+            | Capability::DashboardRead { .. }
+            | Capability::DashboardWrite { .. }
+            | Capability::AuthzCheck { .. }
+            | Capability::Secrets { .. }
+            | Capability::Custom { .. } => None,
         }
     }
 }

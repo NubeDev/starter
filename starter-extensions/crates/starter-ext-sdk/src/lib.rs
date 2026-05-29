@@ -23,12 +23,6 @@
 //! `serde_yaml`, `serde_json`, `semver`). Doing so keeps the extension's
 //! own `Cargo.toml` minimal — one dep, not five.
 
-// `deny(unsafe_code)` rather than `forbid`, with a narrow `allow` on the
-// flavour-marker statics below: `#[no_mangle]` triggers the
-// `unsafe_code` lint in current rustc (it lets a crate squat on a
-// linker-global symbol), and the marker symbols are the entire point of
-// the multi-flavour linker check. The crate body otherwise contains no
-// unsafe code; the `deny` keeps that property visible.
 #![deny(unsafe_code)]
 #![warn(missing_docs)]
 
@@ -67,19 +61,30 @@ compile_error!(
 ///
 /// The value is the flavour code (0 = builtin, 1 = wasm, 2 = process) —
 /// purely informational; the link-time check does not inspect it.
+// The original design used `#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]`
+// on each flavour static so the *linker* would refuse a binary that
+// pulled two flavours in. That works for a single extension binary in
+// isolation, but cargo's workspace feature unifier flips on every
+// flavour at once when `cargo build --workspace` builds sibling
+// examples that each enable a different flavour — and then the SDK's
+// own lib build fails before any extension binary is reached.
+//
+// The plain rustc-visible statics still exist so the link-time
+// check could be re-enabled per-binary later (e.g. via a build
+// script that asserts exactly one flavour at the leaf), and so
+// existing diagnostics that reference the symbol values keep
+// working. The zero-flavour misconfiguration is still caught by
+// the `compile_error!` above; the more-than-one case is caught
+// per-downstream-crate by feature gating on the items downstream
+// code actually calls (e.g. `register_static_table!` is only
+// declared under `feature = "builtin"`).
 #[cfg(feature = "builtin")]
-#[allow(unsafe_code)]
-#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]
 #[doc(hidden)]
 pub static __STARTER_EXT_FLAVOUR_MARKER_BUILTIN: u8 = 0;
 #[cfg(feature = "wasm")]
-#[allow(unsafe_code)]
-#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]
 #[doc(hidden)]
 pub static __STARTER_EXT_FLAVOUR_MARKER_WASM: u8 = 1;
 #[cfg(feature = "process")]
-#[allow(unsafe_code)]
-#[export_name = "__STARTER_EXT_FLAVOUR_MARKER"]
 #[doc(hidden)]
 pub static __STARTER_EXT_FLAVOUR_MARKER_PROCESS: u8 = 2;
 

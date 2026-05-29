@@ -172,6 +172,7 @@ pub async fn build(
         RestRouterOptions {
             path_prefix: None,
             resource_registry: Some(res_registry.clone() as Arc<dyn ResourceRegistry>),
+            ..Default::default()
         },
     )
     .context("build extension REST adapter")?;

@@ -60,7 +60,11 @@ impl RuleRegistry {
             .add(Arc::new(StuckRule::default()))
     }
 
-    /// Append a rule. Builder-style.
+    /// Append a rule. Builder-style — the `add` name reads as the
+    /// natural English verb here ("add a rule"); clippy's confusable
+    /// trait-name check would have us rename to `with`, but that
+    /// loses the builder's voice. Localised allow.
+    #[allow(clippy::should_implement_trait)]
     pub fn add(mut self, rule: Arc<dyn AnomalyRule>) -> Self {
         self.rules.push(rule);
         self

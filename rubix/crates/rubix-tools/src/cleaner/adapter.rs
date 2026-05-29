@@ -183,11 +183,7 @@ pub fn build_registry_with_contributions(
         .map(|t| (t.definition().name, t.clone()))
         .collect();
 
-    let mut entries: Vec<(usize, ContributedRule)> = contributions
-        .into_iter()
-        .enumerate()
-        .map(|(i, c)| (i, c))
-        .collect();
+    let mut entries: Vec<(usize, ContributedRule)> = contributions.into_iter().enumerate().collect();
     // Sort by (priority asc with None last, declaration index asc).
     entries.sort_by(|(ai, a), (bi, b)| {
         let pa: (u8, i32) = match a.priority {
