@@ -252,6 +252,15 @@ pub(crate) fn caller_scope(caller: Option<&CallerIdentity>) -> CallerScope {
 /// truncated to the first 16 hex chars — collisions across distinct
 /// inputs are still cryptographically negligible and keeps keys
 /// readable in tracing.
+///
+/// **Key-order canonicalisation** rides on serde_json's default
+/// `Map` being BTreeMap-backed (alphabetical keys). Two semantically
+/// identical JSON objects with different key orders therefore hash
+/// identically. Enabling serde_json's `preserve_order` feature
+/// **would** silently halve the cache hit-rate for any dispatcher
+/// whose callers don't sort keys client-side; the
+/// `base_key_canonicalises_object_key_order` test in this module
+/// pins the assumption.
 pub(crate) fn dispatch_base_key(
     ext: &ExtensionId,
     contribute_id: &str,
@@ -279,6 +288,40 @@ mod tests {
         assert_eq!(r.len(), 1);
         assert_eq!(r.get(&ext, "bar").unwrap().ttl, Duration::from_secs(30));
         assert!(r.get(&ext, "baz").is_none());
+    }
+
+    #[test]
+    fn base_key_canonicalises_object_key_order() {
+        // Two semantically identical JSON objects with different key
+        // orderings must produce the same base_key — otherwise the
+        // cache wastes RAM on duplicates and the hit-rate dashboard
+        // lies. This holds today because serde_json's default `Map`
+        // is BTreeMap-backed; turning on `preserve_order` would break
+        // this assumption (and halve hit-rates in production).
+        let ext = ExtensionId::new("com.example.ext").unwrap();
+        let a = serde_json::json!({"a": 1, "b": 2, "c": [3, 4]});
+        let b = serde_json::json!({"c": [3, 4], "b": 2, "a": 1});
+        let ka = dispatch_base_key(&ext, "tool", &a);
+        let kb = dispatch_base_key(&ext, "tool", &b);
+        assert_eq!(ka, kb, "key-order must not affect base_key");
+    }
+
+    #[test]
+    fn base_key_distinguishes_distinct_inputs() {
+        // Sanity floor: when the inputs really do differ, the keys
+        // must differ. `Value::Null`, `{}`, and `false` all serialise
+        // to different strings — verified — but pin the property so
+        // we catch any future canonicaliser that flattens these.
+        let ext = ExtensionId::new("com.example.ext").unwrap();
+        let null = serde_json::Value::Null;
+        let empty = serde_json::json!({});
+        let f = serde_json::Value::Bool(false);
+        let kn = dispatch_base_key(&ext, "t", &null);
+        let ke = dispatch_base_key(&ext, "t", &empty);
+        let kf = dispatch_base_key(&ext, "t", &f);
+        assert_ne!(kn, ke);
+        assert_ne!(ke, kf);
+        assert_ne!(kn, kf);
     }
 
     #[test]

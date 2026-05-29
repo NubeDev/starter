@@ -426,6 +426,16 @@ impl RestDispatcher for BuiltinRestDispatcher {
         Ok(value)
     }
 
+    /// Streaming dispatch is **never** wrapped in the opt-in cache,
+    /// even when a sidecar exists for `contribute_id`. Two reasons:
+    /// (1) the proposal scopes v0 to unary dispatch only; (2) caching
+    /// a stream means materialising it in memory, which silently
+    /// converts a constant-memory streaming handler into an
+    /// O(stream-length) one. If a future maintainer needs cached
+    /// streams, that is a new feature with its own design — not a
+    /// `with_cache(...)` flip. The
+    /// `streaming_dispatch_bypasses_cache` integration test pins
+    /// this behaviour.
     async fn dispatch_stream(
         &self,
         extension: &ExtensionId,

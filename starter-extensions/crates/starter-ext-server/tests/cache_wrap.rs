@@ -40,6 +40,12 @@ contributes:
       input_schema:  schemas/in.json
       output_schema: schemas/out.json
       description_file: docs/uncached.md
+  rest:
+    - id: com.acme.cache.stream
+      method: GET
+      path: /stream
+      description_file: docs/stream.md
+      streaming: ndjson
 "#;
 
 fn write_file(root: &Path, rel: &str, body: &[u8]) {
@@ -57,6 +63,7 @@ fn write_bundle(root: &Path) {
     write_file(&dir, "block.yaml", BUNDLE.as_bytes());
     write_file(&dir, "docs/usage.md", b"# usage");
     write_file(&dir, "docs/uncached.md", b"# uncached");
+    write_file(&dir, "docs/stream.md", b"# stream");
     write_file(&dir, "schemas/in.json", br#"{ "type": "object" }"#);
     write_file(&dir, "schemas/out.json", br#"{ "type": "object" }"#);
 }
@@ -73,7 +80,11 @@ fn table_with_counter(counter: Arc<AtomicU32>) -> Arc<BuiltinTable> {
     let mut table = BuiltinTable::new();
     let ext = ExtensionId::new("com.acme.cache").unwrap();
     let entry = BuiltinEntry::new(
-        &["com.acme.cache.usage", "com.acme.cache.uncached"],
+        &[
+            "com.acme.cache.usage",
+            "com.acme.cache.uncached",
+            "com.acme.cache.stream",
+        ],
         move |contribute_id, _ctx, params| {
             counter.fetch_add(1, Ordering::SeqCst);
             Ok(json!({ "kind": contribute_id, "echo": params }))
@@ -184,6 +195,46 @@ async fn invalidate_drops_dispatcher_cache_entry() {
         .await
         .unwrap();
     assert_eq!(counter.load(Ordering::SeqCst), 2, "post-invalidate dispatch re-runs the loader");
+}
+
+/// Streaming dispatch is deliberately never wrapped in the cache,
+/// even when the kind has a sidecar. The proposal scopes v0 to
+/// unary dispatch only; caching a stream would silently turn a
+/// constant-memory handler into an O(stream-length) one. Pin the
+/// behaviour so a future maintainer doesn't accidentally flip it.
+#[tokio::test]
+async fn streaming_dispatch_bypasses_cache_even_with_sidecar() {
+    let counter = Arc::new(AtomicU32::new(0));
+    let ext = ExtensionId::new("com.acme.cache").unwrap();
+    let spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
+        .scope(starter_cache::CacheScope::Tenant);
+    let (dispatch, _layer, _tmp) = build_dispatcher_with_cache(
+        counter.clone(),
+        vec![((ext.clone(), "com.acme.cache.stream".to_string()), spec)],
+    );
+
+    // Two streaming dispatches to the same kind+input. If the cache
+    // were involved, the handler would run only once.
+    for _ in 0..2 {
+        let resp = dispatch
+            .dispatch_stream(&ext, "com.acme.cache.stream", json!({}), None)
+            .await
+            .expect("stream dispatch ok");
+        // Drop the stream response — the spawned handler keeps
+        // running until it returns or the cancel fires. Give it a
+        // moment to increment the counter before continuing.
+        drop(resp);
+    }
+    // The handler runs on spawn_blocking and the counter bump is
+    // synchronous inside it. A short yield is enough; if this ever
+    // becomes flaky, switch to a tokio::sync::Notify in the test
+    // handler.
+    tokio::time::sleep(std::time::Duration::from_millis(50)).await;
+    assert_eq!(
+        counter.load(Ordering::SeqCst),
+        2,
+        "streaming dispatch must bypass the cache (one handler run per call)"
+    );
 }
 
 #[tokio::test]
