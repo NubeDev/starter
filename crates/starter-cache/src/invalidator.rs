@@ -146,6 +146,76 @@ impl Invalidator for InMemoryInvalidator {
     }
 }
 
+// ---------------------------------------------------------------------------
+// EventBusInvalidator — multi-node fan-out via a host-supplied bus.
+// ---------------------------------------------------------------------------
+
+/// Outbound port the [`EventBusInvalidator`] uses to publish a tag
+/// fire to its sibling replicas. Tests can implement this against a
+/// `tokio::sync::broadcast`; production wires it to the host's
+/// `RubixEventBus` (one topic, JSON `[tag, …]` payload).
+///
+/// Implementations must be infallible from the caller's perspective —
+/// fan-out failures are logged, not surfaced; a downed replica must
+/// not block a hot write path.
+#[async_trait]
+pub trait InvalidationBus: Send + Sync + 'static {
+    /// Publish the named tags to every other replica subscribed to
+    /// the cache-invalidation topic.
+    async fn publish(&self, tags: &[String]);
+}
+
+/// Multi-node invalidator. Wraps an [`InMemoryInvalidator`] for the
+/// local-process tag-token side (the race-fix v0/v1 already depends
+/// on) **plus** a fan-out to the bus so peer replicas observe the
+/// fire.
+///
+/// The local invalidator is the only thing the cache layer talks to
+/// for `snapshot_tokens` / `tokens_match`; the bus is one-way (publish
+/// on fire, apply on incoming). The host wires an incoming subscriber
+/// that calls [`Self::apply_remote`] when a peer publishes — this
+/// keeps the cache layer ignorant of bus mechanics.
+pub struct EventBusInvalidator {
+    local: InMemoryInvalidator,
+    bus: std::sync::Arc<dyn InvalidationBus>,
+}
+
+impl EventBusInvalidator {
+    /// Build a fan-out invalidator over the given bus.
+    pub fn new(bus: std::sync::Arc<dyn InvalidationBus>) -> Self {
+        Self {
+            local: InMemoryInvalidator::new(),
+            bus,
+        }
+    }
+
+    /// Apply tags received from a peer replica. Bumps the local
+    /// tokens **without** re-publishing (so two replicas don't fan
+    /// out to infinity).
+    pub async fn apply_remote(&self, tags: &[String]) {
+        self.local.invalidate_tags(tags).await;
+    }
+
+    /// Test introspection — every locally fired tag in order.
+    pub fn fired_tags(&self) -> Vec<String> {
+        self.local.fired_tags()
+    }
+}
+
+#[async_trait]
+impl Invalidator for EventBusInvalidator {
+    async fn invalidate_tags(&self, tags: &[String]) {
+        self.local.invalidate_tags(tags).await;
+        self.bus.publish(tags).await;
+    }
+    fn snapshot_tokens(&self, tags: &[String]) -> TokenSnapshot {
+        self.local.snapshot_tokens(tags)
+    }
+    fn tokens_match(&self, snap: &TokenSnapshot) -> bool {
+        self.local.tokens_match(snap)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -165,6 +235,39 @@ mod tests {
         let inv = InMemoryInvalidator::new();
         inv.invalidate_tags(&["x".into()]).await;
         assert!(inv.tokens_match(&TokenSnapshot::empty()));
+    }
+
+    #[tokio::test]
+    async fn event_bus_invalidator_publishes_and_applies_remote() {
+        use std::sync::Arc;
+        use tokio::sync::Mutex as AsyncMutex;
+
+        struct CapturingBus {
+            published: AsyncMutex<Vec<Vec<String>>>,
+        }
+        #[async_trait]
+        impl InvalidationBus for CapturingBus {
+            async fn publish(&self, tags: &[String]) {
+                self.published.lock().await.push(tags.to_vec());
+            }
+        }
+        let bus = Arc::new(CapturingBus {
+            published: AsyncMutex::new(Vec::new()),
+        });
+        let inv = EventBusInvalidator::new(bus.clone());
+        let tags = vec!["table:readings".to_string()];
+        let snap = inv.snapshot_tokens(&tags);
+        inv.invalidate_tags(&tags).await;
+        assert!(!inv.tokens_match(&snap), "local should bump on publish");
+        let published = bus.published.lock().await.clone();
+        assert_eq!(published, vec![tags.clone()]);
+
+        // apply_remote bumps tokens without re-publishing.
+        let snap2 = inv.snapshot_tokens(&tags);
+        inv.apply_remote(&tags).await;
+        assert!(!inv.tokens_match(&snap2));
+        let published2 = bus.published.lock().await.clone();
+        assert_eq!(published2.len(), 1, "apply_remote must not republish");
     }
 
     #[tokio::test]

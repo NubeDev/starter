@@ -14,6 +14,12 @@ rust-version.workspace = true
 # so adding them never forces existing consumers to pull new deps.
 default = ["moka"]
 moka    = ["dep:moka"]
+# v3 — Valkey backend (shape-correct in-memory mock today; the
+# `redis` swap is a one-file change). Opt in when the deployment is
+# multi-node and wants cross-replica cache.
+valkey  = []
+# v3 — tower::Layer integration for core HTTP routes.
+tower   = ["dep:tower-layer", "dep:tower-service", "dep:http", "dep:http-body", "dep:http-body-util", "dep:bytes"]
 # Surfaces a small set of test-helper methods (e.g.
 # `MokaCache::run_pending_tasks`) for downstream crates that want to
 # write deterministic cache tests of their own.
@@ -27,11 +33,18 @@ serde       = { workspace = true }
 starter-windowed = { workspace = true }
 chrono      = { workspace = true }
 serde_json  = { workspace = true }
+tokio       = { workspace = true, features = ["sync", "rt", "time"] }
 
 # Optional backends. Each one is gated behind its own feature; the
 # `dep:` prefix keeps the bare crate name out of the public feature
 # namespace.
 moka = { version = "0.12", features = ["future"], optional = true }
+tower-layer   = { version = "0.3", optional = true }
+tower-service = { version = "0.3", optional = true }
+http          = { workspace = true, optional = true }
+http-body     = { version = "1", optional = true }
+http-body-util = { version = "0.1", optional = true }
+bytes         = { workspace = true, optional = true }
 
 [dev-dependencies]
 # Tests need `time` (for `tokio::time::sleep` in the TTL test) and

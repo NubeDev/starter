@@ -141,6 +141,37 @@ pub struct ComponentTree {
     /// cannot reference other vars in v1 (no recursion).
     #[serde(default, skip_serializing_if = "std::collections::HashMap::is_empty")]
     pub vars: std::collections::HashMap<String, serde_json::Value>,
+    /// v3 — opt-in cache config (§Layer 1A). Additive root field —
+    /// older IR readers ignore it; no IR version bump per
+    /// §"What changed in this revision". When `Some`, the SDUI
+    /// resolver wraps `/ui/resolve` work in `cache_layer.get_or_load`
+    /// using the spec's TTL / scope / invalidation tags.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache: Option<PageCacheBlock>,
+}
+
+/// v3 — page-level cache block carried by [`ComponentTree`]. Wire
+/// shape mirrors §Layer 1A of the proposal.
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct PageCacheBlock {
+    /// TTL in seconds.
+    pub ttl_seconds: u64,
+    /// `"user" | "tenant" | "global"`. Defaults to `"tenant"`.
+    #[serde(default = "default_cache_scope")]
+    pub scope: String,
+    /// SWR window in seconds.
+    #[serde(default)]
+    pub stale_while_revalidate_seconds: u64,
+    /// Tables this page subscribes to for invalidation.
+    #[serde(default)]
+    pub invalidate_on_tables: Vec<String>,
+    /// Optional author tag set for grouping (free-form).
+    #[serde(default)]
+    pub tags: Vec<String>,
+}
+
+fn default_cache_scope() -> String {
+    "tenant".to_string()
 }
 
 impl ComponentTree {
@@ -150,6 +181,7 @@ impl ComponentTree {
             ir_version: IR_VERSION,
             root,
             vars: std::collections::HashMap::new(),
+            cache: None,
         }
     }
 }

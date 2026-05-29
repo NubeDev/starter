@@ -215,6 +215,70 @@ impl EventBusBackend for RubixEventBusBackend {
     }
 }
 
+/// v3 — adapter between `starter_cache::InvalidationBus` and the
+/// host's [`RubixEventBus`]. Publishes a `[tag, …]` JSON payload on a
+/// dedicated topic; a peer replica subscribes at boot and feeds
+/// incoming payloads back into the local
+/// `EventBusInvalidator::apply_remote`. Single-node deployments
+/// leave the invalidator at `local` and never construct this
+/// adapter.
+pub struct CacheInvalidationBus {
+    bus: std::sync::Arc<RubixEventBus>,
+    topic: String,
+}
+
+impl CacheInvalidationBus {
+    /// Construct with the default `__cache.invalidate` topic.
+    pub fn new(bus: std::sync::Arc<RubixEventBus>) -> Self {
+        Self {
+            bus,
+            topic: "__cache.invalidate".to_string(),
+        }
+    }
+
+    /// The topic this adapter publishes on.
+    pub fn topic(&self) -> &str {
+        &self.topic
+    }
+}
+
+#[async_trait::async_trait]
+impl starter_cache::InvalidationBus for CacheInvalidationBus {
+    async fn publish(&self, tags: &[String]) {
+        let payload = serde_json::Value::Array(
+            tags.iter()
+                .map(|t| serde_json::Value::String(t.clone()))
+                .collect(),
+        );
+        let _ = self.bus.publish_raw(&self.topic, payload);
+    }
+}
+
+/// Wire a peer-subscriber on a fresh task that drives
+/// `EventBusInvalidator::apply_remote` for every cache-invalidation
+/// publish observed on the bus. `inv` is a clone of the cache
+/// layer's [`starter_cache::EventBusInvalidator`]. Returns the
+/// `JoinHandle` so the caller can abort on shutdown.
+pub fn spawn_cache_invalidation_subscriber(
+    bus: std::sync::Arc<RubixEventBus>,
+    inv: std::sync::Arc<starter_cache::EventBusInvalidator>,
+    topic: String,
+) -> tokio::task::JoinHandle<()> {
+    let mut rx = bus.subscribe(&topic);
+    tokio::spawn(async move {
+        while let Ok(msg) = rx.recv().await {
+            let tags: Vec<String> = match &msg.payload {
+                serde_json::Value::Array(items) => items
+                    .iter()
+                    .filter_map(|v| v.as_str().map(str::to_string))
+                    .collect(),
+                _ => continue,
+            };
+            inv.apply_remote(&tags).await;
+        }
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

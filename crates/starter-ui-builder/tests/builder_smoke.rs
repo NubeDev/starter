@@ -55,6 +55,7 @@ fn wrap_in_tree(c: Component) -> ComponentTree {
         ir_version: IR_VERSION,
         root,
         vars: Default::default(),
+        cache: None,
     }
 }
 

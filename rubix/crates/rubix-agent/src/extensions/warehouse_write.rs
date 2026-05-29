@@ -58,6 +58,13 @@ pub struct RubixWarehouseWriteBackend {
     /// unprefixed `name`. `Arc` so cloning the backend per call is
     /// cheap regardless of how many tables an extension declares.
     table_specs: Arc<Vec<ContributeWarehouseTable>>,
+    /// v3 — unified WarehouseWriter chokepoint. When `Some`, every
+    /// successful `insert` enqueues one `WriteRow` per row and
+    /// `commit()`s once, firing the deduplicated tag set through
+    /// the supplied invalidator. `None` keeps v0 best-effort
+    /// behaviour (no invalidation fires).
+    writer_registry: Option<Arc<starter_cache::WriterTagRegistry>>,
+    writer_invalidator: Option<Arc<dyn starter_cache::Invalidator>>,
 }
 
 impl std::fmt::Debug for RubixWarehouseWriteBackend {
@@ -88,7 +95,22 @@ impl RubixWarehouseWriteBackend {
             extension_id,
             granted_tables,
             table_specs,
+            writer_registry: None,
+            writer_invalidator: None,
         }
+    }
+
+    /// v3 — attach the unified WarehouseWriter chokepoint. Successful
+    /// `insert` calls deduplicate per-row tags through the supplied
+    /// registry and fire one `invalidate_tags` per commit.
+    pub fn with_writer(
+        mut self,
+        registry: Arc<starter_cache::WriterTagRegistry>,
+        invalidator: Arc<dyn starter_cache::Invalidator>,
+    ) -> Self {
+        self.writer_registry = Some(registry);
+        self.writer_invalidator = Some(invalidator);
+        self
     }
 
     /// Resolve `name` against the manifest declarations. Returns
@@ -161,14 +183,11 @@ impl RubixWarehouseWriteBackend {
 }
 
 impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
-    // TODO(cache-invalidation): per-extension warehouse write site.
-    // starter-cache's opt-in cache wants
-    // `invalidate_tags(&[format!("table:{full_table}")])` here on
-    // successful commit. There is no unified `WarehouseWriter`
-    // chokepoint yet (see rubix/docs/sessions/cache-v0-progress.md);
-    // until one lands, tag invalidation here is best-effort and
-    // depends on the caller threading the layer's invalidator handle
-    // through.
+    // v3: unified chokepoint via `starter_cache::DefaultWarehouseWriter`
+    // — when `writer_invalidator` is set we enqueue per-row and
+    // commit once after a successful INSERT, firing one deduplicated
+    // `invalidate_tags`. See rubix/docs/operations/cache-runbook.md
+    // § "v3 WarehouseWriter".
     fn insert(&self, table: &str, rows: Vec<Row>) -> Result<u64> {
         let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
             return Err(Error::capability(format!(
@@ -248,7 +267,46 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
             value_rows.push(values);
         }
 
-        self.run_insert(&full_table, &column_names, &column_types, &value_rows)
+        let affected = self.run_insert(&full_table, &column_names, &column_types, &value_rows)?;
+        // v3 — fire deduped tags through the chokepoint.
+        if let (Some(reg), Some(inv)) = (
+            self.writer_registry.as_ref(),
+            self.writer_invalidator.as_ref(),
+        ) {
+            let mut wrows: Vec<starter_cache::WriteRow> = Vec::with_capacity(rows.len());
+            for row in &rows {
+                let map = row.as_map();
+                // Pull `ts` if present and a number (ms epoch).
+                let ts = map
+                    .get("ts")
+                    .and_then(|v| v.as_i64())
+                    .and_then(|ms| chrono::DateTime::<chrono::Utc>::from_timestamp_millis(ms));
+                let mut dims = std::collections::BTreeMap::new();
+                for d in reg
+                    .for_table(&full_table)
+                    .iter()
+                    .flat_map(|s| &s.dimensions)
+                {
+                    if let Some(v) = map.get(d) {
+                        dims.insert(d.clone(), v.to_string());
+                    }
+                }
+                wrows.push(starter_cache::WriteRow {
+                    table: full_table.clone(),
+                    ts,
+                    dimensions: dims,
+                });
+            }
+            use starter_cache::WarehouseWriter as _;
+            let writer = starter_cache::DefaultWarehouseWriter::new(inv.clone(), (**reg).clone());
+            tokio::task::block_in_place(|| {
+                tokio::runtime::Handle::current().block_on(async move {
+                    writer.enqueue_many(wrows).await;
+                    writer.commit().await;
+                });
+            });
+        }
+        Ok(affected)
     }
 
     fn update(&self, table: &str, key_column: &str, rows: Vec<Row>) -> Result<u64> {

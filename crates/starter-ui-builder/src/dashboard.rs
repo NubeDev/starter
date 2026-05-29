@@ -16,6 +16,7 @@ use crate::layout::page;
 ///     ir_version: IR_VERSION,
 ///     root: page(id, title).children(kids).build(),
 ///     vars: Default::default(),
+///     cache: None,
 /// }
 /// ```
 ///
@@ -29,6 +30,7 @@ pub fn dashboard(
         ir_version: IR_VERSION,
         root: page(id, title).children(children).build(),
         vars: Default::default(),
+        cache: None,
     }
 }
 

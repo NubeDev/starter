@@ -135,6 +135,9 @@ struct SpecConfig {
     time_series: Option<TimeSeriesRow>,
     /// v2: two-layer cache `inner_scope` (`null` when absent).
     inner_scope: Option<&'static str>,
+    /// v3: which invalidator the cache is wired with
+    /// (`"local"` or `"event-bus"`).
+    invalidator_kind: String,
 }
 
 #[derive(Serialize)]
@@ -167,7 +170,7 @@ struct BucketSpecRow {
 }
 
 impl SpecConfig {
-    fn from_spec(spec: &CacheSpec) -> Self {
+    fn from_spec(spec: &CacheSpec, invalidator_kind: &str) -> Self {
         Self {
             ttl_seconds: spec.ttl.as_secs(),
             scope: scope_str(spec.scope),
@@ -182,6 +185,7 @@ impl SpecConfig {
             }),
             time_series: spec.time_series.as_ref().map(TimeSeriesRow::from_block),
             inner_scope: spec.inner_scope.map(scope_str),
+            invalidator_kind: invalidator_kind.to_string(),
         }
     }
 }
@@ -229,6 +233,34 @@ impl LoadLatencyRow {
 #[derive(Serialize)]
 struct ListBody {
     specs: Vec<SpecRow>,
+    /// v3 — cold-start warmer status.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    warmer: Option<WarmerRow>,
+}
+
+#[derive(Serialize)]
+struct WarmerRow {
+    /// Wall-clock seconds since epoch the last warm pass completed,
+    /// or `null` if no pass has run since boot.
+    last_run_at: Option<u64>,
+    /// Entries warmed in the last pass.
+    entries_warmed: u64,
+    /// Duration of the last pass, in milliseconds, or `null`.
+    last_duration_ms: Option<u64>,
+}
+
+impl WarmerRow {
+    fn from_status(s: &starter_cache::WarmerStatus) -> Self {
+        Self {
+            last_run_at: s.last_run_at.and_then(|t| {
+                t.duration_since(std::time::UNIX_EPOCH)
+                    .ok()
+                    .map(|d| d.as_secs())
+            }),
+            entries_warmed: s.entries_warmed,
+            last_duration_ms: s.last_duration.map(|d| d.as_millis() as u64),
+        }
+    }
 }
 
 fn split_spec_id(spec_id: &str) -> (String, String) {
@@ -242,8 +274,16 @@ fn split_spec_id(spec_id: &str) -> (String, String) {
 
 async fn list(State(state): State<AdminState>) -> Response {
     let Some(layer) = state.cache_layer.as_ref() else {
-        return Json(ListBody { specs: Vec::new() }).into_response();
+        return Json(ListBody {
+            specs: Vec::new(),
+            warmer: None,
+        })
+        .into_response();
     };
+    let kind = state
+        .cache_invalidator_kind
+        .clone()
+        .unwrap_or_else(|| "local".to_string());
 
     // Join: every registered spec + every spec that has been
     // touched (the touched set will normally be a subset of
@@ -259,7 +299,7 @@ async fn list(State(state): State<AdminState>) -> Response {
                     spec_id,
                     extension: ext.as_str().to_string(),
                     contribute_id: contribute_id.to_string(),
-                    config: Some(SpecConfig::from_spec(spec)),
+                    config: Some(SpecConfig::from_spec(spec, &kind)),
                     hits: 0,
                     misses: 0,
                     hit_ratio: 0.0,
@@ -294,8 +334,13 @@ async fn list(State(state): State<AdminState>) -> Response {
         row.load_latency = LoadLatencyRow::from_snapshot(&load_latency);
     }
 
+    let warmer = state
+        .cache_warmer
+        .as_ref()
+        .map(|w| WarmerRow::from_status(&w.snapshot()));
     Json(ListBody {
         specs: by_id.into_values().collect(),
+        warmer,
     })
     .into_response()
 }

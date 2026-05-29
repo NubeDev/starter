@@ -319,3 +319,111 @@ the (best-effort) `// TODO(cache-invalidation):` markers until the
 v3 `WarehouseWriter` chokepoint lands. The v1 dispatcher-fired path
 covers handlers the dispatcher owns directly — that is a real
 guarantee, not best-effort.
+
+## v3 — multi-node deployment (event-bus invalidator)
+
+Pick the invalidator at boot via `RUBIX_CACHE_INVALIDATOR`:
+
+| Value | Meaning |
+|---|---|
+| `local` (default) | Single-process tag tokens. Use for one-replica deployments. |
+| `event-bus` | Local tokens + fan-out via `RubixEventBus` on the `__cache.invalidate` topic. Every replica subscribes on boot and applies remote tag fires through `EventBusInvalidator::apply_remote` — no double-publish loops. |
+
+A successful tag fire on replica A publishes a JSON `[tag, …]` array
+on `__cache.invalidate`. Every other replica reads it and bumps its
+**local** token store via `apply_remote` (which does **not**
+re-publish). Cache entries stored under those tags become misses on
+the next read.
+
+Operational checks:
+
+- `GET /api/v1/admin/cache/specs` returns
+  `specs[*].config.invalidator_kind` — `"local"` or `"event-bus"`.
+  Use to confirm the env var is honoured at boot.
+- Replica B's hit rate dropping at the moment replica A is observed
+  publishing on `__cache.invalidate` is the wire-level signal the
+  fan-out is alive.
+
+## v3 — Valkey backend
+
+Compile the agent with the `valkey` feature on `starter-cache` to
+enable `crates/starter-cache/src/backends/valkey.rs` — a second
+`Cache` impl behind the same trait. The author-facing `CacheSpec`
+does **not** change; the backend is picked at the host's wiring
+site.
+
+The v3 cut ships a shape-correct in-memory shared-handle model
+(handles cloned from one parent share the underlying store — the
+network-shared shape a real Valkey client needs). The protocol-level
+swap to the `redis` crate is a one-file change.
+
+## v3 — Cold-start warming
+
+After a deploy every cache key is cold. SWR doesn't help. Set
+`RUBIX_CACHE_WARM_ON_BOOT=<N>` to replay the top-N spec ids (by
+prior `hits + misses`) at boot. The result is surfaced as:
+
+```
+GET /api/v1/admin/cache/specs
+{
+  "specs": [...],
+  "warmer": {
+    "last_run_at": 1717072800,
+    "entries_warmed": 50,
+    "last_duration_ms": 1827
+  }
+}
+```
+
+`warmer` is `null` when the env var is unset.
+
+## v3 — Dimension-scoped tags
+
+`BucketTagSpec` grows an optional `dimensions: [<column>, …]` list.
+When set, the `WarehouseWriter` chokepoint emits
+`table:<name>:<dim>=<value>` in addition to the per-row bucket tag.
+Specs subscribe by listing the dimensional tag literally in
+`invalidate_on.tables`. Use this when bucket-level invalidation
+over-invalidates — e.g. when a meter-43 write should not touch
+cached meter-42 entries on the same hour.
+
+## v3 — WarehouseWriter chokepoint
+
+The five scattered write sites have **all** been routed through one
+chokepoint, [`starter_cache::DefaultWarehouseWriter`]:
+
+| Site | Status |
+|---|---|
+| `crates/starter-store-warehouse/src/tsdb/store/samples.rs` | callers wrap via `WarehouseWriter::enqueue` + `commit` |
+| `crates/starter-store-warehouse/src/tsdb/store/raw_events.rs` | same |
+| `crates/starter-store-warehouse/src/tsdb/store/events.rs` | same |
+| `crates/starter-store-warehouse/src/tsdb/store/documents.rs` | same |
+| `rubix/crates/rubix-agent/src/extensions/warehouse_write.rs` | wired directly — `RubixWarehouseWriteBackend::with_writer(registry, invalidator)` enqueues per row and commits once per `insert` |
+
+Batched dedup: a 500-row batch spanning 12 buckets fires *one*
+`invalidate_tags` call carrying ≤13 tags (1 table + ≤12 buckets), not
+500. The dedup is at the chokepoint, not the invalidator; write
+paths with no cache wired pay nothing.
+
+Rollback semantics: `discard()` drops the batch without firing.
+Wire it on transaction rollback paths.
+
+## v3 — SDUI integration
+
+`crates/starter-sdui-routes/src/cache_integration.rs` ships the
+helpers `/ui/resolve`, `/ui/table`, and `/ui/action` consume:
+
+- `wrap_resolve(layer, spec_id, tree, caller, base_key, load)` —
+  no-op when the tree has no `cache:` block; otherwise wraps the
+  resolver in `layer.get_or_load_labelled` with the spec derived
+  from the IR block. The resolve cache key mixes
+  `(tenant, user, page_id, target_ref, stack_hash, page_state_hash,
+  units_hash, ir_version, page_content_hash)` per `resolve_base_key`.
+- `table_base_key(source_id, page, sort, filter, scope_vars)` — the
+  `/ui/table` key shape; cached independently of the resolve cache.
+- `SduiActionMeta { read_only, affects_tables }` + `fire_action_invalidation`
+  — `/ui/action` is never cached; writing handlers fire
+  `invalidate_tags` after success, read-only handlers are a no-op.
+
+The IR `cache:` block on `ComponentTree` is additive — no IR version
+bump (§"What changed in this revision").

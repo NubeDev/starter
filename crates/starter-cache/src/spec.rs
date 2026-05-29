@@ -61,6 +61,15 @@ pub struct BucketTagSpec {
     /// `"1m" | "5m" | "15m" | "1h" | "1d"` (parsed but not enforced
     /// at the layer; writers must agree with spec authors).
     pub granularity: String,
+    /// v3 — dimension columns the writer emits alongside the bucket
+    /// tag. A row `(meter=42, t=…)` written with `dimensions:
+    /// ["meter"]` causes the chokepoint to fire
+    /// `table:<name>:meter=42` in addition to the per-row bucket
+    /// tag. Specs subscribe by listing the literal dimensional tag
+    /// in `invalidate_on.tables`. Empty (default) keeps prior
+    /// behaviour.
+    #[serde(default)]
+    pub dimensions: Vec<String>,
 }
 
 /// What invalidation tags the cache should subscribe an entry to.
@@ -656,6 +665,7 @@ fn parse_sidecar_yaml_legacy(yaml: &str) -> Result<CacheSidecar, SpecParseError>
                         buckets = Some(BucketTagSpec {
                             table: t,
                             granularity: g,
+                            dimensions: Vec::new(),
                         });
                     } else if bucket_table.is_some() || bucket_gran.is_some() {
                         return Err(SpecParseError::yaml_at(
@@ -704,6 +714,7 @@ fn parse_sidecar_yaml_legacy(yaml: &str) -> Result<CacheSidecar, SpecParseError>
         buckets = Some(BucketTagSpec {
             table: t,
             granularity: g,
+            dimensions: Vec::new(),
         });
     }
 
@@ -900,6 +911,7 @@ fn parse_sidecar_yaml_v2(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
         match path.as_str() {
             "cache.invalidate_on.tables" => tables = items.clone(),
             "cache.invalidate_on.events" => events = items.clone(),
+            "cache.invalidate_on.buckets.dimensions" => { /* read above */ }
             other => {
                 return Err(SpecParseError::yaml_file(format!(
                     "unknown list field: {other:?}"
@@ -919,9 +931,15 @@ fn parse_sidecar_yaml_v2(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
         .cloned();
     match (bt, bg) {
         (Some(t), Some(g)) => {
+            let dims = doc
+                .lists
+                .get("cache.invalidate_on.buckets.dimensions")
+                .cloned()
+                .unwrap_or_default();
             buckets = Some(BucketTagSpec {
                 table: t,
                 granularity: g,
+                dimensions: dims,
             })
         }
         (None, None) => {}
