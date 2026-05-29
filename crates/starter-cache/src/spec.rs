@@ -132,9 +132,36 @@ pub enum SpecParseError {
     /// The TTL string was not in `<n><unit>` shape.
     #[error("invalid ttl {0:?}: expected '<number><s|m|h>' (e.g. '60s')")]
     BadTtl(String),
-    /// YAML deserialisation failed.
-    #[error("yaml: {0}")]
-    Yaml(String),
+    /// YAML deserialisation failed at a known line. `line` is
+    /// 1-indexed so it matches what the operator sees in their
+    /// editor and in `tail -n +<line>` output.
+    #[error("yaml: line {line}: {message}")]
+    Yaml {
+        /// 1-indexed line number in the source YAML.
+        line: usize,
+        /// Human-readable description of what went wrong.
+        message: String,
+    },
+}
+
+impl SpecParseError {
+    /// Convenience constructor for non-line-specific YAML errors
+    /// (currently: missing top-level `cache:` block, missing `ttl:`).
+    /// These point at line 0 as a sentinel "the whole file" line.
+    fn yaml_file(message: impl Into<String>) -> Self {
+        Self::Yaml {
+            line: 0,
+            message: message.into(),
+        }
+    }
+
+    /// Convenience constructor for line-specific YAML errors.
+    fn yaml_at(line: usize, message: impl Into<String>) -> Self {
+        Self::Yaml {
+            line,
+            message: message.into(),
+        }
+    }
 }
 
 impl CacheSidecar {
@@ -204,7 +231,10 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
     let mut section = Section::TopLevel;
     let mut cache_seen = false;
 
-    for raw in yaml.lines() {
+    for (idx, raw) in yaml.lines().enumerate() {
+        // 1-indexed so error messages match what the operator sees
+        // in their editor and in `tail -n +<line>` output.
+        let line_no = idx + 1;
         let line = strip_comment(raw);
         if line.trim().is_empty() {
             continue;
@@ -218,17 +248,19 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
                 section = Section::Cache;
                 continue;
             }
-            return Err(SpecParseError::Yaml(format!(
-                "unexpected top-level line: {raw:?} (only `cache:` allowed)"
-            )));
+            return Err(SpecParseError::yaml_at(
+                line_no,
+                format!("unexpected top-level line: {raw:?} (only `cache:` allowed)"),
+            ));
         }
 
         match section {
             Section::Cache => {
                 if indent == 0 {
-                    return Err(SpecParseError::Yaml(format!(
-                        "unexpected top-level line inside cache block: {raw:?}"
-                    )));
+                    return Err(SpecParseError::yaml_at(
+                        line_no,
+                        format!("unexpected top-level line inside cache block: {raw:?}"),
+                    ));
                 }
                 if let Some(v) = trimmed.strip_prefix("ttl:") {
                     ttl = Some(v.trim().trim_matches('"').to_string());
@@ -238,17 +270,21 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
                         "tenant" => CacheScope::Tenant,
                         "global" => CacheScope::Global,
                         other => {
-                            return Err(SpecParseError::Yaml(format!(
-                                "invalid scope {other:?}: expected user|tenant|global"
-                            )))
+                            return Err(SpecParseError::yaml_at(
+                                line_no,
+                                format!(
+                                    "invalid scope {other:?}: expected user|tenant|global"
+                                ),
+                            ))
                         }
                     };
                 } else if trimmed.starts_with("invalidate_on:") {
                     section = Section::InvalidateOn;
                 } else {
-                    return Err(SpecParseError::Yaml(format!(
-                        "unknown cache field: {raw:?}"
-                    )));
+                    return Err(SpecParseError::yaml_at(
+                        line_no,
+                        format!("unknown cache field: {raw:?}"),
+                    ));
                 }
             }
             Section::InvalidateOn => {
@@ -259,18 +295,23 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
                         ttl = Some(v.trim().trim_matches('"').to_string());
                     } else if trimmed.starts_with("scope:") {
                         // re-walk
-                        return Err(SpecParseError::Yaml(format!(
-                            "indentation regression at {raw:?}"
-                        )));
+                        return Err(SpecParseError::yaml_at(
+                            line_no,
+                            format!("indentation regression at {raw:?}"),
+                        ));
                     }
                     continue;
                 }
                 if trimmed.starts_with("tables:") {
                     section = Section::Tables;
                 } else {
-                    return Err(SpecParseError::Yaml(format!(
-                        "unknown invalidate_on field: {raw:?} (v0 supports `tables:` only)"
-                    )));
+                    return Err(SpecParseError::yaml_at(
+                        line_no,
+                        format!(
+                            "unknown invalidate_on field: {raw:?} \
+                             (v0 supports `tables:` only)"
+                        ),
+                    ));
                 }
             }
             Section::Tables => {
@@ -285,9 +326,10 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
                         ttl = Some(v.trim().trim_matches('"').to_string());
                     }
                 } else {
-                    return Err(SpecParseError::Yaml(format!(
-                        "unknown tables entry: {raw:?}"
-                    )));
+                    return Err(SpecParseError::yaml_at(
+                        line_no,
+                        format!("unknown tables entry: {raw:?}"),
+                    ));
                 }
             }
             Section::TopLevel => unreachable!(),
@@ -295,11 +337,12 @@ fn parse_sidecar_yaml(yaml: &str) -> Result<CacheSidecar, SpecParseError> {
     }
 
     if !cache_seen {
-        return Err(SpecParseError::Yaml(
-            "missing `cache:` block at top level".into(),
+        return Err(SpecParseError::yaml_file(
+            "missing `cache:` block at top level",
         ));
     }
-    let ttl = ttl.ok_or_else(|| SpecParseError::Yaml("missing `ttl:` in cache block".into()))?;
+    let ttl =
+        ttl.ok_or_else(|| SpecParseError::yaml_file("missing `ttl:` in cache block"))?;
     Ok(CacheSidecar {
         cache: CacheSidecarBody {
             ttl,
@@ -363,5 +406,60 @@ cache:
         let y = "cache:\n  ttl: nope\n";
         let s = CacheSidecar::from_yaml(y).unwrap();
         assert!(s.into_spec().is_err());
+    }
+
+    #[test]
+    fn parse_error_carries_line_number() {
+        // Unknown field on line 3; we expect line: 3 not line: 0.
+        let y = "cache:\n  ttl: 60s\n  swr: 30s\n";
+        match CacheSidecar::from_yaml(y) {
+            Err(SpecParseError::Yaml { line, message }) => {
+                assert_eq!(line, 3, "expected error on line 3");
+                assert!(
+                    message.contains("unknown cache field"),
+                    "message should name the problem: {message}"
+                );
+            }
+            other => panic!("expected Yaml line error; got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_error_invalid_scope_carries_line_number() {
+        let y = "cache:\n  ttl: 60s\n  scope: bogus\n";
+        match CacheSidecar::from_yaml(y) {
+            Err(SpecParseError::Yaml { line, message }) => {
+                assert_eq!(line, 3);
+                assert!(message.contains("scope"), "message: {message}");
+            }
+            other => panic!("expected Yaml line error; got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_error_missing_cache_block_uses_zero_line_sentinel() {
+        // A whole-file error (missing top-level block) points at
+        // line 0 — the sentinel meaning "the whole file".
+        let y = "";
+        match CacheSidecar::from_yaml(y) {
+            Err(SpecParseError::Yaml { line, message }) => {
+                assert_eq!(line, 0);
+                assert!(message.contains("missing `cache:`"));
+            }
+            other => panic!("expected Yaml file error; got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn parse_error_display_includes_line_number() {
+        let y = "cache:\n  ttl: 60s\n  swr: 30s\n";
+        let err = CacheSidecar::from_yaml(y).unwrap_err();
+        let display = err.to_string();
+        // The Display impl is what shows up in SidecarLoadError.message
+        // and in operator logs — pin it.
+        assert!(
+            display.contains("line 3"),
+            "display should include the line: {display}"
+        );
     }
 }

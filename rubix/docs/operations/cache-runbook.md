@@ -219,7 +219,9 @@ that would un-defer the deferred features are spelled out there.
 3. Restart rubix-agent; check the boot log for `opt-in cache:
    registered kind specs` (info) — your spec should be in the
    count. Watch for `cache sidecar failed to load` (warn) — that's
-   a parse error, fix the YAML.
+   a parse error; the message includes the 1-indexed line number
+   (e.g. `yaml: line 3: unknown cache field: "  swr: 30s"`), so
+   fix the named line.
 4. After traffic flows, `GET /api/v1/admin/cache/specs` will show
    the spec with counters.
 
