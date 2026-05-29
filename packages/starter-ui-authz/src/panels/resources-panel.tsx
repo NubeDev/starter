@@ -20,9 +20,13 @@ export function ResourcesPanel({ i18n }: ResourcesPanelProps) {
 
   return (
     <section className="grid gap-6">
-      <header>
-        <h2 className="text-xl font-semibold tracking-tight">{m.resources.title}</h2>
-        <p className="text-sm text-[color:var(--color-subtle,#6b7280)]">{m.resources.description}</p>
+      <header className="grid gap-1">
+        <h2 className="text-base font-semibold tracking-tight">
+          {m.resources.title}
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          {m.resources.description}
+        </p>
       </header>
 
       {list.isLoading ? (

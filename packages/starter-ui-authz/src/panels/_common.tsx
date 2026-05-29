@@ -1,9 +1,18 @@
-// Small primitives shared by every panel: a centered loading
-// row, an empty-state row, an error row, and a minimal HTML
-// table styled to feel native next to `@nube/starter-ui-kit`.
+// Small primitives shared by every panel: state rows (loading,
+// empty, error) and a thin wrapper over the shadcn `Table`
+// primitive so each panel renders rows without redeclaring the
+// header/cell styling.
 
 import { type ReactNode } from "react";
-import clsx from "clsx";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+  cn,
+} from "@nube/starter-ui-kit";
+import { AlertCircle, Loader2, Inbox } from "lucide-react";
 
 export interface StateRowProps {
   /** "loading" | "empty" | "error". */
@@ -11,19 +20,28 @@ export interface StateRowProps {
   children: ReactNode;
 }
 
-/** Centered row inside a card or table. */
+/** Centered row inside a card or table. Uses the kit's
+ * `text-muted-foreground` / `text-destructive` tokens so it
+ * stays legible across light + dark themes. */
 export function StateRow({ variant, children }: StateRowProps) {
+  const Icon =
+    variant === "loading" ? Loader2 : variant === "empty" ? Inbox : AlertCircle;
   return (
     <div
-      className={clsx(
-        "flex items-center justify-center px-4 py-10 text-sm",
-        variant === "error"
-          ? "text-[color:var(--color-danger,#dc2626)]"
-          : "text-[color:var(--color-subtle,#6b7280)]",
+      className={cn(
+        "flex items-center justify-center gap-2 rounded-2xl border border-dashed border-border bg-muted/30 px-4 py-10 text-sm",
+        variant === "error" ? "text-destructive" : "text-muted-foreground",
       )}
       role={variant === "error" ? "alert" : undefined}
     >
-      {children}
+      <Icon
+        className={cn(
+          "size-4 shrink-0",
+          variant === "loading" && "animate-spin",
+        )}
+        aria-hidden
+      />
+      <span>{children}</span>
     </div>
   );
 }
@@ -31,50 +49,44 @@ export function StateRow({ variant, children }: StateRowProps) {
 export interface DataTableProps {
   /** Header row labels. */
   headers: ReactNode[];
-  /** Body rows. Caller renders the `<td>`s. */
+  /** Body rows. Caller renders the `<td>`s — use the kit's
+   * `TableCell` / `TableRow` for cell-level styling. */
   rows: ReactNode[];
   /** `aria-label` for the table. */
   label?: string;
 }
 
-/** Minimal accessible table. Caller is responsible for cell
- * content and per-row actions. */
+/** Bordered, rounded table card built on shadcn `Table`. The
+ * outer wrapper handles overflow so wide tables (Resources,
+ * Decisions) scroll horizontally inside the card instead of
+ * blowing past the parent's right edge. */
 export function DataTable({ headers, rows, label }: DataTableProps) {
   return (
-    <div className="overflow-hidden rounded-2xl border border-[color:var(--color-border,#e5e7eb)]">
-      <table className="w-full border-collapse text-sm" aria-label={label}>
-        <thead className="bg-[color:var(--color-muted,#f9fafb)]">
-          <tr>
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      <Table aria-label={label}>
+        <TableHeader>
+          <TableRow className="bg-muted/40 hover:bg-muted/40">
             {headers.map((h, i) => (
-              <th
-                key={i}
-                className="border-b border-[color:var(--color-border,#e5e7eb)] px-4 py-2 text-left text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--color-subtle,#6b7280)]"
-              >
-                {h}
-              </th>
+              <TableHead key={i}>{h}</TableHead>
             ))}
-          </tr>
-        </thead>
-        <tbody>{rows}</tbody>
-      </table>
+          </TableRow>
+        </TableHeader>
+        <TableBody>{rows}</TableBody>
+      </Table>
     </div>
   );
 }
 
-/** Standard body cell. */
-export function Td({ children, className }: { children?: ReactNode; className?: string }) {
-  return (
-    <td className={clsx("border-b border-[color:var(--color-border,#e5e7eb)] px-4 py-2 align-middle", className)}>
-      {children}
-    </td>
-  );
-}
+/** Standard body cell. Re-exported from the kit primitive but
+ * with the legacy `Td` name so existing panel code keeps
+ * compiling. New panels should import `TableCell` directly. */
+export { TableCell as Td } from "@nube/starter-ui-kit";
 
 /** A right-aligned cell for row-level actions. */
 export function ActionsCell({ children }: { children?: ReactNode }) {
   return (
-    <Td className="text-right">
+    <td className="px-4 py-3 text-right align-middle">
       <div className="flex justify-end gap-2">{children}</div>
-    </Td>
+    </td>
   );
 }

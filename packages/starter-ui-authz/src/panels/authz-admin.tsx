@@ -10,22 +10,41 @@
 
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
+  Badge,
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
   Input,
   Label,
+  ScrollArea,
+  Separator,
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
   Tabs,
   TabsContent,
   TabsList,
   TabsTrigger,
+  cn,
 } from "@nube/starter-ui-kit";
+import {
+  Activity,
+  Building2,
+  ChevronDown,
+  ChevronRight,
+  CircleHelp,
+  FileSearch,
+  Layers,
+  Search,
+  ShieldCheck,
+  UserRound,
+  Users,
+} from "lucide-react";
 import { AuthzI18nProvider } from "../i18n/context.js";
 import type { AuthzMessages } from "../i18n/messages.js";
 import { useAuthzMessages } from "../i18n/context.js";
@@ -148,24 +167,46 @@ function AuthzAdminInner({
   const [drawer, setDrawer] = useState<null | "resources" | "check" | "decisions">(null);
 
   return (
-    <div className="grid gap-4">
+    <div className="grid gap-6">
       {header}
-      <header className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold tracking-tight">{m.shell.title}</h1>
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="grid gap-1">
+          <h1 className="text-2xl font-semibold tracking-tight">
+            {m.shell.title}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Tenants, teams, members, rules, and audit trail.
+          </p>
+        </div>
         <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" onClick={() => setDrawer("resources")}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDrawer("resources")}
+          >
+            <Layers className="size-4" aria-hidden />
             {m.shell.tabs.resources}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setDrawer("check")}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDrawer("check")}
+          >
+            <ShieldCheck className="size-4" aria-hidden />
             {m.shell.tabs.check}
           </Button>
-          <Button size="sm" variant="outline" onClick={() => setDrawer("decisions")}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setDrawer("decisions")}
+          >
+            <FileSearch className="size-4" aria-hidden />
             {m.shell.tabs.decisions}
           </Button>
         </div>
       </header>
 
-      <div className="grid gap-6 lg:grid-cols-[18rem_1fr]">
+      <div className="grid gap-6 lg:grid-cols-[20rem_1fr]">
         <TenantRail
           selected={sel}
           onSelect={setSel}
@@ -182,21 +223,46 @@ function AuthzAdminInner({
       </div>
 
       <Sheet open={drawer !== null} onOpenChange={(o) => !o && setDrawer(null)}>
-        <SheetContent side="right" className="w-full sm:max-w-3xl overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle>
+        <SheetContent
+          side="right"
+          className="w-full gap-0 sm:max-w-3xl"
+        >
+          <SheetHeader className="border-b border-border px-6 py-4">
+            <SheetTitle className="flex items-center gap-2 text-lg">
+              {drawer === "resources" ? (
+                <Layers className="size-4 text-muted-foreground" aria-hidden />
+              ) : drawer === "check" ? (
+                <ShieldCheck
+                  className="size-4 text-muted-foreground"
+                  aria-hidden
+                />
+              ) : (
+                <FileSearch
+                  className="size-4 text-muted-foreground"
+                  aria-hidden
+                />
+              )}
               {drawer === "resources"
                 ? m.shell.tabs.resources
                 : drawer === "check"
                 ? m.shell.tabs.check
                 : m.shell.tabs.decisions}
             </SheetTitle>
+            <SheetDescription>
+              {drawer === "resources"
+                ? "Read-only catalogue of resource kinds the engine knows about."
+                : drawer === "check"
+                ? "Dry-run a principal + action against the live policy."
+                : "Recent allow/deny decisions recorded by the engine."}
+            </SheetDescription>
           </SheetHeader>
-          <div className="mt-4">
-            {drawer === "resources" ? <ResourcesPanel /> : null}
-            {drawer === "check" ? <CheckPanel /> : null}
-            {drawer === "decisions" ? <DecisionsPanel /> : null}
-          </div>
+          <ScrollArea className="flex-1">
+            <div className="px-6 py-6">
+              {drawer === "resources" ? <ResourcesPanel /> : null}
+              {drawer === "check" ? <CheckPanel /> : null}
+              {drawer === "decisions" ? <DecisionsPanel /> : null}
+            </div>
+          </ScrollArea>
         </SheetContent>
       </Sheet>
     </div>
@@ -242,106 +308,127 @@ function TenantRail({
   }, [list.data, query]);
 
   return (
-    <aside className="flex h-full flex-col rounded-2xl border border-[color:var(--color-border,#e5e7eb)] bg-[color:var(--color-surface,#fff)]/40">
-      <div className="flex items-center justify-between border-b border-[color:var(--color-border,#e5e7eb)] px-3 py-2">
+    <Card
+      size="sm"
+      className="sticky top-4 flex h-fit max-h-[calc(100vh-2rem)] flex-col gap-0 overflow-hidden p-0"
+    >
+      <div className="flex items-center justify-between border-b border-border px-4 py-3">
         <button
           type="button"
-          className="text-sm font-semibold tracking-tight hover:underline"
+          className="flex items-center gap-2 text-sm font-semibold tracking-tight hover:text-primary"
           onClick={() => onSelect({ kind: "root" })}
         >
+          <Building2 className="size-4 text-muted-foreground" aria-hidden />
           {m.shell.tabs.tenants}
         </button>
-        <span className="text-xs opacity-60">{tenants.length}</span>
+        <Badge variant="secondary" className="font-mono text-[10px]">
+          {tenants.length}
+        </Badge>
       </div>
 
-      <div className="flex-1 overflow-y-auto px-1 py-2">
-        {list.isLoading ? (
-          <div className="px-3 py-4 text-xs opacity-60">{m.common.loading}</div>
-        ) : list.error ? (
-          // /v1/tenants is known broken in some envs — show a friendly,
-          // recoverable error instead of throwing.
-          <div className="px-3 py-3 text-xs">
-            <p className="text-[color:var(--color-danger,#dc2626)]">
-              {list.error.message || m.common.error}
-            </p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-2"
-              onClick={() => void list.refetch()}
-            >
-              {m.common.refresh}
-            </Button>
-          </div>
-        ) : tenants.length === 0 ? (
-          <div className="px-3 py-4 text-xs opacity-70">
-            <p>{m.common.empty}</p>
-            <Button
-              size="sm"
-              variant="outline"
-              className="mt-2"
-              onClick={() => onSelect({ kind: "root" })}
-            >
-              {m.tenants.form.submit}
-            </Button>
-          </div>
-        ) : (
-          <ul className="grid gap-0.5">
-            {tenants.map((t) => {
-              const isOpen = expanded[t.id] ?? false;
-              const isSel = selectedTenantId === t.id;
-              return (
-                <li key={t.id}>
-                  <div
-                    className={
-                      isSel
-                        ? "flex items-center gap-1 rounded-md bg-[color:var(--color-accent-soft,#eef2ff)] px-2 py-1"
-                        : "flex items-center gap-1 rounded-md px-2 py-1 hover:bg-[color:var(--color-muted,#f9fafb)]"
-                    }
-                  >
-                    <button
-                      type="button"
-                      aria-label={isOpen ? "Collapse" : "Expand"}
-                      className="grid h-4 w-4 place-items-center text-xs opacity-60"
-                      onClick={() => setExpanded((e) => ({ ...e, [t.id]: !isOpen }))}
+      <ScrollArea className="flex-1">
+        <div className="px-2 py-2">
+          {list.isLoading ? (
+            <div className="px-3 py-4 text-xs text-muted-foreground">
+              {m.common.loading}
+            </div>
+          ) : list.error ? (
+            <div className="grid gap-2 px-3 py-3 text-xs">
+              <p className="text-destructive">
+                {list.error.message || m.common.error}
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void list.refetch()}
+              >
+                {m.common.refresh}
+              </Button>
+            </div>
+          ) : tenants.length === 0 ? (
+            <div className="grid gap-2 px-3 py-4 text-xs text-muted-foreground">
+              <p>{m.common.empty}</p>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => onSelect({ kind: "root" })}
+              >
+                {m.tenants.form.submit}
+              </Button>
+            </div>
+          ) : (
+            <ul className="grid gap-0.5">
+              {tenants.map((t) => {
+                const isOpen = expanded[t.id] ?? false;
+                const isSel = selectedTenantId === t.id;
+                const Chevron = isOpen ? ChevronDown : ChevronRight;
+                return (
+                  <li key={t.id}>
+                    <div
+                      className={cn(
+                        "group flex items-center gap-1 rounded-md px-1.5 py-1 transition-colors",
+                        isSel
+                          ? "bg-accent text-accent-foreground"
+                          : "hover:bg-muted/60",
+                      )}
                     >
-                      {isOpen ? "▾" : "▸"}
-                    </button>
-                    <button
-                      type="button"
-                      className="flex-1 truncate text-left text-sm"
-                      onClick={() => onSelect({ kind: "tenant", tenantId: t.id })}
-                      title={t.display_name}
-                    >
-                      <span className="font-medium">{t.display_name}</span>
-                      <span className="ml-2 text-xs opacity-60">
-                        <code>{t.slug}</code>
-                      </span>
-                    </button>
-                  </div>
-                  {isOpen ? (
-                    <TenantChildren
-                      tenantId={t.id}
-                      selected={selected}
-                      onSelect={onSelect}
-                    />
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        )}
-      </div>
+                      <button
+                        type="button"
+                        aria-label={isOpen ? "Collapse" : "Expand"}
+                        className="grid size-5 place-items-center rounded text-muted-foreground hover:bg-background hover:text-foreground"
+                        onClick={() =>
+                          setExpanded((e) => ({ ...e, [t.id]: !isOpen }))
+                        }
+                      >
+                        <Chevron className="size-3.5" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        className="flex flex-1 items-center gap-2 truncate text-left text-sm"
+                        onClick={() =>
+                          onSelect({ kind: "tenant", tenantId: t.id })
+                        }
+                        title={t.display_name}
+                      >
+                        <span className="truncate font-medium">
+                          {t.display_name}
+                        </span>
+                        <code className="ml-auto text-[10px] text-muted-foreground">
+                          {t.slug}
+                        </code>
+                      </button>
+                    </div>
+                    {isOpen ? (
+                      <TenantChildren
+                        tenantId={t.id}
+                        selected={selected}
+                        onSelect={onSelect}
+                      />
+                    ) : null}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </div>
+      </ScrollArea>
 
-      <div className="border-t border-[color:var(--color-border,#e5e7eb)] p-2">
-        <Input
-          value={query}
-          onChange={(e) => setQuery(e.currentTarget.value)}
-          placeholder="Search tenants…"
-          aria-label="Search tenants"
-        />
+      <div className="border-t border-border p-2">
+        <div className="relative">
+          <Search
+            className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+            aria-hidden
+          />
+          <Input
+            value={query}
+            onChange={(e) => setQuery(e.currentTarget.value)}
+            placeholder="Search tenants…"
+            aria-label="Search tenants"
+            className="pl-8"
+          />
+        </div>
       </div>
-    </aside>
+    </Card>
   );
 }
 
@@ -359,40 +446,44 @@ function TenantChildren({
   const selectedTeamId = selected.kind === "team" ? selected.teamId : undefined;
 
   return (
-    <ul className="ml-5 grid gap-0.5 border-l border-[color:var(--color-border,#e5e7eb)] pl-2 py-1">
+    <ul className="ml-4 grid gap-0.5 border-l border-border pl-2 py-1">
       <li>
-        <div className="px-2 py-0.5 text-[11px] uppercase tracking-wider opacity-60">
+        <div className="flex items-center gap-1.5 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          <Users className="size-3" aria-hidden />
           {m.shell.tabs.teams}
         </div>
         {teams.isLoading ? (
-          <div className="px-2 py-1 text-xs opacity-60">{m.common.loading}</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground">
+            {m.common.loading}
+          </div>
         ) : teams.error ? (
-          <div className="px-2 py-1 text-xs text-[color:var(--color-danger,#dc2626)]">
+          <div className="px-2 py-1 text-xs text-destructive">
             {teams.error.message}
           </div>
         ) : (teams.data ?? []).length === 0 ? (
-          <div className="px-2 py-1 text-xs opacity-60">—</div>
+          <div className="px-2 py-1 text-xs text-muted-foreground">—</div>
         ) : (
-          <ul>
+          <ul className="grid gap-0.5">
             {(teams.data ?? []).map((tm) => {
               const isSel = selectedTeamId === tm.id;
               return (
                 <li key={tm.id}>
                   <button
                     type="button"
-                    className={
+                    className={cn(
+                      "flex w-full items-center gap-2 rounded-md px-2 py-1 text-left text-sm transition-colors",
                       isSel
-                        ? "block w-full rounded-md bg-[color:var(--color-accent-soft,#eef2ff)] px-2 py-1 text-left text-sm"
-                        : "block w-full rounded-md px-2 py-1 text-left text-sm hover:bg-[color:var(--color-muted,#f9fafb)]"
-                    }
+                        ? "bg-accent text-accent-foreground"
+                        : "hover:bg-muted/60",
+                    )}
                     onClick={() =>
                       onSelect({ kind: "team", tenantId, teamId: tm.id })
                     }
                   >
-                    <span>{tm.display_name}</span>
-                    <span className="ml-2 text-xs opacity-60">
-                      <code>{tm.slug}</code>
-                    </span>
+                    <span className="truncate">{tm.display_name}</span>
+                    <code className="ml-auto text-[10px] text-muted-foreground">
+                      {tm.slug}
+                    </code>
                   </button>
                 </li>
               );
@@ -403,24 +494,21 @@ function TenantChildren({
       <li>
         <button
           type="button"
-          className="block w-full rounded-md px-2 py-1 text-left text-sm hover:bg-[color:var(--color-muted,#f9fafb)]"
+          className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
           onClick={() => onSelect({ kind: "tenant", tenantId })}
         >
-          <span className="text-[11px] uppercase tracking-wider opacity-60">
-            {m.shell.tabs.members}
-          </span>
+          <UserRound className="size-3" aria-hidden />
+          {m.shell.tabs.members}
         </button>
       </li>
       <li>
-        {/* "Users" sub-node — Agent C populates the actual list. */}
         <button
           type="button"
-          className="block w-full rounded-md px-2 py-1 text-left text-sm hover:bg-[color:var(--color-muted,#f9fafb)]"
+          className="flex w-full items-center gap-1.5 rounded-md px-2 py-1 text-left text-[10px] font-semibold uppercase tracking-wider text-muted-foreground transition-colors hover:bg-muted/60 hover:text-foreground"
           onClick={() => onSelect({ kind: "tenant", tenantId })}
         >
-          <span className="text-[11px] uppercase tracking-wider opacity-60">
-            Users
-          </span>
+          <UserRound className="size-3" aria-hidden />
+          Users
         </button>
       </li>
     </ul>
@@ -460,20 +548,49 @@ function RootDetail({ onSelect }: { onSelect: (n: SelectedNode) => void }) {
   const m = useAuthzMessages();
   return (
     <Tabs defaultValue="overview">
-      <TabsList className="flex-wrap">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="tenants">{m.shell.tabs.tenants}</TabsTrigger>
+      <TabsList>
+        <TabsTrigger value="overview">
+          <Activity className="size-4" aria-hidden />
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="tenants">
+          <Building2 className="size-4" aria-hidden />
+          {m.shell.tabs.tenants}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="mt-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Access Control</CardTitle>
+          <CardHeader className="border-b">
+            <CardTitle className="flex items-center gap-2">
+              <CircleHelp className="size-4 text-muted-foreground" aria-hidden />
+              Getting started
+            </CardTitle>
+            <CardDescription>
+              Access Control is scoped to whatever you pick in the left rail.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="text-sm opacity-80">
-            <p>
-              Pick a tenant in the left rail to manage its teams, members,
-              rules, and assignments. Use the toolbar buttons for the global
-              Resources catalog, dry-run Check, and Decisions audit feed.
+          <CardContent className="grid gap-4 text-sm">
+            <div className="grid gap-3 sm:grid-cols-3">
+              <RailHint
+                icon={Building2}
+                title="Pick a tenant"
+                body="Manage its teams, members, rules, and assignments from the right pane."
+              />
+              <RailHint
+                icon={Layers}
+                title="Browse resources"
+                body="Use the Resources button to inspect what kinds the engine knows about."
+              />
+              <RailHint
+                icon={ShieldCheck}
+                title="Dry-run a check"
+                body="Use Check to test a (principal, action, resource) without writing a rule."
+              />
+            </div>
+            <Separator />
+            <p className="text-muted-foreground">
+              The toolbar buttons (Resources, Check, Decisions) stay global —
+              they open in a side panel and never close your tenant context.
             </p>
           </CardContent>
         </Card>
@@ -487,6 +604,26 @@ function RootDetail({ onSelect }: { onSelect: (n: SelectedNode) => void }) {
   );
 }
 
+function RailHint({
+  icon: Icon,
+  title,
+  body,
+}: {
+  icon: typeof Building2;
+  title: string;
+  body: string;
+}) {
+  return (
+    <div className="grid gap-2 rounded-xl border border-border bg-muted/30 p-4">
+      <div className="flex items-center gap-2 text-sm font-medium">
+        <Icon className="size-4 text-muted-foreground" aria-hidden />
+        {title}
+      </div>
+      <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
+    </div>
+  );
+}
+
 function TenantDetail({
   tenantId,
   enableTeamMode,
@@ -497,13 +634,28 @@ function TenantDetail({
   const m = useAuthzMessages();
   return (
     <Tabs defaultValue="overview">
-      <TabsList className="flex-wrap">
-        <TabsTrigger value="overview">Overview</TabsTrigger>
-        <TabsTrigger value="teams">{m.shell.tabs.teams}</TabsTrigger>
-        <TabsTrigger value="members">{m.shell.tabs.members}</TabsTrigger>
-        <TabsTrigger value="rules">{m.shell.tabs.rules}</TabsTrigger>
+      <TabsList>
+        <TabsTrigger value="overview">
+          <Activity className="size-4" aria-hidden />
+          Overview
+        </TabsTrigger>
+        <TabsTrigger value="teams">
+          <Users className="size-4" aria-hidden />
+          {m.shell.tabs.teams}
+        </TabsTrigger>
+        <TabsTrigger value="members">
+          <UserRound className="size-4" aria-hidden />
+          {m.shell.tabs.members}
+        </TabsTrigger>
+        <TabsTrigger value="rules">
+          <ShieldCheck className="size-4" aria-hidden />
+          {m.shell.tabs.rules}
+        </TabsTrigger>
         <TabsTrigger value="assignments">{m.shell.tabs.assignments}</TabsTrigger>
-        <TabsTrigger value="decisions">{m.shell.tabs.decisions}</TabsTrigger>
+        <TabsTrigger value="decisions">
+          <FileSearch className="size-4" aria-hidden />
+          {m.shell.tabs.decisions}
+        </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="mt-6">
         <TenantOverview tenantId={tenantId} />
