@@ -107,10 +107,7 @@ impl AdminState {
     }
 
     /// Builder: set the registered cache spec map.
-    pub fn with_cache_registry(
-        mut self,
-        registry: starter_ext_server::KindCacheRegistry,
-    ) -> Self {
+    pub fn with_cache_registry(mut self, registry: starter_ext_server::KindCacheRegistry) -> Self {
         self.cache_registry = Some(registry);
         self
     }

@@ -20,7 +20,9 @@ use serde_json::json;
 use starter_cache::{CacheLayer, LayerConfig};
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_sdk::builtin::{BuiltinEntry, BuiltinTable};
-use starter_ext_server::{BuiltinRestDispatcher, DispatcherCache, KindCacheRegistry, RestDispatcher};
+use starter_ext_server::{
+    BuiltinRestDispatcher, DispatcherCache, KindCacheRegistry, RestDispatcher,
+};
 use starter_ext_spi::ExtensionId;
 use tempfile::tempdir;
 
@@ -104,11 +106,8 @@ fn build_dispatcher_with_cache(
     let table = table_with_counter(counter);
     let layer = CacheLayer::new(LayerConfig::default());
     let kind_registry = KindCacheRegistry::from_entries(registry_entries);
-    let dispatch =
-        BuiltinRestDispatcher::new(table, registry).with_cache(DispatcherCache::new(
-            layer.clone(),
-            kind_registry,
-        ));
+    let dispatch = BuiltinRestDispatcher::new(table, registry)
+        .with_cache(DispatcherCache::new(layer.clone(), kind_registry));
     (dispatch, layer, tmp)
 }
 
@@ -125,7 +124,11 @@ async fn dispatch_without_sidecar_runs_every_call() {
             .await
             .unwrap();
     }
-    assert_eq!(counter.load(Ordering::SeqCst), 3, "no cache → loader runs every call");
+    assert_eq!(
+        counter.load(Ordering::SeqCst),
+        3,
+        "no cache → loader runs every call"
+    );
 }
 
 #[tokio::test]
@@ -148,12 +151,21 @@ async fn dispatch_with_sidecar_caches_repeated_calls() {
 
     for _ in 0..5 {
         let v = dispatch
-            .dispatch(&ext, "com.acme.cache.usage", json!({ "from": 0 }), Some(caller.clone()))
+            .dispatch(
+                &ext,
+                "com.acme.cache.usage",
+                json!({ "from": 0 }),
+                Some(caller.clone()),
+            )
             .await
             .unwrap();
         assert_eq!(v["kind"], "com.acme.cache.usage");
     }
-    assert_eq!(counter.load(Ordering::SeqCst), 1, "loader runs once across 5 hits");
+    assert_eq!(
+        counter.load(Ordering::SeqCst),
+        1,
+        "loader runs once across 5 hits"
+    );
 }
 
 #[tokio::test]
@@ -175,11 +187,21 @@ async fn invalidate_drops_dispatcher_cache_entry() {
     };
 
     let _ = dispatch
-        .dispatch(&ext, "com.acme.cache.usage", json!({}), Some(caller.clone()))
+        .dispatch(
+            &ext,
+            "com.acme.cache.usage",
+            json!({}),
+            Some(caller.clone()),
+        )
         .await
         .unwrap();
     let _ = dispatch
-        .dispatch(&ext, "com.acme.cache.usage", json!({}), Some(caller.clone()))
+        .dispatch(
+            &ext,
+            "com.acme.cache.usage",
+            json!({}),
+            Some(caller.clone()),
+        )
         .await
         .unwrap();
     assert_eq!(counter.load(Ordering::SeqCst), 1);
@@ -194,7 +216,11 @@ async fn invalidate_drops_dispatcher_cache_entry() {
         .dispatch(&ext, "com.acme.cache.usage", json!({}), Some(caller))
         .await
         .unwrap();
-    assert_eq!(counter.load(Ordering::SeqCst), 2, "post-invalidate dispatch re-runs the loader");
+    assert_eq!(
+        counter.load(Ordering::SeqCst),
+        2,
+        "post-invalidate dispatch re-runs the loader"
+    );
 }
 
 /// Streaming dispatch is deliberately never wrapped in the cache,
@@ -255,7 +281,12 @@ async fn per_spec_stats_record_by_kind_id() {
 
     for _ in 0..4 {
         let _ = dispatch
-            .dispatch(&ext, "com.acme.cache.usage", json!({}), Some(caller.clone()))
+            .dispatch(
+                &ext,
+                "com.acme.cache.usage",
+                json!({}),
+                Some(caller.clone()),
+            )
             .await
             .unwrap();
     }

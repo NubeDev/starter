@@ -75,10 +75,7 @@ async fn seed_lands_user_and_team_as_audit_floor() {
 
     assert_eq!(
         floor,
-        vec![
-            ("team".to_string(), None),
-            ("user".to_string(), None),
-        ],
+        vec![("team".to_string(), None), ("user".to_string(), None),],
         "rubix seed must pin `user` and `team` to NULL (keep forever)",
     );
 }

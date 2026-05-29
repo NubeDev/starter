@@ -101,9 +101,8 @@ pub fn frame_to_sse(frame: &StreamFrame) -> Result<SseEvent, Infallible> {
                 error = %e,
                 "stream frame serialisation failed",
             );
-            Ok(SseEvent::default().data(
-                json!({"type":"error","message":"frame serialisation failed"}).to_string(),
-            ))
+            Ok(SseEvent::default()
+                .data(json!({"type":"error","message":"frame serialisation failed"}).to_string()))
         }
     }
 }

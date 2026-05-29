@@ -66,9 +66,9 @@ pub use stats::CacheStats;
 
 pub use clock::{Clock, MockClock, SystemClock};
 pub use invalidator::{InMemoryInvalidator, Invalidator, TokenSnapshot};
-pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig};
+pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig, LoadOutcome};
 pub use per_spec_stats::{
     LoadLatency, LoadLatencySnapshot, PerSpecSnapshot, PerSpecStats, SpecCounters,
 };
-pub use spec::{CacheScope, CacheSidecar, CacheSpec, InvalidateOn, SpecParseError};
+pub use spec::{BucketTagSpec, CacheScope, CacheSidecar, CacheSpec, InvalidateOn, SpecParseError};
 pub use tracing_cache::{CacheEvent, TracingCache};

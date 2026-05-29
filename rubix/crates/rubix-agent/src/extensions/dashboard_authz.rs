@@ -485,13 +485,8 @@ mod tests {
     #[tokio::test(flavor = "multi_thread")]
     async fn dashboard_read_unknown_page_is_not_found() {
         let store: Arc<dyn DashboardStore> = Arc::new(MemStore::default());
-        let backend = RubixDashboardBackend::new(
-            store,
-            Some("t-1".into()),
-            Some("u-1".into()),
-            None,
-            None,
-        );
+        let backend =
+            RubixDashboardBackend::new(store, Some("t-1".into()), Some("u-1".into()), None, None);
         let err = backend.read("missing").expect_err("not found");
         assert!(matches!(err, Error::ExtensionInternal(_)), "got {err:?}");
     }
@@ -609,7 +604,9 @@ mod tests {
             Some(grant),
             None,
         );
-        let err = backend.read("p1").expect_err("out-of-grant page must refuse");
+        let err = backend
+            .read("p1")
+            .expect_err("out-of-grant page must refuse");
         assert!(matches!(err, Error::Capability(_)), "got {err:?}");
     }
 
@@ -679,8 +676,7 @@ mod tests {
             roles: vec!["Reader".into()],
             request_id: String::new(),
         };
-        let grant: BTreeSet<String> =
-            ["rubix.dashboard.page".to_string()].into_iter().collect();
+        let grant: BTreeSet<String> = ["rubix.dashboard.page".to_string()].into_iter().collect();
         let backend = RubixAuthzBackend::new(engine, Some(&caller), Some(grant));
         let allow = backend
             .check("view", "rubix.dashboard.page:p1")

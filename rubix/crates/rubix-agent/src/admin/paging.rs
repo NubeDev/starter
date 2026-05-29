@@ -49,12 +49,8 @@ pub fn encode_cursor(id: &str) -> Cursor {
 pub fn resolve_limit(requested: Option<usize>) -> Result<usize, PageError> {
     match requested {
         None => Ok(DEFAULT_PAGE_SIZE),
-        Some(0) => Err(PageError::InvalidLimit {
-            max: MAX_PAGE_SIZE,
-        }),
-        Some(n) if n > MAX_PAGE_SIZE => Err(PageError::InvalidLimit {
-            max: MAX_PAGE_SIZE,
-        }),
+        Some(0) => Err(PageError::InvalidLimit { max: MAX_PAGE_SIZE }),
+        Some(n) if n > MAX_PAGE_SIZE => Err(PageError::InvalidLimit { max: MAX_PAGE_SIZE }),
         Some(n) => Ok(n),
     }
 }
@@ -100,12 +96,7 @@ mod tests {
 
     #[test]
     fn paginate_emits_cursor_when_more_remain() {
-        let page = paginate(
-            vec![item("a"), item("b"), item("c"), item("d")],
-            None,
-            2,
-        )
-        .unwrap();
+        let page = paginate(vec![item("a"), item("b"), item("c"), item("d")], None, 2).unwrap();
         assert_eq!(page.items.len(), 2);
         assert_eq!(page.items[0].id, "a");
         assert_eq!(page.items[1].id, "b");
@@ -127,7 +118,10 @@ mod tests {
             50,
         )
         .unwrap();
-        assert_eq!(page.items.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(), vec!["c", "d"]);
+        assert_eq!(
+            page.items.iter().map(|i| i.id.as_str()).collect::<Vec<_>>(),
+            vec!["c", "d"]
+        );
     }
 
     #[test]

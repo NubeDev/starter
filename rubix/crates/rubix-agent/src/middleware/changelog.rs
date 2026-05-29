@@ -92,8 +92,7 @@ async fn record_request(
     next: Next,
 ) -> Response {
     // -- 1. Skip when the request isn't a tool dispatch.
-    let Some(tool_id) = tool_id_from_any_prefix(req.uri().path(), &state.tool_path_prefixes)
-    else {
+    let Some(tool_id) = tool_id_from_any_prefix(req.uri().path(), &state.tool_path_prefixes) else {
         return next.run(req).await;
     };
 
@@ -188,9 +187,7 @@ fn tool_id_from_path(path: &str, prefix: &str) -> Option<String> {
 
 /// Try each `prefix` in order; the first match wins.
 fn tool_id_from_any_prefix(path: &str, prefixes: &[String]) -> Option<String> {
-    prefixes
-        .iter()
-        .find_map(|p| tool_id_from_path(path, p))
+    prefixes.iter().find_map(|p| tool_id_from_path(path, p))
 }
 
 /// Best-effort JSON parse for the audit payload. Non-JSON bodies

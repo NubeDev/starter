@@ -33,4 +33,10 @@ fn canary_sidecar_parses() {
         spec.derived_tags(),
         vec!["table:com_nubeio_rubixos__histories".to_string()]
     );
+    // v1: smoke-test that the canary carries the SWR opt-in.
+    assert_eq!(
+        spec.stale_while_revalidate,
+        std::time::Duration::from_secs(30),
+        "canary sidecar must declare stale_while_revalidate: 30s"
+    );
 }

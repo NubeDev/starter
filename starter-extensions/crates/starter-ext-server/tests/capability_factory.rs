@@ -14,9 +14,7 @@ use serde_json::{json, Value};
 use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_ext_sdk::builtin::{BuiltinEntry, BuiltinTable};
 use starter_ext_sdk::ctx::{EventBusBackend, WarehouseReadBackend};
-use starter_ext_server::{
-    BuiltinRestDispatcher, CapabilityFactory, DispatchError, RestDispatcher,
-};
+use starter_ext_server::{BuiltinRestDispatcher, CapabilityFactory, DispatchError, RestDispatcher};
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::warehouse::{Row, TemplateSpec};
 use starter_ext_spi::{Error, ExtensionId, Result as ExtResult};
@@ -73,22 +71,23 @@ fn load_registry(root: &std::path::Path) -> Arc<ExtensionRegistry> {
 fn read_calling_table() -> Arc<BuiltinTable> {
     let mut table = BuiltinTable::new();
     let ext = ExtensionId::new("com.acme.cap").unwrap();
-    let entry = BuiltinEntry::new(
-        &["com.acme.cap.read"],
-        |contribute_id, ctx, _params| match contribute_id {
-            "com.acme.cap.read" => {
-                // Whatever the warehouse_read backend says, surface
-                // it as the success payload so the test can match on
-                // the wording. `Err` paths go through
-                // `DispatchError::from_kernel` instead.
-                match ctx.warehouse_read().query("any_template", json!({})) {
-                    Ok(rows) => Ok(json!({ "ok": rows.len() })),
-                    Err(e) => Ok(json!({ "err": e.to_string() })),
+    let entry =
+        BuiltinEntry::new(
+            &["com.acme.cap.read"],
+            |contribute_id, ctx, _params| match contribute_id {
+                "com.acme.cap.read" => {
+                    // Whatever the warehouse_read backend says, surface
+                    // it as the success payload so the test can match on
+                    // the wording. `Err` paths go through
+                    // `DispatchError::from_kernel` instead.
+                    match ctx.warehouse_read().query("any_template", json!({})) {
+                        Ok(rows) => Ok(json!({ "ok": rows.len() })),
+                        Err(e) => Ok(json!({ "err": e.to_string() })),
+                    }
                 }
-            }
-            other => Err(Error::validation(format!("unknown: {other}"))),
-        },
-    );
+                other => Err(Error::validation(format!("unknown: {other}"))),
+            },
+        );
     table.insert(ext, entry);
     Arc::new(table)
 }
@@ -152,10 +151,7 @@ async fn dispatcher_dispatch_unknown_extension_is_not_found() {
         .dispatch(&bogus, "com.acme.cap.read", json!({}), None)
         .await
         .expect_err("must report not-found");
-    assert!(
-        matches!(err, DispatchError::NotFound(_)),
-        "got {err:?}"
-    );
+    assert!(matches!(err, DispatchError::NotFound(_)), "got {err:?}");
 }
 
 #[tokio::test]
@@ -199,8 +195,7 @@ async fn caller_identity_reaches_capability_factory() {
         seen_caller: seen_caller.clone(),
         seen_ext: seen_ext.clone(),
     });
-    let dispatcher =
-        BuiltinRestDispatcher::new(table, registry).with_capability_factory(factory);
+    let dispatcher = BuiltinRestDispatcher::new(table, registry).with_capability_factory(factory);
 
     let caller = CallerIdentity {
         tenant_id: Some("t-acme".into()),
@@ -216,7 +211,9 @@ async fn caller_identity_reaches_capability_factory() {
 
     let observed_caller = seen_caller.lock().unwrap().clone();
     assert_eq!(
-        observed_caller.as_ref().and_then(|c| c.tenant_id.as_deref()),
+        observed_caller
+            .as_ref()
+            .and_then(|c| c.tenant_id.as_deref()),
         Some("t-acme"),
         "factory did not receive the caller's tenant_id"
     );

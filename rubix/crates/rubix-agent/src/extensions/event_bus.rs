@@ -285,14 +285,9 @@ mod tests {
         let bus = Arc::new(RubixEventBus::new());
         // Manifest granted publish on `com.acme.charts.filter` only —
         // a sibling topic in the same namespace must still refuse.
-        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()]
-            .into_iter()
-            .collect();
-        let backend = RubixEventBusBackend::with_grant(
-            bus,
-            Some("com.acme.charts".to_owned()),
-            Some(grant),
-        );
+        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()].into_iter().collect();
+        let backend =
+            RubixEventBusBackend::with_grant(bus, Some("com.acme.charts".to_owned()), Some(grant));
         let err = backend
             .publish("com.acme.charts.other", JsonValue::Null)
             .expect_err("out-of-grant topic must refuse");
@@ -302,14 +297,9 @@ mod tests {
     #[test]
     fn publish_inside_grant_passes_to_namespace_check() {
         let bus = Arc::new(RubixEventBus::new());
-        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()]
-            .into_iter()
-            .collect();
-        let backend = RubixEventBusBackend::with_grant(
-            bus,
-            Some("com.acme.charts".to_owned()),
-            Some(grant),
-        );
+        let grant: BTreeSet<String> = ["com.acme.charts.filter".to_string()].into_iter().collect();
+        let backend =
+            RubixEventBusBackend::with_grant(bus, Some("com.acme.charts".to_owned()), Some(grant));
         backend
             .publish("com.acme.charts.filter", JsonValue::Null)
             .expect("in-grant + in-namespace publishes");
@@ -343,11 +333,8 @@ mod tests {
         // *tighter* one wins.
         let bus = Arc::new(RubixEventBus::new());
         let grant: BTreeSet<String> = ["com.evil.cross".to_string()].into_iter().collect();
-        let backend = RubixEventBusBackend::with_grant(
-            bus,
-            Some("com.acme.charts".to_owned()),
-            Some(grant),
-        );
+        let backend =
+            RubixEventBusBackend::with_grant(bus, Some("com.acme.charts".to_owned()), Some(grant));
         let err = backend
             .publish("com.evil.cross", JsonValue::Null)
             .expect_err("namespace gate still refuses an over-broad operator grant");

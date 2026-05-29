@@ -18,16 +18,8 @@ fn count(kind: RegistryKind, state: &AdminState) -> usize {
     match kind {
         RegistryKind::Tool => state.tools.len(),
         RegistryKind::Node => state.node_behaviors.len(),
-        RegistryKind::Rule => state
-            .rules
-            .as_ref()
-            .map(|r| r.len())
-            .unwrap_or(0),
-        RegistryKind::Template => state
-            .templates
-            .as_ref()
-            .map(|t| t.len())
-            .unwrap_or(0),
+        RegistryKind::Rule => state.rules.as_ref().map(|r| r.len()).unwrap_or(0),
+        RegistryKind::Template => state.templates.as_ref().map(|t| t.len()).unwrap_or(0),
         RegistryKind::Table => super::tables::table_items(state.extensions.as_ref()).len(),
         RegistryKind::Skill => super::skills::skill_items().len(),
         RegistryKind::Extension => state

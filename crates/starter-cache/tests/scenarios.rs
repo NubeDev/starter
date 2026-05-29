@@ -10,7 +10,7 @@
 
 use starter_cache::{
     CacheLayer, CacheScope, CacheSpec, CallerScope, InMemoryInvalidator, Invalidator, LayerConfig,
-    MockClock, SystemClock,
+    LoadOutcome, MockClock, SystemClock,
 };
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -280,7 +280,10 @@ async fn load_latency_histogram_buckets_misses_only() {
     assert_eq!(row.spec_id, "ext.kind.slow");
     assert_eq!(row.hits, 2);
     assert_eq!(row.misses, 1);
-    assert_eq!(row.load_latency.count, 1, "hit calls do not pollute latency");
+    assert_eq!(
+        row.load_latency.count, 1,
+        "hit calls do not pollute latency"
+    );
     assert_eq!(
         row.load_latency.le_100ms, 1,
         "50ms sample lands in le_100ms"
@@ -334,6 +337,151 @@ async fn per_spec_stats_accumulate_separately() {
     assert_eq!(snap[1].spec_id, "ext.kind.beta");
     assert_eq!(snap[1].misses, 1);
     assert_eq!(snap[1].hits, 4);
+}
+
+/// v1 SWR — inside the stale_while_revalidate window the cached
+/// value is served as a hit; the next caller for the same key drives
+/// the refresh. Uses MockClock so the SWR boundary is deterministic.
+#[tokio::test]
+async fn swr_stale_served_while_refresh_pending() {
+    let clock = MockClock::new();
+    let layer = CacheLayer::with_parts(
+        LayerConfig::default(),
+        Arc::new(clock.clone()),
+        Arc::new(InMemoryInvalidator::new()),
+    );
+    let spec = CacheSpec::ttl(Duration::from_secs(60))
+        .stale_while_revalidate(Duration::from_secs(30))
+        .scope(CacheScope::Tenant);
+    let caller = CallerScope::new("tA", "uX");
+    let calls = Arc::new(AtomicU32::new(0));
+
+    // Initial load.
+    let calls_clone = calls.clone();
+    let v = layer
+        .get_or_load(&spec, &caller, "k1", || async move {
+            calls_clone.fetch_add(1, Ordering::SeqCst);
+            Ok::<_, std::convert::Infallible>(b("v1"))
+        })
+        .await
+        .unwrap();
+    assert_eq!(&*v, b"v1");
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+    // Advance into the SWR window (age = 45s, fresh-until = 30s,
+    // stale-limit = 60 + 120 = 180s).
+    clock.advance(Duration::from_secs(45));
+
+    // Second call: served stale (v1) — does NOT run the loader.
+    let calls_clone = calls.clone();
+    let v = layer
+        .get_or_load(&spec, &caller, "k1", || async move {
+            calls_clone.fetch_add(1, Ordering::SeqCst);
+            Ok::<_, std::convert::Infallible>(b("v2-should-not-run"))
+        })
+        .await
+        .unwrap();
+    assert_eq!(&*v, b"v1", "SWR window must serve stale");
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        1,
+        "first SWR-window hit must not invoke the loader"
+    );
+
+    // Third call: the marker is set, so this caller drives the
+    // refresh.
+    let calls_clone = calls.clone();
+    let v = layer
+        .get_or_load(&spec, &caller, "k1", || async move {
+            calls_clone.fetch_add(1, Ordering::SeqCst);
+            Ok::<_, std::convert::Infallible>(b("v2"))
+        })
+        .await
+        .unwrap();
+    assert_eq!(&*v, b"v2", "second SWR-window call drives the refresh");
+    assert_eq!(calls.load(Ordering::SeqCst), 2);
+}
+
+/// v1 empty-result handling — when the loader returns
+/// `LoadOutcome::Empty`, the layer caches the marker under
+/// `empty_ttl` and serves subsequent reads as hits until that
+/// shorter TTL elapses.
+#[tokio::test]
+async fn empty_result_respects_empty_ttl() {
+    let clock = MockClock::new();
+    let layer = CacheLayer::with_parts(
+        LayerConfig::default(),
+        Arc::new(clock.clone()),
+        Arc::new(InMemoryInvalidator::new()),
+    );
+    let spec = CacheSpec::ttl(Duration::from_secs(60))
+        .empty_ttl(Duration::from_secs(5))
+        .scope(CacheScope::Tenant);
+    let caller = CallerScope::new("tA", "uX");
+    let calls = Arc::new(AtomicU32::new(0));
+
+    // First call: Empty.
+    let calls_clone = calls.clone();
+    let outcome = layer
+        .get_or_load_labelled_outcome::<_, _, std::convert::Infallible>(
+            &spec,
+            None,
+            &caller,
+            "k1",
+            move || async move {
+                calls_clone.fetch_add(1, Ordering::SeqCst);
+                Ok(LoadOutcome::Empty)
+            },
+        )
+        .await
+        .unwrap();
+    assert!(outcome.is_empty());
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+
+    // Within empty_ttl: served as cached Empty (no loader call).
+    clock.advance(Duration::from_secs(2));
+    let calls_clone = calls.clone();
+    let outcome = layer
+        .get_or_load_labelled_outcome::<_, _, std::convert::Infallible>(
+            &spec,
+            None,
+            &caller,
+            "k1",
+            move || async move {
+                calls_clone.fetch_add(1, Ordering::SeqCst);
+                Ok(LoadOutcome::Empty)
+            },
+        )
+        .await
+        .unwrap();
+    assert!(outcome.is_empty());
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        1,
+        "Empty cached within empty_ttl"
+    );
+
+    // Past empty_ttl but well within ttl: re-runs loader.
+    clock.advance(Duration::from_secs(10));
+    let calls_clone = calls.clone();
+    let _ = layer
+        .get_or_load_labelled_outcome::<_, _, std::convert::Infallible>(
+            &spec,
+            None,
+            &caller,
+            "k1",
+            move || async move {
+                calls_clone.fetch_add(1, Ordering::SeqCst);
+                Ok(LoadOutcome::Value(b("rows")))
+            },
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        calls.load(Ordering::SeqCst),
+        2,
+        "Empty must expire at empty_ttl, not full ttl"
+    );
 }
 
 /// Scenario 5 — per-tenant weight cap evicts the noisy tenant's

@@ -92,8 +92,7 @@ async fn user_delete_cross_store_against_postgres() {
         .invoke(json!({ "user_id": "u-solo" }))
         .await
         .expect("delete unassigned user");
-    let resp: UserDeleteResponse =
-        serde_json::from_value(out).expect("UserDeleteResponse parses");
+    let resp: UserDeleteResponse = serde_json::from_value(out).expect("UserDeleteResponse parses");
     assert_eq!(resp.user_id, "u-solo");
     assert_eq!(resp.email, "solo@x");
     assert_eq!(resp.role, "reader");
@@ -158,15 +157,18 @@ async fn user_delete_cross_store_against_postgres() {
         .invoke(json!({ "email": "member@x" }))
         .await
         .expect("delete succeeds after unassign");
-    let resp: UserDeleteResponse =
-        serde_json::from_value(out).expect("UserDeleteResponse parses");
+    let resp: UserDeleteResponse = serde_json::from_value(out).expect("UserDeleteResponse parses");
     assert_eq!(resp.user_id, "u-member");
     assert_eq!(resp.email, "member@x");
     assert!(
         users.get("u-member").await.expect("get").is_none(),
         "user row gone after retry",
     );
-    let surviving = teams.get("t-ops").await.expect("get team").expect("present");
+    let surviving = teams
+        .get("t-ops")
+        .await
+        .expect("get team")
+        .expect("present");
     assert!(
         surviving.members.is_empty(),
         "team row preserved with empty members after user delete: {:?}",

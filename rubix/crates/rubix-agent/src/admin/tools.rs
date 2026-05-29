@@ -22,18 +22,12 @@ pub fn tool_items(
     tools: &[Arc<dyn Tool>],
     extensions: Option<&Arc<ExtensionRegistry>>,
 ) -> Vec<RegistryItem> {
-    tools
-        .iter()
-        .map(|t| to_item(&**t, extensions))
-        .collect()
+    tools.iter().map(|t| to_item(&**t, extensions)).collect()
 }
 
 /// Project a single tool. Surfaced so the per-id detail route can
 /// reuse the same shape without re-walking the registry.
-pub fn tool_to_item(
-    tool: &dyn Tool,
-    extensions: Option<&Arc<ExtensionRegistry>>,
-) -> RegistryItem {
+pub fn tool_to_item(tool: &dyn Tool, extensions: Option<&Arc<ExtensionRegistry>>) -> RegistryItem {
     to_item(tool, extensions)
 }
 

@@ -74,9 +74,7 @@ fn gated() -> axum::Router {
 fn post_invoke(tool_id: &str, body: Value, bearer: Option<&str>) -> Request<Body> {
     let mut b = Request::builder()
         .method("POST")
-        .uri(format!(
-            "/api/v1/admin/registry/tools/{tool_id}/invoke"
-        ))
+        .uri(format!("/api/v1/admin/registry/tools/{tool_id}/invoke"))
         .header("content-type", "application/json");
     if let Some(token) = bearer {
         b = b.header("authorization", format!("Bearer {token}"));

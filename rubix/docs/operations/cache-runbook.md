@@ -230,3 +230,92 @@ declared tables, the entry refreshes when its TTL expires. Pick a
 TTL no larger than the worst-case staleness your callers can
 tolerate; pick a TTL no smaller than the loader cost / refresh
 amortisation.
+
+## SWR explained (v1)
+
+`stale_while_revalidate` (SWR) is the **opt-in** mechanism that lets
+a cached entry keep answering while a follow-up refresh runs. It is
+a sidecar key:
+
+```yaml
+cache:
+  ttl: 60s
+  stale_while_revalidate: 30s   # serve cached values from age 30s..60s
+  max_stale: 120s               # ...and up to 120s past TTL (default 2*ttl)
+```
+
+Reading the timeline for a `ttl: 60s` + `stale_while_revalidate: 30s`
+spec:
+
+| Entry age          | What happens                                          |
+| ------------------ | ----------------------------------------------------- |
+| `0s..30s`          | Fresh hit. Loader is not called.                      |
+| `30s..(60s+120s)`  | **Stale hit.** Cached value returned. Entry is marked for refresh. |
+| `(60s+120s)..`     | Hard miss. Loader runs synchronously.                 |
+
+The first call inside the SWR window serves stale and **marks** the
+entry. The **next** call for the same key sees the marker and drives
+the refresh — it pays the loader cost so subsequent callers see a
+fresh entry. This is the v1 "caller-driven" refresh model; v3 will
+upgrade it to true background-spawned single-flight once the
+`WarehouseWriter` chokepoint ships (the two share the same `'static`
+refresher abstraction).
+
+Operator-facing implications:
+
+- A spec with `stale_while_revalidate: 30s` is **observably as fresh
+  as** a spec with `ttl: 30s`, but **two-thirds less loader pressure**
+  — the loader runs at the refresh cadence, not the hit cadence.
+- `max_stale` is the **safety net**, not the target. If callers
+  observe answers older than `ttl + max_stale`, the loader has been
+  failing — check error logs from the underlying handler.
+- An invalidation (`POST /admin/cache/invalidate` or a write-path
+  fire) drops the entry regardless of SWR window; the next read is
+  a hard miss.
+
+Empty results are caught by `empty_ttl` and **do not** participate in
+SWR/`max_stale`: an empty entry expires hard at `empty_ttl` (default
+`5s`, clamped to `min(empty_ttl, ttl)`). This is intentional —
+"the warehouse came back empty" is a transient answer that should
+not linger.
+
+## How to declare a writing handler (v1)
+
+The kind dispatcher fires `invalidate_tags(["table:T", ...])` after
+**every successful write call** through a registered handler.
+
+Wire it at host boot:
+
+```rust
+use starter_ext_server::rest::cache::{
+    DispatcherCache, HandlerCatalog, HandlerCatalogBuilder, HandlerMeta,
+};
+
+let mut h = HandlerCatalogBuilder::new();
+h.register(ext.clone(), "list_things", HandlerMeta::read_only())?;
+h.register(
+    ext.clone(),
+    "create_thing",
+    HandlerMeta::writing(["things", "thing_audits"]),
+)?;
+let dispatcher_cache = DispatcherCache::new(layer, kind_registry)
+    .with_handlers(h.build());
+```
+
+Rules the registration API enforces:
+
+- A writing handler **must** name at least one table in
+  `affects_tables`. Registering a writer without tables is a hard
+  error (`HandlerRegistrationError::WritingHandlerMissingTables`) —
+  silent best-effort wiring is the #1 way caches rot in production.
+- A read-only handler (`HandlerMeta::read_only()`) does no
+  invalidation. Use this for `list`/`get`/`describe` handlers.
+- A writing handler whose `affects_tables` is missed at registration
+  time will silently fail to invalidate. Pin the catalog with a unit
+  test the way you would pin a sidecar's contents.
+
+Handlers that route writes through the **warehouse** still rely on
+the (best-effort) `// TODO(cache-invalidation):` markers until the
+v3 `WarehouseWriter` chokepoint lands. The v1 dispatcher-fired path
+covers handlers the dispatcher owns directly — that is a real
+guarantee, not best-effort.

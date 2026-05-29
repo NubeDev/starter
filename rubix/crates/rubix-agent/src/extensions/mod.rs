@@ -35,6 +35,4 @@ pub use event_bus::{RubixEventBus, RubixEventBusBackend};
 pub use host_methods::RubixHostMethods;
 pub use rest_dispatcher::{CompositeRestDispatcher, EXTENSION_REST_REQUEST_TIMEOUT};
 pub use secrets_store::{pick_default as pick_default_secret_store, EnvSecretStore};
-pub use warehouse_write::{
-    full_table_name, sanitize_extension_id, RubixWarehouseWriteBackend,
-};
+pub use warehouse_write::{full_table_name, sanitize_extension_id, RubixWarehouseWriteBackend};

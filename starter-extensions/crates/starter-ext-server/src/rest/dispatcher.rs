@@ -34,8 +34,7 @@ use futures::stream::Stream;
 use starter_ext_host::ExtensionRegistry;
 use starter_ext_sdk::builtin::BuiltinTable;
 use starter_ext_sdk::ctx::{
-    Cancel, CtxInner, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend,
-    WallClockBackend,
+    Cancel, CtxInner, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend,
 };
 use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::jsonrpc::{StreamId, StreamNotification};
@@ -45,6 +44,29 @@ use tracing::{debug, warn};
 
 use crate::capabilities::{CapabilityFactory, StubCapabilityFactory};
 use crate::rest::cache::{caller_scope, dispatch_base_key, DispatcherCache};
+
+/// Fire write-path invalidation tags for the handler at
+/// `(extension, contribute_id)`. No-op when the cache is unwired,
+/// when no handler meta is registered, or when the handler is
+/// declared read-only.
+async fn fire_write_invalidation(
+    cache: Option<&DispatcherCache>,
+    extension: &ExtensionId,
+    contribute_id: &str,
+) {
+    let Some(cache) = cache else { return };
+    let Some(meta) = cache.handlers.get(extension, contribute_id) else {
+        return;
+    };
+    if meta.read_only {
+        return;
+    }
+    let tags = meta.invalidation_tags();
+    if tags.is_empty() {
+        return;
+    }
+    cache.layer.invalidator().invalidate_tags(&tags).await;
+}
 
 /// One streaming-event payload as it leaves the dispatcher. Carries the
 /// `stream_id` the initial dispatch allocated; the renderer (SSE or
@@ -382,9 +404,13 @@ impl RestDispatcher for BuiltinRestDispatcher {
             .and_then(|c| c.registry.get(extension, contribute_id).cloned());
 
         let Some(spec) = spec else {
-            return self
+            let result = self
                 .dispatch_inner(extension, contribute_id, input, caller.as_ref())
                 .await;
+            if result.is_ok() {
+                fire_write_invalidation(self.cache.as_ref(), extension, contribute_id).await;
+            }
+            return result;
         };
 
         // Cached path: wrap the inner dispatch in the cache layer.
@@ -404,25 +430,32 @@ impl RestDispatcher for BuiltinRestDispatcher {
         let caller_for_load = caller.clone();
         let this = self;
         let bytes = layer
-            .get_or_load_labelled(&spec, Some(&spec_id), &scope, &base_key, move || async move {
-                let v = this
-                    .dispatch_inner(
-                        &extension_owned,
-                        &contribute_id_owned,
-                        input,
-                        caller_for_load.as_ref(),
-                    )
-                    .await?;
-                let serialised = serde_json::to_vec(&v).map_err(|e| {
-                    DispatchError::Substrate(format!("cache: serialise dispatch result: {e}"))
-                })?;
-                Ok::<_, DispatchError>(std::sync::Arc::new(serialised))
-            })
+            .get_or_load_labelled(
+                &spec,
+                Some(&spec_id),
+                &scope,
+                &base_key,
+                move || async move {
+                    let v = this
+                        .dispatch_inner(
+                            &extension_owned,
+                            &contribute_id_owned,
+                            input,
+                            caller_for_load.as_ref(),
+                        )
+                        .await?;
+                    let serialised = serde_json::to_vec(&v).map_err(|e| {
+                        DispatchError::Substrate(format!("cache: serialise dispatch result: {e}"))
+                    })?;
+                    Ok::<_, DispatchError>(std::sync::Arc::new(serialised))
+                },
+            )
             .await?;
 
         let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
             DispatchError::Substrate(format!("cache: deserialise stored result: {e}"))
         })?;
+        fire_write_invalidation(self.cache.as_ref(), extension, contribute_id).await;
         Ok(value)
     }
 
@@ -659,9 +692,13 @@ impl RestDispatcher for ProcessRestDispatcher {
             .as_ref()
             .and_then(|c| c.registry.get(extension, contribute_id).cloned());
         let Some(spec) = spec else {
-            return self
+            let result = self
                 .dispatch_inner(extension, contribute_id, input, caller)
                 .await;
+            if result.is_ok() {
+                fire_write_invalidation(self.cache.as_ref(), extension, contribute_id).await;
+            }
+            return result;
         };
 
         let cache = self.cache.as_ref().expect("cache must be Some");
@@ -675,24 +712,31 @@ impl RestDispatcher for ProcessRestDispatcher {
         let caller_for_load = caller.clone();
         let this = self;
         let bytes = layer
-            .get_or_load_labelled(&spec, Some(&spec_id), &scope, &base_key, move || async move {
-                let v = this
-                    .dispatch_inner(
-                        &extension_owned,
-                        &contribute_id_owned,
-                        input,
-                        caller_for_load,
-                    )
-                    .await?;
-                let serialised = serde_json::to_vec(&v).map_err(|e| {
-                    DispatchError::Substrate(format!("cache: serialise dispatch result: {e}"))
-                })?;
-                Ok::<_, DispatchError>(std::sync::Arc::new(serialised))
-            })
+            .get_or_load_labelled(
+                &spec,
+                Some(&spec_id),
+                &scope,
+                &base_key,
+                move || async move {
+                    let v = this
+                        .dispatch_inner(
+                            &extension_owned,
+                            &contribute_id_owned,
+                            input,
+                            caller_for_load,
+                        )
+                        .await?;
+                    let serialised = serde_json::to_vec(&v).map_err(|e| {
+                        DispatchError::Substrate(format!("cache: serialise dispatch result: {e}"))
+                    })?;
+                    Ok::<_, DispatchError>(std::sync::Arc::new(serialised))
+                },
+            )
             .await?;
         let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
             DispatchError::Substrate(format!("cache: deserialise stored result: {e}"))
         })?;
+        fire_write_invalidation(self.cache.as_ref(), extension, contribute_id).await;
         Ok(value)
     }
 

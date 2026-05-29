@@ -68,10 +68,7 @@ async fn overview_returns_per_kind_counts() {
         .get("tool")
         .and_then(Value::as_u64)
         .expect("tool count is u64");
-    assert!(
-        tools_count > 0,
-        "builtin tools must be counted; got {body}"
-    );
+    assert!(tools_count > 0, "builtin tools must be counted; got {body}");
     let nodes_count = counts
         .get("node")
         .and_then(Value::as_u64)
@@ -116,9 +113,7 @@ async fn unknown_kind_yields_400() {
 async fn missing_tool_id_yields_404() {
     let app = admin_router(state());
     let resp = app
-        .oneshot(get(
-            "/api/v1/admin/registry/tools/does.not.exist",
-        ))
+        .oneshot(get("/api/v1/admin/registry/tools/does.not.exist"))
         .await
         .expect("oneshot");
     assert_eq!(resp.status(), StatusCode::NOT_FOUND);
@@ -128,9 +123,7 @@ async fn missing_tool_id_yields_404() {
 async fn multiplexed_snapshot_filters_by_kinds() {
     let app = admin_router(state());
     let resp = app
-        .oneshot(get(
-            "/api/v1/admin/registry?kinds=tool,node&limit=200",
-        ))
+        .oneshot(get("/api/v1/admin/registry?kinds=tool,node&limit=200"))
         .await
         .expect("oneshot");
     assert_eq!(resp.status(), StatusCode::OK);

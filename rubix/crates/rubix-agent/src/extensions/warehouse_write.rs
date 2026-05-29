@@ -139,9 +139,8 @@ impl RubixWarehouseWriteBackend {
                             "tenant_id stamp produced a non-string value (bug)",
                         )
                     })?;
-                    args.add(s.to_owned()).map_err(|e| {
-                        Error::extension_internal(format!("bind tenant_id: {e}"))
-                    })?;
+                    args.add(s.to_owned())
+                        .map_err(|e| Error::extension_internal(format!("bind tenant_id: {e}")))?;
                 } else {
                     bind_column(&mut args, value, columns[col_idx])?;
                 }
@@ -271,13 +270,17 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         let full_table = full_table_name(&self.extension_id, table);
 
         // Resolve key column against the declared schema.
-        let key_spec = spec.columns.iter().find(|c| c.name == key_column).ok_or_else(|| {
-            Error::validation(format!(
-                "warehouse_write.update: key_column {key_column:?} is not declared in \
+        let key_spec = spec
+            .columns
+            .iter()
+            .find(|c| c.name == key_column)
+            .ok_or_else(|| {
+                Error::validation(format!(
+                    "warehouse_write.update: key_column {key_column:?} is not declared in \
                  contributes.warehouse_tables[{:?}].columns",
-                spec.name
-            ))
-        })?;
+                    spec.name
+                ))
+            })?;
         let key_type = key_spec.ty.clone();
 
         if rows.is_empty() {
@@ -355,9 +358,8 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
                 bind_column(&mut args, v, col)?;
             }
             bind_column(&mut args, &key_value, key_column)?;
-            args.add(tenant_id.to_owned()).map_err(|e| {
-                Error::extension_internal(format!("bind tenant_id: {e}"))
-            })?;
+            args.add(tenant_id.to_owned())
+                .map_err(|e| Error::extension_internal(format!("bind tenant_id: {e}")))?;
 
             let pool_ref = pool.clone();
             let affected = tokio::task::block_in_place(|| {
@@ -374,12 +376,7 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         Ok(total_affected)
     }
 
-    fn delete(
-        &self,
-        table: &str,
-        key_column: &str,
-        keys: Vec<JsonValue>,
-    ) -> Result<u64> {
+    fn delete(&self, table: &str, key_column: &str, keys: Vec<JsonValue>) -> Result<u64> {
         let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
             return Err(Error::capability(format!(
                 "warehouse_write.delete {table:?} refused: no caller identity (system frame)"
@@ -397,13 +394,17 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         let spec = self.find_spec(table)?;
         let full_table = full_table_name(&self.extension_id, table);
 
-        let key_spec = spec.columns.iter().find(|c| c.name == key_column).ok_or_else(|| {
-            Error::validation(format!(
-                "warehouse_write.delete: key_column {key_column:?} is not declared in \
+        let key_spec = spec
+            .columns
+            .iter()
+            .find(|c| c.name == key_column)
+            .ok_or_else(|| {
+                Error::validation(format!(
+                    "warehouse_write.delete: key_column {key_column:?} is not declared in \
                  contributes.warehouse_tables[{:?}].columns",
-                spec.name
-            ))
-        })?;
+                    spec.name
+                ))
+            })?;
         let key_cast = placeholder_cast(&key_spec.ty);
 
         if keys.is_empty() {
@@ -411,7 +412,10 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
         }
 
         // DELETE FROM t WHERE key IN ($1::kt, $2::kt, ...) AND tenant_id = $N+1.
-        let mut sql = format!("DELETE FROM {full_table} WHERE {} IN (", quote_ident(key_column));
+        let mut sql = format!(
+            "DELETE FROM {full_table} WHERE {} IN (",
+            quote_ident(key_column)
+        );
         for i in 0..keys.len() {
             if i > 0 {
                 sql.push_str(", ");
@@ -516,7 +520,10 @@ fn build_multi_row_placeholders(column_types: &[&str], rows: usize) -> String {
 fn placeholder_cast(ty: &str) -> &'static str {
     // Case-insensitive match on the head of the type so
     // `TIMESTAMP WITH TIME ZONE`, `timestamptz`, `DATE` all hit.
-    let head = ty.split(|c: char| c == '(' || c.is_whitespace()).next().unwrap_or(ty);
+    let head = ty
+        .split(|c: char| c == '(' || c.is_whitespace())
+        .next()
+        .unwrap_or(ty);
     match head.to_ascii_uppercase().as_str() {
         "DATE" => "::date",
         "TIMESTAMP" => match ty.to_ascii_uppercase().contains("TIME ZONE") {
@@ -538,11 +545,7 @@ fn placeholder_cast(ty: &str) -> &'static str {
 ///
 /// v0.1 supports a small whitelist sufficient for the cleaner-flow
 /// L2 output table. Additional types land additively here.
-fn bind_column(
-    args: &mut PgArguments,
-    value: &JsonValue,
-    col_name: &str,
-) -> Result<()> {
+fn bind_column(args: &mut PgArguments, value: &JsonValue, col_name: &str) -> Result<()> {
     // `col_name` is the **column name**, not the type — the type
     // string is owned by the manifest spec and the caller of this
     // helper. For v0.1 we infer the type by inspecting the JSON
@@ -660,7 +663,11 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn system_frame_insert_refused() {
-        let b = backend(None, Some(BTreeSet::from(["solar_panels".into()])), spec_solar());
+        let b = backend(
+            None,
+            Some(BTreeSet::from(["solar_panels".into()])),
+            spec_solar(),
+        );
         let err = b
             .insert("solar_panels", vec![])
             .expect_err("system frame must refuse");

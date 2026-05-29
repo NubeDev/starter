@@ -16,10 +16,7 @@ use starter_store_postgres::pool::connect as pg_connect;
 
 use super::services::BootedServices;
 
-pub(crate) async fn compose_and_serve(
-    svc: BootedServices,
-    runtime_canary: Canary,
-) -> Result<()> {
+pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canary) -> Result<()> {
     let BootedServices {
         cfg,
         bundle: _,
@@ -114,8 +111,7 @@ pub(crate) async fn compose_and_serve(
                 let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
                     Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
                 if let Some(host_methods) = ext_host_methods.as_ref() {
-                    host_methods
-                        .install_warehouse(wh_client.clone(), template_registry.clone());
+                    host_methods.install_warehouse(wh_client.clone(), template_registry.clone());
                     host_methods.install_event_bus(event_bus.clone());
                 }
                 admin_state = admin_state.with_templates(template_registry.clone());
@@ -170,10 +166,8 @@ pub(crate) async fn compose_and_serve(
                                     continue;
                                 };
                                 if let Some(spec) = reg.get(&ext_id, stem) {
-                                    cache_entries.push((
-                                        (ext_id.clone(), stem.to_string()),
-                                        spec.clone(),
-                                    ));
+                                    cache_entries
+                                        .push(((ext_id.clone(), stem.to_string()), spec.clone()));
                                 }
                             }
                         }
@@ -194,8 +188,7 @@ pub(crate) async fn compose_and_serve(
                         "opt-in cache: registered kind specs",
                     );
                 }
-                let kind_cache =
-                    KindCacheRegistry::from_entries(cache_entries.iter().cloned());
+                let kind_cache = KindCacheRegistry::from_entries(cache_entries.iter().cloned());
 
                 let orphans = kind_cache.orphans(|ext| {
                     let mut ids: Vec<&str> = Vec::new();
@@ -306,9 +299,7 @@ pub(crate) async fn compose_and_serve(
                 .max_connections(2)
                 .connect(dsn)
                 .await
-                .map_err(|e| {
-                    anyhow::anyhow!("connect for dashboard_events listen pool: {e}")
-                })?;
+                .map_err(|e| anyhow::anyhow!("connect for dashboard_events listen pool: {e}"))?;
             let listen_pool = Pool::from_sqlx(listen_inner);
             let _t_dash_listen =
                 boot::pool_telemetry::spawn(listen_pool.sqlx().clone(), "rubix-dash-listen");
@@ -374,8 +365,8 @@ pub(crate) async fn compose_and_serve(
                 .map_router(|r| with_role(r, Role::Admin));
             let admin_invoke_recorder = recorder.clone();
             let admin_invoke_prefixes = tool_audit_prefixes.clone();
-            let invoke = routes::admin::admin_invoke_registrar(admin_state.clone())
-                .map_router(move |r| {
+            let invoke =
+                routes::admin::admin_invoke_registrar(admin_state.clone()).map_router(move |r| {
                     let audited = middleware::changelog_layer(
                         r,
                         middleware::ChangelogState {
@@ -417,7 +408,9 @@ pub(crate) async fn compose_and_serve(
         app = app
             .merge(routes::admin::admin_registrar(admin_state.clone()))
             .merge(routes::admin::admin_invoke_registrar(admin_state.clone()))
-            .merge(routes::admin::admin_invoke_stream_registrar(admin_state.clone()));
+            .merge(routes::admin::admin_invoke_stream_registrar(
+                admin_state.clone(),
+            ));
     }
 
     // OpenAPI projection.

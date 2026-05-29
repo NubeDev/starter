@@ -63,10 +63,7 @@ async fn team_store_round_trip_against_postgres() {
     assert_eq!(got, row("t-1", "Ops"));
 
     // 3) duplicate name -> Conflict.
-    let err = store
-        .create(row("t-2", "Ops"))
-        .await
-        .expect_err("dup name");
+    let err = store.create(row("t-2", "Ops")).await.expect_err("dup name");
     match err {
         Error::Conflict { message } => assert!(
             message.contains("Ops"),

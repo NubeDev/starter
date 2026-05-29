@@ -36,6 +36,11 @@
 # markers and rubix/docs/sessions/cache-v0-progress.md.
 cache:
   ttl: 60s
+  # v1: opt-in to stale-while-revalidate. A read landing in the last
+  # 30s of the 60s TTL is served from cache and triggers a follow-up
+  # refresh (caller-driven in v1; background-spawned in v3 once the
+  # WarehouseWriter chokepoint ships).
+  stale_while_revalidate: 30s
   scope: user
   invalidate_on:
     tables:

@@ -120,6 +120,23 @@ struct SpecConfig {
     ttl_seconds: u64,
     scope: &'static str,
     invalidate_on_tables: Vec<String>,
+    /// v1: SWR window in seconds. `0` when SWR is disabled.
+    stale_while_revalidate_seconds: u64,
+    /// v1: cap on the empty-result cache window.
+    empty_ttl_seconds: u64,
+    /// v1: whether empty results are cached at all.
+    cache_empty: bool,
+    /// v1: write-path event tags this spec is subscribed to.
+    invalidate_on_events: Vec<String>,
+    /// v1: structured bucket subscription (`{table, granularity}`).
+    /// `null` when the spec declares no bucket subscription.
+    invalidate_on_buckets: Option<BucketSpecRow>,
+}
+
+#[derive(Serialize)]
+struct BucketSpecRow {
+    table: String,
+    granularity: String,
 }
 
 impl SpecConfig {
@@ -128,6 +145,14 @@ impl SpecConfig {
             ttl_seconds: spec.ttl.as_secs(),
             scope: scope_str(spec.scope),
             invalidate_on_tables: spec.invalidate_on.tables.clone(),
+            stale_while_revalidate_seconds: spec.stale_while_revalidate.as_secs(),
+            empty_ttl_seconds: spec.empty_ttl.as_secs(),
+            cache_empty: spec.cache_empty,
+            invalidate_on_events: spec.invalidate_on.events.clone(),
+            invalidate_on_buckets: spec.invalidate_on.buckets.as_ref().map(|b| BucketSpecRow {
+                table: b.table.clone(),
+                granularity: b.granularity.clone(),
+            }),
         }
     }
 }
@@ -263,10 +288,7 @@ struct InvalidateResponse {
     invalidated: usize,
 }
 
-async fn invalidate(
-    State(state): State<AdminState>,
-    Json(body): Json<InvalidateBody>,
-) -> Response {
+async fn invalidate(State(state): State<AdminState>, Json(body): Json<InvalidateBody>) -> Response {
     let Some(layer) = state.cache_layer.as_ref() else {
         // No cache wired — the request was a no-op from the layer's
         // perspective. 503 makes the wire shape unambiguous: the
@@ -323,10 +345,7 @@ struct EvictTenantResponse {
     entries_dropped: u64,
 }
 
-async fn evict_tenant(
-    State(state): State<AdminState>,
-    Path(tenant): Path<String>,
-) -> Response {
+async fn evict_tenant(State(state): State<AdminState>, Path(tenant): Path<String>) -> Response {
     let Some(layer) = state.cache_layer.as_ref() else {
         return (
             StatusCode::SERVICE_UNAVAILABLE,

@@ -32,11 +32,7 @@ pub fn skill_items() -> Vec<RegistryItem> {
             if !has_skill {
                 return None;
             }
-            let id = dir
-                .path()
-                .file_name()
-                .and_then(|n| n.to_str())?
-                .to_owned();
+            let id = dir.path().file_name().and_then(|n| n.to_str())?.to_owned();
             let metadata = json!({
                 "quarantined": false,
                 "bundle_dir": dir.path().to_string_lossy(),
