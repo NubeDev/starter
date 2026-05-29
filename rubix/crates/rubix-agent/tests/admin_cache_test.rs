@@ -43,6 +43,14 @@ fn post_json(uri: &str, body: Value) -> Request<Body> {
         .expect("build request")
 }
 
+fn delete(uri: &str) -> Request<Body> {
+    Request::builder()
+        .method(Method::DELETE)
+        .uri(uri)
+        .body(Body::empty())
+        .expect("build request")
+}
+
 #[tokio::test]
 async fn cache_specs_empty_when_no_layer_wired() {
     let app = admin_router(AdminState::empty());
@@ -318,4 +326,72 @@ async fn invalidate_drops_cached_entries_end_to_end() {
         2,
         "post-invalidate read must re-run the loader"
     );
+}
+
+/// `DELETE /api/v1/admin/cache/tenants/{tenant}` returns 503 when no
+/// cache layer is wired (same posture as the invalidate endpoint).
+#[tokio::test]
+async fn evict_tenant_503_when_no_layer_wired() {
+    let app = admin_router(AdminState::empty());
+    let resp = app
+        .oneshot(delete("/api/v1/admin/cache/tenants/tA"))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
+}
+
+/// Happy path: populate two tenants, evict one, verify the other is
+/// untouched and the echoed tenant id matches the URL path.
+#[tokio::test]
+async fn evict_tenant_drops_only_named_tenant() {
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
+        .scope(starter_cache::CacheScope::Tenant);
+
+    for tenant in ["tA", "tB"] {
+        let caller = starter_cache::CallerScope::new(tenant, "u");
+        let _ = layer
+            .get_or_load::<_, _, std::convert::Infallible>(
+                &spec,
+                &caller,
+                "k",
+                || async { Ok(Arc::new(b"v".to_vec())) },
+            )
+            .await
+            .unwrap();
+    }
+    layer.run_pending_tasks().await;
+    assert_eq!(layer.tenant_entry_count("tA"), 1);
+    assert_eq!(layer.tenant_entry_count("tB"), 1);
+
+    let app = admin_router(AdminState::empty().with_cache_layer(layer.clone()));
+    let resp = app
+        .oneshot(delete("/api/v1/admin/cache/tenants/tA"))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let v = body_json(resp).await;
+    assert_eq!(v["tenant"], "tA");
+    assert_eq!(v["entries_dropped"], 1);
+
+    // B must still have its entry.
+    assert_eq!(layer.tenant_entry_count("tA"), 0);
+    assert_eq!(layer.tenant_entry_count("tB"), 1);
+}
+
+/// Unknown tenant returns 200 with `entries_dropped: 0`. A 404 would
+/// be precious — the operator's intent ("ensure this tenant has no
+/// cache memory") is satisfied either way.
+#[tokio::test]
+async fn evict_tenant_unknown_returns_zero_not_404() {
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let app = admin_router(AdminState::empty().with_cache_layer(layer));
+    let resp = app
+        .oneshot(delete("/api/v1/admin/cache/tenants/never-seen"))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let v = body_json(resp).await;
+    assert_eq!(v["tenant"], "never-seen");
+    assert_eq!(v["entries_dropped"], 0);
 }

@@ -221,6 +221,43 @@ impl CacheLayer {
         g.get(tenant).map(|c| c.entry_count()).unwrap_or(0)
     }
 
+    /// Snapshot of every tenant id with a currently-allocated cache
+    /// (a cache is allocated lazily on first access). Sorted by id
+    /// for stable admin output.
+    pub fn tenant_ids(&self) -> Vec<String> {
+        let g = self.inner.tenants.lock().unwrap();
+        let mut ids: Vec<String> = g.keys().cloned().collect();
+        ids.sort();
+        ids
+    }
+
+    /// Drop every cached entry belonging to `tenant`. Useful when a
+    /// tenant is disabled or deleted and the operator wants to
+    /// reclaim its cache memory immediately rather than waiting for
+    /// process restart. No-op when the tenant has no allocated
+    /// cache.
+    ///
+    /// The synthetic tenant ids — `"__global"` (for `scope: global`
+    /// entries) and `"__system"` (for system-frame entries) — are
+    /// accepted by the same path; passing them is intentional but
+    /// unusual.
+    ///
+    /// Returns the number of entries dropped (approximate, since
+    /// moka's `entry_count` is eventually consistent).
+    pub async fn evict_tenant(&self, tenant: &str) -> u64 {
+        let cache = {
+            let g = self.inner.tenants.lock().unwrap();
+            g.get(tenant).cloned()
+        };
+        let Some(cache) = cache else {
+            return 0;
+        };
+        let before = cache.entry_count();
+        cache.invalidate_all().await;
+        cache.run_pending_tasks().await;
+        before
+    }
+
     /// Force every tenant cache's pending eviction tasks to drain.
     /// moka's entry counts are otherwise an eventually consistent
     /// estimate; useful in tests and on diagnostic endpoints.
@@ -458,6 +495,65 @@ mod tests {
             LayerConfig::default().per_tenant_max_entries
         );
         std::env::remove_var(format!("{prefix}_PER_TENANT_MAX_ENTRIES"));
+    }
+
+    #[tokio::test]
+    async fn evict_tenant_drops_only_that_tenants_entries() {
+        let layer = CacheLayer::new(LayerConfig::default());
+        let spec = CacheSpec::ttl(Duration::from_secs(60)).scope(CacheScope::Tenant);
+        let caller_a = CallerScope::new("tA", "uA");
+        let caller_b = CallerScope::new("tB", "uB");
+
+        // Populate two tenants.
+        for caller in [&caller_a, &caller_b] {
+            let _ = layer
+                .get_or_load::<_, _, std::convert::Infallible>(
+                    &spec,
+                    caller,
+                    "k",
+                    || async { Ok(b("v")) },
+                )
+                .await
+                .unwrap();
+        }
+        layer.run_pending_tasks().await;
+        assert!(layer.tenant_ids().contains(&"tA".to_string()));
+        assert!(layer.tenant_ids().contains(&"tB".to_string()));
+        assert_eq!(layer.tenant_entry_count("tA"), 1);
+        assert_eq!(layer.tenant_entry_count("tB"), 1);
+
+        // Evict only tenant A.
+        let dropped = layer.evict_tenant("tA").await;
+        assert_eq!(dropped, 1);
+        assert_eq!(layer.tenant_entry_count("tA"), 0);
+        assert_eq!(
+            layer.tenant_entry_count("tB"),
+            1,
+            "B must be untouched"
+        );
+
+        // A subsequent get_or_load for tA must pay a miss.
+        let calls = Arc::new(AtomicU32::new(0));
+        let calls2 = calls.clone();
+        let _ = layer
+            .get_or_load::<_, _, std::convert::Infallible>(
+                &spec,
+                &caller_a,
+                "k",
+                || async move {
+                    calls2.fetch_add(1, Ordering::SeqCst);
+                    Ok(b("v2"))
+                },
+            )
+            .await
+            .unwrap();
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+    }
+
+    #[tokio::test]
+    async fn evict_unknown_tenant_returns_zero() {
+        let layer = CacheLayer::new(LayerConfig::default());
+        assert_eq!(layer.evict_tenant("never-seen").await, 0);
     }
 
     #[tokio::test]

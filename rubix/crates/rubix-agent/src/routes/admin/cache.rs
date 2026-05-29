@@ -32,10 +32,10 @@
 //! When the cache layer is not wired (developer rigs that disable
 //! extensions), the endpoint returns `{ "specs": [] }`.
 
-use axum::extract::State;
+use axum::extract::{Path, State};
 use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::routing::{get, post};
+use axum::routing::{delete, get, post};
 use axum::Json;
 use serde::{Deserialize, Serialize};
 use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot};
@@ -57,13 +57,26 @@ pub(super) fn registrar(state: AdminState) -> RouteRegistrar {
         .mount(
             Method::POST,
             "/api/v1/admin/cache/invalidate",
-            post(invalidate).with_state(state),
+            post(invalidate).with_state(state.clone()),
             RouteMeta::new()
                 .describe(
                     "Fire `invalidate_tags(tags)` against the opt-in cache. \
                      Every cached entry whose stored snapshot depended on any of \
                      the named tags becomes a miss on next read. The body shape \
                      is `{ \"tags\": [\"table:foo\", \"table:bar\"] }`.",
+                )
+                .tag("admin"),
+        )
+        .mount(
+            Method::DELETE,
+            "/api/v1/admin/cache/tenants/{tenant}",
+            delete(evict_tenant).with_state(state),
+            RouteMeta::new()
+                .describe(
+                    "Drop every cached entry belonging to `{tenant}`. \
+                     Use when a tenant is disabled or deleted and the operator \
+                     wants to reclaim cache memory immediately rather than \
+                     waiting for the per-tenant entries to TTL out.",
                 )
                 .tag("admin"),
         )
@@ -257,4 +270,38 @@ async fn invalidate(
     let n = body.tags.len();
     layer.invalidator().invalidate_tags(&body.tags).await;
     Json(InvalidateResponse { invalidated: n }).into_response()
+}
+
+/// Response shape for the per-tenant eviction endpoint.
+#[derive(Debug, Serialize)]
+struct EvictTenantResponse {
+    /// The tenant id evicted (echoed back so a caller using a
+    /// wildcard URL pattern can confirm which one fired).
+    tenant: String,
+    /// Approximate number of entries dropped. moka's `entry_count`
+    /// is eventually consistent, so this is the count at eviction
+    /// time, not a strict guarantee.
+    entries_dropped: u64,
+}
+
+async fn evict_tenant(
+    State(state): State<AdminState>,
+    Path(tenant): Path<String>,
+) -> Response {
+    let Some(layer) = state.cache_layer.as_ref() else {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "service_unavailable",
+                "message": "opt-in cache is not wired on this host",
+            })),
+        )
+            .into_response();
+    };
+    let dropped = layer.evict_tenant(&tenant).await;
+    Json(EvictTenantResponse {
+        tenant,
+        entries_dropped: dropped,
+    })
+    .into_response()
 }
