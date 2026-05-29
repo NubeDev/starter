@@ -91,3 +91,102 @@
 .uplot .u-legend { font-size: 11px; color: var(--color-foreground); }
 .uplot .u-legend .u-marker { width: 10px; height: 10px; border-radius: 2px; }
 
+
+/* =====================================================================
+ * Report page — force a light, paper-like surface even when the host
+ * theme is dark, and tune print output for A4 PDFs.
+ * =================================================================== */
+.ext-report {
+  background:
+    radial-gradient(1200px 600px at 50% -100px, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+  color: #0f172a;
+  min-height: 100%;
+  padding: 1rem 1.25rem;
+  --color-foreground: #0f172a;
+  --color-muted-foreground: #64748b;
+  --color-border: #e2e8f0;
+}
+:root.dark .ext-report {
+  background:
+    radial-gradient(1200px 600px at 50% -100px, #ffffff 0%, #f1f5f9 60%, #e2e8f0 100%);
+  color: #0f172a;
+}
+.ext-report .ext-glass {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(248,250,252,1) 100%);
+  border: 1px solid #cbd5e1;
+  border-radius: 0.875rem;
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.6) inset,
+    0 1px 2px 0 rgb(15 23 42 / 0.06),
+    0 8px 24px -10px rgb(15 23 42 / 0.18),
+    0 16px 40px -16px rgb(15 23 42 / 0.16);
+  backdrop-filter: none;
+  transition: transform 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+.ext-report .ext-glass:hover {
+  border-color: #94a3b8;
+  transform: translateY(-1px);
+  box-shadow:
+    0 0 0 1px rgb(255 255 255 / 0.7) inset,
+    0 2px 6px 0 rgb(15 23 42 / 0.08),
+    0 16px 36px -12px rgb(15 23 42 / 0.22),
+    0 28px 56px -20px rgb(15 23 42 / 0.18);
+}
+.ext-report .ext-glass--accent {
+  background: linear-gradient(180deg, #ffffff 0%, #f0fdfa 100%);
+  border-color: #14b8a6;
+  box-shadow:
+    0 0 0 1px rgb(20 184 166 / 0.25),
+    0 1px 0 0 rgba(255,255,255,0.9) inset,
+    0 10px 24px -8px rgb(20 184 166 / 0.30);
+}
+
+/* Pills (`PillBtn`) — outline by default, soft teal "secondary" when active.
+ * Mirrors shadcn `Button` size="sm" variant="outline" / "secondary". */
+.ext-report button[class*="rounded-full"] {
+  border: 1px solid #cbd5e1 !important;
+  background: #ffffff !important;
+  color: #475569 !important;
+  font-weight: 500;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+.ext-report button[class*="rounded-full"]:hover {
+  background: #f1f5f9 !important;
+  border-color: #94a3b8 !important;
+  color: #0f172a !important;
+}
+.ext-report button[class*="rounded-full"][aria-pressed="true"],
+.ext-report button[class*="bg-primary/15"] {
+  background: #ccfbf1 !important;
+  border-color: #5eead4 !important;
+  color: #0f766e !important;
+  box-shadow: 0 1px 2px 0 rgb(13 148 136 / 0.10) !important;
+}
+
+/* Segmented buttons (`SegBtn`) — primary fill on the light report surface,
+ * matches shadcn `Button` size="sm" variant="default". */
+.ext-report button[class*="rounded-md"][class*="bg-primary"] {
+  background: #0d9488 !important;
+  border-color: #0d9488 !important;
+  color: #ffffff !important;
+  box-shadow:
+    0 1px 0 0 rgba(255,255,255,0.20) inset,
+    0 1px 2px 0 rgb(13 148 136 / 0.35) !important;
+}
+.ext-report .ext-eyebrow {
+  color: #64748b;
+}
+.ext-report .text-muted-foreground {
+  color: #64748b;
+}
+
+@media print {
+  @page { size: A4; margin: 14mm; }
+  html, body { background: #ffffff !important; color: #0f172a !important; }
+  .no-print, nav, header[data-block-shell], aside { display: none !important; }
+  .ext-report { padding: 0; background: #ffffff; }
+  .ext-report .ext-glass { box-shadow: none; border-color: #cbd5e1; }
+  section, .ext-report-channel { break-inside: avoid; page-break-inside: avoid; }
+  a { color: inherit; text-decoration: none; }
+}

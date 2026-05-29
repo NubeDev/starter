@@ -52,7 +52,7 @@ use starter_mcp::registry::ToolRegistry;
 /// hung extension does not stall `tools/call`. SCOPE OQ-4: the
 /// rubix-agent end of the MCP wiring picks the value; extensions
 /// cannot override it.
-const EXTENSION_TOOL_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+const EXTENSION_TOOL_REQUEST_TIMEOUT: Duration = Duration::from_secs(95);
 
 /// Input handed to [`build_mcp_surface`] when the agent has an
 /// extension host wired in. Lets the MCP transport adapter

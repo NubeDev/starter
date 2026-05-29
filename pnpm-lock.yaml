@@ -881,12 +881,18 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
+      lucide-react:
+        specifier: ^1.17.0
+        version: 1.17.0(react@19.1.0)
       maplibre-gl:
         specifier: ^4.7.1
         version: 4.7.1
       react-map-gl:
         specifier: ^7.1.7
         version: 7.1.9(mapbox-gl@3.24.0)(maplibre-gl@4.7.1)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+      recharts:
+        specifier: ^3.8.1
+        version: 3.8.1(@types/react@19.2.14)(react-dom@19.1.0(react@19.1.0))(react-is@19.2.6)(react@19.1.0)(redux@5.0.1)
       uplot:
         specifier: ^1.6.31
         version: 1.6.32
@@ -6484,6 +6490,11 @@ packages:
 
   lucide-react@0.533.0:
     resolution: {integrity: sha512-XwRo6CQowPRe1cfBJITmHytjR3XS4AZpV6rrBFEzoghARgyU2RK3yNRSnRkSFFSQJWFdQ8f4Wk1awgLLSy1NCQ==}
+    peerDependencies:
+      react: 19.1.0
+
+  lucide-react@1.17.0:
+    resolution: {integrity: sha512-9FA9evdox/JQL5PT57fdA1x/yg8T7knJ98+zjTL3UfKza6pflQUUh3XtaQIHKvnsJw1lmsEyHVlt5jchYxOQ5w==}
     peerDependencies:
       react: 19.1.0
 
@@ -14028,6 +14039,10 @@ snapshots:
       react: 19.1.0
 
   lucide-react@0.533.0(react@19.1.0):
+    dependencies:
+      react: 19.1.0
+
+  lucide-react@1.17.0(react@19.1.0):
     dependencies:
       react: 19.1.0
 

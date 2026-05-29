@@ -5,32 +5,47 @@
 import * as React from "react";
 
 export function SectionHeader({
-  title, subtitle, right,
+  title, subtitle, right, icon,
 }: {
   title: React.ReactNode;
   subtitle?: React.ReactNode;
   right?: React.ReactNode;
+  /** Optional leading glyph. Use one of the Lucide-style icons
+   *  from `./icons`. Coloured by surrounding text. */
+  icon?: React.ReactNode;
 }): React.ReactElement {
   return (
-    <header className="flex items-baseline justify-between gap-3 mb-2">
-      <div>
-        <h4 className="text-sm font-semibold tracking-tight">{title}</h4>
-        {subtitle ? <p className="text-xs text-muted-foreground">{subtitle}</p> : null}
+    <header className="flex items-baseline justify-between gap-3 mb-3">
+      <div className="flex items-start gap-2 min-w-0">
+        {icon ? (
+          <span className="text-muted-foreground/70 mt-0.5 shrink-0">
+            {icon}
+          </span>
+        ) : null}
+        <div className="min-w-0">
+          <h4 className="text-sm font-semibold tracking-tight">{title}</h4>
+          {subtitle ? <p className="text-xs text-muted-foreground">{subtitle}</p> : null}
+        </div>
       </div>
-      {right ? <div>{right}</div> : null}
+      {right ? <div className="shrink-0">{right}</div> : null}
     </header>
   );
 }
 
 export function Field({
-  label, children,
+  label, icon, children,
 }: {
   label: string;
+  /** Optional small glyph rendered before the label in the eyebrow row. */
+  icon?: React.ReactNode;
   children: React.ReactNode;
 }): React.ReactElement {
   return (
     <div className="flex flex-col gap-1 min-w-[12rem]">
-      <span className="ext-eyebrow">{label}</span>
+      <span className="ext-eyebrow flex items-center gap-1.5">
+        {icon ? <span className="opacity-70">{icon}</span> : null}
+        {label}
+      </span>
       {children}
     </div>
   );

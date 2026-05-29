@@ -46,10 +46,19 @@ import { RegionRollup, buildRegions } from "./region-rollup";
 import { PortfolioTable, type PortfolioRow } from "./portfolio-table";
 import { exportChartPng, exportUsageCsv } from "./csv-export";
 import { stateOf } from "./helpers";
+import { ROLE_ACCENT, IconBolt, IconClock, IconGrid, IconList, IconMap, IconMapPin, IconRegion, IconTrend, IconWave, IconAlert, IconGauge, IconHash, IconLayers } from "./icons";
+import { RadialKpi } from "./radial-kpi";
+import { readUrlState, useUrlSync } from "./url-state";
 
 export function DashboardPage(): React.ReactElement {
-  const [kindIdx, setKindIdx] = React.useState(0);
-  const [rangeIdx, setRangeIdx] = React.useState(1); // 7d
+  // Initial state honours `?kind=…&range=…` so links like
+  //   /extensions/com.nubeio.rubixos/usage?kind=water&range=6m
+  // are shareable. Subsequent changes are mirrored back to the URL
+  // by `useUrlSync` below.
+  const urlInit = React.useRef(readUrlState()).current;
+  const [kindIdx, setKindIdx] = React.useState(urlInit.kindIdx ?? 0);
+  const [rangeIdx, setRangeIdx] = React.useState(urlInit.rangeIdx ?? 1); // default 7d
+  useUrlSync(kindIdx, rangeIdx);
   const [selectedHosts, setSelectedHosts] = React.useState<ReadonlyArray<string>>([]);
   // Site list view + filter state (scale to 100+ buildings).
   const [siteQuery, setSiteQuery] = React.useState("");
@@ -84,9 +93,14 @@ export function DashboardPage(): React.ReactElement {
   // Prior identical window — used for the period-over-period delta
   // on the headline KPI. Anchored to `win.from` so it ends exactly
   // where the current window starts (no gap, no overlap).
+  //
+  // Skipped at 6m / 1y: the extra usage_site_totals round-trip
+  // costs ~3s on elec just to compute one badge. The KPI cleanly
+  // hides the delta when prevWin is null.
   const prevWin = React.useMemo(() => {
     const toMs = Date.parse(win.from);
     if (!Number.isFinite(toMs)) return null;
+    if (range.hours > 2160) return null;
     const fromMs = toMs - range.hours * 3600_000;
     return { from: new Date(fromMs).toISOString(), to: new Date(toMs).toISOString() };
   }, [win.from, range.hours]);
@@ -177,7 +191,7 @@ export function DashboardPage(): React.ReactElement {
         // 3) Per-meter leaderboard.
         const pm = await fetchTemplate<UsagePerMeterRow>(
           `${EXTENSION_ID}.usage_per_meter`,
-          { point_uuids: pointUuidsCsv, from: win.from, to: win.to, limit: 200 },
+          { point_uuids: pointUuidsCsv, from: win.from, to: win.to, limit: 50 },
         );
         if (cancelled) return;
         setPerMeter(pm);
@@ -367,34 +381,56 @@ export function DashboardPage(): React.ReactElement {
 
       <LoadingToast show={isLoading && !loadDismissed} onClose={() => setLoadDismissed(true)} />
 
-      {/* ─── Hero: map + KPI stack ───────────────────────────── */}
-      <div className="grid grid-cols-1 lg:grid-cols-[2fr_1fr] gap-4">
-        <section className="ext-glass p-2">
+      {/* ─── Hero: radial KPI + map + secondary stats ───────── */}
+      {/*
+        Three-column bento with strong asymmetry:
+        ┌─────────┬───────────────────────┬────────┐
+        │  RADIAL │         MAP           │  meta  │
+        │   KPI   │   (geographic hero)   │ stack  │
+        └─────────┴───────────────────────┴────────┘
+        At lg+ the radial gauge anchors the eye first, the map
+        provides spatial context, and the meta stack provides
+        scan-ready counts. On smaller screens it collapses
+        gracefully to a single column.
+      */}
+      <div className="grid grid-cols-1 lg:grid-cols-[minmax(260px,320px)_1fr_minmax(220px,260px)] gap-4">
+        <RadialKpi
+          value={fmtBig(grandTotal)}
+          unit={unit}
+          deltaPct={deltaPct}
+          deltaLabel={`vs prior ${range.label}`}
+          accent={ROLE_ACCENT[kindPreset.kind]}
+          periodLabel={range.label}
+        />
+
+        <section className="ext-glass p-2 relative">
+          <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 ext-eyebrow text-muted-foreground bg-background/40 backdrop-blur-sm px-2 py-0.5 rounded">
+            <IconMapPin size={12} />
+            <span>{visibleMarkers.length} sites mapped</span>
+          </div>
           <SiteMap markers={visibleMarkers} unit={unit} onToggleSite={toggleHost} height={380} />
         </section>
 
-        <section className="grid grid-cols-2 gap-3">
+        <section className="grid grid-rows-3 gap-3">
           <KpiCard
-            eyebrow={`${kindPreset.label} total`}
-            value={fmtBig(grandTotal)}
-            unit={unit}
-            deltaPct={deltaPct}
-            deltaLabel={`vs prior ${range.label}`}
-            accent
-          />
-          <KpiCard eyebrow="Meters"  value={filteredMeterCount.toLocaleString()} />
-          <KpiCard eyebrow="Sites"   value={`${selectedHosts.length} / ${allHosts.length}`} />
-          <KpiCard
-            eyebrow="Samples"
-            value={totalSamples >= 1000
-              ? `${(totalSamples / 1000).toFixed(totalSamples >= 10000 ? 0 : 1)}k`
-              : totalSamples.toLocaleString()}
+            icon={<IconGauge size={12} />}
+            eyebrow="Meters"
+            value={filteredMeterCount.toLocaleString()}
+            sub={`of ${meters.length.toLocaleString()} in catalog`}
           />
           <KpiCard
-            eyebrow="Latest"
+            icon={<IconLayers size={12} />}
+            eyebrow="Sites"
+            value={`${selectedHosts.length} / ${allHosts.length}`}
+            sub={`${regions.length} region${regions.length === 1 ? "" : "s"}`}
+          />
+          <KpiCard
+            icon={<IconClock size={12} />}
+            eyebrow="Latest sample"
             value={latestBucket ? new Date(latestBucket).toLocaleDateString() : "—"}
-            sub={latestBucket ? new Date(latestBucket).toLocaleTimeString() : undefined}
-            className="col-span-2"
+            sub={latestBucket
+              ? `${new Date(latestBucket).toLocaleTimeString()} · ${totalSamples >= 1000 ? `${(totalSamples / 1000).toFixed(totalSamples >= 10000 ? 0 : 1)}k` : totalSamples.toLocaleString()} samples`
+              : undefined}
           />
         </section>
       </div>
@@ -403,6 +439,7 @@ export function DashboardPage(): React.ReactElement {
       {regions.length > 0 ? (
         <section>
           <SectionHeader
+            icon={<IconRegion size={14} />}
             title="By region"
             subtitle={`${regions.length} state${regions.length === 1 ? "" : "s"} · ${kindPreset.label.toLowerCase()} · ${range.label}`}
           />
@@ -420,6 +457,7 @@ export function DashboardPage(): React.ReactElement {
       {/* ─── Sites: tiles (small portfolio) or table (scaled) ── */}
       <section>
         <SectionHeader
+          icon={<IconGrid size={14} />}
           title={focusRegion ? `Sites — ${focusRegion}` : "Sites"}
           subtitle={`${kindPreset.label.toLowerCase()} · ${range.label} window · ${visibleHosts.length}${focusRegion ? ` of ${allHosts.length}` : " total"}`}
           right={
@@ -473,6 +511,7 @@ export function DashboardPage(): React.ReactElement {
       {/* ─── Main time-series (capped) ─────────────────────────── */}
       <section className="ext-glass p-4" data-chart="usage-ts">
         <SectionHeader
+          icon={kindPreset.kind === "elec" ? <IconBolt size={14} className={ROLE_ACCENT.elec.text} /> : <IconWave size={14} className={ROLE_ACCENT.water.text} />}
           title={`${kindPreset.label} usage over time`}
           subtitle={`bucket = ${range.bucket} · ${unit ?? ""}`}
           right={
@@ -555,6 +594,7 @@ export function DashboardPage(): React.ReactElement {
       {range.bucket === "15 minutes" || range.bucket === "1 hour" ? (
         <section className="ext-glass p-4">
           <SectionHeader
+            icon={<IconClock size={14} />}
             title="Weekday × hour"
             subtitle={`avg ${kindPreset.label.toLowerCase()} usage · brighter = higher`}
             right={<span className="ext-eyebrow">local time</span>}
@@ -567,6 +607,7 @@ export function DashboardPage(): React.ReactElement {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_2fr] gap-4">
         <section className="ext-glass p-4">
           <SectionHeader
+            icon={<IconAlert size={14} />}
             title="Top meters"
             subtitle="by AVG in window · ⚠ marks z-score ≥ 2"
           />
@@ -574,6 +615,7 @@ export function DashboardPage(): React.ReactElement {
         </section>
         <section className="ext-glass p-4">
           <SectionHeader
+            icon={<IconList size={14} />}
             title="Meters"
             subtitle={metersLoading ? "loading…" : `${filteredMeterCount} of ${meters.length}`}
           />

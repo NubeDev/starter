@@ -1,7 +1,7 @@
 import * as React from "react";
 
 export function KpiCard({
-  eyebrow, value, sub, unit, accent, className, deltaPct, deltaLabel,
+  eyebrow, value, sub, unit, accent, className, deltaPct, deltaLabel, icon,
 }: {
   eyebrow: string;
   value: string;
@@ -13,6 +13,8 @@ export function KpiCard({
    *  `null` hides the badge — used when prior data is missing. */
   deltaPct?: number | null;
   deltaLabel?: string;
+  /** Optional Lucide-style glyph rendered before the eyebrow. */
+  icon?: React.ReactNode;
 }): React.ReactElement {
   const showDelta = deltaPct !== undefined && deltaPct !== null && Number.isFinite(deltaPct);
   // Up = bad (more consumption), down = good. Tone neutrally if |Δ| < 0.5%.
@@ -24,7 +26,10 @@ export function KpiCard({
   const arrow = !showDelta ? "" : deltaPct! > 0 ? "↑" : deltaPct! < 0 ? "↓" : "→";
   return (
     <div className={"ext-glass p-3 " + (accent ? "ext-glass--accent " : "") + (className ?? "")}>
-      <div className="ext-eyebrow">{eyebrow}</div>
+      <div className="ext-eyebrow flex items-center gap-1.5">
+        {icon ? <span className="opacity-70">{icon}</span> : null}
+        {eyebrow}
+      </div>
       <div className="ext-num text-2xl font-semibold leading-tight mt-1">
         {value}
         {unit ? <span className="text-sm text-muted-foreground ml-1">{unit}</span> : null}

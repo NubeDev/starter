@@ -3,6 +3,7 @@ import * as React from "react";
 import { KINDS, RANGES } from "./presets";
 import { Field, PillBtn, SegBtn } from "./prims";
 import { SavedViewsField } from "./saved-views";
+import { IconFilter, IconRange, IconSites, ROLE_ACCENT } from "./icons";
 
 export function FilterRail({
   kindIdx, setKindIdx, rangeIdx, setRangeIdx,
@@ -22,20 +23,26 @@ export function FilterRail({
   const range = RANGES[rangeIdx]!;
   return (
     <section className="ext-glass p-3 flex flex-wrap items-end gap-x-6 gap-y-3">
-      <Field label="Meter type">
+      <Field label="Meter type" icon={<IconFilter size={12} />}>
         <div className="flex gap-1">
-          {KINDS.map((k, i) => (
-            <SegBtn key={k.kind} active={i === kindIdx} onClick={() => setKindIdx(i)} title={k.hint}>
-              {k.label}
-            </SegBtn>
-          ))}
+          {KINDS.map((k, i) => {
+            const KindIcon = ROLE_ACCENT[k.kind].Icon;
+            return (
+              <SegBtn key={k.kind} active={i === kindIdx} onClick={() => setKindIdx(i)} title={k.hint}>
+                <span className="inline-flex items-center gap-1.5">
+                  <KindIcon size={12} />
+                  {k.label}
+                </span>
+              </SegBtn>
+            );
+          })}
         </div>
         <span className="ext-eyebrow mt-1 block normal-case tracking-normal text-muted-foreground">
           {kindPreset.hint}
         </span>
       </Field>
 
-      <Field label="Range">
+      <Field label="Range" icon={<IconRange size={12} />}>
         <div className="flex gap-1">
           {RANGES.map((r, i) => (
             <SegBtn key={r.label} active={i === rangeIdx} onClick={() => setRangeIdx(i)}>
@@ -49,7 +56,7 @@ export function FilterRail({
         </span>
       </Field>
 
-      <Field label={`Sites · ${selectedHosts.length}/${allHosts.length}`}>
+      <Field label={`Sites · ${selectedHosts.length}/${allHosts.length}`} icon={<IconSites size={12} />}>
         {/* The Regions roll-up + portfolio table below already
             provide rich site selection. Keep the rail compact with
             just the two bulk actions; full per-site control lives

@@ -5,9 +5,16 @@ import type { MeterRow } from "../types";
 export function fmtBig(v: number): string {
   if (!Number.isFinite(v)) return "—";
   const abs = Math.abs(v);
-  if (abs >= 1e9) return (v / 1e9).toFixed(2) + "B";
-  if (abs >= 1e6) return (v / 1e6).toFixed(2) + "M";
-  if (abs >= 1e3) return (v / 1e3).toFixed(2) + "k";
+  // Always 3-4 sig figs + SI suffix. Anything past trillions keeps
+  // the T suffix rather than wrapping into scientific — operators
+  // care about magnitude not exact value at that scale.
+  const fmt = (n: number) => (Math.abs(n) >= 100 ? n.toFixed(0)
+                            :  Math.abs(n) >= 10  ? n.toFixed(1)
+                            :                       n.toFixed(2));
+  if (abs >= 1e12) return fmt(v / 1e12) + "T";
+  if (abs >= 1e9)  return fmt(v / 1e9)  + "B";
+  if (abs >= 1e6)  return fmt(v / 1e6)  + "M";
+  if (abs >= 1e3)  return fmt(v / 1e3)  + "k";
   return v.toFixed(abs >= 10 ? 1 : 2);
 }
 

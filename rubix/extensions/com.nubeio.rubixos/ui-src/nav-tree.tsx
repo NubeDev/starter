@@ -26,6 +26,7 @@ const TREE: NavItem[] = [
     title: "Data",
     children: [
       { title: "Energy & Water",  href: `/extensions/${EXTENSION_ID}/usage`   },
+      { title: "Report (print)",  href: `/extensions/${EXTENSION_ID}/report`  },
       { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history` },
     ],
   },

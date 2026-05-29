@@ -1,8 +1,42 @@
 # Proposal: Opt-In Caching for SDUI Pages, Extension Kinds, and Core Routes
 
-**Status:** Proposed
+**Status:** Deferred (conditions for revival below)
 **Date:** 2026-05-29
 **Author:** NubeDev
+
+## Why this is deferred
+
+The proposal that follows is intact and the design is mostly correct. It is being held, not abandoned, because the workload that justifies it has not arrived.
+
+The specific symptom that prompted the proposal — a 30-second timeout on `/extensions/com.nubeio.rubixos/usage` — was a single slow query (`count(*)` + `count(DISTINCT)` + `min/max` on a hypertable without chunk-aware paths). A targeted SQL rewrite took it from ~6s to sub-100ms. No cache was needed for the symptom. Building a 500-line declarative cache layer to "prevent the next one" before we have evidence the next one can't be fixed the same way buys us a premature platform and removes the forcing function (slow-query warning → write better SQL) that just paid off.
+
+Two further preconditions are not yet met:
+
+1. **No single warehouse-write chokepoint exists.** Writes are scattered across extension `WarehouseWriteBackend::insert`, agent ingest, and mart writers. Tag-based invalidation without a chokepoint becomes "lint and hope" — the #1 way caches rot in production. This proposal's invalidation story silently depends on a chokepoint that hasn't been built. Until it is, tag invalidation is best-effort, not correct.
+2. **The cheaper move is materialised views, not caching.** For the workload that would actually pay for the cache layer (long-window time-series aggregates), the warehouse already has continuous aggregates and L3 marts. If `usage_bucketed` becomes a problem, the right next step is mart promotion, not cache promotion — which the proposal itself acknowledges in [Cache vs materialised view](#cache-vs-materialised-view--drawing-the-line).
+
+### What would un-defer this
+
+Revive the proposal when **all three** are true:
+
+- **Three distinct queries** are confirmed slow and can be shown to be **un-fixable by SQL rewrite or mart promotion** (the workload is read-shape-varied enough that one mart per query doesn't scale).
+- **A `WarehouseWriter` chokepoint exists** that every write path goes through, so `invalidate_tags` can be enforced by the type system instead of by lints.
+- **At least one consumer** outside this proposal (a flow node, an agent step, an export job) needs windowed delta-fetch on its own merits — i.e. enough to justify [`starter-windowed`](#companion-crate--starter-windowed) on its own.
+
+If only the first two land, build the smallest cut described in [Minimum viable v0](#minimum-viable-v0-when-this-is-revived) — no SDUI, no `starter-windowed`, no two-layer cache. If the third also lands, split `starter-windowed` into its own proposal and ship it independently first.
+
+### What changed in this revision
+
+This revision folds in peer-review feedback. Material changes:
+
+- **No SDUI IR version bump.** `cache:` is an additive optional root field; v5 readers ignore unknown fields. The bump was ceremony.
+- **The "no ingest chokepoint" problem is promoted from a hand-wave to an explicit precondition** — see above and [Layer 3](#layer-3--invalidation-shared-across-all-three-call-sites).
+- **`starter-windowed` is acknowledged as standalone**, with a note that it should be its own proposal driven by a non-cache consumer when one exists.
+- **Layer 6c (two-layer tenant coalescing) is kept in the spec but flagged "spec now, implement when 50+ users on one dashboard appear."** It defines the meaning of `scope:` and removing it would tempt authors to dodge `scope: user` for cost reasons — which defeats the platform's safety story.
+- **New: bucket-tag fan-out under batched ingest** ([Layer 3](#layer-3--invalidation-shared-across-all-three-call-sites)) — coalesce per-batch, not per-row.
+- **New: cold-start handling, test story, "don't cache fast handlers" guideline, per-target key cardinality, validation-lives-at-call-site, empty-TTL caveat, read-only handler declaration** — all added inline.
+
+The rest of the proposal is unchanged from the previous revision and stands as the design we adopt **if and when** the un-defer conditions fire.
 
 ## Summary
 
@@ -118,7 +152,7 @@ Or, equivalently, in a hand-authored / AI-emitted JSON tree:
 }
 ```
 
-The `cache:` block lives on the IR root, beside `ir_version` and `page_id`. It is **optional** — omit it and the page is uncached, same as today. It is **part of the IR**, so the SDUI resolver reads it for free, AI-emitted trees can include it, and the JSON Schema validates it. (This is a minor IR bump per [SDUI R2](../../../DOCS/frontend/sdui/SCOPE.md).)
+The `cache:` block lives on the IR root, beside `ir_version` and `page_id`. It is **optional** — omit it and the page is uncached, same as today. It is **part of the IR**, so the SDUI resolver reads it for free, AI-emitted trees can include it, and the JSON Schema validates it. It is **additive**: existing IR readers ignore unknown root fields, so no version bump is required.
 
 **B — Extension kind (sidecar file):**
 
@@ -201,6 +235,8 @@ A small `tower::Layer` (`CacheLayer`) that derives a key from `(route_path, quer
 
 This is the part most cache layers get wrong. Two complementary mechanisms.
 
+**Precondition: a warehouse-write chokepoint must exist.** Today's reality (per the explore) is that writes go through several un-unified paths — extension `WarehouseWriteBackend::insert`, agent ingest, mart writers. Tag-based invalidation without a single chokepoint reduces to "every author of a new writer remembers to call `invalidate_tags`", and silently missing one means stale-forever data. The proposal is **explicit that this precondition is not met today**. Until a `WarehouseWriter` trait exists that every writer goes through — with `invalidate_tags` enforced at the commit boundary by the type system — tag invalidation is best-effort and the cache layer's correctness story has a known soft spot. This is one of the un-defer conditions at the top of the document.
+
 **(a) Tag-based, write-path hooks (v1)**
 
 `starter-cache` exposes:
@@ -217,6 +253,8 @@ Write paths call `invalidate_tags` once per commit:
 - SDUI action handlers (`/ui/action`) hook the tags they declare in their handler registration metadata. A handler with `affects_tables = ["dashboards"]` calls `invalidate_tags(&["table:dashboards"])` after success.
 - The mart writers hook the L3 table tags they emit into.
 - Retention sweepers hook the table tags they trim.
+
+**Batched ingest coalesces tag emissions.** A 500-row ingest batch spanning 12 buckets emits *one* `invalidate_tags` call carrying the deduplicated set, not 500 calls. Without this, sustained ingest puts the tag registry's lock under contention. The `WarehouseWriter` chokepoint (precondition above) is the natural place to batch: accumulate tags inside the transaction, fire once on commit.
 
 **Bucket-level invalidation is mandatory for any windowed time-series spec.** Without it, a single reading invalidates every cached `usage_bucketed` entry for every user in the tenant — the cache will not pay for itself on the dashboard workload. With it, a reading written for meter 42 at `t` invalidates exactly `bucket:readings:<floor(t, 1h)>`; closed historical buckets and unrelated meters' partial buckets are untouched. Combined with [Layer 4b](#layer-4b--time-windowed-reads-the-dashboard-workload), a 90d query's body is essentially permanent in cache.
 
@@ -310,6 +348,8 @@ SDUI pages can be user-defined and gated per-user (per the platform's [AuthZ sco
 SWR is what makes dashboards feel instant. Without (1) and (2) being explicit, an implementer could reasonably read SWR as "extend TTL by `D` seconds" — which serves correctness-equivalent results but loses the latency property that justifies the feature.
 
 ### Layer 6c — tenant-shared coalescing (the cost lever)
+
+> **Specify now, implement when the workload arrives.** This layer defines what `scope:` *means* — removing it from the spec would tempt authors to dodge `scope: user` (the safe default) for cost reasons, defeating the platform's AuthZ / units / locale safety story. The implementation, however, should be held until a tenant has ≥10 concurrent users on the same dashboard in production. Until then, the runtime treats `inner_scope:` as advisory and a present-but-unimplemented field; the validator accepts it.
 
 `scope: user` is the safe default whenever rendered output depends on user identity, units, or locale. But for warehouse-backed queries, the **SQL plan** is usually identical across users in the tenant — only the unit / locale conversion at render differs. Caching at `scope: user` pays the DB cost N times for what is one query.
 
@@ -422,6 +462,8 @@ This is the shape the proposal exists to deliver. The author wrote one config bl
 
 ## Companion crate — `starter-windowed`
 
+> **Standalone status.** `starter-windowed` is the part of this proposal with the cleanest reusable surface. It has no dependency on caching, the warehouse-write chokepoint, or the SDUI integration. When a non-cache consumer materialises (a flow node, an agent step, an export job, a CLI tool) that needs windowed delta-fetch on its own merits, **`starter-windowed` should be split into its own proposal and shipped independently of the cache layer**, with that consumer driving the trait shape. Building it speculatively as part of a deferred cache rollout is exactly the premature-platform failure mode this revision is correcting against.
+
 The bucket decomposition + stitching logic does not belong in `starter-cache`. The cache layer knows about keys, TTLs, and tags — it does not know about time, ranges, or SQL. Mixing the two crates the time-series logic into the cache and makes it unreachable for callers that want delta fetch without caching (background jobs, agent steps, flow nodes, CLI tools).
 
 We add a new crate:
@@ -510,9 +552,12 @@ This boundary is in the rollout: when we adopt `usage_bucketed`, we measure. If 
 - **Cross-tenant or cross-user leak via wrong scope.** Default is `tenant`, never `global`. Registration-time validator rejects `scope: global` on pages whose `invalidate_on.tables` include tenant-scoped tables.
 - **AuthZ regression by serving cached body to a user who lost access.** The cache wrapper sits inside the authorised handler. Permission-set hash is part of the user-scope key.
 - **Locale / unit preference change shows stale conversions.** Locale + units hash is part of the user-scope key. Changing the user's prefs implicitly invalidates their cached pages.
-- **Memory blow-up from per-user keys on a high-cardinality kind.** moka has size-based eviction; we configure per-spec max-entries caps. Authors see this in stats.
+- **Memory blow-up from per-user keys on a high-cardinality kind.** moka has size-based eviction; we configure per-spec max-entries caps. Authors see this in stats. Per-tenant weight caps (so one noisy tenant cannot evict the rest) ship in v1 via moka's weight-based eviction — not just per-spec caps.
 - **Cache poisoning from a buggy loader.** Loader errors are not cached (`get_or_insert_with` returns `Err` without storing).
 - **A SDUI page with `cache:` set but a `target_ref` the cache hasn't seen.** Cold miss, runs the resolver, populates — same as any cold cache.
+- **Invalidation race during in-flight load.** Reader misses, starts loading, writer commits and invalidates, reader stores stale value that now lives until TTL. Handled by per-tag invalidation tokens (Layer 3) — store is dropped at load-end if any depended-on token moved. This is mandatory in v1, not optional.
+- **IR schema change serves broken trees from cache.** A SDUI IR shape change or binding-semantics change invalidates every cached `ResolveResponse`. The resolve-cache key mixes in `ir_version` and a per-page content hash; bumping either implicitly invalidates without manual purge.
+- **Empty-result caching surprises a freshly-provisioned meter.** Default `cache_empty: true` with the full TTL means a user sees an empty dashboard for `ttl` seconds after data starts flowing. v1 default is `cache_empty: true` with a separate `empty_ttl` defaulting to 5s — cheap re-check, no full TTL of emptiness.
 
 ## Observability
 
@@ -530,21 +575,97 @@ These appear in the existing admin introspection console (see [admin-introspecti
 
 Sequenced so each step is independently shippable and reversible.
 
-1. **`CacheSpec` + `Invalidator` trait + tag registry in `starter-cache`.** No behaviour change anywhere.
-2. **Extension dispatcher integration + `kind.cache.yaml` parser.** First real call site. Opt in `usage_bucketed` as the canary. Measure.
-3. **Warehouse write-path `invalidate_tags` hooks.** Ingest, mart writers, retention. Each writer's PR includes the tag list.
-4. **SDUI IR `cache:` block + resolver / table-endpoint integration.** Minor IR bump per [SDUI R2](../../../DOCS/frontend/sdui/SCOPE.md); existing pages with no `cache:` are unaffected. Opt in `building-overview` as the canary.
-5. **Core HTTP `CacheLayer` (tower).** For non-SDUI, non-extension routes.
-6. **Author docs in the SDUI dev guide and the extension dev guide.**
-7. **Multi-node fan-out invalidator (v2).** Swap the `Invalidator` impl when we deploy more than one replica.
+1. **`CacheSpec` + `Invalidator` trait + tag registry + invalidation-token mechanism in `starter-cache`.** No behaviour change anywhere.
+2. **`starter-windowed` crate — bucket decomposition, stitch, delta-fetch trait.** Engine-agnostic. No cache dep. Unit tests against an in-memory fetcher.
+3. **`TimescaleWindowedFetcher` in `starter-store-warehouse` and `PgWindowedFetcher` in `starter-store-postgres`.** Both thin adapters implementing `WindowedFetcher` against their engines.
+4. **Warehouse write-path `invalidate_tags` hooks, including bucket-level tags.** Ingest, mart writers, retention. Each writer's PR includes the tag list and the bucket granularities it emits.
+5. **Extension dispatcher integration + `kind.cache.yaml` parser, with `time_series:` support.** First real call site. Opt in `usage_bucketed` as the canary, using `starter-windowed` for bucket decomposition. Measure hit rate, invalidation rate, DB-load reduction.
+6. **SDUI IR `cache:` block + resolver / table-endpoint integration.** Additive root field — no IR version bump; existing pages with no `cache:` are unaffected. Opt in `building-overview` as the canary.
+7. **Core HTTP `CacheLayer` (tower).** For non-SDUI, non-extension routes.
+8. **Author docs in the SDUI dev guide and the extension dev guide.** Include the windowed-read pattern and the cache-vs-mart boundary explicitly.
+9. **Multi-node fan-out invalidator (v2).** Swap the `Invalidator` impl when we deploy more than one replica.
 
 ## Open questions
 
 - **Cache config on the IR root vs. per-component.** v1 is page-level only. Per-component caching (e.g. cache a `table` independently of the `kpi`s on the same page) is plausible later; defer until a real page wants it.
 - **AI-emitted `cache:` blocks.** The ai-builder will be able to emit cache config the same way it emits any other IR field. Should we constrain AI-emitted TTLs or scopes? Lean: register `cache:` as a sensitive field that AI emission either omits (default) or requires explicit author sign-off on.
-- **Per-spec memory budgets:** server config or page metadata? Leaning server config — operator owns RAM, not the author.
-- **Invalidation granularity below the table level.** A write to one meter invalidates all `usage_bucketed` for everyone in the tenant. Fine for v1; revisit if overinvalidation shows up in stats.
-- **Negative caching.** Default yes (cache "no rows" results at the same TTL); opt-out via `cache_empty: false`.
+- **Per-spec memory budgets:** server config or page metadata? Leaning server config — operator owns RAM, not the author. Per-tenant weight caps are server config in v1.
+- **Dimension-scoped tags below the bucket level** (`table:readings:meter=42`). Deferred. Bucket-level tags should cover the dashboard workload; revisit if stats show over-invalidation after rollout.
+- **Where the windowed-fetch tail-vs-body split lives when the bucket size doesn't divide the range cleanly** (e.g. `bucket: 1h` but `from = now - 7d - 23m`). v1 snaps both ends to bucket boundaries and accepts a small window-slack at edges. A "fractional bucket at the leading edge" variant is plausible but adds complexity for marginal benefit.
+- **Should `affects_tables` on action handlers be a hard error if missing, or a lint warning?** Lean hard error at handler registration — forgetting to declare it is the #1 way this kind of cache rots. A handler that genuinely affects nothing declares `affects_tables = []` explicitly.
+
+## Minimum viable v0 (when this is revived)
+
+When the un-defer conditions fire, **do not build the full proposal**. Build the smallest thing that solves the three slow queries that triggered revival:
+
+- **`CacheSpec` + `Cache::get_or_insert_with` wrapper at the extension dispatcher only.** No SDUI integration, no tower layer, no two-layer cache, no `starter-windowed`, no SWR.
+- **TTL + tag invalidation, single scope.** No `time_series:` block, no `inner_scope:`, no `cache_empty` tuning. Authors pick `ttl`, `scope`, and `invalidate_on.tables`. Three knobs.
+- **In-process moka backend.** No Valkey, no `foyer`.
+- **Invalidation-token race fix is still mandatory.** This is non-negotiable even at v0 — without it, the cache is incorrect, not just slow.
+- **Per-tenant weight caps from day one.** A noisy tenant must not be able to evict others. Also non-negotiable.
+
+That's roughly 300 LoC of cache integration + the `WarehouseWriter` chokepoint work (which is its own project — bigger than the cache work, and required regardless). Ship it, measure it, and only then evaluate whether SDUI integration, `starter-windowed`, or two-layer caching earn their own slots.
+
+Everything else in this proposal is the v2 / v3 endpoint. Land it incrementally, gated on real workload evidence, not as a single commit.
+
+## Pieces the original revision missed
+
+These were called out in peer review and are folded in here so the spec is honest about what's involved.
+
+### Don't cache fast handlers
+
+A `moka` get plus key derivation plus permission-set hashing is not free — it's measurable. For a handler that already returns in 5 ms, wrapping it in the cache may cost more than it saves at low hit rates. The rule: **don't add `cache:` to handlers under ~50 ms unless hit rate is expected to be > 80%.** The author docs include this as a guideline; the registration-time validator emits an info-level note (not an error) when an existing performance baseline shows the wrapped handler is fast enough that caching is unlikely to pay.
+
+### Cold start
+
+After a deploy, every key is cold. For a windowed read like `usage_bucketed` 90d view, this is many buckets. Stampede protection (single-flight) prevents thundering-herd on one key, but says nothing about a thundering herd of *first* requests across many keys at deploy time. SWR doesn't help — there's nothing stale to serve.
+
+v1 stance: **accept cold-start cost.** We do not pre-warm. The first user after deploy pays. A warming pass (replay yesterday's top-N cache keys after deploy) is plausible later, but is its own project — and it requires the metrics surface to know what "top-N" means. It is not in scope.
+
+### Test story
+
+The proposal mentions correctness without saying how it's verified. Required test infrastructure, in the same crate as `starter-cache`:
+
+- **`MockClock`** — controllable time source the cache uses for TTL / SWR boundaries. Without this, every TTL test is flaky-or-slow.
+- **`InMemoryInvalidator`** — synchronous tag invalidation for tests, with introspection (assert which tags fired, in what order).
+- **`TracingCache<C>`** — a wrapper that records every hit / miss / store / drop for assertion in tests.
+
+Core scenarios to test (each as a one-file example in the crate):
+
+- Tag fired during in-flight load → store is dropped (invalidation token).
+- SWR refresh in progress when invalidation fires → in-flight store dropped, next caller pays fresh miss.
+- Bucket-level invalidation hits the right bucket and only the right bucket.
+- Empty result respects `empty_ttl`, not `ttl`.
+- Per-tenant weight cap evicts the noisy tenant's entries, not its neighbours'.
+
+Without these, the surface area is too large to land safely.
+
+### Per-target key cardinality
+
+A SDUI page like `building-overview` with `scope: user` and a tenant with 200 buildings + 50 users produces **10,000 keys per dashboard** before params, page-state, or stack vars enter the picture. moka's weight-based eviction handles this in steady state, but it's worth being explicit:
+
+- The resolve-cache validator emits a warning at registration time when `scope: user` is combined with a page known to render across many targets, suggesting `inner_scope: tenant` (when [Layer 6c](#layer-6c--tenant-shared-coalescing-the-cost-lever) is implemented) or accepting the per-target cost.
+- Per-spec weight caps are mandatory for SDUI pages, not just per-tenant caps. An author who opts in a high-target-count page without a cap is rejected at registration.
+
+### Read-only handler declaration
+
+[Layer 3](#layer-3--invalidation-shared-across-all-three-call-sites) says action handlers declare `affects_tables`. To prevent authors silencing the lint by declaring `affects_tables = [<everything>]`, the handler registration also requires a positive `read_only: bool` declaration. A read-only handler (refresh, export, recompute view) declares `read_only: true` and `affects_tables` is rejected if present. A writing handler declares `read_only: false` and `affects_tables` is required (possibly empty, with a comment explaining why).
+
+### Empty-TTL edge case
+
+[Failure modes](#failure-modes-and-how-we-handle-them) notes `empty_ttl` defaults to 5s. The edge case: if the loader is expensive enough that running it every 5s is itself the problem (a 6-second `count(DISTINCT)` returning 0 for a fresh tenant), the 5s empty-TTL re-runs that cost every 5s indefinitely. The rule: `empty_ttl = min(empty_ttl_config, ttl)` — never longer than the regular TTL, and authors with slow loaders set `empty_ttl: ttl` to opt out of fast re-check. Documented in the author guide.
+
+### Where cache config is validated
+
+Validation does **not** live in `starter-cache`. The cache crate must not know about warehouse-tenant-scoped tables, SDUI IR shapes, or extension kind metadata — that's a layering violation that pulls warehouse / SDUI concepts into the cache crate.
+
+Validation lives **at each call site**:
+
+- The SDUI resolver validates `cache:` blocks at page registration: scope-vs-binding-set check, target-cardinality warning, IR-content-hash key derivation.
+- The extension dispatcher validates `kind.cache.yaml` at kind registration: scope-vs-table-scope check, bucket-granularity check against any `time_series:` block.
+- The tower layer validates `CacheLayer::builder()` calls at server startup: per-route invariants only.
+
+Each call site already owns the domain knowledge for its half of the validation; `starter-cache` provides the primitives (`CacheSpec::parse`, weight-budget checks) and stays domain-agnostic.
 
 ## Why not just tell authors to use moka directly
 

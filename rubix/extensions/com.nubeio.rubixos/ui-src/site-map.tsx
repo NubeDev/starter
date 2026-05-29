@@ -14,6 +14,7 @@ import * as React from "react";
 // renames the duplicated identifier.
 import { Map as MapGL, Marker, NavigationControl, Popup } from "react-map-gl/maplibre";
 import "maplibre-gl/dist/maplibre-gl.css";
+import { useHostThemeMode } from "./use-host-theme-mode";
 
 import type { SiteGeo } from "./sites-geo";
 
@@ -99,17 +100,30 @@ export function SiteMap({
     [],
   );
 
-  // Carto's free vector basemap; matches the dark glassmorphic
-  // shell without needing a Mapbox account.
-  const mapStyle =
-    "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
+  // Carto's free vector basemaps. Swap dark-matter / positron to
+  // match the host theme so the map blends into the surrounding
+  // glass panels instead of always looking like a black hole on
+  // light themes (or a blinding white slab on dark).
+  //
+  // We read the mode from `document.documentElement` directly
+  // because the SDK's `useHostTheme()` falls back to "light" when
+  // the host doesn't pass `theme` to `<ExtensionSlot>` (rubix-
+  // frontend currently doesn't), and the host toggles a `.dark`
+  // class on `<html>` exactly when dark mode is active.
+  const themeMode = useHostThemeMode();
+  const mapStyle = themeMode === "light"
+    ? "https://basemaps.cartocdn.com/gl/positron-gl-style/style.json"
+    : "https://basemaps.cartocdn.com/gl/dark-matter-gl-style/style.json";
 
   const maxCluster = Math.max(1, ...clusters.map((c) => c.totalValue));
 
   return (
     <div
       style={{ height }}
-      className="relative w-full overflow-hidden rounded-xl border border-white/10"
+      className={
+        "relative w-full overflow-hidden rounded-xl border " +
+        (themeMode === "light" ? "border-slate-200" : "border-white/10")
+      }
     >
       <MapGL
         initialViewState={initialViewState}

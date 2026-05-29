@@ -33,7 +33,7 @@ import {
 import { fetchTemplate } from "./api";
 import { fetchExtensionDetail, invalidateExtensionDetail } from "./detail";
 import { HistoryLineChart } from "./chart";
-import { DashboardPage } from "./dashboard";
+import { DashboardPage, ReportPage } from "./dashboard";
 
 export default function Main(): React.ReactElement {
   return (
@@ -50,6 +50,7 @@ function MainRouter(): React.ReactElement {
   if (route === "devices")  return <DevicesPage />;
   if (route === "history" || route?.startsWith("history/")) return <HistoryPage />;
   if (route === "usage" || route?.startsWith("usage/")) return <UsagePage />;
+  if (route === "report" || route?.startsWith("report/")) return <ReportPage />;
   return <OverviewPage />;
 }
 

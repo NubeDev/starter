@@ -63,8 +63,11 @@ pub mod validate;
 pub const MOUNT_PREFIX: &str = "/api/warehouse/explorer";
 
 /// Per-statement timeout applied to the `POST /query` transaction.
-/// Matches the upstream sql-studio default cap.
-pub const QUERY_STATEMENT_TIMEOUT_MS: u32 = 30_000;
+/// 90s leaves enough headroom for cold portfolio-scale aggregates
+/// (e.g. `usage_per_meter` against ~700 meters × 1 year of
+/// histories, which can take ~30s on a cold buffer cache) while
+/// still preventing a runaway from monopolising a pool connection.
+pub const QUERY_STATEMENT_TIMEOUT_MS: u32 = 90_000;
 
 /// Server-enforced page size for `/tables/{name}/data?page=N`.
 /// Matches the upstream sql-studio constant — the client controls

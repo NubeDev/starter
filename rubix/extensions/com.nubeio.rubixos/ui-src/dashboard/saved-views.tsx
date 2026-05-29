@@ -8,6 +8,7 @@ import * as React from "react";
 import { EXTENSION_ID } from "../types";
 import { KINDS, RANGES, MAX_SAVED_VIEWS } from "./presets";
 import { Field, PillBtn } from "./prims";
+import { IconBookmark } from "./icons";
 
 export interface SavedView {
   /** Stable id (timestamp ms) — used as React key and for
@@ -98,7 +99,7 @@ export function SavedViewsField({
   const defaultName = `${kindLabel} · ${rangeLabel} · ${selectedHosts.length}/${allHosts.length}`;
 
   return (
-    <Field label={`Saved views · ${views.length}/${MAX_SAVED_VIEWS}`}>
+    <Field label={`Saved views · ${views.length}/${MAX_SAVED_VIEWS}`} icon={<IconBookmark size={12} />}>
       <div className="flex flex-wrap items-center gap-1">
         {naming ? (
           <>

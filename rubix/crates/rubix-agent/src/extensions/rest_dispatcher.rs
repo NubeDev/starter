@@ -27,7 +27,7 @@ use starter_ext_spi::{ExtensionId, RuntimeKind};
 /// MCP-side `EXTENSION_TOOL_REQUEST_TIMEOUT` so an operator tuning
 /// extension timeouts in one surface gets the same behaviour on the
 /// other.
-pub const EXTENSION_REST_REQUEST_TIMEOUT: Duration = Duration::from_secs(30);
+pub const EXTENSION_REST_REQUEST_TIMEOUT: Duration = Duration::from_secs(95);
 
 /// Routes REST dispatch to either the builtin or the process
 /// dispatcher based on the extension's manifest runtime kind.
