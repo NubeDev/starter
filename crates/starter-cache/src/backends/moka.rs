@@ -65,9 +65,9 @@ where
         }
     }
 
-    /// Force eviction of expired entries. Test-only helper —
-    /// production code should rely on moka's background sweeping.
-    #[cfg(any(test, feature = "testing"))]
+    /// Force eviction of expired entries. Useful in tests and on
+    /// diagnostic endpoints; production code can rely on moka's
+    /// background sweeping.
     pub async fn run_pending_tasks(&self) {
         self.inner.run_pending_tasks().await;
     }

@@ -190,6 +190,19 @@ impl CacheLayer {
         g.get(tenant).map(|c| c.entry_count()).unwrap_or(0)
     }
 
+    /// Force every tenant cache's pending eviction tasks to drain.
+    /// moka's entry counts are otherwise an eventually consistent
+    /// estimate; useful in tests and on diagnostic endpoints.
+    pub async fn run_pending_tasks(&self) {
+        let caches: Vec<TenantCache> = {
+            let g = self.inner.tenants.lock().unwrap();
+            g.values().cloned().collect()
+        };
+        for c in caches {
+            c.run_pending_tasks().await;
+        }
+    }
+
     /// The v0 entry point. Returns the cached or freshly loaded
     /// bytes.
     ///
