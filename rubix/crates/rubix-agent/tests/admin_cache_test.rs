@@ -43,6 +43,14 @@ fn post_json(uri: &str, body: Value) -> Request<Body> {
         .expect("build request")
 }
 
+fn post_empty(uri: &str) -> Request<Body> {
+    Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .body(Body::empty())
+        .expect("build request")
+}
+
 fn delete(uri: &str) -> Request<Body> {
     Request::builder()
         .method(Method::DELETE)
@@ -377,6 +385,51 @@ async fn evict_tenant_drops_only_named_tenant() {
     // B must still have its entry.
     assert_eq!(layer.tenant_entry_count("tA"), 0);
     assert_eq!(layer.tenant_entry_count("tB"), 1);
+}
+
+/// `POST /api/v1/admin/cache/invalidate_all` returns 503 when no
+/// layer wired — same posture as the other write endpoints.
+#[tokio::test]
+async fn invalidate_all_503_when_no_layer_wired() {
+    let app = admin_router(AdminState::empty());
+    let resp = app
+        .oneshot(post_empty("/api/v1/admin/cache/invalidate_all"))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
+}
+
+/// Happy path: populate two tenants, fire `invalidate_all`, verify
+/// every tenant's count drops to zero.
+#[tokio::test]
+async fn invalidate_all_drops_every_tenant() {
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
+        .scope(starter_cache::CacheScope::Tenant);
+    for tenant in ["tA", "tB"] {
+        let caller = starter_cache::CallerScope::new(tenant, "u");
+        let _ = layer
+            .get_or_load::<_, _, std::convert::Infallible>(
+                &spec,
+                &caller,
+                "k",
+                || async { Ok(Arc::new(b"v".to_vec())) },
+            )
+            .await
+            .unwrap();
+    }
+    layer.run_pending_tasks().await;
+    let app = admin_router(AdminState::empty().with_cache_layer(layer.clone()));
+    let resp = app
+        .oneshot(post_empty("/api/v1/admin/cache/invalidate_all"))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let v = body_json(resp).await;
+    assert_eq!(v["entries_dropped"], 2);
+    for tenant in ["tA", "tB"] {
+        assert_eq!(layer.tenant_entry_count(tenant), 0);
+    }
 }
 
 /// Unknown tenant returns 200 with `entries_dropped: 0`. A 404 would

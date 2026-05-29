@@ -17,6 +17,7 @@ that has the design decisions, the tradeoffs, and the still-open work.
 | See hit/miss/latency for every cached kind   | `GET /api/v1/admin/cache/specs`                           |
 | Drop entries tied to a table                 | `POST /api/v1/admin/cache/invalidate {"tags":["table:X"]}` |
 | Drop a single tenant's whole cache           | `DELETE /api/v1/admin/cache/tenants/{tenant}`             |
+| Drop **everything** (last-resort)            | `POST /api/v1/admin/cache/invalidate_all`                 |
 | Tune the per-tenant entry cap                | `RUBIX_CACHE_PER_TENANT_MAX_ENTRIES=<N>` env var          |
 | Find a typo / stale sidecar                  | grep `rubix.boot.extensions` warn logs at startup         |
 
@@ -141,6 +142,21 @@ unified `WarehouseWriter` chokepoint existed (see the
 `// TODO(cache-invalidation):` markers in the warehouse store
 crates). Until then, this endpoint is the manual escape hatch for
 "the data changed but the cache doesn't know".
+
+### "The cache is in a bad state, drop everything"
+
+Last-resort escape hatch when the surgical `/invalidate` and
+`/tenants/{id}` aren't enough — corrupted serialiser output,
+unexplained stale data, post-incident reset:
+
+```bash
+curl -X POST http://<host>/api/v1/admin/cache/invalidate_all
+```
+
+Returns `{entries_dropped: N}`. Per-spec counters and tag tokens
+survive, so the operator can watch hit rate recover from a known
+baseline. Prefer the surgical endpoints when you know what
+specifically is stale; reach for this only when you don't.
 
 ### "The cache is eating all our RAM"
 

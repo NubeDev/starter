@@ -231,6 +231,27 @@ impl CacheLayer {
         ids
     }
 
+    /// Drop every cached entry across every tenant. Last-resort
+    /// operator escape hatch for "the cache is in a bad state, drop
+    /// it all and let it warm again". Tags survive (tokens are not
+    /// reset); per-spec counters survive (so the operator can watch
+    /// hit rate recover from a known baseline).
+    ///
+    /// Returns the total approximate count dropped.
+    pub async fn invalidate_all(&self) -> u64 {
+        let caches: Vec<TenantCache> = {
+            let g = self.inner.tenants.lock().unwrap();
+            g.values().cloned().collect()
+        };
+        let mut total: u64 = 0;
+        for cache in caches {
+            total = total.saturating_add(cache.entry_count());
+            cache.invalidate_all().await;
+            cache.run_pending_tasks().await;
+        }
+        total
+    }
+
     /// Drop every cached entry belonging to `tenant`. Useful when a
     /// tenant is disabled or deleted and the operator wants to
     /// reclaim its cache memory immediately rather than waiting for
@@ -554,6 +575,31 @@ mod tests {
     async fn evict_unknown_tenant_returns_zero() {
         let layer = CacheLayer::new(LayerConfig::default());
         assert_eq!(layer.evict_tenant("never-seen").await, 0);
+    }
+
+    #[tokio::test]
+    async fn invalidate_all_drops_every_tenants_entries() {
+        let layer = CacheLayer::new(LayerConfig::default());
+        let spec = CacheSpec::ttl(Duration::from_secs(60)).scope(CacheScope::Tenant);
+
+        for tenant in ["tA", "tB", "tC"] {
+            let caller = CallerScope::new(tenant, "u");
+            let _ = layer
+                .get_or_load::<_, _, std::convert::Infallible>(
+                    &spec,
+                    &caller,
+                    "k",
+                    || async { Ok(b("v")) },
+                )
+                .await
+                .unwrap();
+        }
+        layer.run_pending_tasks().await;
+        let total = layer.invalidate_all().await;
+        assert_eq!(total, 3);
+        for tenant in ["tA", "tB", "tC"] {
+            assert_eq!(layer.tenant_entry_count(tenant), 0);
+        }
     }
 
     #[tokio::test]

@@ -68,6 +68,20 @@ pub(super) fn registrar(state: AdminState) -> RouteRegistrar {
                 .tag("admin"),
         )
         .mount(
+            Method::POST,
+            "/api/v1/admin/cache/invalidate_all",
+            post(invalidate_all).with_state(state.clone()),
+            RouteMeta::new()
+                .describe(
+                    "Drop every cached entry across every tenant. Last-resort \
+                     escape hatch — prefer `/invalidate` (tag-scoped) or \
+                     `/tenants/{tenant}` (tenant-scoped) when possible. \
+                     Per-spec counters and tag tokens survive so the operator \
+                     can watch hit rate recover from a known baseline.",
+                )
+                .tag("admin"),
+        )
+        .mount(
             Method::DELETE,
             "/api/v1/admin/cache/tenants/{tenant}",
             delete(evict_tenant).with_state(state),
@@ -270,6 +284,31 @@ async fn invalidate(
     let n = body.tags.len();
     layer.invalidator().invalidate_tags(&body.tags).await;
     Json(InvalidateResponse { invalidated: n }).into_response()
+}
+
+/// Response shape for the global invalidate endpoint.
+#[derive(Debug, Serialize)]
+struct InvalidateAllResponse {
+    /// Approximate total entries dropped across every tenant cache.
+    entries_dropped: u64,
+}
+
+async fn invalidate_all(State(state): State<AdminState>) -> Response {
+    let Some(layer) = state.cache_layer.as_ref() else {
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "service_unavailable",
+                "message": "opt-in cache is not wired on this host",
+            })),
+        )
+            .into_response();
+    };
+    let dropped = layer.invalidate_all().await;
+    Json(InvalidateAllResponse {
+        entries_dropped: dropped,
+    })
+    .into_response()
 }
 
 /// Response shape for the per-tenant eviction endpoint.
