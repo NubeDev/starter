@@ -22,6 +22,13 @@ export default defineConfig({
     // `src/lib/client.ts`).
     proxy: {
       '/api/v1': { target: 'http://127.0.0.1:8088', changeOrigin: true },
+      // `@nube/starter-client-ts` endpoints for tenants/authz address
+      // `/v1/...` directly (matching the in-router patterns in
+      // `starter-auth-users::tenants_router` / `starter-authz::routes::router`),
+      // so we forward those too. Without this, unmounted paths fall
+      // through to Vite and the SPA returns `index.html`, surfacing as
+      // "Expected JSON but got text/html" in the client.
+      '/v1': { target: 'http://127.0.0.1:8088', changeOrigin: true },
       // Warehouse explorer read-only sub-router mounted by
       // rubix-agent (`starter_warehouse_explorer::router_with_auth`).
       // Powers `/admin/warehouse-explorer` via

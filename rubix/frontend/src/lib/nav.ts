@@ -12,7 +12,6 @@ import {
   ShieldCheck,
   Sparkles,
   Terminal,
-  Users,
   type LucideIcon,
 } from 'lucide-react'
 
@@ -61,13 +60,13 @@ export const NAV_GROUPS: NavGroup[] = [
   },
   {
     // Admin section — operator-only surfaces. `access` mounts the
-    // starter-ui-authz `<AuthzAdmin>` panel; `users` is the rubix
-    // user-management page; `warehouse` is a Phase C stub that will
-    // host the warehouse + insights admin once that surface lands.
+    // starter-ui-authz `<AuthzAdmin>` panel (includes the rubix
+    // system Users rail node); `warehouse` is a Phase C stub that
+    // will host the warehouse + insights admin once that surface
+    // lands.
     titleKey: 'nav.group.admin',
     items: [
       { labelKey: 'nav.item.access',    href: '/admin/access',    icon: ShieldCheck },
-      { labelKey: 'nav.item.users',     href: '/admin/users',     icon: Users },
       { labelKey: 'nav.item.warehouse', href: '/admin/warehouse', icon: Database },
       {
         labelKey: 'nav.item.warehouseExplorer',

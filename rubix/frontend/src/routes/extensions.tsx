@@ -11,13 +11,27 @@
 // mutations; success auto-invalidates `['rubix','extensions']` from
 // inside the hook so the table reflects authoritative state.
 
-import { Outlet, createFileRoute } from '@tanstack/react-router'
-import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { Link, Outlet, createFileRoute, useNavigate } from '@tanstack/react-router'
+import { useMemo, useState, useSyncExternalStore } from 'react'
 import { useIntl } from 'react-intl'
-import { Activity, Boxes, CheckCircle2, Download, Power, PowerOff } from 'lucide-react'
+import {
+  Activity,
+  Boxes,
+  CheckCircle2,
+  Download,
+  MoreVertical,
+  Power,
+  PowerOff,
+  Settings,
+  Trash2,
+} from 'lucide-react'
 import {
   Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
   Empty,
   EmptyDescription,
   EmptyHeader,
@@ -29,14 +43,22 @@ import {
   useExtensionsList,
   useExtensionEnable,
   useExtensionDisable,
+  useExtensionProcess,
+  useExtensionMetrics,
+  type ExtensionContributesSummary,
   type ExtensionSummary,
 } from '@nube/rubix-client-react'
 import {
-  useExtensionHost,
+  useExtensionHostManager,
   type ExtensionRemoteFactory,
 } from '@nube/starter-ext-ui'
 import { ErrorBoundary } from '@/components/error-boundary'
 import { getExtensionHost } from '@/lib/extension-host'
+import {
+  UninstallDialog,
+  formatBytes,
+  formatUptime,
+} from '@/components/extensions/uninstall-dialog'
 
 function StatusBadge({ state }: { state: string }) {
   const color =
@@ -65,6 +87,8 @@ export function ExtensionsTable() {
   const list = useExtensionsList()
   const enableMut = useExtensionEnable()
   const disableMut = useExtensionDisable()
+  const navigate = useNavigate()
+  const [uninstallId, setUninstallId] = useState<string | null>(null)
 
   // No aggregate SSE endpoint today — the agent only exposes per-id
   // streams at `/api/v1/extensions/{id}/events`. Live status is
@@ -141,21 +165,25 @@ export function ExtensionsTable() {
               >
                 <div className="grid grid-cols-[1.5fr_1fr_1fr_auto] items-center gap-4 px-6 py-4">
                   <div>
-                    <div className="font-medium text-[color:var(--color-text)]">
+                    <Link
+                      to="/extensions/$extId/$"
+                      params={{ extId: r.id, _splat: '' }}
+                      className="font-medium text-[color:var(--color-text)] hover:text-[color:var(--color-leaf)]"
+                    >
                       {name}
                       {r.version ? (
                         <span className="ml-2 text-[10px] font-normal text-[color:var(--color-subtle)]">
                           v{r.version}
                         </span>
                       ) : null}
-                    </div>
+                    </Link>
                     <div className="font-mono text-[10px] text-[color:var(--color-subtle)]">{r.id}</div>
                   </div>
                   <div><StatusBadge state={state} /></div>
                   <div className="text-sm text-[color:var(--color-muted)]">
                     {enabled ? tr('common.yes', 'Yes') : tr('common.no', 'No')}
                   </div>
-                  <div className="flex justify-end gap-2">
+                  <div className="flex items-center justify-end gap-2">
                     <Button
                       size="sm"
                       variant="outline"
@@ -174,15 +202,100 @@ export function ExtensionsTable() {
                       <PowerOff className="h-3.5 w-3.5" />
                       Disable
                     </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          aria-label={tr('extensions.rowMenu', 'More actions')}
+                        >
+                          <MoreVertical className="h-3.5 w-3.5" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem
+                          onSelect={() =>
+                            void navigate({
+                              to: '/extensions/$extId/$',
+                              params: { extId: r.id, _splat: 'admin' },
+                            })
+                          }
+                        >
+                          <Settings className="mr-2 h-3.5 w-3.5" />
+                          {tr('extensions.admin.action', 'Admin')}
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onSelect={() => setUninstallId(r.id)}
+                          className="text-red-400 focus:text-red-400"
+                        >
+                          <Trash2 className="mr-2 h-3.5 w-3.5" />
+                          {tr('extensions.uninstall.action', 'Uninstall')}
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
-                <ExtensionContributesPanel id={r.id} />
+                <ExtensionRowStats id={r.id} />
+                <ExtensionContributesPanel id={r.id} contributes={r.contributes} />
               </div>
             )
           })
         )}
       </div>
+      {uninstallId ? (
+        <UninstallDialog
+          extId={uninstallId}
+          onClose={() => setUninstallId(null)}
+        />
+      ) : null}
     </section>
+  )
+}
+
+/** Inline per-row stats: restarts + violations from the list response
+ * (already loaded, no extra fetch), plus a per-row fetch for live process
+ * (mem/cpu/uptime) and metrics (tool/REST calls + errors). Per-row hooks
+ * mean N requests on initial load, but they're cheap and cached per id. */
+function ExtensionRowStats({ id }: { id: string }) {
+  const proc = useExtensionProcess(id)
+  const metrics = useExtensionMetrics(id)
+
+  const chips: Array<{ label: string; value: string }> = []
+  if (proc.data) {
+    chips.push({ label: 'uptime', value: formatUptime(proc.data.uptime) })
+    chips.push({ label: 'mem', value: formatBytes(proc.data.rss_bytes) })
+    if (proc.data.cpu_pct != null)
+      chips.push({ label: 'cpu', value: `${proc.data.cpu_pct.toFixed(1)}%` })
+  }
+  if (metrics.data) {
+    const m = metrics.data
+    const calls = m.tool_calls_total + m.rest_requests_total + m.worker_runs_total
+    const errors = m.tool_errors_total + m.worker_failures_total
+    if (calls) chips.push({ label: 'calls', value: String(calls) })
+    if (errors) chips.push({ label: 'errors', value: String(errors) })
+    if (m.restarts_total) chips.push({ label: 'restarts', value: String(m.restarts_total) })
+    if (m.capability_violations_total)
+      chips.push({ label: 'cap violations', value: String(m.capability_violations_total) })
+  }
+
+  if (chips.length === 0) return null
+
+  return (
+    <div className="flex flex-wrap items-center gap-1.5 px-6 pb-2">
+      <span className="text-[10px] uppercase tracking-[0.18em] text-[color:var(--color-subtle)]">
+        Stats
+      </span>
+      {chips.map((c) => (
+        <span
+          key={c.label}
+          className="inline-flex items-center gap-1 rounded-full bg-[color:var(--color-surface-2)]/60 px-2 py-0.5 text-[11px] text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-border)]"
+        >
+          <span className="font-medium text-[color:var(--color-text)]">{c.value}</span>
+          {c.label}
+        </span>
+      ))}
+    </div>
   )
 }
 
@@ -200,65 +313,43 @@ function ExtensionsRoute() {
   )
 }
 
-/** Manifest shape (subset) returned by `GET /api/v1/extensions/<id>`. */
-interface ExtensionDetail {
-  id: string
-  state: string
-  manifest: {
-    id?: string
-    version?: string
-    contributes?: {
-      tools?: ReadonlyArray<{ id: string }>
-      cli?: ReadonlyArray<{ id: string }>
-      rest?: ReadonlyArray<{ id: string; method: string; path: string }>
-      grpc?: ReadonlyArray<{ id: string }>
-      workers?: ReadonlyArray<{ id: string }>
-      nodes?: ReadonlyArray<{ kind: string }>
-      skills?: ReadonlyArray<{ dir: string }>
-      ui?: {
-        entry: string
-        exposes?: ReadonlyArray<{ name: string; module: string; slot: string }>
-      }
-    }
-  } | null
-  failure: string | null
-}
-
 /** Per-extension "what this contributes" panel + a Load UI button.
- * Fetches the agent's detail route lazily; on Load UI, dynamic-imports
- * `contributes.ui.entry` from `/api/v1/extensions/<id>/ui/<entry>` and
- * registers it with the host manager so `<ExtensionSlot/>` mounts it. */
-function ExtensionContributesPanel({ id }: { id: string }) {
-  const detail = useQuery<ExtensionDetail, Error>({
-    queryKey: ['rubix', 'extensions', 'detail', id],
-    queryFn: async () => {
-      const res = await fetch(`/api/v1/extensions/${encodeURIComponent(id)}`, {
-        credentials: 'include',
-        headers: { accept: 'application/json' },
-      })
-      if (!res.ok) throw new Error(`GET /api/v1/extensions/${id}: ${res.status}`)
-      return (await res.json()) as ExtensionDetail
-    },
-  })
-
-  const view = useExtensionHost()
-  const registered = view.registered.some((r) => r.id === id)
+ * Reads counts + UI block from the list-row `contributes` summary
+ * (server-side: `ContributesSummary` in `starter-ext-server`). On
+ * Load UI, dynamic-imports `ui.entry` from `/api/v1/extensions/<id>/ui/<entry>`
+ * and registers it with the host manager so `<ExtensionSlot/>` mounts it. */
+function ExtensionContributesPanel({
+  id,
+  contributes,
+}: {
+  id: string
+  contributes?: ExtensionContributesSummary
+}) {
+  // Subscribe directly to the manager rather than `useExtensionHost()` —
+  // the latter also fetches `/extensions` on every mount, which was
+  // firing N parallel times for an N-row list. We only need the
+  // registered-remotes view here.
+  const mgr = useExtensionHostManager()
+  const registered = useSyncExternalStore(
+    (cb) => mgr.subscribe(cb),
+    () => mgr.listRemotes().some((r) => r.id === id),
+    () => mgr.listRemotes().some((r) => r.id === id),
+  )
   const [loading, setLoading] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
 
-  const ui = detail.data?.manifest?.contributes?.ui ?? null
-  const contributes = detail.data?.manifest?.contributes ?? null
+  const ui = contributes?.ui ?? null
 
   const pills = useMemo(() => {
     if (!contributes) return [] as Array<{ label: string; count: number }>
     return [
-      { label: 'tools', count: contributes.tools?.length ?? 0 },
-      { label: 'cli', count: contributes.cli?.length ?? 0 },
-      { label: 'rest', count: contributes.rest?.length ?? 0 },
-      { label: 'grpc', count: contributes.grpc?.length ?? 0 },
-      { label: 'workers', count: contributes.workers?.length ?? 0 },
-      { label: 'nodes', count: contributes.nodes?.length ?? 0 },
-      { label: 'skills', count: contributes.skills?.length ?? 0 },
+      { label: 'tools', count: contributes.tools },
+      { label: 'cli', count: contributes.cli },
+      { label: 'rest', count: contributes.rest },
+      { label: 'grpc', count: contributes.grpc },
+      { label: 'workers', count: contributes.workers },
+      { label: 'nodes', count: contributes.nodes },
+      { label: 'skills', count: contributes.skills },
       { label: 'ui slots', count: ui?.exposes?.length ?? 0 },
     ].filter((p) => p.count > 0)
   }, [contributes, ui])
@@ -300,20 +391,6 @@ function ExtensionContributesPanel({ id }: { id: string }) {
     }
   }
 
-  if (detail.isLoading) {
-    return (
-      <div className="px-6 pb-4">
-        <Skeleton className="h-8 w-72" />
-      </div>
-    )
-  }
-  if (detail.isError) {
-    return (
-      <div className="px-6 pb-4 text-xs text-red-400">
-        Failed to load manifest: {detail.error.message}
-      </div>
-    )
-  }
   if (!contributes) {
     return null
   }
@@ -337,9 +414,6 @@ function ExtensionContributesPanel({ id }: { id: string }) {
             </span>
           ))
         )}
-        {detail.data?.failure ? (
-          <span className="ml-2 text-[11px] text-red-400">{detail.data.failure}</span>
-        ) : null}
         {loadError ? (
           <span className="ml-2 text-[11px] text-red-400">{loadError}</span>
         ) : null}

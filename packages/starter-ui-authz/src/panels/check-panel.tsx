@@ -1,7 +1,7 @@
 // Dry-run check panel — `POST /v1/authz/check`. Lets an operator
 // preview a decision before committing rule edits.
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent } from "react";
 import {
   Button,
   Card,
@@ -24,16 +24,24 @@ type SimRole = "reader" | "writer" | "admin";
 
 export interface CheckPanelProps {
   i18n?: Partial<AuthzMessages>;
+  /** Prefill `Principal subject`. */
+  defaultSubject?: string | null;
+  /** Reserved for future tenant-scoping (no field today). */
+  defaultTenantId?: string | null;
 }
 
-export function CheckPanel({ i18n }: CheckPanelProps) {
+export function CheckPanel({ i18n, defaultSubject }: CheckPanelProps) {
   const ctx = useAuthzMessages();
   const m = i18n ? mergeAuthzMessages({ ...ctx, ...i18n }) : ctx;
 
   const resources = useAuthzResources();
   const check = useAuthzCheck();
 
-  const [subject, setSubject] = useState("user-1");
+  const [subject, setSubject] = useState(defaultSubject || "user-1");
+
+  useEffect(() => {
+    if (defaultSubject) setSubject(defaultSubject);
+  }, [defaultSubject]);
   const [role, setRole] = useState<SimRole>("reader");
   const [action, setAction] = useState("read");
   const [kind, setKind] = useState("");

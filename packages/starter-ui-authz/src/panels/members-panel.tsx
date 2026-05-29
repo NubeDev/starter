@@ -17,7 +17,6 @@ import {
   CardContent,
   CardHeader,
   CardTitle,
-  Input,
   Label,
   Select,
   SelectContent,
@@ -34,6 +33,7 @@ import {
   useRemoveTenantMember,
 } from "../hooks/index.js";
 import { ActionsCell, DataTable, StateRow, Td } from "./_common.js";
+import { UserPicker, UserPickerFallback, useUserDirectory } from "./user-picker.js";
 
 const ROLES: TenantRole[] = ["reader", "writer", "admin"];
 
@@ -60,6 +60,7 @@ export function MembersPanel({
   const ctx = useAuthzMessages();
   const m = i18n ? mergeAuthzMessages({ ...ctx, ...i18n }) : ctx;
 
+  const directory = useUserDirectory();
   const add = useAddTenantMember();
   const patch = usePatchTenantMember();
   const remove = useRemoveTenantMember();
@@ -101,13 +102,24 @@ export function MembersPanel({
           <form onSubmit={onAdd} className="grid grid-cols-1 gap-3 sm:grid-cols-[2fr_1fr_auto] sm:items-end">
             <div className="grid gap-1">
               <Label htmlFor="m-user">{m.members.form.userIdLabel}</Label>
-              <Input
-                id="m-user"
-                value={userId}
-                onChange={(e) => setUserId(e.currentTarget.value)}
-                placeholder={m.members.form.userIdPlaceholder}
-                required
-              />
+              {directory ? (
+                <UserPicker
+                  id="m-user"
+                  value={userId || null}
+                  onChange={(sel) => setUserId(sel?.kind === "user" ? sel.id : "")}
+                  userDirectory={directory}
+                  enableGlobMode={false}
+                  placeholder={m.members.form.userIdPlaceholder}
+                />
+              ) : (
+                <UserPickerFallback
+                  id="m-user"
+                  value={userId}
+                  onChange={setUserId}
+                  placeholder={m.members.form.userIdPlaceholder}
+                  required
+                />
+              )}
             </div>
             <div className="grid gap-1">
               <Label htmlFor="m-role">{m.members.form.roleLabel}</Label>

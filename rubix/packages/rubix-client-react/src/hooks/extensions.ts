@@ -24,12 +24,38 @@ import { useRubixClient } from "../provider/rubix-client-provider.js";
 
 export const EXTENSIONS_KEY = ["rubix", "extensions"] as const;
 
+export interface ExtensionContributesUiExpose {
+  name: string;
+  module: string;
+  slot: string;
+}
+
+export interface ExtensionContributesUi {
+  entry: string;
+  exposes?: ExtensionContributesUiExpose[];
+}
+
+/** Compact counts + UI block — see `ContributesSummary` in
+ * `starter-ext-server/src/routes.rs`. Lets the list view skip a per-row
+ * detail fetch. */
+export interface ExtensionContributesSummary {
+  tools: number;
+  cli: number;
+  rest: number;
+  grpc: number;
+  workers: number;
+  nodes: number;
+  skills: number;
+  ui?: ExtensionContributesUi;
+}
+
 export interface ExtensionSummary {
   id: string;
   name: string;
   enabled: boolean;
   state: "running" | "stopped" | "starting" | "stopping" | "errored";
   last_error?: string | null;
+  contributes?: ExtensionContributesSummary;
 }
 
 export interface ExtensionListResponse {

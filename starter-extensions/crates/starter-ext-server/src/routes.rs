@@ -10,7 +10,7 @@ use axum::response::IntoResponse;
 use axum::Json;
 use serde::Serialize;
 use starter_ext_host::ExtensionRecord;
-use starter_ext_spi::{ExtensionId, LifecycleState, Manifest};
+use starter_ext_spi::{ContributeUi, ExtensionId, LifecycleState, Manifest};
 
 use crate::admin::ExtensionAdmin;
 use crate::store::EnablementState;
@@ -42,6 +42,44 @@ pub(crate) struct ExtensionSummary {
     /// live — the sealed registry forbids hot-mount, so a newly-uploaded
     /// bundle only becomes active on next boot. The UI badges these rows.
     pub restart_required: bool,
+    /// Compact view of the manifest's `contributes` block — counts per
+    /// kind plus the UI `entry`/`exposes` (needed by the host to register
+    /// the remote bundle). Lets the list view skip a per-row
+    /// `GET /extensions/<id>` fetch for the contributes pills and
+    /// Load-UI button. `None` for rows with no parsed manifest.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub contributes: Option<ContributesSummary>,
+}
+
+/// Counts + UI block from the manifest's `contributes`. Skips the heavier
+/// payload (REST paths, schemas, etc.) which the row UI does not render.
+#[derive(Debug, Serialize)]
+pub(crate) struct ContributesSummary {
+    pub tools: usize,
+    pub cli: usize,
+    pub rest: usize,
+    pub grpc: usize,
+    pub workers: usize,
+    pub nodes: usize,
+    pub skills: usize,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ui: Option<ContributeUi>,
+}
+
+impl ContributesSummary {
+    fn from_manifest(m: &Manifest) -> Self {
+        let c = &m.contributes;
+        Self {
+            tools: c.tools.len(),
+            cli: c.cli.len(),
+            rest: c.rest.len(),
+            grpc: c.grpc.len(),
+            workers: c.workers.len(),
+            nodes: c.nodes.len(),
+            skills: c.skills.len(),
+            ui: c.ui.clone(),
+        }
+    }
 }
 
 pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoResponse {
@@ -71,6 +109,7 @@ pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoRespon
             // A record already in the registry is live; it only needs a
             // restart if it was reinstalled-over this run.
             restart_required: admin.is_pending_restart(&rec.id_hint),
+            contributes: rec.manifest.as_ref().map(ContributesSummary::from_manifest),
         });
     }
 
@@ -96,6 +135,9 @@ pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoRespon
             capability_violations: 0,
             enabled: EnablementState::Enabled,
             restart_required: true,
+            // Pending rows have no parsed manifest yet (they go live on
+            // next boot); the row will gain `contributes` then.
+            contributes: None,
         });
     }
     Json(rows)

@@ -18,7 +18,7 @@
 import * as React from "react";
 
 import { useExtensionHostManager } from "./host-context.js";
-import type { RegisteredRemote } from "./host-manager.js";
+import type { ExtensionHostManager, RegisteredRemote } from "./host-manager.js";
 
 /**
  * Per-extension view returned by `useExtensionHost()`. Mirrors the
@@ -46,10 +46,73 @@ export interface ExtensionHostView {
   refresh(): Promise<void>;
 }
 
+// Per-manager shared cache: N consumers of `useExtensionHost()` share
+// a single `/extensions` fetch + a single `installed` snapshot. Without
+// this, mounting one component per row triggers N parallel GETs.
+interface HostCacheEntry {
+  installed: ReadonlyArray<ExtensionHostExtensionView> | null;
+  inflight: Promise<void> | null;
+  listeners: Set<() => void>;
+}
+
+const HOST_CACHE = new WeakMap<ExtensionHostManager, HostCacheEntry>();
+
+function getCache(mgr: ExtensionHostManager): HostCacheEntry {
+  let entry = HOST_CACHE.get(mgr);
+  if (!entry) {
+    entry = { installed: null, inflight: null, listeners: new Set() };
+    HOST_CACHE.set(mgr, entry);
+  }
+  return entry;
+}
+
+function notify(entry: HostCacheEntry): void {
+  for (const cb of entry.listeners) cb();
+}
+
+async function refreshInstalled(mgr: ExtensionHostManager): Promise<void> {
+  const entry = getCache(mgr);
+  if (entry.inflight) return entry.inflight;
+  const client = mgr.client;
+  // We route through the typed client (SCOPE R11) but the
+  // `/extensions` endpoint lives in `starter-ext-server`, not the
+  // base `starter-server` — so we use the client's underlying
+  // fetch with its configured baseUrl + headers rather than a
+  // declaration-merged method.
+  const p = (async () => {
+    try {
+      const res = await client.fetch(`${client.baseUrl}/extensions`, {
+        headers: client.headers,
+      });
+      if (!res.ok) {
+        throw new Error(`GET /extensions failed: ${res.status}`);
+      }
+      const rows = (await res.json()) as ServerSummary[];
+      const localById = new Map(mgr.listRemotes().map((r) => [r.id, r]));
+      entry.installed = rows.map((row) => ({
+        id: row.id,
+        version: row.version ?? null,
+        displayName: row.display_name ?? null,
+        state: row.state,
+        registered: localById.has(row.id),
+        remote: localById.get(row.id) ?? null,
+      }));
+      notify(entry);
+    } finally {
+      entry.inflight = null;
+    }
+  })();
+  entry.inflight = p;
+  return p;
+}
+
 /**
  * Hook surfacing the host's extension state. Subscribes to the
  * manager for live registration changes and fetches `/extensions`
  * lazily on mount via `useHostClient()`'s underlying client.
+ *
+ * Multiple concurrent consumers share one fetch and one cached
+ * `installed` snapshot per manager (see HOST_CACHE).
  */
 export function useExtensionHost(): ExtensionHostView {
   const mgr = useExtensionHostManager();
@@ -59,38 +122,23 @@ export function useExtensionHost(): ExtensionHostView {
     React.useCallback(() => mgr.listRemotes(), [mgr]),
   );
 
-  const [installed, setInstalled] = React.useState<
-    ReadonlyArray<ExtensionHostExtensionView> | null
-  >(null);
+  const installed = React.useSyncExternalStore(
+    React.useCallback(
+      (cb) => {
+        const entry = getCache(mgr);
+        entry.listeners.add(cb);
+        return () => entry.listeners.delete(cb);
+      },
+      [mgr],
+    ),
+    React.useCallback(() => getCache(mgr).installed, [mgr]),
+    React.useCallback(() => getCache(mgr).installed, [mgr]),
+  );
 
-  const refresh = React.useCallback(async () => {
-    const client = mgr.client;
-    // We route through the typed client (SCOPE R11) but the
-    // `/extensions` endpoint lives in `starter-ext-server`, not the
-    // base `starter-server` — so we use the client's underlying
-    // fetch with its configured baseUrl + headers rather than a
-    // declaration-merged method.
-    const res = await client.fetch(`${client.baseUrl}/extensions`, {
-      headers: client.headers,
-    });
-    if (!res.ok) {
-      throw new Error(`GET /extensions failed: ${res.status}`);
-    }
-    const rows = (await res.json()) as ServerSummary[];
-    const localById = new Map(mgr.listRemotes().map((r) => [r.id, r]));
-    setInstalled(
-      rows.map((row) => ({
-        id: row.id,
-        version: row.version ?? null,
-        displayName: row.display_name ?? null,
-        state: row.state,
-        registered: localById.has(row.id),
-        remote: localById.get(row.id) ?? null,
-      })),
-    );
-  }, [mgr]);
+  const refresh = React.useCallback(() => refreshInstalled(mgr), [mgr]);
 
   React.useEffect(() => {
+    if (getCache(mgr).installed != null) return;
     void refresh().catch((e) => {
       // The hook does not throw — surfacing the error is the
       // consumer's responsibility (they can call refresh() again
@@ -98,7 +146,7 @@ export function useExtensionHost(): ExtensionHostView {
       // eslint-disable-next-line no-console
       console.warn("[starter-ext-ui] useExtensionHost refresh failed:", e);
     });
-  }, [refresh]);
+  }, [mgr, refresh]);
 
   return { installed, registered, refresh };
 }

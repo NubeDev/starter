@@ -10,6 +10,90 @@ Screenshots of every current tab were captured via Playwright against the runnin
 
 ---
 
+## 0. Backend gap — the UI cannot work today
+
+Before any of the IA / UX changes below land, the backend has to actually expose the routes the panels call. Verified against the running agent on `127.0.0.1:8088` on 2026-05-29:
+
+```
+$ curl -s http://127.0.0.1:8088/openapi.json | jq '.paths | keys'
+[
+  "/api/v1/auth/login",
+  "/api/v1/auth/logout",
+  "/api/v1/auth/me",
+  "/api/v1/auth/token",
+  "/livez",
+  "/healthz"
+]
+
+$ curl -i http://127.0.0.1:8088/v1/tenants            # 404
+$ curl -i http://127.0.0.1:8088/v1/authz/decisions    # 404
+```
+
+Six routes total. Neither `/v1/tenants*` nor `/v1/authz/*` is mounted. Every panel that calls them gets a 404 directly from the agent — this surfaces in the browser as the `127.0.0.1:5173` errors in the proposal preamble, but the Vite proxy is innocent (it forwards to 8088, which returns the 404).
+
+### 0.1 What exists in the crates but is unmounted
+
+- [`crates/starter-auth-users/src/routes/tenants.rs#L121`](../../../crates/starter-auth-users/src/routes/tenants.rs#L121) — `tenants_router(Arc<dyn TenantStore>)` defines:
+  - `POST/GET /v1/tenants`, `GET/PATCH /v1/tenants/{id}`
+  - `POST/PATCH/DELETE /v1/tenants/{id}/members[...]`
+  - `POST/DELETE /v1/tenants/{id}/teams[/{team_id}]`
+  - `POST/DELETE /v1/tenants/{id}/teams/{team_id}/members[/{user_id}]`
+- [`crates/starter-authz/src/routes/router.rs#L25`](../../../crates/starter-authz/src/routes/router.rs#L25) — `authz_router(AuthzRoutesState)` defines:
+  - `GET/POST /v1/authz/rules`, `PUT/DELETE /v1/authz/rules/{id}`
+  - `GET/POST /v1/authz/assignments`, `DELETE /v1/authz/assignments/{id}`
+  - `GET /v1/authz/resources`
+  - `POST /v1/authz/check`
+  - `GET /v1/authz/decisions` (only when `AuthzRoutesState.decision_sink = Some(_)`)
+
+Neither is referenced anywhere under `rubix/crates/rubix-agent/`.
+
+### 0.2 What the agent runs today
+
+The agent's router is composed in [`rubix/crates/rubix-agent/src/bin/rubix_agent/compose.rs`](../../crates/rubix-agent/src/bin/rubix_agent/compose.rs). Around [compose.rs#L454-L456](../../crates/rubix-agent/src/bin/rubix_agent/compose.rs#L454-L456) it mounts `auth_routes` under `/api/v1` and gates the tools router. It never calls `tenants_router(...)` or `authz_router(...)`.
+
+The authz engine the tools-router gate consults is built by [`boot/authz.rs#L23`](../../crates/rubix-agent/src/boot/authz.rs#L23) — it constructs a `StaticRbacEngine` from an empty `AuthzConfig::default()` (so `default_policy = true` — every authenticated principal is allowed). That engine is returned as `Arc<dyn PolicyEngine>`, but `authz_router` requires the concrete `Arc<DbPolicyEngine>`. So mounting authz requires swapping the engine builder, not just adding a `.merge(...)` call.
+
+### 0.3 Required backend changes
+
+These are blockers for any of Sections 2–6 to be testable in a browser:
+
+1. **Mount `tenants_router`** in `compose.rs`, behind the same `with_principal(auth.authenticator)` gate the admin routes use:
+   - Construct `let tenants = Arc::new(PgTenantStore::new(pool.clone()))` (the impl already exists at [`crates/starter-auth-users/src/store/tenant_store/postgres.rs#L28`](../../../crates/starter-auth-users/src/store/tenant_store/postgres.rs#L28)).
+   - `app = app.merge_external(Router::new().merge(tenants_router::<()>(tenants)).layer(with_principal(...)))`.
+   - The `0005_tenants.sql` / `0006_teams.sql` migrations are already chained via `postgres_migration_source()` in [`boot/migrations.rs#L67`](../../crates/rubix-agent/src/boot/migrations.rs#L67) — no migration work needed.
+
+2. **Swap the authz engine to `DbPolicyEngine`** in [`boot/authz.rs`](../../crates/rubix-agent/src/boot/authz.rs):
+   - Return `Arc<DbPolicyEngine>` (concrete) instead of `Arc<dyn PolicyEngine>` so the same handle can feed both the tools-router gate and `AuthzRoutesState`. (The gate consumes `PolicyEngine`; `DbPolicyEngine` implements it.)
+   - Construct from the live pool, not from `AuthzConfig::default()`.
+   - Decision point: the gate flips from "allow every authenticated user" to "consult the rules table". An empty table = deny-by-default if `default_policy = false`. **Seed a bootstrap rule** in the same migration that creates the tables: `Role::Admin` → `*` → `allow`. Without this, the first request after the change locks the operator out of the very UI that lets them write rules.
+
+3. **Add the authz migration source** to the chain in `boot/migrations.rs` (verify `starter-authz` exposes a `postgres_migration_source()` equivalent; if not, add one). The chain must run *before* `RUBIX_TENANTS_MIGRATION_SOURCE` only if authz depends on rubix-tenants — verify FK order before placing it.
+
+4. **Mount `authz_router`** in `compose.rs`:
+   - Build `AuthzRoutesState { engine, registry, decision_sink: Some(Arc::new(DbDecisionSink::new(pool.clone()))) }`.
+   - `app = app.merge_external(Router::new().merge(authz_router::<()>(state)).layer(with_principal(...)))`.
+   - The router's own `admin_gate` ([router.rs#L48](../../../crates/starter-authz/src/routes/router.rs#L48)) already requires `Role::Admin`, so no extra `with_role` wrapper is needed.
+
+5. **Audit sink** — wire `DbDecisionSink` into the policy engine's decision path so `GET /v1/authz/decisions` returns rows. Without this the panel renders an empty list even after enforcement is live.
+
+### 0.4 Risk callouts
+
+- **Lockout risk.** Step 2 flips the tools-router gate's behavior. If the bootstrap admin rule (step 2 final bullet) is not seeded atomically with the schema, the first deploy of this change denies every tool call. Treat the seed as part of the migration, not a follow-up.
+- **Static engine consumers.** Anything else in the agent that calls `boot::authz::build_engine()` (see [`services.rs#L78`](../../crates/rubix-agent/src/bin/rubix_agent/services.rs#L78), [`boot/mcp/register.rs#L67`](../../crates/rubix-agent/src/boot/mcp/register.rs#L67)) needs to handle the new concrete type or a shared trait object — audit before the swap.
+- **`DELETE /v1/tenants/{id}` is intentionally absent** ([tenants.rs#L20](../../../crates/starter-auth-users/src/routes/tenants.rs#L20)). The UI's "Delete tenant" affordance in Section 2.4 needs to be either soft-delete via PATCH or removed from the wireframe.
+
+### 0.5 Suggested staging
+
+To avoid a flag-day:
+
+- **Stage A** — mount `tenants_router` only. Tenants/Members/Teams panels start working end-to-end; the rest of the authz UI keeps 404'ing (hide those tabs behind a `RUBIX_AUTHZ_ENABLED` flag, or render an "Unavailable" empty state). No security posture change.
+- **Stage B** — swap to `DbPolicyEngine` + seed bootstrap admin rule + mount `authz_router` + wire `DbDecisionSink`. Ship behind the same flag so it can be rolled back without a redeploy.
+- **Stage C** — the UI redesign in Sections 2–6.
+
+Stages A and B are the prerequisite. Stage C is what the rest of this document covers.
+
+---
+
 ## 1. Current state
 
 ### 1.1 Routes

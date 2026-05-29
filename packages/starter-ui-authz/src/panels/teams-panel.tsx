@@ -22,6 +22,7 @@ import {
   useTeams,
 } from "../hooks/index.js";
 import { ActionsCell, DataTable, StateRow, Td } from "./_common.js";
+import { UserPicker, UserPickerFallback, useUserDirectory } from "./user-picker.js";
 
 export interface TeamsPanelProps {
   tenantId: string | null;
@@ -32,6 +33,7 @@ export function TeamsPanel({ tenantId, i18n }: TeamsPanelProps) {
   const ctx = useAuthzMessages();
   const m = i18n ? mergeAuthzMessages({ ...ctx, ...i18n }) : ctx;
 
+  const directory = useUserDirectory();
   const list = useTeams(tenantId);
   const create = useCreateTeam();
   const del = useDeleteTeam();
@@ -114,20 +116,30 @@ export function TeamsPanel({ tenantId, i18n }: TeamsPanelProps) {
               <Td>{t.display_name}</Td>
               <Td>
                 <div className="flex items-center gap-2">
-                  <Input
-                    className="h-8 w-44"
-                    placeholder={m.teams.teamMembers.userIdLabel}
-                    value={memberDrafts[t.id] ?? ""}
-                    onChange={(e) =>
-                      setMemberDrafts((d) => ({ ...d, [t.id]: e.currentTarget.value }))
-                    }
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        void onAddMember(t.id);
-                      }
-                    }}
-                  />
+                  <div className="w-56">
+                    {directory ? (
+                      <UserPicker
+                        value={memberDrafts[t.id] || null}
+                        onChange={(sel) =>
+                          setMemberDrafts((d) => ({
+                            ...d,
+                            [t.id]: sel?.kind === "user" ? sel.id : "",
+                          }))
+                        }
+                        userDirectory={directory}
+                        enableGlobMode={false}
+                        placeholder={m.teams.teamMembers.userIdLabel}
+                      />
+                    ) : (
+                      <UserPickerFallback
+                        value={memberDrafts[t.id] ?? ""}
+                        onChange={(v) =>
+                          setMemberDrafts((d) => ({ ...d, [t.id]: v }))
+                        }
+                        placeholder={m.teams.teamMembers.userIdLabel}
+                      />
+                    )}
+                  </div>
                   <Button
                     size="sm"
                     onClick={() => void onAddMember(t.id)}

@@ -2,7 +2,7 @@
 // effect ∈ {"allow","deny"} and reloads the engine cache after
 // every write; the UI just funnels the body through.
 
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   Button,
   Card,
@@ -33,9 +33,12 @@ const ROLE_HINTS = ["reader", "writer", "admin"];
 
 export interface RulesPanelProps {
   i18n?: Partial<AuthzMessages>;
+  /** When set, prefill the tenant select and filter the listed
+   *  rules to this tenant (plus global rules). */
+  tenantId?: string | null;
 }
 
-export function RulesPanel({ i18n }: RulesPanelProps) {
+export function RulesPanel({ i18n, tenantId: scopeTenantId }: RulesPanelProps) {
   const ctx = useAuthzMessages();
   const m = i18n ? mergeAuthzMessages({ ...ctx, ...i18n }) : ctx;
 
@@ -51,7 +54,12 @@ export function RulesPanel({ i18n }: RulesPanelProps) {
   const [condition, setCondition] = useState("");
   const [effect, setEffect] = useState<RuleEffect>("allow");
   const [priority, setPriority] = useState(0);
-  const [tenantId, setTenantId] = useState<string>("");
+  const [tenantId, setTenantId] = useState<string>(scopeTenantId ?? "");
+
+  // Re-prefill when the master-detail scope changes.
+  useEffect(() => {
+    if (scopeTenantId) setTenantId(scopeTenantId);
+  }, [scopeTenantId]);
 
   const resourceOptions = useMemo(
     () => ["*", ...(resources.data?.resources?.map((r) => r.kind) ?? [])],
@@ -192,7 +200,10 @@ export function RulesPanel({ i18n }: RulesPanelProps) {
             m.common.tenant,
             "",
           ]}
-          rows={(list.data?.rules ?? []).map((r) => (
+          rows={(list.data?.rules ?? [])
+            // When a tenant scope is set, show that tenant's rules plus global ones.
+            .filter((r) => !scopeTenantId || r.tenant_id === scopeTenantId || r.tenant_id == null)
+            .map((r) => (
             <tr key={r.id}>
               <Td>{r.role}</Td>
               <Td><code className="text-xs">{r.resource}</code></Td>

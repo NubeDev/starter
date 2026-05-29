@@ -47,6 +47,8 @@ export {
   type ExtensionHostProviderProps,
 } from "./host-provider.js";
 
+export { useExtensionHostManager } from "./host-context.js";
+
 export {
   ExtensionSlot,
   type ExtensionSlotProps,

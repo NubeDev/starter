@@ -27,6 +27,7 @@ import { Route as AdminConsoleRouteImport } from './routes/admin/console'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
 import { Route as ExtensionsExtIdSplatRouteImport } from './routes/extensions.$extId.$'
 import { Route as DashboardsPageIdEditRouteImport } from './routes/dashboards/$pageId_.edit'
+import { Route as AdminAccessSplatRouteImport } from './routes/admin/access.$'
 
 const SettingsRoute = SettingsRouteImport.update({
   id: '/settings',
@@ -118,6 +119,11 @@ const DashboardsPageIdEditRoute = DashboardsPageIdEditRouteImport.update({
   path: '/dashboards/$pageId/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminAccessSplatRoute = AdminAccessSplatRouteImport.update({
+  id: '/$',
+  path: '/$',
+  getParentRoute: () => AdminAccessRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -126,7 +132,7 @@ export interface FileRoutesByFullPath {
   '/extensions': typeof ExtensionsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
-  '/admin/access': typeof AdminAccessRoute
+  '/admin/access': typeof AdminAccessRouteWithChildren
   '/admin/console': typeof AdminConsoleRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
@@ -136,6 +142,7 @@ export interface FileRoutesByFullPath {
   '/dashboards/': typeof DashboardsIndexRoute
   '/extensions/': typeof ExtensionsIndexRoute
   '/flows/': typeof FlowsIndexRoute
+  '/admin/access/$': typeof AdminAccessSplatRoute
   '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
   '/extensions/$extId/$': typeof ExtensionsExtIdSplatRoute
 }
@@ -145,7 +152,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
-  '/admin/access': typeof AdminAccessRoute
+  '/admin/access': typeof AdminAccessRouteWithChildren
   '/admin/console': typeof AdminConsoleRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
@@ -155,6 +162,7 @@ export interface FileRoutesByTo {
   '/dashboards': typeof DashboardsIndexRoute
   '/extensions': typeof ExtensionsIndexRoute
   '/flows': typeof FlowsIndexRoute
+  '/admin/access/$': typeof AdminAccessSplatRoute
   '/dashboards/$pageId/edit': typeof DashboardsPageIdEditRoute
   '/extensions/$extId/$': typeof ExtensionsExtIdSplatRoute
 }
@@ -166,7 +174,7 @@ export interface FileRoutesById {
   '/extensions': typeof ExtensionsRouteWithChildren
   '/login': typeof LoginRoute
   '/settings': typeof SettingsRoute
-  '/admin/access': typeof AdminAccessRoute
+  '/admin/access': typeof AdminAccessRouteWithChildren
   '/admin/console': typeof AdminConsoleRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
@@ -176,6 +184,7 @@ export interface FileRoutesById {
   '/dashboards/': typeof DashboardsIndexRoute
   '/extensions/': typeof ExtensionsIndexRoute
   '/flows/': typeof FlowsIndexRoute
+  '/admin/access/$': typeof AdminAccessSplatRoute
   '/dashboards/$pageId_/edit': typeof DashboardsPageIdEditRoute
   '/extensions/$extId/$': typeof ExtensionsExtIdSplatRoute
 }
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/dashboards/'
     | '/extensions/'
     | '/flows/'
+    | '/admin/access/$'
     | '/dashboards/$pageId/edit'
     | '/extensions/$extId/$'
   fileRoutesByTo: FileRoutesByTo
@@ -217,6 +227,7 @@ export interface FileRouteTypes {
     | '/dashboards'
     | '/extensions'
     | '/flows'
+    | '/admin/access/$'
     | '/dashboards/$pageId/edit'
     | '/extensions/$extId/$'
   id:
@@ -237,6 +248,7 @@ export interface FileRouteTypes {
     | '/dashboards/'
     | '/extensions/'
     | '/flows/'
+    | '/admin/access/$'
     | '/dashboards/$pageId_/edit'
     | '/extensions/$extId/$'
   fileRoutesById: FileRoutesById
@@ -248,7 +260,7 @@ export interface RootRouteChildren {
   ExtensionsRoute: typeof ExtensionsRouteWithChildren
   LoginRoute: typeof LoginRoute
   SettingsRoute: typeof SettingsRoute
-  AdminAccessRoute: typeof AdminAccessRoute
+  AdminAccessRoute: typeof AdminAccessRouteWithChildren
   AdminConsoleRoute: typeof AdminConsoleRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
@@ -388,6 +400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardsPageIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/access/$': {
+      id: '/admin/access/$'
+      path: '/$'
+      fullPath: '/admin/access/$'
+      preLoaderRoute: typeof AdminAccessSplatRouteImport
+      parentRoute: typeof AdminAccessRoute
+    }
   }
 }
 
@@ -405,6 +424,18 @@ const ExtensionsRouteWithChildren = ExtensionsRoute._addFileChildren(
   ExtensionsRouteChildren,
 )
 
+interface AdminAccessRouteChildren {
+  AdminAccessSplatRoute: typeof AdminAccessSplatRoute
+}
+
+const AdminAccessRouteChildren: AdminAccessRouteChildren = {
+  AdminAccessSplatRoute: AdminAccessSplatRoute,
+}
+
+const AdminAccessRouteWithChildren = AdminAccessRoute._addFileChildren(
+  AdminAccessRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   ChatRoute: ChatRoute,
@@ -412,7 +443,7 @@ const rootRouteChildren: RootRouteChildren = {
   ExtensionsRoute: ExtensionsRouteWithChildren,
   LoginRoute: LoginRoute,
   SettingsRoute: SettingsRoute,
-  AdminAccessRoute: AdminAccessRoute,
+  AdminAccessRoute: AdminAccessRouteWithChildren,
   AdminConsoleRoute: AdminConsoleRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,

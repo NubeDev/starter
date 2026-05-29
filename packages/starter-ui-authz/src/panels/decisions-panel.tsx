@@ -7,7 +7,7 @@
 // in their own infinite-scroll wrapper around `useAuthzDecisions`
 // if they want it).
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Button,
   Card,
@@ -31,17 +31,36 @@ import { DataTable, StateRow, Td } from "./_common.js";
 
 export interface DecisionsPanelProps {
   i18n?: Partial<AuthzMessages>;
+  /** Prefill the tenant filter (string — accepts id or slug — passed through to API). */
+  tenantId?: string | null;
+  /** Prefill the subject filter. */
+  subject?: string | null;
 }
 
-export function DecisionsPanel({ i18n }: DecisionsPanelProps) {
+export function DecisionsPanel({ i18n, tenantId: scopeTenant, subject: scopeSubject }: DecisionsPanelProps) {
   const ctx = useAuthzMessages();
   const m = i18n ? mergeAuthzMessages({ ...ctx, ...i18n }) : ctx;
 
   const client = useStarterClient();
 
-  const [filters, setFilters] = useState<DecisionsQuery>({ limit: 100 });
-  const [tenant, setTenant] = useState("");
-  const [subject, setSubject] = useState("");
+  const [filters, setFilters] = useState<DecisionsQuery>(() => ({
+    limit: 100,
+    tenant: scopeTenant || undefined,
+    subject: scopeSubject || undefined,
+  }));
+  const [tenant, setTenant] = useState(scopeTenant ?? "");
+  const [subject, setSubject] = useState(scopeSubject ?? "");
+
+  // Reapply when master-detail scope changes.
+  useEffect(() => {
+    setTenant(scopeTenant ?? "");
+    setSubject(scopeSubject ?? "");
+    setFilters({
+      limit: 100,
+      tenant: scopeTenant || undefined,
+      subject: scopeSubject || undefined,
+    });
+  }, [scopeTenant, scopeSubject]);
   const [effect, setEffect] = useState<"" | RuleEffect>("");
   const [extra, setExtra] = useState<DecisionView[]>([]);
   const [nextBefore, setNextBefore] = useState<string | null>(null);

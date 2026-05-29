@@ -28,7 +28,6 @@ import {
   ListChecks,
   Loader2,
   Trash2,
-  X,
 } from 'lucide-react'
 import { Button } from '@nube/starter-ui-kit'
 import { ExtensionSlot } from '@nube/starter-ext-ui'
@@ -36,11 +35,13 @@ import {
   useExtensionIssues,
   useExtensionProcess,
   useExtensionMetrics,
-  useExtensionCleanupPreview,
-  useExtensionPurge,
   type ExtensionIssue,
-  type ExtensionCleanupItem,
 } from '@nube/rubix-client-react'
+import {
+  UninstallDialog,
+  formatBytes,
+  formatUptime,
+} from '@/components/extensions/uninstall-dialog'
 
 export const Route = createFileRoute('/extensions/$extId/$')({
   component: RouteComponent,
@@ -48,10 +49,19 @@ export const Route = createFileRoute('/extensions/$extId/$')({
 
 function RouteComponent() {
   const { extId, _splat } = Route.useParams()
+  const splat = _splat ?? ''
+  // `/extensions/<id>/admin` shows the host admin chrome (Issues/Process/
+  // Metrics/Uninstall). Any other splat — including the empty root —
+  // hands the surface entirely to the extension's own federated UI so it
+  // can dispatch its own sub-pages without the host getting in the way.
+  const isAdmin = splat === 'admin' || splat.startsWith('admin/')
   return (
     <div className="mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
-      <ExtensionAdminPanel extId={extId} />
-      <ExtensionSlot id="main" extensionId={extId} route={_splat ?? ''} />
+      {isAdmin ? (
+        <ExtensionAdminPanel extId={extId} />
+      ) : (
+        <ExtensionSlot id="main" extensionId={extId} route={splat} />
+      )}
     </div>
   )
 }
@@ -65,6 +75,7 @@ type AdminTab = 'issues' | 'process' | 'metrics'
 function ExtensionAdminPanel({ extId }: { extId: string }) {
   const intl = useIntl()
   const tr = (id: string, def: string) => intl.formatMessage({ id, defaultMessage: def })
+  const navigate = useNavigate()
   const [tab, setTab] = useState<AdminTab>('issues')
   const [uninstallOpen, setUninstallOpen] = useState(false)
 
@@ -116,7 +127,11 @@ function ExtensionAdminPanel({ extId }: { extId: string }) {
       </div>
 
       {uninstallOpen ? (
-        <UninstallDialog extId={extId} onClose={() => setUninstallOpen(false)} />
+        <UninstallDialog
+          extId={extId}
+          onClose={() => setUninstallOpen(false)}
+          onUninstalled={() => void navigate({ to: '/extensions' })}
+        />
       ) : null}
     </section>
   )
@@ -193,29 +208,6 @@ function IssuesTab({ extId }: { extId: string }) {
 // Process
 // ---------------------------------------------------------------------------
 
-function formatUptime(uptime?: { secs: number }): string {
-  if (!uptime) return '—'
-  const s = uptime.secs
-  const h = Math.floor(s / 3600)
-  const m = Math.floor((s % 3600) / 60)
-  const sec = s % 60
-  if (h > 0) return `${h}h ${m}m`
-  if (m > 0) return `${m}m ${sec}s`
-  return `${sec}s`
-}
-
-function formatBytes(bytes?: number | null): string {
-  if (bytes == null) return '—'
-  const units = ['B', 'KB', 'MB', 'GB']
-  let v = bytes
-  let u = 0
-  while (v >= 1024 && u < units.length - 1) {
-    v /= 1024
-    u += 1
-  }
-  return `${v.toFixed(u === 0 ? 0 : 1)} ${units[u]}`
-}
-
 function ProcessTab({ extId }: { extId: string }) {
   const intl = useIntl()
   const tr = (id: string, def: string) => intl.formatMessage({ id, defaultMessage: def })
@@ -273,114 +265,6 @@ function MetricsTab({ extId }: { extId: string }) {
     { label: tr('extensions.metrics.eventsDropped', 'Events dropped'), value: String(m.events_dropped_total) },
   ]
   return <StatGrid stats={stats} />
-}
-
-// ---------------------------------------------------------------------------
-// Uninstall dialog — preview manifest, then purge.
-// ---------------------------------------------------------------------------
-
-function UninstallDialog({ extId, onClose }: { extId: string; onClose: () => void }) {
-  const intl = useIntl()
-  const tr = (id: string, def: string) => intl.formatMessage({ id, defaultMessage: def })
-  const navigate = useNavigate()
-  const preview = useExtensionCleanupPreview(extId)
-  const purge = useExtensionPurge({
-    onSuccess: () => {
-      onClose()
-      void navigate({ to: '/extensions' })
-    },
-  })
-
-  const items = preview.data?.items ?? []
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label={tr('common.close', 'Close')}
-        className="absolute inset-0 bg-black/50"
-        onClick={onClose}
-      />
-      <div className="glass relative z-10 w-full max-w-lg rounded-3xl p-6">
-        <div className="mb-4 flex items-start justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-medium text-[color:var(--color-text)]">
-              {tr('extensions.uninstall.title', 'Uninstall extension')}
-            </h2>
-            <p className="mt-1 font-mono text-[11px] text-[color:var(--color-subtle)]">{extId}</p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-full p-1 text-[color:var(--color-muted)] hover:text-[color:var(--color-text)]"
-            aria-label={tr('common.close', 'Close')}
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <p className="mb-3 text-sm text-[color:var(--color-muted)]">
-          {tr(
-            'extensions.uninstall.body',
-            'This permanently removes the bundle and the data listed below. This cannot be undone.',
-          )}
-        </p>
-
-        <div className="mb-4 max-h-64 overflow-auto rounded-2xl border border-[color:var(--color-border)]/60">
-          {preview.isLoading ? (
-            <div className="p-4">
-              <Loading />
-            </div>
-          ) : preview.isError ? (
-            <div className="p-4">
-              <ErrorRow message={preview.error.message} />
-            </div>
-          ) : items.length === 0 ? (
-            <p className="p-4 text-sm text-[color:var(--color-subtle)]">
-              {tr('extensions.uninstall.nothing', 'No leftover data — only the bundle will be removed.')}
-            </p>
-          ) : (
-            <ul className="divide-y divide-[color:var(--color-border)]/40">
-              {items.map((item: ExtensionCleanupItem, i: number) => (
-                <li key={`${item.kind}-${item.label}-${i}`} className="flex items-center justify-between gap-3 px-4 py-2">
-                  <div className="min-w-0">
-                    <span className="inline-flex rounded-full bg-[color:var(--color-surface-2)]/60 px-2 py-0.5 text-[10px] uppercase tracking-wider text-[color:var(--color-muted)] ring-1 ring-[color:var(--color-border)]">
-                      {item.kind}
-                    </span>
-                    <div className="truncate font-mono text-xs text-[color:var(--color-text)]">{item.label}</div>
-                  </div>
-                  <span className="shrink-0 text-[11px] text-[color:var(--color-subtle)]">{formatBytes(item.bytes)}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-
-        {preview.data && preview.data.total_bytes > 0 ? (
-          <p className="mb-4 text-xs text-[color:var(--color-subtle)]">
-            {tr('extensions.uninstall.total', 'Total to reclaim')}: {formatBytes(preview.data.total_bytes)}
-          </p>
-        ) : null}
-
-        {purge.isError ? <ErrorRow message={purge.error.message} /> : null}
-
-        <div className="flex justify-end gap-2">
-          <Button size="sm" variant="outline" onClick={onClose} disabled={purge.isPending}>
-            {tr('common.cancel', 'Cancel')}
-          </Button>
-          <Button
-            size="sm"
-            variant="default"
-            disabled={purge.isPending || preview.isLoading}
-            onClick={() => purge.mutate({ id: extId, purge: true })}
-          >
-            {purge.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            {tr('extensions.uninstall.confirm', 'Uninstall & purge')}
-          </Button>
-        </div>
-      </div>
-    </div>
-  )
 }
 
 // ---------------------------------------------------------------------------
