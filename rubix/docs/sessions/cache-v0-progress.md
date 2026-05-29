@@ -1,7 +1,7 @@
 # Cache v0 — Progress Log
 
 ## Status
-2026-05-29 — v0 landed end-to-end **and a silent-no-op bug was caught + fixed mid-session**. The admin endpoint now also surfaces each spec's *config* (TTL, scope, invalidate tags) joined with the runtime counters, and shows registered-but-never-hit specs so "is this kind ever called?" is a one-curl question. Key invariants pinned by tests: object-key canonicalisation in `dispatch_base_key`, distinct-input separation, and streaming dispatch bypassing the cache. Numbers still TBD pending a workload replay.
+2026-05-29 — v0 landed end-to-end **and a silent-no-op bug was caught + fixed mid-session**. The admin endpoint now also surfaces each spec's *config* (TTL, scope, invalidate tags) joined with the runtime counters, and shows registered-but-never-hit specs so "is this kind ever called?" is a one-curl question. Key invariants pinned by tests: object-key canonicalisation in `dispatch_base_key`, distinct-input separation, and streaming dispatch bypassing the cache. Operators now have an escape hatch — `POST /api/v1/admin/cache/invalidate` — so a stale cache no longer requires a restart. Numbers still TBD pending a workload replay.
 
 ## Scope reminder
 Building **only** the "Minimum viable v0" section of [fe-cache-opt-in.md](../proposal/fe-cache-opt-in.md) (the rest is Deferred). v0 = `CacheSpec` + tag-based invalidation primitives in `crates/starter-cache`, integration at the **extension kind dispatcher only** ([dispatcher.rs](../../../starter-extensions/crates/starter-ext-server/src/rest/dispatcher.rs)), a `kind.cache.yaml` sidecar parser, and `usage_bucketed` as the canary. Three knobs: `ttl`, `scope` (user|tenant|global), `invalidate_on.tables`. Non-negotiable: invalidation-token race fix + per-tenant weight caps. Explicit **non-goals** for v0: SDUI integration, `starter-windowed`, two-layer cache (`inner_scope:`), SWR, `time_series:` block, tower layer, multi-node fan-out, dimension-scoped tags, IR version bump.
@@ -50,6 +50,18 @@ Building **only** the "Minimum viable v0" section of [fe-cache-opt-in.md](../pro
 - **What's blocked:** Real-workload hit-rate + latency numbers still pending the rig — but now there is a single endpoint to scrape that answers both "is the canary paying off" and "what is the cache shielding callers from".
 - **What's next:** Drive `/extensions/com.nubeio.rubixos/usage` at the dashboard refresh cadence and capture the snapshot. Two-line script: `while true; do curl …; sleep N; done | jq` against `GET /api/v1/admin/cache/specs`.
 - **Numbers:** Per-spec snapshot endpoint live with hit/miss + load-latency histogram. Hit-rate / latency from real traffic still pending environment time.
+
+### 2026-05-29 — runtime invalidate endpoint (same day)
+- **What landed:**
+  - Commit `feat(rubix-agent): POST /api/v1/admin/cache/invalidate` — body `{ "tags": [...] }`, fires `invalidator.invalidate_tags(tags)` against the wired layer. 200 `{ invalidated: N }` on success; 503 when no layer is wired (so an operator does not silently assume the call took effect); empty `tags` is a no-op (200, invalidated=0) rather than a 400 — tooling firing "whatever tags I have" should not have to special-case the empty list.
+  - Four tests in `tests/admin_cache_test.rs`: 503-when-no-layer, tokens-snapshot-moved-after-fire, empty-array-is-noop, end-to-end "cache → curl → next read is fresh".
+- **Why this and not `DELETE /specs/{spec_id}`:** the tag-based mechanism reuses the existing write-path invalidation primitive (one mental model, one well-tested code path) and is strictly more powerful — an operator can fire any tag a sidecar declares. A spec-id-scoped invalidate would have required new layer machinery to enumerate keys per spec, which is a different feature with its own design.
+- **What's blocked:** Still — real-workload hit-rate + latency numbers pending the dev rig.
+- **What's next:** Workload replay. The full operator loop is now self-contained on this host:
+  1. `curl http://.../api/v1/admin/cache/specs` → see hit/miss/latency.
+  2. Spot a stale spec → `curl -X POST http://.../api/v1/admin/cache/invalidate -d '{"tags":["table:foo"]}'`.
+  3. Re-`curl /specs` → verify the next read paid a fresh miss.
+- **Numbers:** Same as previous — endpoint surfaces complete; awaiting real traffic.
 
 ### 2026-05-29 — admin endpoint join + invariant pinning (same day)
 - **What landed:**
