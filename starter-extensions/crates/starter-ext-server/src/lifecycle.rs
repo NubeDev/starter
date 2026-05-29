@@ -456,6 +456,12 @@ impl BundlePlan {
     }
 }
 
+// `axum::response::Response` weighs ~128 bytes which trips clippy's
+// `result_large_err` lint. The root starter workspace allows this
+// lint workspace-wide; starter-extensions does not. Boxing here would
+// force every call-site to unbox before `.into_response()`, which is
+// the very next thing we do — net loss in readability.
+#[allow(clippy::result_large_err)]
 fn plan_bundle_action(
     admin: &ExtensionAdmin,
     id: &str,
@@ -488,6 +494,7 @@ fn plan_bundle_action(
     Ok(BundlePlan::LegacyInstalled { path, exists })
 }
 
+#[allow(clippy::result_large_err)]
 fn apply_bundle_removal(plan: &BundlePlan) -> Result<(), axum::response::Response> {
     let (path, must_exist) = match plan {
         BundlePlan::PreserveDev { .. } => return Ok(()),
