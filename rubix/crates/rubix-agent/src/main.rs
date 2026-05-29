@@ -695,6 +695,11 @@ async fn main() -> Result<()> {
                 let kind_cache =
                     KindCacheRegistry::from_entries(cache_entries.iter().cloned());
                 let dispatcher_cache = DispatcherCache::new(cache_layer.clone(), kind_cache);
+                // Thread the layer into the admin state so
+                // `GET /api/v1/admin/cache/specs` can render per-spec
+                // hit/miss numbers — the canary's "is usage_bucketed
+                // paying off?" panel reads this.
+                admin_state = admin_state.with_cache_layer(cache_layer.clone());
 
                 // Builtin dispatcher: in-process extensions go through the
                 // capability factory above.

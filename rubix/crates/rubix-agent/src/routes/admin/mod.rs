@@ -5,6 +5,7 @@
 //! applies pagination, and returns the envelope JSON. No
 //! domain logic — see [docs/design/admin/](../../../../docs/design/admin/README.md).
 
+mod cache;
 mod errors;
 mod extensions;
 mod invoke;

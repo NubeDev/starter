@@ -29,7 +29,7 @@ use crate::routes::{RouteMeta, RouteRegistrar};
 
 use super::errors::page_error_response;
 use super::query::{DecodedQuery, ListQuery};
-use super::{extensions, nodes, overview, rules, skills, tables, templates, tools};
+use super::{cache, extensions, nodes, overview, rules, skills, tables, templates, tools};
 
 /// Build the full admin registrar — the multiplexed `/registry`
 /// route plus every per-kind sugar registrar plus `/overview`.
@@ -50,6 +50,7 @@ pub fn admin_registrar(state: AdminState) -> RouteRegistrar {
         .merge(templates::registrar(state.clone()))
         .merge(tables::registrar(state.clone()))
         .merge(skills::registrar(state.clone()))
+        .merge(cache::registrar(state.clone()))
         .merge(extensions::registrar(state))
 }
 

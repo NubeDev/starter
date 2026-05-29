@@ -46,6 +46,14 @@ pub struct AdminState {
     /// Validated + failed extension records. `None` when the
     /// extension host is disabled in config.
     pub extensions: Option<Arc<ExtensionRegistry>>,
+
+    /// Opt-in cache layer (the one shared by the builtin and
+    /// process REST dispatchers). `None` when the cache is not
+    /// wired — e.g. dev rigs that disable extensions. The admin
+    /// surface uses it to expose per-spec hit/miss numbers so the
+    /// canary's "is `usage_bucketed` paying off?" question has a
+    /// concrete answer.
+    pub cache_layer: Option<starter_cache::CacheLayer>,
 }
 
 impl AdminState {
@@ -82,6 +90,12 @@ impl AdminState {
     /// Builder: set the extension registry.
     pub fn with_extensions(mut self, extensions: Arc<ExtensionRegistry>) -> Self {
         self.extensions = Some(extensions);
+        self
+    }
+
+    /// Builder: set the opt-in cache layer.
+    pub fn with_cache_layer(mut self, cache_layer: starter_cache::CacheLayer) -> Self {
+        self.cache_layer = Some(cache_layer);
         self
     }
 }
