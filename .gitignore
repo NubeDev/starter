@@ -36,3 +36,4 @@ rubix/frontend/.tanstack/tmp/
 .playwright-cli/
 rubix/.playwright-cli
 rubix/extensions/com.nubeio.rubixos/rubix-nubeio-rubixos-extension
+examples/rubix-app
