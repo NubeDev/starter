@@ -98,8 +98,9 @@ pub struct CacheLayer {
 
 struct Inner {
     config: LayerConfig,
-    #[allow(dead_code)] // wired for future expiry tracking; held so the
-    // layer owns a single clock instance.
+    /// Threaded through to time loader calls (per-spec load
+    /// histogram) and for future expiry tracking. The default is
+    /// [`SystemClock`]; tests wire in [`crate::MockClock`].
     clock: Arc<dyn Clock>,
     invalidator: Arc<dyn Invalidator>,
     tenants: Mutex<HashMap<String, TenantCache>>,
@@ -293,7 +294,13 @@ impl CacheLayer {
         // Snapshot tokens **before** firing the loader.
         let tags = spec.derived_tags();
         let snap_before = self.inner.invalidator.snapshot_tokens(&tags);
+        let load_started = self.inner.clock.now();
         let value = load().await?;
+        let load_duration = self
+            .inner
+            .clock
+            .now()
+            .saturating_duration_since(load_started);
 
         // Race check: drop the store if any depended-on tag moved
         // during the load. Otherwise insert with the snapshot we
@@ -317,7 +324,7 @@ impl CacheLayer {
 
         self.inner.stats.record_miss();
         if let Some(s) = &per_spec {
-            s.record_miss();
+            s.record_miss(load_duration);
         }
         Ok(value)
     }

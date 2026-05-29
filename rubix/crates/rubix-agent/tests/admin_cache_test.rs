@@ -81,4 +81,14 @@ async fn cache_specs_reflect_labelled_loads() {
     assert_eq!(specs[0]["misses"], 1);
     let ratio = specs[0]["hit_ratio"].as_f64().unwrap();
     assert!((ratio - 2.0 / 3.0).abs() < 1e-9, "hit_ratio = {ratio}");
+
+    // Latency surface — one miss recorded, hits do not pollute.
+    let lat = &specs[0]["load_latency"];
+    assert_eq!(lat["count"], 1, "exactly one miss-path load timed");
+    let total: u64 = ["le_10ms", "le_100ms", "le_1s", "le_10s", "gt_10s"]
+        .iter()
+        .map(|b| lat[b].as_u64().unwrap())
+        .sum();
+    assert_eq!(total, 1, "exactly one bucket incremented");
+    assert!(lat["mean_ms"].as_f64().unwrap() >= 0.0);
 }

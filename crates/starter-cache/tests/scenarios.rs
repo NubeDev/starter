@@ -10,7 +10,7 @@
 
 use starter_cache::{
     CacheLayer, CacheScope, CacheSpec, CallerScope, InMemoryInvalidator, Invalidator, LayerConfig,
-    SystemClock,
+    MockClock, SystemClock,
 };
 use std::sync::atomic::{AtomicU32, Ordering};
 use std::sync::Arc;
@@ -225,6 +225,68 @@ async fn s4_loader_error_is_not_cached() {
         .unwrap();
     assert_eq!(&*v, b"ok");
     assert_eq!(calls.load(Ordering::SeqCst), 2);
+}
+
+/// Load-latency histogram — miss-path loader durations land in the
+/// right bucket; hit-path calls do not pollute it.
+///
+/// Uses `MockClock` so the test runs in real wall-clock zero time
+/// but the histogram still receives deterministic samples.
+#[tokio::test]
+async fn load_latency_histogram_buckets_misses_only() {
+    let clock = MockClock::new();
+    let layer = CacheLayer::with_parts(
+        LayerConfig::default(),
+        Arc::new(clock.clone()),
+        Arc::new(InMemoryInvalidator::new()),
+    );
+    let spec = CacheSpec::ttl(Duration::from_secs(60)).scope(CacheScope::Tenant);
+    let caller = CallerScope::new("tA", "uX");
+
+    // First call: miss. The loader closure advances the mock clock
+    // by 50ms — that lands in the `le_100ms` bucket.
+    let clock_for_loader = clock.clone();
+    let _ = layer
+        .get_or_load_labelled::<_, _, std::convert::Infallible>(
+            &spec,
+            Some("ext.kind.slow"),
+            &caller,
+            "k",
+            move || async move {
+                clock_for_loader.advance(Duration::from_millis(50));
+                Ok(b("v"))
+            },
+        )
+        .await
+        .unwrap();
+
+    // Second + third call: hits. These must NOT touch the latency
+    // histogram — the cache is measuring what it shields from.
+    for _ in 0..2 {
+        let _ = layer
+            .get_or_load_labelled::<_, _, std::convert::Infallible>(
+                &spec,
+                Some("ext.kind.slow"),
+                &caller,
+                "k",
+                || async { Ok(b("v")) },
+            )
+            .await
+            .unwrap();
+    }
+
+    let snap = layer.per_spec_snapshot();
+    let row = &snap[0];
+    assert_eq!(row.spec_id, "ext.kind.slow");
+    assert_eq!(row.hits, 2);
+    assert_eq!(row.misses, 1);
+    assert_eq!(row.load_latency.count, 1, "hit calls do not pollute latency");
+    assert_eq!(
+        row.load_latency.le_100ms, 1,
+        "50ms sample lands in le_100ms"
+    );
+    assert_eq!(row.load_latency.le_10ms, 0);
+    assert_eq!(row.load_latency.le_1s, 0);
 }
 
 /// Per-spec stats — when a caller labels its dispatches by spec id,

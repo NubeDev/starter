@@ -49,6 +49,21 @@ struct SpecRow {
     hits: u64,
     misses: u64,
     hit_ratio: f64,
+    /// Loader-call latency histogram. See
+    /// `starter_cache::LoadLatencySnapshot`.
+    load_latency: LoadLatencyRow,
+}
+
+#[derive(Serialize)]
+struct LoadLatencyRow {
+    le_10ms: u64,
+    le_100ms: u64,
+    le_1s: u64,
+    le_10s: u64,
+    gt_10s: u64,
+    count: u64,
+    sum_nanos: u64,
+    mean_ms: f64,
 }
 
 #[derive(Serialize)]
@@ -61,11 +76,30 @@ async fn list(State(state): State<AdminState>) -> Response {
         Some(layer) => layer
             .per_spec_snapshot()
             .into_iter()
-            .map(|s| SpecRow {
-                spec_id: s.spec_id,
-                hits: s.hits,
-                misses: s.misses,
-                hit_ratio: s.hit_ratio,
+            .map(|s| {
+                let mean_ms = if s.load_latency.count == 0 {
+                    0.0
+                } else {
+                    (s.load_latency.sum_nanos as f64)
+                        / (s.load_latency.count as f64)
+                        / 1_000_000.0
+                };
+                SpecRow {
+                    spec_id: s.spec_id,
+                    hits: s.hits,
+                    misses: s.misses,
+                    hit_ratio: s.hit_ratio,
+                    load_latency: LoadLatencyRow {
+                        le_10ms: s.load_latency.le_10ms,
+                        le_100ms: s.load_latency.le_100ms,
+                        le_1s: s.load_latency.le_1s,
+                        le_10s: s.load_latency.le_10s,
+                        gt_10s: s.load_latency.gt_10s,
+                        count: s.load_latency.count,
+                        sum_nanos: s.load_latency.sum_nanos,
+                        mean_ms,
+                    },
+                }
             })
             .collect(),
         None => Vec::new(),
