@@ -91,4 +91,87 @@ async fn cache_specs_reflect_labelled_loads() {
         .sum();
     assert_eq!(total, 1, "exactly one bucket incremented");
     assert!(lat["mean_ms"].as_f64().unwrap() >= 0.0);
+
+    // No registry wired in this test → no config visible.
+    assert!(specs[0]["config"].is_null());
+}
+
+/// When the registry is wired alongside the layer, the response
+/// surfaces every registered spec (including those never touched)
+/// plus their `config` block so operators can verify the sidecar
+/// shape without reading YAML.
+#[tokio::test]
+async fn cache_specs_join_registry_and_counters() {
+    let ext =
+        starter_ext_spi::ExtensionId::new("com.example.ext").expect("ext id");
+    // Two specs registered, only one will be touched.
+    let touched_spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
+        .scope(starter_cache::CacheScope::User)
+        .invalidate_on_table("readings");
+    let cold_spec = starter_cache::CacheSpec::ttl(Duration::from_secs(120))
+        .scope(starter_cache::CacheScope::Tenant);
+    let registry = starter_ext_server::KindCacheRegistry::from_entries([
+        (
+            (ext.clone(), "com.example.ext.touched".to_string()),
+            touched_spec.clone(),
+        ),
+        (
+            (ext.clone(), "com.example.ext.cold".to_string()),
+            cold_spec.clone(),
+        ),
+    ]);
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let caller = starter_cache::CallerScope::new("tA", "uX");
+
+    // Touch only one of the two registered specs.
+    for _ in 0..2 {
+        let _ = layer
+            .get_or_load_labelled::<_, _, std::convert::Infallible>(
+                &touched_spec,
+                Some("com.example.ext::com.example.ext.touched"),
+                &caller,
+                "k",
+                || async { Ok(Arc::new(b"v".to_vec())) },
+            )
+            .await
+            .unwrap();
+    }
+
+    let app = admin_router(
+        AdminState::empty()
+            .with_cache_layer(layer)
+            .with_cache_registry(registry),
+    );
+    let resp = app
+        .oneshot(get("/api/v1/admin/cache/specs"))
+        .await
+        .unwrap();
+    let v = body_json(resp).await;
+    let specs = v["specs"].as_array().unwrap();
+
+    // BTreeMap order → sorted by spec_id.
+    assert_eq!(specs.len(), 2, "both registered specs surfaced");
+    let cold = &specs[0];
+    assert_eq!(cold["spec_id"], "com.example.ext::com.example.ext.cold");
+    assert_eq!(cold["extension"], "com.example.ext");
+    assert_eq!(cold["contribute_id"], "com.example.ext.cold");
+    assert_eq!(cold["hits"], 0);
+    assert_eq!(cold["misses"], 0);
+    assert_eq!(cold["config"]["ttl_seconds"], 120);
+    assert_eq!(cold["config"]["scope"], "tenant");
+    assert_eq!(
+        cold["config"]["invalidate_on_tables"],
+        serde_json::json!([])
+    );
+
+    let touched = &specs[1];
+    assert_eq!(touched["spec_id"], "com.example.ext::com.example.ext.touched");
+    assert_eq!(touched["hits"], 1);
+    assert_eq!(touched["misses"], 1);
+    assert_eq!(touched["config"]["ttl_seconds"], 60);
+    assert_eq!(touched["config"]["scope"], "user");
+    assert_eq!(
+        touched["config"]["invalidate_on_tables"],
+        serde_json::json!(["readings"])
+    );
 }

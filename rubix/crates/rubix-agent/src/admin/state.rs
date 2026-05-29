@@ -51,9 +51,16 @@ pub struct AdminState {
     /// process REST dispatchers). `None` when the cache is not
     /// wired — e.g. dev rigs that disable extensions. The admin
     /// surface uses it to expose per-spec hit/miss numbers so the
-    /// canary's "is `usage_bucketed` paying off?" question has a
+    /// canary's "is `warehouse_query` paying off?" question has a
     /// concrete answer.
     pub cache_layer: Option<starter_cache::CacheLayer>,
+
+    /// Registered cache specs (one per loaded `*.cache.yaml`
+    /// sidecar). `None` when the cache is not wired. The admin
+    /// surface joins this with [`Self::cache_layer`]'s per-spec
+    /// counters so an operator can see registered-but-never-hit
+    /// specs (the "is this kind ever called?" diagnostic).
+    pub cache_registry: Option<starter_ext_server::KindCacheRegistry>,
 }
 
 impl AdminState {
@@ -96,6 +103,15 @@ impl AdminState {
     /// Builder: set the opt-in cache layer.
     pub fn with_cache_layer(mut self, cache_layer: starter_cache::CacheLayer) -> Self {
         self.cache_layer = Some(cache_layer);
+        self
+    }
+
+    /// Builder: set the registered cache spec map.
+    pub fn with_cache_registry(
+        mut self,
+        registry: starter_ext_server::KindCacheRegistry,
+    ) -> Self {
+        self.cache_registry = Some(registry);
         self
     }
 }

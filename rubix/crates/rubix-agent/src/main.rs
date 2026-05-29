@@ -734,12 +734,16 @@ async fn main() -> Result<()> {
                     );
                 }
 
-                let dispatcher_cache = DispatcherCache::new(cache_layer.clone(), kind_cache);
-                // Thread the layer into the admin state so
+                let dispatcher_cache =
+                    DispatcherCache::new(cache_layer.clone(), kind_cache.clone());
+                // Thread the layer + registry into the admin state so
                 // `GET /api/v1/admin/cache/specs` can render per-spec
-                // hit/miss numbers — the canary's "is usage_bucketed
-                // paying off?" panel reads this.
-                admin_state = admin_state.with_cache_layer(cache_layer.clone());
+                // config + hit/miss numbers. The registry surfaces
+                // registered-but-never-hit specs; the layer's
+                // counters fill in the runtime side.
+                admin_state = admin_state
+                    .with_cache_layer(cache_layer.clone())
+                    .with_cache_registry(kind_cache);
 
                 // Builtin dispatcher: in-process extensions go through the
                 // capability factory above.

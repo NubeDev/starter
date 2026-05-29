@@ -1,26 +1,36 @@
 //! `GET /api/v1/admin/cache/specs` — per-spec cache hit/miss snapshot.
 //!
 //! Read-only projection over [`starter_cache::CacheLayer`]'s per-spec
-//! stats. The v0 caching cut needs this to answer "is the
-//! `usage_bucketed` canary actually paying off?" without a separate
-//! metrics pipeline. Output shape:
+//! stats joined with the registered [`starter_ext_server::KindCacheRegistry`].
+//! The join is important: a spec registered but never touched needs
+//! to appear with zero counters so the operator can answer "is this
+//! kind ever called?".
+//!
+//! Output shape:
 //!
 //! ```json
 //! {
 //!   "specs": [
 //!     {
-//!       "spec_id": "com.nubeio.rubixos::usage_bucketed",
+//!       "spec_id": "com.nubeio.rubixos::com.nubeio.rubixos.warehouse_query",
+//!       "extension": "com.nubeio.rubixos",
+//!       "contribute_id": "com.nubeio.rubixos.warehouse_query",
+//!       "config": {
+//!         "ttl_seconds": 60,
+//!         "scope": "user",
+//!         "invalidate_on_tables": ["com_nubeio_rubixos__histories"]
+//!       },
 //!       "hits": 42,
 //!       "misses": 7,
-//!       "hit_ratio": 0.857
+//!       "hit_ratio": 0.857,
+//!       "load_latency": { ... }
 //!     }
 //!   ]
 //! }
 //! ```
 //!
 //! When the cache layer is not wired (developer rigs that disable
-//! extensions), the endpoint returns `{ "specs": [] }` — same shape,
-//! easier for tooling than a 404.
+//! extensions), the endpoint returns `{ "specs": [] }`.
 
 use axum::extract::State;
 use axum::http::Method;
@@ -28,6 +38,8 @@ use axum::response::{IntoResponse, Response};
 use axum::routing::get;
 use axum::Json;
 use serde::Serialize;
+use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot};
+use std::collections::BTreeMap;
 
 use crate::admin::AdminState;
 use crate::routes::{RouteMeta, RouteRegistrar};
@@ -38,7 +50,7 @@ pub(super) fn registrar(state: AdminState) -> RouteRegistrar {
         "/api/v1/admin/cache/specs",
         get(list).with_state(state),
         RouteMeta::new()
-            .describe("List per-spec hit/miss counters for the opt-in cache.")
+            .describe("List per-spec config + hit/miss counters for the opt-in cache.")
             .tag("admin"),
     )
 }
@@ -46,15 +58,48 @@ pub(super) fn registrar(state: AdminState) -> RouteRegistrar {
 #[derive(Serialize)]
 struct SpecRow {
     spec_id: String,
+    /// `extension` and `contribute_id` are the split form of
+    /// `spec_id`. Both included so tooling doesn't have to re-parse
+    /// the delimiter.
+    extension: String,
+    contribute_id: String,
+    /// `null` when the registry hasn't been wired into the admin
+    /// state (or, in the joined-stats path, when a counter exists
+    /// without a matching registered spec — should not happen in
+    /// practice but the wire shape allows it for robustness).
+    config: Option<SpecConfig>,
     hits: u64,
     misses: u64,
     hit_ratio: f64,
-    /// Loader-call latency histogram. See
-    /// `starter_cache::LoadLatencySnapshot`.
     load_latency: LoadLatencyRow,
 }
 
 #[derive(Serialize)]
+struct SpecConfig {
+    ttl_seconds: u64,
+    scope: &'static str,
+    invalidate_on_tables: Vec<String>,
+}
+
+impl SpecConfig {
+    fn from_spec(spec: &CacheSpec) -> Self {
+        Self {
+            ttl_seconds: spec.ttl.as_secs(),
+            scope: scope_str(spec.scope),
+            invalidate_on_tables: spec.invalidate_on.tables.clone(),
+        }
+    }
+}
+
+fn scope_str(s: CacheScope) -> &'static str {
+    match s {
+        CacheScope::Global => "global",
+        CacheScope::Tenant => "tenant",
+        CacheScope::User => "user",
+    }
+}
+
+#[derive(Serialize, Default)]
 struct LoadLatencyRow {
     le_10ms: u64,
     le_100ms: u64,
@@ -66,43 +111,96 @@ struct LoadLatencyRow {
     mean_ms: f64,
 }
 
+impl LoadLatencyRow {
+    fn from_snapshot(s: &starter_cache::LoadLatencySnapshot) -> Self {
+        let mean_ms = if s.count == 0 {
+            0.0
+        } else {
+            (s.sum_nanos as f64) / (s.count as f64) / 1_000_000.0
+        };
+        Self {
+            le_10ms: s.le_10ms,
+            le_100ms: s.le_100ms,
+            le_1s: s.le_1s,
+            le_10s: s.le_10s,
+            gt_10s: s.gt_10s,
+            count: s.count,
+            sum_nanos: s.sum_nanos,
+            mean_ms,
+        }
+    }
+}
+
 #[derive(Serialize)]
 struct ListBody {
     specs: Vec<SpecRow>,
 }
 
+fn split_spec_id(spec_id: &str) -> (String, String) {
+    // Spec id shape: `"{extension}::{contribute_id}"`. The split
+    // is purely cosmetic for the wire — counters work either way.
+    match spec_id.split_once("::") {
+        Some((ext, cid)) => (ext.to_string(), cid.to_string()),
+        None => (String::new(), spec_id.to_string()),
+    }
+}
+
 async fn list(State(state): State<AdminState>) -> Response {
-    let specs = match state.cache_layer.as_ref() {
-        Some(layer) => layer
-            .per_spec_snapshot()
-            .into_iter()
-            .map(|s| {
-                let mean_ms = if s.load_latency.count == 0 {
-                    0.0
-                } else {
-                    (s.load_latency.sum_nanos as f64)
-                        / (s.load_latency.count as f64)
-                        / 1_000_000.0
-                };
-                SpecRow {
-                    spec_id: s.spec_id,
-                    hits: s.hits,
-                    misses: s.misses,
-                    hit_ratio: s.hit_ratio,
-                    load_latency: LoadLatencyRow {
-                        le_10ms: s.load_latency.le_10ms,
-                        le_100ms: s.load_latency.le_100ms,
-                        le_1s: s.load_latency.le_1s,
-                        le_10s: s.load_latency.le_10s,
-                        gt_10s: s.load_latency.gt_10s,
-                        count: s.load_latency.count,
-                        sum_nanos: s.load_latency.sum_nanos,
-                        mean_ms,
-                    },
-                }
-            })
-            .collect(),
-        None => Vec::new(),
+    let Some(layer) = state.cache_layer.as_ref() else {
+        return Json(ListBody { specs: Vec::new() }).into_response();
     };
-    Json(ListBody { specs }).into_response()
+
+    // Join: every registered spec + every spec that has been
+    // touched (the touched set will normally be a subset of
+    // registered, but guard against drift).
+    let mut by_id: BTreeMap<String, SpecRow> = BTreeMap::new();
+
+    if let Some(reg) = state.cache_registry.as_ref() {
+        for (ext, contribute_id, spec) in reg.iter() {
+            let spec_id = format!("{}::{}", ext.as_str(), contribute_id);
+            by_id.insert(
+                spec_id.clone(),
+                SpecRow {
+                    spec_id,
+                    extension: ext.as_str().to_string(),
+                    contribute_id: contribute_id.to_string(),
+                    config: Some(SpecConfig::from_spec(spec)),
+                    hits: 0,
+                    misses: 0,
+                    hit_ratio: 0.0,
+                    load_latency: LoadLatencyRow::default(),
+                },
+            );
+        }
+    }
+
+    for snap in layer.per_spec_snapshot() {
+        let PerSpecSnapshot {
+            spec_id,
+            hits,
+            misses,
+            hit_ratio,
+            load_latency,
+        } = snap;
+        let (extension, contribute_id) = split_spec_id(&spec_id);
+        let row = by_id.entry(spec_id.clone()).or_insert_with(|| SpecRow {
+            spec_id,
+            extension,
+            contribute_id,
+            config: None,
+            hits: 0,
+            misses: 0,
+            hit_ratio: 0.0,
+            load_latency: LoadLatencyRow::default(),
+        });
+        row.hits = hits;
+        row.misses = misses;
+        row.hit_ratio = hit_ratio;
+        row.load_latency = LoadLatencyRow::from_snapshot(&load_latency);
+    }
+
+    Json(ListBody {
+        specs: by_id.into_values().collect(),
+    })
+    .into_response()
 }
