@@ -23,6 +23,7 @@ testing = []
 async-trait = { workspace = true }
 thiserror   = { workspace = true }
 tracing     = { workspace = true }
+serde       = { workspace = true }
 
 # Optional backends. Each one is gated behind its own feature; the
 # `dep:` prefix keeps the bare crate name out of the public feature

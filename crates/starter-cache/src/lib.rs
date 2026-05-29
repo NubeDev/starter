@@ -53,6 +53,18 @@ mod cache;
 mod error;
 mod stats;
 
+pub mod clock;
+pub mod invalidator;
+pub mod layer;
+pub mod spec;
+pub mod tracing_cache;
+
 pub use cache::Cache;
 pub use error::CacheError;
 pub use stats::CacheStats;
+
+pub use clock::{Clock, MockClock, SystemClock};
+pub use invalidator::{InMemoryInvalidator, Invalidator, TokenSnapshot};
+pub use layer::{Bytes, CacheLayer, CallerScope, LayerConfig};
+pub use spec::{CacheScope, CacheSidecar, CacheSpec, InvalidateOn, SpecParseError};
+pub use tracing_cache::{CacheEvent, TracingCache};
