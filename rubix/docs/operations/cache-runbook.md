@@ -36,17 +36,40 @@ rest of `/api/v1/admin/*`.
       "config": {
         "ttl_seconds": 60,
         "scope": "user",
-        "invalidate_on_tables": ["com_nubeio_rubixos__histories"]
+        "invalidate_on_tables": ["com_nubeio_rubixos__histories"],
+        "stale_while_revalidate_seconds": 30,
+        "empty_ttl_seconds": 5,
+        "cache_empty": true,
+        "invalidate_on_events": [],
+        "invalidate_on_buckets": {
+          "table": "com_nubeio_rubixos__histories",
+          "granularity": "1h"
+        },
+        "time_series": {
+          "time_param": "to",
+          "range_param": "from",
+          "bucket": "1h",
+          "tail_ttl": "30s",
+          "body_ttl": "24h",
+          "align_to": "utc"
+        },
+        "inner_scope": "tenant",
+        "invalidator_kind": "local"
       },
       "hits": 124,
       "misses": 17,
       "hit_ratio": 0.879,
       "load_latency": {
         "le_10ms": 0, "le_100ms": 4, "le_1s": 12, "le_10s": 1, "gt_10s": 0,
-        "count": 17, "sum_nanos": 8_421_330_000, "mean_ms": 495.4
+        "count": 17, "sum_nanos": 8421330000, "mean_ms": 495.4
       }
     }
-  ]
+  ],
+  "warmer": {
+    "last_run_at": 1717072800,
+    "entries_warmed": 50,
+    "last_duration_ms": 1827
+  }
 }
 ```
 
@@ -54,15 +77,36 @@ Each row reflects one sidecar. Key fields:
 
 - `config` — verbatim shape of the `<id>.cache.yaml` sidecar. If this
   looks wrong, the sidecar shipped wrong; don't go hunting in code.
+- `config.stale_while_revalidate_seconds` (v1) — `0` when SWR is
+  disabled, otherwise the SWR window in seconds. See "SWR explained".
+- `config.empty_ttl_seconds` / `config.cache_empty` (v1) — empty-result
+  caching. `empty_ttl` is clamped to `min(empty_ttl, ttl)`.
+- `config.invalidate_on_events` (v1) — write-path event tags the spec
+  subscribes to (e.g. `event:ingest.batch.committed`).
+- `config.invalidate_on_buckets` (v1) — `{table, granularity}` block,
+  `null` when the spec declares no bucket subscription. Writers fire
+  `bucket:<table>:<floor(t, granularity)>` per-row; the chokepoint
+  dedupes per batch.
+- `config.time_series` (v2) — `null` when absent; otherwise the
+  windowed-read block (`time_param`, `range_param`, `bucket`,
+  `tail_ttl`, `body_ttl`, `align_to`). Authoring is covered below.
+- `config.inner_scope` (v2) — `null` when absent; `"tenant"` for the
+  two-layer cache pattern (`scope: user` + `inner_scope: tenant`).
+- `config.invalidator_kind` (v3) — `"local"` or `"event-bus"`,
+  reflecting `RUBIX_CACHE_INVALIDATOR` at boot. Use to verify the
+  env var was honoured.
 - `hits` / `misses` / `hit_ratio` — counters since process start.
 - `load_latency` — **miss-path only**. Hits don't pollute the
   histogram, so this measures what the cache is shielding callers
   from. `mean_ms` is the derived mean; the bucket counts let you
-  spot bimodal distributions (fast and slow loaders in the same
-  spec).
+  spot bimodal distributions.
 - `config: null` — appears when a counter row has no matching
-  registered spec. Shouldn't happen in practice; treat as drift,
-  worth filing.
+  registered spec. Shouldn't happen in practice; treat as drift.
+- `warmer` (v3, top-level) — present only when
+  `RUBIX_CACHE_WARM_ON_BOOT` is set. `last_run_at` is wall-clock
+  seconds since epoch, or `null` if no pass has run yet;
+  `entries_warmed` is from the last pass; `last_duration_ms` is `null`
+  before the first pass completes.
 
 ## Diagnosing common scenarios
 
@@ -137,11 +181,11 @@ snapshot depended on that tag becomes a miss on next read.
 Multiple tags in one call is fine; empty array is accepted as a
 no-op.
 
-This is the same mechanism the write-path *would* use if the
-unified `WarehouseWriter` chokepoint existed (see the
-`// TODO(cache-invalidation):` markers in the warehouse store
-crates). Until then, this endpoint is the manual escape hatch for
-"the data changed but the cache doesn't know".
+This is the same mechanism the v3 `WarehouseWriter` chokepoint
+fires automatically on every committed batch — see
+"v3 — WarehouseWriter chokepoint" below. The manual endpoint is
+the escape hatch for cases the chokepoint doesn't see (out-of-band
+SQL, manual schema fixes, post-incident reset of one tag).
 
 ### "The cache is in a bad state, drop everything"
 
@@ -174,30 +218,36 @@ If individual entries are too large (large JSON responses), tuning
 the entry cap helps proportionally — entries are stored as
 `Arc<Vec<u8>>` of the serialised JSON.
 
-## What this cache does NOT do (v0 scope)
+## What this cache does (post-v3 scope)
 
-To save you reading the proposal:
+As of v3 the cache covers every integration point the proposal pinned:
 
-- **No SDUI integration.** Only the extension kind dispatcher is
-  wrapped today (Builtin + Process flavours).
-- **No SWR / stale-while-revalidate.** A miss waits for the loader;
-  there is no "serve stale + refresh in background" path.
-- **No time-windowed / bucket-level caching.** A sliding `now`
-  produces a new cache key every wall-clock tick. See the deferred
-  `starter-windowed` companion-crate proposal for the long-term fix.
-- **No automatic write-path invalidation.** The unified
-  `WarehouseWriter` chokepoint that would make this safe is a
-  separate project (one of the proposal's un-defer conditions).
-  Today it is best-effort via the manual `/invalidate` endpoint
-  above.
-- **No two-layer (inner-tenant + outer-user) caching.** Worth doing
-  when a tenant runs ≥10 concurrent users on the same dashboard,
-  per the proposal — not yet justified by traffic.
+- **Extension kind dispatcher** (v0; Builtin + Process flavours).
+- **SDUI** (`POST /ui/resolve`, `GET /ui/table`, `POST /ui/action`) via
+  `starter-sdui-routes` — v3. See "v3 — SDUI integration" below.
+- **Core HTTP routes** via `CacheLayer::tower()` — v3. See "v3 — tower
+  layer" below.
+- **SWR / `empty_ttl`** — v1. See "SWR explained".
+- **Time-windowed / bucket-level caching** via the `time_series:`
+  sidecar block, backed by [`starter-windowed`](../../../crates/starter-windowed/)
+  + `TimescaleWindowedFetcher` / `PgWindowedFetcher` — v2.
+- **Two-layer (`scope: user` + `inner_scope: tenant`) caching** via
+  the canonical-units inner layer + convert-on-read outer layer — v2.
+- **Automatic write-path invalidation** via the unified
+  `WarehouseWriter` chokepoint — v3. Replaces the v0
+  `// TODO(cache-invalidation):` markers entirely. See "v3 —
+  WarehouseWriter chokepoint".
+- **Multi-node fan-out** via `EventBusInvalidator` — v3. See
+  "v3 — multi-node deployment".
+- **Valkey backend** behind the `valkey` feature — v3.
+- **Cold-start warming** via `RUBIX_CACHE_WARM_ON_BOOT=<N>` — v3.
+- **Dimension-scoped tags** via opt-in `BucketTagSpec.dimensions` —
+  v3.
 
-If you find yourself wanting any of the above, the right move is to
-re-read [the v0 proposal](../proposal/fe-cache-opt-in.md) and the
-[progress doc](../sessions/cache-v0-progress.md) — the conditions
-that would un-defer the deferred features are spelled out there.
+For history on what landed when, see
+[cache-v0-progress.md](../sessions/cache-v0-progress.md) and
+[cache-v1-v2-v3-progress.md](../sessions/cache-v1-v2-v3-progress.md).
+The authoritative design is [the proposal](../proposal/fe-cache-opt-in.md).
 
 ## Adding a new cached kind
 
@@ -230,6 +280,85 @@ declared tables, the entry refreshes when its TTL expires. Pick a
 TTL no larger than the worst-case staleness your callers can
 tolerate; pick a TTL no smaller than the loader cost / refresh
 amortisation.
+
+### Authoring a windowed sidecar (v2 `time_series:`)
+
+Use the `time_series:` block for queries shaped like "give me the
+last N of X" where `to=now` slides. The block tells the cache to
+snap `from` and `to` to bucket boundaries before keying, to
+decompose the window into per-bucket sub-fetches that hit the
+cache independently, and to apply two TTLs (the open tail bucket
+gets `tail_ttl`; closed historical buckets get `body_ttl`).
+
+```yaml
+cache:
+  scope: user                       # rendered output depends on user units/locale
+  inner_scope: tenant               # raw query is tenant-shared (see below)
+  ttl: 30s                          # outer (rendered) TTL
+  stale_while_revalidate: 30s
+  time_series:
+    time_param: to                  # which input param carries "now"
+    range_param: from               # which input param carries the window start
+    bucket: 1h                      # closed buckets are effectively immutable
+    tail_ttl: 30s                   # the open bucket containing `now`
+    body_ttl: 24h                   # closed buckets
+    align_to: utc                   # only `utc` is supported in v2
+  invalidate_on:
+    tables: [com_nubeio_rubixos__histories]
+    buckets:
+      table: com_nubeio_rubixos__histories
+      granularity: 1h               # must match `time_series.bucket`
+```
+
+A 7d query then decomposes into 7×24 hourly buckets + 1 tail.
+A follow-up 90d query for the same params reuses those 7×24
+buckets and fetches only the missing 83 days. An ingest at time
+`t` invalidates exactly `bucket:com_nubeio_rubixos__histories:<floor(t, 1h)>`.
+
+### Authoring two-layer caching (v2 `inner_scope:`)
+
+When the SQL plan is identical across users in the tenant but the
+rendered output depends on per-user units / locale (the
+canonical-storage + convert-on-read pattern):
+
+```yaml
+cache:
+  scope: user                  # outer: rendered output keyed per-user
+  inner_scope: tenant          # inner: canonical-units query keyed per-tenant
+  ttl: 30s
+  invalidate_on:
+    tables: [com_nubeio_rubixos__histories]
+```
+
+The cache wrapper looks the tenant-scope (canonical-units) entry
+up first, runs the existing `starter-i18n` /
+`starter-spi::preferences` conversion against the caller's prefs
+on inner miss, then stores in the user-scope cache. One DB hit
+serves the whole tenant; per-user rendering pays once per user per
+TTL. For a tenant with 50 concurrent users on the same dashboard
+this is the single largest cost win available — see proposal
+§Layer 6c.
+
+### Authoring dimension-scoped tags (v3)
+
+When bucket-level invalidation over-invalidates (e.g. one meter's
+ingest drops every other meter's cached entries on the same hour),
+extend the bucket subscription with `dimensions:`:
+
+```yaml
+cache:
+  invalidate_on:
+    buckets:
+      table: com_nubeio_rubixos__histories
+      granularity: 1h
+      dimensions: [meter_id]
+```
+
+The `WarehouseWriter` chokepoint then emits
+`table:com_nubeio_rubixos__histories:meter_id=42` in addition to
+the per-row bucket tag. Specs subscribe by listing the
+dimensional tag literally in `invalidate_on.tables`. Use sparingly
+— dimensional cardinality is unbounded by definition.
 
 ## SWR explained (v1)
 
