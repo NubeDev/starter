@@ -14,6 +14,8 @@ use starter_ext_spi::{
     Error, ExtensionId, ExtensionIssue, IssueCode, IssueSource, LifecycleState, Manifest, Severity,
 };
 
+use crate::origin::BundleOrigin;
+
 /// One extension's full state inside the registry.
 #[derive(Debug, Clone)]
 pub struct ExtensionRecord {
@@ -41,6 +43,14 @@ pub struct ExtensionRecord {
 
     /// The error that put the record in `Failed`, if any.
     pub failure: Option<Error>,
+
+    /// Provenance: dev source tree or installed (uploaded) bundle.
+    /// Drives the uninstall handler's "may I `remove_dir_all` this?"
+    /// decision. Defaults to [`BundleOrigin::Installed`] when a record
+    /// is constructed without one — every existing call-site preserves
+    /// its current behaviour until the loader splits scan into
+    /// `scan_dev` / `scan_installs`.
+    pub origin: BundleOrigin,
 }
 
 impl ExtensionRecord {
@@ -97,6 +107,7 @@ mod tests {
             state: LifecycleState::Failed,
             manifest: None,
             failure: Some(failure),
+            origin: BundleOrigin::default(),
         }
     }
 
@@ -131,6 +142,7 @@ mod tests {
             state: LifecycleState::Validated,
             manifest: None,
             failure: None,
+            origin: BundleOrigin::default(),
         };
         assert!(rec.issues().is_empty());
     }

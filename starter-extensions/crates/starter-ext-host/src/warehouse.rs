@@ -357,6 +357,7 @@ mod tests {
             state: LifecycleState::Validated,
             manifest: Some(manifest),
             failure: None,
+            origin: crate::BundleOrigin::default(),
         }
     }
 
@@ -501,6 +502,7 @@ mod tests {
             state: LifecycleState::Failed,
             manifest: None,
             failure: None,
+            origin: crate::BundleOrigin::default(),
         };
         assert_eq!(r.extend_from_record(&rec).unwrap(), 0);
         assert!(r.is_empty());

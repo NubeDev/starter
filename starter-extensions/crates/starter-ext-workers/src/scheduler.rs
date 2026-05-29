@@ -448,6 +448,7 @@ contributes:
             state: LifecycleState::Validated,
             manifest: Some(manifest),
             failure: None,
+            origin: starter_ext_host::BundleOrigin::default(),
         };
         let mut registry = ExtensionRegistry::new();
         let mut map = HashMap::new();

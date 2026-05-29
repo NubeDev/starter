@@ -815,6 +815,7 @@ mod tests {
             state: LifecycleState::Validated,
             manifest: Some(manifest),
             failure: None,
+            origin: starter_ext_host::BundleOrigin::default(),
         }
     }
 

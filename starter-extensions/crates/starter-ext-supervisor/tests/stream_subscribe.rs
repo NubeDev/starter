@@ -72,6 +72,7 @@ fn stage_bundle() -> Option<(TempDir, ExtensionRecord)> {
         state: LifecycleState::Validated,
         manifest: Some(manifest),
         failure: None,
+        origin: starter_ext_host::BundleOrigin::default(),
     };
     Some((bundle, record))
 }

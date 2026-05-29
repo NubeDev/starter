@@ -123,6 +123,7 @@ mod tests {
             state: LifecycleState::Validated,
             manifest: None,
             failure: None,
+            origin: crate::BundleOrigin::default(),
         }
     }
 

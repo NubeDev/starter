@@ -356,6 +356,7 @@ contributes:
             state: LifecycleState::Validated,
             manifest: Some(manifest),
             failure: None,
+            origin: starter_ext_host::BundleOrigin::default(),
         };
         let ui_file = bundle.join("ui/remoteEntry.js").canonicalize().unwrap();
         let i18n_file = bundle.join("i18n/en.json").canonicalize().unwrap();

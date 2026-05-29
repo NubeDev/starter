@@ -24,7 +24,10 @@ use std::path::{Path, PathBuf};
 
 use starter_ext_spi::{Error, ExtensionId, LifecycleState, Manifest};
 
-use crate::{record::ExtensionRecord, registry::ExtensionRegistry, validate::validate_manifest};
+use crate::{
+    origin::BundleOrigin, record::ExtensionRecord, registry::ExtensionRegistry,
+    validate::validate_manifest,
+};
 
 /// Per-candidate result of the discovery walk.
 struct ScanCandidate {
@@ -43,6 +46,10 @@ struct ScanCandidate {
 /// candidate (good and bad) at `Validated` / `Failed` respectively.
 pub struct Loader {
     candidates: Vec<ScanCandidate>,
+    /// Origin stamped on every record produced from this scan. Set by
+    /// [`Self::scan`] (defaults to `Installed`) and refined by
+    /// [`Self::scan_dev`] / [`Self::scan_installs`].
+    origin: BundleOrigin,
 }
 
 /// Aggregate counts surfaced after `commit` so a consumer can log a
@@ -65,6 +72,39 @@ impl Loader {
     /// deserialisation: the namespace + capability checks happen in
     /// [`Self::validate_all`].
     pub fn scan(root: &Path) -> Self {
+        Self::scan_with_origin(
+            root,
+            BundleOrigin::Installed {
+                installs_dir: root.to_path_buf(),
+            },
+        )
+    }
+
+    /// Walk `root` as a **dev source tree**. Records produced from this
+    /// scan are stamped with [`BundleOrigin::Dev`], and the uninstall
+    /// handler refuses to delete them.
+    pub fn scan_dev(root: &Path) -> Self {
+        Self::scan_with_origin(
+            root,
+            BundleOrigin::Dev {
+                source_dir: root.to_path_buf(),
+            },
+        )
+    }
+
+    /// Walk `root` as the **installed bundles** tree. Records produced
+    /// from this scan are stamped with [`BundleOrigin::Installed`] and
+    /// uninstall is free to remove their directories.
+    pub fn scan_installs(root: &Path) -> Self {
+        Self::scan_with_origin(
+            root,
+            BundleOrigin::Installed {
+                installs_dir: root.to_path_buf(),
+            },
+        )
+    }
+
+    fn scan_with_origin(root: &Path, origin: BundleOrigin) -> Self {
         let mut candidates = Vec::new();
         let entries = match fs::read_dir(root) {
             Ok(it) => it,
@@ -72,7 +112,10 @@ impl Loader {
                 // A missing extensions root is a valid empty load — not an
                 // error. SCOPE explicitly treats the root as optional; a
                 // consumer that does not ship extensions still boots.
-                return Self { candidates };
+                return Self {
+                    candidates,
+                    origin,
+                };
             }
         };
         for entry in entries.flatten() {
@@ -110,7 +153,10 @@ impl Loader {
                 parsed,
             });
         }
-        Self { candidates }
+        Self {
+            candidates,
+            origin,
+        }
     }
 
     /// Consume the loader and run validation across every candidate.
@@ -141,6 +187,7 @@ impl Loader {
                     state: LifecycleState::Failed,
                     manifest: None,
                     failure: Some(e),
+                    origin: self.origin.clone(),
                 }),
                 Ok(manifest) => {
                     let id = manifest.id.clone();
@@ -156,6 +203,7 @@ impl Loader {
                             state: LifecycleState::Failed,
                             manifest: Some(manifest),
                             failure: Some(err),
+                            origin: self.origin.clone(),
                         });
                         continue;
                     }
@@ -168,6 +216,7 @@ impl Loader {
                             state: LifecycleState::Failed,
                             manifest: Some(manifest),
                             failure: Some(err),
+                            origin: self.origin.clone(),
                         });
                         continue;
                     }
@@ -184,6 +233,7 @@ impl Loader {
                                  already claimed it",
                                 id.as_str()
                             ))),
+                            origin: self.origin.clone(),
                         });
                         continue;
                     }
@@ -194,6 +244,7 @@ impl Loader {
                         state: LifecycleState::Validated,
                         manifest: Some(manifest),
                         failure: None,
+                        origin: self.origin.clone(),
                     });
                 }
             }
