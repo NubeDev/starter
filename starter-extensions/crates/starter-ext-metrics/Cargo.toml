@@ -1,0 +1,19 @@
+[package]
+name        = "starter-ext-metrics"
+description = "starter-extensions — counter registry leaf crate. Atomic per-extension tallies bumped by the transport adapters and merged by the supervisor into the /metrics view."
+version.workspace      = true
+edition.workspace      = true
+license.workspace      = true
+repository.workspace   = true
+rust-version.workspace = true
+
+# Leaf crate (locked decision §3): the tool / REST / worker adapters depend
+# on this crate to bump a counter; the supervisor reads the same registry to
+# build `/metrics`. Dependency arrows point one way — adapters → metrics ←
+# supervisor — so nothing here may reach for the supervisor. The only
+# in-workspace dependency is the contracts crate `starter-ext-spi` (for
+# `ExtensionId` / `ExtensionMetrics` / `ProcessStats` / `LifecycleState`).
+[dependencies]
+starter-ext-spi = { workspace = true }
+
+dashmap = { workspace = true }

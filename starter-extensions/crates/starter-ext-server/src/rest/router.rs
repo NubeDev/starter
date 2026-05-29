@@ -55,6 +55,10 @@ pub struct RestRouterOptions {
     /// adapter cannot verify the kind exists, so the safe action
     /// is "refuse to mount" (loud failure beats silent skip).
     pub resource_registry: Option<Arc<dyn ResourceRegistry>>,
+    /// Optional per-extension metrics registry. When wired, every
+    /// dispatched REST request bumps `rest_requests_total` for its
+    /// extension. Leave `None` (the default) for no metrics overhead.
+    pub metrics: Option<starter_ext_metrics::MetricsRegistry>,
 }
 
 /// Errors raised at router build time.
@@ -195,6 +199,7 @@ where
         let Some(extension_id) = record.id.as_ref() else {
             continue;
         };
+        let counters = options.metrics.as_ref().map(|m| m.counters(extension_id));
         for tool in &manifest.contributes.tools {
             router = mount_tool(
                 router,
@@ -203,6 +208,7 @@ where
                 tool,
                 &record.bundle_dir,
                 options.resource_registry.as_deref(),
+                counters.clone(),
             )?;
         }
         for rest in &manifest.contributes.rest {
@@ -214,6 +220,7 @@ where
                 &record.bundle_dir,
                 options.path_prefix.as_deref(),
                 options.resource_registry.as_deref(),
+                counters.clone(),
             )?;
         }
     }
@@ -231,13 +238,14 @@ fn mount_tool<S>(
     tool: &ContributeTool,
     bundle_dir: &std::path::Path,
     resource_registry: Option<&dyn ResourceRegistry>,
+    counters: Option<std::sync::Arc<starter_ext_metrics::Counters>>,
 ) -> Result<Router<S>, RestBuildError>
 where
     S: Clone + Send + Sync + 'static,
 {
     let entry_label = format!("{}:{}", extension.as_str(), tool.id);
     let schema = load_schema(bundle_dir, &tool.input_schema, &entry_label)?;
-    let spec = HandlerSpec::new(dispatcher, extension.clone(), &tool.id, schema);
+    let spec = HandlerSpec::new(dispatcher, extension.clone(), &tool.id, schema, counters);
     let path = tool_path(&tool.id);
     let sub: Router<S> = Router::new()
         .route(&path, post(non_streaming))
@@ -246,6 +254,7 @@ where
     Ok(router.merge(sub))
 }
 
+#[allow(clippy::too_many_arguments)]
 fn mount_rest<S>(
     router: Router<S>,
     dispatcher: Arc<dyn RestDispatcher>,
@@ -254,6 +263,7 @@ fn mount_rest<S>(
     bundle_dir: &std::path::Path,
     path_prefix: Option<&str>,
     resource_registry: Option<&dyn ResourceRegistry>,
+    counters: Option<std::sync::Arc<starter_ext_metrics::Counters>>,
 ) -> Result<Router<S>, RestBuildError>
 where
     S: Clone + Send + Sync + 'static,
@@ -263,7 +273,7 @@ where
         Some(rel) => load_schema(bundle_dir, rel, &entry_label)?,
         None => SchemaCheck::default(),
     };
-    let spec = HandlerSpec::new(dispatcher, extension.clone(), &rest.id, schema);
+    let spec = HandlerSpec::new(dispatcher, extension.clone(), &rest.id, schema, counters);
     let method = rest.method.to_ascii_uppercase();
     let method_router: MethodRouter<Arc<HandlerSpec>> = match (method.as_str(), rest.streaming) {
         ("GET", RestStreaming::Sse) => get(sse),

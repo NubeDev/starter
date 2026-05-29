@@ -19,6 +19,7 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use starter_ext_host::ExtensionRegistry;
+use starter_ext_metrics::MetricsRegistry;
 use starter_ext_sdk::builtin::BuiltinTable;
 use starter_ext_spi::{Error, ExtensionId, PermissionGate, RuntimeKind};
 use starter_mcp::ToolRegistry;
@@ -108,7 +109,19 @@ pub fn register_tools(
     builtins: &Arc<BuiltinTable>,
     tools: ToolRegistry,
 ) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
-    register_tools_with_engine(registry, builtins, None, tools)
+    register_tools_with_engine(registry, builtins, None, None, tools)
+}
+
+/// Same as [`register_tools`] but also wires a [`MetricsRegistry`] so each
+/// tool invocation bumps `tool_calls_total` / `tool_errors_total` for its
+/// extension.
+pub fn register_tools_with_metrics(
+    registry: &ExtensionRegistry,
+    builtins: &Arc<BuiltinTable>,
+    metrics: &MetricsRegistry,
+    tools: ToolRegistry,
+) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
+    register_tools_with_engine(registry, builtins, None, Some(metrics), tools)
 }
 
 /// Same as [`register_tools`] but threads an optional
@@ -121,6 +134,7 @@ pub fn register_tools_with_engine(
     registry: &ExtensionRegistry,
     builtins: &Arc<BuiltinTable>,
     engine: Option<Arc<dyn PolicyEngine>>,
+    metrics: Option<&MetricsRegistry>,
     mut tools: ToolRegistry,
 ) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
     let mut outcome = RegisterOutcome::default();
@@ -170,6 +184,7 @@ pub fn register_tools_with_engine(
                 ctx.clone(),
             ) {
                 Ok(binding) => {
+                    let binding = binding.with_counters(metrics.map(|m| m.counters(&extension_id)));
                     let gate = tool_entry.auth.permission.as_ref();
                     tools = register_with_optional_gate(tools, binding, &engine, gate);
                     outcome.tools_registered += 1;
@@ -212,7 +227,26 @@ pub fn register_process_tools(
     request_timeout: Duration,
     tools: ToolRegistry,
 ) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
-    register_process_tools_with_engine(registry, handles, None, request_timeout, tools)
+    register_process_tools_with_engine(registry, handles, None, None, request_timeout, tools)
+}
+
+/// Same as [`register_process_tools`] but also wires a [`MetricsRegistry`]
+/// so each tool invocation bumps `tool_calls_total` / `tool_errors_total`.
+pub fn register_process_tools_with_metrics(
+    registry: &ExtensionRegistry,
+    handles: &HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
+    metrics: &MetricsRegistry,
+    request_timeout: Duration,
+    tools: ToolRegistry,
+) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
+    register_process_tools_with_engine(
+        registry,
+        handles,
+        None,
+        Some(metrics),
+        request_timeout,
+        tools,
+    )
 }
 
 /// Process-flavour companion to [`register_tools_with_engine`].
@@ -220,6 +254,7 @@ pub fn register_process_tools_with_engine(
     registry: &ExtensionRegistry,
     handles: &HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
     engine: Option<Arc<dyn PolicyEngine>>,
+    metrics: Option<&MetricsRegistry>,
     request_timeout: Duration,
     mut tools: ToolRegistry,
 ) -> (ToolRegistry, RegisterOutcome, Result<(), RegisterError>) {
@@ -265,6 +300,7 @@ pub fn register_process_tools_with_engine(
                 request_timeout,
             ) {
                 Ok(binding) => {
+                    let binding = binding.with_counters(metrics.map(|m| m.counters(&extension_id)));
                     let gate = tool_entry.auth.permission.as_ref();
                     tools = register_with_optional_gate(tools, binding, &engine, gate);
                     outcome.tools_registered += 1;

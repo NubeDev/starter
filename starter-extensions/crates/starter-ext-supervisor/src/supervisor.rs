@@ -165,6 +165,32 @@ impl SupervisorHandle {
         guard.as_ref().map(|p| p.to_stats(Instant::now()))
     }
 
+    /// Cumulative restarts the supervisor has scheduled over this handle's
+    /// lifetime, derived from the `RestartScheduled` events retained in the
+    /// ring (matching the `restart_count` already shown on
+    /// `GET /extensions/<id>`). Surfaced as `restarts_total` on
+    /// `GET /extensions/<id>/metrics`. Bounded; safe on the request path.
+    pub fn restarts_total(&self) -> u64 {
+        self.events
+            .snapshot()
+            .iter()
+            .filter(|e| matches!(e.kind, EventKind::RestartScheduled { .. }))
+            .count() as u64
+    }
+
+    /// Number of events evicted from the bounded ring over this handle's
+    /// lifetime. Surfaced as `events_dropped_total` on
+    /// `GET /extensions/<id>/metrics`.
+    pub fn events_dropped(&self) -> u64 {
+        self.events.dropped()
+    }
+
+    /// The current lifecycle state. A convenience over `state().borrow()`
+    /// for the metrics projection and similar read-only callers.
+    pub fn lifecycle_state(&self) -> LifecycleState {
+        *self.state.borrow()
+    }
+
     /// Send a JSON-RPC envelope to the child (request or notification).
     /// Caller is responsible for constructing valid JSON-RPC; this is the
     /// outbound side of the bidirectional channel, used by adapters to

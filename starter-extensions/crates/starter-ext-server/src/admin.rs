@@ -21,6 +21,7 @@ use std::path::PathBuf;
 use std::sync::{Arc, RwLock};
 
 use starter_ext_host::ExtensionRegistry;
+use starter_ext_metrics::MetricsRegistry;
 use starter_ext_spi::ExtensionId;
 use starter_ext_supervisor::SupervisorHandle;
 
@@ -40,6 +41,11 @@ struct Inner {
     store: Arc<dyn EnablementStore>,
     factory: DynFactory,
     etag_cache: EtagCache,
+    /// Per-extension counter registry. Shared with the transport adapters
+    /// (they bump it) and read by `GET /extensions/<id>/metrics`. Defaults
+    /// to a fresh empty registry so a `TestApp` that does not wire the
+    /// adapters still serves all-zero counters.
+    metrics: MetricsRegistry,
     worker_states: Option<WorkerStatesFn>,
     /// On-disk root that holds extension bundles. Required for the
     /// install / uninstall endpoints (Phase D.1); endpoints return
@@ -67,6 +73,7 @@ impl ExtensionAdmin {
             supervisors: HashMap::new(),
             store: None,
             factory: None,
+            metrics: None,
             worker_states: None,
             extensions_dir: None,
         }
@@ -118,6 +125,14 @@ impl ExtensionAdmin {
         &self.inner.etag_cache
     }
 
+    /// The shared per-extension metrics registry. The consumer hands the
+    /// same handle to the transport adapters at wiring time so their
+    /// counter bumps land in the registry `GET /extensions/<id>/metrics`
+    /// reads.
+    pub fn metrics(&self) -> &MetricsRegistry {
+        &self.inner.metrics
+    }
+
     /// Render the worker-state field for `GET /extensions/<id>`.
     /// Returns an empty vector when no provider is wired — the JSON
     /// response still includes a `workers: []` field, which is the
@@ -145,6 +160,7 @@ pub struct ExtensionAdminBuilder {
     supervisors: HashMap<String, SupervisorHandle>,
     store: Option<Arc<dyn EnablementStore>>,
     factory: Option<DynFactory>,
+    metrics: Option<MetricsRegistry>,
     worker_states: Option<WorkerStatesFn>,
     extensions_dir: Option<PathBuf>,
 }
@@ -169,6 +185,16 @@ impl ExtensionAdminBuilder {
     /// [`DefaultSupervisorFactory`] when unset.
     pub fn with_supervisor_factory(mut self, factory: DynFactory) -> Self {
         self.factory = Some(factory);
+        self
+    }
+
+    /// Wire the shared per-extension [`MetricsRegistry`]. The same handle
+    /// must be passed to the transport adapters (mcp / REST router /
+    /// workers scheduler) so their counter bumps are visible to
+    /// `GET /extensions/<id>/metrics`. Defaults to a fresh empty registry
+    /// (all-zero counters) when unset.
+    pub fn with_metrics(mut self, metrics: MetricsRegistry) -> Self {
+        self.metrics = Some(metrics);
         self
     }
 
@@ -207,6 +233,7 @@ impl ExtensionAdminBuilder {
                     .factory
                     .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory)),
                 etag_cache: EtagCache::new(),
+                metrics: self.metrics.unwrap_or_default(),
                 worker_states: self.worker_states,
                 extensions_dir: self.extensions_dir,
             }),

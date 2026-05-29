@@ -65,6 +65,7 @@ mod factory;
 mod i18n;
 mod issues;
 mod lifecycle;
+mod metrics;
 mod process;
 pub mod rest;
 mod router;

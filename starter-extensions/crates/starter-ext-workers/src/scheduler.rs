@@ -35,6 +35,7 @@ type WorkerNotifyMap = Arc<Mutex<HashMap<(ExtensionId, String), Arc<Notify>>>>;
 
 use rand::Rng;
 use starter_ext_host::ExtensionRegistry;
+use starter_ext_metrics::{Counters, MetricsRegistry};
 use starter_ext_spi::{ContributeWorker, ExtensionId, OnErrorPolicy, RetryStrategy};
 use tokio::sync::Notify;
 use tokio::task::JoinHandle;
@@ -106,6 +107,10 @@ impl WorkerDescriptor {
 pub struct WorkersScheduler {
     registry: Arc<ExtensionRegistry>,
     dispatcher: Arc<dyn WorkerDispatcher>,
+    /// Optional per-extension metrics registry. When wired, every worker
+    /// run bumps `worker_runs_total`, and a failed run additionally bumps
+    /// `worker_failures_total`. `None` ⇒ no metrics overhead.
+    metrics: Option<MetricsRegistry>,
 }
 
 impl WorkersScheduler {
@@ -115,7 +120,17 @@ impl WorkersScheduler {
         Self {
             registry,
             dispatcher,
+            metrics: None,
         }
+    }
+
+    /// Wire a [`MetricsRegistry`] so worker runs / failures are counted
+    /// into the `/extensions/<id>/metrics` view. Builder-style; defaults
+    /// to no metrics.
+    #[must_use]
+    pub fn with_metrics(mut self, metrics: MetricsRegistry) -> Self {
+        self.metrics = Some(metrics);
+        self
     }
 
     /// Enumerate workers and spawn one task per worker. Returns a
@@ -170,6 +185,7 @@ impl WorkersScheduler {
                     notify,
                     options.clone(),
                     first_due,
+                    self.metrics.as_ref().map(|m| m.counters(&ext_id)),
                 ));
                 tasks.push(task);
             }
@@ -272,6 +288,7 @@ async fn run_worker(
     notify: Arc<Notify>,
     options: SchedulerOptions,
     mut next_due: Option<SystemTime>,
+    counters: Option<Arc<Counters>>,
 ) {
     let key = (desc.extension.clone(), desc.worker_id.clone());
 
@@ -296,6 +313,15 @@ async fn run_worker(
         let result = dispatcher
             .run(&desc.extension, &desc.worker_id, options.request_timeout)
             .await;
+
+        // Count the run (and failures) into the metrics registry, if wired.
+        // `worker_failures_total` is a subset of `worker_runs_total`.
+        if let Some(c) = &counters {
+            c.record_worker_run();
+            if result.is_err() {
+                c.record_worker_failure();
+            }
+        }
 
         let now = SystemTime::now();
         next_due = {
@@ -461,6 +487,32 @@ contributes:
         assert_eq!(st.attempt, 0);
         assert!(st.last_run.is_some());
         assert!(st.next_due.is_some());
+        h.shutdown().await;
+    }
+
+    #[tokio::test]
+    async fn metrics_count_worker_runs_and_failures() {
+        let (registry, ext, wid) = registry_with_one_worker();
+        // Handler fails, so each run bumps both runs and failures.
+        let reg = BuiltinWorkerRegistry::new().register(ext.clone(), wid.clone(), |_| {
+            Err(Error::extension_internal("boom"))
+        });
+        let dispatcher = Arc::new(BuiltinWorkerDispatcher::new(Arc::new(reg)));
+        let metrics = MetricsRegistry::new();
+        let h = WorkersScheduler::new(registry, dispatcher)
+            .with_metrics(metrics.clone())
+            .start(SchedulerOptions::default());
+
+        assert!(h.tick_now(&ext, &wid));
+        for _ in 0..50 {
+            if metrics.snapshot(&ext).worker_runs == 1 {
+                break;
+            }
+            tokio::time::sleep(Duration::from_millis(10)).await;
+        }
+        let snap = metrics.snapshot(&ext);
+        assert_eq!(snap.worker_runs, 1);
+        assert_eq!(snap.worker_failures, 1);
         h.shutdown().await;
     }
 

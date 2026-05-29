@@ -202,6 +202,15 @@ impl EventRing {
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
+
+    /// Number of entries evicted from the bounded ring over its lifetime
+    /// — total pushes seen (`next_seq`) minus what is still retained
+    /// (`len`). Monotone; surfaced as `events_dropped_total` on
+    /// `GET /extensions/<id>/metrics`.
+    pub fn dropped(&self) -> u64 {
+        let inner = self.inner.lock().expect("event ring mutex poisoned");
+        inner.next_seq.saturating_sub(inner.queue.len() as u64)
+    }
 }
 
 impl Default for EventRing {
