@@ -38,6 +38,10 @@ pub(crate) struct ExtensionSummary {
     /// Persisted enablement state. Defaults to `Enabled` when the
     /// store has no row for this id yet.
     pub enabled: EnablementState,
+    /// `true` for a freshly-installed extension that has not yet surfaced
+    /// live — the sealed registry forbids hot-mount, so a newly-uploaded
+    /// bundle only becomes active on next boot. The UI badges these rows.
+    pub restart_required: bool,
 }
 
 pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoResponse {
@@ -64,6 +68,34 @@ pub(crate) async fn list(State(admin): State<ExtensionAdmin>) -> impl IntoRespon
             restart_count,
             capability_violations,
             enabled,
+            // A record already in the registry is live; it only needs a
+            // restart if it was reinstalled-over this run.
+            restart_required: admin.is_pending_restart(&rec.id_hint),
+        });
+    }
+
+    // Append rows for extensions installed during this run that the sealed
+    // registry has not surfaced yet — they go live on next boot.
+    let known: std::collections::HashSet<&str> = rows
+        .iter()
+        .map(|r| r.id.as_str())
+        .collect::<std::collections::HashSet<_>>();
+    let pending: Vec<_> = admin
+        .pending_rows()
+        .into_iter()
+        .filter(|(id, _)| !known.contains(id.as_str()))
+        .collect();
+    for (id, p) in pending {
+        rows.push(ExtensionSummary {
+            id,
+            version: p.version,
+            display_name: p.display_name,
+            state: LifecycleState::Validated,
+            runtime_kind: p.runtime_kind,
+            restart_count: 0,
+            capability_violations: 0,
+            enabled: EnablementState::Enabled,
+            restart_required: true,
         });
     }
     Json(rows)

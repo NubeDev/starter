@@ -11,6 +11,8 @@
 //! | GET    | `/extensions/:id/issues`          | `Role::Admin`  |
 //! | GET    | `/extensions/:id/process`         | `Role::Admin`  |
 //! | GET    | `/extensions/:id/metrics`         | `Role::Admin`  |
+//! | GET    | `/extensions/:id/cleanup`         | `Role::Admin`  |
+//! | DELETE | `/extensions/:id` (`?purge=`)     | `Role::Admin`  |
 //! | POST   | `/extensions/:id/enable`          | `Role::Admin`  |
 //! | POST   | `/extensions/:id/disable`         | `Role::Admin`  |
 //! | POST   | `/extensions/:id/restart`         | `Role::Admin`  |
@@ -40,7 +42,7 @@ use crate::admin::ExtensionAdmin;
 use crate::events::events;
 use crate::i18n::i18n;
 use crate::issues::issues;
-use crate::lifecycle::{install, uninstall};
+use crate::lifecycle::{cleanup_preview, install, uninstall};
 use crate::metrics::metrics;
 use crate::process::process;
 use crate::routes::{detail, disable, enable, list, restart};
@@ -87,6 +89,7 @@ where
         .route("/extensions/{id}/issues", get(issues))
         .route("/extensions/{id}/process", get(process))
         .route("/extensions/{id}/metrics", get(metrics))
+        .route("/extensions/{id}/cleanup", get(cleanup_preview))
         .route("/extensions/{id}/enable", post(enable))
         .route("/extensions/{id}/disable", post(disable))
         .route("/extensions/{id}/restart", post(restart))

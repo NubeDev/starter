@@ -87,6 +87,35 @@ impl EtagCache {
         );
         Ok((etag, bytes))
     }
+
+    /// List every cached entry whose path starts with `prefix`, returning
+    /// `(path, byte_size)` pairs. Read-only — used by the cleanup
+    /// providers' `discover` to build the dry-run manifest with best-effort
+    /// byte sizes. The match is a plain path-prefix test against the stored
+    /// (canonical) keys; a file path passed as `prefix` matches only that
+    /// file.
+    pub(crate) fn entries_under_prefix(&self, prefix: &Path) -> Vec<(PathBuf, u64)> {
+        self.inner
+            .read()
+            .expect("etag cache poisoned")
+            .iter()
+            .filter(|(path, _)| path.starts_with(prefix))
+            .map(|(path, entry)| (path.clone(), entry.size))
+            .collect()
+    }
+
+    /// Remove a single cached entry by exact path, returning its byte size
+    /// if it was present. Used by the cleanup providers' `purge` to evict
+    /// the precise keys they discovered (the discovered canonical paths),
+    /// so eviction is correct regardless of whether the bundle directory
+    /// still exists on disk by the time purge runs.
+    pub(crate) fn evict_exact(&self, path: &Path) -> Option<u64> {
+        self.inner
+            .write()
+            .expect("etag cache poisoned")
+            .remove(path)
+            .map(|e| e.size)
+    }
 }
 
 fn mtime_of(meta: &Metadata) -> SystemTime {

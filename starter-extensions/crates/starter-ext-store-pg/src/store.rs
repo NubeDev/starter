@@ -118,6 +118,15 @@ impl EnablementStore for PgEnablementStore {
     async fn set(&self, id: &ExtensionId, state: EnablementState) -> Result<(), StoreError> {
         self.set_as("system", id, state).await
     }
+
+    async fn delete(&self, id: &ExtensionId) -> Result<(), StoreError> {
+        sqlx::query(r#"DELETE FROM extensions_enablement WHERE extension_id = $1"#)
+            .bind(id.as_str())
+            .execute(&self.pool)
+            .await
+            .map_err(|e| StoreError::new(format!("delete: {e}")))?;
+        Ok(())
+    }
 }
 
 fn state_to_str(state: EnablementState) -> &'static str {
