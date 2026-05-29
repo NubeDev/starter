@@ -111,16 +111,18 @@ pub mod wasm;
 // regardless of which `use` statements the extension author wrote.
 // ---------------------------------------------------------------------------
 
-pub use ctx::{Cancel, CallerIdentity, EmitEvent, Event, EventReceiver, EventSender};
+pub use ctx::{CallerIdentity, Cancel, EmitEvent, Event, EventReceiver, EventSender};
 pub use meta::{ExtensionDispatch, ExtensionMeta};
 
+pub use starter_ext_spi::event_bus::{
+    EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest,
+};
 /// Re-export so extensions can construct `Event { stream_id, payload }`
 /// without taking a direct `starter-ext-spi` dep (SCOPE "Extension
 /// author has zero starter-workspace deps beyond starter-ext-sdk +
 /// serde_json").
 pub use starter_ext_spi::jsonrpc::StreamId;
 pub use starter_ext_spi::warehouse::{Row, TemplateSpec, WarehouseReadRequest};
-pub use starter_ext_spi::event_bus::{EventBusMessage, EventBusPublishRequest, EventBusSubscribeRequest};
 pub use starter_ext_spi::{
     AuthGate, Authority, Backoff, Capability, CliStreaming, ContributeCli, ContributeGrpc,
     ContributeRest, ContributeTool, ContributeUi, ContributeUiExpose, ContributeWorker,

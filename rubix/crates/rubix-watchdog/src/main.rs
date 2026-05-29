@@ -224,10 +224,7 @@ async fn main() -> Result<()> {
 
         let now = Instant::now();
         if now >= next_heartbeat {
-            info!(
-                consecutive_failures,
-                "watchdog heartbeat",
-            );
+            info!(consecutive_failures, "watchdog heartbeat",);
             next_heartbeat = now + HEARTBEAT_INTERVAL;
         }
         if now < next_probe {
@@ -323,7 +320,10 @@ async fn handle_wedge(cfg: &Config) -> Result<()> {
         info!(pid, "agent exited after SIGABRT");
     } else {
         // Step 3: SIGKILL — give up on graceful.
-        warn!(pid, "agent still alive after SIGABRT grace — sending SIGKILL");
+        warn!(
+            pid,
+            "agent still alive after SIGABRT grace — sending SIGKILL"
+        );
         if let Err(e) = send_signal(pid, libc::SIGKILL) {
             error!(pid, error = %e, "SIGKILL failed");
         }

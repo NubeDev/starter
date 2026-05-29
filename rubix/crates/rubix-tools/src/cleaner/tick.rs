@@ -186,9 +186,7 @@ pub async fn run_tick(
     registry: &RuleRegistry,
     params: &TickParams,
 ) -> Result<TickStats, sqlx::Error> {
-    let history_from_ms = params
-        .from_ts_ms
-        .saturating_sub(params.history_lookback_ms);
+    let history_from_ms = params.from_ts_ms.saturating_sub(params.history_lookback_ms);
 
     // Single SELECT covers history + fresh; we split per row by
     // comparing ts_ms against `from_ts_ms`. Ordering by

@@ -336,11 +336,7 @@ async fn synthesise_create_table(pool: &PgPool, name: &str) -> Result<String, sq
 /// Caller-validated identifier `name` is interpolated into the
 /// `SELECT * FROM …` statement after passing
 /// [`crate::validate::is_safe_identifier`].
-pub async fn table_data(
-    pool: &PgPool,
-    name: &str,
-    page: i64,
-) -> Result<TableData, sqlx::Error> {
+pub async fn table_data(pool: &PgPool, name: &str, page: i64) -> Result<TableData, sqlx::Error> {
     let limit = crate::PAGE_SIZE;
     let offset = limit * (page.max(1) - 1);
 

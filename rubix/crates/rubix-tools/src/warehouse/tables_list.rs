@@ -92,10 +92,9 @@ impl Tool for WarehouseTablesListTool {
             let table_name: String = r.try_get("table_name").map_err(|e| Error::Internal {
                 source: Box::new(e),
             })?;
-            let is_hypertable: bool =
-                r.try_get("is_hypertable").map_err(|e| Error::Internal {
-                    source: Box::new(e),
-                })?;
+            let is_hypertable: bool = r.try_get("is_hypertable").map_err(|e| Error::Internal {
+                source: Box::new(e),
+            })?;
 
             let (engine, retention_days, row_count) = if is_hypertable {
                 let retention_days = retention::snapshot_days(&self.client, &table_name)
@@ -104,7 +103,11 @@ impl Tool for WarehouseTablesListTool {
                     .flatten()
                     .and_then(|d| u32::try_from(d).ok());
                 let row_count = approximate_row_count(&self.client, &table_name).await;
-                ("timescaledb_hypertable".to_owned(), retention_days, row_count)
+                (
+                    "timescaledb_hypertable".to_owned(),
+                    retention_days,
+                    row_count,
+                )
             } else {
                 // Plain Postgres table — no retention policy, and
                 // `approximate_row_count` is a hypertable-only

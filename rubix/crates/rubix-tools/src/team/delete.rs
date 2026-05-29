@@ -36,9 +36,7 @@ impl Tool for TeamDeleteTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.team.delete".to_owned(),
-            description: rubix_spi::dto::team::delete::DESCRIPTOR
-                .purpose
-                .to_owned(),
+            description: rubix_spi::dto::team::delete::DESCRIPTOR.purpose.to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -65,13 +63,13 @@ impl Tool for TeamDeleteTool {
         // identity-bearing field on the response and produce a
         // byte-exact `before` snapshot in `change_for` — without
         // a follow-up store read (proposal §3.1 fix).
-        let prior =
-            self.store
-                .get(&req.team_id)
-                .await?
-                .ok_or_else(|| Error::NotFound {
-                    what: format!("team:{}", req.team_id),
-                })?;
+        let prior = self
+            .store
+            .get(&req.team_id)
+            .await?
+            .ok_or_else(|| Error::NotFound {
+                what: format!("team:{}", req.team_id),
+            })?;
 
         self.store.delete(&req.team_id).await?;
         let deleted_at_ms = now_epoch_ms();
@@ -220,8 +218,7 @@ mod tests {
         let draft = tool.change_for(&input, &output).expect("draft");
         assert!(matches!(draft.op, Op::Delete));
         assert!(draft.after.is_none());
-        let before: TeamRow =
-            serde_json::from_value(draft.before.unwrap()).unwrap();
+        let before: TeamRow = serde_json::from_value(draft.before.unwrap()).unwrap();
         assert_eq!(before.team_id, "t-1");
         assert_eq!(before.name, "Ops");
         assert_eq!(before.description.as_deref(), Some("desc"));

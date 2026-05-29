@@ -574,6 +574,9 @@ requires:
   - { id: cap.warehouse_read, version: "^1" }
 "#,
         );
-        assert!(matches!(validate_manifest(&m).unwrap_err(), Error::Validation(_)));
+        assert!(matches!(
+            validate_manifest(&m).unwrap_err(),
+            Error::Validation(_)
+        ));
     }
 }

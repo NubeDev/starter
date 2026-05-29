@@ -158,11 +158,13 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
         },
         SiblingTool {
             id: "rubix.team.member.unassign",
-            wins_when: "the caller needs to remove this user from every team before delete will succeed.",
+            wins_when:
+                "the caller needs to remove this user from every team before delete will succeed.",
         },
         SiblingTool {
             id: "rubix.undo.last",
-            wins_when: "the caller wants to REVERSE a user delete they just performed (restores the row).",
+            wins_when:
+                "the caller wants to REVERSE a user delete they just performed (restores the row).",
         },
     ],
 };

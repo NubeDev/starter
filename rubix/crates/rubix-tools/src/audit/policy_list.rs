@@ -114,7 +114,11 @@ mod tests {
         let tool = AuditPolicyListTool::new(store);
         let out = tool.invoke(serde_json::json!({})).await.unwrap();
         let resp: AuditPolicyListResponse = serde_json::from_value(out).unwrap();
-        let kinds: Vec<_> = resp.entries.iter().map(|e| e.resource_kind.as_str()).collect();
+        let kinds: Vec<_> = resp
+            .entries
+            .iter()
+            .map(|e| e.resource_kind.as_str())
+            .collect();
         assert_eq!(kinds, ["flow_def", "user"]);
         assert_eq!(resp.entries[0].max_age_days, Some(30));
         assert_eq!(resp.entries[1].max_age_days, None);

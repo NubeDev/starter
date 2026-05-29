@@ -74,10 +74,12 @@ async fn null_max_age_pins_kind_to_unbounded() {
     // The helper must skip it even though a row exists.
     let (pool, _guard) = setup().await;
 
-    sqlx::query("INSERT INTO changelog_kind_policy (resource_kind, max_age_days) VALUES ('user', NULL)")
-        .execute(pool.sqlx())
-        .await
-        .expect("seed");
+    sqlx::query(
+        "INSERT INTO changelog_kind_policy (resource_kind, max_age_days) VALUES ('user', NULL)",
+    )
+    .execute(pool.sqlx())
+    .await
+    .expect("seed");
 
     insert_at_age(&pool, "user", 30).await;
     insert_at_age(&pool, "user", 5_000).await;
@@ -96,10 +98,12 @@ async fn null_max_age_pins_kind_to_unbounded() {
 async fn finite_max_age_deletes_older_rows() {
     let (pool, _guard) = setup().await;
 
-    sqlx::query("INSERT INTO changelog_kind_policy (resource_kind, max_age_days) VALUES ('flow_def', 30)")
-        .execute(pool.sqlx())
-        .await
-        .expect("seed");
+    sqlx::query(
+        "INSERT INTO changelog_kind_policy (resource_kind, max_age_days) VALUES ('flow_def', 30)",
+    )
+    .execute(pool.sqlx())
+    .await
+    .expect("seed");
 
     insert_at_age(&pool, "flow_def", 5).await; // keep
     insert_at_age(&pool, "flow_def", 29).await; // keep (boundary)
@@ -120,10 +124,12 @@ async fn policy_is_per_kind_does_not_touch_unlisted_kinds() {
     // for `flow_def` must never touch `user`.
     let (pool, _guard) = setup().await;
 
-    sqlx::query("INSERT INTO changelog_kind_policy (resource_kind, max_age_days) VALUES ('flow_def', 30)")
-        .execute(pool.sqlx())
-        .await
-        .expect("seed");
+    sqlx::query(
+        "INSERT INTO changelog_kind_policy (resource_kind, max_age_days) VALUES ('flow_def', 30)",
+    )
+    .execute(pool.sqlx())
+    .await
+    .expect("seed");
 
     insert_at_age(&pool, "user", 5_000).await;
     insert_at_age(&pool, "flow_def", 5_000).await;

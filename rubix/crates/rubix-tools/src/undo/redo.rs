@@ -48,9 +48,8 @@ impl Tool for UndoRedoTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.undo.redo".to_owned(),
-            description:
-                "Redo the most recently undone change made by the calling actor."
-                    .to_owned(),
+            description: "Redo the most recently undone change made by the calling actor."
+                .to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {

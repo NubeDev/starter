@@ -26,9 +26,7 @@ use starter_skills::{Skill, SkillRegistry};
 use starter_spi::error::{Error, Result};
 use starter_spi::tool::{Tool, ToolDefinition};
 
-use crate::registry::{
-    Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole,
-};
+use crate::registry::{Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole};
 use crate::ToolRegistry;
 
 /// One audit record emitted per `SkillTool::invoke` after the
@@ -284,10 +282,9 @@ impl Tool for AddFavoriteTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "starter.add_favorite".into(),
-            description:
-                "Write a new SKILL.md to the user-skills directory. Always quarantined; \
+            description: "Write a new SKILL.md to the user-skills directory. Always quarantined; \
                  an operator must approve before it becomes callable."
-                    .into(),
+                .into(),
             input_schema: json!({
                 "type": "object",
                 "additionalProperties": false,
@@ -302,10 +299,9 @@ impl Tool for AddFavoriteTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let args: AddFavoriteArgs =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("add_favorite arguments: {e}"),
-            })?;
+        let args: AddFavoriteArgs = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("add_favorite arguments: {e}"),
+        })?;
 
         // Cheap shape check so we fail before touching disk. The
         // real validation runs when the SkillRegistry next reloads
@@ -327,8 +323,8 @@ impl Tool for AddFavoriteTool {
             source: Box::new(e),
         })?;
 
-        let bundle_hash = starter_skills::approval::hash_bundle(&bundle_root)
-            .map_err(|e| Error::Internal {
+        let bundle_hash =
+            starter_skills::approval::hash_bundle(&bundle_root).map_err(|e| Error::Internal {
                 source: Box::new(e),
             })?;
 
@@ -380,8 +376,5 @@ fn format_skill_md(id: &str, description: &str, body: &str) -> String {
     let desc = serde_json::to_string(description).expect("string serializes");
     let id_yaml = serde_json::to_string(id).expect("string serializes");
     let trailing = if body.ends_with('\n') { "" } else { "\n" };
-    format!(
-        "---\nid: {id_yaml}\ndescription: {desc}\ntrust: quarantined\n---\n{body}{trailing}"
-    )
+    format!("---\nid: {id_yaml}\ndescription: {desc}\ntrust: quarantined\n---\n{body}{trailing}")
 }
-

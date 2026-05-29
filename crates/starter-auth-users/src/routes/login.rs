@@ -133,19 +133,14 @@ pub(crate) async fn handler(state: Arc<AuthState>, Json(body): Json<LoginRequest
     //                                     downstream defaults)
     let bound_tenant = resolve_login_tenant(&state, &user.id, &user.role).await;
 
-    let issued: IssuedSession = match issue_for_tenant(
-        state.sessions.as_ref(),
-        &user.id,
-        bound_tenant.as_deref(),
-    )
-    .await
-    {
-        Ok(i) => i,
-        Err(e) => {
-            tracing::warn!(target: "starter_auth_users", error = %e, "session issue failed");
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-        }
-    };
+    let issued: IssuedSession =
+        match issue_for_tenant(state.sessions.as_ref(), &user.id, bound_tenant.as_deref()).await {
+            Ok(i) => i,
+            Err(e) => {
+                tracing::warn!(target: "starter_auth_users", error = %e, "session issue failed");
+                return StatusCode::INTERNAL_SERVER_ERROR.into_response();
+            }
+        };
 
     let session_cookie = format!(
         "{SESSION_COOKIE}={value}; Path=/; HttpOnly; SameSite=Lax",

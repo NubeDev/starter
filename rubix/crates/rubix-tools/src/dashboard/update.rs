@@ -502,7 +502,10 @@ mod tests {
         let output = tool.invoke(input.clone()).await.unwrap();
         let resp: UpdateDashboardResponse = serde_json::from_value(output.clone()).unwrap();
         assert_eq!(resp.prior_title.as_deref(), Some("Old title"));
-        assert_eq!(resp.prior_tags.as_deref(), Some(&["custom".to_string()][..]));
+        assert_eq!(
+            resp.prior_tags.as_deref(),
+            Some(&["custom".to_string()][..])
+        );
 
         let draft = tool.change_for(&input, &output).expect("draft present");
         let before = draft.before.expect("before present");

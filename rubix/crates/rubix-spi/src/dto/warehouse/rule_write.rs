@@ -55,7 +55,8 @@ pub const REQUIRED_PERMISSION: &str = "warehouse.write";
 
 /// Five-field descriptor.
 pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
-    purpose: "Write or alter a warehouse derived-state rule (MATERIALIZED VIEW, continuous aggregate).",
+    purpose:
+        "Write or alter a warehouse derived-state rule (MATERIALIZED VIEW, continuous aggregate).",
     when_to_use: concat!(
         "Use when an operator says \"add a rollup\", \"change the ",
         "aggregation for X\", or when a flow needs to deploy a new ",

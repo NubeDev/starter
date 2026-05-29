@@ -321,7 +321,11 @@ mod tests {
         std::fs::write(p, body).unwrap();
     }
 
-    fn make_record(bundle: PathBuf, ext_id: &str, t: ContributeWarehouseTemplate) -> ExtensionRecord {
+    fn make_record(
+        bundle: PathBuf,
+        ext_id: &str,
+        t: ContributeWarehouseTemplate,
+    ) -> ExtensionRecord {
         let id = ExtensionId::new(ext_id).unwrap();
         let manifest = Manifest {
             v: 1,

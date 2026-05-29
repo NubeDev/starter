@@ -78,4 +78,3 @@ pub async fn run_stdio(registry: ToolRegistry) -> std::io::Result<()> {
         }
     }
 }
-

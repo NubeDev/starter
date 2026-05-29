@@ -48,10 +48,9 @@ impl Tool for TeamListTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let _req: TeamListRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("TeamListRequest: {e}"),
-            })?;
+        let _req: TeamListRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("TeamListRequest: {e}"),
+        })?;
 
         let mut rows = self.store.list().await?;
         rows.sort_by(|a, b| a.name.cmp(&b.name));
@@ -66,10 +65,9 @@ impl Tool for TeamListTool {
             .collect();
         let count = teams.len();
 
-        let summary = Diagnostic::new(
-            MessageKey::parse("rubix.team.listed").expect("hard-coded key parses"),
-        )
-        .with_param("count", DiagnosticParam::I64(count as i64));
+        let summary =
+            Diagnostic::new(MessageKey::parse("rubix.team.listed").expect("hard-coded key parses"))
+                .with_param("count", DiagnosticParam::I64(count as i64));
 
         let response = TeamListResponse {
             summary,
@@ -120,7 +118,11 @@ mod tests {
     #[tokio::test]
     async fn rows_come_back_sorted_by_name() {
         let store = Arc::new(InMemoryTeamStore::new());
-        for r in [row("t-2", "Zenith"), row("t-1", "Acme"), row("t-3", "Kepler")] {
+        for r in [
+            row("t-2", "Zenith"),
+            row("t-1", "Acme"),
+            row("t-3", "Kepler"),
+        ] {
             store.create(r).await.expect("seed team");
         }
         let tool = TeamListTool::new(store);
@@ -166,6 +168,9 @@ mod tests {
         let tool = TeamListTool::new(store);
         let out = tool.invoke(serde_json::json!({})).await.unwrap();
         let resp: TeamListResponse = serde_json::from_value(out).unwrap();
-        assert_eq!(resp.teams[0].description.as_deref(), Some("On-call rotation"));
+        assert_eq!(
+            resp.teams[0].description.as_deref(),
+            Some("On-call rotation")
+        );
     }
 }

@@ -59,8 +59,13 @@ export function ReportPage(): React.ReactElement {
   }, []);
 
   const win = React.useMemo(() => {
-    const toMs = latestSampleMs ?? Date.now();
-    const from = new Date(toMs - range.hours * 3600_000).toISOString();
+    // Floor to the hour so cache keys are stable across reloads / mounts.
+    // The warehouse_query cache spec uses a 1h time_series bucket; aligning
+    // here means a returning user within TTL hits cache instead of cold SQL.
+    const HOUR = 3_600_000;
+    const rawTo = latestSampleMs ?? Date.now();
+    const toMs = Math.floor(rawTo / HOUR) * HOUR;
+    const from = new Date(toMs - range.hours * HOUR).toISOString();
     const to   = new Date(toMs).toISOString();
     return { from, to, bucket: range.bucket };
   }, [range.hours, range.bucket, latestSampleMs]);

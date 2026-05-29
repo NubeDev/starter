@@ -139,9 +139,7 @@ impl AnomalyRule for StuckRule {
             if equal_tail >= self.min_repeats {
                 return RuleOutcome::Flag {
                     quality: QualityTag::Stuck,
-                    note: Some(format!(
-                        "value={curr} repeated for {equal_tail}+ readings"
-                    )),
+                    note: Some(format!("value={curr} repeated for {equal_tail}+ readings")),
                 };
             }
         }
@@ -181,13 +179,19 @@ mod tests {
     #[test]
     fn nan_rule_passes_finite() {
         let row = r(10, Some(1.0));
-        assert!(matches!(NanRule.apply(&row, WindowSlice::new(&[])), RuleOutcome::Ok));
+        assert!(matches!(
+            NanRule.apply(&row, WindowSlice::new(&[])),
+            RuleOutcome::Ok
+        ));
     }
 
     #[test]
     fn nan_rule_passes_null() {
         let row = r(10, None);
-        assert!(matches!(NanRule.apply(&row, WindowSlice::new(&[])), RuleOutcome::Ok));
+        assert!(matches!(
+            NanRule.apply(&row, WindowSlice::new(&[])),
+            RuleOutcome::Ok
+        ));
     }
 
     // ----- SpikeRule -----
@@ -314,11 +318,7 @@ mod tests {
 
     #[test]
     fn stuck_rule_ignores_nulls_and_nan_in_history() {
-        let history = vec![
-            r(1, None),
-            r(2, Some(f64::NAN)),
-            r(3, Some(5.0)),
-        ];
+        let history = vec![r(1, None), r(2, Some(f64::NAN)), r(3, Some(5.0))];
         let row = r(4, Some(5.0));
         // The streak is broken by the None / NaN entries — only
         // the last `Some(5.0)` is in the equal-tail.

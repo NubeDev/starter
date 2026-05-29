@@ -210,10 +210,7 @@ mod tests {
     async fn delete_unassigned_tenant_succeeds() {
         let (tenants, users) = seeded().await;
         let tool = TenantDeleteTool::new(tenants.clone(), users);
-        let out = tool
-            .invoke(json!({"tenant_id": "t-acme"}))
-            .await
-            .unwrap();
+        let out = tool.invoke(json!({"tenant_id": "t-acme"})).await.unwrap();
         let resp: TenantDeleteResponse = serde_json::from_value(out).unwrap();
         assert_eq!(resp.summary.code.as_str(), "rubix.tenant.deleted");
         assert_eq!(resp.tenant_id, "t-acme");
@@ -248,15 +245,9 @@ mod tests {
             .await
             .unwrap();
         // Unassign.
-        users
-            .set_tenant("u-1", None)
-            .await
-            .unwrap();
+        users.set_tenant("u-1", None).await.unwrap();
         let tool = TenantDeleteTool::new(tenants.clone(), users);
-        let out = tool
-            .invoke(json!({"tenant_id": "t-acme"}))
-            .await
-            .unwrap();
+        let out = tool.invoke(json!({"tenant_id": "t-acme"})).await.unwrap();
         let resp: TenantDeleteResponse = serde_json::from_value(out).unwrap();
         assert_eq!(resp.summary.code.as_str(), "rubix.tenant.deleted");
         assert!(tenants.get("t-acme").await.unwrap().is_none());
@@ -273,10 +264,7 @@ mod tests {
             .await
             .unwrap();
         let tool = TenantDeleteTool::new(tenants.clone(), users);
-        let _ = tool
-            .invoke(json!({"tenant_id": "t-acme"}))
-            .await
-            .unwrap();
+        let _ = tool.invoke(json!({"tenant_id": "t-acme"})).await.unwrap();
         assert!(tenants.get("t-acme").await.unwrap().is_none());
     }
 
@@ -295,10 +283,7 @@ mod tests {
     async fn empty_tenant_id_is_rejected() {
         let (tenants, users) = seeded().await;
         let tool = TenantDeleteTool::new(tenants, users);
-        let err = tool
-            .invoke(json!({"tenant_id": ""}))
-            .await
-            .unwrap_err();
+        let err = tool.invoke(json!({"tenant_id": ""})).await.unwrap_err();
         assert!(matches!(err, Error::Invalid { .. }));
     }
 

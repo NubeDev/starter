@@ -90,9 +90,7 @@ fn map_fk_err(e: sqlx::Error) -> Error {
         if db_err.code().as_deref() == Some("23503") {
             let constraint = db_err.constraint().unwrap_or("");
             return Error::Conflict {
-                message: format!(
-                    "tenant FK violation on rubix_users (constraint: {constraint})"
-                ),
+                message: format!("tenant FK violation on rubix_users (constraint: {constraint})"),
             };
         }
     }
@@ -122,8 +120,7 @@ impl From<PgUserRow> for UserRow {
     }
 }
 
-const SELECT_COLS: &str =
-    "user_id, email, role, disabled_at_ms, prefs_json, tenant_id";
+const SELECT_COLS: &str = "user_id, email, role, disabled_at_ms, prefs_json, tenant_id";
 
 #[async_trait]
 impl UserAdminStore for PgUserAdminStore {
@@ -160,9 +157,8 @@ impl UserAdminStore for PgUserAdminStore {
 
     async fn disable(&self, user_id: &str, now_ms: i64) -> Result<(UserRow, UserRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE");
         let prior: PgUserRow = sqlx::query_as(&select_sql)
             .bind(user_id)
             .fetch_optional(&mut *tx)
@@ -194,9 +190,8 @@ impl UserAdminStore for PgUserAdminStore {
 
     async fn enable(&self, user_id: &str) -> Result<(UserRow, UserRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE");
         let prior: PgUserRow = sqlx::query_as(&select_sql)
             .bind(user_id)
             .fetch_optional(&mut *tx)
@@ -227,9 +222,8 @@ impl UserAdminStore for PgUserAdminStore {
 
     async fn set_role(&self, user_id: &str, role: &str) -> Result<(UserRow, UserRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE");
         let prior: PgUserRow = sqlx::query_as(&select_sql)
             .bind(user_id)
             .fetch_optional(&mut *tx)
@@ -261,9 +255,8 @@ impl UserAdminStore for PgUserAdminStore {
 
     async fn set_prefs(&self, user_id: &str, prefs: Value) -> Result<(UserRow, UserRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE");
         let prior: PgUserRow = sqlx::query_as(&select_sql)
             .bind(user_id)
             .fetch_optional(&mut *tx)
@@ -299,9 +292,8 @@ impl UserAdminStore for PgUserAdminStore {
         tenant_id: Option<String>,
     ) -> Result<(UserRow, UserRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 FOR UPDATE");
         let prior: PgUserRow = sqlx::query_as(&select_sql)
             .bind(user_id)
             .fetch_optional(&mut *tx)
@@ -332,9 +324,7 @@ impl UserAdminStore for PgUserAdminStore {
     }
 
     async fn get(&self, user_id: &str) -> Result<Option<UserRow>> {
-        let sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 LIMIT 1"
-        );
+        let sql = format!("SELECT {SELECT_COLS} FROM rubix_users WHERE user_id = $1 LIMIT 1");
         let row: Option<PgUserRow> = sqlx::query_as(&sql)
             .bind(user_id)
             .fetch_optional(self.pool.sqlx())
@@ -344,9 +334,7 @@ impl UserAdminStore for PgUserAdminStore {
     }
 
     async fn find_by_email(&self, email: &str) -> Result<Option<UserRow>> {
-        let sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users WHERE email = $1 LIMIT 1"
-        );
+        let sql = format!("SELECT {SELECT_COLS} FROM rubix_users WHERE email = $1 LIMIT 1");
         let row: Option<PgUserRow> = sqlx::query_as(&sql)
             .bind(email)
             .fetch_optional(self.pool.sqlx())
@@ -356,9 +344,7 @@ impl UserAdminStore for PgUserAdminStore {
     }
 
     async fn list(&self) -> Result<Vec<UserRow>> {
-        let sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_users ORDER BY user_id ASC"
-        );
+        let sql = format!("SELECT {SELECT_COLS} FROM rubix_users ORDER BY user_id ASC");
         let rows: Vec<PgUserRow> = sqlx::query_as(&sql)
             .fetch_all(self.pool.sqlx())
             .await

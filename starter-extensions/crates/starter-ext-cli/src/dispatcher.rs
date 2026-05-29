@@ -726,11 +726,7 @@ impl starter_ext_sdk::ctx::WarehouseReadBackend for StubWarehouseRead {
             "warehouse_read not wired in CLI adapter Phase 6",
         ))
     }
-    fn count(
-        &self,
-        _template: &str,
-        _params: serde_json::Value,
-    ) -> starter_ext_spi::Result<u64> {
+    fn count(&self, _template: &str, _params: serde_json::Value) -> starter_ext_spi::Result<u64> {
         Err(Error::capability(
             "warehouse_read not wired in CLI adapter Phase 6",
         ))
@@ -788,9 +784,7 @@ impl starter_ext_sdk::ctx::DashboardBackend for StubDashboard {
 struct StubAuthz;
 impl starter_ext_sdk::ctx::AuthzBackend for StubAuthz {
     fn check(&self, _action: &str, _resource: &str) -> starter_ext_spi::Result<bool> {
-        Err(Error::capability(
-            "authz not wired in CLI adapter Phase 6",
-        ))
+        Err(Error::capability("authz not wired in CLI adapter Phase 6"))
     }
 }
 

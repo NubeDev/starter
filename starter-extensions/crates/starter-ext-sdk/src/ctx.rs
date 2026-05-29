@@ -27,10 +27,10 @@ use std::sync::Arc;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc;
 
+pub use starter_ext_spi::event_bus::{EventBusMessage, EventBusPublishRequest};
 pub use starter_ext_spi::identity::CallerIdentity;
 use starter_ext_spi::jsonrpc::StreamId;
 pub use starter_ext_spi::warehouse::{Row, TemplateSpec, WarehouseReadRequest};
-pub use starter_ext_spi::event_bus::{EventBusMessage, EventBusPublishRequest};
 
 // ---------------------------------------------------------------------------
 // Event stream (mirror of `starter-spi::ai::OnEvent + Cancel`)
@@ -230,11 +230,7 @@ impl WarehouseReadHandle {
 
     /// Count of rows the template would yield. Cheaper than `query`
     /// when the caller only needs a tally (KPI cards, pagination).
-    pub fn count(
-        &self,
-        template: &str,
-        params: serde_json::Value,
-    ) -> starter_ext_spi::Result<u64> {
+    pub fn count(&self, template: &str, params: serde_json::Value) -> starter_ext_spi::Result<u64> {
         self.inner.count(template, params)
     }
 
@@ -347,11 +343,7 @@ impl EventBusHandle {
     /// namespace; the supervisor refuses cross-namespace publishes.
     /// The host stamps a `ts_unix_ms` value before fan-out so every
     /// subscriber sees the same timestamp.
-    pub fn publish(
-        &self,
-        topic: &str,
-        payload: serde_json::Value,
-    ) -> starter_ext_spi::Result<()> {
+    pub fn publish(&self, topic: &str, payload: serde_json::Value) -> starter_ext_spi::Result<()> {
         self.inner.publish(topic, payload)
     }
 }
@@ -387,11 +379,7 @@ impl DashboardHandle {
     ///
     /// Idempotent overwrite; the host appends a changelog entry
     /// attributing the write to `ctx.caller().user_id`.
-    pub fn write(
-        &self,
-        page_id: &str,
-        body: serde_json::Value,
-    ) -> starter_ext_spi::Result<()> {
+    pub fn write(&self, page_id: &str, body: serde_json::Value) -> starter_ext_spi::Result<()> {
         self.inner.write(page_id, body)
     }
 }
@@ -583,7 +571,10 @@ impl std::fmt::Debug for CtxInner {
 // its concrete backing (secret store, reqwest client, std::fs, …).
 // ---------------------------------------------------------------------------
 
-pub use private::{AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend, TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend};
+pub use private::{
+    AuthzBackend, DashboardBackend, EventBusBackend, FsBackend, HttpOutBackend, SecretsBackend,
+    TracingBackend, WallClockBackend, WarehouseReadBackend, WarehouseWriteBackend,
+};
 
 mod private {
     /// Host-side backing for [`super::SecretsHandle`].
@@ -626,28 +617,17 @@ mod private {
         ) -> starter_ext_spi::Result<Vec<super::Row>>;
 
         /// Count the rows the template would yield.
-        fn count(
-            &self,
-            template: &str,
-            params: serde_json::Value,
-        ) -> starter_ext_spi::Result<u64>;
+        fn count(&self, template: &str, params: serde_json::Value) -> starter_ext_spi::Result<u64>;
 
         /// Look up a template's catalog entry.
-        fn describe(
-            &self,
-            template: &str,
-        ) -> starter_ext_spi::Result<Option<super::TemplateSpec>>;
+        fn describe(&self, template: &str) -> starter_ext_spi::Result<Option<super::TemplateSpec>>;
     }
 
     /// Host-side backing for [`super::WarehouseWriteHandle`].
     pub trait WarehouseWriteBackend: std::fmt::Debug + Send + Sync + 'static {
         /// Insert `rows` into `table`. Returns the engine's
         /// acknowledged row count.
-        fn insert(
-            &self,
-            table: &str,
-            rows: Vec<super::Row>,
-        ) -> starter_ext_spi::Result<u64>;
+        fn insert(&self, table: &str, rows: Vec<super::Row>) -> starter_ext_spi::Result<u64>;
 
         /// Update `rows` in `table`, matching each row by its
         /// `key_column` value. Returns the engine's reported
@@ -687,11 +667,7 @@ mod private {
     /// Host-side backing for [`super::EventBusHandle`].
     pub trait EventBusBackend: std::fmt::Debug + Send + Sync + 'static {
         /// Publish `payload` on `topic`.
-        fn publish(
-            &self,
-            topic: &str,
-            payload: serde_json::Value,
-        ) -> starter_ext_spi::Result<()>;
+        fn publish(&self, topic: &str, payload: serde_json::Value) -> starter_ext_spi::Result<()>;
     }
 
     /// Host-side backing for [`super::DashboardHandle`].
@@ -701,11 +677,7 @@ mod private {
         fn read(&self, page_id: &str) -> starter_ext_spi::Result<serde_json::Value>;
         /// Overwrite the SDUI page body for `page_id` under the
         /// caller's bound tenancy.
-        fn write(
-            &self,
-            page_id: &str,
-            body: serde_json::Value,
-        ) -> starter_ext_spi::Result<()>;
+        fn write(&self, page_id: &str, body: serde_json::Value) -> starter_ext_spi::Result<()>;
     }
 
     /// Host-side backing for [`super::AuthzHandle`].
@@ -769,20 +741,13 @@ mod tests {
             fn event(&self, _: &str, _: &str, _: serde_json::Value) {}
         }
         impl WarehouseReadBackend for Noop {
-            fn query(
-                &self,
-                _: &str,
-                _: serde_json::Value,
-            ) -> starter_ext_spi::Result<Vec<Row>> {
+            fn query(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<Vec<Row>> {
                 Ok(Vec::new())
             }
             fn count(&self, _: &str, _: serde_json::Value) -> starter_ext_spi::Result<u64> {
                 Ok(0)
             }
-            fn describe(
-                &self,
-                _: &str,
-            ) -> starter_ext_spi::Result<Option<TemplateSpec>> {
+            fn describe(&self, _: &str) -> starter_ext_spi::Result<Option<TemplateSpec>> {
                 Ok(None)
             }
         }

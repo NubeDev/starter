@@ -109,17 +109,10 @@ impl WarehouseReadBackend for StubWarehouseRead {
     ) -> starter_ext_spi::Result<Vec<Row>> {
         Err(deny("warehouse_read"))
     }
-    fn count(
-        &self,
-        _template: &str,
-        _params: serde_json::Value,
-    ) -> starter_ext_spi::Result<u64> {
+    fn count(&self, _template: &str, _params: serde_json::Value) -> starter_ext_spi::Result<u64> {
         Err(deny("warehouse_read"))
     }
-    fn describe(
-        &self,
-        _template: &str,
-    ) -> starter_ext_spi::Result<Option<TemplateSpec>> {
+    fn describe(&self, _template: &str) -> starter_ext_spi::Result<Option<TemplateSpec>> {
         Err(deny("warehouse_read"))
     }
 }

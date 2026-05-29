@@ -25,7 +25,10 @@ mod tests {
     fn reads_meta_accept_language() {
         let frame = r#"{"jsonrpc":"2.0","id":1,"method":"initialize",
             "params":{"_meta":{"acceptLanguage":"es-AR"}}}"#;
-        assert_eq!(locale_from_initialize_frame(frame).unwrap().as_str(), "es-AR");
+        assert_eq!(
+            locale_from_initialize_frame(frame).unwrap().as_str(),
+            "es-AR"
+        );
     }
 
     #[test]
@@ -37,7 +40,10 @@ mod tests {
 
     #[test]
     fn none_when_meta_absent() {
-        assert!(locale_from_initialize_frame(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#).is_none());
+        assert!(
+            locale_from_initialize_frame(r#"{"jsonrpc":"2.0","id":1,"method":"initialize"}"#)
+                .is_none()
+        );
     }
 
     #[test]

@@ -73,10 +73,7 @@ impl HostRpc {
     /// channel. The writer task should drain `writer_rx` and frame
     /// each value via `starter_jsonrpc_stdio::write_frame`. The
     /// process loop creates one of these per child lifetime.
-    pub fn new(
-        writer: mpsc::UnboundedSender<serde_json::Value>,
-        pending: PendingMap,
-    ) -> Self {
+    pub fn new(writer: mpsc::UnboundedSender<serde_json::Value>, pending: PendingMap) -> Self {
         Self {
             inner: Arc::new(Inner {
                 writer,
@@ -110,11 +107,7 @@ impl HostRpc {
         // Insert *before* sending so an immediate response (paranoid
         // case) doesn't race with the read side observing the entry.
         {
-            let mut g = self
-                .inner
-                .pending
-                .lock()
-                .expect("pending mutex poisoned");
+            let mut g = self.inner.pending.lock().expect("pending mutex poisoned");
             g.insert(id, tx);
         }
         let mut envelope = json!({
@@ -186,11 +179,12 @@ pub fn route_response(pending: &PendingMap, frame: &serde_json::Value) -> bool {
         return true;
     };
     let payload = if has_error {
-        let err_val = frame.get("error").cloned().unwrap_or(serde_json::Value::Null);
+        let err_val = frame
+            .get("error")
+            .cloned()
+            .unwrap_or(serde_json::Value::Null);
         let kernel_err = serde_json::from_value::<Error>(err_val.clone()).unwrap_or_else(|_| {
-            Error::extension_internal(format!(
-                "host returned non-Error error payload: {err_val}"
-            ))
+            Error::extension_internal(format!("host returned non-Error error payload: {err_val}"))
         });
         Err(kernel_err)
     } else {
@@ -269,12 +263,10 @@ mod tests {
         // `call_sync` blocks the current thread on `block_in_place`,
         // which needs the multi-thread runtime — provided by the
         // `#[tokio::test(flavor = "multi_thread")]` attr.
-        let res = tokio::task::spawn_blocking(move || {
-            rpc.call_sync("ping", json!({}))
-        })
-        .await
-        .expect("blocking joined")
-        .expect("rpc ok");
+        let res = tokio::task::spawn_blocking(move || rpc.call_sync("ping", json!({})))
+            .await
+            .expect("blocking joined")
+            .expect("rpc ok");
         assert_eq!(res, json!({"hello": "world"}));
     }
 

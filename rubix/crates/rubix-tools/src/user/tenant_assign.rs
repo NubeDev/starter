@@ -341,7 +341,10 @@ mod tests {
         );
         // And the user row must NOT have flipped.
         let row = users.get("u-1").await.unwrap().unwrap();
-        assert!(row.tenant_id.is_none(), "failed FK must not mutate user row");
+        assert!(
+            row.tenant_id.is_none(),
+            "failed FK must not mutate user row"
+        );
     }
 
     #[tokio::test]

@@ -50,9 +50,7 @@ impl Tool for UserDeleteTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.user.delete".to_owned(),
-            description: rubix_spi::dto::user::delete::DESCRIPTOR
-                .purpose
-                .to_owned(),
+            description: rubix_spi::dto::user::delete::DESCRIPTOR.purpose.to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -65,10 +63,9 @@ impl Tool for UserDeleteTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: UserDeleteRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("UserDeleteRequest: {e}"),
-            })?;
+        let req: UserDeleteRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("UserDeleteRequest: {e}"),
+        })?;
 
         // Resolve the row before any cascade check so we can
         // return a structured NotFound and so the snapshot we
@@ -293,10 +290,7 @@ mod tests {
         // Mutate the seeded row so the snapshot has every field
         // populated \u{2014} pins the \u{00A7}3.1 echo rule for
         // this verb.
-        users
-            .set_role("u-1", "admin")
-            .await
-            .unwrap();
+        users.set_role("u-1", "admin").await.unwrap();
         users
             .set_prefs("u-1", json!({"locale": "en-US"}))
             .await

@@ -334,10 +334,14 @@ impl SupervisorHandle {
                 ))
             }
             Err(_) => {
-                let pending_len = self.pending.lock().map(|mut g| {
-                    g.remove(&id);
-                    g.len()
-                }).unwrap_or(0);
+                let pending_len = self
+                    .pending
+                    .lock()
+                    .map(|mut g| {
+                        g.remove(&id);
+                        g.len()
+                    })
+                    .unwrap_or(0);
                 let lifecycle = format!("{:?}", *self.state.borrow());
                 warn!(
                     ext = %self.id.as_str(),
@@ -1157,8 +1161,14 @@ mod tests {
         );
         let meta = env.get("_meta").expect("_meta written");
         let caller = meta.get("caller").expect("caller present");
-        assert_eq!(caller.get("tenant_id").and_then(|v| v.as_str()), Some("t-1"));
-        assert_eq!(caller.get("request_id").and_then(|v| v.as_str()), Some("r-7"));
+        assert_eq!(
+            caller.get("tenant_id").and_then(|v| v.as_str()),
+            Some("t-1")
+        );
+        assert_eq!(
+            caller.get("request_id").and_then(|v| v.as_str()),
+            Some("r-7")
+        );
     }
 
     #[test]

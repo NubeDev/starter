@@ -288,9 +288,7 @@ impl ChangeTail for PgListenTail {
                             skipped = n,
                             "changelog subscriber lagged broadcast ring; gap-filling via SELECT",
                         );
-                        if let Err(e) =
-                            drain_since_mpsc(&pool, &mut subscribe_cursor, &tx).await
-                        {
+                        if let Err(e) = drain_since_mpsc(&pool, &mut subscribe_cursor, &tx).await {
                             tracing::warn!(error = ?e, "changelog gap-fill SELECT failed");
                         }
                         if tx.is_closed() {

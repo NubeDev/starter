@@ -89,7 +89,9 @@ impl Tool for UserPrefsSetTool {
             // Echo the row's other identity-bearing fields so the
             // snapshot reconstructs byte-exact (see module doc).
             role: new.role,
-            disabled_at_ms: new.disabled_at_ms,            tenant_id: new.tenant_id,        };
+            disabled_at_ms: new.disabled_at_ms,
+            tenant_id: new.tenant_id,
+        };
         serde_json::to_value(response).map_err(|e| Error::Internal {
             source: Box::new(e),
         })

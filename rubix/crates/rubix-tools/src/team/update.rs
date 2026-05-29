@@ -45,9 +45,7 @@ impl Tool for TeamUpdateTool {
     fn definition(&self) -> ToolDefinition {
         ToolDefinition {
             name: "rubix.team.update".to_owned(),
-            description: rubix_spi::dto::team::update::DESCRIPTOR
-                .purpose
-                .to_owned(),
+            description: rubix_spi::dto::team::update::DESCRIPTOR.purpose.to_owned(),
             input_schema: serde_json::json!({
                 "type": "object",
                 "properties": {
@@ -229,7 +227,10 @@ mod tests {
     async fn seeded() -> Arc<InMemoryTeamStore> {
         let store = Arc::new(InMemoryTeamStore::new());
         store.create(row("t-1", "Ops", None)).await.unwrap();
-        store.create(row("t-2", "Eng", Some("Engineers"))).await.unwrap();
+        store
+            .create(row("t-2", "Eng", Some("Engineers")))
+            .await
+            .unwrap();
         store
     }
 
@@ -316,10 +317,7 @@ mod tests {
     async fn no_fields_supplied_is_rejected() {
         let store = seeded().await;
         let tool = TeamUpdateTool::new(store);
-        let err = tool
-            .invoke(json!({"team_id": "t-1"}))
-            .await
-            .unwrap_err();
+        let err = tool.invoke(json!({"team_id": "t-1"})).await.unwrap_err();
         assert!(matches!(err, Error::Invalid { .. }));
     }
 
@@ -343,10 +341,8 @@ mod tests {
         let output = tool.invoke(input.clone()).await.unwrap();
         let draft = tool.change_for(&input, &output).expect("draft");
         assert!(matches!(draft.op, Op::Update));
-        let before: TeamPatch =
-            serde_json::from_value(draft.before.unwrap()).unwrap();
-        let after: TeamPatch =
-            serde_json::from_value(draft.after.unwrap()).unwrap();
+        let before: TeamPatch = serde_json::from_value(draft.before.unwrap()).unwrap();
+        let after: TeamPatch = serde_json::from_value(draft.after.unwrap()).unwrap();
         assert_eq!(before.name.as_deref(), Some("Ops"));
         assert_eq!(after.name.as_deref(), Some("Operations"));
         assert!(before.description.is_none(), "untouched fields stay None");

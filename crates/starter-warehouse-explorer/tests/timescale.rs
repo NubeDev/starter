@@ -69,9 +69,8 @@ async fn seed(pool: &sqlx::PgPool) {
 
 async fn body_json(resp: axum::http::Response<Body>) -> Value {
     let bytes = resp.into_body().collect().await.unwrap().to_bytes();
-    serde_json::from_slice(&bytes).unwrap_or_else(|_| {
-        Value::String(String::from_utf8_lossy(&bytes).into_owned())
-    })
+    serde_json::from_slice(&bytes)
+        .unwrap_or_else(|_| Value::String(String::from_utf8_lossy(&bytes).into_owned()))
 }
 
 #[tokio::test]
@@ -97,7 +96,9 @@ async fn overview_wire_shape_matches_frontend_reviver() {
     // is the wire contract.
     assert!(body.get("file_name").is_some(), "file_name missing");
     assert!(
-        body.get("sqlite_version").map(|v| v.is_null()).unwrap_or(false),
+        body.get("sqlite_version")
+            .map(|v| v.is_null())
+            .unwrap_or(false),
         "sqlite_version must be null on the wire"
     );
     assert!(body.get("size_on_disk").and_then(|v| v.as_str()).is_some());
@@ -283,11 +284,10 @@ async fn query_drop_table_is_rejected_and_table_survives() {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
 
     // Widgets still exists.
-    let still_there: (i64,) =
-        sqlx::query_as("SELECT count(*)::bigint FROM widgets")
-            .fetch_one(client.pool())
-            .await
-            .expect("widgets table must still exist after rejected DROP");
+    let still_there: (i64,) = sqlx::query_as("SELECT count(*)::bigint FROM widgets")
+        .fetch_one(client.pool())
+        .await
+        .expect("widgets table must still exist after rejected DROP");
     assert_eq!(still_there.0, 3);
 }
 
@@ -318,7 +318,10 @@ async fn malicious_table_identifier_is_rejected_before_db_round_trip() {
     assert_eq!(resp.status(), StatusCode::BAD_REQUEST);
     let body = body_json(resp).await;
     assert!(
-        body["error"].as_str().unwrap().contains("invalid table identifier"),
+        body["error"]
+            .as_str()
+            .unwrap()
+            .contains("invalid table identifier"),
         "body = {body:?}"
     );
 }

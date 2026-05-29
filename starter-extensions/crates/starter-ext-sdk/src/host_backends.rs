@@ -219,12 +219,7 @@ impl WarehouseWriteBackend for RealWarehouseWriteBackend {
         Ok(res.rows_affected)
     }
 
-    fn delete(
-        &self,
-        table: &str,
-        key_column: &str,
-        keys: Vec<serde_json::Value>,
-    ) -> Result<u64> {
+    fn delete(&self, table: &str, key_column: &str, keys: Vec<serde_json::Value>) -> Result<u64> {
         let req = WarehouseDeleteRequest {
             table: table.to_owned(),
             key_column: key_column.to_owned(),
@@ -420,4 +415,3 @@ impl FsBackend for RealFsBackend {
             .map_err(|e| Error::transport(format!("fs.read body not valid base64: {e}")))
     }
 }
-

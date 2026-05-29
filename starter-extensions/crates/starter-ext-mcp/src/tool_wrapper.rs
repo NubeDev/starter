@@ -129,11 +129,9 @@ fn map_ext_error(e: Error, subject: &str) -> starter_spi::Error {
         // can force one. Surfacing this as `Unavailable` (rather than
         // `Internal`) lets transports map it to HTTP 503 and surface
         // a restart affordance keyed on the extension id.
-        Error::Transport(m) => SE::unavailable_subject(
-            "extension.supervisor_unavailable",
-            subject,
-            m,
-        ),
+        Error::Transport(m) => {
+            SE::unavailable_subject("extension.supervisor_unavailable", subject, m)
+        }
         other => SE::Internal {
             source: Box::new(other),
         },

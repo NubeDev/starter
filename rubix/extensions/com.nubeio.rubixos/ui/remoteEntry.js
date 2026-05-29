@@ -35753,9 +35753,11 @@ function DashboardPage() {
     };
   }, []);
   const win = React.useMemo(() => {
-    const toMs = latestSampleMs ?? Date.now();
+    const HOUR = 36e5;
+    const rawTo = latestSampleMs ?? Date.now();
+    const toMs = Math.floor(rawTo / HOUR) * HOUR;
     const to = new Date(toMs);
-    const from = new Date(toMs - range.hours * 36e5);
+    const from = new Date(toMs - range.hours * HOUR);
     return { from: from.toISOString(), to: to.toISOString(), bucket: range.bucket };
   }, [rangeIdx, range.hours, range.bucket, latestSampleMs]);
   const prevWin = React.useMemo(() => {
@@ -36234,8 +36236,10 @@ function ReportPage() {
     };
   }, []);
   const win = React.useMemo(() => {
-    const toMs = latestSampleMs ?? Date.now();
-    const from = new Date(toMs - range.hours * 36e5).toISOString();
+    const HOUR = 36e5;
+    const rawTo = latestSampleMs ?? Date.now();
+    const toMs = Math.floor(rawTo / HOUR) * HOUR;
+    const from = new Date(toMs - range.hours * HOUR).toISOString();
     const to = new Date(toMs).toISOString();
     return { from, to, bucket: range.bucket };
   }, [range.hours, range.bucket, latestSampleMs]);
@@ -36553,7 +36557,7 @@ function ReportFooter() {
   ] });
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-05-29T02:38:38.451Z"}`;
+const RUBIXOS_BUILD_STAMP = `build-${"2026-05-29T05:46:32.688Z"}`;
 if (typeof window !== "undefined") {
   console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
   window.__rubixosBuild = RUBIXOS_BUILD_STAMP;

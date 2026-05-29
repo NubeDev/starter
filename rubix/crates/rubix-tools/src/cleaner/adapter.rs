@@ -134,12 +134,9 @@ impl AnomalyRule for ToolAnomalyRule {
 /// [`AnomalyRule::apply`]).
 fn invoke_blocking(tool: &dyn Tool, payload: Value) -> Result<ToolOutcome, String> {
     let fut = tool.invoke(payload);
-    let raw = tokio::task::block_in_place(|| {
-        tokio::runtime::Handle::current().block_on(fut)
-    })
-    .map_err(|e| format!("tool invoke: {e}"))?;
-    serde_json::from_value::<ToolOutcome>(raw)
-        .map_err(|e| format!("tool response shape: {e}"))
+    let raw = tokio::task::block_in_place(|| tokio::runtime::Handle::current().block_on(fut))
+        .map_err(|e| format!("tool invoke: {e}"))?;
+    serde_json::from_value::<ToolOutcome>(raw).map_err(|e| format!("tool response shape: {e}"))
 }
 
 /// One manifest entry to be wired as a [`ToolAnomalyRule`].
@@ -299,10 +296,7 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn drop_outcome_propagates() {
-        let rule = ToolAnomalyRule::new(
-            "com.acme.x",
-            tool(serde_json::json!({"outcome": "drop"})),
-        );
+        let rule = ToolAnomalyRule::new("com.acme.x", tool(serde_json::json!({"outcome": "drop"})));
         assert!(matches!(
             rule.apply(&r(), WindowSlice::new(&[])),
             RuleOutcome::Drop
@@ -311,10 +305,8 @@ mod tests {
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
     async fn malformed_response_degrades_to_ok() {
-        let rule = ToolAnomalyRule::new(
-            "com.acme.x",
-            tool(serde_json::json!({"outcome": "bogus"})),
-        );
+        let rule =
+            ToolAnomalyRule::new("com.acme.x", tool(serde_json::json!({"outcome": "bogus"})));
         // Misbehaving tools must NOT silently flag rows.
         assert!(matches!(
             rule.apply(&r(), WindowSlice::new(&[])),
@@ -418,7 +410,7 @@ mod tests {
             ],
         );
         let ids: Vec<_> = reg.ids().skip(3).collect(); // skip builtins
-        // r.c (-5) → r.b (10) → r.d (10, decl ties to r.b) → r.a (None last)
+                                                       // r.c (-5) → r.b (10) → r.d (10, decl ties to r.b) → r.a (None last)
         assert_eq!(ids, vec!["r.c", "r.b", "r.d", "r.a"]);
     }
 

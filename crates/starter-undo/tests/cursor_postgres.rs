@@ -19,7 +19,10 @@ use starter_store_postgres::{migrate, testing::with_database};
 use starter_undo::cursor_postgres::{migration_source, PgUndoCursor};
 use starter_undo::UndoCursor;
 
-async fn setup() -> (PgUndoCursor, starter_store_postgres::testing::ContainerGuard) {
+async fn setup() -> (
+    PgUndoCursor,
+    starter_store_postgres::testing::ContainerGuard,
+) {
     let (pool, guard) = with_database().await;
     migrate(&pool)
         .with_source(migration_source())

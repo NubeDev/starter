@@ -301,7 +301,11 @@ contributes:
         // contents but no `block.yaml`.
         let target = tmp.path().join("target");
         std::fs::create_dir(&target).unwrap();
-        std::fs::write(target.join("CACHEDIR.TAG"), b"Signature: 8a477f597d28d172789f06886806bc55").unwrap();
+        std::fs::write(
+            target.join("CACHEDIR.TAG"),
+            b"Signature: 8a477f597d28d172789f06886806bc55",
+        )
+        .unwrap();
         std::fs::create_dir(target.join("release")).unwrap();
         // `.git`-style hidden dir.
         std::fs::create_dir(tmp.path().join(".dotdir")).unwrap();

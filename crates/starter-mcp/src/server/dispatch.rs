@@ -211,9 +211,7 @@ mod tests {
     use serde_json::json;
     use starter_spi::tool::{Tool, ToolDefinition};
 
-    use crate::registry::{
-        Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole,
-    };
+    use crate::registry::{Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole};
 
     struct EchoTool;
     #[async_trait]
@@ -256,7 +254,11 @@ mod tests {
     }
 
     fn registry_with_echo_and_greet() -> Arc<ToolRegistry> {
-        Arc::new(ToolRegistry::new().register(EchoTool).register_prompt(GreetPrompt))
+        Arc::new(
+            ToolRegistry::new()
+                .register(EchoTool)
+                .register_prompt(GreetPrompt),
+        )
     }
 
     #[tokio::test]
@@ -377,4 +379,3 @@ mod tests {
         assert_eq!(resp.error.unwrap().code, -32602);
     }
 }
-

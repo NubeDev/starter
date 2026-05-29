@@ -74,23 +74,15 @@ pub trait TeamAdminStore: Send + Sync {
     /// new_row)`; on a no-op re-assignment both halves are
     /// equal and the verb skips the audit row. `Error::NotFound`
     /// when the team itself does not resolve.
-    async fn assign(
-        &self,
-        team_id: &str,
-        user_id: &str,
-        now_ms: i64,
-    ) -> Result<(TeamRow, TeamRow)>;
+    async fn assign(&self, team_id: &str, user_id: &str, now_ms: i64)
+        -> Result<(TeamRow, TeamRow)>;
     /// Remove `user_id` from `team_id`. Returns `(prior_row,
     /// new_row)`; on a no-op (user was not a member) both
     /// halves are equal. Returns `Error::NotFound` when the
     /// *team* does not resolve \u{2014} the absence of a member
     /// is a no-op, but the absence of the team itself is a
     /// wire-shaped bug.
-    async fn unassign(
-        &self,
-        team_id: &str,
-        user_id: &str,
-    ) -> Result<(TeamRow, TeamRow)>;
+    async fn unassign(&self, team_id: &str, user_id: &str) -> Result<(TeamRow, TeamRow)>;
     /// Fetch by team_id.
     async fn get(&self, team_id: &str) -> Result<Option<TeamRow>>;
     /// List all team rows. Order is unspecified \u{2014} callers

@@ -91,8 +91,8 @@ struct PgTeamRow {
 impl TryFrom<PgTeamRow> for TeamRow {
     type Error = Error;
     fn try_from(r: PgTeamRow) -> Result<Self> {
-        let members: BTreeMap<String, i64> = serde_json::from_value(r.members)
-            .map_err(|e| Error::Invalid {
+        let members: BTreeMap<String, i64> =
+            serde_json::from_value(r.members).map_err(|e| Error::Invalid {
                 message: format!(
                     "rubix_teams.members row {} is not a string->i64 map: {e}",
                     r.team_id
@@ -114,8 +114,7 @@ fn members_to_json(members: &BTreeMap<String, i64>) -> Value {
     // sqlx is byte-stable across runs. Useful for the
     // `(prior, new)` comparison on no-op assigns where we want
     // serde_json::Value equality to mean "same snapshot".
-    serde_json::to_value(members)
-        .expect("BTreeMap<String, i64> -> serde_json::Value is infallible")
+    serde_json::to_value(members).expect("BTreeMap<String, i64> -> serde_json::Value is infallible")
 }
 
 #[async_trait]
@@ -145,9 +144,8 @@ impl TeamAdminStore for PgTeamAdminStore {
         now_ms: i64,
     ) -> Result<(TeamRow, TeamRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_teams WHERE team_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_teams WHERE team_id = $1 FOR UPDATE");
         let prior_pg: PgTeamRow = sqlx::query_as(&select_sql)
             .bind(team_id)
             .fetch_optional(&mut *tx)
@@ -174,15 +172,10 @@ impl TeamAdminStore for PgTeamAdminStore {
         Ok((prior, new))
     }
 
-    async fn unassign(
-        &self,
-        team_id: &str,
-        user_id: &str,
-    ) -> Result<(TeamRow, TeamRow)> {
+    async fn unassign(&self, team_id: &str, user_id: &str) -> Result<(TeamRow, TeamRow)> {
         let mut tx = self.pool.sqlx().begin().await.map_err(backend)?;
-        let select_sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_teams WHERE team_id = $1 FOR UPDATE"
-        );
+        let select_sql =
+            format!("SELECT {SELECT_COLS} FROM rubix_teams WHERE team_id = $1 FOR UPDATE");
         let prior_pg: PgTeamRow = sqlx::query_as(&select_sql)
             .bind(team_id)
             .fetch_optional(&mut *tx)
@@ -210,9 +203,7 @@ impl TeamAdminStore for PgTeamAdminStore {
     }
 
     async fn get(&self, team_id: &str) -> Result<Option<TeamRow>> {
-        let sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_teams WHERE team_id = $1 LIMIT 1"
-        );
+        let sql = format!("SELECT {SELECT_COLS} FROM rubix_teams WHERE team_id = $1 LIMIT 1");
         let row: Option<PgTeamRow> = sqlx::query_as(&sql)
             .bind(team_id)
             .fetch_optional(self.pool.sqlx())
@@ -222,9 +213,7 @@ impl TeamAdminStore for PgTeamAdminStore {
     }
 
     async fn list(&self) -> Result<Vec<TeamRow>> {
-        let sql = format!(
-            "SELECT {SELECT_COLS} FROM rubix_teams ORDER BY team_id ASC"
-        );
+        let sql = format!("SELECT {SELECT_COLS} FROM rubix_teams ORDER BY team_id ASC");
         let rows: Vec<PgTeamRow> = sqlx::query_as(&sql)
             .fetch_all(self.pool.sqlx())
             .await

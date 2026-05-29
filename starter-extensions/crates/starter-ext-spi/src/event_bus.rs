@@ -85,7 +85,8 @@ mod tests {
             topic: "com.acme.charts.filter".into(),
             payload: serde_json::json!({}),
         };
-        let back: EventBusPublishRequest = serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
+        let back: EventBusPublishRequest =
+            serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
         assert_eq!(back, r);
     }
 
@@ -94,7 +95,8 @@ mod tests {
         let r = EventBusSubscribeRequest {
             topic: "com.acme.charts.*".into(),
         };
-        let back: EventBusSubscribeRequest = serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
+        let back: EventBusSubscribeRequest =
+            serde_json::from_str(&serde_json::to_string(&r).unwrap()).unwrap();
         assert_eq!(back, r);
     }
 }

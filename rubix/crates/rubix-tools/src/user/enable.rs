@@ -58,10 +58,9 @@ impl Tool for UserEnableTool {
     }
 
     async fn invoke(&self, input: Value) -> Result<Value> {
-        let req: UserEnableRequest =
-            serde_json::from_value(input).map_err(|e| Error::Invalid {
-                message: format!("UserEnableRequest: {e}"),
-            })?;
+        let req: UserEnableRequest = serde_json::from_value(input).map_err(|e| Error::Invalid {
+            message: format!("UserEnableRequest: {e}"),
+        })?;
 
         let target = resolve_target(&*self.store, &req).await?;
         let now_ms = now_epoch_ms();
@@ -215,7 +214,13 @@ mod tests {
         assert!(!resp.was_already_enabled);
         assert_eq!(resp.prior_disabled_at_ms, Some(100));
         // Live row reflects the enable.
-        assert!(store.get("u-1").await.unwrap().unwrap().disabled_at_ms.is_none());
+        assert!(store
+            .get("u-1")
+            .await
+            .unwrap()
+            .unwrap()
+            .disabled_at_ms
+            .is_none());
     }
 
     #[tokio::test]
@@ -279,7 +284,10 @@ mod tests {
         assert_eq!(before.disabled_at_ms, Some(100));
         assert_eq!(after.disabled_at_ms, None);
         // Prefs + tenant echoed through so undo restores them.
-        assert_eq!(before.prefs_json, Some(serde_json::json!({"theme": "dark"})));
+        assert_eq!(
+            before.prefs_json,
+            Some(serde_json::json!({"theme": "dark"}))
+        );
         assert_eq!(before.tenant_id, Some("t-acme".into()));
         assert_eq!(after.prefs_json, before.prefs_json);
         assert_eq!(after.tenant_id, before.tenant_id);
@@ -313,7 +321,10 @@ mod tests {
         reversible.apply_inverse(&change).await.unwrap();
         let restored = store.get("u-1").await.unwrap().unwrap();
         assert_eq!(restored.disabled_at_ms, Some(100));
-        assert_eq!(restored.prefs_json, Some(serde_json::json!({"theme": "dark"})));
+        assert_eq!(
+            restored.prefs_json,
+            Some(serde_json::json!({"theme": "dark"}))
+        );
         assert_eq!(restored.tenant_id, Some("t-acme".into()));
     }
 }

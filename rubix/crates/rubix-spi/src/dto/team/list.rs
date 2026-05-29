@@ -101,8 +101,7 @@ pub static DESCRIPTOR: ToolDescriptor = ToolDescriptor {
         },
         SiblingTool {
             id: "rubix.team.unassign",
-            wins_when:
-                "the caller already knows the team id and wants to remove a member from it.",
+            wins_when: "the caller already knows the team id and wants to remove a member from it.",
         },
     ],
 };

@@ -74,11 +74,7 @@ impl TeamAdminStore for InMemoryTeamStore {
         guard.insert(team_id.to_owned(), new.clone());
         Ok((prior, new))
     }
-    async fn unassign(
-        &self,
-        team_id: &str,
-        user_id: &str,
-    ) -> Result<(TeamRow, TeamRow)> {
+    async fn unassign(&self, team_id: &str, user_id: &str) -> Result<(TeamRow, TeamRow)> {
         let mut guard = self.lock();
         let prior = guard.get(team_id).cloned().ok_or_else(|| Error::NotFound {
             what: format!("team:{team_id}"),

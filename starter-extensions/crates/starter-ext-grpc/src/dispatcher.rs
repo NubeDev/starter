@@ -649,11 +649,7 @@ impl starter_ext_sdk::ctx::WarehouseReadBackend for StubWarehouseRead {
             "warehouse_read not wired in gRPC adapter",
         ))
     }
-    fn count(
-        &self,
-        _template: &str,
-        _params: serde_json::Value,
-    ) -> starter_ext_spi::Result<u64> {
+    fn count(&self, _template: &str, _params: serde_json::Value) -> starter_ext_spi::Result<u64> {
         Err(Error::capability(
             "warehouse_read not wired in gRPC adapter",
         ))

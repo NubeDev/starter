@@ -98,13 +98,13 @@ impl Tool for TenantUpdateTool {
             }
         }
 
-        let prior =
-            self.store
-                .get(&req.tenant_id)
-                .await?
-                .ok_or_else(|| Error::NotFound {
-                    what: format!("tenant:{}", req.tenant_id),
-                })?;
+        let prior = self
+            .store
+            .get(&req.tenant_id)
+            .await?
+            .ok_or_else(|| Error::NotFound {
+                what: format!("tenant:{}", req.tenant_id),
+            })?;
 
         let new_name = req.name.clone().unwrap_or_else(|| prior.name.clone());
         let new_locale = req.locale.clone().unwrap_or_else(|| prior.locale.clone());
@@ -148,7 +148,10 @@ impl Tool for TenantUpdateTool {
         if !was_unchanged {
             diag = diag
                 .with_param("prior_name", DiagnosticParam::String(prior.name.clone()))
-                .with_param("prior_locale", DiagnosticParam::String(prior.locale.clone()))
+                .with_param(
+                    "prior_locale",
+                    DiagnosticParam::String(prior.locale.clone()),
+                )
                 .with_param("new_locale", DiagnosticParam::String(new_locale.clone()));
         }
 
@@ -355,10 +358,7 @@ mod tests {
     async fn no_fields_supplied_is_rejected() {
         let store = seeded().await;
         let tool = TenantUpdateTool::new(store);
-        let err = tool
-            .invoke(json!({"tenant_id": "t-1"}))
-            .await
-            .unwrap_err();
+        let err = tool.invoke(json!({"tenant_id": "t-1"})).await.unwrap_err();
         assert!(matches!(err, Error::Invalid { .. }));
     }
 

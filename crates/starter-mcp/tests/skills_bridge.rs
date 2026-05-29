@@ -70,16 +70,11 @@ impl Drop for TempDir {
 fn write_skill(dir: &Path, name: &str, trust: &str, id: &str, body: &str) {
     let bundle = dir.join(name);
     fs::create_dir_all(&bundle).unwrap();
-    let contents = format!(
-        "---\nid: {id}\ndescription: smoke {id}\ntrust: {trust}\n---\n{body}\n"
-    );
+    let contents = format!("---\nid: {id}\ndescription: smoke {id}\ntrust: {trust}\n---\n{body}\n");
     fs::write(bundle.join("SKILL.md"), contents).unwrap();
 }
 
-async fn build_registry(
-    skills_dir: &Path,
-    store: Arc<dyn ApprovalStore>,
-) -> SkillRegistry {
+async fn build_registry(skills_dir: &Path, store: Arc<dyn ApprovalStore>) -> SkillRegistry {
     SkillRegistry::builder()
         .with_approval_store_arc(store)
         .load_dir(skills_dir)
@@ -161,7 +156,10 @@ async fn approved_only_in_tools_list_and_revoke_fails_at_call_time() {
         .revoke(&q.id, &q.bundle_hash, &principal())
         .await
         .unwrap();
-    let err = tool.invoke(json!({})).await.expect_err("revoked → forbidden");
+    let err = tool
+        .invoke(json!({}))
+        .await
+        .expect_err("revoked → forbidden");
     assert!(
         matches!(err, starter_spi::error::Error::Forbidden),
         "expected Forbidden, got {err:?}"
@@ -171,13 +169,7 @@ async fn approved_only_in_tools_list_and_revoke_fails_at_call_time() {
 #[tokio::test]
 async fn skill_tool_definition_uses_skill_id_and_description() {
     let tmp = TempDir::new("definition");
-    write_skill(
-        tmp.path(),
-        "x",
-        "approved",
-        "starter.example.x",
-        "body x",
-    );
+    write_skill(tmp.path(), "x", "approved", "starter.example.x", "body x");
     let store: Arc<dyn ApprovalStore> = Arc::new(InMemoryApprovalStore::new());
     let skills = build_registry(tmp.path(), store).await;
     let skill = skills.list().pop().unwrap();
@@ -209,9 +201,7 @@ async fn add_favorite_writes_quarantined_bundle_not_in_tools_list() {
     assert!(result["bundle_hash"].as_str().unwrap().len() == 64);
 
     // The file landed on disk.
-    let skill_md = user_dir
-        .join("starter.user.my_favorite")
-        .join("SKILL.md");
+    let skill_md = user_dir.join("starter.user.my_favorite").join("SKILL.md");
     assert!(skill_md.is_file(), "SKILL.md must exist at {skill_md:?}");
 
     // A registry that loads `user_dir` sees it as quarantined.
@@ -228,7 +218,10 @@ async fn add_favorite_writes_quarantined_bundle_not_in_tools_list() {
         .map(|s| s.id.to_string())
         .collect();
     assert_eq!(q_ids, vec!["starter.user.my_favorite".to_string()]);
-    assert!(skills.list().is_empty(), "must be quarantined, not approved");
+    assert!(
+        skills.list().is_empty(),
+        "must be quarantined, not approved"
+    );
 
     // The bridge does NOT register quarantined skills as tools.
     let registry = register_approved_skills(ToolRegistry::new(), &skills);

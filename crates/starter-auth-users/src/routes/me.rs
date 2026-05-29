@@ -89,7 +89,9 @@ pub(crate) async fn handler(state: Arc<AuthState>, headers: HeaderMap) -> Respon
 /// JWT) values so the cookie path can take over.
 fn bearer_token(headers: &HeaderMap) -> Option<String> {
     let raw = headers.get(AUTHORIZATION)?.to_str().ok()?;
-    let token = raw.strip_prefix("Bearer ").or_else(|| raw.strip_prefix("bearer "))?;
+    let token = raw
+        .strip_prefix("Bearer ")
+        .or_else(|| raw.strip_prefix("bearer "))?;
     let token = token.trim();
     if token.starts_with(TOKEN_PREFIX) {
         Some(token.to_string())

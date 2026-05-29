@@ -41,9 +41,9 @@ use starter_ext_spi::{jsonrpc::JSONRPC_VERSION, Capability, Error, FrameMeta, Re
 
 use crate::ctx::{CtxInner, EventSender, NeverCancel};
 use crate::host_backends::{
-    RealAuthzBackend, RealDashboardBackend, RealEventBusBackend, RealFsBackend,
-    RealHttpOutBackend, RealSecretsBackend, RealTracingBackend, RealWallClockBackend,
-    RealWarehouseReadBackend, RealWarehouseWriteBackend,
+    RealAuthzBackend, RealDashboardBackend, RealEventBusBackend, RealFsBackend, RealHttpOutBackend,
+    RealSecretsBackend, RealTracingBackend, RealWallClockBackend, RealWarehouseReadBackend,
+    RealWarehouseWriteBackend,
 };
 use crate::host_rpc::{self, HostRpc};
 use crate::meta::{ExtensionDispatch, ExtensionMeta};
@@ -270,13 +270,8 @@ where
                     // Bind the caller on the blocking task so any
                     // outbound `HostRpc::call_sync` in the handler
                     // body re-stamps `_meta.caller` on the wire.
-                    let dispatch = || {
-                        instance_arc.dispatch_tool(
-                            &tool_id_for_task,
-                            &per_call_ctx,
-                            params,
-                        )
-                    };
+                    let dispatch =
+                        || instance_arc.dispatch_tool(&tool_id_for_task, &per_call_ctx, params);
                     let result = match caller {
                         Some(c) => crate::caller_local::scope_sync(c, dispatch),
                         None => dispatch(),

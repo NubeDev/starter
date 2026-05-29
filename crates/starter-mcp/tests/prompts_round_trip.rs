@@ -11,9 +11,7 @@ use std::sync::Arc;
 
 use async_trait::async_trait;
 use serde_json::{json, Value};
-use starter_mcp::registry::{
-    Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole,
-};
+use starter_mcp::registry::{Prompt, PromptDefinition, PromptMessage, PromptResponse, PromptRole};
 use starter_mcp::testing::pair;
 use starter_mcp::ToolRegistry;
 use starter_spi::Result as SpiResult;
@@ -82,11 +80,7 @@ async fn prompts_list_and_get_round_trip() {
     );
 
     let get_resp = client
-        .request(
-            3,
-            "prompts/get",
-            json!({ "name": "com.demo.skills.hello" }),
-        )
+        .request(3, "prompts/get", json!({ "name": "com.demo.skills.hello" }))
         .await
         .expect("prompts/get round-trip");
     let val = get_resp.result.expect("prompts/get result");

@@ -45,10 +45,7 @@ impl InMemoryTenantStore {
     /// (used by the registry boot path to install the bundled
     /// `System` tenant; production should not seed duplicates).
     pub fn seeded(rows: Vec<TenantRow>) -> Self {
-        let map = rows
-            .into_iter()
-            .map(|r| (r.tenant_id.clone(), r))
-            .collect();
+        let map = rows.into_iter().map(|r| (r.tenant_id.clone(), r)).collect();
         Self {
             rows: Arc::new(Mutex::new(map)),
         }
