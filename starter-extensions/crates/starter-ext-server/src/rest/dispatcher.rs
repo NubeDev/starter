@@ -535,6 +535,11 @@ impl RestDispatcher for NotWiredDispatcher {
 pub struct ProcessRestDispatcher {
     handles: std::collections::HashMap<ExtensionId, Arc<starter_ext_supervisor::SupervisorHandle>>,
     request_timeout: Duration,
+    /// Opt-in cache wiring. Same shape as
+    /// [`BuiltinRestDispatcher::with_cache`]. v0 enables this for the
+    /// rubixos `usage_bucketed` canary; all other process kinds
+    /// without a sidecar take the no-op path.
+    cache: Option<DispatcherCache>,
 }
 
 impl ProcessRestDispatcher {
@@ -549,7 +554,15 @@ impl ProcessRestDispatcher {
         Self {
             handles,
             request_timeout,
+            cache: None,
         }
+    }
+
+    /// Install a [`DispatcherCache`] for opt-in process-kind caching.
+    /// Streaming dispatch is never cached.
+    pub fn with_cache(mut self, cache: DispatcherCache) -> Self {
+        self.cache = Some(cache);
+        self
     }
 
     /// Default per-call timeout the consumer configured.
@@ -564,11 +577,10 @@ impl ProcessRestDispatcher {
     ) -> Option<Arc<starter_ext_supervisor::SupervisorHandle>> {
         self.handles.get(extension).cloned()
     }
-}
 
-#[async_trait]
-impl RestDispatcher for ProcessRestDispatcher {
-    async fn dispatch(
+    /// The uncached dispatch path — preserves the existing behaviour
+    /// so the cache wrapper is purely additive.
+    async fn dispatch_inner(
         &self,
         extension: &ExtensionId,
         contribute_id: &str,
@@ -591,12 +603,6 @@ impl RestDispatcher for ProcessRestDispatcher {
             "REST tool dispatch begin",
         );
         let started = std::time::Instant::now();
-        // Stamp the caller onto the outbound frame's `_meta.caller`
-        // when we have one. A `None` caller (system / host-internal
-        // frame) falls through to plain `call`, which omits `_meta`
-        // entirely; the child's `ctx.caller()` resolves to `None`,
-        // matching what every tenant-scoped capability handle uses
-        // as its fail-closed gate.
         let result = match caller {
             Some(caller) => handle
                 .call_as(&method, input, caller, timeout)
@@ -624,6 +630,58 @@ impl RestDispatcher for ProcessRestDispatcher {
             ),
         }
         result
+    }
+}
+
+#[async_trait]
+impl RestDispatcher for ProcessRestDispatcher {
+    async fn dispatch(
+        &self,
+        extension: &ExtensionId,
+        contribute_id: &str,
+        input: serde_json::Value,
+        caller: Option<CallerIdentity>,
+    ) -> Result<serde_json::Value, DispatchError> {
+        // Fast path: no cache configured, or no spec for this kind.
+        let spec = self
+            .cache
+            .as_ref()
+            .and_then(|c| c.registry.get(extension, contribute_id).cloned());
+        let Some(spec) = spec else {
+            return self
+                .dispatch_inner(extension, contribute_id, input, caller)
+                .await;
+        };
+
+        let cache = self.cache.as_ref().expect("cache must be Some");
+        let layer = cache.layer.clone();
+        let scope = caller_scope(caller.as_ref());
+        let base_key = dispatch_base_key(extension, contribute_id, &input);
+
+        let extension_owned = extension.clone();
+        let contribute_id_owned = contribute_id.to_owned();
+        let caller_for_load = caller.clone();
+        let this = self;
+        let bytes = layer
+            .get_or_load(&spec, &scope, &base_key, move || async move {
+                let v = this
+                    .dispatch_inner(
+                        &extension_owned,
+                        &contribute_id_owned,
+                        input,
+                        caller_for_load,
+                    )
+                    .await?;
+                let serialised = serde_json::to_vec(&v).map_err(|e| {
+                    DispatchError::Substrate(format!("cache: serialise dispatch result: {e}"))
+                })?;
+                Ok::<_, DispatchError>(std::sync::Arc::new(serialised))
+            })
+            .await?;
+        let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
+            DispatchError::Substrate(format!("cache: deserialise stored result: {e}"))
+        })?;
+        Ok(value)
     }
 
     async fn dispatch_stream(
