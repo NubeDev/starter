@@ -138,6 +138,75 @@ async fn handshake_and_shutdown_end_to_end() {
     }
 }
 
+/// The live pid cell is populated once the child is `Running` and cleared
+/// once it exits. Also exercises `process_stats()` returning `Some` while
+/// Running and `None` after shutdown.
+#[tokio::test(flavor = "current_thread")]
+async fn pid_set_on_spawn_and_cleared_on_exit() {
+    let Some((_bundle, record)) = stage_bundle() else {
+        eprintln!(
+            "skipping pid test: target/debug/hello-process not built. \
+             Run `cargo build -p hello-process` first."
+        );
+        return;
+    };
+
+    let handle = Supervisor::start(&record).expect("supervisor start");
+    let mut state_rx = handle.state();
+
+    // Before Running, no pid is reported.
+    assert_eq!(handle.pid(), None, "pid before Running must be None");
+
+    // Wait for Running.
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        if *state_rx.borrow() == LifecycleState::Running {
+            break;
+        }
+        if tokio::time::Instant::now() >= deadline {
+            panic!(
+                "child never reached Running; events: {:#?}",
+                handle.events()
+            );
+        }
+        let _ = tokio::time::timeout(Duration::from_millis(200), state_rx.changed()).await;
+    }
+
+    // Pid is now live and matches the `Spawned` event's pid.
+    let pid = handle.pid().expect("pid set once Running");
+    let spawned_pid = handle.events().iter().find_map(|e| match e.kind {
+        starter_ext_supervisor::EventKind::Spawned { pid } => Some(pid),
+        _ => None,
+    });
+    assert_eq!(Some(pid), spawned_pid, "live pid matches Spawned event");
+
+    let stats = handle.process_stats().expect("stats while Running");
+    assert_eq!(stats.pid, pid);
+
+    // Shut down and wait for Stopped.
+    handle.shutdown().await;
+    let deadline = tokio::time::Instant::now() + Duration::from_secs(10);
+    loop {
+        if matches!(
+            *state_rx.borrow(),
+            LifecycleState::Stopped | LifecycleState::Failed
+        ) {
+            break;
+        }
+        if tokio::time::Instant::now() >= deadline {
+            panic!("child never stopped; events: {:#?}", handle.events());
+        }
+        let _ = tokio::time::timeout(Duration::from_millis(200), state_rx.changed()).await;
+    }
+
+    // Pid is cleared on exit.
+    assert_eq!(handle.pid(), None, "pid cleared after exit");
+    assert!(
+        handle.process_stats().is_none(),
+        "process_stats cleared after exit"
+    );
+}
+
 /// Trivial unit-level sanity: an unknown extension binary path produces
 /// `Spawn` and stays out of the registry. Exercises the supervisor's
 /// pre-spawn validation without needing the example binary.

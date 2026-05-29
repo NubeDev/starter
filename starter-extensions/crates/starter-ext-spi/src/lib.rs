@@ -30,6 +30,7 @@ pub mod issue;
 pub mod jsonrpc;
 pub mod lifecycle;
 pub mod manifest;
+pub mod process;
 pub mod secrets;
 pub mod tracing_ext;
 pub mod wall_clock;
@@ -56,6 +57,7 @@ pub use manifest::{
     RestStreaming, RestartPolicy, RetryStrategy, Runtime, RuntimeKind, Supervision, TableColumn,
     MANIFEST_VERSION,
 };
+pub use process::{ProcessFlavour, ProcessStats};
 pub use warehouse::{
     Row, TemplateSpec, WarehouseDeleteRequest, WarehouseDeleteResponse, WarehouseReadRequest,
     WarehouseReadResponse, WarehouseUpdateRequest, WarehouseUpdateResponse, WarehouseWriteRequest,

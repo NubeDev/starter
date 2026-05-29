@@ -47,6 +47,7 @@ pub mod event_ring;
 pub mod handshake;
 pub mod host_methods;
 pub mod issues;
+pub(crate) mod proc_stats;
 pub mod restart;
 pub mod stream;
 pub mod supervisor;
