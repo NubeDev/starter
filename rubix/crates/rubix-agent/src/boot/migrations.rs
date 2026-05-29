@@ -15,9 +15,24 @@ use rubix_store_postgres::{
     RUBIX_TENANTS_MIGRATION_SOURCE, RUBIX_USERS_MIGRATION_SOURCE, UNDO_SNAPSHOTS_MIGRATION_SOURCE,
 };
 use starter_auth_users::migration::postgres_migration_source;
+use starter_authz::store::AUTHZ_POSTGRES_MIGRATOR;
 use starter_changelog_postgres::migration_source;
 use starter_store_postgres::flow::FLOW_MIGRATION_SOURCE;
-use starter_store_postgres::{migrate, pool::connect, SCHEDULED_FLOWS_MIGRATION_SOURCE};
+use starter_store_postgres::{migrate, pool::connect, MigrationSource, SCHEDULED_FLOWS_MIGRATION_SOURCE};
+
+/// `starter-authz`'s Postgres schema, registered as a named
+/// `MigrationSource` so it gets its own
+/// `_sqlx_migrations_starter_authz` ledger separate from every
+/// other rubix-owned source. Authoritative SQL lives in
+/// `crates/starter-authz/migrations/starter_authz_postgres/`,
+/// including `0006_bootstrap_admin_rule.sql` which seeds the
+/// "Role::Admin → * → allow" rule atomically with the schema
+/// (see `rubix/docs/proposal/access-control-redesign.md`
+/// §0.3 step 2 / §0.4 "Lockout risk").
+const STARTER_AUTHZ_MIGRATION_SOURCE: MigrationSource = MigrationSource {
+    name: "starter_authz",
+    migrator: &AUTHZ_POSTGRES_MIGRATOR,
+};
 use starter_undo::cursor_postgres::migration_source as undo_cursor_migration_source;
 use tracing::{info, warn};
 
@@ -65,6 +80,11 @@ pub async fn apply_migrations(dsn: Option<&str>) -> Result<MigrationReport> {
         // the table. See `rubix/docs/proposal/audit-log.md`.
         CHANGELOG_POLICY_MIGRATION_SOURCE,
         postgres_migration_source(),
+        // `starter-authz`: rules, assignments, decisions, +
+        // bootstrap admin allow-all rule. No FK into the rubix
+        // tenants table — `starter_authz_rules.tenant_id` is a
+        // free-form TEXT scope label.
+        STARTER_AUTHZ_MIGRATION_SOURCE,
         UNDO_SNAPSHOTS_MIGRATION_SOURCE,
         // `starter_undo_cursors` — the per-actor durable redo
         // stack proposal §3.4 calls for. Owned by `starter-undo`

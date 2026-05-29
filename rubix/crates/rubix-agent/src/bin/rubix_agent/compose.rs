@@ -10,6 +10,10 @@ use tracing::{info, warn};
 
 use rubix_agent::boot::{self, runtime_canary::Canary};
 use rubix_agent::{health, middleware, openapi as rubix_openapi_mod, routes};
+use starter_auth_users::routes::tenants_router;
+use starter_auth_users::store::{PgTenantStore, TenantStore};
+use starter_authz::routes::AuthzRoutesState;
+use starter_authz::{authz_router, DbDecisionSink, DecisionSinkConfig};
 use starter_changelog_postgres::PgChangeRecorder;
 use starter_spi::changelog::ChangeRecorder;
 use starter_store_postgres::pool::connect as pg_connect;
@@ -57,7 +61,60 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
         app = app.merge(health::readyz_registrar(pool.sqlx().clone()));
         let auth = boot::build_auth(pool.clone());
         let auth_routes = routes::auth::auth_router(auth.state);
-        let engine = boot::authz::build_engine()?;
+        // Phase 7 — DB-backed engine + decision sink. The same
+        // sink instance is installed inside the engine (so every
+        // `check` records an audit row) AND handed to
+        // `AuthzRoutesState.decision_sink` (so the engine's
+        // self-gated mutation handlers know which sink to drive
+        // and `GET /v1/authz/decisions` returns rows). Concrete
+        // `Arc<DbPolicyEngine>` flows to `AuthzRoutesState`;
+        // implicit `Arc<dyn PolicyEngine>` unsizing handles the
+        // tools-gate / host-methods / capability-factory call
+        // sites. Bootstrap admin allow-all rule is seeded by
+        // `starter-authz` migration `0006` atomically with the
+        // schema (see SCOPE-EXT §0.4 "Lockout risk").
+        let decision_sink: Arc<starter_authz::DbDecisionSink> = Arc::new(
+            DbDecisionSink::postgres(pool.clone(), DecisionSinkConfig::from_env()),
+        );
+        let engine = boot::authz::build_engine_with_sink(
+            pool.clone(),
+            Some(decision_sink.clone() as Arc<dyn starter_authz::audit::DecisionSink>),
+        )
+        .await?;
+
+        // Authz admin surface: `/v1/authz/*` (rules,
+        // assignments, resources, check, decisions). Self-gated
+        // by `admin_gate` inside `authz_router` so admin-role is
+        // enforced without a wrapping `with_role`. The
+        // `with_principal` wrap below makes the `Principal`
+        // extension available to `admin_gate`.
+        let authz_state = AuthzRoutesState {
+            engine: engine.clone(),
+            registry: boot::authz::build_registry(),
+            decision_sink: Some(decision_sink),
+        };
+        let authz_routes = authz_router::<()>(authz_state);
+        let authz_gated = starter_server::auth::with_principal(
+            authz_routes,
+            auth.authenticator.clone(),
+        );
+        app = app.merge_external(authz_gated);
+
+        // Tenant admin surface: `/v1/tenants/*`. Routes are
+        // self-pathed at `/v1/...` (no `/api` prefix) so the
+        // Vite proxy's `/v1` forward at
+        // `rubix/frontend/vite.config.ts` reaches them
+        // directly. Gated behind `with_principal` so handlers
+        // see the authenticated `Principal` extension; the
+        // handlers themselves enforce admin-role on writes.
+        let tenants_store: Arc<dyn TenantStore> =
+            Arc::new(PgTenantStore::new(pool.clone()));
+        let tenants_routes = tenants_router::<()>(tenants_store);
+        let tenants_gated = starter_server::auth::with_principal(
+            tenants_routes,
+            auth.authenticator.clone(),
+        );
+        app = app.merge_external(tenants_gated);
 
         if let Some(wh_client) = warehouse_client.clone() {
             let explorer_router =

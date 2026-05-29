@@ -46,7 +46,7 @@ starter-changelog-postgres = { workspace = true }
 # migration source; the boot wiring in `main.rs` constructs the
 # `UndoSubstrate` from these pieces.
 starter-undo              = { workspace = true, features = ["postgres"] }
-starter-authz             = { workspace = true }
+starter-authz             = { workspace = true, features = ["postgres"] }
 starter-auth-users         = { workspace = true, features = ["postgres"] }
 starter-i18n              = { workspace = true, features = ["units", "preferences", "routes"] }
 starter-mcp               = { workspace = true, features = ["http"] }

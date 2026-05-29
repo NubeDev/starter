@@ -75,7 +75,8 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
         Some(pool) => {
             let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
                 Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
-            let engine: Arc<dyn starter_spi::authz::PolicyEngine> = boot::authz::build_engine()?;
+            let engine: Arc<dyn starter_spi::authz::PolicyEngine> =
+                boot::authz::build_engine(pool.clone()).await?;
             let handler = Arc::new(rubix_agent::extensions::RubixHostMethods::new(
                 dashboard_store,
                 engine,
