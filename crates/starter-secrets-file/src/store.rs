@@ -77,6 +77,29 @@ impl FileSecretStoreBuilder {
         self
     }
 
+    /// Resolve the data directory from a shared [`starter_paths::Paths`]
+    /// handle. The store writes into `<root>/<binary>/secrets/` so it
+    /// composes cleanly with the rest of the platform — one resolved
+    /// root, many subdirs, instead of every consumer calling
+    /// `dirs::data_dir()` for itself.
+    ///
+    /// Returns an error if the requested subdir is somehow invalid
+    /// (relative-only, no path traversal). On success the builder
+    /// behaves as if [`Self::data_dir`] had been called with the
+    /// resolved path.
+    pub fn with_paths(mut self, paths: &starter_paths::Paths) -> Result<Self, FileSecretsError> {
+        // `binary/secrets` so a single Paths handle can host several
+        // binaries' secret blobs without their key files colliding.
+        let subdir = format!("{}/secrets", self.binary);
+        let dir = paths.subdir(&subdir).map_err(|e| {
+            FileSecretsError::Io(std::io::Error::other(format!(
+                "resolve secrets subdir {subdir:?}: {e}"
+            )))
+        })?;
+        self.data_dir = Some(dir);
+        Ok(self)
+    }
+
     /// Override the identity path. Skipped when `STARTER_SECRETS_KEY`
     /// is set.
     pub fn identity_path(mut self, path: impl Into<PathBuf>) -> Self {
@@ -316,5 +339,20 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let s = store_in(&dir);
         assert!(s.ready());
+    }
+
+    #[test]
+    fn with_paths_resolves_under_binary_secrets_subdir() {
+        let dir = TempDir::new().unwrap();
+        let paths = starter_paths::Paths::from_root(dir.path().to_path_buf());
+        paths.ensure().unwrap();
+        let s = FileSecretStoreBuilder::new("test-binary")
+            .with_paths(&paths)
+            .unwrap()
+            .build()
+            .expect("build");
+        s.put("k", Secret::new("v")).unwrap();
+        assert!(dir.path().join("test-binary/secrets/secrets.age").exists());
+        assert_eq!(s.get("k").unwrap().unwrap().expose(), "v");
     }
 }
