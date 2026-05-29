@@ -24,6 +24,10 @@ pub struct RawEventRow {
 }
 
 /// Bulk-insert rows via `COPY`. Empty input is a no-op.
+// TODO(cache-invalidation): scattered warehouse write site —
+// starter-cache wants `invalidate_tags(&["table:raw_events"])` here
+// on commit. No unified `WarehouseWriter` chokepoint yet (see
+// rubix/docs/sessions/cache-v0-progress.md). Best-effort until then.
 pub async fn insert_many(
     client: &WarehouseClient,
     rows: &[RawEventRow],

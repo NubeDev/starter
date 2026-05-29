@@ -162,6 +162,14 @@ impl RubixWarehouseWriteBackend {
 }
 
 impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
+    // TODO(cache-invalidation): per-extension warehouse write site.
+    // starter-cache's opt-in cache wants
+    // `invalidate_tags(&[format!("table:{full_table}")])` here on
+    // successful commit. There is no unified `WarehouseWriter`
+    // chokepoint yet (see rubix/docs/sessions/cache-v0-progress.md);
+    // until one lands, tag invalidation here is best-effort and
+    // depends on the caller threading the layer's invalidator handle
+    // through.
     fn insert(&self, table: &str, rows: Vec<Row>) -> Result<u64> {
         let Some(tenant_id) = self.caller_tenant_id.as_deref() else {
             return Err(Error::capability(format!(

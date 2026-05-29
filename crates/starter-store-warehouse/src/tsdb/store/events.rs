@@ -16,6 +16,11 @@ pub struct EventRow {
     pub tags: serde_json::Value,
 }
 
+// TODO(cache-invalidation): scattered warehouse write site —
+// starter-cache wants `invalidate_tags(&["table:events"])` here on
+// commit, but the unified `WarehouseWriter` chokepoint doesn't
+// exist yet (see rubix/docs/sessions/cache-v0-progress.md).
+// Best-effort until then.
 pub async fn insert_many(
     client: &WarehouseClient,
     rows: &[EventRow],

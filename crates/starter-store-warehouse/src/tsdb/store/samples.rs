@@ -19,6 +19,13 @@ pub struct SampleRow {
     pub tags: serde_json::Value,
 }
 
+// TODO(cache-invalidation): one of several scattered warehouse write
+// sites. starter-cache's tag invalidation expects a
+// `cache_layer.invalidator().invalidate_tags(&["table:samples"])`
+// at commit time. There is no unified `WarehouseWriter` chokepoint
+// yet (see rubix/docs/sessions/cache-v0-progress.md, "Decisions log");
+// until one lands, tag invalidation here is best-effort and callers
+// must fire it via the layer's invalidator handle.
 pub async fn insert_many(
     client: &WarehouseClient,
     rows: &[SampleRow],
