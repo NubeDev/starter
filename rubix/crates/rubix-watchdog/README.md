@@ -9,6 +9,25 @@ This crate exists because the failure mode we built it for —
 inside the wedged runtime. The defense has to be an OS-level peer
 process.
 
+> **Status (2026-05-29) — supersedes the 2026-05-27 update below.**
+> Both diagnoses recorded below were real footguns but **neither caused
+> the freeze** — the agent kept wedging on the same `futex_do_wait`
+> signature after each "fix". The actual root cause is a **single shared
+> flow graph store**: every run executed against one
+> `InMemoryGraphStore`, so concurrent runs cross-fired on the same slots
+> and `SlotChanged` broadcast, never reached quiescence, never
+> terminated, and accumulated tasks until the runtime deadlocked. At the
+> 2026-05-29 freeze the `rubix-auth` pool was **healthy** (`idle=6`, no
+> saturation) — i.e. the SSE-pool "fix" below held and the wedge still
+> happened. Fixed by giving each run its own graph store in
+> [`crates/starter-flow-surfaces/src/lib.rs`][surfaces-fix]
+> (`FlowAsTool::invoke_with_cancel_inner` + `handle_event`). Full
+> writeup, evidence, and a deterministic regression test:
+> [`docs/freeze-evidence/wedge-20260529-shared-graph-store.md`][rc].
+
+[surfaces-fix]: ../../../crates/starter-flow-surfaces/src/lib.rs
+[rc]: ../../docs/freeze-evidence/wedge-20260529-shared-graph-store.md
+
 > **Status (2026-05-27, afternoon update):** The earlier diagnosis
 > below — that a `let _enter = span.enter()` across an `.await` in
 > [`crates/starter-flow/src/graph.rs`][graph-fix] was the root
@@ -127,6 +146,13 @@ The minimal change is to simply not enter the span at all —
 100 tests still pass (incl. all `write_slot_batch_*` tests).
 
 ### Real root cause (2026-05-27 afternoon)
+
+> ⚠️ **Superseded (2026-05-29).** The pool-connection leak described
+> here is real, but it was **not** the cause of the freeze — the
+> dedicated `rubix-dash-listen` pool fix held and the agent still wedged
+> with the `rubix-auth` pool healthy. The actual root cause is the
+> shared flow graph store; see [the 2026-05-29 writeup][rc]. This
+> section is kept for history.
 
 After the `graph.rs` change above landed at 11:53, the agent wedged
 again at 12:37 (~19 min uptime, post-fix binary confirmed by mtime).
@@ -504,6 +530,15 @@ tokio-console http://127.0.0.1:6669
 ---
 
 ## Verification protocol
+
+> ⚠️ **Superseded (2026-05-29).** The checks below verify the SSE
+> auth-pool *cascade* is contained — keep them — but they do **not**
+> verify the freeze is fixed (it wasn't). The freeze fix is the per-run
+> graph store; verify it with the deterministic test
+> `concurrent_invocations_are_isolated_per_run` in
+> `crates/starter-flow-surfaces/tests/stage7_flow_as_tool.rs` (shared
+> store ⇒ 8 concurrent runs hang for 10 s; per-run ⇒ pass) and the A/B
+> in [the 2026-05-29 writeup][rc].
 
 The `graph.rs` "span guard" fix at 11:53:22 on 2026-05-27 **did not
 hold** — the agent wedged again at 12:37 on the same signature.

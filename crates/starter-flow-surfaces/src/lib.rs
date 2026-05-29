@@ -33,12 +33,14 @@ use tokio::time::timeout;
 use tracing::Instrument;
 
 use starter_flow::engine::Engine;
+use starter_flow::graph::InMemoryGraphStore;
 use starter_flow::propagator::FlowTopology;
 use starter_flow::run::{
     FlowRunner, FlowRunnerConfig, InMemoryRunStore, RunCancel, RunSpec, RunStore as FlowRunStore,
 };
 use starter_flow::state::RunStatus;
 use starter_flow_spi::flow::{DedupKey, FlowEvent, FlowId, FlowRevisionId};
+use starter_flow_spi::graph::GraphStore;
 use starter_flow_spi::node::{KindId, SlotMap, SlotRef, SlotValue};
 use starter_flow_spi::{Cancel, Principal};
 use starter_spi::error::{Error as SpiError, Result as SpiResult};
@@ -183,8 +185,21 @@ impl FlowAsTool {
         // SPI `RunStore` is attached on the engine, the per-tick
         // checkpoint / retry-with-backoff / Degraded-mode plumbing
         // applies transparently.
+        //
+        // Per-run graph store (runtime-wedge fix): each invocation gets its
+        // own slot namespace + `SlotChanged` broadcast. The engine's single
+        // shared store let overlapping runs write the same slot refs and
+        // subscribe to each other's events, so a run's propagator never
+        // reached quiescence while another run was active — runs never
+        // terminated, their tasks/subscribers accumulated, and the shared
+        // `nodes` RwLock/broadcast eventually wedged the runtime. The shared
+        // `NodeStateStore` (durable per-node state, e.g. the tick-counter
+        // value) and `FlowEventSink` (SSE fan-out) stay shared — they are
+        // threaded in separately below; only the volatile in-run graph is
+        // isolated.
+        let run_store = Arc::new(InMemoryGraphStore::new());
         let mut runner = FlowRunner::new(
-            self.engine.store.clone(),
+            run_store.clone(),
             Arc::new(InMemoryRunStore::new()) as Arc<dyn FlowRunStore>,
         )
         .with_health_handle(self.engine.health_handle())
@@ -288,7 +303,7 @@ impl FlowAsTool {
                 }
                 let mut output: SlotMap = SlotMap::new();
                 for sr in &self.terminal_slots {
-                    if let Ok(v) = self.engine.store.read_slot(sr).await {
+                    if let Ok(v) = run_store.read_slot(sr).await {
                         output.insert(format!("{}.{}", sr.node, sr.slot), v);
                     }
                 }
@@ -783,8 +798,13 @@ impl FlowAsServiceWorkerHandle {
         .with_principal(self.principal.clone())
         .with_dedup_key(dedup.clone());
 
+        // Per-run graph store — see the matching comment in
+        // `FlowAsTool::invoke_with_cancel_inner`. Isolates each event-driven
+        // run's slots/events so concurrent runs can't cross-trigger on a
+        // shared store (the runtime-wedge root cause).
+        let run_store = Arc::new(InMemoryGraphStore::new());
         let mut runner = FlowRunner::new(
-            self.engine.store.clone(),
+            run_store.clone(),
             Arc::new(InMemoryRunStore::new()) as Arc<dyn FlowRunStore>,
         )
         .with_health_handle(self.engine.health_handle())

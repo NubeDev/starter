@@ -355,3 +355,83 @@ async fn invoke_does_not_leak_tokio_tasks() {
 
     assert_eq!(counter.load(Ordering::Relaxed), 16);
 }
+
+// ---------------------------------------------------------------------------
+// 7. Regression guard for the runtime-wedge fix: concurrent invocations are
+//    isolated per run. Each invocation must run on its OWN graph store. With a
+//    single shared engine store, two concurrent runs write the same `out`
+//    slot and one run's terminal read-back observes the other's value — and,
+//    in production, their propagators cross-subscribe to the shared
+//    `SlotChanged` broadcast, never reach quiescence, never terminate, and
+//    accumulate tasks until the tokio runtime wedges. The `Barrier` forces
+//    both runs to be simultaneously mid-flight so any shared-store
+//    interleaving is deterministic rather than racy.
+// ---------------------------------------------------------------------------
+
+struct BarrierIdentity {
+    kind: KindId,
+    barrier: Arc<tokio::sync::Barrier>,
+}
+
+#[async_trait]
+impl NodeBehavior for BarrierIdentity {
+    fn kind_id(&self) -> &KindId {
+        &self.kind
+    }
+    async fn invoke(&self, _ctx: NodeCtx<'_>, input: SlotMap) -> Result<SlotMap, NodeError> {
+        let v = input.get("in").cloned().unwrap_or(SlotValue::Null);
+        // Block until BOTH concurrent runs are inside their node body, so a
+        // shared graph store would have both `out` writes in flight at once.
+        self.barrier.wait().await;
+        let mut out = SlotMap::new();
+        out.insert("out".to_owned(), v);
+        Ok(out)
+    }
+}
+
+#[tokio::test(flavor = "multi_thread", worker_threads = 4)]
+async fn concurrent_invocations_are_isolated_per_run() {
+    const N: usize = 8;
+    let engine = build_engine();
+    let topology = build_topology(Arc::new(BarrierIdentity {
+        kind: KindId::new("starter.flow.stage7-barrier").unwrap(),
+        barrier: Arc::new(tokio::sync::Barrier::new(N)),
+    }));
+    let tool = Arc::new(build_tool_with_topology(engine, topology));
+
+    // Launch N runs at once. The barrier holds every node body until all N
+    // are mid-flight, so on a shared store all N `out` writes race into the
+    // same slot and the per-run read-backs collide; with per-run stores each
+    // run sees only its own value.
+    let handles: Vec<_> = (0..N)
+        .map(|i| {
+            let tool = tool.clone();
+            tokio::spawn(async move { tool.invoke(serde_json::json!({ "value": i })).await })
+        })
+        .collect();
+
+    // A regression (shared store) can also cross-fire node bodies and block on
+    // the N-party barrier forever; bound the wait so the failure is a clean
+    // timeout rather than a hang.
+    let results = tokio::time::timeout(Duration::from_secs(10), async {
+        let mut out = Vec::with_capacity(N);
+        for h in handles {
+            out.push(h.await.expect("join").expect("invoke ok"));
+        }
+        out
+    })
+    .await
+    .expect("all concurrent runs must complete (a shared store can wedge/cross-fire)");
+
+    let mut got: Vec<i64> = results
+        .iter()
+        .map(|v| v.as_i64().unwrap_or(i64::MIN))
+        .collect();
+    got.sort_unstable();
+    let expected: Vec<i64> = (0..N as i64).collect();
+    assert_eq!(
+        got, expected,
+        "each of the {N} concurrent runs must observe only its own value; a \
+         shared graph store lets runs' terminal read-backs collide on one `out`"
+    );
+}
