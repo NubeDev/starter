@@ -33,11 +33,11 @@
 //! extensions), the endpoint returns `{ "specs": [] }`.
 
 use axum::extract::State;
-use axum::http::Method;
+use axum::http::{Method, StatusCode};
 use axum::response::{IntoResponse, Response};
-use axum::routing::get;
+use axum::routing::{get, post};
 use axum::Json;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use starter_cache::{CacheScope, CacheSpec, PerSpecSnapshot};
 use std::collections::BTreeMap;
 
@@ -45,14 +45,28 @@ use crate::admin::AdminState;
 use crate::routes::{RouteMeta, RouteRegistrar};
 
 pub(super) fn registrar(state: AdminState) -> RouteRegistrar {
-    RouteRegistrar::new().mount(
-        Method::GET,
-        "/api/v1/admin/cache/specs",
-        get(list).with_state(state),
-        RouteMeta::new()
-            .describe("List per-spec config + hit/miss counters for the opt-in cache.")
-            .tag("admin"),
-    )
+    RouteRegistrar::new()
+        .mount(
+            Method::GET,
+            "/api/v1/admin/cache/specs",
+            get(list).with_state(state.clone()),
+            RouteMeta::new()
+                .describe("List per-spec config + hit/miss counters for the opt-in cache.")
+                .tag("admin"),
+        )
+        .mount(
+            Method::POST,
+            "/api/v1/admin/cache/invalidate",
+            post(invalidate).with_state(state),
+            RouteMeta::new()
+                .describe(
+                    "Fire `invalidate_tags(tags)` against the opt-in cache. \
+                     Every cached entry whose stored snapshot depended on any of \
+                     the named tags becomes a miss on next read. The body shape \
+                     is `{ \"tags\": [\"table:foo\", \"table:bar\"] }`.",
+                )
+                .tag("admin"),
+        )
 }
 
 #[derive(Serialize)]
@@ -203,4 +217,44 @@ async fn list(State(state): State<AdminState>) -> Response {
         specs: by_id.into_values().collect(),
     })
     .into_response()
+}
+
+/// Body of `POST /api/v1/admin/cache/invalidate`.
+#[derive(Debug, Deserialize)]
+struct InvalidateBody {
+    /// Tags to fire. Each entry must be a fully-qualified tag string
+    /// (e.g. `"table:com_nubeio_rubixos__histories"`). Empty array is
+    /// accepted and is a no-op — easier on tooling than a 400.
+    tags: Vec<String>,
+}
+
+/// Response shape.
+#[derive(Debug, Serialize)]
+struct InvalidateResponse {
+    /// Number of tags actually fired (equal to `body.tags.len()` after
+    /// dedup-by-position; the layer itself dedupes on the read path).
+    invalidated: usize,
+}
+
+async fn invalidate(
+    State(state): State<AdminState>,
+    Json(body): Json<InvalidateBody>,
+) -> Response {
+    let Some(layer) = state.cache_layer.as_ref() else {
+        // No cache wired — the request was a no-op from the layer's
+        // perspective. 503 makes the wire shape unambiguous: the
+        // operator's request did not take effect, do not assume it
+        // did.
+        return (
+            StatusCode::SERVICE_UNAVAILABLE,
+            Json(serde_json::json!({
+                "error": "service_unavailable",
+                "message": "opt-in cache is not wired on this host",
+            })),
+        )
+            .into_response();
+    };
+    let n = body.tags.len();
+    layer.invalidator().invalidate_tags(&body.tags).await;
+    Json(InvalidateResponse { invalidated: n }).into_response()
 }

@@ -10,8 +10,9 @@
 //!    counters keyed by spec id.
 
 use axum::body::{to_bytes, Body};
-use axum::http::{Request, StatusCode};
+use axum::http::{header, Method, Request, StatusCode};
 use serde_json::Value;
+use starter_cache::Invalidator;
 use std::sync::Arc;
 use std::time::Duration;
 use tower::ServiceExt;
@@ -30,6 +31,15 @@ fn get(uri: &str) -> Request<Body> {
     Request::builder()
         .uri(uri)
         .body(Body::empty())
+        .expect("build request")
+}
+
+fn post_json(uri: &str, body: Value) -> Request<Body> {
+    Request::builder()
+        .method(Method::POST)
+        .uri(uri)
+        .header(header::CONTENT_TYPE, "application/json")
+        .body(Body::from(body.to_string()))
         .expect("build request")
 }
 
@@ -173,5 +183,139 @@ async fn cache_specs_join_registry_and_counters() {
     assert_eq!(
         touched["config"]["invalidate_on_tables"],
         serde_json::json!(["readings"])
+    );
+}
+
+/// `POST /api/v1/admin/cache/invalidate` returns 503 when the cache
+/// layer is not wired — operators must not assume their invalidate
+/// took effect.
+#[tokio::test]
+async fn invalidate_503_when_no_layer_wired() {
+    let app = admin_router(AdminState::empty());
+    let resp = app
+        .oneshot(post_json(
+            "/api/v1/admin/cache/invalidate",
+            serde_json::json!({ "tags": ["table:foo"] }),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::SERVICE_UNAVAILABLE);
+    let v = body_json(resp).await;
+    assert_eq!(v["error"], "service_unavailable");
+}
+
+/// Happy path: the endpoint fires `invalidate_tags` against the wired
+/// layer and reports the number of tags actually fired. Verified by
+/// snapshotting the invalidator's tokens before/after.
+#[tokio::test]
+async fn invalidate_fires_tags_against_wired_layer() {
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let inv = layer.invalidator();
+
+    // Snapshot the tokens for the tags we're about to fire.
+    let tags = vec!["table:alpha".to_string(), "table:beta".to_string()];
+    let snap = inv.snapshot_tokens(&tags);
+    assert!(inv.tokens_match(&snap), "baseline: tokens match");
+
+    let app = admin_router(AdminState::empty().with_cache_layer(layer));
+    let resp = app
+        .oneshot(post_json(
+            "/api/v1/admin/cache/invalidate",
+            serde_json::json!({ "tags": tags }),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let v = body_json(resp).await;
+    assert_eq!(v["invalidated"], 2);
+
+    // After the call, the tokens for both tags must have moved.
+    assert!(
+        !inv.tokens_match(&snap),
+        "tokens must have moved after invalidate"
+    );
+}
+
+/// Empty `tags` array is accepted and reports `invalidated: 0`. Easier
+/// on tooling than a 400 — the only sane no-op shape.
+#[tokio::test]
+async fn invalidate_empty_tags_is_noop_not_400() {
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let app = admin_router(AdminState::empty().with_cache_layer(layer));
+    let resp = app
+        .oneshot(post_json(
+            "/api/v1/admin/cache/invalidate",
+            serde_json::json!({ "tags": [] }),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let v = body_json(resp).await;
+    assert_eq!(v["invalidated"], 0);
+}
+
+/// End-to-end with the dispatcher path: cache a value via the
+/// labelled loader, fire invalidate over HTTP, verify next read pays
+/// a fresh miss. This is the operational shape — "the data looks
+/// stale, curl the invalidate endpoint, verify the next read is
+/// fresh".
+#[tokio::test]
+async fn invalidate_drops_cached_entries_end_to_end() {
+    let layer = starter_cache::CacheLayer::new(starter_cache::LayerConfig::default());
+    let spec = starter_cache::CacheSpec::ttl(Duration::from_secs(60))
+        .scope(starter_cache::CacheScope::Tenant)
+        .invalidate_on_table("readings");
+    let caller = starter_cache::CallerScope::new("tA", "uX");
+
+    // Populate.
+    let calls = Arc::new(std::sync::atomic::AtomicU32::new(0));
+    for _ in 0..2 {
+        let calls = calls.clone();
+        let _ = layer
+            .get_or_load_labelled::<_, _, std::convert::Infallible>(
+                &spec,
+                Some("ext.kind.demo"),
+                &caller,
+                "k",
+                || async move {
+                    calls.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                    Ok(Arc::new(b"v".to_vec()))
+                },
+            )
+            .await
+            .unwrap();
+    }
+    assert_eq!(calls.load(std::sync::atomic::Ordering::SeqCst), 1);
+
+    // Curl the invalidate endpoint.
+    let app = admin_router(AdminState::empty().with_cache_layer(layer.clone()));
+    let resp = app
+        .oneshot(post_json(
+            "/api/v1/admin/cache/invalidate",
+            serde_json::json!({ "tags": ["table:readings"] }),
+        ))
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+
+    // Next read must pay a fresh miss.
+    let calls2 = calls.clone();
+    let _ = layer
+        .get_or_load_labelled::<_, _, std::convert::Infallible>(
+            &spec,
+            Some("ext.kind.demo"),
+            &caller,
+            "k",
+            || async move {
+                calls2.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                Ok(Arc::new(b"v2".to_vec()))
+            },
+        )
+        .await
+        .unwrap();
+    assert_eq!(
+        calls.load(std::sync::atomic::Ordering::SeqCst),
+        2,
+        "post-invalidate read must re-run the loader"
     );
 }
