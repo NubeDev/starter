@@ -1,7 +1,7 @@
 # Cache v0 — Progress Log
 
 ## Status
-2026-05-29 — v0 landed end-to-end **and a silent-no-op bug was caught + fixed mid-session**: the dispatcher's `contribute_id` is the full reverse-DNS id, but sidecars were being indexed by their bare filename stem, so the canary's caching never fired. The orphan-check infrastructure that caught it is now part of v0. Code is sound; numbers still TBD pending a workload replay; the admin endpoint is the scrape target (`hits`, `misses`, `hit_ratio`, `load_latency.{bucket,mean_ms}`).
+2026-05-29 — v0 landed end-to-end **and a silent-no-op bug was caught + fixed mid-session**. The admin endpoint now also surfaces each spec's *config* (TTL, scope, invalidate tags) joined with the runtime counters, and shows registered-but-never-hit specs so "is this kind ever called?" is a one-curl question. Key invariants pinned by tests: object-key canonicalisation in `dispatch_base_key`, distinct-input separation, and streaming dispatch bypassing the cache. Numbers still TBD pending a workload replay.
 
 ## Scope reminder
 Building **only** the "Minimum viable v0" section of [fe-cache-opt-in.md](../proposal/fe-cache-opt-in.md) (the rest is Deferred). v0 = `CacheSpec` + tag-based invalidation primitives in `crates/starter-cache`, integration at the **extension kind dispatcher only** ([dispatcher.rs](../../../starter-extensions/crates/starter-ext-server/src/rest/dispatcher.rs)), a `kind.cache.yaml` sidecar parser, and `usage_bucketed` as the canary. Three knobs: `ttl`, `scope` (user|tenant|global), `invalidate_on.tables`. Non-negotiable: invalidation-token race fix + per-tenant weight caps. Explicit **non-goals** for v0: SDUI integration, `starter-windowed`, two-layer cache (`inner_scope:`), SWR, `time_series:` block, tower layer, multi-node fan-out, dimension-scoped tags, IR version bump.
@@ -50,6 +50,17 @@ Building **only** the "Minimum viable v0" section of [fe-cache-opt-in.md](../pro
 - **What's blocked:** Real-workload hit-rate + latency numbers still pending the rig — but now there is a single endpoint to scrape that answers both "is the canary paying off" and "what is the cache shielding callers from".
 - **What's next:** Drive `/extensions/com.nubeio.rubixos/usage` at the dashboard refresh cadence and capture the snapshot. Two-line script: `while true; do curl …; sleep N; done | jq` against `GET /api/v1/admin/cache/specs`.
 - **Numbers:** Per-spec snapshot endpoint live with hit/miss + load-latency histogram. Hit-rate / latency from real traffic still pending environment time.
+
+### 2026-05-29 — admin endpoint join + invariant pinning (same day)
+- **What landed:**
+  - Commit `feat(rubix-agent): join cache registry with stats in /admin/cache/specs` — the endpoint now joins `KindCacheRegistry` (every registered sidecar) with `PerSpecStats` (touched specs) so a zero-traffic spec shows up with `hits=0, misses=0`. Each row gains `extension`, `contribute_id`, and a `config { ttl_seconds, scope, invalidate_on_tables }` block. Operators can verify the live sidecar shape without reading YAML, and "is this kind ever called?" is a one-curl diagnostic.
+  - Commit `test(starter-ext-server): pin cache invariants` — three previously-implicit guarantees now have tests:
+    1. `dispatch_base_key` canonicalises object key order (test: `{"a":1,"b":2}` and `{"b":2,"a":1}` hash to the same key). Works today because serde_json's default `Map` is BTreeMap-backed; the test exists so turning on `preserve_order` later trips CI rather than silently halving hit rates. The doc comment on `dispatch_base_key` was extended to make the dependency explicit.
+    2. `dispatch_base_key` distinguishes `Value::Null` / `{}` / `false` — sanity floor against a future canonicaliser flattening nullish shapes.
+    3. Streaming dispatch bypasses the cache even with a sidecar registered. The proposal scopes v0 to unary; caching a stream would silently turn a constant-memory handler into an O(stream-length) one. Test drives `dispatch_stream` twice on a sidecar-bearing kind and asserts the handler ran twice. The `dispatch_stream` rustdoc now spells this out explicitly.
+- **What's blocked:** Same as previous — real-workload hit-rate + latency numbers pending the dev rig.
+- **What's next:** Workload replay against the canary. After this session, the admin endpoint includes everything an operator needs to interpret the numbers — config (TTL/scope/tags), hit/miss counters, latency histogram with mean — without referring back to source code or YAML.
+- **Numbers:** Endpoint surfaces are complete; awaiting real traffic.
 
 ### 2026-05-29 — sidecar-naming bug + orphan check (same day)
 - **What landed:**
