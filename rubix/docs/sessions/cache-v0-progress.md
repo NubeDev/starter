@@ -53,6 +53,15 @@ Building **only** the "Minimum viable v0" section of [fe-cache-opt-in.md](../pro
 - **What's next:** Drive `/extensions/com.nubeio.rubixos/usage` at the dashboard refresh cadence and capture the snapshot. Two-line script: `while true; do curl …; sleep N; done | jq` against `GET /api/v1/admin/cache/specs`.
 - **Numbers:** Per-spec snapshot endpoint live with hit/miss + load-latency histogram. Hit-rate / latency from real traffic still pending environment time.
 
+### 2026-05-29 — line numbers in parse errors (same day)
+- **What landed:**
+  - Commit `feat(starter-cache): line numbers in SidecarLoadError messages` — `SpecParseError::Yaml` becomes `Yaml { line, message }`; the hand-rolled parser tracks the line with `enumerate()` and passes it through every error site. Display renders `"yaml: line N: <msg>"`, so the existing warn-log path (`SidecarLoadError.message`) gets line numbers automatically. Five new tests pin: unknown-field reports line, invalid scope reports line, missing block uses line 0 sentinel, Display includes "line N" verbatim.
+- **Why this:** before this commit, a typo like `swr: 30s` on line 17 of a long sidecar produced a warn-log that read `yaml: unknown cache field: "  swr: 30s"` — operators had to grep the file to find which line. With line numbers it's `yaml: line 17: unknown cache field: ...` — fix in seconds.
+- **API impact:** public enum variant changed shape (`Yaml(String)` → `Yaml { line, message }`). No downstream consumers in the workspace pattern-match on the variant; verified by full workspace test run.
+- **What's blocked:** Same — real-workload numbers pending the dev rig.
+- **What's next:** Same — workload replay. The author/operator surface is now polished enough that the only thing left is real traffic.
+- **Numbers:** No change; this is operator UX polish.
+
 ### 2026-05-29 — operator runbook + invalidate_all (same day)
 - **What landed:**
   - Commit `docs(cache): operator runbook` — `rubix/docs/operations/cache-runbook.md`. Six scenario playbooks, the response anatomy, env-var tuning, "add a new cached kind" walkthrough, and an explicit out-of-scope list. New `operations/` dir; future operational docs go here too.
