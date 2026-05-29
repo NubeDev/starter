@@ -182,11 +182,24 @@ export interface ExtensionCleanupItem {
   bytes?: number | null;
 }
 
+/** What uninstall will (or did) do with the bundle directory itself.
+ * `will_delete = false` signals a dev-mounted bundle whose source files
+ * are preserved; the dialog swaps copy and confirm-button label
+ * accordingly. */
+export interface ExtensionBundleOutcome {
+  /** Filesystem path of the bundle directory. */
+  path: string;
+  /** `true` for installed bundles (the runtime owns the dir);
+   *  `false` for dev mounts (source files are user-owned). */
+  will_delete: boolean;
+}
+
 /** Dry-run manifest from `GET /extensions/{id}/cleanup`. */
 export interface ExtensionCleanupPreview {
   id: string;
   items: ExtensionCleanupItem[];
   total_bytes: number;
+  bundle: ExtensionBundleOutcome;
 }
 
 /** Result of `DELETE /extensions/{id}?purge=true`. */
@@ -194,6 +207,7 @@ export interface ExtensionPurgeResult {
   id: string;
   code: string;
   removed: ExtensionCleanupItem[];
+  bundle: ExtensionBundleOutcome;
 }
 
 /** Consolidated issues for one extension. */

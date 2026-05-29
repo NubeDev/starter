@@ -54,6 +54,12 @@ export function UninstallDialog({
   })
 
   const items = preview.data?.items ?? []
+  // Dev mounts (loaded in-place from a source tree) only have their
+  // data purged — the source files are preserved. We swap copy
+  // throughout the dialog so the operator knows the working tree is
+  // safe before confirming.
+  const bundle = preview.data?.bundle
+  const isDevBundle = bundle != null && bundle.will_delete === false
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -82,11 +88,30 @@ export function UninstallDialog({
         </div>
 
         <p className="mb-3 text-sm text-[color:var(--color-muted)]">
-          {tr(
-            'extensions.uninstall.body',
-            'This permanently removes the bundle and the data listed below. This cannot be undone.',
-          )}
+          {isDevBundle
+            ? tr(
+                'extensions.uninstall.body_dev',
+                'This purges the data listed below. The bundle is a dev mount — the source files on disk are preserved.',
+              )
+            : tr(
+                'extensions.uninstall.body',
+                'This permanently removes the bundle and the data listed below. This cannot be undone.',
+              )}
         </p>
+
+        {bundle != null && bundle.path !== '' ? (
+          <div className="mb-3 rounded-2xl border border-[color:var(--color-border)]/60 px-3 py-2">
+            <div className="text-[10px] uppercase tracking-wider text-[color:var(--color-muted)]">
+              {tr('extensions.uninstall.source', 'Source location')}
+            </div>
+            <div className="truncate font-mono text-xs text-[color:var(--color-text)]">{bundle.path}</div>
+            {isDevBundle ? (
+              <div className="mt-1 inline-flex rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider text-emerald-400 ring-1 ring-emerald-500/30">
+                {tr('extensions.uninstall.dev_badge', 'Dev bundle — source files are safe')}
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="mb-4 max-h-64 overflow-auto rounded-2xl border border-[color:var(--color-border)]/60">
           {preview.isLoading ? (
@@ -139,7 +164,9 @@ export function UninstallDialog({
             onClick={() => purge.mutate({ id: extId, purge: true })}
           >
             {purge.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Trash2 className="h-3.5 w-3.5" />}
-            {tr('extensions.uninstall.confirm', 'Uninstall & purge')}
+            {isDevBundle
+              ? tr('extensions.uninstall.confirm_dev', 'Purge data & disable')
+              : tr('extensions.uninstall.confirm', 'Uninstall & purge')}
           </Button>
         </div>
       </div>
