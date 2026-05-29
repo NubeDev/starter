@@ -4,6 +4,40 @@ import { SlotHandle } from "../slots/SlotHandle.js";
 import { cn } from "../lib/cn.js";
 import { useFlowMessages } from "../i18n/context.js";
 
+/**
+ * Granular visibility flags for the parts of a node. Each defaults to
+ * `true`. Pass `false` to hide that part while keeping every other
+ * visual exactly the same — this is the primary mechanism for varying
+ * node shape (e.g. a node with no title, no kind badge, no inputs)
+ * without forking the BaseNode styling.
+ */
+export interface BaseNodeParts {
+  header?: boolean;
+  icon?: boolean;
+  title?: boolean;
+  kindBadge?: boolean;
+  stateDot?: boolean;
+  body?: boolean;
+  inputs?: boolean;
+  outputs?: boolean;
+  extra?: boolean;
+}
+
+/**
+ * Named presets covering the most common node shapes. `full` is the
+ * default rich frame; `compact` hides the kind badge; `minimal` keeps
+ * only the title + slots; `chip` is a single-line pill (no body, no
+ * extra) for nodes that have no slots to expose.
+ */
+export type BaseNodeVariant = "full" | "compact" | "minimal" | "chip";
+
+const VARIANT_PARTS: Record<BaseNodeVariant, BaseNodeParts> = {
+  full: {},
+  compact: { kindBadge: false },
+  minimal: { kindBadge: false, icon: false, stateDot: false },
+  chip: { body: false, extra: false, kindBadge: false },
+};
+
 export interface BaseNodeProps {
   spec: NodeKindSpec;
   label?: string;
@@ -16,6 +50,10 @@ export interface BaseNodeProps {
    * once the engine emits input-write events.
    */
   slotValues?: Record<SlotName, unknown>;
+  /** Preset that controls which parts of the node frame are rendered. */
+  variant?: BaseNodeVariant;
+  /** Per-part visibility overrides applied on top of the variant. */
+  parts?: BaseNodeParts;
   /** Optional body slot for kind-specific config preview. */
   children?: ReactNode;
 }
@@ -36,43 +74,69 @@ export function BaseNode({
   state = "idle",
   selected,
   slotValues,
+  variant = "full",
+  parts,
   children,
 }: BaseNodeProps) {
   const messages = useFlowMessages();
   const accent = spec.color ?? "var(--sf-accent-default, #0ea5e9)";
   const resolvedLabel = label ?? messages.kindLabels?.[spec.kind] ?? spec.label;
+  const p = { ...VARIANT_PARTS[variant], ...parts };
+  const show = {
+    header: p.header !== false,
+    icon: p.icon !== false,
+    title: p.title !== false,
+    kindBadge: p.kindBadge !== false,
+    stateDot: p.stateDot !== false,
+    body: p.body !== false,
+    inputs: p.inputs !== false,
+    outputs: p.outputs !== false,
+    extra: p.extra !== false,
+  };
   return (
     <div
       className={cn(
         "sf-node",
         `sf-node--${state}`,
+        `sf-node--variant-${variant}`,
         selected && "sf-node--selected",
       )}
       data-node-kind={spec.kind}
       data-node-state={state}
+      data-node-variant={variant}
       style={{ ["--sf-accent" as string]: accent }}
     >
-      <div className="sf-node__header">
-        <span className="sf-node__icon" aria-hidden="true">
-          <NodeIcon icon={spec.icon} fallback={spec.label} />
-        </span>
-        <span className="sf-node__title">{resolvedLabel}</span>
-        <span className="sf-node__kind">{spec.kind}</span>
-        <StateDot state={state} />
-      </div>
-      <div className="sf-node__body">
-        <div className="sf-node__col sf-node__col--in">
-          {spec.inputs.map((s) => (
-            <SlotRow key={`in-${s.name}`} kindId={spec.kind} spec={s} side="input" value={slotValues?.[s.name]} />
-          ))}
+      {show.header ? (
+        <div className="sf-node__header">
+          {show.icon ? (
+            <span className="sf-node__icon" aria-hidden="true">
+              <NodeIcon icon={spec.icon} fallback={spec.label} />
+            </span>
+          ) : null}
+          {show.title ? <span className="sf-node__title">{resolvedLabel}</span> : null}
+          {show.kindBadge ? <span className="sf-node__kind">{spec.kind}</span> : null}
+          {show.stateDot ? <StateDot state={state} /> : null}
         </div>
-        <div className="sf-node__col sf-node__col--out">
-          {spec.outputs.map((s) => (
-            <SlotRow key={`out-${s.name}`} kindId={spec.kind} spec={s} side="output" value={slotValues?.[s.name]} />
-          ))}
+      ) : null}
+      {show.body ? (
+        <div className="sf-node__body">
+          {show.inputs ? (
+            <div className="sf-node__col sf-node__col--in">
+              {spec.inputs.map((s) => (
+                <SlotRow key={`in-${s.name}`} kindId={spec.kind} spec={s} side="input" value={slotValues?.[s.name]} />
+              ))}
+            </div>
+          ) : null}
+          {show.outputs ? (
+            <div className="sf-node__col sf-node__col--out">
+              {spec.outputs.map((s) => (
+                <SlotRow key={`out-${s.name}`} kindId={spec.kind} spec={s} side="output" value={slotValues?.[s.name]} />
+              ))}
+            </div>
+          ) : null}
         </div>
-      </div>
-      {children ? <div className="sf-node__extra">{children}</div> : null}
+      ) : null}
+      {show.extra && children ? <div className="sf-node__extra">{children}</div> : null}
     </div>
   );
 }
