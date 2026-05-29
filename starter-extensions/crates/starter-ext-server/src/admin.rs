@@ -59,11 +59,15 @@ struct Inner {
     /// adapters still serves all-zero counters.
     metrics: MetricsRegistry,
     worker_states: Option<WorkerStatesFn>,
-    /// On-disk root that holds extension bundles. Required for the
-    /// install / uninstall endpoints (Phase D.1); endpoints return
-    /// HTTP 503 when unset so a `TestApp` that doesn't wire it stays
-    /// functional for the toggle-only surface.
-    extensions_dir: Option<PathBuf>,
+    /// On-disk root for **installed** (uploaded-tarball) bundles. The
+    /// install handler unpacks here and the uninstall handler is allowed
+    /// to `remove_dir_all` directories under it. Dev source trees live
+    /// elsewhere and are loaded into the registry with
+    /// [`BundleOrigin::Dev`](starter_ext_host::BundleOrigin); the
+    /// uninstall handler refuses to delete them regardless of this path.
+    /// Endpoints return HTTP 503 when this is unset so a `TestApp` that
+    /// doesn't wire it stays functional for the toggle-only surface.
+    installs_dir: Option<PathBuf>,
 }
 
 /// Closure shape the admin route calls when rendering
@@ -98,7 +102,7 @@ impl ExtensionAdmin {
             factory: None,
             metrics: None,
             worker_states: None,
-            extensions_dir: None,
+            installs_dir: None,
             cleanup_providers: Vec::new(),
         }
     }
@@ -162,10 +166,10 @@ impl ExtensionAdmin {
     /// response still includes a `workers: []` field, which is the
     /// truthful shape for hosts that did not opt into the periodic-
     /// worker adapter.
-    /// On-disk root holding extension bundles, when wired. Used by
-    /// the install / uninstall endpoints (Phase D.1).
-    pub(crate) fn extensions_dir(&self) -> Option<&std::path::Path> {
-        self.inner.extensions_dir.as_deref()
+    /// On-disk root for installed (uploaded-tarball) bundles, when
+    /// wired. Used by the install / uninstall endpoints (Phase D.1).
+    pub(crate) fn installs_dir(&self) -> Option<&std::path::Path> {
+        self.inner.installs_dir.as_deref()
     }
 
     pub(crate) fn worker_states(&self, id: &ExtensionId) -> Vec<serde_json::Value> {
@@ -288,7 +292,7 @@ pub struct ExtensionAdminBuilder {
     factory: Option<DynFactory>,
     metrics: Option<MetricsRegistry>,
     worker_states: Option<WorkerStatesFn>,
-    extensions_dir: Option<PathBuf>,
+    installs_dir: Option<PathBuf>,
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
 }
 
@@ -339,11 +343,14 @@ impl ExtensionAdminBuilder {
         self
     }
 
-    /// Wire the on-disk extensions root so the install / uninstall
-    /// endpoints (Phase D.1) can extract tarballs into it and remove
-    /// uninstalled bundles. When unset both endpoints return HTTP 503.
-    pub fn with_extensions_dir(mut self, dir: PathBuf) -> Self {
-        self.extensions_dir = Some(dir);
+    /// Wire the on-disk root for **installed** (uploaded-tarball)
+    /// bundles. The install handler unpacks tarballs into this
+    /// directory; the uninstall handler removes them from here.
+    /// Dev source trees live elsewhere and are loaded read-only —
+    /// the uninstall handler never deletes those regardless of this
+    /// setting. When unset, install / uninstall both return HTTP 503.
+    pub fn with_installs_dir(mut self, dir: PathBuf) -> Self {
+        self.installs_dir = Some(dir);
         self
     }
 
@@ -386,7 +393,7 @@ impl ExtensionAdminBuilder {
                 pending_restart: RwLock::new(HashMap::new()),
                 metrics: self.metrics.unwrap_or_default(),
                 worker_states: self.worker_states,
-                extensions_dir: self.extensions_dir,
+                installs_dir: self.installs_dir,
             }),
         }
     }

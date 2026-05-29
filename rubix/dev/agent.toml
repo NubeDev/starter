@@ -25,18 +25,27 @@ secrets_path = "rubix/dev/secrets.age"
 # crates/starter-ai-agent/LONG-TERM.md for the staged plan.
 # ai_provider = "claude-cli"
 
-# Extension-host knobs (rubix-extensions-wire Phase C). The agent
-# constructs `ExtensionAdmin` from these values via
-# `boot::extensions::build_extension_admin`. `dir` is repo-relative
-# in dev (the in-repo `rubix/extensions` workspace, which ships
-# `com.rubix.example`); production overrides to `/var/lib/rubix/extensions`.
+# Extension-host knobs (rubix-extensions-wire Phase C).
+#
+# `dev_dirs` is the list of developer source trees, scanned read-only.
+# Bundles found here are stamped `BundleOrigin::Dev`; the uninstall
+# handler will disable + purge their *data* but never delete the source
+# files. Default `["rubix/extensions"]` — the in-repo workspace shipping
+# `com.rubix.example`.
+#
+# `installs_dir` is where `POST /api/v1/extensions/install` unpacks
+# uploaded tarballs. Leave it unset to use the OS default
+# (`$XDG_DATA_HOME/rubix/extensions/installed/` on Linux); override
+# explicitly in production (e.g. `/var/lib/rubix/extensions/installed`).
+#
 # `autostart_enabled_records = true` re-spawns supervisors for every
-# extension the PG store marks Enabled before the HTTP listener
-# opens — integration tests that want to drive lifecycle explicitly
-# should set this to false.
+# extension the PG store marks Enabled before the HTTP listener opens
+# — integration tests that drive lifecycle explicitly should set this
+# to false.
 [extensions]
 enabled = true
-dir = "rubix/extensions"
+dev_dirs = ["rubix/extensions"]
+# installs_dir = "/var/lib/rubix/extensions/installed"
 autostart_enabled_records = true
 
 # Insights-gate thresholds. The disk verb's post-dispatch hook

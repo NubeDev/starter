@@ -140,7 +140,9 @@ fn agent_config(extensions_dir: PathBuf) -> AgentConfig {
     let mut cfg = AgentConfig::default();
     cfg.extensions = ExtensionsConfig {
         enabled: true,
-        dir: extensions_dir,
+        dev_dirs: vec![extensions_dir],
+        installs_dir: None,
+        dir: None,
         // Drive every transition explicitly through REST so the
         // assertions don't race the boot-time autostart loop.
         autostart_enabled_records: false,

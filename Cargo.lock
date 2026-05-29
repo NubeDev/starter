@@ -6325,6 +6325,7 @@ dependencies = [
  "starter-i18n",
  "starter-mcp",
  "starter-observability",
+ "starter-paths",
  "starter-sdui-routes",
  "starter-secrets-keyring",
  "starter-server",

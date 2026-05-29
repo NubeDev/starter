@@ -30,6 +30,7 @@ rubix-store-postgres = { workspace = true }
 # placeholders — Phase 1+ activates the additional surfaces.
 starter-spi              = { workspace = true, features = ["i18n", "preferences"] }
 starter-config           = { workspace = true }
+starter-paths            = { workspace = true }
 starter-observability    = { workspace = true }
 starter-server           = { workspace = true }
 starter-cache            = { workspace = true }

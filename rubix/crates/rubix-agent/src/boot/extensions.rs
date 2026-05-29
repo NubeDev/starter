@@ -28,14 +28,14 @@
 //! end-to-end wiring contract.
 
 use std::collections::HashMap;
-use std::path::Path;
 use std::sync::Arc;
 
 use sqlx::PgPool;
 use thiserror::Error;
 use tracing::{info, warn};
 
-use starter_ext_host::{ExtensionRegistry, Loader};
+use starter_ext_host::{BundleOrigin, ExtensionRecord, ExtensionRegistry, Loader};
+use starter_paths::Paths;
 use starter_ext_server::{
     CleanupProvider, DefaultSupervisorFactory, EnablementState, ExtensionAdmin, SupervisorFactory,
     WithHostMethodsFactory,
@@ -99,6 +99,12 @@ pub enum BootError {
         #[source]
         source: AutostartSpawnError,
     },
+
+    /// Resolving the data-root via `starter-paths` failed (e.g. no
+    /// `$XDG_DATA_HOME` and no override). Fatal: without a writable
+    /// installs root we cannot accept uploaded extension bundles.
+    #[error("resolve installs_dir via starter-paths: {0}")]
+    Paths(#[from] starter_paths::PathsError),
 }
 
 /// Inner error wrapper for [`BootError::AutostartSpawn`]. Kept as a
@@ -168,34 +174,30 @@ pub async fn build_extension_admin(
     // (2) PG-backed store. Cheap to clone — wraps an `Arc<PgPool>`.
     let store = Arc::new(PgEnablementStore::new(pg_pool.clone()));
 
-    // (3) Two-phase loader. `Loader::scan` silently treats a missing
-    // extensions root as an empty load (per its own doc comment),
-    // which keeps `cargo run -p rubix-agent` working out-of-the-box
-    // on a fresh checkout that has not built any extensions yet.
+    // (3) Two-phase loader. The dev source trees in `cfg.extensions
+    // .dev_dirs` are scanned read-only (records stamped
+    // `BundleOrigin::Dev`); the installs dir under `Paths` is scanned
+    // separately (`BundleOrigin::Installed`). The uninstall handler
+    // uses the stamped origin to decide whether removing the bundle
+    // dir is safe (data-root-and-safe-uninstall scope, Stage D).
     //
-    // Canonicalise the configured root to an absolute path *before*
-    // handing it to `Loader::scan`. The loader stamps each record's
+    // Canonicalise each scanned root to an absolute path *before*
+    // handing it to the loader. The loader stamps each record's
     // `bundle_dir = scan_root.join(entry_name)`; the process-flavour
     // supervisor then `Command::current_dir(&bundle_dir).arg0(bundle_dir
     // .join(runtime.bin))`, which double-resolves a relative
     // `bundle_dir` against itself and produces a bogus exec path
     // (e.g. `rubix/extensions/<id>/rubix/extensions/<id>/<bin>` -> ENOENT).
-    // Resolving to an absolute path here makes the join a no-op for the
-    // cwd-change and keeps `runtime.bin` valid. Falls back to the
-    // configured value verbatim if the dir doesn't yet exist (the
-    // loader will just produce an empty record set in that case).
-    let raw_dir: &Path = cfg.extensions.dir.as_ref();
-    let owned_dir;
-    let dir: &Path = match raw_dir.canonicalize() {
-        Ok(abs) => {
-            owned_dir = abs;
-            owned_dir.as_path()
-        }
-        Err(_) => raw_dir,
-    };
-    info!(target: "rubix-agent::boot::extensions", dir = %dir.display(),
-        "scanning extensions root");
-    let records = Loader::scan(dir).validate_all();
+    let installs_dir = resolve_installs_dir(cfg)?;
+    info!(target: "rubix-agent::boot::extensions",
+        installs_dir = %installs_dir.display(),
+        dev_dirs = ?effective_dev_dirs(cfg),
+        "scanning extension roots");
+
+    let dev_records = scan_dev_trees(cfg);
+    let installed_records = Loader::scan_installs(&installs_dir).validate_all();
+    let records = merge_records(dev_records, installed_records);
+
     let validated_count = records
         .iter()
         .filter(|r| matches!(r.state, starter_ext_spi::LifecycleState::Validated))
@@ -298,7 +300,7 @@ pub async fn build_extension_admin(
         .with_supervisors(supervisors)
         .with_enablement_store(store)
         .with_supervisor_factory(factory)
-        .with_extensions_dir(dir.to_path_buf());
+        .with_installs_dir(installs_dir.clone());
     for provider in cleanup_providers {
         builder = builder.with_cleanup_provider(provider);
     }
@@ -320,4 +322,94 @@ pub async fn build_extension_admin(
         registry,
         process_handles,
     })
+}
+
+/// Resolve the writable installs root. Precedence: explicit
+/// `extensions.installs_dir` in config > `Paths::resolve("rubix",
+/// None)::installs_dir()` (which honours `$RUBIX_DATA_ROOT` and the
+/// OS XDG defaults). Returns the canonicalised path when it exists on
+/// disk; otherwise the configured value is returned verbatim and the
+/// directory is created so the install endpoint can unpack into it.
+fn resolve_installs_dir(cfg: &AgentConfig) -> Result<std::path::PathBuf, BootError> {
+    let dir = match &cfg.extensions.installs_dir {
+        Some(d) => d.clone(),
+        None => {
+            let paths = Paths::resolve("rubix", None)?;
+            paths.installs_dir()
+        }
+    };
+    // Create eagerly so the install endpoint can write into it without
+    // a first-request race; idempotent on existing dirs.
+    if let Err(e) = std::fs::create_dir_all(&dir) {
+        warn!(target: "rubix-agent::boot::extensions",
+            err = %e, dir = %dir.display(),
+            "create installs_dir failed; continuing — install endpoint will retry");
+    }
+    Ok(dir.canonicalize().unwrap_or(dir))
+}
+
+/// Effective list of dev source trees. Promotes the deprecated
+/// `extensions.dir` field into a one-element `dev_dirs` so legacy
+/// configs keep booting; logs a one-shot deprecation warning the
+/// first time it's read.
+fn effective_dev_dirs(cfg: &AgentConfig) -> Vec<std::path::PathBuf> {
+    let mut dirs = cfg.extensions.dev_dirs.clone();
+    if let Some(legacy) = &cfg.extensions.dir {
+        warn!(target: "rubix-agent::boot::extensions",
+            legacy = %legacy.display(),
+            "`extensions.dir` is deprecated — use `extensions.dev_dirs = [\"…\"]`. \
+             Promoting the legacy value into dev_dirs for this run.");
+        if !dirs.iter().any(|d| d == legacy) {
+            dirs.push(legacy.clone());
+        }
+    }
+    dirs
+}
+
+fn scan_dev_trees(cfg: &AgentConfig) -> Vec<ExtensionRecord> {
+    let mut out = Vec::new();
+    for raw in effective_dev_dirs(cfg) {
+        let canonical = raw.canonicalize().unwrap_or(raw.clone());
+        let scanned = Loader::scan_dev(&canonical).validate_all();
+        info!(target: "rubix-agent::boot::extensions",
+            dir = %canonical.display(), count = scanned.len(),
+            "scanned dev source tree");
+        out.extend(scanned);
+    }
+    out
+}
+
+/// Merge dev + installed records. Installed wins on id collision —
+/// the dev tree is shadowed and we emit a warning so the operator
+/// knows the working copy isn't the one being served.
+fn merge_records(
+    dev: Vec<ExtensionRecord>,
+    installed: Vec<ExtensionRecord>,
+) -> Vec<ExtensionRecord> {
+    use std::collections::HashSet;
+    let installed_ids: HashSet<String> = installed
+        .iter()
+        .filter_map(|r| r.id.as_ref().map(|i| i.as_str().to_owned()))
+        .collect();
+    let mut out = installed;
+    for rec in dev {
+        let key = rec
+            .id
+            .as_ref()
+            .map(|i| i.as_str().to_owned())
+            .unwrap_or_else(|| rec.id_hint.clone());
+        if installed_ids.contains(&key) {
+            let source = match &rec.origin {
+                BundleOrigin::Dev { source_dir } => source_dir.display().to_string(),
+                BundleOrigin::Installed { .. } => rec.bundle_dir.display().to_string(),
+            };
+            warn!(target: "rubix-agent::boot::extensions",
+                id = %key, source = %source,
+                "dev bundle shadowed by installed bundle of the same id — \
+                 the installed copy will serve requests");
+            continue;
+        }
+        out.push(rec);
+    }
+    out
 }

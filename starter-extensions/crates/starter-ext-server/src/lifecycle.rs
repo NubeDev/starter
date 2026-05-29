@@ -71,6 +71,27 @@ pub(crate) struct CleanupResponse {
     pub code: &'static str,
     /// Resources actually removed.
     pub removed: Vec<CleanupItem>,
+    /// Reports what happened to the bundle directory itself. Lets the
+    /// UI surface "source files preserved" when this id was a dev mount.
+    pub bundle: BundleOutcome,
+}
+
+/// What the uninstall handler did with the bundle directory on disk.
+///
+/// `Dev` mounts (loaded in-place from a developer source tree) are
+/// reported with `will_delete = false`; the runtime ran the cleanup
+/// providers but left the source files where the user put them. Every
+/// other id reports `will_delete = true` whether the bundle existed
+/// at uninstall time or not (an already-uninstalled id is a valid
+/// idempotent path).
+#[derive(Debug, Serialize)]
+pub(crate) struct BundleOutcome {
+    /// Where the bundle lived (or lives, for `Dev`). Empty when the
+    /// id was unknown to the registry.
+    pub path: String,
+    /// `true` when the directory was (or would be) removed; `false`
+    /// when it was preserved because the origin was `Dev`.
+    pub will_delete: bool,
 }
 
 /// Query string for `DELETE /extensions/<id>`. `?purge=true` runs the full
@@ -93,10 +114,10 @@ pub(crate) async fn install(
     headers: HeaderMap,
     body: axum::body::Body,
 ) -> axum::response::Response {
-    let Some(extensions_dir) = admin.extensions_dir() else {
+    let Some(installs_dir) = admin.installs_dir() else {
         return (
             StatusCode::SERVICE_UNAVAILABLE,
-            "install endpoint not wired (extensions_dir unset)",
+            "install endpoint not wired (installs_dir unset)",
         )
             .into_response();
     };
@@ -163,12 +184,12 @@ pub(crate) async fn install(
 
     // Stage into a temp directory adjacent to extensions_dir so the
     // final rename stays on the same filesystem (atomic on POSIX).
-    if let Err(e) = std::fs::create_dir_all(extensions_dir) {
-        tracing::warn!(err = %e, dir = %extensions_dir.display(),
-            "extensions_dir create failed");
+    if let Err(e) = std::fs::create_dir_all(installs_dir) {
+        tracing::warn!(err = %e, dir = %installs_dir.display(),
+            "installs_dir create failed");
         return StatusCode::INTERNAL_SERVER_ERROR.into_response();
     }
-    let staging = match make_staging_dir(extensions_dir) {
+    let staging = match make_staging_dir(installs_dir) {
         Ok(p) => p,
         Err(e) => {
             tracing::warn!(err = %e, "staging dir create failed");
@@ -212,7 +233,7 @@ pub(crate) async fn install(
             .into_response();
     };
     let ext_id: ExtensionId = record.id.clone().expect("validated record has id");
-    let final_dir = extensions_dir.join(sanitize_dirname(ext_id.as_str()));
+    let final_dir = installs_dir.join(sanitize_dirname(ext_id.as_str()));
 
     // Best-effort: if a previous install lives there, blow it away.
     if final_dir.exists() {
@@ -287,19 +308,16 @@ pub(crate) async fn uninstall(
     Query(q): Query<UninstallQuery>,
     principal: Option<Extension<Principal>>,
 ) -> axum::response::Response {
-    let Some(extensions_dir) = admin.extensions_dir() else {
-        return (
-            StatusCode::SERVICE_UNAVAILABLE,
-            "uninstall endpoint not wired (extensions_dir unset)",
-        )
-            .into_response();
+    let parsed_id = ExtensionId::new(&id).ok();
+    // Decide the bundle's fate before any side-effects: dev mounts are
+    // preserved, installed (or unknown) ids may be removed from the
+    // installs dir. The decision drives both the supervisor-shutdown
+    // path and the response envelope.
+    let plan = match plan_bundle_action(&admin, &id) {
+        Ok(p) => p,
+        Err(resp) => return resp,
     };
 
-    let bundle_dir = extensions_dir.join(sanitize_dirname(&id));
-    let parsed_id = ExtensionId::new(&id).ok();
-
-    // Stop a live supervisor first so the process doesn't hold open
-    // file handles inside the directory we're about to remove.
     if let Some(ext_id) = &parsed_id {
         if let Some(handle) = admin.replace_supervisor(ext_id, None) {
             handle.shutdown().await;
@@ -317,13 +335,12 @@ pub(crate) async fn uninstall(
         }
     }
 
-    let bundle_existed = bundle_dir.exists();
-
-    // `?purge=false` (default) keeps today's behaviour: a missing bundle
-    // is a `404 uninstall.not_found`. Purge is idempotent and never 404s
-    // (it cleans up leftovers — e.g. a ghost enablement row — even for an
-    // already-uninstalled id).
-    if !q.purge && !bundle_existed {
+    // `?purge=false` (default) keeps today's behaviour: a missing
+    // installed bundle is a `404 uninstall.not_found`. Dev mounts are
+    // never 404 — they're always present by definition (their record
+    // wouldn't be in the registry otherwise). Purge is idempotent
+    // (it cleans up leftovers even for already-uninstalled ids).
+    if !q.purge && plan.is_missing_installed() {
         return (
             StatusCode::NOT_FOUND,
             Json(LifecycleResponse {
@@ -335,23 +352,18 @@ pub(crate) async fn uninstall(
             .into_response();
     }
 
-    if bundle_existed {
-        if let Err(e) = std::fs::remove_dir_all(&bundle_dir) {
-            tracing::warn!(err = %e, dir = %bundle_dir.display(),
-                "remove extension bundle failed");
-            return StatusCode::INTERNAL_SERVER_ERROR.into_response();
-        }
+    if let Err(resp) = apply_bundle_removal(&plan) {
+        return resp;
     }
 
-    // The bundle is gone (or was already), so it no longer surfaces on
-    // next boot — drop any pending-restart badge.
     admin.clear_pending_restart(&id);
 
     tracing::info!(
         target: "starter_ext_server::lifecycle",
         id = %id,
-        dir = %bundle_dir.display(),
+        dir = %plan.bundle_path().display(),
         purge = q.purge,
+        preserved = plan.is_dev(),
         "extension uninstalled",
     );
 
@@ -394,9 +406,102 @@ pub(crate) async fn uninstall(
             id,
             code: "cleanup.succeeded",
             removed,
+            bundle: plan.outcome(),
         }),
     )
         .into_response()
+}
+
+/// What `uninstall` is going to do with the bundle directory.
+///
+/// Computed once at the top of the handler so the supervisor-shutdown
+/// path, the 404 path, the remove-or-skip step, and the response
+/// envelope all agree on what's happening.
+enum BundlePlan {
+    /// Dev mount — record present with `BundleOrigin::Dev`. The
+    /// `path` is the bundle dir; we never remove it.
+    PreserveDev { path: PathBuf },
+    /// Installed bundle that currently exists on disk under the
+    /// configured installs dir. The handler will `remove_dir_all` it.
+    RemoveInstalled { path: PathBuf },
+    /// No record found, but the installs_dir is wired — fall back to
+    /// the legacy `<installs_dir>/<sanitised id>` shape so an
+    /// already-uninstalled id can still report idempotently. Removal
+    /// only fires when the path exists.
+    LegacyInstalled { path: PathBuf, exists: bool },
+}
+
+impl BundlePlan {
+    fn bundle_path(&self) -> &Path {
+        match self {
+            Self::PreserveDev { path }
+            | Self::RemoveInstalled { path }
+            | Self::LegacyInstalled { path, .. } => path,
+        }
+    }
+
+    fn is_dev(&self) -> bool {
+        matches!(self, Self::PreserveDev { .. })
+    }
+
+    fn is_missing_installed(&self) -> bool {
+        matches!(self, Self::LegacyInstalled { exists: false, .. })
+    }
+
+    fn outcome(&self) -> BundleOutcome {
+        BundleOutcome {
+            path: self.bundle_path().display().to_string(),
+            will_delete: !self.is_dev(),
+        }
+    }
+}
+
+fn plan_bundle_action(
+    admin: &ExtensionAdmin,
+    id: &str,
+) -> Result<BundlePlan, axum::response::Response> {
+    // Records carry their own origin — dev mounts always win over the
+    // installs-dir fallback so a typo'd installs path can never delete
+    // a dev tree by accident.
+    if let Some(rec) = admin.registry().get_by_id_str(id) {
+        return Ok(match &rec.origin {
+            starter_ext_host::BundleOrigin::Dev { .. } => BundlePlan::PreserveDev {
+                path: rec.bundle_dir.clone(),
+            },
+            starter_ext_host::BundleOrigin::Installed { .. } => BundlePlan::RemoveInstalled {
+                path: rec.bundle_dir.clone(),
+            },
+        });
+    }
+    // No record — id may have already been uninstalled this run, or
+    // never existed. Need the installs_dir to compute a fallback path
+    // for idempotent re-purge; without it the handler 503s like before.
+    let Some(installs_dir) = admin.installs_dir() else {
+        return Err((
+            StatusCode::SERVICE_UNAVAILABLE,
+            "uninstall endpoint not wired (installs_dir unset)",
+        )
+            .into_response());
+    };
+    let path = installs_dir.join(sanitize_dirname(id));
+    let exists = path.exists();
+    Ok(BundlePlan::LegacyInstalled { path, exists })
+}
+
+fn apply_bundle_removal(plan: &BundlePlan) -> Result<(), axum::response::Response> {
+    let (path, must_exist) = match plan {
+        BundlePlan::PreserveDev { .. } => return Ok(()),
+        BundlePlan::RemoveInstalled { path } => (path, true),
+        BundlePlan::LegacyInstalled { path, exists } => (path, *exists),
+    };
+    if !must_exist {
+        return Ok(());
+    }
+    if let Err(e) = std::fs::remove_dir_all(path) {
+        tracing::warn!(err = %e, dir = %path.display(), "remove extension bundle failed");
+        return Err(StatusCode::INTERNAL_SERVER_ERROR.into_response());
+    }
+    Ok(())
 }
 
 // ---------------------------------------------------------------------------
@@ -413,6 +518,10 @@ pub(crate) struct CleanupPreview {
     pub items: Vec<CleanupItem>,
     /// Sum of the `bytes` fields that are known.
     pub total_bytes: u64,
+    /// What the bundle directory itself would do — preserved (Dev) or
+    /// removed (Installed). Frontend uses this to swap copy and the
+    /// confirm-button label.
+    pub bundle: BundleOutcome,
 }
 
 /// `GET /extensions/<id>/cleanup` — run every provider's `discover` (only)
@@ -433,12 +542,23 @@ pub(crate) async fn cleanup_preview(
         .and_then(|rec| rec.manifest.clone());
     let items = admin.discover_cleanup(&ext_id, manifest.as_ref()).await;
     let total_bytes = items.iter().filter_map(|i| i.bytes).sum();
+    let bundle = match plan_bundle_action(&admin, &id) {
+        Ok(plan) => plan.outcome(),
+        // installs_dir unset on a TestApp — surface an empty bundle
+        // outcome rather than 503'ing the dry-run, which the
+        // toggle-only surface should still be able to render.
+        Err(_) => BundleOutcome {
+            path: String::new(),
+            will_delete: false,
+        },
+    };
     (
         StatusCode::OK,
         Json(CleanupPreview {
             id,
             items,
             total_bytes,
+            bundle,
         }),
     )
         .into_response()

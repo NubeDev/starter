@@ -161,11 +161,28 @@ pub struct ExtensionsConfig {
     /// migration runs against the Postgres pool. Default `true`.
     pub enabled: bool,
 
-    /// Filesystem root scanned by `Loader::scan` for extension
-    /// bundles. Each immediate child directory containing a
-    /// `block.yaml` is a candidate. Default `rubix/extensions` —
-    /// the in-repo workspace shipping `com.rubix.example`.
-    pub dir: PathBuf,
+    /// Developer source trees, scanned read-only. Each path is
+    /// walked one level deep for `block.yaml` bundles. Bundles
+    /// discovered here are stamped with `BundleOrigin::Dev`; the
+    /// uninstall handler will disable + purge their *data* but
+    /// never touch the source files on disk. Default
+    /// `["rubix/extensions"]` — the in-repo workspace shipping
+    /// `com.rubix.example`.
+    pub dev_dirs: Vec<PathBuf>,
+
+    /// Installed (uploaded-tarball) bundle root. `POST
+    /// /api/v1/extensions/install` unpacks bundles here and
+    /// `DELETE /api/v1/extensions/<id>` removes them. When unset,
+    /// the boot path resolves it from `starter_paths::Paths` —
+    /// i.e. `$RUBIX_DATA_ROOT/extensions/installed/` (or the OS
+    /// XDG default). Set it explicitly to override.
+    pub installs_dir: Option<PathBuf>,
+
+    /// Deprecated single-path field. When set, treated as a one-element
+    /// `dev_dirs = [<value>]`; logs a deprecation warning at boot. Will
+    /// be removed once configs in the wild have migrated.
+    #[serde(default)]
+    pub dir: Option<PathBuf>,
 
     /// When `true` the boot path reads every `Enabled` row from the
     /// PG store and spawns a supervisor for the matching record so
@@ -178,7 +195,9 @@ impl Default for ExtensionsConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            dir: PathBuf::from("rubix/extensions"),
+            dev_dirs: vec![PathBuf::from("rubix/extensions")],
+            installs_dir: None,
+            dir: None,
             autostart_enabled_records: true,
         }
     }

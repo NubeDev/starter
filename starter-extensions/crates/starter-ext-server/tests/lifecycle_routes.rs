@@ -77,14 +77,14 @@ fn multipart_body(field: &str, filename: &str, payload: &[u8], boundary: &str) -
 }
 
 fn build_admin(
-    extensions_dir: std::path::PathBuf,
+    installs_dir: std::path::PathBuf,
 ) -> (ExtensionAdmin, Arc<InMemoryEnablementStore>) {
     let mut reg = ExtensionRegistry::new();
     reg.seal();
     let store = Arc::new(InMemoryEnablementStore::new());
     let admin = ExtensionAdmin::builder(Arc::new(reg))
         .with_enablement_store(store.clone() as Arc<dyn EnablementStore>)
-        .with_extensions_dir(extensions_dir)
+        .with_installs_dir(installs_dir)
         .build();
     (admin, store)
 }

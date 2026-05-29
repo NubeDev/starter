@@ -77,7 +77,7 @@ fn build_admin(dir: std::path::PathBuf) -> (ExtensionAdmin, Arc<InMemoryEnableme
     let store = Arc::new(InMemoryEnablementStore::new());
     let admin = ExtensionAdmin::builder(Arc::new(reg))
         .with_enablement_store(store.clone() as Arc<dyn EnablementStore>)
-        .with_extensions_dir(dir)
+        .with_installs_dir(dir)
         .build();
     (admin, store)
 }
