@@ -85,6 +85,7 @@ declare module "../client/client.js" {
     getTenant(id: string): Promise<TenantView>;
     patchTenant(id: string, body: PatchTenantBody): Promise<TenantView>;
     // ----- members
+    listTenantMembers(id: string): Promise<MembershipView[]>;
     addTenantMember(id: string, body: AddMemberBody): Promise<MembershipView>;
     patchTenantMember(
       id: string,
@@ -145,6 +146,16 @@ StarterClient.prototype.patchTenant = function patchTenant(
     headers: mutHeaders(),
     body: JSON.stringify(body),
   });
+};
+
+StarterClient.prototype.listTenantMembers = function listTenantMembers(
+  this: StarterClient,
+  id: string,
+): Promise<MembershipView[]> {
+  return fetchJson<MembershipView[]>(
+    this,
+    `/v1/tenants/${encodeURIComponent(id)}/members`,
+  );
 };
 
 StarterClient.prototype.addTenantMember = function addTenantMember(

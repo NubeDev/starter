@@ -19,13 +19,20 @@ import {
   CardTitle,
   Input,
   Label,
+  Progress,
   ScrollArea,
-  Separator,
   Sheet,
   SheetContent,
   SheetDescription,
   SheetHeader,
   SheetTitle,
+  Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
   Tabs,
   TabsContent,
   TabsList,
@@ -35,20 +42,30 @@ import {
 import {
   Activity,
   Building2,
+  CheckCircle2,
   ChevronDown,
   ChevronRight,
-  CircleHelp,
+  Clock,
   FileSearch,
   Layers,
+  Pencil,
   Search,
   ShieldCheck,
+  ShieldX,
   UserRound,
   Users,
 } from "lucide-react";
 import { AuthzI18nProvider } from "../i18n/context.js";
 import type { AuthzMessages } from "../i18n/messages.js";
 import { useAuthzMessages } from "../i18n/context.js";
-import { useTenants, useTeams, useAddTeamMember } from "../hooks/index.js";
+import {
+  useTenants,
+  useTeams,
+  useAddTeamMember,
+  useTenantMembers,
+  useAuthzRules,
+  useAuthzDecisions,
+} from "../hooks/index.js";
 import { TenantsPanel } from "./tenants-panel.js";
 import { MembersPanel } from "./members-panel.js";
 import { TeamsPanel } from "./teams-panel.js";
@@ -559,41 +576,7 @@ function RootDetail({ onSelect }: { onSelect: (n: SelectedNode) => void }) {
         </TabsTrigger>
       </TabsList>
       <TabsContent value="overview" className="mt-6">
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle className="flex items-center gap-2">
-              <CircleHelp className="size-4 text-muted-foreground" aria-hidden />
-              Getting started
-            </CardTitle>
-            <CardDescription>
-              Access Control is scoped to whatever you pick in the left rail.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="grid gap-4 text-sm">
-            <div className="grid gap-3 sm:grid-cols-3">
-              <RailHint
-                icon={Building2}
-                title="Pick a tenant"
-                body="Manage its teams, members, rules, and assignments from the right pane."
-              />
-              <RailHint
-                icon={Layers}
-                title="Browse resources"
-                body="Use the Resources button to inspect what kinds the engine knows about."
-              />
-              <RailHint
-                icon={ShieldCheck}
-                title="Dry-run a check"
-                body="Use Check to test a (principal, action, resource) without writing a rule."
-              />
-            </div>
-            <Separator />
-            <p className="text-muted-foreground">
-              The toolbar buttons (Resources, Check, Decisions) stay global —
-              they open in a side panel and never close your tenant context.
-            </p>
-          </CardContent>
-        </Card>
+        <GlobalOverview onSelect={onSelect} />
       </TabsContent>
       <TabsContent value="tenants" className="mt-6">
         <TenantsPanel
@@ -604,22 +587,468 @@ function RootDetail({ onSelect }: { onSelect: (n: SelectedNode) => void }) {
   );
 }
 
-function RailHint({
+// ---------------------------------------------------------------------------
+// Overview — shared visual layout for the root and tenant-scoped Overview tabs
+// ---------------------------------------------------------------------------
+
+interface MemberRow {
+  user_id: string;
+  email: string;
+  tenant_id: string;
+  tenant_name: string;
+  role: string;
+}
+
+function StatCard({
+  label,
+  value,
+  hint,
+  loading,
   icon: Icon,
-  title,
-  body,
+  tone,
 }: {
-  icon: typeof Building2;
-  title: string;
-  body: string;
+  label: string;
+  value: string | number;
+  hint?: ReactNode;
+  loading?: boolean;
+  icon: typeof Users;
+  tone?: "default" | "success" | "warning";
+}) {
+  const toneCls =
+    tone === "success"
+      ? "text-emerald-600 dark:text-emerald-400"
+      : tone === "warning"
+      ? "text-amber-600 dark:text-amber-400"
+      : "text-muted-foreground";
+  return (
+    <Card className="overflow-hidden">
+      <CardContent className="grid gap-2 p-5">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
+            {label}
+          </span>
+          <Icon className="size-4 text-muted-foreground" aria-hidden />
+        </div>
+        <div className="flex items-baseline gap-2">
+          {loading ? (
+            <Skeleton className="h-8 w-16" />
+          ) : (
+            <span className="text-3xl font-semibold tracking-tight">{value}</span>
+          )}
+        </div>
+        {hint ? <span className={cn("text-xs", toneCls)}>{hint}</span> : null}
+      </CardContent>
+    </Card>
+  );
+}
+
+function Initials({ email }: { email: string }) {
+  const seed = (email || "?").trim();
+  const ch = seed.slice(0, 2).toUpperCase();
+  // Stable hue from email — keeps colors consistent without picking a fixed palette token.
+  let h = 0;
+  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) >>> 0;
+  const hue = h % 360;
+  return (
+    <span
+      className="grid size-8 place-items-center rounded-full text-[11px] font-semibold text-white"
+      style={{ backgroundColor: `hsl(${hue} 55% 45%)` }}
+      aria-hidden
+    >
+      {ch}
+    </span>
+  );
+}
+
+function MembersTable({
+  rows,
+  loading,
+  showTenant,
+  onSelectUser,
+  emptyHint,
+  footer,
+}: {
+  rows: MemberRow[];
+  loading?: boolean;
+  showTenant?: boolean;
+  onSelectUser?: (userId: string, tenantId: string) => void;
+  emptyHint: string;
+  footer?: ReactNode;
+}) {
+  if (loading) {
+    return (
+      <div className="grid gap-2 p-6">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-2/3" />
+      </div>
+    );
+  }
+  if (rows.length === 0) {
+    return (
+      <div className="grid place-items-center gap-1 px-6 py-10 text-center">
+        <Users className="size-5 text-muted-foreground" aria-hidden />
+        <p className="text-sm text-muted-foreground">{emptyHint}</p>
+      </div>
+    );
+  }
+  return (
+    <>
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Member</TableHead>
+            {showTenant ? <TableHead>Tenant</TableHead> : null}
+            <TableHead>Role</TableHead>
+            <TableHead className="w-12 text-right" aria-label="Actions" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {rows.map((r) => (
+            <TableRow
+              key={`${r.tenant_id}:${r.user_id}`}
+              className={cn(
+                "group",
+                onSelectUser && "cursor-pointer",
+              )}
+              onClick={
+                onSelectUser
+                  ? () => onSelectUser(r.user_id, r.tenant_id)
+                  : undefined
+              }
+            >
+              <TableCell>
+                <div className="flex items-center gap-3">
+                  <Initials email={r.email} />
+                  <div className="grid">
+                    <span className="text-sm font-medium">{r.email}</span>
+                    <code className="text-[10px] text-muted-foreground">
+                      {r.user_id}
+                    </code>
+                  </div>
+                </div>
+              </TableCell>
+              {showTenant ? (
+                <TableCell>
+                  <Badge variant="secondary" className="font-normal">
+                    {r.tenant_name}
+                  </Badge>
+                </TableCell>
+              ) : null}
+              <TableCell>
+                <span className="text-sm capitalize">{r.role}</span>
+              </TableCell>
+              <TableCell className="text-right">
+                <Pencil
+                  className="ml-auto size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100"
+                  aria-hidden
+                />
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+      {footer}
+    </>
+  );
+}
+
+function TenantStatusCard({
+  tenantName,
+  policyCoverage,
+  ruleCount,
+  hasAuditEntries,
+  loading,
+}: {
+  tenantName: string | null;
+  policyCoverage: number | null;
+  ruleCount: number;
+  hasAuditEntries: boolean;
+  loading?: boolean;
 }) {
   return (
-    <div className="grid gap-2 rounded-xl border border-border bg-muted/30 p-4">
-      <div className="flex items-center gap-2 text-sm font-medium">
-        <Icon className="size-4 text-muted-foreground" aria-hidden />
-        {title}
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <span className="relative inline-flex size-2.5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+            <span className="relative inline-flex size-2.5 rounded-full bg-emerald-500" />
+          </span>
+          Tenant Status
+        </CardTitle>
+        <CardDescription>
+          {tenantName ?? "All tenants — aggregate availability"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-5 p-5">
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Availability</span>
+            <span className="font-mono text-foreground">
+              {hasAuditEntries ? "Live" : "—"}
+            </span>
+          </div>
+          <Progress value={hasAuditEntries ? 100 : 0} />
+        </div>
+        <div className="grid gap-2">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>Policy Coverage</span>
+            <span className="font-mono text-foreground">
+              {loading ? "…" : policyCoverage === null ? "—" : `${policyCoverage}%`}
+            </span>
+          </div>
+          <Progress value={policyCoverage ?? 0} />
+          <p className="text-[11px] text-muted-foreground">
+            {ruleCount === 0
+              ? "No rules — default policy is in effect."
+              : `${ruleCount} rule${ruleCount === 1 ? "" : "s"} active.`}
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AuditLogCard({
+  tenantId,
+}: {
+  tenantId?: string | null;
+}) {
+  const q = useMemo(
+    () => (tenantId ? { tenant: tenantId, limit: 8 } : { limit: 8 }),
+    [tenantId],
+  );
+  const decisions = useAuthzDecisions(q);
+  const items = decisions.data?.items ?? [];
+  return (
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <FileSearch className="size-4 text-muted-foreground" aria-hidden />
+          Audit Log
+        </CardTitle>
+        <CardDescription>
+          {tenantId ? "Recent decisions for this tenant" : "Recent decisions"}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        {decisions.isLoading ? (
+          <div className="grid gap-2 p-5">
+            <Skeleton className="h-4 w-full" />
+            <Skeleton className="h-4 w-3/4" />
+            <Skeleton className="h-4 w-2/3" />
+          </div>
+        ) : decisions.error ? (
+          <div className="p-5 text-xs text-destructive">
+            {decisions.error.message}
+          </div>
+        ) : items.length === 0 ? (
+          <div className="grid place-items-center gap-1 px-5 py-10 text-center">
+            <Clock className="size-5 text-muted-foreground" aria-hidden />
+            <p className="text-sm text-muted-foreground">No decisions yet.</p>
+          </div>
+        ) : (
+          <ol className="relative grid gap-0 px-5 py-4">
+            {items.map((d, i) => {
+              const isAllow = d.effect === "allow";
+              const Icon = isAllow ? CheckCircle2 : ShieldX;
+              const iconCls = isAllow
+                ? "text-emerald-600 dark:text-emerald-400"
+                : "text-destructive";
+              return (
+                <li
+                  key={`${d.at}:${i}`}
+                  className="relative grid grid-cols-[1.25rem_1fr] gap-3 py-2"
+                >
+                  <div className="grid place-items-start pt-0.5">
+                    <Icon className={cn("size-4", iconCls)} aria-hidden />
+                  </div>
+                  <div className="grid gap-0.5 text-xs">
+                    <div className="flex items-baseline gap-2">
+                      <span className="font-medium text-foreground">
+                        {d.subject}
+                      </span>
+                      <span className="text-muted-foreground">{d.action}</span>
+                      <code className="text-[10px] text-muted-foreground">
+                        {d.kind}
+                        {d.id ? `:${d.id}` : ""}
+                      </code>
+                    </div>
+                    <span className="text-[10px] text-muted-foreground">
+                      {new Date(d.at).toLocaleString()}
+                      {d.reason ? ` · ${d.reason}` : ""}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+interface TenantAggregate {
+  tenantId: string;
+  rows: MemberRow[];
+  teamCount: number;
+  loading: boolean;
+}
+
+function TenantAggregateProbe({
+  tenant,
+  directory,
+  onData,
+}: {
+  tenant: { id: string; display_name: string };
+  directory: ReturnType<typeof useUserDirectory>;
+  onData: (id: string, agg: TenantAggregate) => void;
+}) {
+  const members = useTenantMembers(tenant.id);
+  const teams = useTeams(tenant.id);
+  useEffect(() => {
+    const rows: MemberRow[] = (members.data ?? []).map((m) => {
+      const entry = directory?.getById?.(m.user_id);
+      return {
+        user_id: m.user_id,
+        email: entry?.email ?? m.user_id,
+        tenant_id: tenant.id,
+        tenant_name: tenant.display_name,
+        role: m.role,
+      };
+    });
+    onData(tenant.id, {
+      tenantId: tenant.id,
+      rows,
+      teamCount: teams.data?.length ?? 0,
+      loading: members.isLoading || teams.isLoading,
+    });
+  }, [
+    tenant.id,
+    tenant.display_name,
+    members.data,
+    members.isLoading,
+    teams.data,
+    teams.isLoading,
+    directory,
+    onData,
+  ]);
+  return null;
+}
+
+function GlobalOverview({
+  onSelect,
+}: {
+  onSelect: (n: SelectedNode) => void;
+}) {
+  const tenants = useTenants();
+  const rules = useAuthzRules();
+  const tenantList = tenants.data ?? [];
+  const directory = useUserDirectory();
+
+  const [aggMap, setAggMap] = useState<Record<string, TenantAggregate>>({});
+  const handleAgg = useMemo(
+    () => (id: string, agg: TenantAggregate) =>
+      setAggMap((m) => (m[id] === agg ? m : { ...m, [id]: agg })),
+    [],
+  );
+
+  const aggs = tenantList.map((t) => aggMap[t.id]).filter(Boolean) as TenantAggregate[];
+  const rows = aggs.flatMap((a) => a.rows);
+  const totalMembers = rows.length;
+  const totalTeams = aggs.reduce((acc, a) => acc + a.teamCount, 0);
+  const ruleCount = rules.data?.rules?.length ?? 0;
+  const anyLoading =
+    tenants.isLoading || aggs.length < tenantList.length || aggs.some((a) => a.loading);
+
+  const topRows = rows.slice(0, 6);
+
+  return (
+    <div className="grid gap-6 lg:grid-cols-12">
+      {tenantList.map((t) => (
+        <TenantAggregateProbe
+          key={t.id}
+          tenant={t}
+          directory={directory}
+          onData={handleAgg}
+        />
+      ))}
+      <div className="grid gap-6 lg:col-span-8">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Total Members"
+            value={anyLoading ? "—" : totalMembers}
+            icon={Users}
+            loading={anyLoading}
+            hint={`Across ${tenantList.length} tenant${tenantList.length === 1 ? "" : "s"}`}
+          />
+          <StatCard
+            label="Active Teams"
+            value={anyLoading ? "—" : totalTeams}
+            icon={Layers}
+            loading={anyLoading}
+            tone="success"
+            hint={totalTeams === 0 ? "No teams yet" : "Stable"}
+          />
+          <StatCard
+            label="Active Rules"
+            value={rules.isLoading ? "—" : ruleCount}
+            icon={ShieldCheck}
+            loading={rules.isLoading}
+            tone={ruleCount === 0 ? "warning" : "default"}
+            hint={
+              ruleCount === 0
+                ? "Default policy is in effect"
+                : "Policy engine enforcing"
+            }
+          />
+        </div>
+        <Card className="overflow-hidden">
+          <CardHeader className="flex flex-row items-center justify-between border-b">
+            <div className="grid gap-0.5">
+              <CardTitle className="text-base">Active Members</CardTitle>
+              <CardDescription>
+                Recent memberships across all tenants
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <MembersTable
+              rows={topRows}
+              loading={anyLoading}
+              showTenant
+              emptyHint="No memberships yet — create a tenant and add a member."
+              onSelectUser={(userId, tenantId) =>
+                onSelect({ kind: "user", userId, tenantId })
+              }
+              footer={
+                rows.length > topRows.length ? (
+                  <div className="border-t px-5 py-3 text-center">
+                    <button
+                      type="button"
+                      className="text-xs font-medium text-primary hover:underline"
+                      onClick={() => onSelect({ kind: "root" })}
+                    >
+                      View all {rows.length} members
+                    </button>
+                  </div>
+                ) : null
+              }
+            />
+          </CardContent>
+        </Card>
       </div>
-      <p className="text-xs leading-relaxed text-muted-foreground">{body}</p>
+      <aside className="grid gap-6 lg:col-span-4">
+        <TenantStatusCard
+          tenantName={null}
+          policyCoverage={ruleCount === 0 ? 0 : Math.min(100, ruleCount * 5)}
+          ruleCount={ruleCount}
+          hasAuditEntries
+          loading={rules.isLoading}
+        />
+        <AuditLogCard />
+      </aside>
     </div>
   );
 }
@@ -664,7 +1093,7 @@ function TenantDetail({
         <TeamsPanel tenantId={tenantId} />
       </TabsContent>
       <TabsContent value="members" className="mt-6">
-        <MembersPanel tenantId={tenantId} />
+        <TenantMembersTab tenantId={tenantId} />
       </TabsContent>
       <TabsContent value="rules" className="mt-6">
         <RulesPanel tenantId={tenantId} />
@@ -679,29 +1108,120 @@ function TenantDetail({
   );
 }
 
+function TenantMembersTab({ tenantId }: { tenantId: string }) {
+  const members = useTenantMembers(tenantId);
+  return (
+    <MembersPanel
+      tenantId={tenantId}
+      members={members.data}
+      membersLoading={members.isLoading}
+      membersError={members.error}
+    />
+  );
+}
+
 function TenantOverview({ tenantId }: { tenantId: string }) {
   const tenants = useTenants();
+  const members = useTenantMembers(tenantId);
+  const teams = useTeams(tenantId);
+  const rules = useAuthzRules();
+  const directory = useUserDirectory();
   const t = (tenants.data ?? []).find((x) => x.id === tenantId);
+
+  const rows: MemberRow[] = useMemo(() => {
+    if (!t) return [];
+    return (members.data ?? []).map((m) => {
+      const entry = directory?.getById?.(m.user_id);
+      return {
+        user_id: m.user_id,
+        email: entry?.email ?? m.user_id,
+        tenant_id: t.id,
+        tenant_name: t.display_name,
+        role: m.role,
+      };
+    });
+  }, [members.data, directory, t]);
+
   if (!t) return <StateRow variant="empty">Tenant not found.</StateRow>;
+
+  const memberCount = rows.length;
+  const teamCount = teams.data?.length ?? 0;
+  const tenantRules =
+    rules.data?.rules?.filter((r) => !r.tenant_id || r.tenant_id === t.id) ?? [];
+  const ruleCount = tenantRules.length;
+  const loading = members.isLoading || teams.isLoading;
+  const topRows = rows.slice(0, 6);
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t.display_name}</CardTitle>
-      </CardHeader>
-      <CardContent className="grid gap-1 text-sm">
-        <div>
-          <span className="opacity-60">Slug:</span> <code>{t.slug}</code>
+    <div className="grid gap-6 lg:grid-cols-12">
+      <div className="grid gap-6 lg:col-span-8">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard
+            label="Total Members"
+            value={loading ? "—" : memberCount}
+            icon={Users}
+            loading={loading}
+            hint={t.display_name}
+          />
+          <StatCard
+            label="Active Teams"
+            value={loading ? "—" : teamCount}
+            icon={Layers}
+            loading={loading}
+            tone="success"
+            hint={teamCount === 0 ? "No teams yet" : "Stable"}
+          />
+          <StatCard
+            label="Active Rules"
+            value={rules.isLoading ? "—" : ruleCount}
+            icon={ShieldCheck}
+            loading={rules.isLoading}
+            tone={ruleCount === 0 ? "warning" : "default"}
+            hint={
+              ruleCount === 0
+                ? "No rules — default policy applies"
+                : "Tenant + global rules"
+            }
+          />
         </div>
-        <div>
-          <span className="opacity-60">ID:</span>{" "}
-          <code className="text-xs">{t.id}</code>
-        </div>
-        <div>
-          <span className="opacity-60">Audit sample:</span>{" "}
-          {t.audit_allow_sample ?? "—"}
-        </div>
-      </CardContent>
-    </Card>
+        <Card className="overflow-hidden">
+          <CardHeader className="border-b">
+            <div className="grid gap-0.5">
+              <CardTitle className="text-base">Active Members</CardTitle>
+              <CardDescription>
+                Members of {t.display_name}
+              </CardDescription>
+            </div>
+          </CardHeader>
+          <CardContent className="p-0">
+            <MembersTable
+              rows={topRows}
+              loading={loading}
+              emptyHint="No members yet — add one from the Members tab."
+              footer={
+                rows.length > topRows.length ? (
+                  <div className="border-t px-5 py-3 text-center">
+                    <span className="text-xs text-muted-foreground">
+                      Showing {topRows.length} of {rows.length} members
+                    </span>
+                  </div>
+                ) : null
+              }
+            />
+          </CardContent>
+        </Card>
+      </div>
+      <aside className="grid gap-6 lg:col-span-4">
+        <TenantStatusCard
+          tenantName={t.display_name}
+          policyCoverage={ruleCount === 0 ? 0 : Math.min(100, ruleCount * 10)}
+          ruleCount={ruleCount}
+          hasAuditEntries
+          loading={rules.isLoading}
+        />
+        <AuditLogCard tenantId={t.id} />
+      </aside>
+    </div>
   );
 }
 

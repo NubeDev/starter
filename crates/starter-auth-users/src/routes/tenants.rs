@@ -13,6 +13,7 @@
 //! GET    /v1/tenants/{id}
 //! PATCH  /v1/tenants/{id}
 //! POST   /v1/tenants/{id}/members
+//! GET    /v1/tenants/{id}/members
 //! PATCH  /v1/tenants/{id}/members/{user_id}
 //! DELETE /v1/tenants/{id}/members/{user_id}
 //! ```
@@ -125,7 +126,10 @@ where
     Router::new()
         .route("/v1/tenants", post(create_tenant_h).get(list_tenants_h))
         .route("/v1/tenants/{id}", get(get_tenant_h).patch(patch_tenant_h))
-        .route("/v1/tenants/{id}/members", post(add_member_h))
+        .route(
+            "/v1/tenants/{id}/members",
+            post(add_member_h).get(list_members_h),
+        )
         .route(
             "/v1/tenants/{id}/members/{user_id}",
             patch(patch_member_h).delete(remove_member_h),
@@ -244,6 +248,21 @@ async fn patch_member_h(
     }
     match tenants.patch_member_role(&id, &user_id, &body.role).await {
         Ok(()) => StatusCode::NO_CONTENT.into_response(),
+        Err(e) => map_err(e),
+    }
+}
+
+async fn list_members_h(
+    State(tenants): State<Arc<dyn TenantStore>>,
+    Path(id): Path<String>,
+) -> Response {
+    match tenants.members_of_tenant(&id).await {
+        Ok(rows) => Json(
+            rows.into_iter()
+                .map(MembershipView::from)
+                .collect::<Vec<_>>(),
+        )
+        .into_response(),
         Err(e) => map_err(e),
     }
 }

@@ -102,11 +102,17 @@ export function usePatchTenant(): UseMutationResult<TenantView, Error, PatchTena
 
 // ----------------------------------------------------------------- members
 
-/** Members aren't exposed as a list endpoint server-side — the
- * `MembersPanel` derives them from a tenant + an external user
- * directory. We expose only the write hooks here; consumers needing
- * a list can either fetch from their own users API or list via
- * `listAuthzAssignments()` and filter. */
+export function useTenantMembers(
+  tenantId: string | null,
+): UseQueryResult<MembershipView[], Error> {
+  const c = useStarterClient();
+  return useQuery({
+    queryKey: authzKeys.members(tenantId ?? ""),
+    queryFn: () => c.listTenantMembers(tenantId ?? ""),
+    enabled: !!tenantId,
+  });
+}
+
 export interface AddMemberArgs {
   tenantId: string;
   body: AddMemberBody;

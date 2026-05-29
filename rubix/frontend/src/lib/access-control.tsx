@@ -346,17 +346,32 @@ export function AccessControl({ splat }: AccessControlProps) {
   )
 
   return (
-    <section className="relative mx-auto max-w-6xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
+    <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
       <header className="mb-8">
         <div className="flex items-center gap-3">
           <span className="h-px w-8 bg-[color:var(--color-leaf)]" />
           <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[color:var(--color-leaf)]">
-            Admin
+            Admin / Access
+            {selected.kind === 'tenant' ||
+            selected.kind === 'team' ||
+            (selected.kind === 'user' && selected.tenantId)
+              ? (() => {
+                  const tid =
+                    selected.kind === 'user'
+                      ? selected.tenantId!
+                      : selected.tenantId
+                  const tn = tenantList.find((x) => x.id === tid)?.slug
+                  return tn ? ` / ${tn}` : ''
+                })()
+              : ''}
           </span>
         </div>
         <h1 className="mt-3 text-4xl font-medium tracking-[-0.03em]">
           {i18n.shell?.title}
         </h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Manage tenants, teams, members, and policy from one place.
+        </p>
       </header>
       <AuthzAdmin
         i18n={i18n}
