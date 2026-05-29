@@ -44,6 +44,7 @@ use tokio::sync::{mpsc, watch};
 use tracing::{debug, warn};
 
 use crate::capabilities::{CapabilityFactory, StubCapabilityFactory};
+use crate::rest::cache::{caller_scope, dispatch_base_key, DispatcherCache};
 
 /// One streaming-event payload as it leaves the dispatcher. Carries the
 /// `stream_id` the initial dispatch allocated; the renderer (SSE or
@@ -236,6 +237,10 @@ pub struct BuiltinRestDispatcher {
     /// `Error::Capability`). Hosts opt in to real backends via
     /// [`Self::with_capability_factory`].
     capability_factory: Arc<dyn CapabilityFactory>,
+    /// Opt-in cache wiring. `None` means cache is disabled — every
+    /// dispatch goes straight through to the handler. v0 integration
+    /// point for the opt-in caching proposal.
+    cache: Option<DispatcherCache>,
 }
 
 impl BuiltinRestDispatcher {
@@ -246,7 +251,17 @@ impl BuiltinRestDispatcher {
             registry,
             event_channel_capacity: 16,
             capability_factory: Arc::new(StubCapabilityFactory),
+            cache: None,
         }
+    }
+
+    /// Install a [`DispatcherCache`] for opt-in kind caching. The
+    /// dispatcher consults the registry on every `dispatch()`; kinds
+    /// without a sidecar take the no-op path. Streaming dispatch is
+    /// never cached — actions and streams are out of scope for v0.
+    pub fn with_cache(mut self, cache: DispatcherCache) -> Self {
+        self.cache = Some(cache);
+        self
     }
 
     /// Install a host-provided [`CapabilityFactory`]. Builder-style
@@ -316,14 +331,16 @@ impl BuiltinRestDispatcher {
     }
 }
 
-#[async_trait]
-impl RestDispatcher for BuiltinRestDispatcher {
-    async fn dispatch(
+impl BuiltinRestDispatcher {
+    /// Inner dispatch — the original (uncached) path. Factored out
+    /// so the public `dispatch` can wrap it in the cache layer when
+    /// a spec is registered for `(extension, contribute_id)`.
+    async fn dispatch_inner(
         &self,
         extension: &ExtensionId,
         contribute_id: &str,
         input: serde_json::Value,
-        caller: Option<CallerIdentity>,
+        caller: Option<&CallerIdentity>,
     ) -> Result<serde_json::Value, DispatchError> {
         self.ensure_builtin(extension)?;
         let entry = self.table.get(extension).ok_or_else(|| {
@@ -337,11 +354,8 @@ impl RestDispatcher for BuiltinRestDispatcher {
         // Non-streaming: stub event channel + cancel (handler may
         // ignore them).
         let (tx, _rx) = mpsc::channel(self.event_channel_capacity);
-        let ctx = self.build_ctx(extension, tx, Arc::new(NeverCancel), caller.as_ref());
+        let ctx = self.build_ctx(extension, tx, Arc::new(NeverCancel), caller);
 
-        // BuiltinEntry::dispatch is sync. Run on the blocking pool so
-        // the async runtime isn't held up by a long handler. The
-        // `move`d clones keep the dispatcher useful afterwards.
         let entry_dispatch = entry.dispatch_arc();
         let contribute_id_owned = contribute_id.to_owned();
         let result: starter_ext_spi::Result<serde_json::Value> =
@@ -349,6 +363,66 @@ impl RestDispatcher for BuiltinRestDispatcher {
                 .await
                 .map_err(|e| DispatchError::Substrate(format!("dispatch join: {e}")))?;
         result.map_err(DispatchError::from_kernel)
+    }
+}
+
+#[async_trait]
+impl RestDispatcher for BuiltinRestDispatcher {
+    async fn dispatch(
+        &self,
+        extension: &ExtensionId,
+        contribute_id: &str,
+        input: serde_json::Value,
+        caller: Option<CallerIdentity>,
+    ) -> Result<serde_json::Value, DispatchError> {
+        // Fast path: no cache configured, or no spec for this kind.
+        let spec = self
+            .cache
+            .as_ref()
+            .and_then(|c| c.registry.get(extension, contribute_id).cloned());
+
+        let Some(spec) = spec else {
+            return self
+                .dispatch_inner(extension, contribute_id, input, caller.as_ref())
+                .await;
+        };
+
+        // Cached path: wrap the inner dispatch in the cache layer.
+        // Loader serialises the JSON result to bytes; cache hits
+        // round-trip back through serde.
+        let cache = self
+            .cache
+            .as_ref()
+            .expect("cache must be Some — spec lookup succeeded");
+        let layer = cache.layer.clone();
+        let scope = caller_scope(caller.as_ref());
+        let base_key = dispatch_base_key(extension, contribute_id, &input);
+
+        let extension_owned = extension.clone();
+        let contribute_id_owned = contribute_id.to_owned();
+        let caller_for_load = caller.clone();
+        let this = self;
+        let bytes = layer
+            .get_or_load(&spec, &scope, &base_key, move || async move {
+                let v = this
+                    .dispatch_inner(
+                        &extension_owned,
+                        &contribute_id_owned,
+                        input,
+                        caller_for_load.as_ref(),
+                    )
+                    .await?;
+                let serialised = serde_json::to_vec(&v).map_err(|e| {
+                    DispatchError::Substrate(format!("cache: serialise dispatch result: {e}"))
+                })?;
+                Ok::<_, DispatchError>(std::sync::Arc::new(serialised))
+            })
+            .await?;
+
+        let value: serde_json::Value = serde_json::from_slice(&bytes).map_err(|e| {
+            DispatchError::Substrate(format!("cache: deserialise stored result: {e}"))
+        })?;
+        Ok(value)
     }
 
     async fn dispatch_stream(

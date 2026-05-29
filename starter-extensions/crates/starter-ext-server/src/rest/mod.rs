@@ -34,11 +34,13 @@
 //!   test in `tests/rest_streaming.rs` enforces this).
 
 mod auth;
+mod cache;
 mod dispatcher;
 mod handler;
 mod router;
 mod schema;
 
+pub use cache::{DispatcherCache, KindCacheRegistry, SidecarLoadError};
 pub use dispatcher::{
     BuiltinRestDispatcher, DispatchError, NotWiredDispatcher, ProcessRestDispatcher,
     RestDispatcher, StreamResponse,

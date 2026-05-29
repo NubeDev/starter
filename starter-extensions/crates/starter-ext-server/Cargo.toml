@@ -21,6 +21,7 @@ starter-ext-supervisor = { workspace = true }
 starter-spi            = { workspace = true }
 starter-server         = { workspace = true }
 starter-authz          = { workspace = true }
+starter-cache          = { workspace = true }
 
 axum        = { workspace = true }
 tower       = { workspace = true }
