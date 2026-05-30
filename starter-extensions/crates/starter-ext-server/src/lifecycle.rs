@@ -71,26 +71,23 @@ pub(crate) struct CleanupResponse {
     pub code: &'static str,
     /// Resources actually removed.
     pub removed: Vec<CleanupItem>,
-    /// Reports what happened to the bundle directory itself. Lets the
-    /// UI surface "source files preserved" when this id was a dev mount.
+    /// Reports what happened to the bundle directory itself.
     pub bundle: BundleOutcome,
 }
 
 /// What the uninstall handler did with the bundle directory on disk.
 ///
-/// `Dev` mounts (loaded in-place from a developer source tree) are
-/// reported with `will_delete = false`; the runtime ran the cleanup
-/// providers but left the source files where the user put them. Every
-/// other id reports `will_delete = true` whether the bundle existed
-/// at uninstall time or not (an already-uninstalled id is a valid
-/// idempotent path).
+/// Under the installed-only model every uninstall removes the bundle
+/// dir; `will_delete` is therefore always `true`. The field is kept
+/// for one release so frontends that still branch on it parse
+/// successfully.
 #[derive(Debug, Serialize)]
 pub(crate) struct BundleOutcome {
-    /// Where the bundle lived (or lives, for `Dev`). Empty when the
-    /// id was unknown to the registry.
+    /// Where the bundle lived under `installs_dir`. Empty when the id
+    /// was unknown to the registry.
     pub path: String,
-    /// `true` when the directory was (or would be) removed; `false`
-    /// when it was preserved because the origin was `Dev`.
+    /// Always `true` under the installed-only model. Retained for
+    /// one-release frontend compatibility.
     pub will_delete: bool,
 }
 
@@ -309,10 +306,11 @@ pub(crate) async fn uninstall(
     principal: Option<Extension<Principal>>,
 ) -> axum::response::Response {
     let parsed_id = ExtensionId::new(&id).ok();
-    // Decide the bundle's fate before any side-effects: dev mounts are
-    // preserved, installed (or unknown) ids may be removed from the
-    // installs dir. The decision drives both the supervisor-shutdown
-    // path and the response envelope.
+    // Decide the bundle's fate before any side-effects: every known id
+    // resolves to a bundle dir under installs_dir; unknown ids fall
+    // back to the sanitised-id shape for idempotent re-purge. The
+    // decision drives both the supervisor-shutdown path and the
+    // response envelope.
     let plan = match plan_bundle_action(&admin, &id) {
         Ok(p) => p,
         Err(resp) => return resp,
@@ -336,10 +334,9 @@ pub(crate) async fn uninstall(
     }
 
     // `?purge=false` (default) keeps today's behaviour: a missing
-    // installed bundle is a `404 uninstall.not_found`. Dev mounts are
-    // never 404 — they're always present by definition (their record
-    // wouldn't be in the registry otherwise). Purge is idempotent
-    // (it cleans up leftovers even for already-uninstalled ids).
+    // installed bundle is a `404 uninstall.not_found`. Purge is
+    // idempotent (it cleans up leftovers even for already-uninstalled
+    // ids).
     if !q.purge && plan.is_missing_installed() {
         return (
             StatusCode::NOT_FOUND,
@@ -363,7 +360,6 @@ pub(crate) async fn uninstall(
         id = %id,
         dir = %plan.bundle_path().display(),
         purge = q.purge,
-        preserved = plan.is_dev(),
         "extension uninstalled",
     );
 
@@ -418,9 +414,6 @@ pub(crate) async fn uninstall(
 /// path, the 404 path, the remove-or-skip step, and the response
 /// envelope all agree on what's happening.
 enum BundlePlan {
-    /// Dev mount — record present with `BundleOrigin::Dev`. The
-    /// `path` is the bundle dir; we never remove it.
-    PreserveDev { path: PathBuf },
     /// Installed bundle that currently exists on disk under the
     /// configured installs dir. The handler will `remove_dir_all` it.
     RemoveInstalled { path: PathBuf },
@@ -434,14 +427,8 @@ enum BundlePlan {
 impl BundlePlan {
     fn bundle_path(&self) -> &Path {
         match self {
-            Self::PreserveDev { path }
-            | Self::RemoveInstalled { path }
-            | Self::LegacyInstalled { path, .. } => path,
+            Self::RemoveInstalled { path } | Self::LegacyInstalled { path, .. } => path,
         }
-    }
-
-    fn is_dev(&self) -> bool {
-        matches!(self, Self::PreserveDev { .. })
     }
 
     fn is_missing_installed(&self) -> bool {
@@ -451,7 +438,10 @@ impl BundlePlan {
     fn outcome(&self) -> BundleOutcome {
         BundleOutcome {
             path: self.bundle_path().display().to_string(),
-            will_delete: !self.is_dev(),
+            // Installed-only model: every uninstall removes the bundle
+            // dir. Field retained for one release so frontends with the
+            // dev-badge branch keep parsing successfully.
+            will_delete: true,
         }
     }
 }
@@ -466,17 +456,11 @@ fn plan_bundle_action(
     admin: &ExtensionAdmin,
     id: &str,
 ) -> Result<BundlePlan, axum::response::Response> {
-    // Records carry their own origin — dev mounts always win over the
-    // installs-dir fallback so a typo'd installs path can never delete
-    // a dev tree by accident.
+    // Records carry their bundle_dir from the loader; under the
+    // installed-only model that path always lives under installs_dir.
     if let Some(rec) = admin.registry().get_by_id_str(id) {
-        return Ok(match &rec.origin {
-            starter_ext_host::BundleOrigin::Dev { .. } => BundlePlan::PreserveDev {
-                path: rec.bundle_dir.clone(),
-            },
-            starter_ext_host::BundleOrigin::Installed { .. } => BundlePlan::RemoveInstalled {
-                path: rec.bundle_dir.clone(),
-            },
+        return Ok(BundlePlan::RemoveInstalled {
+            path: rec.bundle_dir.clone(),
         });
     }
     // No record — id may have already been uninstalled this run, or
@@ -497,7 +481,6 @@ fn plan_bundle_action(
 #[allow(clippy::result_large_err)]
 fn apply_bundle_removal(plan: &BundlePlan) -> Result<(), axum::response::Response> {
     let (path, must_exist) = match plan {
-        BundlePlan::PreserveDev { .. } => return Ok(()),
         BundlePlan::RemoveInstalled { path } => (path, true),
         BundlePlan::LegacyInstalled { path, exists } => (path, *exists),
     };
@@ -525,9 +508,9 @@ pub(crate) struct CleanupPreview {
     pub items: Vec<CleanupItem>,
     /// Sum of the `bytes` fields that are known.
     pub total_bytes: u64,
-    /// What the bundle directory itself would do — preserved (Dev) or
-    /// removed (Installed). Frontend uses this to swap copy and the
-    /// confirm-button label.
+    /// What the bundle directory itself would do. Always
+    /// `will_delete = true` under the installed-only model; retained
+    /// for one-release frontend compatibility.
     pub bundle: BundleOutcome,
 }
 
@@ -650,6 +633,22 @@ fn extract_tarball(bytes: &[u8], dest: &Path) -> std::io::Result<()> {
                 let mut buf = Vec::new();
                 entry.read_to_end(&mut buf)?;
                 std::fs::write(&target, &buf)?;
+                // We disabled preserve_permissions to avoid trusting the
+                // tar for setuid/setgid/world-writable bits, but that also
+                // drops +x — which kills child-process bundles whose
+                // runtime.bin is an executable. Re-apply the source mode
+                // masked to user/group/other rwx only.
+                #[cfg(unix)]
+                {
+                    use std::os::unix::fs::PermissionsExt;
+                    if let Ok(mode) = entry.header().mode() {
+                        let safe = mode & 0o777;
+                        let _ = std::fs::set_permissions(
+                            &target,
+                            std::fs::Permissions::from_mode(safe),
+                        );
+                    }
+                }
             }
             // Skip symlinks, hardlinks, devices, FIFOs — none belong
             // in an extension bundle.

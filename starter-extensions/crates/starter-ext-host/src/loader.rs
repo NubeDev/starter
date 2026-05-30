@@ -46,9 +46,8 @@ struct ScanCandidate {
 /// candidate (good and bad) at `Validated` / `Failed` respectively.
 pub struct Loader {
     candidates: Vec<ScanCandidate>,
-    /// Origin stamped on every record produced from this scan. Set by
-    /// [`Self::scan`] (defaults to `Installed`) and refined by
-    /// [`Self::scan_dev`] / [`Self::scan_installs`].
+    /// Origin stamped on every record produced from this scan. Always
+    /// `BundleOrigin::Installed` under the installed-only model.
     origin: BundleOrigin,
 }
 
@@ -76,18 +75,6 @@ impl Loader {
             root,
             BundleOrigin::Installed {
                 installs_dir: root.to_path_buf(),
-            },
-        )
-    }
-
-    /// Walk `root` as a **dev source tree**. Records produced from this
-    /// scan are stamped with [`BundleOrigin::Dev`], and the uninstall
-    /// handler refuses to delete them.
-    pub fn scan_dev(root: &Path) -> Self {
-        Self::scan_with_origin(
-            root,
-            BundleOrigin::Dev {
-                source_dir: root.to_path_buf(),
             },
         )
     }

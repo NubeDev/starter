@@ -59,14 +59,12 @@ struct Inner {
     /// adapters still serves all-zero counters.
     metrics: MetricsRegistry,
     worker_states: Option<WorkerStatesFn>,
-    /// On-disk root for **installed** (uploaded-tarball) bundles. The
-    /// install handler unpacks here and the uninstall handler is allowed
-    /// to `remove_dir_all` directories under it. Dev source trees live
-    /// elsewhere and are loaded into the registry with
-    /// [`BundleOrigin::Dev`](starter_ext_host::BundleOrigin); the
-    /// uninstall handler refuses to delete them regardless of this path.
-    /// Endpoints return HTTP 503 when this is unset so a `TestApp` that
-    /// doesn't wire it stays functional for the toggle-only surface.
+    /// On-disk root for installed (uploaded-tarball) bundles. The
+    /// install handler unpacks here and the uninstall handler removes
+    /// directories under it. Under the installed-only model this is
+    /// the *only* place extension bundles live at runtime. Endpoints
+    /// return HTTP 503 when this is unset so a `TestApp` that doesn't
+    /// wire it stays functional for the toggle-only surface.
     installs_dir: Option<PathBuf>,
 }
 

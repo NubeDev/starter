@@ -1,32 +1,19 @@
 //! [`BundleOrigin`] — provenance of an extension bundle on disk.
 //!
-//! The data-root-and-safe-uninstall scope (rubix/docs/scope/extensions/)
-//! splits one path into two:
-//!
-//! - **Dev source trees** are scanned in-place. Their contents are
-//!   author-edited and tracked in git; the runtime must never
-//!   `remove_dir_all` them.
-//! - **Installed bundles** are unpacked from uploaded tarballs into
-//!   the writable installs dir. The runtime owns these — uninstall
-//!   removes them.
-//!
-//! Records carry their origin from the moment the loader records them
-//! so the uninstall handler can refuse to delete a dev tree without
-//! re-deriving the distinction from path heuristics.
+//! Per the installed-only model
+//! (`rubix/docs/scope/extensions/installed-only-model.md`), bundles
+//! reach the runtime only by being unpacked into the writable installs
+//! dir. The type carries the installs root so uninstall can sanity-
+//! check that a path it's about to `remove_dir_all` really lives under
+//! the configured installs tree.
 
 use std::path::PathBuf;
 
-/// Where a bundle came from — drives whether uninstall may delete its
-/// directory.
+/// Where a bundle came from. Today there is exactly one origin; the
+/// type is retained as a wrapper so call sites stay forward-compatible
+/// if signed-registry installs or quarantine areas land later.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum BundleOrigin {
-    /// Loaded in-place from a developer source tree. Uninstall does
-    /// **not** delete the bundle directory.
-    Dev {
-        /// The dev source root the loader walked to find this bundle.
-        /// (Not the bundle dir itself — that lives on the record.)
-        source_dir: PathBuf,
-    },
     /// Unpacked from an uploaded tarball into the writable installs dir.
     /// Uninstall removes the bundle directory.
     Installed {
@@ -39,13 +26,10 @@ pub enum BundleOrigin {
 }
 
 impl Default for BundleOrigin {
-    /// `Installed { installs_dir: <empty> }`. Preserves pre-split
-    /// behaviour for tests and other call-sites that construct an
-    /// [`ExtensionRecord`](crate::ExtensionRecord) directly: every
-    /// record produced without an explicit origin is treated as
-    /// installable-and-deletable (the original behaviour before the
-    /// dev/installed split). Real boot paths replace this with the
-    /// actual installs dir via the loader.
+    /// `Installed { installs_dir: <empty> }`. Used by test fixtures and
+    /// other call sites that construct an
+    /// [`ExtensionRecord`](crate::ExtensionRecord) directly. Real boot
+    /// paths replace this with the actual installs dir via the loader.
     fn default() -> Self {
         Self::Installed {
             installs_dir: PathBuf::new(),
@@ -54,14 +38,10 @@ impl Default for BundleOrigin {
 }
 
 impl BundleOrigin {
-    /// `true` when this bundle's source files are owned by the user,
-    /// not by the runtime.
-    pub fn is_dev(&self) -> bool {
-        matches!(self, BundleOrigin::Dev { .. })
-    }
-
     /// `true` when uninstall is allowed to `remove_dir_all` the bundle
-    /// directory.
+    /// directory. Always true under the installed-only model — kept as
+    /// a method so call sites read intent and stay stable if more
+    /// origin variants are added later.
     pub fn is_installed(&self) -> bool {
         matches!(self, BundleOrigin::Installed { .. })
     }
@@ -72,16 +52,11 @@ mod tests {
     use super::*;
 
     #[test]
-    fn dev_and_installed_are_distinguishable() {
-        let dev = BundleOrigin::Dev {
-            source_dir: PathBuf::from("/repo/extensions"),
-        };
-        let installed = BundleOrigin::Installed {
-            installs_dir: PathBuf::from("/var/lib/rubix/extensions/installed"),
-        };
-        assert!(dev.is_dev());
-        assert!(!dev.is_installed());
-        assert!(installed.is_installed());
-        assert!(!installed.is_dev());
+    fn installed_default_has_empty_installs_dir() {
+        let o = BundleOrigin::default();
+        assert!(o.is_installed());
+        if let BundleOrigin::Installed { installs_dir } = o {
+            assert_eq!(installs_dir, PathBuf::new());
+        }
     }
 }

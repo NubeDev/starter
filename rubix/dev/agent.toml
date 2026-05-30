@@ -25,16 +25,16 @@ secrets_path = "rubix/dev/secrets.age"
 # crates/starter-ai-agent/LONG-TERM.md for the staged plan.
 # ai_provider = "claude-cli"
 
-# Extension-host knobs (rubix-extensions-wire Phase C).
+# Extension-host knobs (installed-only model — see
+# `docs/scope/extensions/installed-only-model.md`).
 #
-# `dev_dirs` is the list of developer source trees, scanned read-only.
-# Bundles found here are stamped `BundleOrigin::Dev`; the uninstall
-# handler will disable + purge their *data* but never delete the source
-# files. Default `["rubix/extensions"]` — the in-repo workspace shipping
-# `com.rubix.example`.
+# Bundles reach the runtime only by being unpacked into `installs_dir`
+# via `POST /api/v1/extensions/install`. Local development uses the
+# same path as production: `make -C rubix/extensions/<id> all` builds,
+# packs, installs, and restarts.
 #
-# `installs_dir` is where `POST /api/v1/extensions/install` unpacks
-# uploaded tarballs. Leave it unset to use the OS default
+# `installs_dir` is where the install handler unpacks uploaded
+# tarballs. Leave it unset to use the OS default
 # (`$XDG_DATA_HOME/rubix/extensions/installed/` on Linux); override
 # explicitly in production (e.g. `/var/lib/rubix/extensions/installed`).
 #
@@ -44,7 +44,6 @@ secrets_path = "rubix/dev/secrets.age"
 # to false.
 [extensions]
 enabled = true
-dev_dirs = ["rubix/extensions"]
 # installs_dir = "/var/lib/rubix/extensions/installed"
 autostart_enabled_records = true
 

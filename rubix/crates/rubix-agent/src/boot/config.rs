@@ -142,11 +142,13 @@ pub struct FlowRuntimeConfig {}
 /// The host is opt-out via `enabled = false` so an operator running
 /// rubix-agent purely as a REST/MCP frontend can skip the
 /// `extensions_enablement` migration and the on-boot supervisor
-/// spawns without uninstalling extensions on disk. `dir` defaults to
-/// `rubix/extensions` (the in-repo workspace) so a fresh checkout
-/// boots against the bundled `com.rubix.example`; production
-/// deployments override it to `/var/lib/rubix/extensions` (see
-/// SCOPE open question #1).
+/// spawns. Per the installed-only model
+/// (`rubix/docs/scope/extensions/installed-only-model.md`), bundles
+/// reach the runtime only by being unpacked into `installs_dir` via
+/// `POST /api/v1/extensions/install` — there is no dev-source-tree
+/// scan. `installs_dir` defaults to `$RUBIX_DATA_ROOT/extensions/
+/// installed/` (or the OS XDG default); production deployments may
+/// override it to `/var/lib/rubix/extensions/installed`.
 ///
 /// `autostart_enabled_records` controls whether the boot path reads
 /// the `extensions_enablement` table and spawns a supervisor for
@@ -161,28 +163,13 @@ pub struct ExtensionsConfig {
     /// migration runs against the Postgres pool. Default `true`.
     pub enabled: bool,
 
-    /// Developer source trees, scanned read-only. Each path is
-    /// walked one level deep for `block.yaml` bundles. Bundles
-    /// discovered here are stamped with `BundleOrigin::Dev`; the
-    /// uninstall handler will disable + purge their *data* but
-    /// never touch the source files on disk. Default
-    /// `["rubix/extensions"]` — the in-repo workspace shipping
-    /// `com.rubix.example`.
-    pub dev_dirs: Vec<PathBuf>,
-
-    /// Installed (uploaded-tarball) bundle root. `POST
-    /// /api/v1/extensions/install` unpacks bundles here and
-    /// `DELETE /api/v1/extensions/<id>` removes them. When unset,
-    /// the boot path resolves it from `starter_paths::Paths` —
-    /// i.e. `$RUBIX_DATA_ROOT/extensions/installed/` (or the OS
-    /// XDG default). Set it explicitly to override.
+    /// Installed-bundle root. `POST /api/v1/extensions/install`
+    /// unpacks bundles here and `DELETE /api/v1/extensions/<id>`
+    /// removes them. When unset, the boot path resolves it from
+    /// `starter_paths::Paths` — i.e. `$RUBIX_DATA_ROOT/extensions/
+    /// installed/` (or the OS XDG default). Set it explicitly to
+    /// override.
     pub installs_dir: Option<PathBuf>,
-
-    /// Deprecated single-path field. When set, treated as a one-element
-    /// `dev_dirs = [<value>]`; logs a deprecation warning at boot. Will
-    /// be removed once configs in the wild have migrated.
-    #[serde(default)]
-    pub dir: Option<PathBuf>,
 
     /// When `true` the boot path reads every `Enabled` row from the
     /// PG store and spawns a supervisor for the matching record so
@@ -195,9 +182,7 @@ impl Default for ExtensionsConfig {
     fn default() -> Self {
         Self {
             enabled: true,
-            dev_dirs: vec![PathBuf::from("rubix/extensions")],
             installs_dir: None,
-            dir: None,
             autostart_enabled_records: true,
         }
     }

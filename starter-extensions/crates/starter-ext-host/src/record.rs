@@ -44,12 +44,11 @@ pub struct ExtensionRecord {
     /// The error that put the record in `Failed`, if any.
     pub failure: Option<Error>,
 
-    /// Provenance: dev source tree or installed (uploaded) bundle.
-    /// Drives the uninstall handler's "may I `remove_dir_all` this?"
-    /// decision. Defaults to [`BundleOrigin::Installed`] when a record
-    /// is constructed without one — every existing call-site preserves
-    /// its current behaviour until the loader splits scan into
-    /// `scan_dev` / `scan_installs`.
+    /// Provenance: where on disk this bundle was loaded from. Under
+    /// the installed-only model this is always
+    /// [`BundleOrigin::Installed`] carrying the installs-root path so
+    /// the uninstall handler can sanity-check that a `remove_dir_all`
+    /// target really lives under the configured installs tree.
     pub origin: BundleOrigin,
 }
 

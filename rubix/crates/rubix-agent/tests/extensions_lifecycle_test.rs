@@ -140,9 +140,10 @@ fn agent_config(extensions_dir: PathBuf) -> AgentConfig {
     let mut cfg = AgentConfig::default();
     cfg.extensions = ExtensionsConfig {
         enabled: true,
-        dev_dirs: vec![extensions_dir],
-        installs_dir: None,
-        dir: None,
+        // Installed-only model: point installs_dir at the test bundle
+        // root. The loader walks this path the same way it walks the
+        // real installs dir at runtime.
+        installs_dir: Some(extensions_dir),
         // Drive every transition explicitly through REST so the
         // assertions don't race the boot-time autostart loop.
         autostart_enabled_records: false,

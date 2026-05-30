@@ -5,10 +5,11 @@
 //!
 //! 1. [`PgEnablementStore`] — the PostgreSQL-backed persistence impl of the
 //!    [`EnablementStore`] trait, landed upstream per SCOPE R2.
-//! 2. [`Loader::scan`] + [`Loader::validate_all`] + [`Loader::commit`] —
-//!    the two-phase manifest loader that turns `cfg.extensions.dir`'s
-//!    immediate child directories into validated [`ExtensionRecord`]s and
-//!    drops them into a sealed [`ExtensionRegistry`].
+//! 2. [`Loader::scan_installs`] + [`Loader::validate_all`] +
+//!    [`Loader::commit`] — the two-phase manifest loader that turns
+//!    `installs_dir`'s immediate child directories into validated
+//!    [`ExtensionRecord`]s and drops them into a sealed
+//!    [`ExtensionRegistry`].
 //! 3. [`DefaultSupervisorFactory`] — spawns a process-flavour supervisor
 //!    for each enabled record at boot, and is later re-used by the admin
 //!    router's `enable` handler.
@@ -34,7 +35,7 @@ use sqlx::PgPool;
 use thiserror::Error;
 use tracing::{info, warn};
 
-use starter_ext_host::{BundleOrigin, ExtensionRecord, ExtensionRegistry, Loader};
+use starter_ext_host::{ExtensionRegistry, Loader};
 use starter_paths::Paths;
 use starter_ext_server::{
     CleanupProvider, DefaultSupervisorFactory, EnablementState, ExtensionAdmin, SupervisorFactory,
@@ -122,8 +123,8 @@ pub struct AutostartSpawnError(pub String);
 ///
 /// 1. Apply `0001_extensions_enablement.sql` against `pg_pool` (idempotent).
 /// 2. Wrap the pool in a [`PgEnablementStore`].
-/// 3. Walk `cfg.extensions.dir` via the two-phase [`Loader`] and seal
-///    the resulting [`ExtensionRegistry`].
+/// 3. Walk `installs_dir` via [`Loader::scan_installs`] and seal the
+///    resulting [`ExtensionRegistry`].
 /// 4. When `cfg.extensions.autostart_enabled_records` is `true`, read
 ///    every persisted `Enabled` row from the store and spawn its
 ///    supervisor via [`DefaultSupervisorFactory`]. A spawn failure for
@@ -174,29 +175,25 @@ pub async fn build_extension_admin(
     // (2) PG-backed store. Cheap to clone — wraps an `Arc<PgPool>`.
     let store = Arc::new(PgEnablementStore::new(pg_pool.clone()));
 
-    // (3) Two-phase loader. The dev source trees in `cfg.extensions
-    // .dev_dirs` are scanned read-only (records stamped
-    // `BundleOrigin::Dev`); the installs dir under `Paths` is scanned
-    // separately (`BundleOrigin::Installed`). The uninstall handler
-    // uses the stamped origin to decide whether removing the bundle
-    // dir is safe (data-root-and-safe-uninstall scope, Stage D).
+    // (3) Loader. Under the installed-only model
+    // (`rubix/docs/scope/extensions/installed-only-model.md`), bundles
+    // only reach the runtime by being unpacked into `installs_dir`.
+    // There is no dev-source-tree scan; local development uses the
+    // same `POST /extensions/install` path as production.
     //
-    // Canonicalise each scanned root to an absolute path *before*
+    // Canonicalise the installs root to an absolute path *before*
     // handing it to the loader. The loader stamps each record's
-    // `bundle_dir = scan_root.join(entry_name)`; the process-flavour
-    // supervisor then `Command::current_dir(&bundle_dir).arg0(bundle_dir
-    // .join(runtime.bin))`, which double-resolves a relative
-    // `bundle_dir` against itself and produces a bogus exec path
-    // (e.g. `rubix/extensions/<id>/rubix/extensions/<id>/<bin>` -> ENOENT).
+    // `bundle_dir = installs_dir.join(entry_name)`; the process-
+    // flavour supervisor then `Command::current_dir(&bundle_dir)
+    // .arg0(bundle_dir.join(runtime.bin))`, which double-resolves a
+    // relative `bundle_dir` against itself and produces a bogus exec
+    // path.
     let installs_dir = resolve_installs_dir(cfg)?;
     info!(target: "rubix-agent::boot::extensions",
         installs_dir = %installs_dir.display(),
-        dev_dirs = ?effective_dev_dirs(cfg),
-        "scanning extension roots");
+        "scanning installed extensions");
 
-    let dev_records = scan_dev_trees(cfg);
-    let installed_records = Loader::scan_installs(&installs_dir).validate_all();
-    let records = merge_records(dev_records, installed_records);
+    let records = Loader::scan_installs(&installs_dir).validate_all();
 
     let validated_count = records
         .iter()
@@ -348,68 +345,3 @@ fn resolve_installs_dir(cfg: &AgentConfig) -> Result<std::path::PathBuf, BootErr
     Ok(dir.canonicalize().unwrap_or(dir))
 }
 
-/// Effective list of dev source trees. Promotes the deprecated
-/// `extensions.dir` field into a one-element `dev_dirs` so legacy
-/// configs keep booting; logs a one-shot deprecation warning the
-/// first time it's read.
-fn effective_dev_dirs(cfg: &AgentConfig) -> Vec<std::path::PathBuf> {
-    let mut dirs = cfg.extensions.dev_dirs.clone();
-    if let Some(legacy) = &cfg.extensions.dir {
-        warn!(target: "rubix-agent::boot::extensions",
-            legacy = %legacy.display(),
-            "`extensions.dir` is deprecated — use `extensions.dev_dirs = [\"…\"]`. \
-             Promoting the legacy value into dev_dirs for this run.");
-        if !dirs.iter().any(|d| d == legacy) {
-            dirs.push(legacy.clone());
-        }
-    }
-    dirs
-}
-
-fn scan_dev_trees(cfg: &AgentConfig) -> Vec<ExtensionRecord> {
-    let mut out = Vec::new();
-    for raw in effective_dev_dirs(cfg) {
-        let canonical = raw.canonicalize().unwrap_or(raw.clone());
-        let scanned = Loader::scan_dev(&canonical).validate_all();
-        info!(target: "rubix-agent::boot::extensions",
-            dir = %canonical.display(), count = scanned.len(),
-            "scanned dev source tree");
-        out.extend(scanned);
-    }
-    out
-}
-
-/// Merge dev + installed records. Installed wins on id collision —
-/// the dev tree is shadowed and we emit a warning so the operator
-/// knows the working copy isn't the one being served.
-fn merge_records(
-    dev: Vec<ExtensionRecord>,
-    installed: Vec<ExtensionRecord>,
-) -> Vec<ExtensionRecord> {
-    use std::collections::HashSet;
-    let installed_ids: HashSet<String> = installed
-        .iter()
-        .filter_map(|r| r.id.as_ref().map(|i| i.as_str().to_owned()))
-        .collect();
-    let mut out = installed;
-    for rec in dev {
-        let key = rec
-            .id
-            .as_ref()
-            .map(|i| i.as_str().to_owned())
-            .unwrap_or_else(|| rec.id_hint.clone());
-        if installed_ids.contains(&key) {
-            let source = match &rec.origin {
-                BundleOrigin::Dev { source_dir } => source_dir.display().to_string(),
-                BundleOrigin::Installed { .. } => rec.bundle_dir.display().to_string(),
-            };
-            warn!(target: "rubix-agent::boot::extensions",
-                id = %key, source = %source,
-                "dev bundle shadowed by installed bundle of the same id — \
-                 the installed copy will serve requests");
-            continue;
-        }
-        out.push(rec);
-    }
-    out
-}
