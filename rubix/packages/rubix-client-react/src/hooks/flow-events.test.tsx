@@ -9,6 +9,7 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 
 import {
   flowEventsPath,
+  flowValuesPath,
   useFlowEvents,
   type NodeSlotValue,
 } from "./flow-events.js";
@@ -47,6 +48,15 @@ describe("flowEventsPath", () => {
       "/api/v1/flows/dev.starter.echo/events",
     );
     expect(flowEventsPath("a/b")).toBe("/api/v1/flows/a%2Fb/events");
+  });
+});
+
+describe("flowValuesPath", () => {
+  it("encodes the flow id and lands under /api/v1/flows", () => {
+    expect(flowValuesPath("dev.starter.echo")).toBe(
+      "/api/v1/flows/dev.starter.echo/values",
+    );
+    expect(flowValuesPath("a/b")).toBe("/api/v1/flows/a%2Fb/values");
   });
 });
 
@@ -120,6 +130,81 @@ describe("useFlowEvents", () => {
     act(() => es.emit(emit("dev.starter.counter", "count", 3)));
     await waitFor(() => expect(result.current.events).toHaveLength(2));
     expect(result.current.events.map((e) => e.value)).toEqual([2, 3]);
+  });
+
+  it("seeds runOverlay from the REST snapshot on mount", async () => {
+    MockEventSource.reset();
+    const { Wrapper } = makeHarness(() => new Response("{}", { status: 200 }));
+    const snapshot: NodeSlotValue[] = [
+      emit("dev.starter.counter", "count", 41),
+      emit("dev.starter.log", "out", "seeded"),
+    ];
+    const seedFetch: typeof fetch = async () =>
+      new Response(JSON.stringify(snapshot), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    const { result } = renderHook(
+      () =>
+        useFlowEvents("dev.starter.echo", {
+          eventSourceCtor: MockEventSource as unknown as typeof EventSource,
+          fetchImpl: seedFetch,
+        }),
+      { wrapper: Wrapper },
+    );
+
+    await waitFor(() =>
+      expect(result.current.runOverlay.slotValues).toEqual({
+        "dev.starter.counter": { count: 41 },
+        "dev.starter.log": { out: "seeded" },
+      }),
+    );
+    expect(result.current.runOverlay.nodes).toEqual({
+      "dev.starter.counter": "ok",
+      "dev.starter.log": "ok",
+    });
+  });
+
+  it("live SSE frames win over the seeded snapshot for the same slot", async () => {
+    MockEventSource.reset();
+    const { Wrapper } = makeHarness(() => new Response("{}", { status: 200 }));
+    const snapshot: NodeSlotValue[] = [emit("dev.starter.counter", "count", 41)];
+    // Resolve the snapshot fetch only after the test triggers it so we
+    // can land a live frame first and assert it is not clobbered.
+    let release: (() => void) | undefined;
+    const gate = new Promise<void>((r) => {
+      release = r;
+    });
+    const seedFetch: typeof fetch = async () => {
+      await gate;
+      return new Response(JSON.stringify(snapshot), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    };
+    const { result } = renderHook(
+      () =>
+        useFlowEvents("dev.starter.echo", {
+          eventSourceCtor: MockEventSource as unknown as typeof EventSource,
+          fetchImpl: seedFetch,
+        }),
+      { wrapper: Wrapper },
+    );
+    await waitFor(() => expect(MockEventSource.instances).toHaveLength(1));
+    const es = MockEventSource.instances[0]!;
+    // Live frame arrives before the snapshot resolves.
+    act(() => es.emit(emit("dev.starter.counter", "count", 99)));
+    await waitFor(() =>
+      expect(result.current.runOverlay.slotValues).toEqual({
+        "dev.starter.counter": { count: 99 },
+      }),
+    );
+    // Now let the snapshot resolve — it must not overwrite the live 99.
+    act(() => release?.());
+    await new Promise((r) => setTimeout(r, 0));
+    expect(result.current.runOverlay.slotValues).toEqual({
+      "dev.starter.counter": { count: 99 },
+    });
   });
 
   it("reconnect() clears events + overlay and opens a new EventSource", async () => {

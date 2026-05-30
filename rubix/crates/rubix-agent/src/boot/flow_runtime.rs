@@ -57,7 +57,9 @@ use tokio::sync::broadcast;
 use tracing::{info, warn};
 
 use starter_flow::state::in_memory::InMemoryNodeStateStore;
+use starter_flow_spi::event_dto::NodeSlotValue;
 use starter_flow_spi::flow::{FlowEvent, FlowId};
+use starter_flow_spi::node::NodeId;
 use starter_flow_spi::state::NodeStateStore;
 use starter_store_postgres::flow::node_state::PgNodeStateStore;
 use starter_store_postgres::flow::FLOW_MIGRATION_SOURCE;
@@ -76,6 +78,17 @@ const BROADCAST_CAPACITY: usize = 256;
 #[derive(Default)]
 pub struct FlowSubscriptionRegistry {
     inner: RwLock<std::collections::HashMap<FlowId, broadcast::Sender<FlowEvent>>>,
+    /// Last emitted slot value per `(node, slot)` per flow. Populated
+    /// on the same `publish()` path as the broadcast fan-out so a UI
+    /// connecting *between* runs can paint the most-recent values
+    /// immediately (via `GET /api/v1/flows/{flow_id}/values`) instead
+    /// of waiting for the next scheduled run to emit a fresh frame.
+    /// The SSE channel only carries events emitted *after* a client
+    /// subscribes, so without this snapshot a freshly-loaded page
+    /// shows empty node values until the next tick.
+    last_values: RwLock<
+        std::collections::HashMap<FlowId, std::collections::HashMap<(NodeId, String), NodeSlotValue>>,
+    >,
 }
 
 impl FlowSubscriptionRegistry {
@@ -128,29 +141,70 @@ impl FlowSubscriptionRegistry {
             .or_insert_with(|| broadcast::channel::<FlowEvent>(BROADCAST_CAPACITY).0)
             .clone()
     }
-}
 
+    /// Snapshot of the last emitted value for every `(node, slot)`
+    /// the engine has fanned out for `flow_id` since this process
+    /// booted. Backs `GET /api/v1/flows/{flow_id}/values` so a page
+    /// loaded between runs paints the most-recent values immediately
+    /// rather than waiting for the next SSE frame. Returns an empty
+    /// vec when no values have been recorded yet.
+    pub fn snapshot(&self, flow_id: &FlowId) -> Vec<NodeSlotValue> {
+        self.last_values
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(flow_id)
+            .map(|m| m.values().cloned().collect())
+            .unwrap_or_default()
+    }
+}
 /// `FlowEventSink` implementation: feeds every event into the
 /// per-flow broadcast that the SSE route subscribes to.
 impl starter_flow::FlowEventSink for FlowSubscriptionRegistry {
     fn publish(&self, flow: &FlowId, event: FlowEvent) {
         // Re-use the fast path of `sender()` synchronously —
         // `tokio::sync::broadcast::Sender::send` itself is sync.
-        let tx = {
-            if let Some(tx) = self
+        //
+        // The read guard MUST be released before the write lock is
+        // taken. On edition 2021 the scrutinee temporary of an
+        // `if let … { } else { }` lives until the end of the whole
+        // expression, so writing the registry inside the `else`
+        // branch while the `if let` still pins the read guard
+        // self-deadlocks (acquire write while holding read on the
+        // same `RwLock`). That wedged the first scheduled run's
+        // `NodeEmitted` after boot and left every later registry
+        // `read()`/`write()` — including each SSE subscribe — parked
+        // forever, so the live-value feed never produced a frame.
+        // Bind the fast-path clone in its own `let` statement so the
+        // read guard drops at the `;` before any write.
+        let existing = self
+            .inner
+            .read()
+            .unwrap_or_else(|e| e.into_inner())
+            .get(flow)
+            .cloned();
+        let tx = match existing {
+            Some(tx) => tx,
+            None => self
                 .inner
-                .read()
+                .write()
                 .unwrap_or_else(|e| e.into_inner())
-                .get(flow)
-            {
-                tx.clone()
-            } else {
-                let mut map = self.inner.write().unwrap_or_else(|e| e.into_inner());
-                map.entry(flow.clone())
-                    .or_insert_with(|| broadcast::channel::<FlowEvent>(BROADCAST_CAPACITY).0)
-                    .clone()
-            }
+                .entry(flow.clone())
+                .or_insert_with(|| broadcast::channel::<FlowEvent>(BROADCAST_CAPACITY).0)
+                .clone(),
         };
+        // Record the latest value per `(node, slot)` so a UI loading
+        // between runs can read it back over REST. Done before the
+        // broadcast send (the send consumes `event`) and on its own
+        // write lock that is released at the `;` — never held across
+        // the `tx.send` below.
+        if let Some(nsv) = NodeSlotValue::from_event(&event) {
+            self.last_values
+                .write()
+                .unwrap_or_else(|e| e.into_inner())
+                .entry(flow.clone())
+                .or_default()
+                .insert((nsv.node.clone(), nsv.slot.clone()), nsv);
+        }
         // `Err` only when there are no receivers — fine to drop.
         let _ = tx.send(event);
     }
@@ -432,6 +486,117 @@ mod tests {
         .expect("send");
         assert!(rx1.try_recv().is_ok());
         assert!(rx2.try_recv().is_ok());
+    }
+
+    // Regression: `FlowEventSink::publish` for a flow that is NOT yet
+    // in the registry must take the write path WITHOUT holding a read
+    // guard. The previous `if let { } else { write } ` expression
+    // pinned the scrutinee read guard into the `else` branch (edition
+    // 2021 temporary scope), so the write lock deadlocked against the
+    // still-held read lock on the first emit of every flow — which
+    // permanently wedged the SSE live-value feed. Run `publish` on a
+    // dedicated thread and assert it returns promptly; a deadlock
+    // leaves the thread parked and the join times out.
+    #[test]
+    fn publish_to_fresh_flow_does_not_deadlock() {
+        use std::sync::mpsc;
+        use std::time::Duration;
+
+        let reg = Arc::new(FlowSubscriptionRegistry::new());
+        let flow = FlowId::new("dev.starter.fresh").expect("valid id");
+        let (done_tx, done_rx) = mpsc::channel();
+        let reg_for_thread = reg.clone();
+        let flow_for_thread = flow.clone();
+        std::thread::spawn(move || {
+            // First publish: flow absent → exercises the write path.
+            starter_flow::FlowEventSink::publish(
+                reg_for_thread.as_ref(),
+                &flow_for_thread,
+                FlowEvent::RunStarted {
+                    run: starter_flow_spi::flow::RunId::new(),
+                    flow: flow_for_thread.clone(),
+                },
+            );
+            let _ = done_tx.send(());
+        });
+        done_rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("publish to a fresh flow must not deadlock");
+
+        // The channel was created and a later subscriber sees a
+        // subsequent emit — proving publish wired the sender, not a
+        // throwaway.
+        let mut rx = futures::executor::block_on(reg.subscribe_or_create(&flow));
+        starter_flow::FlowEventSink::publish(
+            reg.as_ref(),
+            &flow,
+            FlowEvent::RunStarted {
+                run: starter_flow_spi::flow::RunId::new(),
+                flow: flow.clone(),
+            },
+        );
+        assert!(rx.try_recv().is_ok());
+    }
+
+    // Snapshot of last emitted slot values backs the REST
+    // `/values` route the UI reads on page load. `publish` of a
+    // `NodeEmitted` must record the projected value per `(node,
+    // slot)`, latest-wins; non-emitting variants leave it untouched.
+    #[test]
+    fn snapshot_records_latest_node_emitted_per_slot() {
+        use starter_flow_spi::node::{NodeId, SlotValue};
+
+        let reg = FlowSubscriptionRegistry::new();
+        let flow = FlowId::new("dev.starter.echo").expect("valid id");
+        let run = starter_flow_spi::flow::RunId::new();
+        let node = NodeId::new("dev.starter.counter").expect("valid id");
+
+        // No emits yet → empty snapshot.
+        assert!(reg.snapshot(&flow).is_empty());
+
+        // A non-emitting variant does not populate the snapshot.
+        starter_flow::FlowEventSink::publish(
+            &reg,
+            &flow,
+            FlowEvent::RunStarted {
+                run,
+                flow: flow.clone(),
+            },
+        );
+        assert!(reg.snapshot(&flow).is_empty());
+
+        // Two emits on the same slot → latest wins.
+        starter_flow::FlowEventSink::publish(
+            &reg,
+            &flow,
+            FlowEvent::NodeEmitted {
+                run,
+                node: node.clone(),
+                slot: "count".into(),
+                value: SlotValue::Int(1),
+            },
+        );
+        starter_flow::FlowEventSink::publish(
+            &reg,
+            &flow,
+            FlowEvent::NodeEmitted {
+                run,
+                node: node.clone(),
+                slot: "count".into(),
+                value: SlotValue::Int(7),
+            },
+        );
+
+        let snap = reg.snapshot(&flow);
+        assert_eq!(snap.len(), 1, "one (node, slot) entry");
+        assert_eq!(snap[0].node, node);
+        assert_eq!(snap[0].slot, "count");
+        assert_eq!(snap[0].value, serde_json::json!(7));
+
+        // A different flow id has its own (empty) snapshot.
+        assert!(reg
+            .snapshot(&FlowId::new("dev.starter.other").unwrap())
+            .is_empty());
     }
 
     #[tokio::test]

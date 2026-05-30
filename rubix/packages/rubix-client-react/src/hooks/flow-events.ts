@@ -29,6 +29,20 @@ export function flowEventsPath(flowId: string): string {
 }
 
 /**
+ * Build the REST snapshot path for a given flow id.
+ *
+ * `GET /api/v1/flows/{flow_id}/values` returns the last known
+ * `NodeSlotValue` per `(node, slot)` the agent has fanned out since
+ * boot. The SSE feed only carries frames emitted *after* a client
+ * connects, so a page loaded between scheduled runs reads this
+ * snapshot once on mount to paint node values immediately instead of
+ * waiting for the next tick.
+ */
+export function flowValuesPath(flowId: string): string {
+  return `/api/v1/flows/${encodeURIComponent(flowId)}/values`;
+}
+
+/**
  * Wire DTO mirroring `starter_flow_spi::event_dto::NodeSlotValue`.
  * Kept structural so this package stays free of an engine-side type
  * dependency — the rubix UI does the same elsewhere (see
@@ -100,6 +114,15 @@ export interface UseFlowEventsOptions {
   eventSourceCtor?: typeof EventSource;
   /** Test seam — forwarded to `useEventStream`. */
   forceFetch?: boolean;
+  /**
+   * Load the last-known values over REST (`/values`) on mount so the
+   * overlay paints immediately between runs. Default `true`. The
+   * snapshot only seeds slots a live SSE frame has not already
+   * filled, so it never clobbers fresher data.
+   */
+  seedFromSnapshot?: boolean;
+  /** Test seam — override the `fetch` used for the snapshot load. */
+  fetchImpl?: typeof fetch;
 }
 
 export interface UseFlowEventsResult {
@@ -149,6 +172,51 @@ export function useFlowEvents(
     setRunOverlay(EMPTY_OVERLAY);
     lastFrameRef.current = null;
   }, [path]);
+
+  // Seed the overlay from the REST snapshot (`/values`) once per
+  // flow on mount. The SSE feed only carries frames emitted after we
+  // connect, so without this a page loaded between runs shows empty
+  // node values until the next tick. We only fill slots a live frame
+  // has not already populated, so a snapshot that resolves after the
+  // first SSE frame never overwrites fresher data.
+  useEffect(() => {
+    if (options.enabled === false) return;
+    if (options.seedFromSnapshot === false) return;
+    const doFetch = options.fetchImpl ?? globalThis.fetch;
+    if (typeof doFetch !== "function") return;
+    let cancelled = false;
+    doFetch(flowValuesPath(flowId), {
+      credentials: "include",
+      headers: { accept: "application/json" },
+    })
+      .then((r) => (r.ok ? (r.json() as Promise<NodeSlotValue[]>) : []))
+      .then((rows) => {
+        if (cancelled || !Array.isArray(rows) || rows.length === 0) return;
+        setRunOverlay((prev) => {
+          const nodes = { ...prev.nodes };
+          const slotValues: FlowRunOverlay["slotValues"] = {
+            ...prev.slotValues,
+          };
+          for (const row of rows) {
+            const nodeKey = rubixShortNodeId(row.node);
+            const existing = slotValues[nodeKey] ?? {};
+            // A live SSE frame for this slot already won — keep it.
+            if (existing[row.slot] !== undefined) continue;
+            slotValues[nodeKey] = { ...existing, [row.slot]: row.value };
+            nodes[nodeKey] = nodes[nodeKey] ?? "ok";
+          }
+          return { nodes, slotValues };
+        });
+      })
+      .catch(() => {
+        // Snapshot is best-effort — the SSE feed still delivers live
+        // values once the next frame lands.
+      });
+    return () => {
+      cancelled = true;
+    };
+    // `path` is derived from `flowId`; re-seed whenever it changes.
+  }, [path, flowId, options.enabled, options.seedFromSnapshot, options.fetchImpl]);
 
   // Accumulate frames as they arrive. `useEventStream` only surfaces
   // the latest snapshot, so we promote each new reference into our
