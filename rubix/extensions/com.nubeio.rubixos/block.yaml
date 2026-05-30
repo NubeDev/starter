@@ -279,6 +279,3 @@ contributes:
       - name: NavTree
         module: "./NavTree"
         slot: sidebar-nav
-      - name: Sidebar
-        module: "./Sidebar"
-        slot: sidebar

@@ -1,33 +1,67 @@
 // `nav-tree.tsx` — Sidebar nav-tree contribution for `com.nubeio.rubixos`.
-// Uses the same data-sidebar attributes and Tailwind classes as the host's
-// shadcn SidebarGroup/SidebarMenu components so it renders identically.
+//
+// Renders identically to the host's NavGroup (rubix/frontend/src/components/
+// layout/nav-group.tsx) by mirroring the exact data-slot/data-sidebar
+// attributes, Tailwind class strings, and lucide-react icons that the
+// host's shadcn `SidebarMenu*` primitives emit. We can't import those
+// primitives directly — the extension is a module-federation remote and
+// React is the only externalised singleton — so we hand-roll the markup
+// with the same classes the host's `sidebarMenuButtonVariants` cva emits.
+//
+// When the host's sidebar primitives change classes, this file must be
+// updated in lockstep (see `rubix/frontend/src/components/ui/sidebar.tsx`).
 
 import * as React from "react";
+import {
+  ChevronRight,
+  Database,
+  FileText,
+  LineChart,
+  LayoutGrid,
+  Network,
+  Router,
+  Server,
+  Zap,
+} from "lucide-react";
 
 import { BlockShell } from "@nube/starter-ext-sdk-ts";
 import { EXTENSION_ID } from "./types";
 
-interface NavLeaf   { title: string; href: string }
-interface NavBranch { title: string; children: NavLeaf[] }
+type IconCmp = React.ComponentType<{ className?: string }>;
+
+interface NavLeaf {
+  title: string;
+  href: string;
+  icon?: IconCmp;
+}
+interface NavBranch {
+  title: string;
+  icon?: IconCmp;
+  children: NavLeaf[];
+}
 type NavItem = NavLeaf | NavBranch;
-function isBranch(item: NavItem): item is NavBranch { return "children" in item; }
+function isBranch(item: NavItem): item is NavBranch {
+  return "children" in item;
+}
 
 const TREE: NavItem[] = [
-  { title: "Overview", href: `/extensions/${EXTENSION_ID}` },
+  { title: "Overview", href: `/extensions/${EXTENSION_ID}`, icon: LayoutGrid },
   {
     title: "Topology",
+    icon: Network,
     children: [
-      { title: "Hosts",    href: `/extensions/${EXTENSION_ID}/hosts`    },
-      { title: "Networks", href: `/extensions/${EXTENSION_ID}/networks` },
-      { title: "Devices",  href: `/extensions/${EXTENSION_ID}/devices`  },
+      { title: "Hosts",    href: `/extensions/${EXTENSION_ID}/hosts`,    icon: Server },
+      { title: "Networks", href: `/extensions/${EXTENSION_ID}/networks`, icon: Router },
+      { title: "Devices",  href: `/extensions/${EXTENSION_ID}/devices`,  icon: Database },
     ],
   },
   {
     title: "Data",
+    icon: Database,
     children: [
-      { title: "Energy & Water",  href: `/extensions/${EXTENSION_ID}/usage`   },
-      { title: "Report (print)",  href: `/extensions/${EXTENSION_ID}/report`  },
-      { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history` },
+      { title: "Energy & Water",  href: `/extensions/${EXTENSION_ID}/usage`,   icon: Zap },
+      { title: "Report (print)",  href: `/extensions/${EXTENSION_ID}/report`,  icon: FileText },
+      { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: LineChart },
     ],
   },
 ];
@@ -42,71 +76,121 @@ export default function NavTree(): React.ReactElement {
 
 function NavTreeInner(): React.ReactElement {
   const path = typeof window !== "undefined" ? window.location.pathname : "";
+  // SidebarGroup
   return (
-    // Matches SidebarGroup: relative flex w-full min-w-0 flex-col p-2
-    <div data-slot="sidebar-group" data-sidebar="group" className="relative flex w-full min-w-0 flex-col p-2">
-      {/* Matches SidebarGroupLabel */}
+    <div
+      data-slot="sidebar-group"
+      data-sidebar="group"
+      className="relative flex w-full min-w-0 flex-col p-2"
+    >
+      {/* SidebarGroupLabel */}
       <div
         data-slot="sidebar-group-label"
         data-sidebar="group-label"
-        className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70"
+        className="flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0"
       >
-        RUBIX-OS
+        Rubix-OS
       </div>
-      {/* Matches SidebarMenu */}
-      <ul data-slot="sidebar-menu" data-sidebar="menu" className="flex w-full min-w-0 flex-col gap-1">
+      {/* SidebarMenu */}
+      <ul
+        data-slot="sidebar-menu"
+        data-sidebar="menu"
+        className="flex w-full min-w-0 flex-col gap-1"
+      >
         {TREE.map((item) =>
-          isBranch(item)
-            ? <Branch key={item.title} branch={item} currentPath={path} />
-            : <Leaf key={item.href} leaf={item} currentPath={path} top />
+          isBranch(item) ? (
+            <Branch key={item.title} branch={item} currentPath={path} />
+          ) : (
+            <Leaf key={item.href} leaf={item} currentPath={path} top />
+          ),
         )}
       </ul>
     </div>
   );
 }
 
-function Leaf({ leaf, currentPath, top }: { leaf: NavLeaf; currentPath: string; top?: boolean }): React.ReactElement {
-  const isActive = currentPath === leaf.href || currentPath.startsWith(leaf.href + "/");
+// Matches SidebarMenuButton (top) / SidebarMenuSubButton (nested).
+const MENU_BUTTON_CLASS =
+  "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pe-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 h-8 no-underline";
+
+const SUB_BUTTON_CLASS =
+  "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-inherit text-sm data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden no-underline";
+
+function Leaf({
+  leaf,
+  currentPath,
+  top,
+}: {
+  leaf: NavLeaf;
+  currentPath: string;
+  top?: boolean;
+}): React.ReactElement {
+  const isActive =
+    currentPath === leaf.href || currentPath.startsWith(leaf.href + "/");
+  const Icon = leaf.icon;
   if (top) {
     return (
-      // Matches SidebarMenuItem
-      <li data-slot="sidebar-menu-item" data-sidebar="menu-item" className="group/menu-item relative">
+      // SidebarMenuItem
+      <li
+        data-slot="sidebar-menu-item"
+        data-sidebar="menu-item"
+        className="group/menu-item relative"
+      >
         <a
           href={leaf.href}
           data-slot="sidebar-menu-button"
           data-sidebar="menu-button"
           data-active={isActive}
-          className="peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground h-8 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground no-underline"
+          className={MENU_BUTTON_CLASS}
         >
+          {Icon ? <Icon /> : null}
           <span>{leaf.title}</span>
         </a>
       </li>
     );
   }
   return (
-    // Matches SidebarMenuSubItem + SidebarMenuSubButton
-    <li data-slot="sidebar-menu-sub-item" data-sidebar="menu-sub-item" className="group/menu-sub-item relative">
+    // SidebarMenuSubItem
+    <li
+      data-slot="sidebar-menu-sub-item"
+      data-sidebar="menu-sub-item"
+      className="group/menu-sub-item relative"
+    >
       <a
         href={leaf.href}
         data-slot="sidebar-menu-sub-button"
         data-sidebar="menu-sub-button"
         data-size="md"
         data-active={isActive}
-        className="flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 text-sm data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground no-underline"
+        className={SUB_BUTTON_CLASS}
       >
+        {Icon ? <Icon /> : null}
         <span>{leaf.title}</span>
       </a>
     </li>
   );
 }
 
-function Branch({ branch, currentPath }: { branch: NavBranch; currentPath: string }): React.ReactElement {
+function Branch({
+  branch,
+  currentPath,
+}: {
+  branch: NavBranch;
+  currentPath: string;
+}): React.ReactElement {
   const defaultOpen = branch.children.some(
-    (c) => currentPath === c.href || currentPath.startsWith(c.href + "/")
+    (c) => currentPath === c.href || currentPath.startsWith(c.href + "/"),
   );
-  const [open, setOpen] = React.useState(defaultOpen || true);
+  const [open, setOpen] = React.useState(defaultOpen);
+  const Icon = branch.icon;
   return (
-    <li data-slot="sidebar-menu-item" data-sidebar="menu-item" className="group/menu-item relative">
+    // SidebarMenuItem wrapping a Collapsible
+    <li
+      data-slot="sidebar-menu-item"
+      data-sidebar="menu-item"
+      className="group/collapsible group/menu-item relative"
+      data-state={open ? "open" : "closed"}
+    >
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -114,22 +198,18 @@ function Branch({ branch, currentPath }: { branch: NavBranch; currentPath: strin
         data-slot="sidebar-menu-button"
         data-sidebar="menu-button"
         data-state={open ? "open" : "closed"}
-        className="group/collapsible peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 h-8 bg-transparent border-0 cursor-pointer"
+        className={MENU_BUTTON_CLASS + " border-0 bg-transparent cursor-pointer"}
       >
-        <span className="flex-1">{branch.title}</span>
-        <svg
-          width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"
-          className={"ms-auto shrink-0 transition-transform duration-200 " + (open ? "rotate-90" : "")}
-        >
-          <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
+        {Icon ? <Icon /> : null}
+        <span>{branch.title}</span>
+        <ChevronRight className="ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
       </button>
       {open ? (
-        // Matches SidebarMenuSub
+        // SidebarMenuSub
         <ul
           data-slot="sidebar-menu-sub"
           data-sidebar="menu-sub"
-          className="mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-s border-sidebar-border px-2.5 py-0.5"
+          className="mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-s border-sidebar-border px-2.5 py-0.5 group-data-[collapsible=icon]:hidden"
         >
           {branch.children.map((leaf) => (
             <Leaf key={leaf.href} leaf={leaf} currentPath={currentPath} />

@@ -1,0 +1,16 @@
+/* Tailwind v4 source-scanning shim for `@nube/starter-ui-flow`.
+ *
+ * Tailwind v4 skips `node_modules` by default, so without an `@source`
+ * directive the utilities used inside this package (palette layout,
+ * node card classes, etc.) are never generated.
+ *
+ * Consumers should `@import` this file once from their main Tailwind
+ * stylesheet, after `@import "tailwindcss";`:
+ *
+ *   @import "tailwindcss";
+ *   @import "@nube/starter-ui-flow/scan-source.css";
+ *
+ * Path resolves relative to this file at the package root, so `"."`
+ * scans every source file in the package.
+ */
+@source ".";

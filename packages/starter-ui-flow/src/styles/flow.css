@@ -20,8 +20,13 @@
  *   --sf-selected-ring
  */
 
-/* Tailwind v4 skips node_modules; opt this package back in. */
-@source "../..";
+/* Tailwind v4 source-scanning lives in the sibling `scan-source.css`,
+ * which hosts import from their main Tailwind entry. Keeping `@source`
+ * out of this file prevents the @tailwindcss/vite plugin from treating
+ * it as a separate Tailwind entrypoint and emitting a duplicate utility
+ * bundle that would override the host's responsive variants by source
+ * order.
+ */
 
 :root {
   --sf-node-bg:        #ffffffeb;

@@ -1,4 +1,76 @@
-@import "tailwindcss";
+/* Wrap the entire Tailwind output in the `rubix-extension` cascade
+ * layer. The host's theme.css declares `@layer rubix-extension,
+ * tailwindcss;` first, which makes every host utility — including
+ * responsive variants like `lg:grid-cols-[...]` — win over anything
+ * this extension's runtime-injected <style> tag emits. Without this
+ * isolation the extension's bundle ships its own `.grid-cols-1`,
+ * `.flex`, etc. and, because it's injected AFTER the host bundle, it
+ * silently overrides host responsive utilities by source order. */
+@import "tailwindcss" layer(rubix-extension) no-preflight;
+
+/* `@theme reference` — tells Tailwind v4 these token names exist so it
+   generates utility classes (bg-primary, text-muted-foreground, etc.)
+   but emits ZERO values into the output CSS. The host already defines
+   --color-* on :root via its theme.css; the extension's bundle ships
+   only the utility class definitions, NOT a full base/preflight layer
+   that would override the host's responsive variants by source order. */
+@theme reference {
+  --color-background: initial;
+  --color-foreground: initial;
+  --color-card: initial;
+  --color-card-foreground: initial;
+  --color-popover: initial;
+  --color-popover-foreground: initial;
+  --color-primary: initial;
+  --color-primary-foreground: initial;
+  --color-secondary: initial;
+  --color-secondary-foreground: initial;
+  --color-muted: initial;
+  --color-muted-foreground: initial;
+  --color-accent: initial;
+  --color-accent-foreground: initial;
+  --color-destructive: initial;
+  --color-border: initial;
+  --color-input: initial;
+  --color-ring: initial;
+  --color-sidebar: initial;
+  --color-sidebar-foreground: initial;
+  --color-sidebar-primary: initial;
+  --color-sidebar-primary-foreground: initial;
+  --color-sidebar-accent: initial;
+  --color-sidebar-accent-foreground: initial;
+  --color-sidebar-border: initial;
+  --color-sidebar-ring: initial;
+
+  --color-bg: initial;
+  --color-bg-2: initial;
+  --color-surface: initial;
+  --color-surface-2: initial;
+  --color-text: initial;
+  --color-subtle: initial;
+  --color-leaf: initial;
+  --color-leaf-2: initial;
+  --color-moss: initial;
+  --color-lime: initial;
+  --color-aqua: initial;
+  --color-aqua-2: initial;
+  --color-mist: initial;
+  --color-sky: initial;
+  --color-sun: initial;
+  --color-ok: initial;
+  --color-warn: initial;
+  --color-danger: initial;
+
+  --radius-sm: initial;
+  --radius-md: initial;
+  --radius-lg: initial;
+  --radius-xl: initial;
+  --radius-2xl: initial;
+  --radius-3xl: initial;
+
+  --font-sans: initial;
+  --font-mono: initial;
+}
 
 /* ---------------------------------------------------------------
  * Energy & Water dashboard styling — glassmorphism, soft glow,

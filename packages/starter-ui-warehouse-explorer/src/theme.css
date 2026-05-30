@@ -18,60 +18,13 @@
  * this file so the `@theme inline` block can extend the default theme.
  */
 
-/* Tailwind v4 source-scanning shim.
- *
- * Tailwind v4 skips `node_modules` by default, so without this `@source`
- * directive the host's Tailwind build never sees the class names used
- * inside this package and emits zero rules for them — collapsing every
- * `h-[…]`, `min-h-[…]`, `grid-cols-[…]` etc. to no-ops. The symptom is
- * an empty container with no height; ReactFlow then has no canvas and
- * the schema diagram renders blank.
- *
- * Path resolves relative to this file at
- * `node_modules/@nube/starter-ui-warehouse-explorer/src/theme.css`, so
- * `../..` walks up to the package root and Tailwind scans every `*.tsx`
- * underneath. Hosts get this automatically by importing
- * `@nube/starter-ui-warehouse-explorer/theme.css` once.
+/* Tailwind source-scanning and the `@theme inline` token bridge live in
+ * the sibling `scan-source.css`. Hosts must import that file from their
+ * main Tailwind entry. Keeping `@source` and `@theme` out of this file
+ * prevents the @tailwindcss/vite plugin from treating it as a separate
+ * Tailwind entrypoint and emitting a duplicate utility bundle that
+ * would override the host's responsive variants by source order.
  */
-@source "../..";
-
-@custom-variant dark (&:is(.dark *, [data-mode="dark"] *));
-
-@theme inline {
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-
-  --color-border: hsl(var(--border));
-  --color-input: hsl(var(--input));
-  --color-ring: hsl(var(--ring));
-  --color-background: hsl(var(--background));
-  --color-foreground: hsl(var(--foreground));
-
-  --color-primary: hsl(var(--primary));
-  --color-primary-foreground: hsl(var(--primary-foreground));
-
-  --color-secondary: hsl(var(--secondary));
-  --color-secondary-foreground: hsl(var(--secondary-foreground));
-
-  --color-destructive: hsl(var(--destructive));
-  --color-destructive-foreground: hsl(var(--destructive-foreground));
-
-  --color-muted: hsl(var(--muted));
-  --color-muted-foreground: hsl(var(--muted-foreground));
-
-  --color-accent: hsl(var(--accent));
-  --color-accent-foreground: hsl(var(--accent-foreground));
-
-  --color-popover: hsl(var(--popover));
-  --color-popover-foreground: hsl(var(--popover-foreground));
-
-  --color-card: hsl(var(--card));
-  --color-card-foreground: hsl(var(--card-foreground));
-
-  --radius: 0.5rem;
-  --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
-}
 
 /* react-data-grid colour hooks — keep upstream's mapping, just point at
  * shadcn tokens (which rubix owns).
