@@ -24,9 +24,13 @@
 //! under [`SYSTEM_TENANT`] (the all-zero UUID also used by
 //! [`rubix-agent::boot::flows_seed::SYSTEM_TENANT`]). Multi-tenant
 //! routing lands when the `flow_ops` verbs grow a tenant
-//! parameter; until then both columns are pinned here so the row
+//! parameter; until then `tenant_id` is pinned here so the row
 //! shape matches the bundled-seed rows and the
 //! `flows_definitions_unique_revision` constraint is honoured.
+//! `created_by`, by contrast, is [`DEPLOYED_BY`] for verb-written
+//! revisions (and [`SYSTEM_TENANT`] only for bundled seed rows) so
+//! the boot seeder never rolls an operator deploy back to the
+//! bundled default.
 
 use async_trait::async_trait;
 use rubix_spi::flow_def::{FlowDefStore, FlowRevisionRow};
@@ -34,10 +38,24 @@ use rubix_spi::starter::error::{Error, Result};
 use starter_store_postgres::pool::Pool;
 use uuid::Uuid;
 
-/// The all-zero UUID used as both `tenant_id` and `created_by`
-/// for rows the rubix surface writes today. Mirrors
-/// [`rubix-agent::boot::flows_seed::SYSTEM_TENANT`].
+/// The all-zero UUID used as `tenant_id` for every row the rubix
+/// surface writes today, and as `created_by` for bundled seed
+/// rows. Mirrors [`rubix-agent::boot::flows_seed::SYSTEM_TENANT`].
 pub const SYSTEM_TENANT: Uuid = Uuid::nil();
+
+/// Non-nil sentinel stamped as `created_by` on rows written by the
+/// `rubix.flow_ops.deploy` (and `duplicate`) verbs.
+///
+/// The boot seeder in `rubix-agent::boot::flows_seed` only rolls a
+/// live row forward to the on-disk bundled YAML when that row's
+/// `created_by` is [`SYSTEM_TENANT`] (i.e. it is itself a bundled
+/// seed row). Operator-deployed revisions must therefore carry a
+/// *different* `created_by` or the next boot silently supersedes
+/// the operator's edit and re-inserts the bundled default. Until a
+/// real actor identity is threaded through the [`FlowDefStore`]
+/// trait, this fixed sentinel marks "written by the deploy verb,
+/// not the seeder" — enough for the seeder's ownership guard.
+pub const DEPLOYED_BY: Uuid = Uuid::from_u128(1);
 
 /// Cheap-to-clone handle over the [`Pool`].
 #[derive(Clone)]
@@ -143,7 +161,7 @@ impl FlowDefStore for PgFlowDefStore {
             .bind(flow_id)
             .bind(&revision_id)
             .bind(body_yaml)
-            .bind(SYSTEM_TENANT)
+            .bind(DEPLOYED_BY)
             .fetch_one(&mut *tx)
             .await
             .map_err(backend)?;

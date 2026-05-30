@@ -15,6 +15,8 @@
 //!    `FlowRevisionId`.
 
 use rubix_agent::boot::flows_seed::{seed_and_load, SYSTEM_TENANT};
+use rubix_spi::flow_def::FlowDefStore;
+use rubix_store_postgres::flows::{PgFlowDefStore, DEPLOYED_BY};
 use rubix_store_postgres::FLOWS_DEFINITIONS_MIGRATION_SOURCE;
 use starter_store_postgres::{migrate, testing::with_database};
 
@@ -104,4 +106,76 @@ async fn first_boot_seeds_bundled_yamls_second_boot_is_noop() {
             "revision_id round-trip must be lossless for {flow_id}",
         );
     }
+}
+
+/// Regression: an operator deploy must survive the next boot's
+/// seed pass.
+///
+/// The seeder rolls a live row forward to the on-disk bundled YAML
+/// only when that row's `created_by` is the [`SYSTEM_TENANT`]
+/// sentinel (i.e. the row is itself a bundled seed). A deploy
+/// written by [`PgFlowDefStore::insert_revision`] stamps
+/// [`DEPLOYED_BY`] instead, so the seeder's ownership guard skips
+/// it. Before the fix, deploys were stamped with `SYSTEM_TENANT`
+/// and were silently clobbered back to the bundled default on the
+/// next boot — the node a user added would vanish after a restart.
+#[tokio::test]
+#[ignore = "requires Docker (testcontainers Postgres); run via the integration job"]
+async fn operator_deploy_survives_next_boot_seed() {
+    let (pool, _guard) = with_database().await;
+    migrate(&pool)
+        .with_source(FLOWS_DEFINITIONS_MIGRATION_SOURCE)
+        .run()
+        .await
+        .expect("apply flows_definitions migration");
+
+    // First boot seeds the bundled YAMLs.
+    seed_and_load(&pool).await.expect("first seed succeeds");
+
+    // Operator edits a bundled flow through the deploy verb. The
+    // body differs from the on-disk bundle, so a SYSTEM_TENANT-
+    // owned row here would trip the roll-forward path.
+    let flow_id = "com.rubix.flow-programmer";
+    let edited_body = "id: com.rubix.flow-programmer\n\
+        description: operator added a node\n\
+        nodes:\n\
+        \x20 - id: extra\n\
+        \x20   kind: starter.flow.log\n\
+        \x20   config: { level: info }\n";
+    let store = PgFlowDefStore::new(pool.clone());
+    let (deployed, _prior) = store
+        .insert_revision(flow_id, edited_body, 0)
+        .await
+        .expect("deploy insert succeeds");
+
+    // The deployed row must carry the non-nil DEPLOYED_BY sentinel.
+    let created_by: uuid::Uuid = sqlx::query_scalar(
+        "SELECT created_by FROM flows_definitions WHERE revision_id = $1",
+    )
+    .bind(&deployed.revision_id)
+    .fetch_one(pool.sqlx())
+    .await
+    .expect("select created_by");
+    assert_eq!(
+        created_by, DEPLOYED_BY,
+        "deploy must stamp created_by = DEPLOYED_BY, not SYSTEM_TENANT",
+    );
+
+    // Next boot: seed again. The operator's edit must NOT be
+    // rolled forward back to the bundled default.
+    seed_and_load(&pool).await.expect("second seed succeeds");
+
+    let live_body: String = sqlx::query_scalar(
+        "SELECT body_yaml FROM flows_definitions
+          WHERE flow_id = $1 AND superseded_at IS NULL
+          LIMIT 1",
+    )
+    .bind(flow_id)
+    .fetch_one(pool.sqlx())
+    .await
+    .expect("select live body after reboot");
+    assert_eq!(
+        live_body, edited_body,
+        "operator deploy must survive the seed pass on the next boot",
+    );
 }

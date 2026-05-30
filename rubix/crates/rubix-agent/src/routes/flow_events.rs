@@ -63,14 +63,26 @@ pub struct FlowEventsState {
 /// Build the registrar. Mounts under `/api/v1` (path is fully
 /// qualified).
 pub fn registrar(state: FlowEventsState) -> RouteRegistrar {
-    RouteRegistrar::new().mount(
-        Method::GET,
-        "/api/v1/flows/{flow_id}/events",
-        get(events).with_state(state),
-        RouteMeta::new()
-            .describe("SSE live tail of FlowEvent::NodeEmitted frames for one flow.")
-            .tag("flow-programmer"),
-    )
+    RouteRegistrar::new()
+        .mount(
+            Method::GET,
+            "/api/v1/flows/{flow_id}/events",
+            get(events).with_state(state.clone()),
+            RouteMeta::new()
+                .describe("SSE live tail of FlowEvent::NodeEmitted frames for one flow.")
+                .tag("flow-programmer"),
+        )
+        .mount(
+            Method::GET,
+            "/api/v1/flows/{flow_id}/values",
+            get(values).with_state(state),
+            RouteMeta::new()
+                .describe(
+                    "Last known NodeSlotValue per (node, slot) for one flow — the snapshot a \
+                     UI reads on page load so node values paint immediately between runs.",
+                )
+                .tag("flow-programmer"),
+        )
 }
 
 /// Backwards-compatible alias for tests that expect an
@@ -95,6 +107,31 @@ async fn events(
     Sse::new(stream)
         .keep_alive(KeepAlive::new().interval(Duration::from_secs(15)))
         .into_response()
+}
+
+/// `GET /api/v1/flows/{flow_id}/values` — JSON snapshot of the last
+/// known `NodeSlotValue` per `(node, slot)` for `flow_id`.
+///
+/// The SSE feed at `/events` only carries frames emitted *after* a
+/// client connects, so a page loaded between scheduled runs would
+/// otherwise show empty node values until the next tick. This route
+/// returns the most-recent values the engine has fanned out since
+/// boot (kept in [`FlowSubscriptionRegistry`]'s in-memory cache), so
+/// the UI can paint immediately and then keep live via SSE. Returns
+/// `[]` when no values have been recorded yet.
+async fn values(
+    State(state): State<FlowEventsState>,
+    Path(flow_id_raw): Path<String>,
+) -> axum::response::Response {
+    let flow_id = match FlowId::new(&flow_id_raw) {
+        Ok(id) => id,
+        Err(e) => {
+            debug!(target: "rubix.routes.flow_events", flow_id = %flow_id_raw, error = %e, "rejecting non-reverse-dns flow id");
+            return (StatusCode::BAD_REQUEST, format!("invalid flow_id: {e}")).into_response();
+        }
+    };
+    let snapshot = state.subscriptions.snapshot(&flow_id);
+    axum::Json(snapshot).into_response()
 }
 
 /// Map a per-flow `broadcast::Receiver<FlowEvent>` into the SSE

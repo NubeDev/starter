@@ -24,9 +24,10 @@ export interface RFNodeData extends Record<string, unknown> {
   state?: NodeRunState;
   preview?: string;
   /**
-   * Live per-slot values for this node, keyed by output-slot name.
-   * Populated from `RunOverlay.slotValues`. Renderers display each
-   * value as a small badge next to the matching slot handle.
+   * Live per-slot values for this node, keyed by slot name. Output
+   * slots come straight from `RunOverlay.slotValues`; input slots are
+   * derived by carrying the connected upstream output along its edge.
+   * Renderers display each value as a small badge next to its handle.
    */
   slotValues?: Record<SlotName, unknown>;
   /** Original `data` bag from the wire `FlowNode`. */
@@ -55,6 +56,33 @@ export function useFlowGraph({
   onChange,
 }: UseFlowGraphArgs) {
   const [graph, setGraph] = useState<FlowGraph>(initial);
+
+  // Derive an "effective" per-node slot-value map that augments the
+  // engine's overlay (which only emits *output* slot values) with
+  // *input* slot values carried along each edge from the upstream
+  // output it is wired to. A node's input slot has no value of its
+  // own — it is, by definition, whatever the connected source output
+  // last emitted — so we project `source.sourceSlot → target.targetSlot`.
+  //
+  // Output values always win on the source node; inputs and outputs use
+  // disjoint slot names within a kind, so the carry never clobbers a
+  // real emitted output. Recomputed only when the overlay ticks or the
+  // edge set changes.
+  const effectiveSlotValues = useMemo<Record<string, Record<SlotName, unknown>>>(() => {
+    const base = overlay?.slotValues;
+    const result: Record<string, Record<SlotName, unknown>> = {};
+    if (base) {
+      for (const [nodeId, slots] of Object.entries(base)) {
+        result[nodeId] = { ...slots };
+      }
+    }
+    for (const e of graph.edges) {
+      const upstream = base?.[e.source]?.[e.sourceSlot];
+      if (upstream === undefined) continue;
+      (result[e.target] ??= {})[e.targetSlot] = upstream;
+    }
+    return result;
+  }, [overlay, graph.edges]);
 
   // Sync `initial` prop changes into local state. Parents that own
   // the graph in a query cache (and recompute it via `useMemo` from
@@ -90,7 +118,7 @@ export function useFlowGraph({
       g.nodes.map((n) => {
         const entry = registry.get(n.kind);
         const state = overlay?.nodes[n.id];
-        const slotValues = overlay?.slotValues?.[n.id];
+        const slotValues = effectiveSlotValues[n.id];
         return {
           id: n.id,
           type: n.kind,
@@ -104,7 +132,7 @@ export function useFlowGraph({
           } satisfies RFNodeData,
         };
       }),
-    [registry, overlay],
+    [registry, overlay, effectiveSlotValues],
   );
 
   const [rfNodes, setRfNodes] = useState<Node[]>(() => buildRfNodes(initial));
@@ -122,7 +150,7 @@ export function useFlowGraph({
         const existing = byId.get(n.id);
         const entry = registry.get(n.kind);
         const state = overlay?.nodes[n.id];
-        const slotValues = overlay?.slotValues?.[n.id];
+        const slotValues = effectiveSlotValues[n.id];
         const data: RFNodeData = {
           kindSpec: entry?.spec,
           label: n.label,
@@ -137,7 +165,7 @@ export function useFlowGraph({
         return { ...existing, type: n.kind, position: n.position, data };
       });
     });
-  }, [graph, registry, overlay]);
+  }, [graph, registry, overlay, effectiveSlotValues]);
 
   // Overlay-only reconciliation: when the run overlay ticks but the
   // graph hasn't changed, push new `state` / `slotValues` into each
@@ -150,7 +178,7 @@ export function useFlowGraph({
       prev.map((rn) => {
         const prevData = (rn.data ?? {}) as RFNodeData;
         const state = overlay?.nodes[rn.id];
-        const slotValues = overlay?.slotValues?.[rn.id];
+        const slotValues = effectiveSlotValues[rn.id];
         if (prevData.state === state && prevData.slotValues === slotValues) {
           return rn;
         }
@@ -158,7 +186,7 @@ export function useFlowGraph({
         return { ...rn, data };
       }),
     );
-  }, [overlay]);
+  }, [overlay, effectiveSlotValues]);
 
   const rfNodesRef = useRef(rfNodes);
   useEffect(() => {

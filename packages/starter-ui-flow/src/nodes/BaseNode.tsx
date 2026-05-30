@@ -46,8 +46,8 @@ export interface BaseNodeProps {
   /**
    * Live per-slot values, keyed by slot name. Renderers show each
    * value as a small monospaced badge adjacent to its slot label.
-   * Currently rendered for output slots only — input badges land
-   * once the engine emits input-write events.
+   * Both output slots (emitted by the engine) and input slots
+   * (carried from the connected upstream output) are rendered.
    */
   slotValues?: Record<SlotName, unknown>;
   /** Preset that controls which parts of the node frame are rendered. */
