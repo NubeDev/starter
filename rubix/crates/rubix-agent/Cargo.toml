@@ -145,6 +145,7 @@ sqlx                     = { workspace = true, features = ["postgres", "macros",
 async-trait              = { workspace = true }
 tokio                    = { workspace = true, features = ["macros", "rt-multi-thread", "process", "io-util", "time"] }
 tower                    = { workspace = true }
+semver                   = "1"
 
 [features]
 default = []

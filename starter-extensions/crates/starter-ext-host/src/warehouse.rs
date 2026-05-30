@@ -47,7 +47,8 @@ use std::path::Path;
 
 use starter_ext_spi::manifest::ContributeWarehouseTemplate;
 use starter_ext_spi::warehouse::TemplateSpec;
-use starter_ext_spi::Error;
+use starter_ext_spi::{Error, ExtensionId};
+use tracing::warn;
 
 use crate::record::ExtensionRecord;
 
@@ -65,6 +66,15 @@ use crate::record::ExtensionRecord;
 #[derive(Debug, Default, Clone)]
 pub struct TemplateRegistry {
     by_name: BTreeMap<String, TemplateSpec>,
+    /// Side map keyed identically to `by_name`. Present entries name
+    /// the extension that contributed the template; absent entries
+    /// mean "host-trusted builtin, no per-extension allowlist
+    /// applies". The bridge gate keys off this distinction —
+    /// `None` is **not** a fail-open marker, it means "skip the
+    /// per-extension allowlist step". Mutated only via
+    /// [`Self::insert_template`] so `by_name` and `owners` cannot
+    /// drift.
+    owners: BTreeMap<String, ExtensionId>,
 }
 
 impl TemplateRegistry {
@@ -187,8 +197,55 @@ impl TemplateRegistry {
     /// only legal when an explicit `override:` flag lands in the
     /// manifest, which is a row-3 follow-up; row 2 silently
     /// overwrites).
+    ///
+    /// This path leaves no owner attached — equivalent to a builtin
+    /// insert. Use [`Self::extend_from_record`] for
+    /// extension-contributed templates so the owning
+    /// [`ExtensionId`] is recorded for the SDUI allowlist gate.
     pub fn insert(&mut self, spec: TemplateSpec) {
-        self.by_name.insert(spec.name.clone(), spec);
+        let name = spec.name.clone();
+        self.insert_template(name, spec, None);
+    }
+
+    /// Single insertion choke point. Every path that registers a
+    /// template — [`Self::builtin`], [`Self::extend_from_record`],
+    /// and the builder-style [`Self::with`] / [`Self::insert`] —
+    /// funnels through here so `by_name` and `owners` can never
+    /// drift. Builtins pass `owner = None`; extension-contributed
+    /// templates pass `Some(ext_id)`.
+    fn insert_template(
+        &mut self,
+        name: String,
+        spec: TemplateSpec,
+        owner: Option<ExtensionId>,
+    ) {
+        self.by_name.insert(name.clone(), spec);
+        match owner {
+            Some(id) => {
+                self.owners.insert(name, id);
+            }
+            None => {
+                // A builtin (or `insert`) shadowing a previously
+                // contributed entry must also clear the owner so the
+                // SDUI gate does not later try to intersect a stale
+                // extension's grant against the builtin's tables.
+                self.owners.remove(&name);
+            }
+        }
+    }
+
+    /// Look up the extension that contributed a template by name.
+    ///
+    /// Returns `None` for host-builtin templates (those registered
+    /// via [`Self::builtin`] / [`Self::insert`] / [`Self::with`]) —
+    /// callers must read `None` as **"host-trusted, no
+    /// per-extension allowlist to apply"**, not as a fail-open
+    /// signal. The SDUI bridge's per-call allowlist gate uses this
+    /// distinction: `Some(ext_id)` means intersect `spec.tables`
+    /// with the extension's `contributes.warehouse_tables[]` grant;
+    /// `None` means skip the intersection.
+    pub fn owning_extension(&self, name: &str) -> Option<&ExtensionId> {
+        self.owners.get(name)
     }
 
     /// Lookup by name.
@@ -248,10 +305,35 @@ impl TemplateRegistry {
         let Some(manifest) = record.manifest.as_ref() else {
             return Ok(0);
         };
+        // `manifest.id` is the validated extension id; prefer it over
+        // `record.id` to avoid the (rare) early-failure case where
+        // `record.id` was not yet set.
+        let owner = record.id.clone().unwrap_or_else(|| manifest.id.clone());
         let mut inserted = 0;
         for entry in &manifest.contributes.warehouse_templates {
             let spec = load_template_spec(&record.bundle_dir, entry)?;
-            self.insert(spec);
+            // Silent-capture warning: contributed templates that
+            // overwrite an existing entry (builtin or another
+            // extension's) are loaded but logged. Hard rejection is
+            // deferred to an explicit `override:` opt-in (see the
+            // row-3 design doc) — flipping the default to reject
+            // would force every existing manifest through a
+            // migration.
+            if self.by_name.contains_key(&entry.name) {
+                let previous_owner = self
+                    .owners
+                    .get(&entry.name)
+                    .map(|i| i.as_str().to_string())
+                    .unwrap_or_else(|| "<builtin>".into());
+                warn!(
+                    target: "starter_ext_host.warehouse",
+                    template = %entry.name,
+                    new_owner = %owner.as_str(),
+                    previous_owner = %previous_owner,
+                    "warehouse template name collision — overwriting existing entry",
+                );
+            }
+            self.insert_template(entry.name.clone(), spec, Some(owner.clone()));
             inserted += 1;
         }
         Ok(inserted)
@@ -489,6 +571,104 @@ mod tests {
         );
         let err = r.extend_from_record(&rec).unwrap_err();
         assert!(err.to_string().contains("not valid JSON"), "{err}");
+    }
+
+    #[test]
+    fn owning_extension_returns_owner_for_contributed_template() {
+        let tmp = tempfile::tempdir().unwrap();
+        write(tmp.path(), "s.json", "{}");
+        write(tmp.path(), "q.sql", "SELECT 1");
+        let mut r = TemplateRegistry::empty();
+        let rec = make_record(
+            tmp.path().to_path_buf(),
+            "com.acme.charts",
+            ContributeWarehouseTemplate {
+                name: "com.acme.charts.q".into(),
+                params_schema: "s.json".into(),
+                tables: vec!["t".into()],
+                sql_file: Some("q.sql".into()),
+            },
+        );
+        r.extend_from_record(&rec).unwrap();
+        let owner = r.owning_extension("com.acme.charts.q").unwrap();
+        assert_eq!(owner.as_str(), "com.acme.charts");
+        // Builtins have no owner.
+        let b = TemplateRegistry::builtin();
+        assert!(b.owning_extension("meter_kwh_last_24h").is_none());
+    }
+
+    #[test]
+    fn insert_clears_owner_when_shadowing_contributed() {
+        let tmp = tempfile::tempdir().unwrap();
+        write(tmp.path(), "s.json", "{}");
+        let mut r = TemplateRegistry::empty();
+        let rec = make_record(
+            tmp.path().to_path_buf(),
+            "com.acme.charts",
+            ContributeWarehouseTemplate {
+                name: "com.acme.charts.q".into(),
+                params_schema: "s.json".into(),
+                tables: vec![],
+                sql_file: None,
+            },
+        );
+        r.extend_from_record(&rec).unwrap();
+        assert!(r.owning_extension("com.acme.charts.q").is_some());
+        // Insert a plain (builtin-shaped) entry — owner must clear.
+        r.insert(TemplateSpec {
+            name: "com.acme.charts.q".into(),
+            params: serde_json::json!({}),
+            tables: vec![],
+            sql: None,
+        });
+        assert!(r.owning_extension("com.acme.charts.q").is_none());
+    }
+
+    #[test]
+    fn extend_from_record_collision_logs_but_loads() {
+        // Two records contributing the same template name; second
+        // insert overwrites silently (warn-only). The second owner
+        // wins.
+        let tmp = tempfile::tempdir().unwrap();
+        write(tmp.path(), "s.json", "{}");
+        let mut r = TemplateRegistry::empty();
+        let rec1 = make_record(
+            tmp.path().to_path_buf(),
+            "com.acme.first",
+            ContributeWarehouseTemplate {
+                name: "com.acme.first.q".into(),
+                params_schema: "s.json".into(),
+                tables: vec!["a".into()],
+                sql_file: None,
+            },
+        );
+        r.extend_from_record(&rec1).unwrap();
+        // Use the same name on the second record (validate_manifest
+        // would reject the namespace-mismatch, but the registry
+        // itself is the layer under test).
+        let mut rec2 = make_record(
+            tmp.path().to_path_buf(),
+            "com.acme.first",
+            ContributeWarehouseTemplate {
+                name: "com.acme.first.q".into(),
+                params_schema: "s.json".into(),
+                tables: vec!["b".into()],
+                sql_file: None,
+            },
+        );
+        // Pretend it came from a different extension to exercise the
+        // owner-change branch of the collision warning.
+        rec2.id = Some(ExtensionId::new("com.acme.second").unwrap());
+        if let Some(m) = rec2.manifest.as_mut() {
+            m.id = ExtensionId::new("com.acme.second").unwrap();
+        }
+        r.extend_from_record(&rec2).unwrap();
+        let spec = r.get("com.acme.first.q").unwrap();
+        assert_eq!(spec.tables, vec!["b"]);
+        assert_eq!(
+            r.owning_extension("com.acme.first.q").unwrap().as_str(),
+            "com.acme.second"
+        );
     }
 
     #[test]

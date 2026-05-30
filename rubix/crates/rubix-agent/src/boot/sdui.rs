@@ -13,6 +13,7 @@ use std::sync::Arc;
 use axum::Router;
 use rubix_spi::dashboard::DashboardStore;
 use rubix_store_postgres::PgDashboardStore;
+use starter_ext_host::{ExtensionRegistry, TemplateRegistry};
 use starter_sdui_routes::{sdui_router, AnalyticsBridgeRef, SduiState};
 use starter_spi::tool::Tool;
 use starter_store_postgres::pool::Pool;
@@ -30,6 +31,8 @@ pub fn build_sdui_router<S>(
     pg_pool: Pool,
     warehouse: Option<WarehouseClient>,
     tool_registry: &[Arc<dyn Tool>],
+    template_registry: Option<Arc<TemplateRegistry>>,
+    extension_registry: Option<Arc<ExtensionRegistry>>,
 ) -> Router<S>
 where
     S: Clone + Send + Sync + 'static,
@@ -50,7 +53,17 @@ where
         .with_query_engine(queries)
         .with_handler_registry(handlers);
     if let Some(client) = warehouse {
-        let bridge: AnalyticsBridgeRef = Arc::new(TimescaleAnalyticsBridge::new(client));
+        // Prefer the host-built merged registry (builtins +
+        // extension-contributed templates from `compose.rs`). When
+        // absent (e.g. no extension bundle), fall back to the
+        // builtin-only set so the four `meter_*` templates still
+        // resolve.
+        let registry = template_registry.unwrap_or_else(|| Arc::new(TemplateRegistry::builtin()));
+        let mut bridge = TimescaleAnalyticsBridge::with_registry(client, registry);
+        if let Some(ext_reg) = extension_registry {
+            bridge = bridge.with_extension_registry(ext_reg);
+        }
+        let bridge: AnalyticsBridgeRef = Arc::new(bridge);
         builder = builder.with_analytics(bridge);
     }
     let state = builder
@@ -70,7 +83,14 @@ mod tests {
     #[tokio::test]
     async fn router_mounts_ui_routes_at_expected_paths() {
         let _ = build_sdui_router::<()>
-            as fn(&AgentConfig, Pool, Option<WarehouseClient>, &[Arc<dyn Tool>]) -> Router<()>;
+            as fn(
+                &AgentConfig,
+                Pool,
+                Option<WarehouseClient>,
+                &[Arc<dyn Tool>],
+                Option<Arc<TemplateRegistry>>,
+                Option<Arc<ExtensionRegistry>>,
+            ) -> Router<()>;
 
         let app: Router = Router::new();
         let resp = app

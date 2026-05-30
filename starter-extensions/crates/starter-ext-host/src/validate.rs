@@ -120,6 +120,20 @@ fn check_namespace(m: &Manifest) -> Result<()> {
                 e.name, prefix
             )));
         }
+        // `warehouse.*` is reserved for the host's future promoted-builtin
+        // tier (see rubix/docs/scope/extensions/extension-data-to-dashboard.md
+        // §"Growing the common toolkit"). Treated identically to `starter.*` /
+        // `sys.*`: hard reject so an extension cannot squat the namespace.
+        // Kept inline here rather than added to `RESERVED_PREFIXES` to avoid
+        // also rejecting extension *ids* like `warehouse.acme.*`, which the
+        // SCOPE.md R4 layer already enforces.
+        if e.name.split('.').next() == Some("warehouse") {
+            return Err(Error::validation(format!(
+                "contributes.warehouse_templates[].name {:?} begins with host-reserved \
+                 prefix \"warehouse\" (rubix/docs/scope/extensions/extension-data-to-dashboard.md)",
+                e.name
+            )));
+        }
         if !owner.owns(&e.name) {
             return Err(Error::validation(format!(
                 "contributes.warehouse_templates[].name {:?} escapes the extension's \
@@ -516,6 +530,31 @@ contributes:
         };
         assert!(
             msg.contains("host-reserved prefix") && msg.contains("starter"),
+            "unexpected error: {msg}"
+        );
+    }
+
+    #[test]
+    fn warehouse_templates_rejects_warehouse_prefix() {
+        let m = parse(
+            r#"
+v: 1
+id: com.acme.charts
+version: 0.1.0
+display_name: "C"
+runtime: { kind: builtin, crate_name: charts }
+contributes:
+  warehouse_templates:
+    - name: warehouse.bucketed
+      params_schema: x.json
+      tables: []
+"#,
+        );
+        let Error::Validation(msg) = validate_manifest(&m).unwrap_err() else {
+            panic!("expected Validation error");
+        };
+        assert!(
+            msg.contains("host-reserved") && msg.contains("warehouse"),
             "unexpected error: {msg}"
         );
     }

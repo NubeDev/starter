@@ -122,6 +122,15 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
             app = app.merge_external(explorer_router);
         }
 
+        // Hoisted so they can be passed to `build_sdui_router` below
+        // (the SDUI bridge needs the merged template registry for
+        // name resolution and the extension registry for the
+        // per-call table allowlist gate). Constructed inside the
+        // `if let Some(bundle)` block; remain `None` when no
+        // extension bundle is wired.
+        let mut sdui_template_registry: Option<Arc<starter_ext_host::TemplateRegistry>> = None;
+        let mut sdui_extension_registry: Option<Arc<starter_ext_host::ExtensionRegistry>> = None;
+
         if let Some(bundle) = ext_bundle {
             let ext_router: Router =
                 starter_ext_server::router_with_auth(bundle.admin, auth.authenticator.clone());
@@ -164,6 +173,8 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
                     }
                 }
                 let template_registry = Arc::new(tmpl);
+                sdui_template_registry = Some(template_registry.clone());
+                sdui_extension_registry = Some(bundle.registry.clone());
                 let event_bus = Arc::new(RubixEventBus::new());
                 let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
                     Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
@@ -438,8 +449,14 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
             .map_err(|e| anyhow::anyhow!("dashboards_seed::seed: {e}"))?;
         tracing::info!(inserted, "dashboards_definitions seed complete",);
 
-        let sdui_router: Router =
-            boot::build_sdui_router(&cfg, pool.clone(), warehouse_client.clone(), &tools);
+        let sdui_router: Router = boot::build_sdui_router(
+            &cfg,
+            pool.clone(),
+            warehouse_client.clone(),
+            &tools,
+            sdui_template_registry.clone(),
+            sdui_extension_registry.clone(),
+        );
         app = app.merge_external(sdui_router);
 
         // Dashboard events SSE.
