@@ -23,8 +23,6 @@ use super::services::BootedServices;
 pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canary) -> Result<()> {
     let BootedServices {
         cfg,
-        bundle: _,
-        mcp_pool: _,
         ext_host_methods,
         ext_bundle,
         warehouse_client,
@@ -389,10 +387,13 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
                         );
                     let sibling =
                         std::sync::Arc::new(starter_cache::EventBusInvalidator::new(bus_adapter));
-                    let _ = rubix_agent::extensions::event_bus::spawn_cache_invalidation_subscriber(
-                        event_bus.clone(),
-                        sibling,
-                        "__cache.invalidate".to_string(),
+                    // Detach: the subscriber lives for the process lifetime.
+                    drop(
+                        rubix_agent::extensions::event_bus::spawn_cache_invalidation_subscriber(
+                            event_bus.clone(),
+                            sibling,
+                            "__cache.invalidate".to_string(),
+                        ),
                     );
                 }
 

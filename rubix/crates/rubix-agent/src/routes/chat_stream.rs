@@ -148,7 +148,6 @@ pub struct ChatRequest {
 /// [`StreamFrame`](crate::routes::stream_frames::StreamFrame) —
 /// chat uses the `connected` / `text` / `tool_use` /
 /// `done(chat keys)` / `error` subset of variants.
-
 async fn chat_stream(
     State(state): State<ChatStreamState>,
     principal: Option<Extension<Principal>>,

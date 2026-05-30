@@ -206,7 +206,7 @@ async fn contributed_rule_fires_end_to_end_against_synthetic_window() {
     );
 
     let row = ordinary_reading();
-    let (emitted, dropped) = process_entity_window(&rule_registry, &[], &[row.clone()]);
+    let (emitted, dropped) = process_entity_window(&rule_registry, &[], std::slice::from_ref(&row));
     assert_eq!(dropped, 0);
     assert_eq!(emitted.len(), 1);
     let l2 = &emitted[0];

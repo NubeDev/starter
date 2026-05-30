@@ -15,8 +15,6 @@ use starter_store_postgres::pool::connect as pg_connect;
 /// Everything constructed before the router is assembled.
 pub(crate) struct BootedServices {
     pub(crate) cfg: AgentConfig,
-    pub(crate) bundle: Arc<starter_i18n::bundle::MessageBundle>,
-    pub(crate) mcp_pool: Option<starter_store_postgres::pool::Pool>,
     pub(crate) ext_host_methods: Option<Arc<rubix_agent::extensions::RubixHostMethods>>,
     pub(crate) ext_bundle: Option<boot::ExtensionAdminBundle>,
     pub(crate) warehouse_client: Option<starter_store_warehouse::WarehouseClient>,
@@ -280,8 +278,6 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
 
     Ok(BootedServices {
         cfg,
-        bundle,
-        mcp_pool,
         ext_host_methods,
         ext_bundle,
         warehouse_client,

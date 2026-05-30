@@ -280,7 +280,7 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
                 let ts = map
                     .get("ts")
                     .and_then(|v| v.as_i64())
-                    .and_then(|ms| chrono::DateTime::<chrono::Utc>::from_timestamp_millis(ms));
+                    .and_then(chrono::DateTime::<chrono::Utc>::from_timestamp_millis);
                 let mut dims = std::collections::BTreeMap::new();
                 for d in reg
                     .for_table(&full_table)
@@ -661,6 +661,11 @@ fn bind_column(args: &mut PgArguments, value: &JsonValue, col_name: &str) -> Res
     Ok(())
 }
 
+// Silence "unused import" when only the type re-export shows up
+// downstream.
+#[allow(dead_code)]
+fn _table_column_anchor(_c: &TableColumn) {}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -830,8 +835,3 @@ mod tests {
         assert_eq!(s, "($1, $2::date, $3::timestamptz, $4::timestamptz)");
     }
 }
-
-// Silence "unused import" when only the type re-export shows up
-// downstream.
-#[allow(dead_code)]
-fn _table_column_anchor(_c: &TableColumn) {}

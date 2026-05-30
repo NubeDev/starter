@@ -15,12 +15,6 @@ use starter_ext_host::ExtensionRegistry;
 /// Reverse-DNS prefix for items the upstream `starter-*` crates own.
 const STARTER_PREFIX: &str = "starter.";
 
-/// Reverse-DNS prefix for items the rubix-agent binary owns.
-const RUBIX_PREFIX: &str = "rubix.";
-
-/// Prefix the cleaner uses for its in-process anomaly rules.
-const BUILTIN_PREFIX: &str = "builtin.";
-
 /// Decide the [`ItemSource`] for an item id.
 ///
 /// Resolution order:
@@ -28,11 +22,8 @@ const BUILTIN_PREFIX: &str = "builtin.";
 ///    prefix of `item_id` (with a trailing `.` or exact match),
 ///    the item is attributed to that extension.
 /// 2. Items starting with `starter.` are [`ItemSource::Starter`].
-/// 3. Items starting with `rubix.` or `builtin.` are
-///    [`ItemSource::Builtin`].
-/// 4. Anything else defaults to [`ItemSource::Builtin`] — the
-///    rubix-agent's tool seed is the only producer of non-namespaced
-///    ids today (e.g. the cleaner's `cleaner.tick` shim).
+/// 3. Anything else (`rubix.`, `builtin.`, or un-namespaced ids such
+///    as the cleaner's `cleaner.tick` shim) is [`ItemSource::Builtin`].
 pub fn item_source(item_id: &str, extensions: Option<&Arc<ExtensionRegistry>>) -> ItemSource {
     if let Some(registry) = extensions {
         for record in registry.iter_validated() {
@@ -49,8 +40,6 @@ pub fn item_source(item_id: &str, extensions: Option<&Arc<ExtensionRegistry>>) -
     }
     if item_id.starts_with(STARTER_PREFIX) {
         ItemSource::Starter
-    } else if item_id.starts_with(RUBIX_PREFIX) || item_id.starts_with(BUILTIN_PREFIX) {
-        ItemSource::Builtin
     } else {
         ItemSource::Builtin
     }

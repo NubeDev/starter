@@ -12,7 +12,6 @@
 use axum::body::{to_bytes, Body};
 use axum::http::{header, Method, Request, StatusCode};
 use serde_json::Value;
-use starter_cache::Invalidator;
 use std::sync::Arc;
 use std::time::Duration;
 use tower::ServiceExt;
