@@ -220,6 +220,17 @@ contributes:
       sql_file:      kinds/histories_summary.sql
       tables: [com_nubeio_rubixos__histories]
 
+    # Histories — pre-aggregated 1-minute rollup (Timescale CAGG).
+    # Same shape as `history_bucketed`, but sourced from
+    # `com_nubeio_rubixos__histories_1m` (installed by
+    # scripts/post-load.sql). Use for charts that span more than a
+    # few hours — a 24h window hits ~1,440 rows instead of
+    # potentially millions of raw samples.
+    - name: com.nubeio.rubixos.history_bucketed_1m
+      params_schema: kinds/history_bucketed_1m_params.json
+      sql_file:      kinds/history_bucketed_1m.sql
+      tables: [com_nubeio_rubixos__histories_1m]
+
     # ----------------------------------------------------------------
     # Energy & Water dashboard templates. `meters_list` filters the
     # points catalog down to electrical or water meters by the

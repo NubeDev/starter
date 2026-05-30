@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "HistoryBucketed1mParams",
+  "description": "Server-side time-bucket aggregate sourced from the `_1m` continuous aggregate. Returns one row per minute-bucket with min/max/avg/count of the point's value. Same shape as `history_bucketed` for caller compatibility — but pre-aggregated, so a 24-hour chart hits ~1,440 rows instead of potentially millions. `tenant_id` is not declared here: the host injects `$caller_tenant_id` from the operator session.",
+  "type": "object",
+  "properties": {
+    "point_uuid": { "type": "string", "minLength": 1 },
+    "from":       { "type": "string", "format": "date-time" },
+    "to":         { "type": "string", "format": "date-time" }
+  },
+  "required": ["point_uuid", "from", "to"],
+  "additionalProperties": false
+}
