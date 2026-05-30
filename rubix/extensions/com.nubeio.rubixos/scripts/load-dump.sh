@@ -271,6 +271,25 @@ echo "==> ANALYZE for fresh planner stats"
 psql_run "ANALYZE public.${EXT_TABLE_PREFIX}histories"
 psql_run "ANALYZE public.${EXT_TABLE_PREFIX}points"
 
+# Install/refresh the continuous aggregates that back the rollup
+# warehouse_templates (`history_bucketed_1m`, …). Idempotent: every
+# CREATE / policy call uses IF NOT EXISTS / if_not_exists => true,
+# so running load-dump.sh twice in a row is a no-op.
+echo "==> post-load: install continuous aggregates"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &>/dev/null && pwd)"
+POST_LOAD_SQL="$SCRIPT_DIR/post-load.sql"
+if [[ -f "$POST_LOAD_SQL" ]]; then
+    if [[ "$NO_DOCKER" -eq 1 ]]; then
+        "${PSQL[@]}" -f "$POST_LOAD_SQL"
+    else
+        POST_LOAD_PG="/tmp/com.nubeio.rubixos.post-load.sql"
+        docker cp "$POST_LOAD_SQL" "$CONTAINER:$POST_LOAD_PG"
+        "${PSQL[@]}" -f "$POST_LOAD_PG"
+    fi
+else
+    echo "    warning: $POST_LOAD_SQL not found — skipping CAGG install"
+fi
+
 if [[ "$DROP_STAGING" -eq 1 ]]; then
     echo "==> drop staging schema $STAGING_SCHEMA"
     psql_run "DROP SCHEMA $STAGING_SCHEMA CASCADE"

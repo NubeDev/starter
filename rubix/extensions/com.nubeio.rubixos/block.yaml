@@ -138,6 +138,31 @@ contributes:
         - { name: key,        type: "TEXT" }
         - { name: value,      type: "TEXT", default: "NULL" }
 
+    # ------------------------------------------------------------------
+    # Continuous-aggregate rollups (see scripts/post-load.sql). These
+    # are NOT plain tables — they are Timescale materialized views over
+    # `histories`, created by `post-load.sql` after the bulk load. They
+    # are registered here so the host's per-call warehouse_tables[]
+    # allowlist gate covers templates that reference them (e.g.
+    # `history_bucketed_1m`).
+    #
+    # Note: the host's boot::extension_tables path issues
+    # `CREATE TABLE IF NOT EXISTS` for every entry — when the CAGG
+    # already exists as a materialized view, `IF NOT EXISTS` is a
+    # relation-name check and no-ops, so this is safe. The column
+    # list mirrors the SELECT in post-load.sql for documentation /
+    # admin-introspection purposes.
+    - name: histories_1m
+      order_by: [tenant_id, point_uuid, bucket]
+      columns:
+        - { name: point_uuid,   type: "TEXT" }
+        - { name: host_uuid,    type: "TEXT" }
+        - { name: bucket,       type: "TIMESTAMPTZ" }
+        - { name: avg_value,    type: "DOUBLE PRECISION", default: "NULL" }
+        - { name: min_value,    type: "DOUBLE PRECISION", default: "NULL" }
+        - { name: max_value,    type: "DOUBLE PRECISION", default: "NULL" }
+        - { name: sample_count, type: "BIGINT",           default: "NULL" }
+
   # Named warehouse-read templates. Per R7 each `sql_file` is
   # captured verbatim for audit and resolved by name at the host;
   # the SPI never templates the SQL at runtime. `$caller_tenant_id`
