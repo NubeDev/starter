@@ -92,7 +92,12 @@ the warehouse's growing public API.
 
 Keep raw tables exactly as the host created them. Add Timescale
 **continuous aggregates** for the heavy ones and register them in
-`contributes.warehouse_tables[]` so the host allowlist covers them.
+`contributes.warehouse_tables[]` with `kind: continuous_aggregate`.
+The host allowlist still covers them, but the boot-time
+`CREATE TABLE IF NOT EXISTS` step is skipped — creation is owned by
+the extension's `scripts/post-load.sql`, so the host never races
+the materialised view with a plain stub. Plain tables (the default
+`kind: table`) keep their existing behaviour.
 
 ```sql
 -- scripts/post-load.sql, idempotent

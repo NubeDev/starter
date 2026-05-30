@@ -146,13 +146,13 @@ contributes:
     # allowlist gate covers templates that reference them (e.g.
     # `history_bucketed_1m`).
     #
-    # Note: the host's boot::extension_tables path issues
-    # `CREATE TABLE IF NOT EXISTS` for every entry — when the CAGG
-    # already exists as a materialized view, `IF NOT EXISTS` is a
-    # relation-name check and no-ops, so this is safe. The column
-    # list mirrors the SELECT in post-load.sql for documentation /
-    # admin-introspection purposes.
+    # `kind: continuous_aggregate` opts this entry out of the host's
+    # boot-time `CREATE TABLE IF NOT EXISTS` step. Creation is owned
+    # by the extension's `scripts/post-load.sql` so we never race the
+    # materialised view with a plain stub. The column list mirrors the
+    # SELECT in post-load.sql for documentation / admin-introspection.
     - name: histories_1m
+      kind: continuous_aggregate
       order_by: [tenant_id, point_uuid, bucket]
       columns:
         - { name: point_uuid,   type: "TEXT" }

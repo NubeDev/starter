@@ -523,6 +523,53 @@ pub struct ContributeWarehouseTable {
     /// retention is the alternative path).
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub ttl: Option<String>,
+
+    /// What kind of relation this entry describes.
+    ///
+    /// Defaults to [`WarehouseTableKind::Table`] — a plain table the
+    /// host creates at boot via `CREATE TABLE IF NOT EXISTS`. For
+    /// derived relations such as Timescale continuous aggregates,
+    /// flag the entry as [`WarehouseTableKind::ContinuousAggregate`]
+    /// so the host skips DDL and leaves creation to the extension's
+    /// own `scripts/post-load.sql` (or equivalent). The entry stays
+    /// registered so the per-call `warehouse_tables[]` allowlist
+    /// still covers templates that reference it.
+    #[serde(default, skip_serializing_if = "WarehouseTableKind::is_default")]
+    pub kind: WarehouseTableKind,
+}
+
+/// What kind of warehouse relation a [`ContributeWarehouseTable`]
+/// describes.
+///
+/// Controls whether the host creates the relation at boot. The
+/// allowlist gate that authorises templates referencing the table
+/// is unaffected — every entry is registered regardless of kind.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum WarehouseTableKind {
+    /// A plain table. The host issues `CREATE TABLE IF NOT EXISTS`
+    /// at boot.
+    #[default]
+    Table,
+    /// A derived relation (e.g. a Timescale continuous aggregate)
+    /// created by the extension's own post-load SQL. The host does
+    /// NOT issue DDL — emitting a plain table would race the real
+    /// materialised-view installation and leave dashboards reading
+    /// an empty stub.
+    ContinuousAggregate,
+}
+
+impl WarehouseTableKind {
+    fn is_default(&self) -> bool {
+        matches!(self, WarehouseTableKind::Table)
+    }
+
+    /// Whether the host's boot DDL step should `CREATE TABLE` for
+    /// this entry. `false` for kinds the extension creates itself
+    /// (e.g. [`WarehouseTableKind::ContinuousAggregate`]).
+    pub fn host_manages_ddl(&self) -> bool {
+        matches!(self, WarehouseTableKind::Table)
+    }
 }
 
 /// One column in a [`ContributeWarehouseTable`].

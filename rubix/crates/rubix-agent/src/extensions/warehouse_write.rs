@@ -703,6 +703,7 @@ mod tests {
             engine: None,
             partition_by: None,
             ttl: None,
+            kind: Default::default(),
         }]
     }
 

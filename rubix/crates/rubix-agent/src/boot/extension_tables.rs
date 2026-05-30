@@ -37,6 +37,12 @@ pub struct ExtensionTablesOutcome {
     /// `tenant_id` collision, DDL execution failed). One warn line
     /// per skip names the offending id.
     pub skipped: usize,
+    /// Entries the host intentionally did not create because their
+    /// `kind` opts out of host-managed DDL (e.g. continuous
+    /// aggregates owned by the extension's post-load script).
+    /// Counted separately from `skipped` because it's a routine
+    /// outcome, not a failure.
+    pub deferred_to_extension: usize,
 }
 
 /// Walk the registry and create every declared extension table.
@@ -62,6 +68,24 @@ pub async fn create_extension_tables(
         };
         for entry in &manifest.contributes.warehouse_tables {
             outcome.seen += 1;
+            if !entry.kind.host_manages_ddl() {
+                // The entry exists in the registry so the per-call
+                // allowlist gate still authorises templates that
+                // reference it, but creation is the extension's
+                // responsibility (e.g. a CAGG installed by
+                // `scripts/post-load.sql`). Emitting a plain table
+                // here would race the materialised view and leave
+                // the relation as an empty stub.
+                outcome.deferred_to_extension += 1;
+                info!(
+                    target: "rubix.boot.extensions.tables",
+                    extension = %extension_id.as_str(),
+                    table = %entry.name,
+                    kind = ?entry.kind,
+                    "deferring DDL to extension (non-table kind)",
+                );
+                continue;
+            }
             match apply_one(warehouse, extension_id, entry).await {
                 Ok(()) => outcome.created_or_existing += 1,
                 Err(reason) => {
@@ -82,6 +106,7 @@ pub async fn create_extension_tables(
         seen = outcome.seen,
         created_or_existing = outcome.created_or_existing,
         skipped = outcome.skipped,
+        deferred_to_extension = outcome.deferred_to_extension,
         "extension warehouse-table DDL applied",
     );
     outcome
@@ -192,7 +217,7 @@ fn format_column(col: &TableColumn) -> String {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use starter_ext_spi::manifest::TableColumn as Col;
+    use starter_ext_spi::manifest::{TableColumn as Col, WarehouseTableKind};
 
     fn ext() -> ExtensionId {
         ExtensionId::new("com.acme.power").unwrap()
@@ -217,6 +242,7 @@ mod tests {
             engine: None,
             partition_by: None,
             ttl: None,
+            kind: WarehouseTableKind::Table,
         }
     }
 
@@ -257,9 +283,40 @@ mod tests {
             engine: None,
             partition_by: None,
             ttl: None,
+            kind: WarehouseTableKind::Table,
         };
         let err = apply_one(&wh, &ext(), &bad).await.expect_err("reserved");
         assert!(err.contains("reserved"), "got {err}");
+    }
+
+    #[test]
+    fn continuous_aggregate_kind_defers_ddl_to_extension() {
+        // The lone reliable signal that the boot step will skip the
+        // entry: `host_manages_ddl()` returns `false`. The outer
+        // loop in `create_extension_tables` short-circuits on that
+        // before reaching `apply_one`, which is what keeps the host
+        // from racing the extension's `post-load.sql` and stamping
+        // a plain table over a continuous aggregate.
+        assert!(WarehouseTableKind::Table.host_manages_ddl());
+        assert!(!WarehouseTableKind::ContinuousAggregate.host_manages_ddl());
+
+        // Sanity check: an entry flagged as a CAGG round-trips with
+        // its kind preserved (so a `deny_unknown_fields` parse of
+        // `block.yaml` actually surfaces the flag to the host).
+        let cagg = ContributeWarehouseTable {
+            name: "histories_1m".into(),
+            columns: vec![Col {
+                name: "bucket".into(),
+                ty: "TIMESTAMPTZ".into(),
+                default: None,
+            }],
+            order_by: vec!["bucket".into()],
+            engine: None,
+            partition_by: None,
+            ttl: None,
+            kind: WarehouseTableKind::ContinuousAggregate,
+        };
+        assert!(!cagg.kind.host_manages_ddl());
     }
 
     #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
@@ -280,6 +337,7 @@ mod tests {
             engine: None,
             partition_by: None,
             ttl: None,
+            kind: WarehouseTableKind::Table,
         };
         let err = apply_one(&wh, &ext(), &bad)
             .await

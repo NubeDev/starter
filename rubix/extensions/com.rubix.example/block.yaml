@@ -114,6 +114,13 @@ contributes:
     # Postgres (see crates/rubix-agent/src/boot/extension_tables.rs).
     # Column types are passed verbatim into the CREATE TABLE — use
     # Postgres type names here.
+    #
+    # `kind:` is optional and defaults to `table`. Set
+    # `kind: continuous_aggregate` for entries whose relation is
+    # created by the extension's own post-load SQL (e.g. a
+    # Timescale continuous aggregate). The host will skip DDL for
+    # those entries but still expose them through the per-call
+    # `warehouse_tables[]` allowlist gate.
     - name: customers
       order_by: [customer_id]
       columns:
