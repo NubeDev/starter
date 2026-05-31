@@ -1,0 +1,93 @@
+{
+  "ir_version": 5,
+  "root": {
+    "type": "page",
+    "id": "page",
+    "title": "Rubix Example — End-to-End Demo (3 KPIs from extension warehouse templates)",
+    "children": [
+      {
+        "type": "row",
+        "id": "kpis-row",
+        "children": [
+          {
+            "type": "col",
+            "span": 4,
+            "id": "kpi-a-col",
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-top-country",
+                "label": "Top country (customers)",
+                "format": "number",
+                "unit_symbol": "",
+                "source": {
+                  "type": "analytics_template",
+                  "name": "com.rubix.example.customers_by_country",
+                  "params": {
+                    "limit": 1,
+                    "min_count": 1,
+                    "tenant_id": "*"
+                  },
+                  "map": {
+                    "value_field": "customer_count"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "id": "kpi-b-col",
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-lowest-stock",
+                "label": "Lowest stock (units)",
+                "format": "number",
+                "unit_symbol": "",
+                "source": {
+                  "type": "analytics_template",
+                  "name": "com.rubix.example.products_low_stock",
+                  "params": {
+                    "threshold": 1000,
+                    "limit": 1,
+                    "tenant_id": "*"
+                  },
+                  "map": {
+                    "value_field": "stock"
+                  }
+                }
+              }
+            ]
+          },
+          {
+            "type": "col",
+            "span": 4,
+            "id": "kpi-c-col",
+            "children": [
+              {
+                "type": "kpi",
+                "id": "kpi-top-product-price",
+                "label": "Cheapest product price (USD)",
+                "format": "number",
+                "unit_symbol": "$",
+                "source": {
+                  "type": "analytics_template",
+                  "name": "com.rubix.example.products_list",
+                  "params": {
+                    "limit": 1,
+                    "tenant_id": "*"
+                  },
+                  "map": {
+                    "value_field": "price"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

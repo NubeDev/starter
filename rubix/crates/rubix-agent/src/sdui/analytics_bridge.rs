@@ -25,6 +25,7 @@ use tracing::warn;
 
 use super::template_resolver;
 use crate::extensions::backends::warehouse_tables_for;
+use crate::extensions::warehouse_write::full_table_name;
 
 /// Concrete bridge backed by a Timescale `samples` hypertable.
 ///
@@ -119,11 +120,20 @@ impl AnalyticsBridge for TimescaleAnalyticsBridge {
         // `meter_*` builtins legitimately read `samples`, which no
         // extension contributes).
         if let (Some(spec), Some(owner)) = (spec, self.registry.owning_extension(name)) {
+            // `warehouse_tables[].name` is the unprefixed table name as
+            // declared by the extension; the host stamps the
+            // `<sanitized_extension_id>__` prefix at DDL time, and that
+            // prefixed form is what shows up in a template's `tables: [...]`
+            // allowlist. Normalise the grant side to the same prefixed
+            // shape before comparing so the two sides are in the same
+            // namespace.
             let granted = warehouse_tables_for(self.extension_registry.as_deref(), owner);
-            let granted_names: std::collections::BTreeSet<&str> =
-                granted.iter().map(|g| g.name.as_str()).collect();
+            let granted_full: std::collections::BTreeSet<String> = granted
+                .iter()
+                .map(|g| full_table_name(owner, &g.name))
+                .collect();
             for table in &spec.tables {
-                if !granted_names.contains(table.as_str()) {
+                if !granted_full.contains(table.as_str()) {
                     return Err(format!(
                         "{name}: template references table {table:?} not in \
                          owning extension {:?}'s warehouse_tables[] grant",
@@ -140,7 +150,14 @@ impl AnalyticsBridge for TimescaleAnalyticsBridge {
         // Hand the rest off to the shared resolver. The BTreeMap
         // shape the SDUI layer uses is structurally compatible with
         // a JSON object; serialise once and pass the value through.
-        let params_json: JsonValue = json!(params);
+        // `tenant_id` is carried out-of-band as the dedicated `tenant`
+        // argument and bound through `$caller_tenant_id` by the
+        // executor, so strip it from the forwarded params — leaving
+        // it in would trip a contributed template's
+        // `additionalProperties: false` schema.
+        let mut forwarded = params.clone();
+        forwarded.remove("tenant_id");
+        let params_json: JsonValue = json!(forwarded);
         template_resolver::resolve(&self.client, name, tenant_id, &params_json, spec).await
     }
 }
@@ -260,7 +277,10 @@ mod tests {
                 warehouse_templates: vec![ContributeWarehouseTemplate {
                     name: "com.acme.ext.q".into(),
                     params_schema: "s.json".into(),
-                    tables: vec!["secret_t".into()],
+                    // Template `tables` are full prefixed names — the
+                    // grant side normalises `warehouse_tables[].name`
+                    // through `full_table_name` before comparing.
+                    tables: vec!["com_acme_ext__secret_t".into()],
                     sql_file: None,
                 }],
                 ..Contributes::default()
@@ -288,7 +308,10 @@ mod tests {
             .invoke("com.acme.ext.q", &params)
             .await
             .unwrap_err();
-        assert!(err.contains("not in") && err.contains("secret_t"), "{err}");
+        assert!(
+            err.contains("not in") && err.contains("com_acme_ext__secret_t"),
+            "{err}"
+        );
     }
 
     #[tokio::test]
@@ -347,7 +370,9 @@ mod tests {
                 warehouse_templates: vec![ContributeWarehouseTemplate {
                     name: "com.acme.ext.q".into(),
                     params_schema: "s.json".into(),
-                    tables: vec!["allowed_t".into()],
+                    // Full prefixed form — see the rejecting test for
+                    // the rationale.
+                    tables: vec!["com_acme_ext__allowed_t".into()],
                     sql_file: None,
                 }],
                 ..Contributes::default()
