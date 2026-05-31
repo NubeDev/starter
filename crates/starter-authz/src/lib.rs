@@ -43,10 +43,14 @@ pub mod config;
 pub mod defaults;
 pub mod engine;
 pub mod error;
+pub mod instances;
 pub mod middleware;
 pub mod registry;
 pub mod surface;
 pub mod testing;
+
+#[cfg(any(feature = "sqlite", feature = "postgres"))]
+pub mod acl;
 
 pub use surface::{current_surface, with_surface};
 
