@@ -238,6 +238,59 @@ async fn metrics_merges_counters_and_record_state_without_supervisor() {
 }
 
 #[tokio::test]
+async fn overview_returns_one_row_with_merged_metrics() {
+    use starter_ext_metrics::MetricsRegistry;
+    use starter_ext_spi::ExtensionId;
+
+    let tmp = tempdir().unwrap();
+    write_bundle(tmp.path(), "com.acme.hello", HELLO_BUNDLE);
+    let recs = Loader::scan(tmp.path()).validate_all();
+    let mut reg = ExtensionRegistry::new();
+    Loader::commit(recs, &mut reg);
+    reg.seal();
+
+    let metrics = MetricsRegistry::new();
+    let id = ExtensionId::new("com.acme.hello").unwrap();
+    let c = metrics.counters(&id);
+    c.record_tool_call();
+    c.record_rest_request();
+
+    let admin = ExtensionAdmin::builder(Arc::new(reg))
+        .with_metrics(metrics)
+        .build();
+    let app = router::<()>(admin);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .uri("/extensions/overview")
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK);
+    let body = to_bytes(resp.into_body(), 64 * 1024).await.unwrap();
+    let json: Value = serde_json::from_slice(&body).unwrap();
+    let arr = json.as_array().unwrap();
+    assert_eq!(arr.len(), 1);
+
+    let row = &arr[0];
+    // Identity half — same shape as `list`.
+    assert_eq!(row["id"], "com.acme.hello");
+    assert_eq!(row["runtime_kind"], "builtin");
+    assert_eq!(row["enabled"], "enabled");
+    assert!(row["contributes"].is_object());
+    // Telemetry half — flattened `ExtensionMetrics`. Builtin / no live
+    // supervisor: process is null, lifecycle falls back to record state.
+    assert!(row["process"].is_null());
+    assert_eq!(row["lifecycle_state"], "validated");
+    assert_eq!(row["tool_calls_total"], 1);
+    assert_eq!(row["rest_requests_total"], 1);
+    assert_eq!(row["restarts_total"], 0);
+}
+
+#[tokio::test]
 async fn metrics_404_for_unknown_id() {
     let (admin, _tmp) = build_admin();
     let app = router::<()>(admin);

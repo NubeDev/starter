@@ -81,6 +81,55 @@ export function useExtensionsList(
   return useQuery<ExtensionListResponse, StarterError>({
     queryKey: [...EXTENSIONS_KEY, "list"],
     queryFn: () => fetchJson<ExtensionListResponse>(client.starter, "/api/v1/extensions"),
+    // Poll every 5s so the lifecycle `state` (running / stopped / errored)
+    // in the table reflects supervisor reality without a manual refresh.
+    // There is no aggregate SSE endpoint yet — see comment in the
+    // `/extensions` route — so polling is the pragmatic stand-in.
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
+    ...options,
+  });
+}
+
+/** One row in `GET /api/v1/extensions/overview` — folds the list summary
+ * and the merged `ExtensionMetrics` into a single document so the table
+ * polls one URL instead of `1 + 2N`. See
+ * `starter-ext-server/src/overview.rs`. */
+export interface ExtensionOverviewRow {
+  id: string;
+  version?: string | null;
+  display_name?: string | null;
+  runtime_kind?: string | null;
+  enabled: "enabled" | "disabled";
+  restart_required: boolean;
+  contributes?: ExtensionContributesSummary;
+  // Flattened `ExtensionMetrics` half — identical bytes to `/extensions/<id>/metrics`.
+  process: ExtensionProcessStats | null;
+  lifecycle_state: string;
+  restarts_total: number;
+  capability_violations_total: number;
+  tool_calls_total: number;
+  tool_errors_total: number;
+  rest_requests_total: number;
+  worker_runs_total: number;
+  worker_failures_total: number;
+  events_dropped_total: number;
+}
+
+/** Aggregated overview: one request fetches identity, lifecycle, process
+ * gauges and counters for every installed extension. Designed for the
+ * `/extensions` table's poll loop — replaces N×(`/process` + `/metrics`)
+ * fan-out per tick. Polls every 5s by default. */
+export function useExtensionsOverview(
+  options?: ReadOptions<ExtensionOverviewRow[]>,
+): UseQueryResult<ExtensionOverviewRow[], StarterError> {
+  const client = useRubixClient();
+  return useQuery<ExtensionOverviewRow[], StarterError>({
+    queryKey: [...EXTENSIONS_KEY, "overview"],
+    queryFn: () =>
+      fetchJson<ExtensionOverviewRow[]>(client.starter, "/api/v1/extensions/overview"),
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     ...options,
   });
 }
@@ -243,6 +292,8 @@ export function useExtensionProcess(
         `/api/v1/extensions/${encodeURIComponent(id)}/process`,
       ),
     retry: false,
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     ...options,
   });
 }
@@ -260,6 +311,8 @@ export function useExtensionMetrics(
         client.starter,
         `/api/v1/extensions/${encodeURIComponent(id)}/metrics`,
       ),
+    refetchInterval: 5_000,
+    refetchIntervalInBackground: false,
     ...options,
   });
 }

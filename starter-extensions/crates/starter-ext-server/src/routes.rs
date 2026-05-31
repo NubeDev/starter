@@ -67,7 +67,7 @@ pub(crate) struct ContributesSummary {
 }
 
 impl ContributesSummary {
-    fn from_manifest(m: &Manifest) -> Self {
+    pub(crate) fn from_manifest(m: &Manifest) -> Self {
         let c = &m.contributes;
         Self {
             tools: c.tools.len(),

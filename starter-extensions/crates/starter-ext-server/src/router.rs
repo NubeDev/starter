@@ -6,6 +6,7 @@
 //! | Method | Path                              | Guard          |
 //! |--------|-----------------------------------|----------------|
 //! | GET    | `/extensions`                     | `Role::Admin`  |
+//! | GET    | `/extensions/overview`            | `Role::Admin`  |
 //! | GET    | `/extensions/:id`                 | `Role::Admin`  |
 //! | GET    | `/extensions/:id/events`          | `Role::Admin`  |
 //! | GET    | `/extensions/:id/issues`          | `Role::Admin`  |
@@ -44,6 +45,7 @@ use crate::i18n::i18n;
 use crate::issues::issues;
 use crate::lifecycle::{cleanup_preview, install, uninstall};
 use crate::metrics::metrics;
+use crate::overview::overview;
 use crate::process::process;
 use crate::routes::{detail, disable, enable, list, restart};
 use crate::ui::ui;
@@ -84,6 +86,7 @@ where
 {
     Router::new()
         .route("/extensions", get(list))
+        .route("/extensions/overview", get(overview))
         .route("/extensions/{id}", get(detail))
         .route("/extensions/{id}/events", get(events))
         .route("/extensions/{id}/issues", get(issues))

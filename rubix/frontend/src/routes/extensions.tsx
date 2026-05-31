@@ -13,6 +13,7 @@
 
 import { Link, Outlet, createFileRoute, useNavigate } from '@tanstack/react-router'
 import { useMemo, useState, useSyncExternalStore } from 'react'
+// `useMemo` is still used by `ExtensionContributesPanel` below.
 import { useIntl } from 'react-intl'
 import {
   Activity,
@@ -40,13 +41,11 @@ import {
   Skeleton,
 } from '@nube/starter-ui-kit'
 import {
-  useExtensionsList,
+  useExtensionsOverview,
   useExtensionEnable,
   useExtensionDisable,
-  useExtensionProcess,
-  useExtensionMetrics,
   type ExtensionContributesSummary,
-  type ExtensionSummary,
+  type ExtensionOverviewRow,
 } from '@nube/rubix-client-react'
 import {
   useExtensionHostManager,
@@ -84,20 +83,17 @@ export function ExtensionsTable() {
   const tr = (id: string, def: string) =>
     intl.formatMessage({ id, defaultMessage: def })
 
-  const list = useExtensionsList()
+  const overview = useExtensionsOverview()
   const enableMut = useExtensionEnable()
   const disableMut = useExtensionDisable()
   const navigate = useNavigate()
   const [uninstallId, setUninstallId] = useState<string | null>(null)
 
-  // No aggregate SSE endpoint today — the agent only exposes per-id
-  // streams at `/api/v1/extensions/{id}/events`. Live status is
-  // refreshed by list refetch after each mutation.
-  const liveStateById = useMemo(() => new Map<string, string>(), [])
-
-  const rows: ExtensionSummary[] = Array.isArray(list.data)
-    ? (list.data as unknown as ExtensionSummary[])
-    : (list.data?.extensions ?? [])
+  // `/api/v1/extensions/overview` returns one document per row carrying
+  // identity + lifecycle + process gauges + counters. Polled every 5s by
+  // the hook; mutations invalidate the EXTENSIONS_KEY prefix and refetch
+  // immediately. No aggregate SSE endpoint today.
+  const rows: ExtensionOverviewRow[] = overview.data ?? []
 
   return (
     <section className="relative mx-auto max-w-7xl px-4 pb-24 pt-6 sm:px-6 lg:px-8">
@@ -114,7 +110,7 @@ export function ExtensionsTable() {
           </h1>
         </div>
         <div className="text-xs text-[color:var(--color-subtle)]">
-          {tr('extensions.streamStatus', 'Live status')}: <span className="text-[color:var(--color-text)]">poll</span>
+          {tr('extensions.streamStatus', 'Live status')}: <span className="text-[color:var(--color-text)]">poll · 5s</span>
         </div>
       </header>
 
@@ -125,7 +121,7 @@ export function ExtensionsTable() {
           <div>{tr('extensions.col.enabled', 'Enabled')}</div>
           <div className="text-right">{tr('extensions.col.actions', 'Actions')}</div>
         </div>
-        {list.isLoading ? (
+        {overview.isLoading ? (
           <div className="space-y-3 p-4">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-12 w-full" />
@@ -149,15 +145,10 @@ export function ExtensionsTable() {
             </EmptyHeader>
           </Empty>
         ) : (
-          rows.map((row) => {
-            const r = row as ExtensionSummary & {
-              display_name?: string | null
-              version?: string | null
-            }
-            const state = liveStateById.get(r.id) ?? r.state
-            const name = r.display_name ?? r.name ?? r.id
-            const enabled =
-              typeof r.enabled === 'boolean' ? r.enabled : r.enabled === 'enabled'
+          rows.map((r) => {
+            const state = r.lifecycle_state
+            const name = r.display_name ?? r.id
+            const enabled = r.enabled === 'enabled'
             return (
               <div
                 key={r.id}
@@ -236,7 +227,7 @@ export function ExtensionsTable() {
                     </DropdownMenu>
                   </div>
                 </div>
-                <ExtensionRowStats id={r.id} />
+                <ExtensionRowStats row={r} />
                 <ExtensionContributesPanel id={r.id} contributes={r.contributes} />
               </div>
             )
@@ -253,31 +244,25 @@ export function ExtensionsTable() {
   )
 }
 
-/** Inline per-row stats: restarts + violations from the list response
- * (already loaded, no extra fetch), plus a per-row fetch for live process
- * (mem/cpu/uptime) and metrics (tool/REST calls + errors). Per-row hooks
- * mean N requests on initial load, but they're cheap and cached per id. */
-function ExtensionRowStats({ id }: { id: string }) {
-  const proc = useExtensionProcess(id)
-  const metrics = useExtensionMetrics(id)
-
+/** Inline per-row stats. Reads process gauges + counters straight off the
+ * overview row — no per-row fetch — so the table polls a single URL even
+ * for N extensions. See `useExtensionsOverview`. */
+function ExtensionRowStats({ row }: { row: ExtensionOverviewRow }) {
   const chips: Array<{ label: string; value: string }> = []
-  if (proc.data) {
-    chips.push({ label: 'uptime', value: formatUptime(proc.data.uptime) })
-    chips.push({ label: 'mem', value: formatBytes(proc.data.rss_bytes) })
-    if (proc.data.cpu_pct != null)
-      chips.push({ label: 'cpu', value: `${proc.data.cpu_pct.toFixed(1)}%` })
+  if (row.process) {
+    chips.push({ label: 'uptime', value: formatUptime(row.process.uptime) })
+    chips.push({ label: 'mem', value: formatBytes(row.process.rss_bytes) })
+    if (row.process.cpu_pct != null)
+      chips.push({ label: 'cpu', value: `${row.process.cpu_pct.toFixed(1)}%` })
   }
-  if (metrics.data) {
-    const m = metrics.data
-    const calls = m.tool_calls_total + m.rest_requests_total + m.worker_runs_total
-    const errors = m.tool_errors_total + m.worker_failures_total
-    if (calls) chips.push({ label: 'calls', value: String(calls) })
-    if (errors) chips.push({ label: 'errors', value: String(errors) })
-    if (m.restarts_total) chips.push({ label: 'restarts', value: String(m.restarts_total) })
-    if (m.capability_violations_total)
-      chips.push({ label: 'cap violations', value: String(m.capability_violations_total) })
-  }
+  const calls = row.tool_calls_total + row.rest_requests_total + row.worker_runs_total
+  const errors = row.tool_errors_total + row.worker_failures_total
+  if (calls) chips.push({ label: 'calls', value: String(calls) })
+  if (errors) chips.push({ label: 'errors', value: String(errors) })
+  if (row.restarts_total)
+    chips.push({ label: 'restarts', value: String(row.restarts_total) })
+  if (row.capability_violations_total)
+    chips.push({ label: 'cap violations', value: String(row.capability_violations_total) })
 
   if (chips.length === 0) return null
 

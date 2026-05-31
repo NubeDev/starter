@@ -2,6 +2,7 @@
 // menu action) and the per-extension page header. Previews the cleanup
 // manifest, then calls `DELETE /extensions/{id}?purge=true`.
 
+import { createPortal } from 'react-dom'
 import { useIntl } from 'react-intl'
 import { Loader2, Trash2, X } from 'lucide-react'
 import { Button } from '@nube/starter-ui-kit'
@@ -56,7 +57,12 @@ export function UninstallDialog({
   const items = preview.data?.items ?? []
   const bundle = preview.data?.bundle
 
-  return (
+  // The admin panel wraps its content in a `.glass` container, which uses
+  // `backdrop-filter` — that establishes a containing block and traps any
+  // `position: fixed` descendant inside the card instead of the viewport.
+  // Portal the dialog to `document.body` so the overlay covers the whole
+  // screen and the modal centres on the viewport.
+  const overlay = (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <button
         type="button"
@@ -155,4 +161,8 @@ export function UninstallDialog({
       </div>
     </div>
   )
+
+  return typeof document === 'undefined'
+    ? overlay
+    : createPortal(overlay, document.body)
 }
