@@ -84,6 +84,11 @@ import {
 import { UserOpsProvider, useUserOps, type UsersAdminOps } from "./user-ops.js";
 import { UserProfilePanel } from "./user-profile-panel.js";
 import { StateRow } from "./_common.js";
+import {
+  ModeToggle,
+  useAuthzAdminMode,
+  type AuthzAdminMode,
+} from "./mode-toggle.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -182,6 +187,11 @@ function AuthzAdminInner({
   };
 
   const [drawer, setDrawer] = useState<null | "resources" | "check" | "decisions">(null);
+  const [mode, setMode] = useAuthzAdminMode();
+
+  // Resources / Check / Decisions are dev-tool drawers — only mounted in
+  // Advanced mode, since Simple mode operators don't act on them.
+  const showAdvancedDrawers = mode === "advanced";
 
   return (
     <div className="grid gap-6">
@@ -196,31 +206,36 @@ function AuthzAdminInner({
               Tenants, teams, members, rules, and audit trail.
             </p>
           </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setDrawer("resources")}
-            >
-              <Layers className="size-4" aria-hidden />
-              {m.shell.tabs.resources}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setDrawer("check")}
-            >
-              <ShieldCheck className="size-4" aria-hidden />
-              {m.shell.tabs.check}
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setDrawer("decisions")}
-            >
-              <FileSearch className="size-4" aria-hidden />
-              {m.shell.tabs.decisions}
-            </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            <ModeToggle mode={mode} onChange={setMode} />
+            {showAdvancedDrawers && (
+              <>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDrawer("resources")}
+                >
+                  <Layers className="size-4" aria-hidden />
+                  {m.shell.tabs.resources}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDrawer("check")}
+                >
+                  <ShieldCheck className="size-4" aria-hidden />
+                  {m.shell.tabs.check}
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDrawer("decisions")}
+                >
+                  <FileSearch className="size-4" aria-hidden />
+                  {m.shell.tabs.decisions}
+                </Button>
+              </>
+            )}
           </div>
         </header>
       )}
@@ -230,6 +245,7 @@ function AuthzAdminInner({
         onSelect={setSel}
         enableTeamMode={!!enableTeamMode}
         userDetailExtras={userDetailExtras}
+        mode={mode}
       />
 
       <Sheet open={drawer !== null} onOpenChange={(o) => !o && setDrawer(null)}>
@@ -534,21 +550,30 @@ function DetailPane({
   onSelect,
   enableTeamMode,
   userDetailExtras,
+  mode,
 }: {
   sel: SelectedNode;
   onSelect: (n: SelectedNode) => void;
   enableTeamMode: boolean;
   userDetailExtras?: UserDetailExtras;
+  mode: AuthzAdminMode;
 }) {
   if (sel.kind === "root") return <RootDetail onSelect={onSelect} />;
   if (sel.kind === "tenant")
-    return <TenantDetail tenantId={sel.tenantId} enableTeamMode={enableTeamMode} />;
+    return (
+      <TenantDetail
+        tenantId={sel.tenantId}
+        enableTeamMode={enableTeamMode}
+        mode={mode}
+      />
+    );
   if (sel.kind === "team")
     return (
       <TeamDetail
         tenantId={sel.tenantId}
         teamId={sel.teamId}
         enableTeamMode={enableTeamMode}
+        mode={mode}
       />
     );
   return <UserDetail sel={sel} extras={userDetailExtras} />;
@@ -1049,18 +1074,26 @@ function GlobalOverview({
 function TenantDetail({
   tenantId,
   enableTeamMode,
+  mode,
 }: {
   tenantId: string;
   enableTeamMode: boolean;
+  mode: AuthzAdminMode;
 }) {
   const m = useAuthzMessages();
+  const advanced = mode === "advanced";
+  // Simple mode defaults to Teams (the operator-first surface). Advanced
+  // restores the engine-centric Overview as the landing tab.
+  const defaultTab = advanced ? "overview" : "teams";
   return (
-    <Tabs defaultValue="overview">
+    <Tabs defaultValue={defaultTab}>
       <TabsList>
-        <TabsTrigger value="overview">
-          <Activity className="size-4" aria-hidden />
-          Overview
-        </TabsTrigger>
+        {advanced && (
+          <TabsTrigger value="overview">
+            <Activity className="size-4" aria-hidden />
+            Overview
+          </TabsTrigger>
+        )}
         <TabsTrigger value="teams">
           <Users className="size-4" aria-hidden />
           {m.shell.tabs.teams}
@@ -1069,34 +1102,44 @@ function TenantDetail({
           <UserRound className="size-4" aria-hidden />
           {m.shell.tabs.members}
         </TabsTrigger>
-        <TabsTrigger value="rules">
-          <ShieldCheck className="size-4" aria-hidden />
-          {m.shell.tabs.rules}
-        </TabsTrigger>
-        <TabsTrigger value="assignments">{m.shell.tabs.assignments}</TabsTrigger>
-        <TabsTrigger value="decisions">
-          <FileSearch className="size-4" aria-hidden />
-          {m.shell.tabs.decisions}
-        </TabsTrigger>
+        {advanced && (
+          <>
+            <TabsTrigger value="rules">
+              <ShieldCheck className="size-4" aria-hidden />
+              {m.shell.tabs.rules}
+            </TabsTrigger>
+            <TabsTrigger value="assignments">{m.shell.tabs.assignments}</TabsTrigger>
+            <TabsTrigger value="decisions">
+              <FileSearch className="size-4" aria-hidden />
+              Audit log
+            </TabsTrigger>
+          </>
+        )}
       </TabsList>
-      <TabsContent value="overview" className="mt-6">
-        <TenantOverview tenantId={tenantId} />
-      </TabsContent>
+      {advanced && (
+        <TabsContent value="overview" className="mt-6">
+          <TenantOverview tenantId={tenantId} />
+        </TabsContent>
+      )}
       <TabsContent value="teams" className="mt-6">
         <TeamsPanel tenantId={tenantId} />
       </TabsContent>
       <TabsContent value="members" className="mt-6">
         <TenantMembersTab tenantId={tenantId} />
       </TabsContent>
-      <TabsContent value="rules" className="mt-6">
-        <RulesPanel tenantId={tenantId} />
-      </TabsContent>
-      <TabsContent value="assignments" className="mt-6">
-        <AssignmentsPanel tenantId={tenantId} enableTeamMode={enableTeamMode} />
-      </TabsContent>
-      <TabsContent value="decisions" className="mt-6">
-        <DecisionsPanel tenantId={tenantId} />
-      </TabsContent>
+      {advanced && (
+        <>
+          <TabsContent value="rules" className="mt-6">
+            <RulesPanel tenantId={tenantId} />
+          </TabsContent>
+          <TabsContent value="assignments" className="mt-6">
+            <AssignmentsPanel tenantId={tenantId} enableTeamMode={enableTeamMode} />
+          </TabsContent>
+          <TabsContent value="decisions" className="mt-6">
+            <DecisionsPanel tenantId={tenantId} />
+          </TabsContent>
+        </>
+      )}
     </Tabs>
   );
 }
@@ -1222,23 +1265,30 @@ function TeamDetail({
   tenantId,
   teamId,
   enableTeamMode,
+  mode,
 }: {
   tenantId: string;
   teamId: string;
   enableTeamMode: boolean;
+  mode: AuthzAdminMode;
 }) {
   const m = useAuthzMessages();
   const teams = useTeams(tenantId);
   const team = (teams.data ?? []).find((x) => x.id === teamId);
   const teamSubject = team ? `team:${team.slug}` : null;
+  const advanced = mode === "advanced";
 
   return (
     <Tabs defaultValue="overview">
       <TabsList className="flex-wrap">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="members">{m.shell.tabs.members}</TabsTrigger>
-        <TabsTrigger value="rules">{m.shell.tabs.rules}</TabsTrigger>
-        <TabsTrigger value="assignments">{m.shell.tabs.assignments}</TabsTrigger>
+        {advanced && (
+          <>
+            <TabsTrigger value="rules">{m.shell.tabs.rules}</TabsTrigger>
+            <TabsTrigger value="assignments">{m.shell.tabs.assignments}</TabsTrigger>
+          </>
+        )}
       </TabsList>
       <TabsContent value="overview" className="mt-6">
         <TeamOverview tenantId={tenantId} teamId={teamId} />
@@ -1246,16 +1296,20 @@ function TeamDetail({
       <TabsContent value="members" className="mt-6">
         <TeamMembersInline tenantId={tenantId} teamId={teamId} />
       </TabsContent>
-      <TabsContent value="rules" className="mt-6">
-        <RulesPanel tenantId={tenantId} />
-      </TabsContent>
-      <TabsContent value="assignments" className="mt-6">
-        <AssignmentsPanel
-          tenantId={tenantId}
-          enableTeamMode={enableTeamMode}
-          defaultSubject={teamSubject}
-        />
-      </TabsContent>
+      {advanced && (
+        <>
+          <TabsContent value="rules" className="mt-6">
+            <RulesPanel tenantId={tenantId} />
+          </TabsContent>
+          <TabsContent value="assignments" className="mt-6">
+            <AssignmentsPanel
+              tenantId={tenantId}
+              enableTeamMode={enableTeamMode}
+              defaultSubject={teamSubject}
+            />
+          </TabsContent>
+        </>
+      )}
     </Tabs>
   );
 }

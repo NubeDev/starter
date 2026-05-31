@@ -39,3 +39,9 @@ export {
   UsersListPanel,
   type UsersListPanelProps,
 } from "./users-list-panel.js";
+export {
+  ModeToggle,
+  useAuthzAdminMode,
+  type AuthzAdminMode,
+  type ModeToggleProps,
+} from "./mode-toggle.js";
