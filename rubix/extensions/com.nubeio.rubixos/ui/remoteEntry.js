@@ -45960,7 +45960,7 @@ function AdminPanel({ initial }) {
   ] });
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T23:40:45.656Z"}`;
+const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T23:46:10.634Z"}`;
 if (typeof window !== "undefined") {
   console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
   window.__rubixosBuild = RUBIXOS_BUILD_STAMP;
