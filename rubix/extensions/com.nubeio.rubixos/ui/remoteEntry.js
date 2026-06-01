@@ -1,12 +1,12 @@
 (function () {
 	'use strict';
 
-	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, :before, :after, ::backdrop {\n      --tw-translate-x: 0;\n      --tw-translate-y: 0;\n      --tw-translate-z: 0;\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-backdrop-blur: initial;\n      --tw-backdrop-brightness: initial;\n      --tw-backdrop-contrast: initial;\n      --tw-backdrop-grayscale: initial;\n      --tw-backdrop-hue-rotate: initial;\n      --tw-backdrop-invert: initial;\n      --tw-backdrop-opacity: initial;\n      --tw-backdrop-saturate: initial;\n      --tw-backdrop-sepia: initial;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n@media no-preflight {\n  @layer rubix-extension {\n    @layer theme {\n      :root, :host {\n        --color-amber-200: oklch(92.4% .12 95.746);\n        --color-amber-300: oklch(87.9% .169 91.605);\n        --color-amber-400: oklch(82.8% .189 84.429);\n        --color-lime-200: oklch(93.8% .127 124.321);\n        --color-lime-300: oklch(89.7% .196 126.665);\n        --color-lime-400: oklch(84.1% .238 128.85);\n        --color-emerald-300: oklch(84.5% .143 164.978);\n        --color-emerald-400: oklch(76.5% .177 163.223);\n        --color-teal-200: oklch(91% .096 180.426);\n        --color-teal-300: oklch(85.5% .138 181.071);\n        --color-cyan-300: oklch(86.5% .127 207.078);\n        --color-cyan-400: oklch(78.9% .154 211.53);\n        --color-sky-300: oklch(82.8% .111 230.318);\n        --color-sky-400: oklch(74.6% .16 232.661);\n        --color-indigo-300: oklch(78.5% .115 274.713);\n        --color-indigo-400: oklch(67.3% .182 276.935);\n        --color-slate-100: oklch(96.8% .007 247.896);\n        --color-slate-200: oklch(92.9% .013 255.508);\n        --color-slate-300: oklch(86.9% .022 252.894);\n        --color-slate-400: oklch(70.4% .04 256.788);\n        --color-slate-500: oklch(55.4% .046 257.417);\n        --color-slate-800: oklch(27.9% .041 260.031);\n        --color-slate-900: oklch(20.8% .042 265.755);\n        --color-slate-950: oklch(12.9% .042 264.695);\n        --color-white: #fff;\n        --spacing: .25rem;\n        --container-xs: 20rem;\n        --container-2xl: 42rem;\n        --text-xs: .75rem;\n        --text-xs--line-height: calc(1 / .75);\n        --text-sm: .875rem;\n        --text-sm--line-height: calc(1.25 / .875);\n        --text-lg: 1.125rem;\n        --text-lg--line-height: calc(1.75 / 1.125);\n        --text-xl: 1.25rem;\n        --text-xl--line-height: calc(1.75 / 1.25);\n        --text-2xl: 1.5rem;\n        --text-2xl--line-height: calc(2 / 1.5);\n        --text-3xl: 1.875rem;\n        --text-3xl--line-height: calc(2.25 / 1.875);\n        --text-4xl: 2.25rem;\n        --text-4xl--line-height: calc(2.5 / 2.25);\n        --text-5xl: 3rem;\n        --text-5xl--line-height: 1;\n        --text-6xl: 3.75rem;\n        --text-6xl--line-height: 1;\n        --font-weight-normal: 400;\n        --font-weight-medium: 500;\n        --font-weight-semibold: 600;\n        --font-weight-bold: 700;\n        --tracking-tight: -.025em;\n        --tracking-normal: 0em;\n        --tracking-wide: .025em;\n        --tracking-wider: .05em;\n        --leading-tight: 1.25;\n        --ease-out: cubic-bezier(0, 0, .2, 1);\n        --animate-spin: spin 1s linear infinite;\n        --blur-sm: 8px;\n        --default-transition-duration: .15s;\n        --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);\n      }\n    }\n\n    @layer base {\n      *, :after, :before, ::backdrop {\n        box-sizing: border-box;\n        border: 0 solid;\n        margin: 0;\n        padding: 0;\n      }\n\n      ::file-selector-button {\n        box-sizing: border-box;\n        border: 0 solid;\n        margin: 0;\n        padding: 0;\n      }\n\n      html, :host {\n        -webkit-text-size-adjust: 100%;\n        tab-size: 4;\n        line-height: 1.5;\n        font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\");\n        font-feature-settings: var(--default-font-feature-settings, normal);\n        font-variation-settings: var(--default-font-variation-settings, normal);\n        -webkit-tap-highlight-color: transparent;\n      }\n\n      hr {\n        height: 0;\n        color: inherit;\n        border-top-width: 1px;\n      }\n\n      abbr:where([title]) {\n        -webkit-text-decoration: underline dotted;\n        text-decoration: underline dotted;\n      }\n\n      h1, h2, h3, h4, h5, h6 {\n        font-size: inherit;\n        font-weight: inherit;\n      }\n\n      a {\n        color: inherit;\n        -webkit-text-decoration: inherit;\n        -webkit-text-decoration: inherit;\n        -webkit-text-decoration: inherit;\n        text-decoration: inherit;\n      }\n\n      b, strong {\n        font-weight: bolder;\n      }\n\n      code, kbd, samp, pre {\n        font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace);\n        font-feature-settings: var(--default-mono-font-feature-settings, normal);\n        font-variation-settings: var(--default-mono-font-variation-settings, normal);\n        font-size: 1em;\n      }\n\n      small {\n        font-size: 80%;\n      }\n\n      sub, sup {\n        vertical-align: baseline;\n        font-size: 75%;\n        line-height: 0;\n        position: relative;\n      }\n\n      sub {\n        bottom: -.25em;\n      }\n\n      sup {\n        top: -.5em;\n      }\n\n      table {\n        text-indent: 0;\n        border-color: inherit;\n        border-collapse: collapse;\n      }\n\n      :-moz-focusring {\n        outline: auto;\n      }\n\n      progress {\n        vertical-align: baseline;\n      }\n\n      summary {\n        display: list-item;\n      }\n\n      ol, ul, menu {\n        list-style: none;\n      }\n\n      img, svg, video, canvas, audio, iframe, embed, object {\n        vertical-align: middle;\n        display: block;\n      }\n\n      img, video {\n        max-width: 100%;\n        height: auto;\n      }\n\n      button, input, select, optgroup, textarea {\n        font: inherit;\n        font-feature-settings: inherit;\n        font-variation-settings: inherit;\n        letter-spacing: inherit;\n        color: inherit;\n        opacity: 1;\n        background-color: #0000;\n        border-radius: 0;\n      }\n\n      ::file-selector-button {\n        font: inherit;\n        font-feature-settings: inherit;\n        font-variation-settings: inherit;\n        letter-spacing: inherit;\n        color: inherit;\n        opacity: 1;\n        background-color: #0000;\n        border-radius: 0;\n      }\n\n      :where(select:is([multiple], [size])) optgroup {\n        font-weight: bolder;\n      }\n\n      :where(select:is([multiple], [size])) optgroup option {\n        padding-inline-start: 20px;\n      }\n\n      ::file-selector-button {\n        margin-inline-end: 4px;\n      }\n\n      ::placeholder {\n        opacity: 1;\n      }\n\n      @supports (not ((-webkit-appearance: -apple-pay-button))) or (contain-intrinsic-size: 1px) {\n        ::placeholder {\n          color: currentColor;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          ::placeholder {\n            color: color-mix(in oklab, currentcolor 50%, transparent);\n          }\n        }\n      }\n\n      textarea {\n        resize: vertical;\n      }\n\n      ::-webkit-search-decoration {\n        -webkit-appearance: none;\n      }\n\n      ::-webkit-date-and-time-value {\n        min-height: 1lh;\n        text-align: inherit;\n      }\n\n      ::-webkit-datetime-edit {\n        display: inline-flex;\n      }\n\n      ::-webkit-datetime-edit-fields-wrapper {\n        padding: 0;\n      }\n\n      ::-webkit-datetime-edit {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-year-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-month-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-day-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-hour-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-minute-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-second-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-millisecond-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-meridiem-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-calendar-picker-indicator {\n        line-height: 1;\n      }\n\n      :-moz-ui-invalid {\n        box-shadow: none;\n      }\n\n      button, input:where([type=\"button\"], [type=\"reset\"], [type=\"submit\"]) {\n        appearance: button;\n      }\n\n      ::file-selector-button {\n        appearance: button;\n      }\n\n      ::-webkit-inner-spin-button {\n        height: auto;\n      }\n\n      ::-webkit-outer-spin-button {\n        height: auto;\n      }\n\n      [hidden]:where(:not([hidden=\"until-found\"])) {\n        display: none !important;\n      }\n    }\n\n    @layer components;\n\n    @layer utilities {\n      .pointer-events-none {\n        pointer-events: none;\n      }\n\n      .collapse {\n        visibility: collapse;\n      }\n\n      .visible {\n        visibility: visible;\n      }\n\n      .absolute {\n        position: absolute;\n      }\n\n      .fixed {\n        position: fixed;\n      }\n\n      .relative {\n        position: relative;\n      }\n\n      .static {\n        position: static;\n      }\n\n      .sticky {\n        position: sticky;\n      }\n\n      .inset-0 {\n        inset: calc(var(--spacing) * 0);\n      }\n\n      .-top-1 {\n        top: calc(var(--spacing) * -1);\n      }\n\n      .top-0 {\n        top: calc(var(--spacing) * 0);\n      }\n\n      .top-1\\/2 {\n        top: 50%;\n      }\n\n      .top-2 {\n        top: calc(var(--spacing) * 2);\n      }\n\n      .top-3 {\n        top: calc(var(--spacing) * 3);\n      }\n\n      .-right-1 {\n        right: calc(var(--spacing) * -1);\n      }\n\n      .left-3 {\n        left: calc(var(--spacing) * 3);\n      }\n\n      .left-full {\n        left: 100%;\n      }\n\n      .z-10 {\n        z-index: 10;\n      }\n\n      .z-30 {\n        z-index: 30;\n      }\n\n      .float-right {\n        float: right;\n      }\n\n      .container {\n        width: 100%;\n      }\n\n      @media (min-width: 40rem) {\n        .container {\n          max-width: 40rem;\n        }\n      }\n\n      @media (min-width: 48rem) {\n        .container {\n          max-width: 48rem;\n        }\n      }\n\n      @media (min-width: 64rem) {\n        .container {\n          max-width: 64rem;\n        }\n      }\n\n      @media (min-width: 80rem) {\n        .container {\n          max-width: 80rem;\n        }\n      }\n\n      @media (min-width: 96rem) {\n        .container {\n          max-width: 96rem;\n        }\n      }\n\n      .m-0 {\n        margin: calc(var(--spacing) * 0);\n      }\n\n      .-mx-1 {\n        margin-inline: calc(var(--spacing) * -1);\n      }\n\n      .mx-3\\.5 {\n        margin-inline: calc(var(--spacing) * 3.5);\n      }\n\n      .mx-auto {\n        margin-inline: auto;\n      }\n\n      .my-1\\.5 {\n        margin-block: calc(var(--spacing) * 1.5);\n      }\n\n      .ms-auto {\n        margin-inline-start: auto;\n      }\n\n      .mt-0\\.5 {\n        margin-top: calc(var(--spacing) * .5);\n      }\n\n      .mt-1 {\n        margin-top: calc(var(--spacing) * 1);\n      }\n\n      .mt-1\\.5 {\n        margin-top: calc(var(--spacing) * 1.5);\n      }\n\n      .mt-2 {\n        margin-top: calc(var(--spacing) * 2);\n      }\n\n      .mt-3 {\n        margin-top: calc(var(--spacing) * 3);\n      }\n\n      .mt-4 {\n        margin-top: calc(var(--spacing) * 4);\n      }\n\n      .mr-2 {\n        margin-right: calc(var(--spacing) * 2);\n      }\n\n      .mb-1 {\n        margin-bottom: calc(var(--spacing) * 1);\n      }\n\n      .mb-2 {\n        margin-bottom: calc(var(--spacing) * 2);\n      }\n\n      .mb-3 {\n        margin-bottom: calc(var(--spacing) * 3);\n      }\n\n      .ml-1 {\n        margin-left: calc(var(--spacing) * 1);\n      }\n\n      .ml-2 {\n        margin-left: calc(var(--spacing) * 2);\n      }\n\n      .ml-3 {\n        margin-left: calc(var(--spacing) * 3);\n      }\n\n      .ml-auto {\n        margin-left: auto;\n      }\n\n      .block {\n        display: block;\n      }\n\n      .flex {\n        display: flex;\n      }\n\n      .grid {\n        display: grid;\n      }\n\n      .hidden {\n        display: none;\n      }\n\n      .inline {\n        display: inline;\n      }\n\n      .inline-block {\n        display: inline-block;\n      }\n\n      .inline-flex {\n        display: inline-flex;\n      }\n\n      .table {\n        display: table;\n      }\n\n      .aspect-square {\n        aspect-ratio: 1;\n      }\n\n      .size-1\\.5 {\n        width: calc(var(--spacing) * 1.5);\n        height: calc(var(--spacing) * 1.5);\n      }\n\n      .size-2 {\n        width: calc(var(--spacing) * 2);\n        height: calc(var(--spacing) * 2);\n      }\n\n      .size-2\\.5 {\n        width: calc(var(--spacing) * 2.5);\n        height: calc(var(--spacing) * 2.5);\n      }\n\n      .size-3 {\n        width: calc(var(--spacing) * 3);\n        height: calc(var(--spacing) * 3);\n      }\n\n      .h-1\\.5 {\n        height: calc(var(--spacing) * 1.5);\n      }\n\n      .h-2 {\n        height: calc(var(--spacing) * 2);\n      }\n\n      .h-3\\.5 {\n        height: calc(var(--spacing) * 3.5);\n      }\n\n      .h-4 {\n        height: calc(var(--spacing) * 4);\n      }\n\n      .h-5 {\n        height: calc(var(--spacing) * 5);\n      }\n\n      .h-6 {\n        height: calc(var(--spacing) * 6);\n      }\n\n      .h-7 {\n        height: calc(var(--spacing) * 7);\n      }\n\n      .h-8 {\n        height: calc(var(--spacing) * 8);\n      }\n\n      .h-9 {\n        height: calc(var(--spacing) * 9);\n      }\n\n      .h-11 {\n        height: calc(var(--spacing) * 11);\n      }\n\n      .h-20 {\n        height: calc(var(--spacing) * 20);\n      }\n\n      .h-24 {\n        height: calc(var(--spacing) * 24);\n      }\n\n      .h-44 {\n        height: calc(var(--spacing) * 44);\n      }\n\n      .h-64 {\n        height: calc(var(--spacing) * 64);\n      }\n\n      .h-full {\n        height: 100%;\n      }\n\n      .max-h-\\[60vh\\] {\n        max-height: 60vh;\n      }\n\n      .max-h-\\[220px\\] {\n        max-height: 220px;\n      }\n\n      .w-1\\.5 {\n        width: calc(var(--spacing) * 1.5);\n      }\n\n      .w-3\\.5 {\n        width: calc(var(--spacing) * 3.5);\n      }\n\n      .w-4 {\n        width: calc(var(--spacing) * 4);\n      }\n\n      .w-5 {\n        width: calc(var(--spacing) * 5);\n      }\n\n      .w-8 {\n        width: calc(var(--spacing) * 8);\n      }\n\n      .w-10 {\n        width: calc(var(--spacing) * 10);\n      }\n\n      .w-11 {\n        width: calc(var(--spacing) * 11);\n      }\n\n      .w-16 {\n        width: calc(var(--spacing) * 16);\n      }\n\n      .w-20 {\n        width: calc(var(--spacing) * 20);\n      }\n\n      .w-32 {\n        width: calc(var(--spacing) * 32);\n      }\n\n      .w-44 {\n        width: calc(var(--spacing) * 44);\n      }\n\n      .w-full {\n        width: 100%;\n      }\n\n      .max-w-2xl {\n        max-width: var(--container-2xl);\n      }\n\n      .max-w-\\[260px\\] {\n        max-width: 260px;\n      }\n\n      .max-w-\\[920px\\] {\n        max-width: 920px;\n      }\n\n      .max-w-xs {\n        max-width: var(--container-xs);\n      }\n\n      .min-w-0 {\n        min-width: calc(var(--spacing) * 0);\n      }\n\n      .min-w-\\[1rem\\] {\n        min-width: 1rem;\n      }\n\n      .min-w-\\[10rem\\] {\n        min-width: 10rem;\n      }\n\n      .min-w-\\[12rem\\] {\n        min-width: 12rem;\n      }\n\n      .min-w-full {\n        min-width: 100%;\n      }\n\n      .flex-1 {\n        flex: 1;\n      }\n\n      .shrink-0 {\n        flex-shrink: 0;\n      }\n\n      .grow {\n        flex-grow: 1;\n      }\n\n      .-translate-x-px {\n        --tw-translate-x: -1px;\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .translate-x-px {\n        --tw-translate-x: 1px;\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .-translate-y-1\\/2 {\n        --tw-translate-y: calc(calc(1 / 2 * 100%) * -1);\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .transform {\n        transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );\n      }\n\n      .animate-spin {\n        animation: var(--animate-spin);\n      }\n\n      .cursor-pointer {\n        cursor: pointer;\n      }\n\n      .list-none {\n        list-style-type: none;\n      }\n\n      .grid-cols-1 {\n        grid-template-columns: repeat(1, minmax(0, 1fr));\n      }\n\n      .grid-cols-2 {\n        grid-template-columns: repeat(2, minmax(0, 1fr));\n      }\n\n      .grid-cols-4 {\n        grid-template-columns: repeat(4, minmax(0, 1fr));\n      }\n\n      .grid-cols-5 {\n        grid-template-columns: repeat(5, minmax(0, 1fr));\n      }\n\n      .grid-cols-\\[1\\.5rem_1fr_5rem\\] {\n        grid-template-columns: 1.5rem 1fr 5rem;\n      }\n\n      .grid-cols-\\[1fr_auto\\] {\n        grid-template-columns: 1fr auto;\n      }\n\n      .grid-rows-3 {\n        grid-template-rows: repeat(3, minmax(0, 1fr));\n      }\n\n      .flex-col {\n        flex-direction: column;\n      }\n\n      .flex-wrap {\n        flex-wrap: wrap;\n      }\n\n      .items-baseline {\n        align-items: baseline;\n      }\n\n      .items-center {\n        align-items: center;\n      }\n\n      .items-end {\n        align-items: flex-end;\n      }\n\n      .items-start {\n        align-items: flex-start;\n      }\n\n      .justify-between {\n        justify-content: space-between;\n      }\n\n      .justify-center {\n        justify-content: center;\n      }\n\n      .gap-0\\.5 {\n        gap: calc(var(--spacing) * .5);\n      }\n\n      .gap-1 {\n        gap: calc(var(--spacing) * 1);\n      }\n\n      .gap-1\\.5 {\n        gap: calc(var(--spacing) * 1.5);\n      }\n\n      .gap-2 {\n        gap: calc(var(--spacing) * 2);\n      }\n\n      .gap-2\\.5 {\n        gap: calc(var(--spacing) * 2.5);\n      }\n\n      .gap-3 {\n        gap: calc(var(--spacing) * 3);\n      }\n\n      .gap-4 {\n        gap: calc(var(--spacing) * 4);\n      }\n\n      .gap-6 {\n        gap: calc(var(--spacing) * 6);\n      }\n\n      .gap-\\[2px\\] {\n        gap: 2px;\n      }\n\n      .gap-x-6 {\n        column-gap: calc(var(--spacing) * 6);\n      }\n\n      .gap-y-3 {\n        row-gap: calc(var(--spacing) * 3);\n      }\n\n      .truncate {\n        text-overflow: ellipsis;\n        white-space: nowrap;\n        overflow: hidden;\n      }\n\n      .overflow-hidden {\n        overflow: hidden;\n      }\n\n      .overflow-x-auto {\n        overflow-x: auto;\n      }\n\n      .overflow-y-auto {\n        overflow-y: auto;\n      }\n\n      .rounded {\n        border-radius: .25rem;\n      }\n\n      .rounded-\\[3px\\] {\n        border-radius: 3px;\n      }\n\n      .rounded-full {\n        border-radius: 3.40282e38px;\n      }\n\n      .border {\n        border-style: var(--tw-border-style);\n        border-width: 1px;\n      }\n\n      .border-0 {\n        border-style: var(--tw-border-style);\n        border-width: 0;\n      }\n\n      .border-2 {\n        border-style: var(--tw-border-style);\n        border-width: 2px;\n      }\n\n      .border-s {\n        border-inline-start-style: var(--tw-border-style);\n        border-inline-start-width: 1px;\n      }\n\n      .border-t {\n        border-top-style: var(--tw-border-style);\n        border-top-width: 1px;\n      }\n\n      .border-b {\n        border-bottom-style: var(--tw-border-style);\n        border-bottom-width: 1px;\n      }\n\n      .border-amber-400\\/30 {\n        border-color: #fcbb004d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-amber-400\\/30 {\n          border-color: color-mix(in oklab, var(--color-amber-400) 30%, transparent);\n        }\n      }\n\n      .border-amber-400\\/40 {\n        border-color: #fcbb0066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-amber-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-amber-400) 40%, transparent);\n        }\n      }\n\n      .border-emerald-400\\/40 {\n        border-color: #00d29466;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-emerald-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-emerald-400) 40%, transparent);\n        }\n      }\n\n      .border-lime-400\\/40 {\n        border-color: #9de50066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-lime-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-lime-400) 40%, transparent);\n        }\n      }\n\n      .border-sky-400\\/30 {\n        border-color: #00bcfe4d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-sky-400\\/30 {\n          border-color: color-mix(in oklab, var(--color-sky-400) 30%, transparent);\n        }\n      }\n\n      .border-sky-400\\/40 {\n        border-color: #00bcfe66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-sky-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n        }\n      }\n\n      .border-slate-200 {\n        border-color: var(--color-slate-200);\n      }\n\n      .border-white\\/10 {\n        border-color: #ffffff1a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-white\\/10 {\n          border-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n\n      .border-white\\/20 {\n        border-color: #fff3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-white\\/20 {\n          border-color: color-mix(in oklab, var(--color-white) 20%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/10 {\n        background-color: #fcbb001a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 10%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/15 {\n        background-color: #fcbb0026;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 15%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/80 {\n        background-color: #fcbb00cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/80 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 80%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/\\[0\\.06\\] {\n        background-color: #fcbb000f;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/\\[0\\.06\\] {\n          background-color: color-mix(in oklab, var(--color-amber-400) 6%, transparent);\n        }\n      }\n\n      .bg-emerald-400\\/10 {\n        background-color: #00d2941a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-emerald-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-emerald-400) 10%, transparent);\n        }\n      }\n\n      .bg-lime-300 {\n        background-color: var(--color-lime-300);\n      }\n\n      .bg-lime-400\\/10 {\n        background-color: #9de5001a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-lime-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-lime-400) 10%, transparent);\n        }\n      }\n\n      .bg-lime-400\\/15 {\n        background-color: #9de50026;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-lime-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-lime-400) 15%, transparent);\n        }\n      }\n\n      .bg-sky-400\\/15 {\n        background-color: #00bcfe26;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-sky-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-sky-400) 15%, transparent);\n        }\n      }\n\n      .bg-sky-400\\/\\[0\\.06\\] {\n        background-color: #00bcfe0f;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-sky-400\\/\\[0\\.06\\] {\n          background-color: color-mix(in oklab, var(--color-sky-400) 6%, transparent);\n        }\n      }\n\n      .bg-slate-200\\/80 {\n        background-color: #e2e8f0cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-200\\/80 {\n          background-color: color-mix(in oklab, var(--color-slate-200) 80%, transparent);\n        }\n      }\n\n      .bg-slate-900\\/80 {\n        background-color: #0f172bcc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-900\\/80 {\n          background-color: color-mix(in oklab, var(--color-slate-900) 80%, transparent);\n        }\n      }\n\n      .bg-slate-900\\/95 {\n        background-color: #0f172bf2;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-900\\/95 {\n          background-color: color-mix(in oklab, var(--color-slate-900) 95%, transparent);\n        }\n      }\n\n      .bg-slate-950\\/40 {\n        background-color: #02061866;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-950\\/40 {\n          background-color: color-mix(in oklab, var(--color-slate-950) 40%, transparent);\n        }\n      }\n\n      .bg-slate-950\\/70 {\n        background-color: #020618b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-950\\/70 {\n          background-color: color-mix(in oklab, var(--color-slate-950) 70%, transparent);\n        }\n      }\n\n      .bg-teal-300 {\n        background-color: var(--color-teal-300);\n      }\n\n      .bg-teal-300\\/70 {\n        background-color: #46ecd5b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-teal-300\\/70 {\n          background-color: color-mix(in oklab, var(--color-teal-300) 70%, transparent);\n        }\n      }\n\n      .bg-teal-300\\/90 {\n        background-color: #46ecd5e6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-teal-300\\/90 {\n          background-color: color-mix(in oklab, var(--color-teal-300) 90%, transparent);\n        }\n      }\n\n      .bg-transparent {\n        background-color: #0000;\n      }\n\n      .bg-white\\/5 {\n        background-color: #ffffff0d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/5 {\n          background-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n        }\n      }\n\n      .bg-white\\/10 {\n        background-color: #ffffff1a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/10 {\n          background-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n\n      .bg-white\\/\\[0\\.02\\] {\n        background-color: #ffffff05;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/\\[0\\.02\\] {\n          background-color: color-mix(in oklab, var(--color-white) 2%, transparent);\n        }\n      }\n\n      .bg-white\\/\\[0\\.03\\] {\n        background-color: #ffffff08;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/\\[0\\.03\\] {\n          background-color: color-mix(in oklab, var(--color-white) 3%, transparent);\n        }\n      }\n\n      .p-0 {\n        padding: calc(var(--spacing) * 0);\n      }\n\n      .p-1\\.5 {\n        padding: calc(var(--spacing) * 1.5);\n      }\n\n      .p-2 {\n        padding: calc(var(--spacing) * 2);\n      }\n\n      .p-3 {\n        padding: calc(var(--spacing) * 3);\n      }\n\n      .p-4 {\n        padding: calc(var(--spacing) * 4);\n      }\n\n      .p-5 {\n        padding: calc(var(--spacing) * 5);\n      }\n\n      .p-6 {\n        padding: calc(var(--spacing) * 6);\n      }\n\n      .px-1 {\n        padding-inline: calc(var(--spacing) * 1);\n      }\n\n      .px-1\\.5 {\n        padding-inline: calc(var(--spacing) * 1.5);\n      }\n\n      .px-2 {\n        padding-inline: calc(var(--spacing) * 2);\n      }\n\n      .px-2\\.5 {\n        padding-inline: calc(var(--spacing) * 2.5);\n      }\n\n      .px-3 {\n        padding-inline: calc(var(--spacing) * 3);\n      }\n\n      .py-0\\.5 {\n        padding-block: calc(var(--spacing) * .5);\n      }\n\n      .py-1 {\n        padding-block: calc(var(--spacing) * 1);\n      }\n\n      .py-1\\.5 {\n        padding-block: calc(var(--spacing) * 1.5);\n      }\n\n      .py-2 {\n        padding-block: calc(var(--spacing) * 2);\n      }\n\n      .py-4 {\n        padding-block: calc(var(--spacing) * 4);\n      }\n\n      .py-px {\n        padding-block: 1px;\n      }\n\n      .pt-1 {\n        padding-top: calc(var(--spacing) * 1);\n      }\n\n      .pt-3 {\n        padding-top: calc(var(--spacing) * 3);\n      }\n\n      .pt-4 {\n        padding-top: calc(var(--spacing) * 4);\n      }\n\n      .pr-1 {\n        padding-right: calc(var(--spacing) * 1);\n      }\n\n      .pb-1 {\n        padding-bottom: calc(var(--spacing) * 1);\n      }\n\n      .pb-2 {\n        padding-bottom: calc(var(--spacing) * 2);\n      }\n\n      .pb-4 {\n        padding-bottom: calc(var(--spacing) * 4);\n      }\n\n      .pl-2 {\n        padding-left: calc(var(--spacing) * 2);\n      }\n\n      .text-center {\n        text-align: center;\n      }\n\n      .text-left {\n        text-align: left;\n      }\n\n      .text-right {\n        text-align: right;\n      }\n\n      .text-start {\n        text-align: start;\n      }\n\n      .align-middle {\n        vertical-align: middle;\n      }\n\n      .text-2xl {\n        font-size: var(--text-2xl);\n        line-height: var(--tw-leading, var(--text-2xl--line-height));\n      }\n\n      .text-3xl {\n        font-size: var(--text-3xl);\n        line-height: var(--tw-leading, var(--text-3xl--line-height));\n      }\n\n      .text-4xl {\n        font-size: var(--text-4xl);\n        line-height: var(--tw-leading, var(--text-4xl--line-height));\n      }\n\n      .text-5xl {\n        font-size: var(--text-5xl);\n        line-height: var(--tw-leading, var(--text-5xl--line-height));\n      }\n\n      .text-lg {\n        font-size: var(--text-lg);\n        line-height: var(--tw-leading, var(--text-lg--line-height));\n      }\n\n      .text-sm {\n        font-size: var(--text-sm);\n        line-height: var(--tw-leading, var(--text-sm--line-height));\n      }\n\n      .text-xl {\n        font-size: var(--text-xl);\n        line-height: var(--tw-leading, var(--text-xl--line-height));\n      }\n\n      .text-xs {\n        font-size: var(--text-xs);\n        line-height: var(--tw-leading, var(--text-xs--line-height));\n      }\n\n      .text-\\[0\\.6rem\\] {\n        font-size: .6rem;\n      }\n\n      .text-\\[0\\.7rem\\] {\n        font-size: .7rem;\n      }\n\n      .text-\\[0\\.65rem\\] {\n        font-size: .65rem;\n      }\n\n      .leading-none {\n        --tw-leading: 1;\n        line-height: 1;\n      }\n\n      .leading-tight {\n        --tw-leading: var(--leading-tight);\n        line-height: var(--leading-tight);\n      }\n\n      .font-bold {\n        --tw-font-weight: var(--font-weight-bold);\n        font-weight: var(--font-weight-bold);\n      }\n\n      .font-medium {\n        --tw-font-weight: var(--font-weight-medium);\n        font-weight: var(--font-weight-medium);\n      }\n\n      .font-normal {\n        --tw-font-weight: var(--font-weight-normal);\n        font-weight: var(--font-weight-normal);\n      }\n\n      .font-semibold {\n        --tw-font-weight: var(--font-weight-semibold);\n        font-weight: var(--font-weight-semibold);\n      }\n\n      .tracking-\\[0\\.16em\\] {\n        --tw-tracking: .16em;\n        letter-spacing: .16em;\n      }\n\n      .tracking-\\[0\\.18em\\] {\n        --tw-tracking: .18em;\n        letter-spacing: .18em;\n      }\n\n      .tracking-normal {\n        --tw-tracking: var(--tracking-normal);\n        letter-spacing: var(--tracking-normal);\n      }\n\n      .tracking-tight {\n        --tw-tracking: var(--tracking-tight);\n        letter-spacing: var(--tracking-tight);\n      }\n\n      .tracking-wide {\n        --tw-tracking: var(--tracking-wide);\n        letter-spacing: var(--tracking-wide);\n      }\n\n      .tracking-wider {\n        --tw-tracking: var(--tracking-wider);\n        letter-spacing: var(--tracking-wider);\n      }\n\n      .whitespace-nowrap {\n        white-space: nowrap;\n      }\n\n      .\\!text-current {\n        color: currentColor !important;\n      }\n\n      .text-amber-200 {\n        color: var(--color-amber-200);\n      }\n\n      .text-amber-300 {\n        color: var(--color-amber-300);\n      }\n\n      .text-amber-300\\/80 {\n        color: #ffd236cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .text-amber-300\\/80 {\n          color: color-mix(in oklab, var(--color-amber-300) 80%, transparent);\n        }\n      }\n\n      .text-amber-400 {\n        color: var(--color-amber-400);\n      }\n\n      .text-cyan-300 {\n        color: var(--color-cyan-300);\n      }\n\n      .text-emerald-300 {\n        color: var(--color-emerald-300);\n      }\n\n      .text-indigo-300 {\n        color: var(--color-indigo-300);\n      }\n\n      .text-lime-200 {\n        color: var(--color-lime-200);\n      }\n\n      .text-lime-300 {\n        color: var(--color-lime-300);\n      }\n\n      .text-sky-300 {\n        color: var(--color-sky-300);\n      }\n\n      .text-sky-400 {\n        color: var(--color-sky-400);\n      }\n\n      .text-slate-100 {\n        color: var(--color-slate-100);\n      }\n\n      .text-slate-100\\/85 {\n        color: #f1f5f9d9;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .text-slate-100\\/85 {\n          color: color-mix(in oklab, var(--color-slate-100) 85%, transparent);\n        }\n      }\n\n      .text-slate-200 {\n        color: var(--color-slate-200);\n      }\n\n      .text-slate-300 {\n        color: var(--color-slate-300);\n      }\n\n      .text-slate-400 {\n        color: var(--color-slate-400);\n      }\n\n      .text-slate-500 {\n        color: var(--color-slate-500);\n      }\n\n      .text-slate-900 {\n        color: var(--color-slate-900);\n      }\n\n      .text-white {\n        color: var(--color-white);\n      }\n\n      .text-white\\/85 {\n        color: #ffffffd9;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .text-white\\/85 {\n          color: color-mix(in oklab, var(--color-white) 85%, transparent);\n        }\n      }\n\n      .capitalize {\n        text-transform: capitalize;\n      }\n\n      .normal-case {\n        text-transform: none;\n      }\n\n      .uppercase {\n        text-transform: uppercase;\n      }\n\n      .italic {\n        font-style: italic;\n      }\n\n      .tabular-nums {\n        --tw-numeric-spacing: tabular-nums;\n        font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n      }\n\n      .no-underline {\n        text-decoration-line: none;\n      }\n\n      .opacity-0 {\n        opacity: 0;\n      }\n\n      .opacity-60 {\n        opacity: .6;\n      }\n\n      .opacity-70 {\n        opacity: .7;\n      }\n\n      .opacity-75 {\n        opacity: .75;\n      }\n\n      .opacity-90 {\n        opacity: .9;\n      }\n\n      .shadow-\\[0_0_10px_2px_rgba\\(163\\,230\\,53\\,0\\.7\\)\\] {\n        --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, #a3e635b3);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\] {\n        --tw-shadow: 0 0 10px var(--tw-shadow-color, #ffffff40);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\] {\n        --tw-shadow: 0 0 14px var(--tw-shadow-color, #5eead499);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\] {\n        --tw-shadow: 0 0 18px -6px var(--tw-shadow-color, var(--color-primary));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\] {\n        --tw-shadow: 0 0 18px var(--tw-shadow-color, #5eead4d9);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\] {\n        --tw-shadow: 0 0 24px -8px var(--tw-shadow-color, var(--color-primary));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-lg {\n        --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, #0000001a), 0 4px 6px -4px var(--tw-shadow-color, #0000001a);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring, .ring-1 {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring-2 {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring-amber-400\\/40 {\n        --tw-ring-color: #fcbb0066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-amber-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-amber-400) 40%, transparent);\n        }\n      }\n\n      .ring-cyan-400\\/40 {\n        --tw-ring-color: #00d2ef66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-cyan-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-cyan-400) 40%, transparent);\n        }\n      }\n\n      .ring-indigo-400\\/40 {\n        --tw-ring-color: #7d87ff66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-indigo-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-indigo-400) 40%, transparent);\n        }\n      }\n\n      .ring-lime-400\\/40 {\n        --tw-ring-color: #9de50066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-lime-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-lime-400) 40%, transparent);\n        }\n      }\n\n      .ring-sky-400\\/40 {\n        --tw-ring-color: #00bcfe66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-sky-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n        }\n      }\n\n      .ring-teal-200 {\n        --tw-ring-color: var(--color-teal-200);\n      }\n\n      .ring-teal-200\\/70 {\n        --tw-ring-color: #96f7e4b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-teal-200\\/70 {\n          --tw-ring-color: color-mix(in oklab, var(--color-teal-200) 70%, transparent);\n        }\n      }\n\n      .ring-white\\/5 {\n        --tw-ring-color: #ffffff0d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/5 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n        }\n      }\n\n      .ring-white\\/30 {\n        --tw-ring-color: #ffffff4d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/30 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 30%, transparent);\n        }\n      }\n\n      .ring-white\\/40 {\n        --tw-ring-color: #fff6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 40%, transparent);\n        }\n      }\n\n      .outline-hidden {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      @media (forced-colors: active) {\n        .outline-hidden {\n          outline-offset: 2px;\n          outline: 2px solid #0000;\n        }\n      }\n\n      .drop-shadow-\\[0_2px_18px_rgba\\(0\\,0\\,0\\,0\\.45\\)\\] {\n        --tw-drop-shadow-size: drop-shadow(0 2px 18px var(--tw-drop-shadow-color, #00000073));\n        --tw-drop-shadow: var(--tw-drop-shadow-size);\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .invert {\n        --tw-invert: invert(100%);\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .filter {\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .backdrop-blur {\n        --tw-backdrop-blur: blur(8px);\n        -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n        backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n      }\n\n      .backdrop-blur-sm {\n        --tw-backdrop-blur: blur(var(--blur-sm));\n        -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n        backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n      }\n\n      .transition-\\[margin\\,opacity\\] {\n        transition-property: margin, opacity;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-\\[width\\,height\\,padding\\] {\n        transition-property: width, height, padding;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-all {\n        transition-property: all;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-colors {\n        transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-opacity {\n        transition-property: opacity;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-shadow {\n        transition-property: box-shadow;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-transform {\n        transition-property: transform, translate, scale, rotate;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .duration-150 {\n        --tw-duration: .15s;\n        transition-duration: .15s;\n      }\n\n      .duration-200 {\n        --tw-duration: .2s;\n        transition-duration: .2s;\n      }\n\n      .ease-linear {\n        --tw-ease: linear;\n        transition-timing-function: linear;\n      }\n\n      .ease-out {\n        --tw-ease: var(--ease-out);\n        transition-timing-function: var(--ease-out);\n      }\n\n      .outline-none {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      .select-none {\n        -webkit-user-select: none;\n        user-select: none;\n      }\n\n      @media (hover: hover) {\n        .group-hover\\:opacity-100:is(:where(.group):hover *) {\n          opacity: 1;\n        }\n      }\n\n      .group-focus-visible\\:opacity-100:is(:where(.group):focus-visible *) {\n        opacity: 1;\n      }\n\n      .group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *) {\n        padding-inline-end: calc(var(--spacing) * 8);\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        margin-top: calc(var(--spacing) * -8);\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        display: none;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        width: calc(var(--spacing) * 8) !important;\n        height: calc(var(--spacing) * 8) !important;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        padding: calc(var(--spacing) * 2) !important;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        opacity: 0;\n      }\n\n      .group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *) {\n        rotate: 90deg;\n      }\n\n      @media (hover: hover) {\n        .hover\\:-translate-y-0\\.5:hover {\n          --tw-translate-y: calc(var(--spacing) * -.5);\n          translate: var(--tw-translate-x) var(--tw-translate-y);\n        }\n\n        .hover\\:bg-slate-800:hover {\n          background-color: var(--color-slate-800);\n        }\n\n        .hover\\:bg-slate-950\\/70:hover {\n          background-color: #020618b3;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          .hover\\:bg-slate-950\\/70:hover {\n            background-color: color-mix(in oklab, var(--color-slate-950) 70%, transparent);\n          }\n        }\n\n        .hover\\:bg-white\\/5:hover {\n          background-color: #ffffff0d;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          .hover\\:bg-white\\/5:hover {\n            background-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n          }\n        }\n\n        .hover\\:text-white:hover {\n          color: var(--color-white);\n        }\n\n        .hover\\:underline:hover {\n          text-decoration-line: underline;\n        }\n\n        .hover\\:opacity-100:hover {\n          opacity: 1;\n        }\n\n        .hover\\:shadow-xl:hover {\n          --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n        }\n      }\n\n      .focus\\:outline-none:focus {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      .focus-visible\\:ring-2:focus-visible {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .focus-visible\\:ring-white\\/40:focus-visible {\n        --tw-ring-color: #fff6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .focus-visible\\:ring-white\\/40:focus-visible {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 40%, transparent);\n        }\n      }\n\n      .disabled\\:pointer-events-none:disabled {\n        pointer-events: none;\n      }\n\n      .disabled\\:opacity-50:disabled {\n        opacity: .5;\n      }\n\n      .aria-disabled\\:pointer-events-none[aria-disabled=\"true\"] {\n        pointer-events: none;\n      }\n\n      .aria-disabled\\:opacity-50[aria-disabled=\"true\"] {\n        opacity: .5;\n      }\n\n      .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n        --tw-font-weight: var(--font-weight-medium);\n        font-weight: var(--font-weight-medium);\n      }\n\n      @media (min-width: 40rem) {\n        .sm\\:inline-flex {\n          display: inline-flex;\n        }\n\n        .sm\\:h-72 {\n          height: calc(var(--spacing) * 72);\n        }\n\n        .sm\\:grid-cols-2 {\n          grid-template-columns: repeat(2, minmax(0, 1fr));\n        }\n\n        .sm\\:grid-cols-3 {\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n        }\n\n        .sm\\:gap-4 {\n          gap: calc(var(--spacing) * 4);\n        }\n\n        .sm\\:p-3 {\n          padding: calc(var(--spacing) * 3);\n        }\n\n        .sm\\:p-4 {\n          padding: calc(var(--spacing) * 4);\n        }\n\n        .sm\\:p-6 {\n          padding: calc(var(--spacing) * 6);\n        }\n\n        .sm\\:text-4xl {\n          font-size: var(--text-4xl);\n          line-height: var(--tw-leading, var(--text-4xl--line-height));\n        }\n\n        .sm\\:text-5xl {\n          font-size: var(--text-5xl);\n          line-height: var(--tw-leading, var(--text-5xl--line-height));\n        }\n\n        .sm\\:text-6xl {\n          font-size: var(--text-6xl);\n          line-height: var(--tw-leading, var(--text-6xl--line-height));\n        }\n      }\n\n      @media (min-width: 48rem) {\n        .md\\:grid-cols-4 {\n          grid-template-columns: repeat(4, minmax(0, 1fr));\n        }\n\n        .md\\:grid-cols-5 {\n          grid-template-columns: repeat(5, minmax(0, 1fr));\n        }\n\n        .md\\:grid-cols-\\[260px_1fr\\] {\n          grid-template-columns: 260px 1fr;\n        }\n\n        .md\\:grid-cols-\\[280px_1fr\\] {\n          grid-template-columns: 280px 1fr;\n        }\n      }\n\n      @media (min-width: 64rem) {\n        .lg\\:col-span-2 {\n          grid-column: span 2 / span 2;\n        }\n\n        .lg\\:col-span-3 {\n          grid-column: span 3 / span 3;\n        }\n\n        .lg\\:grid-cols-3 {\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n        }\n\n        .lg\\:grid-cols-5 {\n          grid-template-columns: repeat(5, minmax(0, 1fr));\n        }\n\n        .lg\\:grid-cols-\\[1fr_2fr\\] {\n          grid-template-columns: 1fr 2fr;\n        }\n\n        .lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\] {\n          grid-template-columns: minmax(260px, 320px) 1fr minmax(220px, 260px);\n        }\n      }\n\n      @media (min-width: 80rem) {\n        .xl\\:grid-cols-4 {\n          grid-template-columns: repeat(4, minmax(0, 1fr));\n        }\n      }\n\n      @media print {\n        .print\\:hidden {\n          display: none;\n        }\n\n        .print\\:break-inside-avoid {\n          break-inside: avoid;\n        }\n\n        .print\\:gap-3 {\n          gap: calc(var(--spacing) * 3);\n        }\n\n        .print\\:border-slate-200 {\n          border-color: var(--color-slate-200);\n        }\n\n        .print\\:border-slate-300 {\n          border-color: var(--color-slate-300);\n        }\n\n        .print\\:\\!bg-white {\n          background-color: var(--color-white) !important;\n        }\n\n        .print\\:py-0 {\n          padding-block: calc(var(--spacing) * 0);\n        }\n\n        .print\\:text-\\[10px\\] {\n          font-size: 10px;\n        }\n\n        .print\\:\\!shadow-none {\n          --tw-shadow: 0 0 #0000 !important;\n          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow) !important;\n        }\n      }\n\n      .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n        text-overflow: ellipsis;\n        white-space: nowrap;\n        overflow: hidden;\n      }\n\n      .\\[\\&\\>svg\\]\\:size-4 > svg {\n        width: calc(var(--spacing) * 4);\n        height: calc(var(--spacing) * 4);\n      }\n\n      .\\[\\&\\>svg\\]\\:shrink-0 > svg {\n        flex-shrink: 0;\n      }\n\n      .\\[\\&\\>svg\\]\\:text-inherit > svg {\n        color: inherit;\n      }\n    }\n  }\n}\n\n@layer rubix-extension {\n  @keyframes nrg-hero-slide {\n    0% {\n      background-position: 0%;\n    }\n\n    50% {\n      background-position: 100%;\n    }\n\n    100% {\n      background-position: 0%;\n    }\n  }\n\n  .nrg-hero-gradient {\n    background-size: 220% 220%;\n    animation: 18s ease-in-out infinite nrg-hero-slide;\n  }\n\n  @keyframes nrg-spin {\n    from {\n      transform: rotate(0);\n    }\n\n    to {\n      transform: rotate(360deg);\n    }\n  }\n\n  .nrg-spin-slow {\n    transform-origin: 50%;\n    transform-box: fill-box;\n    animation: 4.2s linear infinite nrg-spin;\n  }\n\n  .nrg-spin-med {\n    transform-origin: 50%;\n    transform-box: fill-box;\n    animation: 2.4s linear infinite nrg-spin;\n  }\n\n  @keyframes nrg-bob {\n    0%, 100% {\n      transform: translateY(0);\n    }\n\n    50% {\n      transform: translateY(-3.5px);\n    }\n  }\n\n  .nrg-bob {\n    transform-origin: 50%;\n    transform-box: fill-box;\n    animation: 3.8s ease-in-out infinite nrg-bob;\n  }\n\n  @keyframes nrg-charge {\n    0% {\n      opacity: .55;\n    }\n\n    50% {\n      opacity: 1;\n    }\n\n    100% {\n      opacity: .55;\n    }\n  }\n\n  .nrg-charge {\n    animation: 2.6s ease-in-out infinite nrg-charge;\n  }\n\n  @keyframes nrg-status-pulse {\n    0% {\n      box-shadow: 0 0 0 0 var(--nrg-pulse-color, #a3e6358c);\n    }\n\n    70% {\n      box-shadow: 0 0 0 9px #0000;\n    }\n\n    100% {\n      box-shadow: 0 0 #0000;\n    }\n  }\n\n  .nrg-dot-pulse {\n    animation: 1.9s cubic-bezier(.45, 0, .2, 1) infinite nrg-status-pulse;\n  }\n\n  .nrg-glow-amber {\n    text-shadow: 0 0 22px #fbbf2473, 0 0 4px #fbbf244d;\n  }\n\n  .nrg-glow-lime {\n    text-shadow: 0 0 22px #a3e63566, 0 0 4px #a3e6354d;\n  }\n\n  .nrg-glow-cyan {\n    text-shadow: 0 0 22px #22d3ee66, 0 0 4px #22d3ee4d;\n  }\n\n  .nrg-shell {\n    color: #f8fafc;\n    background-color: #0f0f23;\n    background-image: radial-gradient(60% 50% at 12% 0, #6366f138, #0000 70%), radial-gradient(50% 50% at 95% 8%, #22d3ee2e, #0000 70%), radial-gradient(40% 40% at 65% 100%, #fbbf2424, #0000 70%);\n    min-height: 100%;\n  }\n\n  .nrg-card {\n    -webkit-backdrop-filter: blur(8px);\n    backdrop-filter: blur(8px);\n    background: #0f172ac7;\n    border: 1px solid #ffffff14;\n    border-radius: 1rem;\n    box-shadow: inset 0 1px #ffffff0a, 0 18px 44px -22px #000000b3;\n  }\n\n  .nrg-card--solar {\n    box-shadow: inset 0 0 0 1px #fbbf242e, 0 18px 44px -22px #fbbf2440;\n  }\n\n  .nrg-card--wind {\n    box-shadow: inset 0 0 0 1px #22d3ee2e, 0 18px 44px -22px #22d3ee40;\n  }\n\n  .nrg-card--water {\n    box-shadow: inset 0 0 0 1px #38bdf82e, 0 18px 44px -22px #38bdf840;\n  }\n\n  .nrg-card--hydro {\n    box-shadow: inset 0 0 0 1px #6366f133, 0 18px 44px -22px #6366f14d;\n  }\n\n  .nrg-card--storage {\n    box-shadow: inset 0 0 0 1px #a3e6352e, 0 18px 44px -22px #a3e63540;\n  }\n\n  .nrg-nav-active {\n    box-shadow: inset 2px 0 0 0 var(--nrg-nav-accent, #ca8a04), 0 0 24px -8px var(--nrg-nav-accent, #ca8a04);\n    background: linear-gradient(#ffffff0f, #ffffff05);\n  }\n\n  @media (prefers-reduced-motion: reduce) {\n    .nrg-hero-gradient, .nrg-spin-slow, .nrg-spin-med, .nrg-bob, .nrg-charge, .nrg-dot-pulse {\n      animation: none !important;\n    }\n  }\n}\n\n.ext-dash-shell {\n  isolation: isolate;\n  position: relative;\n}\n\n.ext-dash-shell:before {\n  content: \"\";\n  pointer-events: none;\n  z-index: -1;\n  filter: blur(20px);\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf2e, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f129, #0000 70%);\n  height: 50%;\n  position: absolute;\n  inset: -20% -10% auto;\n}\n\n:root[data-mode=\"dark\"] .ext-dash-shell:before {\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf38, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f133, #0000 70%);\n}\n\n.ext-glass {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 14px;\n  position: relative;\n  overflow: hidden;\n  box-shadow: inset 0 1px #ffffff8c, 0 1px 2px #0f172a0f, 0 12px 28px -12px #0f172a38;\n}\n\n:root[data-mode=\"dark\"] .ext-glass {\n  background: var(--color-card, #0f172a);\n  border-color: var(--color-border, #94a3b82e);\n  box-shadow: inset 0 1px #ffffff0f, 0 1px 2px #00000073, 0 18px 44px -16px #000000b3;\n}\n\n.ext-glass--accent {\n  border-color: var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-glass--accent {\n    border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);\n  }\n}\n\n.ext-glass--accent {\n  box-shadow: 0 0 0 1px var(--color-primary, #2dd4bf), 0 12px 36px -12px var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-glass--accent {\n    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent), 0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);\n  }\n}\n\n.ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-eyebrow {\n    color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);\n  }\n}\n\n.ext-num {\n  font-variant-numeric: tabular-nums;\n}\n\n@keyframes ext-site-pulse {\n  0% {\n    opacity: .9;\n    transform: scale(.6);\n  }\n\n  80% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n\n  100% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n}\n\n.site-pulse--on {\n  animation: 1.8s ease-out infinite ext-site-pulse;\n}\n\n.site-pulse--off {\n  opacity: .35;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .site-pulse--on {\n    opacity: .55;\n    animation: none;\n  }\n}\n\n.uplot {\n  font-family: inherit;\n}\n\n.uplot .u-legend {\n  color: var(--color-foreground);\n  font-size: 11px;\n}\n\n.uplot .u-legend .u-marker {\n  border-radius: 2px;\n  width: 10px;\n  height: 10px;\n}\n\n.ext-report {\n  min-height: 100%;\n  padding: 1rem 1.25rem;\n}\n\n@media print {\n  @page {\n    size: A4;\n    margin: 14mm;\n  }\n\n  html, body {\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  .no-print, nav, header[data-block-shell], aside {\n    display: none !important;\n  }\n\n  .ext-report {\n    --color-foreground: #0f172a;\n    --color-muted-foreground: #64748b;\n    --color-border: #e2e8f0;\n    --color-card: #fff;\n    padding: 0;\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  .ext-report .ext-glass {\n    box-shadow: none;\n    background: #fff !important;\n  }\n\n  section, .ext-report-channel {\n    break-inside: avoid;\n    page-break-inside: avoid;\n  }\n\n  a {\n    color: inherit;\n    text-decoration: none;\n  }\n}\n\n@property --tw-translate-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}.maplibregl-canvas{left:0;position:absolute;top:0}.maplibregl-map:fullscreen{height:100%;width:100%}.maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}.maplibregl-canvas-container.maplibregl-interactive,.maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}.maplibregl-canvas-container.maplibregl-interactive:active,.maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures,.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}.maplibregl-ctrl-top-left{left:0;top:0}.maplibregl-ctrl-top-right{right:0;top:0}.maplibregl-ctrl-bottom-left{bottom:0;left:0}.maplibregl-ctrl-bottom-right{bottom:0;right:0}.maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}.maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}.maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}.maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}.maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}.maplibregl-ctrl-group{background:#fff;border-radius:4px}.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}.maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}.maplibregl-ctrl-group button+button{border-top:1px solid #ddd}.maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){.maplibregl-ctrl-icon{background-color:transparent}.maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}.maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}.maplibregl-ctrl-attrib-button:focus,.maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl button:disabled{cursor:not-allowed}.maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}.maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}.maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}.maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}.maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){a.maplibregl-ctrl-logo{background-color:transparent;background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}.maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{.maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}.maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show,.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}.maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}.maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}.maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}.maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}.maplibregl-attrib-empty{display:none}.maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}.maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}.maplibregl-popup-anchor-top,.maplibregl-popup-anchor-top-left,.maplibregl-popup-anchor-top-right{flex-direction:column}.maplibregl-popup-anchor-bottom,.maplibregl-popup-anchor-bottom-left,.maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}.maplibregl-popup-anchor-left{flex-direction:row}.maplibregl-popup-anchor-right{flex-direction:row-reverse}.maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}.maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}.maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}.maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}.maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}.maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}.maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}.maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}.maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}.maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}.maplibregl-popup-track-pointer{display:none}.maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}.maplibregl-map:active .maplibregl-popup-track-pointer{display:none}.maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}.maplibregl-user-location-dot,.maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}.maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:\"\";position:absolute}.maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:\"\";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}.maplibregl-user-location-dot-stale{background-color:#aaa}.maplibregl-user-location-dot-stale:after{display:none}.maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}.maplibregl-crosshair,.maplibregl-crosshair .maplibregl-interactive,.maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}.maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}.maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}.maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}.maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}.uplot, .uplot *, .uplot *::before, .uplot *::after {box-sizing: border-box;}.uplot {font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";line-height: 1.5;width: min-content;}.u-title {text-align: center;font-size: 18px;font-weight: bold;}.u-wrap {position: relative;user-select: none;}.u-over, .u-under {position: absolute;}.u-under {overflow: hidden;}.uplot canvas {display: block;position: relative;width: 100%;height: 100%;}.u-axis {position: absolute;}.u-legend {font-size: 14px;margin: auto;text-align: center;}.u-inline {display: block;}.u-inline * {display: inline-block;}.u-inline tr {margin-right: 16px;}.u-legend th {font-weight: 600;}.u-legend th > * {vertical-align: middle;display: inline-block;}.u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}.u-inline.u-live th::after {content: \":\";vertical-align: middle;}.u-inline:not(.u-live) .u-value {display: none;}.u-series > * {padding: 4px;}.u-series th {cursor: pointer;}.u-legend .u-off > * {opacity: 0.3;}.u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}.u-cursor-x, .u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}.u-hz .u-cursor-x, .u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}.u-hz .u-cursor-y, .u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}.u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline \"background\" shorthand */background-clip: padding-box !important;}.u-axis.u-off, .u-select.u-off, .u-cursor-x.u-off, .u-cursor-y.u-off, .u-cursor-pt.u-off {display: none;}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
+	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.nubeio.rubixos\"] :before, [data-ext-id=\"com.nubeio.rubixos\"]:before, [data-ext-id=\"com.nubeio.rubixos\"] :after, [data-ext-id=\"com.nubeio.rubixos\"]:after, [data-ext-id=\"com.nubeio.rubixos\"] ::backdrop, [data-ext-id=\"com.nubeio.rubixos\"]::backdrop {\n      --tw-translate-x: 0;\n      --tw-translate-y: 0;\n      --tw-translate-z: 0;\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-divide-y-reverse: 0;\n      --tw-border-style: solid;\n      --tw-gradient-position: initial;\n      --tw-gradient-from: #0000;\n      --tw-gradient-via: #0000;\n      --tw-gradient-to: #0000;\n      --tw-gradient-stops: initial;\n      --tw-gradient-via-stops: initial;\n      --tw-gradient-from-position: 0%;\n      --tw-gradient-via-position: 50%;\n      --tw-gradient-to-position: 100%;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-backdrop-blur: initial;\n      --tw-backdrop-brightness: initial;\n      --tw-backdrop-contrast: initial;\n      --tw-backdrop-grayscale: initial;\n      --tw-backdrop-hue-rotate: initial;\n      --tw-backdrop-invert: initial;\n      --tw-backdrop-opacity: initial;\n      --tw-backdrop-saturate: initial;\n      --tw-backdrop-sepia: initial;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pointer-events-none, [data-ext-id=\"com.nubeio.rubixos\"].pointer-events-none {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .collapse, [data-ext-id=\"com.nubeio.rubixos\"].collapse {\n  visibility: collapse;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .visible, [data-ext-id=\"com.nubeio.rubixos\"].visible {\n  visibility: visible;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .absolute, [data-ext-id=\"com.nubeio.rubixos\"].absolute {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .fixed, [data-ext-id=\"com.nubeio.rubixos\"].fixed {\n  position: fixed;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .relative, [data-ext-id=\"com.nubeio.rubixos\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .static, [data-ext-id=\"com.nubeio.rubixos\"].static {\n  position: static;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .sticky, [data-ext-id=\"com.nubeio.rubixos\"].sticky {\n  position: sticky;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inset-0, [data-ext-id=\"com.nubeio.rubixos\"].inset-0 {\n  inset: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inset-6, [data-ext-id=\"com.nubeio.rubixos\"].inset-6 {\n  inset: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-top-1, [data-ext-id=\"com.nubeio.rubixos\"].-top-1 {\n  top: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-0, [data-ext-id=\"com.nubeio.rubixos\"].top-0 {\n  top: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-3, [data-ext-id=\"com.nubeio.rubixos\"].top-3 {\n  top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-right-1, [data-ext-id=\"com.nubeio.rubixos\"].-right-1 {\n  right: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .left-3, [data-ext-id=\"com.nubeio.rubixos\"].left-3 {\n  left: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .z-10, [data-ext-id=\"com.nubeio.rubixos\"].z-10 {\n  z-index: 10;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .z-50, [data-ext-id=\"com.nubeio.rubixos\"].z-50 {\n  z-index: 50;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .float-right, [data-ext-id=\"com.nubeio.rubixos\"].float-right {\n  float: right;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n  width: 100%;\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 40rem;\n  }\n}\n\n@media (min-width: 48rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 48rem;\n  }\n}\n\n@media (min-width: 64rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 64rem;\n  }\n}\n\n@media (min-width: 80rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 80rem;\n  }\n}\n\n@media (min-width: 96rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 96rem;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .m-0, [data-ext-id=\"com.nubeio.rubixos\"].m-0 {\n  margin: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-mx-1, [data-ext-id=\"com.nubeio.rubixos\"].-mx-1 {\n  margin-inline: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mx-3\\.5 {\n  margin-inline: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-auto, [data-ext-id=\"com.nubeio.rubixos\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .my-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].my-1\\.5 {\n  margin-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ms-auto, [data-ext-id=\"com.nubeio.rubixos\"].ms-auto {\n  margin-inline-start: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mt-0\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-1, [data-ext-id=\"com.nubeio.rubixos\"].mt-1 {\n  margin-top: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mt-1\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-2, [data-ext-id=\"com.nubeio.rubixos\"].mt-2 {\n  margin-top: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-3, [data-ext-id=\"com.nubeio.rubixos\"].mt-3 {\n  margin-top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-4, [data-ext-id=\"com.nubeio.rubixos\"].mt-4 {\n  margin-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mr-2, [data-ext-id=\"com.nubeio.rubixos\"].mr-2 {\n  margin-right: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-1, [data-ext-id=\"com.nubeio.rubixos\"].mb-1 {\n  margin-bottom: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-2, [data-ext-id=\"com.nubeio.rubixos\"].mb-2 {\n  margin-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-3, [data-ext-id=\"com.nubeio.rubixos\"].mb-3 {\n  margin-bottom: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-1, [data-ext-id=\"com.nubeio.rubixos\"].ml-1 {\n  margin-left: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-2, [data-ext-id=\"com.nubeio.rubixos\"].ml-2 {\n  margin-left: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-3, [data-ext-id=\"com.nubeio.rubixos\"].ml-3 {\n  margin-left: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-auto, [data-ext-id=\"com.nubeio.rubixos\"].ml-auto {\n  margin-left: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .block, [data-ext-id=\"com.nubeio.rubixos\"].block {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex, [data-ext-id=\"com.nubeio.rubixos\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid, [data-ext-id=\"com.nubeio.rubixos\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .hidden, [data-ext-id=\"com.nubeio.rubixos\"].hidden {\n  display: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline, [data-ext-id=\"com.nubeio.rubixos\"].inline {\n  display: inline;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline-block, [data-ext-id=\"com.nubeio.rubixos\"].inline-block {\n  display: inline-block;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline-flex, [data-ext-id=\"com.nubeio.rubixos\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .table, [data-ext-id=\"com.nubeio.rubixos\"].table {\n  display: table;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aspect-square, [data-ext-id=\"com.nubeio.rubixos\"].aspect-square {\n  aspect-ratio: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-2, [data-ext-id=\"com.nubeio.rubixos\"].size-2 {\n  width: calc(var(--spacing, .25rem) * 2);\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-2\\.5 {\n  width: calc(var(--spacing, .25rem) * 2.5);\n  height: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-3, [data-ext-id=\"com.nubeio.rubixos\"].size-3 {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-4, [data-ext-id=\"com.nubeio.rubixos\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-5, [data-ext-id=\"com.nubeio.rubixos\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-6, [data-ext-id=\"com.nubeio.rubixos\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-10, [data-ext-id=\"com.nubeio.rubixos\"].size-10 {\n  width: calc(var(--spacing, .25rem) * 10);\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-12, [data-ext-id=\"com.nubeio.rubixos\"].size-12 {\n  width: calc(var(--spacing, .25rem) * 12);\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-14, [data-ext-id=\"com.nubeio.rubixos\"].size-14 {\n  width: calc(var(--spacing, .25rem) * 14);\n  height: calc(var(--spacing, .25rem) * 14);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-40, [data-ext-id=\"com.nubeio.rubixos\"].size-40 {\n  width: calc(var(--spacing, .25rem) * 40);\n  height: calc(var(--spacing, .25rem) * 40);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].h-1\\.5 {\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-2, [data-ext-id=\"com.nubeio.rubixos\"].h-2 {\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-3, [data-ext-id=\"com.nubeio.rubixos\"].h-3 {\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].h-3\\.5 {\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-4, [data-ext-id=\"com.nubeio.rubixos\"].h-4 {\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-5, [data-ext-id=\"com.nubeio.rubixos\"].h-5 {\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-6, [data-ext-id=\"com.nubeio.rubixos\"].h-6 {\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-7, [data-ext-id=\"com.nubeio.rubixos\"].h-7 {\n  height: calc(var(--spacing, .25rem) * 7);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-8, [data-ext-id=\"com.nubeio.rubixos\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-9, [data-ext-id=\"com.nubeio.rubixos\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-12, [data-ext-id=\"com.nubeio.rubixos\"].h-12 {\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-20, [data-ext-id=\"com.nubeio.rubixos\"].h-20 {\n  height: calc(var(--spacing, .25rem) * 20);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-24, [data-ext-id=\"com.nubeio.rubixos\"].h-24 {\n  height: calc(var(--spacing, .25rem) * 24);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-44, [data-ext-id=\"com.nubeio.rubixos\"].h-44 {\n  height: calc(var(--spacing, .25rem) * 44);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-64, [data-ext-id=\"com.nubeio.rubixos\"].h-64 {\n  height: calc(var(--spacing, .25rem) * 64);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-\\[60vh\\], [data-ext-id=\"com.nubeio.rubixos\"].h-\\[60vh\\] {\n  height: 60vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-full, [data-ext-id=\"com.nubeio.rubixos\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-h-\\[60vh\\], [data-ext-id=\"com.nubeio.rubixos\"].max-h-\\[60vh\\] {\n  max-height: 60vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-h-\\[220px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-h-\\[220px\\] {\n  max-height: 220px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-h-\\[100dvh\\], [data-ext-id=\"com.nubeio.rubixos\"].min-h-\\[100dvh\\] {\n  min-height: 100dvh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].w-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].w-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-4, [data-ext-id=\"com.nubeio.rubixos\"].w-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-5, [data-ext-id=\"com.nubeio.rubixos\"].w-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-8, [data-ext-id=\"com.nubeio.rubixos\"].w-8 {\n  width: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-9, [data-ext-id=\"com.nubeio.rubixos\"].w-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-10, [data-ext-id=\"com.nubeio.rubixos\"].w-10 {\n  width: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-20, [data-ext-id=\"com.nubeio.rubixos\"].w-20 {\n  width: calc(var(--spacing, .25rem) * 20);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-32, [data-ext-id=\"com.nubeio.rubixos\"].w-32 {\n  width: calc(var(--spacing, .25rem) * 32);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-44, [data-ext-id=\"com.nubeio.rubixos\"].w-44 {\n  width: calc(var(--spacing, .25rem) * 44);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-full, [data-ext-id=\"com.nubeio.rubixos\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-2xl, [data-ext-id=\"com.nubeio.rubixos\"].max-w-2xl {\n  max-width: var(--container-2xl, 42rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[120px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[120px\\] {\n  max-width: 120px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[260px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[260px\\] {\n  max-width: 260px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[920px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[920px\\] {\n  max-width: 920px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-lg, [data-ext-id=\"com.nubeio.rubixos\"].max-w-lg {\n  max-width: var(--container-lg, 32rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-md, [data-ext-id=\"com.nubeio.rubixos\"].max-w-md {\n  max-width: var(--container-md, 28rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-xs, [data-ext-id=\"com.nubeio.rubixos\"].max-w-xs {\n  max-width: var(--container-xs, 20rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-0, [data-ext-id=\"com.nubeio.rubixos\"].min-w-0 {\n  min-width: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[1rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[1rem\\] {\n  min-width: 1rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[10rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[10rem\\] {\n  min-width: 10rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[12rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[12rem\\] {\n  min-width: 12rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-full, [data-ext-id=\"com.nubeio.rubixos\"].min-w-full {\n  min-width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-1, [data-ext-id=\"com.nubeio.rubixos\"].flex-1 {\n  flex: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shrink-0, [data-ext-id=\"com.nubeio.rubixos\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grow, [data-ext-id=\"com.nubeio.rubixos\"].grow {\n  flex-grow: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-translate-x-px, [data-ext-id=\"com.nubeio.rubixos\"].-translate-x-px {\n  --tw-translate-x: -1px;\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-0\\.5 {\n  --tw-translate-x: calc(var(--spacing, .25rem) * .5);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-4, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-4 {\n  --tw-translate-x: calc(var(--spacing, .25rem) * 4);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-px, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-px {\n  --tw-translate-x: 1px;\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transform, [data-ext-id=\"com.nubeio.rubixos\"].transform {\n  transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .animate-spin, [data-ext-id=\"com.nubeio.rubixos\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .cursor-pointer, [data-ext-id=\"com.nubeio.rubixos\"].cursor-pointer {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .resize-none, [data-ext-id=\"com.nubeio.rubixos\"].resize-none {\n  resize: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .list-none, [data-ext-id=\"com.nubeio.rubixos\"].list-none {\n  list-style-type: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-1, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-2 {\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-4 {\n  grid-template-columns: repeat(4, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-5 {\n  grid-template-columns: repeat(5, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-\\[1\\.5rem_1fr_5rem\\], [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-\\[1\\.5rem_1fr_5rem\\] {\n  grid-template-columns: 1.5rem 1fr 5rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-\\[1fr_auto\\], [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-\\[1fr_auto\\] {\n  grid-template-columns: 1fr auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-rows-3, [data-ext-id=\"com.nubeio.rubixos\"].grid-rows-3 {\n  grid-template-rows: repeat(3, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-col, [data-ext-id=\"com.nubeio.rubixos\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-wrap, [data-ext-id=\"com.nubeio.rubixos\"].flex-wrap {\n  flex-wrap: wrap;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-baseline, [data-ext-id=\"com.nubeio.rubixos\"].items-baseline {\n  align-items: baseline;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-center, [data-ext-id=\"com.nubeio.rubixos\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-end, [data-ext-id=\"com.nubeio.rubixos\"].items-end {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-start, [data-ext-id=\"com.nubeio.rubixos\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-between, [data-ext-id=\"com.nubeio.rubixos\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-center, [data-ext-id=\"com.nubeio.rubixos\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-end, [data-ext-id=\"com.nubeio.rubixos\"].justify-end {\n  justify-content: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-0\\.5 {\n  gap: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-1, [data-ext-id=\"com.nubeio.rubixos\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-2, [data-ext-id=\"com.nubeio.rubixos\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-2\\.5 {\n  gap: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-3, [data-ext-id=\"com.nubeio.rubixos\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-4, [data-ext-id=\"com.nubeio.rubixos\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-6, [data-ext-id=\"com.nubeio.rubixos\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-\\[2px\\], [data-ext-id=\"com.nubeio.rubixos\"].gap-\\[2px\\] {\n  gap: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-x-6, [data-ext-id=\"com.nubeio.rubixos\"].gap-x-6 {\n  column-gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-y-3, [data-ext-id=\"com.nubeio.rubixos\"].gap-y-3 {\n  row-gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] :where(.divide-y > :not(:last-child)), [data-ext-id=\"com.nubeio.rubixos\"]:where(.divide-y > :not(:last-child)) {\n  --tw-divide-y-reverse: 0;\n  border-bottom-style: var(--tw-border-style);\n  border-top-style: var(--tw-border-style);\n  border-top-width: calc(1px * var(--tw-divide-y-reverse));\n  border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .self-start, [data-ext-id=\"com.nubeio.rubixos\"].self-start {\n  align-self: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .truncate, [data-ext-id=\"com.nubeio.rubixos\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-hidden, [data-ext-id=\"com.nubeio.rubixos\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-x-auto, [data-ext-id=\"com.nubeio.rubixos\"].overflow-x-auto {\n  overflow-x: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-y-auto, [data-ext-id=\"com.nubeio.rubixos\"].overflow-y-auto {\n  overflow-y: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded, [data-ext-id=\"com.nubeio.rubixos\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded-\\[3px\\], [data-ext-id=\"com.nubeio.rubixos\"].rounded-\\[3px\\] {\n  border-radius: 3px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded-full, [data-ext-id=\"com.nubeio.rubixos\"].rounded-full {\n  border-radius: 3.40282e38px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border, [data-ext-id=\"com.nubeio.rubixos\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-0, [data-ext-id=\"com.nubeio.rubixos\"].border-0 {\n  border-style: var(--tw-border-style);\n  border-width: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-2, [data-ext-id=\"com.nubeio.rubixos\"].border-2 {\n  border-style: var(--tw-border-style);\n  border-width: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-s, [data-ext-id=\"com.nubeio.rubixos\"].border-s {\n  border-inline-start-style: var(--tw-border-style);\n  border-inline-start-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-t, [data-ext-id=\"com.nubeio.rubixos\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-b, [data-ext-id=\"com.nubeio.rubixos\"].border-b {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-b-2, [data-ext-id=\"com.nubeio.rubixos\"].border-b-2 {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/30 {\n  border-color: #fcbb004d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/30 {\n    border-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/40 {\n  border-color: #fcbb0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-400\\/40 {\n  border-color: #00d29466;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-emerald-400, oklch(76.5% .177 163.223)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-500\\/40 {\n  border-color: #00bb7f66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/30 {\n  border-color: #00bcfe4d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/30 {\n    border-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/40 {\n  border-color: #00bcfe66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-slate-200, [data-ext-id=\"com.nubeio.rubixos\"].border-slate-200 {\n  border-color: var(--color-slate-200, oklch(92.9% .013 255.508));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-white\\/10, [data-ext-id=\"com.nubeio.rubixos\"].border-white\\/10 {\n  border-color: #ffffff1a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-white\\/10, [data-ext-id=\"com.nubeio.rubixos\"].border-white\\/10 {\n    border-color: color-mix(in oklab, var(--color-white, #fff) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-yellow-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-yellow-500\\/40 {\n  border-color: #edb20066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-yellow-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-yellow-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-yellow-500, oklch(79.5% .184 86.047)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/10 {\n  background-color: #fcbb001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/10 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/15 {\n  background-color: #fcbb0026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/80 {\n  background-color: #fcbb00cc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/80 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/\\[0\\.06\\] {\n  background-color: #fcbb000f;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/\\[0\\.06\\] {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 6%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-black, [data-ext-id=\"com.nubeio.rubixos\"].bg-black {\n  background-color: var(--color-black, #000);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-black\\/50, [data-ext-id=\"com.nubeio.rubixos\"].bg-black\\/50 {\n  background-color: #00000080;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-black\\/50, [data-ext-id=\"com.nubeio.rubixos\"].bg-black\\/50 {\n    background-color: color-mix(in oklab, var(--color-black, #000) 50%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-400\\/10 {\n  background-color: #00d2941a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-400\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-400, oklch(76.5% .177 163.223)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500 {\n  background-color: var(--color-emerald-500, oklch(69.6% .17 162.48));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500\\/10 {\n  background-color: #00bb7f1a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-lime-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-lime-400\\/15 {\n  background-color: #9de50026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-lime-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-lime-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-lime-400, oklch(84.1% .238 128.85)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/15 {\n  background-color: #00bcfe26;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/\\[0\\.06\\] {\n  background-color: #00bcfe0f;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/\\[0\\.06\\] {\n    background-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 6%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-200\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-200\\/80 {\n  background-color: #e2e8f0cc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-200\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-200\\/80 {\n    background-color: color-mix(in oklab, var(--color-slate-200, oklch(92.9% .013 255.508)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-900\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-900\\/80 {\n  background-color: #0f172bcc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-900\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-900\\/80 {\n    background-color: color-mix(in oklab, var(--color-slate-900, oklch(20.8% .042 265.755)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300 {\n  background-color: var(--color-teal-300, oklch(85.5% .138 181.071));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/70, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/70 {\n  background-color: #46ecd5b3;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/70, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/70 {\n    background-color: color-mix(in oklab, var(--color-teal-300, oklch(85.5% .138 181.071)) 70%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/90, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/90 {\n  background-color: #46ecd5e6;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/90, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/90 {\n    background-color: color-mix(in oklab, var(--color-teal-300, oklch(85.5% .138 181.071)) 90%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-transparent, [data-ext-id=\"com.nubeio.rubixos\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-white, [data-ext-id=\"com.nubeio.rubixos\"].bg-white {\n  background-color: var(--color-white, #fff);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500 {\n  background-color: var(--color-yellow-500, oklch(79.5% .184 86.047));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500\\/10 {\n  background-color: #edb2001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-yellow-500, oklch(79.5% .184 86.047)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-gradient-to-r, [data-ext-id=\"com.nubeio.rubixos\"].bg-gradient-to-r {\n  --tw-gradient-position: to right in oklab;\n  background-image: linear-gradient(var(--tw-gradient-stops));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n  --tw-gradient-from: var(--color-primary);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n    --tw-gradient-from: color-mix(in oklab, var(--color-primary) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n  --tw-gradient-via: var(--color-aqua);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n    --tw-gradient-via: color-mix(in oklab, var(--color-aqua) 8%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n  --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);\n  --tw-gradient-stops: var(--tw-gradient-via-stops);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n  --tw-gradient-to: var(--color-leaf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n    --tw-gradient-to: color-mix(in oklab, var(--color-leaf) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .object-cover, [data-ext-id=\"com.nubeio.rubixos\"].object-cover {\n  object-fit: cover;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-0, [data-ext-id=\"com.nubeio.rubixos\"].p-0 {\n  padding: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].p-0\\.5 {\n  padding: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-1, [data-ext-id=\"com.nubeio.rubixos\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].p-1\\.5 {\n  padding: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-2, [data-ext-id=\"com.nubeio.rubixos\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-3, [data-ext-id=\"com.nubeio.rubixos\"].p-3 {\n  padding: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-4, [data-ext-id=\"com.nubeio.rubixos\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-5, [data-ext-id=\"com.nubeio.rubixos\"].p-5 {\n  padding: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-6, [data-ext-id=\"com.nubeio.rubixos\"].p-6 {\n  padding: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-1, [data-ext-id=\"com.nubeio.rubixos\"].px-1 {\n  padding-inline: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].px-1\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-2, [data-ext-id=\"com.nubeio.rubixos\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].px-2\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-3, [data-ext-id=\"com.nubeio.rubixos\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-4, [data-ext-id=\"com.nubeio.rubixos\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-1, [data-ext-id=\"com.nubeio.rubixos\"].py-1 {\n  padding-block: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-1\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-2, [data-ext-id=\"com.nubeio.rubixos\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-3, [data-ext-id=\"com.nubeio.rubixos\"].py-3 {\n  padding-block: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-4, [data-ext-id=\"com.nubeio.rubixos\"].py-4 {\n  padding-block: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-6, [data-ext-id=\"com.nubeio.rubixos\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-px, [data-ext-id=\"com.nubeio.rubixos\"].py-px {\n  padding-block: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-1, [data-ext-id=\"com.nubeio.rubixos\"].pt-1 {\n  padding-top: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-3, [data-ext-id=\"com.nubeio.rubixos\"].pt-3 {\n  padding-top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-4, [data-ext-id=\"com.nubeio.rubixos\"].pt-4 {\n  padding-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pr-1, [data-ext-id=\"com.nubeio.rubixos\"].pr-1 {\n  padding-right: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-1, [data-ext-id=\"com.nubeio.rubixos\"].pb-1 {\n  padding-bottom: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-2, [data-ext-id=\"com.nubeio.rubixos\"].pb-2 {\n  padding-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-4, [data-ext-id=\"com.nubeio.rubixos\"].pb-4 {\n  padding-bottom: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pl-2, [data-ext-id=\"com.nubeio.rubixos\"].pl-2 {\n  padding-left: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-center, [data-ext-id=\"com.nubeio.rubixos\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-left, [data-ext-id=\"com.nubeio.rubixos\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-right, [data-ext-id=\"com.nubeio.rubixos\"].text-right {\n  text-align: right;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-start, [data-ext-id=\"com.nubeio.rubixos\"].text-start {\n  text-align: start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .align-middle, [data-ext-id=\"com.nubeio.rubixos\"].align-middle {\n  vertical-align: middle;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-2xl, [data-ext-id=\"com.nubeio.rubixos\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-3xl, [data-ext-id=\"com.nubeio.rubixos\"].text-3xl {\n  font-size: var(--text-3xl, 1.875rem);\n  line-height: var(--tw-leading, var(--text-3xl--line-height, calc(2.25 / 1.875)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-4xl, [data-ext-id=\"com.nubeio.rubixos\"].text-4xl {\n  font-size: var(--text-4xl, 2.25rem);\n  line-height: var(--tw-leading, var(--text-4xl--line-height, calc(2.5 / 2.25)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-5xl, [data-ext-id=\"com.nubeio.rubixos\"].text-5xl {\n  font-size: var(--text-5xl, 3rem);\n  line-height: var(--tw-leading, var(--text-5xl--line-height, 1));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-base, [data-ext-id=\"com.nubeio.rubixos\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lg, [data-ext-id=\"com.nubeio.rubixos\"].text-lg {\n  font-size: var(--text-lg, 1.125rem);\n  line-height: var(--tw-leading, var(--text-lg--line-height, calc(1.75 / 1.125)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sm, [data-ext-id=\"com.nubeio.rubixos\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-xl, [data-ext-id=\"com.nubeio.rubixos\"].text-xl {\n  font-size: var(--text-xl, 1.25rem);\n  line-height: var(--tw-leading, var(--text-xl--line-height, calc(1.75 / 1.25)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-xs, [data-ext-id=\"com.nubeio.rubixos\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.6rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.6rem\\] {\n  font-size: .6rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.7rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.7rem\\] {\n  font-size: .7rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.65rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.65rem\\] {\n  font-size: .65rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-none, [data-ext-id=\"com.nubeio.rubixos\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-tight, [data-ext-id=\"com.nubeio.rubixos\"].leading-tight {\n  --tw-leading: var(--leading-tight, 1.25);\n  line-height: var(--leading-tight, 1.25);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-bold, [data-ext-id=\"com.nubeio.rubixos\"].font-bold {\n  --tw-font-weight: var(--font-weight-bold, 700);\n  font-weight: var(--font-weight-bold, 700);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-medium, [data-ext-id=\"com.nubeio.rubixos\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-normal, [data-ext-id=\"com.nubeio.rubixos\"].font-normal {\n  --tw-font-weight: var(--font-weight-normal, 400);\n  font-weight: var(--font-weight-normal, 400);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-semibold, [data-ext-id=\"com.nubeio.rubixos\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-\\[0\\.18em\\], [data-ext-id=\"com.nubeio.rubixos\"].tracking-\\[0\\.18em\\] {\n  --tw-tracking: .18em;\n  letter-spacing: .18em;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-normal, [data-ext-id=\"com.nubeio.rubixos\"].tracking-normal {\n  --tw-tracking: var(--tracking-normal, 0em);\n  letter-spacing: var(--tracking-normal, 0em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-tight, [data-ext-id=\"com.nubeio.rubixos\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-wide, [data-ext-id=\"com.nubeio.rubixos\"].tracking-wide {\n  --tw-tracking: var(--tracking-wide, .025em);\n  letter-spacing: var(--tracking-wide, .025em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .break-all, [data-ext-id=\"com.nubeio.rubixos\"].break-all {\n  word-break: break-all;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\!text-current, [data-ext-id=\"com.nubeio.rubixos\"].\\!text-current {\n  color: currentColor !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-300, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-300 {\n  color: var(--color-amber-300, oklch(87.9% .169 91.605));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-400, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-400 {\n  color: var(--color-amber-400, oklch(82.8% .189 84.429));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-500, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-500 {\n  color: var(--color-amber-500, oklch(76.9% .188 70.08));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-600, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-600 {\n  color: var(--color-amber-600, oklch(66.6% .179 58.318));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-300, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-300 {\n  color: var(--color-cyan-300, oklch(86.5% .127 207.078));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-500, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-500 {\n  color: var(--color-cyan-500, oklch(71.5% .143 215.221));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-600, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-600 {\n  color: var(--color-cyan-600, oklch(60.9% .126 221.723));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-300, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-300 {\n  color: var(--color-emerald-300, oklch(84.5% .143 164.978));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-500, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-500 {\n  color: var(--color-emerald-500, oklch(69.6% .17 162.48));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-600, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-indigo-300, [data-ext-id=\"com.nubeio.rubixos\"].text-indigo-300 {\n  color: var(--color-indigo-300, oklch(78.5% .115 274.713));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-indigo-600, [data-ext-id=\"com.nubeio.rubixos\"].text-indigo-600 {\n  color: var(--color-indigo-600, oklch(51.1% .262 276.966));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lime-300, [data-ext-id=\"com.nubeio.rubixos\"].text-lime-300 {\n  color: var(--color-lime-300, oklch(89.7% .196 126.665));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lime-600, [data-ext-id=\"com.nubeio.rubixos\"].text-lime-600 {\n  color: var(--color-lime-600, oklch(64.8% .2 131.684));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-300, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-300 {\n  color: var(--color-sky-300, oklch(82.8% .111 230.318));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-400, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-400 {\n  color: var(--color-sky-400, oklch(74.6% .16 232.661));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-500, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-500 {\n  color: var(--color-sky-500, oklch(68.5% .169 237.323));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-600, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-600 {\n  color: var(--color-sky-600, oklch(58.8% .158 241.966));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-100, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-100 {\n  color: var(--color-slate-100, oklch(96.8% .007 247.896));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-500, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-500 {\n  color: var(--color-slate-500, oklch(55.4% .046 257.417));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-900, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-900 {\n  color: var(--color-slate-900, oklch(20.8% .042 265.755));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .capitalize, [data-ext-id=\"com.nubeio.rubixos\"].capitalize {\n  text-transform: capitalize;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .normal-case, [data-ext-id=\"com.nubeio.rubixos\"].normal-case {\n  text-transform: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uppercase, [data-ext-id=\"com.nubeio.rubixos\"].uppercase {\n  text-transform: uppercase;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .italic, [data-ext-id=\"com.nubeio.rubixos\"].italic {\n  font-style: italic;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tabular-nums, [data-ext-id=\"com.nubeio.rubixos\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .no-underline, [data-ext-id=\"com.nubeio.rubixos\"].no-underline {\n  text-decoration-line: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-60, [data-ext-id=\"com.nubeio.rubixos\"].opacity-60 {\n  opacity: .6;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-70, [data-ext-id=\"com.nubeio.rubixos\"].opacity-70 {\n  opacity: .7;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-75, [data-ext-id=\"com.nubeio.rubixos\"].opacity-75 {\n  opacity: .75;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-90, [data-ext-id=\"com.nubeio.rubixos\"].opacity-90 {\n  opacity: .9;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow, [data-ext-id=\"com.nubeio.rubixos\"].shadow {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_8px\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_8px\\] {\n  --tw-shadow: 0 0 8px var(--tw-shadow-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n  --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, var(--color-primary));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n    --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, color-mix(in oklab,var(--color-primary) 50%,transparent));\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\] {\n  --tw-shadow: 0 0 10px var(--tw-shadow-color, #ffffff40);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\] {\n  --tw-shadow: 0 0 14px var(--tw-shadow-color, #5eead499);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\] {\n  --tw-shadow: 0 0 18px -6px var(--tw-shadow-color, var(--color-primary));\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\] {\n  --tw-shadow: 0 0 18px var(--tw-shadow-color, #5eead4d9);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\] {\n  --tw-shadow: 0 0 24px -8px var(--tw-shadow-color, var(--color-primary));\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-xl, [data-ext-id=\"com.nubeio.rubixos\"].shadow-xl {\n  --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring, [data-ext-id=\"com.nubeio.rubixos\"].ring, [data-ext-id=\"com.nubeio.rubixos\"] .ring-1, [data-ext-id=\"com.nubeio.rubixos\"].ring-1 {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-2, [data-ext-id=\"com.nubeio.rubixos\"].ring-2 {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-emerald-500\\/60, [data-ext-id=\"com.nubeio.rubixos\"].shadow-emerald-500\\/60 {\n  --tw-shadow-color: #00bb7f99;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .shadow-emerald-500\\/60, [data-ext-id=\"com.nubeio.rubixos\"].shadow-emerald-500\\/60 {\n    --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 60%, transparent) var(--tw-shadow-alpha), transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-amber-400\\/40 {\n  --tw-ring-color: #fcbb0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-amber-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-cyan-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-cyan-400\\/40 {\n  --tw-ring-color: #00d2ef66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-cyan-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-cyan-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-cyan-400, oklch(78.9% .154 211.53)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-indigo-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-indigo-400\\/40 {\n  --tw-ring-color: #7d87ff66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-indigo-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-indigo-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-indigo-400, oklch(67.3% .182 276.935)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-lime-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-lime-400\\/40 {\n  --tw-ring-color: #9de50066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-lime-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-lime-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-lime-400, oklch(84.1% .238 128.85)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-sky-400\\/40 {\n  --tw-ring-color: #00bcfe66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-sky-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200 {\n  --tw-ring-color: var(--color-teal-200, oklch(91% .096 180.426));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200\\/70, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200\\/70 {\n  --tw-ring-color: #96f7e4b3;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200\\/70, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200\\/70 {\n    --tw-ring-color: color-mix(in oklab, var(--color-teal-200, oklch(91% .096 180.426)) 70%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/5, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/5 {\n  --tw-ring-color: #ffffff0d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/5, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/5 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 5%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/30, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/30 {\n  --tw-ring-color: #ffffff4d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/30, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/30 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/40 {\n  --tw-ring-color: #fff6;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .outline-hidden, [data-ext-id=\"com.nubeio.rubixos\"].outline-hidden {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n@media (forced-colors: active) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .outline-hidden, [data-ext-id=\"com.nubeio.rubixos\"].outline-hidden {\n    outline-offset: 2px;\n    outline: 2px solid #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .invert, [data-ext-id=\"com.nubeio.rubixos\"].invert {\n  --tw-invert: invert(100%);\n  filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .filter, [data-ext-id=\"com.nubeio.rubixos\"].filter {\n  filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .backdrop-blur, [data-ext-id=\"com.nubeio.rubixos\"].backdrop-blur {\n  --tw-backdrop-blur: blur(8px);\n  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .backdrop-blur-sm, [data-ext-id=\"com.nubeio.rubixos\"].backdrop-blur-sm {\n  --tw-backdrop-blur: blur(var(--blur-sm, 8px));\n  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-\\[margin\\,opacity\\], [data-ext-id=\"com.nubeio.rubixos\"].transition-\\[margin\\,opacity\\] {\n  transition-property: margin, opacity;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-\\[width\\,height\\,padding\\], [data-ext-id=\"com.nubeio.rubixos\"].transition-\\[width\\,height\\,padding\\] {\n  transition-property: width, height, padding;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-all, [data-ext-id=\"com.nubeio.rubixos\"].transition-all {\n  transition-property: all;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-colors, [data-ext-id=\"com.nubeio.rubixos\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-shadow, [data-ext-id=\"com.nubeio.rubixos\"].transition-shadow {\n  transition-property: box-shadow;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-transform, [data-ext-id=\"com.nubeio.rubixos\"].transition-transform {\n  transition-property: transform, translate, scale, rotate;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .duration-150, [data-ext-id=\"com.nubeio.rubixos\"].duration-150 {\n  --tw-duration: .15s;\n  transition-duration: .15s;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .duration-200, [data-ext-id=\"com.nubeio.rubixos\"].duration-200 {\n  --tw-duration: .2s;\n  transition-duration: .2s;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ease-linear, [data-ext-id=\"com.nubeio.rubixos\"].ease-linear {\n  --tw-ease: linear;\n  transition-timing-function: linear;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .outline-none, [data-ext-id=\"com.nubeio.rubixos\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .select-none, [data-ext-id=\"com.nubeio.rubixos\"].select-none {\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *), [data-ext-id=\"com.nubeio.rubixos\"].group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *) {\n  padding-inline-end: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  margin-top: calc(var(--spacing, .25rem) * -8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  display: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  width: calc(var(--spacing, .25rem) * 8) !important;\n  height: calc(var(--spacing, .25rem) * 8) !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  padding: calc(var(--spacing, .25rem) * 2) !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  opacity: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *) {\n  rotate: 90deg;\n}\n\n@media (hover: hover) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:-translate-y-0\\.5:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:-translate-y-0\\.5:hover {\n    --tw-translate-y: calc(var(--spacing, .25rem) * -.5);\n    translate: var(--tw-translate-x) var(--tw-translate-y);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-slate-800:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-slate-800:hover {\n    background-color: var(--color-slate-800, oklch(27.9% .041 260.031));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:underline:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:underline:hover {\n    text-decoration-line: underline;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:opacity-100:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:opacity-100:hover {\n    opacity: 1;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:shadow-xl:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:shadow-xl:hover {\n    --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus\\:outline-none:focus, [data-ext-id=\"com.nubeio.rubixos\"].focus\\:outline-none:focus {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.nubeio.rubixos\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aria-disabled\\:pointer-events-none[aria-disabled=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].aria-disabled\\:pointer-events-none[aria-disabled=\"true\"] {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aria-disabled\\:opacity-50[aria-disabled=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].aria-disabled\\:opacity-50[aria-disabled=\"true\"] {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:inline-flex, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:inline-flex {\n    display: inline-flex;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:h-72, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:h-72 {\n    height: calc(var(--spacing, .25rem) * 72);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-3, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-3 {\n    padding: calc(var(--spacing, .25rem) * 3);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-4, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-4 {\n    padding: calc(var(--spacing, .25rem) * 4);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-6, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-6 {\n    padding: calc(var(--spacing, .25rem) * 6);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-4xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-4xl {\n    font-size: var(--text-4xl, 2.25rem);\n    line-height: var(--tw-leading, var(--text-4xl--line-height, calc(2.5 / 2.25)));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-5xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-5xl {\n    font-size: var(--text-5xl, 3rem);\n    line-height: var(--tw-leading, var(--text-5xl--line-height, 1));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-6xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-6xl {\n    font-size: var(--text-6xl, 3.75rem);\n    line-height: var(--tw-leading, var(--text-6xl--line-height, 1));\n  }\n}\n\n@media (min-width: 48rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-5 {\n    grid-template-columns: repeat(5, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-\\[260px_1fr\\], [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-\\[260px_1fr\\] {\n    grid-template-columns: 260px 1fr;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-\\[280px_1fr\\], [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-\\[280px_1fr\\] {\n    grid-template-columns: 280px 1fr;\n  }\n}\n\n@media (min-width: 64rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:col-span-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:col-span-2 {\n    grid-column: span 2 / span 2;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:col-span-3, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:col-span-3 {\n    grid-column: span 3 / span 3;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-5 {\n    grid-template-columns: repeat(5, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[1fr_2fr\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[1fr_2fr\\] {\n    grid-template-columns: 1fr 2fr;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[260px_1fr_320px\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[260px_1fr_320px\\] {\n    grid-template-columns: 260px 1fr 320px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\] {\n    grid-template-columns: minmax(260px, 320px) 1fr minmax(220px, 260px);\n  }\n}\n\n@media (min-width: 80rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .xl\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].xl\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-amber-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-amber-300 {\n    color: var(--color-amber-300, oklch(87.9% .169 91.605));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-cyan-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-cyan-300 {\n    color: var(--color-cyan-300, oklch(86.5% .127 207.078));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-emerald-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-emerald-300 {\n    color: var(--color-emerald-300, oklch(84.5% .143 164.978));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-indigo-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-indigo-300 {\n    color: var(--color-indigo-300, oklch(78.5% .115 274.713));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-lime-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-lime-300 {\n    color: var(--color-lime-300, oklch(89.7% .196 126.665));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-sky-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-sky-300 {\n    color: var(--color-sky-300, oklch(82.8% .111 230.318));\n  }\n}\n\n@media print {\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:hidden, [data-ext-id=\"com.nubeio.rubixos\"].print\\:hidden {\n    display: none;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:break-inside-avoid, [data-ext-id=\"com.nubeio.rubixos\"].print\\:break-inside-avoid {\n    break-inside: avoid;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:gap-3, [data-ext-id=\"com.nubeio.rubixos\"].print\\:gap-3 {\n    gap: calc(var(--spacing, .25rem) * 3);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:border-slate-200, [data-ext-id=\"com.nubeio.rubixos\"].print\\:border-slate-200 {\n    border-color: var(--color-slate-200, oklch(92.9% .013 255.508));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:border-slate-300, [data-ext-id=\"com.nubeio.rubixos\"].print\\:border-slate-300 {\n    border-color: var(--color-slate-300, oklch(86.9% .022 252.894));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:\\!bg-white, [data-ext-id=\"com.nubeio.rubixos\"].print\\:\\!bg-white {\n    background-color: var(--color-white, #fff) !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:py-0, [data-ext-id=\"com.nubeio.rubixos\"].print\\:py-0 {\n    padding-block: calc(var(--spacing, .25rem) * 0);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:text-\\[10px\\], [data-ext-id=\"com.nubeio.rubixos\"].print\\:text-\\[10px\\] {\n    font-size: 10px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:\\!shadow-none, [data-ext-id=\"com.nubeio.rubixos\"].print\\:\\!shadow-none {\n    --tw-shadow: 0 0 #0000 !important;\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow) !important;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:size-4 > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:size-4 > svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:shrink-0 > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:shrink-0 > svg {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:text-inherit > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:text-inherit > svg {\n  color: inherit;\n}\n\n@keyframes nrg-spin {\n  from {\n    transform: rotate(0);\n  }\n\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-slow {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 4.2s linear infinite nrg-spin;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-med {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 2.4s linear infinite nrg-spin;\n}\n\n@keyframes nrg-bob {\n  0%, 100% {\n    transform: translateY(0);\n  }\n\n  50% {\n    transform: translateY(-3.5px);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"].nrg-bob {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 3.8s ease-in-out infinite nrg-bob;\n}\n\n@keyframes nrg-charge {\n  0% {\n    opacity: .55;\n  }\n\n  50% {\n    opacity: 1;\n  }\n\n  100% {\n    opacity: .55;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"].nrg-charge {\n  animation: 2.6s ease-in-out infinite nrg-charge;\n}\n\n@keyframes nrg-status-pulse {\n  0% {\n    box-shadow: 0 0 0 0 var(--nrg-pulse-color, #22c55e8c);\n  }\n\n  70% {\n    box-shadow: 0 0 0 9px #0000;\n  }\n\n  100% {\n    box-shadow: 0 0 #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-dot-pulse, [data-ext-id=\"com.nubeio.rubixos\"].nrg-dot-pulse {\n  animation: 1.9s cubic-bezier(.45, 0, .2, 1) infinite nrg-status-pulse;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"].nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"].nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-dot-pulse, [data-ext-id=\"com.nubeio.rubixos\"].nrg-dot-pulse {\n    animation: none !important;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-dash-shell, [data-ext-id=\"com.nubeio.rubixos\"].ext-dash-shell {\n  isolation: isolate;\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-dash-shell:before, [data-ext-id=\"com.nubeio.rubixos\"].ext-dash-shell:before {\n  content: \"\";\n  pointer-events: none;\n  z-index: -1;\n  filter: blur(20px);\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf2e, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f129, #0000 70%);\n  height: 50%;\n  position: absolute;\n  inset: -20% -10% auto;\n}\n\n:root[data-mode=\"dark\"] .ext-dash-shell:before {\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf38, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f133, #0000 70%);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 14px;\n  position: relative;\n  overflow: hidden;\n  box-shadow: inset 0 1px #ffffff8c, 0 1px 2px #0f172a0f, 0 12px 28px -12px #0f172a38;\n}\n\n:root[data-mode=\"dark\"] .ext-glass {\n  background: var(--color-card, #0f172a);\n  border-color: var(--color-border, #94a3b82e);\n  box-shadow: inset 0 1px #ffffff0f, 0 1px 2px #00000073, 0 18px 44px -16px #000000b3;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n  border-color: var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n    border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n  box-shadow: 0 0 0 1px var(--color-primary, #2dd4bf), 0 12px 36px -12px var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent), 0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.rubixos\"].ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.rubixos\"].ext-eyebrow {\n    color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-num, [data-ext-id=\"com.nubeio.rubixos\"].ext-num {\n  font-variant-numeric: tabular-nums;\n}\n\n@keyframes ext-site-pulse {\n  0% {\n    opacity: .9;\n    transform: scale(.6);\n  }\n\n  80% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n\n  100% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--on, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--on {\n  animation: 1.8s ease-out infinite ext-site-pulse;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--off, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--off {\n  opacity: .35;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--on, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--on {\n    opacity: .55;\n    animation: none;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot {\n  font-family: inherit;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot .u-legend, [data-ext-id=\"com.nubeio.rubixos\"].uplot .u-legend {\n  color: var(--color-foreground);\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot .u-legend .u-marker, [data-ext-id=\"com.nubeio.rubixos\"].uplot .u-legend .u-marker {\n  border-radius: 2px;\n  width: 10px;\n  height: 10px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-report, [data-ext-id=\"com.nubeio.rubixos\"].ext-report {\n  min-height: 100%;\n  padding: 1rem 1.25rem;\n}\n\n@media print {\n  @page {\n    size: A4;\n    margin: 14mm;\n  }\n\n  html, body {\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .no-print, [data-ext-id=\"com.nubeio.rubixos\"].no-print, [data-ext-id=\"com.nubeio.rubixos\"] nav, [data-ext-id=\"com.nubeio.rubixos\"] header[data-block-shell], [data-ext-id=\"com.nubeio.rubixos\"] aside {\n    display: none !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-report, [data-ext-id=\"com.nubeio.rubixos\"].ext-report {\n    --color-foreground: #0f172a;\n    --color-muted-foreground: #64748b;\n    --color-border: #e2e8f0;\n    --color-card: #fff;\n    padding: 0;\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-report .ext-glass, [data-ext-id=\"com.nubeio.rubixos\"].ext-report .ext-glass {\n    box-shadow: none;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] section, [data-ext-id=\"com.nubeio.rubixos\"] .ext-report-channel, [data-ext-id=\"com.nubeio.rubixos\"].ext-report-channel {\n    break-inside: avoid;\n    page-break-inside: avoid;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] a {\n    color: inherit;\n    text-decoration: none;\n  }\n}\n\n@property --tw-translate-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-divide-y-reverse {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-gradient-position {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-from {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-via {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-to {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-stops {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-via-stops {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-from-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 0%;\n}\n\n@property --tw-gradient-via-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 50%;\n}\n\n@property --tw-gradient-to-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas{left:0;position:absolute;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:fullscreen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:fullscreen{height:100%;width:100%}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left{left:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right{right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left{bottom:0;left:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right{bottom:0;right:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group{background:#fff;border-radius:4px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group:not(:empty), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group:not(:empty), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button+button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button+button{border-top:1px solid #ddd}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-icon{background-color:transparent}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button+button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button::-moz-focus-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib-button:focus, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib-button:focus, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:disabled, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:disabled{cursor:not-allowed}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:not(:disabled):hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:focus-visible, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:not(:focus-visible), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:first-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:last-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:only-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-color:transparent;background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl.maplibregl-ctrl-attrib, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib a, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib a:hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-attrib-empty, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-attrib-empty{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-scale, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right{flex-direction:column}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-left{flex-direction:row}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-right{flex-direction:row-reverse}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-close-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-close-button:hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-track-pointer{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-track-pointer *, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:hover .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:active .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:active .maplibregl-popup-track-pointer{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-marker, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:before, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:before, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:\"\";position:absolute}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:\"\";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot-stale, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot-stale{background-color:#aaa}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot-stale:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot-stale:after{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-accuracy-circle, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair .maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair .maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair .maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-boxzoom, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen.maplibregl-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-desktop-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-pseudo-fullscreen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *, [data-ext-id=\"com.nubeio.rubixos\"].uplot *, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *::before, [data-ext-id=\"com.nubeio.rubixos\"].uplot *::before, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *::after, [data-ext-id=\"com.nubeio.rubixos\"].uplot *::after {box-sizing: border-box;}[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot {font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";line-height: 1.5;width: min-content;}[data-ext-id=\"com.nubeio.rubixos\"] .u-title, [data-ext-id=\"com.nubeio.rubixos\"].u-title {text-align: center;font-size: 18px;font-weight: bold;}[data-ext-id=\"com.nubeio.rubixos\"] .u-wrap, [data-ext-id=\"com.nubeio.rubixos\"].u-wrap {position: relative;user-select: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-over, [data-ext-id=\"com.nubeio.rubixos\"].u-over, [data-ext-id=\"com.nubeio.rubixos\"] .u-under, [data-ext-id=\"com.nubeio.rubixos\"].u-under {position: absolute;}[data-ext-id=\"com.nubeio.rubixos\"] .u-under, [data-ext-id=\"com.nubeio.rubixos\"].u-under {overflow: hidden;}[data-ext-id=\"com.nubeio.rubixos\"] .uplot canvas, [data-ext-id=\"com.nubeio.rubixos\"].uplot canvas {display: block;position: relative;width: 100%;height: 100%;}[data-ext-id=\"com.nubeio.rubixos\"] .u-axis, [data-ext-id=\"com.nubeio.rubixos\"].u-axis {position: absolute;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend, [data-ext-id=\"com.nubeio.rubixos\"].u-legend {font-size: 14px;margin: auto;text-align: center;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline, [data-ext-id=\"com.nubeio.rubixos\"].u-inline {display: block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline *, [data-ext-id=\"com.nubeio.rubixos\"].u-inline * {display: inline-block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline tr, [data-ext-id=\"com.nubeio.rubixos\"].u-inline tr {margin-right: 16px;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend th, [data-ext-id=\"com.nubeio.rubixos\"].u-legend th {font-weight: 600;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend th > *, [data-ext-id=\"com.nubeio.rubixos\"].u-legend th > * {vertical-align: middle;display: inline-block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend .u-marker, [data-ext-id=\"com.nubeio.rubixos\"].u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline.u-live th::after, [data-ext-id=\"com.nubeio.rubixos\"].u-inline.u-live th::after {content: \":\";vertical-align: middle;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline:not(.u-live) .u-value, [data-ext-id=\"com.nubeio.rubixos\"].u-inline:not(.u-live) .u-value {display: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-series > *, [data-ext-id=\"com.nubeio.rubixos\"].u-series > * {padding: 4px;}[data-ext-id=\"com.nubeio.rubixos\"] .u-series th, [data-ext-id=\"com.nubeio.rubixos\"].u-series th {cursor: pointer;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend .u-off > *, [data-ext-id=\"com.nubeio.rubixos\"].u-legend .u-off > * {opacity: 0.3;}[data-ext-id=\"com.nubeio.rubixos\"] .u-select, [data-ext-id=\"com.nubeio.rubixos\"].u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}[data-ext-id=\"com.nubeio.rubixos\"] .u-hz .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-hz .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"] .u-vt .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}[data-ext-id=\"com.nubeio.rubixos\"] .u-hz .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-hz .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"] .u-vt .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}[data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-pt, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline \"background\" shorthand */background-clip: padding-box !important;}[data-ext-id=\"com.nubeio.rubixos\"] .u-axis.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-axis.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-select.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-select.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-x.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-x.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-y.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-y.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-pt.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-pt.u-off {display: none;}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
 
 })();
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import * as React from 'react';
-import React__default, { useLayoutEffect, useEffect, useContext, useState, useRef, useImperativeHandle, useMemo, memo, forwardRef, createElement, isValidElement, createContext, useCallback, cloneElement, Children, PureComponent } from 'react';
+import React__default, { useLayoutEffect, useEffect, useContext, useState, useRef, useImperativeHandle, useMemo, memo, forwardRef, createElement, isValidElement, createContext, useCallback, cloneElement, Children, PureComponent, Component } from 'react';
 import { createPortal } from 'react-dom';
 
 function _mergeNamespaces(n, m) {
@@ -1987,7 +1987,7 @@ function SectionHeader({
     right ? /* @__PURE__ */ jsx("div", { className: "shrink-0", children: right }) : null
   ] });
 }
-function Field({
+function Field$1({
   label,
   icon,
   children
@@ -2351,6 +2351,19 @@ const ArrowDownRight = createLucideIcon("ArrowDownRight", [
  */
 
 
+const ArrowLeft = createLucideIcon("ArrowLeft", [
+  ["path", { d: "m12 19-7-7 7-7", key: "1l729n" }],
+  ["path", { d: "M19 12H5", key: "x3x0zl" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const ArrowUpRight = createLucideIcon("ArrowUpRight", [
   ["path", { d: "M7 7h10v10", key: "1tivn9" }],
   ["path", { d: "M7 17 17 7", key: "1vkiza" }]
@@ -2364,11 +2377,11 @@ const ArrowUpRight = createLucideIcon("ArrowUpRight", [
  */
 
 
-const BatteryCharging = createLucideIcon("BatteryCharging", [
-  ["path", { d: "M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2", key: "1sdynx" }],
-  ["path", { d: "M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1", key: "1gkd3k" }],
-  ["path", { d: "m11 7-3 5h4l-3 5", key: "b4a64w" }],
-  ["line", { x1: "22", x2: "22", y1: "11", y2: "13", key: "4dh1rd" }]
+const BatteryMedium = createLucideIcon("BatteryMedium", [
+  ["rect", { width: "16", height: "10", x: "2", y: "7", rx: "2", ry: "2", key: "1w10f2" }],
+  ["line", { x1: "22", x2: "22", y1: "11", y2: "13", key: "4dh1rd" }],
+  ["line", { x1: "6", x2: "6", y1: "11", y2: "13", key: "1wd6dw" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "13", key: "haxvl5" }]
 ]);
 
 /**
@@ -2428,6 +2441,25 @@ const CalendarRange = createLucideIcon("CalendarRange", [
  */
 
 
+const Camera = createLucideIcon("Camera", [
+  [
+    "path",
+    {
+      d: "M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z",
+      key: "1tc9qg"
+    }
+  ],
+  ["circle", { cx: "12", cy: "13", r: "3", key: "1vg3eu" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const ChartLine = createLucideIcon("ChartLine", [
   ["path", { d: "M3 3v16a2 2 0 0 0 2 2h16", key: "c24i48" }],
   ["path", { d: "m19 9-5 5-4-4-3 3", key: "2osh9i" }]
@@ -2451,8 +2483,33 @@ createLucideIcon("Check", [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]);
  */
 
 
+const ChevronDown = createLucideIcon("ChevronDown", [
+  ["path", { d: "m6 9 6 6 6-6", key: "qrunsl" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const ChevronRight = createLucideIcon("ChevronRight", [
   ["path", { d: "m9 18 6-6-6-6", key: "mthhwq" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const CircleCheck = createLucideIcon("CircleCheck", [
+  ["circle", { cx: "12", cy: "12", r: "10", key: "1mglay" }],
+  ["path", { d: "m9 12 2 2 4-4", key: "dzmm74" }]
 ]);
 
 /**
@@ -2516,6 +2573,27 @@ const Cloud = createLucideIcon("Cloud", [
  */
 
 
+const Cpu = createLucideIcon("Cpu", [
+  ["rect", { width: "16", height: "16", x: "4", y: "4", rx: "2", key: "14l7u7" }],
+  ["rect", { width: "6", height: "6", x: "9", y: "9", rx: "1", key: "5aljv4" }],
+  ["path", { d: "M15 2v2", key: "13l42r" }],
+  ["path", { d: "M15 20v2", key: "15mkzm" }],
+  ["path", { d: "M2 15h2", key: "1gxd5l" }],
+  ["path", { d: "M2 9h2", key: "1bbxkp" }],
+  ["path", { d: "M20 15h2", key: "19e6y8" }],
+  ["path", { d: "M20 9h2", key: "19tzq7" }],
+  ["path", { d: "M9 2v2", key: "165o2o" }],
+  ["path", { d: "M9 20v2", key: "i2bqo8" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Database = createLucideIcon("Database", [
   ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
   ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
@@ -2562,31 +2640,6 @@ const Droplet = createLucideIcon("Droplet", [
  */
 
 
-const Droplets = createLucideIcon("Droplets", [
-  [
-    "path",
-    {
-      d: "M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z",
-      key: "1ptgy4"
-    }
-  ],
-  [
-    "path",
-    {
-      d: "M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97",
-      key: "1sl1rz"
-    }
-  ]
-]);
-
-/**
- * @license lucide-react v0.469.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
 createLucideIcon("EyeOff", [
   [
     "path",
@@ -2614,7 +2667,7 @@ createLucideIcon("EyeOff", [
  */
 
 
-createLucideIcon("Eye", [
+const Eye = createLucideIcon("Eye", [
   [
     "path",
     {
@@ -2623,6 +2676,36 @@ createLucideIcon("Eye", [
     }
   ],
   ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const FileCode = createLucideIcon("FileCode", [
+  ["path", { d: "M10 12.5 8 15l2 2.5", key: "1tg20x" }],
+  ["path", { d: "m14 12.5 2 2.5-2 2.5", key: "yinavb" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7z", key: "1mlx9k" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const FilePlus2 = createLucideIcon("FilePlus2", [
+  ["path", { d: "M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4", key: "1pf5j1" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "M3 15h6", key: "4e2qda" }],
+  ["path", { d: "M6 12v6", key: "1u72j0" }]
 ]);
 
 /**
@@ -2705,6 +2788,26 @@ createLucideIcon("Hash", [
  */
 
 
+const Keyboard = createLucideIcon("Keyboard", [
+  ["path", { d: "M10 8h.01", key: "1r9ogq" }],
+  ["path", { d: "M12 12h.01", key: "1mp3jc" }],
+  ["path", { d: "M14 8h.01", key: "1primd" }],
+  ["path", { d: "M16 12h.01", key: "1l6xoz" }],
+  ["path", { d: "M18 8h.01", key: "emo2bl" }],
+  ["path", { d: "M6 8h.01", key: "x9i8wu" }],
+  ["path", { d: "M7 16h10", key: "wp8him" }],
+  ["path", { d: "M8 12h.01", key: "czm47f" }],
+  ["rect", { width: "20", height: "16", x: "2", y: "4", rx: "2", key: "18n3k1" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Layers = createLucideIcon("Layers", [
   [
     "path",
@@ -2727,21 +2830,6 @@ const Layers = createLucideIcon("Layers", [
       key: "kqbvx6"
     }
   ]
-]);
-
-/**
- * @license lucide-react v0.469.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
-const LayoutDashboard = createLucideIcon("LayoutDashboard", [
-  ["rect", { width: "7", height: "9", x: "3", y: "3", rx: "1", key: "10lvy0" }],
-  ["rect", { width: "7", height: "5", x: "14", y: "3", rx: "1", key: "16une8" }],
-  ["rect", { width: "7", height: "9", x: "14", y: "12", rx: "1", key: "1hutg5" }],
-  ["rect", { width: "7", height: "5", x: "3", y: "16", rx: "1", key: "ldoo1y" }]
 ]);
 
 /**
@@ -2803,6 +2891,18 @@ const List = createLucideIcon("List", [
  */
 
 
+const LoaderCircle = createLucideIcon("LoaderCircle", [
+  ["path", { d: "M21 12a9 9 0 1 1-6.219-8.56", key: "13zald" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const MapPin = createLucideIcon("MapPin", [
   [
     "path",
@@ -2842,8 +2942,12 @@ createLucideIcon("Map", [
  */
 
 
-const Mountain = createLucideIcon("Mountain", [
-  ["path", { d: "m8 3 4 8 5-5 5 15H2L8 3z", key: "otkl63" }]
+const Network = createLucideIcon("Network", [
+  ["rect", { x: "16", y: "16", width: "6", height: "6", rx: "1", key: "4q2zg0" }],
+  ["rect", { x: "2", y: "16", width: "6", height: "6", rx: "1", key: "8cvhb9" }],
+  ["rect", { x: "9", y: "2", width: "6", height: "6", rx: "1", key: "1egb70" }],
+  ["path", { d: "M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3", key: "1jsf9p" }],
+  ["path", { d: "M12 12V8", key: "2874zd" }]
 ]);
 
 /**
@@ -2854,12 +2958,9 @@ const Mountain = createLucideIcon("Mountain", [
  */
 
 
-const Network = createLucideIcon("Network", [
-  ["rect", { x: "16", y: "16", width: "6", height: "6", rx: "1", key: "4q2zg0" }],
-  ["rect", { x: "2", y: "16", width: "6", height: "6", rx: "1", key: "8cvhb9" }],
-  ["rect", { x: "9", y: "2", width: "6", height: "6", rx: "1", key: "1egb70" }],
-  ["path", { d: "M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3", key: "1jsf9p" }],
-  ["path", { d: "M12 12V8", key: "2874zd" }]
+const Plus = createLucideIcon("Plus", [
+  ["path", { d: "M5 12h14", key: "1ays0h" }],
+  ["path", { d: "M12 5v14", key: "s699le" }]
 ]);
 
 /**
@@ -2893,6 +2994,29 @@ const Printer = createLucideIcon("Printer", [
   ],
   ["path", { d: "M6 9V3a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6", key: "1itne7" }],
   ["rect", { x: "6", y: "14", width: "12", height: "8", rx: "1", key: "1ue0tg" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const QrCode = createLucideIcon("QrCode", [
+  ["rect", { width: "5", height: "5", x: "3", y: "3", rx: "1", key: "1tu5fj" }],
+  ["rect", { width: "5", height: "5", x: "16", y: "3", rx: "1", key: "1v8r4q" }],
+  ["rect", { width: "5", height: "5", x: "3", y: "16", rx: "1", key: "1x03jg" }],
+  ["path", { d: "M21 16h-3a2 2 0 0 0-2 2v3", key: "177gqh" }],
+  ["path", { d: "M21 21v.01", key: "ents32" }],
+  ["path", { d: "M12 7v3a2 2 0 0 1-2 2H7", key: "8crl2c" }],
+  ["path", { d: "M3 12h.01", key: "nlz23k" }],
+  ["path", { d: "M12 3h.01", key: "n36tog" }],
+  ["path", { d: "M12 16v.01", key: "133mhm" }],
+  ["path", { d: "M16 12h1", key: "1slzba" }],
+  ["path", { d: "M21 12v.01", key: "1lwtk9" }],
+  ["path", { d: "M12 21v-1", key: "1880an" }]
 ]);
 
 /**
@@ -2981,25 +3105,6 @@ const Server = createLucideIcon("Server", [
  */
 
 
-const Settings = createLucideIcon("Settings", [
-  [
-    "path",
-    {
-      d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
-      key: "1qme2f"
-    }
-  ],
-  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
-]);
-
-/**
- * @license lucide-react v0.469.0 - ISC
- *
- * This source code is licensed under the ISC license.
- * See the LICENSE file in the root directory of this source tree.
- */
-
-
 createLucideIcon("Sparkles", [
   [
     "path",
@@ -3032,6 +3137,22 @@ const Sun = createLucideIcon("Sun", [
   ["path", { d: "M20 12h2", key: "1q8mjw" }],
   ["path", { d: "m6.34 17.66-1.41 1.41", key: "1m8zz5" }],
   ["path", { d: "m19.07 4.93-1.41 1.41", key: "1shlcs" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Trash2 = createLucideIcon("Trash2", [
+  ["path", { d: "M3 6h18", key: "d0wm0j" }],
+  ["path", { d: "M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6", key: "4alrt4" }],
+  ["path", { d: "M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2", key: "v07s0e" }],
+  ["line", { x1: "10", x2: "10", y1: "11", y2: "17", key: "1uufr5" }],
+  ["line", { x1: "14", x2: "14", y1: "11", y2: "17", key: "xtxkd" }]
 ]);
 
 /**
@@ -3075,6 +3196,31 @@ const TriangleAlert = createLucideIcon("TriangleAlert", [
  */
 
 
+const WandSparkles = createLucideIcon("WandSparkles", [
+  [
+    "path",
+    {
+      d: "m21.64 3.64-1.28-1.28a1.21 1.21 0 0 0-1.72 0L2.36 18.64a1.21 1.21 0 0 0 0 1.72l1.28 1.28a1.2 1.2 0 0 0 1.72 0L21.64 5.36a1.2 1.2 0 0 0 0-1.72",
+      key: "ul74o6"
+    }
+  ],
+  ["path", { d: "m14 7 3 3", key: "1r5n42" }],
+  ["path", { d: "M5 6v4", key: "ilb8ba" }],
+  ["path", { d: "M19 14v4", key: "blhpug" }],
+  ["path", { d: "M10 2v2", key: "7u0qdc" }],
+  ["path", { d: "M7 8H3", key: "zfb6yr" }],
+  ["path", { d: "M21 16h-4", key: "1cnmox" }],
+  ["path", { d: "M11 3H9", key: "1obp7u" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Wind = createLucideIcon("Wind", [
   ["path", { d: "M12.8 19.6A2 2 0 1 0 14 16H2", key: "148xed" }],
   ["path", { d: "M17.5 8a2.5 2.5 0 1 1 2 4H2", key: "1u4tom" }],
@@ -3097,6 +3243,19 @@ createLucideIcon("Wrench", [
       key: "cbrjhi"
     }
   ]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const X = createLucideIcon("X", [
+  ["path", { d: "M18 6 6 18", key: "1bl5f8" }],
+  ["path", { d: "m6 6 12 12", key: "d8bk6v" }]
 ]);
 
 /**
@@ -3216,7 +3375,7 @@ function SavedViewsField({
   const kindLabel = KINDS[kindIdx]?.label ?? "?";
   const rangeLabel = RANGES$1[rangeIdx]?.label ?? "?";
   const defaultName = `${kindLabel} · ${rangeLabel} · ${selectedHosts.length}/${allHosts.length}`;
-  return /* @__PURE__ */ jsx(Field, { label: `Saved views · ${views.length}/${MAX_SAVED_VIEWS}`, icon: /* @__PURE__ */ jsx(IconBookmark, { size: 12 }), children: /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-1", children: [
+  return /* @__PURE__ */ jsx(Field$1, { label: `Saved views · ${views.length}/${MAX_SAVED_VIEWS}`, icon: /* @__PURE__ */ jsx(IconBookmark, { size: 12 }), children: /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-1", children: [
     naming ? /* @__PURE__ */ jsxs(Fragment, { children: [
       /* @__PURE__ */ jsx(
         "input",
@@ -3297,7 +3456,7 @@ function FilterRail({
   const kindPreset = KINDS[kindIdx];
   const range = RANGES$1[rangeIdx];
   return /* @__PURE__ */ jsxs("section", { className: "ext-glass p-3 flex flex-wrap items-end gap-x-6 gap-y-3", children: [
-    /* @__PURE__ */ jsxs(Field, { label: "Meter type", icon: /* @__PURE__ */ jsx(IconFilter, { size: 12 }), children: [
+    /* @__PURE__ */ jsxs(Field$1, { label: "Meter type", icon: /* @__PURE__ */ jsx(IconFilter, { size: 12 }), children: [
       /* @__PURE__ */ jsx("div", { className: "flex gap-1", children: KINDS.map((k, i) => {
         const KindIcon = ROLE_ACCENT[k.kind].Icon;
         return /* @__PURE__ */ jsx(SegBtn, { active: i === kindIdx, onClick: () => setKindIdx(i), title: k.hint, children: /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5", children: [
@@ -3307,7 +3466,7 @@ function FilterRail({
       }) }),
       /* @__PURE__ */ jsx("span", { className: "ext-eyebrow mt-1 block normal-case tracking-normal text-muted-foreground", children: kindPreset.hint })
     ] }),
-    /* @__PURE__ */ jsxs(Field, { label: "Range", icon: /* @__PURE__ */ jsx(IconRange, { size: 12 }), children: [
+    /* @__PURE__ */ jsxs(Field$1, { label: "Range", icon: /* @__PURE__ */ jsx(IconRange, { size: 12 }), children: [
       /* @__PURE__ */ jsx("div", { className: "flex gap-1", children: RANGES$1.map((r, i) => /* @__PURE__ */ jsx(SegBtn, { active: i === rangeIdx, onClick: () => setRangeIdx(i), children: r.label }, r.label)) }),
       /* @__PURE__ */ jsxs("span", { className: "ext-eyebrow mt-1 block normal-case tracking-normal text-muted-foreground", children: [
         "bucket = ",
@@ -3318,7 +3477,7 @@ function FilterRail({
         ] }) : null
       ] })
     ] }),
-    /* @__PURE__ */ jsxs(Field, { label: `Sites · ${selectedHosts.length}/${allHosts.length}`, icon: /* @__PURE__ */ jsx(IconSites, { size: 12 }), children: [
+    /* @__PURE__ */ jsxs(Field$1, { label: `Sites · ${selectedHosts.length}/${allHosts.length}`, icon: /* @__PURE__ */ jsx(IconSites, { size: 12 }), children: [
       /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-1", children: [
         /* @__PURE__ */ jsx(
           PillBtn,
@@ -10329,10 +10488,10 @@ function svgPropertiesAndEventsFromUnknown(input) {
   return null;
 }
 
-var _excluded$i = ["children", "width", "height", "viewBox", "className", "style", "title", "desc"];
-function _extends$p() { return _extends$p = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$p.apply(null, arguments); }
-function _objectWithoutProperties$i(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$i(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$i(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$k = ["children", "width", "height", "viewBox", "className", "style", "title", "desc"];
+function _extends$q() { return _extends$q = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$q.apply(null, arguments); }
+function _objectWithoutProperties$k(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$k(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$k(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 /**
  * Renders an SVG element.
  *
@@ -10351,7 +10510,7 @@ var Surface = /*#__PURE__*/forwardRef((props, ref) => {
       title,
       desc
     } = props,
-    others = _objectWithoutProperties$i(props, _excluded$i);
+    others = _objectWithoutProperties$k(props, _excluded$k);
   var svgView = viewBox || {
     width,
     height,
@@ -10359,7 +10518,7 @@ var Surface = /*#__PURE__*/forwardRef((props, ref) => {
     y: 0
   };
   var layerClass = clsx('recharts-surface', className);
-  return /*#__PURE__*/React.createElement("svg", _extends$p({}, svgPropertiesAndEvents(others), {
+  return /*#__PURE__*/React.createElement("svg", _extends$q({}, svgPropertiesAndEvents(others), {
     className: layerClass,
     width: width,
     height: height,
@@ -10369,10 +10528,10 @@ var Surface = /*#__PURE__*/forwardRef((props, ref) => {
   }), /*#__PURE__*/React.createElement("title", null, title), /*#__PURE__*/React.createElement("desc", null, desc), children);
 });
 
-var _excluded$h = ["children", "className"];
-function _extends$o() { return _extends$o = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$o.apply(null, arguments); }
-function _objectWithoutProperties$h(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$h(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$h(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$j = ["children", "className"];
+function _extends$p() { return _extends$p = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$p.apply(null, arguments); }
+function _objectWithoutProperties$j(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$j(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$j(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 /**
  * Creates an SVG group element to group other SVG elements.
  *
@@ -10386,9 +10545,9 @@ var Layer = /*#__PURE__*/React.forwardRef((props, ref) => {
       children,
       className
     } = props,
-    others = _objectWithoutProperties$h(props, _excluded$h);
+    others = _objectWithoutProperties$j(props, _excluded$j);
   var layerClass = clsx('recharts-layer', className);
-  return /*#__PURE__*/React.createElement("g", _extends$o({
+  return /*#__PURE__*/React.createElement("g", _extends$p({
     className: layerClass
   }, svgPropertiesAndEvents(others), {
     ref: ref
@@ -11882,15 +12041,15 @@ function isNotNil(value) {
  */
 function noop$2() {}
 
-var _excluded$g = ["type", "size", "sizeType"];
-function _extends$n() { return _extends$n = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$n.apply(null, arguments); }
-function ownKeys$H(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$H(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$H(Object(t), true).forEach(function (r) { _defineProperty$J(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$H(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$J(e, r, t) { return (r = _toPropertyKey$J(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$J(t) { var i = _toPrimitive$J(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$J(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$g(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$g(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$g(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$i = ["type", "size", "sizeType"];
+function _extends$o() { return _extends$o = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$o.apply(null, arguments); }
+function ownKeys$I(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$I(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$I(Object(t), true).forEach(function (r) { _defineProperty$K(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$I(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$K(e, r, t) { return (r = _toPropertyKey$K(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$K(t) { var i = _toPrimitive$K(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$K(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$i(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$i(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$i(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var symbolFactories = {
   symbolCircle,
   symbolCross,
@@ -11942,8 +12101,8 @@ var Symbols = _ref => {
       size = 64,
       sizeType = 'area'
     } = _ref,
-    rest = _objectWithoutProperties$g(_ref, _excluded$g);
-  var props = _objectSpread$H(_objectSpread$H({}, rest), {}, {
+    rest = _objectWithoutProperties$i(_ref, _excluded$i);
+  var props = _objectSpread$I(_objectSpread$I({}, rest), {}, {
     type,
     size,
     sizeType
@@ -11980,7 +12139,7 @@ var Symbols = _ref => {
   } = props;
   var filteredProps = svgPropertiesAndEvents(props);
   if (isNumber(cx) && isNumber(cy) && isNumber(size)) {
-    return /*#__PURE__*/React.createElement("path", _extends$n({}, filteredProps, {
+    return /*#__PURE__*/React.createElement("path", _extends$o({}, filteredProps, {
       className: clsx('recharts-symbols', className),
       transform: "translate(".concat(cx, ", ").concat(cy, ")"),
       d: getPath()
@@ -12175,11 +12334,11 @@ var adaptEventsOfChild = (props, data, index) => {
   return out;
 };
 
-function ownKeys$G(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$G(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$G(Object(t), true).forEach(function (r) { _defineProperty$I(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$G(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$I(e, r, t) { return (r = _toPropertyKey$I(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$I(t) { var i = _toPrimitive$I(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$I(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$H(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$H(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$H(Object(t), true).forEach(function (r) { _defineProperty$J(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$H(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$J(e, r, t) { return (r = _toPropertyKey$J(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$J(t) { var i = _toPrimitive$J(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$J(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * This function mimics the behavior of the `defaultProps` static property in React.
  * Functional components do not have a defaultProps property, so this function is useful to resolve default props.
@@ -12200,7 +12359,7 @@ function resolveDefaultProps(realProps, defaultProps) {
    * To avoid mutating the original `realProps` object passed to the function, create a shallow copy of it.
    * `resolvedProps` will be modified directly with the defaults.
    */
-  var resolvedProps = _objectSpread$G({}, realProps);
+  var resolvedProps = _objectSpread$H({}, realProps);
   /*
    * Since the function guarantees `D extends Partial<T>`, this assignment is safe.
    * It allows TypeScript to work with the well-defined `Partial<T>` type inside the loop,
@@ -16991,11 +17150,11 @@ function isPositiveNumber(n) {
   return typeof n === 'number' && n > 0 && Number.isFinite(n);
 }
 
-function ownKeys$F(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$F(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$F(Object(t), true).forEach(function (r) { _defineProperty$H(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$F(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$H(e, r, t) { return (r = _toPropertyKey$H(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$H(t) { var i = _toPrimitive$H(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$H(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$G(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$G(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$G(Object(t), true).forEach(function (r) { _defineProperty$I(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$G(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$I(e, r, t) { return (r = _toPropertyKey$I(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$I(t) { var i = _toPrimitive$I(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$I(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function getValueByDataKey(obj, dataKey, defaultValue) {
   if (isNullish(obj) || isNullish(dataKey)) {
     return defaultValue;
@@ -17020,12 +17179,12 @@ var appendOffsetOfLegend = (offset, legendSettings, legendSize) => {
       layout
     } = legendSettings;
     if ((layout === 'vertical' || layout === 'horizontal' && verticalAlign === 'middle') && align !== 'center' && isNumber(offset[align])) {
-      return _objectSpread$F(_objectSpread$F({}, offset), {}, {
+      return _objectSpread$G(_objectSpread$G({}, offset), {}, {
         [align]: offset[align] + (boxWidth || 0)
       });
     }
     if ((layout === 'horizontal' || layout === 'vertical' && align === 'center') && verticalAlign !== 'middle' && isNumber(offset[verticalAlign])) {
-      return _objectSpread$F(_objectSpread$F({}, offset), {}, {
+      return _objectSpread$G(_objectSpread$G({}, offset), {}, {
         [verticalAlign]: offset[verticalAlign] + (boxHeight || 0)
       });
     }
@@ -17347,7 +17506,7 @@ function getTooltipEntry(_ref4) {
     value,
     name
   } = _ref4;
-  return _objectSpread$F(_objectSpread$F({}, tooltipEntrySettings), {}, {
+  return _objectSpread$G(_objectSpread$G({}, tooltipEntrySettings), {}, {
     dataKey,
     payload,
     value,
@@ -17405,11 +17564,11 @@ var DATA_ITEM_INDEX_ATTRIBUTE_NAME = 'data-recharts-item-index';
 var DATA_ITEM_GRAPHICAL_ITEM_ID_ATTRIBUTE_NAME = 'data-recharts-item-id';
 var DEFAULT_Y_AXIS_WIDTH = 60;
 
-function ownKeys$E(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$E(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$E(Object(t), true).forEach(function (r) { _defineProperty$G(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$E(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$G(e, r, t) { return (r = _toPropertyKey$G(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$G(t) { var i = _toPrimitive$G(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$G(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$F(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$F(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$F(Object(t), true).forEach(function (r) { _defineProperty$H(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$F(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$H(e, r, t) { return (r = _toPropertyKey$H(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$H(t) { var i = _toPrimitive$H(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$H(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var selectBrushHeight = state => state.brush.height;
 function selectLeftAxesOffset(state) {
   var yAxes = selectAllYAxes(state);
@@ -17465,13 +17624,13 @@ var selectChartOffsetInternal = createSelector([selectChartWidth, selectChartHei
     top: (margin.top || 0) + topAxesOffset,
     bottom: (margin.bottom || 0) + bottomAxesOffset
   };
-  var offset = _objectSpread$E(_objectSpread$E({}, offsetV), offsetH);
+  var offset = _objectSpread$F(_objectSpread$F({}, offsetV), offsetH);
   var brushBottom = offset.bottom;
   offset.bottom += brushHeight;
   offset = appendOffsetOfLegend(offset, legendSettings, legendSize);
   var offsetWidth = chartWidth - offset.left - offset.right;
   var offsetHeight = chartHeight - offset.top - offset.bottom;
-  return _objectSpread$E(_objectSpread$E({
+  return _objectSpread$F(_objectSpread$F({
     brushBottom
   }, offset), {}, {
     // never return negative values for height and width
@@ -17784,12 +17943,12 @@ function getDefaultWidthAndHeight(_ref) {
   };
 }
 
-function _extends$m() { return _extends$m = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$m.apply(null, arguments); }
-function ownKeys$D(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$D(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$D(Object(t), true).forEach(function (r) { _defineProperty$F(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$D(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$F(e, r, t) { return (r = _toPropertyKey$F(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$F(t) { var i = _toPrimitive$F(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$F(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$n() { return _extends$n = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$n.apply(null, arguments); }
+function ownKeys$E(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$E(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$E(Object(t), true).forEach(function (r) { _defineProperty$G(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$E(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$G(e, r, t) { return (r = _toPropertyKey$G(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$G(t) { var i = _toPrimitive$G(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$G(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var ResponsiveContainerContext = /*#__PURE__*/createContext(defaultResponsiveContainerProps.initialDimension);
 function isAcceptableSize(size) {
   return isPositiveNumber(size.width) && isPositiveNumber(size.height);
@@ -17914,7 +18073,7 @@ var SizeDetectorContainer = /*#__PURE__*/forwardRef((_ref2, ref) => {
   return /*#__PURE__*/React.createElement("div", {
     id: id ? "".concat(id) : undefined,
     className: clsx('recharts-responsive-container', className),
-    style: _objectSpread$D(_objectSpread$D({}, style), {}, {
+    style: _objectSpread$E(_objectSpread$E({}, style), {}, {
       width,
       height,
       minWidth,
@@ -17994,7 +18153,7 @@ var ResponsiveContainer = /*#__PURE__*/forwardRef((props, ref) => {
    * Static analysis did not produce fixed dimensions,
    * so we need to render a special div and monitor its size.
    */
-  return /*#__PURE__*/React.createElement(SizeDetectorContainer, _extends$m({}, props, {
+  return /*#__PURE__*/React.createElement(SizeDetectorContainer, _extends$n({}, props, {
     width: width,
     height: height,
     ref: ref
@@ -19521,12 +19680,12 @@ function propsAreEqual(prevProps, nextProps) {
   return true;
 }
 
-function _extends$l() { return _extends$l = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$l.apply(null, arguments); }
-function ownKeys$C(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$C(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$C(Object(t), true).forEach(function (r) { _defineProperty$E(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$C(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$E(e, r, t) { return (r = _toPropertyKey$E(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$E(t) { var i = _toPrimitive$E(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$E(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$m() { return _extends$m = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$m.apply(null, arguments); }
+function ownKeys$D(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$D(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$D(Object(t), true).forEach(function (r) { _defineProperty$F(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$D(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$F(e, r, t) { return (r = _toPropertyKey$F(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$F(t) { var i = _toPrimitive$F(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$F(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function defaultFormatter(value) {
   return Array.isArray(value) && isNumOrStr(value[0]) && isNumOrStr(value[1]) ? value.join(' ~ ') : value;
 }
@@ -19610,7 +19769,7 @@ var DefaultTooltipContent = props => {
             return null;
           }
         }
-        var finalItemStyle = _objectSpread$C(_objectSpread$C({}, defaultDefaultTooltipContentProps.itemStyle), {}, {
+        var finalItemStyle = _objectSpread$D(_objectSpread$D({}, defaultDefaultTooltipContentProps.itemStyle), {}, {
           color: entry.color || defaultDefaultTooltipContentProps.itemStyle.color
         }, itemStyle);
         return /*#__PURE__*/React.createElement("li", {
@@ -19634,8 +19793,8 @@ var DefaultTooltipContent = props => {
     }
     return null;
   };
-  var finalStyle = _objectSpread$C(_objectSpread$C({}, defaultDefaultTooltipContentProps.contentStyle), contentStyle);
-  var finalLabelStyle = _objectSpread$C({
+  var finalStyle = _objectSpread$D(_objectSpread$D({}, defaultDefaultTooltipContentProps.contentStyle), contentStyle);
+  var finalLabelStyle = _objectSpread$D({
     margin: 0
   }, labelStyle);
   var hasLabel = !isNullish(label);
@@ -19649,7 +19808,7 @@ var DefaultTooltipContent = props => {
     role: 'status',
     'aria-live': 'assertive'
   } : {};
-  return /*#__PURE__*/React.createElement("div", _extends$l({
+  return /*#__PURE__*/React.createElement("div", _extends$m({
     className: wrapperCN,
     style: finalStyle
   }, accessibilityAttributes), /*#__PURE__*/React.createElement("p", {
@@ -19818,11 +19977,11 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
-function ownKeys$B(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$B(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$B(Object(t), true).forEach(function (r) { _defineProperty$D(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$B(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$D(e, r, t) { return (r = _toPropertyKey$D(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$D(t) { var i = _toPrimitive$D(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$D(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$C(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$C(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$C(Object(t), true).forEach(function (r) { _defineProperty$E(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$C(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$E(e, r, t) { return (r = _toPropertyKey$E(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$E(t) { var i = _toPrimitive$E(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$E(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function resolveTransitionProperty(args) {
   if (args.prefersReducedMotion && args.isAnimationActive === 'auto') {
     return undefined;
@@ -19861,7 +20020,7 @@ function TooltipBoundingBoxImpl(props) {
     };
   }, [(_props$coordinate3 = props.coordinate) === null || _props$coordinate3 === void 0 ? void 0 : _props$coordinate3.x, (_props$coordinate4 = props.coordinate) === null || _props$coordinate4 === void 0 ? void 0 : _props$coordinate4.y]);
   if (state.dismissed && (((_props$coordinate$x2 = (_props$coordinate5 = props.coordinate) === null || _props$coordinate5 === void 0 ? void 0 : _props$coordinate5.x) !== null && _props$coordinate$x2 !== void 0 ? _props$coordinate$x2 : 0) !== state.dismissedAtCoordinate.x || ((_props$coordinate$y2 = (_props$coordinate6 = props.coordinate) === null || _props$coordinate6 === void 0 ? void 0 : _props$coordinate6.y) !== null && _props$coordinate$y2 !== void 0 ? _props$coordinate$y2 : 0) !== state.dismissedAtCoordinate.y)) {
-    setState(_objectSpread$B(_objectSpread$B({}, state), {}, {
+    setState(_objectSpread$C(_objectSpread$C({}, state), {}, {
       dismissed: false
     }));
   }
@@ -19882,7 +20041,7 @@ function TooltipBoundingBoxImpl(props) {
     useTranslate3d: props.useTranslate3d,
     viewBox: props.viewBox
   });
-  var positionStyle = props.hasPortalFromProps ? {} : _objectSpread$B(_objectSpread$B({
+  var positionStyle = props.hasPortalFromProps ? {} : _objectSpread$C(_objectSpread$C({
     transition: resolveTransitionProperty({
       prefersReducedMotion,
       isAnimationActive: props.isAnimationActive,
@@ -19896,7 +20055,7 @@ function TooltipBoundingBoxImpl(props) {
     top: 0,
     left: 0
   });
-  var outerStyle = _objectSpread$B(_objectSpread$B({}, positionStyle), {}, {
+  var outerStyle = _objectSpread$C(_objectSpread$C({}, positionStyle), {}, {
     visibility: !state.dismissed && props.active && props.hasPayload ? 'visible' : 'hidden'
   }, props.wrapperStyle);
   return /*#__PURE__*/React.createElement("div", {
@@ -19915,12 +20074,12 @@ var useAccessibilityLayer = () => {
   return (_useAppSelector = useAppSelector(state => state.rootProps.accessibilityLayer)) !== null && _useAppSelector !== void 0 ? _useAppSelector : true;
 };
 
-function _extends$k() { return _extends$k = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$k.apply(null, arguments); }
-function ownKeys$A(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$A(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$A(Object(t), true).forEach(function (r) { _defineProperty$C(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$A(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$C(e, r, t) { return (r = _toPropertyKey$C(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$C(t) { var i = _toPrimitive$C(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$C(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$l() { return _extends$l = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$l.apply(null, arguments); }
+function ownKeys$B(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$B(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$B(Object(t), true).forEach(function (r) { _defineProperty$D(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$B(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$D(e, r, t) { return (r = _toPropertyKey$D(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$D(t) { var i = _toPrimitive$D(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$D(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var CURVE_FACTORIES = {
   curveBasisClosed,
   curveBasisOpen,
@@ -19991,7 +20150,7 @@ var getPath$1 = _ref => {
   // preventing errors from mismatched array lengths and ensuring `defined` checks both.
   if (Array.isArray(baseLine)) {
     var _lineFunction;
-    var areaPoints = points.map((entry, index) => _objectSpread$A(_objectSpread$A({}, entry), {}, {
+    var areaPoints = points.map((entry, index) => _objectSpread$B(_objectSpread$B({}, entry), {}, {
       base: baseLine[index]
     }));
     if (layout === 'vertical') {
@@ -20045,22 +20204,22 @@ var Curve = props => {
     connectNulls: props.connectNulls
   };
   var realPath = points && points.length ? getPath$1(getPathInput) : path;
-  return /*#__PURE__*/React.createElement("path", _extends$k({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
+  return /*#__PURE__*/React.createElement("path", _extends$l({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
     className: clsx('recharts-curve', className),
     d: realPath === null ? undefined : realPath,
     ref: pathRef
   }));
 };
 
-var _excluded$f = ["x", "y", "top", "left", "width", "height", "className"];
-function _extends$j() { return _extends$j = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$j.apply(null, arguments); }
-function ownKeys$z(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$z(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$z(Object(t), true).forEach(function (r) { _defineProperty$B(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$z(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$B(e, r, t) { return (r = _toPropertyKey$B(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$B(t) { var i = _toPrimitive$B(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$B(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$f(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$f(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$f(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$h = ["x", "y", "top", "left", "width", "height", "className"];
+function _extends$k() { return _extends$k = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$k.apply(null, arguments); }
+function ownKeys$A(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$A(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$A(Object(t), true).forEach(function (r) { _defineProperty$C(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$A(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$C(e, r, t) { return (r = _toPropertyKey$C(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$C(t) { var i = _toPrimitive$C(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$C(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$h(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$h(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$h(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var getPath = (x, y, width, height, top, left) => {
   return "M".concat(x, ",").concat(top, "v").concat(height, "M").concat(left, ",").concat(y, "h").concat(width);
 };
@@ -20074,8 +20233,8 @@ var Cross = _ref => {
       height = 0,
       className
     } = _ref,
-    rest = _objectWithoutProperties$f(_ref, _excluded$f);
-  var props = _objectSpread$z({
+    rest = _objectWithoutProperties$h(_ref, _excluded$h);
+  var props = _objectSpread$A({
     x,
     y,
     top,
@@ -20086,7 +20245,7 @@ var Cross = _ref => {
   if (!isNumber(x) || !isNumber(y) || !isNumber(width) || !isNumber(height) || !isNumber(top) || !isNumber(left)) {
     return null;
   }
-  return /*#__PURE__*/React.createElement("path", _extends$j({}, svgPropertiesAndEvents(props), {
+  return /*#__PURE__*/React.createElement("path", _extends$k({}, svgPropertiesAndEvents(props), {
     className: clsx('recharts-cross', className),
     d: getPath(x, y, width, height, top, left)
   }));
@@ -20104,11 +20263,11 @@ function getCursorRectangle(layout, activeCoordinate, offset, tooltipAxisBandSiz
   };
 }
 
-function ownKeys$y(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$y(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$y(Object(t), true).forEach(function (r) { _defineProperty$A(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$y(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$A(e, r, t) { return (r = _toPropertyKey$A(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$A(t) { var i = _toPrimitive$A(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$A(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$z(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$z(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$z(Object(t), true).forEach(function (r) { _defineProperty$B(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$z(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$B(e, r, t) { return (r = _toPropertyKey$B(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$B(t) { var i = _toPrimitive$B(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$B(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /*
  * @description: convert camel case to dash case
  * string => string
@@ -20130,15 +20289,15 @@ var getIntersectionKeys = (preObj, nextObj) => [Object.keys(preObj), Object.keys
  * @param {object} obj object to map
  * @returns mapped object
  */
-var mapObject = (fn, obj) => Object.keys(obj).reduce((res, key) => _objectSpread$y(_objectSpread$y({}, res), {}, {
+var mapObject = (fn, obj) => Object.keys(obj).reduce((res, key) => _objectSpread$z(_objectSpread$z({}, res), {}, {
   [key]: fn(key, obj[key])
 }), {});
 
-function ownKeys$x(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$x(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$x(Object(t), true).forEach(function (r) { _defineProperty$z(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$x(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$z(e, r, t) { return (r = _toPropertyKey$z(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$z(t) { var i = _toPrimitive$z(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$z(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$y(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$y(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$y(Object(t), true).forEach(function (r) { _defineProperty$A(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$y(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$A(e, r, t) { return (r = _toPropertyKey$A(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$A(t) { var i = _toPrimitive$A(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$A(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var alpha = (begin, end, k) => begin + (end - begin) * k;
 var needContinue = _ref => {
   var {
@@ -20155,7 +20314,7 @@ var calStepperVals = (easing, preVals, steps) => {
   var nextStepVals = mapObject((key, val) => {
     if (needContinue(val)) {
       var [newX, newV] = easing(val.from, val.to, val.velocity);
-      return _objectSpread$x(_objectSpread$x({}, val), {}, {
+      return _objectSpread$y(_objectSpread$y({}, val), {}, {
         from: newX,
         velocity: newV
       });
@@ -20165,7 +20324,7 @@ var calStepperVals = (easing, preVals, steps) => {
   if (steps < 1) {
     return mapObject((key, val) => {
       if (needContinue(val) && nextStepVals[key] != null) {
-        return _objectSpread$x(_objectSpread$x({}, val), {}, {
+        return _objectSpread$y(_objectSpread$y({}, val), {}, {
           velocity: alpha(val.velocity, nextStepVals[key].velocity, steps),
           from: alpha(val.from, nextStepVals[key].from, steps)
         });
@@ -20177,7 +20336,7 @@ var calStepperVals = (easing, preVals, steps) => {
 };
 function createStepperUpdate(from, to, easing, interKeys, render, timeoutController) {
   var preTime;
-  var stepperStyle = interKeys.reduce((res, key) => _objectSpread$x(_objectSpread$x({}, res), {}, {
+  var stepperStyle = interKeys.reduce((res, key) => _objectSpread$y(_objectSpread$y({}, res), {}, {
     [key]: {
       from: from[key],
       velocity: 0,
@@ -20195,7 +20354,7 @@ function createStepperUpdate(from, to, easing, interKeys, render, timeoutControl
     var steps = deltaTime / easing.dt;
     stepperStyle = calStepperVals(easing, stepperStyle, steps);
     // get union set and add compatible prefix
-    render(_objectSpread$x(_objectSpread$x(_objectSpread$x({}, from), to), getCurrStyle()));
+    render(_objectSpread$y(_objectSpread$y(_objectSpread$y({}, from), to), getCurrStyle()));
     preTime = now;
     if (!shouldStopAnimation()) {
       stopAnimation = timeoutController.setTimeout(stepperUpdate);
@@ -20221,7 +20380,7 @@ function createTimingUpdate(from, to, easing, duration, interKeys, render, timeo
     if (fromElement == null || toElement == null) {
       return res;
     }
-    return _objectSpread$x(_objectSpread$x({}, res), {}, {
+    return _objectSpread$y(_objectSpread$y({}, res), {}, {
       [key]: [fromElement, toElement]
     });
   }, {});
@@ -20234,12 +20393,12 @@ function createTimingUpdate(from, to, easing, duration, interKeys, render, timeo
     var currStyle = mapObject((key, val) => alpha(...val, easing(t)), timingStyle);
 
     // get union set and add compatible prefix
-    render(_objectSpread$x(_objectSpread$x(_objectSpread$x({}, from), to), currStyle));
+    render(_objectSpread$y(_objectSpread$y(_objectSpread$y({}, from), to), currStyle));
     if (t < 1) {
       stopAnimation = timeoutController.setTimeout(timingUpdate);
     } else {
       var finalStyle = mapObject((key, val) => alpha(...val, easing(1)), timingStyle);
-      render(_objectSpread$x(_objectSpread$x(_objectSpread$x({}, from), to), finalStyle));
+      render(_objectSpread$y(_objectSpread$y(_objectSpread$y({}, from), to), finalStyle));
     }
   };
 
@@ -20262,7 +20421,7 @@ const configUpdate = (from, to, easing, duration, render, timeoutController) => 
   if (easing == null) {
     // no animation, just set to final state
     return () => {
-      render(_objectSpread$x(_objectSpread$x({}, from), to));
+      render(_objectSpread$y(_objectSpread$y({}, from), to));
       return () => {};
     };
   }
@@ -20596,17 +20755,17 @@ function useAnimationId(input) {
   return animationId.current;
 }
 
-var _excluded$e = ["radius"],
-  _excluded2$7 = ["radius"];
+var _excluded$g = ["radius"],
+  _excluded2$8 = ["radius"];
 var _templateObject$2, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$1, _templateObject7$1, _templateObject8, _templateObject9, _templateObject0;
-function ownKeys$w(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$w(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$w(Object(t), true).forEach(function (r) { _defineProperty$y(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$w(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$y(e, r, t) { return (r = _toPropertyKey$y(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$y(t) { var i = _toPrimitive$y(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$y(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$i() { return _extends$i = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$i.apply(null, arguments); }
-function _objectWithoutProperties$e(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$e(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$e(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$x(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$x(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$x(Object(t), true).forEach(function (r) { _defineProperty$z(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$x(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$z(e, r, t) { return (r = _toPropertyKey$z(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$z(t) { var i = _toPrimitive$z(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$z(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$j() { return _extends$j = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$j.apply(null, arguments); }
+function _objectWithoutProperties$g(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$g(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$g(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function _taggedTemplateLiteral$2(e, t) { return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, { raw: { value: Object.freeze(t) } })); }
 
 /**
@@ -20729,8 +20888,8 @@ var Rectangle = rectangleProps => {
       {
         radius: _
       } = _svgPropertiesAndEven,
-      otherPathProps = _objectWithoutProperties$e(_svgPropertiesAndEven, _excluded$e);
-    return /*#__PURE__*/React.createElement("path", _extends$i({}, otherPathProps, {
+      otherPathProps = _objectWithoutProperties$g(_svgPropertiesAndEven, _excluded$g);
+    return /*#__PURE__*/React.createElement("path", _extends$j({}, otherPathProps, {
       x: round$1(x),
       y: round$1(y),
       width: round$1(width),
@@ -20785,22 +20944,22 @@ var Rectangle = rectangleProps => {
       {
         radius: _
       } = _svgPropertiesAndEven2,
-      otherPathProps = _objectWithoutProperties$e(_svgPropertiesAndEven2, _excluded2$7);
-    return /*#__PURE__*/React.createElement("path", _extends$i({}, otherPathProps, {
+      otherPathProps = _objectWithoutProperties$g(_svgPropertiesAndEven2, _excluded2$8);
+    return /*#__PURE__*/React.createElement("path", _extends$j({}, otherPathProps, {
       radius: typeof radius === 'number' ? radius : undefined,
       className: layerClass,
       d: getRectanglePath(currX, currY, currWidth, currHeight, radius),
       ref: pathRef,
-      style: _objectSpread$w(_objectSpread$w({}, animationStyle), props.style)
+      style: _objectSpread$x(_objectSpread$x({}, animationStyle), props.style)
     }));
   });
 };
 
-function ownKeys$v(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$v(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$v(Object(t), true).forEach(function (r) { _defineProperty$x(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$v(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$x(e, r, t) { return (r = _toPropertyKey$x(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$x(t) { var i = _toPrimitive$x(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$x(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$w(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$w(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$w(Object(t), true).forEach(function (r) { _defineProperty$y(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$w(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$y(e, r, t) { return (r = _toPropertyKey$y(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$y(t) { var i = _toPrimitive$y(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$y(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var RADIAN = Math.PI / 180;
 var radianToDegree = angleInRadian => angleInRadian * 180 / Math.PI;
 var polarToCartesian = (cx, cy, radius, angle) => ({
@@ -20928,7 +21087,7 @@ var inRangeOfSector = (_ref5, viewBox) => {
     inRange = formatAngle >= endAngle && formatAngle <= startAngle;
   }
   if (inRange) {
-    return _objectSpread$v(_objectSpread$v({}, viewBox), {}, {
+    return _objectSpread$w(_objectSpread$w({}, viewBox), {}, {
       radius,
       angle: reverseFormatAngleOfSector(formatAngle, viewBox)
     });
@@ -20962,7 +21121,7 @@ function getRadialCursorPoints(activeCoordinate) {
 }
 
 var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7;
-function _extends$h() { return _extends$h = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$h.apply(null, arguments); }
+function _extends$i() { return _extends$i = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$i.apply(null, arguments); }
 function _taggedTemplateLiteral$1(e, t) { return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, { raw: { value: Object.freeze(t) } })); }
 var getDeltaAngle$1 = (startAngle, endAngle) => {
   var sign = mathSign(endAngle - startAngle);
@@ -21174,7 +21333,7 @@ var Sector = sectorProps => {
       endAngle
     });
   }
-  return /*#__PURE__*/React.createElement("path", _extends$h({}, svgPropertiesAndEvents(props), {
+  return /*#__PURE__*/React.createElement("path", _extends$i({}, svgPropertiesAndEvents(props), {
     className: layerClass,
     d: path
   }));
@@ -23981,11 +24140,11 @@ function getAxisTypeBasedOnLayout(layout, axisType, axisDomainType) {
   return isCategoricalAxis(layout, axisType) ? 'category' : 'number';
 }
 
-function ownKeys$u(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$u(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$u(Object(t), true).forEach(function (r) { _defineProperty$w(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$u(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$w(e, r, t) { return (r = _toPropertyKey$w(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$w(t) { var i = _toPrimitive$w(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$w(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$v(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$v(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$v(Object(t), true).forEach(function (r) { _defineProperty$x(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$v(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$x(e, r, t) { return (r = _toPropertyKey$x(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$x(t) { var i = _toPrimitive$x(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$x(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var implicitAngleAxis = {
   allowDataOverflow: defaultPolarAngleAxisProps.allowDataOverflow,
   allowDecimals: defaultPolarAngleAxisProps.allowDecimals,
@@ -24035,7 +24194,7 @@ var selectAngleAxis = createSelector([selectAngleAxisNoDefaults, selectPolarChar
     return angleAxisSettings;
   }
   var evaluatedType = (_getAxisTypeBasedOnLa = getAxisTypeBasedOnLayout(layout, 'angleAxis', implicitAngleAxis.type)) !== null && _getAxisTypeBasedOnLa !== void 0 ? _getAxisTypeBasedOnLa : 'category';
-  return _objectSpread$u(_objectSpread$u({}, implicitAngleAxis), {}, {
+  return _objectSpread$v(_objectSpread$v({}, implicitAngleAxis), {}, {
     type: evaluatedType
   });
 });
@@ -24048,7 +24207,7 @@ var selectRadiusAxis = createSelector([selectRadiusAxisNoDefaults, selectPolarCh
     return radiusAxisSettings;
   }
   var evaluatedType = (_getAxisTypeBasedOnLa2 = getAxisTypeBasedOnLayout(layout, 'radiusAxis', implicitRadiusAxis.type)) !== null && _getAxisTypeBasedOnLa2 !== void 0 ? _getAxisTypeBasedOnLa2 : 'category';
-  return _objectSpread$u(_objectSpread$u({}, implicitRadiusAxis), {}, {
+  return _objectSpread$v(_objectSpread$v({}, implicitRadiusAxis), {}, {
     type: evaluatedType
   });
 });
@@ -28022,11 +28181,11 @@ function combineInverseScaleFunction(configuredScale) {
   return createCategoricalInverse(configuredScale, undefined);
 }
 
-function ownKeys$t(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$t(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$t(Object(t), true).forEach(function (r) { _defineProperty$v(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$t(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$v(e, r, t) { return (r = _toPropertyKey$v(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$v(t) { var i = _toPrimitive$v(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$v(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$u(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$u(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$u(Object(t), true).forEach(function (r) { _defineProperty$w(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$u(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$w(e, r, t) { return (r = _toPropertyKey$w(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$w(t) { var i = _toPrimitive$w(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$w(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var defaultNumericDomain = [0, 'auto'];
 /**
  * If an axis is not explicitly defined as an element,
@@ -29333,7 +29492,7 @@ var selectAxisWithScale = createSelector(selectBaseAxis, selectAxisScale, (axis,
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$t(_objectSpread$t({}, axis), {}, {
+  return _objectSpread$u(_objectSpread$u({}, axis), {}, {
     scale
   });
 });
@@ -29343,7 +29502,7 @@ createSelector((state, _axisType, axisId) => selectZAxisSettings(state, axisId),
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$t(_objectSpread$t({}, axis), {}, {
+  return _objectSpread$u(_objectSpread$u({}, axis), {}, {
     scale
   });
 });
@@ -29652,11 +29811,11 @@ var {
 } = tooltipSlice.actions;
 var tooltipReducer = tooltipSlice.reducer;
 
-function ownKeys$s(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$s(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$s(Object(t), true).forEach(function (r) { _defineProperty$u(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$s(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$u(e, r, t) { return (r = _toPropertyKey$u(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$u(t) { var i = _toPrimitive$u(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$u(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$t(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$t(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$t(Object(t), true).forEach(function (r) { _defineProperty$v(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$t(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$v(e, r, t) { return (r = _toPropertyKey$v(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$v(t) { var i = _toPrimitive$v(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$v(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function chooseAppropriateMouseInteraction(tooltipState, tooltipEventType, trigger) {
   if (tooltipEventType === 'axis') {
     if (trigger === 'click') {
@@ -29692,7 +29851,7 @@ var combineTooltipInteractionState = (tooltipState, tooltipEventType, trigger, d
   var activeFromProps = tooltipState.settings.active === true;
   if (hasBeenActivePreviously(appropriateMouseInteraction)) {
     if (activeFromProps) {
-      return _objectSpread$s(_objectSpread$s({}, appropriateMouseInteraction), {}, {
+      return _objectSpread$t(_objectSpread$t({}, appropriateMouseInteraction), {}, {
         active: true
       });
     }
@@ -29705,7 +29864,7 @@ var combineTooltipInteractionState = (tooltipState, tooltipEventType, trigger, d
       graphicalItemId: undefined
     };
   }
-  return _objectSpread$s(_objectSpread$s({}, noInteraction), {}, {
+  return _objectSpread$t(_objectSpread$t({}, noInteraction), {}, {
     coordinate: appropriateMouseInteraction.coordinate
   });
 };
@@ -29865,11 +30024,11 @@ var selectTooltipPayloadSearcher = state => state.options.tooltipPayloadSearcher
 
 var selectTooltipState = state => state.tooltip;
 
-function ownKeys$r(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$r(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$r(Object(t), true).forEach(function (r) { _defineProperty$t(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$r(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$t(e, r, t) { return (r = _toPropertyKey$t(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$t(t) { var i = _toPrimitive$t(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$t(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$s(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$s(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$s(Object(t), true).forEach(function (r) { _defineProperty$u(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$s(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$u(e, r, t) { return (r = _toPropertyKey$u(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$u(t) { var i = _toPrimitive$u(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$u(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function parseName(value) {
   if (typeof value === 'string' || typeof value === 'number') {
     return value;
@@ -29990,7 +30149,7 @@ var combineTooltipPayload = (tooltipPayloadConfigurations, activeIndex, chartDat
         var itemName = parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.name;
         var itemDataKey = parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.dataKey;
         var itemPayload = parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.payload;
-        var newSettings = _objectSpread$r(_objectSpread$r({}, settings), {}, {
+        var newSettings = _objectSpread$s(_objectSpread$s({}, settings), {}, {
           name: itemName,
           unit: parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.unit,
           // Preserve item-level color/fill from graphical items.
@@ -30176,11 +30335,11 @@ var selectActiveTooltipDataPoints = createSelector([selectActiveTooltipPayload],
   return Array.from(new Set(dataPoints));
 });
 
-function ownKeys$q(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$q(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$q(Object(t), true).forEach(function (r) { _defineProperty$s(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$q(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$s(e, r, t) { return (r = _toPropertyKey$s(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$s(t) { var i = _toPrimitive$s(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$s(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$r(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$r(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$r(Object(t), true).forEach(function (r) { _defineProperty$t(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$r(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$t(e, r, t) { return (r = _toPropertyKey$t(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$t(t) { var i = _toPrimitive$t(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$t(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var useTooltipAxis = () => useAppSelector(selectTooltipAxis);
 var useTooltipAxisBandSize = () => {
   var tooltipAxis = useTooltipAxis();
@@ -30189,16 +30348,16 @@ var useTooltipAxisBandSize = () => {
   if (!tooltipAxis || !tooltipAxisScale) {
     return getBandSizeOfAxis(undefined, tooltipTicks);
   }
-  return getBandSizeOfAxis(_objectSpread$q(_objectSpread$q({}, tooltipAxis), {}, {
+  return getBandSizeOfAxis(_objectSpread$r(_objectSpread$r({}, tooltipAxis), {}, {
     scale: tooltipAxisScale
   }), tooltipTicks);
 };
 
-function ownKeys$p(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$p(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$p(Object(t), true).forEach(function (r) { _defineProperty$r(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$p(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$r(e, r, t) { return (r = _toPropertyKey$r(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$r(t) { var i = _toPrimitive$r(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$r(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$q(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$q(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$q(Object(t), true).forEach(function (r) { _defineProperty$s(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$q(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$s(e, r, t) { return (r = _toPropertyKey$s(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$s(t) { var i = _toPrimitive$s(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$s(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var getActiveCartesianCoordinate = (layout, tooltipTicks, activeIndex, pointer) => {
   var entry = tooltipTicks.find(tick => tick && tick.index === activeIndex);
   if (entry) {
@@ -30241,7 +30400,7 @@ var getActivePolarCoordinate = (layout, tooltipTicks, activeIndex, rangeObj) => 
       var {
         radius: _radius
       } = rangeObj;
-      return _objectSpread$p(_objectSpread$p(_objectSpread$p({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, _radius, _angle)), {}, {
+      return _objectSpread$q(_objectSpread$q(_objectSpread$q({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, _radius, _angle)), {}, {
         angle: _angle,
         radius: _radius
       });
@@ -30250,7 +30409,7 @@ var getActivePolarCoordinate = (layout, tooltipTicks, activeIndex, rangeObj) => 
     var {
       angle
     } = rangeObj;
-    return _objectSpread$p(_objectSpread$p(_objectSpread$p({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, radius, angle)), {}, {
+    return _objectSpread$q(_objectSpread$q(_objectSpread$q({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, radius, angle)), {}, {
       angle,
       radius
     });
@@ -30454,14 +30613,14 @@ var selectAllRegisteredZIndexes = createSelector(state => state.zIndex.zIndexMap
   }
 });
 
-function ownKeys$o(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$o(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$o(Object(t), true).forEach(function (r) { _defineProperty$q(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$o(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$q(e, r, t) { return (r = _toPropertyKey$q(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$q(t) { var i = _toPrimitive$q(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$q(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$p(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$p(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$p(Object(t), true).forEach(function (r) { _defineProperty$r(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$p(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$r(e, r, t) { return (r = _toPropertyKey$r(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$r(t) { var i = _toPrimitive$r(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$r(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var seed = {};
 var initialState$a = {
-  zIndexMap: Object.values(DefaultZIndexes).reduce((acc, current) => _objectSpread$o(_objectSpread$o({}, acc), {}, {
+  zIndexMap: Object.values(DefaultZIndexes).reduce((acc, current) => _objectSpread$p(_objectSpread$p({}, acc), {}, {
     [current]: {
       element: undefined,
       panoramaElement: undefined,
@@ -30691,12 +30850,12 @@ function ZIndexLayer(_ref) {
   return /*#__PURE__*/createPortal(children, targetElement);
 }
 
-function _extends$g() { return _extends$g = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$g.apply(null, arguments); }
-function ownKeys$n(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$n(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$n(Object(t), true).forEach(function (r) { _defineProperty$p(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$n(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$p(e, r, t) { return (r = _toPropertyKey$p(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$p(t) { var i = _toPrimitive$p(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$p(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$h() { return _extends$h = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$h.apply(null, arguments); }
+function ownKeys$o(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$o(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$o(Object(t), true).forEach(function (r) { _defineProperty$q(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$o(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$q(e, r, t) { return (r = _toPropertyKey$q(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$q(t) { var i = _toPrimitive$q(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$q(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /**
  * If set false, no cursor will be drawn when tooltip is active.
@@ -30771,7 +30930,7 @@ function CursorInternal(props) {
     preferredZIndex = DefaultZIndexes.cursorLine;
   }
   var extraClassName = typeof cursor === 'object' && 'className' in cursor ? cursor.className : undefined;
-  var cursorProps = _objectSpread$n(_objectSpread$n(_objectSpread$n(_objectSpread$n({
+  var cursorProps = _objectSpread$o(_objectSpread$o(_objectSpread$o(_objectSpread$o({
     stroke: '#ccc',
     pointerEvents: 'none'
   }, offset), restProps), svgPropertiesNoEventsFromUnknown(cursor)), {}, {
@@ -30804,7 +30963,7 @@ function Cursor(props) {
   if (tooltipAxisBandSize == null || offset == null || layout == null || chartName == null) {
     return null;
   }
-  return /*#__PURE__*/React.createElement(CursorInternal, _extends$g({}, props, {
+  return /*#__PURE__*/React.createElement(CursorInternal, _extends$h({}, props, {
     offset: offset,
     layout: layout,
     tooltipAxisBandSize: tooltipAxisBandSize,
@@ -31272,14 +31431,14 @@ var {
 } = chartDataSlice.actions;
 var chartDataReducer = chartDataSlice.reducer;
 
-var _excluded$d = ["x", "y"];
-function ownKeys$m(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$m(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$m(Object(t), true).forEach(function (r) { _defineProperty$o(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$m(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$o(e, r, t) { return (r = _toPropertyKey$o(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$o(t) { var i = _toPrimitive$o(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$o(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$d(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$d(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$d(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$f = ["x", "y"];
+function ownKeys$n(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$n(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$n(Object(t), true).forEach(function (r) { _defineProperty$p(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$n(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$p(e, r, t) { return (r = _toPropertyKey$p(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$p(t) { var i = _toPrimitive$p(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$p(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$f(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$f(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$f(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 
 /**
  * Listens for tooltip sync events from other charts and dispatches the appropriate
@@ -31343,19 +31502,19 @@ function useTooltipSyncEventsListener() {
               x: _x,
               y: _y
             } = _action$payload$coord,
-            otherCoordinateProps = _objectWithoutProperties$d(_action$payload$coord, _excluded$d);
+            otherCoordinateProps = _objectWithoutProperties$f(_action$payload$coord, _excluded$f);
           var {
             x: sourceX,
             y: sourceY,
             width: sourceWidth,
             height: sourceHeight
           } = action.payload.sourceViewBox;
-          var scaledCoordinate = _objectSpread$m(_objectSpread$m({}, otherCoordinateProps), {}, {
+          var scaledCoordinate = _objectSpread$n(_objectSpread$n({}, otherCoordinateProps), {}, {
             x: viewBox.x + (sourceWidth ? (_x - sourceX) / sourceWidth : 0) * viewBox.width,
             y: viewBox.y + (sourceHeight ? (_y - sourceY) / sourceHeight : 0) * viewBox.height
           });
-          dispatch(_objectSpread$m(_objectSpread$m({}, action), {}, {
-            payload: _objectSpread$m(_objectSpread$m({}, action.payload), {}, {
+          dispatch(_objectSpread$n(_objectSpread$n({}, action), {}, {
+            payload: _objectSpread$n(_objectSpread$n({}, action.payload), {}, {
               coordinate: scaledCoordinate
             })
           }));
@@ -31574,11 +31733,11 @@ function useTooltipChartSynchronisation(tooltipEventType, trigger, activeCoordin
   }, [isReceivingSynchronisation, activeCoordinate, activeDataKey, activeGraphicalItemId, activeIndex, activeLabel, eventEmitterSymbol, syncId, syncMethod, isTooltipActive, viewBox]);
 }
 
-function ownKeys$l(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$l(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$l(Object(t), true).forEach(function (r) { _defineProperty$n(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$l(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$n(e, r, t) { return (r = _toPropertyKey$n(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$n(t) { var i = _toPrimitive$n(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$n(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$m(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$m(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$m(Object(t), true).forEach(function (r) { _defineProperty$o(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$m(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$o(e, r, t) { return (r = _toPropertyKey$o(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$o(t) { var i = _toPrimitive$o(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$o(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function defaultUniqBy(entry) {
   return entry.dataKey;
 }
@@ -31701,7 +31860,7 @@ function Tooltip(outsideProps) {
     finalPayload = getUniqPayload(finalPayload.filter(entry => entry.value != null && (entry.hide !== true || props.includeHidden)), payloadUniqBy, defaultUniqBy);
   }
   var hasPayload = finalPayload.length > 0;
-  var tooltipContentProps = _objectSpread$l(_objectSpread$l({}, props), {}, {
+  var tooltipContentProps = _objectSpread$m(_objectSpread$m({}, props), {}, {
     payload: finalPayload,
     label: finalLabel,
     active: finalIsActive,
@@ -31752,15 +31911,15 @@ function Tooltip(outsideProps) {
 var Cell = _props => null;
 Cell.displayName = 'Cell';
 
-function _defineProperty$m(e, r, t) { return (r = _toPropertyKey$m(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$m(t) { var i = _toPrimitive$m(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$m(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _defineProperty$n(e, r, t) { return (r = _toPropertyKey$n(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$n(t) { var i = _toPrimitive$n(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$n(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Simple LRU (Least Recently Used) cache implementation
  */
 class LRUCache {
   constructor(maxSize) {
-    _defineProperty$m(this, "cache", new Map());
+    _defineProperty$n(this, "cache", new Map());
     this.maxSize = maxSize;
   }
   get(key) {
@@ -31790,16 +31949,16 @@ class LRUCache {
   }
 }
 
-function ownKeys$k(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$k(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$k(Object(t), true).forEach(function (r) { _defineProperty$l(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$k(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$l(e, r, t) { return (r = _toPropertyKey$l(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$l(t) { var i = _toPrimitive$l(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$l(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$l(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$l(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$l(Object(t), true).forEach(function (r) { _defineProperty$m(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$l(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$m(e, r, t) { return (r = _toPropertyKey$m(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$m(t) { var i = _toPrimitive$m(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$m(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var defaultConfig = {
   cacheSize: 2000,
   enableCache: true
 };
-var currentConfig = _objectSpread$k({}, defaultConfig);
+var currentConfig = _objectSpread$l({}, defaultConfig);
 var stringCache = new LRUCache(currentConfig.cacheSize);
 var SPAN_STYLE = {
   position: 'absolute',
@@ -31881,9 +32040,9 @@ var getStringSize = function getStringSize(text) {
 };
 
 var _DecimalCSS;
-function _defineProperty$k(e, r, t) { return (r = _toPropertyKey$k(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$k(t) { var i = _toPrimitive$k(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$k(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _defineProperty$l(e, r, t) { return (r = _toPropertyKey$l(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$l(t) { var i = _toPrimitive$l(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$l(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var MULTIPLY_OR_DIVIDE_REGEX = /(-?\d+(?:\.\d+)?[a-zA-Z%]*)([*/])(-?\d+(?:\.\d+)?[a-zA-Z%]*)/;
 var ADD_OR_SUBTRACT_REGEX = /(-?\d+(?:\.\d+)?[a-zA-Z%]*)([+-])(-?\d+(?:\.\d+)?[a-zA-Z%]*)/;
 var CSS_LENGTH_UNIT_REGEX = /^(px|cm|vh|vw|em|rem|%|mm|in|pt|pc|ex|ch|vmin|vmax|Q)$/;
@@ -31963,7 +32122,7 @@ class DecimalCSS {
   }
 }
 _DecimalCSS = DecimalCSS;
-_defineProperty$k(DecimalCSS, "NaN", new _DecimalCSS(NaN, ''));
+_defineProperty$l(DecimalCSS, "NaN", new _DecimalCSS(NaN, ''));
 function calculateArithmetic(expr) {
   if (expr == null || expr.includes(STR_NAN)) {
     return STR_NAN;
@@ -32025,11 +32184,11 @@ function reduceCSSCalc(expression) {
   return result;
 }
 
-var _excluded$c = ["x", "y", "lineHeight", "capHeight", "fill", "scaleToFit", "textAnchor", "verticalAnchor"],
-  _excluded2$6 = ["dx", "dy", "angle", "className", "breakAll"];
-function _extends$f() { return _extends$f = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$f.apply(null, arguments); }
-function _objectWithoutProperties$c(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$c(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$c(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$e = ["x", "y", "lineHeight", "capHeight", "fill", "scaleToFit", "textAnchor", "verticalAnchor"],
+  _excluded2$7 = ["dx", "dy", "angle", "className", "breakAll"];
+function _extends$g() { return _extends$g = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$g.apply(null, arguments); }
+function _objectWithoutProperties$e(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$e(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$e(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var BREAKING_SPACES = /[ \f\n\r\t\v\u2028\u2029]+/;
 var calculateWordWidths = _ref => {
   var {
@@ -32228,7 +32387,7 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
       textAnchor,
       verticalAnchor
     } = _resolveDefaultProps,
-    props = _objectWithoutProperties$c(_resolveDefaultProps, _excluded$c);
+    props = _objectWithoutProperties$e(_resolveDefaultProps, _excluded$e);
   var wordsByLines = useMemo(() => {
     return getWordsByLines({
       breakAll: props.breakAll,
@@ -32246,7 +32405,7 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
       className,
       breakAll
     } = props,
-    textProps = _objectWithoutProperties$c(props, _excluded2$6);
+    textProps = _objectWithoutProperties$e(props, _excluded2$7);
   if (!isNumOrStr(propsX) || !isNumOrStr(propsY) || wordsByLines.length === 0) {
     return null;
   }
@@ -32282,7 +32441,7 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
   if (transforms.length) {
     textProps.transform = transforms.join(' ');
   }
-  return /*#__PURE__*/React.createElement("text", _extends$f({}, svgPropertiesAndEvents(textProps), {
+  return /*#__PURE__*/React.createElement("text", _extends$g({}, svgPropertiesAndEvents(textProps), {
     ref: ref,
     x: x,
     y: y,
@@ -32304,11 +32463,11 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
 });
 Text.displayName = 'Text';
 
-function ownKeys$j(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$j(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$j(Object(t), true).forEach(function (r) { _defineProperty$j(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$j(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$j(e, r, t) { return (r = _toPropertyKey$j(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$j(t) { var i = _toPrimitive$j(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$j(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$k(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$k(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$k(Object(t), true).forEach(function (r) { _defineProperty$k(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$k(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$k(e, r, t) { return (r = _toPropertyKey$k(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$k(t) { var i = _toPrimitive$k(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$k(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Calculates the position and alignment for a generic element in a Cartesian coordinate system.
  *
@@ -32414,7 +32573,7 @@ var getCartesianPosition = options => {
     height
   } : {};
   if (position === 'insideLeft') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: middleX + horizontalOffset,
       y: y + height / 2,
       horizontalAnchor: horizontalStart,
@@ -32422,7 +32581,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideRight') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: middleX + midHeightWidth - horizontalOffset,
       y: y + height / 2,
       horizontalAnchor: horizontalEnd,
@@ -32430,7 +32589,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideTop') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: upperX + upperWidth / 2,
       y: y + verticalOffset,
       horizontalAnchor: 'middle',
@@ -32438,7 +32597,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideBottom') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: lowerX + lowerWidth / 2,
       y: y + height - verticalOffset,
       horizontalAnchor: 'middle',
@@ -32446,7 +32605,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideTopLeft') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: upperX + horizontalOffset,
       y: y + verticalOffset,
       horizontalAnchor: horizontalStart,
@@ -32454,7 +32613,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideTopRight') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: upperX + upperWidth - horizontalOffset,
       y: y + verticalOffset,
       horizontalAnchor: horizontalEnd,
@@ -32462,7 +32621,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideBottomLeft') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: lowerX + horizontalOffset,
       y: y + height - verticalOffset,
       horizontalAnchor: horizontalStart,
@@ -32470,7 +32629,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideBottomRight') {
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: lowerX + lowerWidth - horizontalOffset,
       y: y + height - verticalOffset,
       horizontalAnchor: horizontalEnd,
@@ -32481,14 +32640,14 @@ var getCartesianPosition = options => {
     // TODO: This is not quite right. The width of the trapezoid changes with y.
     // A percentage-based x should be relative to the width at that y.
     // For now, we use the mid-height width as a reasonable approximation.
-    return _objectSpread$j({
+    return _objectSpread$k({
       x: x + getPercentValue(position.x, midHeightWidth),
       y: y + getPercentValue(position.y, height),
       horizontalAnchor: 'end',
       verticalAnchor: 'end'
     }, sizeAttrs);
   }
-  return _objectSpread$j({
+  return _objectSpread$k({
     x: centerX,
     y: y + height / 2,
     horizontalAnchor: 'middle',
@@ -32496,16 +32655,16 @@ var getCartesianPosition = options => {
   }, sizeAttrs);
 };
 
-var _excluded$b = ["labelRef"],
-  _excluded2$5 = ["content"];
-function _objectWithoutProperties$b(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$b(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$b(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function ownKeys$i(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$i(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$i(Object(t), true).forEach(function (r) { _defineProperty$i(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$i(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$i(e, r, t) { return (r = _toPropertyKey$i(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$i(t) { var i = _toPrimitive$i(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$i(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$e() { return _extends$e = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$e.apply(null, arguments); }
+var _excluded$d = ["labelRef"],
+  _excluded2$6 = ["content"];
+function _objectWithoutProperties$d(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$d(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$d(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$j(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$j(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$j(Object(t), true).forEach(function (r) { _defineProperty$j(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$j(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$j(e, r, t) { return (r = _toPropertyKey$j(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$j(t) { var i = _toPrimitive$j(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$j(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$f() { return _extends$f = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$f.apply(null, arguments); }
 
 /**
  * @inline
@@ -32613,7 +32772,7 @@ var renderRadialLabel = (labelProps, position, label, attrs, viewBox) => {
   var endPoint = polarToCartesian(cx, cy, radius, labelAngle + (direction ? 1 : -1) * 359);
   var path = "M".concat(startPoint.x, ",").concat(startPoint.y, "\n    A").concat(radius, ",").concat(radius, ",0,1,").concat(direction ? 0 : 1, ",\n    ").concat(endPoint.x, ",").concat(endPoint.y);
   var id = isNullish(labelProps.id) ? uniqueId('recharts-radial-line-') : labelProps.id;
-  return /*#__PURE__*/React.createElement("text", _extends$e({}, attrs, {
+  return /*#__PURE__*/React.createElement("text", _extends$f({}, attrs, {
     dominantBaseline: "central",
     className: clsx('recharts-radial-bar-label', className)
   }), /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("path", {
@@ -32749,21 +32908,21 @@ function Label(outerProps) {
   if (!viewBox || isNullish(value) && isNullish(children) && ! /*#__PURE__*/isValidElement(content) && typeof content !== 'function') {
     return null;
   }
-  var propsWithViewBox = _objectSpread$i(_objectSpread$i({}, props), {}, {
+  var propsWithViewBox = _objectSpread$j(_objectSpread$j({}, props), {}, {
     viewBox
   });
   if (/*#__PURE__*/isValidElement(content)) {
     var {
         labelRef: _
       } = propsWithViewBox,
-      propsWithoutLabelRef = _objectWithoutProperties$b(propsWithViewBox, _excluded$b);
+      propsWithoutLabelRef = _objectWithoutProperties$d(propsWithViewBox, _excluded$d);
     return /*#__PURE__*/cloneElement(content, propsWithoutLabelRef);
   }
   if (typeof content === 'function') {
     var {
         content: _2
       } = propsWithViewBox,
-      propsForContent = _objectWithoutProperties$b(propsWithViewBox, _excluded2$5);
+      propsForContent = _objectWithoutProperties$d(propsWithViewBox, _excluded2$6);
     // @ts-expect-error we're not checking if the content component returns something that Text is able to render
     label = /*#__PURE__*/createElement(content, propsForContent);
     if (/*#__PURE__*/isValidElement(label)) {
@@ -32788,7 +32947,7 @@ function Label(outerProps) {
       position,
       offset: props.offset,
       parentViewBox: isPolar(parentViewBox) ? undefined : parentViewBox});
-    positionAttrs = _objectSpread$i(_objectSpread$i({
+    positionAttrs = _objectSpread$j(_objectSpread$j({
       x: cartesianResult.x,
       y: cartesianResult.y,
       textAnchor: cartesianResult.horizontalAnchor,
@@ -32801,7 +32960,7 @@ function Label(outerProps) {
   }
   return /*#__PURE__*/React.createElement(ZIndexLayer, {
     zIndex: props.zIndex
-  }, /*#__PURE__*/React.createElement(Text, _extends$e({
+  }, /*#__PURE__*/React.createElement(Text, _extends$f({
     ref: labelRef,
     className: clsx('recharts-label', className)
   }, attrs, positionAttrs, {
@@ -32823,35 +32982,35 @@ var parseLabel = (label, viewBox, labelRef) => {
     labelRef
   };
   if (label === true) {
-    return /*#__PURE__*/React.createElement(Label, _extends$e({
+    return /*#__PURE__*/React.createElement(Label, _extends$f({
       key: "label-implicit"
     }, commonProps));
   }
   if (isNumOrStr(label)) {
-    return /*#__PURE__*/React.createElement(Label, _extends$e({
+    return /*#__PURE__*/React.createElement(Label, _extends$f({
       key: "label-implicit",
       value: label
     }, commonProps));
   }
   if (/*#__PURE__*/isValidElement(label)) {
     if (label.type === Label) {
-      return /*#__PURE__*/cloneElement(label, _objectSpread$i({
+      return /*#__PURE__*/cloneElement(label, _objectSpread$j({
         key: 'label-implicit'
       }, commonProps));
     }
-    return /*#__PURE__*/React.createElement(Label, _extends$e({
+    return /*#__PURE__*/React.createElement(Label, _extends$f({
       key: "label-implicit",
       content: label
     }, commonProps));
   }
   if (isLabelContentAFunction(label)) {
-    return /*#__PURE__*/React.createElement(Label, _extends$e({
+    return /*#__PURE__*/React.createElement(Label, _extends$f({
       key: "label-implicit",
       content: label
     }, commonProps));
   }
   if (label && typeof label === 'object') {
-    return /*#__PURE__*/React.createElement(Label, _extends$e({}, label, {
+    return /*#__PURE__*/React.createElement(Label, _extends$f({}, label, {
       key: "label-implicit"
     }, commonProps));
   }
@@ -32865,11 +33024,11 @@ function PolarLabelFromLabelProp(_ref4) {
   return parseLabel(label, viewBox) || null;
 }
 
-var _excluded$a = ["valueAccessor"],
-  _excluded2$4 = ["dataKey", "clockWise", "id", "textBreakAll", "zIndex"];
-function _extends$d() { return _extends$d = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$d.apply(null, arguments); }
-function _objectWithoutProperties$a(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$a(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$a(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$c = ["valueAccessor"],
+  _excluded2$5 = ["dataKey", "clockWise", "id", "textBreakAll", "zIndex"];
+function _extends$e() { return _extends$e = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$e.apply(null, arguments); }
+function _objectWithoutProperties$c(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$c(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$c(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 
 /**
  * This is public API because we expose it as the valueAccessor parameter.
@@ -32926,7 +33085,7 @@ function LabelList(_ref) {
   var {
       valueAccessor = defaultAccessor
     } = _ref,
-    restProps = _objectWithoutProperties$a(_ref, _excluded$a);
+    restProps = _objectWithoutProperties$c(_ref, _excluded$c);
   var {
       dataKey,
       clockWise,
@@ -32934,7 +33093,7 @@ function LabelList(_ref) {
       textBreakAll,
       zIndex
     } = restProps,
-    others = _objectWithoutProperties$a(restProps, _excluded2$4);
+    others = _objectWithoutProperties$c(restProps, _excluded2$5);
   var cartesianData = useCartesianLabelListContext();
   var polarData = usePolarLabelListContext();
   var data = cartesianData || polarData;
@@ -32951,7 +33110,7 @@ function LabelList(_ref) {
     var idProps = isNullish(id) ? {} : {
       id: "".concat(id, "-").concat(index)
     };
-    return /*#__PURE__*/React.createElement(Label, _extends$d({
+    return /*#__PURE__*/React.createElement(Label, _extends$e({
       key: "label-".concat(index)
     }, svgPropertiesAndEvents(entry), others, idProps, {
       /*
@@ -32995,7 +33154,7 @@ function LabelListFromLabelProp(_ref2) {
     });
   }
   if (typeof label === 'object') {
-    return /*#__PURE__*/React.createElement(LabelList, _extends$d({
+    return /*#__PURE__*/React.createElement(LabelList, _extends$e({
       key: "labelList-implicit"
     }, label, {
       type: String(label.type)
@@ -33004,7 +33163,7 @@ function LabelListFromLabelProp(_ref2) {
   return null;
 }
 
-function _extends$c() { return _extends$c = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$c.apply(null, arguments); }
+function _extends$d() { return _extends$d = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$d.apply(null, arguments); }
 /**
  * Renders a dot in the chart.
  *
@@ -33024,7 +33183,7 @@ var Dot = props => {
   } = props;
   var layerClass = clsx('recharts-dot', className);
   if (isNumber(cx) && isNumber(cy) && isNumber(r)) {
-    return /*#__PURE__*/React.createElement("circle", _extends$c({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
+    return /*#__PURE__*/React.createElement("circle", _extends$d({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
       className: layerClass,
       cx: cx,
       cy: cy,
@@ -33142,15 +33301,15 @@ var selectPolarGridRadii = createSelector([selectRadiusAxisTicks$1], ticks => {
   return ticks.map(tick => tick.coordinate);
 });
 
-var _excluded$9 = ["gridType", "radialLines", "angleAxisId", "radiusAxisId", "cx", "cy", "innerRadius", "outerRadius", "polarAngles", "polarRadius", "zIndex"];
-function _objectWithoutProperties$9(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$9(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$9(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function _extends$b() { return _extends$b = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$b.apply(null, arguments); }
-function ownKeys$h(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$h(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$h(Object(t), true).forEach(function (r) { _defineProperty$h(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$h(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$h(e, r, t) { return (r = _toPropertyKey$h(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$h(t) { var i = _toPrimitive$h(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$h(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var _excluded$b = ["gridType", "radialLines", "angleAxisId", "radiusAxisId", "cx", "cy", "innerRadius", "outerRadius", "polarAngles", "polarRadius", "zIndex"];
+function _objectWithoutProperties$b(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$b(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$b(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function _extends$c() { return _extends$c = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$c.apply(null, arguments); }
+function ownKeys$i(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$i(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$i(Object(t), true).forEach(function (r) { _defineProperty$i(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$i(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$i(e, r, t) { return (r = _toPropertyKey$i(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$i(t) { var i = _toPrimitive$i(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$i(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var getPolygonPath = (radius, cx, cy, polarAngles) => {
   var path = '';
   polarAngles.forEach((angle, i) => {
@@ -33178,13 +33337,13 @@ var PolarAngles = props => {
   if (!polarAngles || !polarAngles.length || !radialLines) {
     return null;
   }
-  var polarAnglesProps = _objectSpread$h({}, svgPropertiesNoEvents(props));
+  var polarAnglesProps = _objectSpread$i({}, svgPropertiesNoEvents(props));
   return /*#__PURE__*/React.createElement("g", {
     className: "recharts-polar-grid-angle"
   }, polarAngles.map(entry => {
     var start = polarToCartesian(cx, cy, innerRadius, entry);
     var end = polarToCartesian(cx, cy, outerRadius, entry);
-    return /*#__PURE__*/React.createElement("line", _extends$b({
+    return /*#__PURE__*/React.createElement("line", _extends$c({
       key: "line-".concat(entry)
     }, polarAnglesProps, {
       x1: start.x,
@@ -33202,11 +33361,11 @@ var ConcentricCircle = props => {
     cy,
     radius
   } = props;
-  var concentricCircleProps = _objectSpread$h({}, svgPropertiesNoEvents(props));
+  var concentricCircleProps = _objectSpread$i({}, svgPropertiesNoEvents(props));
   return (
     /*#__PURE__*/
     // @ts-expect-error wrong SVG element type
-    React.createElement("circle", _extends$b({}, concentricCircleProps, {
+    React.createElement("circle", _extends$c({}, concentricCircleProps, {
       className: clsx('recharts-polar-grid-concentric-circle', props.className),
       cx: cx,
       cy: cy,
@@ -33220,8 +33379,8 @@ var ConcentricPolygon = props => {
   var {
     radius
   } = props;
-  var concentricPolygonProps = _objectSpread$h({}, svgPropertiesNoEvents(props));
-  return /*#__PURE__*/React.createElement("path", _extends$b({}, concentricPolygonProps, {
+  var concentricPolygonProps = _objectSpread$i({}, svgPropertiesNoEvents(props));
+  return /*#__PURE__*/React.createElement("path", _extends$c({}, concentricPolygonProps, {
     className: clsx('recharts-polar-grid-concentric-polygon', props.className),
     d: getPolygonPath(radius, props.cx, props.cy, props.polarAngles)
   }));
@@ -33240,21 +33399,21 @@ var ConcentricGridPath = props => {
   var renderBackground = props.fill && props.fill !== 'none';
   return /*#__PURE__*/React.createElement("g", {
     className: "recharts-polar-grid-concentric"
-  }, renderBackground && gridType === 'circle' && /*#__PURE__*/React.createElement(ConcentricCircle, _extends$b({}, props, {
+  }, renderBackground && gridType === 'circle' && /*#__PURE__*/React.createElement(ConcentricCircle, _extends$c({}, props, {
     radius: maxPolarRadius
-  })), renderBackground && gridType !== 'circle' && /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$b({}, props, {
+  })), renderBackground && gridType !== 'circle' && /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$c({}, props, {
     radius: maxPolarRadius
   })), polarRadius.map((entry, i) => {
     var key = i;
     if (gridType === 'circle') {
-      return /*#__PURE__*/React.createElement(ConcentricCircle, _extends$b({
+      return /*#__PURE__*/React.createElement(ConcentricCircle, _extends$c({
         key: key
       }, props, {
         fill: "none",
         radius: entry
       }));
     }
-    return /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$b({
+    return /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$c({
       key: key
     }, props, {
       fill: "none",
@@ -33292,7 +33451,7 @@ var PolarGrid = outsideProps => {
       polarRadius: polarRadiusInput,
       zIndex
     } = _resolveDefaultProps,
-    inputs = _objectWithoutProperties$9(_resolveDefaultProps, _excluded$9);
+    inputs = _objectWithoutProperties$b(_resolveDefaultProps, _excluded$b);
   var polarViewBox = useAppSelector(selectPolarViewBox);
   var polarAnglesFromRedux = useAppSelector(state => selectPolarGridAngles(state, angleAxisId));
   var polarRadiiFromRedux = useAppSelector(state => selectPolarGridRadii(state, radiusAxisId));
@@ -33301,7 +33460,7 @@ var PolarGrid = outsideProps => {
   if (polarAngles == null || polarRadius == null) {
     return null;
   }
-  var props = _objectSpread$h({
+  var props = _objectSpread$i({
     cx: (_ref = (_polarViewBox$cx = polarViewBox === null || polarViewBox === void 0 ? void 0 : polarViewBox.cx) !== null && _polarViewBox$cx !== void 0 ? _polarViewBox$cx : cxFromOutside) !== null && _ref !== void 0 ? _ref : 0,
     cy: (_ref2 = (_polarViewBox$cy = polarViewBox === null || polarViewBox === void 0 ? void 0 : polarViewBox.cy) !== null && _polarViewBox$cy !== void 0 ? _polarViewBox$cy : cyFromOutside) !== null && _ref2 !== void 0 ? _ref2 : 0,
     innerRadius: (_ref3 = (_polarViewBox$innerRa = polarViewBox === null || polarViewBox === void 0 ? void 0 : polarViewBox.innerRadius) !== null && _polarViewBox$innerRa !== void 0 ? _polarViewBox$innerRa : innerRadiusFromOutside) !== null && _ref3 !== void 0 ? _ref3 : 0,
@@ -33320,13 +33479,13 @@ var PolarGrid = outsideProps => {
     zIndex: props.zIndex
   }, /*#__PURE__*/React.createElement("g", {
     className: "recharts-polar-grid"
-  }, /*#__PURE__*/React.createElement(ConcentricGridPath, _extends$b({
+  }, /*#__PURE__*/React.createElement(ConcentricGridPath, _extends$c({
     gridType: gridType,
     radialLines: radialLines
   }, props, {
     polarAngles: polarAngles,
     polarRadius: polarRadius
-  })), /*#__PURE__*/React.createElement(PolarAngles, _extends$b({
+  })), /*#__PURE__*/React.createElement(PolarAngles, _extends$c({
     gridType: gridType,
     radialLines: radialLines
   }, props, {
@@ -33473,17 +33632,17 @@ function getClassNameFromUnknown(u) {
   return '';
 }
 
-var _excluded$8 = ["type"],
-  _excluded2$3 = ["cx", "cy", "angle", "axisLine"],
-  _excluded3$2 = ["angle", "tickFormatter", "stroke", "tick"];
-function _extends$a() { return _extends$a = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$a.apply(null, arguments); }
-function ownKeys$g(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$g(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$g(Object(t), true).forEach(function (r) { _defineProperty$g(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$g(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$g(e, r, t) { return (r = _toPropertyKey$g(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$g(t) { var i = _toPrimitive$g(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$g(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$8(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$8(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$8(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$a = ["type"],
+  _excluded2$4 = ["cx", "cy", "angle", "axisLine"],
+  _excluded3$3 = ["angle", "tickFormatter", "stroke", "tick"];
+function _extends$b() { return _extends$b = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$b.apply(null, arguments); }
+function ownKeys$h(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$h(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$h(Object(t), true).forEach(function (r) { _defineProperty$h(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$h(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$h(e, r, t) { return (r = _toPropertyKey$h(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$h(t) { var i = _toPrimitive$h(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$h(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$a(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$a(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$a(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var AXIS_TYPE = 'radiusAxis';
 function SetRadiusAxisSettings(props) {
   var dispatch = useAppDispatch();
@@ -33492,12 +33651,12 @@ function SetRadiusAxisSettings(props) {
     var {
         type: typeFromProps
       } = props,
-      rest = _objectWithoutProperties$8(props, _excluded$8);
+      rest = _objectWithoutProperties$a(props, _excluded$a);
     var evaluatedType = getAxisTypeBasedOnLayout(layout, 'radiusAxis', typeFromProps);
     if (evaluatedType == null) {
       return undefined;
     }
-    return _objectSpread$g(_objectSpread$g({}, rest), {}, {
+    return _objectSpread$h(_objectSpread$h({}, rest), {}, {
       type: evaluatedType
     });
   }, [props, layout]);
@@ -33562,11 +33721,11 @@ var renderAxisLine = (props, ticks) => {
       angle,
       axisLine
     } = props,
-    others = _objectWithoutProperties$8(props, _excluded2$3);
+    others = _objectWithoutProperties$a(props, _excluded2$4);
   var extent = ticks.reduce((result, entry) => [Math.min(result[0], entry.coordinate), Math.max(result[1], entry.coordinate)], [Infinity, -Infinity]);
   var point0 = polarToCartesian(cx, cy, extent[0], angle);
   var point1 = polarToCartesian(cx, cy, extent[1], angle);
-  var axisLineProps = _objectSpread$g(_objectSpread$g(_objectSpread$g({}, svgPropertiesNoEvents(others)), {}, {
+  var axisLineProps = _objectSpread$h(_objectSpread$h(_objectSpread$h({}, svgPropertiesNoEvents(others)), {}, {
     fill: 'none'
   }, svgPropertiesNoEvents(axisLine)), {}, {
     x1: point0.x,
@@ -33576,7 +33735,7 @@ var renderAxisLine = (props, ticks) => {
   });
 
   // @ts-expect-error wrong SVG element type
-  return /*#__PURE__*/React.createElement("line", _extends$a({
+  return /*#__PURE__*/React.createElement("line", _extends$b({
     className: "recharts-polar-radius-axis-line"
   }, axisLineProps));
 };
@@ -33587,7 +33746,7 @@ var renderTickItem = (option, tickProps, value) => {
   } else if (typeof option === 'function') {
     tickItem = option(tickProps);
   } else {
-    tickItem = /*#__PURE__*/React.createElement(Text, _extends$a({}, tickProps, {
+    tickItem = /*#__PURE__*/React.createElement(Text, _extends$b({}, tickProps, {
       className: "recharts-polar-radius-axis-tick-value"
     }), value);
   }
@@ -33600,13 +33759,13 @@ var renderTicks = (props, ticks) => {
       stroke,
       tick
     } = props,
-    others = _objectWithoutProperties$8(props, _excluded3$2);
+    others = _objectWithoutProperties$a(props, _excluded3$3);
   var textAnchor = getTickTextAnchor(props.orientation);
   var axisProps = svgPropertiesNoEvents(others);
   var customTickProps = svgPropertiesNoEventsFromUnknown(tick);
   var items = ticks.map((entry, i) => {
     var coord = getTickValueCoord(entry, props.angle, props.cx, props.cy);
-    var tickProps = _objectSpread$g(_objectSpread$g(_objectSpread$g(_objectSpread$g({
+    var tickProps = _objectSpread$h(_objectSpread$h(_objectSpread$h(_objectSpread$h({
       textAnchor,
       transform: "rotate(".concat(90 - angle, ", ").concat(coord.x, ", ").concat(coord.y, ")")
     }, axisProps), {}, {
@@ -33617,7 +33776,7 @@ var renderTicks = (props, ticks) => {
     }, coord), {}, {
       payload: entry
     });
-    return /*#__PURE__*/React.createElement(Layer, _extends$a({
+    return /*#__PURE__*/React.createElement(Layer, _extends$b({
       className: clsx('recharts-polar-radius-axis-tick', getClassNameFromUnknown(tick)),
       key: "tick-".concat(entry.coordinate)
     }, adaptEventsOfChild(props, entry, i)), renderTickItem(tick, tickProps, tickFormatter ? tickFormatter(entry.value, i) : entry.value));
@@ -33636,7 +33795,7 @@ var PolarRadiusAxisWrapper = defaultsAndInputs => {
   if (viewBox == null || !ticks || !ticks.length || scale == null) {
     return null;
   }
-  var props = _objectSpread$g(_objectSpread$g({}, defaultsAndInputs), {}, {
+  var props = _objectSpread$h(_objectSpread$h({}, defaultsAndInputs), {}, {
     scale
   }, viewBox);
   var {
@@ -33680,11 +33839,11 @@ function PolarRadiusAxis(outsideProps) {
 }
 PolarRadiusAxis.displayName = 'PolarRadiusAxis';
 
-function ownKeys$f(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$f(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$f(Object(t), true).forEach(function (r) { _defineProperty$f(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$f(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$f(e, r, t) { return (r = _toPropertyKey$f(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$f(t) { var i = _toPrimitive$f(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$f(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$g(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$g(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$g(Object(t), true).forEach(function (r) { _defineProperty$g(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$g(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$g(e, r, t) { return (r = _toPropertyKey$g(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$g(t) { var i = _toPrimitive$g(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$g(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var pickId = (_state, id) => id;
 var selectSynchronisedPieSettings = createSelector([selectUnfilteredPolarItems, pickId], (graphicalItems, id) => graphicalItems.filter(item => item.type === 'pie').find(item => item.id === id));
 
@@ -33710,7 +33869,7 @@ var selectDisplayedData = createSelector([selectChartDataAndAlwaysIgnoreIndexes,
     displayedData = chartData;
   }
   if ((!displayedData || !displayedData.length) && cells != null) {
-    displayedData = cells.map(cell => _objectSpread$f(_objectSpread$f({}, pieSettings.presentationProps), cell.props));
+    displayedData = cells.map(cell => _objectSpread$g(_objectSpread$g({}, pieSettings.presentationProps), cell.props));
   }
   if (displayedData == null) {
     return undefined;
@@ -34164,12 +34323,12 @@ var isPlainObject = isPlainObject$2.isPlainObject;
 const isPlainObject$1 = /*@__PURE__*/getDefaultExportFromCjs(isPlainObject);
 
 var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
-function ownKeys$e(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$e(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$e(Object(t), true).forEach(function (r) { _defineProperty$e(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$e(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$e(e, r, t) { return (r = _toPropertyKey$e(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$e(t) { var i = _toPrimitive$e(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$e(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$9() { return _extends$9 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$9.apply(null, arguments); }
+function ownKeys$f(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$f(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$f(Object(t), true).forEach(function (r) { _defineProperty$f(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$f(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$f(e, r, t) { return (r = _toPropertyKey$f(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$f(t) { var i = _toPrimitive$f(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$f(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$a() { return _extends$a = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$a.apply(null, arguments); }
 function _taggedTemplateLiteral(e, t) { return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, { raw: { value: Object.freeze(t) } })); }
 var getTrapezoidPath = (x, y, upperWidth, lowerWidth, height) => {
   var widthGap = upperWidth - lowerWidth;
@@ -34233,7 +34392,7 @@ var Trapezoid = outsideProps => {
   }
   var layerClass = clsx('recharts-trapezoid', className);
   if (!isUpdateAnimationActive) {
-    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", _extends$9({}, svgPropertiesAndEvents(trapezoidProps), {
+    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", _extends$a({}, svgPropertiesAndEvents(trapezoidProps), {
       className: layerClass,
       d: getTrapezoidPath(x, y, upperWidth, lowerWidth, height)
     })));
@@ -34273,23 +34432,23 @@ var Trapezoid = outsideProps => {
     } : {
       strokeDasharray: from
     };
-    return /*#__PURE__*/React.createElement("path", _extends$9({}, svgPropertiesAndEvents(trapezoidProps), {
+    return /*#__PURE__*/React.createElement("path", _extends$a({}, svgPropertiesAndEvents(trapezoidProps), {
       className: layerClass,
       d: getTrapezoidPath(currX, currY, currUpperWidth, currLowerWidth, currHeight),
       ref: pathRef,
-      style: _objectSpread$e(_objectSpread$e({}, animationStyle), trapezoidProps.style)
+      style: _objectSpread$f(_objectSpread$f({}, animationStyle), trapezoidProps.style)
     }));
   });
 };
 
-var _excluded$7 = ["option", "shapeType", "activeClassName", "inActiveClassName"];
-function _objectWithoutProperties$7(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$7(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$7(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function ownKeys$d(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$d(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$d(Object(t), true).forEach(function (r) { _defineProperty$d(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$d(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$d(e, r, t) { return (r = _toPropertyKey$d(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$d(t) { var i = _toPrimitive$d(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$d(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var _excluded$9 = ["option", "shapeType", "activeClassName", "inActiveClassName"];
+function _objectWithoutProperties$9(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$9(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$9(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$e(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$e(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$e(Object(t), true).forEach(function (r) { _defineProperty$e(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$e(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$e(e, r, t) { return (r = _toPropertyKey$e(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$e(t) { var i = _toPrimitive$e(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$e(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /**
  * This is an abstraction for rendering a user defined prop for a customized shape in several forms.
@@ -34306,7 +34465,7 @@ function _toPrimitive$d(t, r) { if ("object" != typeof t || !t) return t; var e 
  */
 
 function defaultPropTransformer(option, props) {
-  return _objectSpread$d(_objectSpread$d({}, props), option);
+  return _objectSpread$e(_objectSpread$e({}, props), option);
 }
 function isSymbolsProps(shapeType, _elementProps) {
   return shapeType === 'symbols';
@@ -34347,11 +34506,11 @@ function Shape(_ref2) {
       activeClassName = 'recharts-active-shape',
       inActiveClassName = 'recharts-shape'
     } = _ref2,
-    props = _objectWithoutProperties$7(_ref2, _excluded$7);
+    props = _objectWithoutProperties$9(_ref2, _excluded$9);
   var shape;
   if (/*#__PURE__*/isValidElement(option)) {
     // @ts-expect-error we can't know the type of cloned element props
-    shape = /*#__PURE__*/cloneElement(option, _objectSpread$d(_objectSpread$d({}, props), getPropsFromShapeOption(option)));
+    shape = /*#__PURE__*/cloneElement(option, _objectSpread$e(_objectSpread$e({}, props), getPropsFromShapeOption(option)));
   } else if (typeof option === 'function') {
     shape = option(props, props.index);
   } else if (isPlainObject$1(option) && typeof option !== 'boolean') {
@@ -34719,18 +34878,18 @@ var SetPolarGraphicalItemImpl = props => {
 };
 var SetPolarGraphicalItem = /*#__PURE__*/memo(SetPolarGraphicalItemImpl);
 
-var _excluded$6 = ["key"],
-  _excluded2$2 = ["onMouseEnter", "onClick", "onMouseLeave"],
-  _excluded3$1 = ["id"],
+var _excluded$8 = ["key"],
+  _excluded2$3 = ["onMouseEnter", "onClick", "onMouseLeave"],
+  _excluded3$2 = ["id"],
   _excluded4 = ["id"];
-function _extends$8() { return _extends$8 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$8.apply(null, arguments); }
-function _objectWithoutProperties$6(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$6(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$6(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function ownKeys$c(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$c(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$c(Object(t), true).forEach(function (r) { _defineProperty$c(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$c(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$c(e, r, t) { return (r = _toPropertyKey$c(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$c(t) { var i = _toPrimitive$c(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$c(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$9() { return _extends$9 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$9.apply(null, arguments); }
+function _objectWithoutProperties$8(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$8(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$8(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$d(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$d(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$d(Object(t), true).forEach(function (r) { _defineProperty$d(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$d(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$d(e, r, t) { return (r = _toPropertyKey$d(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$d(t) { var i = _toPrimitive$d(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$d(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /**
  * The `label` prop in Pie accepts a variety of alternatives.
@@ -34797,7 +34956,7 @@ var SetPieTooltipEntrySettings = /*#__PURE__*/React.memo(_ref => {
     if (activeShapeFill == null || sectorTooltipPayload == null) {
       return sectorTooltipPayload;
     }
-    return sectorTooltipPayload.map(item => _objectSpread$c(_objectSpread$c({}, item), {}, {
+    return sectorTooltipPayload.map(item => _objectSpread$d(_objectSpread$d({}, item), {}, {
       color: activeShapeFill,
       fill: activeShapeFill
     }));
@@ -34881,8 +35040,8 @@ var renderLabelLineItem = (option, props) => {
   var {
       key
     } = props,
-    otherProps = _objectWithoutProperties$6(props, _excluded$6);
-  return /*#__PURE__*/React.createElement(Curve, _extends$8({}, otherProps, {
+    otherProps = _objectWithoutProperties$8(props, _excluded$8);
+  return /*#__PURE__*/React.createElement(Curve, _extends$9({}, otherProps, {
     type: "linear",
     className: className
   }));
@@ -34900,7 +35059,7 @@ var renderLabelItem = (option, props, value) => {
     }
   }
   var className = clsx('recharts-pie-label-text', getClassNameFromUnknown(option));
-  return /*#__PURE__*/React.createElement(Text, _extends$8({}, props, {
+  return /*#__PURE__*/React.createElement(Text, _extends$9({}, props, {
     alignmentBaseline: "middle",
     className: className
   }), label);
@@ -34926,14 +35085,14 @@ function PieLabels(_ref2) {
   var labels = sectors.map((entry, i) => {
     var midAngle = (entry.startAngle + entry.endAngle) / 2;
     var endPoint = polarToCartesian(entry.cx, entry.cy, entry.outerRadius + offsetRadius, midAngle);
-    var labelProps = _objectSpread$c(_objectSpread$c(_objectSpread$c(_objectSpread$c({}, pieProps), entry), {}, {
+    var labelProps = _objectSpread$d(_objectSpread$d(_objectSpread$d(_objectSpread$d({}, pieProps), entry), {}, {
       // @ts-expect-error customLabelProps is contributing unknown props
       stroke: 'none'
     }, customLabelProps), {}, {
       index: i,
       textAnchor: getTextAnchor(endPoint.x, entry.cx)
     }, endPoint);
-    var lineProps = _objectSpread$c(_objectSpread$c(_objectSpread$c(_objectSpread$c({}, pieProps), entry), {}, {
+    var lineProps = _objectSpread$d(_objectSpread$d(_objectSpread$d(_objectSpread$d({}, pieProps), entry), {}, {
       // @ts-expect-error customLabelLineProps is contributing unknown props
       fill: 'none',
       // @ts-expect-error customLabelLineProps is contributing unknown props
@@ -34989,7 +35148,7 @@ function PieSectors(props) {
       onClick: onItemClickFromProps,
       onMouseLeave: onMouseLeaveFromProps
     } = allOtherPieProps,
-    restOfAllOtherProps = _objectWithoutProperties$6(allOtherPieProps, _excluded2$2);
+    restOfAllOtherProps = _objectWithoutProperties$8(allOtherPieProps, _excluded2$3);
   var onMouseEnterFromContext = useMouseEnterItemDispatch(onMouseEnterFromProps, allOtherPieProps.dataKey, id);
   var onMouseLeaveFromContext = useMouseLeaveItemDispatch(onMouseLeaveFromProps);
   var onClickFromContext = useMouseClickItemDispatch(onItemClickFromProps, allOtherPieProps.dataKey, id);
@@ -35005,13 +35164,13 @@ function PieSectors(props) {
     var isActive = String(i) === activeIndex && (activeDataKey == null || allOtherPieProps.dataKey === activeDataKey) && graphicalItemMatches;
     var inactiveShape = activeIndex ? inactiveShapeProp : null;
     var sectorOptions = activeShape && isActive ? activeShape : inactiveShape;
-    var sectorProps = _objectSpread$c(_objectSpread$c({}, entry), {}, {
+    var sectorProps = _objectSpread$d(_objectSpread$d({}, entry), {}, {
       stroke: entry.stroke,
       tabIndex: -1,
       [DATA_ITEM_INDEX_ATTRIBUTE_NAME]: i,
       [DATA_ITEM_GRAPHICAL_ITEM_ID_ATTRIBUTE_NAME]: id
     });
-    return /*#__PURE__*/React.createElement(Layer, _extends$8({
+    return /*#__PURE__*/React.createElement(Layer, _extends$9({
       key: "sector-".concat(entry === null || entry === void 0 ? void 0 : entry.startAngle, "-").concat(entry === null || entry === void 0 ? void 0 : entry.endAngle, "-").concat(entry.midAngle, "-").concat(i),
       tabIndex: -1,
       className: "recharts-pie-sector"
@@ -35019,7 +35178,7 @@ function PieSectors(props) {
       onMouseEnter: onMouseEnterFromContext(entry, i),
       onMouseLeave: onMouseLeaveFromContext(entry, i),
       onClick: onClickFromContext(entry, i)
-    }), /*#__PURE__*/React.createElement(Shape, _extends$8({
+    }), /*#__PURE__*/React.createElement(Shape, _extends$9({
       option: shape !== null && shape !== void 0 ? shape : sectorOptions,
       index: i,
       shapeType: "sector",
@@ -35076,7 +35235,7 @@ function computePieSectors(_ref4) {
       var tempStartAngle;
 
       // @ts-expect-error can't spread unknown
-      var entryWithCellInfo = _objectSpread$c(_objectSpread$c({}, entry), cells && cells[i] && cells[i].props);
+      var entryWithCellInfo = _objectSpread$d(_objectSpread$d({}, entry), cells && cells[i] && cells[i].props);
       var sectorColor = entryWithCellInfo != null && 'fill' in entryWithCellInfo && typeof entryWithCellInfo.fill === 'string' ? entryWithCellInfo.fill : pieSettings.fill;
       if (i) {
         tempStartAngle = prev.endAngle + mathSign(deltaAngle) * paddingAngle * (val !== 0 ? 1 : 0);
@@ -35097,7 +35256,7 @@ function computePieSectors(_ref4) {
         graphicalItemId: pieSettings.id
       }];
       var tooltipPosition = polarToCartesian(coordinate.cx, coordinate.cy, middleRadius, midAngle);
-      prev = _objectSpread$c(_objectSpread$c(_objectSpread$c(_objectSpread$c({}, pieSettings.presentationProps), {}, {
+      prev = _objectSpread$d(_objectSpread$d(_objectSpread$d(_objectSpread$d({}, pieSettings.presentationProps), {}, {
         percent,
         cornerRadius: typeof cornerRadius === 'string' ? parseFloat(cornerRadius) : cornerRadius,
         name,
@@ -35203,7 +35362,7 @@ function SectorsWithAnimation$1(_ref6) {
       var paddingAngle = index > 0 ? get$2(entry, 'paddingAngle', 0) : 0;
       if (prev) {
         var angle = interpolate$1(prev.endAngle - prev.startAngle, entry.endAngle - entry.startAngle, t);
-        var latest = _objectSpread$c(_objectSpread$c({}, entry), {}, {
+        var latest = _objectSpread$d(_objectSpread$d({}, entry), {}, {
           startAngle: curAngle + paddingAngle,
           endAngle: curAngle + angle + paddingAngle
         });
@@ -35215,7 +35374,7 @@ function SectorsWithAnimation$1(_ref6) {
           startAngle
         } = entry;
         var deltaAngle = interpolate$1(0, endAngle - startAngle, t);
-        var _latest = _objectSpread$c(_objectSpread$c({}, entry), {}, {
+        var _latest = _objectSpread$d(_objectSpread$d({}, entry), {}, {
           startAngle: curAngle + paddingAngle,
           endAngle: curAngle + deltaAngle + paddingAngle
         });
@@ -35268,7 +35427,7 @@ function PieImpl(props) {
   var {
       id
     } = props,
-    propsWithoutId = _objectWithoutProperties$6(props, _excluded3$1);
+    propsWithoutId = _objectWithoutProperties$8(props, _excluded3$2);
   var {
     hide,
     className,
@@ -35303,7 +35462,7 @@ function PieImpl(props) {
     tabIndex: rootTabIndex,
     className: layerClass
   }, /*#__PURE__*/React.createElement(SectorsWithAnimation$1, {
-    props: _objectSpread$c(_objectSpread$c({}, propsWithoutId), {}, {
+    props: _objectSpread$d(_objectSpread$d({}, propsWithoutId), {}, {
       sectors
     }),
     previousSectorsRef: previousSectorsRef,
@@ -35320,7 +35479,7 @@ function PieFn(outsideProps) {
   var {
       id: externalId
     } = props,
-    propsWithoutId = _objectWithoutProperties$6(props, _excluded4);
+    propsWithoutId = _objectWithoutProperties$8(props, _excluded4);
   var presentationProps = svgPropertiesNoEvents(propsWithoutId);
   return /*#__PURE__*/React.createElement(RegisterGraphicalItemId, {
     id: externalId,
@@ -35349,9 +35508,9 @@ function PieFn(outsideProps) {
     cornerRadius: propsWithoutId.cornerRadius,
     presentationProps: presentationProps,
     maxRadius: props.maxRadius
-  }), /*#__PURE__*/React.createElement(SetPiePayloadLegend, _extends$8({}, propsWithoutId, {
+  }), /*#__PURE__*/React.createElement(SetPiePayloadLegend, _extends$9({}, propsWithoutId, {
     id: id
-  })), /*#__PURE__*/React.createElement(PieImpl, _extends$8({}, propsWithoutId, {
+  })), /*#__PURE__*/React.createElement(PieImpl, _extends$9({}, propsWithoutId, {
     id: id
   }))));
 }
@@ -35359,15 +35518,15 @@ var Pie = PieFn;
 // @ts-expect-error we need to set the displayName for debugging purposes
 Pie.displayName = 'Pie';
 
-var _excluded$5 = ["points"];
-function ownKeys$b(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$b(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$b(Object(t), true).forEach(function (r) { _defineProperty$b(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$b(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$b(e, r, t) { return (r = _toPropertyKey$b(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$b(t) { var i = _toPrimitive$b(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$b(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$7() { return _extends$7 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$7.apply(null, arguments); }
-function _objectWithoutProperties$5(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$5(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$5(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$7 = ["points"];
+function ownKeys$c(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$c(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$c(Object(t), true).forEach(function (r) { _defineProperty$c(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$c(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$c(e, r, t) { return (r = _toPropertyKey$c(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$c(t) { var i = _toPrimitive$c(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$c(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$8() { return _extends$8 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$8.apply(null, arguments); }
+function _objectWithoutProperties$7(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$7(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$7(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function DotItem(_ref) {
   var {
     option,
@@ -35386,8 +35545,8 @@ function DotItem(_ref) {
     {
       points
     } = _ref2,
-    props = _objectWithoutProperties$5(_ref2, _excluded$5);
-  return /*#__PURE__*/React.createElement(Dot, _extends$7({}, props, {
+    props = _objectWithoutProperties$7(_ref2, _excluded$7);
+  return /*#__PURE__*/React.createElement(Dot, _extends$8({}, props, {
     className: finalClassName
   }));
 }
@@ -35419,7 +35578,7 @@ function Dots(_ref3) {
   var customDotProps = svgPropertiesAndEventsFromUnknown(dot);
   var dots = points.map((entry, i) => {
     var _entry$x, _entry$y;
-    var dotProps = _objectSpread$b(_objectSpread$b(_objectSpread$b({
+    var dotProps = _objectSpread$c(_objectSpread$c(_objectSpread$c({
       r: 3
     }, baseProps), customDotProps), {}, {
       index: i,
@@ -35443,16 +35602,16 @@ function Dots(_ref3) {
   }
   return /*#__PURE__*/React.createElement(ZIndexLayer, {
     zIndex: zIndex
-  }, /*#__PURE__*/React.createElement(Layer, _extends$7({
+  }, /*#__PURE__*/React.createElement(Layer, _extends$8({
     className: className
   }, layerProps), dots));
 }
 
-function ownKeys$a(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$a(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$a(Object(t), true).forEach(function (r) { _defineProperty$a(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$a(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$a(e, r, t) { return (r = _toPropertyKey$a(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$a(t) { var i = _toPrimitive$a(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$a(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$b(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$b(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$b(Object(t), true).forEach(function (r) { _defineProperty$b(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$b(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$b(e, r, t) { return (r = _toPropertyKey$b(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$b(t) { var i = _toPrimitive$b(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$b(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /**
  * @inline
@@ -35616,7 +35775,7 @@ var cartesianAxisSlice = createSlice({
           return;
         }
         var newHistory = [...history, width].slice(-3);
-        state.yAxis[id] = _objectSpread$a(_objectSpread$a({}, axis), {}, {
+        state.yAxis[id] = _objectSpread$b(_objectSpread$b({}, axis), {}, {
           width,
           widthHistory: newHistory
         });
@@ -35701,11 +35860,11 @@ var useActiveTooltipDataPoints = () => {
   return useAppSelector(selectActiveTooltipDataPoints);
 };
 
-function ownKeys$9(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$9(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$9(Object(t), true).forEach(function (r) { _defineProperty$9(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$9(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$9(e, r, t) { return (r = _toPropertyKey$9(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$9(t) { var i = _toPrimitive$9(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$9(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$a(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$a(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$a(Object(t), true).forEach(function (r) { _defineProperty$a(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$a(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$a(e, r, t) { return (r = _toPropertyKey$a(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$a(t) { var i = _toPrimitive$a(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$a(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var ActivePoint = _ref => {
   var {
     point,
@@ -35732,7 +35891,7 @@ var ActivePoint = _ref => {
   };
 
   // @ts-expect-error svgPropertiesNoEventsFromUnknown(activeDot) is contributing unknown props
-  var dotProps = _objectSpread$9(_objectSpread$9(_objectSpread$9({}, dotPropsTyped), svgPropertiesNoEventsFromUnknown(activeDot)), adaptEventHandlers(activeDot));
+  var dotProps = _objectSpread$a(_objectSpread$a(_objectSpread$a({}, dotPropsTyped), svgPropertiesNoEventsFromUnknown(activeDot)), adaptEventHandlers(activeDot));
   var dot;
   if (/*#__PURE__*/isValidElement(activeDot)) {
     // @ts-expect-error we're improperly typing events
@@ -35777,7 +35936,7 @@ function ActivePoints(_ref2) {
   }));
 }
 
-function _extends$6() { return _extends$6 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$6.apply(null, arguments); }
+function _extends$7() { return _extends$7 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$7.apply(null, arguments); }
 function parseCornerRadius(cornerRadius) {
   if (typeof cornerRadius === 'string') {
     return parseInt(cornerRadius, 10);
@@ -35785,7 +35944,7 @@ function parseCornerRadius(cornerRadius) {
   return cornerRadius;
 }
 function RadialBarSector(props) {
-  return /*#__PURE__*/React.createElement(Shape, _extends$6({
+  return /*#__PURE__*/React.createElement(Shape, _extends$7({
     shapeType: "sector"
   }, props));
 }
@@ -35833,11 +35992,11 @@ var combineBarSizeList = (allBars, globalSize, totalSize) => {
   return [...stackedSizeList, ...unstackedSizeList];
 };
 
-function ownKeys$8(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$8(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$8(Object(t), true).forEach(function (r) { _defineProperty$8(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$8(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$8(e, r, t) { return (r = _toPropertyKey$8(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$8(t) { var i = _toPrimitive$8(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$8(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$9(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$9(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$9(Object(t), true).forEach(function (r) { _defineProperty$9(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$9(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$9(e, r, t) { return (r = _toPropertyKey$9(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$9(t) { var i = _toPrimitive$9(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$9(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function getBarPositions(barGap, barCategoryGap, bandSize, sizeList, maxBarSize) {
   var _sizeList$;
   var len = sizeList.length;
@@ -35908,8 +36067,8 @@ var combineAllBarPositions = (sizeList, globalMaxBarSize, barGap, barCategoryGap
   var maxBarSize = isNullish(childMaxBarSize) ? globalMaxBarSize : childMaxBarSize;
   var allBarPositions = getBarPositions(barGap, barCategoryGap, barBandSize !== bandSize ? barBandSize : bandSize, sizeList, maxBarSize);
   if (barBandSize !== bandSize && allBarPositions != null) {
-    allBarPositions = allBarPositions.map(pos => _objectSpread$8(_objectSpread$8({}, pos), {}, {
-      position: _objectSpread$8(_objectSpread$8({}, pos.position), {}, {
+    allBarPositions = allBarPositions.map(pos => _objectSpread$9(_objectSpread$9({}, pos), {}, {
+      position: _objectSpread$9(_objectSpread$9({}, pos.position), {}, {
         offset: pos.position.offset - barBandSize / 2
       })
     }));
@@ -35952,18 +36111,18 @@ var combineBarPosition = (allBarPositions, barSettings) => {
   return position.position;
 };
 
-function ownKeys$7(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$7(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$7(Object(t), true).forEach(function (r) { _defineProperty$7(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$7(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$7(e, r, t) { return (r = _toPropertyKey$7(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$7(t) { var i = _toPrimitive$7(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$7(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$8(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$8(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$8(Object(t), true).forEach(function (r) { _defineProperty$8(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$8(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$8(e, r, t) { return (r = _toPropertyKey$8(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$8(t) { var i = _toPrimitive$8(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$8(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var selectRadiusAxisForRadialBar = (state, radiusAxisId) => selectRadiusAxis(state, radiusAxisId);
 var selectRadiusAxisScaleForRadar = (state, radiusAxisId) => selectPolarAxisScale(state, 'radiusAxis', radiusAxisId);
 var selectRadiusAxisWithScale = createSelector([selectRadiusAxisForRadialBar, selectRadiusAxisScaleForRadar], (axis, scale) => {
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$7(_objectSpread$7({}, axis), {}, {
+  return _objectSpread$8(_objectSpread$8({}, axis), {}, {
     scale
   });
 });
@@ -35976,7 +36135,7 @@ var selectAngleAxisWithScale = createSelector([selectAngleAxisForRadialBar, sele
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$7(_objectSpread$7({}, axis), {}, {
+  return _objectSpread$8(_objectSpread$8({}, axis), {}, {
     scale
   });
 });
@@ -36126,17 +36285,17 @@ function getZIndexFromUnknown(input, defaultZIndex) {
   return defaultZIndex;
 }
 
-var _excluded$4 = ["shape", "activeShape", "cornerRadius", "id"],
-  _excluded2$1 = ["onMouseEnter", "onClick", "onMouseLeave"],
-  _excluded3 = ["value", "background"];
-function _extends$5() { return _extends$5 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$5.apply(null, arguments); }
-function ownKeys$6(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$6(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$6(Object(t), true).forEach(function (r) { _defineProperty$6(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$6(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$6(e, r, t) { return (r = _toPropertyKey$6(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$6(t) { var i = _toPrimitive$6(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$6(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$4(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$4(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$4(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$6 = ["shape", "activeShape", "cornerRadius", "id"],
+  _excluded2$2 = ["onMouseEnter", "onClick", "onMouseLeave"],
+  _excluded3$1 = ["value", "background"];
+function _extends$6() { return _extends$6 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$6.apply(null, arguments); }
+function ownKeys$7(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$7(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$7(Object(t), true).forEach(function (r) { _defineProperty$7(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$7(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$7(e, r, t) { return (r = _toPropertyKey$7(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$7(t) { var i = _toPrimitive$7(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$7(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$6(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$6(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$6(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var STABLE_EMPTY_ARRAY = [];
 function RadialBarLabelListProvider(_ref) {
   var {
@@ -36176,7 +36335,7 @@ function RadialBarSectors(_ref2) {
       cornerRadius,
       id
     } = allOtherRadialBarProps,
-    others = _objectWithoutProperties$4(allOtherRadialBarProps, _excluded$4);
+    others = _objectWithoutProperties$6(allOtherRadialBarProps, _excluded$6);
   var baseProps = svgPropertiesNoEvents(others);
   var activeIndex = useAppSelector(selectActiveTooltipIndex);
   var {
@@ -36184,7 +36343,7 @@ function RadialBarSectors(_ref2) {
       onClick: onItemClickFromProps,
       onMouseLeave: onMouseLeaveFromProps
     } = allOtherRadialBarProps,
-    restOfAllOtherProps = _objectWithoutProperties$4(allOtherRadialBarProps, _excluded2$1);
+    restOfAllOtherProps = _objectWithoutProperties$6(allOtherRadialBarProps, _excluded2$2);
   var onMouseEnterFromContext = useMouseEnterItemDispatch(onMouseEnterFromProps, allOtherRadialBarProps.dataKey, id);
   var onMouseLeaveFromContext = useMouseLeaveItemDispatch(onMouseLeaveFromProps);
   var onClickFromContext = useMouseClickItemDispatch(onItemClickFromProps, allOtherRadialBarProps.dataKey, id);
@@ -36199,7 +36358,7 @@ function RadialBarSectors(_ref2) {
     var onMouseEnter = onMouseEnterFromContext(entry, i);
     var onMouseLeave = onMouseLeaveFromContext(entry, i);
     var onClick = onClickFromContext(entry, i);
-    var radialBarSectorProps = _objectSpread$6(_objectSpread$6(_objectSpread$6(_objectSpread$6({}, baseProps), {}, {
+    var radialBarSectorProps = _objectSpread$7(_objectSpread$7(_objectSpread$7(_objectSpread$7({}, baseProps), {}, {
       cornerRadius: parseCornerRadius(cornerRadius)
     }, entry), adaptEventsOfChild(restOfAllOtherProps, entry, i)), {}, {
       onMouseEnter,
@@ -36218,7 +36377,7 @@ function RadialBarSectors(_ref2) {
         key: "sector-".concat(entry.cx, "-").concat(entry.cy, "-").concat(entry.innerRadius, "-").concat(entry.outerRadius, "-").concat(entry.startAngle, "-").concat(entry.endAngle, "-").concat(i)
       }, /*#__PURE__*/React.createElement(RadialBarSector, radialBarSectorProps));
     }
-    return /*#__PURE__*/React.createElement(RadialBarSector, _extends$5({
+    return /*#__PURE__*/React.createElement(RadialBarSector, _extends$6({
       key: "sector-".concat(entry.cx, "-").concat(entry.cy, "-").concat(entry.innerRadius, "-").concat(entry.outerRadius, "-").concat(entry.startAngle, "-").concat(entry.endAngle, "-").concat(i)
     }, radialBarSectorProps));
   }), /*#__PURE__*/React.createElement(LabelListFromLabelProp, {
@@ -36267,7 +36426,7 @@ function SectorsWithAnimation(_ref3) {
     var stepData = t === 1 ? sectors : (sectors !== null && sectors !== void 0 ? sectors : STABLE_EMPTY_ARRAY).map((entry, index) => {
       var prev = prevData && prevData[index];
       if (prev) {
-        return _objectSpread$6(_objectSpread$6({}, entry), {}, {
+        return _objectSpread$7(_objectSpread$7({}, entry), {}, {
           startAngle: interpolate$1(prev.startAngle, entry.startAngle, t),
           endAngle: interpolate$1(prev.endAngle, entry.endAngle, t)
         });
@@ -36276,7 +36435,7 @@ function SectorsWithAnimation(_ref3) {
         endAngle,
         startAngle
       } = entry;
-      return _objectSpread$6(_objectSpread$6({}, entry), {}, {
+      return _objectSpread$7(_objectSpread$7({}, entry), {}, {
         endAngle: interpolate$1(startAngle, endAngle, t)
       });
     });
@@ -36354,11 +36513,11 @@ class RadialBarWithState extends PureComponent {
           value,
           background
         } = entry,
-        rest = _objectWithoutProperties$4(entry, _excluded3);
+        rest = _objectWithoutProperties$6(entry, _excluded3$1);
       if (!background) {
         return null;
       }
-      var props = _objectSpread$6(_objectSpread$6(_objectSpread$6(_objectSpread$6(_objectSpread$6({
+      var props = _objectSpread$7(_objectSpread$7(_objectSpread$7(_objectSpread$7(_objectSpread$7({
         cornerRadius: parseCornerRadius(cornerRadius)
       }, rest), {}, {
         // @ts-expect-error backgroundProps is contributing unknown props
@@ -36369,7 +36528,7 @@ class RadialBarWithState extends PureComponent {
         option: background,
         isActive: false
       });
-      return /*#__PURE__*/React.createElement(RadialBarSector, _extends$5({
+      return /*#__PURE__*/React.createElement(RadialBarSector, _extends$6({
         key: "background-".concat(rest.cx, "-").concat(rest.cy, "-").concat(rest.innerRadius, "-").concat(rest.outerRadius, "-").concat(rest.startAngle, "-").concat(rest.endAngle, "-").concat(i)
       }, props));
     }));
@@ -36423,7 +36582,7 @@ function RadialBarImpl(props) {
     fill: props.fill,
     tooltipType: props.tooltipType,
     id: props.id
-  }), /*#__PURE__*/React.createElement(RadialBarWithState, _extends$5({}, props, {
+  }), /*#__PURE__*/React.createElement(RadialBarWithState, _extends$6({}, props, {
     sectors: sectors
   })));
 }
@@ -36530,7 +36689,7 @@ function computeRadialBarDataItems(_ref5) {
         }
       }
     }
-    return _objectSpread$6(_objectSpread$6(_objectSpread$6({}, entry), backgroundSector), {}, {
+    return _objectSpread$7(_objectSpread$7(_objectSpread$7({}, entry), backgroundSector), {}, {
       payload: entry,
       value: stackedData ? value : value[1],
       cx,
@@ -36569,7 +36728,7 @@ function RadialBar(outsideProps) {
       barSize: props.barSize,
       minPointSize: props.minPointSize,
       maxBarSize: props.maxBarSize
-    }), /*#__PURE__*/React.createElement(SetRadialBarPayloadLegend, props), /*#__PURE__*/React.createElement(RadialBarImpl, _extends$5({}, props, {
+    }), /*#__PURE__*/React.createElement(SetRadialBarPayloadLegend, props), /*#__PURE__*/React.createElement(RadialBarImpl, _extends$6({}, props, {
       id: id
     })));
   });
@@ -36807,6 +36966,31 @@ var {
 } = errorBarSlice.actions;
 var errorBarReducer = errorBarSlice.reducer;
 
+var _excluded$5 = ["children"];
+function _objectWithoutProperties$5(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$5(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$5(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var initialContextState = {
+  data: [],
+  xAxisId: 'xAxis-0',
+  yAxisId: 'yAxis-0',
+  dataPointFormatter: () => ({
+    x: 0,
+    y: 0,
+    value: 0
+  }),
+  errorBarOffset: 0
+};
+var ErrorBarContext = /*#__PURE__*/createContext(initialContextState);
+function SetErrorBarContext(props) {
+  var {
+      children
+    } = props,
+    rest = _objectWithoutProperties$5(props, _excluded$5);
+  return /*#__PURE__*/React.createElement(ErrorBarContext.Provider, {
+    value: rest
+  }, children);
+}
+
 function useNeedsClip(xAxisId, yAxisId) {
   var _xAxis$allowDataOverf, _yAxis$allowDataOverf;
   var xAxis = useAppSelector(state => selectXAxisSettings(state, xAxisId));
@@ -36851,6 +37035,64 @@ function GraphicalItemClipPath(_ref) {
   }));
 }
 
+var selectXAxisWithScale$1 = (state, xAxisId, _yAxisId, isPanorama) => selectAxisWithScale(state, 'xAxis', xAxisId, isPanorama);
+var selectXAxisTicks$1 = (state, xAxisId, _yAxisId, isPanorama) => selectTicksOfGraphicalItem(state, 'xAxis', xAxisId, isPanorama);
+var selectYAxisWithScale$1 = (state, _xAxisId, yAxisId, isPanorama) => selectAxisWithScale(state, 'yAxis', yAxisId, isPanorama);
+var selectYAxisTicks$1 = (state, _xAxisId, yAxisId, isPanorama) => selectTicksOfGraphicalItem(state, 'yAxis', yAxisId, isPanorama);
+var selectBandSize$1 = createSelector([selectChartLayout, selectXAxisWithScale$1, selectYAxisWithScale$1, selectXAxisTicks$1, selectYAxisTicks$1], (layout, xAxis, yAxis, xAxisTicks, yAxisTicks) => {
+  if (isCategoricalAxis(layout, 'xAxis')) {
+    return getBandSizeOfAxis(xAxis, xAxisTicks, false);
+  }
+  return getBandSizeOfAxis(yAxis, yAxisTicks, false);
+});
+var pickLineId = (_state, _xAxisId, _yAxisId, _isPanorama, id) => id;
+function isLineSettings(item) {
+  return item.type === 'line';
+}
+
+/*
+ * There is a race condition problem because we read some data from props and some from the state.
+ * The state is updated through a dispatch and is one render behind,
+ * and so we have this weird one tick render where the displayedData in one selector have the old dataKey
+ * but the new dataKey in another selector.
+ *
+ * So here instead of reading the dataKey from the props, we always read it from the state.
+ */
+var selectSynchronisedLineSettings = createSelector([selectUnfilteredCartesianItems, pickLineId], (graphicalItems, id) => graphicalItems.filter(isLineSettings).find(x => x.id === id));
+var selectLinePoints = createSelector([selectChartLayout, selectXAxisWithScale$1, selectYAxisWithScale$1, selectXAxisTicks$1, selectYAxisTicks$1, selectSynchronisedLineSettings, selectBandSize$1, selectChartDataWithIndexesIfNotInPanoramaPosition4], (layout, xAxis, yAxis, xAxisTicks, yAxisTicks, lineSettings, bandSize, _ref) => {
+  var {
+    chartData,
+    dataStartIndex,
+    dataEndIndex
+  } = _ref;
+  if (lineSettings == null || xAxis == null || yAxis == null || xAxisTicks == null || yAxisTicks == null || xAxisTicks.length === 0 || yAxisTicks.length === 0 || bandSize == null || layout !== 'horizontal' && layout !== 'vertical') {
+    return undefined;
+  }
+  var {
+    dataKey,
+    data
+  } = lineSettings;
+  var displayedData;
+  if (data != null && data.length > 0) {
+    displayedData = data;
+  } else {
+    displayedData = chartData === null || chartData === void 0 ? void 0 : chartData.slice(dataStartIndex, dataEndIndex + 1);
+  }
+  if (displayedData == null) {
+    return undefined;
+  }
+  return computeLinePoints({
+    layout,
+    xAxis,
+    yAxis,
+    xAxisTicks,
+    yAxisTicks,
+    dataKey,
+    bandSize,
+    displayedData
+  });
+});
+
 function getRadiusAndStrokeWidthFromDot(dot) {
   var props = svgPropertiesNoEventsFromUnknown(dot);
   var defaultR = 3;
@@ -36878,6 +37120,704 @@ function getRadiusAndStrokeWidthFromDot(dot) {
     strokeWidth: defaultStrokeWidth
   };
 }
+
+var _excluded$4 = ["id"],
+  _excluded2$1 = ["type", "layout", "connectNulls", "needClip", "shape"],
+  _excluded3 = ["activeDot", "animateNewValues", "animationBegin", "animationDuration", "animationEasing", "connectNulls", "dot", "hide", "isAnimationActive", "label", "legendType", "xAxisId", "yAxisId", "id"];
+function _extends$5() { return _extends$5 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$5.apply(null, arguments); }
+function ownKeys$6(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$6(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$6(Object(t), true).forEach(function (r) { _defineProperty$6(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$6(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$6(e, r, t) { return (r = _toPropertyKey$6(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$6(t) { var i = _toPrimitive$6(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$6(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$4(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$4(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$4(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+
+/**
+ * Internal props, combination of external props + defaultProps + private Recharts state
+ */
+
+/**
+ * External props, intended for end users to fill in
+ */
+
+/**
+ * Because of naming conflict, we are forced to ignore certain (valid) SVG attributes.
+ */
+
+var computeLegendPayloadFromAreaData$1 = props => {
+  var {
+    dataKey,
+    name,
+    stroke,
+    legendType,
+    hide
+  } = props;
+  return [{
+    inactive: hide,
+    dataKey,
+    type: legendType,
+    color: stroke,
+    value: getTooltipNameProp(name, dataKey),
+    payload: props
+  }];
+};
+var SetLineTooltipEntrySettings = /*#__PURE__*/React.memo(_ref => {
+  var {
+    dataKey,
+    data,
+    stroke,
+    strokeWidth,
+    fill,
+    name,
+    hide,
+    unit,
+    tooltipType,
+    id
+  } = _ref;
+  var tooltipEntrySettings = {
+    dataDefinedOnItem: data,
+    getPosition: noop$2,
+    settings: {
+      stroke,
+      strokeWidth,
+      fill,
+      dataKey,
+      nameKey: undefined,
+      name: getTooltipNameProp(name, dataKey),
+      hide,
+      type: tooltipType,
+      color: stroke,
+      unit,
+      graphicalItemId: id
+    }
+  };
+  return /*#__PURE__*/React.createElement(SetTooltipEntrySettings, {
+    tooltipEntrySettings: tooltipEntrySettings
+  });
+});
+
+/**
+ * Generates a simple stroke-dasharray string for animating a line draw effect.
+ *
+ * Uses `totalLength` as the gap (instead of `totalLength - length`) to prevent a floating-point
+ * precision artifact: when fractional dash and gap values are serialized to a string attribute
+ * and re-parsed by the SVG renderer, their sum can differ from the actual path length by a ULP,
+ * causing the dasharray pattern to repeat and render a phantom dot at the path endpoint
+ * with round or square strokeLinecap.
+ *
+ * @param totalLength The total length of the SVG path
+ * @param length The currently visible portion of the path
+ * @returns A stroke-dasharray string like "50px 200px"
+ */
+var generateSimpleStrokeDasharray = (totalLength, length) => {
+  return "".concat(length, "px ").concat(totalLength, "px");
+};
+
+/**
+ * Repeats a dash pattern array a given number of times.
+ *
+ * If the input array has an odd length, a trailing `0` is appended to make it even
+ * before repeating, because SVG stroke-dasharray patterns must have an even number
+ * of values to cycle correctly between dash and gap segments.
+ *
+ * @param lines Array of dash/gap lengths to repeat
+ * @param count Number of times to repeat the pattern
+ * @returns A new array with the pattern repeated `count` times
+ */
+function repeat(lines, count) {
+  var linesUnit = lines.length % 2 !== 0 ? [...lines, 0] : lines;
+  var result = [];
+  for (var i = 0; i < count; ++i) {
+    result.push(...linesUnit);
+  }
+  return result;
+}
+
+/**
+ * Computes a stroke-dasharray string for animating a custom-dashed line draw effect.
+ *
+ * Given a user-specified dash pattern (e.g. `"7,3"`), this function builds a dasharray
+ * that reveals exactly `length` pixels of that pattern, followed by a gap of `totalLength`
+ * to hide the remainder of the path.
+ *
+ * Like {@link generateSimpleStrokeDasharray}, the trailing gap uses `totalLength` rather than
+ * `totalLength - length` to avoid floating-point precision artifacts with round/square strokeLinecap.
+ *
+ * @param length The currently visible portion of the path
+ * @param totalLength The total length of the SVG path
+ * @param lines The user-specified dash pattern as an array of numbers (e.g. [7, 3])
+ * @returns A stroke-dasharray string incorporating the custom dash pattern
+ */
+var getStrokeDasharray = (length, totalLength, lines) => {
+  var lineLength = lines.reduce((pre, next) => pre + next, 0);
+
+  // if lineLength is 0 return the default when no strokeDasharray is provided
+  if (!lineLength) {
+    return generateSimpleStrokeDasharray(totalLength, length);
+  }
+  var count = Math.floor(length / lineLength);
+  var remainLength = length % lineLength;
+  var remainLines = [];
+  for (var i = 0, sum = 0; i < lines.length; sum += (_lines$i = lines[i]) !== null && _lines$i !== void 0 ? _lines$i : 0, ++i) {
+    var _lines$i;
+    var lineValue = lines[i];
+    if (lineValue != null && sum + lineValue > remainLength) {
+      remainLines = [...lines.slice(0, i), remainLength - sum];
+      break;
+    }
+  }
+  var emptyLines = remainLines.length % 2 === 0 ? [0, totalLength] : [totalLength];
+  return [...repeat(lines, count), ...remainLines, ...emptyLines].map(line => "".concat(line, "px")).join(', ');
+};
+function LineDotsWrapper(_ref2) {
+  var {
+    clipPathId,
+    points,
+    props
+  } = _ref2;
+  var {
+    dot,
+    dataKey,
+    needClip
+  } = props;
+
+  /*
+   * Exclude ID from the props passed to the Dots component
+   * because then the ID would be applied to multiple dots, and it would no longer be unique.
+   */
+  var {
+      id
+    } = props,
+    propsWithoutId = _objectWithoutProperties$4(props, _excluded$4);
+  var lineProps = svgPropertiesNoEvents(propsWithoutId);
+  return /*#__PURE__*/React.createElement(Dots, {
+    points: points,
+    dot: dot,
+    className: "recharts-line-dots",
+    dotClassName: "recharts-line-dot",
+    dataKey: dataKey,
+    baseProps: lineProps,
+    needClip: needClip,
+    clipPathId: clipPathId
+  });
+}
+function LineLabelListProvider(_ref3) {
+  var {
+    showLabels,
+    children,
+    points
+  } = _ref3;
+  var labelListEntries = useMemo(() => {
+    return points === null || points === void 0 ? void 0 : points.map(point => {
+      var _point$x, _point$y;
+      var viewBox = {
+        x: (_point$x = point.x) !== null && _point$x !== void 0 ? _point$x : 0,
+        y: (_point$y = point.y) !== null && _point$y !== void 0 ? _point$y : 0,
+        width: 0,
+        lowerWidth: 0,
+        upperWidth: 0,
+        height: 0
+      };
+      return _objectSpread$6(_objectSpread$6({}, viewBox), {}, {
+        value: point.value,
+        payload: point.payload,
+        viewBox,
+        /*
+         * Line is not passing parentViewBox to the LabelList so the labels can escape - looks like a bug, should we pass parentViewBox?
+         * Or should this just be the root chart viewBox?
+         */
+        parentViewBox: undefined,
+        fill: undefined
+      });
+    });
+  }, [points]);
+  return /*#__PURE__*/React.createElement(CartesianLabelListContextProvider, {
+    value: showLabels ? labelListEntries : undefined
+  }, children);
+}
+function StaticCurve(_ref4) {
+  var {
+    clipPathId,
+    pathRef,
+    points,
+    strokeDasharray,
+    props
+  } = _ref4;
+  var {
+      type,
+      layout,
+      connectNulls,
+      needClip,
+      shape
+    } = props,
+    others = _objectWithoutProperties$4(props, _excluded2$1);
+  var curveProps = _objectSpread$6(_objectSpread$6({}, svgPropertiesAndEvents(others)), {}, {
+    fill: 'none',
+    className: 'recharts-line-curve',
+    clipPath: needClip ? "url(#clipPath-".concat(clipPathId, ")") : undefined,
+    points,
+    type,
+    layout,
+    connectNulls,
+    strokeDasharray: strokeDasharray !== null && strokeDasharray !== void 0 ? strokeDasharray : props.strokeDasharray
+  });
+  return /*#__PURE__*/React.createElement(React.Fragment, null, (points === null || points === void 0 ? void 0 : points.length) > 1 && /*#__PURE__*/React.createElement(Shape, _extends$5({
+    shapeType: "curve",
+    option: shape
+  }, curveProps, {
+    pathRef: pathRef
+  })), /*#__PURE__*/React.createElement(LineDotsWrapper, {
+    points: points,
+    clipPathId: clipPathId,
+    props: props
+  }));
+}
+function getTotalLength(mainCurve) {
+  try {
+    return mainCurve && mainCurve.getTotalLength && mainCurve.getTotalLength() || 0;
+  } catch (_unused) {
+    return 0;
+  }
+}
+function CurveWithAnimation(_ref5) {
+  var {
+    clipPathId,
+    props,
+    pathRef,
+    previousPointsRef,
+    longestAnimatedLengthRef
+  } = _ref5;
+  var {
+    points,
+    strokeDasharray,
+    isAnimationActive,
+    animationBegin,
+    animationDuration,
+    animationEasing,
+    animateNewValues,
+    width,
+    height,
+    onAnimationEnd,
+    onAnimationStart
+  } = props;
+  var prevPoints = previousPointsRef.current;
+  var animationId = useAnimationId(points, 'recharts-line-');
+  var animationIdRef = useRef(animationId);
+  var [isAnimating, setIsAnimating] = useState(false);
+  var showLabels = !isAnimating;
+  var handleAnimationEnd = useCallback(() => {
+    if (typeof onAnimationEnd === 'function') {
+      onAnimationEnd();
+    }
+    setIsAnimating(false);
+  }, [onAnimationEnd]);
+  var handleAnimationStart = useCallback(() => {
+    if (typeof onAnimationStart === 'function') {
+      onAnimationStart();
+    }
+    setIsAnimating(true);
+  }, [onAnimationStart]);
+  var totalLength = getTotalLength(pathRef.current);
+  /*
+   * Here we want to detect if the length animation has been interrupted.
+   * For that we keep a reference to the furthest length that has been animated.
+   *
+   * And then, to keep things smooth, we add to it the current length that is being animated right now.
+   *
+   * If we did Math.max then it makes the length animation "pause" but we want to keep it smooth
+   * so in case we have some "leftover" length from the previous animation we add it to the current length.
+   *
+   * This is not perfect because the animation changes speed due to easing. The default easing is 'ease' which is not linear
+   * and makes it stand out. But it's good enough I suppose.
+   * If we want to fix it then we need to keep track of multiple animations and their easing and timings.
+   *
+   * If you want to see this in action, try to change the dataKey of the line chart while the initial animation is running.
+   * The Line begins with zero length and slowly grows to the full length. While this growth is in progress,
+   * change the dataKey and the Line will continue growing from where it has grown so far.
+   *
+   * This is for the case when new animation triggers. When that happens we get new points, everything re-renders,
+   * and we get fresh new state in this component and use the ref stored above.
+   *
+   * In case when we get render without new animation - for example when opacity changes, or color changes,
+   * then the animationId remains the same, and we do not update the starting point.
+   * See https://github.com/recharts/recharts/issues/6044
+   */
+  var startingPointRef = useRef(0);
+  if (animationIdRef.current !== animationId) {
+    startingPointRef.current = longestAnimatedLengthRef.current;
+    animationIdRef.current = animationId;
+  }
+  var startingPoint = startingPointRef.current;
+  return /*#__PURE__*/React.createElement(LineLabelListProvider, {
+    points: points,
+    showLabels: showLabels
+  }, props.children, /*#__PURE__*/React.createElement(JavascriptAnimate, {
+    animationId: animationId,
+    begin: animationBegin,
+    duration: animationDuration,
+    isActive: isAnimationActive,
+    easing: animationEasing,
+    onAnimationEnd: handleAnimationEnd,
+    onAnimationStart: handleAnimationStart,
+    key: animationId
+  }, t => {
+    var lengthInterpolated = interpolate$1(startingPoint, totalLength + startingPoint, t);
+    var curLength = Math.min(lengthInterpolated, totalLength);
+    var currentStrokeDasharray;
+    if (isAnimationActive) {
+      if (strokeDasharray) {
+        var lines = "".concat(strokeDasharray).split(/[,\s]+/gim).map(num => parseFloat(num));
+        currentStrokeDasharray = getStrokeDasharray(curLength, totalLength, lines);
+      } else {
+        currentStrokeDasharray = generateSimpleStrokeDasharray(totalLength, curLength);
+      }
+    } else {
+      currentStrokeDasharray = strokeDasharray == null ? undefined : String(strokeDasharray);
+    }
+
+    /*
+     * Here it is important to wait a little bit with updating the previousPointsRef
+     * before the animation has a time to initialize.
+     * If we set the previous pointsRef immediately, we set it before the Legend height it calculated
+     * and before pathRef is set.
+     * If that happens, the Line will re-render again after Legend had reported its height
+     * which will start a new animation with the previous points as the starting point
+     * which gives the effect of the Line animating slightly upwards (where the animation distance equals the Legend height).
+     * Waiting for t > 0 is indirect but good enough to ensure that the Legend height is calculated and animation works properly.
+     *
+     * Total length similarly is calculated from the pathRef. We should not update the previousPointsRef
+     * before the pathRef is set, otherwise we will have a wrong total length.
+     */
+    if (t > 0 && totalLength > 0) {
+      // eslint-disable-next-line no-param-reassign
+      previousPointsRef.current = points;
+      /*
+       * totalLength is set from a ref and is not updated in the first tick of the animation.
+       * It defaults to zero which is exactly what we want here because we want to grow from zero,
+       * however the same happens when the data change.
+       *
+       * In that case we want to remember the previous length and continue from there, and only animate the shape.
+       *
+       * Therefore the totalLength > 0 check.
+       *
+       * The Animate is about to fire handleAnimationStart which will update the state
+       * and cause a re-render and read a new proper totalLength which will be used in the next tick
+       * and update the longestAnimatedLengthRef.
+       *
+       * Why Math.max? Sometimes the curve goes through a smaller length than previously recorded.
+       * If we just set it to curLength, then the next animation would start from a smaller length
+       * which looks weird. So we keep the longest length ever reached and then animate from there.
+       */
+      // eslint-disable-next-line no-param-reassign
+      longestAnimatedLengthRef.current = Math.max(longestAnimatedLengthRef.current, curLength);
+    }
+    if (prevPoints) {
+      var prevPointsDiffFactor = prevPoints.length / points.length;
+      var stepData = t === 1 ? points : points.map((entry, index) => {
+        var prevPointIndex = Math.floor(index * prevPointsDiffFactor);
+        if (prevPoints[prevPointIndex]) {
+          var prev = prevPoints[prevPointIndex];
+          return _objectSpread$6(_objectSpread$6({}, entry), {}, {
+            x: interpolate$1(prev.x, entry.x, t),
+            y: interpolate$1(prev.y, entry.y, t)
+          });
+        }
+
+        // magic number of faking previous x and y location
+        if (animateNewValues) {
+          return _objectSpread$6(_objectSpread$6({}, entry), {}, {
+            x: interpolate$1(width * 2, entry.x, t),
+            y: interpolate$1(height / 2, entry.y, t)
+          });
+        }
+        return _objectSpread$6(_objectSpread$6({}, entry), {}, {
+          x: entry.x,
+          y: entry.y
+        });
+      });
+      // eslint-disable-next-line no-param-reassign
+      previousPointsRef.current = stepData;
+      return /*#__PURE__*/React.createElement(StaticCurve, {
+        props: props,
+        points: stepData,
+        clipPathId: clipPathId,
+        pathRef: pathRef,
+        strokeDasharray: currentStrokeDasharray
+      });
+    }
+    return /*#__PURE__*/React.createElement(StaticCurve, {
+      props: props,
+      points: points,
+      clipPathId: clipPathId,
+      pathRef: pathRef,
+      strokeDasharray: currentStrokeDasharray
+    });
+  }), /*#__PURE__*/React.createElement(LabelListFromLabelProp, {
+    label: props.label
+  }));
+}
+function RenderCurve(_ref6) {
+  var {
+    clipPathId,
+    props
+  } = _ref6;
+  var previousPointsRef = useRef(null);
+  var longestAnimatedLengthRef = useRef(0);
+  var pathRef = useRef(null);
+  return /*#__PURE__*/React.createElement(CurveWithAnimation, {
+    props: props,
+    clipPathId: clipPathId,
+    previousPointsRef: previousPointsRef,
+    longestAnimatedLengthRef: longestAnimatedLengthRef,
+    pathRef: pathRef
+  });
+}
+var errorBarDataPointFormatter = (dataPoint, dataKey) => {
+  var _dataPoint$x, _dataPoint$y;
+  return {
+    x: (_dataPoint$x = dataPoint.x) !== null && _dataPoint$x !== void 0 ? _dataPoint$x : undefined,
+    y: (_dataPoint$y = dataPoint.y) !== null && _dataPoint$y !== void 0 ? _dataPoint$y : undefined,
+    value: dataPoint.value,
+    // getValueByDataKey does not validate the output type
+    errorVal: getValueByDataKey(dataPoint.payload, dataKey)
+  };
+};
+
+// eslint-disable-next-line react/prefer-stateless-function
+class LineWithState extends Component {
+  render() {
+    var {
+      hide,
+      dot,
+      points,
+      className,
+      xAxisId,
+      yAxisId,
+      top,
+      left,
+      width,
+      height,
+      id,
+      needClip,
+      zIndex
+    } = this.props;
+    if (hide) {
+      return null;
+    }
+    var layerClass = clsx('recharts-line', className);
+    var clipPathId = id;
+    var {
+      r,
+      strokeWidth
+    } = getRadiusAndStrokeWidthFromDot(dot);
+    var clipDot = isClipDot(dot);
+    var dotSize = r * 2 + strokeWidth;
+    var activePointsClipPath = needClip ? "url(#clipPath-".concat(clipDot ? '' : 'dots-').concat(clipPathId, ")") : undefined;
+    return /*#__PURE__*/React.createElement(ZIndexLayer, {
+      zIndex: zIndex
+    }, /*#__PURE__*/React.createElement(Layer, {
+      className: layerClass
+    }, needClip && /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement(GraphicalItemClipPath, {
+      clipPathId: clipPathId,
+      xAxisId: xAxisId,
+      yAxisId: yAxisId
+    }), !clipDot && /*#__PURE__*/React.createElement("clipPath", {
+      id: "clipPath-dots-".concat(clipPathId)
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: left - dotSize / 2,
+      y: top - dotSize / 2,
+      width: width + dotSize,
+      height: height + dotSize
+    }))), /*#__PURE__*/React.createElement(SetErrorBarContext, {
+      xAxisId: xAxisId,
+      yAxisId: yAxisId,
+      data: points,
+      dataPointFormatter: errorBarDataPointFormatter,
+      errorBarOffset: 0
+    }, /*#__PURE__*/React.createElement(RenderCurve, {
+      props: this.props,
+      clipPathId: clipPathId
+    }))), /*#__PURE__*/React.createElement(ActivePoints, {
+      activeDot: this.props.activeDot,
+      points: points,
+      mainColor: this.props.stroke,
+      itemDataKey: this.props.dataKey,
+      clipPath: activePointsClipPath
+    }));
+  }
+}
+var defaultLineProps = {
+  activeDot: true,
+  animateNewValues: true,
+  animationBegin: 0,
+  animationDuration: 1500,
+  animationEasing: 'ease',
+  connectNulls: false,
+  dot: true,
+  fill: '#fff',
+  hide: false,
+  isAnimationActive: 'auto',
+  label: false,
+  legendType: 'line',
+  stroke: '#3182bd',
+  strokeWidth: 1,
+  xAxisId: 0,
+  yAxisId: 0,
+  zIndex: DefaultZIndexes.line,
+  type: 'linear'
+};
+function LineImpl(props) {
+  var _resolveDefaultProps = resolveDefaultProps(props, defaultLineProps),
+    {
+      activeDot,
+      animateNewValues,
+      animationBegin,
+      animationDuration,
+      animationEasing,
+      connectNulls,
+      dot,
+      hide,
+      isAnimationActive,
+      label,
+      legendType,
+      xAxisId,
+      yAxisId,
+      id
+    } = _resolveDefaultProps,
+    everythingElse = _objectWithoutProperties$4(_resolveDefaultProps, _excluded3);
+  var {
+    needClip
+  } = useNeedsClip(xAxisId, yAxisId);
+  var plotArea = usePlotArea();
+  var layout = useChartLayout();
+  var isPanorama = useIsPanorama();
+  var points = useAppSelector(state => selectLinePoints(state, xAxisId, yAxisId, isPanorama, id));
+  if (layout !== 'horizontal' && layout !== 'vertical' || points == null || plotArea == null) {
+    // Cannot render Line in an unsupported layout
+    return null;
+  }
+  var {
+    height,
+    width,
+    x: left,
+    y: top
+  } = plotArea;
+  return /*#__PURE__*/React.createElement(LineWithState, _extends$5({}, everythingElse, {
+    id: id,
+    connectNulls: connectNulls,
+    dot: dot,
+    activeDot: activeDot,
+    animateNewValues: animateNewValues,
+    animationBegin: animationBegin,
+    animationDuration: animationDuration,
+    animationEasing: animationEasing,
+    isAnimationActive: isAnimationActive,
+    hide: hide,
+    label: label,
+    legendType: legendType,
+    xAxisId: xAxisId,
+    yAxisId: yAxisId,
+    points: points,
+    layout: layout,
+    height: height,
+    width: width,
+    left: left,
+    top: top,
+    needClip: needClip
+  }));
+}
+function computeLinePoints(_ref7) {
+  var {
+    layout,
+    xAxis,
+    yAxis,
+    xAxisTicks,
+    yAxisTicks,
+    dataKey,
+    bandSize,
+    displayedData
+  } = _ref7;
+  return displayedData.map((entry, index) => {
+    // getValueByDataKey does not validate the output type
+    var value = getValueByDataKey(entry, dataKey);
+    if (layout === 'horizontal') {
+      var _x = getCateCoordinateOfLine({
+        axis: xAxis,
+        ticks: xAxisTicks,
+        bandSize,
+        entry,
+        index
+      });
+      var _y = isNullish(value) ? null : yAxis.scale.map(value);
+      return {
+        x: _x,
+        y: _y !== null && _y !== void 0 ? _y : null,
+        value,
+        payload: entry
+      };
+    }
+    var x = isNullish(value) ? null : xAxis.scale.map(value);
+    var y = getCateCoordinateOfLine({
+      axis: yAxis,
+      ticks: yAxisTicks,
+      bandSize,
+      entry,
+      index
+    });
+    if (x == null || y == null) {
+      return null;
+    }
+    return {
+      x,
+      y,
+      value,
+      payload: entry
+    };
+  }).filter(Boolean);
+}
+function LineFn(outsideProps) {
+  var props = resolveDefaultProps(outsideProps, defaultLineProps);
+  var isPanorama = useIsPanorama();
+  return /*#__PURE__*/React.createElement(RegisterGraphicalItemId, {
+    id: props.id,
+    type: "line"
+  }, id => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SetLegendPayload, {
+    legendPayload: computeLegendPayloadFromAreaData$1(props)
+  }), /*#__PURE__*/React.createElement(SetLineTooltipEntrySettings, {
+    dataKey: props.dataKey,
+    data: props.data,
+    stroke: props.stroke,
+    strokeWidth: props.strokeWidth,
+    fill: props.fill,
+    name: props.name,
+    hide: props.hide,
+    unit: props.unit,
+    tooltipType: props.tooltipType,
+    id: id
+  }), /*#__PURE__*/React.createElement(SetCartesianGraphicalItem, {
+    type: "line",
+    id: id,
+    data: props.data,
+    xAxisId: props.xAxisId,
+    yAxisId: props.yAxisId,
+    zAxisId: 0,
+    dataKey: props.dataKey,
+    hide: props.hide,
+    isPanorama: isPanorama
+  }), /*#__PURE__*/React.createElement(LineImpl, _extends$5({}, props, {
+    id: id
+  }))));
+}
+
+/**
+ * @provides LabelListContext
+ * @provides ErrorBarContext
+ * @consumes CartesianChartContext
+ */
+var Line = /*#__PURE__*/React.memo(LineFn, propsAreEqual);
+// @ts-expect-error we need to set the displayName for debugging purposes
+Line.displayName = 'Line';
 
 function selectXAxisIdFromGraphicalItemId(state, id) {
   var _state$graphicalItems, _state$graphicalItems2;
@@ -39301,6 +40241,24 @@ var CartesianChart = /*#__PURE__*/forwardRef(function CartesianChart(props, ref)
   })));
 });
 
+var allowedTooltipTypes$3 = ['axis'];
+
+/**
+ * @consumes ResponsiveContainerContext
+ * @provides CartesianViewBoxContext
+ * @provides CartesianChartContext
+ */
+var LineChart = /*#__PURE__*/forwardRef((props, ref) => {
+  return /*#__PURE__*/React.createElement(CartesianChart, {
+    chartName: "LineChart",
+    defaultTooltipEventType: "axis",
+    validateTooltipEventTypes: allowedTooltipTypes$3,
+    tooltipPayloadSearcher: arrayTooltipSearcher,
+    categoricalChartProps: props,
+    ref: ref
+  });
+});
+
 function ReportPolarOptions(props) {
   var dispatch = useAppDispatch();
   useEffect(() => {
@@ -40499,58 +41457,81 @@ function ReportFooter() {
   ] });
 }
 
+const SECTIONS = [
+  { id: "overview", label: "Overview" },
+  { id: "solar", label: "Solar" },
+  { id: "wind", label: "Wind" },
+  { id: "water", label: "Water" },
+  { id: "hydro", label: "Hydro" },
+  { id: "storage", label: "Storage" }
+];
 function HeroGradient({
   title,
   subtitle,
   breadcrumb,
+  section,
+  onSelectSection,
   rightEl
 }) {
   return /* @__PURE__ */ jsxs(
     "section",
     {
       "aria-label": "Page hero",
-      className: "relative overflow-hidden rounded-2xl border border-white/10",
-      style: { minHeight: 160 },
+      className: "ext-glass relative overflow-hidden p-5 sm:p-6",
       children: [
         /* @__PURE__ */ jsx(
           "div",
           {
             "aria-hidden": "true",
-            className: "nrg-hero-gradient absolute inset-0",
-            style: {
-              background: "linear-gradient(115deg, #6d28d9 0%, #0891b2 32%, #22d3ee 50%, #f59e0b 72%, #a3e635 100%)"
-            }
+            className: "pointer-events-none absolute inset-0 bg-gradient-to-r from-[var(--color-primary)]/10 via-[var(--color-aqua)]/8 to-[var(--color-leaf)]/10"
           }
         ),
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            "aria-hidden": "true",
-            className: "absolute inset-0",
-            style: {
-              background: "linear-gradient(180deg, rgba(15,15,35,0) 0%, rgba(15,15,35,0.10) 55%, rgba(15,15,35,0.55) 100%)"
+        /* @__PURE__ */ jsxs("div", { className: "relative z-10 flex flex-col gap-3", children: [
+          breadcrumb && breadcrumb.length > 0 ? /* @__PURE__ */ jsx(
+            "nav",
+            {
+              "aria-label": "Breadcrumb",
+              className: "flex items-center gap-1.5 text-[0.7rem] uppercase tracking-[0.18em] text-muted-foreground",
+              children: breadcrumb.map((crumb, i) => /* @__PURE__ */ jsxs(React.Fragment, { children: [
+                i > 0 ? /* @__PURE__ */ jsx(ChevronRight, { className: "size-3 opacity-60" }) : null,
+                /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    className: i === breadcrumb.length - 1 ? "font-semibold text-foreground" : "",
+                    children: crumb
+                  }
+                )
+              ] }, crumb + i))
             }
-          }
-        ),
-        /* @__PURE__ */ jsxs("div", { className: "relative z-10 flex h-full flex-col justify-between gap-3 p-5 sm:p-6", children: [
-          breadcrumb && breadcrumb.length > 0 ? /* @__PURE__ */ jsx("nav", { "aria-label": "Breadcrumb", className: "flex items-center gap-1.5 text-[0.7rem] uppercase tracking-[0.18em] text-slate-100/85", children: breadcrumb.map((crumb, i) => /* @__PURE__ */ jsxs(React.Fragment, { children: [
-            i > 0 ? /* @__PURE__ */ jsx(ChevronRight, { className: "size-3 opacity-60" }) : null,
-            /* @__PURE__ */ jsx("span", { className: i === breadcrumb.length - 1 ? "text-white font-semibold" : "", children: crumb })
-          ] }, crumb + i)) }) : null,
+          ) : null,
           /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-end justify-between gap-3", children: [
             /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
-              /* @__PURE__ */ jsx(
-                "h1",
-                {
-                  className: "text-3xl sm:text-4xl font-bold tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)]",
-                  style: { fontFamily: '"Fira Sans", ui-sans-serif, system-ui, sans-serif' },
-                  children: title
-                }
-              ),
-              subtitle ? /* @__PURE__ */ jsx("p", { className: "mt-1 text-sm text-white/85 max-w-2xl", children: subtitle }) : null
+              /* @__PURE__ */ jsx("h1", { className: "text-3xl font-bold tracking-tight text-foreground sm:text-4xl", children: title }),
+              subtitle ? /* @__PURE__ */ jsx("p", { className: "mt-1 max-w-2xl text-sm text-muted-foreground", children: subtitle }) : null
             ] }),
             rightEl ? /* @__PURE__ */ jsx("div", { className: "shrink-0", children: rightEl }) : null
-          ] })
+          ] }),
+          /* @__PURE__ */ jsx(
+            "div",
+            {
+              role: "tablist",
+              "aria-label": "Energy sections",
+              className: "flex flex-wrap items-center gap-1.5 pt-1",
+              children: SECTIONS.map((s) => {
+                const active = section === s.id;
+                return /* @__PURE__ */ jsx(
+                  "span",
+                  {
+                    role: "tab",
+                    "aria-selected": active,
+                    className: active ? "ext-glass--accent rounded-full" : "",
+                    children: /* @__PURE__ */ jsx(PillBtn, { active, onClick: () => onSelectSection(s.id), children: s.label })
+                  },
+                  s.id
+                );
+              })
+            }
+          )
         ] })
       ]
     }
@@ -40619,57 +41600,6 @@ const ACCENT = {
 };
 const HERO_SPARK = TIMELINE_24H.map((p) => p.solar + p.wind + p.water + p.hydro);
 
-const ITEMS = [
-  { id: "overview", label: "Overview", icon: LayoutDashboard },
-  { id: "solar", label: "Solar", icon: Sun, kind: "solar" },
-  { id: "wind", label: "Wind", icon: Wind, kind: "wind" },
-  { id: "water", label: "Water", icon: Droplets, kind: "water" },
-  { id: "hydro", label: "Hydro", icon: Mountain, kind: "hydro" },
-  { id: "storage", label: "Storage", icon: BatteryCharging, kind: "storage" },
-  { id: "settings", label: "Settings", icon: Settings }
-];
-function NavRail({
-  active,
-  onSelect
-}) {
-  return /* @__PURE__ */ jsx(
-    "nav",
-    {
-      "aria-label": "Energy sections",
-      className: "sticky top-2 flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-slate-950/70 p-2",
-      children: ITEMS.map((item) => {
-        const Icon = item.icon;
-        const isActive = active === item.id;
-        const accentCss = item.kind ? ACCENT[item.kind].from : "#CA8A04";
-        return /* @__PURE__ */ jsxs(
-          "button",
-          {
-            type: "button",
-            onClick: () => onSelect(item.id),
-            "aria-label": item.label,
-            "aria-current": isActive ? "page" : void 0,
-            title: item.label,
-            className: "group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 " + (isActive ? "nrg-nav-active text-white" : ""),
-            style: isActive ? { ["--nrg-nav-accent"]: accentCss } : void 0,
-            children: [
-              /* @__PURE__ */ jsx(Icon, { size: 18, className: "shrink-0" }),
-              /* @__PURE__ */ jsx(
-                "span",
-                {
-                  role: "tooltip",
-                  className: "pointer-events-none absolute left-full top-1/2 z-30 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-slate-900/95 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg backdrop-blur transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100",
-                  children: item.label
-                }
-              )
-            ]
-          },
-          item.id
-        );
-      })
-    }
-  );
-}
-
 function SolarPanelIllustration({ className, title = "Solar array" }) {
   return /* @__PURE__ */ jsxs(
     "svg",
@@ -40687,8 +41617,8 @@ function SolarPanelIllustration({ className, title = "Solar array" }) {
           ] }),
           /* @__PURE__ */ jsxs("radialGradient", { id: "nrg-sun", cx: "50%", cy: "50%", r: "50%", children: [
             /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#fef3c7" }),
-            /* @__PURE__ */ jsx("stop", { offset: "55%", stopColor: "#fbbf24" }),
-            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#f59e0b" })
+            /* @__PURE__ */ jsx("stop", { offset: "55%", stopColor: "var(--color-sun, #fbbf24)" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "var(--color-sun, #f59e0b)" })
           ] }),
           /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-panel", x1: "0", y1: "0", x2: "1", y2: "1", children: [
             /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#1e3a8a" }),
@@ -40698,8 +41628,8 @@ function SolarPanelIllustration({ className, title = "Solar array" }) {
         ] }),
         /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "160", height: "120", rx: "14", fill: "url(#nrg-sky)" }),
         /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "18", fill: "url(#nrg-sun)", opacity: "0.95" }),
-        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "28", fill: "#fbbf24", opacity: "0.12" }),
-        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "40", fill: "#fbbf24", opacity: "0.06" }),
+        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "28", fill: "var(--color-sun, #fbbf24)", opacity: "0.12" }),
+        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "40", fill: "var(--color-sun, #fbbf24)", opacity: "0.06" }),
         [0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
           const r1 = 22;
           const r2 = 30;
@@ -40908,8 +41838,8 @@ function BatteryIllustration({
             /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#0F0F23" })
           ] }),
           /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-bat-fill", x1: "0", y1: "0", x2: "1", y2: "0", children: [
-            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#65a30d" }),
-            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#a3e635" })
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "var(--color-moss, #65a30d)" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "var(--color-lime, #a3e635)" })
           ] }),
           /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-bat-shell", x1: "0", y1: "0", x2: "0", y2: "1", children: [
             /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#475569" }),
@@ -40921,7 +41851,7 @@ function BatteryIllustration({
           "path",
           {
             d: "M118 30 L108 56 L120 56 L110 84 L132 50 L120 50 Z",
-            fill: "#a3e635",
+            fill: "var(--color-lime, #a3e635)",
             opacity: "0.18"
           }
         ),
@@ -40959,7 +41889,7 @@ function BatteryIllustration({
             x: "76",
             y: "106",
             textAnchor: "middle",
-            fill: "#a3e635",
+            fill: "var(--color-lime, #a3e635)",
             fontSize: "11",
             fontWeight: "700",
             style: { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" },
@@ -40974,13 +41904,16 @@ function BatteryIllustration({
   );
 }
 
-function cardClass(kind) {
-  if (!kind) return "nrg-card";
-  return `nrg-card nrg-card--${kind}`;
-}
 function fmtInt$1(n) {
   return n.toLocaleString();
 }
+const SOURCE_TONE = {
+  solar: "text-amber-600 dark:text-amber-300",
+  wind: "text-cyan-600 dark:text-cyan-300",
+  water: "text-sky-600 dark:text-sky-300",
+  hydro: "text-indigo-600 dark:text-indigo-300",
+  storage: "text-lime-600 dark:text-lime-300"
+};
 function useCountUp(target, durationMs = 1100) {
   const [value, setValue] = React.useState(0);
   React.useEffect(() => {
@@ -41011,7 +41944,7 @@ function DeltaPill({
   return /* @__PURE__ */ jsxs(
     "span",
     {
-      className: "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium tabular-nums " + (good ? "border-lime-400/40 bg-lime-400/10 text-lime-300" : "border-amber-400/40 bg-amber-400/10 text-amber-300"),
+      className: "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium tabular-nums " + (good ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-600 dark:text-emerald-300" : "border-amber-400/40 bg-amber-400/10 text-amber-600 dark:text-amber-300"),
       children: [
         /* @__PURE__ */ jsx(Icon, { size: 12 }),
         Math.abs(pct).toFixed(1),
@@ -41023,11 +41956,11 @@ function DeltaPill({
 function TotalGenerationTile() {
   const v = useCountUp(TOTAL_KWH_TODAY);
   const sparkData = HERO_SPARK.map((y, i) => ({ i, y }));
-  return /* @__PURE__ */ jsxs("article", { className: cardClass("solar") + " p-5 lg:col-span-2", "aria-labelledby": "nrg-total-h", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5 lg:col-span-2", "aria-labelledby": "nrg-total-h", children: [
     /* @__PURE__ */ jsxs("header", { className: "flex items-start justify-between gap-3", children: [
       /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsx("span", { className: "rounded-lg bg-amber-400/15 p-1.5 text-amber-300", children: /* @__PURE__ */ jsx(Zap, { size: 16 }) }),
-        /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Total generation · today" })
+        /* @__PURE__ */ jsx("span", { className: "rounded-lg bg-amber-400/15 p-1.5 text-amber-600 dark:text-amber-300", children: /* @__PURE__ */ jsx(Zap, { size: 16 }) }),
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "Total generation · today" })
       ] }),
       /* @__PURE__ */ jsx(DeltaPill, { pct: TOTAL_KWH_DELTA_PCT })
     ] }),
@@ -41035,31 +41968,30 @@ function TotalGenerationTile() {
       /* @__PURE__ */ jsx(
         "div",
         {
-          className: "nrg-glow-amber text-5xl font-bold tabular-nums text-amber-200 sm:text-6xl",
-          style: { fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, monospace' },
+          className: "ext-num text-5xl font-bold leading-none text-foreground sm:text-6xl",
           id: "nrg-total-h",
           "aria-live": "polite",
           children: fmtInt$1(v)
         }
       ),
-      /* @__PURE__ */ jsx("div", { className: "pb-2 text-sm font-medium text-slate-300", children: "kWh" })
+      /* @__PURE__ */ jsx("div", { className: "pb-2 text-sm font-medium text-muted-foreground", children: "kWh" })
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "mt-1 text-xs text-slate-400", children: [
+    /* @__PURE__ */ jsxs("div", { className: "mt-1 text-xs text-muted-foreground", children: [
       "equivalent to powering ~",
       Math.round(TOTAL_KWH_TODAY / 30).toLocaleString(),
       " homes for a day"
     ] }),
     /* @__PURE__ */ jsx("div", { className: "mt-4 h-20", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs(AreaChart, { data: sparkData, margin: { top: 4, right: 0, bottom: 0, left: 0 }, children: [
       /* @__PURE__ */ jsx("defs", { children: /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-hero-spark", x1: "0", y1: "0", x2: "0", y2: "1", children: [
-        /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#fbbf24", stopOpacity: 0.7 }),
-        /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#fbbf24", stopOpacity: 0 })
+        /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "var(--color-primary)", stopOpacity: 0.55 }),
+        /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "var(--color-primary)", stopOpacity: 0 })
       ] }) }),
       /* @__PURE__ */ jsx(
         Area,
         {
           type: "monotone",
           dataKey: "y",
-          stroke: "#fbbf24",
+          stroke: "var(--color-primary)",
           strokeWidth: 2,
           fill: "url(#nrg-hero-spark)",
           isAnimationActive: false
@@ -41070,43 +42002,36 @@ function TotalGenerationTile() {
 }
 function Co2AvoidedTile() {
   const v = useCountUp(CO2_AVOIDED_KG);
-  return /* @__PURE__ */ jsxs("article", { className: cardClass("storage") + " p-5", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5", children: [
     /* @__PURE__ */ jsxs("header", { className: "flex items-start justify-between gap-3", children: [
       /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
-        /* @__PURE__ */ jsx("span", { className: "rounded-lg bg-lime-400/15 p-1.5 text-lime-300", children: /* @__PURE__ */ jsx(Leaf$1, { size: 16 }) }),
-        /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "CO₂ avoided · today" })
+        /* @__PURE__ */ jsx("span", { className: "rounded-lg bg-lime-400/15 p-1.5 text-lime-600 dark:text-lime-300", children: /* @__PURE__ */ jsx(Leaf$1, { size: 16 }) }),
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "CO₂ avoided · today" })
       ] }),
       /* @__PURE__ */ jsx(DeltaPill, { pct: CO2_DELTA_PCT })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "mt-4 flex items-end gap-2", children: [
-      /* @__PURE__ */ jsx(
-        "div",
-        {
-          className: "nrg-glow-lime text-4xl font-bold tabular-nums text-lime-200 sm:text-5xl",
-          style: { fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, monospace' },
-          children: fmtInt$1(v)
-        }
-      ),
-      /* @__PURE__ */ jsx("div", { className: "pb-1 text-xs font-medium text-slate-300", children: "kg CO₂" })
+      /* @__PURE__ */ jsx("div", { className: "ext-num text-4xl font-bold leading-none text-foreground sm:text-5xl", children: fmtInt$1(v) }),
+      /* @__PURE__ */ jsx("div", { className: "pb-1 text-xs font-medium text-muted-foreground", children: "kg CO₂" })
     ] }),
-    /* @__PURE__ */ jsxs("div", { className: "mt-2 grid grid-cols-2 gap-2 text-xs text-slate-400", children: [
-      /* @__PURE__ */ jsxs("div", { className: "rounded-md border border-white/10 bg-white/[0.02] p-2", children: [
-        /* @__PURE__ */ jsx("div", { className: "text-[0.65rem] uppercase tracking-wider opacity-70", children: "≈ trees / yr" }),
-        /* @__PURE__ */ jsx("div", { className: "mt-0.5 font-semibold text-slate-200 tabular-nums", children: Math.round(CO2_AVOIDED_KG / 21).toLocaleString() })
+    /* @__PURE__ */ jsxs("div", { className: "mt-3 grid grid-cols-2 gap-2 text-xs", children: [
+      /* @__PURE__ */ jsxs("div", { className: "rounded-md border border-border/60 bg-muted/30 p-2", children: [
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "≈ trees / yr" }),
+        /* @__PURE__ */ jsx("div", { className: "ext-num mt-0.5 font-semibold text-foreground", children: Math.round(CO2_AVOIDED_KG / 21).toLocaleString() })
       ] }),
-      /* @__PURE__ */ jsxs("div", { className: "rounded-md border border-white/10 bg-white/[0.02] p-2", children: [
-        /* @__PURE__ */ jsx("div", { className: "text-[0.65rem] uppercase tracking-wider opacity-70", children: "≈ km not driven" }),
-        /* @__PURE__ */ jsx("div", { className: "mt-0.5 font-semibold text-slate-200 tabular-nums", children: Math.round(CO2_AVOIDED_KG * 5.3).toLocaleString() })
+      /* @__PURE__ */ jsxs("div", { className: "rounded-md border border-border/60 bg-muted/30 p-2", children: [
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "≈ km not driven" }),
+        /* @__PURE__ */ jsx("div", { className: "ext-num mt-0.5 font-semibold text-foreground", children: Math.round(CO2_AVOIDED_KG * 5.3).toLocaleString() })
       ] })
     ] })
   ] });
 }
 function MixDonutTile() {
   const data = MIX_SHARE.map((d) => ({ name: d.label, value: d.value, color: d.color }));
-  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5", children: [
     /* @__PURE__ */ jsxs("header", { className: "flex items-center justify-between gap-2", children: [
-      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Generation mix" }),
-      /* @__PURE__ */ jsx("span", { className: "text-xs text-slate-500", children: "today" })
+      /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "Generation mix" }),
+      /* @__PURE__ */ jsx("span", { className: "text-xs text-muted-foreground", children: "today" })
     ] }),
     /* @__PURE__ */ jsxs("div", { className: "mt-2 grid grid-cols-[1fr_auto] items-center gap-3", children: [
       /* @__PURE__ */ jsx("div", { className: "h-44 min-w-0", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs(PieChart, { children: [
@@ -41115,10 +42040,10 @@ function MixDonutTile() {
           {
             cursor: { fill: "transparent" },
             contentStyle: {
-              background: "rgba(15, 23, 42, 0.95)",
-              border: "1px solid rgba(255,255,255,0.1)",
+              background: "var(--color-popover, var(--color-card))",
+              border: "1px solid var(--color-border)",
               borderRadius: 8,
-              color: "#F8FAFC",
+              color: "var(--color-foreground)",
               fontSize: 12
             },
             formatter: (value) => [`${Number(value)}%`, ""]
@@ -41133,7 +42058,7 @@ function MixDonutTile() {
             innerRadius: 45,
             outerRadius: 72,
             paddingAngle: 2,
-            stroke: "rgba(15,15,35,0.9)",
+            stroke: "var(--color-card)",
             strokeWidth: 2,
             children: data.map((entry) => /* @__PURE__ */ jsx(Cell, { fill: entry.color }, entry.name))
           }
@@ -41148,8 +42073,8 @@ function MixDonutTile() {
             style: { backgroundColor: d.color }
           }
         ),
-        /* @__PURE__ */ jsx("span", { className: "text-slate-300", children: d.label }),
-        /* @__PURE__ */ jsxs("span", { className: "ml-auto tabular-nums font-medium text-slate-100", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-muted-foreground", children: d.label }),
+        /* @__PURE__ */ jsxs("span", { className: "ext-num ml-auto font-medium text-foreground", children: [
           d.value,
           "%"
         ] })
@@ -41158,16 +42083,16 @@ function MixDonutTile() {
   ] });
 }
 function GenerationTimelineTile() {
-  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5 lg:col-span-3", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5 lg:col-span-3", children: [
     /* @__PURE__ */ jsxs("header", { className: "mb-2 flex items-end justify-between gap-3", children: [
       /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Generation timeline · last 24 hours" }),
-        /* @__PURE__ */ jsx("div", { className: "mt-1 text-sm font-medium text-slate-100", children: "Stacked by source · solar / wind / water / hydro" })
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "Generation timeline · last 24 hours" }),
+        /* @__PURE__ */ jsx("div", { className: "mt-1 text-sm font-medium text-foreground", children: "Stacked by source · solar / wind / water / hydro" })
       ] }),
       /* @__PURE__ */ jsx("div", { className: "flex flex-wrap items-center gap-2 text-xs", children: ["solar", "wind", "water", "hydro"].map((k) => /* @__PURE__ */ jsxs(
         "span",
         {
-          className: "inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5",
+          className: "inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-2 py-0.5",
           children: [
             /* @__PURE__ */ jsx(
               "span",
@@ -41177,7 +42102,7 @@ function GenerationTimelineTile() {
                 style: { backgroundColor: ACCENT[k].from }
               }
             ),
-            /* @__PURE__ */ jsx("span", { className: "capitalize text-slate-300", children: k })
+            /* @__PURE__ */ jsx("span", { className: "capitalize text-muted-foreground", children: k })
           ]
         },
         k
@@ -41185,21 +42110,21 @@ function GenerationTimelineTile() {
     ] }),
     /* @__PURE__ */ jsx("div", { className: "h-64 sm:h-72", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs(AreaChart, { data: TIMELINE_24H, margin: { top: 12, right: 8, bottom: 18, left: 4 }, children: [
       /* @__PURE__ */ jsx("defs", { children: ["solar", "wind", "water", "hydro"].map((k) => /* @__PURE__ */ jsxs("linearGradient", { id: `nrg-area-${k}`, x1: "0", y1: "0", x2: "0", y2: "1", children: [
-        /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: ACCENT[k].from, stopOpacity: 0.85 }),
+        /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: ACCENT[k].from, stopOpacity: 0.75 }),
         /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: ACCENT[k].to, stopOpacity: 0.05 })
       ] }, k)) }),
       /* @__PURE__ */ jsx(
         Tooltip,
         {
-          cursor: { stroke: "rgba(255,255,255,0.15)" },
+          cursor: { stroke: "var(--color-border)" },
           contentStyle: {
-            background: "rgba(15, 23, 42, 0.95)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            background: "var(--color-popover, var(--color-card))",
+            border: "1px solid var(--color-border)",
             borderRadius: 8,
-            color: "#F8FAFC",
+            color: "var(--color-foreground)",
             fontSize: 12
           },
-          labelStyle: { color: "#94a3b8", fontSize: 11 },
+          labelStyle: { color: "var(--color-muted-foreground)", fontSize: 11 },
           formatter: (value, name) => [`${Number(value).toLocaleString()} kW`, String(name)]
         }
       ),
@@ -41218,43 +42143,36 @@ function GenerationTimelineTile() {
         k
       ))
     ] }) }) }),
-    /* @__PURE__ */ jsx("div", { className: "mt-1 flex justify-between text-[0.65rem] tabular-nums text-slate-500", children: TIMELINE_24H.filter((_, i) => i % 4 === 0).map((p) => /* @__PURE__ */ jsx("span", { children: p.t }, p.t)) })
+    /* @__PURE__ */ jsx("div", { className: "ext-num mt-1 flex justify-between text-[0.65rem] text-muted-foreground", children: TIMELINE_24H.filter((_, i) => i % 4 === 0).map((p) => /* @__PURE__ */ jsx("span", { children: p.t }, p.t)) })
   ] });
 }
 function TopSitesTile() {
-  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5", children: [
     /* @__PURE__ */ jsxs("header", { className: "mb-3 flex items-center justify-between", children: [
-      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Top sites · today" }),
-      /* @__PURE__ */ jsx(TrendingUp, { size: 14, className: "text-slate-500" })
+      /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "Top sites · today" }),
+      /* @__PURE__ */ jsx(TrendingUp, { size: 14, className: "text-muted-foreground" })
     ] }),
     /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-2.5", children: TOP_SITES.map((s) => {
       const accent = ACCENT[s.kind];
       return /* @__PURE__ */ jsxs("li", { children: [
         /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-3 text-xs", children: [
           /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
-            /* @__PURE__ */ jsx("div", { className: "truncate text-sm font-medium text-slate-100", children: s.name }),
-            /* @__PURE__ */ jsxs("div", { className: "truncate text-[0.65rem] uppercase tracking-wider text-slate-500", children: [
+            /* @__PURE__ */ jsx("div", { className: "truncate text-sm font-medium text-foreground", children: s.name }),
+            /* @__PURE__ */ jsxs("div", { className: "ext-eyebrow truncate", children: [
               s.region,
               " · ",
               s.kind
             ] })
           ] }),
-          /* @__PURE__ */ jsxs(
-            "div",
-            {
-              className: "shrink-0 tabular-nums font-semibold text-slate-100",
-              style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
-              children: [
-                fmtInt$1(s.total),
-                /* @__PURE__ */ jsx("span", { className: "ml-1 text-[0.65rem] text-slate-400", children: "kWh" })
-              ]
-            }
-          )
+          /* @__PURE__ */ jsxs("div", { className: "ext-num shrink-0 font-semibold text-foreground", children: [
+            fmtInt$1(s.total),
+            /* @__PURE__ */ jsx("span", { className: "ml-1 text-[0.65rem] text-muted-foreground", children: "kWh" })
+          ] })
         ] }),
         /* @__PURE__ */ jsx(
           "div",
           {
-            className: "mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5",
+            className: "mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted/40",
             role: "progressbar",
             "aria-valuemin": 0,
             "aria-valuemax": 100,
@@ -41266,8 +42184,7 @@ function TopSitesTile() {
                 className: "h-full rounded-full",
                 style: {
                   width: `${s.share * 100}%`,
-                  background: `linear-gradient(90deg, ${accent.from}, ${accent.to})`,
-                  boxShadow: `0 0 16px -4px ${accent.from}`
+                  background: `linear-gradient(90deg, ${accent.from}, ${accent.to})`
                 }
               }
             )
@@ -41280,18 +42197,18 @@ function TopSitesTile() {
 function statusColor(status) {
   switch (status) {
     case "ok":
-      return { dot: "#a3e635", pulse: "rgba(163, 230, 53, 0.55)" };
+      return { dot: "#22c55e", pulse: "rgba(34, 197, 94, 0.55)" };
     case "warn":
-      return { dot: "#fbbf24", pulse: "rgba(251, 191, 36, 0.55)" };
+      return { dot: "#f59e0b", pulse: "rgba(245, 158, 11, 0.55)" };
     case "fault":
       return { dot: "#ef4444", pulse: "rgba(239, 68, 68, 0.55)" };
   }
 }
 function LiveStatusTile() {
-  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5", children: [
     /* @__PURE__ */ jsxs("header", { className: "mb-3 flex items-center justify-between", children: [
-      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Live status" }),
-      /* @__PURE__ */ jsx("span", { className: "text-[0.65rem] uppercase tracking-wider text-slate-500", children: "streaming" })
+      /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "Live status" }),
+      /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "streaming" })
     ] }),
     /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-3", children: LIVE_STATUS.map((s) => {
       const c = statusColor(s.status);
@@ -41309,24 +42226,17 @@ function LiveStatusTile() {
         ),
         /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
           /* @__PURE__ */ jsxs("div", { className: "flex items-baseline justify-between gap-2", children: [
-            /* @__PURE__ */ jsx("span", { className: "truncate text-sm font-medium text-slate-100", children: s.label }),
-            /* @__PURE__ */ jsxs(
-              "span",
-              {
-                className: "shrink-0 tabular-nums text-sm font-semibold text-slate-100",
-                style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
-                children: [
-                  s.online,
-                  s.offline > 0 ? /* @__PURE__ */ jsxs("span", { className: "ml-1 text-xs font-normal text-amber-300/80", children: [
-                    "/",
-                    s.offline,
-                    "↓"
-                  ] }) : null
-                ]
-              }
-            )
+            /* @__PURE__ */ jsx("span", { className: "truncate text-sm font-medium text-foreground", children: s.label }),
+            /* @__PURE__ */ jsxs("span", { className: "ext-num shrink-0 text-sm font-semibold text-foreground", children: [
+              s.online,
+              s.offline > 0 ? /* @__PURE__ */ jsxs("span", { className: "ml-1 text-xs font-normal text-amber-600 dark:text-amber-300", children: [
+                "/",
+                s.offline,
+                "↓"
+              ] }) : null
+            ] })
           ] }),
-          /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] text-slate-400", children: s.detail })
+          /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] text-muted-foreground", children: s.detail })
         ] })
       ] }, s.kind);
     }) })
@@ -41335,47 +42245,40 @@ function LiveStatusTile() {
 function WeatherGlyph({ icon }) {
   switch (icon) {
     case "sun":
-      return /* @__PURE__ */ jsx(Sun, { size: 20, className: "text-amber-300" });
+      return /* @__PURE__ */ jsx(Sun, { size: 20, className: "text-amber-500 dark:text-amber-300" });
     case "cloud":
-      return /* @__PURE__ */ jsx(Cloud, { size: 20, className: "text-slate-300" });
+      return /* @__PURE__ */ jsx(Cloud, { size: 20, className: "text-muted-foreground" });
     case "rain":
-      return /* @__PURE__ */ jsx(CloudRain, { size: 20, className: "text-sky-300" });
+      return /* @__PURE__ */ jsx(CloudRain, { size: 20, className: "text-sky-500 dark:text-sky-300" });
     case "wind":
-      return /* @__PURE__ */ jsx(Wind, { size: 20, className: "text-cyan-300" });
+      return /* @__PURE__ */ jsx(Wind, { size: 20, className: "text-cyan-500 dark:text-cyan-300" });
   }
 }
 function WeatherTile() {
-  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+  return /* @__PURE__ */ jsxs("article", { className: "ext-glass p-5", children: [
     /* @__PURE__ */ jsxs("header", { className: "mb-3 flex items-center justify-between", children: [
-      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Forecast · 5 day" }),
-      /* @__PURE__ */ jsx("span", { className: "text-[0.65rem] uppercase tracking-wider text-slate-500", children: "drives plan" })
+      /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: "Forecast · 5 day" }),
+      /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "drives plan" })
     ] }),
     /* @__PURE__ */ jsx("ul", { className: "grid grid-cols-5 gap-2", children: WEATHER_5D.map((d) => /* @__PURE__ */ jsxs(
       "li",
       {
-        className: "rounded-lg border border-white/10 bg-white/[0.02] p-2 text-center",
+        className: "rounded-lg border border-border/60 bg-muted/30 p-2 text-center",
         children: [
-          /* @__PURE__ */ jsx("div", { className: "text-[0.65rem] uppercase tracking-wider text-slate-400", children: d.day }),
+          /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: d.day }),
           /* @__PURE__ */ jsx("div", { className: "my-1.5 flex justify-center", children: /* @__PURE__ */ jsx(WeatherGlyph, { icon: d.icon }) }),
-          /* @__PURE__ */ jsxs(
-            "div",
-            {
-              className: "text-xs font-semibold tabular-nums text-slate-100",
-              style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
-              children: [
-                d.high,
-                "°",
-                /* @__PURE__ */ jsxs("span", { className: "font-normal text-slate-500", children: [
-                  "/",
-                  d.low,
-                  "°"
-                ] })
-              ]
-            }
-          ),
-          /* @__PURE__ */ jsxs("div", { className: "mt-1 inline-flex items-center gap-0.5 text-[0.65rem] text-slate-400", children: [
+          /* @__PURE__ */ jsxs("div", { className: "ext-num text-xs font-semibold text-foreground", children: [
+            d.high,
+            "°",
+            /* @__PURE__ */ jsxs("span", { className: "font-normal text-muted-foreground", children: [
+              "/",
+              d.low,
+              "°"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "mt-1 inline-flex items-center gap-0.5 text-[0.65rem] text-muted-foreground", children: [
             /* @__PURE__ */ jsx(Wind, { size: 9 }),
-            /* @__PURE__ */ jsx("span", { className: "tabular-nums", children: d.wind })
+            /* @__PURE__ */ jsx("span", { className: "ext-num", children: d.wind })
           ] })
         ]
       },
@@ -41384,7 +42287,7 @@ function WeatherTile() {
   ] });
 }
 function SourceVignettes() {
-  return /* @__PURE__ */ jsx("article", { className: cardClass() + " p-3 lg:col-span-3", children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-3 md:grid-cols-5", children: [
+  return /* @__PURE__ */ jsx("article", { className: "ext-glass p-3 lg:col-span-3", children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-3 md:grid-cols-5", children: [
     /* @__PURE__ */ jsx(
       Vignette,
       {
@@ -41438,67 +42341,51 @@ function Vignette({
   label,
   illustration
 }) {
-  const accent = ACCENT[kind];
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      className: "rounded-xl border border-white/10 bg-slate-950/40 p-2 transition-colors duration-200 hover:bg-slate-950/70",
-      children: [
-        /* @__PURE__ */ jsx("div", { className: "overflow-hidden rounded-lg", children: illustration }),
-        /* @__PURE__ */ jsxs("div", { className: "mt-2 flex items-baseline justify-between gap-2 px-1", children: [
-          /* @__PURE__ */ jsx("span", { className: "text-[0.65rem] uppercase tracking-[0.16em] " + accent.text, children: kind }),
-          /* @__PURE__ */ jsx(
-            "span",
-            {
-              className: "text-sm font-semibold tabular-nums text-slate-100",
-              style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
-              children: metric
-            }
-          )
-        ] }),
-        /* @__PURE__ */ jsx("div", { className: "px-1 text-[0.7rem] text-slate-400", children: label })
-      ]
-    }
-  );
+  return /* @__PURE__ */ jsxs("div", { className: "rounded-xl border border-border/60 bg-muted/20 p-2 transition-colors duration-200 hover:bg-muted/40", children: [
+    /* @__PURE__ */ jsx("div", { className: "overflow-hidden rounded-lg", children: illustration }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-2 flex items-baseline justify-between gap-2 px-1", children: [
+      /* @__PURE__ */ jsx("span", { className: "ext-eyebrow " + SOURCE_TONE[kind], children: kind }),
+      /* @__PURE__ */ jsx("span", { className: "ext-num text-sm font-semibold text-foreground", children: metric })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "px-1 text-[0.7rem] text-muted-foreground", children: label })
+  ] });
 }
 
 function EnergyPage() {
   const [section, setSection] = React.useState("overview");
-  return /* @__PURE__ */ jsx(
+  return /* @__PURE__ */ jsxs(
     "div",
     {
       "data-ext-id": EXTENSION_ID,
       "data-ext-page": "energy",
-      className: "nrg-shell rounded-2xl p-3 sm:p-4",
-      style: { fontFamily: '"Fira Sans", ui-sans-serif, system-ui, sans-serif' },
-      children: /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-3 sm:gap-4", children: [
-        /* @__PURE__ */ jsx(NavRail, { active: section, onSelect: setSection }),
-        /* @__PURE__ */ jsxs("div", { className: "flex min-w-0 flex-1 flex-col gap-4", children: [
-          /* @__PURE__ */ jsx(
-            HeroGradient,
-            {
-              title: titleFor(section),
-              subtitle: subtitleFor(section),
-              breadcrumb: ["Rubix-OS", "Energy", sectionLabel(section)],
-              rightEl: /* @__PURE__ */ jsxs("div", { className: "hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white backdrop-blur sm:inline-flex", children: [
-                /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full bg-lime-300 shadow-[0_0_10px_2px_rgba(163,230,53,0.7)]" }),
-                "live · v1 mock data"
-              ] })
-            }
-          ),
-          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-3 lg:grid-cols-3", children: [
-            /* @__PURE__ */ jsx(TotalGenerationTile, {}),
-            /* @__PURE__ */ jsx(MixDonutTile, {}),
-            /* @__PURE__ */ jsx(Co2AvoidedTile, {}),
-            /* @__PURE__ */ jsx(SourceVignettes, {}),
-            /* @__PURE__ */ jsx(GenerationTimelineTile, {}),
-            /* @__PURE__ */ jsx(TopSitesTile, {}),
-            /* @__PURE__ */ jsx(LiveStatusTile, {}),
-            /* @__PURE__ */ jsx(WeatherTile, {})
-          ] }),
-          /* @__PURE__ */ jsx("footer", { className: "mt-2 text-[0.65rem] uppercase tracking-[0.16em] text-slate-500", children: "v1 presentation · mock data · live warehouse wiring follow-up" })
-        ] })
-      ] })
+      className: "flex min-w-0 flex-col gap-4 p-3 sm:p-4",
+      children: [
+        /* @__PURE__ */ jsx(
+          HeroGradient,
+          {
+            title: titleFor(section),
+            subtitle: subtitleFor(section),
+            breadcrumb: ["Rubix-OS", "Energy", sectionLabel(section)],
+            section,
+            onSelectSection: setSection,
+            rightEl: /* @__PURE__ */ jsxs("div", { className: "hidden items-center gap-2 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground sm:inline-flex", children: [
+              /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_2px_color-mix(in_oklab,var(--color-primary)_50%,transparent)]" }),
+              "live · v1 mock data"
+            ] })
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-3 lg:grid-cols-3", children: [
+          /* @__PURE__ */ jsx(TotalGenerationTile, {}),
+          /* @__PURE__ */ jsx(MixDonutTile, {}),
+          /* @__PURE__ */ jsx(Co2AvoidedTile, {}),
+          /* @__PURE__ */ jsx(SourceVignettes, {}),
+          /* @__PURE__ */ jsx(GenerationTimelineTile, {}),
+          /* @__PURE__ */ jsx(TopSitesTile, {}),
+          /* @__PURE__ */ jsx(LiveStatusTile, {}),
+          /* @__PURE__ */ jsx(WeatherTile, {})
+        ] }),
+        /* @__PURE__ */ jsx("footer", { className: "ext-eyebrow mt-2", children: "v1 presentation · mock data · live warehouse wiring follow-up" })
+      ]
     }
   );
 }
@@ -41516,8 +42403,6 @@ function sectionLabel(s) {
       return "Hydro";
     case "storage":
       return "Storage";
-    case "settings":
-      return "Settings";
   }
 }
 function titleFor(s) {
@@ -41538,12 +42423,10 @@ function subtitleFor(s) {
       return "Dams and penstocks — reservoir reserve, spillway state, throttling.";
     case "storage":
       return "Battery stacks — state of charge, throughput, cycle health.";
-    case "settings":
-      return "Tile preferences, units, alert thresholds.";
   }
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T03:59:49.220Z"}`;
+const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T06:07:34.419Z"}`;
 if (typeof window !== "undefined") {
   console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
   window.__rubixosBuild = RUBIXOS_BUILD_STAMP;
@@ -42228,6 +43111,1258 @@ function Branch({
   );
 }
 
+const tool = (name) => `${EXTENSION_ID}.${name}`;
+function decode(barcode) {
+  return callTool(tool("bc_decode"), { barcode });
+}
+function provision(input) {
+  return callTool(tool("bc_provision"), input);
+}
+function deviceUpdate(row) {
+  return callTool(tool("bc_device_update"), { row });
+}
+function decommission(device_ids, hard = false) {
+  return callTool(tool("bc_device_decommission"), { device_ids, hard });
+}
+function siteCreate(row) {
+  return callTool(tool("bc_site_create"), { row });
+}
+function locationCreate(row) {
+  return callTool(tool("bc_location_create"), { row });
+}
+function templateUpsert(yaml) {
+  return callTool(tool("bc_template_upsert"), { yaml });
+}
+function labelRender(device_id) {
+  return callTool(tool("bc_label_render"), { device_id });
+}
+function listDevices(params = {}) {
+  return fetchTemplate(tool("bc_devices_list"), params);
+}
+function listSites(limit = 200) {
+  return fetchTemplate(tool("bc_sites_list"), { limit });
+}
+function listLocations(params = {}) {
+  return fetchTemplate(tool("bc_locations_list"), params);
+}
+function listPages(limit = 200) {
+  return fetchTemplate(tool("bc_pages_list"), { limit });
+}
+function listTemplates(limit = 200) {
+  return fetchTemplate(tool("bc_templates_list"), { limit });
+}
+function getTemplateYaml(template) {
+  return fetchTemplate(tool("bc_template_yaml"), { template });
+}
+function pointsByDevice(device_id) {
+  return fetchTemplate(tool("bc_points_by_device"), { device_id });
+}
+function widgetsByPage(page_id) {
+  return fetchTemplate(tool("bc_widgets_by_page"), { page_id });
+}
+
+function Scan({ onScanned }) {
+  const videoRef = React.useRef(null);
+  const [manual, setManual] = React.useState("");
+  const [camError, setCamError] = React.useState(null);
+  const supported = typeof window !== "undefined" && "BarcodeDetector" in window;
+  React.useEffect(() => {
+    if (!supported) return;
+    let stream = null;
+    let raf = 0;
+    let stopped = false;
+    const Ctor = window.BarcodeDetector;
+    const detector = new Ctor({ formats: ["qr_code", "code_128"] });
+    (async () => {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        const video = videoRef.current;
+        if (!video) return;
+        video.srcObject = stream;
+        await video.play();
+        const tick = async () => {
+          if (stopped || !video.videoWidth) {
+            raf = requestAnimationFrame(tick);
+            return;
+          }
+          try {
+            const hits = await detector.detect(video);
+            if (hits[0]?.rawValue) {
+              onScanned(hits[0].rawValue);
+              return;
+            }
+          } catch {
+          }
+          raf = requestAnimationFrame(tick);
+        };
+        raf = requestAnimationFrame(tick);
+      } catch (e) {
+        setCamError(e instanceof Error ? e.message : String(e));
+      }
+    })();
+    return () => {
+      stopped = true;
+      cancelAnimationFrame(raf);
+      stream?.getTracks().forEach((t) => t.stop());
+    };
+  }, [supported, onScanned]);
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    supported ? /* @__PURE__ */ jsxs("div", { className: "relative overflow-hidden rounded-xl border border-border/60 bg-black", children: [
+      /* @__PURE__ */ jsx("video", { ref: videoRef, muted: true, playsInline: true, className: "aspect-square w-full object-cover" }),
+      /* @__PURE__ */ jsx("div", { className: "pointer-events-none absolute inset-6 rounded-lg border-2 border-primary/70" })
+    ] }) : /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 rounded-lg border border-border/60 bg-card p-3 text-sm text-muted-foreground", children: [
+      /* @__PURE__ */ jsx(Camera, { className: "size-4" }),
+      "Camera scanning unavailable on this device — enter the code below."
+    ] }),
+    camError ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: camError }) : null,
+    /* @__PURE__ */ jsxs(
+      "form",
+      {
+        className: "flex flex-col gap-2",
+        onSubmit: (e) => {
+          e.preventDefault();
+          if (manual.trim()) onScanned(manual.trim());
+        },
+        children: [
+          /* @__PURE__ */ jsxs("label", { htmlFor: "manual-bc", className: "flex items-center gap-2 text-sm font-medium text-foreground", children: [
+            /* @__PURE__ */ jsx(Keyboard, { className: "size-4" }),
+            " Or type / paste a code"
+          ] }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              id: "manual-bc",
+              value: manual,
+              onChange: (e) => setManual(e.target.value),
+              placeholder: "rubix://add?... or device serial",
+              className: "rounded-lg border border-border/60 bg-background px-3 py-3 text-base text-foreground outline-none focus:border-primary"
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "submit",
+              disabled: !manual.trim(),
+              className: "rounded-lg bg-primary px-4 py-3 text-base font-semibold text-primary-foreground disabled:opacity-50",
+              children: "Use this"
+            }
+          )
+        ]
+      }
+    )
+  ] });
+}
+
+function Identify({ identity }) {
+  const t = identity.template;
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3 rounded-xl border border-border/60 bg-card p-4", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary", children: /* @__PURE__ */ jsx(Cpu, { className: "size-6" }) }),
+      /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+        /* @__PURE__ */ jsx("div", { className: "truncate text-base font-semibold text-foreground", children: t.display_name }),
+        /* @__PURE__ */ jsxs("div", { className: "truncate text-sm text-muted-foreground", children: [
+          identity.model,
+          " · ",
+          identity.network,
+          " · ",
+          t.category
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "truncate font-mono text-xs text-muted-foreground", children: identity.id })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "rounded-xl border border-border/60 bg-card", children: [
+      /* @__PURE__ */ jsxs("header", { className: "border-b border-border/60 px-4 py-2 text-xs font-medium text-muted-foreground", children: [
+        t.points.length,
+        " points · addr ",
+        identity.address
+      ] }),
+      /* @__PURE__ */ jsx("ul", { className: "divide-y divide-border/40", children: t.points.slice(0, 8).map((p) => /* @__PURE__ */ jsxs("li", { className: "flex items-center justify-between px-4 py-2 text-sm", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-foreground", children: p.name }),
+        /* @__PURE__ */ jsx("span", { className: "rounded bg-muted px-1.5 py-0.5 text-xs text-muted-foreground", children: p.widget })
+      ] }, p.key)) })
+    ] })
+  ] });
+}
+
+const EMPTY_PLACEMENT = {
+  siteId: "",
+  locationId: "",
+  newLocation: "",
+  pageId: "",
+  newPage: ""
+};
+function Place({
+  value,
+  onChange
+}) {
+  const [sites, setSites] = React.useState([]);
+  const [locations, setLocations] = React.useState([]);
+  const [pages, setPages] = React.useState([]);
+  const set = (patch) => onChange({ ...value, ...patch });
+  React.useEffect(() => {
+    listSites().then(setSites).catch(() => setSites([]));
+    listPages().then(setPages).catch(() => setPages([]));
+  }, []);
+  React.useEffect(() => {
+    if (!value.siteId) return setLocations([]);
+    listLocations({ site_id: value.siteId }).then(setLocations).catch(() => setLocations([]));
+  }, [value.siteId]);
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    /* @__PURE__ */ jsx(Field, { label: "Site", children: /* @__PURE__ */ jsx(
+      Picker,
+      {
+        value: value.siteId,
+        placeholder: "Select a site",
+        options: sites.map((s) => ({ value: s.site_id, label: s.name })),
+        onChange: (v) => set({ siteId: v, locationId: "", newLocation: "" })
+      }
+    ) }),
+    value.siteId ? /* @__PURE__ */ jsxs(Field, { label: "Location", children: [
+      /* @__PURE__ */ jsx(
+        Picker,
+        {
+          value: value.locationId,
+          placeholder: "+ New location",
+          options: locations.map((l) => ({ value: l.location_id, label: l.name })),
+          onChange: (v) => set({ locationId: v, newLocation: "" })
+        }
+      ),
+      !value.locationId ? /* @__PURE__ */ jsx(
+        "input",
+        {
+          value: value.newLocation,
+          onChange: (e) => set({ newLocation: e.target.value }),
+          placeholder: "New location name",
+          className: "mt-2 w-full rounded-lg border border-border/60 bg-background px-3 py-3 text-base text-foreground outline-none focus:border-primary"
+        }
+      ) : null
+    ] }) : null,
+    /* @__PURE__ */ jsxs(Field, { label: "Page (optional)", children: [
+      /* @__PURE__ */ jsx(
+        Picker,
+        {
+          value: value.pageId,
+          placeholder: "+ New page",
+          options: pages.map((p) => ({ value: p.page_id, label: p.name })),
+          onChange: (v) => set({ pageId: v, newPage: "" })
+        }
+      ),
+      !value.pageId ? /* @__PURE__ */ jsx(
+        "input",
+        {
+          value: value.newPage,
+          onChange: (e) => set({ newPage: e.target.value }),
+          placeholder: "New page name (optional)",
+          className: "mt-2 w-full rounded-lg border border-border/60 bg-background px-3 py-3 text-base text-foreground outline-none focus:border-primary"
+        }
+      ) : null
+    ] })
+  ] });
+}
+function Field({ label, children }) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
+    /* @__PURE__ */ jsx("span", { className: "text-xs font-medium text-muted-foreground", children: label }),
+    children
+  ] });
+}
+function Picker({
+  value,
+  options,
+  placeholder,
+  onChange
+}) {
+  return /* @__PURE__ */ jsxs(
+    "select",
+    {
+      value,
+      onChange: (e) => onChange(e.target.value),
+      className: "w-full rounded-lg border border-border/60 bg-background px-3 py-3 text-base text-foreground outline-none focus:border-primary",
+      children: [
+        /* @__PURE__ */ jsx("option", { value: "", children: placeholder }),
+        options.map((o) => /* @__PURE__ */ jsx("option", { value: o.value, children: o.label }, o.value))
+      ]
+    }
+  );
+}
+
+function buildProvisionInput(barcode, placement, toggles, name) {
+  const input = { barcode, trend: toggles.trend, alarm: toggles.alarm };
+  if (placement.siteId) input.site_id = placement.siteId;
+  if (placement.locationId) input.location_id = placement.locationId;
+  else if (placement.newLocation.trim()) input.new_location = { name: placement.newLocation.trim() };
+  if (placement.pageId) input.page_id = placement.pageId;
+  else if (placement.newPage.trim()) input.new_page = { name: placement.newPage.trim() };
+  if (name?.trim()) input.name = name.trim();
+  return input;
+}
+
+function GaugeWidget({ title, value, unit }) {
+  const pct = typeof value === "number" ? Math.max(0, Math.min(100, value)) : 62;
+  const radius = 34;
+  const circ = Math.PI * radius;
+  const dash = pct / 100 * circ;
+  return /* @__PURE__ */ jsxs("figure", { className: "flex flex-col items-center gap-1", children: [
+    /* @__PURE__ */ jsxs("svg", { viewBox: "0 0 90 52", className: "w-full max-w-[120px]", children: [
+      /* @__PURE__ */ jsx(
+        "path",
+        {
+          d: "M 11 48 A 34 34 0 0 1 79 48",
+          fill: "none",
+          stroke: "currentColor",
+          className: "text-muted",
+          strokeWidth: "8",
+          strokeLinecap: "round"
+        }
+      ),
+      /* @__PURE__ */ jsx(
+        "path",
+        {
+          d: "M 11 48 A 34 34 0 0 1 79 48",
+          fill: "none",
+          stroke: "currentColor",
+          className: "text-primary",
+          strokeWidth: "8",
+          strokeLinecap: "round",
+          strokeDasharray: `${dash} ${circ}`
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "text-lg font-semibold tabular-nums text-foreground", children: [
+      typeof value === "number" ? value : "—",
+      unit ? /* @__PURE__ */ jsxs("span", { className: "text-xs text-muted-foreground", children: [
+        " ",
+        unit
+      ] }) : null
+    ] }),
+    /* @__PURE__ */ jsx("figcaption", { className: "text-xs text-muted-foreground", children: title })
+  ] });
+}
+
+function StatWidget({ title, value, unit }) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
+    /* @__PURE__ */ jsx("span", { className: "text-xs uppercase tracking-wide text-muted-foreground", children: title }),
+    /* @__PURE__ */ jsxs("span", { className: "text-2xl font-semibold tabular-nums text-foreground", children: [
+      value ?? "—",
+      unit ? /* @__PURE__ */ jsx("span", { className: "ml-1 text-sm text-muted-foreground", children: unit }) : null
+    ] })
+  ] });
+}
+
+function BatteryWidget({ title, value }) {
+  const pct = typeof value === "number" ? Math.max(0, Math.min(100, value)) : 78;
+  const tone = pct < 20 ? "bg-destructive" : pct < 50 ? "bg-yellow-500" : "bg-primary";
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 text-xs text-muted-foreground", children: [
+      /* @__PURE__ */ jsx(BatteryMedium, { className: "size-4" }),
+      /* @__PURE__ */ jsx("span", { children: title })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "h-3 w-full overflow-hidden rounded-full bg-muted", children: /* @__PURE__ */ jsx("div", { className: `h-full ${tone}`, style: { width: `${pct}%` } }) }),
+    /* @__PURE__ */ jsxs("span", { className: "text-sm font-medium tabular-nums text-foreground", children: [
+      pct,
+      "%"
+    ] })
+  ] });
+}
+
+function CounterWidget({ title, value, unit }) {
+  const shown = value ?? 128450;
+  return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+    /* @__PURE__ */ jsx(Gauge, { className: "size-5 text-muted-foreground" }),
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-col", children: [
+      /* @__PURE__ */ jsx("span", { className: "text-xs text-muted-foreground", children: title }),
+      /* @__PURE__ */ jsxs("span", { className: "font-mono text-lg tabular-nums text-foreground", children: [
+        shown,
+        unit ? /* @__PURE__ */ jsx("span", { className: "ml-1 text-xs text-muted-foreground", children: unit }) : null
+      ] })
+    ] })
+  ] });
+}
+
+function LedWidget({ title, value }) {
+  const on = value === void 0 ? true : Boolean(value);
+  return /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+    /* @__PURE__ */ jsx(
+      "span",
+      {
+        className: "inline-block size-3 rounded-full " + (on ? "bg-emerald-500 shadow-[0_0_8px] shadow-emerald-500/60" : "bg-muted-foreground/40"),
+        "aria-hidden": true
+      }
+    ),
+    /* @__PURE__ */ jsx("span", { className: "text-sm text-foreground", children: title }),
+    /* @__PURE__ */ jsx("span", { className: "ml-auto text-xs text-muted-foreground", children: on ? "ON" : "OFF" })
+  ] });
+}
+
+function Switch({
+  checked,
+  onChange,
+  label,
+  disabled
+}) {
+  return /* @__PURE__ */ jsxs("label", { className: "flex items-center gap-2 text-sm select-none", children: [
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        role: "switch",
+        "aria-checked": checked,
+        "aria-label": label,
+        disabled,
+        onClick: () => onChange?.(!checked),
+        className: "relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors disabled:opacity-50 " + (checked ? "bg-primary" : "bg-muted"),
+        children: /* @__PURE__ */ jsx(
+          "span",
+          {
+            className: "inline-block h-4 w-4 transform rounded-full bg-background shadow transition-transform " + (checked ? "translate-x-4" : "translate-x-0.5")
+          }
+        )
+      }
+    ),
+    /* @__PURE__ */ jsx("span", { className: "text-foreground", children: label })
+  ] });
+}
+
+function ToggleWidget({ title, value }) {
+  const on = value === void 0 ? false : Boolean(value);
+  return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-2", children: [
+    /* @__PURE__ */ jsx("span", { className: "text-sm text-foreground", children: title }),
+    /* @__PURE__ */ jsx(Switch, { checked: on, label: title, disabled: true })
+  ] });
+}
+
+const MOCK = [4, 6, 5, 8, 7, 9, 6, 10, 8, 11].map((v, i) => ({ i, v }));
+function LineWidget({ title, unit }) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
+    /* @__PURE__ */ jsxs("span", { className: "text-xs text-muted-foreground", children: [
+      title,
+      unit ? ` (${unit})` : ""
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "h-12 w-full text-primary", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsx(LineChart, { data: MOCK, children: /* @__PURE__ */ jsx(
+      Line,
+      {
+        type: "monotone",
+        dataKey: "v",
+        stroke: "currentColor",
+        strokeWidth: 2,
+        dot: false,
+        isAnimationActive: false
+      }
+    ) }) }) })
+  ] });
+}
+
+const REGISTRY = {
+  gauge: GaugeWidget,
+  stat: StatWidget,
+  battery: BatteryWidget,
+  counter: CounterWidget,
+  led: LedWidget,
+  toggle: ToggleWidget,
+  line: LineWidget
+};
+function renderWidget(widget, props) {
+  const Cmp = REGISTRY[widget] ?? StatWidget;
+  return /* @__PURE__ */ jsx(Cmp, { ...props, widget });
+}
+
+function Confirm({
+  barcode,
+  identity,
+  placement,
+  onDone
+}) {
+  const [trend, setTrend] = React.useState(true);
+  const [alarm, setAlarm] = React.useState(true);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [result, setResult] = React.useState(null);
+  const submit = () => {
+    setBusy(true);
+    setError(null);
+    provision(buildProvisionInput(barcode, placement, { trend, alarm })).then(setResult).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  if (result) {
+    const preview = identity.template.points[0];
+    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center gap-4 py-6 text-center", children: [
+      /* @__PURE__ */ jsx(CircleCheck, { className: "size-14 text-emerald-500" }),
+      /* @__PURE__ */ jsx("div", { className: "text-lg font-semibold text-foreground", children: "Provisioned" }),
+      /* @__PURE__ */ jsxs("div", { className: "text-sm text-muted-foreground", children: [
+        result.points,
+        " points · ",
+        result.widgets,
+        " widgets · ",
+        result.alarms,
+        " alarms"
+      ] }),
+      preview ? /* @__PURE__ */ jsx("div", { className: "w-full max-w-xs rounded-lg border border-border/60 bg-card p-4", children: renderWidget(preview.widget, { title: preview.name, widget: preview.widget }) }) : null,
+      result.warnings.length > 0 ? /* @__PURE__ */ jsx("ul", { className: "w-full rounded-md border border-yellow-500/40 bg-yellow-500/10 p-3 text-left text-xs text-foreground", children: result.warnings.map((w, i) => /* @__PURE__ */ jsxs("li", { children: [
+        "• ",
+        w
+      ] }, i)) }) : null,
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: onDone,
+          className: "w-full rounded-lg bg-primary px-4 py-3 text-base font-semibold text-primary-foreground",
+          children: "Scan another"
+        }
+      )
+    ] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 rounded-xl border border-border/60 bg-card p-4", children: [
+      /* @__PURE__ */ jsx(Switch, { checked: trend, onChange: setTrend, label: "Enable trends" }),
+      /* @__PURE__ */ jsx(Switch, { checked: alarm, onChange: setAlarm, label: "Enable alarms" })
+    ] }),
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        onClick: submit,
+        disabled: busy,
+        className: "rounded-lg bg-primary px-4 py-3 text-base font-semibold text-primary-foreground disabled:opacity-50",
+        children: busy ? "Provisioning…" : "Confirm & provision"
+      }
+    )
+  ] });
+}
+
+const TITLES = {
+  scan: "Scan device",
+  identify: "Confirm device",
+  place: "Place device",
+  confirm: "Provision"
+};
+function PwaApp() {
+  const [step, setStep] = React.useState("scan");
+  const [barcode, setBarcode] = React.useState("");
+  const [identity, setIdentity] = React.useState(null);
+  const [placement, setPlacement] = React.useState(EMPTY_PLACEMENT);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const reset = () => {
+    setStep("scan");
+    setBarcode("");
+    setIdentity(null);
+    setPlacement(EMPTY_PLACEMENT);
+    setError(null);
+  };
+  const onScanned = (code) => {
+    setBusy(true);
+    setError(null);
+    decode(code).then((id) => {
+      setBarcode(code);
+      setIdentity(id);
+      setStep("identify");
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  const back = () => {
+    if (step === "identify") reset();
+    else if (step === "place") setStep("identify");
+    else if (step === "confirm") setStep("place");
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "mx-auto flex min-h-[100dvh] w-full max-w-md flex-col gap-4 p-4", children: [
+    /* @__PURE__ */ jsxs("header", { className: "flex items-center gap-2", children: [
+      step !== "scan" ? /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Back", onClick: back, className: "rounded p-1 hover:bg-accent", children: /* @__PURE__ */ jsx(ArrowLeft, { className: "size-5" }) }) : null,
+      /* @__PURE__ */ jsx("h2", { className: "text-lg font-semibold text-foreground", children: TITLES[step] }),
+      busy ? /* @__PURE__ */ jsx(LoaderCircle, { className: "ml-auto size-5 animate-spin text-muted-foreground" }) : null
+    ] }),
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    step === "scan" ? /* @__PURE__ */ jsx(Scan, { onScanned }) : null,
+    step === "identify" && identity ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(Identify, { identity }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => setStep("place"),
+          className: "rounded-lg bg-primary px-4 py-3 text-base font-semibold text-primary-foreground",
+          children: "Continue"
+        }
+      )
+    ] }) : null,
+    step === "place" ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(Place, { value: placement, onChange: setPlacement }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: () => setStep("confirm"),
+          className: "rounded-lg bg-primary px-4 py-3 text-base font-semibold text-primary-foreground",
+          children: "Continue"
+        }
+      )
+    ] }) : null,
+    step === "confirm" && identity ? /* @__PURE__ */ jsx(Confirm, { barcode, identity, placement, onDone: reset }) : null
+  ] });
+}
+
+function DeviceDetail({ deviceId }) {
+  const [points, setPoints] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    pointsByDevice(deviceId).then((rs) => !cancelled && setPoints(rs)).catch((e) => !cancelled && setError(e instanceof Error ? e.message : String(e))).finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceId]);
+  if (error) return /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm text-destructive", children: error });
+  if (loading) return /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm italic text-muted-foreground", children: "loading…" });
+  if (points.length === 0) return /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm italic text-muted-foreground", children: "No points." });
+  return /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+    /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-left text-xs text-muted-foreground", children: [
+      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", children: "Point" }),
+      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", children: "Widget" }),
+      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", title: "set at provision time", children: "Trend" }),
+      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", title: "set at provision time", children: "Alarm" })
+    ] }) }),
+    /* @__PURE__ */ jsx("tbody", { children: points.map((p) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/40", children: [
+      /* @__PURE__ */ jsxs("td", { className: "px-2 py-1.5 text-foreground", children: [
+        p.name,
+        p.unit ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground", children: [
+          " (",
+          p.unit,
+          ")"
+        ] }) : null
+      ] }),
+      /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-muted-foreground", children: p.widget }),
+      /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", title: "set at provision time", children: /* @__PURE__ */ jsx(Switch, { checked: p.trend_on, label: `${p.name} trend`, disabled: true }) }),
+      /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", title: "set at provision time", children: /* @__PURE__ */ jsx(Switch, { checked: p.alarm_on, label: `${p.name} alarm`, disabled: true }) })
+    ] }, p.point_id)) })
+  ] });
+}
+
+function Dialog({
+  title,
+  onClose,
+  children
+}) {
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      className: "fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4",
+      onClick: onClose,
+      children: /* @__PURE__ */ jsxs(
+        "div",
+        {
+          role: "dialog",
+          "aria-modal": "true",
+          "aria-label": title,
+          className: "w-full max-w-lg rounded-lg border border-border/60 bg-card text-card-foreground shadow-xl",
+          onClick: (e) => e.stopPropagation(),
+          children: [
+            /* @__PURE__ */ jsxs("header", { className: "flex items-center justify-between border-b border-border/60 px-4 py-3", children: [
+              /* @__PURE__ */ jsx("h4", { className: "text-sm font-semibold", children: title }),
+              /* @__PURE__ */ jsx(
+                "button",
+                {
+                  type: "button",
+                  "aria-label": "Close",
+                  onClick: onClose,
+                  className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground",
+                  children: /* @__PURE__ */ jsx(X, { className: "size-4" })
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx("div", { className: "p-4", children })
+          ]
+        }
+      )
+    }
+  );
+}
+
+function LabelDialog({
+  deviceId,
+  onClose
+}) {
+  const [label, setLabel] = React.useState(null);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    labelRender(deviceId).then(setLabel).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  }, [deviceId]);
+  return /* @__PURE__ */ jsx(Dialog, { title: "Device label", onClose, children: error ? /* @__PURE__ */ jsx("p", { className: "text-sm text-destructive", children: error }) : !label ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "loading…" }) : /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center gap-3", children: [
+    /* @__PURE__ */ jsx("div", { className: "text-sm font-semibold text-foreground", children: label.display_name }),
+    /* @__PURE__ */ jsx("img", { src: label.qr_url, alt: `QR code for ${label.serial}`, className: "size-40 rounded border border-border/60 bg-white p-2" }),
+    /* @__PURE__ */ jsx("code", { className: "break-all text-center font-mono text-xs text-muted-foreground", children: label.code128 }),
+    /* @__PURE__ */ jsx("div", { className: "font-mono text-xs text-muted-foreground", children: label.serial })
+  ] }) });
+}
+
+const STATUSES = ["", "active", "commissioned", "decommissioned"];
+function DevicesTab() {
+  const [rows, setRows] = React.useState([]);
+  const [sites, setSites] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [q, setQ] = React.useState("");
+  const [site, setSite] = React.useState("");
+  const [status, setStatus] = React.useState("");
+  const [open, setOpen] = React.useState(null);
+  const [editing, setEditing] = React.useState(null);
+  const [editName, setEditName] = React.useState("");
+  const [label, setLabel] = React.useState(null);
+  const load = React.useCallback(() => {
+    setLoading(true);
+    setError(null);
+    listDevices({ site_id: site || void 0, status: status || void 0, limit: 500 }).then(setRows).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setLoading(false));
+  }, [site, status]);
+  React.useEffect(load, [load]);
+  React.useEffect(() => {
+    listSites().then(setSites).catch(() => setSites([]));
+  }, []);
+  const filtered = rows.filter((r) => {
+    if (!q.trim()) return true;
+    const hay = `${r.name ?? ""} ${r.device_id} ${r.template} ${r.address ?? ""}`.toLowerCase();
+    return hay.includes(q.trim().toLowerCase());
+  });
+  const saveRename = (id) => {
+    deviceUpdate({ device_id: id, name: editName.trim() }).then(() => {
+      setEditing(null);
+      load();
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  };
+  const remove = (id, hard) => {
+    if (!window.confirm("Decommission this device?")) return;
+    decommission([id], hard).then(load).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-end gap-2", children: [
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          value: q,
+          onChange: (e) => setQ(e.target.value),
+          placeholder: "Search name / id / address",
+          "aria-label": "Search devices",
+          className: "flex-1 rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+        }
+      ),
+      /* @__PURE__ */ jsxs("select", { value: site, onChange: (e) => setSite(e.target.value), "aria-label": "Filter by site", className: "rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm text-foreground", children: [
+        /* @__PURE__ */ jsx("option", { value: "", children: "All sites" }),
+        sites.map((s) => /* @__PURE__ */ jsx("option", { value: s.site_id, children: s.name }, s.site_id))
+      ] }),
+      /* @__PURE__ */ jsx("select", { value: status, onChange: (e) => setStatus(e.target.value), "aria-label": "Filter by status", className: "rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm text-foreground", children: STATUSES.map((s) => /* @__PURE__ */ jsx("option", { value: s, children: s || "All statuses" }, s)) })
+    ] }),
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    /* @__PURE__ */ jsx("div", { className: "overflow-x-auto rounded-lg border border-border/60 bg-card", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+      /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-left text-xs text-muted-foreground", children: [
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium" }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Device" }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Template" }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Network/Addr" }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Status" }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 text-right font-medium", children: "Actions" })
+      ] }) }),
+      /* @__PURE__ */ jsx("tbody", { children: loading ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "px-2 py-3 text-sm italic text-muted-foreground", children: "loading…" }) }) : filtered.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "px-2 py-3 text-sm italic text-muted-foreground", children: "No devices match." }) }) : filtered.map((r) => /* @__PURE__ */ jsxs(React.Fragment, { children: [
+        /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/40", children: [
+          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Toggle points", onClick: () => setOpen(open === r.device_id ? null : r.device_id), className: "rounded p-0.5 hover:bg-accent", children: open === r.device_id ? /* @__PURE__ */ jsx(ChevronDown, { className: "size-4" }) : /* @__PURE__ */ jsx(ChevronRight, { className: "size-4" }) }) }),
+          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: editing === r.device_id ? /* @__PURE__ */ jsxs("span", { className: "flex gap-1", children: [
+            /* @__PURE__ */ jsx("input", { value: editName, onChange: (e) => setEditName(e.target.value), "aria-label": "Device name", className: "rounded border border-border/60 bg-background px-1.5 py-0.5 text-sm" }),
+            /* @__PURE__ */ jsx("button", { type: "button", onClick: () => saveRename(r.device_id), className: "text-xs text-primary hover:underline", children: "save" })
+          ] }) : /* @__PURE__ */ jsx("button", { type: "button", onClick: () => {
+            setEditing(r.device_id);
+            setEditName(r.name ?? "");
+          }, className: "text-left text-foreground hover:underline", children: r.name ?? r.device_id }) }),
+          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-muted-foreground", children: r.template }),
+          /* @__PURE__ */ jsxs("td", { className: "px-2 py-1.5 text-muted-foreground", children: [
+            r.network ?? "—",
+            " / ",
+            r.address ?? "—"
+          ] }),
+          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-muted-foreground", children: r.status }),
+          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
+            /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Print label", title: "Print label", onClick: () => setLabel(r.device_id), className: "rounded p-1 hover:bg-accent", children: /* @__PURE__ */ jsx(QrCode, { className: "size-4" }) }),
+            /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Decommission", title: "Decommission", onClick: () => remove(r.device_id, false), className: "rounded p-1 text-destructive hover:bg-accent", children: /* @__PURE__ */ jsx(Trash2, { className: "size-4" }) })
+          ] }) })
+        ] }),
+        open === r.device_id ? /* @__PURE__ */ jsx("tr", { className: "border-t border-border/30 bg-muted/30", children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "p-2", children: /* @__PURE__ */ jsx(DeviceDetail, { deviceId: r.device_id }) }) }) : null
+      ] }, r.device_id)) })
+    ] }) }),
+    label ? /* @__PURE__ */ jsx(LabelDialog, { deviceId: label, onClose: () => setLabel(null) }) : null
+  ] });
+}
+
+const newId = (prefix) => `${prefix}_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
+function SitesTab() {
+  const [sites, setSites] = React.useState([]);
+  const [locations, setLocations] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [siteName, setSiteName] = React.useState("");
+  const [locName, setLocName] = React.useState({});
+  const load = React.useCallback(() => {
+    setLoading(true);
+    setError(null);
+    Promise.all([listSites(), listLocations()]).then(([s, l]) => {
+      setSites(s);
+      setLocations(l);
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setLoading(false));
+  }, []);
+  React.useEffect(load, [load]);
+  const addSite = () => {
+    if (!siteName.trim()) return;
+    siteCreate({ site_id: newId("site"), name: siteName.trim() }).then(() => {
+      setSiteName("");
+      load();
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  };
+  const addLocation = (siteId) => {
+    const name = (locName[siteId] ?? "").trim();
+    if (!name) return;
+    locationCreate({ location_id: newId("loc"), site_id: siteId, name }).then(() => {
+      setLocName((m) => ({ ...m, [siteId]: "" }));
+      load();
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "flex max-w-2xl flex-col gap-4", children: [
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
+      /* @__PURE__ */ jsx(
+        "input",
+        {
+          value: siteName,
+          onChange: (e) => setSiteName(e.target.value),
+          placeholder: "New site name",
+          "aria-label": "New site name",
+          className: "flex-1 rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+        }
+      ),
+      /* @__PURE__ */ jsxs("button", { type: "button", onClick: addSite, className: "flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground", children: [
+        /* @__PURE__ */ jsx(Plus, { className: "size-4" }),
+        " Site"
+      ] })
+    ] }),
+    loading ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "loading…" }) : sites.length === 0 ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "No sites yet. Create one above." }) : /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-3", children: sites.map((s) => /* @__PURE__ */ jsxs("li", { className: "rounded-lg border border-border/60 bg-card", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 border-b border-border/60 px-3 py-2", children: [
+        /* @__PURE__ */ jsx(MapPin, { className: "size-4 text-muted-foreground" }),
+        /* @__PURE__ */ jsx("span", { className: "text-sm font-medium text-foreground", children: s.name }),
+        /* @__PURE__ */ jsx("span", { className: "font-mono text-xs text-muted-foreground", children: s.site_id })
+      ] }),
+      /* @__PURE__ */ jsxs("ul", { className: "px-3 py-2", children: [
+        locations.filter((l) => l.site_id === s.site_id).map((l) => /* @__PURE__ */ jsxs("li", { className: "py-0.5 text-sm text-foreground", children: [
+          "• ",
+          l.name
+        ] }, l.location_id)),
+        /* @__PURE__ */ jsxs("li", { className: "mt-2 flex gap-2", children: [
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              value: locName[s.site_id] ?? "",
+              onChange: (e) => setLocName((m) => ({ ...m, [s.site_id]: e.target.value })),
+              placeholder: "New location",
+              "aria-label": `New location in ${s.name}`,
+              className: "flex-1 rounded-md border border-border/60 bg-background px-2 py-1 text-sm text-foreground outline-none focus:border-primary"
+            }
+          ),
+          /* @__PURE__ */ jsx("button", { type: "button", onClick: () => addLocation(s.site_id), className: "rounded-md border border-border/60 px-2 py-1 text-sm hover:bg-accent", children: "Add" })
+        ] })
+      ] })
+    ] }, s.site_id)) })
+  ] });
+}
+
+function TemplatesTab() {
+  const [templates, setTemplates] = React.useState([]);
+  const [selected, setSelected] = React.useState(null);
+  const [yaml, setYaml] = React.useState("");
+  const [listError, setListError] = React.useState(null);
+  const [saveError, setSaveError] = React.useState(null);
+  const [saved, setSaved] = React.useState(null);
+  const [busy, setBusy] = React.useState(false);
+  const loadList = React.useCallback(() => {
+    listTemplates().then(setTemplates).catch((e) => setListError(e instanceof Error ? e.message : String(e)));
+  }, []);
+  React.useEffect(loadList, [loadList]);
+  const open = (template) => {
+    setSelected(template);
+    setSaved(null);
+    setSaveError(null);
+    setYaml("# loading…");
+    getTemplateYaml(template).then((rs) => setYaml(rs[0]?.yaml ?? "")).catch((e) => setSaveError(e instanceof Error ? e.message : String(e)));
+  };
+  const startNew = () => {
+    setSelected("");
+    setSaved(null);
+    setSaveError(null);
+    setYaml("template: my_device\nversion: 1\ndisplay_name: My Device\nnetwork: bacnet\ncategory: sensor\npoints: []\n");
+  };
+  const save = () => {
+    setBusy(true);
+    setSaveError(null);
+    setSaved(null);
+    templateUpsert(yaml).then((r) => {
+      setSaved(`Saved (${r.operation}, ${r.affected} affected)`);
+      loadList();
+    }).catch((e) => setSaveError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-[260px_1fr]", children: [
+    /* @__PURE__ */ jsxs("div", { className: "rounded-lg border border-border/60 bg-card", children: [
+      /* @__PURE__ */ jsxs("header", { className: "flex items-center justify-between border-b border-border/60 px-3 py-2", children: [
+        /* @__PURE__ */ jsx("span", { className: "text-sm font-medium", children: "Templates" }),
+        /* @__PURE__ */ jsxs("button", { type: "button", onClick: startNew, className: "flex items-center gap-1 text-xs text-primary hover:underline", children: [
+          /* @__PURE__ */ jsx(FilePlus2, { className: "size-3.5" }),
+          " New"
+        ] })
+      ] }),
+      listError ? /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm text-destructive", children: listError }) : templates.length === 0 ? /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm italic text-muted-foreground", children: "No templates yet." }) : /* @__PURE__ */ jsx("ul", { className: "max-h-[60vh] overflow-y-auto p-1", children: templates.map((t) => /* @__PURE__ */ jsx("li", { children: /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => open(t.template),
+          className: "w-full rounded px-2 py-1.5 text-left text-sm hover:bg-accent " + (selected === t.template ? "bg-accent text-accent-foreground" : "text-foreground/85"),
+          children: [
+            /* @__PURE__ */ jsx("div", { className: "truncate", children: t.display_name }),
+            /* @__PURE__ */ jsxs("div", { className: "truncate text-xs text-muted-foreground", children: [
+              t.template,
+              " · v",
+              t.version
+            ] })
+          ]
+        }
+      ) }, t.template)) })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-2", children: selected === null ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "Select a template, or create a new one." }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(
+        "textarea",
+        {
+          value: yaml,
+          onChange: (e) => setYaml(e.target.value),
+          spellCheck: false,
+          "aria-label": "Template YAML",
+          className: "h-[60vh] w-full resize-none rounded-md border border-border/60 bg-background p-3 font-mono text-xs text-foreground outline-none focus:border-primary"
+        }
+      ),
+      saveError ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: saveError }) : null,
+      saved ? /* @__PURE__ */ jsx("div", { className: "text-sm text-emerald-500", children: saved }) : null,
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: save,
+          disabled: busy,
+          className: "self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50",
+          children: busy ? "Saving…" : "Validate & save"
+        }
+      )
+    ] }) })
+  ] });
+}
+
+function IdentifyCard({ identity }) {
+  const t = identity.template;
+  return /* @__PURE__ */ jsxs("div", { className: "rounded-lg border border-border/60 bg-card p-4", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-3", children: [
+      /* @__PURE__ */ jsx("div", { className: "flex size-10 items-center justify-center rounded-md bg-primary/10 text-primary", children: /* @__PURE__ */ jsx(Cpu, { className: "size-5" }) }),
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("div", { className: "font-semibold text-foreground", children: t.display_name }),
+        /* @__PURE__ */ jsxs("div", { className: "text-sm text-muted-foreground", children: [
+          identity.model,
+          " · ",
+          identity.network,
+          " · ",
+          t.category,
+          " · addr ",
+          identity.address
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "font-mono text-xs text-muted-foreground", children: identity.id })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "mt-3 flex flex-wrap gap-1.5", children: t.points.map((p) => /* @__PURE__ */ jsxs("span", { className: "rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground", children: [
+      p.name,
+      " · ",
+      p.widget
+    ] }, p.key)) })
+  ] });
+}
+
+function WizardTab() {
+  const [barcode, setBarcode] = React.useState("");
+  const [identity, setIdentity] = React.useState(null);
+  const [placement, setPlacement] = React.useState(EMPTY_PLACEMENT);
+  const [name, setName] = React.useState("");
+  const [trend, setTrend] = React.useState(true);
+  const [alarm, setAlarm] = React.useState(true);
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  const [result, setResult] = React.useState(null);
+  const reset = () => {
+    setBarcode("");
+    setIdentity(null);
+    setPlacement(EMPTY_PLACEMENT);
+    setName("");
+    setResult(null);
+    setError(null);
+  };
+  const runDecode = () => {
+    if (!barcode.trim()) return;
+    setBusy(true);
+    setError(null);
+    decode(barcode.trim()).then(setIdentity).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  const runProvision = () => {
+    setBusy(true);
+    setError(null);
+    provision(buildProvisionInput(barcode.trim(), placement, { trend, alarm }, name)).then(setResult).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  if (result) {
+    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4", children: [
+      /* @__PURE__ */ jsxs("div", { className: "font-semibold text-foreground", children: [
+        "Provisioned device ",
+        result.device_id
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "text-sm text-muted-foreground", children: [
+        result.points,
+        " points · ",
+        result.widgets,
+        " widgets · ",
+        result.alarms,
+        " alarms · page ",
+        result.page_id
+      ] }),
+      result.warnings.length > 0 ? /* @__PURE__ */ jsx("ul", { className: "text-xs text-foreground", children: result.warnings.map((w, i) => /* @__PURE__ */ jsxs("li", { children: [
+        "• ",
+        w
+      ] }, i)) }) : null,
+      /* @__PURE__ */ jsx("button", { type: "button", onClick: reset, className: "self-start rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground", children: "Provision another" })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "flex max-w-2xl flex-col gap-4", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+      /* @__PURE__ */ jsx("label", { htmlFor: "wiz-bc", className: "text-xs font-medium text-muted-foreground", children: "Barcode / serial" }),
+      /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            id: "wiz-bc",
+            value: barcode,
+            onChange: (e) => setBarcode(e.target.value),
+            placeholder: "rubix://add?... or device serial",
+            className: "flex-1 rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: runDecode,
+            disabled: busy || !barcode.trim(),
+            className: "rounded-md border border-border/60 px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-50",
+            children: "Decode"
+          }
+        )
+      ] })
+    ] }),
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    identity ? /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx(IdentifyCard, { identity }),
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
+        /* @__PURE__ */ jsx("label", { htmlFor: "wiz-name", className: "text-xs font-medium text-muted-foreground", children: "Device name (optional)" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            id: "wiz-name",
+            value: name,
+            onChange: (e) => setName(e.target.value),
+            placeholder: identity.template.display_name,
+            className: "rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsx(Place, { value: placement, onChange: setPlacement }),
+      /* @__PURE__ */ jsxs("div", { className: "flex gap-6 rounded-md border border-border/60 bg-card p-3", children: [
+        /* @__PURE__ */ jsx(Switch, { checked: trend, onChange: setTrend, label: "Trends" }),
+        /* @__PURE__ */ jsx(Switch, { checked: alarm, onChange: setAlarm, label: "Alarms" })
+      ] }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: runProvision,
+          disabled: busy,
+          className: "self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50",
+          children: busy ? "Provisioning…" : "Provision"
+        }
+      )
+    ] }) : null
+  ] });
+}
+
+function DeviceCard({
+  deviceId,
+  widgets
+}) {
+  const primary = widgets.find((w) => w.role === "primary");
+  const title = primary?.title ?? deviceId;
+  const points = widgets.filter((w) => w.point_id !== null);
+  return /* @__PURE__ */ jsxs("section", { className: "rounded-lg border border-border/60 bg-card text-card-foreground", children: [
+    /* @__PURE__ */ jsxs("header", { className: "border-b border-border/60 px-3 py-2", children: [
+      /* @__PURE__ */ jsx("div", { className: "text-sm font-medium", children: title }),
+      /* @__PURE__ */ jsx("div", { className: "font-mono text-xs text-muted-foreground", children: deviceId })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-4 p-3 sm:grid-cols-2", children: points.length === 0 ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "No point widgets on this device." }) : points.map((w) => /* @__PURE__ */ jsx("div", { className: "rounded-md border border-border/40 p-3", children: renderWidget(w.widget, { title: w.title ?? w.widget, widget: w.widget }) }, w.widget_id)) })
+  ] });
+}
+
+function groupByDevice(rows) {
+  const m = /* @__PURE__ */ new Map();
+  for (const r of rows) {
+    const list = m.get(r.device_id) ?? [];
+    list.push(r);
+    m.set(r.device_id, list);
+  }
+  return m;
+}
+function PageView({ pageId }) {
+  const [rows, setRows] = React.useState([]);
+  const [loading, setLoading] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    if (!pageId) return;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    widgetsByPage(pageId).then((rs) => !cancelled && setRows(rs)).catch(
+      (e) => !cancelled && setError(e instanceof Error ? e.message : String(e))
+    ).finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [pageId]);
+  if (!pageId) {
+    return /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "Select a page to preview." });
+  }
+  if (error) {
+    return /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error });
+  }
+  if (loading) {
+    return /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "loading…" });
+  }
+  if (rows.length === 0) {
+    return /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "No widgets on this page yet." });
+  }
+  const groups = [...groupByDevice(rows).entries()];
+  return /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-4 lg:grid-cols-2", children: groups.map(([deviceId, widgets]) => /* @__PURE__ */ jsx(DeviceCard, { deviceId, widgets }, deviceId)) });
+}
+
+function Select({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  disabled
+}) {
+  const id = React.useId();
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
+    /* @__PURE__ */ jsx("label", { htmlFor: id, className: "text-xs font-medium text-muted-foreground", children: label }),
+    /* @__PURE__ */ jsxs(
+      "select",
+      {
+        id,
+        value,
+        disabled,
+        onChange: (e) => onChange(e.target.value),
+        className: "rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm text-foreground outline-none focus:border-primary disabled:opacity-50",
+        children: [
+          placeholder ? /* @__PURE__ */ jsx("option", { value: "", children: placeholder }) : null,
+          options.map((o) => /* @__PURE__ */ jsx("option", { value: o.value, children: o.label }, o.value))
+        ]
+      }
+    )
+  ] });
+}
+
+function PagePreviewTab() {
+  const [pages, setPages] = React.useState([]);
+  const [pageId, setPageId] = React.useState("");
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    listPages().then((ps) => {
+      setPages(ps);
+      if (ps[0]) setPageId(ps[0].page_id);
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  }, []);
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    /* @__PURE__ */ jsx("div", { className: "max-w-xs", children: /* @__PURE__ */ jsx(
+      Select,
+      {
+        label: "Page",
+        value: pageId,
+        placeholder: "Select a page",
+        options: pages.map((p) => ({ value: p.page_id, label: p.name })),
+        onChange: setPageId
+      }
+    ) }),
+    /* @__PURE__ */ jsx(PageView, { pageId })
+  ] });
+}
+
+const TABS = [
+  { id: "devices", label: "Devices", icon: LayoutGrid, render: () => /* @__PURE__ */ jsx(DevicesTab, {}) },
+  { id: "sites", label: "Sites & Locations", icon: MapPin, render: () => /* @__PURE__ */ jsx(SitesTab, {}) },
+  { id: "templates", label: "Templates", icon: FileCode, render: () => /* @__PURE__ */ jsx(TemplatesTab, {}) },
+  { id: "wizard", label: "Provision wizard", icon: WandSparkles, render: () => /* @__PURE__ */ jsx(WizardTab, {}) },
+  { id: "preview", label: "Page preview", icon: Eye, render: () => /* @__PURE__ */ jsx(PagePreviewTab, {}) }
+];
+function Provision() {
+  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(ProvisionRouter, {}) });
+}
+function ProvisionRouter() {
+  const route = useExtensionRoute();
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  if (route === "pwa" || route?.startsWith("pwa/")) {
+    return /* @__PURE__ */ jsx("div", { "data-ext-id": EXTENSION_ID, "data-ext-slot": slot.slotId, "data-ext-theme": theme.mode, children: /* @__PURE__ */ jsx(PwaApp, {}) });
+  }
+  const initial = TABS.find((t) => route === `provision/${t.id}`)?.id ?? "devices";
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID,
+      "data-ext-slot": slot.slotId,
+      "data-ext-theme": theme.mode,
+      className: "flex flex-col gap-4 p-4",
+      children: /* @__PURE__ */ jsx(AdminPanel, { initial })
+    }
+  );
+}
+function AdminPanel({ initial }) {
+  const [active, setActive] = React.useState(initial);
+  const tab = TABS.find((t) => t.id === active) ?? TABS[0];
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsxs("div", { children: [
+      /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: "Provisioning" }),
+      /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Scan-to-dashboard device commissioning" })
+    ] }),
+    /* @__PURE__ */ jsx("nav", { className: "flex flex-wrap gap-1 border-b border-border/60", children: TABS.map((t) => {
+      const Icon = t.icon;
+      const on = t.id === active;
+      return /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => setActive(t.id),
+          className: "flex items-center gap-1.5 rounded-t-md px-3 py-2 text-sm transition-colors " + (on ? "border-b-2 border-primary font-medium text-foreground" : "text-muted-foreground hover:text-foreground"),
+          children: [
+            /* @__PURE__ */ jsx(Icon, { className: "size-4" }),
+            t.label
+          ]
+        },
+        t.id
+      );
+    }) }),
+    /* @__PURE__ */ jsx("div", { children: tab.render() })
+  ] });
+}
+
 const factory = {
   singletons: {
     react: { version: "19.1.0" },
@@ -42235,7 +44370,7 @@ const factory = {
   },
   init(handle) {
     registerExtensionContributions(handle, {
-      components: { Main, NavTree }
+      components: { Main, NavTree, Provision }
     });
   }
 };
