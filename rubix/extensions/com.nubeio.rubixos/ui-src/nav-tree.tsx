@@ -21,6 +21,7 @@ import {
   Network,
   Router,
   Server,
+  Sun,
   Zap,
 } from "lucide-react";
 
@@ -60,6 +61,7 @@ const TREE: NavItem[] = [
     icon: Database,
     children: [
       { title: "Energy & Water",  href: `/extensions/${EXTENSION_ID}/usage`,   icon: Zap },
+      { title: "Energy",          href: `/extensions/${EXTENSION_ID}/energy`,  icon: Sun },
       { title: "Report (print)",  href: `/extensions/${EXTENSION_ID}/report`,  icon: FileText },
       { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: LineChart },
     ],

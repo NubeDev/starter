@@ -1,12 +1,12 @@
 (function () {
 	'use strict';
 
-	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, :before, :after, ::backdrop {\n      --tw-translate-x: 0;\n      --tw-translate-y: 0;\n      --tw-translate-z: 0;\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-backdrop-blur: initial;\n      --tw-backdrop-brightness: initial;\n      --tw-backdrop-contrast: initial;\n      --tw-backdrop-grayscale: initial;\n      --tw-backdrop-hue-rotate: initial;\n      --tw-backdrop-invert: initial;\n      --tw-backdrop-opacity: initial;\n      --tw-backdrop-saturate: initial;\n      --tw-backdrop-sepia: initial;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n@media no-preflight {\n  @layer rubix-extension {\n    @layer theme {\n      :root, :host {\n        --color-amber-300: oklch(87.9% .169 91.605);\n        --color-amber-400: oklch(82.8% .189 84.429);\n        --color-emerald-300: oklch(84.5% .143 164.978);\n        --color-emerald-400: oklch(76.5% .177 163.223);\n        --color-teal-200: oklch(91% .096 180.426);\n        --color-teal-300: oklch(85.5% .138 181.071);\n        --color-sky-300: oklch(82.8% .111 230.318);\n        --color-sky-400: oklch(74.6% .16 232.661);\n        --color-slate-100: oklch(96.8% .007 247.896);\n        --color-slate-200: oklch(92.9% .013 255.508);\n        --color-slate-300: oklch(86.9% .022 252.894);\n        --color-slate-500: oklch(55.4% .046 257.417);\n        --color-slate-800: oklch(27.9% .041 260.031);\n        --color-slate-900: oklch(20.8% .042 265.755);\n        --color-white: #fff;\n        --spacing: .25rem;\n        --container-xs: 20rem;\n        --text-xs: .75rem;\n        --text-xs--line-height: calc(1 / .75);\n        --text-sm: .875rem;\n        --text-sm--line-height: calc(1.25 / .875);\n        --text-lg: 1.125rem;\n        --text-lg--line-height: calc(1.75 / 1.125);\n        --text-xl: 1.25rem;\n        --text-xl--line-height: calc(1.75 / 1.25);\n        --text-2xl: 1.5rem;\n        --text-2xl--line-height: calc(2 / 1.5);\n        --text-3xl: 1.875rem;\n        --text-3xl--line-height: calc(2.25 / 1.875);\n        --font-weight-normal: 400;\n        --font-weight-medium: 500;\n        --font-weight-semibold: 600;\n        --tracking-tight: -.025em;\n        --tracking-normal: 0em;\n        --tracking-wide: .025em;\n        --leading-tight: 1.25;\n        --animate-spin: spin 1s linear infinite;\n        --blur-sm: 8px;\n        --default-transition-duration: .15s;\n        --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);\n      }\n    }\n\n    @layer base {\n      *, :after, :before, ::backdrop {\n        box-sizing: border-box;\n        border: 0 solid;\n        margin: 0;\n        padding: 0;\n      }\n\n      ::file-selector-button {\n        box-sizing: border-box;\n        border: 0 solid;\n        margin: 0;\n        padding: 0;\n      }\n\n      html, :host {\n        -webkit-text-size-adjust: 100%;\n        tab-size: 4;\n        line-height: 1.5;\n        font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\");\n        font-feature-settings: var(--default-font-feature-settings, normal);\n        font-variation-settings: var(--default-font-variation-settings, normal);\n        -webkit-tap-highlight-color: transparent;\n      }\n\n      hr {\n        height: 0;\n        color: inherit;\n        border-top-width: 1px;\n      }\n\n      abbr:where([title]) {\n        -webkit-text-decoration: underline dotted;\n        text-decoration: underline dotted;\n      }\n\n      h1, h2, h3, h4, h5, h6 {\n        font-size: inherit;\n        font-weight: inherit;\n      }\n\n      a {\n        color: inherit;\n        -webkit-text-decoration: inherit;\n        -webkit-text-decoration: inherit;\n        -webkit-text-decoration: inherit;\n        text-decoration: inherit;\n      }\n\n      b, strong {\n        font-weight: bolder;\n      }\n\n      code, kbd, samp, pre {\n        font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace);\n        font-feature-settings: var(--default-mono-font-feature-settings, normal);\n        font-variation-settings: var(--default-mono-font-variation-settings, normal);\n        font-size: 1em;\n      }\n\n      small {\n        font-size: 80%;\n      }\n\n      sub, sup {\n        vertical-align: baseline;\n        font-size: 75%;\n        line-height: 0;\n        position: relative;\n      }\n\n      sub {\n        bottom: -.25em;\n      }\n\n      sup {\n        top: -.5em;\n      }\n\n      table {\n        text-indent: 0;\n        border-color: inherit;\n        border-collapse: collapse;\n      }\n\n      :-moz-focusring {\n        outline: auto;\n      }\n\n      progress {\n        vertical-align: baseline;\n      }\n\n      summary {\n        display: list-item;\n      }\n\n      ol, ul, menu {\n        list-style: none;\n      }\n\n      img, svg, video, canvas, audio, iframe, embed, object {\n        vertical-align: middle;\n        display: block;\n      }\n\n      img, video {\n        max-width: 100%;\n        height: auto;\n      }\n\n      button, input, select, optgroup, textarea {\n        font: inherit;\n        font-feature-settings: inherit;\n        font-variation-settings: inherit;\n        letter-spacing: inherit;\n        color: inherit;\n        opacity: 1;\n        background-color: #0000;\n        border-radius: 0;\n      }\n\n      ::file-selector-button {\n        font: inherit;\n        font-feature-settings: inherit;\n        font-variation-settings: inherit;\n        letter-spacing: inherit;\n        color: inherit;\n        opacity: 1;\n        background-color: #0000;\n        border-radius: 0;\n      }\n\n      :where(select:is([multiple], [size])) optgroup {\n        font-weight: bolder;\n      }\n\n      :where(select:is([multiple], [size])) optgroup option {\n        padding-inline-start: 20px;\n      }\n\n      ::file-selector-button {\n        margin-inline-end: 4px;\n      }\n\n      ::placeholder {\n        opacity: 1;\n      }\n\n      @supports (not ((-webkit-appearance: -apple-pay-button))) or (contain-intrinsic-size: 1px) {\n        ::placeholder {\n          color: currentColor;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          ::placeholder {\n            color: color-mix(in oklab, currentcolor 50%, transparent);\n          }\n        }\n      }\n\n      textarea {\n        resize: vertical;\n      }\n\n      ::-webkit-search-decoration {\n        -webkit-appearance: none;\n      }\n\n      ::-webkit-date-and-time-value {\n        min-height: 1lh;\n        text-align: inherit;\n      }\n\n      ::-webkit-datetime-edit {\n        display: inline-flex;\n      }\n\n      ::-webkit-datetime-edit-fields-wrapper {\n        padding: 0;\n      }\n\n      ::-webkit-datetime-edit {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-year-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-month-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-day-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-hour-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-minute-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-second-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-millisecond-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-meridiem-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-calendar-picker-indicator {\n        line-height: 1;\n      }\n\n      :-moz-ui-invalid {\n        box-shadow: none;\n      }\n\n      button, input:where([type=\"button\"], [type=\"reset\"], [type=\"submit\"]) {\n        appearance: button;\n      }\n\n      ::file-selector-button {\n        appearance: button;\n      }\n\n      ::-webkit-inner-spin-button {\n        height: auto;\n      }\n\n      ::-webkit-outer-spin-button {\n        height: auto;\n      }\n\n      [hidden]:where(:not([hidden=\"until-found\"])) {\n        display: none !important;\n      }\n    }\n\n    @layer components;\n\n    @layer utilities {\n      .collapse {\n        visibility: collapse;\n      }\n\n      .visible {\n        visibility: visible;\n      }\n\n      .absolute {\n        position: absolute;\n      }\n\n      .fixed {\n        position: fixed;\n      }\n\n      .relative {\n        position: relative;\n      }\n\n      .static {\n        position: static;\n      }\n\n      .sticky {\n        position: sticky;\n      }\n\n      .inset-0 {\n        inset: calc(var(--spacing) * 0);\n      }\n\n      .-top-1 {\n        top: calc(var(--spacing) * -1);\n      }\n\n      .top-0 {\n        top: calc(var(--spacing) * 0);\n      }\n\n      .top-3 {\n        top: calc(var(--spacing) * 3);\n      }\n\n      .-right-1 {\n        right: calc(var(--spacing) * -1);\n      }\n\n      .left-3 {\n        left: calc(var(--spacing) * 3);\n      }\n\n      .z-10 {\n        z-index: 10;\n      }\n\n      .float-right {\n        float: right;\n      }\n\n      .container {\n        width: 100%;\n      }\n\n      @media (min-width: 40rem) {\n        .container {\n          max-width: 40rem;\n        }\n      }\n\n      @media (min-width: 48rem) {\n        .container {\n          max-width: 48rem;\n        }\n      }\n\n      @media (min-width: 64rem) {\n        .container {\n          max-width: 64rem;\n        }\n      }\n\n      @media (min-width: 80rem) {\n        .container {\n          max-width: 80rem;\n        }\n      }\n\n      @media (min-width: 96rem) {\n        .container {\n          max-width: 96rem;\n        }\n      }\n\n      .m-0 {\n        margin: calc(var(--spacing) * 0);\n      }\n\n      .-mx-1 {\n        margin-inline: calc(var(--spacing) * -1);\n      }\n\n      .mx-3\\.5 {\n        margin-inline: calc(var(--spacing) * 3.5);\n      }\n\n      .mx-auto {\n        margin-inline: auto;\n      }\n\n      .ms-auto {\n        margin-inline-start: auto;\n      }\n\n      .mt-0\\.5 {\n        margin-top: calc(var(--spacing) * .5);\n      }\n\n      .mt-1 {\n        margin-top: calc(var(--spacing) * 1);\n      }\n\n      .mt-1\\.5 {\n        margin-top: calc(var(--spacing) * 1.5);\n      }\n\n      .mt-2 {\n        margin-top: calc(var(--spacing) * 2);\n      }\n\n      .mt-3 {\n        margin-top: calc(var(--spacing) * 3);\n      }\n\n      .mr-2 {\n        margin-right: calc(var(--spacing) * 2);\n      }\n\n      .mb-1 {\n        margin-bottom: calc(var(--spacing) * 1);\n      }\n\n      .mb-2 {\n        margin-bottom: calc(var(--spacing) * 2);\n      }\n\n      .mb-3 {\n        margin-bottom: calc(var(--spacing) * 3);\n      }\n\n      .ml-1 {\n        margin-left: calc(var(--spacing) * 1);\n      }\n\n      .ml-2 {\n        margin-left: calc(var(--spacing) * 2);\n      }\n\n      .ml-3 {\n        margin-left: calc(var(--spacing) * 3);\n      }\n\n      .ml-auto {\n        margin-left: auto;\n      }\n\n      .block {\n        display: block;\n      }\n\n      .flex {\n        display: flex;\n      }\n\n      .grid {\n        display: grid;\n      }\n\n      .inline {\n        display: inline;\n      }\n\n      .inline-block {\n        display: inline-block;\n      }\n\n      .inline-flex {\n        display: inline-flex;\n      }\n\n      .table {\n        display: table;\n      }\n\n      .aspect-square {\n        aspect-ratio: 1;\n      }\n\n      .h-1\\.5 {\n        height: calc(var(--spacing) * 1.5);\n      }\n\n      .h-2 {\n        height: calc(var(--spacing) * 2);\n      }\n\n      .h-3\\.5 {\n        height: calc(var(--spacing) * 3.5);\n      }\n\n      .h-4 {\n        height: calc(var(--spacing) * 4);\n      }\n\n      .h-5 {\n        height: calc(var(--spacing) * 5);\n      }\n\n      .h-6 {\n        height: calc(var(--spacing) * 6);\n      }\n\n      .h-7 {\n        height: calc(var(--spacing) * 7);\n      }\n\n      .h-8 {\n        height: calc(var(--spacing) * 8);\n      }\n\n      .h-9 {\n        height: calc(var(--spacing) * 9);\n      }\n\n      .h-full {\n        height: 100%;\n      }\n\n      .max-h-\\[60vh\\] {\n        max-height: 60vh;\n      }\n\n      .max-h-\\[220px\\] {\n        max-height: 220px;\n      }\n\n      .w-1\\.5 {\n        width: calc(var(--spacing) * 1.5);\n      }\n\n      .w-3\\.5 {\n        width: calc(var(--spacing) * 3.5);\n      }\n\n      .w-4 {\n        width: calc(var(--spacing) * 4);\n      }\n\n      .w-5 {\n        width: calc(var(--spacing) * 5);\n      }\n\n      .w-8 {\n        width: calc(var(--spacing) * 8);\n      }\n\n      .w-10 {\n        width: calc(var(--spacing) * 10);\n      }\n\n      .w-20 {\n        width: calc(var(--spacing) * 20);\n      }\n\n      .w-32 {\n        width: calc(var(--spacing) * 32);\n      }\n\n      .w-44 {\n        width: calc(var(--spacing) * 44);\n      }\n\n      .w-full {\n        width: 100%;\n      }\n\n      .max-w-\\[260px\\] {\n        max-width: 260px;\n      }\n\n      .max-w-\\[920px\\] {\n        max-width: 920px;\n      }\n\n      .max-w-xs {\n        max-width: var(--container-xs);\n      }\n\n      .min-w-0 {\n        min-width: calc(var(--spacing) * 0);\n      }\n\n      .min-w-\\[1rem\\] {\n        min-width: 1rem;\n      }\n\n      .min-w-\\[10rem\\] {\n        min-width: 10rem;\n      }\n\n      .min-w-\\[12rem\\] {\n        min-width: 12rem;\n      }\n\n      .min-w-full {\n        min-width: 100%;\n      }\n\n      .flex-1 {\n        flex: 1;\n      }\n\n      .shrink-0 {\n        flex-shrink: 0;\n      }\n\n      .grow {\n        flex-grow: 1;\n      }\n\n      .-translate-x-px {\n        --tw-translate-x: -1px;\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .translate-x-px {\n        --tw-translate-x: 1px;\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .animate-spin {\n        animation: var(--animate-spin);\n      }\n\n      .cursor-pointer {\n        cursor: pointer;\n      }\n\n      .list-none {\n        list-style-type: none;\n      }\n\n      .grid-cols-1 {\n        grid-template-columns: repeat(1, minmax(0, 1fr));\n      }\n\n      .grid-cols-2 {\n        grid-template-columns: repeat(2, minmax(0, 1fr));\n      }\n\n      .grid-cols-4 {\n        grid-template-columns: repeat(4, minmax(0, 1fr));\n      }\n\n      .grid-cols-\\[1\\.5rem_1fr_5rem\\] {\n        grid-template-columns: 1.5rem 1fr 5rem;\n      }\n\n      .grid-rows-3 {\n        grid-template-rows: repeat(3, minmax(0, 1fr));\n      }\n\n      .flex-col {\n        flex-direction: column;\n      }\n\n      .flex-wrap {\n        flex-wrap: wrap;\n      }\n\n      .items-baseline {\n        align-items: baseline;\n      }\n\n      .items-center {\n        align-items: center;\n      }\n\n      .items-end {\n        align-items: flex-end;\n      }\n\n      .items-start {\n        align-items: flex-start;\n      }\n\n      .justify-between {\n        justify-content: space-between;\n      }\n\n      .justify-center {\n        justify-content: center;\n      }\n\n      .gap-0\\.5 {\n        gap: calc(var(--spacing) * .5);\n      }\n\n      .gap-1 {\n        gap: calc(var(--spacing) * 1);\n      }\n\n      .gap-1\\.5 {\n        gap: calc(var(--spacing) * 1.5);\n      }\n\n      .gap-2 {\n        gap: calc(var(--spacing) * 2);\n      }\n\n      .gap-3 {\n        gap: calc(var(--spacing) * 3);\n      }\n\n      .gap-4 {\n        gap: calc(var(--spacing) * 4);\n      }\n\n      .gap-6 {\n        gap: calc(var(--spacing) * 6);\n      }\n\n      .gap-\\[2px\\] {\n        gap: 2px;\n      }\n\n      .gap-x-6 {\n        column-gap: calc(var(--spacing) * 6);\n      }\n\n      .gap-y-3 {\n        row-gap: calc(var(--spacing) * 3);\n      }\n\n      .truncate {\n        text-overflow: ellipsis;\n        white-space: nowrap;\n        overflow: hidden;\n      }\n\n      .overflow-hidden {\n        overflow: hidden;\n      }\n\n      .overflow-x-auto {\n        overflow-x: auto;\n      }\n\n      .overflow-y-auto {\n        overflow-y: auto;\n      }\n\n      .rounded {\n        border-radius: .25rem;\n      }\n\n      .rounded-\\[3px\\] {\n        border-radius: 3px;\n      }\n\n      .rounded-full {\n        border-radius: 3.40282e38px;\n      }\n\n      .border {\n        border-style: var(--tw-border-style);\n        border-width: 1px;\n      }\n\n      .border-0 {\n        border-style: var(--tw-border-style);\n        border-width: 0;\n      }\n\n      .border-2 {\n        border-style: var(--tw-border-style);\n        border-width: 2px;\n      }\n\n      .border-s {\n        border-inline-start-style: var(--tw-border-style);\n        border-inline-start-width: 1px;\n      }\n\n      .border-t {\n        border-top-style: var(--tw-border-style);\n        border-top-width: 1px;\n      }\n\n      .border-b {\n        border-bottom-style: var(--tw-border-style);\n        border-bottom-width: 1px;\n      }\n\n      .border-amber-400\\/30 {\n        border-color: #fcbb004d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-amber-400\\/30 {\n          border-color: color-mix(in oklab, var(--color-amber-400) 30%, transparent);\n        }\n      }\n\n      .border-amber-400\\/40 {\n        border-color: #fcbb0066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-amber-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-amber-400) 40%, transparent);\n        }\n      }\n\n      .border-emerald-400\\/40 {\n        border-color: #00d29466;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-emerald-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-emerald-400) 40%, transparent);\n        }\n      }\n\n      .border-sky-400\\/30 {\n        border-color: #00bcfe4d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-sky-400\\/30 {\n          border-color: color-mix(in oklab, var(--color-sky-400) 30%, transparent);\n        }\n      }\n\n      .border-sky-400\\/40 {\n        border-color: #00bcfe66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-sky-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n        }\n      }\n\n      .border-slate-200 {\n        border-color: var(--color-slate-200);\n      }\n\n      .border-white\\/10 {\n        border-color: #ffffff1a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-white\\/10 {\n          border-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/10 {\n        background-color: #fcbb001a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 10%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/15 {\n        background-color: #fcbb0026;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 15%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/80 {\n        background-color: #fcbb00cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/80 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 80%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/\\[0\\.06\\] {\n        background-color: #fcbb000f;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/\\[0\\.06\\] {\n          background-color: color-mix(in oklab, var(--color-amber-400) 6%, transparent);\n        }\n      }\n\n      .bg-emerald-400\\/10 {\n        background-color: #00d2941a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-emerald-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-emerald-400) 10%, transparent);\n        }\n      }\n\n      .bg-sky-400\\/15 {\n        background-color: #00bcfe26;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-sky-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-sky-400) 15%, transparent);\n        }\n      }\n\n      .bg-sky-400\\/\\[0\\.06\\] {\n        background-color: #00bcfe0f;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-sky-400\\/\\[0\\.06\\] {\n          background-color: color-mix(in oklab, var(--color-sky-400) 6%, transparent);\n        }\n      }\n\n      .bg-slate-200\\/80 {\n        background-color: #e2e8f0cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-200\\/80 {\n          background-color: color-mix(in oklab, var(--color-slate-200) 80%, transparent);\n        }\n      }\n\n      .bg-slate-900\\/80 {\n        background-color: #0f172bcc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-900\\/80 {\n          background-color: color-mix(in oklab, var(--color-slate-900) 80%, transparent);\n        }\n      }\n\n      .bg-teal-300 {\n        background-color: var(--color-teal-300);\n      }\n\n      .bg-teal-300\\/70 {\n        background-color: #46ecd5b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-teal-300\\/70 {\n          background-color: color-mix(in oklab, var(--color-teal-300) 70%, transparent);\n        }\n      }\n\n      .bg-teal-300\\/90 {\n        background-color: #46ecd5e6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-teal-300\\/90 {\n          background-color: color-mix(in oklab, var(--color-teal-300) 90%, transparent);\n        }\n      }\n\n      .bg-transparent {\n        background-color: #0000;\n      }\n\n      .p-0 {\n        padding: calc(var(--spacing) * 0);\n      }\n\n      .p-2 {\n        padding: calc(var(--spacing) * 2);\n      }\n\n      .p-3 {\n        padding: calc(var(--spacing) * 3);\n      }\n\n      .p-4 {\n        padding: calc(var(--spacing) * 4);\n      }\n\n      .p-6 {\n        padding: calc(var(--spacing) * 6);\n      }\n\n      .px-1 {\n        padding-inline: calc(var(--spacing) * 1);\n      }\n\n      .px-1\\.5 {\n        padding-inline: calc(var(--spacing) * 1.5);\n      }\n\n      .px-2 {\n        padding-inline: calc(var(--spacing) * 2);\n      }\n\n      .px-2\\.5 {\n        padding-inline: calc(var(--spacing) * 2.5);\n      }\n\n      .px-3 {\n        padding-inline: calc(var(--spacing) * 3);\n      }\n\n      .py-0\\.5 {\n        padding-block: calc(var(--spacing) * .5);\n      }\n\n      .py-1 {\n        padding-block: calc(var(--spacing) * 1);\n      }\n\n      .py-1\\.5 {\n        padding-block: calc(var(--spacing) * 1.5);\n      }\n\n      .py-2 {\n        padding-block: calc(var(--spacing) * 2);\n      }\n\n      .py-4 {\n        padding-block: calc(var(--spacing) * 4);\n      }\n\n      .py-px {\n        padding-block: 1px;\n      }\n\n      .pt-1 {\n        padding-top: calc(var(--spacing) * 1);\n      }\n\n      .pt-3 {\n        padding-top: calc(var(--spacing) * 3);\n      }\n\n      .pt-4 {\n        padding-top: calc(var(--spacing) * 4);\n      }\n\n      .pr-1 {\n        padding-right: calc(var(--spacing) * 1);\n      }\n\n      .pb-4 {\n        padding-bottom: calc(var(--spacing) * 4);\n      }\n\n      .pl-2 {\n        padding-left: calc(var(--spacing) * 2);\n      }\n\n      .text-center {\n        text-align: center;\n      }\n\n      .text-left {\n        text-align: left;\n      }\n\n      .text-right {\n        text-align: right;\n      }\n\n      .text-start {\n        text-align: start;\n      }\n\n      .align-middle {\n        vertical-align: middle;\n      }\n\n      .text-2xl {\n        font-size: var(--text-2xl);\n        line-height: var(--tw-leading, var(--text-2xl--line-height));\n      }\n\n      .text-3xl {\n        font-size: var(--text-3xl);\n        line-height: var(--tw-leading, var(--text-3xl--line-height));\n      }\n\n      .text-lg {\n        font-size: var(--text-lg);\n        line-height: var(--tw-leading, var(--text-lg--line-height));\n      }\n\n      .text-sm {\n        font-size: var(--text-sm);\n        line-height: var(--tw-leading, var(--text-sm--line-height));\n      }\n\n      .text-xl {\n        font-size: var(--text-xl);\n        line-height: var(--tw-leading, var(--text-xl--line-height));\n      }\n\n      .text-xs {\n        font-size: var(--text-xs);\n        line-height: var(--tw-leading, var(--text-xs--line-height));\n      }\n\n      .text-\\[0\\.6rem\\] {\n        font-size: .6rem;\n      }\n\n      .text-\\[0\\.7rem\\] {\n        font-size: .7rem;\n      }\n\n      .text-\\[0\\.65rem\\] {\n        font-size: .65rem;\n      }\n\n      .leading-none {\n        --tw-leading: 1;\n        line-height: 1;\n      }\n\n      .leading-tight {\n        --tw-leading: var(--leading-tight);\n        line-height: var(--leading-tight);\n      }\n\n      .font-medium {\n        --tw-font-weight: var(--font-weight-medium);\n        font-weight: var(--font-weight-medium);\n      }\n\n      .font-normal {\n        --tw-font-weight: var(--font-weight-normal);\n        font-weight: var(--font-weight-normal);\n      }\n\n      .font-semibold {\n        --tw-font-weight: var(--font-weight-semibold);\n        font-weight: var(--font-weight-semibold);\n      }\n\n      .tracking-normal {\n        --tw-tracking: var(--tracking-normal);\n        letter-spacing: var(--tracking-normal);\n      }\n\n      .tracking-tight {\n        --tw-tracking: var(--tracking-tight);\n        letter-spacing: var(--tracking-tight);\n      }\n\n      .tracking-wide {\n        --tw-tracking: var(--tracking-wide);\n        letter-spacing: var(--tracking-wide);\n      }\n\n      .\\!text-current {\n        color: currentColor !important;\n      }\n\n      .text-amber-300 {\n        color: var(--color-amber-300);\n      }\n\n      .text-amber-400 {\n        color: var(--color-amber-400);\n      }\n\n      .text-emerald-300 {\n        color: var(--color-emerald-300);\n      }\n\n      .text-sky-300 {\n        color: var(--color-sky-300);\n      }\n\n      .text-sky-400 {\n        color: var(--color-sky-400);\n      }\n\n      .text-slate-100 {\n        color: var(--color-slate-100);\n      }\n\n      .text-slate-500 {\n        color: var(--color-slate-500);\n      }\n\n      .text-slate-900 {\n        color: var(--color-slate-900);\n      }\n\n      .normal-case {\n        text-transform: none;\n      }\n\n      .uppercase {\n        text-transform: uppercase;\n      }\n\n      .italic {\n        font-style: italic;\n      }\n\n      .tabular-nums {\n        --tw-numeric-spacing: tabular-nums;\n        font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n      }\n\n      .no-underline {\n        text-decoration-line: none;\n      }\n\n      .opacity-70 {\n        opacity: .7;\n      }\n\n      .opacity-75 {\n        opacity: .75;\n      }\n\n      .opacity-90 {\n        opacity: .9;\n      }\n\n      .shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\] {\n        --tw-shadow: 0 0 10px var(--tw-shadow-color, #ffffff40);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\] {\n        --tw-shadow: 0 0 14px var(--tw-shadow-color, #5eead499);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\] {\n        --tw-shadow: 0 0 18px -6px var(--tw-shadow-color, var(--color-primary));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\] {\n        --tw-shadow: 0 0 18px var(--tw-shadow-color, #5eead4d9);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\] {\n        --tw-shadow: 0 0 24px -8px var(--tw-shadow-color, var(--color-primary));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring, .ring-1 {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring-2 {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring-amber-400\\/40 {\n        --tw-ring-color: #fcbb0066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-amber-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-amber-400) 40%, transparent);\n        }\n      }\n\n      .ring-sky-400\\/40 {\n        --tw-ring-color: #00bcfe66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-sky-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n        }\n      }\n\n      .ring-teal-200 {\n        --tw-ring-color: var(--color-teal-200);\n      }\n\n      .ring-teal-200\\/70 {\n        --tw-ring-color: #96f7e4b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-teal-200\\/70 {\n          --tw-ring-color: color-mix(in oklab, var(--color-teal-200) 70%, transparent);\n        }\n      }\n\n      .ring-white\\/5 {\n        --tw-ring-color: #ffffff0d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/5 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n        }\n      }\n\n      .ring-white\\/30 {\n        --tw-ring-color: #ffffff4d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/30 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 30%, transparent);\n        }\n      }\n\n      .ring-white\\/40 {\n        --tw-ring-color: #fff6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 40%, transparent);\n        }\n      }\n\n      .outline-hidden {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      @media (forced-colors: active) {\n        .outline-hidden {\n          outline-offset: 2px;\n          outline: 2px solid #0000;\n        }\n      }\n\n      .invert {\n        --tw-invert: invert(100%);\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .filter {\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .backdrop-blur {\n        --tw-backdrop-blur: blur(8px);\n        -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n        backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n      }\n\n      .backdrop-blur-sm {\n        --tw-backdrop-blur: blur(var(--blur-sm));\n        -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n        backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n      }\n\n      .transition-\\[margin\\,opacity\\] {\n        transition-property: margin, opacity;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-\\[width\\,height\\,padding\\] {\n        transition-property: width, height, padding;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-all {\n        transition-property: all;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-colors {\n        transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-shadow {\n        transition-property: box-shadow;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-transform {\n        transition-property: transform, translate, scale, rotate;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .duration-150 {\n        --tw-duration: .15s;\n        transition-duration: .15s;\n      }\n\n      .duration-200 {\n        --tw-duration: .2s;\n        transition-duration: .2s;\n      }\n\n      .ease-linear {\n        --tw-ease: linear;\n        transition-timing-function: linear;\n      }\n\n      .outline-none {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      .select-none {\n        -webkit-user-select: none;\n        user-select: none;\n      }\n\n      .group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *) {\n        padding-inline-end: calc(var(--spacing) * 8);\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        margin-top: calc(var(--spacing) * -8);\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        display: none;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        width: calc(var(--spacing) * 8) !important;\n        height: calc(var(--spacing) * 8) !important;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        padding: calc(var(--spacing) * 2) !important;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        opacity: 0;\n      }\n\n      .group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *) {\n        rotate: 90deg;\n      }\n\n      @media (hover: hover) {\n        .hover\\:-translate-y-0\\.5:hover {\n          --tw-translate-y: calc(var(--spacing) * -.5);\n          translate: var(--tw-translate-x) var(--tw-translate-y);\n        }\n\n        .hover\\:bg-slate-800:hover {\n          background-color: var(--color-slate-800);\n        }\n\n        .hover\\:underline:hover {\n          text-decoration-line: underline;\n        }\n\n        .hover\\:opacity-100:hover {\n          opacity: 1;\n        }\n\n        .hover\\:shadow-xl:hover {\n          --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n        }\n      }\n\n      .focus\\:outline-none:focus {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      .focus-visible\\:ring-2:focus-visible {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .disabled\\:pointer-events-none:disabled {\n        pointer-events: none;\n      }\n\n      .disabled\\:opacity-50:disabled {\n        opacity: .5;\n      }\n\n      .aria-disabled\\:pointer-events-none[aria-disabled=\"true\"] {\n        pointer-events: none;\n      }\n\n      .aria-disabled\\:opacity-50[aria-disabled=\"true\"] {\n        opacity: .5;\n      }\n\n      .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n        --tw-font-weight: var(--font-weight-medium);\n        font-weight: var(--font-weight-medium);\n      }\n\n      @media (min-width: 40rem) {\n        .sm\\:grid-cols-2 {\n          grid-template-columns: repeat(2, minmax(0, 1fr));\n        }\n\n        .sm\\:grid-cols-3 {\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n        }\n      }\n\n      @media (min-width: 48rem) {\n        .md\\:grid-cols-4 {\n          grid-template-columns: repeat(4, minmax(0, 1fr));\n        }\n\n        .md\\:grid-cols-\\[260px_1fr\\] {\n          grid-template-columns: 260px 1fr;\n        }\n\n        .md\\:grid-cols-\\[280px_1fr\\] {\n          grid-template-columns: 280px 1fr;\n        }\n      }\n\n      @media (min-width: 64rem) {\n        .lg\\:grid-cols-3 {\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n        }\n\n        .lg\\:grid-cols-5 {\n          grid-template-columns: repeat(5, minmax(0, 1fr));\n        }\n\n        .lg\\:grid-cols-\\[1fr_2fr\\] {\n          grid-template-columns: 1fr 2fr;\n        }\n\n        .lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\] {\n          grid-template-columns: minmax(260px, 320px) 1fr minmax(220px, 260px);\n        }\n      }\n\n      @media (min-width: 80rem) {\n        .xl\\:grid-cols-4 {\n          grid-template-columns: repeat(4, minmax(0, 1fr));\n        }\n      }\n\n      @media print {\n        .print\\:hidden {\n          display: none;\n        }\n\n        .print\\:break-inside-avoid {\n          break-inside: avoid;\n        }\n\n        .print\\:gap-3 {\n          gap: calc(var(--spacing) * 3);\n        }\n\n        .print\\:border-slate-200 {\n          border-color: var(--color-slate-200);\n        }\n\n        .print\\:border-slate-300 {\n          border-color: var(--color-slate-300);\n        }\n\n        .print\\:\\!bg-white {\n          background-color: var(--color-white) !important;\n        }\n\n        .print\\:py-0 {\n          padding-block: calc(var(--spacing) * 0);\n        }\n\n        .print\\:text-\\[10px\\] {\n          font-size: 10px;\n        }\n\n        .print\\:\\!shadow-none {\n          --tw-shadow: 0 0 #0000 !important;\n          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow) !important;\n        }\n      }\n\n      .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n        text-overflow: ellipsis;\n        white-space: nowrap;\n        overflow: hidden;\n      }\n\n      .\\[\\&\\>svg\\]\\:size-4 > svg {\n        width: calc(var(--spacing) * 4);\n        height: calc(var(--spacing) * 4);\n      }\n\n      .\\[\\&\\>svg\\]\\:shrink-0 > svg {\n        flex-shrink: 0;\n      }\n\n      .\\[\\&\\>svg\\]\\:text-inherit > svg {\n        color: inherit;\n      }\n    }\n  }\n}\n\n.ext-dash-shell {\n  isolation: isolate;\n  position: relative;\n}\n\n.ext-dash-shell:before {\n  content: \"\";\n  pointer-events: none;\n  z-index: -1;\n  filter: blur(20px);\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf2e, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f129, #0000 70%);\n  height: 50%;\n  position: absolute;\n  inset: -20% -10% auto;\n}\n\n:root[data-mode=\"dark\"] .ext-dash-shell:before {\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf38, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f133, #0000 70%);\n}\n\n.ext-glass {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 14px;\n  position: relative;\n  overflow: hidden;\n  box-shadow: inset 0 1px #ffffff8c, 0 1px 2px #0f172a0f, 0 12px 28px -12px #0f172a38;\n}\n\n:root[data-mode=\"dark\"] .ext-glass {\n  background: var(--color-card, #0f172a);\n  border-color: var(--color-border, #94a3b82e);\n  box-shadow: inset 0 1px #ffffff0f, 0 1px 2px #00000073, 0 18px 44px -16px #000000b3;\n}\n\n.ext-glass--accent {\n  border-color: var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-glass--accent {\n    border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);\n  }\n}\n\n.ext-glass--accent {\n  box-shadow: 0 0 0 1px var(--color-primary, #2dd4bf), 0 12px 36px -12px var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-glass--accent {\n    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent), 0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);\n  }\n}\n\n.ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-eyebrow {\n    color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);\n  }\n}\n\n.ext-num {\n  font-variant-numeric: tabular-nums;\n}\n\n@keyframes ext-site-pulse {\n  0% {\n    opacity: .9;\n    transform: scale(.6);\n  }\n\n  80% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n\n  100% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n}\n\n.site-pulse--on {\n  animation: 1.8s ease-out infinite ext-site-pulse;\n}\n\n.site-pulse--off {\n  opacity: .35;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .site-pulse--on {\n    opacity: .55;\n    animation: none;\n  }\n}\n\n.uplot {\n  font-family: inherit;\n}\n\n.uplot .u-legend {\n  color: var(--color-foreground);\n  font-size: 11px;\n}\n\n.uplot .u-legend .u-marker {\n  border-radius: 2px;\n  width: 10px;\n  height: 10px;\n}\n\n.ext-report {\n  min-height: 100%;\n  padding: 1rem 1.25rem;\n}\n\n@media print {\n  @page {\n    size: A4;\n    margin: 14mm;\n  }\n\n  html, body {\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  .no-print, nav, header[data-block-shell], aside {\n    display: none !important;\n  }\n\n  .ext-report {\n    --color-foreground: #0f172a;\n    --color-muted-foreground: #64748b;\n    --color-border: #e2e8f0;\n    --color-card: #fff;\n    padding: 0;\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  .ext-report .ext-glass {\n    box-shadow: none;\n    background: #fff !important;\n  }\n\n  section, .ext-report-channel {\n    break-inside: avoid;\n    page-break-inside: avoid;\n  }\n\n  a {\n    color: inherit;\n    text-decoration: none;\n  }\n}\n\n@property --tw-translate-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}.maplibregl-canvas{left:0;position:absolute;top:0}.maplibregl-map:fullscreen{height:100%;width:100%}.maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}.maplibregl-canvas-container.maplibregl-interactive,.maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}.maplibregl-canvas-container.maplibregl-interactive:active,.maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures,.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}.maplibregl-ctrl-top-left{left:0;top:0}.maplibregl-ctrl-top-right{right:0;top:0}.maplibregl-ctrl-bottom-left{bottom:0;left:0}.maplibregl-ctrl-bottom-right{bottom:0;right:0}.maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}.maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}.maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}.maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}.maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}.maplibregl-ctrl-group{background:#fff;border-radius:4px}.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}.maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}.maplibregl-ctrl-group button+button{border-top:1px solid #ddd}.maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){.maplibregl-ctrl-icon{background-color:transparent}.maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}.maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}.maplibregl-ctrl-attrib-button:focus,.maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl button:disabled{cursor:not-allowed}.maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}.maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}.maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}.maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}.maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){a.maplibregl-ctrl-logo{background-color:transparent;background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}.maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{.maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}.maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show,.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}.maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}.maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}.maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}.maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}.maplibregl-attrib-empty{display:none}.maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}.maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}.maplibregl-popup-anchor-top,.maplibregl-popup-anchor-top-left,.maplibregl-popup-anchor-top-right{flex-direction:column}.maplibregl-popup-anchor-bottom,.maplibregl-popup-anchor-bottom-left,.maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}.maplibregl-popup-anchor-left{flex-direction:row}.maplibregl-popup-anchor-right{flex-direction:row-reverse}.maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}.maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}.maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}.maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}.maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}.maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}.maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}.maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}.maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}.maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}.maplibregl-popup-track-pointer{display:none}.maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}.maplibregl-map:active .maplibregl-popup-track-pointer{display:none}.maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}.maplibregl-user-location-dot,.maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}.maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:\"\";position:absolute}.maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:\"\";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}.maplibregl-user-location-dot-stale{background-color:#aaa}.maplibregl-user-location-dot-stale:after{display:none}.maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}.maplibregl-crosshair,.maplibregl-crosshair .maplibregl-interactive,.maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}.maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}.maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}.maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}.maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}.uplot, .uplot *, .uplot *::before, .uplot *::after {box-sizing: border-box;}.uplot {font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";line-height: 1.5;width: min-content;}.u-title {text-align: center;font-size: 18px;font-weight: bold;}.u-wrap {position: relative;user-select: none;}.u-over, .u-under {position: absolute;}.u-under {overflow: hidden;}.uplot canvas {display: block;position: relative;width: 100%;height: 100%;}.u-axis {position: absolute;}.u-legend {font-size: 14px;margin: auto;text-align: center;}.u-inline {display: block;}.u-inline * {display: inline-block;}.u-inline tr {margin-right: 16px;}.u-legend th {font-weight: 600;}.u-legend th > * {vertical-align: middle;display: inline-block;}.u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}.u-inline.u-live th::after {content: \":\";vertical-align: middle;}.u-inline:not(.u-live) .u-value {display: none;}.u-series > * {padding: 4px;}.u-series th {cursor: pointer;}.u-legend .u-off > * {opacity: 0.3;}.u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}.u-cursor-x, .u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}.u-hz .u-cursor-x, .u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}.u-hz .u-cursor-y, .u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}.u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline \"background\" shorthand */background-clip: padding-box !important;}.u-axis.u-off, .u-select.u-off, .u-cursor-x.u-off, .u-cursor-y.u-off, .u-cursor-pt.u-off {display: none;}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
+	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, :before, :after, ::backdrop {\n      --tw-translate-x: 0;\n      --tw-translate-y: 0;\n      --tw-translate-z: 0;\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-border-style: solid;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-backdrop-blur: initial;\n      --tw-backdrop-brightness: initial;\n      --tw-backdrop-contrast: initial;\n      --tw-backdrop-grayscale: initial;\n      --tw-backdrop-hue-rotate: initial;\n      --tw-backdrop-invert: initial;\n      --tw-backdrop-opacity: initial;\n      --tw-backdrop-saturate: initial;\n      --tw-backdrop-sepia: initial;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n@media no-preflight {\n  @layer rubix-extension {\n    @layer theme {\n      :root, :host {\n        --color-amber-200: oklch(92.4% .12 95.746);\n        --color-amber-300: oklch(87.9% .169 91.605);\n        --color-amber-400: oklch(82.8% .189 84.429);\n        --color-lime-200: oklch(93.8% .127 124.321);\n        --color-lime-300: oklch(89.7% .196 126.665);\n        --color-lime-400: oklch(84.1% .238 128.85);\n        --color-emerald-300: oklch(84.5% .143 164.978);\n        --color-emerald-400: oklch(76.5% .177 163.223);\n        --color-teal-200: oklch(91% .096 180.426);\n        --color-teal-300: oklch(85.5% .138 181.071);\n        --color-cyan-300: oklch(86.5% .127 207.078);\n        --color-cyan-400: oklch(78.9% .154 211.53);\n        --color-sky-300: oklch(82.8% .111 230.318);\n        --color-sky-400: oklch(74.6% .16 232.661);\n        --color-indigo-300: oklch(78.5% .115 274.713);\n        --color-indigo-400: oklch(67.3% .182 276.935);\n        --color-slate-100: oklch(96.8% .007 247.896);\n        --color-slate-200: oklch(92.9% .013 255.508);\n        --color-slate-300: oklch(86.9% .022 252.894);\n        --color-slate-400: oklch(70.4% .04 256.788);\n        --color-slate-500: oklch(55.4% .046 257.417);\n        --color-slate-800: oklch(27.9% .041 260.031);\n        --color-slate-900: oklch(20.8% .042 265.755);\n        --color-slate-950: oklch(12.9% .042 264.695);\n        --color-white: #fff;\n        --spacing: .25rem;\n        --container-xs: 20rem;\n        --container-2xl: 42rem;\n        --text-xs: .75rem;\n        --text-xs--line-height: calc(1 / .75);\n        --text-sm: .875rem;\n        --text-sm--line-height: calc(1.25 / .875);\n        --text-lg: 1.125rem;\n        --text-lg--line-height: calc(1.75 / 1.125);\n        --text-xl: 1.25rem;\n        --text-xl--line-height: calc(1.75 / 1.25);\n        --text-2xl: 1.5rem;\n        --text-2xl--line-height: calc(2 / 1.5);\n        --text-3xl: 1.875rem;\n        --text-3xl--line-height: calc(2.25 / 1.875);\n        --text-4xl: 2.25rem;\n        --text-4xl--line-height: calc(2.5 / 2.25);\n        --text-5xl: 3rem;\n        --text-5xl--line-height: 1;\n        --text-6xl: 3.75rem;\n        --text-6xl--line-height: 1;\n        --font-weight-normal: 400;\n        --font-weight-medium: 500;\n        --font-weight-semibold: 600;\n        --font-weight-bold: 700;\n        --tracking-tight: -.025em;\n        --tracking-normal: 0em;\n        --tracking-wide: .025em;\n        --tracking-wider: .05em;\n        --leading-tight: 1.25;\n        --ease-out: cubic-bezier(0, 0, .2, 1);\n        --animate-spin: spin 1s linear infinite;\n        --blur-sm: 8px;\n        --default-transition-duration: .15s;\n        --default-transition-timing-function: cubic-bezier(.4, 0, .2, 1);\n      }\n    }\n\n    @layer base {\n      *, :after, :before, ::backdrop {\n        box-sizing: border-box;\n        border: 0 solid;\n        margin: 0;\n        padding: 0;\n      }\n\n      ::file-selector-button {\n        box-sizing: border-box;\n        border: 0 solid;\n        margin: 0;\n        padding: 0;\n      }\n\n      html, :host {\n        -webkit-text-size-adjust: 100%;\n        tab-size: 4;\n        line-height: 1.5;\n        font-family: var(--default-font-family, ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\");\n        font-feature-settings: var(--default-font-feature-settings, normal);\n        font-variation-settings: var(--default-font-variation-settings, normal);\n        -webkit-tap-highlight-color: transparent;\n      }\n\n      hr {\n        height: 0;\n        color: inherit;\n        border-top-width: 1px;\n      }\n\n      abbr:where([title]) {\n        -webkit-text-decoration: underline dotted;\n        text-decoration: underline dotted;\n      }\n\n      h1, h2, h3, h4, h5, h6 {\n        font-size: inherit;\n        font-weight: inherit;\n      }\n\n      a {\n        color: inherit;\n        -webkit-text-decoration: inherit;\n        -webkit-text-decoration: inherit;\n        -webkit-text-decoration: inherit;\n        text-decoration: inherit;\n      }\n\n      b, strong {\n        font-weight: bolder;\n      }\n\n      code, kbd, samp, pre {\n        font-family: var(--default-mono-font-family, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, \"Liberation Mono\", \"Courier New\", monospace);\n        font-feature-settings: var(--default-mono-font-feature-settings, normal);\n        font-variation-settings: var(--default-mono-font-variation-settings, normal);\n        font-size: 1em;\n      }\n\n      small {\n        font-size: 80%;\n      }\n\n      sub, sup {\n        vertical-align: baseline;\n        font-size: 75%;\n        line-height: 0;\n        position: relative;\n      }\n\n      sub {\n        bottom: -.25em;\n      }\n\n      sup {\n        top: -.5em;\n      }\n\n      table {\n        text-indent: 0;\n        border-color: inherit;\n        border-collapse: collapse;\n      }\n\n      :-moz-focusring {\n        outline: auto;\n      }\n\n      progress {\n        vertical-align: baseline;\n      }\n\n      summary {\n        display: list-item;\n      }\n\n      ol, ul, menu {\n        list-style: none;\n      }\n\n      img, svg, video, canvas, audio, iframe, embed, object {\n        vertical-align: middle;\n        display: block;\n      }\n\n      img, video {\n        max-width: 100%;\n        height: auto;\n      }\n\n      button, input, select, optgroup, textarea {\n        font: inherit;\n        font-feature-settings: inherit;\n        font-variation-settings: inherit;\n        letter-spacing: inherit;\n        color: inherit;\n        opacity: 1;\n        background-color: #0000;\n        border-radius: 0;\n      }\n\n      ::file-selector-button {\n        font: inherit;\n        font-feature-settings: inherit;\n        font-variation-settings: inherit;\n        letter-spacing: inherit;\n        color: inherit;\n        opacity: 1;\n        background-color: #0000;\n        border-radius: 0;\n      }\n\n      :where(select:is([multiple], [size])) optgroup {\n        font-weight: bolder;\n      }\n\n      :where(select:is([multiple], [size])) optgroup option {\n        padding-inline-start: 20px;\n      }\n\n      ::file-selector-button {\n        margin-inline-end: 4px;\n      }\n\n      ::placeholder {\n        opacity: 1;\n      }\n\n      @supports (not ((-webkit-appearance: -apple-pay-button))) or (contain-intrinsic-size: 1px) {\n        ::placeholder {\n          color: currentColor;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          ::placeholder {\n            color: color-mix(in oklab, currentcolor 50%, transparent);\n          }\n        }\n      }\n\n      textarea {\n        resize: vertical;\n      }\n\n      ::-webkit-search-decoration {\n        -webkit-appearance: none;\n      }\n\n      ::-webkit-date-and-time-value {\n        min-height: 1lh;\n        text-align: inherit;\n      }\n\n      ::-webkit-datetime-edit {\n        display: inline-flex;\n      }\n\n      ::-webkit-datetime-edit-fields-wrapper {\n        padding: 0;\n      }\n\n      ::-webkit-datetime-edit {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-year-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-month-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-day-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-hour-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-minute-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-second-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-millisecond-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-datetime-edit-meridiem-field {\n        padding-block: 0;\n      }\n\n      ::-webkit-calendar-picker-indicator {\n        line-height: 1;\n      }\n\n      :-moz-ui-invalid {\n        box-shadow: none;\n      }\n\n      button, input:where([type=\"button\"], [type=\"reset\"], [type=\"submit\"]) {\n        appearance: button;\n      }\n\n      ::file-selector-button {\n        appearance: button;\n      }\n\n      ::-webkit-inner-spin-button {\n        height: auto;\n      }\n\n      ::-webkit-outer-spin-button {\n        height: auto;\n      }\n\n      [hidden]:where(:not([hidden=\"until-found\"])) {\n        display: none !important;\n      }\n    }\n\n    @layer components;\n\n    @layer utilities {\n      .pointer-events-none {\n        pointer-events: none;\n      }\n\n      .collapse {\n        visibility: collapse;\n      }\n\n      .visible {\n        visibility: visible;\n      }\n\n      .absolute {\n        position: absolute;\n      }\n\n      .fixed {\n        position: fixed;\n      }\n\n      .relative {\n        position: relative;\n      }\n\n      .static {\n        position: static;\n      }\n\n      .sticky {\n        position: sticky;\n      }\n\n      .inset-0 {\n        inset: calc(var(--spacing) * 0);\n      }\n\n      .-top-1 {\n        top: calc(var(--spacing) * -1);\n      }\n\n      .top-0 {\n        top: calc(var(--spacing) * 0);\n      }\n\n      .top-1\\/2 {\n        top: 50%;\n      }\n\n      .top-2 {\n        top: calc(var(--spacing) * 2);\n      }\n\n      .top-3 {\n        top: calc(var(--spacing) * 3);\n      }\n\n      .-right-1 {\n        right: calc(var(--spacing) * -1);\n      }\n\n      .left-3 {\n        left: calc(var(--spacing) * 3);\n      }\n\n      .left-full {\n        left: 100%;\n      }\n\n      .z-10 {\n        z-index: 10;\n      }\n\n      .z-30 {\n        z-index: 30;\n      }\n\n      .float-right {\n        float: right;\n      }\n\n      .container {\n        width: 100%;\n      }\n\n      @media (min-width: 40rem) {\n        .container {\n          max-width: 40rem;\n        }\n      }\n\n      @media (min-width: 48rem) {\n        .container {\n          max-width: 48rem;\n        }\n      }\n\n      @media (min-width: 64rem) {\n        .container {\n          max-width: 64rem;\n        }\n      }\n\n      @media (min-width: 80rem) {\n        .container {\n          max-width: 80rem;\n        }\n      }\n\n      @media (min-width: 96rem) {\n        .container {\n          max-width: 96rem;\n        }\n      }\n\n      .m-0 {\n        margin: calc(var(--spacing) * 0);\n      }\n\n      .-mx-1 {\n        margin-inline: calc(var(--spacing) * -1);\n      }\n\n      .mx-3\\.5 {\n        margin-inline: calc(var(--spacing) * 3.5);\n      }\n\n      .mx-auto {\n        margin-inline: auto;\n      }\n\n      .my-1\\.5 {\n        margin-block: calc(var(--spacing) * 1.5);\n      }\n\n      .ms-auto {\n        margin-inline-start: auto;\n      }\n\n      .mt-0\\.5 {\n        margin-top: calc(var(--spacing) * .5);\n      }\n\n      .mt-1 {\n        margin-top: calc(var(--spacing) * 1);\n      }\n\n      .mt-1\\.5 {\n        margin-top: calc(var(--spacing) * 1.5);\n      }\n\n      .mt-2 {\n        margin-top: calc(var(--spacing) * 2);\n      }\n\n      .mt-3 {\n        margin-top: calc(var(--spacing) * 3);\n      }\n\n      .mt-4 {\n        margin-top: calc(var(--spacing) * 4);\n      }\n\n      .mr-2 {\n        margin-right: calc(var(--spacing) * 2);\n      }\n\n      .mb-1 {\n        margin-bottom: calc(var(--spacing) * 1);\n      }\n\n      .mb-2 {\n        margin-bottom: calc(var(--spacing) * 2);\n      }\n\n      .mb-3 {\n        margin-bottom: calc(var(--spacing) * 3);\n      }\n\n      .ml-1 {\n        margin-left: calc(var(--spacing) * 1);\n      }\n\n      .ml-2 {\n        margin-left: calc(var(--spacing) * 2);\n      }\n\n      .ml-3 {\n        margin-left: calc(var(--spacing) * 3);\n      }\n\n      .ml-auto {\n        margin-left: auto;\n      }\n\n      .block {\n        display: block;\n      }\n\n      .flex {\n        display: flex;\n      }\n\n      .grid {\n        display: grid;\n      }\n\n      .hidden {\n        display: none;\n      }\n\n      .inline {\n        display: inline;\n      }\n\n      .inline-block {\n        display: inline-block;\n      }\n\n      .inline-flex {\n        display: inline-flex;\n      }\n\n      .table {\n        display: table;\n      }\n\n      .aspect-square {\n        aspect-ratio: 1;\n      }\n\n      .size-1\\.5 {\n        width: calc(var(--spacing) * 1.5);\n        height: calc(var(--spacing) * 1.5);\n      }\n\n      .size-2 {\n        width: calc(var(--spacing) * 2);\n        height: calc(var(--spacing) * 2);\n      }\n\n      .size-2\\.5 {\n        width: calc(var(--spacing) * 2.5);\n        height: calc(var(--spacing) * 2.5);\n      }\n\n      .size-3 {\n        width: calc(var(--spacing) * 3);\n        height: calc(var(--spacing) * 3);\n      }\n\n      .h-1\\.5 {\n        height: calc(var(--spacing) * 1.5);\n      }\n\n      .h-2 {\n        height: calc(var(--spacing) * 2);\n      }\n\n      .h-3\\.5 {\n        height: calc(var(--spacing) * 3.5);\n      }\n\n      .h-4 {\n        height: calc(var(--spacing) * 4);\n      }\n\n      .h-5 {\n        height: calc(var(--spacing) * 5);\n      }\n\n      .h-6 {\n        height: calc(var(--spacing) * 6);\n      }\n\n      .h-7 {\n        height: calc(var(--spacing) * 7);\n      }\n\n      .h-8 {\n        height: calc(var(--spacing) * 8);\n      }\n\n      .h-9 {\n        height: calc(var(--spacing) * 9);\n      }\n\n      .h-11 {\n        height: calc(var(--spacing) * 11);\n      }\n\n      .h-20 {\n        height: calc(var(--spacing) * 20);\n      }\n\n      .h-24 {\n        height: calc(var(--spacing) * 24);\n      }\n\n      .h-44 {\n        height: calc(var(--spacing) * 44);\n      }\n\n      .h-64 {\n        height: calc(var(--spacing) * 64);\n      }\n\n      .h-full {\n        height: 100%;\n      }\n\n      .max-h-\\[60vh\\] {\n        max-height: 60vh;\n      }\n\n      .max-h-\\[220px\\] {\n        max-height: 220px;\n      }\n\n      .w-1\\.5 {\n        width: calc(var(--spacing) * 1.5);\n      }\n\n      .w-3\\.5 {\n        width: calc(var(--spacing) * 3.5);\n      }\n\n      .w-4 {\n        width: calc(var(--spacing) * 4);\n      }\n\n      .w-5 {\n        width: calc(var(--spacing) * 5);\n      }\n\n      .w-8 {\n        width: calc(var(--spacing) * 8);\n      }\n\n      .w-10 {\n        width: calc(var(--spacing) * 10);\n      }\n\n      .w-11 {\n        width: calc(var(--spacing) * 11);\n      }\n\n      .w-16 {\n        width: calc(var(--spacing) * 16);\n      }\n\n      .w-20 {\n        width: calc(var(--spacing) * 20);\n      }\n\n      .w-32 {\n        width: calc(var(--spacing) * 32);\n      }\n\n      .w-44 {\n        width: calc(var(--spacing) * 44);\n      }\n\n      .w-full {\n        width: 100%;\n      }\n\n      .max-w-2xl {\n        max-width: var(--container-2xl);\n      }\n\n      .max-w-\\[260px\\] {\n        max-width: 260px;\n      }\n\n      .max-w-\\[920px\\] {\n        max-width: 920px;\n      }\n\n      .max-w-xs {\n        max-width: var(--container-xs);\n      }\n\n      .min-w-0 {\n        min-width: calc(var(--spacing) * 0);\n      }\n\n      .min-w-\\[1rem\\] {\n        min-width: 1rem;\n      }\n\n      .min-w-\\[10rem\\] {\n        min-width: 10rem;\n      }\n\n      .min-w-\\[12rem\\] {\n        min-width: 12rem;\n      }\n\n      .min-w-full {\n        min-width: 100%;\n      }\n\n      .flex-1 {\n        flex: 1;\n      }\n\n      .shrink-0 {\n        flex-shrink: 0;\n      }\n\n      .grow {\n        flex-grow: 1;\n      }\n\n      .-translate-x-px {\n        --tw-translate-x: -1px;\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .translate-x-px {\n        --tw-translate-x: 1px;\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .-translate-y-1\\/2 {\n        --tw-translate-y: calc(calc(1 / 2 * 100%) * -1);\n        translate: var(--tw-translate-x) var(--tw-translate-y);\n      }\n\n      .transform {\n        transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );\n      }\n\n      .animate-spin {\n        animation: var(--animate-spin);\n      }\n\n      .cursor-pointer {\n        cursor: pointer;\n      }\n\n      .list-none {\n        list-style-type: none;\n      }\n\n      .grid-cols-1 {\n        grid-template-columns: repeat(1, minmax(0, 1fr));\n      }\n\n      .grid-cols-2 {\n        grid-template-columns: repeat(2, minmax(0, 1fr));\n      }\n\n      .grid-cols-4 {\n        grid-template-columns: repeat(4, minmax(0, 1fr));\n      }\n\n      .grid-cols-5 {\n        grid-template-columns: repeat(5, minmax(0, 1fr));\n      }\n\n      .grid-cols-\\[1\\.5rem_1fr_5rem\\] {\n        grid-template-columns: 1.5rem 1fr 5rem;\n      }\n\n      .grid-cols-\\[1fr_auto\\] {\n        grid-template-columns: 1fr auto;\n      }\n\n      .grid-rows-3 {\n        grid-template-rows: repeat(3, minmax(0, 1fr));\n      }\n\n      .flex-col {\n        flex-direction: column;\n      }\n\n      .flex-wrap {\n        flex-wrap: wrap;\n      }\n\n      .items-baseline {\n        align-items: baseline;\n      }\n\n      .items-center {\n        align-items: center;\n      }\n\n      .items-end {\n        align-items: flex-end;\n      }\n\n      .items-start {\n        align-items: flex-start;\n      }\n\n      .justify-between {\n        justify-content: space-between;\n      }\n\n      .justify-center {\n        justify-content: center;\n      }\n\n      .gap-0\\.5 {\n        gap: calc(var(--spacing) * .5);\n      }\n\n      .gap-1 {\n        gap: calc(var(--spacing) * 1);\n      }\n\n      .gap-1\\.5 {\n        gap: calc(var(--spacing) * 1.5);\n      }\n\n      .gap-2 {\n        gap: calc(var(--spacing) * 2);\n      }\n\n      .gap-2\\.5 {\n        gap: calc(var(--spacing) * 2.5);\n      }\n\n      .gap-3 {\n        gap: calc(var(--spacing) * 3);\n      }\n\n      .gap-4 {\n        gap: calc(var(--spacing) * 4);\n      }\n\n      .gap-6 {\n        gap: calc(var(--spacing) * 6);\n      }\n\n      .gap-\\[2px\\] {\n        gap: 2px;\n      }\n\n      .gap-x-6 {\n        column-gap: calc(var(--spacing) * 6);\n      }\n\n      .gap-y-3 {\n        row-gap: calc(var(--spacing) * 3);\n      }\n\n      .truncate {\n        text-overflow: ellipsis;\n        white-space: nowrap;\n        overflow: hidden;\n      }\n\n      .overflow-hidden {\n        overflow: hidden;\n      }\n\n      .overflow-x-auto {\n        overflow-x: auto;\n      }\n\n      .overflow-y-auto {\n        overflow-y: auto;\n      }\n\n      .rounded {\n        border-radius: .25rem;\n      }\n\n      .rounded-\\[3px\\] {\n        border-radius: 3px;\n      }\n\n      .rounded-full {\n        border-radius: 3.40282e38px;\n      }\n\n      .border {\n        border-style: var(--tw-border-style);\n        border-width: 1px;\n      }\n\n      .border-0 {\n        border-style: var(--tw-border-style);\n        border-width: 0;\n      }\n\n      .border-2 {\n        border-style: var(--tw-border-style);\n        border-width: 2px;\n      }\n\n      .border-s {\n        border-inline-start-style: var(--tw-border-style);\n        border-inline-start-width: 1px;\n      }\n\n      .border-t {\n        border-top-style: var(--tw-border-style);\n        border-top-width: 1px;\n      }\n\n      .border-b {\n        border-bottom-style: var(--tw-border-style);\n        border-bottom-width: 1px;\n      }\n\n      .border-amber-400\\/30 {\n        border-color: #fcbb004d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-amber-400\\/30 {\n          border-color: color-mix(in oklab, var(--color-amber-400) 30%, transparent);\n        }\n      }\n\n      .border-amber-400\\/40 {\n        border-color: #fcbb0066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-amber-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-amber-400) 40%, transparent);\n        }\n      }\n\n      .border-emerald-400\\/40 {\n        border-color: #00d29466;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-emerald-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-emerald-400) 40%, transparent);\n        }\n      }\n\n      .border-lime-400\\/40 {\n        border-color: #9de50066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-lime-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-lime-400) 40%, transparent);\n        }\n      }\n\n      .border-sky-400\\/30 {\n        border-color: #00bcfe4d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-sky-400\\/30 {\n          border-color: color-mix(in oklab, var(--color-sky-400) 30%, transparent);\n        }\n      }\n\n      .border-sky-400\\/40 {\n        border-color: #00bcfe66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-sky-400\\/40 {\n          border-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n        }\n      }\n\n      .border-slate-200 {\n        border-color: var(--color-slate-200);\n      }\n\n      .border-white\\/10 {\n        border-color: #ffffff1a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-white\\/10 {\n          border-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n\n      .border-white\\/20 {\n        border-color: #fff3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .border-white\\/20 {\n          border-color: color-mix(in oklab, var(--color-white) 20%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/10 {\n        background-color: #fcbb001a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 10%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/15 {\n        background-color: #fcbb0026;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 15%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/80 {\n        background-color: #fcbb00cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/80 {\n          background-color: color-mix(in oklab, var(--color-amber-400) 80%, transparent);\n        }\n      }\n\n      .bg-amber-400\\/\\[0\\.06\\] {\n        background-color: #fcbb000f;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-amber-400\\/\\[0\\.06\\] {\n          background-color: color-mix(in oklab, var(--color-amber-400) 6%, transparent);\n        }\n      }\n\n      .bg-emerald-400\\/10 {\n        background-color: #00d2941a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-emerald-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-emerald-400) 10%, transparent);\n        }\n      }\n\n      .bg-lime-300 {\n        background-color: var(--color-lime-300);\n      }\n\n      .bg-lime-400\\/10 {\n        background-color: #9de5001a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-lime-400\\/10 {\n          background-color: color-mix(in oklab, var(--color-lime-400) 10%, transparent);\n        }\n      }\n\n      .bg-lime-400\\/15 {\n        background-color: #9de50026;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-lime-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-lime-400) 15%, transparent);\n        }\n      }\n\n      .bg-sky-400\\/15 {\n        background-color: #00bcfe26;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-sky-400\\/15 {\n          background-color: color-mix(in oklab, var(--color-sky-400) 15%, transparent);\n        }\n      }\n\n      .bg-sky-400\\/\\[0\\.06\\] {\n        background-color: #00bcfe0f;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-sky-400\\/\\[0\\.06\\] {\n          background-color: color-mix(in oklab, var(--color-sky-400) 6%, transparent);\n        }\n      }\n\n      .bg-slate-200\\/80 {\n        background-color: #e2e8f0cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-200\\/80 {\n          background-color: color-mix(in oklab, var(--color-slate-200) 80%, transparent);\n        }\n      }\n\n      .bg-slate-900\\/80 {\n        background-color: #0f172bcc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-900\\/80 {\n          background-color: color-mix(in oklab, var(--color-slate-900) 80%, transparent);\n        }\n      }\n\n      .bg-slate-900\\/95 {\n        background-color: #0f172bf2;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-900\\/95 {\n          background-color: color-mix(in oklab, var(--color-slate-900) 95%, transparent);\n        }\n      }\n\n      .bg-slate-950\\/40 {\n        background-color: #02061866;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-950\\/40 {\n          background-color: color-mix(in oklab, var(--color-slate-950) 40%, transparent);\n        }\n      }\n\n      .bg-slate-950\\/70 {\n        background-color: #020618b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-slate-950\\/70 {\n          background-color: color-mix(in oklab, var(--color-slate-950) 70%, transparent);\n        }\n      }\n\n      .bg-teal-300 {\n        background-color: var(--color-teal-300);\n      }\n\n      .bg-teal-300\\/70 {\n        background-color: #46ecd5b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-teal-300\\/70 {\n          background-color: color-mix(in oklab, var(--color-teal-300) 70%, transparent);\n        }\n      }\n\n      .bg-teal-300\\/90 {\n        background-color: #46ecd5e6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-teal-300\\/90 {\n          background-color: color-mix(in oklab, var(--color-teal-300) 90%, transparent);\n        }\n      }\n\n      .bg-transparent {\n        background-color: #0000;\n      }\n\n      .bg-white\\/5 {\n        background-color: #ffffff0d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/5 {\n          background-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n        }\n      }\n\n      .bg-white\\/10 {\n        background-color: #ffffff1a;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/10 {\n          background-color: color-mix(in oklab, var(--color-white) 10%, transparent);\n        }\n      }\n\n      .bg-white\\/\\[0\\.02\\] {\n        background-color: #ffffff05;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/\\[0\\.02\\] {\n          background-color: color-mix(in oklab, var(--color-white) 2%, transparent);\n        }\n      }\n\n      .bg-white\\/\\[0\\.03\\] {\n        background-color: #ffffff08;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .bg-white\\/\\[0\\.03\\] {\n          background-color: color-mix(in oklab, var(--color-white) 3%, transparent);\n        }\n      }\n\n      .p-0 {\n        padding: calc(var(--spacing) * 0);\n      }\n\n      .p-1\\.5 {\n        padding: calc(var(--spacing) * 1.5);\n      }\n\n      .p-2 {\n        padding: calc(var(--spacing) * 2);\n      }\n\n      .p-3 {\n        padding: calc(var(--spacing) * 3);\n      }\n\n      .p-4 {\n        padding: calc(var(--spacing) * 4);\n      }\n\n      .p-5 {\n        padding: calc(var(--spacing) * 5);\n      }\n\n      .p-6 {\n        padding: calc(var(--spacing) * 6);\n      }\n\n      .px-1 {\n        padding-inline: calc(var(--spacing) * 1);\n      }\n\n      .px-1\\.5 {\n        padding-inline: calc(var(--spacing) * 1.5);\n      }\n\n      .px-2 {\n        padding-inline: calc(var(--spacing) * 2);\n      }\n\n      .px-2\\.5 {\n        padding-inline: calc(var(--spacing) * 2.5);\n      }\n\n      .px-3 {\n        padding-inline: calc(var(--spacing) * 3);\n      }\n\n      .py-0\\.5 {\n        padding-block: calc(var(--spacing) * .5);\n      }\n\n      .py-1 {\n        padding-block: calc(var(--spacing) * 1);\n      }\n\n      .py-1\\.5 {\n        padding-block: calc(var(--spacing) * 1.5);\n      }\n\n      .py-2 {\n        padding-block: calc(var(--spacing) * 2);\n      }\n\n      .py-4 {\n        padding-block: calc(var(--spacing) * 4);\n      }\n\n      .py-px {\n        padding-block: 1px;\n      }\n\n      .pt-1 {\n        padding-top: calc(var(--spacing) * 1);\n      }\n\n      .pt-3 {\n        padding-top: calc(var(--spacing) * 3);\n      }\n\n      .pt-4 {\n        padding-top: calc(var(--spacing) * 4);\n      }\n\n      .pr-1 {\n        padding-right: calc(var(--spacing) * 1);\n      }\n\n      .pb-1 {\n        padding-bottom: calc(var(--spacing) * 1);\n      }\n\n      .pb-2 {\n        padding-bottom: calc(var(--spacing) * 2);\n      }\n\n      .pb-4 {\n        padding-bottom: calc(var(--spacing) * 4);\n      }\n\n      .pl-2 {\n        padding-left: calc(var(--spacing) * 2);\n      }\n\n      .text-center {\n        text-align: center;\n      }\n\n      .text-left {\n        text-align: left;\n      }\n\n      .text-right {\n        text-align: right;\n      }\n\n      .text-start {\n        text-align: start;\n      }\n\n      .align-middle {\n        vertical-align: middle;\n      }\n\n      .text-2xl {\n        font-size: var(--text-2xl);\n        line-height: var(--tw-leading, var(--text-2xl--line-height));\n      }\n\n      .text-3xl {\n        font-size: var(--text-3xl);\n        line-height: var(--tw-leading, var(--text-3xl--line-height));\n      }\n\n      .text-4xl {\n        font-size: var(--text-4xl);\n        line-height: var(--tw-leading, var(--text-4xl--line-height));\n      }\n\n      .text-5xl {\n        font-size: var(--text-5xl);\n        line-height: var(--tw-leading, var(--text-5xl--line-height));\n      }\n\n      .text-lg {\n        font-size: var(--text-lg);\n        line-height: var(--tw-leading, var(--text-lg--line-height));\n      }\n\n      .text-sm {\n        font-size: var(--text-sm);\n        line-height: var(--tw-leading, var(--text-sm--line-height));\n      }\n\n      .text-xl {\n        font-size: var(--text-xl);\n        line-height: var(--tw-leading, var(--text-xl--line-height));\n      }\n\n      .text-xs {\n        font-size: var(--text-xs);\n        line-height: var(--tw-leading, var(--text-xs--line-height));\n      }\n\n      .text-\\[0\\.6rem\\] {\n        font-size: .6rem;\n      }\n\n      .text-\\[0\\.7rem\\] {\n        font-size: .7rem;\n      }\n\n      .text-\\[0\\.65rem\\] {\n        font-size: .65rem;\n      }\n\n      .leading-none {\n        --tw-leading: 1;\n        line-height: 1;\n      }\n\n      .leading-tight {\n        --tw-leading: var(--leading-tight);\n        line-height: var(--leading-tight);\n      }\n\n      .font-bold {\n        --tw-font-weight: var(--font-weight-bold);\n        font-weight: var(--font-weight-bold);\n      }\n\n      .font-medium {\n        --tw-font-weight: var(--font-weight-medium);\n        font-weight: var(--font-weight-medium);\n      }\n\n      .font-normal {\n        --tw-font-weight: var(--font-weight-normal);\n        font-weight: var(--font-weight-normal);\n      }\n\n      .font-semibold {\n        --tw-font-weight: var(--font-weight-semibold);\n        font-weight: var(--font-weight-semibold);\n      }\n\n      .tracking-\\[0\\.16em\\] {\n        --tw-tracking: .16em;\n        letter-spacing: .16em;\n      }\n\n      .tracking-\\[0\\.18em\\] {\n        --tw-tracking: .18em;\n        letter-spacing: .18em;\n      }\n\n      .tracking-normal {\n        --tw-tracking: var(--tracking-normal);\n        letter-spacing: var(--tracking-normal);\n      }\n\n      .tracking-tight {\n        --tw-tracking: var(--tracking-tight);\n        letter-spacing: var(--tracking-tight);\n      }\n\n      .tracking-wide {\n        --tw-tracking: var(--tracking-wide);\n        letter-spacing: var(--tracking-wide);\n      }\n\n      .tracking-wider {\n        --tw-tracking: var(--tracking-wider);\n        letter-spacing: var(--tracking-wider);\n      }\n\n      .whitespace-nowrap {\n        white-space: nowrap;\n      }\n\n      .\\!text-current {\n        color: currentColor !important;\n      }\n\n      .text-amber-200 {\n        color: var(--color-amber-200);\n      }\n\n      .text-amber-300 {\n        color: var(--color-amber-300);\n      }\n\n      .text-amber-300\\/80 {\n        color: #ffd236cc;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .text-amber-300\\/80 {\n          color: color-mix(in oklab, var(--color-amber-300) 80%, transparent);\n        }\n      }\n\n      .text-amber-400 {\n        color: var(--color-amber-400);\n      }\n\n      .text-cyan-300 {\n        color: var(--color-cyan-300);\n      }\n\n      .text-emerald-300 {\n        color: var(--color-emerald-300);\n      }\n\n      .text-indigo-300 {\n        color: var(--color-indigo-300);\n      }\n\n      .text-lime-200 {\n        color: var(--color-lime-200);\n      }\n\n      .text-lime-300 {\n        color: var(--color-lime-300);\n      }\n\n      .text-sky-300 {\n        color: var(--color-sky-300);\n      }\n\n      .text-sky-400 {\n        color: var(--color-sky-400);\n      }\n\n      .text-slate-100 {\n        color: var(--color-slate-100);\n      }\n\n      .text-slate-100\\/85 {\n        color: #f1f5f9d9;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .text-slate-100\\/85 {\n          color: color-mix(in oklab, var(--color-slate-100) 85%, transparent);\n        }\n      }\n\n      .text-slate-200 {\n        color: var(--color-slate-200);\n      }\n\n      .text-slate-300 {\n        color: var(--color-slate-300);\n      }\n\n      .text-slate-400 {\n        color: var(--color-slate-400);\n      }\n\n      .text-slate-500 {\n        color: var(--color-slate-500);\n      }\n\n      .text-slate-900 {\n        color: var(--color-slate-900);\n      }\n\n      .text-white {\n        color: var(--color-white);\n      }\n\n      .text-white\\/85 {\n        color: #ffffffd9;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .text-white\\/85 {\n          color: color-mix(in oklab, var(--color-white) 85%, transparent);\n        }\n      }\n\n      .capitalize {\n        text-transform: capitalize;\n      }\n\n      .normal-case {\n        text-transform: none;\n      }\n\n      .uppercase {\n        text-transform: uppercase;\n      }\n\n      .italic {\n        font-style: italic;\n      }\n\n      .tabular-nums {\n        --tw-numeric-spacing: tabular-nums;\n        font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n      }\n\n      .no-underline {\n        text-decoration-line: none;\n      }\n\n      .opacity-0 {\n        opacity: 0;\n      }\n\n      .opacity-60 {\n        opacity: .6;\n      }\n\n      .opacity-70 {\n        opacity: .7;\n      }\n\n      .opacity-75 {\n        opacity: .75;\n      }\n\n      .opacity-90 {\n        opacity: .9;\n      }\n\n      .shadow-\\[0_0_10px_2px_rgba\\(163\\,230\\,53\\,0\\.7\\)\\] {\n        --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, #a3e635b3);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\] {\n        --tw-shadow: 0 0 10px var(--tw-shadow-color, #ffffff40);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\] {\n        --tw-shadow: 0 0 14px var(--tw-shadow-color, #5eead499);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\] {\n        --tw-shadow: 0 0 18px -6px var(--tw-shadow-color, var(--color-primary));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\] {\n        --tw-shadow: 0 0 18px var(--tw-shadow-color, #5eead4d9);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\] {\n        --tw-shadow: 0 0 24px -8px var(--tw-shadow-color, var(--color-primary));\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .shadow-lg {\n        --tw-shadow: 0 10px 15px -3px var(--tw-shadow-color, #0000001a), 0 4px 6px -4px var(--tw-shadow-color, #0000001a);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring, .ring-1 {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring-2 {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .ring-amber-400\\/40 {\n        --tw-ring-color: #fcbb0066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-amber-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-amber-400) 40%, transparent);\n        }\n      }\n\n      .ring-cyan-400\\/40 {\n        --tw-ring-color: #00d2ef66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-cyan-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-cyan-400) 40%, transparent);\n        }\n      }\n\n      .ring-indigo-400\\/40 {\n        --tw-ring-color: #7d87ff66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-indigo-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-indigo-400) 40%, transparent);\n        }\n      }\n\n      .ring-lime-400\\/40 {\n        --tw-ring-color: #9de50066;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-lime-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-lime-400) 40%, transparent);\n        }\n      }\n\n      .ring-sky-400\\/40 {\n        --tw-ring-color: #00bcfe66;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-sky-400\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-sky-400) 40%, transparent);\n        }\n      }\n\n      .ring-teal-200 {\n        --tw-ring-color: var(--color-teal-200);\n      }\n\n      .ring-teal-200\\/70 {\n        --tw-ring-color: #96f7e4b3;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-teal-200\\/70 {\n          --tw-ring-color: color-mix(in oklab, var(--color-teal-200) 70%, transparent);\n        }\n      }\n\n      .ring-white\\/5 {\n        --tw-ring-color: #ffffff0d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/5 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n        }\n      }\n\n      .ring-white\\/30 {\n        --tw-ring-color: #ffffff4d;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/30 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 30%, transparent);\n        }\n      }\n\n      .ring-white\\/40 {\n        --tw-ring-color: #fff6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .ring-white\\/40 {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 40%, transparent);\n        }\n      }\n\n      .outline-hidden {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      @media (forced-colors: active) {\n        .outline-hidden {\n          outline-offset: 2px;\n          outline: 2px solid #0000;\n        }\n      }\n\n      .drop-shadow-\\[0_2px_18px_rgba\\(0\\,0\\,0\\,0\\.45\\)\\] {\n        --tw-drop-shadow-size: drop-shadow(0 2px 18px var(--tw-drop-shadow-color, #00000073));\n        --tw-drop-shadow: var(--tw-drop-shadow-size);\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .invert {\n        --tw-invert: invert(100%);\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .filter {\n        filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n      }\n\n      .backdrop-blur {\n        --tw-backdrop-blur: blur(8px);\n        -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n        backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n      }\n\n      .backdrop-blur-sm {\n        --tw-backdrop-blur: blur(var(--blur-sm));\n        -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n        backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n      }\n\n      .transition-\\[margin\\,opacity\\] {\n        transition-property: margin, opacity;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-\\[width\\,height\\,padding\\] {\n        transition-property: width, height, padding;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-all {\n        transition-property: all;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-colors {\n        transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-opacity {\n        transition-property: opacity;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-shadow {\n        transition-property: box-shadow;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .transition-transform {\n        transition-property: transform, translate, scale, rotate;\n        transition-timing-function: var(--tw-ease, var(--default-transition-timing-function));\n        transition-duration: var(--tw-duration, var(--default-transition-duration));\n      }\n\n      .duration-150 {\n        --tw-duration: .15s;\n        transition-duration: .15s;\n      }\n\n      .duration-200 {\n        --tw-duration: .2s;\n        transition-duration: .2s;\n      }\n\n      .ease-linear {\n        --tw-ease: linear;\n        transition-timing-function: linear;\n      }\n\n      .ease-out {\n        --tw-ease: var(--ease-out);\n        transition-timing-function: var(--ease-out);\n      }\n\n      .outline-none {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      .select-none {\n        -webkit-user-select: none;\n        user-select: none;\n      }\n\n      @media (hover: hover) {\n        .group-hover\\:opacity-100:is(:where(.group):hover *) {\n          opacity: 1;\n        }\n      }\n\n      .group-focus-visible\\:opacity-100:is(:where(.group):focus-visible *) {\n        opacity: 1;\n      }\n\n      .group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *) {\n        padding-inline-end: calc(var(--spacing) * 8);\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        margin-top: calc(var(--spacing) * -8);\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        display: none;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        width: calc(var(--spacing) * 8) !important;\n        height: calc(var(--spacing) * 8) !important;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        padding: calc(var(--spacing) * 2) !important;\n      }\n\n      .group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *) {\n        opacity: 0;\n      }\n\n      .group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *) {\n        rotate: 90deg;\n      }\n\n      @media (hover: hover) {\n        .hover\\:-translate-y-0\\.5:hover {\n          --tw-translate-y: calc(var(--spacing) * -.5);\n          translate: var(--tw-translate-x) var(--tw-translate-y);\n        }\n\n        .hover\\:bg-slate-800:hover {\n          background-color: var(--color-slate-800);\n        }\n\n        .hover\\:bg-slate-950\\/70:hover {\n          background-color: #020618b3;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          .hover\\:bg-slate-950\\/70:hover {\n            background-color: color-mix(in oklab, var(--color-slate-950) 70%, transparent);\n          }\n        }\n\n        .hover\\:bg-white\\/5:hover {\n          background-color: #ffffff0d;\n        }\n\n        @supports (color: color-mix(in lab, red, red)) {\n          .hover\\:bg-white\\/5:hover {\n            background-color: color-mix(in oklab, var(--color-white) 5%, transparent);\n          }\n        }\n\n        .hover\\:text-white:hover {\n          color: var(--color-white);\n        }\n\n        .hover\\:underline:hover {\n          text-decoration-line: underline;\n        }\n\n        .hover\\:opacity-100:hover {\n          opacity: 1;\n        }\n\n        .hover\\:shadow-xl:hover {\n          --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n        }\n      }\n\n      .focus\\:outline-none:focus {\n        --tw-outline-style: none;\n        outline-style: none;\n      }\n\n      .focus-visible\\:ring-2:focus-visible {\n        --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n        box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n      }\n\n      .focus-visible\\:ring-white\\/40:focus-visible {\n        --tw-ring-color: #fff6;\n      }\n\n      @supports (color: color-mix(in lab, red, red)) {\n        .focus-visible\\:ring-white\\/40:focus-visible {\n          --tw-ring-color: color-mix(in oklab, var(--color-white) 40%, transparent);\n        }\n      }\n\n      .disabled\\:pointer-events-none:disabled {\n        pointer-events: none;\n      }\n\n      .disabled\\:opacity-50:disabled {\n        opacity: .5;\n      }\n\n      .aria-disabled\\:pointer-events-none[aria-disabled=\"true\"] {\n        pointer-events: none;\n      }\n\n      .aria-disabled\\:opacity-50[aria-disabled=\"true\"] {\n        opacity: .5;\n      }\n\n      .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n        --tw-font-weight: var(--font-weight-medium);\n        font-weight: var(--font-weight-medium);\n      }\n\n      @media (min-width: 40rem) {\n        .sm\\:inline-flex {\n          display: inline-flex;\n        }\n\n        .sm\\:h-72 {\n          height: calc(var(--spacing) * 72);\n        }\n\n        .sm\\:grid-cols-2 {\n          grid-template-columns: repeat(2, minmax(0, 1fr));\n        }\n\n        .sm\\:grid-cols-3 {\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n        }\n\n        .sm\\:gap-4 {\n          gap: calc(var(--spacing) * 4);\n        }\n\n        .sm\\:p-3 {\n          padding: calc(var(--spacing) * 3);\n        }\n\n        .sm\\:p-4 {\n          padding: calc(var(--spacing) * 4);\n        }\n\n        .sm\\:p-6 {\n          padding: calc(var(--spacing) * 6);\n        }\n\n        .sm\\:text-4xl {\n          font-size: var(--text-4xl);\n          line-height: var(--tw-leading, var(--text-4xl--line-height));\n        }\n\n        .sm\\:text-5xl {\n          font-size: var(--text-5xl);\n          line-height: var(--tw-leading, var(--text-5xl--line-height));\n        }\n\n        .sm\\:text-6xl {\n          font-size: var(--text-6xl);\n          line-height: var(--tw-leading, var(--text-6xl--line-height));\n        }\n      }\n\n      @media (min-width: 48rem) {\n        .md\\:grid-cols-4 {\n          grid-template-columns: repeat(4, minmax(0, 1fr));\n        }\n\n        .md\\:grid-cols-5 {\n          grid-template-columns: repeat(5, minmax(0, 1fr));\n        }\n\n        .md\\:grid-cols-\\[260px_1fr\\] {\n          grid-template-columns: 260px 1fr;\n        }\n\n        .md\\:grid-cols-\\[280px_1fr\\] {\n          grid-template-columns: 280px 1fr;\n        }\n      }\n\n      @media (min-width: 64rem) {\n        .lg\\:col-span-2 {\n          grid-column: span 2 / span 2;\n        }\n\n        .lg\\:col-span-3 {\n          grid-column: span 3 / span 3;\n        }\n\n        .lg\\:grid-cols-3 {\n          grid-template-columns: repeat(3, minmax(0, 1fr));\n        }\n\n        .lg\\:grid-cols-5 {\n          grid-template-columns: repeat(5, minmax(0, 1fr));\n        }\n\n        .lg\\:grid-cols-\\[1fr_2fr\\] {\n          grid-template-columns: 1fr 2fr;\n        }\n\n        .lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\] {\n          grid-template-columns: minmax(260px, 320px) 1fr minmax(220px, 260px);\n        }\n      }\n\n      @media (min-width: 80rem) {\n        .xl\\:grid-cols-4 {\n          grid-template-columns: repeat(4, minmax(0, 1fr));\n        }\n      }\n\n      @media print {\n        .print\\:hidden {\n          display: none;\n        }\n\n        .print\\:break-inside-avoid {\n          break-inside: avoid;\n        }\n\n        .print\\:gap-3 {\n          gap: calc(var(--spacing) * 3);\n        }\n\n        .print\\:border-slate-200 {\n          border-color: var(--color-slate-200);\n        }\n\n        .print\\:border-slate-300 {\n          border-color: var(--color-slate-300);\n        }\n\n        .print\\:\\!bg-white {\n          background-color: var(--color-white) !important;\n        }\n\n        .print\\:py-0 {\n          padding-block: calc(var(--spacing) * 0);\n        }\n\n        .print\\:text-\\[10px\\] {\n          font-size: 10px;\n        }\n\n        .print\\:\\!shadow-none {\n          --tw-shadow: 0 0 #0000 !important;\n          box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow) !important;\n        }\n      }\n\n      .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n        text-overflow: ellipsis;\n        white-space: nowrap;\n        overflow: hidden;\n      }\n\n      .\\[\\&\\>svg\\]\\:size-4 > svg {\n        width: calc(var(--spacing) * 4);\n        height: calc(var(--spacing) * 4);\n      }\n\n      .\\[\\&\\>svg\\]\\:shrink-0 > svg {\n        flex-shrink: 0;\n      }\n\n      .\\[\\&\\>svg\\]\\:text-inherit > svg {\n        color: inherit;\n      }\n    }\n  }\n}\n\n@layer rubix-extension {\n  @keyframes nrg-hero-slide {\n    0% {\n      background-position: 0%;\n    }\n\n    50% {\n      background-position: 100%;\n    }\n\n    100% {\n      background-position: 0%;\n    }\n  }\n\n  .nrg-hero-gradient {\n    background-size: 220% 220%;\n    animation: 18s ease-in-out infinite nrg-hero-slide;\n  }\n\n  @keyframes nrg-spin {\n    from {\n      transform: rotate(0);\n    }\n\n    to {\n      transform: rotate(360deg);\n    }\n  }\n\n  .nrg-spin-slow {\n    transform-origin: 50%;\n    transform-box: fill-box;\n    animation: 4.2s linear infinite nrg-spin;\n  }\n\n  .nrg-spin-med {\n    transform-origin: 50%;\n    transform-box: fill-box;\n    animation: 2.4s linear infinite nrg-spin;\n  }\n\n  @keyframes nrg-bob {\n    0%, 100% {\n      transform: translateY(0);\n    }\n\n    50% {\n      transform: translateY(-3.5px);\n    }\n  }\n\n  .nrg-bob {\n    transform-origin: 50%;\n    transform-box: fill-box;\n    animation: 3.8s ease-in-out infinite nrg-bob;\n  }\n\n  @keyframes nrg-charge {\n    0% {\n      opacity: .55;\n    }\n\n    50% {\n      opacity: 1;\n    }\n\n    100% {\n      opacity: .55;\n    }\n  }\n\n  .nrg-charge {\n    animation: 2.6s ease-in-out infinite nrg-charge;\n  }\n\n  @keyframes nrg-status-pulse {\n    0% {\n      box-shadow: 0 0 0 0 var(--nrg-pulse-color, #a3e6358c);\n    }\n\n    70% {\n      box-shadow: 0 0 0 9px #0000;\n    }\n\n    100% {\n      box-shadow: 0 0 #0000;\n    }\n  }\n\n  .nrg-dot-pulse {\n    animation: 1.9s cubic-bezier(.45, 0, .2, 1) infinite nrg-status-pulse;\n  }\n\n  .nrg-glow-amber {\n    text-shadow: 0 0 22px #fbbf2473, 0 0 4px #fbbf244d;\n  }\n\n  .nrg-glow-lime {\n    text-shadow: 0 0 22px #a3e63566, 0 0 4px #a3e6354d;\n  }\n\n  .nrg-glow-cyan {\n    text-shadow: 0 0 22px #22d3ee66, 0 0 4px #22d3ee4d;\n  }\n\n  .nrg-shell {\n    color: #f8fafc;\n    background-color: #0f0f23;\n    background-image: radial-gradient(60% 50% at 12% 0, #6366f138, #0000 70%), radial-gradient(50% 50% at 95% 8%, #22d3ee2e, #0000 70%), radial-gradient(40% 40% at 65% 100%, #fbbf2424, #0000 70%);\n    min-height: 100%;\n  }\n\n  .nrg-card {\n    -webkit-backdrop-filter: blur(8px);\n    backdrop-filter: blur(8px);\n    background: #0f172ac7;\n    border: 1px solid #ffffff14;\n    border-radius: 1rem;\n    box-shadow: inset 0 1px #ffffff0a, 0 18px 44px -22px #000000b3;\n  }\n\n  .nrg-card--solar {\n    box-shadow: inset 0 0 0 1px #fbbf242e, 0 18px 44px -22px #fbbf2440;\n  }\n\n  .nrg-card--wind {\n    box-shadow: inset 0 0 0 1px #22d3ee2e, 0 18px 44px -22px #22d3ee40;\n  }\n\n  .nrg-card--water {\n    box-shadow: inset 0 0 0 1px #38bdf82e, 0 18px 44px -22px #38bdf840;\n  }\n\n  .nrg-card--hydro {\n    box-shadow: inset 0 0 0 1px #6366f133, 0 18px 44px -22px #6366f14d;\n  }\n\n  .nrg-card--storage {\n    box-shadow: inset 0 0 0 1px #a3e6352e, 0 18px 44px -22px #a3e63540;\n  }\n\n  .nrg-nav-active {\n    box-shadow: inset 2px 0 0 0 var(--nrg-nav-accent, #ca8a04), 0 0 24px -8px var(--nrg-nav-accent, #ca8a04);\n    background: linear-gradient(#ffffff0f, #ffffff05);\n  }\n\n  @media (prefers-reduced-motion: reduce) {\n    .nrg-hero-gradient, .nrg-spin-slow, .nrg-spin-med, .nrg-bob, .nrg-charge, .nrg-dot-pulse {\n      animation: none !important;\n    }\n  }\n}\n\n.ext-dash-shell {\n  isolation: isolate;\n  position: relative;\n}\n\n.ext-dash-shell:before {\n  content: \"\";\n  pointer-events: none;\n  z-index: -1;\n  filter: blur(20px);\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf2e, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f129, #0000 70%);\n  height: 50%;\n  position: absolute;\n  inset: -20% -10% auto;\n}\n\n:root[data-mode=\"dark\"] .ext-dash-shell:before {\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf38, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f133, #0000 70%);\n}\n\n.ext-glass {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 14px;\n  position: relative;\n  overflow: hidden;\n  box-shadow: inset 0 1px #ffffff8c, 0 1px 2px #0f172a0f, 0 12px 28px -12px #0f172a38;\n}\n\n:root[data-mode=\"dark\"] .ext-glass {\n  background: var(--color-card, #0f172a);\n  border-color: var(--color-border, #94a3b82e);\n  box-shadow: inset 0 1px #ffffff0f, 0 1px 2px #00000073, 0 18px 44px -16px #000000b3;\n}\n\n.ext-glass--accent {\n  border-color: var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-glass--accent {\n    border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);\n  }\n}\n\n.ext-glass--accent {\n  box-shadow: 0 0 0 1px var(--color-primary, #2dd4bf), 0 12px 36px -12px var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-glass--accent {\n    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent), 0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);\n  }\n}\n\n.ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  .ext-eyebrow {\n    color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);\n  }\n}\n\n.ext-num {\n  font-variant-numeric: tabular-nums;\n}\n\n@keyframes ext-site-pulse {\n  0% {\n    opacity: .9;\n    transform: scale(.6);\n  }\n\n  80% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n\n  100% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n}\n\n.site-pulse--on {\n  animation: 1.8s ease-out infinite ext-site-pulse;\n}\n\n.site-pulse--off {\n  opacity: .35;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  .site-pulse--on {\n    opacity: .55;\n    animation: none;\n  }\n}\n\n.uplot {\n  font-family: inherit;\n}\n\n.uplot .u-legend {\n  color: var(--color-foreground);\n  font-size: 11px;\n}\n\n.uplot .u-legend .u-marker {\n  border-radius: 2px;\n  width: 10px;\n  height: 10px;\n}\n\n.ext-report {\n  min-height: 100%;\n  padding: 1rem 1.25rem;\n}\n\n@media print {\n  @page {\n    size: A4;\n    margin: 14mm;\n  }\n\n  html, body {\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  .no-print, nav, header[data-block-shell], aside {\n    display: none !important;\n  }\n\n  .ext-report {\n    --color-foreground: #0f172a;\n    --color-muted-foreground: #64748b;\n    --color-border: #e2e8f0;\n    --color-card: #fff;\n    padding: 0;\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  .ext-report .ext-glass {\n    box-shadow: none;\n    background: #fff !important;\n  }\n\n  section, .ext-report-channel {\n    break-inside: avoid;\n    page-break-inside: avoid;\n  }\n\n  a {\n    color: inherit;\n    text-decoration: none;\n  }\n}\n\n@property --tw-translate-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n.maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}.maplibregl-canvas{left:0;position:absolute;top:0}.maplibregl-map:fullscreen{height:100%;width:100%}.maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}.maplibregl-canvas-container.maplibregl-interactive,.maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}.maplibregl-canvas-container.maplibregl-interactive:active,.maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-canvas-container.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan,.maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures,.maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}.maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right,.maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}.maplibregl-ctrl-top-left{left:0;top:0}.maplibregl-ctrl-top-right{right:0;top:0}.maplibregl-ctrl-bottom-left{bottom:0;left:0}.maplibregl-ctrl-bottom-right{bottom:0;right:0}.maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}.maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}.maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}.maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}.maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}.maplibregl-ctrl-group{background:#fff;border-radius:4px}.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){.maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}.maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}.maplibregl-ctrl-group button+button{border-top:1px solid #ddd}.maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){.maplibregl-ctrl-icon{background-color:transparent}.maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}.maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}.maplibregl-ctrl-attrib-button:focus,.maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl button:disabled{cursor:not-allowed}.maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}.maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}.maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}.maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}.maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}.maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}.maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}.maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){a.maplibregl-ctrl-logo{background-color:transparent;background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}.maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{.maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}.maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show,.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}.maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}.maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}.maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}.maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button,.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}.maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}.maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}.maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}.maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}.maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){.maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}.maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}.maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}.maplibregl-attrib-empty{display:none}.maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}.maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}.maplibregl-popup-anchor-top,.maplibregl-popup-anchor-top-left,.maplibregl-popup-anchor-top-right{flex-direction:column}.maplibregl-popup-anchor-bottom,.maplibregl-popup-anchor-bottom-left,.maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}.maplibregl-popup-anchor-left{flex-direction:row}.maplibregl-popup-anchor-right{flex-direction:row-reverse}.maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}.maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}.maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}.maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}.maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}.maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}.maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}.maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}.maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}.maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}.maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}.maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}.maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}.maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}.maplibregl-popup-track-pointer{display:none}.maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}.maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}.maplibregl-map:active .maplibregl-popup-track-pointer{display:none}.maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}.maplibregl-user-location-dot,.maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}.maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:\"\";position:absolute}.maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:\"\";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}.maplibregl-user-location-dot-stale{background-color:#aaa}.maplibregl-user-location-dot-stale:after{display:none}.maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}.maplibregl-crosshair,.maplibregl-crosshair .maplibregl-interactive,.maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}.maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}.maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}.maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){.maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}.maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}.maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}.uplot, .uplot *, .uplot *::before, .uplot *::after {box-sizing: border-box;}.uplot {font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";line-height: 1.5;width: min-content;}.u-title {text-align: center;font-size: 18px;font-weight: bold;}.u-wrap {position: relative;user-select: none;}.u-over, .u-under {position: absolute;}.u-under {overflow: hidden;}.uplot canvas {display: block;position: relative;width: 100%;height: 100%;}.u-axis {position: absolute;}.u-legend {font-size: 14px;margin: auto;text-align: center;}.u-inline {display: block;}.u-inline * {display: inline-block;}.u-inline tr {margin-right: 16px;}.u-legend th {font-weight: 600;}.u-legend th > * {vertical-align: middle;display: inline-block;}.u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}.u-inline.u-live th::after {content: \":\";vertical-align: middle;}.u-inline:not(.u-live) .u-value {display: none;}.u-series > * {padding: 4px;}.u-series th {cursor: pointer;}.u-legend .u-off > * {opacity: 0.3;}.u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}.u-cursor-x, .u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}.u-hz .u-cursor-x, .u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}.u-hz .u-cursor-y, .u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}.u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline \"background\" shorthand */background-clip: padding-box !important;}.u-axis.u-off, .u-select.u-off, .u-cursor-x.u-off, .u-cursor-y.u-off, .u-cursor-pt.u-off {display: none;}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
 
 })();
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
 import * as React from 'react';
-import React__default, { useLayoutEffect, useEffect, useContext, useState, useRef, useImperativeHandle, useMemo, memo, forwardRef, createElement, isValidElement, createContext, cloneElement, Children, PureComponent, useCallback } from 'react';
+import React__default, { useLayoutEffect, useEffect, useContext, useState, useRef, useImperativeHandle, useMemo, memo, forwardRef, createElement, isValidElement, createContext, useCallback, cloneElement, Children, PureComponent } from 'react';
 import { createPortal } from 'react-dom';
 
 function _mergeNamespaces(n, m) {
@@ -2338,6 +2338,47 @@ const Activity = createLucideIcon("Activity", [
  */
 
 
+const ArrowDownRight = createLucideIcon("ArrowDownRight", [
+  ["path", { d: "m7 7 10 10", key: "1fmybs" }],
+  ["path", { d: "M17 7v10H7", key: "6fjiku" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const ArrowUpRight = createLucideIcon("ArrowUpRight", [
+  ["path", { d: "M7 7h10v10", key: "1tivn9" }],
+  ["path", { d: "M7 17 17 7", key: "1vkiza" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const BatteryCharging = createLucideIcon("BatteryCharging", [
+  ["path", { d: "M15 7h1a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2h-2", key: "1sdynx" }],
+  ["path", { d: "M6 7H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h1", key: "1gkd3k" }],
+  ["path", { d: "m11 7-3 5h4l-3 5", key: "b4a64w" }],
+  ["line", { x1: "22", x2: "22", y1: "11", y2: "13", key: "4dh1rd" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Bookmark = createLucideIcon("Bookmark", [
   ["path", { d: "m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z", key: "1fy3hk" }]
 ]);
@@ -2448,6 +2489,33 @@ const Clock = createLucideIcon("Clock", [
  */
 
 
+const CloudRain = createLucideIcon("CloudRain", [
+  ["path", { d: "M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242", key: "1pljnt" }],
+  ["path", { d: "M16 14v6", key: "1j4efv" }],
+  ["path", { d: "M8 14v6", key: "17c4r9" }],
+  ["path", { d: "M12 16v6", key: "c8a4gj" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Cloud = createLucideIcon("Cloud", [
+  ["path", { d: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z", key: "p7xjir" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Database = createLucideIcon("Database", [
   ["ellipse", { cx: "12", cy: "5", rx: "9", ry: "3", key: "msslwz" }],
   ["path", { d: "M3 5V19A9 3 0 0 0 21 19V5", key: "1wlel7" }],
@@ -2482,6 +2550,31 @@ const Droplet = createLucideIcon("Droplet", [
     {
       d: "M12 22a7 7 0 0 0 7-7c0-2-1-3.9-3-5.5s-3.5-4-4-6.5c-.5 2.5-2 4.9-4 6.5C6 11.1 5 13 5 15a7 7 0 0 0 7 7z",
       key: "c7niix"
+    }
+  ]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Droplets = createLucideIcon("Droplets", [
+  [
+    "path",
+    {
+      d: "M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z",
+      key: "1ptgy4"
+    }
+  ],
+  [
+    "path",
+    {
+      d: "M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2 4.9 4 6.5s3 3.5 3 5.5a6.98 6.98 0 0 1-11.91 4.97",
+      key: "1sl1rz"
     }
   ]
 ]);
@@ -2644,11 +2737,45 @@ const Layers = createLucideIcon("Layers", [
  */
 
 
+const LayoutDashboard = createLucideIcon("LayoutDashboard", [
+  ["rect", { width: "7", height: "9", x: "3", y: "3", rx: "1", key: "10lvy0" }],
+  ["rect", { width: "7", height: "5", x: "14", y: "3", rx: "1", key: "16une8" }],
+  ["rect", { width: "7", height: "9", x: "14", y: "12", rx: "1", key: "1hutg5" }],
+  ["rect", { width: "7", height: "5", x: "3", y: "16", rx: "1", key: "ldoo1y" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const LayoutGrid = createLucideIcon("LayoutGrid", [
   ["rect", { width: "7", height: "7", x: "3", y: "3", rx: "1", key: "1g98yp" }],
   ["rect", { width: "7", height: "7", x: "14", y: "3", rx: "1", key: "6d4xhi" }],
   ["rect", { width: "7", height: "7", x: "14", y: "14", rx: "1", key: "nxv5o0" }],
   ["rect", { width: "7", height: "7", x: "3", y: "14", rx: "1", key: "1bb6yr" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Leaf$1 = createLucideIcon("Leaf", [
+  [
+    "path",
+    {
+      d: "M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z",
+      key: "nnexq3"
+    }
+  ],
+  ["path", { d: "M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12", key: "mt58a7" }]
 ]);
 
 /**
@@ -2705,6 +2832,18 @@ createLucideIcon("Map", [
   ],
   ["path", { d: "M15 5.764v15", key: "1pn4in" }],
   ["path", { d: "M9 3.236v15", key: "1uimfh" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Mountain = createLucideIcon("Mountain", [
+  ["path", { d: "m8 3 4 8 5-5 5 15H2L8 3z", key: "otkl63" }]
 ]);
 
 /**
@@ -2842,6 +2981,25 @@ const Server = createLucideIcon("Server", [
  */
 
 
+const Settings = createLucideIcon("Settings", [
+  [
+    "path",
+    {
+      d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z",
+      key: "1qme2f"
+    }
+  ],
+  ["circle", { cx: "12", cy: "12", r: "3", key: "1v7zrd" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 createLucideIcon("Sparkles", [
   [
     "path",
@@ -2854,6 +3012,26 @@ createLucideIcon("Sparkles", [
   ["path", { d: "M22 5h-4", key: "1gvqau" }],
   ["path", { d: "M4 17v2", key: "vumght" }],
   ["path", { d: "M5 18H3", key: "zchphs" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Sun = createLucideIcon("Sun", [
+  ["circle", { cx: "12", cy: "12", r: "4", key: "4exip2" }],
+  ["path", { d: "M12 2v2", key: "tus03m" }],
+  ["path", { d: "M12 20v2", key: "1lh1kg" }],
+  ["path", { d: "m4.93 4.93 1.41 1.41", key: "149t6j" }],
+  ["path", { d: "m17.66 17.66 1.41 1.41", key: "ptbguv" }],
+  ["path", { d: "M2 12h2", key: "1t8f8n" }],
+  ["path", { d: "M20 12h2", key: "1q8mjw" }],
+  ["path", { d: "m6.34 17.66-1.41 1.41", key: "1m8zz5" }],
+  ["path", { d: "m19.07 4.93-1.41 1.41", key: "1shlcs" }]
 ]);
 
 /**
@@ -2887,6 +3065,20 @@ const TriangleAlert = createLucideIcon("TriangleAlert", [
   ],
   ["path", { d: "M12 9v4", key: "juzpu7" }],
   ["path", { d: "M12 17h.01", key: "p32p05" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Wind = createLucideIcon("Wind", [
+  ["path", { d: "M12.8 19.6A2 2 0 1 0 14 16H2", key: "148xed" }],
+  ["path", { d: "M17.5 8a2.5 2.5 0 1 1 2 4H2", key: "1u4tom" }],
+  ["path", { d: "M9.8 4.4A2 2 0 1 1 11 8H2", key: "75valh" }]
 ]);
 
 /**
@@ -10108,10 +10300,39 @@ function svgPropertiesAndEvents(obj) {
   return result;
 }
 
-var _excluded$e = ["children", "width", "height", "viewBox", "className", "style", "title", "desc"];
-function _extends$g() { return _extends$g = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$g.apply(null, arguments); }
-function _objectWithoutProperties$e(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$e(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$e(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+/**
+ * Function to filter SVG properties from various input types.
+ * The input types can be:
+ * - A record of string keys to any values, in which case it returns a record of only SVG properties
+ * - A React element, in which case it returns the props of the element filtered to only SVG properties
+ * - Anything else, in which case it returns null
+ *
+ * This function has a wide-open return type, because it will read and filter the props of an arbitrary React element.
+ * This can be SVG, HTML, whatnot, with arbitrary values, so we can't type it more specifically.
+ *
+ * If you wish to have a type-safe version, use svgPropertiesNoEvents directly with a typed object.
+ *
+ * @param input - The input to filter, which can be a record, a React element, or other types.
+ * @returns A record of SVG properties if the input is a record or React element, otherwise null.
+ */
+function svgPropertiesAndEventsFromUnknown(input) {
+  if (input == null) {
+    return null;
+  }
+  if (/*#__PURE__*/isValidElement(input)) {
+    // @ts-expect-error we can't type this better because input can be any React element
+    return svgPropertiesAndEvents(input.props);
+  }
+  if (typeof input === 'object' && !Array.isArray(input)) {
+    return svgPropertiesAndEvents(input);
+  }
+  return null;
+}
+
+var _excluded$i = ["children", "width", "height", "viewBox", "className", "style", "title", "desc"];
+function _extends$p() { return _extends$p = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$p.apply(null, arguments); }
+function _objectWithoutProperties$i(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$i(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$i(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 /**
  * Renders an SVG element.
  *
@@ -10130,7 +10351,7 @@ var Surface = /*#__PURE__*/forwardRef((props, ref) => {
       title,
       desc
     } = props,
-    others = _objectWithoutProperties$e(props, _excluded$e);
+    others = _objectWithoutProperties$i(props, _excluded$i);
   var svgView = viewBox || {
     width,
     height,
@@ -10138,7 +10359,7 @@ var Surface = /*#__PURE__*/forwardRef((props, ref) => {
     y: 0
   };
   var layerClass = clsx('recharts-surface', className);
-  return /*#__PURE__*/React.createElement("svg", _extends$g({}, svgPropertiesAndEvents(others), {
+  return /*#__PURE__*/React.createElement("svg", _extends$p({}, svgPropertiesAndEvents(others), {
     className: layerClass,
     width: width,
     height: height,
@@ -10148,10 +10369,10 @@ var Surface = /*#__PURE__*/forwardRef((props, ref) => {
   }), /*#__PURE__*/React.createElement("title", null, title), /*#__PURE__*/React.createElement("desc", null, desc), children);
 });
 
-var _excluded$d = ["children", "className"];
-function _extends$f() { return _extends$f = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$f.apply(null, arguments); }
-function _objectWithoutProperties$d(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$d(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$d(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$h = ["children", "className"];
+function _extends$o() { return _extends$o = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$o.apply(null, arguments); }
+function _objectWithoutProperties$h(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$h(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$h(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 /**
  * Creates an SVG group element to group other SVG elements.
  *
@@ -10165,9 +10386,9 @@ var Layer = /*#__PURE__*/React.forwardRef((props, ref) => {
       children,
       className
     } = props,
-    others = _objectWithoutProperties$d(props, _excluded$d);
+    others = _objectWithoutProperties$h(props, _excluded$h);
   var layerClass = clsx('recharts-layer', className);
-  return /*#__PURE__*/React.createElement("g", _extends$f({
+  return /*#__PURE__*/React.createElement("g", _extends$o({
     className: layerClass
   }, svgPropertiesAndEvents(others), {
     ref: ref
@@ -11661,15 +11882,15 @@ function isNotNil(value) {
  */
 function noop$2() {}
 
-var _excluded$c = ["type", "size", "sizeType"];
-function _extends$e() { return _extends$e = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$e.apply(null, arguments); }
-function ownKeys$t(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$t(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$t(Object(t), true).forEach(function (r) { _defineProperty$v(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$t(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$v(e, r, t) { return (r = _toPropertyKey$v(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$v(t) { var i = _toPrimitive$v(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$v(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$c(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$c(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$c(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$g = ["type", "size", "sizeType"];
+function _extends$n() { return _extends$n = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$n.apply(null, arguments); }
+function ownKeys$H(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$H(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$H(Object(t), true).forEach(function (r) { _defineProperty$J(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$H(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$J(e, r, t) { return (r = _toPropertyKey$J(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$J(t) { var i = _toPrimitive$J(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$J(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$g(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$g(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$g(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var symbolFactories = {
   symbolCircle,
   symbolCross,
@@ -11721,8 +11942,8 @@ var Symbols = _ref => {
       size = 64,
       sizeType = 'area'
     } = _ref,
-    rest = _objectWithoutProperties$c(_ref, _excluded$c);
-  var props = _objectSpread$t(_objectSpread$t({}, rest), {}, {
+    rest = _objectWithoutProperties$g(_ref, _excluded$g);
+  var props = _objectSpread$H(_objectSpread$H({}, rest), {}, {
     type,
     size,
     sizeType
@@ -11759,7 +11980,7 @@ var Symbols = _ref => {
   } = props;
   var filteredProps = svgPropertiesAndEvents(props);
   if (isNumber(cx) && isNumber(cy) && isNumber(size)) {
-    return /*#__PURE__*/React.createElement("path", _extends$e({}, filteredProps, {
+    return /*#__PURE__*/React.createElement("path", _extends$n({}, filteredProps, {
       className: clsx('recharts-symbols', className),
       transform: "translate(".concat(cx, ", ").concat(cy, ")"),
       d: getPath()
@@ -11768,6 +11989,73 @@ var Symbols = _ref => {
   return null;
 };
 Symbols.registerSymbol = registerSymbol;
+
+/**
+ * Determines how values are stacked:
+ *
+ * - `none` is the default, it adds values on top of each other. No smarts. Negative values will overlap.
+ * - `expand` make it so that the values always add up to 1 - so the chart will look like a rectangle.
+ * - `wiggle` and `silhouette` tries to keep the chart centered.
+ * - `sign` stacks positive values above zero and negative values below zero. Similar to `none` but handles negatives.
+ * - `positive` ignores all negative values, and then behaves like \`none\`.
+ *
+ * @see {@link https://d3js.org/d3-shape/stack#stack-offsets}
+ * (note that the `diverging` offset in d3 is named `sign` in recharts)
+ *
+ * @inline
+ */
+
+/**
+ * @deprecated use either `CartesianLayout` or `PolarLayout` instead.
+ * Mixing both charts families leads to ambiguity in the type system.
+ * These two layouts share very few properties, so it is best to keep them separate.
+ */
+
+/**
+ * The type of axis.
+ *
+ * `category`: Treats data as distinct values.
+ * Each value is in the same distance from its neighbors, regardless of their actual numeric difference.
+ *
+ * `number`: Treats data as continuous range.
+ * Values that are numerically closer are placed closer together on the axis.
+ *
+ * `auto`: the type is inferred based on the chart layout.
+ *
+ * This is external type - users will provide this type in props.
+ * Internally we will evaluate it to either 'category' or 'number' based on the layout,
+ * before sending it to the store.
+ *
+ * @inline
+ */
+
+/**
+ * Individual axes are responsible for resolving the 'auto' type to either 'number' or 'category',
+ * based on the chart layout and axis kind. Then they can start using this type.
+ */
+
+/**
+ * Extracts values from data objects.
+ *
+ * @inline
+ */
+
+/**
+ * @inline
+ */
+
+/**
+ * @inline
+ */
+
+/**
+ * @deprecated do not use: too many properties, mixing too many concepts, cartesian and polar together, everything optional.
+ * Instead, use either `Coordinate` or `PolarCoordinate`.
+ */
+
+var isPolarCoordinate = c => {
+  return 'radius' in c && 'startAngle' in c && 'endAngle' in c;
+};
 
 /**
  * String shortcuts for scale types.
@@ -11887,11 +12175,11 @@ var adaptEventsOfChild = (props, data, index) => {
   return out;
 };
 
-function ownKeys$s(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$s(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$s(Object(t), true).forEach(function (r) { _defineProperty$u(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$s(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$u(e, r, t) { return (r = _toPropertyKey$u(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$u(t) { var i = _toPrimitive$u(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$u(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$G(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$G(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$G(Object(t), true).forEach(function (r) { _defineProperty$I(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$G(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$I(e, r, t) { return (r = _toPropertyKey$I(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$I(t) { var i = _toPrimitive$I(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$I(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * This function mimics the behavior of the `defaultProps` static property in React.
  * Functional components do not have a defaultProps property, so this function is useful to resolve default props.
@@ -11912,7 +12200,7 @@ function resolveDefaultProps(realProps, defaultProps) {
    * To avoid mutating the original `realProps` object passed to the function, create a shallow copy of it.
    * `resolvedProps` will be modified directly with the defaults.
    */
-  var resolvedProps = _objectSpread$s({}, realProps);
+  var resolvedProps = _objectSpread$G({}, realProps);
   /*
    * Since the function guarantees `D extends Partial<T>`, this assignment is safe.
    * It allows TypeScript to work with the well-defined `Partial<T>` type inside the loop,
@@ -11973,6 +12261,44 @@ function resolveDefaultProps(realProps, defaultProps) {
  * This is useful for creating a type that represents the resolved props of a component with default props.
  */
 
+var uniqBy$3 = {};
+
+var uniqBy$2 = {};
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	function uniqBy(arr, mapper) {
+	    const map = new Map();
+	    for (let i = 0; i < arr.length; i++) {
+	        const item = arr[i];
+	        const key = mapper(item, i, arr);
+	        if (!map.has(key)) {
+	            map.set(key, item);
+	        }
+	    }
+	    return Array.from(map.values());
+	}
+
+	exports.uniqBy = uniqBy; 
+} (uniqBy$2));
+
+var ary = {};
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	function ary(func, n) {
+	    return function (...args) {
+	        return func.apply(this, args.slice(0, n));
+	    };
+	}
+
+	exports.ary = ary; 
+} (ary));
+
 var identity$3 = {};
 
 (function (exports) {
@@ -11985,6 +12311,8 @@ var identity$3 = {};
 
 	exports.identity = identity; 
 } (identity$3));
+
+var isArrayLikeObject = {};
 
 var isArrayLike = {};
 
@@ -12013,6 +12341,33 @@ var isLength = {};
 
 	exports.isArrayLike = isArrayLike; 
 } (isArrayLike));
+
+var isObjectLike = {};
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	function isObjectLike(value) {
+	    return typeof value === 'object' && value !== null;
+	}
+
+	exports.isObjectLike = isObjectLike; 
+} (isObjectLike));
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	const isArrayLike$1 = isArrayLike;
+	const isObjectLike$1 = isObjectLike;
+
+	function isArrayLikeObject(value) {
+	    return isObjectLike$1.isObjectLike(value) && isArrayLike$1.isArrayLike(value);
+	}
+
+	exports.isArrayLikeObject = isArrayLikeObject; 
+} (isArrayLikeObject));
 
 var iteratee = {};
 
@@ -12819,6 +13174,48 @@ var isArguments = {};
 
 	exports.iteratee = iteratee; 
 } (iteratee));
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	const uniqBy$1 = uniqBy$2;
+	const ary$1 = ary;
+	const identity = identity$3;
+	const isArrayLikeObject$1 = isArrayLikeObject;
+	const iteratee$1 = iteratee;
+
+	function uniqBy(array, iteratee$1$1 = identity.identity) {
+	    if (!isArrayLikeObject$1.isArrayLikeObject(array)) {
+	        return [];
+	    }
+	    return uniqBy$1.uniqBy(Array.from(array), ary$1.ary(iteratee$1.iteratee(iteratee$1$1), 1));
+	}
+
+	exports.uniqBy = uniqBy; 
+} (uniqBy$3));
+
+var uniqBy = uniqBy$3.uniqBy;
+
+const uniqBy$1 = /*@__PURE__*/getDefaultExportFromCjs(uniqBy);
+
+/**
+ * This is configuration option that decides how to filter for unique values only:
+ *
+ * - `false` means "no filter"
+ * - `true` means "use recharts default filter"
+ * - function means "use return of this function as the default key"
+ */
+
+function getUniqPayload(payload, option, defaultUniqBy) {
+  if (option === true) {
+    return uniqBy$1(payload, defaultUniqBy);
+  }
+  if (typeof option === 'function') {
+    return uniqBy$1(payload, option);
+  }
+  return payload;
+}
 
 var withSelector = {exports: {}};
 
@@ -13859,6 +14256,53 @@ createSelector([selectAllLegendPayload2DArray, selectLegendSettings], (payloads,
   var flat = payloads.flat(1);
   return itemSorter ? sortBy$2(flat, itemSorter) : flat;
 });
+
+var EPS = 1;
+
+/**
+ * TODO this documentation does not reflect what this hook is doing, update it.
+ * Stores the `offsetHeight`, `offsetLeft`, `offsetTop`, and `offsetWidth` of a DOM element.
+ */
+
+/**
+ * Use this to listen to element layout changes.
+ *
+ * Very useful for reading actual sizes of DOM elements relative to the viewport.
+ *
+ * @param extraDependencies use this to trigger new DOM dimensions read when any of these change. Good for things like payload and label, that will re-render something down in the children array, but you want to read the layout box of a parent.
+ * @returns [lastElementOffset, updateElementOffset] most recent value, and setter. Pass the setter to a DOM element ref like this: `<div ref={updateElementOffset}>`
+ */
+function useElementOffset() {
+  var extraDependencies = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : [];
+  var [lastBoundingBox, setLastBoundingBox] = useState({
+    height: 0,
+    left: 0,
+    top: 0,
+    width: 0
+  });
+  var updateBoundingBox = useCallback(node => {
+    if (node != null) {
+      var rect = node.getBoundingClientRect();
+      var box = {
+        height: rect.height,
+        left: rect.left,
+        top: rect.top,
+        width: rect.width
+      };
+      if (Math.abs(box.height - lastBoundingBox.height) > EPS || Math.abs(box.left - lastBoundingBox.left) > EPS || Math.abs(box.top - lastBoundingBox.top) > EPS || Math.abs(box.width - lastBoundingBox.width) > EPS) {
+        setLastBoundingBox({
+          height: box.height,
+          left: box.left,
+          top: box.top,
+          width: box.width
+        });
+      }
+    }
+  },
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  [lastBoundingBox.width, lastBoundingBox.height, lastBoundingBox.top, lastBoundingBox.left, ...extraDependencies]);
+  return [lastBoundingBox, updateBoundingBox];
+}
 
 // src/utils/formatProdErrorMessage.ts
 function formatProdErrorMessage$1(code) {
@@ -16547,11 +16991,11 @@ function isPositiveNumber(n) {
   return typeof n === 'number' && n > 0 && Number.isFinite(n);
 }
 
-function ownKeys$r(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$r(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$r(Object(t), true).forEach(function (r) { _defineProperty$t(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$r(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$t(e, r, t) { return (r = _toPropertyKey$t(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$t(t) { var i = _toPrimitive$t(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$t(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$F(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$F(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$F(Object(t), true).forEach(function (r) { _defineProperty$H(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$F(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$H(e, r, t) { return (r = _toPropertyKey$H(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$H(t) { var i = _toPrimitive$H(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$H(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function getValueByDataKey(obj, dataKey, defaultValue) {
   if (isNullish(obj) || isNullish(dataKey)) {
     return defaultValue;
@@ -16576,12 +17020,12 @@ var appendOffsetOfLegend = (offset, legendSettings, legendSize) => {
       layout
     } = legendSettings;
     if ((layout === 'vertical' || layout === 'horizontal' && verticalAlign === 'middle') && align !== 'center' && isNumber(offset[align])) {
-      return _objectSpread$r(_objectSpread$r({}, offset), {}, {
+      return _objectSpread$F(_objectSpread$F({}, offset), {}, {
         [align]: offset[align] + (boxWidth || 0)
       });
     }
     if ((layout === 'horizontal' || layout === 'vertical' && align === 'center') && verticalAlign !== 'middle' && isNumber(offset[verticalAlign])) {
-      return _objectSpread$r(_objectSpread$r({}, offset), {}, {
+      return _objectSpread$F(_objectSpread$F({}, offset), {}, {
         [verticalAlign]: offset[verticalAlign] + (boxHeight || 0)
       });
     }
@@ -16765,6 +17209,34 @@ var getStackedData = (data, dataKeys, offsetType) => {
 function getNormalizedStackId(publicStackId) {
   return publicStackId == null ? undefined : String(publicStackId);
 }
+function getCateCoordinateOfLine(_ref) {
+  var {
+    axis,
+    ticks,
+    bandSize,
+    entry,
+    index,
+    dataKey
+  } = _ref;
+  if (axis.type === 'category') {
+    // find coordinate of category axis by the value of category
+    // @ts-expect-error why does this use direct object access instead of getValueByDataKey?
+    if (!axis.allowDuplicatedCategory && axis.dataKey && !isNullish(entry[axis.dataKey])) {
+      // @ts-expect-error why does this use direct object access instead of getValueByDataKey?
+      var matchedTick = findEntryInArray(ticks, 'value', entry[axis.dataKey]);
+      if (matchedTick) {
+        return matchedTick.coordinate + bandSize / 2;
+      }
+    }
+    return ticks !== null && ticks !== void 0 && ticks[index] ? ticks[index].coordinate + bandSize / 2 : null;
+  }
+  var value = getValueByDataKey(entry, !isNullish(dataKey) ? dataKey : axis.dataKey);
+  var scaled = axis.scale.map(value);
+  if (!isNumber(scaled)) {
+    return null;
+  }
+  return scaled;
+}
 var getCateCoordinateOfBar = _ref2 => {
   var {
     axis,
@@ -16875,7 +17347,7 @@ function getTooltipEntry(_ref4) {
     value,
     name
   } = _ref4;
-  return _objectSpread$r(_objectSpread$r({}, tooltipEntrySettings), {}, {
+  return _objectSpread$F(_objectSpread$F({}, tooltipEntrySettings), {}, {
     dataKey,
     payload,
     value,
@@ -16933,11 +17405,11 @@ var DATA_ITEM_INDEX_ATTRIBUTE_NAME = 'data-recharts-item-index';
 var DATA_ITEM_GRAPHICAL_ITEM_ID_ATTRIBUTE_NAME = 'data-recharts-item-id';
 var DEFAULT_Y_AXIS_WIDTH = 60;
 
-function ownKeys$q(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$q(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$q(Object(t), true).forEach(function (r) { _defineProperty$s(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$q(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$s(e, r, t) { return (r = _toPropertyKey$s(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$s(t) { var i = _toPrimitive$s(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$s(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$E(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$E(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$E(Object(t), true).forEach(function (r) { _defineProperty$G(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$E(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$G(e, r, t) { return (r = _toPropertyKey$G(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$G(t) { var i = _toPrimitive$G(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$G(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var selectBrushHeight = state => state.brush.height;
 function selectLeftAxesOffset(state) {
   var yAxes = selectAllYAxes(state);
@@ -16993,13 +17465,13 @@ var selectChartOffsetInternal = createSelector([selectChartWidth, selectChartHei
     top: (margin.top || 0) + topAxesOffset,
     bottom: (margin.bottom || 0) + bottomAxesOffset
   };
-  var offset = _objectSpread$q(_objectSpread$q({}, offsetV), offsetH);
+  var offset = _objectSpread$E(_objectSpread$E({}, offsetV), offsetH);
   var brushBottom = offset.bottom;
   offset.bottom += brushHeight;
   offset = appendOffsetOfLegend(offset, legendSettings, legendSize);
   var offsetWidth = chartWidth - offset.left - offset.right;
   var offsetHeight = chartHeight - offset.top - offset.bottom;
-  return _objectSpread$q(_objectSpread$q({
+  return _objectSpread$E(_objectSpread$E({
     brushBottom
   }, offset), {}, {
     // never return negative values for height and width
@@ -17031,15 +17503,503 @@ var selectBrushDimensions = createSelector([selectBrushSettings, selectChartOffs
   width: isNumber(brushSettings.width) ? brushSettings.width : offset.width
 }));
 
+var throttle$2 = {};
+
+var debounce$1 = {};
+
+var debounce = {};
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	function debounce(func, debounceMs, { signal, edges } = {}) {
+	    let pendingThis = undefined;
+	    let pendingArgs = null;
+	    const leading = edges != null && edges.includes('leading');
+	    const trailing = edges == null || edges.includes('trailing');
+	    const invoke = () => {
+	        if (pendingArgs !== null) {
+	            func.apply(pendingThis, pendingArgs);
+	            pendingThis = undefined;
+	            pendingArgs = null;
+	        }
+	    };
+	    const onTimerEnd = () => {
+	        if (trailing) {
+	            invoke();
+	        }
+	        cancel();
+	    };
+	    let timeoutId = null;
+	    const schedule = () => {
+	        if (timeoutId != null) {
+	            clearTimeout(timeoutId);
+	        }
+	        timeoutId = setTimeout(() => {
+	            timeoutId = null;
+	            onTimerEnd();
+	        }, debounceMs);
+	    };
+	    const cancelTimer = () => {
+	        if (timeoutId !== null) {
+	            clearTimeout(timeoutId);
+	            timeoutId = null;
+	        }
+	    };
+	    const cancel = () => {
+	        cancelTimer();
+	        pendingThis = undefined;
+	        pendingArgs = null;
+	    };
+	    const flush = () => {
+	        invoke();
+	    };
+	    const debounced = function (...args) {
+	        if (signal?.aborted) {
+	            return;
+	        }
+	        pendingThis = this;
+	        pendingArgs = args;
+	        const isFirstCall = timeoutId == null;
+	        schedule();
+	        if (leading && isFirstCall) {
+	            invoke();
+	        }
+	    };
+	    debounced.schedule = schedule;
+	    debounced.cancel = cancel;
+	    debounced.flush = flush;
+	    signal?.addEventListener('abort', cancel, { once: true });
+	    return debounced;
+	}
+
+	exports.debounce = debounce; 
+} (debounce));
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	const debounce$1 = debounce;
+
+	function debounce$2(func, debounceMs = 0, options = {}) {
+	    if (typeof options !== 'object') {
+	        options = {};
+	    }
+	    const { leading = false, trailing = true, maxWait } = options;
+	    const edges = Array(2);
+	    if (leading) {
+	        edges[0] = 'leading';
+	    }
+	    if (trailing) {
+	        edges[1] = 'trailing';
+	    }
+	    let result = undefined;
+	    let pendingAt = null;
+	    const _debounced = debounce$1.debounce(function (...args) {
+	        result = func.apply(this, args);
+	        pendingAt = null;
+	    }, debounceMs, { edges });
+	    const debounced = function (...args) {
+	        if (maxWait != null) {
+	            if (pendingAt === null) {
+	                pendingAt = Date.now();
+	            }
+	            if (Date.now() - pendingAt >= maxWait) {
+	                result = func.apply(this, args);
+	                pendingAt = Date.now();
+	                _debounced.cancel();
+	                _debounced.schedule();
+	                return result;
+	            }
+	        }
+	        _debounced.apply(this, args);
+	        return result;
+	    };
+	    const flush = () => {
+	        _debounced.flush();
+	        return result;
+	    };
+	    debounced.cancel = _debounced.cancel;
+	    debounced.flush = flush;
+	    return debounced;
+	}
+
+	exports.debounce = debounce$2; 
+} (debounce$1));
+
+(function (exports) {
+
+	Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+
+	const debounce = debounce$1;
+
+	function throttle(func, throttleMs = 0, options = {}) {
+	    const { leading = true, trailing = true } = options;
+	    return debounce.debounce(func, throttleMs, {
+	        leading,
+	        maxWait: throttleMs,
+	        trailing,
+	    });
+	}
+
+	exports.throttle = throttle; 
+} (throttle$2));
+
+var throttle = throttle$2.throttle;
+
+const throttle$1 = /*@__PURE__*/getDefaultExportFromCjs(throttle);
+
+/* eslint no-console: 0 */
+var warn = function warn(condition, format) {
+  for (var _len = arguments.length, args = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+    args[_key - 2] = arguments[_key];
+  }
+  if (typeof console !== 'undefined' && console.warn) {
+    if (format === undefined) {
+      console.warn('LogUtils requires an error message argument');
+    }
+    if (!condition) {
+      if (format === undefined) {
+        console.warn('Minified exception occurred; use the non-minified dev environment ' + 'for the full error message and additional helpful warnings.');
+      } else {
+        var argIndex = 0;
+        console.warn(format.replace(/%s/g, () => args[argIndex++]));
+      }
+    }
+  }
+};
+
 var defaultResponsiveContainerProps = {
+  width: '100%',
+  height: '100%',
+  debounce: 0,
+  minWidth: 0,
   initialDimension: {
     width: -1,
     height: -1
   }
 };
+var calculateChartDimensions = (containerWidth, containerHeight, props) => {
+  var {
+    width = defaultResponsiveContainerProps.width,
+    height = defaultResponsiveContainerProps.height,
+    aspect,
+    maxHeight
+  } = props;
 
+  /*
+   * The containerWidth and containerHeight are already percentage based because it's set as that percentage in CSS.
+   * Means we don't have to calculate percentages here.
+   */
+  var calculatedWidth = isPercent(width) ? containerWidth : Number(width);
+  var calculatedHeight = isPercent(height) ? containerHeight : Number(height);
+  if (aspect && aspect > 0) {
+    // Preserve the desired aspect ratio
+    if (calculatedWidth) {
+      // Will default to using width for aspect ratio
+      calculatedHeight = calculatedWidth / aspect;
+    } else if (calculatedHeight) {
+      // But we should also take height into consideration
+      calculatedWidth = calculatedHeight * aspect;
+    }
+
+    // if maxHeight is set, overwrite if calculatedHeight is greater than maxHeight
+    if (maxHeight && calculatedHeight != null && calculatedHeight > maxHeight) {
+      calculatedHeight = maxHeight;
+    }
+  }
+  return {
+    calculatedWidth,
+    calculatedHeight
+  };
+};
+var bothOverflow = {
+  width: 0,
+  height: 0,
+  overflow: 'visible'
+};
+var overflowX = {
+  width: 0,
+  overflowX: 'visible'
+};
+var overflowY = {
+  height: 0,
+  overflowY: 'visible'
+};
+var noStyle = {};
+
+/**
+ * This zero-size, overflow-visible is required to allow the chart to shrink.
+ * Without it, the chart itself will fill the ResponsiveContainer, and while it allows the chart to grow,
+ * it would always keep the container at the size of the chart,
+ * and ResizeObserver would never fire.
+ * With this zero-size element, the chart itself never actually fills the container,
+ * it just so happens that it is visible because it overflows.
+ * I learned this trick from the `react-virtualized` library: https://github.com/bvaughn/react-virtualized-auto-sizer/blob/master/src/AutoSizer.ts
+ * See https://github.com/recharts/recharts/issues/172 and also https://github.com/bvaughn/react-virtualized/issues/68
+ *
+ * Also, we don't need to apply the zero-size style if the dimension is a fixed number (or undefined),
+ * because in that case the chart can't shrink in that dimension anyway.
+ * This fixes defining the dimensions using aspect ratio: https://github.com/recharts/recharts/issues/6245
+ */
+var getInnerDivStyle = props => {
+  var {
+    width,
+    height
+  } = props;
+  var isWidthPercent = isPercent(width);
+  var isHeightPercent = isPercent(height);
+  if (isWidthPercent && isHeightPercent) {
+    return bothOverflow;
+  }
+  if (isWidthPercent) {
+    return overflowX;
+  }
+  if (isHeightPercent) {
+    return overflowY;
+  }
+  return noStyle;
+};
+function getDefaultWidthAndHeight(_ref) {
+  var {
+    width,
+    height,
+    aspect
+  } = _ref;
+  var calculatedWidth = width;
+  var calculatedHeight = height;
+  if (calculatedWidth === undefined && calculatedHeight === undefined) {
+    calculatedWidth = defaultResponsiveContainerProps.width;
+    calculatedHeight = defaultResponsiveContainerProps.height;
+  } else if (calculatedWidth === undefined) {
+    calculatedWidth = aspect && aspect > 0 ? undefined : defaultResponsiveContainerProps.width;
+  } else if (calculatedHeight === undefined) {
+    calculatedHeight = aspect && aspect > 0 ? undefined : defaultResponsiveContainerProps.height;
+  }
+  return {
+    width: calculatedWidth,
+    height: calculatedHeight
+  };
+}
+
+function _extends$m() { return _extends$m = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$m.apply(null, arguments); }
+function ownKeys$D(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$D(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$D(Object(t), true).forEach(function (r) { _defineProperty$F(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$D(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$F(e, r, t) { return (r = _toPropertyKey$F(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$F(t) { var i = _toPrimitive$F(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$F(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var ResponsiveContainerContext = /*#__PURE__*/createContext(defaultResponsiveContainerProps.initialDimension);
+function isAcceptableSize(size) {
+  return isPositiveNumber(size.width) && isPositiveNumber(size.height);
+}
+function ResponsiveContainerContextProvider(_ref) {
+  var {
+    children,
+    width,
+    height
+  } = _ref;
+  var size = useMemo(() => ({
+    width,
+    height
+  }), [width, height]);
+  if (!isAcceptableSize(size)) {
+    /*
+     * Don't render the container if width or height is non-positive because
+     * in that case the chart will not be rendered properly anyway.
+     * We will instead wait for the next resize event to provide the correct dimensions.
+     */
+    return null;
+  }
+  return /*#__PURE__*/React.createElement(ResponsiveContainerContext.Provider, {
+    value: size
+  }, children);
+}
 var useResponsiveContainerContext = () => useContext(ResponsiveContainerContext);
+var SizeDetectorContainer = /*#__PURE__*/forwardRef((_ref2, ref) => {
+  var {
+    aspect,
+    initialDimension = defaultResponsiveContainerProps.initialDimension,
+    width,
+    height,
+    /*
+     * default min-width to 0 if not specified - 'auto' causes issues with flexbox
+     * https://github.com/recharts/recharts/issues/172
+     */
+    minWidth = defaultResponsiveContainerProps.minWidth,
+    minHeight,
+    maxHeight,
+    children,
+    debounce = defaultResponsiveContainerProps.debounce,
+    id,
+    className,
+    onResize,
+    style = {}
+  } = _ref2;
+  var containerRef = useRef(null);
+  /*
+   * We are using a ref to avoid re-creating the ResizeObserver when the onResize function changes.
+   * The ref is updated on every render, so the latest onResize function is always available in the effect.
+   */
+  var onResizeRef = useRef();
+  onResizeRef.current = onResize;
+  useImperativeHandle(ref, () => containerRef.current);
+  var [sizes, setSizes] = useState({
+    containerWidth: initialDimension.width,
+    containerHeight: initialDimension.height
+  });
+  var setContainerSize = useCallback((newWidth, newHeight) => {
+    setSizes(prevState => {
+      var roundedWidth = Math.round(newWidth);
+      var roundedHeight = Math.round(newHeight);
+      if (prevState.containerWidth === roundedWidth && prevState.containerHeight === roundedHeight) {
+        return prevState;
+      }
+      return {
+        containerWidth: roundedWidth,
+        containerHeight: roundedHeight
+      };
+    });
+  }, []);
+  useEffect(() => {
+    if (containerRef.current == null || typeof ResizeObserver === 'undefined') {
+      return noop$2;
+    }
+    var callback = entries => {
+      var _onResizeRef$current;
+      var entry = entries[0];
+      if (entry == null) {
+        return;
+      }
+      var {
+        width: containerWidth,
+        height: containerHeight
+      } = entry.contentRect;
+      setContainerSize(containerWidth, containerHeight);
+      (_onResizeRef$current = onResizeRef.current) === null || _onResizeRef$current === void 0 || _onResizeRef$current.call(onResizeRef, containerWidth, containerHeight);
+    };
+    if (debounce > 0) {
+      callback = throttle$1(callback, debounce, {
+        trailing: true,
+        leading: false
+      });
+    }
+    var observer = new ResizeObserver(callback);
+    var {
+      width: containerWidth,
+      height: containerHeight
+    } = containerRef.current.getBoundingClientRect();
+    setContainerSize(containerWidth, containerHeight);
+    observer.observe(containerRef.current);
+    return () => {
+      observer.disconnect();
+    };
+  }, [setContainerSize, debounce]);
+  var {
+    containerWidth,
+    containerHeight
+  } = sizes;
+  warn(!aspect || aspect > 0, 'The aspect(%s) must be greater than zero.', aspect);
+  var {
+    calculatedWidth,
+    calculatedHeight
+  } = calculateChartDimensions(containerWidth, containerHeight, {
+    width,
+    height,
+    aspect,
+    maxHeight
+  });
+  warn(calculatedWidth != null && calculatedWidth > 0 || calculatedHeight != null && calculatedHeight > 0, "The width(%s) and height(%s) of chart should be greater than 0,\n       please check the style of container, or the props width(%s) and height(%s),\n       or add a minWidth(%s) or minHeight(%s) or use aspect(%s) to control the\n       height and width.", calculatedWidth, calculatedHeight, width, height, minWidth, minHeight, aspect);
+  return /*#__PURE__*/React.createElement("div", {
+    id: id ? "".concat(id) : undefined,
+    className: clsx('recharts-responsive-container', className),
+    style: _objectSpread$D(_objectSpread$D({}, style), {}, {
+      width,
+      height,
+      minWidth,
+      minHeight,
+      maxHeight
+    }),
+    ref: containerRef
+  }, /*#__PURE__*/React.createElement("div", {
+    style: getInnerDivStyle({
+      width,
+      height
+    })
+  }, /*#__PURE__*/React.createElement(ResponsiveContainerContextProvider, {
+    width: calculatedWidth,
+    height: calculatedHeight
+  }, children)));
+});
+
+/**
+ * The `ResponsiveContainer` component is a container that adjusts its width and height based on the size of its parent element.
+ * It is used to create responsive charts that adapt to different screen sizes.
+ *
+ * This component uses the {@link https://developer.mozilla.org/en-US/docs/Web/API/ResizeObserver ResizeObserver} API to monitor changes to the size of its parent element.
+ * If you need to support older browsers that do not support this API, you may need to include a polyfill.
+ *
+ * @see {@link https://recharts.github.io/en-US/guide/sizes/ Chart size guide}
+ *
+ * @provides ResponsiveContainerContext
+ */
+var ResponsiveContainer = /*#__PURE__*/forwardRef((props, ref) => {
+  var responsiveContainerContext = useResponsiveContainerContext();
+  if (isPositiveNumber(responsiveContainerContext.width) && isPositiveNumber(responsiveContainerContext.height)) {
+    /*
+     * If we detect that we are already inside another ResponsiveContainer,
+     * we do not attempt to add another layer of responsiveness.
+     */
+    return props.children;
+  }
+  var {
+    width,
+    height
+  } = getDefaultWidthAndHeight({
+    width: props.width,
+    height: props.height,
+    aspect: props.aspect
+  });
+
+  /*
+   * Let's try to get the calculated dimensions without having the div container set up.
+   * Sometimes this does produce fixed, positive dimensions. If so, we can skip rendering the div and monitoring its size.
+   */
+  var {
+    calculatedWidth,
+    calculatedHeight
+  } = calculateChartDimensions(undefined, undefined, {
+    width,
+    height,
+    aspect: props.aspect,
+    maxHeight: props.maxHeight
+  });
+  if (isNumber(calculatedWidth) && isNumber(calculatedHeight)) {
+    /*
+     * If it just so happens that the combination of width, height, and aspect ratio
+     * results in fixed dimensions, then we don't need to monitor the container's size.
+     * We can just provide these fixed dimensions to the context.
+     *
+     * Note that here we are not checking for positive numbers;
+     * if the user provides a zero or negative width/height, we will just pass that along
+     * as whatever size we detect won't be helping anyway.
+     */
+    return /*#__PURE__*/React.createElement(ResponsiveContainerContextProvider, {
+      width: calculatedWidth,
+      height: calculatedHeight
+    }, props.children);
+  }
+  /*
+   * Static analysis did not produce fixed dimensions,
+   * so we need to render a special div and monitor its size.
+   */
+  return /*#__PURE__*/React.createElement(SizeDetectorContainer, _extends$m({}, props, {
+    width: width,
+    height: height,
+    ref: ref
+  }));
+});
 
 function cartesianViewBoxToTrapezoid(box) {
   if (!box) {
@@ -17069,6 +18029,26 @@ var useViewBox = () => {
     x: brushPadding.left,
     y: brushPadding.top
   };
+};
+var manyComponentsThrowErrorsIfOffsetIsUndefined = {
+  top: 0,
+  bottom: 0,
+  left: 0,
+  right: 0,
+  width: 0,
+  height: 0,
+  brushBottom: 0
+};
+/**
+ * For internal use only. If you want this information, `import { useOffset } from 'recharts'` instead.
+ *
+ * Returns the offset of the chart in pixels.
+ *
+ * @returns {ChartOffsetInternal} The offset of the chart in pixels, or a default value if not in a chart context.
+ */
+var useOffsetInternal = () => {
+  var _useAppSelector2;
+  return (_useAppSelector2 = useAppSelector(selectChartOffsetInternal)) !== null && _useAppSelector2 !== void 0 ? _useAppSelector2 : manyComponentsThrowErrorsIfOffsetIsUndefined;
 };
 
 /**
@@ -17118,6 +18098,13 @@ var useChartHeight = () => {
 };
 var selectChartLayout = state => state.layout.layoutType;
 var useChartLayout = () => useAppSelector(selectChartLayout);
+var useCartesianChartLayout = () => {
+  var layout = useChartLayout();
+  if (layout === 'horizontal' || layout === 'vertical') {
+    return layout;
+  }
+  return undefined;
+};
 var selectPolarChartLayout = state => {
   var layout = state.layout.layoutType;
   if (layout === 'centric' || layout === 'radial') {
@@ -18534,6 +19521,266 @@ function propsAreEqual(prevProps, nextProps) {
   return true;
 }
 
+function _extends$l() { return _extends$l = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$l.apply(null, arguments); }
+function ownKeys$C(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$C(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$C(Object(t), true).forEach(function (r) { _defineProperty$E(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$C(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$E(e, r, t) { return (r = _toPropertyKey$E(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$E(t) { var i = _toPrimitive$E(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$E(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function defaultFormatter(value) {
+  return Array.isArray(value) && isNumOrStr(value[0]) && isNumOrStr(value[1]) ? value.join(' ~ ') : value;
+}
+
+/**
+ * @inline
+ */
+
+var defaultDefaultTooltipContentProps = {
+  separator: ' : ',
+  contentStyle: {
+    margin: 0,
+    padding: 10,
+    backgroundColor: '#fff',
+    border: '1px solid #ccc',
+    whiteSpace: 'nowrap'
+  },
+  itemStyle: {
+    display: 'block',
+    paddingTop: 4,
+    paddingBottom: 4,
+    color: '#000'
+  },
+  labelStyle: {},
+  accessibilityLayer: false
+};
+function lodashLikeSortBy(array, itemSorter) {
+  if (itemSorter == null) {
+    return array;
+  }
+  // @ts-expect-error sortBy types somehow are returning a number type.
+  return sortBy$2(array, itemSorter);
+}
+
+/**
+ * This component is by default rendered inside the {@link Tooltip} component. You would not use it directly.
+ *
+ * You can use this component to customize the content of the tooltip,
+ * or you can provide your own completely independent content.
+ */
+var DefaultTooltipContent = props => {
+  var {
+    separator = defaultDefaultTooltipContentProps.separator,
+    contentStyle,
+    itemStyle,
+    labelStyle = defaultDefaultTooltipContentProps.labelStyle,
+    payload,
+    formatter,
+    itemSorter,
+    wrapperClassName,
+    labelClassName,
+    label,
+    labelFormatter,
+    accessibilityLayer = defaultDefaultTooltipContentProps.accessibilityLayer
+  } = props;
+  var renderContent = () => {
+    if (payload && payload.length) {
+      var listStyle = {
+        padding: 0,
+        margin: 0
+      };
+      var sortedPayload = lodashLikeSortBy(payload, itemSorter);
+      var items = sortedPayload.map((entry, i) => {
+        if (!entry || entry.type === 'none') {
+          return null;
+        }
+        var finalFormatter = entry.formatter || formatter || defaultFormatter;
+        var {
+          value,
+          name
+        } = entry;
+        var finalValue = value;
+        var finalName = name;
+        if (finalFormatter) {
+          var formatted = finalFormatter(value, name, entry, i, payload);
+          if (Array.isArray(formatted)) {
+            [finalValue, finalName] = formatted;
+          } else if (formatted != null) {
+            finalValue = formatted;
+          } else {
+            return null;
+          }
+        }
+        var finalItemStyle = _objectSpread$C(_objectSpread$C({}, defaultDefaultTooltipContentProps.itemStyle), {}, {
+          color: entry.color || defaultDefaultTooltipContentProps.itemStyle.color
+        }, itemStyle);
+        return /*#__PURE__*/React.createElement("li", {
+          className: "recharts-tooltip-item",
+          key: "tooltip-item-".concat(i),
+          style: finalItemStyle
+        }, isNumOrStr(finalName) ? /*#__PURE__*/React.createElement("span", {
+          className: "recharts-tooltip-item-name"
+        }, finalName) : null, isNumOrStr(finalName) ? /*#__PURE__*/React.createElement("span", {
+          className: "recharts-tooltip-item-separator"
+        }, separator) : null, /*#__PURE__*/React.createElement("span", {
+          className: "recharts-tooltip-item-value"
+        }, finalValue), /*#__PURE__*/React.createElement("span", {
+          className: "recharts-tooltip-item-unit"
+        }, entry.unit || ''));
+      });
+      return /*#__PURE__*/React.createElement("ul", {
+        className: "recharts-tooltip-item-list",
+        style: listStyle
+      }, items);
+    }
+    return null;
+  };
+  var finalStyle = _objectSpread$C(_objectSpread$C({}, defaultDefaultTooltipContentProps.contentStyle), contentStyle);
+  var finalLabelStyle = _objectSpread$C({
+    margin: 0
+  }, labelStyle);
+  var hasLabel = !isNullish(label);
+  var finalLabel = hasLabel ? label : '';
+  var wrapperCN = clsx('recharts-default-tooltip', wrapperClassName);
+  var labelCN = clsx('recharts-tooltip-label', labelClassName);
+  if (hasLabel && labelFormatter && payload !== undefined && payload !== null) {
+    finalLabel = labelFormatter(label, payload);
+  }
+  var accessibilityAttributes = accessibilityLayer ? {
+    role: 'status',
+    'aria-live': 'assertive'
+  } : {};
+  return /*#__PURE__*/React.createElement("div", _extends$l({
+    className: wrapperCN,
+    style: finalStyle
+  }, accessibilityAttributes), /*#__PURE__*/React.createElement("p", {
+    className: labelCN,
+    style: finalLabelStyle
+  }, /*#__PURE__*/React.isValidElement(finalLabel) ? finalLabel : "".concat(finalLabel)), renderContent());
+};
+
+var CSS_CLASS_PREFIX = 'recharts-tooltip-wrapper';
+var TOOLTIP_HIDDEN = {
+  visibility: 'hidden'
+};
+function getTooltipCSSClassName(_ref) {
+  var {
+    coordinate,
+    translateX,
+    translateY
+  } = _ref;
+  return clsx(CSS_CLASS_PREFIX, {
+    ["".concat(CSS_CLASS_PREFIX, "-right")]: isNumber(translateX) && coordinate && isNumber(coordinate.x) && translateX >= coordinate.x,
+    ["".concat(CSS_CLASS_PREFIX, "-left")]: isNumber(translateX) && coordinate && isNumber(coordinate.x) && translateX < coordinate.x,
+    ["".concat(CSS_CLASS_PREFIX, "-bottom")]: isNumber(translateY) && coordinate && isNumber(coordinate.y) && translateY >= coordinate.y,
+    ["".concat(CSS_CLASS_PREFIX, "-top")]: isNumber(translateY) && coordinate && isNumber(coordinate.y) && translateY < coordinate.y
+  });
+}
+function getTooltipTranslateXY(_ref2) {
+  var {
+    allowEscapeViewBox,
+    coordinate,
+    key,
+    offset,
+    position,
+    reverseDirection,
+    tooltipDimension,
+    viewBox,
+    viewBoxDimension
+  } = _ref2;
+  if (position && isNumber(position[key])) {
+    return position[key];
+  }
+  var negative = coordinate[key] - tooltipDimension - (offset > 0 ? offset : 0);
+  var positive = coordinate[key] + offset;
+  if (allowEscapeViewBox[key]) {
+    return reverseDirection[key] ? negative : positive;
+  }
+  var viewBoxKey = viewBox[key];
+  if (viewBoxKey == null) {
+    return 0;
+  }
+  if (reverseDirection[key]) {
+    var _tooltipBoundary = negative;
+    var _viewBoxBoundary = viewBoxKey;
+    if (_tooltipBoundary < _viewBoxBoundary) {
+      return Math.max(positive, viewBoxKey);
+    }
+    return Math.max(negative, viewBoxKey);
+  }
+  if (viewBoxDimension == null) {
+    return 0;
+  }
+  var tooltipBoundary = positive + tooltipDimension;
+  var viewBoxBoundary = viewBoxKey + viewBoxDimension;
+  if (tooltipBoundary > viewBoxBoundary) {
+    return Math.max(negative, viewBoxKey);
+  }
+  return Math.max(positive, viewBoxKey);
+}
+function getTransformStyle(_ref3) {
+  var {
+    translateX,
+    translateY,
+    useTranslate3d
+  } = _ref3;
+  return {
+    transform: useTranslate3d ? "translate3d(".concat(translateX, "px, ").concat(translateY, "px, 0)") : "translate(".concat(translateX, "px, ").concat(translateY, "px)")
+  };
+}
+function getTooltipTranslate(_ref4) {
+  var {
+    allowEscapeViewBox,
+    coordinate,
+    offsetTop,
+    offsetLeft,
+    position,
+    reverseDirection,
+    tooltipBox,
+    useTranslate3d,
+    viewBox
+  } = _ref4;
+  var cssProperties, translateX, translateY;
+  if (tooltipBox.height > 0 && tooltipBox.width > 0 && coordinate) {
+    translateX = getTooltipTranslateXY({
+      allowEscapeViewBox,
+      coordinate,
+      key: 'x',
+      offset: offsetLeft,
+      position,
+      reverseDirection,
+      tooltipDimension: tooltipBox.width,
+      viewBox,
+      viewBoxDimension: viewBox.width
+    });
+    translateY = getTooltipTranslateXY({
+      allowEscapeViewBox,
+      coordinate,
+      key: 'y',
+      offset: offsetTop,
+      position,
+      reverseDirection,
+      tooltipDimension: tooltipBox.height,
+      viewBox,
+      viewBoxDimension: viewBox.height
+    });
+    cssProperties = getTransformStyle({
+      translateX,
+      translateY,
+      useTranslate3d
+    });
+  } else {
+    cssProperties = TOOLTIP_HIDDEN;
+  }
+  return {
+    cssProperties,
+    cssClasses: getTooltipCSSClassName({
+      translateX,
+      translateY,
+      coordinate
+    })
+  };
+}
+
 var parseIsSsrByDefault = () => !(typeof window !== 'undefined' && window.document && Boolean(window.document.createElement) && window.setTimeout);
 var Global = {
   isSsr: parseIsSsrByDefault()
@@ -18571,17 +19818,109 @@ function usePrefersReducedMotion() {
   return prefersReducedMotion;
 }
 
+function ownKeys$B(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$B(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$B(Object(t), true).forEach(function (r) { _defineProperty$D(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$B(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$D(e, r, t) { return (r = _toPropertyKey$D(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$D(t) { var i = _toPrimitive$D(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$D(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function resolveTransitionProperty(args) {
+  if (args.prefersReducedMotion && args.isAnimationActive === 'auto') {
+    return undefined;
+  }
+  if (args.isAnimationActive && args.active) {
+    return "transform ".concat(args.animationDuration, "ms ").concat(args.animationEasing);
+  }
+  return undefined;
+}
+function TooltipBoundingBoxImpl(props) {
+  var _props$coordinate3, _props$coordinate4, _props$coordinate$x2, _props$coordinate5, _props$coordinate$y2, _props$coordinate6;
+  var prefersReducedMotion = usePrefersReducedMotion();
+  var [state, setState] = React.useState(() => ({
+    dismissed: false,
+    dismissedAtCoordinate: {
+      x: 0,
+      y: 0
+    }
+  }));
+  React.useEffect(() => {
+    var handleKeyDown = event => {
+      if (event.key === 'Escape') {
+        var _props$coordinate$x, _props$coordinate, _props$coordinate$y, _props$coordinate2;
+        setState({
+          dismissed: true,
+          dismissedAtCoordinate: {
+            x: (_props$coordinate$x = (_props$coordinate = props.coordinate) === null || _props$coordinate === void 0 ? void 0 : _props$coordinate.x) !== null && _props$coordinate$x !== void 0 ? _props$coordinate$x : 0,
+            y: (_props$coordinate$y = (_props$coordinate2 = props.coordinate) === null || _props$coordinate2 === void 0 ? void 0 : _props$coordinate2.y) !== null && _props$coordinate$y !== void 0 ? _props$coordinate$y : 0
+          }
+        });
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [(_props$coordinate3 = props.coordinate) === null || _props$coordinate3 === void 0 ? void 0 : _props$coordinate3.x, (_props$coordinate4 = props.coordinate) === null || _props$coordinate4 === void 0 ? void 0 : _props$coordinate4.y]);
+  if (state.dismissed && (((_props$coordinate$x2 = (_props$coordinate5 = props.coordinate) === null || _props$coordinate5 === void 0 ? void 0 : _props$coordinate5.x) !== null && _props$coordinate$x2 !== void 0 ? _props$coordinate$x2 : 0) !== state.dismissedAtCoordinate.x || ((_props$coordinate$y2 = (_props$coordinate6 = props.coordinate) === null || _props$coordinate6 === void 0 ? void 0 : _props$coordinate6.y) !== null && _props$coordinate$y2 !== void 0 ? _props$coordinate$y2 : 0) !== state.dismissedAtCoordinate.y)) {
+    setState(_objectSpread$B(_objectSpread$B({}, state), {}, {
+      dismissed: false
+    }));
+  }
+  var {
+    cssClasses,
+    cssProperties
+  } = getTooltipTranslate({
+    allowEscapeViewBox: props.allowEscapeViewBox,
+    coordinate: props.coordinate,
+    offsetLeft: typeof props.offset === 'number' ? props.offset : props.offset.x,
+    offsetTop: typeof props.offset === 'number' ? props.offset : props.offset.y,
+    position: props.position,
+    reverseDirection: props.reverseDirection,
+    tooltipBox: {
+      height: props.lastBoundingBox.height,
+      width: props.lastBoundingBox.width
+    },
+    useTranslate3d: props.useTranslate3d,
+    viewBox: props.viewBox
+  });
+  var positionStyle = props.hasPortalFromProps ? {} : _objectSpread$B(_objectSpread$B({
+    transition: resolveTransitionProperty({
+      prefersReducedMotion,
+      isAnimationActive: props.isAnimationActive,
+      active: props.active,
+      animationDuration: props.animationDuration,
+      animationEasing: props.animationEasing
+    })
+  }, cssProperties), {}, {
+    pointerEvents: 'none',
+    position: 'absolute',
+    top: 0,
+    left: 0
+  });
+  var outerStyle = _objectSpread$B(_objectSpread$B({}, positionStyle), {}, {
+    visibility: !state.dismissed && props.active && props.hasPayload ? 'visible' : 'hidden'
+  }, props.wrapperStyle);
+  return /*#__PURE__*/React.createElement("div", {
+    // @ts-expect-error typescript library does not recognize xmlns attribute, but it's required for an HTML chunk inside SVG.
+    xmlns: "http://www.w3.org/1999/xhtml",
+    tabIndex: -1,
+    className: cssClasses,
+    style: outerStyle,
+    ref: props.innerRef
+  }, props.children);
+}
+var TooltipBoundingBox = /*#__PURE__*/React.memo(TooltipBoundingBoxImpl);
+
 var useAccessibilityLayer = () => {
   var _useAppSelector;
   return (_useAppSelector = useAppSelector(state => state.rootProps.accessibilityLayer)) !== null && _useAppSelector !== void 0 ? _useAppSelector : true;
 };
 
-function _extends$d() { return _extends$d = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$d.apply(null, arguments); }
-function ownKeys$p(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$p(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$p(Object(t), true).forEach(function (r) { _defineProperty$r(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$p(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$r(e, r, t) { return (r = _toPropertyKey$r(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$r(t) { var i = _toPrimitive$r(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$r(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$k() { return _extends$k = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$k.apply(null, arguments); }
+function ownKeys$A(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$A(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$A(Object(t), true).forEach(function (r) { _defineProperty$C(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$A(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$C(e, r, t) { return (r = _toPropertyKey$C(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$C(t) { var i = _toPrimitive$C(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$C(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var CURVE_FACTORIES = {
   curveBasisClosed,
   curveBasisOpen,
@@ -18635,7 +19974,7 @@ var defaultCurveProps = {
  * Calculate the path of curve. Returns null if points is an empty array.
  * @return path or null
  */
-var getPath = _ref => {
+var getPath$1 = _ref => {
   var {
     type = defaultCurveProps.type,
     points = [],
@@ -18652,7 +19991,7 @@ var getPath = _ref => {
   // preventing errors from mismatched array lengths and ensuring `defined` checks both.
   if (Array.isArray(baseLine)) {
     var _lineFunction;
-    var areaPoints = points.map((entry, index) => _objectSpread$p(_objectSpread$p({}, entry), {}, {
+    var areaPoints = points.map((entry, index) => _objectSpread$A(_objectSpread$A({}, entry), {}, {
       base: baseLine[index]
     }));
     if (layout === 'vertical') {
@@ -18705,19 +20044,71 @@ var Curve = props => {
     layout: props.layout || layout,
     connectNulls: props.connectNulls
   };
-  var realPath = points && points.length ? getPath(getPathInput) : path;
-  return /*#__PURE__*/React.createElement("path", _extends$d({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
+  var realPath = points && points.length ? getPath$1(getPathInput) : path;
+  return /*#__PURE__*/React.createElement("path", _extends$k({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
     className: clsx('recharts-curve', className),
     d: realPath === null ? undefined : realPath,
     ref: pathRef
   }));
 };
 
-function ownKeys$o(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$o(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$o(Object(t), true).forEach(function (r) { _defineProperty$q(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$o(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$q(e, r, t) { return (r = _toPropertyKey$q(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$q(t) { var i = _toPrimitive$q(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$q(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var _excluded$f = ["x", "y", "top", "left", "width", "height", "className"];
+function _extends$j() { return _extends$j = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$j.apply(null, arguments); }
+function ownKeys$z(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$z(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$z(Object(t), true).forEach(function (r) { _defineProperty$B(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$z(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$B(e, r, t) { return (r = _toPropertyKey$B(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$B(t) { var i = _toPrimitive$B(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$B(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$f(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$f(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$f(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var getPath = (x, y, width, height, top, left) => {
+  return "M".concat(x, ",").concat(top, "v").concat(height, "M").concat(left, ",").concat(y, "h").concat(width);
+};
+var Cross = _ref => {
+  var {
+      x = 0,
+      y = 0,
+      top = 0,
+      left = 0,
+      width = 0,
+      height = 0,
+      className
+    } = _ref,
+    rest = _objectWithoutProperties$f(_ref, _excluded$f);
+  var props = _objectSpread$z({
+    x,
+    y,
+    top,
+    left,
+    width,
+    height
+  }, rest);
+  if (!isNumber(x) || !isNumber(y) || !isNumber(width) || !isNumber(height) || !isNumber(top) || !isNumber(left)) {
+    return null;
+  }
+  return /*#__PURE__*/React.createElement("path", _extends$j({}, svgPropertiesAndEvents(props), {
+    className: clsx('recharts-cross', className),
+    d: getPath(x, y, width, height, top, left)
+  }));
+};
+
+function getCursorRectangle(layout, activeCoordinate, offset, tooltipAxisBandSize) {
+  var halfSize = tooltipAxisBandSize / 2;
+  return {
+    stroke: 'none',
+    fill: '#ccc',
+    x: layout === 'horizontal' ? activeCoordinate.x - halfSize : offset.left + 0.5,
+    y: layout === 'horizontal' ? offset.top + 0.5 : activeCoordinate.y - halfSize,
+    width: layout === 'horizontal' ? tooltipAxisBandSize : offset.width - 1,
+    height: layout === 'horizontal' ? offset.height - 1 : tooltipAxisBandSize
+  };
+}
+
+function ownKeys$y(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$y(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$y(Object(t), true).forEach(function (r) { _defineProperty$A(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$y(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$A(e, r, t) { return (r = _toPropertyKey$A(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$A(t) { var i = _toPrimitive$A(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$A(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /*
  * @description: convert camel case to dash case
  * string => string
@@ -18739,15 +20130,15 @@ var getIntersectionKeys = (preObj, nextObj) => [Object.keys(preObj), Object.keys
  * @param {object} obj object to map
  * @returns mapped object
  */
-var mapObject = (fn, obj) => Object.keys(obj).reduce((res, key) => _objectSpread$o(_objectSpread$o({}, res), {}, {
+var mapObject = (fn, obj) => Object.keys(obj).reduce((res, key) => _objectSpread$y(_objectSpread$y({}, res), {}, {
   [key]: fn(key, obj[key])
 }), {});
 
-function ownKeys$n(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$n(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$n(Object(t), true).forEach(function (r) { _defineProperty$p(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$n(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$p(e, r, t) { return (r = _toPropertyKey$p(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$p(t) { var i = _toPrimitive$p(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$p(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$x(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$x(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$x(Object(t), true).forEach(function (r) { _defineProperty$z(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$x(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$z(e, r, t) { return (r = _toPropertyKey$z(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$z(t) { var i = _toPrimitive$z(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$z(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var alpha = (begin, end, k) => begin + (end - begin) * k;
 var needContinue = _ref => {
   var {
@@ -18764,7 +20155,7 @@ var calStepperVals = (easing, preVals, steps) => {
   var nextStepVals = mapObject((key, val) => {
     if (needContinue(val)) {
       var [newX, newV] = easing(val.from, val.to, val.velocity);
-      return _objectSpread$n(_objectSpread$n({}, val), {}, {
+      return _objectSpread$x(_objectSpread$x({}, val), {}, {
         from: newX,
         velocity: newV
       });
@@ -18774,7 +20165,7 @@ var calStepperVals = (easing, preVals, steps) => {
   if (steps < 1) {
     return mapObject((key, val) => {
       if (needContinue(val) && nextStepVals[key] != null) {
-        return _objectSpread$n(_objectSpread$n({}, val), {}, {
+        return _objectSpread$x(_objectSpread$x({}, val), {}, {
           velocity: alpha(val.velocity, nextStepVals[key].velocity, steps),
           from: alpha(val.from, nextStepVals[key].from, steps)
         });
@@ -18786,7 +20177,7 @@ var calStepperVals = (easing, preVals, steps) => {
 };
 function createStepperUpdate(from, to, easing, interKeys, render, timeoutController) {
   var preTime;
-  var stepperStyle = interKeys.reduce((res, key) => _objectSpread$n(_objectSpread$n({}, res), {}, {
+  var stepperStyle = interKeys.reduce((res, key) => _objectSpread$x(_objectSpread$x({}, res), {}, {
     [key]: {
       from: from[key],
       velocity: 0,
@@ -18804,7 +20195,7 @@ function createStepperUpdate(from, to, easing, interKeys, render, timeoutControl
     var steps = deltaTime / easing.dt;
     stepperStyle = calStepperVals(easing, stepperStyle, steps);
     // get union set and add compatible prefix
-    render(_objectSpread$n(_objectSpread$n(_objectSpread$n({}, from), to), getCurrStyle()));
+    render(_objectSpread$x(_objectSpread$x(_objectSpread$x({}, from), to), getCurrStyle()));
     preTime = now;
     if (!shouldStopAnimation()) {
       stopAnimation = timeoutController.setTimeout(stepperUpdate);
@@ -18830,7 +20221,7 @@ function createTimingUpdate(from, to, easing, duration, interKeys, render, timeo
     if (fromElement == null || toElement == null) {
       return res;
     }
-    return _objectSpread$n(_objectSpread$n({}, res), {}, {
+    return _objectSpread$x(_objectSpread$x({}, res), {}, {
       [key]: [fromElement, toElement]
     });
   }, {});
@@ -18843,12 +20234,12 @@ function createTimingUpdate(from, to, easing, duration, interKeys, render, timeo
     var currStyle = mapObject((key, val) => alpha(...val, easing(t)), timingStyle);
 
     // get union set and add compatible prefix
-    render(_objectSpread$n(_objectSpread$n(_objectSpread$n({}, from), to), currStyle));
+    render(_objectSpread$x(_objectSpread$x(_objectSpread$x({}, from), to), currStyle));
     if (t < 1) {
       stopAnimation = timeoutController.setTimeout(timingUpdate);
     } else {
       var finalStyle = mapObject((key, val) => alpha(...val, easing(1)), timingStyle);
-      render(_objectSpread$n(_objectSpread$n(_objectSpread$n({}, from), to), finalStyle));
+      render(_objectSpread$x(_objectSpread$x(_objectSpread$x({}, from), to), finalStyle));
     }
   };
 
@@ -18871,7 +20262,7 @@ const configUpdate = (from, to, easing, duration, render, timeoutController) => 
   if (easing == null) {
     // no animation, just set to final state
     return () => {
-      render(_objectSpread$n(_objectSpread$n({}, from), to));
+      render(_objectSpread$x(_objectSpread$x({}, from), to));
       return () => {};
     };
   }
@@ -19205,17 +20596,17 @@ function useAnimationId(input) {
   return animationId.current;
 }
 
-var _excluded$b = ["radius"],
-  _excluded2$5 = ["radius"];
+var _excluded$e = ["radius"],
+  _excluded2$7 = ["radius"];
 var _templateObject$2, _templateObject2$2, _templateObject3$2, _templateObject4$2, _templateObject5$2, _templateObject6$1, _templateObject7$1, _templateObject8, _templateObject9, _templateObject0;
-function ownKeys$m(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$m(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$m(Object(t), true).forEach(function (r) { _defineProperty$o(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$m(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$o(e, r, t) { return (r = _toPropertyKey$o(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$o(t) { var i = _toPrimitive$o(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$o(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$c() { return _extends$c = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$c.apply(null, arguments); }
-function _objectWithoutProperties$b(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$b(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$b(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$w(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$w(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$w(Object(t), true).forEach(function (r) { _defineProperty$y(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$w(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$y(e, r, t) { return (r = _toPropertyKey$y(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$y(t) { var i = _toPrimitive$y(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$y(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$i() { return _extends$i = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$i.apply(null, arguments); }
+function _objectWithoutProperties$e(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$e(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$e(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 function _taggedTemplateLiteral$2(e, t) { return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, { raw: { value: Object.freeze(t) } })); }
 
 /**
@@ -19338,8 +20729,8 @@ var Rectangle = rectangleProps => {
       {
         radius: _
       } = _svgPropertiesAndEven,
-      otherPathProps = _objectWithoutProperties$b(_svgPropertiesAndEven, _excluded$b);
-    return /*#__PURE__*/React.createElement("path", _extends$c({}, otherPathProps, {
+      otherPathProps = _objectWithoutProperties$e(_svgPropertiesAndEven, _excluded$e);
+    return /*#__PURE__*/React.createElement("path", _extends$i({}, otherPathProps, {
       x: round$1(x),
       y: round$1(y),
       width: round$1(width),
@@ -19394,22 +20785,22 @@ var Rectangle = rectangleProps => {
       {
         radius: _
       } = _svgPropertiesAndEven2,
-      otherPathProps = _objectWithoutProperties$b(_svgPropertiesAndEven2, _excluded2$5);
-    return /*#__PURE__*/React.createElement("path", _extends$c({}, otherPathProps, {
+      otherPathProps = _objectWithoutProperties$e(_svgPropertiesAndEven2, _excluded2$7);
+    return /*#__PURE__*/React.createElement("path", _extends$i({}, otherPathProps, {
       radius: typeof radius === 'number' ? radius : undefined,
       className: layerClass,
       d: getRectanglePath(currX, currY, currWidth, currHeight, radius),
       ref: pathRef,
-      style: _objectSpread$m(_objectSpread$m({}, animationStyle), props.style)
+      style: _objectSpread$w(_objectSpread$w({}, animationStyle), props.style)
     }));
   });
 };
 
-function ownKeys$l(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$l(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$l(Object(t), true).forEach(function (r) { _defineProperty$n(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$l(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$n(e, r, t) { return (r = _toPropertyKey$n(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$n(t) { var i = _toPrimitive$n(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$n(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$v(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$v(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$v(Object(t), true).forEach(function (r) { _defineProperty$x(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$v(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$x(e, r, t) { return (r = _toPropertyKey$x(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$x(t) { var i = _toPrimitive$x(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$x(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var RADIAN = Math.PI / 180;
 var radianToDegree = angleInRadian => angleInRadian * 180 / Math.PI;
 var polarToCartesian = (cx, cy, radius, angle) => ({
@@ -19537,7 +20928,7 @@ var inRangeOfSector = (_ref5, viewBox) => {
     inRange = formatAngle >= endAngle && formatAngle <= startAngle;
   }
   if (inRange) {
-    return _objectSpread$l(_objectSpread$l({}, viewBox), {}, {
+    return _objectSpread$v(_objectSpread$v({}, viewBox), {}, {
       radius,
       angle: reverseFormatAngleOfSector(formatAngle, viewBox)
     });
@@ -19545,8 +20936,33 @@ var inRangeOfSector = (_ref5, viewBox) => {
   return null;
 };
 
+/**
+ * Only applicable for radial layouts
+ * @param {Object} activeCoordinate ChartCoordinate
+ * @returns {Object} RadialCursorPoints
+ */
+function getRadialCursorPoints(activeCoordinate) {
+  var {
+    cx,
+    cy,
+    radius,
+    startAngle,
+    endAngle
+  } = activeCoordinate;
+  var startPoint = polarToCartesian(cx, cy, radius, startAngle);
+  var endPoint = polarToCartesian(cx, cy, radius, endAngle);
+  return {
+    points: [startPoint, endPoint],
+    cx,
+    cy,
+    radius,
+    startAngle,
+    endAngle
+  };
+}
+
 var _templateObject$1, _templateObject2$1, _templateObject3$1, _templateObject4$1, _templateObject5$1, _templateObject6, _templateObject7;
-function _extends$b() { return _extends$b = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$b.apply(null, arguments); }
+function _extends$h() { return _extends$h = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$h.apply(null, arguments); }
 function _taggedTemplateLiteral$1(e, t) { return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, { raw: { value: Object.freeze(t) } })); }
 var getDeltaAngle$1 = (startAngle, endAngle) => {
   var sign = mathSign(endAngle - startAngle);
@@ -19758,11 +21174,54 @@ var Sector = sectorProps => {
       endAngle
     });
   }
-  return /*#__PURE__*/React.createElement("path", _extends$b({}, svgPropertiesAndEvents(props), {
+  return /*#__PURE__*/React.createElement("path", _extends$h({}, svgPropertiesAndEvents(props), {
     className: layerClass,
     d: path
   }));
 };
+
+function getCursorPoints(layout, activeCoordinate, offset) {
+  if (layout === 'horizontal') {
+    return [{
+      x: activeCoordinate.x,
+      y: offset.top
+    }, {
+      x: activeCoordinate.x,
+      y: offset.top + offset.height
+    }];
+  }
+  if (layout === 'vertical') {
+    return [{
+      x: offset.left,
+      y: activeCoordinate.y
+    }, {
+      x: offset.left + offset.width,
+      y: activeCoordinate.y
+    }];
+  }
+  if (isPolarCoordinate(activeCoordinate)) {
+    if (layout === 'centric') {
+      var {
+        cx,
+        cy,
+        innerRadius,
+        outerRadius,
+        angle
+      } = activeCoordinate;
+      var innerPoint = polarToCartesian(cx, cy, innerRadius, angle);
+      var outerPoint = polarToCartesian(cx, cy, outerRadius, angle);
+      return [{
+        x: innerPoint.x,
+        y: innerPoint.y
+      }, {
+        x: outerPoint.x,
+        y: outerPoint.y
+      }];
+    }
+    return getRadialCursorPoints(activeCoordinate);
+  }
+  return undefined;
+}
 
 var range$3 = {};
 
@@ -19872,6 +21331,12 @@ var selectChartDataAndAlwaysIgnoreIndexes = createSelector([selectChartDataWithI
   };
 });
 var selectChartDataWithIndexesIfNotInPanoramaPosition4 = (state, _unused1, _unused2, isPanorama) => {
+  if (isPanorama) {
+    return selectChartDataAndAlwaysIgnoreIndexes(state);
+  }
+  return selectChartDataWithIndexes(state);
+};
+var selectChartDataWithIndexesIfNotInPanoramaPosition3 = (state, _unused1, isPanorama) => {
   if (isPanorama) {
     return selectChartDataAndAlwaysIgnoreIndexes(state);
   }
@@ -22384,6 +23849,7 @@ var selectChartName = state => state.options.chartName;
 var selectSyncId = state => state.rootProps.syncId;
 var selectSyncMethod = state => state.rootProps.syncMethod;
 var selectEventEmitter = state => state.options.eventEmitter;
+var selectChartBaseValue = state => state.rootProps.baseValue;
 
 /**
  * A collection of all default zIndex values used by Recharts.
@@ -22515,11 +23981,11 @@ function getAxisTypeBasedOnLayout(layout, axisType, axisDomainType) {
   return isCategoricalAxis(layout, axisType) ? 'category' : 'number';
 }
 
-function ownKeys$k(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$k(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$k(Object(t), true).forEach(function (r) { _defineProperty$m(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$k(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$m(e, r, t) { return (r = _toPropertyKey$m(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$m(t) { var i = _toPrimitive$m(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$m(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$u(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$u(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$u(Object(t), true).forEach(function (r) { _defineProperty$w(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$u(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$w(e, r, t) { return (r = _toPropertyKey$w(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$w(t) { var i = _toPrimitive$w(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$w(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var implicitAngleAxis = {
   allowDataOverflow: defaultPolarAngleAxisProps.allowDataOverflow,
   allowDecimals: defaultPolarAngleAxisProps.allowDecimals,
@@ -22569,7 +24035,7 @@ var selectAngleAxis = createSelector([selectAngleAxisNoDefaults, selectPolarChar
     return angleAxisSettings;
   }
   var evaluatedType = (_getAxisTypeBasedOnLa = getAxisTypeBasedOnLayout(layout, 'angleAxis', implicitAngleAxis.type)) !== null && _getAxisTypeBasedOnLa !== void 0 ? _getAxisTypeBasedOnLa : 'category';
-  return _objectSpread$k(_objectSpread$k({}, implicitAngleAxis), {}, {
+  return _objectSpread$u(_objectSpread$u({}, implicitAngleAxis), {}, {
     type: evaluatedType
   });
 });
@@ -22582,7 +24048,7 @@ var selectRadiusAxis = createSelector([selectRadiusAxisNoDefaults, selectPolarCh
     return radiusAxisSettings;
   }
   var evaluatedType = (_getAxisTypeBasedOnLa2 = getAxisTypeBasedOnLayout(layout, 'radiusAxis', implicitRadiusAxis.type)) !== null && _getAxisTypeBasedOnLa2 !== void 0 ? _getAxisTypeBasedOnLa2 : 'category';
-  return _objectSpread$k(_objectSpread$k({}, implicitRadiusAxis), {}, {
+  return _objectSpread$u(_objectSpread$u({}, implicitRadiusAxis), {}, {
     type: evaluatedType
   });
 });
@@ -26556,11 +28022,11 @@ function combineInverseScaleFunction(configuredScale) {
   return createCategoricalInverse(configuredScale, undefined);
 }
 
-function ownKeys$j(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$j(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$j(Object(t), true).forEach(function (r) { _defineProperty$l(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$j(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$l(e, r, t) { return (r = _toPropertyKey$l(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$l(t) { var i = _toPrimitive$l(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$l(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$t(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$t(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$t(Object(t), true).forEach(function (r) { _defineProperty$v(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$t(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$v(e, r, t) { return (r = _toPropertyKey$v(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$v(t) { var i = _toPrimitive$v(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$v(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var defaultNumericDomain = [0, 'auto'];
 /**
  * If an axis is not explicitly defined as an element,
@@ -26851,7 +28317,7 @@ var combineDisplayedData = (graphicalItemsData, _ref) => {
  *
  * This function will discard the original indexes, so it is also not useful for anything that depends on ordering.
  */
-var selectDisplayedData = createSelector([selectCartesianGraphicalItemsData, selectChartDataWithIndexesIfNotInPanoramaPosition4], combineDisplayedData);
+var selectDisplayedData$1 = createSelector([selectCartesianGraphicalItemsData, selectChartDataWithIndexesIfNotInPanoramaPosition4], combineDisplayedData);
 var combineAppliedValues = (data, axisSettings, items) => {
   if ((axisSettings === null || axisSettings === void 0 ? void 0 : axisSettings.dataKey) != null) {
     return data.map(item => ({
@@ -26901,7 +28367,7 @@ var combineAllAppliedValues = (displayedData, axisSettings, items, _ref2, anyIte
  *
  * This is an expensive selector - it will iterate all data and compute their value using the provided dataKey.
  */
-var selectAllAppliedValues = createSelector([selectDisplayedData, selectBaseAxis, selectCartesianItemsSettings, selectChartDataWithIndexesIfNotInPanoramaPosition4, selectAnyCartesianItemsUsesChartData, selectCartesianGraphicalItemsData], combineAllAppliedValues);
+var selectAllAppliedValues = createSelector([selectDisplayedData$1, selectBaseAxis, selectCartesianItemsSettings, selectChartDataWithIndexesIfNotInPanoramaPosition4, selectAnyCartesianItemsUsesChartData, selectCartesianGraphicalItemsData], combineAllAppliedValues);
 function makeNumber(val) {
   if (isNumOrStr(val) || val instanceof Date) {
     var n = Number(val);
@@ -27166,7 +28632,7 @@ var combineDomainOfAllAppliedNumericalValuesIncludingErrorValues = function comb
   }
   return undefined;
 };
-var selectDomainOfAllAppliedNumericalValuesIncludingErrorValues$1 = createSelector([selectDisplayedData, selectBaseAxis, selectCartesianItemsSettingsExceptStacked, selectAllErrorBarSettings, pickAxisType, selectChartDataSliceIfNotInPanorama], combineDomainOfAllAppliedNumericalValuesIncludingErrorValues, {
+var selectDomainOfAllAppliedNumericalValuesIncludingErrorValues$1 = createSelector([selectDisplayedData$1, selectBaseAxis, selectCartesianItemsSettingsExceptStacked, selectAllErrorBarSettings, pickAxisType, selectChartDataSliceIfNotInPanorama], combineDomainOfAllAppliedNumericalValuesIncludingErrorValues, {
   memoizeOptions: {
     resultEqualityCheck: numberDomainEqualityCheck
   }
@@ -27308,7 +28774,7 @@ var combineAxisDomain = (axisSettings, layout, displayedData, allAppliedValues, 
   }
   return numericalDomain;
 };
-var selectAxisDomain = createSelector([selectBaseAxis, selectChartLayout, selectDisplayedData, selectAllAppliedValues, selectStackOffsetType, pickAxisType, selectNumericalDomain], combineAxisDomain);
+var selectAxisDomain = createSelector([selectBaseAxis, selectChartLayout, selectDisplayedData$1, selectAllAppliedValues, selectStackOffsetType, pickAxisType, selectNumericalDomain], combineAxisDomain);
 var selectRealScaleType = createSelector([selectBaseAxis, selectHasBar, selectChartName], combineRealScaleType);
 var combineNiceTicks = (axisDomain, axisSettings, realScaleType) => {
   var {
@@ -27855,7 +29321,7 @@ var combineGraphicalItemTicks = (layout, axis, scale, axisRange, duplicateDomain
     };
   }).filter(isNotNil);
 };
-createSelector([selectChartLayout, selectRenderableAxisSettings, selectAxisScale, selectAxisRange, selectDuplicateDomain, selectCategoricalDomain, pickAxisType], combineGraphicalItemTicks);
+var selectTicksOfGraphicalItem = createSelector([selectChartLayout, selectRenderableAxisSettings, selectAxisScale, selectAxisRange, selectDuplicateDomain, selectCategoricalDomain, pickAxisType], combineGraphicalItemTicks);
 
 /**
  * This is the internal representation of an axis along with its scale function.
@@ -27863,11 +29329,11 @@ createSelector([selectChartLayout, selectRenderableAxisSettings, selectAxisScale
  * and replaced the union type of scale (string | function) with just the function type.
  */
 
-createSelector(selectBaseAxis, selectAxisScale, (axis, scale) => {
+var selectAxisWithScale = createSelector(selectBaseAxis, selectAxisScale, (axis, scale) => {
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$j(_objectSpread$j({}, axis), {}, {
+  return _objectSpread$t(_objectSpread$t({}, axis), {}, {
     scale
   });
 });
@@ -27877,7 +29343,7 @@ createSelector((state, _axisType, axisId) => selectZAxisSettings(state, axisId),
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$j(_objectSpread$j({}, axis), {}, {
+  return _objectSpread$t(_objectSpread$t({}, axis), {}, {
     scale
   });
 });
@@ -27949,6 +29415,9 @@ function selectTooltipEventType$1(state, shared) {
   var defaultTooltipEventType = selectDefaultTooltipEventType(state);
   var validateTooltipEventTypes = selectValidateTooltipEventTypes(state);
   return combineTooltipEventType(shared, defaultTooltipEventType, validateTooltipEventTypes);
+}
+function useTooltipEventType(shared) {
+  return useAppSelector(state => selectTooltipEventType$1(state, shared));
 }
 
 var combineActiveLabel = (tooltipTicks, activeIndex) => {
@@ -28183,11 +29652,11 @@ var {
 } = tooltipSlice.actions;
 var tooltipReducer = tooltipSlice.reducer;
 
-function ownKeys$i(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$i(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$i(Object(t), true).forEach(function (r) { _defineProperty$k(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$i(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$k(e, r, t) { return (r = _toPropertyKey$k(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$k(t) { var i = _toPrimitive$k(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$k(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$s(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$s(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$s(Object(t), true).forEach(function (r) { _defineProperty$u(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$s(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$u(e, r, t) { return (r = _toPropertyKey$u(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$u(t) { var i = _toPrimitive$u(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$u(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function chooseAppropriateMouseInteraction(tooltipState, tooltipEventType, trigger) {
   if (tooltipEventType === 'axis') {
     if (trigger === 'click') {
@@ -28223,7 +29692,7 @@ var combineTooltipInteractionState = (tooltipState, tooltipEventType, trigger, d
   var activeFromProps = tooltipState.settings.active === true;
   if (hasBeenActivePreviously(appropriateMouseInteraction)) {
     if (activeFromProps) {
-      return _objectSpread$i(_objectSpread$i({}, appropriateMouseInteraction), {}, {
+      return _objectSpread$s(_objectSpread$s({}, appropriateMouseInteraction), {}, {
         active: true
       });
     }
@@ -28236,7 +29705,7 @@ var combineTooltipInteractionState = (tooltipState, tooltipEventType, trigger, d
       graphicalItemId: undefined
     };
   }
-  return _objectSpread$i(_objectSpread$i({}, noInteraction), {}, {
+  return _objectSpread$s(_objectSpread$s({}, noInteraction), {}, {
     coordinate: appropriateMouseInteraction.coordinate
   });
 };
@@ -28396,11 +29865,11 @@ var selectTooltipPayloadSearcher = state => state.options.tooltipPayloadSearcher
 
 var selectTooltipState = state => state.tooltip;
 
-function ownKeys$h(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$h(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$h(Object(t), true).forEach(function (r) { _defineProperty$j(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$h(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$j(e, r, t) { return (r = _toPropertyKey$j(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$j(t) { var i = _toPrimitive$j(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$j(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$r(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$r(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$r(Object(t), true).forEach(function (r) { _defineProperty$t(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$r(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$t(e, r, t) { return (r = _toPropertyKey$t(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$t(t) { var i = _toPrimitive$t(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$t(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function parseName(value) {
   if (typeof value === 'string' || typeof value === 'number') {
     return value;
@@ -28521,7 +29990,7 @@ var combineTooltipPayload = (tooltipPayloadConfigurations, activeIndex, chartDat
         var itemName = parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.name;
         var itemDataKey = parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.dataKey;
         var itemPayload = parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.payload;
-        var newSettings = _objectSpread$h(_objectSpread$h({}, settings), {}, {
+        var newSettings = _objectSpread$r(_objectSpread$r({}, settings), {}, {
           name: itemName,
           unit: parsedItem === null || parsedItem === void 0 ? void 0 : parsedItem.unit,
           // Preserve item-level color/fill from graphical items.
@@ -28680,7 +30149,7 @@ var selectActiveTooltipDataKey = createSelector([selectTooltipInteractionState$1
   }
   return tooltipInteraction.dataKey;
 });
-createSelector([selectTooltipInteractionState$1], tooltipInteraction => {
+var selectActiveTooltipGraphicalItemId = createSelector([selectTooltipInteractionState$1], tooltipInteraction => {
   if (!tooltipInteraction) {
     return undefined;
   }
@@ -28694,12 +30163,12 @@ var selectActiveTooltipCoordinate = createSelector([selectTooltipInteractionStat
   }
   return defaultIndexCoordinate;
 });
-var selectIsTooltipActive = createSelector([selectTooltipInteractionState$1], tooltipInteractionState => {
+var selectIsTooltipActive$1 = createSelector([selectTooltipInteractionState$1], tooltipInteractionState => {
   var _tooltipInteractionSt;
   return (_tooltipInteractionSt = tooltipInteractionState === null || tooltipInteractionState === void 0 ? void 0 : tooltipInteractionState.active) !== null && _tooltipInteractionSt !== void 0 ? _tooltipInteractionSt : false;
 });
 var selectActiveTooltipPayload = createSelector([selectTooltipPayloadConfigurations$1, selectActiveTooltipIndex, selectChartDataWithIndexes, selectTooltipAxisDataKey, selectActiveLabel$1, selectTooltipPayloadSearcher, selectTooltipEventType], combineTooltipPayload);
-createSelector([selectActiveTooltipPayload], payload => {
+var selectActiveTooltipDataPoints = createSelector([selectActiveTooltipPayload], payload => {
   if (payload == null) {
     return undefined;
   }
@@ -28707,11 +30176,29 @@ createSelector([selectActiveTooltipPayload], payload => {
   return Array.from(new Set(dataPoints));
 });
 
-function ownKeys$g(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$g(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$g(Object(t), true).forEach(function (r) { _defineProperty$i(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$g(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$i(e, r, t) { return (r = _toPropertyKey$i(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$i(t) { var i = _toPrimitive$i(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$i(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$q(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$q(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$q(Object(t), true).forEach(function (r) { _defineProperty$s(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$q(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$s(e, r, t) { return (r = _toPropertyKey$s(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$s(t) { var i = _toPrimitive$s(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$s(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var useTooltipAxis = () => useAppSelector(selectTooltipAxis);
+var useTooltipAxisBandSize = () => {
+  var tooltipAxis = useTooltipAxis();
+  var tooltipTicks = useAppSelector(selectTooltipAxisTicks);
+  var tooltipAxisScale = useAppSelector(selectTooltipAxisScale);
+  if (!tooltipAxis || !tooltipAxisScale) {
+    return getBandSizeOfAxis(undefined, tooltipTicks);
+  }
+  return getBandSizeOfAxis(_objectSpread$q(_objectSpread$q({}, tooltipAxis), {}, {
+    scale: tooltipAxisScale
+  }), tooltipTicks);
+};
+
+function ownKeys$p(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$p(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$p(Object(t), true).forEach(function (r) { _defineProperty$r(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$p(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$r(e, r, t) { return (r = _toPropertyKey$r(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$r(t) { var i = _toPrimitive$r(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$r(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var getActiveCartesianCoordinate = (layout, tooltipTicks, activeIndex, pointer) => {
   var entry = tooltipTicks.find(tick => tick && tick.index === activeIndex);
   if (entry) {
@@ -28754,7 +30241,7 @@ var getActivePolarCoordinate = (layout, tooltipTicks, activeIndex, rangeObj) => 
       var {
         radius: _radius
       } = rangeObj;
-      return _objectSpread$g(_objectSpread$g(_objectSpread$g({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, _radius, _angle)), {}, {
+      return _objectSpread$p(_objectSpread$p(_objectSpread$p({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, _radius, _angle)), {}, {
         angle: _angle,
         radius: _radius
       });
@@ -28763,7 +30250,7 @@ var getActivePolarCoordinate = (layout, tooltipTicks, activeIndex, rangeObj) => 
     var {
       angle
     } = rangeObj;
-    return _objectSpread$g(_objectSpread$g(_objectSpread$g({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, radius, angle)), {}, {
+    return _objectSpread$p(_objectSpread$p(_objectSpread$p({}, rangeObj), polarToCartesian(rangeObj.cx, rangeObj.cy, radius, angle)), {}, {
       angle,
       radius
     });
@@ -28858,21 +30345,40 @@ var calculateActiveTickIndex = (coordinate, ticks, unsortedTicks, axisType, rang
   return -1;
 };
 
+var useChartName = () => {
+  return useAppSelector(selectChartName);
+};
 var pickTooltipEventType = (_state, tooltipEventType) => tooltipEventType;
 var pickTrigger = (_state, _tooltipEventType, trigger) => trigger;
 var pickDefaultIndex = (_state, _tooltipEventType, _trigger, defaultIndex) => defaultIndex;
 var selectOrderedTooltipTicks = createSelector(selectTooltipAxisTicks, ticks => sortBy$2(ticks, o => o.coordinate));
 var selectTooltipInteractionState = createSelector([selectTooltipState, pickTooltipEventType, pickTrigger, pickDefaultIndex], combineTooltipInteractionState);
 var selectActiveIndex = createSelector([selectTooltipInteractionState, selectTooltipDisplayedData, selectTooltipAxisDataKey, selectTooltipAxisDomain], combineActiveTooltipIndex);
+var selectTooltipDataKey = (state, tooltipEventType, trigger) => {
+  if (tooltipEventType == null) {
+    return undefined;
+  }
+  var tooltipState = selectTooltipState(state);
+  if (tooltipEventType === 'axis') {
+    if (trigger === 'hover') {
+      return tooltipState.axisInteraction.hover.dataKey;
+    }
+    return tooltipState.axisInteraction.click.dataKey;
+  }
+  if (trigger === 'hover') {
+    return tooltipState.itemInteraction.hover.dataKey;
+  }
+  return tooltipState.itemInteraction.click.dataKey;
+};
 var selectTooltipPayloadConfigurations = createSelector([selectTooltipState, pickTooltipEventType, pickTrigger, pickDefaultIndex], combineTooltipPayloadConfigurations);
 var selectCoordinateForDefaultIndex = createSelector([selectChartWidth, selectChartHeight, selectChartLayout, selectChartOffsetInternal, selectTooltipAxisTicks, pickDefaultIndex, selectTooltipPayloadConfigurations], combineCoordinateForDefaultIndex);
-createSelector([selectTooltipInteractionState, selectCoordinateForDefaultIndex], (tooltipInteractionState, defaultIndexCoordinate) => {
+var selectActiveCoordinate = createSelector([selectTooltipInteractionState, selectCoordinateForDefaultIndex], (tooltipInteractionState, defaultIndexCoordinate) => {
   var _tooltipInteractionSt;
   return (_tooltipInteractionSt = tooltipInteractionState.coordinate) !== null && _tooltipInteractionSt !== void 0 ? _tooltipInteractionSt : defaultIndexCoordinate;
 });
 var selectActiveLabel = createSelector([selectTooltipAxisTicks, selectActiveIndex], combineActiveLabel);
-createSelector([selectTooltipPayloadConfigurations, selectActiveIndex, selectChartDataWithIndexes, selectTooltipAxisDataKey, selectActiveLabel, selectTooltipPayloadSearcher, pickTooltipEventType], combineTooltipPayload);
-createSelector([selectTooltipInteractionState, selectActiveIndex], (tooltipInteractionState, activeIndex) => {
+var selectTooltipPayload = createSelector([selectTooltipPayloadConfigurations, selectActiveIndex, selectChartDataWithIndexes, selectTooltipAxisDataKey, selectActiveLabel, selectTooltipPayloadSearcher, pickTooltipEventType], combineTooltipPayload);
+var selectIsTooltipActive = createSelector([selectTooltipInteractionState, selectActiveIndex], (tooltipInteractionState, activeIndex) => {
   return {
     isActive: tooltipInteractionState.active && activeIndex != null,
     activeIndex
@@ -28948,14 +30454,14 @@ var selectAllRegisteredZIndexes = createSelector(state => state.zIndex.zIndexMap
   }
 });
 
-function ownKeys$f(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$f(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$f(Object(t), true).forEach(function (r) { _defineProperty$h(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$f(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$h(e, r, t) { return (r = _toPropertyKey$h(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$h(t) { var i = _toPrimitive$h(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$h(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$o(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$o(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$o(Object(t), true).forEach(function (r) { _defineProperty$q(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$o(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$q(e, r, t) { return (r = _toPropertyKey$q(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$q(t) { var i = _toPrimitive$q(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$q(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var seed = {};
 var initialState$a = {
-  zIndexMap: Object.values(DefaultZIndexes).reduce((acc, current) => _objectSpread$f(_objectSpread$f({}, acc), {}, {
+  zIndexMap: Object.values(DefaultZIndexes).reduce((acc, current) => _objectSpread$o(_objectSpread$o({}, acc), {}, {
     [current]: {
       element: undefined,
       panoramaElement: undefined,
@@ -29185,7 +30691,129 @@ function ZIndexLayer(_ref) {
   return /*#__PURE__*/createPortal(children, targetElement);
 }
 
+function _extends$g() { return _extends$g = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$g.apply(null, arguments); }
+function ownKeys$n(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$n(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$n(Object(t), true).forEach(function (r) { _defineProperty$p(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$n(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$p(e, r, t) { return (r = _toPropertyKey$p(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$p(t) { var i = _toPrimitive$p(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$p(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+/**
+ * If set false, no cursor will be drawn when tooltip is active.
+ * If set an object, the option is the configuration of cursor.
+ * If set a React element, the option is the custom react element of drawing cursor
+ */
+
+function RenderCursor(_ref) {
+  var {
+    cursor,
+    cursorComp,
+    cursorProps
+  } = _ref;
+  if (/*#__PURE__*/isValidElement(cursor)) {
+    return /*#__PURE__*/cloneElement(cursor, cursorProps);
+  }
+  return /*#__PURE__*/createElement(cursorComp, cursorProps);
+}
+function CursorInternal(props) {
+  var _props$zIndex;
+  var {
+    coordinate,
+    payload,
+    index,
+    offset,
+    tooltipAxisBandSize,
+    layout,
+    cursor,
+    tooltipEventType,
+    chartName
+  } = props;
+
+  // The cursor is a part of the Tooltip, and it should be shown (by default) when the Tooltip is active.
+  var activeCoordinate = coordinate;
+  var activePayload = payload;
+  var activeTooltipIndex = index;
+  if (!cursor || !activeCoordinate || chartName !== 'ScatterChart' && tooltipEventType !== 'axis') {
+    return null;
+  }
+  var restProps, cursorComp, preferredZIndex;
+  if (chartName === 'ScatterChart') {
+    restProps = activeCoordinate;
+    cursorComp = Cross;
+    preferredZIndex = DefaultZIndexes.cursorLine;
+  } else if (chartName === 'BarChart') {
+    restProps = getCursorRectangle(layout, activeCoordinate, offset, tooltipAxisBandSize);
+    cursorComp = Rectangle;
+    preferredZIndex = DefaultZIndexes.cursorRectangle;
+  } else if (layout === 'radial' && isPolarCoordinate(activeCoordinate)) {
+    var {
+      cx,
+      cy,
+      radius,
+      startAngle,
+      endAngle
+    } = getRadialCursorPoints(activeCoordinate);
+    restProps = {
+      cx,
+      cy,
+      startAngle,
+      endAngle,
+      innerRadius: radius,
+      outerRadius: radius
+    };
+    cursorComp = Sector;
+    preferredZIndex = DefaultZIndexes.cursorLine;
+  } else {
+    restProps = {
+      points: getCursorPoints(layout, activeCoordinate, offset)
+    };
+    cursorComp = Curve;
+    preferredZIndex = DefaultZIndexes.cursorLine;
+  }
+  var extraClassName = typeof cursor === 'object' && 'className' in cursor ? cursor.className : undefined;
+  var cursorProps = _objectSpread$n(_objectSpread$n(_objectSpread$n(_objectSpread$n({
+    stroke: '#ccc',
+    pointerEvents: 'none'
+  }, offset), restProps), svgPropertiesNoEventsFromUnknown(cursor)), {}, {
+    payload: activePayload,
+    payloadIndex: activeTooltipIndex,
+    className: clsx('recharts-tooltip-cursor', extraClassName)
+  });
+  return /*#__PURE__*/React.createElement(ZIndexLayer, {
+    zIndex: (_props$zIndex = props.zIndex) !== null && _props$zIndex !== void 0 ? _props$zIndex : preferredZIndex
+  }, /*#__PURE__*/React.createElement(RenderCursor, {
+    cursor: cursor,
+    cursorComp: cursorComp,
+    cursorProps: cursorProps
+  }));
+}
+
+/*
+ * Cursor is the background, or a highlight,
+ * that shows when user mouses over or activates
+ * an area.
+ *
+ * It usually shows together with a tooltip
+ * to emphasise which part of the chart does the tooltip refer to.
+ */
+function Cursor(props) {
+  var tooltipAxisBandSize = useTooltipAxisBandSize();
+  var offset = useOffsetInternal();
+  var layout = useChartLayout();
+  var chartName = useChartName();
+  if (tooltipAxisBandSize == null || offset == null || layout == null || chartName == null) {
+    return null;
+  }
+  return /*#__PURE__*/React.createElement(CursorInternal, _extends$g({}, props, {
+    offset: offset,
+    layout: layout,
+    tooltipAxisBandSize: tooltipAxisBandSize,
+    chartName: chartName
+  }));
+}
+
 var TooltipPortalContext = /*#__PURE__*/createContext(null);
+var useTooltipPortal = () => useContext(TooltipPortalContext);
 
 var eventemitter3 = {exports: {}};
 
@@ -29576,6 +31204,10 @@ var {
   createEventEmitter
 } = optionsSlice.actions;
 
+function selectSynchronisedTooltipState(state) {
+  return state.tooltip.syncInteraction;
+}
+
 /**
  * This is the data that's coming through main chart `data` prop
  * Recharts is very flexible in what it accepts so the type is very flexible too.
@@ -29640,14 +31272,14 @@ var {
 } = chartDataSlice.actions;
 var chartDataReducer = chartDataSlice.reducer;
 
-var _excluded$a = ["x", "y"];
-function ownKeys$e(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$e(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$e(Object(t), true).forEach(function (r) { _defineProperty$g(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$e(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$g(e, r, t) { return (r = _toPropertyKey$g(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$g(t) { var i = _toPrimitive$g(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$g(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$a(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$a(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$a(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$d = ["x", "y"];
+function ownKeys$m(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$m(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$m(Object(t), true).forEach(function (r) { _defineProperty$o(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$m(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$o(e, r, t) { return (r = _toPropertyKey$o(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$o(t) { var i = _toPrimitive$o(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$o(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$d(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$d(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$d(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 
 /**
  * Listens for tooltip sync events from other charts and dispatches the appropriate
@@ -29711,19 +31343,19 @@ function useTooltipSyncEventsListener() {
               x: _x,
               y: _y
             } = _action$payload$coord,
-            otherCoordinateProps = _objectWithoutProperties$a(_action$payload$coord, _excluded$a);
+            otherCoordinateProps = _objectWithoutProperties$d(_action$payload$coord, _excluded$d);
           var {
             x: sourceX,
             y: sourceY,
             width: sourceWidth,
             height: sourceHeight
           } = action.payload.sourceViewBox;
-          var scaledCoordinate = _objectSpread$e(_objectSpread$e({}, otherCoordinateProps), {}, {
+          var scaledCoordinate = _objectSpread$m(_objectSpread$m({}, otherCoordinateProps), {}, {
             x: viewBox.x + (sourceWidth ? (_x - sourceX) / sourceWidth : 0) * viewBox.width,
             y: viewBox.y + (sourceHeight ? (_y - sourceY) / sourceHeight : 0) * viewBox.height
           });
-          dispatch(_objectSpread$e(_objectSpread$e({}, action), {}, {
-            payload: _objectSpread$e(_objectSpread$e({}, action.payload), {}, {
+          dispatch(_objectSpread$m(_objectSpread$m({}, action), {}, {
+            payload: _objectSpread$m(_objectSpread$m({}, action.payload), {}, {
               coordinate: scaledCoordinate
             })
           }));
@@ -29870,6 +31502,241 @@ function useSynchronisedEventsFromOtherCharts() {
 }
 
 /**
+ * Will send events to other charts.
+ * If syncId is undefined, no events will be sent.
+ *
+ * This ignores the syncMethod, because that is set and computed on the receiving end.
+ *
+ * Outgoing emissions are suppressed when `isReceivingSynchronisation` is true,
+ * which is determined by the presence of `sourceViewBox` in the sync state (not by
+ * the tooltip's `active` flag). This matters for charts with sparse data: when an
+ * incoming sync label has no matching tick, the tooltip becomes inactive but
+ * `sourceViewBox` remains set, so the chart is still considered "receiving" and
+ * will not emit a counter-sync event that would cascade-clear other charts' tooltips.
+ *
+ * @param tooltipEventType from Tooltip
+ * @param trigger from Tooltip
+ * @param activeCoordinate from state
+ * @param activeLabel from state
+ * @param activeIndex from state
+ * @param isTooltipActive from state
+ * @returns void
+ */
+function useTooltipChartSynchronisation(tooltipEventType, trigger, activeCoordinate, activeLabel, activeIndex, isTooltipActive) {
+  var activeDataKey = useAppSelector(state => selectTooltipDataKey(state, tooltipEventType, trigger));
+  var activeGraphicalItemId = useAppSelector(selectActiveTooltipGraphicalItemId);
+  var eventEmitterSymbol = useAppSelector(selectEventEmitter);
+  var syncId = useAppSelector(selectSyncId);
+  var syncMethod = useAppSelector(selectSyncMethod);
+  var tooltipState = useAppSelector(selectSynchronisedTooltipState);
+  /*
+   * Use sourceViewBox (not active) to determine if we're receiving sync events.
+   * sourceViewBox is set whenever another chart sends a sync event to us — even when
+   * our own tooltip is inactive (because the label didn't match our data).
+   * This prevents charts with sparse data from emitting counter-sync events
+   * that would clear tooltips on all other synced charts.
+   */
+  var isReceivingSynchronisation = (tooltipState === null || tooltipState === void 0 ? void 0 : tooltipState.sourceViewBox) != null;
+  var viewBox = useViewBox();
+  useEffect(() => {
+    if (isReceivingSynchronisation) {
+      /*
+       * This chart is currently receiving synchronisation events from another chart.
+       * Let's not send any outgoing synchronisation events while that's happening
+       * to avoid infinite loops and cascading tooltip clears.
+       */
+      return;
+    }
+    if (syncId == null) {
+      /*
+       * syncId is not set, means that this chart is not synchronised with any other chart,
+       * means we don't need to send synchronisation events
+       */
+      return;
+    }
+    if (eventEmitterSymbol == null) {
+      /*
+       * When using Recharts internal hooks and selectors outside charts context,
+       * these properties will be undefined. Let's return silently instead of throwing an error.
+       */
+      return;
+    }
+    var syncAction = setSyncInteraction({
+      active: isTooltipActive,
+      coordinate: activeCoordinate,
+      dataKey: activeDataKey,
+      index: activeIndex,
+      label: typeof activeLabel === 'number' ? String(activeLabel) : activeLabel,
+      sourceViewBox: viewBox,
+      graphicalItemId: activeGraphicalItemId
+    });
+    eventCenter.emit(TOOLTIP_SYNC_EVENT, syncId, syncAction, eventEmitterSymbol);
+  }, [isReceivingSynchronisation, activeCoordinate, activeDataKey, activeGraphicalItemId, activeIndex, activeLabel, eventEmitterSymbol, syncId, syncMethod, isTooltipActive, viewBox]);
+}
+
+function ownKeys$l(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$l(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$l(Object(t), true).forEach(function (r) { _defineProperty$n(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$l(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$n(e, r, t) { return (r = _toPropertyKey$n(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$n(t) { var i = _toPrimitive$n(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$n(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function defaultUniqBy(entry) {
+  return entry.dataKey;
+}
+function renderContent(content, props) {
+  if (/*#__PURE__*/React.isValidElement(content)) {
+    return /*#__PURE__*/React.cloneElement(content, props);
+  }
+  if (typeof content === 'function') {
+    return /*#__PURE__*/React.createElement(content, props);
+  }
+  return /*#__PURE__*/React.createElement(DefaultTooltipContent, props);
+}
+var emptyPayload = [];
+var defaultTooltipProps = {
+  allowEscapeViewBox: {
+    x: false,
+    y: false
+  },
+  animationDuration: 400,
+  animationEasing: 'ease',
+  axisId: 0,
+  contentStyle: {},
+  cursor: true,
+  filterNull: true,
+  includeHidden: false,
+  isAnimationActive: 'auto',
+  itemSorter: 'name',
+  itemStyle: {},
+  labelStyle: {},
+  offset: 10,
+  reverseDirection: {
+    x: false,
+    y: false
+  },
+  separator: ' : ',
+  trigger: 'hover',
+  useTranslate3d: false,
+  wrapperStyle: {}
+};
+
+/**
+ * The Tooltip component displays a floating box with data values when hovering over or clicking on chart elements.
+ *
+ * It can be configured to show information for individual data points or for all points at a specific axis coordinate.
+ * The appearance and content of the tooltip can be customized via props.
+ *
+ * @see {@link https://github.com/recharts/recharts/wiki/Tooltip-event-type-and-shared-prop Tooltip event type and shared prop wiki page}
+ * @see {@link https://recharts.github.io/en-US/guide/activeIndex/ Active index replacement when migrating from Recharts v2 to v3}
+ *
+ * @consumes CartesianChartContext
+ * @consumes PolarChartContext
+ * @consumes TooltipEntrySettings
+ */
+function Tooltip(outsideProps) {
+  var _useAppSelector, _ref;
+  var props = resolveDefaultProps(outsideProps, defaultTooltipProps);
+  var {
+    active: activeFromProps,
+    allowEscapeViewBox,
+    animationDuration,
+    animationEasing,
+    content,
+    filterNull,
+    isAnimationActive,
+    offset,
+    payloadUniqBy,
+    position,
+    reverseDirection,
+    useTranslate3d,
+    wrapperStyle,
+    cursor,
+    shared,
+    trigger,
+    defaultIndex,
+    portal: portalFromProps,
+    axisId
+  } = props;
+  var dispatch = useAppDispatch();
+  var defaultIndexAsString = typeof defaultIndex === 'number' ? String(defaultIndex) : defaultIndex;
+  useEffect(() => {
+    dispatch(setTooltipSettingsState({
+      shared,
+      trigger,
+      axisId,
+      active: activeFromProps,
+      defaultIndex: defaultIndexAsString
+    }));
+  }, [dispatch, shared, trigger, axisId, activeFromProps, defaultIndexAsString]);
+  var viewBox = useViewBox();
+  var accessibilityLayer = useAccessibilityLayer();
+  var tooltipEventType = useTooltipEventType(shared);
+  var {
+    activeIndex,
+    isActive
+  } = (_useAppSelector = useAppSelector(state => selectIsTooltipActive(state, tooltipEventType, trigger, defaultIndexAsString))) !== null && _useAppSelector !== void 0 ? _useAppSelector : {};
+  var payloadFromRedux = useAppSelector(state => selectTooltipPayload(state, tooltipEventType, trigger, defaultIndexAsString));
+  var labelFromRedux = useAppSelector(state => selectActiveLabel(state, tooltipEventType, trigger, defaultIndexAsString));
+  var coordinate = useAppSelector(state => selectActiveCoordinate(state, tooltipEventType, trigger, defaultIndexAsString));
+  var payload = payloadFromRedux;
+  var tooltipPortalFromContext = useTooltipPortal();
+  /*
+   * The user can set `active=true` on the Tooltip in which case the Tooltip will stay always active,
+   * or `active=false` in which case the Tooltip never shows.
+   *
+   * If the `active` prop is not defined then it will show and hide based on mouse or keyboard activity.
+   */
+  var finalIsActive = (_ref = activeFromProps !== null && activeFromProps !== void 0 ? activeFromProps : isActive) !== null && _ref !== void 0 ? _ref : false;
+  var [lastBoundingBox, updateBoundingBox] = useElementOffset([payload, finalIsActive]);
+  var finalLabel = tooltipEventType === 'axis' ? labelFromRedux : undefined;
+  useTooltipChartSynchronisation(tooltipEventType, trigger, coordinate, finalLabel, activeIndex, finalIsActive);
+  var tooltipPortal = portalFromProps !== null && portalFromProps !== void 0 ? portalFromProps : tooltipPortalFromContext;
+  if (tooltipPortal == null || viewBox == null || tooltipEventType == null) {
+    return null;
+  }
+  var finalPayload = payload !== null && payload !== void 0 ? payload : emptyPayload;
+  if (!finalIsActive) {
+    finalPayload = emptyPayload;
+  }
+  if (filterNull && finalPayload.length) {
+    finalPayload = getUniqPayload(finalPayload.filter(entry => entry.value != null && (entry.hide !== true || props.includeHidden)), payloadUniqBy, defaultUniqBy);
+  }
+  var hasPayload = finalPayload.length > 0;
+  var tooltipContentProps = _objectSpread$l(_objectSpread$l({}, props), {}, {
+    payload: finalPayload,
+    label: finalLabel,
+    active: finalIsActive,
+    activeIndex,
+    coordinate,
+    accessibilityLayer
+  });
+  var tooltipElement = /*#__PURE__*/React.createElement(TooltipBoundingBox, {
+    allowEscapeViewBox: allowEscapeViewBox,
+    animationDuration: animationDuration,
+    animationEasing: animationEasing,
+    isAnimationActive: isAnimationActive,
+    active: finalIsActive,
+    coordinate: coordinate,
+    hasPayload: hasPayload,
+    offset: offset,
+    position: position,
+    reverseDirection: reverseDirection,
+    useTranslate3d: useTranslate3d,
+    viewBox: viewBox,
+    wrapperStyle: wrapperStyle,
+    lastBoundingBox: lastBoundingBox,
+    innerRef: updateBoundingBox,
+    hasPortalFromProps: Boolean(portalFromProps)
+  }, renderContent(content, tooltipContentProps));
+  return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/createPortal(tooltipElement, tooltipPortal), finalIsActive && /*#__PURE__*/React.createElement(Cursor, {
+    cursor: cursor,
+    tooltipEventType: tooltipEventType,
+    coordinate: coordinate,
+    payload: finalPayload,
+    index: activeIndex
+  }));
+}
+
+/**
  * Cell component used to define colors and styles of chart elements.
  *
  * This component is now deprecated and will be removed in Recharts 4.0.
@@ -29885,15 +31752,15 @@ function useSynchronisedEventsFromOtherCharts() {
 var Cell = _props => null;
 Cell.displayName = 'Cell';
 
-function _defineProperty$f(e, r, t) { return (r = _toPropertyKey$f(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$f(t) { var i = _toPrimitive$f(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$f(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _defineProperty$m(e, r, t) { return (r = _toPropertyKey$m(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$m(t) { var i = _toPrimitive$m(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$m(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Simple LRU (Least Recently Used) cache implementation
  */
 class LRUCache {
   constructor(maxSize) {
-    _defineProperty$f(this, "cache", new Map());
+    _defineProperty$m(this, "cache", new Map());
     this.maxSize = maxSize;
   }
   get(key) {
@@ -29923,16 +31790,16 @@ class LRUCache {
   }
 }
 
-function ownKeys$d(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$d(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$d(Object(t), true).forEach(function (r) { _defineProperty$e(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$d(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$e(e, r, t) { return (r = _toPropertyKey$e(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$e(t) { var i = _toPrimitive$e(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$e(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$k(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$k(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$k(Object(t), true).forEach(function (r) { _defineProperty$l(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$k(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$l(e, r, t) { return (r = _toPropertyKey$l(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$l(t) { var i = _toPrimitive$l(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$l(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var defaultConfig = {
   cacheSize: 2000,
   enableCache: true
 };
-var currentConfig = _objectSpread$d({}, defaultConfig);
+var currentConfig = _objectSpread$k({}, defaultConfig);
 var stringCache = new LRUCache(currentConfig.cacheSize);
 var SPAN_STYLE = {
   position: 'absolute',
@@ -30014,9 +31881,9 @@ var getStringSize = function getStringSize(text) {
 };
 
 var _DecimalCSS;
-function _defineProperty$d(e, r, t) { return (r = _toPropertyKey$d(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$d(t) { var i = _toPrimitive$d(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$d(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _defineProperty$k(e, r, t) { return (r = _toPropertyKey$k(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$k(t) { var i = _toPrimitive$k(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$k(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var MULTIPLY_OR_DIVIDE_REGEX = /(-?\d+(?:\.\d+)?[a-zA-Z%]*)([*/])(-?\d+(?:\.\d+)?[a-zA-Z%]*)/;
 var ADD_OR_SUBTRACT_REGEX = /(-?\d+(?:\.\d+)?[a-zA-Z%]*)([+-])(-?\d+(?:\.\d+)?[a-zA-Z%]*)/;
 var CSS_LENGTH_UNIT_REGEX = /^(px|cm|vh|vw|em|rem|%|mm|in|pt|pc|ex|ch|vmin|vmax|Q)$/;
@@ -30096,7 +31963,7 @@ class DecimalCSS {
   }
 }
 _DecimalCSS = DecimalCSS;
-_defineProperty$d(DecimalCSS, "NaN", new _DecimalCSS(NaN, ''));
+_defineProperty$k(DecimalCSS, "NaN", new _DecimalCSS(NaN, ''));
 function calculateArithmetic(expr) {
   if (expr == null || expr.includes(STR_NAN)) {
     return STR_NAN;
@@ -30158,11 +32025,11 @@ function reduceCSSCalc(expression) {
   return result;
 }
 
-var _excluded$9 = ["x", "y", "lineHeight", "capHeight", "fill", "scaleToFit", "textAnchor", "verticalAnchor"],
-  _excluded2$4 = ["dx", "dy", "angle", "className", "breakAll"];
-function _extends$a() { return _extends$a = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$a.apply(null, arguments); }
-function _objectWithoutProperties$9(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$9(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$9(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$c = ["x", "y", "lineHeight", "capHeight", "fill", "scaleToFit", "textAnchor", "verticalAnchor"],
+  _excluded2$6 = ["dx", "dy", "angle", "className", "breakAll"];
+function _extends$f() { return _extends$f = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$f.apply(null, arguments); }
+function _objectWithoutProperties$c(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$c(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$c(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var BREAKING_SPACES = /[ \f\n\r\t\v\u2028\u2029]+/;
 var calculateWordWidths = _ref => {
   var {
@@ -30361,7 +32228,7 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
       textAnchor,
       verticalAnchor
     } = _resolveDefaultProps,
-    props = _objectWithoutProperties$9(_resolveDefaultProps, _excluded$9);
+    props = _objectWithoutProperties$c(_resolveDefaultProps, _excluded$c);
   var wordsByLines = useMemo(() => {
     return getWordsByLines({
       breakAll: props.breakAll,
@@ -30379,7 +32246,7 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
       className,
       breakAll
     } = props,
-    textProps = _objectWithoutProperties$9(props, _excluded2$4);
+    textProps = _objectWithoutProperties$c(props, _excluded2$6);
   if (!isNumOrStr(propsX) || !isNumOrStr(propsY) || wordsByLines.length === 0) {
     return null;
   }
@@ -30415,7 +32282,7 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
   if (transforms.length) {
     textProps.transform = transforms.join(' ');
   }
-  return /*#__PURE__*/React.createElement("text", _extends$a({}, svgPropertiesAndEvents(textProps), {
+  return /*#__PURE__*/React.createElement("text", _extends$f({}, svgPropertiesAndEvents(textProps), {
     ref: ref,
     x: x,
     y: y,
@@ -30437,11 +32304,11 @@ var Text = /*#__PURE__*/forwardRef((outsideProps, ref) => {
 });
 Text.displayName = 'Text';
 
-function ownKeys$c(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$c(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$c(Object(t), true).forEach(function (r) { _defineProperty$c(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$c(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$c(e, r, t) { return (r = _toPropertyKey$c(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$c(t) { var i = _toPrimitive$c(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$c(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$j(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$j(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$j(Object(t), true).forEach(function (r) { _defineProperty$j(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$j(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$j(e, r, t) { return (r = _toPropertyKey$j(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$j(t) { var i = _toPrimitive$j(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$j(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 /**
  * Calculates the position and alignment for a generic element in a Cartesian coordinate system.
  *
@@ -30547,7 +32414,7 @@ var getCartesianPosition = options => {
     height
   } : {};
   if (position === 'insideLeft') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: middleX + horizontalOffset,
       y: y + height / 2,
       horizontalAnchor: horizontalStart,
@@ -30555,7 +32422,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideRight') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: middleX + midHeightWidth - horizontalOffset,
       y: y + height / 2,
       horizontalAnchor: horizontalEnd,
@@ -30563,7 +32430,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideTop') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: upperX + upperWidth / 2,
       y: y + verticalOffset,
       horizontalAnchor: 'middle',
@@ -30571,7 +32438,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideBottom') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: lowerX + lowerWidth / 2,
       y: y + height - verticalOffset,
       horizontalAnchor: 'middle',
@@ -30579,7 +32446,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideTopLeft') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: upperX + horizontalOffset,
       y: y + verticalOffset,
       horizontalAnchor: horizontalStart,
@@ -30587,7 +32454,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideTopRight') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: upperX + upperWidth - horizontalOffset,
       y: y + verticalOffset,
       horizontalAnchor: horizontalEnd,
@@ -30595,7 +32462,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideBottomLeft') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: lowerX + horizontalOffset,
       y: y + height - verticalOffset,
       horizontalAnchor: horizontalStart,
@@ -30603,7 +32470,7 @@ var getCartesianPosition = options => {
     }, sizeAttrs);
   }
   if (position === 'insideBottomRight') {
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: lowerX + lowerWidth - horizontalOffset,
       y: y + height - verticalOffset,
       horizontalAnchor: horizontalEnd,
@@ -30614,14 +32481,14 @@ var getCartesianPosition = options => {
     // TODO: This is not quite right. The width of the trapezoid changes with y.
     // A percentage-based x should be relative to the width at that y.
     // For now, we use the mid-height width as a reasonable approximation.
-    return _objectSpread$c({
+    return _objectSpread$j({
       x: x + getPercentValue(position.x, midHeightWidth),
       y: y + getPercentValue(position.y, height),
       horizontalAnchor: 'end',
       verticalAnchor: 'end'
     }, sizeAttrs);
   }
-  return _objectSpread$c({
+  return _objectSpread$j({
     x: centerX,
     y: y + height / 2,
     horizontalAnchor: 'middle',
@@ -30629,16 +32496,16 @@ var getCartesianPosition = options => {
   }, sizeAttrs);
 };
 
-var _excluded$8 = ["labelRef"],
-  _excluded2$3 = ["content"];
-function _objectWithoutProperties$8(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$8(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$8(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function ownKeys$b(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$b(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$b(Object(t), true).forEach(function (r) { _defineProperty$b(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$b(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$b(e, r, t) { return (r = _toPropertyKey$b(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$b(t) { var i = _toPrimitive$b(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$b(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$9() { return _extends$9 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$9.apply(null, arguments); }
+var _excluded$b = ["labelRef"],
+  _excluded2$5 = ["content"];
+function _objectWithoutProperties$b(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$b(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$b(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$i(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$i(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$i(Object(t), true).forEach(function (r) { _defineProperty$i(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$i(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$i(e, r, t) { return (r = _toPropertyKey$i(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$i(t) { var i = _toPrimitive$i(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$i(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$e() { return _extends$e = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$e.apply(null, arguments); }
 
 /**
  * @inline
@@ -30746,7 +32613,7 @@ var renderRadialLabel = (labelProps, position, label, attrs, viewBox) => {
   var endPoint = polarToCartesian(cx, cy, radius, labelAngle + (direction ? 1 : -1) * 359);
   var path = "M".concat(startPoint.x, ",").concat(startPoint.y, "\n    A").concat(radius, ",").concat(radius, ",0,1,").concat(direction ? 0 : 1, ",\n    ").concat(endPoint.x, ",").concat(endPoint.y);
   var id = isNullish(labelProps.id) ? uniqueId('recharts-radial-line-') : labelProps.id;
-  return /*#__PURE__*/React.createElement("text", _extends$9({}, attrs, {
+  return /*#__PURE__*/React.createElement("text", _extends$e({}, attrs, {
     dominantBaseline: "central",
     className: clsx('recharts-radial-bar-label', className)
   }), /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("path", {
@@ -30882,21 +32749,21 @@ function Label(outerProps) {
   if (!viewBox || isNullish(value) && isNullish(children) && ! /*#__PURE__*/isValidElement(content) && typeof content !== 'function') {
     return null;
   }
-  var propsWithViewBox = _objectSpread$b(_objectSpread$b({}, props), {}, {
+  var propsWithViewBox = _objectSpread$i(_objectSpread$i({}, props), {}, {
     viewBox
   });
   if (/*#__PURE__*/isValidElement(content)) {
     var {
         labelRef: _
       } = propsWithViewBox,
-      propsWithoutLabelRef = _objectWithoutProperties$8(propsWithViewBox, _excluded$8);
+      propsWithoutLabelRef = _objectWithoutProperties$b(propsWithViewBox, _excluded$b);
     return /*#__PURE__*/cloneElement(content, propsWithoutLabelRef);
   }
   if (typeof content === 'function') {
     var {
         content: _2
       } = propsWithViewBox,
-      propsForContent = _objectWithoutProperties$8(propsWithViewBox, _excluded2$3);
+      propsForContent = _objectWithoutProperties$b(propsWithViewBox, _excluded2$5);
     // @ts-expect-error we're not checking if the content component returns something that Text is able to render
     label = /*#__PURE__*/createElement(content, propsForContent);
     if (/*#__PURE__*/isValidElement(label)) {
@@ -30921,7 +32788,7 @@ function Label(outerProps) {
       position,
       offset: props.offset,
       parentViewBox: isPolar(parentViewBox) ? undefined : parentViewBox});
-    positionAttrs = _objectSpread$b(_objectSpread$b({
+    positionAttrs = _objectSpread$i(_objectSpread$i({
       x: cartesianResult.x,
       y: cartesianResult.y,
       textAnchor: cartesianResult.horizontalAnchor,
@@ -30934,7 +32801,7 @@ function Label(outerProps) {
   }
   return /*#__PURE__*/React.createElement(ZIndexLayer, {
     zIndex: props.zIndex
-  }, /*#__PURE__*/React.createElement(Text, _extends$9({
+  }, /*#__PURE__*/React.createElement(Text, _extends$e({
     ref: labelRef,
     className: clsx('recharts-label', className)
   }, attrs, positionAttrs, {
@@ -30956,35 +32823,35 @@ var parseLabel = (label, viewBox, labelRef) => {
     labelRef
   };
   if (label === true) {
-    return /*#__PURE__*/React.createElement(Label, _extends$9({
+    return /*#__PURE__*/React.createElement(Label, _extends$e({
       key: "label-implicit"
     }, commonProps));
   }
   if (isNumOrStr(label)) {
-    return /*#__PURE__*/React.createElement(Label, _extends$9({
+    return /*#__PURE__*/React.createElement(Label, _extends$e({
       key: "label-implicit",
       value: label
     }, commonProps));
   }
   if (/*#__PURE__*/isValidElement(label)) {
     if (label.type === Label) {
-      return /*#__PURE__*/cloneElement(label, _objectSpread$b({
+      return /*#__PURE__*/cloneElement(label, _objectSpread$i({
         key: 'label-implicit'
       }, commonProps));
     }
-    return /*#__PURE__*/React.createElement(Label, _extends$9({
+    return /*#__PURE__*/React.createElement(Label, _extends$e({
       key: "label-implicit",
       content: label
     }, commonProps));
   }
   if (isLabelContentAFunction(label)) {
-    return /*#__PURE__*/React.createElement(Label, _extends$9({
+    return /*#__PURE__*/React.createElement(Label, _extends$e({
       key: "label-implicit",
       content: label
     }, commonProps));
   }
   if (label && typeof label === 'object') {
-    return /*#__PURE__*/React.createElement(Label, _extends$9({}, label, {
+    return /*#__PURE__*/React.createElement(Label, _extends$e({}, label, {
       key: "label-implicit"
     }, commonProps));
   }
@@ -30998,11 +32865,11 @@ function PolarLabelFromLabelProp(_ref4) {
   return parseLabel(label, viewBox) || null;
 }
 
-var _excluded$7 = ["valueAccessor"],
-  _excluded2$2 = ["dataKey", "clockWise", "id", "textBreakAll", "zIndex"];
-function _extends$8() { return _extends$8 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$8.apply(null, arguments); }
-function _objectWithoutProperties$7(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$7(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$7(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$a = ["valueAccessor"],
+  _excluded2$4 = ["dataKey", "clockWise", "id", "textBreakAll", "zIndex"];
+function _extends$d() { return _extends$d = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$d.apply(null, arguments); }
+function _objectWithoutProperties$a(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$a(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$a(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 
 /**
  * This is public API because we expose it as the valueAccessor parameter.
@@ -31042,7 +32909,7 @@ var defaultAccessor = entry => {
   return undefined;
 };
 var CartesianLabelListContext = /*#__PURE__*/createContext(undefined);
-CartesianLabelListContext.Provider;
+var CartesianLabelListContextProvider = CartesianLabelListContext.Provider;
 var PolarLabelListContext = /*#__PURE__*/createContext(undefined);
 var PolarLabelListContextProvider = PolarLabelListContext.Provider;
 function useCartesianLabelListContext() {
@@ -31059,7 +32926,7 @@ function LabelList(_ref) {
   var {
       valueAccessor = defaultAccessor
     } = _ref,
-    restProps = _objectWithoutProperties$7(_ref, _excluded$7);
+    restProps = _objectWithoutProperties$a(_ref, _excluded$a);
   var {
       dataKey,
       clockWise,
@@ -31067,7 +32934,7 @@ function LabelList(_ref) {
       textBreakAll,
       zIndex
     } = restProps,
-    others = _objectWithoutProperties$7(restProps, _excluded2$2);
+    others = _objectWithoutProperties$a(restProps, _excluded2$4);
   var cartesianData = useCartesianLabelListContext();
   var polarData = usePolarLabelListContext();
   var data = cartesianData || polarData;
@@ -31084,7 +32951,7 @@ function LabelList(_ref) {
     var idProps = isNullish(id) ? {} : {
       id: "".concat(id, "-").concat(index)
     };
-    return /*#__PURE__*/React.createElement(Label, _extends$8({
+    return /*#__PURE__*/React.createElement(Label, _extends$d({
       key: "label-".concat(index)
     }, svgPropertiesAndEvents(entry), others, idProps, {
       /*
@@ -31128,7 +32995,7 @@ function LabelListFromLabelProp(_ref2) {
     });
   }
   if (typeof label === 'object') {
-    return /*#__PURE__*/React.createElement(LabelList, _extends$8({
+    return /*#__PURE__*/React.createElement(LabelList, _extends$d({
       key: "labelList-implicit"
     }, label, {
       type: String(label.type)
@@ -31136,6 +33003,36 @@ function LabelListFromLabelProp(_ref2) {
   }
   return null;
 }
+
+function _extends$c() { return _extends$c = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$c.apply(null, arguments); }
+/**
+ * Renders a dot in the chart.
+ *
+ * This component accepts X and Y coordinates in pixels.
+ * If you need to position the rectangle based on your chart's data,
+ * consider using the {@link ReferenceDot} component instead.
+ *
+ * @param props
+ * @constructor
+ */
+var Dot = props => {
+  var {
+    cx,
+    cy,
+    r,
+    className
+  } = props;
+  var layerClass = clsx('recharts-dot', className);
+  if (isNumber(cx) && isNumber(cy) && isNumber(r)) {
+    return /*#__PURE__*/React.createElement("circle", _extends$c({}, svgPropertiesNoEvents(props), adaptEventHandlers(props), {
+      className: layerClass,
+      cx: cx,
+      cy: cy,
+      r: r
+    }));
+  }
+  return null;
+};
 
 var selectUnfilteredPolarItems = state => state.graphicalItems.polarItems;
 var selectAxisPredicate = createSelector([pickAxisType, pickAxisId], itemAxisPredicate);
@@ -31245,15 +33142,15 @@ var selectPolarGridRadii = createSelector([selectRadiusAxisTicks$1], ticks => {
   return ticks.map(tick => tick.coordinate);
 });
 
-var _excluded$6 = ["gridType", "radialLines", "angleAxisId", "radiusAxisId", "cx", "cy", "innerRadius", "outerRadius", "polarAngles", "polarRadius", "zIndex"];
-function _objectWithoutProperties$6(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$6(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$6(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function _extends$7() { return _extends$7 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$7.apply(null, arguments); }
-function ownKeys$a(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$a(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$a(Object(t), true).forEach(function (r) { _defineProperty$a(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$a(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$a(e, r, t) { return (r = _toPropertyKey$a(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$a(t) { var i = _toPrimitive$a(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$a(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var _excluded$9 = ["gridType", "radialLines", "angleAxisId", "radiusAxisId", "cx", "cy", "innerRadius", "outerRadius", "polarAngles", "polarRadius", "zIndex"];
+function _objectWithoutProperties$9(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$9(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$9(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function _extends$b() { return _extends$b = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$b.apply(null, arguments); }
+function ownKeys$h(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$h(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$h(Object(t), true).forEach(function (r) { _defineProperty$h(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$h(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$h(e, r, t) { return (r = _toPropertyKey$h(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$h(t) { var i = _toPrimitive$h(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$h(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var getPolygonPath = (radius, cx, cy, polarAngles) => {
   var path = '';
   polarAngles.forEach((angle, i) => {
@@ -31281,13 +33178,13 @@ var PolarAngles = props => {
   if (!polarAngles || !polarAngles.length || !radialLines) {
     return null;
   }
-  var polarAnglesProps = _objectSpread$a({}, svgPropertiesNoEvents(props));
+  var polarAnglesProps = _objectSpread$h({}, svgPropertiesNoEvents(props));
   return /*#__PURE__*/React.createElement("g", {
     className: "recharts-polar-grid-angle"
   }, polarAngles.map(entry => {
     var start = polarToCartesian(cx, cy, innerRadius, entry);
     var end = polarToCartesian(cx, cy, outerRadius, entry);
-    return /*#__PURE__*/React.createElement("line", _extends$7({
+    return /*#__PURE__*/React.createElement("line", _extends$b({
       key: "line-".concat(entry)
     }, polarAnglesProps, {
       x1: start.x,
@@ -31305,11 +33202,11 @@ var ConcentricCircle = props => {
     cy,
     radius
   } = props;
-  var concentricCircleProps = _objectSpread$a({}, svgPropertiesNoEvents(props));
+  var concentricCircleProps = _objectSpread$h({}, svgPropertiesNoEvents(props));
   return (
     /*#__PURE__*/
     // @ts-expect-error wrong SVG element type
-    React.createElement("circle", _extends$7({}, concentricCircleProps, {
+    React.createElement("circle", _extends$b({}, concentricCircleProps, {
       className: clsx('recharts-polar-grid-concentric-circle', props.className),
       cx: cx,
       cy: cy,
@@ -31323,8 +33220,8 @@ var ConcentricPolygon = props => {
   var {
     radius
   } = props;
-  var concentricPolygonProps = _objectSpread$a({}, svgPropertiesNoEvents(props));
-  return /*#__PURE__*/React.createElement("path", _extends$7({}, concentricPolygonProps, {
+  var concentricPolygonProps = _objectSpread$h({}, svgPropertiesNoEvents(props));
+  return /*#__PURE__*/React.createElement("path", _extends$b({}, concentricPolygonProps, {
     className: clsx('recharts-polar-grid-concentric-polygon', props.className),
     d: getPolygonPath(radius, props.cx, props.cy, props.polarAngles)
   }));
@@ -31343,21 +33240,21 @@ var ConcentricGridPath = props => {
   var renderBackground = props.fill && props.fill !== 'none';
   return /*#__PURE__*/React.createElement("g", {
     className: "recharts-polar-grid-concentric"
-  }, renderBackground && gridType === 'circle' && /*#__PURE__*/React.createElement(ConcentricCircle, _extends$7({}, props, {
+  }, renderBackground && gridType === 'circle' && /*#__PURE__*/React.createElement(ConcentricCircle, _extends$b({}, props, {
     radius: maxPolarRadius
-  })), renderBackground && gridType !== 'circle' && /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$7({}, props, {
+  })), renderBackground && gridType !== 'circle' && /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$b({}, props, {
     radius: maxPolarRadius
   })), polarRadius.map((entry, i) => {
     var key = i;
     if (gridType === 'circle') {
-      return /*#__PURE__*/React.createElement(ConcentricCircle, _extends$7({
+      return /*#__PURE__*/React.createElement(ConcentricCircle, _extends$b({
         key: key
       }, props, {
         fill: "none",
         radius: entry
       }));
     }
-    return /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$7({
+    return /*#__PURE__*/React.createElement(ConcentricPolygon, _extends$b({
       key: key
     }, props, {
       fill: "none",
@@ -31395,7 +33292,7 @@ var PolarGrid = outsideProps => {
       polarRadius: polarRadiusInput,
       zIndex
     } = _resolveDefaultProps,
-    inputs = _objectWithoutProperties$6(_resolveDefaultProps, _excluded$6);
+    inputs = _objectWithoutProperties$9(_resolveDefaultProps, _excluded$9);
   var polarViewBox = useAppSelector(selectPolarViewBox);
   var polarAnglesFromRedux = useAppSelector(state => selectPolarGridAngles(state, angleAxisId));
   var polarRadiiFromRedux = useAppSelector(state => selectPolarGridRadii(state, radiusAxisId));
@@ -31404,7 +33301,7 @@ var PolarGrid = outsideProps => {
   if (polarAngles == null || polarRadius == null) {
     return null;
   }
-  var props = _objectSpread$a({
+  var props = _objectSpread$h({
     cx: (_ref = (_polarViewBox$cx = polarViewBox === null || polarViewBox === void 0 ? void 0 : polarViewBox.cx) !== null && _polarViewBox$cx !== void 0 ? _polarViewBox$cx : cxFromOutside) !== null && _ref !== void 0 ? _ref : 0,
     cy: (_ref2 = (_polarViewBox$cy = polarViewBox === null || polarViewBox === void 0 ? void 0 : polarViewBox.cy) !== null && _polarViewBox$cy !== void 0 ? _polarViewBox$cy : cyFromOutside) !== null && _ref2 !== void 0 ? _ref2 : 0,
     innerRadius: (_ref3 = (_polarViewBox$innerRa = polarViewBox === null || polarViewBox === void 0 ? void 0 : polarViewBox.innerRadius) !== null && _polarViewBox$innerRa !== void 0 ? _polarViewBox$innerRa : innerRadiusFromOutside) !== null && _ref3 !== void 0 ? _ref3 : 0,
@@ -31423,13 +33320,13 @@ var PolarGrid = outsideProps => {
     zIndex: props.zIndex
   }, /*#__PURE__*/React.createElement("g", {
     className: "recharts-polar-grid"
-  }, /*#__PURE__*/React.createElement(ConcentricGridPath, _extends$7({
+  }, /*#__PURE__*/React.createElement(ConcentricGridPath, _extends$b({
     gridType: gridType,
     radialLines: radialLines
   }, props, {
     polarAngles: polarAngles,
     polarRadius: polarRadius
-  })), /*#__PURE__*/React.createElement(PolarAngles, _extends$7({
+  })), /*#__PURE__*/React.createElement(PolarAngles, _extends$b({
     gridType: gridType,
     radialLines: radialLines
   }, props, {
@@ -31576,17 +33473,17 @@ function getClassNameFromUnknown(u) {
   return '';
 }
 
-var _excluded$5 = ["type"],
-  _excluded2$1 = ["cx", "cy", "angle", "axisLine"],
-  _excluded3$1 = ["angle", "tickFormatter", "stroke", "tick"];
-function _extends$6() { return _extends$6 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$6.apply(null, arguments); }
-function ownKeys$9(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$9(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$9(Object(t), true).forEach(function (r) { _defineProperty$9(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$9(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$9(e, r, t) { return (r = _toPropertyKey$9(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$9(t) { var i = _toPrimitive$9(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$9(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$5(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$5(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$5(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+var _excluded$8 = ["type"],
+  _excluded2$3 = ["cx", "cy", "angle", "axisLine"],
+  _excluded3$2 = ["angle", "tickFormatter", "stroke", "tick"];
+function _extends$a() { return _extends$a = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$a.apply(null, arguments); }
+function ownKeys$g(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$g(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$g(Object(t), true).forEach(function (r) { _defineProperty$g(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$g(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$g(e, r, t) { return (r = _toPropertyKey$g(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$g(t) { var i = _toPrimitive$g(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$g(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$8(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$8(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$8(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var AXIS_TYPE = 'radiusAxis';
 function SetRadiusAxisSettings(props) {
   var dispatch = useAppDispatch();
@@ -31595,12 +33492,12 @@ function SetRadiusAxisSettings(props) {
     var {
         type: typeFromProps
       } = props,
-      rest = _objectWithoutProperties$5(props, _excluded$5);
+      rest = _objectWithoutProperties$8(props, _excluded$8);
     var evaluatedType = getAxisTypeBasedOnLayout(layout, 'radiusAxis', typeFromProps);
     if (evaluatedType == null) {
       return undefined;
     }
-    return _objectSpread$9(_objectSpread$9({}, rest), {}, {
+    return _objectSpread$g(_objectSpread$g({}, rest), {}, {
       type: evaluatedType
     });
   }, [props, layout]);
@@ -31665,11 +33562,11 @@ var renderAxisLine = (props, ticks) => {
       angle,
       axisLine
     } = props,
-    others = _objectWithoutProperties$5(props, _excluded2$1);
+    others = _objectWithoutProperties$8(props, _excluded2$3);
   var extent = ticks.reduce((result, entry) => [Math.min(result[0], entry.coordinate), Math.max(result[1], entry.coordinate)], [Infinity, -Infinity]);
   var point0 = polarToCartesian(cx, cy, extent[0], angle);
   var point1 = polarToCartesian(cx, cy, extent[1], angle);
-  var axisLineProps = _objectSpread$9(_objectSpread$9(_objectSpread$9({}, svgPropertiesNoEvents(others)), {}, {
+  var axisLineProps = _objectSpread$g(_objectSpread$g(_objectSpread$g({}, svgPropertiesNoEvents(others)), {}, {
     fill: 'none'
   }, svgPropertiesNoEvents(axisLine)), {}, {
     x1: point0.x,
@@ -31679,7 +33576,7 @@ var renderAxisLine = (props, ticks) => {
   });
 
   // @ts-expect-error wrong SVG element type
-  return /*#__PURE__*/React.createElement("line", _extends$6({
+  return /*#__PURE__*/React.createElement("line", _extends$a({
     className: "recharts-polar-radius-axis-line"
   }, axisLineProps));
 };
@@ -31690,7 +33587,7 @@ var renderTickItem = (option, tickProps, value) => {
   } else if (typeof option === 'function') {
     tickItem = option(tickProps);
   } else {
-    tickItem = /*#__PURE__*/React.createElement(Text, _extends$6({}, tickProps, {
+    tickItem = /*#__PURE__*/React.createElement(Text, _extends$a({}, tickProps, {
       className: "recharts-polar-radius-axis-tick-value"
     }), value);
   }
@@ -31703,13 +33600,13 @@ var renderTicks = (props, ticks) => {
       stroke,
       tick
     } = props,
-    others = _objectWithoutProperties$5(props, _excluded3$1);
+    others = _objectWithoutProperties$8(props, _excluded3$2);
   var textAnchor = getTickTextAnchor(props.orientation);
   var axisProps = svgPropertiesNoEvents(others);
   var customTickProps = svgPropertiesNoEventsFromUnknown(tick);
   var items = ticks.map((entry, i) => {
     var coord = getTickValueCoord(entry, props.angle, props.cx, props.cy);
-    var tickProps = _objectSpread$9(_objectSpread$9(_objectSpread$9(_objectSpread$9({
+    var tickProps = _objectSpread$g(_objectSpread$g(_objectSpread$g(_objectSpread$g({
       textAnchor,
       transform: "rotate(".concat(90 - angle, ", ").concat(coord.x, ", ").concat(coord.y, ")")
     }, axisProps), {}, {
@@ -31720,7 +33617,7 @@ var renderTicks = (props, ticks) => {
     }, coord), {}, {
       payload: entry
     });
-    return /*#__PURE__*/React.createElement(Layer, _extends$6({
+    return /*#__PURE__*/React.createElement(Layer, _extends$a({
       className: clsx('recharts-polar-radius-axis-tick', getClassNameFromUnknown(tick)),
       key: "tick-".concat(entry.coordinate)
     }, adaptEventsOfChild(props, entry, i)), renderTickItem(tick, tickProps, tickFormatter ? tickFormatter(entry.value, i) : entry.value));
@@ -31739,7 +33636,7 @@ var PolarRadiusAxisWrapper = defaultsAndInputs => {
   if (viewBox == null || !ticks || !ticks.length || scale == null) {
     return null;
   }
-  var props = _objectSpread$9(_objectSpread$9({}, defaultsAndInputs), {}, {
+  var props = _objectSpread$g(_objectSpread$g({}, defaultsAndInputs), {}, {
     scale
   }, viewBox);
   var {
@@ -31782,6 +33679,79 @@ function PolarRadiusAxis(outsideProps) {
   }), /*#__PURE__*/React.createElement(PolarRadiusAxisWrapper, props));
 }
 PolarRadiusAxis.displayName = 'PolarRadiusAxis';
+
+function ownKeys$f(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$f(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$f(Object(t), true).forEach(function (r) { _defineProperty$f(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$f(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$f(e, r, t) { return (r = _toPropertyKey$f(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$f(t) { var i = _toPrimitive$f(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$f(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var pickId = (_state, id) => id;
+var selectSynchronisedPieSettings = createSelector([selectUnfilteredPolarItems, pickId], (graphicalItems, id) => graphicalItems.filter(item => item.type === 'pie').find(item => item.id === id));
+
+// Keep stable reference to an empty array to prevent re-renders
+var emptyArray = [];
+var pickCells$1 = (_state, _id, cells) => {
+  if ((cells === null || cells === void 0 ? void 0 : cells.length) === 0) {
+    return emptyArray;
+  }
+  return cells;
+};
+var selectDisplayedData = createSelector([selectChartDataAndAlwaysIgnoreIndexes, selectSynchronisedPieSettings, pickCells$1], (_ref, pieSettings, cells) => {
+  var {
+    chartData
+  } = _ref;
+  if (pieSettings == null) {
+    return undefined;
+  }
+  var displayedData;
+  if ((pieSettings === null || pieSettings === void 0 ? void 0 : pieSettings.data) != null && pieSettings.data.length > 0) {
+    displayedData = pieSettings.data;
+  } else {
+    displayedData = chartData;
+  }
+  if ((!displayedData || !displayedData.length) && cells != null) {
+    displayedData = cells.map(cell => _objectSpread$f(_objectSpread$f({}, pieSettings.presentationProps), cell.props));
+  }
+  if (displayedData == null) {
+    return undefined;
+  }
+  return displayedData;
+});
+var selectPieLegend = createSelector([selectDisplayedData, selectSynchronisedPieSettings, pickCells$1], (displayedData, pieSettings, cells) => {
+  if (displayedData == null || pieSettings == null) {
+    return undefined;
+  }
+  return displayedData.map((entry, i) => {
+    var _cells$i;
+    var name = getValueByDataKey(entry, pieSettings.nameKey, pieSettings.name);
+    var color;
+    if (cells !== null && cells !== void 0 && (_cells$i = cells[i]) !== null && _cells$i !== void 0 && (_cells$i = _cells$i.props) !== null && _cells$i !== void 0 && _cells$i.fill) {
+      color = cells[i].props.fill;
+    } else if (typeof entry === 'object' && entry != null && 'fill' in entry) {
+      color = entry.fill;
+    } else {
+      color = pieSettings.fill;
+    }
+    return {
+      value: getTooltipNameProp(name, pieSettings.dataKey),
+      color,
+      // @ts-expect-error Legend payload.payload says it wants objects but our data can be unknown
+      payload: entry,
+      type: pieSettings.legendType
+    };
+  });
+});
+var selectPieSectors = createSelector([selectDisplayedData, selectSynchronisedPieSettings, pickCells$1, selectChartOffsetInternal], (displayedData, pieSettings, cells, offset) => {
+  if (pieSettings == null || displayedData == null) {
+    return undefined;
+  }
+  return computePieSectors({
+    offset,
+    pieSettings,
+    displayedData,
+    cells
+  });
+});
 
 var reactIs = {exports: {}};
 
@@ -32145,6 +34115,12 @@ function findAllByType(children, type) {
   });
   return result;
 }
+var isClipDot = dot => {
+  if (dot && typeof dot === 'object' && 'clipDot' in dot) {
+    return Boolean(dot.clipDot);
+  }
+  return true;
+};
 
 var isPlainObject$2 = {};
 
@@ -32188,12 +34164,12 @@ var isPlainObject = isPlainObject$2.isPlainObject;
 const isPlainObject$1 = /*@__PURE__*/getDefaultExportFromCjs(isPlainObject);
 
 var _templateObject, _templateObject2, _templateObject3, _templateObject4, _templateObject5;
-function ownKeys$8(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$8(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$8(Object(t), true).forEach(function (r) { _defineProperty$8(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$8(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$8(e, r, t) { return (r = _toPropertyKey$8(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$8(t) { var i = _toPrimitive$8(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$8(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$5() { return _extends$5 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$5.apply(null, arguments); }
+function ownKeys$e(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$e(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$e(Object(t), true).forEach(function (r) { _defineProperty$e(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$e(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$e(e, r, t) { return (r = _toPropertyKey$e(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$e(t) { var i = _toPrimitive$e(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$e(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$9() { return _extends$9 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$9.apply(null, arguments); }
 function _taggedTemplateLiteral(e, t) { return t || (t = e.slice(0)), Object.freeze(Object.defineProperties(e, { raw: { value: Object.freeze(t) } })); }
 var getTrapezoidPath = (x, y, upperWidth, lowerWidth, height) => {
   var widthGap = upperWidth - lowerWidth;
@@ -32257,7 +34233,7 @@ var Trapezoid = outsideProps => {
   }
   var layerClass = clsx('recharts-trapezoid', className);
   if (!isUpdateAnimationActive) {
-    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", _extends$5({}, svgPropertiesAndEvents(trapezoidProps), {
+    return /*#__PURE__*/React.createElement("g", null, /*#__PURE__*/React.createElement("path", _extends$9({}, svgPropertiesAndEvents(trapezoidProps), {
       className: layerClass,
       d: getTrapezoidPath(x, y, upperWidth, lowerWidth, height)
     })));
@@ -32297,23 +34273,23 @@ var Trapezoid = outsideProps => {
     } : {
       strokeDasharray: from
     };
-    return /*#__PURE__*/React.createElement("path", _extends$5({}, svgPropertiesAndEvents(trapezoidProps), {
+    return /*#__PURE__*/React.createElement("path", _extends$9({}, svgPropertiesAndEvents(trapezoidProps), {
       className: layerClass,
       d: getTrapezoidPath(currX, currY, currUpperWidth, currLowerWidth, currHeight),
       ref: pathRef,
-      style: _objectSpread$8(_objectSpread$8({}, animationStyle), trapezoidProps.style)
+      style: _objectSpread$e(_objectSpread$e({}, animationStyle), trapezoidProps.style)
     }));
   });
 };
 
-var _excluded$4 = ["option", "shapeType", "activeClassName", "inActiveClassName"];
-function _objectWithoutProperties$4(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$4(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$4(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function ownKeys$7(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$7(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$7(Object(t), true).forEach(function (r) { _defineProperty$7(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$7(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$7(e, r, t) { return (r = _toPropertyKey$7(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$7(t) { var i = _toPrimitive$7(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$7(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var _excluded$7 = ["option", "shapeType", "activeClassName", "inActiveClassName"];
+function _objectWithoutProperties$7(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$7(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$7(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$d(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$d(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$d(Object(t), true).forEach(function (r) { _defineProperty$d(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$d(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$d(e, r, t) { return (r = _toPropertyKey$d(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$d(t) { var i = _toPrimitive$d(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$d(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 
 /**
  * This is an abstraction for rendering a user defined prop for a customized shape in several forms.
@@ -32330,7 +34306,7 @@ function _toPrimitive$7(t, r) { if ("object" != typeof t || !t) return t; var e 
  */
 
 function defaultPropTransformer(option, props) {
-  return _objectSpread$7(_objectSpread$7({}, props), option);
+  return _objectSpread$d(_objectSpread$d({}, props), option);
 }
 function isSymbolsProps(shapeType, _elementProps) {
   return shapeType === 'symbols';
@@ -32371,11 +34347,11 @@ function Shape(_ref2) {
       activeClassName = 'recharts-active-shape',
       inActiveClassName = 'recharts-shape'
     } = _ref2,
-    props = _objectWithoutProperties$4(_ref2, _excluded$4);
+    props = _objectWithoutProperties$7(_ref2, _excluded$7);
   var shape;
   if (/*#__PURE__*/isValidElement(option)) {
     // @ts-expect-error we can't know the type of cloned element props
-    shape = /*#__PURE__*/cloneElement(option, _objectSpread$7(_objectSpread$7({}, props), getPropsFromShapeOption(option)));
+    shape = /*#__PURE__*/cloneElement(option, _objectSpread$d(_objectSpread$d({}, props), getPropsFromShapeOption(option)));
   } else if (typeof option === 'function') {
     shape = option(props, props.index);
   } else if (isPlainObject$1(option) && typeof option !== 'boolean') {
@@ -32471,6 +34447,37 @@ function SetTooltipEntrySettings(_ref) {
   return null;
 }
 
+function SetLegendPayload(_ref) {
+  var {
+    legendPayload
+  } = _ref;
+  var dispatch = useAppDispatch();
+  var isPanorama = useIsPanorama();
+  var prevPayloadRef = useRef(null);
+  useLayoutEffect(() => {
+    if (isPanorama) {
+      return;
+    }
+    if (prevPayloadRef.current === null) {
+      dispatch(addLegendPayload(legendPayload));
+    } else if (prevPayloadRef.current !== legendPayload) {
+      dispatch(replaceLegendPayload({
+        prev: prevPayloadRef.current,
+        next: legendPayload
+      }));
+    }
+    prevPayloadRef.current = legendPayload;
+  }, [dispatch, isPanorama, legendPayload]);
+  useLayoutEffect(() => {
+    return () => {
+      if (prevPayloadRef.current) {
+        dispatch(removeLegendPayload(prevPayloadRef.current));
+        prevPayloadRef.current = null;
+      }
+    };
+  }, [dispatch]);
+  return null;
+}
 function SetPolarLegendPayload(_ref2) {
   var {
     legendPayload
@@ -32648,6 +34655,44 @@ var {
 } = graphicalItemsSlice.actions;
 var graphicalItemsReducer = graphicalItemsSlice.reducer;
 
+var SetCartesianGraphicalItemImpl = props => {
+  var dispatch = useAppDispatch();
+  var prevPropsRef = useRef(null);
+  useLayoutEffect(() => {
+    if (prevPropsRef.current === null) {
+      dispatch(addCartesianGraphicalItem(props));
+    } else if (prevPropsRef.current !== props) {
+      dispatch(replaceCartesianGraphicalItem({
+        prev: prevPropsRef.current,
+        next: props
+      }));
+    }
+    prevPropsRef.current = props;
+  }, [dispatch, props]);
+  useLayoutEffect(() => {
+    return () => {
+      if (prevPropsRef.current) {
+        dispatch(removeCartesianGraphicalItem(prevPropsRef.current));
+        /*
+         * Here we have to reset the ref to null because in StrictMode, the effect will run twice,
+         * but it will keep the same ref value from the first render.
+         *
+         * In browser, React will clear the ref after the first effect cleanup,
+         * so that wouldn't be an issue.
+         *
+         * In StrictMode, however, the ref is kept,
+         * and in the hook above the code checks for `prevPropsRef.current === null`
+         * which would be false so it would not dispatch the `addCartesianGraphicalItem` action again.
+         *
+         * https://github.com/recharts/recharts/issues/6022
+         */
+        prevPropsRef.current = null;
+      }
+    };
+  }, [dispatch]);
+  return null;
+};
+var SetCartesianGraphicalItem = /*#__PURE__*/memo(SetCartesianGraphicalItemImpl);
 var SetPolarGraphicalItemImpl = props => {
   var dispatch = useAppDispatch();
   var prevPropsRef = useRef(null);
@@ -32674,11 +34719,746 @@ var SetPolarGraphicalItemImpl = props => {
 };
 var SetPolarGraphicalItem = /*#__PURE__*/memo(SetPolarGraphicalItemImpl);
 
-function ownKeys$6(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$6(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$6(Object(t), true).forEach(function (r) { _defineProperty$6(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$6(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$6(e, r, t) { return (r = _toPropertyKey$6(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$6(t) { var i = _toPrimitive$6(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$6(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var _excluded$6 = ["key"],
+  _excluded2$2 = ["onMouseEnter", "onClick", "onMouseLeave"],
+  _excluded3$1 = ["id"],
+  _excluded4 = ["id"];
+function _extends$8() { return _extends$8 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$8.apply(null, arguments); }
+function _objectWithoutProperties$6(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$6(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$6(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$c(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$c(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$c(Object(t), true).forEach(function (r) { _defineProperty$c(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$c(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$c(e, r, t) { return (r = _toPropertyKey$c(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$c(t) { var i = _toPrimitive$c(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$c(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+/**
+ * The `label` prop in Pie accepts a variety of alternatives.
+ */
+
+/**
+ * We spread the data object into the sector data item,
+ * so we can't really know what is going to be inside.
+ *
+ * This type represents our best effort, but it all depends on the input data
+ * and what is inside of it.
+ *
+ * https://github.com/recharts/recharts/issues/6380
+ * https://github.com/recharts/recharts/discussions/6375
+ */
+
+/**
+ * Internal props, combination of external props + defaultProps + private Recharts state
+ */
+
+function SetPiePayloadLegend(props) {
+  var cells = useMemo(() => findAllByType(props.children, Cell), [props.children]);
+  var legendPayload = useAppSelector(state => selectPieLegend(state, props.id, cells));
+  if (legendPayload == null) {
+    return null;
+  }
+  return /*#__PURE__*/React.createElement(SetPolarLegendPayload, {
+    legendPayload: legendPayload
+  });
+}
+function getActiveShapeFill(activeShape) {
+  // activeShape can be boolean/function/element/object; only element/object can carry a static fill value.
+  if (activeShape == null || typeof activeShape === 'boolean' || typeof activeShape === 'function') {
+    return undefined;
+  }
+  if (/*#__PURE__*/React.isValidElement(activeShape)) {
+    var _activeShape$props;
+    // React element form: <Sector fill="..."/> or custom element with fill prop.
+    var _fill = (_activeShape$props = activeShape.props) === null || _activeShape$props === void 0 ? void 0 : _activeShape$props.fill;
+    return typeof _fill === 'string' ? _fill : undefined;
+  }
+  var {
+    fill
+  } = activeShape;
+  return typeof fill === 'string' ? fill : undefined;
+}
+var SetPieTooltipEntrySettings = /*#__PURE__*/React.memo(_ref => {
+  var {
+    dataKey,
+    nameKey,
+    sectors,
+    stroke,
+    strokeWidth,
+    fill,
+    name,
+    hide,
+    tooltipType,
+    id,
+    activeShape
+  } = _ref;
+  var activeShapeFill = getActiveShapeFill(activeShape);
+  var tooltipDataDefinedOnItem = sectors.map(sector => {
+    var sectorTooltipPayload = sector.tooltipPayload;
+    if (activeShapeFill == null || sectorTooltipPayload == null) {
+      return sectorTooltipPayload;
+    }
+    return sectorTooltipPayload.map(item => _objectSpread$c(_objectSpread$c({}, item), {}, {
+      color: activeShapeFill,
+      fill: activeShapeFill
+    }));
+  });
+  var tooltipEntrySettings = {
+    dataDefinedOnItem: tooltipDataDefinedOnItem,
+    getPosition: index => {
+      var _sectors$Number;
+      return (_sectors$Number = sectors[Number(index)]) === null || _sectors$Number === void 0 ? void 0 : _sectors$Number.tooltipPosition;
+    },
+    settings: {
+      stroke,
+      strokeWidth,
+      fill,
+      dataKey,
+      nameKey,
+      name: getTooltipNameProp(name, dataKey),
+      hide,
+      type: tooltipType,
+      color: fill,
+      unit: '',
+      // why doesn't Pie support unit?
+      graphicalItemId: id
+    }
+  };
+  return /*#__PURE__*/React.createElement(SetTooltipEntrySettings, {
+    tooltipEntrySettings: tooltipEntrySettings
+  });
+});
+var getTextAnchor = (x, cx) => {
+  if (x > cx) {
+    return 'start';
+  }
+  if (x < cx) {
+    return 'end';
+  }
+  return 'middle';
+};
+var getOuterRadius = (dataPoint, outerRadius, maxPieRadius) => {
+  if (typeof outerRadius === 'function') {
+    return getPercentValue(outerRadius(dataPoint), maxPieRadius, maxPieRadius * 0.8);
+  }
+  return getPercentValue(outerRadius, maxPieRadius, maxPieRadius * 0.8);
+};
+var parseCoordinateOfPie = (pieSettings, offset, dataPoint) => {
+  var {
+    top,
+    left,
+    width,
+    height
+  } = offset;
+  var maxPieRadius = getMaxRadius(width, height);
+  var cx = left + getPercentValue(pieSettings.cx, width, width / 2);
+  var cy = top + getPercentValue(pieSettings.cy, height, height / 2);
+  var innerRadius = getPercentValue(pieSettings.innerRadius, maxPieRadius, 0);
+  var outerRadius = getOuterRadius(dataPoint, pieSettings.outerRadius, maxPieRadius);
+  var maxRadius = pieSettings.maxRadius || Math.sqrt(width * width + height * height) / 2;
+  return {
+    cx,
+    cy,
+    innerRadius,
+    outerRadius,
+    maxRadius
+  };
+};
+var parseDeltaAngle = (startAngle, endAngle) => {
+  var sign = mathSign(endAngle - startAngle);
+  var deltaAngle = Math.min(Math.abs(endAngle - startAngle), 360);
+  return sign * deltaAngle;
+};
+var renderLabelLineItem = (option, props) => {
+  if (/*#__PURE__*/React.isValidElement(option)) {
+    // @ts-expect-error we can't know if the type of props matches the element
+    return /*#__PURE__*/React.cloneElement(option, props);
+  }
+  if (typeof option === 'function') {
+    return option(props);
+  }
+  var className = clsx('recharts-pie-label-line', typeof option !== 'boolean' ? option.className : '');
+  // React doesn't like it when we spread a key property onto an element
+  var {
+      key
+    } = props,
+    otherProps = _objectWithoutProperties$6(props, _excluded$6);
+  return /*#__PURE__*/React.createElement(Curve, _extends$8({}, otherProps, {
+    type: "linear",
+    className: className
+  }));
+};
+var renderLabelItem = (option, props, value) => {
+  if (/*#__PURE__*/React.isValidElement(option)) {
+    // @ts-expect-error element cloning is not typed
+    return /*#__PURE__*/React.cloneElement(option, props);
+  }
+  var label = value;
+  if (typeof option === 'function') {
+    label = option(props);
+    if (/*#__PURE__*/React.isValidElement(label)) {
+      return label;
+    }
+  }
+  var className = clsx('recharts-pie-label-text', getClassNameFromUnknown(option));
+  return /*#__PURE__*/React.createElement(Text, _extends$8({}, props, {
+    alignmentBaseline: "middle",
+    className: className
+  }), label);
+};
+function PieLabels(_ref2) {
+  var {
+    sectors,
+    props,
+    showLabels
+  } = _ref2;
+  var {
+    label,
+    labelLine,
+    dataKey
+  } = props;
+  if (!showLabels || !label || !sectors) {
+    return null;
+  }
+  var pieProps = svgPropertiesNoEvents(props);
+  var customLabelProps = svgPropertiesNoEventsFromUnknown(label);
+  var customLabelLineProps = svgPropertiesNoEventsFromUnknown(labelLine);
+  var offsetRadius = typeof label === 'object' && 'offsetRadius' in label && typeof label.offsetRadius === 'number' && label.offsetRadius || 20;
+  var labels = sectors.map((entry, i) => {
+    var midAngle = (entry.startAngle + entry.endAngle) / 2;
+    var endPoint = polarToCartesian(entry.cx, entry.cy, entry.outerRadius + offsetRadius, midAngle);
+    var labelProps = _objectSpread$c(_objectSpread$c(_objectSpread$c(_objectSpread$c({}, pieProps), entry), {}, {
+      // @ts-expect-error customLabelProps is contributing unknown props
+      stroke: 'none'
+    }, customLabelProps), {}, {
+      index: i,
+      textAnchor: getTextAnchor(endPoint.x, entry.cx)
+    }, endPoint);
+    var lineProps = _objectSpread$c(_objectSpread$c(_objectSpread$c(_objectSpread$c({}, pieProps), entry), {}, {
+      // @ts-expect-error customLabelLineProps is contributing unknown props
+      fill: 'none',
+      // @ts-expect-error customLabelLineProps is contributing unknown props
+      stroke: entry.fill
+    }, customLabelLineProps), {}, {
+      index: i,
+      points: [polarToCartesian(entry.cx, entry.cy, entry.outerRadius, midAngle), endPoint],
+      key: 'line'
+    });
+    return /*#__PURE__*/React.createElement(ZIndexLayer, {
+      zIndex: DefaultZIndexes.label,
+      key: "label-".concat(entry.startAngle, "-").concat(entry.endAngle, "-").concat(entry.midAngle, "-").concat(i)
+    }, /*#__PURE__*/React.createElement(Layer, null, labelLine && renderLabelLineItem(labelLine, lineProps), renderLabelItem(label, labelProps, getValueByDataKey(entry, dataKey))));
+  });
+  return /*#__PURE__*/React.createElement(Layer, {
+    className: "recharts-pie-labels"
+  }, labels);
+}
+function PieLabelList(_ref3) {
+  var {
+    sectors,
+    props,
+    showLabels
+  } = _ref3;
+  var {
+    label
+  } = props;
+  if (typeof label === 'object' && label != null && 'position' in label) {
+    return /*#__PURE__*/React.createElement(LabelListFromLabelProp, {
+      label: label
+    });
+  }
+  return /*#__PURE__*/React.createElement(PieLabels, {
+    sectors: sectors,
+    props: props,
+    showLabels: showLabels
+  });
+}
+function PieSectors(props) {
+  var {
+    sectors,
+    activeShape,
+    inactiveShape: inactiveShapeProp,
+    allOtherPieProps,
+    shape,
+    id
+  } = props;
+  var activeIndex = useAppSelector(selectActiveTooltipIndex);
+  var activeDataKey = useAppSelector(selectActiveTooltipDataKey);
+  var activeGraphicalItemId = useAppSelector(selectActiveTooltipGraphicalItemId);
+  var {
+      onMouseEnter: onMouseEnterFromProps,
+      onClick: onItemClickFromProps,
+      onMouseLeave: onMouseLeaveFromProps
+    } = allOtherPieProps,
+    restOfAllOtherProps = _objectWithoutProperties$6(allOtherPieProps, _excluded2$2);
+  var onMouseEnterFromContext = useMouseEnterItemDispatch(onMouseEnterFromProps, allOtherPieProps.dataKey, id);
+  var onMouseLeaveFromContext = useMouseLeaveItemDispatch(onMouseLeaveFromProps);
+  var onClickFromContext = useMouseClickItemDispatch(onItemClickFromProps, allOtherPieProps.dataKey, id);
+  if (sectors == null || sectors.length === 0) {
+    return null;
+  }
+  return /*#__PURE__*/React.createElement(React.Fragment, null, sectors.map((entry, i) => {
+    if ((entry === null || entry === void 0 ? void 0 : entry.startAngle) === 0 && (entry === null || entry === void 0 ? void 0 : entry.endAngle) === 0 && sectors.length !== 1) return null;
+
+    // For Pie charts, when multiple Pies share the same dataKey, we need to ensure only the hovered Pie's sector is active.
+    // We do this by checking if the active graphical item ID matches this Pie's ID.
+    var graphicalItemMatches = activeGraphicalItemId == null || activeGraphicalItemId === id;
+    var isActive = String(i) === activeIndex && (activeDataKey == null || allOtherPieProps.dataKey === activeDataKey) && graphicalItemMatches;
+    var inactiveShape = activeIndex ? inactiveShapeProp : null;
+    var sectorOptions = activeShape && isActive ? activeShape : inactiveShape;
+    var sectorProps = _objectSpread$c(_objectSpread$c({}, entry), {}, {
+      stroke: entry.stroke,
+      tabIndex: -1,
+      [DATA_ITEM_INDEX_ATTRIBUTE_NAME]: i,
+      [DATA_ITEM_GRAPHICAL_ITEM_ID_ATTRIBUTE_NAME]: id
+    });
+    return /*#__PURE__*/React.createElement(Layer, _extends$8({
+      key: "sector-".concat(entry === null || entry === void 0 ? void 0 : entry.startAngle, "-").concat(entry === null || entry === void 0 ? void 0 : entry.endAngle, "-").concat(entry.midAngle, "-").concat(i),
+      tabIndex: -1,
+      className: "recharts-pie-sector"
+    }, adaptEventsOfChild(restOfAllOtherProps, entry, i), {
+      onMouseEnter: onMouseEnterFromContext(entry, i),
+      onMouseLeave: onMouseLeaveFromContext(entry, i),
+      onClick: onClickFromContext(entry, i)
+    }), /*#__PURE__*/React.createElement(Shape, _extends$8({
+      option: shape !== null && shape !== void 0 ? shape : sectorOptions,
+      index: i,
+      shapeType: "sector",
+      isActive: isActive
+    }, sectorProps)));
+  }));
+}
+function computePieSectors(_ref4) {
+  var _pieSettings$paddingA;
+  var {
+    pieSettings,
+    displayedData,
+    cells,
+    offset
+  } = _ref4;
+  var {
+    cornerRadius,
+    startAngle,
+    endAngle,
+    dataKey,
+    nameKey,
+    tooltipType
+  } = pieSettings;
+  var minAngle = Math.abs(pieSettings.minAngle);
+  var deltaAngle = parseDeltaAngle(startAngle, endAngle);
+  var absDeltaAngle = Math.abs(deltaAngle);
+  var paddingAngle = displayedData.length <= 1 ? 0 : (_pieSettings$paddingA = pieSettings.paddingAngle) !== null && _pieSettings$paddingA !== void 0 ? _pieSettings$paddingA : 0;
+  var notZeroItemCount = displayedData.filter(entry => getValueByDataKey(entry, dataKey, 0) !== 0).length;
+  var totalPaddingAngle = (absDeltaAngle >= 360 ? notZeroItemCount : notZeroItemCount - 1) * paddingAngle;
+  var sum = displayedData.reduce((result, entry) => {
+    var val = getValueByDataKey(entry, dataKey, 0);
+    return result + (isNumber(val) ? val : 0);
+  }, 0);
+
+  // Only apply minAngle redistribution when at least one non-zero segment's
+  // natural angle falls below the minAngle threshold. Otherwise, minAngle
+  // unnecessarily shifts all segments even when none need the boost.
+  // See: https://github.com/recharts/recharts/issues/6814
+  var needsMinAngleAdjustment = minAngle > 0 && sum > 0 && displayedData.some(entry => {
+    var val = getValueByDataKey(entry, dataKey, 0);
+    var percent = (isNumber(val) ? val : 0) / sum;
+    return val !== 0 && percent * absDeltaAngle < minAngle;
+  });
+  var effectiveMinAngle = needsMinAngleAdjustment ? minAngle : 0;
+  var realTotalAngle = absDeltaAngle - notZeroItemCount * effectiveMinAngle - totalPaddingAngle;
+  var sectors;
+  if (sum > 0) {
+    var prev;
+    sectors = displayedData.map((entry, i) => {
+      var val = getValueByDataKey(entry, dataKey, 0);
+      var name = getValueByDataKey(entry, nameKey, i);
+      var coordinate = parseCoordinateOfPie(pieSettings, offset, entry);
+      var percent = (isNumber(val) ? val : 0) / sum;
+      var tempStartAngle;
+
+      // @ts-expect-error can't spread unknown
+      var entryWithCellInfo = _objectSpread$c(_objectSpread$c({}, entry), cells && cells[i] && cells[i].props);
+      var sectorColor = entryWithCellInfo != null && 'fill' in entryWithCellInfo && typeof entryWithCellInfo.fill === 'string' ? entryWithCellInfo.fill : pieSettings.fill;
+      if (i) {
+        tempStartAngle = prev.endAngle + mathSign(deltaAngle) * paddingAngle * (val !== 0 ? 1 : 0);
+      } else {
+        tempStartAngle = startAngle;
+      }
+      var tempEndAngle = tempStartAngle + mathSign(deltaAngle) * ((val !== 0 ? effectiveMinAngle : 0) + percent * realTotalAngle);
+      var midAngle = (tempStartAngle + tempEndAngle) / 2;
+      var middleRadius = (coordinate.innerRadius + coordinate.outerRadius) / 2;
+      var tooltipPayload = [{
+        name,
+        value: val,
+        payload: entryWithCellInfo,
+        dataKey,
+        type: tooltipType,
+        color: sectorColor,
+        fill: sectorColor,
+        graphicalItemId: pieSettings.id
+      }];
+      var tooltipPosition = polarToCartesian(coordinate.cx, coordinate.cy, middleRadius, midAngle);
+      prev = _objectSpread$c(_objectSpread$c(_objectSpread$c(_objectSpread$c({}, pieSettings.presentationProps), {}, {
+        percent,
+        cornerRadius: typeof cornerRadius === 'string' ? parseFloat(cornerRadius) : cornerRadius,
+        name,
+        tooltipPayload,
+        midAngle,
+        middleRadius,
+        tooltipPosition
+      }, entryWithCellInfo), coordinate), {}, {
+        value: val,
+        dataKey,
+        startAngle: tempStartAngle,
+        endAngle: tempEndAngle,
+        payload: entryWithCellInfo,
+        paddingAngle: val !== 0 ? mathSign(deltaAngle) * paddingAngle : 0
+      });
+      return prev;
+    });
+  }
+  return sectors;
+}
+function PieLabelListProvider(_ref5) {
+  var {
+    showLabels,
+    sectors,
+    children
+  } = _ref5;
+  var labelListEntries = useMemo(() => {
+    if (!showLabels || !sectors) {
+      return [];
+    }
+    return sectors.map(entry => ({
+      value: entry.value,
+      payload: entry.payload,
+      clockWise: false,
+      parentViewBox: undefined,
+      viewBox: {
+        cx: entry.cx,
+        cy: entry.cy,
+        innerRadius: entry.innerRadius,
+        outerRadius: entry.outerRadius,
+        startAngle: entry.startAngle,
+        endAngle: entry.endAngle,
+        clockWise: false
+      },
+      fill: entry.fill
+    }));
+  }, [sectors, showLabels]);
+  return /*#__PURE__*/React.createElement(PolarLabelListContextProvider, {
+    value: showLabels ? labelListEntries : undefined
+  }, children);
+}
+function SectorsWithAnimation$1(_ref6) {
+  var {
+    props,
+    previousSectorsRef,
+    id
+  } = _ref6;
+  var {
+    sectors,
+    isAnimationActive,
+    animationBegin,
+    animationDuration,
+    animationEasing,
+    activeShape,
+    inactiveShape,
+    onAnimationStart,
+    onAnimationEnd
+  } = props;
+  var animationId = useAnimationId(props, 'recharts-pie-');
+  var prevSectors = previousSectorsRef.current;
+  var [isAnimating, setIsAnimating] = useState(false);
+  var handleAnimationEnd = useCallback(() => {
+    if (typeof onAnimationEnd === 'function') {
+      onAnimationEnd();
+    }
+    setIsAnimating(false);
+  }, [onAnimationEnd]);
+  var handleAnimationStart = useCallback(() => {
+    if (typeof onAnimationStart === 'function') {
+      onAnimationStart();
+    }
+    setIsAnimating(true);
+  }, [onAnimationStart]);
+  return /*#__PURE__*/React.createElement(PieLabelListProvider, {
+    showLabels: !isAnimating,
+    sectors: sectors
+  }, /*#__PURE__*/React.createElement(JavascriptAnimate, {
+    animationId: animationId,
+    begin: animationBegin,
+    duration: animationDuration,
+    isActive: isAnimationActive,
+    easing: animationEasing,
+    onAnimationStart: handleAnimationStart,
+    onAnimationEnd: handleAnimationEnd,
+    key: animationId
+  }, t => {
+    var _first$startAngle;
+    var stepData = [];
+    var first = sectors && sectors[0];
+    var curAngle = (_first$startAngle = first === null || first === void 0 ? void 0 : first.startAngle) !== null && _first$startAngle !== void 0 ? _first$startAngle : 0;
+    sectors === null || sectors === void 0 || sectors.forEach((entry, index) => {
+      var prev = prevSectors && prevSectors[index];
+      var paddingAngle = index > 0 ? get$2(entry, 'paddingAngle', 0) : 0;
+      if (prev) {
+        var angle = interpolate$1(prev.endAngle - prev.startAngle, entry.endAngle - entry.startAngle, t);
+        var latest = _objectSpread$c(_objectSpread$c({}, entry), {}, {
+          startAngle: curAngle + paddingAngle,
+          endAngle: curAngle + angle + paddingAngle
+        });
+        stepData.push(latest);
+        curAngle = latest.endAngle;
+      } else {
+        var {
+          endAngle,
+          startAngle
+        } = entry;
+        var deltaAngle = interpolate$1(0, endAngle - startAngle, t);
+        var _latest = _objectSpread$c(_objectSpread$c({}, entry), {}, {
+          startAngle: curAngle + paddingAngle,
+          endAngle: curAngle + deltaAngle + paddingAngle
+        });
+        stepData.push(_latest);
+        curAngle = _latest.endAngle;
+      }
+    });
+
+    // eslint-disable-next-line no-param-reassign
+    previousSectorsRef.current = stepData;
+    return /*#__PURE__*/React.createElement(Layer, null, /*#__PURE__*/React.createElement(PieSectors, {
+      sectors: stepData,
+      activeShape: activeShape,
+      inactiveShape: inactiveShape,
+      allOtherPieProps: props,
+      shape: props.shape,
+      id: id
+    }));
+  }), /*#__PURE__*/React.createElement(PieLabelList, {
+    showLabels: !isAnimating,
+    sectors: sectors,
+    props: props
+  }), props.children);
+}
+var defaultPieProps = {
+  animationBegin: 400,
+  animationDuration: 1500,
+  animationEasing: 'ease',
+  cx: '50%',
+  cy: '50%',
+  dataKey: 'value',
+  endAngle: 360,
+  fill: '#808080',
+  hide: false,
+  innerRadius: 0,
+  isAnimationActive: 'auto',
+  label: false,
+  labelLine: true,
+  legendType: 'rect',
+  minAngle: 0,
+  nameKey: 'name',
+  outerRadius: '80%',
+  paddingAngle: 0,
+  rootTabIndex: 0,
+  startAngle: 0,
+  stroke: '#fff',
+  zIndex: DefaultZIndexes.area
+};
+function PieImpl(props) {
+  var {
+      id
+    } = props,
+    propsWithoutId = _objectWithoutProperties$6(props, _excluded3$1);
+  var {
+    hide,
+    className,
+    rootTabIndex
+  } = props;
+  var cells = useMemo(() => findAllByType(props.children, Cell), [props.children]);
+  var sectors = useAppSelector(state => selectPieSectors(state, id, cells));
+  var previousSectorsRef = useRef(null);
+  var layerClass = clsx('recharts-pie', className);
+  if (hide || sectors == null) {
+    previousSectorsRef.current = null;
+    return /*#__PURE__*/React.createElement(Layer, {
+      tabIndex: rootTabIndex,
+      className: layerClass
+    });
+  }
+  return /*#__PURE__*/React.createElement(ZIndexLayer, {
+    zIndex: props.zIndex
+  }, /*#__PURE__*/React.createElement(SetPieTooltipEntrySettings, {
+    dataKey: props.dataKey,
+    nameKey: props.nameKey,
+    sectors: sectors,
+    stroke: props.stroke,
+    strokeWidth: props.strokeWidth,
+    fill: props.fill,
+    name: props.name,
+    hide: props.hide,
+    tooltipType: props.tooltipType,
+    id: id,
+    activeShape: props.activeShape
+  }), /*#__PURE__*/React.createElement(Layer, {
+    tabIndex: rootTabIndex,
+    className: layerClass
+  }, /*#__PURE__*/React.createElement(SectorsWithAnimation$1, {
+    props: _objectSpread$c(_objectSpread$c({}, propsWithoutId), {}, {
+      sectors
+    }),
+    previousSectorsRef: previousSectorsRef,
+    id: id
+  })));
+}
+/**
+ * @consumes PolarChartContext
+ * @provides LabelListContext
+ * @provides CellReader
+ */
+function PieFn(outsideProps) {
+  var props = resolveDefaultProps(outsideProps, defaultPieProps);
+  var {
+      id: externalId
+    } = props,
+    propsWithoutId = _objectWithoutProperties$6(props, _excluded4);
+  var presentationProps = svgPropertiesNoEvents(propsWithoutId);
+  return /*#__PURE__*/React.createElement(RegisterGraphicalItemId, {
+    id: externalId,
+    type: "pie"
+  }, id => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SetPolarGraphicalItem, {
+    type: "pie",
+    id: id,
+    data: propsWithoutId.data,
+    dataKey: propsWithoutId.dataKey,
+    hide: propsWithoutId.hide,
+    angleAxisId: 0,
+    radiusAxisId: 0,
+    name: propsWithoutId.name,
+    nameKey: propsWithoutId.nameKey,
+    tooltipType: propsWithoutId.tooltipType,
+    legendType: propsWithoutId.legendType,
+    fill: propsWithoutId.fill,
+    cx: propsWithoutId.cx,
+    cy: propsWithoutId.cy,
+    startAngle: propsWithoutId.startAngle,
+    endAngle: propsWithoutId.endAngle,
+    paddingAngle: propsWithoutId.paddingAngle,
+    minAngle: propsWithoutId.minAngle,
+    innerRadius: propsWithoutId.innerRadius,
+    outerRadius: propsWithoutId.outerRadius,
+    cornerRadius: propsWithoutId.cornerRadius,
+    presentationProps: presentationProps,
+    maxRadius: props.maxRadius
+  }), /*#__PURE__*/React.createElement(SetPiePayloadLegend, _extends$8({}, propsWithoutId, {
+    id: id
+  })), /*#__PURE__*/React.createElement(PieImpl, _extends$8({}, propsWithoutId, {
+    id: id
+  }))));
+}
+var Pie = PieFn;
+// @ts-expect-error we need to set the displayName for debugging purposes
+Pie.displayName = 'Pie';
+
+var _excluded$5 = ["points"];
+function ownKeys$b(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$b(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$b(Object(t), true).forEach(function (r) { _defineProperty$b(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$b(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$b(e, r, t) { return (r = _toPropertyKey$b(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$b(t) { var i = _toPrimitive$b(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$b(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$7() { return _extends$7 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$7.apply(null, arguments); }
+function _objectWithoutProperties$5(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$5(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$5(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function DotItem(_ref) {
+  var {
+    option,
+    dotProps,
+    className
+  } = _ref;
+  if (/*#__PURE__*/isValidElement(option)) {
+    // @ts-expect-error we can't type check element cloning properly
+    return /*#__PURE__*/cloneElement(option, dotProps);
+  }
+  if (typeof option === 'function') {
+    return option(dotProps);
+  }
+  var finalClassName = clsx(className, typeof option !== 'boolean' ? option.className : '');
+  var _ref2 = dotProps !== null && dotProps !== void 0 ? dotProps : {},
+    {
+      points
+    } = _ref2,
+    props = _objectWithoutProperties$5(_ref2, _excluded$5);
+  return /*#__PURE__*/React.createElement(Dot, _extends$7({}, props, {
+    className: finalClassName
+  }));
+}
+function shouldRenderDots(points, dot) {
+  if (points == null) {
+    return false;
+  }
+  if (dot) {
+    return true;
+  }
+  return points.length === 1;
+}
+function Dots(_ref3) {
+  var {
+    points,
+    dot,
+    className,
+    dotClassName,
+    dataKey,
+    baseProps,
+    needClip,
+    clipPathId,
+    zIndex = DefaultZIndexes.scatter
+  } = _ref3;
+  if (!shouldRenderDots(points, dot)) {
+    return null;
+  }
+  var clipDot = isClipDot(dot);
+  var customDotProps = svgPropertiesAndEventsFromUnknown(dot);
+  var dots = points.map((entry, i) => {
+    var _entry$x, _entry$y;
+    var dotProps = _objectSpread$b(_objectSpread$b(_objectSpread$b({
+      r: 3
+    }, baseProps), customDotProps), {}, {
+      index: i,
+      cx: (_entry$x = entry.x) !== null && _entry$x !== void 0 ? _entry$x : undefined,
+      cy: (_entry$y = entry.y) !== null && _entry$y !== void 0 ? _entry$y : undefined,
+      dataKey,
+      value: entry.value,
+      payload: entry.payload,
+      points
+    });
+    return /*#__PURE__*/React.createElement(DotItem, {
+      key: "dot-".concat(i),
+      option: dot,
+      dotProps: dotProps,
+      className: dotClassName
+    });
+  });
+  var layerProps = {};
+  if (needClip && clipPathId != null) {
+    layerProps.clipPath = "url(#clipPath-".concat(clipDot ? '' : 'dots-').concat(clipPathId, ")");
+  }
+  return /*#__PURE__*/React.createElement(ZIndexLayer, {
+    zIndex: zIndex
+  }, /*#__PURE__*/React.createElement(Layer, _extends$7({
+    className: className
+  }, layerProps), dots));
+}
+
+function ownKeys$a(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$a(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$a(Object(t), true).forEach(function (r) { _defineProperty$a(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$a(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$a(e, r, t) { return (r = _toPropertyKey$a(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$a(t) { var i = _toPrimitive$a(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$a(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+/**
+ * @inline
+ */
+
+var defaultAxisId = 0;
 
 /**
  * Properties shared in X, Y, and Z axes.
@@ -32836,7 +35616,7 @@ var cartesianAxisSlice = createSlice({
           return;
         }
         var newHistory = [...history, width].slice(-3);
-        state.yAxis[id] = _objectSpread$6(_objectSpread$6({}, axis), {}, {
+        state.yAxis[id] = _objectSpread$a(_objectSpread$a({}, axis), {}, {
           width,
           widthHistory: newHistory
         });
@@ -32901,7 +35681,103 @@ var usePlotArea = () => {
   return useAppSelector(selectPlotArea);
 };
 
-function _extends$4() { return _extends$4 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$4.apply(null, arguments); }
+/**
+ * Returns the currently active data points being displayed in the Tooltip.
+ * Active means that it is currently visible; this hook will return `undefined` if there is no current interaction.
+ *
+ * This follows the `<Tooltip />` props, if the Tooltip element is present in the chart.
+ * If there is no `<Tooltip />` then this hook will follow the default Tooltip props.
+ *
+ * Data point is whatever you pass as an input to the chart using the `data={}` prop.
+ *
+ * This returns an array because a chart can have multiple graphical items in it (multiple Lines for example)
+ * and tooltip with `shared={true}` will display all items at the same time.
+ *
+ * Returns undefined when used outside a chart context.
+ *
+ * @returns Data points that are currently visible in a Tooltip
+ */
+var useActiveTooltipDataPoints = () => {
+  return useAppSelector(selectActiveTooltipDataPoints);
+};
+
+function ownKeys$9(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$9(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$9(Object(t), true).forEach(function (r) { _defineProperty$9(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$9(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$9(e, r, t) { return (r = _toPropertyKey$9(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$9(t) { var i = _toPrimitive$9(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$9(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var ActivePoint = _ref => {
+  var {
+    point,
+    childIndex,
+    mainColor,
+    activeDot,
+    dataKey,
+    clipPath
+  } = _ref;
+  if (activeDot === false || point.x == null || point.y == null) {
+    return null;
+  }
+  var dotPropsTyped = {
+    index: childIndex,
+    dataKey,
+    cx: point.x,
+    cy: point.y,
+    r: 4,
+    fill: mainColor !== null && mainColor !== void 0 ? mainColor : 'none',
+    strokeWidth: 2,
+    stroke: '#fff',
+    payload: point.payload,
+    value: point.value
+  };
+
+  // @ts-expect-error svgPropertiesNoEventsFromUnknown(activeDot) is contributing unknown props
+  var dotProps = _objectSpread$9(_objectSpread$9(_objectSpread$9({}, dotPropsTyped), svgPropertiesNoEventsFromUnknown(activeDot)), adaptEventHandlers(activeDot));
+  var dot;
+  if (/*#__PURE__*/isValidElement(activeDot)) {
+    // @ts-expect-error we're improperly typing events
+    dot = /*#__PURE__*/cloneElement(activeDot, dotProps);
+  } else if (typeof activeDot === 'function') {
+    dot = activeDot(dotProps);
+  } else {
+    dot = /*#__PURE__*/React.createElement(Dot, dotProps);
+  }
+  return /*#__PURE__*/React.createElement(Layer, {
+    className: "recharts-active-dot",
+    clipPath: clipPath
+  }, dot);
+};
+function ActivePoints(_ref2) {
+  var {
+    points,
+    mainColor,
+    activeDot,
+    itemDataKey,
+    clipPath,
+    zIndex = DefaultZIndexes.activeDot
+  } = _ref2;
+  var activeTooltipIndex = useAppSelector(selectActiveTooltipIndex);
+  var activeDataPoints = useActiveTooltipDataPoints();
+  if (points == null || activeDataPoints == null) {
+    return null;
+  }
+  var activePoint = points.find(p => activeDataPoints.includes(p.payload));
+  if (isNullish(activePoint)) {
+    return null;
+  }
+  return /*#__PURE__*/React.createElement(ZIndexLayer, {
+    zIndex: zIndex
+  }, /*#__PURE__*/React.createElement(ActivePoint, {
+    point: activePoint,
+    childIndex: Number(activeTooltipIndex),
+    mainColor: mainColor,
+    dataKey: itemDataKey,
+    activeDot: activeDot,
+    clipPath: clipPath
+  }));
+}
+
+function _extends$6() { return _extends$6 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$6.apply(null, arguments); }
 function parseCornerRadius(cornerRadius) {
   if (typeof cornerRadius === 'string') {
     return parseInt(cornerRadius, 10);
@@ -32909,7 +35785,7 @@ function parseCornerRadius(cornerRadius) {
   return cornerRadius;
 }
 function RadialBarSector(props) {
-  return /*#__PURE__*/React.createElement(Shape, _extends$4({
+  return /*#__PURE__*/React.createElement(Shape, _extends$6({
     shapeType: "sector"
   }, props));
 }
@@ -32957,11 +35833,11 @@ var combineBarSizeList = (allBars, globalSize, totalSize) => {
   return [...stackedSizeList, ...unstackedSizeList];
 };
 
-function ownKeys$5(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$5(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$5(Object(t), true).forEach(function (r) { _defineProperty$5(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$5(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$5(e, r, t) { return (r = _toPropertyKey$5(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$5(t) { var i = _toPrimitive$5(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$5(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$8(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$8(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$8(Object(t), true).forEach(function (r) { _defineProperty$8(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$8(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$8(e, r, t) { return (r = _toPropertyKey$8(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$8(t) { var i = _toPrimitive$8(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$8(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 function getBarPositions(barGap, barCategoryGap, bandSize, sizeList, maxBarSize) {
   var _sizeList$;
   var len = sizeList.length;
@@ -33032,8 +35908,8 @@ var combineAllBarPositions = (sizeList, globalMaxBarSize, barGap, barCategoryGap
   var maxBarSize = isNullish(childMaxBarSize) ? globalMaxBarSize : childMaxBarSize;
   var allBarPositions = getBarPositions(barGap, barCategoryGap, barBandSize !== bandSize ? barBandSize : bandSize, sizeList, maxBarSize);
   if (barBandSize !== bandSize && allBarPositions != null) {
-    allBarPositions = allBarPositions.map(pos => _objectSpread$5(_objectSpread$5({}, pos), {}, {
-      position: _objectSpread$5(_objectSpread$5({}, pos.position), {}, {
+    allBarPositions = allBarPositions.map(pos => _objectSpread$8(_objectSpread$8({}, pos), {}, {
+      position: _objectSpread$8(_objectSpread$8({}, pos.position), {}, {
         offset: pos.position.offset - barBandSize / 2
       })
     }));
@@ -33076,18 +35952,18 @@ var combineBarPosition = (allBarPositions, barSettings) => {
   return position.position;
 };
 
-function ownKeys$4(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$4(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$4(Object(t), true).forEach(function (r) { _defineProperty$4(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$4(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$4(e, r, t) { return (r = _toPropertyKey$4(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$4(t) { var i = _toPrimitive$4(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$4(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$7(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$7(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$7(Object(t), true).forEach(function (r) { _defineProperty$7(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$7(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$7(e, r, t) { return (r = _toPropertyKey$7(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$7(t) { var i = _toPrimitive$7(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$7(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var selectRadiusAxisForRadialBar = (state, radiusAxisId) => selectRadiusAxis(state, radiusAxisId);
 var selectRadiusAxisScaleForRadar = (state, radiusAxisId) => selectPolarAxisScale(state, 'radiusAxis', radiusAxisId);
 var selectRadiusAxisWithScale = createSelector([selectRadiusAxisForRadialBar, selectRadiusAxisScaleForRadar], (axis, scale) => {
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$4(_objectSpread$4({}, axis), {}, {
+  return _objectSpread$7(_objectSpread$7({}, axis), {}, {
     scale
   });
 });
@@ -33100,7 +35976,7 @@ var selectAngleAxisWithScale = createSelector([selectAngleAxisForRadialBar, sele
   if (axis == null || scale == null) {
     return undefined;
   }
-  return _objectSpread$4(_objectSpread$4({}, axis), {}, {
+  return _objectSpread$7(_objectSpread$7({}, axis), {}, {
     scale
   });
 });
@@ -33250,17 +36126,17 @@ function getZIndexFromUnknown(input, defaultZIndex) {
   return defaultZIndex;
 }
 
-var _excluded$3 = ["shape", "activeShape", "cornerRadius", "id"],
-  _excluded2 = ["onMouseEnter", "onClick", "onMouseLeave"],
+var _excluded$4 = ["shape", "activeShape", "cornerRadius", "id"],
+  _excluded2$1 = ["onMouseEnter", "onClick", "onMouseLeave"],
   _excluded3 = ["value", "background"];
-function _extends$3() { return _extends$3 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$3.apply(null, arguments); }
-function ownKeys$3(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$3(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$3(Object(t), true).forEach(function (r) { _defineProperty$3(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$3(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$3(e, r, t) { return (r = _toPropertyKey$3(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$3(t) { var i = _toPrimitive$3(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$3(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _objectWithoutProperties$3(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$3(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
-function _objectWithoutPropertiesLoose$3(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function _extends$5() { return _extends$5 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$5.apply(null, arguments); }
+function ownKeys$6(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$6(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$6(Object(t), true).forEach(function (r) { _defineProperty$6(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$6(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$6(e, r, t) { return (r = _toPropertyKey$6(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$6(t) { var i = _toPrimitive$6(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$6(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _objectWithoutProperties$4(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$4(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$4(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
 var STABLE_EMPTY_ARRAY = [];
 function RadialBarLabelListProvider(_ref) {
   var {
@@ -33300,7 +36176,7 @@ function RadialBarSectors(_ref2) {
       cornerRadius,
       id
     } = allOtherRadialBarProps,
-    others = _objectWithoutProperties$3(allOtherRadialBarProps, _excluded$3);
+    others = _objectWithoutProperties$4(allOtherRadialBarProps, _excluded$4);
   var baseProps = svgPropertiesNoEvents(others);
   var activeIndex = useAppSelector(selectActiveTooltipIndex);
   var {
@@ -33308,7 +36184,7 @@ function RadialBarSectors(_ref2) {
       onClick: onItemClickFromProps,
       onMouseLeave: onMouseLeaveFromProps
     } = allOtherRadialBarProps,
-    restOfAllOtherProps = _objectWithoutProperties$3(allOtherRadialBarProps, _excluded2);
+    restOfAllOtherProps = _objectWithoutProperties$4(allOtherRadialBarProps, _excluded2$1);
   var onMouseEnterFromContext = useMouseEnterItemDispatch(onMouseEnterFromProps, allOtherRadialBarProps.dataKey, id);
   var onMouseLeaveFromContext = useMouseLeaveItemDispatch(onMouseLeaveFromProps);
   var onClickFromContext = useMouseClickItemDispatch(onItemClickFromProps, allOtherRadialBarProps.dataKey, id);
@@ -33323,7 +36199,7 @@ function RadialBarSectors(_ref2) {
     var onMouseEnter = onMouseEnterFromContext(entry, i);
     var onMouseLeave = onMouseLeaveFromContext(entry, i);
     var onClick = onClickFromContext(entry, i);
-    var radialBarSectorProps = _objectSpread$3(_objectSpread$3(_objectSpread$3(_objectSpread$3({}, baseProps), {}, {
+    var radialBarSectorProps = _objectSpread$6(_objectSpread$6(_objectSpread$6(_objectSpread$6({}, baseProps), {}, {
       cornerRadius: parseCornerRadius(cornerRadius)
     }, entry), adaptEventsOfChild(restOfAllOtherProps, entry, i)), {}, {
       onMouseEnter,
@@ -33342,7 +36218,7 @@ function RadialBarSectors(_ref2) {
         key: "sector-".concat(entry.cx, "-").concat(entry.cy, "-").concat(entry.innerRadius, "-").concat(entry.outerRadius, "-").concat(entry.startAngle, "-").concat(entry.endAngle, "-").concat(i)
       }, /*#__PURE__*/React.createElement(RadialBarSector, radialBarSectorProps));
     }
-    return /*#__PURE__*/React.createElement(RadialBarSector, _extends$3({
+    return /*#__PURE__*/React.createElement(RadialBarSector, _extends$5({
       key: "sector-".concat(entry.cx, "-").concat(entry.cy, "-").concat(entry.innerRadius, "-").concat(entry.outerRadius, "-").concat(entry.startAngle, "-").concat(entry.endAngle, "-").concat(i)
     }, radialBarSectorProps));
   }), /*#__PURE__*/React.createElement(LabelListFromLabelProp, {
@@ -33391,7 +36267,7 @@ function SectorsWithAnimation(_ref3) {
     var stepData = t === 1 ? sectors : (sectors !== null && sectors !== void 0 ? sectors : STABLE_EMPTY_ARRAY).map((entry, index) => {
       var prev = prevData && prevData[index];
       if (prev) {
-        return _objectSpread$3(_objectSpread$3({}, entry), {}, {
+        return _objectSpread$6(_objectSpread$6({}, entry), {}, {
           startAngle: interpolate$1(prev.startAngle, entry.startAngle, t),
           endAngle: interpolate$1(prev.endAngle, entry.endAngle, t)
         });
@@ -33400,7 +36276,7 @@ function SectorsWithAnimation(_ref3) {
         endAngle,
         startAngle
       } = entry;
-      return _objectSpread$3(_objectSpread$3({}, entry), {}, {
+      return _objectSpread$6(_objectSpread$6({}, entry), {}, {
         endAngle: interpolate$1(startAngle, endAngle, t)
       });
     });
@@ -33478,11 +36354,11 @@ class RadialBarWithState extends PureComponent {
           value,
           background
         } = entry,
-        rest = _objectWithoutProperties$3(entry, _excluded3);
+        rest = _objectWithoutProperties$4(entry, _excluded3);
       if (!background) {
         return null;
       }
-      var props = _objectSpread$3(_objectSpread$3(_objectSpread$3(_objectSpread$3(_objectSpread$3({
+      var props = _objectSpread$6(_objectSpread$6(_objectSpread$6(_objectSpread$6(_objectSpread$6({
         cornerRadius: parseCornerRadius(cornerRadius)
       }, rest), {}, {
         // @ts-expect-error backgroundProps is contributing unknown props
@@ -33493,7 +36369,7 @@ class RadialBarWithState extends PureComponent {
         option: background,
         isActive: false
       });
-      return /*#__PURE__*/React.createElement(RadialBarSector, _extends$3({
+      return /*#__PURE__*/React.createElement(RadialBarSector, _extends$5({
         key: "background-".concat(rest.cx, "-").concat(rest.cy, "-").concat(rest.innerRadius, "-").concat(rest.outerRadius, "-").concat(rest.startAngle, "-").concat(rest.endAngle, "-").concat(i)
       }, props));
     }));
@@ -33547,7 +36423,7 @@ function RadialBarImpl(props) {
     fill: props.fill,
     tooltipType: props.tooltipType,
     id: props.id
-  }), /*#__PURE__*/React.createElement(RadialBarWithState, _extends$3({}, props, {
+  }), /*#__PURE__*/React.createElement(RadialBarWithState, _extends$5({}, props, {
     sectors: sectors
   })));
 }
@@ -33654,7 +36530,7 @@ function computeRadialBarDataItems(_ref5) {
         }
       }
     }
-    return _objectSpread$3(_objectSpread$3(_objectSpread$3({}, entry), backgroundSector), {}, {
+    return _objectSpread$6(_objectSpread$6(_objectSpread$6({}, entry), backgroundSector), {}, {
       payload: entry,
       value: stackedData ? value : value[1],
       cx,
@@ -33693,7 +36569,7 @@ function RadialBar(outsideProps) {
       barSize: props.barSize,
       minPointSize: props.minPointSize,
       maxBarSize: props.maxBarSize
-    }), /*#__PURE__*/React.createElement(SetRadialBarPayloadLegend, props), /*#__PURE__*/React.createElement(RadialBarImpl, _extends$3({}, props, {
+    }), /*#__PURE__*/React.createElement(SetRadialBarPayloadLegend, props), /*#__PURE__*/React.createElement(RadialBarImpl, _extends$5({}, props, {
       id: id
     })));
   });
@@ -33930,6 +36806,949 @@ var {
   removeErrorBar
 } = errorBarSlice.actions;
 var errorBarReducer = errorBarSlice.reducer;
+
+function useNeedsClip(xAxisId, yAxisId) {
+  var _xAxis$allowDataOverf, _yAxis$allowDataOverf;
+  var xAxis = useAppSelector(state => selectXAxisSettings(state, xAxisId));
+  var yAxis = useAppSelector(state => selectYAxisSettings(state, yAxisId));
+  var needClipX = (_xAxis$allowDataOverf = xAxis === null || xAxis === void 0 ? void 0 : xAxis.allowDataOverflow) !== null && _xAxis$allowDataOverf !== void 0 ? _xAxis$allowDataOverf : implicitXAxis.allowDataOverflow;
+  var needClipY = (_yAxis$allowDataOverf = yAxis === null || yAxis === void 0 ? void 0 : yAxis.allowDataOverflow) !== null && _yAxis$allowDataOverf !== void 0 ? _yAxis$allowDataOverf : implicitYAxis.allowDataOverflow;
+  var needClip = needClipX || needClipY;
+  return {
+    needClip,
+    needClipX,
+    needClipY
+  };
+}
+function GraphicalItemClipPath(_ref) {
+  var {
+    xAxisId,
+    yAxisId,
+    clipPathId
+  } = _ref;
+  var plotArea = usePlotArea();
+  var {
+    needClipX,
+    needClipY,
+    needClip
+  } = useNeedsClip(xAxisId, yAxisId);
+  if (!needClip || !plotArea) {
+    return null;
+  }
+  var {
+    x,
+    y,
+    width,
+    height
+  } = plotArea;
+  return /*#__PURE__*/React.createElement("clipPath", {
+    id: "clipPath-".concat(clipPathId)
+  }, /*#__PURE__*/React.createElement("rect", {
+    x: needClipX ? x : x - width / 2,
+    y: needClipY ? y : y - height / 2,
+    width: needClipX ? width : width * 2,
+    height: needClipY ? height : height * 2
+  }));
+}
+
+function getRadiusAndStrokeWidthFromDot(dot) {
+  var props = svgPropertiesNoEventsFromUnknown(dot);
+  var defaultR = 3;
+  var defaultStrokeWidth = 2;
+  if (props != null) {
+    var {
+      r,
+      strokeWidth
+    } = props;
+    var realR = Number(r);
+    var realStrokeWidth = Number(strokeWidth);
+    if (Number.isNaN(realR) || realR < 0) {
+      realR = defaultR;
+    }
+    if (Number.isNaN(realStrokeWidth) || realStrokeWidth < 0) {
+      realStrokeWidth = defaultStrokeWidth;
+    }
+    return {
+      r: realR,
+      strokeWidth: realStrokeWidth
+    };
+  }
+  return {
+    r: defaultR,
+    strokeWidth: defaultStrokeWidth
+  };
+}
+
+function selectXAxisIdFromGraphicalItemId(state, id) {
+  var _state$graphicalItems, _state$graphicalItems2;
+  return (_state$graphicalItems = (_state$graphicalItems2 = state.graphicalItems.cartesianItems.find(item => item.id === id)) === null || _state$graphicalItems2 === void 0 ? void 0 : _state$graphicalItems2.xAxisId) !== null && _state$graphicalItems !== void 0 ? _state$graphicalItems : defaultAxisId;
+}
+function selectYAxisIdFromGraphicalItemId(state, id) {
+  var _state$graphicalItems3, _state$graphicalItems4;
+  return (_state$graphicalItems3 = (_state$graphicalItems4 = state.graphicalItems.cartesianItems.find(item => item.id === id)) === null || _state$graphicalItems4 === void 0 ? void 0 : _state$graphicalItems4.yAxisId) !== null && _state$graphicalItems3 !== void 0 ? _state$graphicalItems3 : defaultAxisId;
+}
+
+var selectXAxisWithScale = (state, graphicalItemId, isPanorama) => selectAxisWithScale(state, 'xAxis', selectXAxisIdFromGraphicalItemId(state, graphicalItemId), isPanorama);
+var selectXAxisTicks = (state, graphicalItemId, isPanorama) => selectTicksOfGraphicalItem(state, 'xAxis', selectXAxisIdFromGraphicalItemId(state, graphicalItemId), isPanorama);
+var selectYAxisWithScale = (state, graphicalItemId, isPanorama) => selectAxisWithScale(state, 'yAxis', selectYAxisIdFromGraphicalItemId(state, graphicalItemId), isPanorama);
+var selectYAxisTicks = (state, graphicalItemId, isPanorama) => selectTicksOfGraphicalItem(state, 'yAxis', selectYAxisIdFromGraphicalItemId(state, graphicalItemId), isPanorama);
+var selectBandSize = createSelector([selectChartLayout, selectXAxisWithScale, selectYAxisWithScale, selectXAxisTicks, selectYAxisTicks], (layout, xAxis, yAxis, xAxisTicks, yAxisTicks) => {
+  if (isCategoricalAxis(layout, 'xAxis')) {
+    return getBandSizeOfAxis(xAxis, xAxisTicks, false);
+  }
+  return getBandSizeOfAxis(yAxis, yAxisTicks, false);
+});
+var pickAreaId = (_state, id) => id;
+
+/*
+ * There is a race condition problem because we read some data from props and some from the state.
+ * The state is updated through a dispatch and is one render behind,
+ * and so we have this weird one tick render where the displayedData in one selector have the old dataKey
+ * but the new dataKey in another selector.
+ *
+ * A proper fix is to either move everything into the state, or read the dataKey always from props
+ * - but this is a smaller change.
+ */
+var selectSynchronisedAreaSettings = createSelector([selectUnfilteredCartesianItems, pickAreaId], (graphicalItems, id) => graphicalItems.filter(item => item.type === 'area').find(item => item.id === id));
+var selectNumericalAxisType = state => {
+  var layout = selectChartLayout(state);
+  var isXAxisCategorical = isCategoricalAxis(layout, 'xAxis');
+  return isXAxisCategorical ? 'yAxis' : 'xAxis';
+};
+var selectNumericalAxisIdFromGraphicalItemId = (state, graphicalItemId) => {
+  var axisType = selectNumericalAxisType(state);
+  if (axisType === 'yAxis') {
+    return selectYAxisIdFromGraphicalItemId(state, graphicalItemId);
+  }
+  return selectXAxisIdFromGraphicalItemId(state, graphicalItemId);
+};
+var selectNumericalAxisStackGroups = (state, graphicalItemId, isPanorama) => selectStackGroups$1(state, selectNumericalAxisType(state), selectNumericalAxisIdFromGraphicalItemId(state, graphicalItemId), isPanorama);
+var selectGraphicalItemStackedData = createSelector([selectSynchronisedAreaSettings, selectNumericalAxisStackGroups], (areaSettings, stackGroups) => {
+  var _stackGroups$stackId;
+  if (areaSettings == null || stackGroups == null) {
+    return undefined;
+  }
+  var {
+    stackId
+  } = areaSettings;
+  var stackSeriesIdentifier = getStackSeriesIdentifier(areaSettings);
+  if (stackId == null || stackSeriesIdentifier == null) {
+    return undefined;
+  }
+  var groups = (_stackGroups$stackId = stackGroups[stackId]) === null || _stackGroups$stackId === void 0 ? void 0 : _stackGroups$stackId.stackedData;
+  var found = groups === null || groups === void 0 ? void 0 : groups.find(v => v.key === stackSeriesIdentifier);
+  if (found == null) {
+    return undefined;
+  }
+  return found.map(item => [item[0], item[1]]);
+});
+var selectArea = createSelector([selectChartLayout, selectXAxisWithScale, selectYAxisWithScale, selectXAxisTicks, selectYAxisTicks, selectGraphicalItemStackedData, selectChartDataWithIndexesIfNotInPanoramaPosition3, selectBandSize, selectSynchronisedAreaSettings, selectChartBaseValue], (layout, xAxis, yAxis, xAxisTicks, yAxisTicks, stackedData, _ref, bandSize, areaSettings, chartBaseValue) => {
+  var {
+    chartData,
+    dataStartIndex,
+    dataEndIndex
+  } = _ref;
+  if (areaSettings == null || layout !== 'horizontal' && layout !== 'vertical' || xAxis == null || yAxis == null || xAxisTicks == null || yAxisTicks == null || xAxisTicks.length === 0 || yAxisTicks.length === 0 || bandSize == null) {
+    return undefined;
+  }
+  var {
+    data
+  } = areaSettings;
+  var displayedData;
+  if (data && data.length > 0) {
+    displayedData = data;
+  } else {
+    displayedData = chartData === null || chartData === void 0 ? void 0 : chartData.slice(dataStartIndex, dataEndIndex + 1);
+  }
+  if (displayedData == null) {
+    return undefined;
+  }
+  return computeArea({
+    layout,
+    xAxis,
+    yAxis,
+    xAxisTicks,
+    yAxisTicks,
+    dataStartIndex,
+    areaSettings,
+    stackedData,
+    displayedData,
+    chartBaseValue,
+    bandSize
+  });
+});
+
+var _excluded$3 = ["id"],
+  _excluded2 = ["activeDot", "animationBegin", "animationDuration", "animationEasing", "connectNulls", "dot", "fill", "fillOpacity", "hide", "isAnimationActive", "legendType", "stroke", "xAxisId", "yAxisId"];
+function _extends$4() { return _extends$4 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$4.apply(null, arguments); }
+function _objectWithoutProperties$3(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$3(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
+function _objectWithoutPropertiesLoose$3(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
+function ownKeys$5(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$5(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$5(Object(t), true).forEach(function (r) { _defineProperty$5(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$5(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$5(e, r, t) { return (r = _toPropertyKey$5(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$5(t) { var i = _toPrimitive$5(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$5(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+
+/**
+ * @inline
+ */
+
+/**
+ * Our base value array has payload in it, and we expose it externally too.
+ */
+
+/**
+ * Internal props, combination of external props + defaultProps + private Recharts state
+ */
+
+/**
+ * External props, intended for end users to fill in
+ */
+
+/**
+ * Because of naming conflict, we are forced to ignore certain (valid) SVG attributes.
+ */
+
+function getLegendItemColor(stroke, fill) {
+  return stroke && stroke !== 'none' ? stroke : fill;
+}
+var computeLegendPayloadFromAreaData = props => {
+  var {
+    dataKey,
+    name,
+    stroke,
+    fill,
+    legendType,
+    hide
+  } = props;
+  return [{
+    inactive: hide,
+    dataKey,
+    type: legendType,
+    color: getLegendItemColor(stroke, fill),
+    value: getTooltipNameProp(name, dataKey),
+    payload: props
+  }];
+};
+var SetAreaTooltipEntrySettings = /*#__PURE__*/React.memo(_ref => {
+  var {
+    dataKey,
+    data,
+    stroke,
+    strokeWidth,
+    fill,
+    name,
+    hide,
+    unit,
+    tooltipType,
+    id
+  } = _ref;
+  var tooltipEntrySettings = {
+    dataDefinedOnItem: data,
+    getPosition: noop$2,
+    settings: {
+      stroke,
+      strokeWidth,
+      fill,
+      dataKey,
+      nameKey: undefined,
+      name: getTooltipNameProp(name, dataKey),
+      hide,
+      type: tooltipType,
+      color: getLegendItemColor(stroke, fill),
+      unit,
+      graphicalItemId: id
+    }
+  };
+  return /*#__PURE__*/React.createElement(SetTooltipEntrySettings, {
+    tooltipEntrySettings: tooltipEntrySettings
+  });
+});
+function AreaDotsWrapper(_ref2) {
+  var {
+    clipPathId,
+    points,
+    props
+  } = _ref2;
+  var {
+    needClip,
+    dot,
+    dataKey
+  } = props;
+  var areaProps = svgPropertiesNoEvents(props);
+  return /*#__PURE__*/React.createElement(Dots, {
+    points: points,
+    dot: dot,
+    className: "recharts-area-dots",
+    dotClassName: "recharts-area-dot",
+    dataKey: dataKey,
+    baseProps: areaProps,
+    needClip: needClip,
+    clipPathId: clipPathId
+  });
+}
+function AreaLabelListProvider(_ref3) {
+  var {
+    showLabels,
+    children,
+    points
+  } = _ref3;
+  var labelListEntries = points.map(point => {
+    var _point$x, _point$y;
+    var viewBox = {
+      x: (_point$x = point.x) !== null && _point$x !== void 0 ? _point$x : 0,
+      y: (_point$y = point.y) !== null && _point$y !== void 0 ? _point$y : 0,
+      width: 0,
+      lowerWidth: 0,
+      upperWidth: 0,
+      height: 0
+    };
+    return _objectSpread$5(_objectSpread$5({}, viewBox), {}, {
+      value: point.value,
+      payload: point.payload,
+      parentViewBox: undefined,
+      viewBox,
+      fill: undefined
+    });
+  });
+  return /*#__PURE__*/React.createElement(CartesianLabelListContextProvider, {
+    value: showLabels ? labelListEntries : undefined
+  }, children);
+}
+function StaticArea(_ref4) {
+  var {
+    points,
+    baseLine,
+    needClip,
+    clipPathId,
+    props
+  } = _ref4;
+  var {
+    layout,
+    type,
+    stroke,
+    connectNulls,
+    isRange
+  } = props;
+  var {
+      id
+    } = props,
+    propsWithoutId = _objectWithoutProperties$3(props, _excluded$3);
+  var allOtherProps = svgPropertiesNoEvents(propsWithoutId);
+  var propsWithEvents = svgPropertiesAndEvents(propsWithoutId);
+  return /*#__PURE__*/React.createElement(React.Fragment, null, (points === null || points === void 0 ? void 0 : points.length) > 1 && /*#__PURE__*/React.createElement(Layer, {
+    clipPath: needClip ? "url(#clipPath-".concat(clipPathId, ")") : undefined
+  }, /*#__PURE__*/React.createElement(Curve, _extends$4({}, propsWithEvents, {
+    id: id,
+    points: points,
+    connectNulls: connectNulls,
+    type: type,
+    baseLine: baseLine,
+    layout: layout,
+    stroke: "none",
+    className: "recharts-area-area"
+  })), stroke !== 'none' && /*#__PURE__*/React.createElement(Curve, _extends$4({}, allOtherProps, {
+    className: "recharts-area-curve",
+    layout: layout,
+    type: type,
+    connectNulls: connectNulls,
+    fill: "none",
+    points: points
+  })), stroke !== 'none' && isRange && Array.isArray(baseLine) && /*#__PURE__*/React.createElement(Curve, _extends$4({}, allOtherProps, {
+    className: "recharts-area-curve",
+    layout: layout,
+    type: type,
+    connectNulls: connectNulls,
+    fill: "none",
+    points: baseLine
+  }))), /*#__PURE__*/React.createElement(AreaDotsWrapper, {
+    points: points,
+    props: propsWithoutId,
+    clipPathId: clipPathId
+  }));
+}
+function VerticalRect(_ref5) {
+  var _points$, _points;
+  var {
+    alpha,
+    baseLine,
+    points,
+    strokeWidth
+  } = _ref5;
+  var startY = (_points$ = points[0]) === null || _points$ === void 0 ? void 0 : _points$.y;
+  var endY = (_points = points[points.length - 1]) === null || _points === void 0 ? void 0 : _points.y;
+  if (!isWellBehavedNumber(startY) || !isWellBehavedNumber(endY)) {
+    return null;
+  }
+  var height = alpha * Math.abs(startY - endY);
+  var maxX = Math.max(...points.map(entry => entry.x || 0));
+  if (isNumber(baseLine)) {
+    maxX = Math.max(baseLine, maxX);
+  } else if (baseLine && Array.isArray(baseLine) && baseLine.length) {
+    maxX = Math.max(...baseLine.map(entry => entry.x || 0), maxX);
+  }
+  if (isNumber(maxX)) {
+    return /*#__PURE__*/React.createElement("rect", {
+      x: 0,
+      y: startY < endY ? startY : startY - height,
+      width: maxX + (strokeWidth ? parseInt("".concat(strokeWidth), 10) : 1),
+      height: Math.floor(height)
+    });
+  }
+  return null;
+}
+function HorizontalRect(_ref6) {
+  var _points$2, _points2;
+  var {
+    alpha,
+    baseLine,
+    points,
+    strokeWidth
+  } = _ref6;
+  var startX = (_points$2 = points[0]) === null || _points$2 === void 0 ? void 0 : _points$2.x;
+  var endX = (_points2 = points[points.length - 1]) === null || _points2 === void 0 ? void 0 : _points2.x;
+  if (!isWellBehavedNumber(startX) || !isWellBehavedNumber(endX)) {
+    return null;
+  }
+  var width = alpha * Math.abs(startX - endX);
+  var maxY = Math.max(...points.map(entry => entry.y || 0));
+  if (isNumber(baseLine)) {
+    maxY = Math.max(baseLine, maxY);
+  } else if (baseLine && Array.isArray(baseLine) && baseLine.length) {
+    maxY = Math.max(...baseLine.map(entry => entry.y || 0), maxY);
+  }
+  if (isNumber(maxY)) {
+    return /*#__PURE__*/React.createElement("rect", {
+      x: startX < endX ? startX : startX - width,
+      y: 0,
+      width: width,
+      height: Math.floor(maxY + (strokeWidth ? parseInt("".concat(strokeWidth), 10) : 1))
+    });
+  }
+  return null;
+}
+function ClipRect(_ref7) {
+  var {
+    alpha,
+    layout,
+    points,
+    baseLine,
+    strokeWidth
+  } = _ref7;
+  if (layout === 'vertical') {
+    return /*#__PURE__*/React.createElement(VerticalRect, {
+      alpha: alpha,
+      points: points,
+      baseLine: baseLine,
+      strokeWidth: strokeWidth
+    });
+  }
+  return /*#__PURE__*/React.createElement(HorizontalRect, {
+    alpha: alpha,
+    points: points,
+    baseLine: baseLine,
+    strokeWidth: strokeWidth
+  });
+}
+function AreaWithAnimation(_ref8) {
+  var {
+    needClip,
+    clipPathId,
+    props,
+    previousPointsRef,
+    previousBaselineRef
+  } = _ref8;
+  var {
+    points,
+    baseLine,
+    isAnimationActive,
+    animationBegin,
+    animationDuration,
+    animationEasing,
+    onAnimationStart,
+    onAnimationEnd
+  } = props;
+  var animationInput = useMemo(() => ({
+    points,
+    baseLine
+  }), [points, baseLine]);
+  var animationId = useAnimationId(animationInput, 'recharts-area-');
+  var layout = useCartesianChartLayout();
+  var [isAnimating, setIsAnimating] = useState(false);
+  var showLabels = !isAnimating;
+  var handleAnimationEnd = useCallback(() => {
+    if (typeof onAnimationEnd === 'function') {
+      onAnimationEnd();
+    }
+    setIsAnimating(false);
+  }, [onAnimationEnd]);
+  var handleAnimationStart = useCallback(() => {
+    if (typeof onAnimationStart === 'function') {
+      onAnimationStart();
+    }
+    setIsAnimating(true);
+  }, [onAnimationStart]);
+  if (layout == null) {
+    return null;
+  }
+  var prevPoints = previousPointsRef.current;
+  var prevBaseLine = previousBaselineRef.current;
+  return /*#__PURE__*/React.createElement(AreaLabelListProvider, {
+    showLabels: showLabels,
+    points: points
+  }, props.children, /*#__PURE__*/React.createElement(JavascriptAnimate, {
+    animationId: animationId,
+    begin: animationBegin,
+    duration: animationDuration,
+    isActive: isAnimationActive,
+    easing: animationEasing,
+    onAnimationEnd: handleAnimationEnd,
+    onAnimationStart: handleAnimationStart,
+    key: animationId
+  }, t => {
+    if (prevPoints) {
+      var prevPointsDiffFactor = prevPoints.length / points.length;
+      var stepPoints =
+      /*
+       * Here it is important that at the very end of the animation, on the last frame,
+       * we render the original points without any interpolation.
+       * This is needed because the code above is checking for reference equality to decide if the animation should run
+       * and if we create a new array instance (even if the numbers were the same)
+       * then we would break animations.
+       */
+      t === 1 ? points : points.map((entry, index) => {
+        var prevPointIndex = Math.floor(index * prevPointsDiffFactor);
+        if (prevPoints[prevPointIndex]) {
+          var prev = prevPoints[prevPointIndex];
+          return _objectSpread$5(_objectSpread$5({}, entry), {}, {
+            x: interpolate$1(prev.x, entry.x, t),
+            y: interpolate$1(prev.y, entry.y, t)
+          });
+        }
+        return entry;
+      });
+      var stepBaseLine;
+      if (isNumber(baseLine)) {
+        stepBaseLine = interpolate$1(prevBaseLine, baseLine, t);
+      } else if (isNullish(baseLine) || isNan(baseLine)) {
+        stepBaseLine = interpolate$1(prevBaseLine, 0, t);
+      } else {
+        stepBaseLine = baseLine.map((entry, index) => {
+          var prevPointIndex = Math.floor(index * prevPointsDiffFactor);
+          if (Array.isArray(prevBaseLine) && prevBaseLine[prevPointIndex]) {
+            var prev = prevBaseLine[prevPointIndex];
+            return _objectSpread$5(_objectSpread$5({}, entry), {}, {
+              x: interpolate$1(prev.x, entry.x, t),
+              y: interpolate$1(prev.y, entry.y, t)
+            });
+          }
+          return entry;
+        });
+      }
+      if (t > 0) {
+        /*
+         * We need to keep the refs in the parent component because we need to remember the last shape of the animation
+         * even if AreaWithAnimation is unmounted as that happens when changing props.
+         *
+         * And we need to update the refs here because here is where the interpolation is computed.
+         * Eslint doesn't like changing function arguments, but we need it so here is an eslint-disable.
+         */
+        // eslint-disable-next-line no-param-reassign
+        previousPointsRef.current = stepPoints;
+        // eslint-disable-next-line no-param-reassign
+        previousBaselineRef.current = stepBaseLine;
+      }
+      return /*#__PURE__*/React.createElement(StaticArea, {
+        points: stepPoints,
+        baseLine: stepBaseLine,
+        needClip: needClip,
+        clipPathId: clipPathId,
+        props: props
+      });
+    }
+    if (t > 0) {
+      // eslint-disable-next-line no-param-reassign
+      previousPointsRef.current = points;
+      // eslint-disable-next-line no-param-reassign
+      previousBaselineRef.current = baseLine;
+    }
+    return /*#__PURE__*/React.createElement(Layer, null, isAnimationActive && /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement("clipPath", {
+      id: "animationClipPath-".concat(clipPathId)
+    }, /*#__PURE__*/React.createElement(ClipRect, {
+      alpha: t,
+      points: points,
+      baseLine: baseLine,
+      layout: layout,
+      strokeWidth: props.strokeWidth
+    }))), /*#__PURE__*/React.createElement(Layer, {
+      clipPath: "url(#animationClipPath-".concat(clipPathId, ")")
+    }, /*#__PURE__*/React.createElement(StaticArea, {
+      points: points,
+      baseLine: baseLine,
+      needClip: needClip,
+      clipPathId: clipPathId,
+      props: props
+    })));
+  }), /*#__PURE__*/React.createElement(LabelListFromLabelProp, {
+    label: props.label
+  }));
+}
+
+/*
+ * This components decides if the area should be animated or not.
+ * It also holds the state of the animation.
+ */
+function RenderArea(_ref9) {
+  var {
+    needClip,
+    clipPathId,
+    props
+  } = _ref9;
+  /*
+   * These two must be refs, not state!
+   * Because we want to store the most recent shape of the animation in case we have to interrupt the animation;
+   * that happens when user initiates another animation before the current one finishes.
+   *
+   * If this was a useState, then every step in the animation would trigger a re-render.
+   * So, useRef it is.
+   */
+  var previousPointsRef = useRef(null);
+  var previousBaselineRef = useRef();
+  return /*#__PURE__*/React.createElement(AreaWithAnimation, {
+    needClip: needClip,
+    clipPathId: clipPathId,
+    props: props,
+    previousPointsRef: previousPointsRef,
+    previousBaselineRef: previousBaselineRef
+  });
+}
+class AreaWithState extends PureComponent {
+  render() {
+    var {
+      hide,
+      dot,
+      points,
+      className,
+      top,
+      left,
+      needClip,
+      xAxisId,
+      yAxisId,
+      width,
+      height,
+      id,
+      baseLine,
+      zIndex
+    } = this.props;
+    if (hide) {
+      return null;
+    }
+    var layerClass = clsx('recharts-area', className);
+    var clipPathId = id;
+    var {
+      r,
+      strokeWidth
+    } = getRadiusAndStrokeWidthFromDot(dot);
+    var clipDot = isClipDot(dot);
+    var dotSize = r * 2 + strokeWidth;
+    var activePointsClipPath = needClip ? "url(#clipPath-".concat(clipDot ? '' : 'dots-').concat(clipPathId, ")") : undefined;
+    return /*#__PURE__*/React.createElement(ZIndexLayer, {
+      zIndex: zIndex
+    }, /*#__PURE__*/React.createElement(Layer, {
+      className: layerClass
+    }, needClip && /*#__PURE__*/React.createElement("defs", null, /*#__PURE__*/React.createElement(GraphicalItemClipPath, {
+      clipPathId: clipPathId,
+      xAxisId: xAxisId,
+      yAxisId: yAxisId
+    }), !clipDot && /*#__PURE__*/React.createElement("clipPath", {
+      id: "clipPath-dots-".concat(clipPathId)
+    }, /*#__PURE__*/React.createElement("rect", {
+      x: left - dotSize / 2,
+      y: top - dotSize / 2,
+      width: width + dotSize,
+      height: height + dotSize
+    }))), /*#__PURE__*/React.createElement(RenderArea, {
+      needClip: needClip,
+      clipPathId: clipPathId,
+      props: this.props
+    })), /*#__PURE__*/React.createElement(ActivePoints, {
+      points: points,
+      mainColor: getLegendItemColor(this.props.stroke, this.props.fill),
+      itemDataKey: this.props.dataKey,
+      activeDot: this.props.activeDot,
+      clipPath: activePointsClipPath
+    }), this.props.isRange && Array.isArray(baseLine) && /*#__PURE__*/React.createElement(ActivePoints, {
+      points: baseLine,
+      mainColor: getLegendItemColor(this.props.stroke, this.props.fill),
+      itemDataKey: this.props.dataKey,
+      activeDot: this.props.activeDot,
+      clipPath: activePointsClipPath
+    }));
+  }
+}
+var defaultAreaProps = {
+  activeDot: true,
+  animationBegin: 0,
+  animationDuration: 1500,
+  animationEasing: 'ease',
+  connectNulls: false,
+  dot: false,
+  fill: '#3182bd',
+  fillOpacity: 0.6,
+  hide: false,
+  isAnimationActive: 'auto',
+  legendType: 'line',
+  stroke: '#3182bd',
+  strokeWidth: 1,
+  type: 'linear',
+  label: false,
+  xAxisId: 0,
+  yAxisId: 0,
+  zIndex: DefaultZIndexes.area
+};
+function AreaImpl(props) {
+  var _useAppSelector;
+  var {
+      activeDot,
+      animationBegin,
+      animationDuration,
+      animationEasing,
+      connectNulls,
+      dot,
+      fill,
+      fillOpacity,
+      hide,
+      isAnimationActive,
+      legendType,
+      stroke,
+      xAxisId,
+      yAxisId
+    } = props,
+    everythingElse = _objectWithoutProperties$3(props, _excluded2);
+  var layout = useChartLayout();
+  var chartName = useChartName();
+  var {
+    needClip
+  } = useNeedsClip(xAxisId, yAxisId);
+  var isPanorama = useIsPanorama();
+  var {
+    points,
+    isRange,
+    baseLine
+  } = (_useAppSelector = useAppSelector(state => selectArea(state, props.id, isPanorama))) !== null && _useAppSelector !== void 0 ? _useAppSelector : {};
+  var plotArea = usePlotArea();
+  if (layout !== 'horizontal' && layout !== 'vertical' || plotArea == null) {
+    // Can't render Area in an unsupported layout
+    return null;
+  }
+  if (chartName !== 'AreaChart' && chartName !== 'ComposedChart') {
+    // There is nothing stopping us from rendering Area in other charts, except for historical reasons. Do we want to allow that?
+    return null;
+  }
+  var {
+    height,
+    width,
+    x: left,
+    y: top
+  } = plotArea;
+  if (!points || !points.length) {
+    return null;
+  }
+  return /*#__PURE__*/React.createElement(AreaWithState, _extends$4({}, everythingElse, {
+    activeDot: activeDot,
+    animationBegin: animationBegin,
+    animationDuration: animationDuration,
+    animationEasing: animationEasing,
+    baseLine: baseLine,
+    connectNulls: connectNulls,
+    dot: dot,
+    fill: fill,
+    fillOpacity: fillOpacity,
+    height: height,
+    hide: hide,
+    layout: layout,
+    isAnimationActive: isAnimationActive,
+    isRange: isRange,
+    legendType: legendType,
+    needClip: needClip,
+    points: points,
+    stroke: stroke,
+    width: width,
+    left: left,
+    top: top,
+    xAxisId: xAxisId,
+    yAxisId: yAxisId
+  }));
+}
+var getBaseValue = (layout, chartBaseValue, itemBaseValue, xAxis, yAxis) => {
+  // The baseValue can be defined both on the AreaChart, and on the Area.
+  // The value for the item takes precedence.
+  var baseValue = itemBaseValue !== null && itemBaseValue !== void 0 ? itemBaseValue : chartBaseValue;
+  if (isNumber(baseValue)) {
+    return baseValue;
+  }
+  var numericAxis = layout === 'horizontal' ? yAxis : xAxis;
+  // @ts-expect-error d3scale .domain() returns unknown, Math.max expects number
+  var domain = numericAxis.scale.domain();
+  if (numericAxis.type === 'number') {
+    var domainMax = Math.max(domain[0], domain[1]);
+    var domainMin = Math.min(domain[0], domain[1]);
+    if (baseValue === 'dataMin') {
+      return domainMin;
+    }
+    if (baseValue === 'dataMax') {
+      return domainMax;
+    }
+    return domainMax < 0 ? domainMax : Math.max(Math.min(domain[0], domain[1]), 0);
+  }
+  if (baseValue === 'dataMin') {
+    return domain[0];
+  }
+  if (baseValue === 'dataMax') {
+    return domain[1];
+  }
+  return domain[0];
+};
+function computeArea(_ref0) {
+  var {
+    areaSettings: {
+      connectNulls,
+      baseValue: itemBaseValue,
+      dataKey
+    },
+    stackedData,
+    layout,
+    chartBaseValue,
+    xAxis,
+    yAxis,
+    displayedData,
+    dataStartIndex,
+    xAxisTicks,
+    yAxisTicks,
+    bandSize
+  } = _ref0;
+  var hasStack = stackedData && stackedData.length;
+  var baseValue = getBaseValue(layout, chartBaseValue, itemBaseValue, xAxis, yAxis);
+  var isHorizontalLayout = layout === 'horizontal';
+  var isRange = false;
+  var points = displayedData.map((entry, index) => {
+    var _valueAsArray$, _valueAsArray, _xAxis$scale$map;
+    var valueAsArray;
+    if (hasStack) {
+      valueAsArray = stackedData[dataStartIndex + index];
+    } else {
+      var rawValue = getValueByDataKey(entry, dataKey);
+      if (!Array.isArray(rawValue)) {
+        valueAsArray = [baseValue, rawValue];
+      } else {
+        valueAsArray = rawValue;
+        isRange = true;
+      }
+    }
+    var value1 = (_valueAsArray$ = (_valueAsArray = valueAsArray) === null || _valueAsArray === void 0 ? void 0 : _valueAsArray[1]) !== null && _valueAsArray$ !== void 0 ? _valueAsArray$ : null;
+    var isBreakPoint = value1 == null || hasStack && !connectNulls && getValueByDataKey(entry, dataKey) == null;
+    if (isHorizontalLayout) {
+      var _yAxis$scale$map;
+      return {
+        x: getCateCoordinateOfLine({
+          axis: xAxis,
+          ticks: xAxisTicks,
+          bandSize,
+          entry,
+          index
+        }),
+        y: isBreakPoint ? null : (_yAxis$scale$map = yAxis.scale.map(value1)) !== null && _yAxis$scale$map !== void 0 ? _yAxis$scale$map : null,
+        value: valueAsArray,
+        payload: entry
+      };
+    }
+    return {
+      x: isBreakPoint ? null : (_xAxis$scale$map = xAxis.scale.map(value1)) !== null && _xAxis$scale$map !== void 0 ? _xAxis$scale$map : null,
+      y: getCateCoordinateOfLine({
+        axis: yAxis,
+        ticks: yAxisTicks,
+        bandSize,
+        entry,
+        index
+      }),
+      value: valueAsArray,
+      payload: entry
+    };
+  });
+  var baseLine;
+  if (hasStack || isRange) {
+    baseLine = points.map(entry => {
+      var _xAxis$scale$map2;
+      var x = Array.isArray(entry.value) ? entry.value[0] : null;
+      if (isHorizontalLayout) {
+        var _yAxis$scale$map2;
+        return {
+          x: entry.x,
+          y: x != null && entry.y != null ? (_yAxis$scale$map2 = yAxis.scale.map(x)) !== null && _yAxis$scale$map2 !== void 0 ? _yAxis$scale$map2 : null : null,
+          payload: entry.payload
+        };
+      }
+      return {
+        x: x != null ? (_xAxis$scale$map2 = xAxis.scale.map(x)) !== null && _xAxis$scale$map2 !== void 0 ? _xAxis$scale$map2 : null : null,
+        y: entry.y,
+        payload: entry.payload
+      };
+    });
+  } else {
+    baseLine = isHorizontalLayout ? yAxis.scale.map(baseValue) : xAxis.scale.map(baseValue);
+  }
+  return {
+    points,
+    baseLine: baseLine !== null && baseLine !== void 0 ? baseLine : 0,
+    isRange
+  };
+}
+function AreaFn(outsideProps) {
+  var props = resolveDefaultProps(outsideProps, defaultAreaProps);
+  var isPanorama = useIsPanorama();
+  // Report all props to Redux store first, before calling hooks, to avoid circular dependencies.
+  return /*#__PURE__*/React.createElement(RegisterGraphicalItemId, {
+    id: props.id,
+    type: "area"
+  }, id => /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(SetLegendPayload, {
+    legendPayload: computeLegendPayloadFromAreaData(props)
+  }), /*#__PURE__*/React.createElement(SetAreaTooltipEntrySettings, {
+    dataKey: props.dataKey,
+    data: props.data,
+    stroke: props.stroke,
+    strokeWidth: props.strokeWidth,
+    fill: props.fill,
+    name: props.name,
+    hide: props.hide,
+    unit: props.unit,
+    tooltipType: props.tooltipType,
+    id: id
+  }), /*#__PURE__*/React.createElement(SetCartesianGraphicalItem, {
+    type: "area",
+    id: id,
+    data: props.data,
+    dataKey: props.dataKey,
+    xAxisId: props.xAxisId,
+    yAxisId: props.yAxisId,
+    zAxisId: 0,
+    stackId: getNormalizedStackId(props.stackId),
+    hide: props.hide,
+    barSize: undefined,
+    baseValue: props.baseValue,
+    isPanorama: isPanorama,
+    connectNulls: props.connectNulls
+  }), /*#__PURE__*/React.createElement(AreaImpl, _extends$4({}, props, {
+    id: id
+  }))));
+}
+
+/**
+ * @provides LabelListContext
+ * @consumes CartesianChartContext
+ */
+var Area = /*#__PURE__*/React.memo(AreaFn, propsAreEqual);
+// @ts-expect-error we need to set the displayName for debugging purposes
+Area.displayName = 'Area';
 
 var pickChartPointer = (_state, chartPointer) => chartPointer;
 var selectActivePropsFromChartPointer = createSelector([pickChartPointer, selectChartLayout, selectPolarViewBox, selectTooltipAxisType, selectTooltipAxisRangeWithReverse, selectTooltipAxisTicks, selectOrderedTooltipTicks, selectChartOffsetInternal], combineActiveProps);
@@ -34496,7 +38315,7 @@ externalEventsMiddleware.startListening({
           activeIndex: selectActiveTooltipIndex(currentState),
           activeLabel: selectActiveLabel$1(currentState),
           activeTooltipIndex: selectActiveTooltipIndex(currentState),
-          isTooltipActive: selectIsTooltipActive(currentState)
+          isTooltipActive: selectIsTooltipActive$1(currentState)
         };
         if (latestHandler) {
           latestHandler(nextState, latestEvent);
@@ -34899,7 +38718,7 @@ function AllZIndexPortals(_ref2) {
 var _excluded$2 = ["children"];
 function _objectWithoutProperties$2(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose$2(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function _objectWithoutPropertiesLoose$2(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function _extends$2() { return _extends$2 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$2.apply(null, arguments); }
+function _extends$3() { return _extends$3 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$3.apply(null, arguments); }
 var FULL_WIDTH_AND_HEIGHT = {
   width: '100%',
   height: '100%',
@@ -34940,7 +38759,7 @@ var MainChartSurface = /*#__PURE__*/forwardRef((props, ref) => {
       role = hasAccessibilityLayer ? 'application' : undefined;
     }
   }
-  return /*#__PURE__*/React.createElement(Surface, _extends$2({}, otherAttributes, {
+  return /*#__PURE__*/React.createElement(Surface, _extends$3({}, otherAttributes, {
     title: title,
     desc: desc,
     role: role,
@@ -34983,7 +38802,7 @@ var RootSurface = /*#__PURE__*/forwardRef((_ref2, ref) => {
       isPanorama: true
     }, children));
   }
-  return /*#__PURE__*/React.createElement(MainChartSurface, _extends$2({
+  return /*#__PURE__*/React.createElement(MainChartSurface, _extends$3({
     ref: ref
   }, rest), /*#__PURE__*/React.createElement(AllZIndexPortals, {
     isPanorama: false
@@ -35007,12 +38826,12 @@ function useReportScale() {
   return setRef;
 }
 
-function ownKeys$2(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$2(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$2(Object(t), true).forEach(function (r) { _defineProperty$2(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$2(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$2(e, r, t) { return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$2(t) { var i = _toPrimitive$2(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$2(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
-function _extends$1() { return _extends$1 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$1.apply(null, arguments); }
+function ownKeys$4(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$4(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$4(Object(t), true).forEach(function (r) { _defineProperty$4(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$4(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$4(e, r, t) { return (r = _toPropertyKey$4(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$4(t) { var i = _toPrimitive$4(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$4(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _extends$2() { return _extends$2 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$2.apply(null, arguments); }
 var EventSynchronizer = () => {
   useSynchronisedEventsFromOtherCharts();
   return null;
@@ -35095,7 +38914,7 @@ var ResponsiveDiv = /*#__PURE__*/forwardRef((props, ref) => {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ReportChartSize, {
     width: sizes.containerWidth,
     height: sizes.containerHeight
-  }), /*#__PURE__*/React.createElement("div", _extends$1({
+  }), /*#__PURE__*/React.createElement("div", _extends$2({
     ref: innerRef
   }, props)));
 });
@@ -35136,7 +38955,7 @@ var ReadSizeOnceDiv = /*#__PURE__*/forwardRef((props, ref) => {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ReportChartSize, {
     width: sizes.containerWidth,
     height: sizes.containerHeight
-  }), /*#__PURE__*/React.createElement("div", _extends$1({
+  }), /*#__PURE__*/React.createElement("div", _extends$2({
     ref: innerRef
   }, props)));
 });
@@ -35148,7 +38967,7 @@ var StaticDiv = /*#__PURE__*/forwardRef((props, ref) => {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ReportChartSize, {
     width: width,
     height: height
-  }), /*#__PURE__*/React.createElement("div", _extends$1({
+  }), /*#__PURE__*/React.createElement("div", _extends$2({
     ref: ref
   }, props)));
 });
@@ -35159,13 +38978,13 @@ var NonResponsiveDiv = /*#__PURE__*/forwardRef((props, ref) => {
   } = props;
   // When width or height are percentages or CSS short names, read size from DOM once
   if (typeof width === 'string' || typeof height === 'string') {
-    return /*#__PURE__*/React.createElement(ReadSizeOnceDiv, _extends$1({}, props, {
+    return /*#__PURE__*/React.createElement(ReadSizeOnceDiv, _extends$2({}, props, {
       ref: ref
     }));
   }
   // When both are numbers, use them directly
   if (typeof width === 'number' && typeof height === 'number') {
-    return /*#__PURE__*/React.createElement(StaticDiv, _extends$1({}, props, {
+    return /*#__PURE__*/React.createElement(StaticDiv, _extends$2({}, props, {
       width: width,
       height: height,
       ref: ref
@@ -35176,7 +38995,7 @@ var NonResponsiveDiv = /*#__PURE__*/forwardRef((props, ref) => {
   return /*#__PURE__*/React.createElement(React.Fragment, null, /*#__PURE__*/React.createElement(ReportChartSize, {
     width: width,
     height: height
-  }), /*#__PURE__*/React.createElement("div", _extends$1({
+  }), /*#__PURE__*/React.createElement("div", _extends$2({
     ref: ref
   }, props)));
 });
@@ -35324,7 +39143,7 @@ var RechartsWrapper = /*#__PURE__*/forwardRef((props, ref) => {
     width: width !== null && width !== void 0 ? width : style === null || style === void 0 ? void 0 : style.width,
     height: height !== null && height !== void 0 ? height : style === null || style === void 0 ? void 0 : style.height,
     className: clsx('recharts-wrapper', className),
-    style: _objectSpread$2({
+    style: _objectSpread$4({
       position: 'relative',
       cursor: 'default',
       width,
@@ -35405,6 +39224,83 @@ var CategoricalChart = /*#__PURE__*/forwardRef((props, ref) => {
   }, /*#__PURE__*/React.createElement(ClipPathProvider, null, children)));
 });
 
+function _extends$1() { return _extends$1 = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends$1.apply(null, arguments); }
+function ownKeys$3(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$3(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$3(Object(t), true).forEach(function (r) { _defineProperty$3(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$3(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$3(e, r, t) { return (r = _toPropertyKey$3(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$3(t) { var i = _toPrimitive$3(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$3(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var defaultMargin$1 = {
+  top: 5,
+  right: 5,
+  bottom: 5,
+  left: 5
+};
+var defaultCartesianChartProps = _objectSpread$3({
+  accessibilityLayer: true,
+  barCategoryGap: '10%',
+  barGap: 4,
+  layout: 'horizontal',
+  margin: defaultMargin$1,
+  responsive: false,
+  reverseStackOrder: false,
+  stackOffset: 'none',
+  syncMethod: 'index'
+}, initialEventSettingsState);
+
+/**
+ * These are one-time, immutable options that decide the chart's behavior.
+ * Users who wish to call CartesianChart may decide to pass these options explicitly,
+ * but usually we would expect that they use one of the convenience components like BarChart, LineChart, etc.
+ */
+
+var CartesianChart = /*#__PURE__*/forwardRef(function CartesianChart(props, ref) {
+  var _categoricalChartProp;
+  var rootChartProps = resolveDefaultProps(props.categoricalChartProps, defaultCartesianChartProps);
+  var {
+    chartName,
+    defaultTooltipEventType,
+    validateTooltipEventTypes,
+    tooltipPayloadSearcher,
+    categoricalChartProps
+  } = props;
+  var options = {
+    chartName,
+    defaultTooltipEventType,
+    validateTooltipEventTypes,
+    tooltipPayloadSearcher,
+    eventEmitter: undefined
+  };
+  return /*#__PURE__*/React.createElement(RechartsStoreProvider, {
+    preloadedState: {
+      options
+    },
+    reduxStoreName: (_categoricalChartProp = categoricalChartProps.id) !== null && _categoricalChartProp !== void 0 ? _categoricalChartProp : chartName
+  }, /*#__PURE__*/React.createElement(ChartDataContextProvider, {
+    chartData: categoricalChartProps.data
+  }), /*#__PURE__*/React.createElement(ReportMainChartProps, {
+    layout: rootChartProps.layout,
+    margin: rootChartProps.margin
+  }), /*#__PURE__*/React.createElement(ReportEventSettings, {
+    throttleDelay: rootChartProps.throttleDelay,
+    throttledEvents: rootChartProps.throttledEvents
+  }), /*#__PURE__*/React.createElement(ReportChartProps, {
+    baseValue: rootChartProps.baseValue,
+    accessibilityLayer: rootChartProps.accessibilityLayer,
+    barCategoryGap: rootChartProps.barCategoryGap,
+    maxBarSize: rootChartProps.maxBarSize,
+    stackOffset: rootChartProps.stackOffset,
+    barGap: rootChartProps.barGap,
+    barSize: rootChartProps.barSize,
+    syncId: rootChartProps.syncId,
+    syncMethod: rootChartProps.syncMethod,
+    className: rootChartProps.className,
+    reverseStackOrder: rootChartProps.reverseStackOrder
+  }), /*#__PURE__*/React.createElement(CategoricalChart, _extends$1({}, rootChartProps, {
+    ref: ref
+  })));
+});
+
 function ReportPolarOptions(props) {
   var dispatch = useAppDispatch();
   useEffect(() => {
@@ -35417,11 +39313,11 @@ var _excluded = ["layout"];
 function _extends() { return _extends = Object.assign ? Object.assign.bind() : function (n) { for (var e = 1; e < arguments.length; e++) { var t = arguments[e]; for (var r in t) ({}).hasOwnProperty.call(t, r) && (n[r] = t[r]); } return n; }, _extends.apply(null, arguments); }
 function _objectWithoutProperties(e, t) { if (null == e) return {}; var o, r, i = _objectWithoutPropertiesLoose(e, t); if (Object.getOwnPropertySymbols) { var n = Object.getOwnPropertySymbols(e); for (r = 0; r < n.length; r++) o = n[r], -1 === t.indexOf(o) && {}.propertyIsEnumerable.call(e, o) && (i[o] = e[o]); } return i; }
 function _objectWithoutPropertiesLoose(r, e) { if (null == r) return {}; var t = {}; for (var n in r) if ({}.hasOwnProperty.call(r, n)) { if (-1 !== e.indexOf(n)) continue; t[n] = r[n]; } return t; }
-function ownKeys$1(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
-function _objectSpread$1(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$1(Object(t), true).forEach(function (r) { _defineProperty$1(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
-function _defineProperty$1(e, r, t) { return (r = _toPropertyKey$1(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
-function _toPropertyKey$1(t) { var i = _toPrimitive$1(t, "string"); return "symbol" == typeof i ? i : i + ""; }
-function _toPrimitive$1(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function ownKeys$2(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$2(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$2(Object(t), true).forEach(function (r) { _defineProperty$2(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$2(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$2(e, r, t) { return (r = _toPropertyKey$2(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$2(t) { var i = _toPrimitive$2(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$2(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
 var defaultMargin = {
   top: 5,
   right: 5,
@@ -35432,7 +39328,7 @@ var defaultMargin = {
 /**
  * These default props are the same for all PolarChart components.
  */
-var defaultPolarChartProps = _objectSpread$1({
+var defaultPolarChartProps = _objectSpread$2({
   accessibilityLayer: true,
   stackOffset: 'none',
   barCategoryGap: '10%',
@@ -35518,6 +39414,53 @@ var PolarChart = /*#__PURE__*/forwardRef(function PolarChart(props, ref) {
   }), /*#__PURE__*/React.createElement(CategoricalChart, _extends({}, otherCategoricalProps, {
     ref: ref
   })));
+});
+
+function ownKeys$1(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread$1(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys$1(Object(t), true).forEach(function (r) { _defineProperty$1(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys$1(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty$1(e, r, t) { return (r = _toPropertyKey$1(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: true, configurable: true, writable: true }) : e[r] = t, e; }
+function _toPropertyKey$1(t) { var i = _toPrimitive$1(t, "string"); return "symbol" == typeof i ? i : i + ""; }
+function _toPrimitive$1(t, r) { if ("object" != typeof t || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r); if ("object" != typeof i) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+var allowedTooltipTypes$2 = ['item'];
+var defaultPieChartProps = _objectSpread$1(_objectSpread$1({}, defaultPolarChartProps), {}, {
+  layout: 'centric',
+  startAngle: 0,
+  endAngle: 360
+});
+
+/**
+ * @consumes ResponsiveContainerContext
+ * @provides PolarViewBoxContext
+ * @provides PolarChartContext
+ */
+var PieChart = /*#__PURE__*/forwardRef((props, ref) => {
+  var propsWithDefaults = resolveDefaultProps(props, defaultPieChartProps);
+  return /*#__PURE__*/React.createElement(PolarChart, {
+    chartName: "PieChart",
+    defaultTooltipEventType: "item",
+    validateTooltipEventTypes: allowedTooltipTypes$2,
+    tooltipPayloadSearcher: arrayTooltipSearcher,
+    categoricalChartProps: propsWithDefaults,
+    ref: ref
+  });
+});
+
+var allowedTooltipTypes$1 = ['axis'];
+
+/**
+ * @consumes ResponsiveContainerContext
+ * @provides CartesianViewBoxContext
+ * @provides CartesianChartContext
+ */
+var AreaChart = /*#__PURE__*/forwardRef((props, ref) => {
+  return /*#__PURE__*/React.createElement(CartesianChart, {
+    chartName: "AreaChart",
+    defaultTooltipEventType: "axis",
+    validateTooltipEventTypes: allowedTooltipTypes$1,
+    tooltipPayloadSearcher: arrayTooltipSearcher,
+    categoricalChartProps: props,
+    ref: ref
+  });
 });
 
 function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
@@ -36556,7 +40499,1051 @@ function ReportFooter() {
   ] });
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-05-30T11:08:24.146Z"}`;
+function HeroGradient({
+  title,
+  subtitle,
+  breadcrumb,
+  rightEl
+}) {
+  return /* @__PURE__ */ jsxs(
+    "section",
+    {
+      "aria-label": "Page hero",
+      className: "relative overflow-hidden rounded-2xl border border-white/10",
+      style: { minHeight: 160 },
+      children: [
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            "aria-hidden": "true",
+            className: "nrg-hero-gradient absolute inset-0",
+            style: {
+              background: "linear-gradient(115deg, #6d28d9 0%, #0891b2 32%, #22d3ee 50%, #f59e0b 72%, #a3e635 100%)"
+            }
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            "aria-hidden": "true",
+            className: "absolute inset-0",
+            style: {
+              background: "linear-gradient(180deg, rgba(15,15,35,0) 0%, rgba(15,15,35,0.10) 55%, rgba(15,15,35,0.55) 100%)"
+            }
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { className: "relative z-10 flex h-full flex-col justify-between gap-3 p-5 sm:p-6", children: [
+          breadcrumb && breadcrumb.length > 0 ? /* @__PURE__ */ jsx("nav", { "aria-label": "Breadcrumb", className: "flex items-center gap-1.5 text-[0.7rem] uppercase tracking-[0.18em] text-slate-100/85", children: breadcrumb.map((crumb, i) => /* @__PURE__ */ jsxs(React.Fragment, { children: [
+            i > 0 ? /* @__PURE__ */ jsx(ChevronRight, { className: "size-3 opacity-60" }) : null,
+            /* @__PURE__ */ jsx("span", { className: i === breadcrumb.length - 1 ? "text-white font-semibold" : "", children: crumb })
+          ] }, crumb + i)) }) : null,
+          /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-end justify-between gap-3", children: [
+            /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+              /* @__PURE__ */ jsx(
+                "h1",
+                {
+                  className: "text-3xl sm:text-4xl font-bold tracking-tight text-white drop-shadow-[0_2px_18px_rgba(0,0,0,0.45)]",
+                  style: { fontFamily: '"Fira Sans", ui-sans-serif, system-ui, sans-serif' },
+                  children: title
+                }
+              ),
+              subtitle ? /* @__PURE__ */ jsx("p", { className: "mt-1 text-sm text-white/85 max-w-2xl", children: subtitle }) : null
+            ] }),
+            rightEl ? /* @__PURE__ */ jsx("div", { className: "shrink-0", children: rightEl }) : null
+          ] })
+        ] })
+      ]
+    }
+  );
+}
+
+const TOTAL_KWH_TODAY = 184320;
+const TOTAL_KWH_DELTA_PCT = 12.4;
+const CO2_AVOIDED_KG = 73280;
+const CO2_DELTA_PCT = 8.7;
+const MIX_SHARE = [
+  { kind: "solar", label: "Solar", value: 46, color: "#fbbf24" },
+  { kind: "wind", label: "Wind", value: 28, color: "#22d3ee" },
+  { kind: "water", label: "Water", value: 14, color: "#38bdf8" },
+  { kind: "hydro", label: "Hydro", value: 12, color: "#6366f1" }
+];
+const TIMELINE_24H = buildTimeline();
+function buildTimeline() {
+  const rows = [];
+  for (let h = 0; h < 24; h++) {
+    const solarBell = Math.max(0, Math.sin((h - 6) / 12 * Math.PI));
+    const solar = Math.round(2400 * solarBell + (Math.random() * 120 - 60));
+    const windNoise = 0.6 + 0.4 * Math.sin(h / 3) + (Math.random() * 0.25 - 0.12);
+    const wind = Math.round(1100 * Math.max(0.3, windNoise));
+    const water = Math.round(420 + Math.sin(h / 4) * 60 + (Math.random() * 30 - 15));
+    const hydro = Math.round(380 + Math.cos(h / 5) * 40 + (Math.random() * 24 - 12));
+    rows.push({
+      t: h.toString().padStart(2, "0") + ":00",
+      solar: Math.max(0, solar),
+      wind,
+      water,
+      hydro
+    });
+  }
+  return rows;
+}
+const TOP_SITES = [
+  { name: "Tarcoola Solar Farm", region: "SA · AU", kind: "solar", total: 42180, share: 1 },
+  { name: "Macarthur Wind", region: "VIC · AU", kind: "wind", total: 31640, share: 0.75 },
+  { name: "Snowy 2.0 Tumut", region: "NSW · AU", kind: "hydro", total: 22910, share: 0.54 },
+  { name: "Murray Run-of-River", region: "VIC · AU", kind: "water", total: 18440, share: 0.44 },
+  { name: "Coopers Gap Wind", region: "QLD · AU", kind: "wind", total: 14220, share: 0.34 }
+];
+const LIVE_STATUS = [
+  { kind: "solar", label: "Inverters online", online: 312, offline: 4, status: "ok", detail: "98.7% uptime · 4 in maintenance" },
+  { kind: "wind", label: "Turbines spinning", online: 74, offline: 2, status: "ok", detail: "Avg rotor: 14.2 rpm" },
+  { kind: "water", label: "Flow stations", online: 28, offline: 0, status: "ok", detail: "All sites within target flow" },
+  { kind: "hydro", label: "Hydro penstocks", online: 12, offline: 1, status: "warn", detail: "Tumut-3 throttled (debris)" },
+  { kind: "storage", label: "Battery stacks armed", online: 8, offline: 0, status: "ok", detail: "State of charge 71%" }
+];
+const WEATHER_5D = [
+  { day: "Mon", icon: "sun", high: 32, low: 19, wind: 12 },
+  { day: "Tue", icon: "sun", high: 34, low: 21, wind: 8 },
+  { day: "Wed", icon: "cloud", high: 28, low: 18, wind: 22 },
+  { day: "Thu", icon: "wind", high: 26, low: 17, wind: 38 },
+  { day: "Fri", icon: "rain", high: 23, low: 16, wind: 28 }
+];
+const BATTERY_SOC_PCT = 71;
+const BATTERY_RATE_KW = 4200;
+const ACCENT = {
+  solar: { from: "#fbbf24", to: "#f59e0b", text: "text-amber-300", ring: "ring-amber-400/40" },
+  wind: { from: "#22d3ee", to: "#0891b2", text: "text-cyan-300", ring: "ring-cyan-400/40" },
+  water: { from: "#38bdf8", to: "#0284c7", text: "text-sky-300", ring: "ring-sky-400/40" },
+  hydro: { from: "#818cf8", to: "#4338ca", text: "text-indigo-300", ring: "ring-indigo-400/40" },
+  storage: { from: "#a3e635", to: "#65a30d", text: "text-lime-300", ring: "ring-lime-400/40" }
+};
+const HERO_SPARK = TIMELINE_24H.map((p) => p.solar + p.wind + p.water + p.hydro);
+
+const ITEMS = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "solar", label: "Solar", icon: Sun, kind: "solar" },
+  { id: "wind", label: "Wind", icon: Wind, kind: "wind" },
+  { id: "water", label: "Water", icon: Droplets, kind: "water" },
+  { id: "hydro", label: "Hydro", icon: Mountain, kind: "hydro" },
+  { id: "storage", label: "Storage", icon: BatteryCharging, kind: "storage" },
+  { id: "settings", label: "Settings", icon: Settings }
+];
+function NavRail({
+  active,
+  onSelect
+}) {
+  return /* @__PURE__ */ jsx(
+    "nav",
+    {
+      "aria-label": "Energy sections",
+      className: "sticky top-2 flex w-16 shrink-0 flex-col items-center gap-1.5 rounded-2xl border border-white/10 bg-slate-950/70 p-2",
+      children: ITEMS.map((item) => {
+        const Icon = item.icon;
+        const isActive = active === item.id;
+        const accentCss = item.kind ? ACCENT[item.kind].from : "#CA8A04";
+        return /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => onSelect(item.id),
+            "aria-label": item.label,
+            "aria-current": isActive ? "page" : void 0,
+            title: item.label,
+            className: "group relative flex h-11 w-11 cursor-pointer items-center justify-center rounded-xl text-slate-400 transition-colors duration-200 hover:bg-white/5 hover:text-white focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 " + (isActive ? "nrg-nav-active text-white" : ""),
+            style: isActive ? { ["--nrg-nav-accent"]: accentCss } : void 0,
+            children: [
+              /* @__PURE__ */ jsx(Icon, { size: 18, className: "shrink-0" }),
+              /* @__PURE__ */ jsx(
+                "span",
+                {
+                  role: "tooltip",
+                  className: "pointer-events-none absolute left-full top-1/2 z-30 ml-3 -translate-y-1/2 whitespace-nowrap rounded-md border border-white/10 bg-slate-900/95 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-lg backdrop-blur transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100",
+                  children: item.label
+                }
+              )
+            ]
+          },
+          item.id
+        );
+      })
+    }
+  );
+}
+
+function SolarPanelIllustration({ className, title = "Solar array" }) {
+  return /* @__PURE__ */ jsxs(
+    "svg",
+    {
+      viewBox: "0 0 160 120",
+      className,
+      role: "img",
+      "aria-label": title,
+      xmlns: "http://www.w3.org/2000/svg",
+      children: [
+        /* @__PURE__ */ jsxs("defs", { children: [
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-sky", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#0F1B3A" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#1E1B4B" })
+          ] }),
+          /* @__PURE__ */ jsxs("radialGradient", { id: "nrg-sun", cx: "50%", cy: "50%", r: "50%", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#fef3c7" }),
+            /* @__PURE__ */ jsx("stop", { offset: "55%", stopColor: "#fbbf24" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#f59e0b" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-panel", x1: "0", y1: "0", x2: "1", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#1e3a8a" }),
+            /* @__PURE__ */ jsx("stop", { offset: "55%", stopColor: "#1e40af" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#312E81" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "160", height: "120", rx: "14", fill: "url(#nrg-sky)" }),
+        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "18", fill: "url(#nrg-sun)", opacity: "0.95" }),
+        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "28", fill: "#fbbf24", opacity: "0.12" }),
+        /* @__PURE__ */ jsx("circle", { cx: "124", cy: "32", r: "40", fill: "#fbbf24", opacity: "0.06" }),
+        [0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
+          const r1 = 22;
+          const r2 = 30;
+          const rad = deg * Math.PI / 180;
+          const x1 = 124 + Math.cos(rad) * r1;
+          const y1 = 32 + Math.sin(rad) * r1;
+          const x2 = 124 + Math.cos(rad) * r2;
+          const y2 = 32 + Math.sin(rad) * r2;
+          return /* @__PURE__ */ jsx("line", { x1, y1, x2, y2, stroke: "#fcd34d", strokeWidth: "1.5", strokeLinecap: "round", opacity: "0.85" }, deg);
+        }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "92", width: "160", height: "28", fill: "#0a0a23", opacity: "0.6" }),
+        /* @__PURE__ */ jsxs("g", { children: [
+          /* @__PURE__ */ jsx("polygon", { points: "20,90 140,90 124,58 36,58", fill: "url(#nrg-panel)", stroke: "#0ea5e9", strokeWidth: "0.6", opacity: "0.95" }),
+          [0, 1, 2, 3].map((row) => /* @__PURE__ */ jsx(
+            "line",
+            {
+              x1: 26 + row * 3,
+              y1: 66 + row * 7,
+              x2: 134 - row * 3,
+              y2: 66 + row * 7,
+              stroke: "#38bdf8",
+              strokeWidth: "0.4",
+              opacity: "0.55"
+            },
+            "h" + row
+          )),
+          [0, 1, 2, 3, 4, 5, 6, 7].map((col) => {
+            const xTop = 36 + col / 7 * 88;
+            const xBot = 20 + col / 7 * 120;
+            return /* @__PURE__ */ jsx("line", { x1: xTop, y1: "58", x2: xBot, y2: "90", stroke: "#38bdf8", strokeWidth: "0.4", opacity: "0.5" }, "v" + col);
+          }),
+          /* @__PURE__ */ jsx("polygon", { points: "60,68 78,68 70,84 52,84", fill: "#67e8f9", opacity: "0.22" }),
+          /* @__PURE__ */ jsx("rect", { x: "44", y: "90", width: "3", height: "14", fill: "#475569" }),
+          /* @__PURE__ */ jsx("rect", { x: "113", y: "90", width: "3", height: "14", fill: "#475569" })
+        ] })
+      ]
+    }
+  );
+}
+function WindTurbineIllustration({ className, title = "Wind turbine" }) {
+  return /* @__PURE__ */ jsxs(
+    "svg",
+    {
+      viewBox: "0 0 160 120",
+      className,
+      role: "img",
+      "aria-label": title,
+      xmlns: "http://www.w3.org/2000/svg",
+      children: [
+        /* @__PURE__ */ jsxs("defs", { children: [
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-sky-wind", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#082F49" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#0C1334" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-blade", x1: "0", y1: "0", x2: "1", y2: "0", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#e0f2fe" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#67e8f9" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-mast", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#cbd5e1" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#64748b" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "160", height: "120", rx: "14", fill: "url(#nrg-sky-wind)" }),
+        /* @__PURE__ */ jsx("path", { d: "M10 30 Q40 22 70 30", stroke: "#22d3ee", strokeWidth: "1", fill: "none", opacity: "0.32", strokeLinecap: "round" }),
+        /* @__PURE__ */ jsx("path", { d: "M14 46 Q44 36 80 44", stroke: "#22d3ee", strokeWidth: "0.8", fill: "none", opacity: "0.22", strokeLinecap: "round" }),
+        /* @__PURE__ */ jsx("path", { d: "M100 70 Q124 60 150 66", stroke: "#22d3ee", strokeWidth: "0.8", fill: "none", opacity: "0.22", strokeLinecap: "round" }),
+        /* @__PURE__ */ jsxs("g", { opacity: "0.45", transform: "translate(120 60) scale(0.55)", children: [
+          /* @__PURE__ */ jsx("rect", { x: "-2", y: "0", width: "4", height: "50", fill: "#94a3b8" }),
+          /* @__PURE__ */ jsx("circle", { cx: "0", cy: "-4", r: "3", fill: "#cbd5e1" }),
+          /* @__PURE__ */ jsxs("g", { className: "nrg-spin-slow", transform: "translate(0 -4)", children: [
+            /* @__PURE__ */ jsx("ellipse", { cx: "0", cy: "-18", rx: "2.6", ry: "14", fill: "#e2e8f0" }),
+            /* @__PURE__ */ jsx("ellipse", { cx: "15.6", cy: "9", rx: "2.6", ry: "14", fill: "#e2e8f0", transform: "rotate(120 0 0)" }),
+            /* @__PURE__ */ jsx("ellipse", { cx: "-15.6", cy: "9", rx: "2.6", ry: "14", fill: "#e2e8f0", transform: "rotate(240 0 0)" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "98", width: "160", height: "22", fill: "#020617", opacity: "0.7" }),
+        /* @__PURE__ */ jsx("path", { d: "M0 100 Q40 92 80 96 T160 98 L160 120 L0 120 Z", fill: "#0f172a", opacity: "0.85" }),
+        /* @__PURE__ */ jsx("polygon", { points: "58,98 62,98 64,32 56,32", fill: "url(#nrg-mast)" }),
+        /* @__PURE__ */ jsx("circle", { cx: "60", cy: "32", r: "4.5", fill: "#94a3b8", stroke: "#475569", strokeWidth: "0.6" }),
+        /* @__PURE__ */ jsxs("g", { className: "nrg-spin-med", transform: "translate(60 32)", children: [
+          /* @__PURE__ */ jsx("ellipse", { cx: "0", cy: "-26", rx: "3.2", ry: "22", fill: "url(#nrg-blade)", stroke: "#0891b2", strokeWidth: "0.4" }),
+          /* @__PURE__ */ jsx("ellipse", { cx: "22.5", cy: "13", rx: "3.2", ry: "22", fill: "url(#nrg-blade)", stroke: "#0891b2", strokeWidth: "0.4", transform: "rotate(120 0 0)" }),
+          /* @__PURE__ */ jsx("ellipse", { cx: "-22.5", cy: "13", rx: "3.2", ry: "22", fill: "url(#nrg-blade)", stroke: "#0891b2", strokeWidth: "0.4", transform: "rotate(240 0 0)" }),
+          /* @__PURE__ */ jsx("circle", { cx: "0", cy: "0", r: "3", fill: "#67e8f9" })
+        ] })
+      ]
+    }
+  );
+}
+function WaterDropletIllustration({ className, title = "Water flow" }) {
+  return /* @__PURE__ */ jsxs(
+    "svg",
+    {
+      viewBox: "0 0 160 120",
+      className,
+      role: "img",
+      "aria-label": title,
+      xmlns: "http://www.w3.org/2000/svg",
+      children: [
+        /* @__PURE__ */ jsxs("defs", { children: [
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-water-bg", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#0c2247" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#0a1a3a" })
+          ] }),
+          /* @__PURE__ */ jsxs("radialGradient", { id: "nrg-drop", cx: "50%", cy: "60%", r: "60%", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#e0f2fe" }),
+            /* @__PURE__ */ jsx("stop", { offset: "55%", stopColor: "#38bdf8" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#0284c7" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "160", height: "120", rx: "14", fill: "url(#nrg-water-bg)" }),
+        /* @__PURE__ */ jsx("ellipse", { cx: "80", cy: "92", rx: "58", ry: "6", fill: "none", stroke: "#38bdf8", strokeWidth: "0.8", opacity: "0.35" }),
+        /* @__PURE__ */ jsx("ellipse", { cx: "80", cy: "92", rx: "42", ry: "4", fill: "none", stroke: "#38bdf8", strokeWidth: "0.8", opacity: "0.45" }),
+        /* @__PURE__ */ jsx("ellipse", { cx: "80", cy: "92", rx: "26", ry: "3", fill: "none", stroke: "#38bdf8", strokeWidth: "0.8", opacity: "0.55" }),
+        /* @__PURE__ */ jsxs("g", { className: "nrg-bob", children: [
+          /* @__PURE__ */ jsx(
+            "path",
+            {
+              d: "M80 22 C 96 48 110 64 110 78 C 110 96 96 108 80 108 C 64 108 50 96 50 78 C 50 64 64 48 80 22 Z",
+              fill: "url(#nrg-drop)",
+              stroke: "#7dd3fc",
+              strokeWidth: "0.6"
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "path",
+            {
+              d: "M68 60 C 64 70 64 78 68 86",
+              stroke: "#e0f2fe",
+              strokeWidth: "3",
+              fill: "none",
+              strokeLinecap: "round",
+              opacity: "0.7"
+            }
+          ),
+          /* @__PURE__ */ jsx("circle", { cx: "70", cy: "50", r: "3.5", fill: "#f0f9ff", opacity: "0.85" })
+        ] })
+      ]
+    }
+  );
+}
+function HydroDamIllustration({ className, title = "Hydro dam" }) {
+  return /* @__PURE__ */ jsxs(
+    "svg",
+    {
+      viewBox: "0 0 160 120",
+      className,
+      role: "img",
+      "aria-label": title,
+      xmlns: "http://www.w3.org/2000/svg",
+      children: [
+        /* @__PURE__ */ jsxs("defs", { children: [
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-hydro-sky", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#1e1b4b" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#0F0F23" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-dam", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#94a3b8" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#1e293b" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-reservoir", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#38bdf8" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#1e3a8a" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-spill", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#e0f2fe" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#38bdf8" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "160", height: "120", rx: "14", fill: "url(#nrg-hydro-sky)" }),
+        /* @__PURE__ */ jsx("polygon", { points: "-4,72 30,32 50,52 78,18 110,52 134,30 164,68 164,120 -4,120", fill: "#312E81", opacity: "0.65" }),
+        /* @__PURE__ */ jsx("polygon", { points: "-4,82 22,52 44,68 66,40 92,66 118,46 164,80 164,120 -4,120", fill: "#1e1b4b", opacity: "0.85" }),
+        /* @__PURE__ */ jsx("rect", { x: "14", y: "60", width: "84", height: "26", fill: "url(#nrg-reservoir)" }),
+        /* @__PURE__ */ jsx("path", { d: "M14 62 Q40 58 60 64 T98 62 L98 60 L14 60 Z", fill: "#7dd3fc", opacity: "0.4" }),
+        /* @__PURE__ */ jsx("polygon", { points: "98,42 116,42 124,108 96,108", fill: "url(#nrg-dam)" }),
+        /* @__PURE__ */ jsx("line", { x1: "100", y1: "56", x2: "120", y2: "56", stroke: "#0f172a", strokeWidth: "0.6", opacity: "0.6" }),
+        /* @__PURE__ */ jsx("line", { x1: "100", y1: "72", x2: "121", y2: "72", stroke: "#0f172a", strokeWidth: "0.6", opacity: "0.6" }),
+        /* @__PURE__ */ jsx("line", { x1: "100", y1: "88", x2: "122", y2: "88", stroke: "#0f172a", strokeWidth: "0.6", opacity: "0.6" }),
+        /* @__PURE__ */ jsx("path", { d: "M104 70 Q108 84 122 100 L130 108 L118 108 Q104 96 102 80 Z", fill: "url(#nrg-spill)", opacity: "0.92" }),
+        /* @__PURE__ */ jsx("path", { d: "M108 74 Q110 86 122 100", stroke: "#f0f9ff", strokeWidth: "0.6", fill: "none", opacity: "0.7" }),
+        /* @__PURE__ */ jsx("path", { d: "M118 108 Q140 104 160 110 L160 120 L118 120 Z", fill: "#0c4a6e", opacity: "0.9" })
+      ]
+    }
+  );
+}
+function BatteryIllustration({
+  className,
+  title = "Battery storage",
+  socPct = 71
+}) {
+  const clamped = Math.max(0, Math.min(100, socPct));
+  const fillWidth = 104 * clamped / 100;
+  return /* @__PURE__ */ jsxs(
+    "svg",
+    {
+      viewBox: "0 0 160 120",
+      className,
+      role: "img",
+      "aria-label": title,
+      xmlns: "http://www.w3.org/2000/svg",
+      children: [
+        /* @__PURE__ */ jsxs("defs", { children: [
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-bat-bg", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#1a2e0c" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#0F0F23" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-bat-fill", x1: "0", y1: "0", x2: "1", y2: "0", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#65a30d" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#a3e635" })
+          ] }),
+          /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-bat-shell", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+            /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#475569" }),
+            /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#1e293b" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsx("rect", { x: "0", y: "0", width: "160", height: "120", rx: "14", fill: "url(#nrg-bat-bg)" }),
+        /* @__PURE__ */ jsx(
+          "path",
+          {
+            d: "M118 30 L108 56 L120 56 L110 84 L132 50 L120 50 Z",
+            fill: "#a3e635",
+            opacity: "0.18"
+          }
+        ),
+        /* @__PURE__ */ jsx("rect", { x: "20", y: "42", width: "112", height: "44", rx: "6", fill: "url(#nrg-bat-shell)", stroke: "#94a3b8", strokeWidth: "0.8" }),
+        /* @__PURE__ */ jsx("rect", { x: "132", y: "56", width: "6", height: "16", rx: "1.5", fill: "#94a3b8" }),
+        /* @__PURE__ */ jsx("rect", { x: "24", y: "46", width: "104", height: "36", rx: "4", fill: "#0a0a23" }),
+        /* @__PURE__ */ jsx(
+          "rect",
+          {
+            x: "24",
+            y: "46",
+            width: fillWidth,
+            height: "36",
+            rx: "4",
+            fill: "url(#nrg-bat-fill)",
+            className: "nrg-charge"
+          }
+        ),
+        [25, 50, 75].map((pct) => /* @__PURE__ */ jsx(
+          "line",
+          {
+            x1: 24 + 104 * pct / 100,
+            y1: "46",
+            x2: 24 + 104 * pct / 100,
+            y2: "82",
+            stroke: "#0a0a23",
+            strokeWidth: "1.2",
+            opacity: "0.65"
+          },
+          pct
+        )),
+        /* @__PURE__ */ jsxs(
+          "text",
+          {
+            x: "76",
+            y: "106",
+            textAnchor: "middle",
+            fill: "#a3e635",
+            fontSize: "11",
+            fontWeight: "700",
+            style: { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" },
+            children: [
+              clamped,
+              "% SoC"
+            ]
+          }
+        )
+      ]
+    }
+  );
+}
+
+function cardClass(kind) {
+  if (!kind) return "nrg-card";
+  return `nrg-card nrg-card--${kind}`;
+}
+function fmtInt$1(n) {
+  return n.toLocaleString();
+}
+function useCountUp(target, durationMs = 1100) {
+  const [value, setValue] = React.useState(0);
+  React.useEffect(() => {
+    if (typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const t0 = performance.now();
+    const step = (now) => {
+      const p = Math.min(1, (now - t0) / durationMs);
+      const eased = 1 - Math.pow(1 - p, 3);
+      setValue(Math.round(target * eased));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target, durationMs]);
+  return value;
+}
+function DeltaPill({
+  pct,
+  positiveIsGood = true
+}) {
+  const up = pct > 0;
+  const good = up === positiveIsGood;
+  const Icon = up ? ArrowUpRight : ArrowDownRight;
+  return /* @__PURE__ */ jsxs(
+    "span",
+    {
+      className: "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium tabular-nums " + (good ? "border-lime-400/40 bg-lime-400/10 text-lime-300" : "border-amber-400/40 bg-amber-400/10 text-amber-300"),
+      children: [
+        /* @__PURE__ */ jsx(Icon, { size: 12 }),
+        Math.abs(pct).toFixed(1),
+        "%"
+      ]
+    }
+  );
+}
+function TotalGenerationTile() {
+  const v = useCountUp(TOTAL_KWH_TODAY);
+  const sparkData = HERO_SPARK.map((y, i) => ({ i, y }));
+  return /* @__PURE__ */ jsxs("article", { className: cardClass("solar") + " p-5 lg:col-span-2", "aria-labelledby": "nrg-total-h", children: [
+    /* @__PURE__ */ jsxs("header", { className: "flex items-start justify-between gap-3", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx("span", { className: "rounded-lg bg-amber-400/15 p-1.5 text-amber-300", children: /* @__PURE__ */ jsx(Zap, { size: 16 }) }),
+        /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Total generation · today" })
+      ] }),
+      /* @__PURE__ */ jsx(DeltaPill, { pct: TOTAL_KWH_DELTA_PCT })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-4 flex items-end gap-3", children: [
+      /* @__PURE__ */ jsx(
+        "div",
+        {
+          className: "nrg-glow-amber text-5xl font-bold tabular-nums text-amber-200 sm:text-6xl",
+          style: { fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, monospace' },
+          id: "nrg-total-h",
+          "aria-live": "polite",
+          children: fmtInt$1(v)
+        }
+      ),
+      /* @__PURE__ */ jsx("div", { className: "pb-2 text-sm font-medium text-slate-300", children: "kWh" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-1 text-xs text-slate-400", children: [
+      "equivalent to powering ~",
+      Math.round(TOTAL_KWH_TODAY / 30).toLocaleString(),
+      " homes for a day"
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "mt-4 h-20", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs(AreaChart, { data: sparkData, margin: { top: 4, right: 0, bottom: 0, left: 0 }, children: [
+      /* @__PURE__ */ jsx("defs", { children: /* @__PURE__ */ jsxs("linearGradient", { id: "nrg-hero-spark", x1: "0", y1: "0", x2: "0", y2: "1", children: [
+        /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: "#fbbf24", stopOpacity: 0.7 }),
+        /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: "#fbbf24", stopOpacity: 0 })
+      ] }) }),
+      /* @__PURE__ */ jsx(
+        Area,
+        {
+          type: "monotone",
+          dataKey: "y",
+          stroke: "#fbbf24",
+          strokeWidth: 2,
+          fill: "url(#nrg-hero-spark)",
+          isAnimationActive: false
+        }
+      )
+    ] }) }) })
+  ] });
+}
+function Co2AvoidedTile() {
+  const v = useCountUp(CO2_AVOIDED_KG);
+  return /* @__PURE__ */ jsxs("article", { className: cardClass("storage") + " p-5", children: [
+    /* @__PURE__ */ jsxs("header", { className: "flex items-start justify-between gap-3", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx("span", { className: "rounded-lg bg-lime-400/15 p-1.5 text-lime-300", children: /* @__PURE__ */ jsx(Leaf$1, { size: 16 }) }),
+        /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "CO₂ avoided · today" })
+      ] }),
+      /* @__PURE__ */ jsx(DeltaPill, { pct: CO2_DELTA_PCT })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-4 flex items-end gap-2", children: [
+      /* @__PURE__ */ jsx(
+        "div",
+        {
+          className: "nrg-glow-lime text-4xl font-bold tabular-nums text-lime-200 sm:text-5xl",
+          style: { fontFamily: '"Fira Code", ui-monospace, SFMono-Regular, monospace' },
+          children: fmtInt$1(v)
+        }
+      ),
+      /* @__PURE__ */ jsx("div", { className: "pb-1 text-xs font-medium text-slate-300", children: "kg CO₂" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-2 grid grid-cols-2 gap-2 text-xs text-slate-400", children: [
+      /* @__PURE__ */ jsxs("div", { className: "rounded-md border border-white/10 bg-white/[0.02] p-2", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[0.65rem] uppercase tracking-wider opacity-70", children: "≈ trees / yr" }),
+        /* @__PURE__ */ jsx("div", { className: "mt-0.5 font-semibold text-slate-200 tabular-nums", children: Math.round(CO2_AVOIDED_KG / 21).toLocaleString() })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "rounded-md border border-white/10 bg-white/[0.02] p-2", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[0.65rem] uppercase tracking-wider opacity-70", children: "≈ km not driven" }),
+        /* @__PURE__ */ jsx("div", { className: "mt-0.5 font-semibold text-slate-200 tabular-nums", children: Math.round(CO2_AVOIDED_KG * 5.3).toLocaleString() })
+      ] })
+    ] })
+  ] });
+}
+function MixDonutTile() {
+  const data = MIX_SHARE.map((d) => ({ name: d.label, value: d.value, color: d.color }));
+  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+    /* @__PURE__ */ jsxs("header", { className: "flex items-center justify-between gap-2", children: [
+      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Generation mix" }),
+      /* @__PURE__ */ jsx("span", { className: "text-xs text-slate-500", children: "today" })
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "mt-2 grid grid-cols-[1fr_auto] items-center gap-3", children: [
+      /* @__PURE__ */ jsx("div", { className: "h-44 min-w-0", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs(PieChart, { children: [
+        /* @__PURE__ */ jsx(
+          Tooltip,
+          {
+            cursor: { fill: "transparent" },
+            contentStyle: {
+              background: "rgba(15, 23, 42, 0.95)",
+              border: "1px solid rgba(255,255,255,0.1)",
+              borderRadius: 8,
+              color: "#F8FAFC",
+              fontSize: 12
+            },
+            formatter: (value) => [`${Number(value)}%`, ""]
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          Pie,
+          {
+            data,
+            dataKey: "value",
+            nameKey: "name",
+            innerRadius: 45,
+            outerRadius: 72,
+            paddingAngle: 2,
+            stroke: "rgba(15,15,35,0.9)",
+            strokeWidth: 2,
+            children: data.map((entry) => /* @__PURE__ */ jsx(Cell, { fill: entry.color }, entry.name))
+          }
+        )
+      ] }) }) }),
+      /* @__PURE__ */ jsx("ul", { className: "flex shrink-0 flex-col gap-1.5 text-xs", children: MIX_SHARE.map((d) => /* @__PURE__ */ jsxs("li", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx(
+          "span",
+          {
+            "aria-hidden": "true",
+            className: "size-2.5 shrink-0 rounded-sm",
+            style: { backgroundColor: d.color }
+          }
+        ),
+        /* @__PURE__ */ jsx("span", { className: "text-slate-300", children: d.label }),
+        /* @__PURE__ */ jsxs("span", { className: "ml-auto tabular-nums font-medium text-slate-100", children: [
+          d.value,
+          "%"
+        ] })
+      ] }, d.kind)) })
+    ] })
+  ] });
+}
+function GenerationTimelineTile() {
+  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5 lg:col-span-3", children: [
+    /* @__PURE__ */ jsxs("header", { className: "mb-2 flex items-end justify-between gap-3", children: [
+      /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Generation timeline · last 24 hours" }),
+        /* @__PURE__ */ jsx("div", { className: "mt-1 text-sm font-medium text-slate-100", children: "Stacked by source · solar / wind / water / hydro" })
+      ] }),
+      /* @__PURE__ */ jsx("div", { className: "flex flex-wrap items-center gap-2 text-xs", children: ["solar", "wind", "water", "hydro"].map((k) => /* @__PURE__ */ jsxs(
+        "span",
+        {
+          className: "inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5",
+          children: [
+            /* @__PURE__ */ jsx(
+              "span",
+              {
+                "aria-hidden": "true",
+                className: "size-2 rounded-sm",
+                style: { backgroundColor: ACCENT[k].from }
+              }
+            ),
+            /* @__PURE__ */ jsx("span", { className: "capitalize text-slate-300", children: k })
+          ]
+        },
+        k
+      )) })
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "h-64 sm:h-72", children: /* @__PURE__ */ jsx(ResponsiveContainer, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs(AreaChart, { data: TIMELINE_24H, margin: { top: 12, right: 8, bottom: 18, left: 4 }, children: [
+      /* @__PURE__ */ jsx("defs", { children: ["solar", "wind", "water", "hydro"].map((k) => /* @__PURE__ */ jsxs("linearGradient", { id: `nrg-area-${k}`, x1: "0", y1: "0", x2: "0", y2: "1", children: [
+        /* @__PURE__ */ jsx("stop", { offset: "0%", stopColor: ACCENT[k].from, stopOpacity: 0.85 }),
+        /* @__PURE__ */ jsx("stop", { offset: "100%", stopColor: ACCENT[k].to, stopOpacity: 0.05 })
+      ] }, k)) }),
+      /* @__PURE__ */ jsx(
+        Tooltip,
+        {
+          cursor: { stroke: "rgba(255,255,255,0.15)" },
+          contentStyle: {
+            background: "rgba(15, 23, 42, 0.95)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 8,
+            color: "#F8FAFC",
+            fontSize: 12
+          },
+          labelStyle: { color: "#94a3b8", fontSize: 11 },
+          formatter: (value, name) => [`${Number(value).toLocaleString()} kW`, String(name)]
+        }
+      ),
+      ["hydro", "water", "wind", "solar"].map((k) => /* @__PURE__ */ jsx(
+        Area,
+        {
+          type: "monotone",
+          dataKey: k,
+          stackId: "1",
+          name: k.charAt(0).toUpperCase() + k.slice(1),
+          stroke: ACCENT[k].from,
+          strokeWidth: 1.5,
+          fill: `url(#nrg-area-${k})`,
+          isAnimationActive: false
+        },
+        k
+      ))
+    ] }) }) }),
+    /* @__PURE__ */ jsx("div", { className: "mt-1 flex justify-between text-[0.65rem] tabular-nums text-slate-500", children: TIMELINE_24H.filter((_, i) => i % 4 === 0).map((p) => /* @__PURE__ */ jsx("span", { children: p.t }, p.t)) })
+  ] });
+}
+function TopSitesTile() {
+  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+    /* @__PURE__ */ jsxs("header", { className: "mb-3 flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Top sites · today" }),
+      /* @__PURE__ */ jsx(TrendingUp, { size: 14, className: "text-slate-500" })
+    ] }),
+    /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-2.5", children: TOP_SITES.map((s) => {
+      const accent = ACCENT[s.kind];
+      return /* @__PURE__ */ jsxs("li", { children: [
+        /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-3 text-xs", children: [
+          /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+            /* @__PURE__ */ jsx("div", { className: "truncate text-sm font-medium text-slate-100", children: s.name }),
+            /* @__PURE__ */ jsxs("div", { className: "truncate text-[0.65rem] uppercase tracking-wider text-slate-500", children: [
+              s.region,
+              " · ",
+              s.kind
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: "shrink-0 tabular-nums font-semibold text-slate-100",
+              style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
+              children: [
+                fmtInt$1(s.total),
+                /* @__PURE__ */ jsx("span", { className: "ml-1 text-[0.65rem] text-slate-400", children: "kWh" })
+              ]
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            className: "mt-1 h-1.5 w-full overflow-hidden rounded-full bg-white/5",
+            role: "progressbar",
+            "aria-valuemin": 0,
+            "aria-valuemax": 100,
+            "aria-valuenow": Math.round(s.share * 100),
+            "aria-label": `${s.name} share of top`,
+            children: /* @__PURE__ */ jsx(
+              "div",
+              {
+                className: "h-full rounded-full",
+                style: {
+                  width: `${s.share * 100}%`,
+                  background: `linear-gradient(90deg, ${accent.from}, ${accent.to})`,
+                  boxShadow: `0 0 16px -4px ${accent.from}`
+                }
+              }
+            )
+          }
+        )
+      ] }, s.name);
+    }) })
+  ] });
+}
+function statusColor(status) {
+  switch (status) {
+    case "ok":
+      return { dot: "#a3e635", pulse: "rgba(163, 230, 53, 0.55)" };
+    case "warn":
+      return { dot: "#fbbf24", pulse: "rgba(251, 191, 36, 0.55)" };
+    case "fault":
+      return { dot: "#ef4444", pulse: "rgba(239, 68, 68, 0.55)" };
+  }
+}
+function LiveStatusTile() {
+  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+    /* @__PURE__ */ jsxs("header", { className: "mb-3 flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Live status" }),
+      /* @__PURE__ */ jsx("span", { className: "text-[0.65rem] uppercase tracking-wider text-slate-500", children: "streaming" })
+    ] }),
+    /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-3", children: LIVE_STATUS.map((s) => {
+      const c = statusColor(s.status);
+      return /* @__PURE__ */ jsxs("li", { className: "flex items-start gap-3", children: [
+        /* @__PURE__ */ jsx(
+          "span",
+          {
+            className: "nrg-dot-pulse mt-1 inline-block size-2.5 shrink-0 rounded-full",
+            style: {
+              backgroundColor: c.dot,
+              ["--nrg-pulse-color"]: c.pulse
+            },
+            "aria-hidden": "true"
+          }
+        ),
+        /* @__PURE__ */ jsxs("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxs("div", { className: "flex items-baseline justify-between gap-2", children: [
+            /* @__PURE__ */ jsx("span", { className: "truncate text-sm font-medium text-slate-100", children: s.label }),
+            /* @__PURE__ */ jsxs(
+              "span",
+              {
+                className: "shrink-0 tabular-nums text-sm font-semibold text-slate-100",
+                style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
+                children: [
+                  s.online,
+                  s.offline > 0 ? /* @__PURE__ */ jsxs("span", { className: "ml-1 text-xs font-normal text-amber-300/80", children: [
+                    "/",
+                    s.offline,
+                    "↓"
+                  ] }) : null
+                ]
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] text-slate-400", children: s.detail })
+        ] })
+      ] }, s.kind);
+    }) })
+  ] });
+}
+function WeatherGlyph({ icon }) {
+  switch (icon) {
+    case "sun":
+      return /* @__PURE__ */ jsx(Sun, { size: 20, className: "text-amber-300" });
+    case "cloud":
+      return /* @__PURE__ */ jsx(Cloud, { size: 20, className: "text-slate-300" });
+    case "rain":
+      return /* @__PURE__ */ jsx(CloudRain, { size: 20, className: "text-sky-300" });
+    case "wind":
+      return /* @__PURE__ */ jsx(Wind, { size: 20, className: "text-cyan-300" });
+  }
+}
+function WeatherTile() {
+  return /* @__PURE__ */ jsxs("article", { className: cardClass() + " p-5", children: [
+    /* @__PURE__ */ jsxs("header", { className: "mb-3 flex items-center justify-between", children: [
+      /* @__PURE__ */ jsx("div", { className: "text-[0.7rem] uppercase tracking-[0.18em] text-slate-400", children: "Forecast · 5 day" }),
+      /* @__PURE__ */ jsx("span", { className: "text-[0.65rem] uppercase tracking-wider text-slate-500", children: "drives plan" })
+    ] }),
+    /* @__PURE__ */ jsx("ul", { className: "grid grid-cols-5 gap-2", children: WEATHER_5D.map((d) => /* @__PURE__ */ jsxs(
+      "li",
+      {
+        className: "rounded-lg border border-white/10 bg-white/[0.02] p-2 text-center",
+        children: [
+          /* @__PURE__ */ jsx("div", { className: "text-[0.65rem] uppercase tracking-wider text-slate-400", children: d.day }),
+          /* @__PURE__ */ jsx("div", { className: "my-1.5 flex justify-center", children: /* @__PURE__ */ jsx(WeatherGlyph, { icon: d.icon }) }),
+          /* @__PURE__ */ jsxs(
+            "div",
+            {
+              className: "text-xs font-semibold tabular-nums text-slate-100",
+              style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
+              children: [
+                d.high,
+                "°",
+                /* @__PURE__ */ jsxs("span", { className: "font-normal text-slate-500", children: [
+                  "/",
+                  d.low,
+                  "°"
+                ] })
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs("div", { className: "mt-1 inline-flex items-center gap-0.5 text-[0.65rem] text-slate-400", children: [
+            /* @__PURE__ */ jsx(Wind, { size: 9 }),
+            /* @__PURE__ */ jsx("span", { className: "tabular-nums", children: d.wind })
+          ] })
+        ]
+      },
+      d.day
+    )) })
+  ] });
+}
+function SourceVignettes() {
+  return /* @__PURE__ */ jsx("article", { className: cardClass() + " p-3 lg:col-span-3", children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-3 md:grid-cols-5", children: [
+    /* @__PURE__ */ jsx(
+      Vignette,
+      {
+        kind: "solar",
+        metric: "84.2 MW",
+        label: "Peak output 12:00",
+        illustration: /* @__PURE__ */ jsx(SolarPanelIllustration, { className: "h-24 w-full" })
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      Vignette,
+      {
+        kind: "wind",
+        metric: "14.2 rpm",
+        label: "Avg rotor speed",
+        illustration: /* @__PURE__ */ jsx(WindTurbineIllustration, { className: "h-24 w-full" })
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      Vignette,
+      {
+        kind: "water",
+        metric: "2,180 L/s",
+        label: "Aggregate flow",
+        illustration: /* @__PURE__ */ jsx(WaterDropletIllustration, { className: "h-24 w-full" })
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      Vignette,
+      {
+        kind: "hydro",
+        metric: "11 GWh",
+        label: "Reservoir reserve",
+        illustration: /* @__PURE__ */ jsx(HydroDamIllustration, { className: "h-24 w-full" })
+      }
+    ),
+    /* @__PURE__ */ jsx(
+      Vignette,
+      {
+        kind: "storage",
+        metric: `${BATTERY_RATE_KW.toLocaleString()} kW`,
+        label: `Discharging · ${BATTERY_SOC_PCT}% SoC`,
+        illustration: /* @__PURE__ */ jsx(BatteryIllustration, { className: "h-24 w-full", socPct: BATTERY_SOC_PCT })
+      }
+    )
+  ] }) });
+}
+function Vignette({
+  kind,
+  metric,
+  label,
+  illustration
+}) {
+  const accent = ACCENT[kind];
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      className: "rounded-xl border border-white/10 bg-slate-950/40 p-2 transition-colors duration-200 hover:bg-slate-950/70",
+      children: [
+        /* @__PURE__ */ jsx("div", { className: "overflow-hidden rounded-lg", children: illustration }),
+        /* @__PURE__ */ jsxs("div", { className: "mt-2 flex items-baseline justify-between gap-2 px-1", children: [
+          /* @__PURE__ */ jsx("span", { className: "text-[0.65rem] uppercase tracking-[0.16em] " + accent.text, children: kind }),
+          /* @__PURE__ */ jsx(
+            "span",
+            {
+              className: "text-sm font-semibold tabular-nums text-slate-100",
+              style: { fontFamily: '"Fira Code", ui-monospace, monospace' },
+              children: metric
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx("div", { className: "px-1 text-[0.7rem] text-slate-400", children: label })
+      ]
+    }
+  );
+}
+
+function EnergyPage() {
+  const [section, setSection] = React.useState("overview");
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID,
+      "data-ext-page": "energy",
+      className: "nrg-shell rounded-2xl p-3 sm:p-4",
+      style: { fontFamily: '"Fira Sans", ui-sans-serif, system-ui, sans-serif' },
+      children: /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-3 sm:gap-4", children: [
+        /* @__PURE__ */ jsx(NavRail, { active: section, onSelect: setSection }),
+        /* @__PURE__ */ jsxs("div", { className: "flex min-w-0 flex-1 flex-col gap-4", children: [
+          /* @__PURE__ */ jsx(
+            HeroGradient,
+            {
+              title: titleFor(section),
+              subtitle: subtitleFor(section),
+              breadcrumb: ["Rubix-OS", "Energy", sectionLabel(section)],
+              rightEl: /* @__PURE__ */ jsxs("div", { className: "hidden items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs text-white backdrop-blur sm:inline-flex", children: [
+                /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full bg-lime-300 shadow-[0_0_10px_2px_rgba(163,230,53,0.7)]" }),
+                "live · v1 mock data"
+              ] })
+            }
+          ),
+          /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-3 lg:grid-cols-3", children: [
+            /* @__PURE__ */ jsx(TotalGenerationTile, {}),
+            /* @__PURE__ */ jsx(MixDonutTile, {}),
+            /* @__PURE__ */ jsx(Co2AvoidedTile, {}),
+            /* @__PURE__ */ jsx(SourceVignettes, {}),
+            /* @__PURE__ */ jsx(GenerationTimelineTile, {}),
+            /* @__PURE__ */ jsx(TopSitesTile, {}),
+            /* @__PURE__ */ jsx(LiveStatusTile, {}),
+            /* @__PURE__ */ jsx(WeatherTile, {})
+          ] }),
+          /* @__PURE__ */ jsx("footer", { className: "mt-2 text-[0.65rem] uppercase tracking-[0.16em] text-slate-500", children: "v1 presentation · mock data · live warehouse wiring follow-up" })
+        ] })
+      ] })
+    }
+  );
+}
+function sectionLabel(s) {
+  switch (s) {
+    case "overview":
+      return "Overview";
+    case "solar":
+      return "Solar";
+    case "wind":
+      return "Wind";
+    case "water":
+      return "Water";
+    case "hydro":
+      return "Hydro";
+    case "storage":
+      return "Storage";
+    case "settings":
+      return "Settings";
+  }
+}
+function titleFor(s) {
+  if (s === "overview") return "Energy Dashboard";
+  return `${sectionLabel(s)} · Energy Dashboard`;
+}
+function subtitleFor(s) {
+  switch (s) {
+    case "overview":
+      return "Renewable generation across the portfolio — solar, wind, water and hydro.";
+    case "solar":
+      return "Photovoltaic farms — instant output, inverter health, weather impact.";
+    case "wind":
+      return "Onshore turbines — rotor speed, output, wind-direction trends.";
+    case "water":
+      return "Pumped-storage and run-of-river — flow rate, head, downstream demand.";
+    case "hydro":
+      return "Dams and penstocks — reservoir reserve, spillway state, throttling.";
+    case "storage":
+      return "Battery stacks — state of charge, throughput, cycle health.";
+    case "settings":
+      return "Tile preferences, units, alert thresholds.";
+  }
+}
+
+const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T03:59:49.220Z"}`;
 if (typeof window !== "undefined") {
   console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
   window.__rubixosBuild = RUBIXOS_BUILD_STAMP;
@@ -36572,8 +41559,23 @@ function MainRouter() {
   if (route === "devices") return /* @__PURE__ */ jsx(DevicesPage, {});
   if (route === "history" || route?.startsWith("history/")) return /* @__PURE__ */ jsx(HistoryPage, {});
   if (route === "usage" || route?.startsWith("usage/")) return /* @__PURE__ */ jsx(UsagePage, {});
+  if (route === "energy" || route?.startsWith("energy/")) return /* @__PURE__ */ jsx(EnergyPageWrapper, {});
   if (route === "report" || route?.startsWith("report/")) return /* @__PURE__ */ jsx(ReportPage, {});
   return /* @__PURE__ */ jsx(OverviewPage, {});
+}
+function EnergyPageWrapper() {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID,
+      "data-ext-slot": slot.slotId,
+      "data-ext-theme": theme.mode,
+      className: "p-2 sm:p-3",
+      children: /* @__PURE__ */ jsx(EnergyPage, {})
+    }
+  );
 }
 function UsagePage() {
   const slot = useSlotContext();
@@ -37067,6 +42069,7 @@ const TREE = [
     icon: Database,
     children: [
       { title: "Energy & Water", href: `/extensions/${EXTENSION_ID}/usage`, icon: Zap },
+      { title: "Energy", href: `/extensions/${EXTENSION_ID}/energy`, icon: Sun },
       { title: "Report (print)", href: `/extensions/${EXTENSION_ID}/report`, icon: FileText },
       { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: ChartLine }
     ]

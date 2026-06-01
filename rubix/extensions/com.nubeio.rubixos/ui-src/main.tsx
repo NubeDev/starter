@@ -50,6 +50,7 @@ import { fetchTemplate } from "./api";
 import { fetchExtensionDetail, invalidateExtensionDetail } from "./detail";
 import { HistoryLineChart } from "./chart";
 import { DashboardPage, ReportPage } from "./dashboard";
+import { EnergyPage } from "./energy";
 
 export default function Main(): React.ReactElement {
   return (
@@ -66,8 +67,30 @@ function MainRouter(): React.ReactElement {
   if (route === "devices")  return <DevicesPage />;
   if (route === "history" || route?.startsWith("history/")) return <HistoryPage />;
   if (route === "usage" || route?.startsWith("usage/")) return <UsagePage />;
+  if (route === "energy" || route?.startsWith("energy/")) return <EnergyPageWrapper />;
   if (route === "report" || route?.startsWith("report/")) return <ReportPage />;
   return <OverviewPage />;
+}
+
+/* ============================== Energy ============================== */
+
+// Thin wrapper that frames `<EnergyPage />` inside the same
+// `Page` chrome the other routes use. The energy module brings
+// its own dark OLED shell + nav-rail, so we skip the header bar
+// and just hand it the page surface.
+function EnergyPageWrapper(): React.ReactElement {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  return (
+    <div
+      data-ext-id={EXTENSION_ID}
+      data-ext-slot={slot.slotId}
+      data-ext-theme={theme.mode}
+      className="p-2 sm:p-3"
+    >
+      <EnergyPage />
+    </div>
+  );
 }
 
 /* ============================== Usage =============================== */

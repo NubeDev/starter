@@ -1,0 +1,115 @@
+/* Energy dashboard animation primitives.
+ *
+ * Per the extension CSS isolation rule (see app.css preamble) ALL
+ * keyframes / utilities live inside @layer rubix-extension so they
+ * never out-rank host responsive variants by source order.
+ *
+ * Every motion-bearing rule degrades gracefully under
+ * `prefers-reduced-motion: reduce`. */
+
+@layer rubix-extension {
+
+  /* -------- Hero gradient slow hue-shift -------- */
+  @keyframes nrg-hero-slide {
+    0%   { background-position:   0% 50%; }
+    50%  { background-position: 100% 50%; }
+    100% { background-position:   0% 50%; }
+  }
+  .nrg-hero-gradient {
+    background-size: 220% 220%;
+    animation: nrg-hero-slide 18s ease-in-out infinite;
+  }
+
+  /* -------- Wind turbine rotor -------- */
+  @keyframes nrg-spin {
+    from { transform: rotate(0deg);   }
+    to   { transform: rotate(360deg); }
+  }
+  .nrg-spin-slow { animation: nrg-spin 4.2s linear infinite; transform-origin: 50% 50%; transform-box: fill-box; }
+  .nrg-spin-med  { animation: nrg-spin 2.4s linear infinite; transform-origin: 50% 50%; transform-box: fill-box; }
+
+  /* -------- Water droplet bob -------- */
+  @keyframes nrg-bob {
+    0%, 100% { transform: translateY(0px);    }
+    50%      { transform: translateY(-3.5px); }
+  }
+  .nrg-bob { animation: nrg-bob 3.8s ease-in-out infinite; transform-origin: 50% 50%; transform-box: fill-box; }
+
+  /* -------- Battery charge level pulse -------- */
+  @keyframes nrg-charge {
+    0%   { opacity: 0.55; }
+    50%  { opacity: 1;    }
+    100% { opacity: 0.55; }
+  }
+  .nrg-charge { animation: nrg-charge 2.6s ease-in-out infinite; }
+
+  /* -------- Status dot pulse -------- */
+  @keyframes nrg-status-pulse {
+    0%   { box-shadow: 0 0 0 0   var(--nrg-pulse-color, rgba(163, 230, 53, 0.55)); }
+    70%  { box-shadow: 0 0 0 9px rgba(0, 0, 0, 0); }
+    100% { box-shadow: 0 0 0 0   rgba(0, 0, 0, 0); }
+  }
+  .nrg-dot-pulse {
+    animation: nrg-status-pulse 1.9s cubic-bezier(0.45, 0, 0.2, 1) infinite;
+  }
+
+  /* -------- Soft glow halos behind hero KPI values -------- */
+  .nrg-glow-amber {
+    text-shadow: 0 0 22px rgba(251, 191, 36, 0.45),
+                 0 0 4px  rgba(251, 191, 36, 0.30);
+  }
+  .nrg-glow-lime {
+    text-shadow: 0 0 22px rgba(163, 230, 53, 0.40),
+                 0 0 4px  rgba(163, 230, 53, 0.30);
+  }
+  .nrg-glow-cyan {
+    text-shadow: 0 0 22px rgba(34, 211, 238, 0.40),
+                 0 0 4px  rgba(34, 211, 238, 0.30);
+  }
+
+  /* -------- OLED page shell -------- */
+  .nrg-shell {
+    background-color: #0F0F23;
+    background-image:
+      radial-gradient(60% 50% at 12% 0%,  rgba(99, 102, 241, 0.22), transparent 70%),
+      radial-gradient(50% 50% at 95% 8%,  rgba(34, 211, 238, 0.18), transparent 70%),
+      radial-gradient(40% 40% at 65% 100%, rgba(251, 191, 36, 0.14), transparent 70%);
+    min-height: 100%;
+    color: #F8FAFC;
+  }
+
+  /* -------- Bento card primitive -------- */
+  .nrg-card {
+    background: rgba(15, 23, 42, 0.78);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 1rem;
+    box-shadow:
+      0 1px 0 0 rgba(255, 255, 255, 0.04) inset,
+      0 18px 44px -22px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
+  }
+  .nrg-card--solar  { box-shadow: 0 0 0 1px rgba(251, 191, 36, 0.18) inset, 0 18px 44px -22px rgba(251, 191, 36, 0.25); }
+  .nrg-card--wind   { box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.18) inset, 0 18px 44px -22px rgba(34, 211, 238, 0.25); }
+  .nrg-card--water  { box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.18) inset, 0 18px 44px -22px rgba(56, 189, 248, 0.25); }
+  .nrg-card--hydro  { box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.20) inset, 0 18px 44px -22px rgba(99, 102, 241, 0.30); }
+  .nrg-card--storage{ box-shadow: 0 0 0 1px rgba(163, 230, 53, 0.18) inset, 0 18px 44px -22px rgba(163, 230, 53, 0.25); }
+
+  /* -------- Nav rail active indicator -------- */
+  .nrg-nav-active {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.02));
+    box-shadow: inset 2px 0 0 0 var(--nrg-nav-accent, #CA8A04),
+                0 0 24px -8px var(--nrg-nav-accent, #CA8A04);
+  }
+
+  /* -------- Reduced motion guard -------- */
+  @media (prefers-reduced-motion: reduce) {
+    .nrg-hero-gradient,
+    .nrg-spin-slow,
+    .nrg-spin-med,
+    .nrg-bob,
+    .nrg-charge,
+    .nrg-dot-pulse {
+      animation: none !important;
+    }
+  }
+}

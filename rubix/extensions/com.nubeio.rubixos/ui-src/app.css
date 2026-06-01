@@ -8,6 +8,10 @@
  * silently overrides host responsive utilities by source order. */
 @import "tailwindcss" layer(rubix-extension) no-preflight;
 
+/* Energy dashboard keyframes + utilities (also layered into
+ * `rubix-extension` so host responsive variants stay authoritative). */
+@import "./energy/animations.css";
+
 /* `@theme reference` — tells Tailwind v4 these token names exist so it
    generates utility classes (bg-primary, text-muted-foreground, etc.)
    but emits ZERO values into the output CSS. The host already defines
