@@ -92,6 +92,10 @@ contributes:
       input_schema: kinds/bc_device_decommission_in.json
       output_schema: kinds/bc_write_out.json
       description_file: kinds/bc_device.md
+    - id: com.nubeio.rubixos.bc_device_assign_page
+      input_schema: kinds/bc_device_assign_page_in.json
+      output_schema: kinds/bc_device_assign_page_out.json
+      description_file: kinds/bc_device.md
     - id: com.nubeio.rubixos.bc_site_create
       input_schema: kinds/bc_site_create_in.json
       output_schema: kinds/bc_write_out.json
@@ -265,9 +269,13 @@ contributes:
         - { name: created_at,  type: "TIMESTAMPTZ", default: "now()" }
 
     - name: bc_pages
-      order_by: [page_id]
+      order_by: [site_id, page_id]
       columns:
         - { name: page_id,    type: "TEXT" }
+        # A page is a site's dashboard: it belongs to one site, so the
+        # client browses "Site → its pages". Nullable for pages created
+        # before this column existed (they read as unassigned).
+        - { name: site_id,    type: "TEXT",        default: "NULL" }
         - { name: name,       type: "TEXT",        default: "NULL" }
         - { name: created_at, type: "TIMESTAMPTZ", default: "now()" }
 

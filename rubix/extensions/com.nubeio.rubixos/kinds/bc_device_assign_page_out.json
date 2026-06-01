@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcDeviceAssignPageOutput",
+  "description": "Result of placing a pending device on a page.",
+  "type": "object",
+  "required": ["device_id", "page_id", "widgets", "status"],
+  "properties": {
+    "device_id": { "type": "string" },
+    "page_id": { "type": "string" },
+    "widgets": { "type": "integer", "minimum": 0, "description": "Widget tiles generated on the page." },
+    "status": { "type": "string", "description": "Device status after assignment (always `provisioned`)." }
+  },
+  "additionalProperties": false
+}

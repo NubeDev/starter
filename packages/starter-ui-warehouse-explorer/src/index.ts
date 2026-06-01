@@ -1,5 +1,6 @@
 export { Explorer } from "./views/explorer-shell";
-export { Overview, Tables, Query, Schema } from "./views";
+export { Overview, Tables, Query, Schema, SchemaExplorer } from "./views";
+export type { SchemaExplorerProps } from "./views";
 export {
   SqlProvider,
   useSql,

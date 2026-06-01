@@ -141,6 +141,12 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
         let mut sdui_extension_registry: Option<Arc<starter_ext_host::ExtensionRegistry>> = None;
 
         if let Some(bundle) = ext_bundle {
+            // Surface the boot-reaper report on the admin supervisor-health
+            // endpoint (`GET /api/v1/admin/supervisor/health`). Captured
+            // before `bundle.admin` is consumed by the router below.
+            admin_state =
+                admin_state.with_supervisor_reaped(Arc::new(bundle.reaped.clone()));
+
             let ext_router: Router =
                 starter_ext_server::router_with_auth(bundle.admin, auth.authenticator.clone());
             app = app.merge_external(Router::new().nest("/api/v1", ext_router));

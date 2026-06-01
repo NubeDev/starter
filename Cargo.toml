@@ -97,7 +97,7 @@ members = [
 # whose manifests pick up `starter-ext-sdk` from the starter-extensions
 # workspace via a path dep; the root rubix workspace must not claim
 # them as members.
-exclude = ["starter-extensions", "rubix/extensions"]
+exclude = ["starter-extensions", "rubix/extensions", "rubix/apps"]
 
 # Pre-existing clippy lints surfaced by clippy 1.94+ that are unrelated to the
 # warehouse-engine-swap rename. CI pins to `stable` (older clippy) so these

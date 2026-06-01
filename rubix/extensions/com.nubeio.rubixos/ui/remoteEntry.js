@@ -1,7 +1,7 @@
 (function () {
 	'use strict';
 
-	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.nubeio.rubixos\"] :before, [data-ext-id=\"com.nubeio.rubixos\"]:before, [data-ext-id=\"com.nubeio.rubixos\"] :after, [data-ext-id=\"com.nubeio.rubixos\"]:after, [data-ext-id=\"com.nubeio.rubixos\"] ::backdrop, [data-ext-id=\"com.nubeio.rubixos\"]::backdrop {\n      --tw-translate-x: 0;\n      --tw-translate-y: 0;\n      --tw-translate-z: 0;\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-divide-y-reverse: 0;\n      --tw-border-style: solid;\n      --tw-gradient-position: initial;\n      --tw-gradient-from: #0000;\n      --tw-gradient-via: #0000;\n      --tw-gradient-to: #0000;\n      --tw-gradient-stops: initial;\n      --tw-gradient-via-stops: initial;\n      --tw-gradient-from-position: 0%;\n      --tw-gradient-via-position: 50%;\n      --tw-gradient-to-position: 100%;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-backdrop-blur: initial;\n      --tw-backdrop-brightness: initial;\n      --tw-backdrop-contrast: initial;\n      --tw-backdrop-grayscale: initial;\n      --tw-backdrop-hue-rotate: initial;\n      --tw-backdrop-invert: initial;\n      --tw-backdrop-opacity: initial;\n      --tw-backdrop-saturate: initial;\n      --tw-backdrop-sepia: initial;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pointer-events-none, [data-ext-id=\"com.nubeio.rubixos\"].pointer-events-none {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .collapse, [data-ext-id=\"com.nubeio.rubixos\"].collapse {\n  visibility: collapse;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .visible, [data-ext-id=\"com.nubeio.rubixos\"].visible {\n  visibility: visible;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .absolute, [data-ext-id=\"com.nubeio.rubixos\"].absolute {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .fixed, [data-ext-id=\"com.nubeio.rubixos\"].fixed {\n  position: fixed;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .relative, [data-ext-id=\"com.nubeio.rubixos\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .static, [data-ext-id=\"com.nubeio.rubixos\"].static {\n  position: static;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .sticky, [data-ext-id=\"com.nubeio.rubixos\"].sticky {\n  position: sticky;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inset-0, [data-ext-id=\"com.nubeio.rubixos\"].inset-0 {\n  inset: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inset-6, [data-ext-id=\"com.nubeio.rubixos\"].inset-6 {\n  inset: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-top-1, [data-ext-id=\"com.nubeio.rubixos\"].-top-1 {\n  top: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-0, [data-ext-id=\"com.nubeio.rubixos\"].top-0 {\n  top: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-3, [data-ext-id=\"com.nubeio.rubixos\"].top-3 {\n  top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-right-1, [data-ext-id=\"com.nubeio.rubixos\"].-right-1 {\n  right: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .left-3, [data-ext-id=\"com.nubeio.rubixos\"].left-3 {\n  left: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .z-10, [data-ext-id=\"com.nubeio.rubixos\"].z-10 {\n  z-index: 10;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .z-50, [data-ext-id=\"com.nubeio.rubixos\"].z-50 {\n  z-index: 50;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .float-right, [data-ext-id=\"com.nubeio.rubixos\"].float-right {\n  float: right;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n  width: 100%;\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 40rem;\n  }\n}\n\n@media (min-width: 48rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 48rem;\n  }\n}\n\n@media (min-width: 64rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 64rem;\n  }\n}\n\n@media (min-width: 80rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 80rem;\n  }\n}\n\n@media (min-width: 96rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 96rem;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .m-0, [data-ext-id=\"com.nubeio.rubixos\"].m-0 {\n  margin: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-mx-1, [data-ext-id=\"com.nubeio.rubixos\"].-mx-1 {\n  margin-inline: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mx-3\\.5 {\n  margin-inline: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-auto, [data-ext-id=\"com.nubeio.rubixos\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .my-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].my-1\\.5 {\n  margin-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ms-auto, [data-ext-id=\"com.nubeio.rubixos\"].ms-auto {\n  margin-inline-start: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mt-0\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-1, [data-ext-id=\"com.nubeio.rubixos\"].mt-1 {\n  margin-top: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mt-1\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-2, [data-ext-id=\"com.nubeio.rubixos\"].mt-2 {\n  margin-top: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-3, [data-ext-id=\"com.nubeio.rubixos\"].mt-3 {\n  margin-top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-4, [data-ext-id=\"com.nubeio.rubixos\"].mt-4 {\n  margin-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mr-2, [data-ext-id=\"com.nubeio.rubixos\"].mr-2 {\n  margin-right: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-1, [data-ext-id=\"com.nubeio.rubixos\"].mb-1 {\n  margin-bottom: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-2, [data-ext-id=\"com.nubeio.rubixos\"].mb-2 {\n  margin-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-3, [data-ext-id=\"com.nubeio.rubixos\"].mb-3 {\n  margin-bottom: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-1, [data-ext-id=\"com.nubeio.rubixos\"].ml-1 {\n  margin-left: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-2, [data-ext-id=\"com.nubeio.rubixos\"].ml-2 {\n  margin-left: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-3, [data-ext-id=\"com.nubeio.rubixos\"].ml-3 {\n  margin-left: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-auto, [data-ext-id=\"com.nubeio.rubixos\"].ml-auto {\n  margin-left: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .block, [data-ext-id=\"com.nubeio.rubixos\"].block {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex, [data-ext-id=\"com.nubeio.rubixos\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid, [data-ext-id=\"com.nubeio.rubixos\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .hidden, [data-ext-id=\"com.nubeio.rubixos\"].hidden {\n  display: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline, [data-ext-id=\"com.nubeio.rubixos\"].inline {\n  display: inline;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline-block, [data-ext-id=\"com.nubeio.rubixos\"].inline-block {\n  display: inline-block;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline-flex, [data-ext-id=\"com.nubeio.rubixos\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .table, [data-ext-id=\"com.nubeio.rubixos\"].table {\n  display: table;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aspect-square, [data-ext-id=\"com.nubeio.rubixos\"].aspect-square {\n  aspect-ratio: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-2, [data-ext-id=\"com.nubeio.rubixos\"].size-2 {\n  width: calc(var(--spacing, .25rem) * 2);\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-2\\.5 {\n  width: calc(var(--spacing, .25rem) * 2.5);\n  height: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-3, [data-ext-id=\"com.nubeio.rubixos\"].size-3 {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-4, [data-ext-id=\"com.nubeio.rubixos\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-5, [data-ext-id=\"com.nubeio.rubixos\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-6, [data-ext-id=\"com.nubeio.rubixos\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-10, [data-ext-id=\"com.nubeio.rubixos\"].size-10 {\n  width: calc(var(--spacing, .25rem) * 10);\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-12, [data-ext-id=\"com.nubeio.rubixos\"].size-12 {\n  width: calc(var(--spacing, .25rem) * 12);\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-14, [data-ext-id=\"com.nubeio.rubixos\"].size-14 {\n  width: calc(var(--spacing, .25rem) * 14);\n  height: calc(var(--spacing, .25rem) * 14);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-40, [data-ext-id=\"com.nubeio.rubixos\"].size-40 {\n  width: calc(var(--spacing, .25rem) * 40);\n  height: calc(var(--spacing, .25rem) * 40);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].h-1\\.5 {\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-2, [data-ext-id=\"com.nubeio.rubixos\"].h-2 {\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-3, [data-ext-id=\"com.nubeio.rubixos\"].h-3 {\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].h-3\\.5 {\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-4, [data-ext-id=\"com.nubeio.rubixos\"].h-4 {\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-5, [data-ext-id=\"com.nubeio.rubixos\"].h-5 {\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-6, [data-ext-id=\"com.nubeio.rubixos\"].h-6 {\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-7, [data-ext-id=\"com.nubeio.rubixos\"].h-7 {\n  height: calc(var(--spacing, .25rem) * 7);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-8, [data-ext-id=\"com.nubeio.rubixos\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-9, [data-ext-id=\"com.nubeio.rubixos\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-12, [data-ext-id=\"com.nubeio.rubixos\"].h-12 {\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-20, [data-ext-id=\"com.nubeio.rubixos\"].h-20 {\n  height: calc(var(--spacing, .25rem) * 20);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-24, [data-ext-id=\"com.nubeio.rubixos\"].h-24 {\n  height: calc(var(--spacing, .25rem) * 24);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-44, [data-ext-id=\"com.nubeio.rubixos\"].h-44 {\n  height: calc(var(--spacing, .25rem) * 44);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-64, [data-ext-id=\"com.nubeio.rubixos\"].h-64 {\n  height: calc(var(--spacing, .25rem) * 64);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-\\[60vh\\], [data-ext-id=\"com.nubeio.rubixos\"].h-\\[60vh\\] {\n  height: 60vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-full, [data-ext-id=\"com.nubeio.rubixos\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-h-\\[60vh\\], [data-ext-id=\"com.nubeio.rubixos\"].max-h-\\[60vh\\] {\n  max-height: 60vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-h-\\[220px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-h-\\[220px\\] {\n  max-height: 220px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-h-\\[100dvh\\], [data-ext-id=\"com.nubeio.rubixos\"].min-h-\\[100dvh\\] {\n  min-height: 100dvh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].w-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].w-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-4, [data-ext-id=\"com.nubeio.rubixos\"].w-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-5, [data-ext-id=\"com.nubeio.rubixos\"].w-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-8, [data-ext-id=\"com.nubeio.rubixos\"].w-8 {\n  width: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-9, [data-ext-id=\"com.nubeio.rubixos\"].w-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-10, [data-ext-id=\"com.nubeio.rubixos\"].w-10 {\n  width: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-20, [data-ext-id=\"com.nubeio.rubixos\"].w-20 {\n  width: calc(var(--spacing, .25rem) * 20);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-32, [data-ext-id=\"com.nubeio.rubixos\"].w-32 {\n  width: calc(var(--spacing, .25rem) * 32);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-44, [data-ext-id=\"com.nubeio.rubixos\"].w-44 {\n  width: calc(var(--spacing, .25rem) * 44);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-full, [data-ext-id=\"com.nubeio.rubixos\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-2xl, [data-ext-id=\"com.nubeio.rubixos\"].max-w-2xl {\n  max-width: var(--container-2xl, 42rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[120px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[120px\\] {\n  max-width: 120px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[260px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[260px\\] {\n  max-width: 260px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[920px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[920px\\] {\n  max-width: 920px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-lg, [data-ext-id=\"com.nubeio.rubixos\"].max-w-lg {\n  max-width: var(--container-lg, 32rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-md, [data-ext-id=\"com.nubeio.rubixos\"].max-w-md {\n  max-width: var(--container-md, 28rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-xs, [data-ext-id=\"com.nubeio.rubixos\"].max-w-xs {\n  max-width: var(--container-xs, 20rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-0, [data-ext-id=\"com.nubeio.rubixos\"].min-w-0 {\n  min-width: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[1rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[1rem\\] {\n  min-width: 1rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[10rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[10rem\\] {\n  min-width: 10rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[12rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[12rem\\] {\n  min-width: 12rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-full, [data-ext-id=\"com.nubeio.rubixos\"].min-w-full {\n  min-width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-1, [data-ext-id=\"com.nubeio.rubixos\"].flex-1 {\n  flex: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shrink-0, [data-ext-id=\"com.nubeio.rubixos\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grow, [data-ext-id=\"com.nubeio.rubixos\"].grow {\n  flex-grow: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-translate-x-px, [data-ext-id=\"com.nubeio.rubixos\"].-translate-x-px {\n  --tw-translate-x: -1px;\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-0\\.5 {\n  --tw-translate-x: calc(var(--spacing, .25rem) * .5);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-4, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-4 {\n  --tw-translate-x: calc(var(--spacing, .25rem) * 4);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-px, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-px {\n  --tw-translate-x: 1px;\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transform, [data-ext-id=\"com.nubeio.rubixos\"].transform {\n  transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .animate-spin, [data-ext-id=\"com.nubeio.rubixos\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .cursor-pointer, [data-ext-id=\"com.nubeio.rubixos\"].cursor-pointer {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .resize-none, [data-ext-id=\"com.nubeio.rubixos\"].resize-none {\n  resize: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .list-none, [data-ext-id=\"com.nubeio.rubixos\"].list-none {\n  list-style-type: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-1, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-2 {\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-4 {\n  grid-template-columns: repeat(4, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-5 {\n  grid-template-columns: repeat(5, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-\\[1\\.5rem_1fr_5rem\\], [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-\\[1\\.5rem_1fr_5rem\\] {\n  grid-template-columns: 1.5rem 1fr 5rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-\\[1fr_auto\\], [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-\\[1fr_auto\\] {\n  grid-template-columns: 1fr auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-rows-3, [data-ext-id=\"com.nubeio.rubixos\"].grid-rows-3 {\n  grid-template-rows: repeat(3, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-col, [data-ext-id=\"com.nubeio.rubixos\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-wrap, [data-ext-id=\"com.nubeio.rubixos\"].flex-wrap {\n  flex-wrap: wrap;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-baseline, [data-ext-id=\"com.nubeio.rubixos\"].items-baseline {\n  align-items: baseline;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-center, [data-ext-id=\"com.nubeio.rubixos\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-end, [data-ext-id=\"com.nubeio.rubixos\"].items-end {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-start, [data-ext-id=\"com.nubeio.rubixos\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-between, [data-ext-id=\"com.nubeio.rubixos\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-center, [data-ext-id=\"com.nubeio.rubixos\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-end, [data-ext-id=\"com.nubeio.rubixos\"].justify-end {\n  justify-content: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-0\\.5 {\n  gap: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-1, [data-ext-id=\"com.nubeio.rubixos\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-2, [data-ext-id=\"com.nubeio.rubixos\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-2\\.5 {\n  gap: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-3, [data-ext-id=\"com.nubeio.rubixos\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-4, [data-ext-id=\"com.nubeio.rubixos\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-6, [data-ext-id=\"com.nubeio.rubixos\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-\\[2px\\], [data-ext-id=\"com.nubeio.rubixos\"].gap-\\[2px\\] {\n  gap: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-x-6, [data-ext-id=\"com.nubeio.rubixos\"].gap-x-6 {\n  column-gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-y-3, [data-ext-id=\"com.nubeio.rubixos\"].gap-y-3 {\n  row-gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] :where(.divide-y > :not(:last-child)), [data-ext-id=\"com.nubeio.rubixos\"]:where(.divide-y > :not(:last-child)) {\n  --tw-divide-y-reverse: 0;\n  border-bottom-style: var(--tw-border-style);\n  border-top-style: var(--tw-border-style);\n  border-top-width: calc(1px * var(--tw-divide-y-reverse));\n  border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .self-start, [data-ext-id=\"com.nubeio.rubixos\"].self-start {\n  align-self: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .truncate, [data-ext-id=\"com.nubeio.rubixos\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-hidden, [data-ext-id=\"com.nubeio.rubixos\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-x-auto, [data-ext-id=\"com.nubeio.rubixos\"].overflow-x-auto {\n  overflow-x: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-y-auto, [data-ext-id=\"com.nubeio.rubixos\"].overflow-y-auto {\n  overflow-y: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded, [data-ext-id=\"com.nubeio.rubixos\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded-\\[3px\\], [data-ext-id=\"com.nubeio.rubixos\"].rounded-\\[3px\\] {\n  border-radius: 3px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded-full, [data-ext-id=\"com.nubeio.rubixos\"].rounded-full {\n  border-radius: 3.40282e38px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border, [data-ext-id=\"com.nubeio.rubixos\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-0, [data-ext-id=\"com.nubeio.rubixos\"].border-0 {\n  border-style: var(--tw-border-style);\n  border-width: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-2, [data-ext-id=\"com.nubeio.rubixos\"].border-2 {\n  border-style: var(--tw-border-style);\n  border-width: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-s, [data-ext-id=\"com.nubeio.rubixos\"].border-s {\n  border-inline-start-style: var(--tw-border-style);\n  border-inline-start-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-t, [data-ext-id=\"com.nubeio.rubixos\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-b, [data-ext-id=\"com.nubeio.rubixos\"].border-b {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-b-2, [data-ext-id=\"com.nubeio.rubixos\"].border-b-2 {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/30 {\n  border-color: #fcbb004d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/30 {\n    border-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/40 {\n  border-color: #fcbb0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-400\\/40 {\n  border-color: #00d29466;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-emerald-400, oklch(76.5% .177 163.223)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-500\\/40 {\n  border-color: #00bb7f66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/30 {\n  border-color: #00bcfe4d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/30 {\n    border-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/40 {\n  border-color: #00bcfe66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-slate-200, [data-ext-id=\"com.nubeio.rubixos\"].border-slate-200 {\n  border-color: var(--color-slate-200, oklch(92.9% .013 255.508));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-white\\/10, [data-ext-id=\"com.nubeio.rubixos\"].border-white\\/10 {\n  border-color: #ffffff1a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-white\\/10, [data-ext-id=\"com.nubeio.rubixos\"].border-white\\/10 {\n    border-color: color-mix(in oklab, var(--color-white, #fff) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-yellow-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-yellow-500\\/40 {\n  border-color: #edb20066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-yellow-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-yellow-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-yellow-500, oklch(79.5% .184 86.047)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/10 {\n  background-color: #fcbb001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/10 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/15 {\n  background-color: #fcbb0026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/80 {\n  background-color: #fcbb00cc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/80 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/\\[0\\.06\\] {\n  background-color: #fcbb000f;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/\\[0\\.06\\] {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 6%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-black, [data-ext-id=\"com.nubeio.rubixos\"].bg-black {\n  background-color: var(--color-black, #000);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-black\\/50, [data-ext-id=\"com.nubeio.rubixos\"].bg-black\\/50 {\n  background-color: #00000080;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-black\\/50, [data-ext-id=\"com.nubeio.rubixos\"].bg-black\\/50 {\n    background-color: color-mix(in oklab, var(--color-black, #000) 50%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-400\\/10 {\n  background-color: #00d2941a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-400\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-400, oklch(76.5% .177 163.223)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500 {\n  background-color: var(--color-emerald-500, oklch(69.6% .17 162.48));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500\\/10 {\n  background-color: #00bb7f1a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-lime-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-lime-400\\/15 {\n  background-color: #9de50026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-lime-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-lime-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-lime-400, oklch(84.1% .238 128.85)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/15 {\n  background-color: #00bcfe26;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/\\[0\\.06\\] {\n  background-color: #00bcfe0f;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/\\[0\\.06\\] {\n    background-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 6%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-200\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-200\\/80 {\n  background-color: #e2e8f0cc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-200\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-200\\/80 {\n    background-color: color-mix(in oklab, var(--color-slate-200, oklch(92.9% .013 255.508)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-900\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-900\\/80 {\n  background-color: #0f172bcc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-900\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-900\\/80 {\n    background-color: color-mix(in oklab, var(--color-slate-900, oklch(20.8% .042 265.755)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300 {\n  background-color: var(--color-teal-300, oklch(85.5% .138 181.071));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/70, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/70 {\n  background-color: #46ecd5b3;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/70, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/70 {\n    background-color: color-mix(in oklab, var(--color-teal-300, oklch(85.5% .138 181.071)) 70%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/90, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/90 {\n  background-color: #46ecd5e6;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/90, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/90 {\n    background-color: color-mix(in oklab, var(--color-teal-300, oklch(85.5% .138 181.071)) 90%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-transparent, [data-ext-id=\"com.nubeio.rubixos\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-white, [data-ext-id=\"com.nubeio.rubixos\"].bg-white {\n  background-color: var(--color-white, #fff);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500 {\n  background-color: var(--color-yellow-500, oklch(79.5% .184 86.047));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500\\/10 {\n  background-color: #edb2001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-yellow-500, oklch(79.5% .184 86.047)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-gradient-to-r, [data-ext-id=\"com.nubeio.rubixos\"].bg-gradient-to-r {\n  --tw-gradient-position: to right in oklab;\n  background-image: linear-gradient(var(--tw-gradient-stops));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n  --tw-gradient-from: var(--color-primary);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n    --tw-gradient-from: color-mix(in oklab, var(--color-primary) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n  --tw-gradient-via: var(--color-aqua);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n    --tw-gradient-via: color-mix(in oklab, var(--color-aqua) 8%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n  --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);\n  --tw-gradient-stops: var(--tw-gradient-via-stops);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n  --tw-gradient-to: var(--color-leaf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n    --tw-gradient-to: color-mix(in oklab, var(--color-leaf) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .object-cover, [data-ext-id=\"com.nubeio.rubixos\"].object-cover {\n  object-fit: cover;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-0, [data-ext-id=\"com.nubeio.rubixos\"].p-0 {\n  padding: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].p-0\\.5 {\n  padding: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-1, [data-ext-id=\"com.nubeio.rubixos\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].p-1\\.5 {\n  padding: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-2, [data-ext-id=\"com.nubeio.rubixos\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-3, [data-ext-id=\"com.nubeio.rubixos\"].p-3 {\n  padding: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-4, [data-ext-id=\"com.nubeio.rubixos\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-5, [data-ext-id=\"com.nubeio.rubixos\"].p-5 {\n  padding: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-6, [data-ext-id=\"com.nubeio.rubixos\"].p-6 {\n  padding: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-1, [data-ext-id=\"com.nubeio.rubixos\"].px-1 {\n  padding-inline: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].px-1\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-2, [data-ext-id=\"com.nubeio.rubixos\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].px-2\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-3, [data-ext-id=\"com.nubeio.rubixos\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-4, [data-ext-id=\"com.nubeio.rubixos\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-1, [data-ext-id=\"com.nubeio.rubixos\"].py-1 {\n  padding-block: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-1\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-2, [data-ext-id=\"com.nubeio.rubixos\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-3, [data-ext-id=\"com.nubeio.rubixos\"].py-3 {\n  padding-block: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-4, [data-ext-id=\"com.nubeio.rubixos\"].py-4 {\n  padding-block: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-6, [data-ext-id=\"com.nubeio.rubixos\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-px, [data-ext-id=\"com.nubeio.rubixos\"].py-px {\n  padding-block: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-1, [data-ext-id=\"com.nubeio.rubixos\"].pt-1 {\n  padding-top: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-3, [data-ext-id=\"com.nubeio.rubixos\"].pt-3 {\n  padding-top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-4, [data-ext-id=\"com.nubeio.rubixos\"].pt-4 {\n  padding-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pr-1, [data-ext-id=\"com.nubeio.rubixos\"].pr-1 {\n  padding-right: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-1, [data-ext-id=\"com.nubeio.rubixos\"].pb-1 {\n  padding-bottom: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-2, [data-ext-id=\"com.nubeio.rubixos\"].pb-2 {\n  padding-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-4, [data-ext-id=\"com.nubeio.rubixos\"].pb-4 {\n  padding-bottom: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pl-2, [data-ext-id=\"com.nubeio.rubixos\"].pl-2 {\n  padding-left: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-center, [data-ext-id=\"com.nubeio.rubixos\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-left, [data-ext-id=\"com.nubeio.rubixos\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-right, [data-ext-id=\"com.nubeio.rubixos\"].text-right {\n  text-align: right;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-start, [data-ext-id=\"com.nubeio.rubixos\"].text-start {\n  text-align: start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .align-middle, [data-ext-id=\"com.nubeio.rubixos\"].align-middle {\n  vertical-align: middle;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-2xl, [data-ext-id=\"com.nubeio.rubixos\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-3xl, [data-ext-id=\"com.nubeio.rubixos\"].text-3xl {\n  font-size: var(--text-3xl, 1.875rem);\n  line-height: var(--tw-leading, var(--text-3xl--line-height, calc(2.25 / 1.875)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-4xl, [data-ext-id=\"com.nubeio.rubixos\"].text-4xl {\n  font-size: var(--text-4xl, 2.25rem);\n  line-height: var(--tw-leading, var(--text-4xl--line-height, calc(2.5 / 2.25)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-5xl, [data-ext-id=\"com.nubeio.rubixos\"].text-5xl {\n  font-size: var(--text-5xl, 3rem);\n  line-height: var(--tw-leading, var(--text-5xl--line-height, 1));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-base, [data-ext-id=\"com.nubeio.rubixos\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lg, [data-ext-id=\"com.nubeio.rubixos\"].text-lg {\n  font-size: var(--text-lg, 1.125rem);\n  line-height: var(--tw-leading, var(--text-lg--line-height, calc(1.75 / 1.125)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sm, [data-ext-id=\"com.nubeio.rubixos\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-xl, [data-ext-id=\"com.nubeio.rubixos\"].text-xl {\n  font-size: var(--text-xl, 1.25rem);\n  line-height: var(--tw-leading, var(--text-xl--line-height, calc(1.75 / 1.25)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-xs, [data-ext-id=\"com.nubeio.rubixos\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.6rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.6rem\\] {\n  font-size: .6rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.7rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.7rem\\] {\n  font-size: .7rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.65rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.65rem\\] {\n  font-size: .65rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-none, [data-ext-id=\"com.nubeio.rubixos\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-tight, [data-ext-id=\"com.nubeio.rubixos\"].leading-tight {\n  --tw-leading: var(--leading-tight, 1.25);\n  line-height: var(--leading-tight, 1.25);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-bold, [data-ext-id=\"com.nubeio.rubixos\"].font-bold {\n  --tw-font-weight: var(--font-weight-bold, 700);\n  font-weight: var(--font-weight-bold, 700);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-medium, [data-ext-id=\"com.nubeio.rubixos\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-normal, [data-ext-id=\"com.nubeio.rubixos\"].font-normal {\n  --tw-font-weight: var(--font-weight-normal, 400);\n  font-weight: var(--font-weight-normal, 400);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-semibold, [data-ext-id=\"com.nubeio.rubixos\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-\\[0\\.18em\\], [data-ext-id=\"com.nubeio.rubixos\"].tracking-\\[0\\.18em\\] {\n  --tw-tracking: .18em;\n  letter-spacing: .18em;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-normal, [data-ext-id=\"com.nubeio.rubixos\"].tracking-normal {\n  --tw-tracking: var(--tracking-normal, 0em);\n  letter-spacing: var(--tracking-normal, 0em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-tight, [data-ext-id=\"com.nubeio.rubixos\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-wide, [data-ext-id=\"com.nubeio.rubixos\"].tracking-wide {\n  --tw-tracking: var(--tracking-wide, .025em);\n  letter-spacing: var(--tracking-wide, .025em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .break-all, [data-ext-id=\"com.nubeio.rubixos\"].break-all {\n  word-break: break-all;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\!text-current, [data-ext-id=\"com.nubeio.rubixos\"].\\!text-current {\n  color: currentColor !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-300, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-300 {\n  color: var(--color-amber-300, oklch(87.9% .169 91.605));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-400, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-400 {\n  color: var(--color-amber-400, oklch(82.8% .189 84.429));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-500, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-500 {\n  color: var(--color-amber-500, oklch(76.9% .188 70.08));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-600, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-600 {\n  color: var(--color-amber-600, oklch(66.6% .179 58.318));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-300, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-300 {\n  color: var(--color-cyan-300, oklch(86.5% .127 207.078));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-500, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-500 {\n  color: var(--color-cyan-500, oklch(71.5% .143 215.221));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-600, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-600 {\n  color: var(--color-cyan-600, oklch(60.9% .126 221.723));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-300, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-300 {\n  color: var(--color-emerald-300, oklch(84.5% .143 164.978));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-500, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-500 {\n  color: var(--color-emerald-500, oklch(69.6% .17 162.48));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-600, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-indigo-300, [data-ext-id=\"com.nubeio.rubixos\"].text-indigo-300 {\n  color: var(--color-indigo-300, oklch(78.5% .115 274.713));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-indigo-600, [data-ext-id=\"com.nubeio.rubixos\"].text-indigo-600 {\n  color: var(--color-indigo-600, oklch(51.1% .262 276.966));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lime-300, [data-ext-id=\"com.nubeio.rubixos\"].text-lime-300 {\n  color: var(--color-lime-300, oklch(89.7% .196 126.665));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lime-600, [data-ext-id=\"com.nubeio.rubixos\"].text-lime-600 {\n  color: var(--color-lime-600, oklch(64.8% .2 131.684));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-300, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-300 {\n  color: var(--color-sky-300, oklch(82.8% .111 230.318));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-400, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-400 {\n  color: var(--color-sky-400, oklch(74.6% .16 232.661));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-500, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-500 {\n  color: var(--color-sky-500, oklch(68.5% .169 237.323));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-600, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-600 {\n  color: var(--color-sky-600, oklch(58.8% .158 241.966));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-100, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-100 {\n  color: var(--color-slate-100, oklch(96.8% .007 247.896));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-500, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-500 {\n  color: var(--color-slate-500, oklch(55.4% .046 257.417));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-900, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-900 {\n  color: var(--color-slate-900, oklch(20.8% .042 265.755));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .capitalize, [data-ext-id=\"com.nubeio.rubixos\"].capitalize {\n  text-transform: capitalize;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .normal-case, [data-ext-id=\"com.nubeio.rubixos\"].normal-case {\n  text-transform: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uppercase, [data-ext-id=\"com.nubeio.rubixos\"].uppercase {\n  text-transform: uppercase;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .italic, [data-ext-id=\"com.nubeio.rubixos\"].italic {\n  font-style: italic;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tabular-nums, [data-ext-id=\"com.nubeio.rubixos\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .no-underline, [data-ext-id=\"com.nubeio.rubixos\"].no-underline {\n  text-decoration-line: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-60, [data-ext-id=\"com.nubeio.rubixos\"].opacity-60 {\n  opacity: .6;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-70, [data-ext-id=\"com.nubeio.rubixos\"].opacity-70 {\n  opacity: .7;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-75, [data-ext-id=\"com.nubeio.rubixos\"].opacity-75 {\n  opacity: .75;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-90, [data-ext-id=\"com.nubeio.rubixos\"].opacity-90 {\n  opacity: .9;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow, [data-ext-id=\"com.nubeio.rubixos\"].shadow {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_8px\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_8px\\] {\n  --tw-shadow: 0 0 8px var(--tw-shadow-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n  --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, var(--color-primary));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n    --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, color-mix(in oklab,var(--color-primary) 50%,transparent));\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\] {\n  --tw-shadow: 0 0 10px var(--tw-shadow-color, #ffffff40);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\] {\n  --tw-shadow: 0 0 14px var(--tw-shadow-color, #5eead499);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\] {\n  --tw-shadow: 0 0 18px -6px var(--tw-shadow-color, var(--color-primary));\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\] {\n  --tw-shadow: 0 0 18px var(--tw-shadow-color, #5eead4d9);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\] {\n  --tw-shadow: 0 0 24px -8px var(--tw-shadow-color, var(--color-primary));\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-xl, [data-ext-id=\"com.nubeio.rubixos\"].shadow-xl {\n  --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring, [data-ext-id=\"com.nubeio.rubixos\"].ring, [data-ext-id=\"com.nubeio.rubixos\"] .ring-1, [data-ext-id=\"com.nubeio.rubixos\"].ring-1 {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-2, [data-ext-id=\"com.nubeio.rubixos\"].ring-2 {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-emerald-500\\/60, [data-ext-id=\"com.nubeio.rubixos\"].shadow-emerald-500\\/60 {\n  --tw-shadow-color: #00bb7f99;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .shadow-emerald-500\\/60, [data-ext-id=\"com.nubeio.rubixos\"].shadow-emerald-500\\/60 {\n    --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 60%, transparent) var(--tw-shadow-alpha), transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-amber-400\\/40 {\n  --tw-ring-color: #fcbb0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-amber-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-cyan-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-cyan-400\\/40 {\n  --tw-ring-color: #00d2ef66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-cyan-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-cyan-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-cyan-400, oklch(78.9% .154 211.53)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-indigo-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-indigo-400\\/40 {\n  --tw-ring-color: #7d87ff66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-indigo-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-indigo-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-indigo-400, oklch(67.3% .182 276.935)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-lime-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-lime-400\\/40 {\n  --tw-ring-color: #9de50066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-lime-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-lime-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-lime-400, oklch(84.1% .238 128.85)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-sky-400\\/40 {\n  --tw-ring-color: #00bcfe66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-sky-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200 {\n  --tw-ring-color: var(--color-teal-200, oklch(91% .096 180.426));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200\\/70, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200\\/70 {\n  --tw-ring-color: #96f7e4b3;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200\\/70, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200\\/70 {\n    --tw-ring-color: color-mix(in oklab, var(--color-teal-200, oklch(91% .096 180.426)) 70%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/5, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/5 {\n  --tw-ring-color: #ffffff0d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/5, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/5 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 5%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/30, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/30 {\n  --tw-ring-color: #ffffff4d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/30, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/30 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/40 {\n  --tw-ring-color: #fff6;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .outline-hidden, [data-ext-id=\"com.nubeio.rubixos\"].outline-hidden {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n@media (forced-colors: active) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .outline-hidden, [data-ext-id=\"com.nubeio.rubixos\"].outline-hidden {\n    outline-offset: 2px;\n    outline: 2px solid #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .invert, [data-ext-id=\"com.nubeio.rubixos\"].invert {\n  --tw-invert: invert(100%);\n  filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .filter, [data-ext-id=\"com.nubeio.rubixos\"].filter {\n  filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .backdrop-blur, [data-ext-id=\"com.nubeio.rubixos\"].backdrop-blur {\n  --tw-backdrop-blur: blur(8px);\n  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .backdrop-blur-sm, [data-ext-id=\"com.nubeio.rubixos\"].backdrop-blur-sm {\n  --tw-backdrop-blur: blur(var(--blur-sm, 8px));\n  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-\\[margin\\,opacity\\], [data-ext-id=\"com.nubeio.rubixos\"].transition-\\[margin\\,opacity\\] {\n  transition-property: margin, opacity;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-\\[width\\,height\\,padding\\], [data-ext-id=\"com.nubeio.rubixos\"].transition-\\[width\\,height\\,padding\\] {\n  transition-property: width, height, padding;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-all, [data-ext-id=\"com.nubeio.rubixos\"].transition-all {\n  transition-property: all;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-colors, [data-ext-id=\"com.nubeio.rubixos\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-shadow, [data-ext-id=\"com.nubeio.rubixos\"].transition-shadow {\n  transition-property: box-shadow;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-transform, [data-ext-id=\"com.nubeio.rubixos\"].transition-transform {\n  transition-property: transform, translate, scale, rotate;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .duration-150, [data-ext-id=\"com.nubeio.rubixos\"].duration-150 {\n  --tw-duration: .15s;\n  transition-duration: .15s;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .duration-200, [data-ext-id=\"com.nubeio.rubixos\"].duration-200 {\n  --tw-duration: .2s;\n  transition-duration: .2s;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ease-linear, [data-ext-id=\"com.nubeio.rubixos\"].ease-linear {\n  --tw-ease: linear;\n  transition-timing-function: linear;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .outline-none, [data-ext-id=\"com.nubeio.rubixos\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .select-none, [data-ext-id=\"com.nubeio.rubixos\"].select-none {\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *), [data-ext-id=\"com.nubeio.rubixos\"].group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *) {\n  padding-inline-end: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  margin-top: calc(var(--spacing, .25rem) * -8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  display: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  width: calc(var(--spacing, .25rem) * 8) !important;\n  height: calc(var(--spacing, .25rem) * 8) !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  padding: calc(var(--spacing, .25rem) * 2) !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  opacity: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *) {\n  rotate: 90deg;\n}\n\n@media (hover: hover) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:-translate-y-0\\.5:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:-translate-y-0\\.5:hover {\n    --tw-translate-y: calc(var(--spacing, .25rem) * -.5);\n    translate: var(--tw-translate-x) var(--tw-translate-y);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-slate-800:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-slate-800:hover {\n    background-color: var(--color-slate-800, oklch(27.9% .041 260.031));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:underline:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:underline:hover {\n    text-decoration-line: underline;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:opacity-100:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:opacity-100:hover {\n    opacity: 1;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:shadow-xl:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:shadow-xl:hover {\n    --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus\\:outline-none:focus, [data-ext-id=\"com.nubeio.rubixos\"].focus\\:outline-none:focus {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.nubeio.rubixos\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aria-disabled\\:pointer-events-none[aria-disabled=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].aria-disabled\\:pointer-events-none[aria-disabled=\"true\"] {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aria-disabled\\:opacity-50[aria-disabled=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].aria-disabled\\:opacity-50[aria-disabled=\"true\"] {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:inline-flex, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:inline-flex {\n    display: inline-flex;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:h-72, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:h-72 {\n    height: calc(var(--spacing, .25rem) * 72);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-3, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-3 {\n    padding: calc(var(--spacing, .25rem) * 3);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-4, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-4 {\n    padding: calc(var(--spacing, .25rem) * 4);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-6, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-6 {\n    padding: calc(var(--spacing, .25rem) * 6);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-4xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-4xl {\n    font-size: var(--text-4xl, 2.25rem);\n    line-height: var(--tw-leading, var(--text-4xl--line-height, calc(2.5 / 2.25)));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-5xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-5xl {\n    font-size: var(--text-5xl, 3rem);\n    line-height: var(--tw-leading, var(--text-5xl--line-height, 1));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-6xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-6xl {\n    font-size: var(--text-6xl, 3.75rem);\n    line-height: var(--tw-leading, var(--text-6xl--line-height, 1));\n  }\n}\n\n@media (min-width: 48rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-5 {\n    grid-template-columns: repeat(5, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-\\[260px_1fr\\], [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-\\[260px_1fr\\] {\n    grid-template-columns: 260px 1fr;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-\\[280px_1fr\\], [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-\\[280px_1fr\\] {\n    grid-template-columns: 280px 1fr;\n  }\n}\n\n@media (min-width: 64rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:col-span-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:col-span-2 {\n    grid-column: span 2 / span 2;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:col-span-3, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:col-span-3 {\n    grid-column: span 3 / span 3;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-5 {\n    grid-template-columns: repeat(5, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[1fr_2fr\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[1fr_2fr\\] {\n    grid-template-columns: 1fr 2fr;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[260px_1fr_320px\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[260px_1fr_320px\\] {\n    grid-template-columns: 260px 1fr 320px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\] {\n    grid-template-columns: minmax(260px, 320px) 1fr minmax(220px, 260px);\n  }\n}\n\n@media (min-width: 80rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .xl\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].xl\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-amber-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-amber-300 {\n    color: var(--color-amber-300, oklch(87.9% .169 91.605));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-cyan-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-cyan-300 {\n    color: var(--color-cyan-300, oklch(86.5% .127 207.078));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-emerald-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-emerald-300 {\n    color: var(--color-emerald-300, oklch(84.5% .143 164.978));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-indigo-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-indigo-300 {\n    color: var(--color-indigo-300, oklch(78.5% .115 274.713));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-lime-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-lime-300 {\n    color: var(--color-lime-300, oklch(89.7% .196 126.665));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-sky-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-sky-300 {\n    color: var(--color-sky-300, oklch(82.8% .111 230.318));\n  }\n}\n\n@media print {\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:hidden, [data-ext-id=\"com.nubeio.rubixos\"].print\\:hidden {\n    display: none;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:break-inside-avoid, [data-ext-id=\"com.nubeio.rubixos\"].print\\:break-inside-avoid {\n    break-inside: avoid;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:gap-3, [data-ext-id=\"com.nubeio.rubixos\"].print\\:gap-3 {\n    gap: calc(var(--spacing, .25rem) * 3);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:border-slate-200, [data-ext-id=\"com.nubeio.rubixos\"].print\\:border-slate-200 {\n    border-color: var(--color-slate-200, oklch(92.9% .013 255.508));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:border-slate-300, [data-ext-id=\"com.nubeio.rubixos\"].print\\:border-slate-300 {\n    border-color: var(--color-slate-300, oklch(86.9% .022 252.894));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:\\!bg-white, [data-ext-id=\"com.nubeio.rubixos\"].print\\:\\!bg-white {\n    background-color: var(--color-white, #fff) !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:py-0, [data-ext-id=\"com.nubeio.rubixos\"].print\\:py-0 {\n    padding-block: calc(var(--spacing, .25rem) * 0);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:text-\\[10px\\], [data-ext-id=\"com.nubeio.rubixos\"].print\\:text-\\[10px\\] {\n    font-size: 10px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:\\!shadow-none, [data-ext-id=\"com.nubeio.rubixos\"].print\\:\\!shadow-none {\n    --tw-shadow: 0 0 #0000 !important;\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow) !important;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:size-4 > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:size-4 > svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:shrink-0 > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:shrink-0 > svg {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:text-inherit > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:text-inherit > svg {\n  color: inherit;\n}\n\n@keyframes nrg-spin {\n  from {\n    transform: rotate(0);\n  }\n\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-slow {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 4.2s linear infinite nrg-spin;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-med {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 2.4s linear infinite nrg-spin;\n}\n\n@keyframes nrg-bob {\n  0%, 100% {\n    transform: translateY(0);\n  }\n\n  50% {\n    transform: translateY(-3.5px);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"].nrg-bob {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 3.8s ease-in-out infinite nrg-bob;\n}\n\n@keyframes nrg-charge {\n  0% {\n    opacity: .55;\n  }\n\n  50% {\n    opacity: 1;\n  }\n\n  100% {\n    opacity: .55;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"].nrg-charge {\n  animation: 2.6s ease-in-out infinite nrg-charge;\n}\n\n@keyframes nrg-status-pulse {\n  0% {\n    box-shadow: 0 0 0 0 var(--nrg-pulse-color, #22c55e8c);\n  }\n\n  70% {\n    box-shadow: 0 0 0 9px #0000;\n  }\n\n  100% {\n    box-shadow: 0 0 #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-dot-pulse, [data-ext-id=\"com.nubeio.rubixos\"].nrg-dot-pulse {\n  animation: 1.9s cubic-bezier(.45, 0, .2, 1) infinite nrg-status-pulse;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"].nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"].nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-dot-pulse, [data-ext-id=\"com.nubeio.rubixos\"].nrg-dot-pulse {\n    animation: none !important;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-dash-shell, [data-ext-id=\"com.nubeio.rubixos\"].ext-dash-shell {\n  isolation: isolate;\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-dash-shell:before, [data-ext-id=\"com.nubeio.rubixos\"].ext-dash-shell:before {\n  content: \"\";\n  pointer-events: none;\n  z-index: -1;\n  filter: blur(20px);\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf2e, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f129, #0000 70%);\n  height: 50%;\n  position: absolute;\n  inset: -20% -10% auto;\n}\n\n:root[data-mode=\"dark\"] .ext-dash-shell:before {\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf38, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f133, #0000 70%);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 14px;\n  position: relative;\n  overflow: hidden;\n  box-shadow: inset 0 1px #ffffff8c, 0 1px 2px #0f172a0f, 0 12px 28px -12px #0f172a38;\n}\n\n:root[data-mode=\"dark\"] .ext-glass {\n  background: var(--color-card, #0f172a);\n  border-color: var(--color-border, #94a3b82e);\n  box-shadow: inset 0 1px #ffffff0f, 0 1px 2px #00000073, 0 18px 44px -16px #000000b3;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n  border-color: var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n    border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n  box-shadow: 0 0 0 1px var(--color-primary, #2dd4bf), 0 12px 36px -12px var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent), 0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.rubixos\"].ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.rubixos\"].ext-eyebrow {\n    color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-num, [data-ext-id=\"com.nubeio.rubixos\"].ext-num {\n  font-variant-numeric: tabular-nums;\n}\n\n@keyframes ext-site-pulse {\n  0% {\n    opacity: .9;\n    transform: scale(.6);\n  }\n\n  80% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n\n  100% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--on, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--on {\n  animation: 1.8s ease-out infinite ext-site-pulse;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--off, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--off {\n  opacity: .35;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--on, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--on {\n    opacity: .55;\n    animation: none;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot {\n  font-family: inherit;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot .u-legend, [data-ext-id=\"com.nubeio.rubixos\"].uplot .u-legend {\n  color: var(--color-foreground);\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot .u-legend .u-marker, [data-ext-id=\"com.nubeio.rubixos\"].uplot .u-legend .u-marker {\n  border-radius: 2px;\n  width: 10px;\n  height: 10px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-report, [data-ext-id=\"com.nubeio.rubixos\"].ext-report {\n  min-height: 100%;\n  padding: 1rem 1.25rem;\n}\n\n@media print {\n  @page {\n    size: A4;\n    margin: 14mm;\n  }\n\n  html, body {\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .no-print, [data-ext-id=\"com.nubeio.rubixos\"].no-print, [data-ext-id=\"com.nubeio.rubixos\"] nav, [data-ext-id=\"com.nubeio.rubixos\"] header[data-block-shell], [data-ext-id=\"com.nubeio.rubixos\"] aside {\n    display: none !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-report, [data-ext-id=\"com.nubeio.rubixos\"].ext-report {\n    --color-foreground: #0f172a;\n    --color-muted-foreground: #64748b;\n    --color-border: #e2e8f0;\n    --color-card: #fff;\n    padding: 0;\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-report .ext-glass, [data-ext-id=\"com.nubeio.rubixos\"].ext-report .ext-glass {\n    box-shadow: none;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] section, [data-ext-id=\"com.nubeio.rubixos\"] .ext-report-channel, [data-ext-id=\"com.nubeio.rubixos\"].ext-report-channel {\n    break-inside: avoid;\n    page-break-inside: avoid;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] a {\n    color: inherit;\n    text-decoration: none;\n  }\n}\n\n@property --tw-translate-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-divide-y-reverse {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-gradient-position {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-from {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-via {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-to {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-stops {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-via-stops {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-from-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 0%;\n}\n\n@property --tw-gradient-via-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 50%;\n}\n\n@property --tw-gradient-to-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas{left:0;position:absolute;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:fullscreen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:fullscreen{height:100%;width:100%}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left{left:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right{right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left{bottom:0;left:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right{bottom:0;right:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group{background:#fff;border-radius:4px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group:not(:empty), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group:not(:empty), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button+button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button+button{border-top:1px solid #ddd}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-icon{background-color:transparent}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button+button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button::-moz-focus-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib-button:focus, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib-button:focus, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:disabled, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:disabled{cursor:not-allowed}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:not(:disabled):hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:focus-visible, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:not(:focus-visible), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:first-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:last-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:only-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-color:transparent;background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl.maplibregl-ctrl-attrib, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib a, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib a:hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-attrib-empty, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-attrib-empty{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-scale, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right{flex-direction:column}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-left{flex-direction:row}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-right{flex-direction:row-reverse}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-close-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-close-button:hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-track-pointer{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-track-pointer *, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:hover .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:active .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:active .maplibregl-popup-track-pointer{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-marker, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:before, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:before, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:\"\";position:absolute}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:\"\";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot-stale, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot-stale{background-color:#aaa}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot-stale:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot-stale:after{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-accuracy-circle, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair .maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair .maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair .maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-boxzoom, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen.maplibregl-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-desktop-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-pseudo-fullscreen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *, [data-ext-id=\"com.nubeio.rubixos\"].uplot *, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *::before, [data-ext-id=\"com.nubeio.rubixos\"].uplot *::before, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *::after, [data-ext-id=\"com.nubeio.rubixos\"].uplot *::after {box-sizing: border-box;}[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot {font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";line-height: 1.5;width: min-content;}[data-ext-id=\"com.nubeio.rubixos\"] .u-title, [data-ext-id=\"com.nubeio.rubixos\"].u-title {text-align: center;font-size: 18px;font-weight: bold;}[data-ext-id=\"com.nubeio.rubixos\"] .u-wrap, [data-ext-id=\"com.nubeio.rubixos\"].u-wrap {position: relative;user-select: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-over, [data-ext-id=\"com.nubeio.rubixos\"].u-over, [data-ext-id=\"com.nubeio.rubixos\"] .u-under, [data-ext-id=\"com.nubeio.rubixos\"].u-under {position: absolute;}[data-ext-id=\"com.nubeio.rubixos\"] .u-under, [data-ext-id=\"com.nubeio.rubixos\"].u-under {overflow: hidden;}[data-ext-id=\"com.nubeio.rubixos\"] .uplot canvas, [data-ext-id=\"com.nubeio.rubixos\"].uplot canvas {display: block;position: relative;width: 100%;height: 100%;}[data-ext-id=\"com.nubeio.rubixos\"] .u-axis, [data-ext-id=\"com.nubeio.rubixos\"].u-axis {position: absolute;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend, [data-ext-id=\"com.nubeio.rubixos\"].u-legend {font-size: 14px;margin: auto;text-align: center;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline, [data-ext-id=\"com.nubeio.rubixos\"].u-inline {display: block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline *, [data-ext-id=\"com.nubeio.rubixos\"].u-inline * {display: inline-block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline tr, [data-ext-id=\"com.nubeio.rubixos\"].u-inline tr {margin-right: 16px;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend th, [data-ext-id=\"com.nubeio.rubixos\"].u-legend th {font-weight: 600;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend th > *, [data-ext-id=\"com.nubeio.rubixos\"].u-legend th > * {vertical-align: middle;display: inline-block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend .u-marker, [data-ext-id=\"com.nubeio.rubixos\"].u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline.u-live th::after, [data-ext-id=\"com.nubeio.rubixos\"].u-inline.u-live th::after {content: \":\";vertical-align: middle;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline:not(.u-live) .u-value, [data-ext-id=\"com.nubeio.rubixos\"].u-inline:not(.u-live) .u-value {display: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-series > *, [data-ext-id=\"com.nubeio.rubixos\"].u-series > * {padding: 4px;}[data-ext-id=\"com.nubeio.rubixos\"] .u-series th, [data-ext-id=\"com.nubeio.rubixos\"].u-series th {cursor: pointer;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend .u-off > *, [data-ext-id=\"com.nubeio.rubixos\"].u-legend .u-off > * {opacity: 0.3;}[data-ext-id=\"com.nubeio.rubixos\"] .u-select, [data-ext-id=\"com.nubeio.rubixos\"].u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}[data-ext-id=\"com.nubeio.rubixos\"] .u-hz .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-hz .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"] .u-vt .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}[data-ext-id=\"com.nubeio.rubixos\"] .u-hz .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-hz .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"] .u-vt .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}[data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-pt, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline \"background\" shorthand */background-clip: padding-box !important;}[data-ext-id=\"com.nubeio.rubixos\"] .u-axis.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-axis.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-select.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-select.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-x.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-x.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-y.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-y.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-pt.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-pt.u-off {display: none;}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
+	try{if(typeof document != 'undefined'){var elementStyle = document.createElement('style');elementStyle.appendChild(document.createTextNode("/*! tailwindcss v4.3.0 | MIT License | https://tailwindcss.com */\n@layer properties {\n  @supports (((-webkit-hyphens: none)) and (not (margin-trim: inline))) or ((-moz-orient: inline) and (not (color: rgb(from red r g b)))) {\n    *, [data-ext-id=\"com.nubeio.rubixos\"] :before, [data-ext-id=\"com.nubeio.rubixos\"]:before, [data-ext-id=\"com.nubeio.rubixos\"] :after, [data-ext-id=\"com.nubeio.rubixos\"]:after, [data-ext-id=\"com.nubeio.rubixos\"] ::backdrop, [data-ext-id=\"com.nubeio.rubixos\"]::backdrop {\n      --tw-translate-x: 0;\n      --tw-translate-y: 0;\n      --tw-translate-z: 0;\n      --tw-rotate-x: initial;\n      --tw-rotate-y: initial;\n      --tw-rotate-z: initial;\n      --tw-skew-x: initial;\n      --tw-skew-y: initial;\n      --tw-divide-y-reverse: 0;\n      --tw-border-style: solid;\n      --tw-gradient-position: initial;\n      --tw-gradient-from: #0000;\n      --tw-gradient-via: #0000;\n      --tw-gradient-to: #0000;\n      --tw-gradient-stops: initial;\n      --tw-gradient-via-stops: initial;\n      --tw-gradient-from-position: 0%;\n      --tw-gradient-via-position: 50%;\n      --tw-gradient-to-position: 100%;\n      --tw-leading: initial;\n      --tw-font-weight: initial;\n      --tw-tracking: initial;\n      --tw-ordinal: initial;\n      --tw-slashed-zero: initial;\n      --tw-numeric-figure: initial;\n      --tw-numeric-spacing: initial;\n      --tw-numeric-fraction: initial;\n      --tw-shadow: 0 0 #0000;\n      --tw-shadow-color: initial;\n      --tw-shadow-alpha: 100%;\n      --tw-inset-shadow: 0 0 #0000;\n      --tw-inset-shadow-color: initial;\n      --tw-inset-shadow-alpha: 100%;\n      --tw-ring-color: initial;\n      --tw-ring-shadow: 0 0 #0000;\n      --tw-inset-ring-color: initial;\n      --tw-inset-ring-shadow: 0 0 #0000;\n      --tw-ring-inset: initial;\n      --tw-ring-offset-width: 0px;\n      --tw-ring-offset-color: #fff;\n      --tw-ring-offset-shadow: 0 0 #0000;\n      --tw-blur: initial;\n      --tw-brightness: initial;\n      --tw-contrast: initial;\n      --tw-grayscale: initial;\n      --tw-hue-rotate: initial;\n      --tw-invert: initial;\n      --tw-opacity: initial;\n      --tw-saturate: initial;\n      --tw-sepia: initial;\n      --tw-drop-shadow: initial;\n      --tw-drop-shadow-color: initial;\n      --tw-drop-shadow-alpha: 100%;\n      --tw-drop-shadow-size: initial;\n      --tw-backdrop-blur: initial;\n      --tw-backdrop-brightness: initial;\n      --tw-backdrop-contrast: initial;\n      --tw-backdrop-grayscale: initial;\n      --tw-backdrop-hue-rotate: initial;\n      --tw-backdrop-invert: initial;\n      --tw-backdrop-opacity: initial;\n      --tw-backdrop-saturate: initial;\n      --tw-backdrop-sepia: initial;\n      --tw-duration: initial;\n      --tw-ease: initial;\n    }\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pointer-events-none, [data-ext-id=\"com.nubeio.rubixos\"].pointer-events-none {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .collapse, [data-ext-id=\"com.nubeio.rubixos\"].collapse {\n  visibility: collapse;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .visible, [data-ext-id=\"com.nubeio.rubixos\"].visible {\n  visibility: visible;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .absolute, [data-ext-id=\"com.nubeio.rubixos\"].absolute {\n  position: absolute;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .fixed, [data-ext-id=\"com.nubeio.rubixos\"].fixed {\n  position: fixed;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .relative, [data-ext-id=\"com.nubeio.rubixos\"].relative {\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .static, [data-ext-id=\"com.nubeio.rubixos\"].static {\n  position: static;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .sticky, [data-ext-id=\"com.nubeio.rubixos\"].sticky {\n  position: sticky;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inset-0, [data-ext-id=\"com.nubeio.rubixos\"].inset-0 {\n  inset: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inset-6, [data-ext-id=\"com.nubeio.rubixos\"].inset-6 {\n  inset: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-top-1, [data-ext-id=\"com.nubeio.rubixos\"].-top-1 {\n  top: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-0, [data-ext-id=\"com.nubeio.rubixos\"].top-0 {\n  top: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-1\\/2, [data-ext-id=\"com.nubeio.rubixos\"].top-1\\/2 {\n  top: 50%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-3, [data-ext-id=\"com.nubeio.rubixos\"].top-3 {\n  top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .top-8, [data-ext-id=\"com.nubeio.rubixos\"].top-8 {\n  top: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-right-1, [data-ext-id=\"com.nubeio.rubixos\"].-right-1 {\n  right: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .left-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].left-2\\.5 {\n  left: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .left-3, [data-ext-id=\"com.nubeio.rubixos\"].left-3 {\n  left: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .left-\\[15px\\], [data-ext-id=\"com.nubeio.rubixos\"].left-\\[15px\\] {\n  left: 15px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .z-10, [data-ext-id=\"com.nubeio.rubixos\"].z-10 {\n  z-index: 10;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .z-50, [data-ext-id=\"com.nubeio.rubixos\"].z-50 {\n  z-index: 50;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .float-right, [data-ext-id=\"com.nubeio.rubixos\"].float-right {\n  float: right;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n  width: 100%;\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 40rem;\n  }\n}\n\n@media (min-width: 48rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 48rem;\n  }\n}\n\n@media (min-width: 64rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 64rem;\n  }\n}\n\n@media (min-width: 80rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 80rem;\n  }\n}\n\n@media (min-width: 96rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .container, [data-ext-id=\"com.nubeio.rubixos\"].container {\n    max-width: 96rem;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .m-0, [data-ext-id=\"com.nubeio.rubixos\"].m-0 {\n  margin: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-mx-1, [data-ext-id=\"com.nubeio.rubixos\"].-mx-1 {\n  margin-inline: calc(var(--spacing, .25rem) * -1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-3, [data-ext-id=\"com.nubeio.rubixos\"].mx-3 {\n  margin-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mx-3\\.5 {\n  margin-inline: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mx-auto, [data-ext-id=\"com.nubeio.rubixos\"].mx-auto {\n  margin-inline: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .my-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].my-1\\.5 {\n  margin-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ms-auto, [data-ext-id=\"com.nubeio.rubixos\"].ms-auto {\n  margin-inline-start: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mt-0\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-1, [data-ext-id=\"com.nubeio.rubixos\"].mt-1 {\n  margin-top: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].mt-1\\.5 {\n  margin-top: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-2, [data-ext-id=\"com.nubeio.rubixos\"].mt-2 {\n  margin-top: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-3, [data-ext-id=\"com.nubeio.rubixos\"].mt-3 {\n  margin-top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mt-4, [data-ext-id=\"com.nubeio.rubixos\"].mt-4 {\n  margin-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mr-2, [data-ext-id=\"com.nubeio.rubixos\"].mr-2 {\n  margin-right: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-1, [data-ext-id=\"com.nubeio.rubixos\"].mb-1 {\n  margin-bottom: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-2, [data-ext-id=\"com.nubeio.rubixos\"].mb-2 {\n  margin-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .mb-3, [data-ext-id=\"com.nubeio.rubixos\"].mb-3 {\n  margin-bottom: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-1, [data-ext-id=\"com.nubeio.rubixos\"].ml-1 {\n  margin-left: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-2, [data-ext-id=\"com.nubeio.rubixos\"].ml-2 {\n  margin-left: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-3, [data-ext-id=\"com.nubeio.rubixos\"].ml-3 {\n  margin-left: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ml-auto, [data-ext-id=\"com.nubeio.rubixos\"].ml-auto {\n  margin-left: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .block, [data-ext-id=\"com.nubeio.rubixos\"].block {\n  display: block;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex, [data-ext-id=\"com.nubeio.rubixos\"].flex {\n  display: flex;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid, [data-ext-id=\"com.nubeio.rubixos\"].grid {\n  display: grid;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .hidden, [data-ext-id=\"com.nubeio.rubixos\"].hidden {\n  display: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline, [data-ext-id=\"com.nubeio.rubixos\"].inline {\n  display: inline;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline-block, [data-ext-id=\"com.nubeio.rubixos\"].inline-block {\n  display: inline-block;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .inline-flex, [data-ext-id=\"com.nubeio.rubixos\"].inline-flex {\n  display: inline-flex;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .table, [data-ext-id=\"com.nubeio.rubixos\"].table {\n  display: table;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aspect-square, [data-ext-id=\"com.nubeio.rubixos\"].aspect-square {\n  aspect-ratio: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-2, [data-ext-id=\"com.nubeio.rubixos\"].size-2 {\n  width: calc(var(--spacing, .25rem) * 2);\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-2\\.5 {\n  width: calc(var(--spacing, .25rem) * 2.5);\n  height: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-3, [data-ext-id=\"com.nubeio.rubixos\"].size-3 {\n  width: calc(var(--spacing, .25rem) * 3);\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].size-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-4, [data-ext-id=\"com.nubeio.rubixos\"].size-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-5, [data-ext-id=\"com.nubeio.rubixos\"].size-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-6, [data-ext-id=\"com.nubeio.rubixos\"].size-6 {\n  width: calc(var(--spacing, .25rem) * 6);\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-7, [data-ext-id=\"com.nubeio.rubixos\"].size-7 {\n  width: calc(var(--spacing, .25rem) * 7);\n  height: calc(var(--spacing, .25rem) * 7);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-8, [data-ext-id=\"com.nubeio.rubixos\"].size-8 {\n  width: calc(var(--spacing, .25rem) * 8);\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-10, [data-ext-id=\"com.nubeio.rubixos\"].size-10 {\n  width: calc(var(--spacing, .25rem) * 10);\n  height: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-12, [data-ext-id=\"com.nubeio.rubixos\"].size-12 {\n  width: calc(var(--spacing, .25rem) * 12);\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .size-14, [data-ext-id=\"com.nubeio.rubixos\"].size-14 {\n  width: calc(var(--spacing, .25rem) * 14);\n  height: calc(var(--spacing, .25rem) * 14);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].h-1\\.5 {\n  height: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-2, [data-ext-id=\"com.nubeio.rubixos\"].h-2 {\n  height: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-3, [data-ext-id=\"com.nubeio.rubixos\"].h-3 {\n  height: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].h-3\\.5 {\n  height: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-4, [data-ext-id=\"com.nubeio.rubixos\"].h-4 {\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-5, [data-ext-id=\"com.nubeio.rubixos\"].h-5 {\n  height: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-6, [data-ext-id=\"com.nubeio.rubixos\"].h-6 {\n  height: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-7, [data-ext-id=\"com.nubeio.rubixos\"].h-7 {\n  height: calc(var(--spacing, .25rem) * 7);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-8, [data-ext-id=\"com.nubeio.rubixos\"].h-8 {\n  height: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-9, [data-ext-id=\"com.nubeio.rubixos\"].h-9 {\n  height: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-12, [data-ext-id=\"com.nubeio.rubixos\"].h-12 {\n  height: calc(var(--spacing, .25rem) * 12);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-20, [data-ext-id=\"com.nubeio.rubixos\"].h-20 {\n  height: calc(var(--spacing, .25rem) * 20);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-24, [data-ext-id=\"com.nubeio.rubixos\"].h-24 {\n  height: calc(var(--spacing, .25rem) * 24);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-44, [data-ext-id=\"com.nubeio.rubixos\"].h-44 {\n  height: calc(var(--spacing, .25rem) * 44);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-64, [data-ext-id=\"com.nubeio.rubixos\"].h-64 {\n  height: calc(var(--spacing, .25rem) * 64);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-\\[55vh\\], [data-ext-id=\"com.nubeio.rubixos\"].h-\\[55vh\\] {\n  height: 55vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-\\[60vh\\], [data-ext-id=\"com.nubeio.rubixos\"].h-\\[60vh\\] {\n  height: 60vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-\\[calc\\(100\\%-1rem\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].h-\\[calc\\(100\\%-1rem\\)\\] {\n  height: calc(100% - 1rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-fit, [data-ext-id=\"com.nubeio.rubixos\"].h-fit {\n  height: fit-content;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .h-full, [data-ext-id=\"com.nubeio.rubixos\"].h-full {\n  height: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-h-\\[60vh\\], [data-ext-id=\"com.nubeio.rubixos\"].max-h-\\[60vh\\] {\n  max-height: 60vh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-h-\\[220px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-h-\\[220px\\] {\n  max-height: 220px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-h-\\[100dvh\\], [data-ext-id=\"com.nubeio.rubixos\"].min-h-\\[100dvh\\] {\n  min-height: 100dvh;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].w-1\\.5 {\n  width: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-3\\.5, [data-ext-id=\"com.nubeio.rubixos\"].w-3\\.5 {\n  width: calc(var(--spacing, .25rem) * 3.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-4, [data-ext-id=\"com.nubeio.rubixos\"].w-4 {\n  width: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-5, [data-ext-id=\"com.nubeio.rubixos\"].w-5 {\n  width: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-8, [data-ext-id=\"com.nubeio.rubixos\"].w-8 {\n  width: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-9, [data-ext-id=\"com.nubeio.rubixos\"].w-9 {\n  width: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-10, [data-ext-id=\"com.nubeio.rubixos\"].w-10 {\n  width: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-20, [data-ext-id=\"com.nubeio.rubixos\"].w-20 {\n  width: calc(var(--spacing, .25rem) * 20);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-32, [data-ext-id=\"com.nubeio.rubixos\"].w-32 {\n  width: calc(var(--spacing, .25rem) * 32);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-44, [data-ext-id=\"com.nubeio.rubixos\"].w-44 {\n  width: calc(var(--spacing, .25rem) * 44);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-fit, [data-ext-id=\"com.nubeio.rubixos\"].w-fit {\n  width: fit-content;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-full, [data-ext-id=\"com.nubeio.rubixos\"].w-full {\n  width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .w-px, [data-ext-id=\"com.nubeio.rubixos\"].w-px {\n  width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-2xl, [data-ext-id=\"com.nubeio.rubixos\"].max-w-2xl {\n  max-width: var(--container-2xl, 42rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[120px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[120px\\] {\n  max-width: 120px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[260px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[260px\\] {\n  max-width: 260px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-\\[920px\\], [data-ext-id=\"com.nubeio.rubixos\"].max-w-\\[920px\\] {\n  max-width: 920px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-lg, [data-ext-id=\"com.nubeio.rubixos\"].max-w-lg {\n  max-width: var(--container-lg, 32rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-md, [data-ext-id=\"com.nubeio.rubixos\"].max-w-md {\n  max-width: var(--container-md, 28rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .max-w-xs, [data-ext-id=\"com.nubeio.rubixos\"].max-w-xs {\n  max-width: var(--container-xs, 20rem);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-0, [data-ext-id=\"com.nubeio.rubixos\"].min-w-0 {\n  min-width: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-48, [data-ext-id=\"com.nubeio.rubixos\"].min-w-48 {\n  min-width: calc(var(--spacing, .25rem) * 48);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[1rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[1rem\\] {\n  min-width: 1rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[10rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[10rem\\] {\n  min-width: 10rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[12rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[12rem\\] {\n  min-width: 12rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-\\[14rem\\], [data-ext-id=\"com.nubeio.rubixos\"].min-w-\\[14rem\\] {\n  min-width: 14rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .min-w-full, [data-ext-id=\"com.nubeio.rubixos\"].min-w-full {\n  min-width: 100%;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-1, [data-ext-id=\"com.nubeio.rubixos\"].flex-1 {\n  flex: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shrink-0, [data-ext-id=\"com.nubeio.rubixos\"].shrink-0 {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grow, [data-ext-id=\"com.nubeio.rubixos\"].grow {\n  flex-grow: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-translate-x-px, [data-ext-id=\"com.nubeio.rubixos\"].-translate-x-px {\n  --tw-translate-x: -1px;\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-0\\.5 {\n  --tw-translate-x: calc(var(--spacing, .25rem) * .5);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-4, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-4 {\n  --tw-translate-x: calc(var(--spacing, .25rem) * 4);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .translate-x-px, [data-ext-id=\"com.nubeio.rubixos\"].translate-x-px {\n  --tw-translate-x: 1px;\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .-translate-y-1\\/2, [data-ext-id=\"com.nubeio.rubixos\"].-translate-y-1\\/2 {\n  --tw-translate-y: calc(calc(1 / 2 * 100%) * -1);\n  translate: var(--tw-translate-x) var(--tw-translate-y);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rotate-90, [data-ext-id=\"com.nubeio.rubixos\"].rotate-90 {\n  rotate: 90deg;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transform, [data-ext-id=\"com.nubeio.rubixos\"].transform {\n  transform: var(--tw-rotate-x, ) var(--tw-rotate-y, ) var(--tw-rotate-z, ) var(--tw-skew-x, ) var(--tw-skew-y, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .animate-spin, [data-ext-id=\"com.nubeio.rubixos\"].animate-spin {\n  animation: var(--animate-spin, spin 1s linear infinite);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .cursor-pointer, [data-ext-id=\"com.nubeio.rubixos\"].cursor-pointer {\n  cursor: pointer;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .resize-none, [data-ext-id=\"com.nubeio.rubixos\"].resize-none {\n  resize: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .list-none, [data-ext-id=\"com.nubeio.rubixos\"].list-none {\n  list-style-type: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-1, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-1 {\n  grid-template-columns: repeat(1, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-2 {\n  grid-template-columns: repeat(2, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-4 {\n  grid-template-columns: repeat(4, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-5 {\n  grid-template-columns: repeat(5, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-\\[1\\.5rem_1fr_5rem\\], [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-\\[1\\.5rem_1fr_5rem\\] {\n  grid-template-columns: 1.5rem 1fr 5rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-cols-\\[1fr_auto\\], [data-ext-id=\"com.nubeio.rubixos\"].grid-cols-\\[1fr_auto\\] {\n  grid-template-columns: 1fr auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .grid-rows-3, [data-ext-id=\"com.nubeio.rubixos\"].grid-rows-3 {\n  grid-template-rows: repeat(3, minmax(0, 1fr));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-col, [data-ext-id=\"com.nubeio.rubixos\"].flex-col {\n  flex-direction: column;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-row, [data-ext-id=\"com.nubeio.rubixos\"].flex-row {\n  flex-direction: row;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .flex-wrap, [data-ext-id=\"com.nubeio.rubixos\"].flex-wrap {\n  flex-wrap: wrap;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-baseline, [data-ext-id=\"com.nubeio.rubixos\"].items-baseline {\n  align-items: baseline;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-center, [data-ext-id=\"com.nubeio.rubixos\"].items-center {\n  align-items: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-end, [data-ext-id=\"com.nubeio.rubixos\"].items-end {\n  align-items: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .items-start, [data-ext-id=\"com.nubeio.rubixos\"].items-start {\n  align-items: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-between, [data-ext-id=\"com.nubeio.rubixos\"].justify-between {\n  justify-content: space-between;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-center, [data-ext-id=\"com.nubeio.rubixos\"].justify-center {\n  justify-content: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .justify-end, [data-ext-id=\"com.nubeio.rubixos\"].justify-end {\n  justify-content: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-0\\.5 {\n  gap: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-1, [data-ext-id=\"com.nubeio.rubixos\"].gap-1 {\n  gap: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-1\\.5 {\n  gap: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-2, [data-ext-id=\"com.nubeio.rubixos\"].gap-2 {\n  gap: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].gap-2\\.5 {\n  gap: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-3, [data-ext-id=\"com.nubeio.rubixos\"].gap-3 {\n  gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-4, [data-ext-id=\"com.nubeio.rubixos\"].gap-4 {\n  gap: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-6, [data-ext-id=\"com.nubeio.rubixos\"].gap-6 {\n  gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-\\[2px\\], [data-ext-id=\"com.nubeio.rubixos\"].gap-\\[2px\\] {\n  gap: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-x-6, [data-ext-id=\"com.nubeio.rubixos\"].gap-x-6 {\n  column-gap: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .gap-y-3, [data-ext-id=\"com.nubeio.rubixos\"].gap-y-3 {\n  row-gap: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] :where(.divide-y > :not(:last-child)), [data-ext-id=\"com.nubeio.rubixos\"]:where(.divide-y > :not(:last-child)) {\n  --tw-divide-y-reverse: 0;\n  border-bottom-style: var(--tw-border-style);\n  border-top-style: var(--tw-border-style);\n  border-top-width: calc(1px * var(--tw-divide-y-reverse));\n  border-bottom-width: calc(1px * calc(1 - var(--tw-divide-y-reverse)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .self-end, [data-ext-id=\"com.nubeio.rubixos\"].self-end {\n  align-self: flex-end;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .self-start, [data-ext-id=\"com.nubeio.rubixos\"].self-start {\n  align-self: flex-start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .truncate, [data-ext-id=\"com.nubeio.rubixos\"].truncate {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-hidden, [data-ext-id=\"com.nubeio.rubixos\"].overflow-hidden {\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-x-auto, [data-ext-id=\"com.nubeio.rubixos\"].overflow-x-auto {\n  overflow-x: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .overflow-y-auto, [data-ext-id=\"com.nubeio.rubixos\"].overflow-y-auto {\n  overflow-y: auto;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded, [data-ext-id=\"com.nubeio.rubixos\"].rounded {\n  border-radius: .25rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded-\\[3px\\], [data-ext-id=\"com.nubeio.rubixos\"].rounded-\\[3px\\] {\n  border-radius: 3px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .rounded-full, [data-ext-id=\"com.nubeio.rubixos\"].rounded-full {\n  border-radius: 3.40282e38px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border, [data-ext-id=\"com.nubeio.rubixos\"].border {\n  border-style: var(--tw-border-style);\n  border-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-0, [data-ext-id=\"com.nubeio.rubixos\"].border-0 {\n  border-style: var(--tw-border-style);\n  border-width: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-2, [data-ext-id=\"com.nubeio.rubixos\"].border-2 {\n  border-style: var(--tw-border-style);\n  border-width: 2px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-s, [data-ext-id=\"com.nubeio.rubixos\"].border-s {\n  border-inline-start-style: var(--tw-border-style);\n  border-inline-start-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-t, [data-ext-id=\"com.nubeio.rubixos\"].border-t {\n  border-top-style: var(--tw-border-style);\n  border-top-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-b, [data-ext-id=\"com.nubeio.rubixos\"].border-b {\n  border-bottom-style: var(--tw-border-style);\n  border-bottom-width: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/30 {\n  border-color: #fcbb004d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/30 {\n    border-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/40 {\n  border-color: #fcbb0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-amber-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-500\\/40 {\n  border-color: #f99c0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-amber-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-amber-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-amber-500, oklch(76.9% .188 70.08)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-400\\/40 {\n  border-color: #00d29466;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-emerald-400, oklch(76.5% .177 163.223)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-500\\/40 {\n  border-color: #00bb7f66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-emerald-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-emerald-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/30 {\n  border-color: #00bcfe4d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/30, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/30 {\n    border-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/40 {\n  border-color: #00bcfe66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-sky-400\\/40 {\n    border-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-slate-200, [data-ext-id=\"com.nubeio.rubixos\"].border-slate-200 {\n  border-color: var(--color-slate-200, oklch(92.9% .013 255.508));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-white\\/10, [data-ext-id=\"com.nubeio.rubixos\"].border-white\\/10 {\n  border-color: #ffffff1a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-white\\/10, [data-ext-id=\"com.nubeio.rubixos\"].border-white\\/10 {\n    border-color: color-mix(in oklab, var(--color-white, #fff) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .border-yellow-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-yellow-500\\/40 {\n  border-color: #edb20066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .border-yellow-500\\/40, [data-ext-id=\"com.nubeio.rubixos\"].border-yellow-500\\/40 {\n    border-color: color-mix(in oklab, var(--color-yellow-500, oklch(79.5% .184 86.047)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/10 {\n  background-color: #fcbb001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/10 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/15 {\n  background-color: #fcbb0026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/80 {\n  background-color: #fcbb00cc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/80 {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/\\[0\\.06\\] {\n  background-color: #fcbb000f;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-400\\/\\[0\\.06\\] {\n    background-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 6%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-500 {\n  background-color: var(--color-amber-500, oklch(76.9% .188 70.08));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-500\\/10 {\n  background-color: #f99c001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-amber-500, oklch(76.9% .188 70.08)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-500\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-500\\/15 {\n  background-color: #f99c0026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-amber-500\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-amber-500\\/15 {\n    background-color: color-mix(in oklab, var(--color-amber-500, oklch(76.9% .188 70.08)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-black, [data-ext-id=\"com.nubeio.rubixos\"].bg-black {\n  background-color: var(--color-black, #000);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-black\\/50, [data-ext-id=\"com.nubeio.rubixos\"].bg-black\\/50 {\n  background-color: #00000080;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-black\\/50, [data-ext-id=\"com.nubeio.rubixos\"].bg-black\\/50 {\n    background-color: color-mix(in oklab, var(--color-black, #000) 50%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-400\\/10 {\n  background-color: #00d2941a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-400\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-400\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-400, oklch(76.5% .177 163.223)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500 {\n  background-color: var(--color-emerald-500, oklch(69.6% .17 162.48));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500\\/10 {\n  background-color: #00bb7f1a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-emerald-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-emerald-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-lime-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-lime-400\\/15 {\n  background-color: #9de50026;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-lime-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-lime-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-lime-400, oklch(84.1% .238 128.85)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-rose-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-rose-500 {\n  background-color: var(--color-rose-500, oklch(64.5% .246 16.439));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-rose-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-rose-500\\/10 {\n  background-color: #ff23571a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-rose-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-rose-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-rose-500, oklch(64.5% .246 16.439)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/15 {\n  background-color: #00bcfe26;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/15, [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/15 {\n    background-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 15%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/\\[0\\.06\\] {\n  background-color: #00bcfe0f;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-sky-400\\/\\[0\\.06\\], [data-ext-id=\"com.nubeio.rubixos\"].bg-sky-400\\/\\[0\\.06\\] {\n    background-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 6%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-200\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-200\\/80 {\n  background-color: #e2e8f0cc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-200\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-200\\/80 {\n    background-color: color-mix(in oklab, var(--color-slate-200, oklch(92.9% .013 255.508)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-400, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-400 {\n  background-color: var(--color-slate-400, oklch(70.4% .04 256.788));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-900\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-900\\/80 {\n  background-color: #0f172bcc;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-slate-900\\/80, [data-ext-id=\"com.nubeio.rubixos\"].bg-slate-900\\/80 {\n    background-color: color-mix(in oklab, var(--color-slate-900, oklch(20.8% .042 265.755)) 80%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300 {\n  background-color: var(--color-teal-300, oklch(85.5% .138 181.071));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/70, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/70 {\n  background-color: #46ecd5b3;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/70, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/70 {\n    background-color: color-mix(in oklab, var(--color-teal-300, oklch(85.5% .138 181.071)) 70%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/90, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/90 {\n  background-color: #46ecd5e6;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-teal-300\\/90, [data-ext-id=\"com.nubeio.rubixos\"].bg-teal-300\\/90 {\n    background-color: color-mix(in oklab, var(--color-teal-300, oklch(85.5% .138 181.071)) 90%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-transparent, [data-ext-id=\"com.nubeio.rubixos\"].bg-transparent {\n  background-color: #0000;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-white, [data-ext-id=\"com.nubeio.rubixos\"].bg-white {\n  background-color: var(--color-white, #fff);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500 {\n  background-color: var(--color-yellow-500, oklch(79.5% .184 86.047));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500\\/10 {\n  background-color: #edb2001a;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .bg-yellow-500\\/10, [data-ext-id=\"com.nubeio.rubixos\"].bg-yellow-500\\/10 {\n    background-color: color-mix(in oklab, var(--color-yellow-500, oklch(79.5% .184 86.047)) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .bg-gradient-to-r, [data-ext-id=\"com.nubeio.rubixos\"].bg-gradient-to-r {\n  --tw-gradient-position: to right in oklab;\n  background-image: linear-gradient(var(--tw-gradient-stops));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n  --tw-gradient-from: var(--color-primary);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n    --tw-gradient-from: color-mix(in oklab, var(--color-primary) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .from-\\[var\\(--color-primary\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].from-\\[var\\(--color-primary\\)\\]\\/10 {\n  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n  --tw-gradient-via: var(--color-aqua);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n    --tw-gradient-via: color-mix(in oklab, var(--color-aqua) 8%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .via-\\[var\\(--color-aqua\\)\\]\\/8, [data-ext-id=\"com.nubeio.rubixos\"].via-\\[var\\(--color-aqua\\)\\]\\/8 {\n  --tw-gradient-via-stops: var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-via) var(--tw-gradient-via-position), var(--tw-gradient-to) var(--tw-gradient-to-position);\n  --tw-gradient-stops: var(--tw-gradient-via-stops);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n  --tw-gradient-to: var(--color-leaf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n    --tw-gradient-to: color-mix(in oklab, var(--color-leaf) 10%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .to-\\[var\\(--color-leaf\\)\\]\\/10, [data-ext-id=\"com.nubeio.rubixos\"].to-\\[var\\(--color-leaf\\)\\]\\/10 {\n  --tw-gradient-stops: var(--tw-gradient-via-stops, var(--tw-gradient-position), var(--tw-gradient-from) var(--tw-gradient-from-position), var(--tw-gradient-to) var(--tw-gradient-to-position));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .object-cover, [data-ext-id=\"com.nubeio.rubixos\"].object-cover {\n  object-fit: cover;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-0, [data-ext-id=\"com.nubeio.rubixos\"].p-0 {\n  padding: calc(var(--spacing, .25rem) * 0);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].p-0\\.5 {\n  padding: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-1, [data-ext-id=\"com.nubeio.rubixos\"].p-1 {\n  padding: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].p-1\\.5 {\n  padding: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-2, [data-ext-id=\"com.nubeio.rubixos\"].p-2 {\n  padding: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-3, [data-ext-id=\"com.nubeio.rubixos\"].p-3 {\n  padding: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-4, [data-ext-id=\"com.nubeio.rubixos\"].p-4 {\n  padding: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-5, [data-ext-id=\"com.nubeio.rubixos\"].p-5 {\n  padding: calc(var(--spacing, .25rem) * 5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .p-6, [data-ext-id=\"com.nubeio.rubixos\"].p-6 {\n  padding: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-1, [data-ext-id=\"com.nubeio.rubixos\"].px-1 {\n  padding-inline: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].px-1\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-2, [data-ext-id=\"com.nubeio.rubixos\"].px-2 {\n  padding-inline: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].px-2\\.5 {\n  padding-inline: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-3, [data-ext-id=\"com.nubeio.rubixos\"].px-3 {\n  padding-inline: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-4, [data-ext-id=\"com.nubeio.rubixos\"].px-4 {\n  padding-inline: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .px-6, [data-ext-id=\"com.nubeio.rubixos\"].px-6 {\n  padding-inline: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-0\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-1, [data-ext-id=\"com.nubeio.rubixos\"].py-1 {\n  padding-block: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-1\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-1\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * 1.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-2, [data-ext-id=\"com.nubeio.rubixos\"].py-2 {\n  padding-block: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].py-2\\.5 {\n  padding-block: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-3, [data-ext-id=\"com.nubeio.rubixos\"].py-3 {\n  padding-block: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-4, [data-ext-id=\"com.nubeio.rubixos\"].py-4 {\n  padding-block: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-6, [data-ext-id=\"com.nubeio.rubixos\"].py-6 {\n  padding-block: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-10, [data-ext-id=\"com.nubeio.rubixos\"].py-10 {\n  padding-block: calc(var(--spacing, .25rem) * 10);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .py-px, [data-ext-id=\"com.nubeio.rubixos\"].py-px {\n  padding-block: 1px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-0\\.5, [data-ext-id=\"com.nubeio.rubixos\"].pt-0\\.5 {\n  padding-top: calc(var(--spacing, .25rem) * .5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-1, [data-ext-id=\"com.nubeio.rubixos\"].pt-1 {\n  padding-top: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-3, [data-ext-id=\"com.nubeio.rubixos\"].pt-3 {\n  padding-top: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pt-4, [data-ext-id=\"com.nubeio.rubixos\"].pt-4 {\n  padding-top: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pr-1, [data-ext-id=\"com.nubeio.rubixos\"].pr-1 {\n  padding-right: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pr-2, [data-ext-id=\"com.nubeio.rubixos\"].pr-2 {\n  padding-right: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pr-2\\.5, [data-ext-id=\"com.nubeio.rubixos\"].pr-2\\.5 {\n  padding-right: calc(var(--spacing, .25rem) * 2.5);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pr-3, [data-ext-id=\"com.nubeio.rubixos\"].pr-3 {\n  padding-right: calc(var(--spacing, .25rem) * 3);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-1, [data-ext-id=\"com.nubeio.rubixos\"].pb-1 {\n  padding-bottom: calc(var(--spacing, .25rem) * 1);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-2, [data-ext-id=\"com.nubeio.rubixos\"].pb-2 {\n  padding-bottom: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pb-4, [data-ext-id=\"com.nubeio.rubixos\"].pb-4 {\n  padding-bottom: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pl-2, [data-ext-id=\"com.nubeio.rubixos\"].pl-2 {\n  padding-left: calc(var(--spacing, .25rem) * 2);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pl-6, [data-ext-id=\"com.nubeio.rubixos\"].pl-6 {\n  padding-left: calc(var(--spacing, .25rem) * 6);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pl-8, [data-ext-id=\"com.nubeio.rubixos\"].pl-8 {\n  padding-left: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .pl-9, [data-ext-id=\"com.nubeio.rubixos\"].pl-9 {\n  padding-left: calc(var(--spacing, .25rem) * 9);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-center, [data-ext-id=\"com.nubeio.rubixos\"].text-center {\n  text-align: center;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-left, [data-ext-id=\"com.nubeio.rubixos\"].text-left {\n  text-align: left;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-right, [data-ext-id=\"com.nubeio.rubixos\"].text-right {\n  text-align: right;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-start, [data-ext-id=\"com.nubeio.rubixos\"].text-start {\n  text-align: start;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .align-middle, [data-ext-id=\"com.nubeio.rubixos\"].align-middle {\n  vertical-align: middle;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-2xl, [data-ext-id=\"com.nubeio.rubixos\"].text-2xl {\n  font-size: var(--text-2xl, 1.5rem);\n  line-height: var(--tw-leading, var(--text-2xl--line-height, calc(2 / 1.5)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-3xl, [data-ext-id=\"com.nubeio.rubixos\"].text-3xl {\n  font-size: var(--text-3xl, 1.875rem);\n  line-height: var(--tw-leading, var(--text-3xl--line-height, calc(2.25 / 1.875)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-4xl, [data-ext-id=\"com.nubeio.rubixos\"].text-4xl {\n  font-size: var(--text-4xl, 2.25rem);\n  line-height: var(--tw-leading, var(--text-4xl--line-height, calc(2.5 / 2.25)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-5xl, [data-ext-id=\"com.nubeio.rubixos\"].text-5xl {\n  font-size: var(--text-5xl, 3rem);\n  line-height: var(--tw-leading, var(--text-5xl--line-height, 1));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-base, [data-ext-id=\"com.nubeio.rubixos\"].text-base {\n  font-size: var(--text-base, 1rem);\n  line-height: var(--tw-leading, var(--text-base--line-height, calc(1.5 / 1)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lg, [data-ext-id=\"com.nubeio.rubixos\"].text-lg {\n  font-size: var(--text-lg, 1.125rem);\n  line-height: var(--tw-leading, var(--text-lg--line-height, calc(1.75 / 1.125)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sm, [data-ext-id=\"com.nubeio.rubixos\"].text-sm {\n  font-size: var(--text-sm, .875rem);\n  line-height: var(--tw-leading, var(--text-sm--line-height, calc(1.25 / .875)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-xl, [data-ext-id=\"com.nubeio.rubixos\"].text-xl {\n  font-size: var(--text-xl, 1.25rem);\n  line-height: var(--tw-leading, var(--text-xl--line-height, calc(1.75 / 1.25)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-xs, [data-ext-id=\"com.nubeio.rubixos\"].text-xs {\n  font-size: var(--text-xs, .75rem);\n  line-height: var(--tw-leading, var(--text-xs--line-height, calc(1 / .75)));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.6rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.6rem\\] {\n  font-size: .6rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.7rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.7rem\\] {\n  font-size: .7rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[0\\.65rem\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[0\\.65rem\\] {\n  font-size: .65rem;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[10px\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[10px\\] {\n  font-size: 10px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-\\[11px\\], [data-ext-id=\"com.nubeio.rubixos\"].text-\\[11px\\] {\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-none, [data-ext-id=\"com.nubeio.rubixos\"].leading-none {\n  --tw-leading: 1;\n  line-height: 1;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-relaxed, [data-ext-id=\"com.nubeio.rubixos\"].leading-relaxed {\n  --tw-leading: var(--leading-relaxed, 1.625);\n  line-height: var(--leading-relaxed, 1.625);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .leading-tight, [data-ext-id=\"com.nubeio.rubixos\"].leading-tight {\n  --tw-leading: var(--leading-tight, 1.25);\n  line-height: var(--leading-tight, 1.25);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-bold, [data-ext-id=\"com.nubeio.rubixos\"].font-bold {\n  --tw-font-weight: var(--font-weight-bold, 700);\n  font-weight: var(--font-weight-bold, 700);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-medium, [data-ext-id=\"com.nubeio.rubixos\"].font-medium {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-normal, [data-ext-id=\"com.nubeio.rubixos\"].font-normal {\n  --tw-font-weight: var(--font-weight-normal, 400);\n  font-weight: var(--font-weight-normal, 400);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .font-semibold, [data-ext-id=\"com.nubeio.rubixos\"].font-semibold {\n  --tw-font-weight: var(--font-weight-semibold, 600);\n  font-weight: var(--font-weight-semibold, 600);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-\\[0\\.18em\\], [data-ext-id=\"com.nubeio.rubixos\"].tracking-\\[0\\.18em\\] {\n  --tw-tracking: .18em;\n  letter-spacing: .18em;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-normal, [data-ext-id=\"com.nubeio.rubixos\"].tracking-normal {\n  --tw-tracking: var(--tracking-normal, 0em);\n  letter-spacing: var(--tracking-normal, 0em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-tight, [data-ext-id=\"com.nubeio.rubixos\"].tracking-tight {\n  --tw-tracking: var(--tracking-tight, -.025em);\n  letter-spacing: var(--tracking-tight, -.025em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-wide, [data-ext-id=\"com.nubeio.rubixos\"].tracking-wide {\n  --tw-tracking: var(--tracking-wide, .025em);\n  letter-spacing: var(--tracking-wide, .025em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tracking-wider, [data-ext-id=\"com.nubeio.rubixos\"].tracking-wider {\n  --tw-tracking: var(--tracking-wider, .05em);\n  letter-spacing: var(--tracking-wider, .05em);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .break-all, [data-ext-id=\"com.nubeio.rubixos\"].break-all {\n  word-break: break-all;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\!text-current, [data-ext-id=\"com.nubeio.rubixos\"].\\!text-current {\n  color: currentColor !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-300, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-300 {\n  color: var(--color-amber-300, oklch(87.9% .169 91.605));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-400, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-400 {\n  color: var(--color-amber-400, oklch(82.8% .189 84.429));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-500, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-500 {\n  color: var(--color-amber-500, oklch(76.9% .188 70.08));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-amber-600, [data-ext-id=\"com.nubeio.rubixos\"].text-amber-600 {\n  color: var(--color-amber-600, oklch(66.6% .179 58.318));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-300, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-300 {\n  color: var(--color-cyan-300, oklch(86.5% .127 207.078));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-500, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-500 {\n  color: var(--color-cyan-500, oklch(71.5% .143 215.221));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-cyan-600, [data-ext-id=\"com.nubeio.rubixos\"].text-cyan-600 {\n  color: var(--color-cyan-600, oklch(60.9% .126 221.723));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-300, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-300 {\n  color: var(--color-emerald-300, oklch(84.5% .143 164.978));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-400, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-400 {\n  color: var(--color-emerald-400, oklch(76.5% .177 163.223));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-500, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-500 {\n  color: var(--color-emerald-500, oklch(69.6% .17 162.48));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-emerald-600, [data-ext-id=\"com.nubeio.rubixos\"].text-emerald-600 {\n  color: var(--color-emerald-600, oklch(59.6% .145 163.225));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-indigo-300, [data-ext-id=\"com.nubeio.rubixos\"].text-indigo-300 {\n  color: var(--color-indigo-300, oklch(78.5% .115 274.713));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-indigo-600, [data-ext-id=\"com.nubeio.rubixos\"].text-indigo-600 {\n  color: var(--color-indigo-600, oklch(51.1% .262 276.966));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lime-300, [data-ext-id=\"com.nubeio.rubixos\"].text-lime-300 {\n  color: var(--color-lime-300, oklch(89.7% .196 126.665));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-lime-600, [data-ext-id=\"com.nubeio.rubixos\"].text-lime-600 {\n  color: var(--color-lime-600, oklch(64.8% .2 131.684));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-rose-400, [data-ext-id=\"com.nubeio.rubixos\"].text-rose-400 {\n  color: var(--color-rose-400, oklch(71.2% .194 13.428));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-300, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-300 {\n  color: var(--color-sky-300, oklch(82.8% .111 230.318));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-400, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-400 {\n  color: var(--color-sky-400, oklch(74.6% .16 232.661));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-500, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-500 {\n  color: var(--color-sky-500, oklch(68.5% .169 237.323));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-sky-600, [data-ext-id=\"com.nubeio.rubixos\"].text-sky-600 {\n  color: var(--color-sky-600, oklch(58.8% .158 241.966));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-100, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-100 {\n  color: var(--color-slate-100, oklch(96.8% .007 247.896));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-500, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-500 {\n  color: var(--color-slate-500, oklch(55.4% .046 257.417));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-slate-900, [data-ext-id=\"com.nubeio.rubixos\"].text-slate-900 {\n  color: var(--color-slate-900, oklch(20.8% .042 265.755));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .text-white, [data-ext-id=\"com.nubeio.rubixos\"].text-white {\n  color: var(--color-white, #fff);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .capitalize, [data-ext-id=\"com.nubeio.rubixos\"].capitalize {\n  text-transform: capitalize;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .normal-case, [data-ext-id=\"com.nubeio.rubixos\"].normal-case {\n  text-transform: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uppercase, [data-ext-id=\"com.nubeio.rubixos\"].uppercase {\n  text-transform: uppercase;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .italic, [data-ext-id=\"com.nubeio.rubixos\"].italic {\n  font-style: italic;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .tabular-nums, [data-ext-id=\"com.nubeio.rubixos\"].tabular-nums {\n  --tw-numeric-spacing: tabular-nums;\n  font-variant-numeric: var(--tw-ordinal, ) var(--tw-slashed-zero, ) var(--tw-numeric-figure, ) var(--tw-numeric-spacing, ) var(--tw-numeric-fraction, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .no-underline, [data-ext-id=\"com.nubeio.rubixos\"].no-underline {\n  text-decoration-line: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-60, [data-ext-id=\"com.nubeio.rubixos\"].opacity-60 {\n  opacity: .6;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-70, [data-ext-id=\"com.nubeio.rubixos\"].opacity-70 {\n  opacity: .7;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-75, [data-ext-id=\"com.nubeio.rubixos\"].opacity-75 {\n  opacity: .75;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .opacity-90, [data-ext-id=\"com.nubeio.rubixos\"].opacity-90 {\n  opacity: .9;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow, [data-ext-id=\"com.nubeio.rubixos\"].shadow {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_8px\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_8px\\] {\n  --tw-shadow: 0 0 8px var(--tw-shadow-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n  --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, var(--color-primary));\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n    --tw-shadow: 0 0 10px 2px var(--tw-shadow-color, color-mix(in oklab,var(--color-primary) 50%,transparent));\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_2px_color-mix\\(in_oklab\\,var\\(--color-primary\\)_50\\%\\,transparent\\)\\] {\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_10px_rgba\\(255\\,255\\,255\\,0\\.25\\)\\] {\n  --tw-shadow: 0 0 10px var(--tw-shadow-color, #ffffff40);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_14px_rgba\\(94\\,234\\,212\\,0\\.6\\)\\] {\n  --tw-shadow: 0 0 14px var(--tw-shadow-color, #5eead499);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_18px_-6px_var\\(--color-primary\\)\\] {\n  --tw-shadow: 0 0 18px -6px var(--tw-shadow-color, var(--color-primary));\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_18px_rgba\\(94\\,234\\,212\\,0\\.85\\)\\] {\n  --tw-shadow: 0 0 18px var(--tw-shadow-color, #5eead4d9);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].shadow-\\[0_0_24px_-8px_var\\(--color-primary\\)\\] {\n  --tw-shadow: 0 0 24px -8px var(--tw-shadow-color, var(--color-primary));\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-sm, [data-ext-id=\"com.nubeio.rubixos\"].shadow-sm {\n  --tw-shadow: 0 1px 3px 0 var(--tw-shadow-color, #0000001a), 0 1px 2px -1px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-xl, [data-ext-id=\"com.nubeio.rubixos\"].shadow-xl {\n  --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring, [data-ext-id=\"com.nubeio.rubixos\"].ring, [data-ext-id=\"com.nubeio.rubixos\"] .ring-1, [data-ext-id=\"com.nubeio.rubixos\"].ring-1 {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-2, [data-ext-id=\"com.nubeio.rubixos\"].ring-2 {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .shadow-emerald-500\\/60, [data-ext-id=\"com.nubeio.rubixos\"].shadow-emerald-500\\/60 {\n  --tw-shadow-color: #00bb7f99;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .shadow-emerald-500\\/60, [data-ext-id=\"com.nubeio.rubixos\"].shadow-emerald-500\\/60 {\n    --tw-shadow-color: color-mix(in oklab, color-mix(in oklab, var(--color-emerald-500, oklch(69.6% .17 162.48)) 60%, transparent) var(--tw-shadow-alpha), transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-amber-400\\/40 {\n  --tw-ring-color: #fcbb0066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-amber-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-amber-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-amber-400, oklch(82.8% .189 84.429)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-cyan-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-cyan-400\\/40 {\n  --tw-ring-color: #00d2ef66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-cyan-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-cyan-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-cyan-400, oklch(78.9% .154 211.53)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-indigo-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-indigo-400\\/40 {\n  --tw-ring-color: #7d87ff66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-indigo-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-indigo-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-indigo-400, oklch(67.3% .182 276.935)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-lime-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-lime-400\\/40 {\n  --tw-ring-color: #9de50066;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-lime-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-lime-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-lime-400, oklch(84.1% .238 128.85)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-sky-400\\/40 {\n  --tw-ring-color: #00bcfe66;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-sky-400\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-sky-400\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-sky-400, oklch(74.6% .16 232.661)) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200 {\n  --tw-ring-color: var(--color-teal-200, oklch(91% .096 180.426));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200\\/70, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200\\/70 {\n  --tw-ring-color: #96f7e4b3;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-teal-200\\/70, [data-ext-id=\"com.nubeio.rubixos\"].ring-teal-200\\/70 {\n    --tw-ring-color: color-mix(in oklab, var(--color-teal-200, oklch(91% .096 180.426)) 70%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/5, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/5 {\n  --tw-ring-color: #ffffff0d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/5, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/5 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 5%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/30, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/30 {\n  --tw-ring-color: #ffffff4d;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/30, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/30 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 30%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/40 {\n  --tw-ring-color: #fff6;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ring-white\\/40, [data-ext-id=\"com.nubeio.rubixos\"].ring-white\\/40 {\n    --tw-ring-color: color-mix(in oklab, var(--color-white, #fff) 40%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .outline-hidden, [data-ext-id=\"com.nubeio.rubixos\"].outline-hidden {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n@media (forced-colors: active) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .outline-hidden, [data-ext-id=\"com.nubeio.rubixos\"].outline-hidden {\n    outline-offset: 2px;\n    outline: 2px solid #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .invert, [data-ext-id=\"com.nubeio.rubixos\"].invert {\n  --tw-invert: invert(100%);\n  filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .filter, [data-ext-id=\"com.nubeio.rubixos\"].filter {\n  filter: var(--tw-blur, ) var(--tw-brightness, ) var(--tw-contrast, ) var(--tw-grayscale, ) var(--tw-hue-rotate, ) var(--tw-invert, ) var(--tw-saturate, ) var(--tw-sepia, ) var(--tw-drop-shadow, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .backdrop-blur, [data-ext-id=\"com.nubeio.rubixos\"].backdrop-blur {\n  --tw-backdrop-blur: blur(8px);\n  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .backdrop-blur-sm, [data-ext-id=\"com.nubeio.rubixos\"].backdrop-blur-sm {\n  --tw-backdrop-blur: blur(var(--blur-sm, 8px));\n  -webkit-backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n  backdrop-filter: var(--tw-backdrop-blur, ) var(--tw-backdrop-brightness, ) var(--tw-backdrop-contrast, ) var(--tw-backdrop-grayscale, ) var(--tw-backdrop-hue-rotate, ) var(--tw-backdrop-invert, ) var(--tw-backdrop-opacity, ) var(--tw-backdrop-saturate, ) var(--tw-backdrop-sepia, );\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-\\[margin\\,opacity\\], [data-ext-id=\"com.nubeio.rubixos\"].transition-\\[margin\\,opacity\\] {\n  transition-property: margin, opacity;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-\\[width\\,height\\,padding\\], [data-ext-id=\"com.nubeio.rubixos\"].transition-\\[width\\,height\\,padding\\] {\n  transition-property: width, height, padding;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-all, [data-ext-id=\"com.nubeio.rubixos\"].transition-all {\n  transition-property: all;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-colors, [data-ext-id=\"com.nubeio.rubixos\"].transition-colors {\n  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke, --tw-gradient-from, --tw-gradient-via, --tw-gradient-to;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-opacity, [data-ext-id=\"com.nubeio.rubixos\"].transition-opacity {\n  transition-property: opacity;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-shadow, [data-ext-id=\"com.nubeio.rubixos\"].transition-shadow {\n  transition-property: box-shadow;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .transition-transform, [data-ext-id=\"com.nubeio.rubixos\"].transition-transform {\n  transition-property: transform, translate, scale, rotate;\n  transition-timing-function: var(--tw-ease, var(--default-transition-timing-function, cubic-bezier(.4, 0, .2, 1)));\n  transition-duration: var(--tw-duration, var(--default-transition-duration, .15s));\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .duration-150, [data-ext-id=\"com.nubeio.rubixos\"].duration-150 {\n  --tw-duration: .15s;\n  transition-duration: .15s;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .duration-200, [data-ext-id=\"com.nubeio.rubixos\"].duration-200 {\n  --tw-duration: .2s;\n  transition-duration: .2s;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ease-linear, [data-ext-id=\"com.nubeio.rubixos\"].ease-linear {\n  --tw-ease: linear;\n  transition-timing-function: linear;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .outline-none, [data-ext-id=\"com.nubeio.rubixos\"].outline-none {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .select-none, [data-ext-id=\"com.nubeio.rubixos\"].select-none {\n  -webkit-user-select: none;\n  user-select: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *), [data-ext-id=\"com.nubeio.rubixos\"].group-has-data-\\[sidebar\\=menu-action\\]\\/menu-item\\:pe-8:is(:where(.group\\/menu-item):has([data-sidebar=\"menu-action\"]) *) {\n  padding-inline-end: calc(var(--spacing, .25rem) * 8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:-mt-8:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  margin-top: calc(var(--spacing, .25rem) * -8);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:hidden:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  display: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:size-8\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  width: calc(var(--spacing, .25rem) * 8) !important;\n  height: calc(var(--spacing, .25rem) * 8) !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:p-2\\!:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  padding: calc(var(--spacing, .25rem) * 2) !important;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[collapsible\\=icon\\]\\:opacity-0:is(:where(.group)[data-collapsible=\"icon\"] *) {\n  opacity: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *), [data-ext-id=\"com.nubeio.rubixos\"].group-data-\\[state\\=open\\]\\/collapsible\\:rotate-90:is(:where(.group\\/collapsible)[data-state=\"open\"] *) {\n  rotate: 90deg;\n}\n\n@media (hover: hover) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:-translate-y-0\\.5:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:-translate-y-0\\.5:hover {\n    --tw-translate-y: calc(var(--spacing, .25rem) * -.5);\n    translate: var(--tw-translate-x) var(--tw-translate-y);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-amber-500\\/10:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-amber-500\\/10:hover {\n    background-color: #f99c001a;\n  }\n\n  @supports (color: color-mix(in lab, red, red)) {\n    [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-amber-500\\/10:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-amber-500\\/10:hover {\n      background-color: color-mix(in oklab, var(--color-amber-500, oklch(76.9% .188 70.08)) 10%, transparent);\n    }\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-rose-500\\/10:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-rose-500\\/10:hover {\n    background-color: #ff23571a;\n  }\n\n  @supports (color: color-mix(in lab, red, red)) {\n    [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-rose-500\\/10:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-rose-500\\/10:hover {\n      background-color: color-mix(in oklab, var(--color-rose-500, oklch(64.5% .246 16.439)) 10%, transparent);\n    }\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:bg-slate-800:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:bg-slate-800:hover {\n    background-color: var(--color-slate-800, oklch(27.9% .041 260.031));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:text-rose-400:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:text-rose-400:hover {\n    color: var(--color-rose-400, oklch(71.2% .194 13.428));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:underline:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:underline:hover {\n    text-decoration-line: underline;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:opacity-90:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:opacity-90:hover {\n    opacity: .9;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:opacity-100:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:opacity-100:hover {\n    opacity: 1;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .hover\\:shadow-xl:hover, [data-ext-id=\"com.nubeio.rubixos\"].hover\\:shadow-xl:hover {\n    --tw-shadow: 0 20px 25px -5px var(--tw-shadow-color, #0000001a), 0 8px 10px -6px var(--tw-shadow-color, #0000001a);\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus\\:ring-0:focus, [data-ext-id=\"com.nubeio.rubixos\"].focus\\:ring-0:focus {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(0px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus\\:ring-1:focus, [data-ext-id=\"com.nubeio.rubixos\"].focus\\:ring-1:focus {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(1px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus\\:outline-none:focus, [data-ext-id=\"com.nubeio.rubixos\"].focus\\:outline-none:focus {\n  --tw-outline-style: none;\n  outline-style: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .focus-visible\\:ring-2:focus-visible, [data-ext-id=\"com.nubeio.rubixos\"].focus-visible\\:ring-2:focus-visible {\n  --tw-ring-shadow: var(--tw-ring-inset, ) 0 0 0 calc(2px + var(--tw-ring-offset-width)) var(--tw-ring-color, currentcolor);\n  box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:pointer-events-none:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:pointer-events-none:disabled {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:cursor-not-allowed:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:cursor-not-allowed:disabled {\n  cursor: not-allowed;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .disabled\\:opacity-50:disabled, [data-ext-id=\"com.nubeio.rubixos\"].disabled\\:opacity-50:disabled {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aria-disabled\\:pointer-events-none[aria-disabled=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].aria-disabled\\:pointer-events-none[aria-disabled=\"true\"] {\n  pointer-events: none;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .aria-disabled\\:opacity-50[aria-disabled=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].aria-disabled\\:opacity-50[aria-disabled=\"true\"] {\n  opacity: .5;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"], [data-ext-id=\"com.nubeio.rubixos\"].data-\\[active\\=true\\]\\:font-medium[data-active=\"true\"] {\n  --tw-font-weight: var(--font-weight-medium, 500);\n  font-weight: var(--font-weight-medium, 500);\n}\n\n@media (min-width: 40rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:block, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:block {\n    display: block;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:inline-flex, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:inline-flex {\n    display: inline-flex;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:h-72, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:h-72 {\n    height: calc(var(--spacing, .25rem) * 72);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:flex-none, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:flex-none {\n    flex: none;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:flex-col, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:flex-col {\n    flex-direction: column;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:flex-row, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:flex-row {\n    flex-direction: row;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:items-center, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:items-center {\n    align-items: center;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:items-end, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:items-end {\n    align-items: flex-end;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:items-start, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:items-start {\n    align-items: flex-start;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:justify-between, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:justify-between {\n    justify-content: space-between;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:gap-0, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:gap-0 {\n    gap: calc(var(--spacing, .25rem) * 0);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-3, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-3 {\n    padding: calc(var(--spacing, .25rem) * 3);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-4, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-4 {\n    padding: calc(var(--spacing, .25rem) * 4);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:p-6, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:p-6 {\n    padding: calc(var(--spacing, .25rem) * 6);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:pb-6, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:pb-6 {\n    padding-bottom: calc(var(--spacing, .25rem) * 6);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-4xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-4xl {\n    font-size: var(--text-4xl, 2.25rem);\n    line-height: var(--tw-leading, var(--text-4xl--line-height, calc(2.5 / 2.25)));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-5xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-5xl {\n    font-size: var(--text-5xl, 3rem);\n    line-height: var(--tw-leading, var(--text-5xl--line-height, 1));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .sm\\:text-6xl, [data-ext-id=\"com.nubeio.rubixos\"].sm\\:text-6xl {\n    font-size: var(--text-6xl, 3.75rem);\n    line-height: var(--tw-leading, var(--text-6xl--line-height, 1));\n  }\n}\n\n@media (min-width: 48rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-5 {\n    grid-template-columns: repeat(5, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-\\[260px_1fr\\], [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-\\[260px_1fr\\] {\n    grid-template-columns: 260px 1fr;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .md\\:grid-cols-\\[280px_1fr\\], [data-ext-id=\"com.nubeio.rubixos\"].md\\:grid-cols-\\[280px_1fr\\] {\n    grid-template-columns: 280px 1fr;\n  }\n}\n\n@media (min-width: 64rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:col-span-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:col-span-2 {\n    grid-column: span 2 / span 2;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:col-span-3, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:col-span-3 {\n    grid-column: span 3 / span 3;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-2 {\n    grid-template-columns: repeat(2, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-5, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-5 {\n    grid-template-columns: repeat(5, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[1fr_2fr\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[1fr_2fr\\] {\n    grid-template-columns: 1fr 2fr;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[200px_minmax\\(0\\,42rem\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[200px_minmax\\(0\\,42rem\\)\\] {\n    grid-template-columns: 200px minmax(0, 42rem);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[260px_1fr_320px\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[260px_1fr_320px\\] {\n    grid-template-columns: 260px 1fr 320px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[minmax\\(0\\,1fr\\)_320px\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[minmax\\(0\\,1fr\\)_320px\\] {\n    grid-template-columns: minmax(0, 1fr) 320px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\], [data-ext-id=\"com.nubeio.rubixos\"].lg\\:grid-cols-\\[minmax\\(260px\\,320px\\)_1fr_minmax\\(220px\\,260px\\)\\] {\n    grid-template-columns: minmax(260px, 320px) 1fr minmax(220px, 260px);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .lg\\:pt-2, [data-ext-id=\"com.nubeio.rubixos\"].lg\\:pt-2 {\n    padding-top: calc(var(--spacing, .25rem) * 2);\n  }\n}\n\n@media (min-width: 80rem) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .xl\\:grid-cols-3, [data-ext-id=\"com.nubeio.rubixos\"].xl\\:grid-cols-3 {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .xl\\:grid-cols-4, [data-ext-id=\"com.nubeio.rubixos\"].xl\\:grid-cols-4 {\n    grid-template-columns: repeat(4, minmax(0, 1fr));\n  }\n}\n\n@media (prefers-color-scheme: dark) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-amber-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-amber-300 {\n    color: var(--color-amber-300, oklch(87.9% .169 91.605));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-cyan-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-cyan-300 {\n    color: var(--color-cyan-300, oklch(86.5% .127 207.078));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-emerald-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-emerald-300 {\n    color: var(--color-emerald-300, oklch(84.5% .143 164.978));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-indigo-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-indigo-300 {\n    color: var(--color-indigo-300, oklch(78.5% .115 274.713));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-lime-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-lime-300 {\n    color: var(--color-lime-300, oklch(89.7% .196 126.665));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .dark\\:text-sky-300, [data-ext-id=\"com.nubeio.rubixos\"].dark\\:text-sky-300 {\n    color: var(--color-sky-300, oklch(82.8% .111 230.318));\n  }\n}\n\n@media print {\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:hidden, [data-ext-id=\"com.nubeio.rubixos\"].print\\:hidden {\n    display: none;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:break-inside-avoid, [data-ext-id=\"com.nubeio.rubixos\"].print\\:break-inside-avoid {\n    break-inside: avoid;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:gap-3, [data-ext-id=\"com.nubeio.rubixos\"].print\\:gap-3 {\n    gap: calc(var(--spacing, .25rem) * 3);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:border-slate-200, [data-ext-id=\"com.nubeio.rubixos\"].print\\:border-slate-200 {\n    border-color: var(--color-slate-200, oklch(92.9% .013 255.508));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:border-slate-300, [data-ext-id=\"com.nubeio.rubixos\"].print\\:border-slate-300 {\n    border-color: var(--color-slate-300, oklch(86.9% .022 252.894));\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:\\!bg-white, [data-ext-id=\"com.nubeio.rubixos\"].print\\:\\!bg-white {\n    background-color: var(--color-white, #fff) !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:py-0, [data-ext-id=\"com.nubeio.rubixos\"].print\\:py-0 {\n    padding-block: calc(var(--spacing, .25rem) * 0);\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:text-\\[10px\\], [data-ext-id=\"com.nubeio.rubixos\"].print\\:text-\\[10px\\] {\n    font-size: 10px;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .print\\:\\!shadow-none, [data-ext-id=\"com.nubeio.rubixos\"].print\\:\\!shadow-none {\n    --tw-shadow: 0 0 #0000 !important;\n    box-shadow: var(--tw-inset-shadow), var(--tw-inset-ring-shadow), var(--tw-ring-offset-shadow), var(--tw-ring-shadow), var(--tw-shadow) !important;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>span\\:last-child\\]\\:truncate > span:last-child {\n  text-overflow: ellipsis;\n  white-space: nowrap;\n  overflow: hidden;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:size-4 > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:size-4 > svg {\n  width: calc(var(--spacing, .25rem) * 4);\n  height: calc(var(--spacing, .25rem) * 4);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:shrink-0 > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:shrink-0 > svg {\n  flex-shrink: 0;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .\\[\\&\\>svg\\]\\:text-inherit > svg, [data-ext-id=\"com.nubeio.rubixos\"].\\[\\&\\>svg\\]\\:text-inherit > svg {\n  color: inherit;\n}\n\n@keyframes nrg-spin {\n  from {\n    transform: rotate(0);\n  }\n\n  to {\n    transform: rotate(360deg);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-slow {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 4.2s linear infinite nrg-spin;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-med {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 2.4s linear infinite nrg-spin;\n}\n\n@keyframes nrg-bob {\n  0%, 100% {\n    transform: translateY(0);\n  }\n\n  50% {\n    transform: translateY(-3.5px);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"].nrg-bob {\n  transform-origin: 50%;\n  transform-box: fill-box;\n  animation: 3.8s ease-in-out infinite nrg-bob;\n}\n\n@keyframes nrg-charge {\n  0% {\n    opacity: .55;\n  }\n\n  50% {\n    opacity: 1;\n  }\n\n  100% {\n    opacity: .55;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"].nrg-charge {\n  animation: 2.6s ease-in-out infinite nrg-charge;\n}\n\n@keyframes nrg-status-pulse {\n  0% {\n    box-shadow: 0 0 0 0 var(--nrg-pulse-color, #22c55e8c);\n  }\n\n  70% {\n    box-shadow: 0 0 0 9px #0000;\n  }\n\n  100% {\n    box-shadow: 0 0 #0000;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .nrg-dot-pulse, [data-ext-id=\"com.nubeio.rubixos\"].nrg-dot-pulse {\n  animation: 1.9s cubic-bezier(.45, 0, .2, 1) infinite nrg-status-pulse;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-slow, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"].nrg-spin-med, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"].nrg-bob, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"].nrg-charge, [data-ext-id=\"com.nubeio.rubixos\"] .nrg-dot-pulse, [data-ext-id=\"com.nubeio.rubixos\"].nrg-dot-pulse {\n    animation: none !important;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-dash-shell, [data-ext-id=\"com.nubeio.rubixos\"].ext-dash-shell {\n  isolation: isolate;\n  position: relative;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-dash-shell:before, [data-ext-id=\"com.nubeio.rubixos\"].ext-dash-shell:before {\n  content: \"\";\n  pointer-events: none;\n  z-index: -1;\n  filter: blur(20px);\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf2e, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f129, #0000 70%);\n  height: 50%;\n  position: absolute;\n  inset: -20% -10% auto;\n}\n\n:root[data-mode=\"dark\"] .ext-dash-shell:before {\n  background: radial-gradient(60% 60% at 20% 0, #2dd4bf38, #0000 70%), radial-gradient(50% 60% at 95% 10%, #6366f133, #0000 70%);\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass {\n  background: var(--color-card, #fff);\n  border: 1px solid var(--color-border, #0f172a1a);\n  border-radius: 14px;\n  position: relative;\n  overflow: hidden;\n  box-shadow: inset 0 1px #ffffff8c, 0 1px 2px #0f172a0f, 0 12px 28px -12px #0f172a38;\n}\n\n:root[data-mode=\"dark\"] .ext-glass {\n  background: var(--color-card, #0f172a);\n  border-color: var(--color-border, #94a3b82e);\n  box-shadow: inset 0 1px #ffffff0f, 0 1px 2px #00000073, 0 18px 44px -16px #000000b3;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n  border-color: var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n    border-color: color-mix(in oklab, var(--color-primary, #2dd4bf) 55%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n  box-shadow: 0 0 0 1px var(--color-primary, #2dd4bf), 0 12px 36px -12px var(--color-primary, #2dd4bf);\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-glass--accent, [data-ext-id=\"com.nubeio.rubixos\"].ext-glass--accent {\n    box-shadow: 0 0 0 1px color-mix(in oklab, var(--color-primary, #2dd4bf) 30%, transparent), 0 12px 36px -12px color-mix(in oklab, var(--color-primary, #2dd4bf) 35%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.rubixos\"].ext-eyebrow {\n  letter-spacing: .12em;\n  text-transform: uppercase;\n  color: var(--color-muted-foreground, #64748b);\n  font-size: .625rem;\n}\n\n@supports (color: color-mix(in lab, red, red)) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-eyebrow, [data-ext-id=\"com.nubeio.rubixos\"].ext-eyebrow {\n    color: color-mix(in oklab, var(--color-muted-foreground, #64748b) 100%, transparent);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-num, [data-ext-id=\"com.nubeio.rubixos\"].ext-num {\n  font-variant-numeric: tabular-nums;\n}\n\n@keyframes ext-site-pulse {\n  0% {\n    opacity: .9;\n    transform: scale(.6);\n  }\n\n  80% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n\n  100% {\n    opacity: 0;\n    transform: scale(1.6);\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--on, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--on {\n  animation: 1.8s ease-out infinite ext-site-pulse;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--off, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--off {\n  opacity: .35;\n}\n\n@media (prefers-reduced-motion: reduce) {\n  [data-ext-id=\"com.nubeio.rubixos\"] .site-pulse--on, [data-ext-id=\"com.nubeio.rubixos\"].site-pulse--on {\n    opacity: .55;\n    animation: none;\n  }\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot {\n  font-family: inherit;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot .u-legend, [data-ext-id=\"com.nubeio.rubixos\"].uplot .u-legend {\n  color: var(--color-foreground);\n  font-size: 11px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .uplot .u-legend .u-marker, [data-ext-id=\"com.nubeio.rubixos\"].uplot .u-legend .u-marker {\n  border-radius: 2px;\n  width: 10px;\n  height: 10px;\n}\n\n[data-ext-id=\"com.nubeio.rubixos\"] .ext-report, [data-ext-id=\"com.nubeio.rubixos\"].ext-report {\n  min-height: 100%;\n  padding: 1rem 1.25rem;\n}\n\n@media print {\n  @page {\n    size: A4;\n    margin: 14mm;\n  }\n\n  html, body {\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .no-print, [data-ext-id=\"com.nubeio.rubixos\"].no-print, [data-ext-id=\"com.nubeio.rubixos\"] nav, [data-ext-id=\"com.nubeio.rubixos\"] header[data-block-shell], [data-ext-id=\"com.nubeio.rubixos\"] aside {\n    display: none !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-report, [data-ext-id=\"com.nubeio.rubixos\"].ext-report {\n    --color-foreground: #0f172a;\n    --color-muted-foreground: #64748b;\n    --color-border: #e2e8f0;\n    --color-card: #fff;\n    padding: 0;\n    color: #0f172a !important;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] .ext-report .ext-glass, [data-ext-id=\"com.nubeio.rubixos\"].ext-report .ext-glass {\n    box-shadow: none;\n    background: #fff !important;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] section, [data-ext-id=\"com.nubeio.rubixos\"] .ext-report-channel, [data-ext-id=\"com.nubeio.rubixos\"].ext-report-channel {\n    break-inside: avoid;\n    page-break-inside: avoid;\n  }\n\n  [data-ext-id=\"com.nubeio.rubixos\"] a {\n    color: inherit;\n    text-decoration: none;\n  }\n}\n\n@property --tw-translate-x {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-y {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-translate-z {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-rotate-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-rotate-z {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-x {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-skew-y {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-divide-y-reverse {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-border-style {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: solid;\n}\n\n@property --tw-gradient-position {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-from {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-via {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-to {\n  syntax: \"<color>\";\n  inherits: false;\n  initial-value: #0000;\n}\n\n@property --tw-gradient-stops {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-via-stops {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-gradient-from-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 0%;\n}\n\n@property --tw-gradient-via-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 50%;\n}\n\n@property --tw-gradient-to-position {\n  syntax: \"<length-percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-leading {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-font-weight {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-tracking {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ordinal {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-slashed-zero {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-figure {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-spacing {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-numeric-fraction {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-inset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-inset-ring-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-inset-ring-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-ring-inset {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ring-offset-width {\n  syntax: \"<length>\";\n  inherits: false;\n  initial-value: 0;\n}\n\n@property --tw-ring-offset-color {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: #fff;\n}\n\n@property --tw-ring-offset-shadow {\n  syntax: \"*\";\n  inherits: false;\n  initial-value: 0 0 #0000;\n}\n\n@property --tw-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-color {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-drop-shadow-alpha {\n  syntax: \"<percentage>\";\n  inherits: false;\n  initial-value: 100%;\n}\n\n@property --tw-drop-shadow-size {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-blur {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-brightness {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-contrast {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-grayscale {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-hue-rotate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-invert {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-opacity {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-saturate {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-backdrop-sepia {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-duration {\n  syntax: \"*\";\n  inherits: false\n}\n\n@property --tw-ease {\n  syntax: \"*\";\n  inherits: false\n}\n\n@keyframes spin {\n  to {\n    transform: rotate(360deg);\n  }\n}\n[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map{font:12px/20px Helvetica Neue,Arial,Helvetica,sans-serif;overflow:hidden;position:relative;-webkit-tap-highlight-color:rgb(0 0 0/0)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas{left:0;position:absolute;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:fullscreen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:fullscreen{height:100%;width:100%}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass{touch-action:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass{cursor:grab;-webkit-user-select:none;-moz-user-select:none;user-select:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive.maplibregl-track-pointer{cursor:pointer}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button.maplibregl-ctrl-compass:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button.maplibregl-ctrl-compass:active{cursor:grabbing}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate .maplibregl-canvas{touch-action:pan-x pan-y}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:pinch-zoom}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-zoom-rotate.maplibregl-touch-drag-pan .maplibregl-canvas{touch-action:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-canvas-container.maplibregl-touch-drag-pan.maplibregl-cooperative-gestures .maplibregl-canvas{touch-action:pan-x pan-y}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right{pointer-events:none;position:absolute;z-index:2}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left{left:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right{right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left{bottom:0;left:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right{bottom:0;right:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl{clear:both;pointer-events:auto;transform:translate(0)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left .maplibregl-ctrl{float:left;margin:10px 0 0 10px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right .maplibregl-ctrl{float:right;margin:10px 10px 0 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left .maplibregl-ctrl{float:left;margin:0 0 10px 10px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right .maplibregl-ctrl, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right .maplibregl-ctrl{float:right;margin:0 10px 10px 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group{background:#fff;border-radius:4px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group:not(:empty), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px rgba(0,0,0,.1)}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group:not(:empty), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group:not(:empty){box-shadow:0 0 0 2px ButtonText}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button{background-color:transparent;border:0;box-sizing:border-box;cursor:pointer;display:block;height:29px;outline:none;padding:0;width:29px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button+button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button+button{border-top:1px solid #ddd}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button .maplibregl-ctrl-icon{background-position:50%;background-repeat:no-repeat;display:block;height:100%;width:100%}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-icon{background-color:transparent}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button+button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button+button{border-top:1px solid ButtonText}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button::-moz-focus-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button::-moz-focus-inner{border:0;padding:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib-button:focus, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib-button:focus, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus{box-shadow:0 0 2px 2px #0096ff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:disabled, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:disabled{cursor:not-allowed}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:disabled .maplibregl-ctrl-icon{opacity:.25}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button:not(:disabled):hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button:not(:disabled):hover{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:focus-visible, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:focus-visible{box-shadow:0 0 2px 2px #0096ff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:not(:focus-visible), [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:not(:focus-visible){box-shadow:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:first-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:first-child{border-radius:4px 4px 0 0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:last-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:last-child{border-radius:0 0 4px 4px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-group button:focus:only-child, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-group button:focus:only-child{border-radius:inherit}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M10 13c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h9c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M14.5 8.5c-.75 0-1.5.75-1.5 1.5v3h-3c-.75 0-1.5.75-1.5 1.5S9.25 16 10 16h3v3c0 .75.75 1.5 1.5 1.5S16 19.75 16 19v-3h3c.75 0 1.5-.75 1.5-1.5S19.75 13 19 13h-3v-3c0-.75-.75-1.5-1.5-1.5'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M24 16v5.5c0 1.75-.75 2.5-2.5 2.5H16v-1l3-1.5-4-5.5 1-1 5.5 4 1.5-3zM6 16l1.5 3 5.5-4 1 1-4 5.5 3 1.5v1H7.5C5.75 24 5 23.25 5 21.5V16zm7-11v1l-3 1.5 4 5.5-1 1-5.5-4L6 13H5V7.5C5 5.75 5.75 5 7.5 5zm11 2.5c0-1.75-.75-2.5-2.5-2.5H16v1l3 1.5-4 5.5 1 1 5.5-4 1.5 3h1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-shrink .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='M18.5 16c-1.75 0-2.5.75-2.5 2.5V24h1l1.5-3 5.5 4 1-1-4-5.5 3-1.5v-1zM13 18.5c0-1.75-.75-2.5-2.5-2.5H5v1l3 1.5L4 24l1 1 5.5-4 1.5 3h1zm3-8c0 1.75.75 2.5 2.5 2.5H24v-1l-3-1.5L25 5l-1-1-5.5 4L17 5h-1zM10.5 13c1.75 0 2.5-.75 2.5-2.5V5h-1l-1.5 3L5 4 4 5l4 5.5L5 12v1z'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-compass .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 29 29'%3E%3Cpath d='m10.5 14 4-8 4 8z'/%3E%3Cpath fill='%23ccc' d='m10.5 16 4 8 4-8z'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-terrain .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%23333' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-terrain-enabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='22' height='22' fill='%2333b5e5' viewBox='0 0 22 22'%3E%3Cpath d='m1.754 13.406 4.453-4.851 3.09 3.09 3.281 3.277.969-.969-3.309-3.312 3.844-4.121 6.148 6.886h1.082v-.855l-7.207-8.07-4.84 5.187L6.169 6.57l-5.48 5.965v.871ZM.688 16.844h20.625v1.375H.688Zm0 0'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23333' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23aaa' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-waiting .maplibregl-ctrl-icon{animation:maplibregl-spin 2s linear infinite}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23fff' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23999' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-active-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e58978' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%2333b5e5' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate.maplibregl-ctrl-geolocate-background-error .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23e54e33' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3C/svg%3E\")}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl button.maplibregl-ctrl-geolocate:disabled .maplibregl-ctrl-icon{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='29' height='29' fill='%23666' viewBox='0 0 20 20'%3E%3Cpath d='M10 4C9 4 9 5 9 5v.1A5 5 0 0 0 5.1 9H5s-1 0-1 1 1 1 1 1h.1A5 5 0 0 0 9 14.9v.1s0 1 1 1 1-1 1-1v-.1a5 5 0 0 0 3.9-3.9h.1s1 0 1-1-1-1-1-1h-.1A5 5 0 0 0 11 5.1V5s0-1-1-1m0 2.5a3.5 3.5 0 1 1 0 7 3.5 3.5 0 1 1 0-7'/%3E%3Ccircle cx='10' cy='10' r='2'/%3E%3Cpath fill='red' d='m14 5 1 1-9 9-1-1z'/%3E%3C/svg%3E\")}}@keyframes maplibregl-spin{0%{transform:rotate(0deg)}to{transform:rotate(1turn)}}[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\");background-repeat:no-repeat;cursor:pointer;display:block;height:23px;margin:0 0 -4px -4px;overflow:hidden;width:88px}[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo.maplibregl-compact{width:14px}@media (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-color:transparent;background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}@media (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] a.maplibregl-ctrl-logo{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='88' height='23' fill='none'%3E%3Cpath fill='%23000' fill-opacity='.4' fill-rule='evenodd' d='M17.408 16.796h-1.827l2.501-12.095h.198l3.324 6.533.988 2.19.988-2.19 3.258-6.533h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.929 5.644h-.098l-2.914-5.644-.757-1.71-.345 1.71zm1.958-3.42-.726 3.663a1.255 1.255 0 0 1-1.232 1.011h-1.827a1.255 1.255 0 0 1-1.229-1.509l2.501-12.095a1.255 1.255 0 0 1 1.23-1.001h.197a1.25 1.25 0 0 1 1.12.685l3.19 6.273 3.125-6.263a1.25 1.25 0 0 1 1.123-.695h.181a1.255 1.255 0 0 1 1.227.991l1.443 6.71a5 5 0 0 1 .314-.787l.009-.016a4.6 4.6 0 0 1 1.777-1.887c.782-.46 1.668-.667 2.611-.667a4.6 4.6 0 0 1 1.7.32l.306.134c.21-.16.474-.256.759-.256h1.694a1.255 1.255 0 0 1 1.212.925 1.255 1.255 0 0 1 1.212-.925h1.711c.284 0 .545.094.755.252.613-.3 1.312-.45 2.075-.45 1.356 0 2.557.445 3.482 1.4q.47.48.763 1.064V4.701a1.255 1.255 0 0 1 1.255-1.255h1.86A1.255 1.255 0 0 1 54.44 4.7v9.194h2.217c.19 0 .37.043.532.118v-4.77c0-.356.147-.678.385-.906a2.42 2.42 0 0 1-.682-1.71c0-.665.267-1.253.735-1.7a2.45 2.45 0 0 1 1.722-.674 2.43 2.43 0 0 1 1.705.675q.318.302.504.683V4.7a1.255 1.255 0 0 1 1.255-1.255h1.744A1.255 1.255 0 0 1 65.812 4.7v3.335a4.8 4.8 0 0 1 1.526-.246c.938 0 1.817.214 2.59.69a4.47 4.47 0 0 1 1.67 1.743v-.98a1.255 1.255 0 0 1 1.256-1.256h1.777c.233 0 .451.064.639.174a3.4 3.4 0 0 1 1.567-.372c.346 0 .861.02 1.285.232a1.25 1.25 0 0 1 .689 1.004 4.7 4.7 0 0 1 .853-.588c.795-.44 1.675-.647 2.61-.647 1.385 0 2.65.39 3.525 1.396.836.938 1.168 2.173 1.168 3.528q-.001.515-.056 1.051a1.255 1.255 0 0 1-.947 1.09l.408.952a1.255 1.255 0 0 1-.477 1.552c-.418.268-.92.463-1.458.612-.613.171-1.304.244-2.049.244-1.06 0-2.043-.207-2.886-.698l-.015-.008c-.798-.48-1.419-1.135-1.818-1.963l-.004-.008a5.8 5.8 0 0 1-.548-2.512q0-.429.053-.843a1.3 1.3 0 0 1-.333-.086l-.166-.004c-.223 0-.426.062-.643.228-.03.024-.142.139-.142.59v3.883a1.255 1.255 0 0 1-1.256 1.256h-1.777a1.255 1.255 0 0 1-1.256-1.256V15.69l-.032.057a4.8 4.8 0 0 1-1.86 1.833 5.04 5.04 0 0 1-2.484.634 4.5 4.5 0 0 1-1.935-.424 1.25 1.25 0 0 1-.764.258h-1.71a1.255 1.255 0 0 1-1.256-1.255V7.687a2.4 2.4 0 0 1-.428.625c.253.23.412.561.412.93v7.553a1.255 1.255 0 0 1-1.256 1.255h-1.843a1.25 1.25 0 0 1-.894-.373c-.228.23-.544.373-.894.373H51.32a1.255 1.255 0 0 1-1.256-1.255v-1.251l-.061.117a4.7 4.7 0 0 1-1.782 1.884 4.77 4.77 0 0 1-2.485.67 5.6 5.6 0 0 1-1.485-.188l.009 2.764a1.255 1.255 0 0 1-1.255 1.259h-1.729a1.255 1.255 0 0 1-1.255-1.255v-3.537a1.255 1.255 0 0 1-1.167.793h-1.679a1.25 1.25 0 0 1-.77-.263 4.5 4.5 0 0 1-1.945.429c-.885 0-1.724-.21-2.495-.632l-.017-.01a5 5 0 0 1-1.081-.836 1.255 1.255 0 0 1-1.254 1.312h-1.81a1.255 1.255 0 0 1-1.228-.99l-.782-3.625-2.044 3.939a1.25 1.25 0 0 1-1.115.676h-.098a1.25 1.25 0 0 1-1.116-.68l-2.061-3.994zM35.92 16.63l.207-.114.223-.15q.493-.356.735-.785l.061-.118.033 1.332h1.678V9.242h-1.694l-.033 1.267q-.133-.329-.526-.658l-.032-.028a3.2 3.2 0 0 0-.668-.428l-.27-.12a3.3 3.3 0 0 0-1.235-.23q-1.136-.001-1.974.493a3.36 3.36 0 0 0-1.3 1.382q-.445.89-.444 2.074 0 1.2.51 2.107a3.8 3.8 0 0 0 1.382 1.381 3.9 3.9 0 0 0 1.893.477q.795 0 1.455-.33zm-2.789-5.38q-.576.675-.575 1.762 0 1.102.559 1.794.576.675 1.645.675a2.25 2.25 0 0 0 .934-.19 2.2 2.2 0 0 0 .468-.29l.178-.161a2.2 2.2 0 0 0 .397-.561q.244-.5.244-1.15v-.115q0-.708-.296-1.267l-.043-.077a2.2 2.2 0 0 0-.633-.709l-.13-.086-.047-.028a2.1 2.1 0 0 0-1.073-.285q-1.052 0-1.629.692zm2.316 2.706c.163-.17.28-.407.28-.83v-.114c0-.292-.06-.508-.15-.68a.96.96 0 0 0-.353-.389.85.85 0 0 0-.464-.127c-.4 0-.56.114-.664.239l-.01.012c-.148.174-.275.45-.275.945 0 .506.122.801.27.99.097.11.266.224.68.224.303 0 .504-.09.687-.269zm7.545 1.705a2.6 2.6 0 0 0 .331.423q.319.33.755.548l.173.074q.65.255 1.49.255 1.02 0 1.844-.493a3.45 3.45 0 0 0 1.316-1.4q.493-.904.493-2.089 0-1.909-.988-2.913-.988-1.02-2.584-1.02-.898 0-1.575.347a3 3 0 0 0-.415.262l-.199.166a3.4 3.4 0 0 0-.64.82V9.242h-1.712v11.553h1.729l-.017-5.134zm.53-1.138q.206.29.48.5l.155.11.053.034q.51.296 1.119.297 1.07 0 1.645-.675.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.435 0-.835.16a2 2 0 0 0-.284.136 2 2 0 0 0-.363.254 2.2 2.2 0 0 0-.46.569l-.082.162a2.6 2.6 0 0 0-.213 1.072v.115q0 .707.296 1.267l.135.211zm.964-.818a1.1 1.1 0 0 0 .367.385.94.94 0 0 0 .476.118c.423 0 .59-.117.687-.23.159-.194.28-.478.28-.95 0-.53-.133-.8-.266-.952l-.021-.025c-.078-.094-.231-.221-.68-.221a1 1 0 0 0-.503.135l-.012.007a.86.86 0 0 0-.335.343c-.073.133-.132.324-.132.614v.115a1.4 1.4 0 0 0 .14.66zm15.7-6.222q.347-.346.346-.856a1.05 1.05 0 0 0-.345-.79 1.18 1.18 0 0 0-.84-.329q-.51 0-.855.33a1.05 1.05 0 0 0-.346.79q0 .51.346.855.345.346.856.346.51 0 .839-.346zm4.337 9.314.033-1.332q.191.403.59.747l.098.081a4 4 0 0 0 .316.224l.223.122a3.2 3.2 0 0 0 1.44.322 3.8 3.8 0 0 0 1.875-.477 3.5 3.5 0 0 0 1.382-1.366q.527-.89.526-2.09 0-1.184-.444-2.073a3.24 3.24 0 0 0-1.283-1.399q-.823-.51-1.942-.51a3.5 3.5 0 0 0-1.527.344l-.086.043-.165.09a3 3 0 0 0-.33.214q-.432.315-.656.707a2 2 0 0 0-.099.198l.082-1.283V4.701h-1.744v12.095zm.473-2.509a2.5 2.5 0 0 0 .566.7q.117.098.245.18l.144.08a2.1 2.1 0 0 0 .975.232q1.07 0 1.645-.675.576-.69.576-1.778 0-1.102-.576-1.777-.56-.691-1.645-.692a2.2 2.2 0 0 0-1.015.235q-.22.113-.415.282l-.15.142a2.1 2.1 0 0 0-.42.594q-.223.479-.223 1.1v.115q0 .705.293 1.26zm2.616-.293c.157-.191.28-.479.28-.967 0-.51-.13-.79-.276-.961l-.021-.026c-.082-.1-.232-.225-.67-.225a.87.87 0 0 0-.681.279l-.012.011c-.154.155-.274.38-.274.807v.115c0 .285.057.499.144.669a1.1 1.1 0 0 0 .367.405c.137.082.28.123.455.123.423 0 .59-.118.686-.23zm8.266-3.013q.345-.13.724-.14l.069-.002q.493 0 .642.099l.247-1.794q-.196-.099-.717-.099a2.3 2.3 0 0 0-.545.063 2 2 0 0 0-.411.148 2.2 2.2 0 0 0-.4.249 2.5 2.5 0 0 0-.485.499 2.7 2.7 0 0 0-.32.581l-.05.137v-1.48h-1.778v7.553h1.777v-3.884q0-.546.159-.943a1.5 1.5 0 0 1 .466-.636 2.5 2.5 0 0 1 .399-.253 2 2 0 0 1 .224-.099zm9.784 2.656.05-.922q0-1.743-.856-2.698-.838-.97-2.584-.97-1.119-.001-2.007.493a3.46 3.46 0 0 0-1.4 1.382q-.493.906-.493 2.106 0 1.07.428 1.975.428.89 1.332 1.432.906.526 2.255.526.973 0 1.668-.185l.044-.012.135-.04q.613-.184.984-.421l-.542-1.267q-.3.162-.642.274l-.297.087q-.51.131-1.3.131-.954 0-1.497-.444a1.6 1.6 0 0 1-.192-.193q-.366-.44-.512-1.234l-.004-.021zm-5.427-1.256-.003.022h3.752v-.138q-.011-.727-.288-1.118a1 1 0 0 0-.156-.176q-.46-.428-1.316-.428-.986 0-1.494.604-.379.45-.494 1.234zm-27.053 2.77V4.7h-1.86v12.095h5.333V15.15zm7.103-5.908v7.553h-1.843V9.242h1.843z'/%3E%3Cpath fill='%23fff' d='m19.63 11.151-.757-1.71-.345 1.71-1.12 5.644h-1.827L18.083 4.7h.197l3.325 6.533.988 2.19.988-2.19L26.839 4.7h.181l2.6 12.095h-1.81l-1.218-5.644-.362-1.71-.658 1.71-2.93 5.644h-.098l-2.913-5.644zm14.836 5.81q-1.02 0-1.893-.478a3.8 3.8 0 0 1-1.381-1.382q-.51-.906-.51-2.106 0-1.185.444-2.074a3.36 3.36 0 0 1 1.3-1.382q.839-.494 1.974-.494a3.3 3.3 0 0 1 1.234.231 3.3 3.3 0 0 1 .97.575q.396.33.527.659l.033-1.267h1.694v7.553H37.18l-.033-1.332q-.279.593-1.02 1.053a3.17 3.17 0 0 1-1.662.444zm.296-1.482q.938 0 1.58-.642.642-.66.642-1.711v-.115q0-.708-.296-1.267a2.2 2.2 0 0 0-.807-.872 2.1 2.1 0 0 0-1.119-.313q-1.053 0-1.629.692-.575.675-.575 1.76 0 1.103.559 1.795.577.675 1.645.675zm6.521-6.237h1.711v1.4q.906-1.597 2.83-1.597 1.596 0 2.584 1.02.988 1.005.988 2.914 0 1.185-.493 2.09a3.46 3.46 0 0 1-1.316 1.399 3.5 3.5 0 0 1-1.844.493q-.954 0-1.662-.329a2.67 2.67 0 0 1-1.086-.97l.017 5.134h-1.728zm4.048 6.22q1.07 0 1.645-.674.577-.69.576-1.762 0-1.119-.576-1.777-.558-.675-1.645-.675-.592 0-1.12.296-.51.28-.822.823-.296.527-.296 1.234v.115q0 .708.296 1.267.313.543.823.855.51.296 1.119.297z'/%3E%3Cpath fill='%23e1e3e9' d='M51.325 4.7h1.86v10.45h3.473v1.646h-5.333zm7.12 4.542h1.843v7.553h-1.843zm.905-1.415a1.16 1.16 0 0 1-.856-.346 1.17 1.17 0 0 1-.346-.856 1.05 1.05 0 0 1 .346-.79q.346-.329.856-.329.494 0 .839.33a1.05 1.05 0 0 1 .345.79 1.16 1.16 0 0 1-.345.855q-.33.346-.84.346zm7.875 9.133a3.17 3.17 0 0 1-1.662-.444q-.723-.46-1.004-1.053l-.033 1.332h-1.71V4.701h1.743v4.657l-.082 1.283q.279-.658 1.086-1.119a3.5 3.5 0 0 1 1.778-.477q1.119 0 1.942.51a3.24 3.24 0 0 1 1.283 1.4q.445.888.444 2.072 0 1.201-.526 2.09a3.5 3.5 0 0 1-1.382 1.366 3.8 3.8 0 0 1-1.876.477zm-.296-1.481q1.069 0 1.645-.675.577-.69.577-1.778 0-1.102-.577-1.776-.56-.691-1.645-.692a2.12 2.12 0 0 0-1.58.659q-.642.641-.642 1.694v.115q0 .71.296 1.267a2.4 2.4 0 0 0 .807.872 2.1 2.1 0 0 0 1.119.313zm5.927-6.237h1.777v1.481q.263-.757.856-1.217a2.14 2.14 0 0 1 1.349-.46q.527 0 .724.098l-.247 1.794q-.149-.099-.642-.099-.774 0-1.416.494-.626.493-.626 1.58v3.883h-1.777V9.242zm9.534 7.718q-1.35 0-2.255-.526-.904-.543-1.332-1.432a4.6 4.6 0 0 1-.428-1.975q0-1.2.493-2.106a3.46 3.46 0 0 1 1.4-1.382q.889-.495 2.007-.494 1.744 0 2.584.97.855.956.856 2.7 0 .444-.05.92h-5.43q.18 1.005.708 1.45.542.443 1.497.443.79 0 1.3-.131a4 4 0 0 0 .938-.362l.542 1.267q-.411.263-1.119.46-.708.198-1.711.197zm1.596-4.558q.016-1.02-.444-1.432-.46-.428-1.316-.428-1.728 0-1.991 1.86z'/%3E%3Cpath d='M5.074 15.948a.484.657 0 0 0-.486.659v1.84a.484.657 0 0 0 .486.659h4.101a.484.657 0 0 0 .486-.659v-1.84a.484.657 0 0 0-.486-.659zm3.56 1.16H5.617v.838h3.017z' style='fill:%23fff;fill-rule:evenodd;stroke-width:1.03600001'/%3E%3Cg style='stroke-width:1.12603545'%3E%3Cpath d='M-9.408-1.416c-3.833-.025-7.056 2.912-7.08 6.615-.02 3.08 1.653 4.832 3.107 6.268.903.892 1.721 1.74 2.32 2.902l-.525-.004c-.543-.003-.992.304-1.24.639a1.87 1.87 0 0 0-.362 1.121l-.011 1.877c-.003.402.104.787.347 1.125.244.338.688.653 1.23.656l4.142.028c.542.003.99-.306 1.238-.641a1.87 1.87 0 0 0 .363-1.121l.012-1.875a1.87 1.87 0 0 0-.348-1.127c-.243-.338-.688-.653-1.23-.656l-.518-.004c.597-1.145 1.425-1.983 2.348-2.87 1.473-1.414 3.18-3.149 3.2-6.226-.016-3.59-2.923-6.684-6.993-6.707m-.006 1.1v.002c3.274.02 5.92 2.532 5.9 5.6-.017 2.706-1.39 4.026-2.863 5.44-1.034.994-2.118 2.033-2.814 3.633-.018.041-.052.055-.075.065q-.013.004-.02.01a.34.34 0 0 1-.226.084.34.34 0 0 1-.224-.086l-.092-.077c-.699-1.615-1.768-2.669-2.781-3.67-1.454-1.435-2.797-2.762-2.78-5.478.02-3.067 2.7-5.545 5.975-5.523m-.02 2.826c-1.62-.01-2.944 1.315-2.955 2.96-.01 1.646 1.295 2.988 2.916 2.999h.002c1.621.01 2.943-1.316 2.953-2.961.011-1.646-1.294-2.988-2.916-2.998m-.005 1.1c1.017.006 1.829.83 1.822 1.89s-.83 1.874-1.848 1.867c-1.018-.006-1.829-.83-1.822-1.89s.83-1.874 1.848-1.868m-2.155 11.857 4.14.025c.271.002.49.305.487.676l-.013 1.875c-.003.37-.224.67-.495.668l-4.14-.025c-.27-.002-.487-.306-.485-.676l.012-1.875c.003-.37.224-.67.494-.668' style='color:%23000;font-style:normal;font-variant:normal;font-weight:400;font-stretch:normal;font-size:medium;line-height:normal;font-family:sans-serif;font-variant-ligatures:normal;font-variant-position:normal;font-variant-caps:normal;font-variant-numeric:normal;font-variant-alternates:normal;font-feature-settings:normal;text-indent:0;text-align:start;text-decoration:none;text-decoration-line:none;text-decoration-style:solid;text-decoration-color:%23000;letter-spacing:normal;word-spacing:normal;text-transform:none;writing-mode:lr-tb;direction:ltr;text-orientation:mixed;dominant-baseline:auto;baseline-shift:baseline;text-anchor:start;white-space:normal;shape-padding:0;clip-rule:evenodd;display:inline;overflow:visible;visibility:visible;opacity:1;isolation:auto;mix-blend-mode:normal;color-interpolation:sRGB;color-interpolation-filters:linearRGB;solid-color:%23000;solid-opacity:1;vector-effect:none;fill:%23000;fill-opacity:.4;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;color-rendering:auto;image-rendering:auto;shape-rendering:auto;text-rendering:auto' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-9.415-.316C-12.69-.338-15.37 2.14-15.39 5.207c-.017 2.716 1.326 4.041 2.78 5.477 1.013 1 2.081 2.055 2.78 3.67l.092.076a.34.34 0 0 0 .225.086.34.34 0 0 0 .227-.083l.019-.01c.022-.009.057-.024.074-.064.697-1.6 1.78-2.64 2.814-3.634 1.473-1.414 2.847-2.733 2.864-5.44.02-3.067-2.627-5.58-5.901-5.601m-.057 8.784c1.621.011 2.944-1.315 2.955-2.96.01-1.646-1.295-2.988-2.916-2.999-1.622-.01-2.945 1.315-2.955 2.96s1.295 2.989 2.916 3' style='clip-rule:evenodd;fill:%23e1e3e9;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3Cpath d='M-11.594 15.465c-.27-.002-.492.297-.494.668l-.012 1.876c-.003.371.214.673.485.675l4.14.027c.271.002.492-.298.495-.668l.012-1.877c.003-.37-.215-.672-.485-.674z' style='clip-rule:evenodd;fill:%23fff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.47727823;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:.4' transform='translate(15.553 2.85)scale(.88807)'/%3E%3C/g%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl.maplibregl-ctrl-attrib, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl.maplibregl-ctrl-attrib{background-color:hsla(0,0%,100%,.5);margin:0;padding:0 5px}@media screen{[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact{background-color:#fff;border-radius:12px;box-sizing:content-box;color:#000;margin:10px;min-height:20px;padding:2px 24px 2px 0;position:relative}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show{padding:2px 28px 2px 8px;visibility:visible}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact-show{border-radius:12px;padding:2px 8px 2px 28px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-inner{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib-button{background-color:hsla(0,0%,100%,.5);background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\");border:0;border-radius:12px;box-sizing:border-box;cursor:pointer;display:none;height:24px;outline:none;position:absolute;right:0;top:0;width:24px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button{-webkit-appearance:none;-moz-appearance:none;appearance:none;list-style:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib summary.maplibregl-ctrl-attrib-button::-webkit-details-marker{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left .maplibregl-ctrl-attrib-button{left:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-inner{display:block}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact-show .maplibregl-ctrl-attrib-button{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;right:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-right>.maplibregl-ctrl-attrib.maplibregl-compact:after{right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-top-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{left:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-bottom-left>.maplibregl-ctrl-attrib.maplibregl-compact:after{bottom:0;left:0}}@media screen and (forced-colors:active){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill='%23fff' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}@media screen and (forced-colors:active) and (prefers-color-scheme:light){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib.maplibregl-compact:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib.maplibregl-compact:after{background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' fill-rule='evenodd' viewBox='0 0 20 20'%3E%3Cpath d='M4 10a6 6 0 1 0 12 0 6 6 0 1 0-12 0m5-3a1 1 0 1 0 2 0 1 1 0 1 0-2 0m0 3a1 1 0 1 1 2 0v3a1 1 0 1 1-2 0'/%3E%3C/svg%3E\")}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib a, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib a{color:rgba(0,0,0,.75);text-decoration:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-attrib a:hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-attrib a:hover{color:inherit;text-decoration:underline}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-attrib-empty, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-attrib-empty{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-ctrl-scale, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-ctrl-scale{background-color:hsla(0,0%,100%,.75);border:2px solid #333;border-top:#333;box-sizing:border-box;color:#333;font-size:10px;padding:0 5px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup{display:flex;left:0;pointer-events:none;position:absolute;top:0;will-change:transform}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right{flex-direction:column}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right{flex-direction:column-reverse}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-left, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-left{flex-direction:row}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-right, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-right{flex-direction:row-reverse}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-tip{border:10px solid transparent;height:0;width:0;z-index:1}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top .maplibregl-popup-tip{align-self:center;border-bottom-color:#fff;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left .maplibregl-popup-tip{align-self:flex-start;border-bottom-color:#fff;border-left:none;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right .maplibregl-popup-tip{align-self:flex-end;border-bottom-color:#fff;border-right:none;border-top:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom .maplibregl-popup-tip{align-self:center;border-bottom:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left .maplibregl-popup-tip{align-self:flex-start;border-bottom:none;border-left:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right .maplibregl-popup-tip{align-self:flex-end;border-bottom:none;border-right:none;border-top-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-left .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-left .maplibregl-popup-tip{align-self:center;border-left:none;border-right-color:#fff}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-right .maplibregl-popup-tip, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-right .maplibregl-popup-tip{align-self:center;border-left-color:#fff;border-right:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-close-button, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-close-button{background-color:transparent;border:0;border-radius:0 3px 0 0;cursor:pointer;position:absolute;right:0;top:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-close-button:hover, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-close-button:hover{background-color:rgb(0 0 0/5%)}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-content{background:#fff;border-radius:3px;box-shadow:0 1px 2px rgba(0,0,0,.1);padding:15px 10px;pointer-events:auto;position:relative}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-left .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-left .maplibregl-popup-content{border-top-left-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-top-right .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-top-right .maplibregl-popup-content{border-top-right-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-left .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-left .maplibregl-popup-content{border-bottom-left-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-anchor-bottom-right .maplibregl-popup-content, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-anchor-bottom-right .maplibregl-popup-content{border-bottom-right-radius:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-track-pointer{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-popup-track-pointer *, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-popup-track-pointer *{pointer-events:none;-webkit-user-select:none;-moz-user-select:none;user-select:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:hover .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:hover .maplibregl-popup-track-pointer{display:flex}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-map:active .maplibregl-popup-track-pointer, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-map:active .maplibregl-popup-track-pointer{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-marker, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-marker{left:0;position:absolute;top:0;transition:opacity .2s;will-change:transform}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:before, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:before{background-color:#1da1f2;border-radius:50%;height:15px;width:15px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:before, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:before{animation:maplibregl-user-location-dot-pulse 2s infinite;content:\"\";position:absolute}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot:after{border:2px solid #fff;border-radius:50%;box-shadow:0 0 3px rgba(0,0,0,.35);box-sizing:border-box;content:\"\";height:19px;left:-2px;position:absolute;top:-2px;width:19px}@keyframes maplibregl-user-location-dot-pulse{0%{opacity:1;transform:scale(1)}70%{opacity:0;transform:scale(3)}to{opacity:0;transform:scale(1)}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot-stale, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot-stale{background-color:#aaa}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-dot-stale:after, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-dot-stale:after{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-user-location-accuracy-circle, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-user-location-accuracy-circle{background-color:#1da1f233;border-radius:100%;height:1px;width:1px}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair .maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair .maplibregl-interactive, [data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-crosshair .maplibregl-interactive:active, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-crosshair .maplibregl-interactive:active{cursor:crosshair}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-boxzoom, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-boxzoom{background:#fff;border:2px dotted #202020;height:0;left:0;opacity:.5;position:absolute;top:0;width:0}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen{align-items:center;background:rgba(0,0,0,.4);color:#fff;display:flex;font-size:1.4em;inset:0;justify-content:center;line-height:1.2;opacity:0;padding:1rem;pointer-events:none;position:absolute;transition:opacity 1s ease 1s;z-index:99999}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen.maplibregl-show, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen.maplibregl-show{opacity:1;transition:opacity .05s}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:none}@media (hover:none),(width <= 480px){[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-desktop-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-desktop-message{display:none}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-cooperative-gesture-screen .maplibregl-mobile-message, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-cooperative-gesture-screen .maplibregl-mobile-message{display:block}}[data-ext-id=\"com.nubeio.rubixos\"] .maplibregl-pseudo-fullscreen, [data-ext-id=\"com.nubeio.rubixos\"].maplibregl-pseudo-fullscreen{height:100%!important;left:0!important;position:fixed!important;top:0!important;width:100%!important;z-index:99999}[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *, [data-ext-id=\"com.nubeio.rubixos\"].uplot *, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *::before, [data-ext-id=\"com.nubeio.rubixos\"].uplot *::before, [data-ext-id=\"com.nubeio.rubixos\"] .uplot *::after, [data-ext-id=\"com.nubeio.rubixos\"].uplot *::after {box-sizing: border-box;}[data-ext-id=\"com.nubeio.rubixos\"] .uplot, [data-ext-id=\"com.nubeio.rubixos\"].uplot {font-family: system-ui, -apple-system, \"Segoe UI\", Roboto, \"Helvetica Neue\", Arial, \"Noto Sans\", sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\";line-height: 1.5;width: min-content;}[data-ext-id=\"com.nubeio.rubixos\"] .u-title, [data-ext-id=\"com.nubeio.rubixos\"].u-title {text-align: center;font-size: 18px;font-weight: bold;}[data-ext-id=\"com.nubeio.rubixos\"] .u-wrap, [data-ext-id=\"com.nubeio.rubixos\"].u-wrap {position: relative;user-select: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-over, [data-ext-id=\"com.nubeio.rubixos\"].u-over, [data-ext-id=\"com.nubeio.rubixos\"] .u-under, [data-ext-id=\"com.nubeio.rubixos\"].u-under {position: absolute;}[data-ext-id=\"com.nubeio.rubixos\"] .u-under, [data-ext-id=\"com.nubeio.rubixos\"].u-under {overflow: hidden;}[data-ext-id=\"com.nubeio.rubixos\"] .uplot canvas, [data-ext-id=\"com.nubeio.rubixos\"].uplot canvas {display: block;position: relative;width: 100%;height: 100%;}[data-ext-id=\"com.nubeio.rubixos\"] .u-axis, [data-ext-id=\"com.nubeio.rubixos\"].u-axis {position: absolute;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend, [data-ext-id=\"com.nubeio.rubixos\"].u-legend {font-size: 14px;margin: auto;text-align: center;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline, [data-ext-id=\"com.nubeio.rubixos\"].u-inline {display: block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline *, [data-ext-id=\"com.nubeio.rubixos\"].u-inline * {display: inline-block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline tr, [data-ext-id=\"com.nubeio.rubixos\"].u-inline tr {margin-right: 16px;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend th, [data-ext-id=\"com.nubeio.rubixos\"].u-legend th {font-weight: 600;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend th > *, [data-ext-id=\"com.nubeio.rubixos\"].u-legend th > * {vertical-align: middle;display: inline-block;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend .u-marker, [data-ext-id=\"com.nubeio.rubixos\"].u-legend .u-marker {width: 1em;height: 1em;margin-right: 4px;background-clip: padding-box !important;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline.u-live th::after, [data-ext-id=\"com.nubeio.rubixos\"].u-inline.u-live th::after {content: \":\";vertical-align: middle;}[data-ext-id=\"com.nubeio.rubixos\"] .u-inline:not(.u-live) .u-value, [data-ext-id=\"com.nubeio.rubixos\"].u-inline:not(.u-live) .u-value {display: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-series > *, [data-ext-id=\"com.nubeio.rubixos\"].u-series > * {padding: 4px;}[data-ext-id=\"com.nubeio.rubixos\"] .u-series th, [data-ext-id=\"com.nubeio.rubixos\"].u-series th {cursor: pointer;}[data-ext-id=\"com.nubeio.rubixos\"] .u-legend .u-off > *, [data-ext-id=\"com.nubeio.rubixos\"].u-legend .u-off > * {opacity: 0.3;}[data-ext-id=\"com.nubeio.rubixos\"] .u-select, [data-ext-id=\"com.nubeio.rubixos\"].u-select {background: rgba(0,0,0,0.07);position: absolute;pointer-events: none;}[data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-y {position: absolute;left: 0;top: 0;pointer-events: none;will-change: transform;}[data-ext-id=\"com.nubeio.rubixos\"] .u-hz .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-hz .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"] .u-vt .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-vt .u-cursor-y {height: 100%;border-right: 1px dashed #607D8B;}[data-ext-id=\"com.nubeio.rubixos\"] .u-hz .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"].u-hz .u-cursor-y, [data-ext-id=\"com.nubeio.rubixos\"] .u-vt .u-cursor-x, [data-ext-id=\"com.nubeio.rubixos\"].u-vt .u-cursor-x {width: 100%;border-bottom: 1px dashed #607D8B;}[data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-pt, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-pt {position: absolute;top: 0;left: 0;border-radius: 50%;border: 0 solid;pointer-events: none;will-change: transform;/*this has to be !important since we set inline \"background\" shorthand */background-clip: padding-box !important;}[data-ext-id=\"com.nubeio.rubixos\"] .u-axis.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-axis.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-select.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-select.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-x.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-x.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-y.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-y.u-off, [data-ext-id=\"com.nubeio.rubixos\"] .u-cursor-pt.u-off, [data-ext-id=\"com.nubeio.rubixos\"].u-cursor-pt.u-off {display: none;}"));document.head.appendChild(elementStyle);}}catch(e){console.error('vite-plugin-css-injected-by-js', e);}
 
 })();
 import { jsx, jsxs, Fragment } from 'react/jsx-runtime';
@@ -186,11 +186,18 @@ function asEpochMs(v) {
 }
 
 const inFlight$1 = /* @__PURE__ */ new Map();
-function callTool(toolId, params) {
+let readEpoch = 0;
+function invalidateReads() {
+  readEpoch += 1;
+  inFlight$1.clear();
+}
+function callTool(toolId, params, opts) {
   const body = JSON.stringify(params ?? {});
-  const key = `${toolId}::${body}`;
-  const existing = inFlight$1.get(key);
-  if (existing) return existing;
+  const key = `${toolId}::${body}::e${readEpoch}`;
+  if (!opts?.fresh) {
+    const existing = inFlight$1.get(key);
+    if (existing) return existing;
+  }
   const p = (async () => {
     const res = await fetch(`/api/v1/tools/${toolId}`, {
       method: "POST",
@@ -211,15 +218,16 @@ function callTool(toolId, params) {
     }
     return parsed;
   })().finally(() => {
-    inFlight$1.delete(key);
+    if (inFlight$1.get(key) === p) inFlight$1.delete(key);
   });
-  inFlight$1.set(key, p);
+  if (!opts?.fresh) inFlight$1.set(key, p);
   return p;
 }
 async function fetchTemplate(template, params = {}) {
   const res = await callTool(
     `${EXTENSION_ID}.warehouse_query`,
-    { template, params }
+    { template, params },
+    { fresh: true }
   );
   return res.rows;
 }
@@ -2473,7 +2481,7 @@ const ChartLine = createLucideIcon("ChartLine", [
  */
 
 
-createLucideIcon("Check", [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]);
+const Check = createLucideIcon("Check", [["path", { d: "M20 6 9 17l-5-5", key: "1gmf2c" }]]);
 
 /**
  * @license lucide-react v0.469.0 - ISC
@@ -2563,6 +2571,19 @@ const CloudRain = createLucideIcon("CloudRain", [
 
 const Cloud = createLucideIcon("Cloud", [
   ["path", { d: "M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z", key: "p7xjir" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Copy = createLucideIcon("Copy", [
+  ["rect", { width: "14", height: "14", x: "8", y: "8", rx: "2", ry: "2", key: "17jyea" }],
+  ["path", { d: "M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2", key: "zix9uf" }]
 ]);
 
 /**
@@ -2686,6 +2707,21 @@ const Eye = createLucideIcon("Eye", [
  */
 
 
+const FileCode2 = createLucideIcon("FileCode2", [
+  ["path", { d: "M4 22h14a2 2 0 0 0 2-2V7l-5-5H6a2 2 0 0 0-2 2v4", key: "1pf5j1" }],
+  ["path", { d: "M14 2v4a2 2 0 0 0 2 2h4", key: "tnqrlb" }],
+  ["path", { d: "m5 12-3 3 3 3", key: "oke12k" }],
+  ["path", { d: "m9 18 3-3-3-3", key: "112psh" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const FileCode = createLucideIcon("FileCode", [
   ["path", { d: "M10 12.5 8 15l2 2.5", key: "1tg20x" }],
   ["path", { d: "m14 12.5 2 2.5-2 2.5", key: "yinavb" }],
@@ -2734,6 +2770,24 @@ const FileText = createLucideIcon("FileText", [
 
 const Filter = createLucideIcon("Filter", [
   ["polygon", { points: "22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3", key: "1yg77f" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Folder = createLucideIcon("Folder", [
+  [
+    "path",
+    {
+      d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+      key: "1kt360"
+    }
+  ]
 ]);
 
 /**
@@ -2874,6 +2928,22 @@ const Leaf$1 = createLucideIcon("Leaf", [
  */
 
 
+const ListTree = createLucideIcon("ListTree", [
+  ["path", { d: "M21 12h-8", key: "1bmf0i" }],
+  ["path", { d: "M21 6H8", key: "1pqkrb" }],
+  ["path", { d: "M21 18h-8", key: "1tm79t" }],
+  ["path", { d: "M3 6v4c0 1.1.9 2 2 2h3", key: "1ywdgy" }],
+  ["path", { d: "M3 10v6c0 1.1.9 2 2 2h3", key: "2wc746" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const List = createLucideIcon("List", [
   ["path", { d: "M3 12h.01", key: "nlz23k" }],
   ["path", { d: "M3 18h.01", key: "1tta3j" }],
@@ -2942,12 +3012,41 @@ createLucideIcon("Map", [
  */
 
 
+const Minus = createLucideIcon("Minus", [["path", { d: "M5 12h14", key: "1ays0h" }]]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 const Network = createLucideIcon("Network", [
   ["rect", { x: "16", y: "16", width: "6", height: "6", rx: "1", key: "4q2zg0" }],
   ["rect", { x: "2", y: "16", width: "6", height: "6", rx: "1", key: "8cvhb9" }],
   ["rect", { x: "9", y: "2", width: "6", height: "6", rx: "1", key: "1egb70" }],
   ["path", { d: "M5 16v-3a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v3", key: "1jsf9p" }],
   ["path", { d: "M12 12V8", key: "2874zd" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Pencil = createLucideIcon("Pencil", [
+  [
+    "path",
+    {
+      d: "M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z",
+      key: "1a8usu"
+    }
+  ],
+  ["path", { d: "m15 5 4 4", key: "1mk7zo" }]
 ]);
 
 /**
@@ -3027,6 +3126,55 @@ const QrCode = createLucideIcon("QrCode", [
  */
 
 
+const RadioTower = createLucideIcon("RadioTower", [
+  ["path", { d: "M4.9 16.1C1 12.2 1 5.8 4.9 1.9", key: "s0qx1y" }],
+  ["path", { d: "M7.8 4.7a6.14 6.14 0 0 0-.8 7.5", key: "1idnkw" }],
+  ["circle", { cx: "12", cy: "9", r: "2", key: "1092wv" }],
+  ["path", { d: "M16.2 4.8c2 2 2.26 5.11.8 7.47", key: "ojru2q" }],
+  ["path", { d: "M19.1 1.9a9.96 9.96 0 0 1 0 14.1", key: "rhi7fg" }],
+  ["path", { d: "M9.5 18h5", key: "mfy3pd" }],
+  ["path", { d: "m8 22 4-11 4 11", key: "25yftu" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Radio = createLucideIcon("Radio", [
+  ["path", { d: "M4.9 19.1C1 15.2 1 8.8 4.9 4.9", key: "1vaf9d" }],
+  ["path", { d: "M7.8 16.2c-2.3-2.3-2.3-6.1 0-8.5", key: "u1ii0m" }],
+  ["circle", { cx: "12", cy: "12", r: "2", key: "1c9p78" }],
+  ["path", { d: "M16.2 7.8c2.3 2.3 2.3 6.1 0 8.5", key: "1j5fej" }],
+  ["path", { d: "M19.1 4.9C23 8.8 23 15.1 19.1 19", key: "10b0cb" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const RefreshCw = createLucideIcon("RefreshCw", [
+  ["path", { d: "M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8", key: "v9h5vc" }],
+  ["path", { d: "M21 3v5h-5", key: "1q7to0" }],
+  ["path", { d: "M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16", key: "3uifl3" }],
+  ["path", { d: "M8 16H3v5", key: "1cv678" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 createLucideIcon("RotateCcw", [
   ["path", { d: "M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8", key: "1357e3" }],
   ["path", { d: "M3 3v5h5", key: "1xhq8a" }]
@@ -3093,7 +3241,7 @@ const ScanLine = createLucideIcon("ScanLine", [
  */
 
 
-createLucideIcon("Search", [
+const Search = createLucideIcon("Search", [
   ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }],
   ["path", { d: "m21 21-4.3-4.3", key: "1qie3q" }]
 ]);
@@ -3240,6 +3388,21 @@ const WandSparkles = createLucideIcon("WandSparkles", [
   ["path", { d: "M7 8H3", key: "zfb6yr" }],
   ["path", { d: "M21 16h-4", key: "1cnmox" }],
   ["path", { d: "M11 3H9", key: "1obp7u" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Wifi = createLucideIcon("Wifi", [
+  ["path", { d: "M12 20h.01", key: "zekei9" }],
+  ["path", { d: "M2 8.82a15 15 0 0 1 20 0", key: "dnpr2z" }],
+  ["path", { d: "M5 12.859a10 10 0 0 1 14 0", key: "1x1e6c" }],
+  ["path", { d: "M8.5 16.429a5 5 0 0 1 7 0", key: "1bycff" }]
 ]);
 
 /**
@@ -42455,27 +42618,61 @@ function subtitleFor(s) {
   }
 }
 
+let version = 0;
+const listeners = /* @__PURE__ */ new Set();
+function notify() {
+  invalidateReads();
+  version += 1;
+  for (const l of listeners) l();
+}
+function bumpRefresh() {
+  notify();
+  for (const ms of [300, 800, 1500, 3e3, 5e3]) setTimeout(notify, ms);
+}
+function subscribe(cb) {
+  listeners.add(cb);
+  return () => {
+    listeners.delete(cb);
+  };
+}
+function useRefreshKey() {
+  return React.useSyncExternalStore(
+    subscribe,
+    () => version,
+    () => version
+  );
+}
+
 const tool = (name) => `${EXTENSION_ID}.${name}`;
+function mutate(toolId, params) {
+  return callTool(toolId, params).then((res) => {
+    bumpRefresh();
+    return res;
+  });
+}
 function decode(barcode) {
   return callTool(tool("bc_decode"), { barcode });
 }
 function provision(input) {
-  return callTool(tool("bc_provision"), input);
+  return mutate(tool("bc_provision"), input);
+}
+function assignPage(input) {
+  return mutate(tool("bc_device_assign_page"), input);
 }
 function deviceUpdate(row) {
-  return callTool(tool("bc_device_update"), { row });
+  return mutate(tool("bc_device_update"), { row });
 }
 function decommission(device_ids, hard = false) {
-  return callTool(tool("bc_device_decommission"), { device_ids, hard });
+  return mutate(tool("bc_device_decommission"), { device_ids, hard });
 }
 function siteCreate(row) {
-  return callTool(tool("bc_site_create"), { row });
+  return mutate(tool("bc_site_create"), { row });
 }
 function locationCreate(row) {
-  return callTool(tool("bc_location_create"), { row });
+  return mutate(tool("bc_location_create"), { row });
 }
 function templateUpsert(yaml) {
-  return callTool(tool("bc_template_upsert"), { yaml });
+  return mutate(tool("bc_template_upsert"), { yaml });
 }
 function labelRender(device_id) {
   return callTool(tool("bc_label_render"), { device_id });
@@ -42489,8 +42686,8 @@ function listSites(limit = 200) {
 function listLocations(params = {}) {
   return fetchTemplate(tool("bc_locations_list"), params);
 }
-function listPages(limit = 200) {
-  return fetchTemplate(tool("bc_pages_list"), { limit });
+function listPages(params = {}) {
+  return fetchTemplate(tool("bc_pages_list"), { limit: 200, ...params });
 }
 function listTemplates(limit = 200) {
   return fetchTemplate(tool("bc_templates_list"), { limit });
@@ -42628,6 +42825,7 @@ function Identify({ identity }) {
   ] });
 }
 
+const newSiteId = () => `site_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 6)}`;
 const EMPTY_PLACEMENT = {
   siteId: "",
   locationId: "",
@@ -42643,24 +42841,66 @@ function Place({
   const [locations, setLocations] = React.useState([]);
   const [pages, setPages] = React.useState([]);
   const set = (patch) => onChange({ ...value, ...patch });
+  const refresh = useRefreshKey();
+  const [newSite, setNewSite] = React.useState("");
+  const [creatingSite, setCreatingSite] = React.useState(false);
+  const createSite = () => {
+    const nm = newSite.trim();
+    if (!nm || creatingSite) return;
+    const id = newSiteId();
+    setCreatingSite(true);
+    siteCreate({ site_id: id, name: nm }).then(() => listSites().catch(() => [{ site_id: id, name: nm }])).then((list) => {
+      setSites(list.some((s) => s.site_id === id) ? list : [...list, { site_id: id, name: nm }]);
+      setNewSite("");
+      set({ siteId: id, locationId: "", newLocation: "" });
+    }).finally(() => setCreatingSite(false));
+  };
   React.useEffect(() => {
     listSites().then(setSites).catch(() => setSites([]));
-    listPages().then(setPages).catch(() => setPages([]));
-  }, []);
+  }, [refresh]);
   React.useEffect(() => {
     if (!value.siteId) return setLocations([]);
     listLocations({ site_id: value.siteId }).then(setLocations).catch(() => setLocations([]));
-  }, [value.siteId]);
+  }, [value.siteId, refresh]);
+  React.useEffect(() => {
+    if (!value.siteId) return setPages([]);
+    listPages({ site_id: value.siteId }).then(setPages).catch(() => setPages([]));
+  }, [value.siteId, refresh]);
   return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
-    /* @__PURE__ */ jsx(Field, { label: "Site", children: /* @__PURE__ */ jsx(
-      Picker,
-      {
-        value: value.siteId,
-        placeholder: "Select a site",
-        options: sites.map((s) => ({ value: s.site_id, label: s.name })),
-        onChange: (v) => set({ siteId: v, locationId: "", newLocation: "" })
-      }
-    ) }),
+    /* @__PURE__ */ jsxs(Field, { label: "Site", children: [
+      /* @__PURE__ */ jsx(
+        Picker,
+        {
+          value: value.siteId,
+          placeholder: sites.length ? "+ New site" : "+ Create your first site",
+          options: sites.map((s) => ({ value: s.site_id, label: s.name })),
+          onChange: (v) => set({ siteId: v, locationId: "", newLocation: "" })
+        }
+      ),
+      !value.siteId ? /* @__PURE__ */ jsxs("div", { className: "mt-2 flex gap-2", children: [
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            value: newSite,
+            onChange: (e) => setNewSite(e.target.value),
+            onKeyDown: (e) => e.key === "Enter" && createSite(),
+            placeholder: "New site name (e.g. Building A)",
+            "aria-label": "New site name",
+            className: "w-full rounded-lg border border-border/60 bg-background px-3 py-3 text-base text-foreground outline-none focus:border-primary"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: createSite,
+            disabled: !newSite.trim() || creatingSite,
+            className: "shrink-0 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground disabled:opacity-50",
+            children: creatingSite ? "…" : "Create"
+          }
+        )
+      ] }) : null
+    ] }),
     value.siteId ? /* @__PURE__ */ jsxs(Field, { label: "Location", children: [
       /* @__PURE__ */ jsx(
         Picker,
@@ -42681,12 +42921,12 @@ function Place({
         }
       ) : null
     ] }) : null,
-    /* @__PURE__ */ jsxs(Field, { label: "Page (optional)", children: [
+    value.siteId ? /* @__PURE__ */ jsxs(Field, { label: "Dashboard page", children: [
       /* @__PURE__ */ jsx(
         Picker,
         {
           value: value.pageId,
-          placeholder: "+ New page",
+          placeholder: "+ New page for this site",
           options: pages.map((p) => ({ value: p.page_id, label: p.name })),
           onChange: (v) => set({ pageId: v, newPage: "" })
         }
@@ -42696,11 +42936,11 @@ function Place({
         {
           value: value.newPage,
           onChange: (e) => set({ newPage: e.target.value }),
-          placeholder: "New page name (optional)",
+          placeholder: "New page name (e.g. Floor 3)",
           className: "mt-2 w-full rounded-lg border border-border/60 bg-background px-3 py-3 text-base text-foreground outline-none focus:border-primary"
         }
       ) : null
-    ] })
+    ] }) : null
   ] });
 }
 function Field({ label, children }) {
@@ -43043,6 +43283,50 @@ function PwaApp() {
   ] });
 }
 
+function deviceHref(deviceId) {
+  const q = new URLSearchParams({ id: deviceId });
+  return `/extensions/${EXTENSION_ID}/provision/device?${q.toString()}`;
+}
+function deviceShareUrl(deviceId) {
+  if (typeof window === "undefined") return deviceHref(deviceId);
+  return new URL(deviceHref(deviceId), window.location.origin).toString();
+}
+function gotoDevice(deviceId) {
+  if (typeof window === "undefined") return;
+  window.history.pushState(window.history.state, "", deviceHref(deviceId));
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+function gotoDevicesList() {
+  if (typeof window === "undefined") return;
+  const href = `/extensions/${EXTENSION_ID}/provision/devices`;
+  window.history.pushState(window.history.state, "", href);
+  window.dispatchEvent(new PopStateEvent("popstate"));
+}
+
+function statusTone(status) {
+  const s = status.toLowerCase();
+  if (s.includes("fail") || s === "error" || s === "decommissioned")
+    return { dot: "bg-rose-500", text: "text-rose-400" };
+  if (s.includes("pend") || s.includes("sync"))
+    return { dot: "bg-amber-500", text: "text-amber-400" };
+  if (s === "active" || s.includes("commission") || s.includes("provision") || s.includes("connect"))
+    return { dot: "bg-emerald-500", text: "text-emerald-400" };
+  return { dot: "bg-slate-400", text: "text-muted-foreground" };
+}
+
+function StatePill({ on, label }) {
+  return /* @__PURE__ */ jsxs(
+    "span",
+    {
+      "aria-label": `${label}: ${on ? "on" : "off"}`,
+      className: "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium " + (on ? "bg-emerald-500/10 text-emerald-400" : "bg-muted/40 text-muted-foreground"),
+      children: [
+        on ? /* @__PURE__ */ jsx(Check, { className: "size-3" }) : /* @__PURE__ */ jsx(Minus, { className: "size-3" }),
+        on ? "On" : "Off"
+      ]
+    }
+  );
+}
 function DeviceDetail({ deviceId }) {
   const [points, setPoints] = React.useState([]);
   const [loading, setLoading] = React.useState(false);
@@ -43059,28 +43343,1157 @@ function DeviceDetail({ deviceId }) {
   if (error) return /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm text-destructive", children: error });
   if (loading) return /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm italic text-muted-foreground", children: "loading…" });
   if (points.length === 0) return /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm italic text-muted-foreground", children: "No points." });
-  return /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
-    /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-left text-xs text-muted-foreground", children: [
-      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", children: "Point" }),
-      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", children: "Widget" }),
-      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", title: "set at provision time", children: "Trend" }),
-      /* @__PURE__ */ jsx("th", { className: "px-2 py-1 font-medium", title: "set at provision time", children: "Alarm" })
-    ] }) }),
-    /* @__PURE__ */ jsx("tbody", { children: points.map((p) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/40", children: [
-      /* @__PURE__ */ jsxs("td", { className: "px-2 py-1.5 text-foreground", children: [
-        p.name,
-        p.unit ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground", children: [
-          " (",
-          p.unit,
-          ")"
-        ] }) : null
-      ] }),
-      /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-muted-foreground", children: p.widget }),
-      /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", title: "set at provision time", children: /* @__PURE__ */ jsx(Switch, { checked: p.trend_on, label: `${p.name} trend`, disabled: true }) }),
-      /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", title: "set at provision time", children: /* @__PURE__ */ jsx(Switch, { checked: p.alarm_on, label: `${p.name} alarm`, disabled: true }) })
-    ] }, p.point_id)) })
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+    /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+      /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-left", children: [
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-1", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Point" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-1", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Widget" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-1", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Trend" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-2 py-1", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Alarm" }) })
+      ] }) }),
+      /* @__PURE__ */ jsx("tbody", { children: points.map((p) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/40", children: [
+        /* @__PURE__ */ jsxs("td", { className: "px-2 py-1.5 text-foreground", children: [
+          p.name,
+          p.unit ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground", children: [
+            " (",
+            p.unit,
+            ")"
+          ] }) : null
+        ] }),
+        /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 font-mono text-xs text-muted-foreground", children: p.widget }),
+        /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: /* @__PURE__ */ jsx(StatePill, { on: p.trend_on, label: `${p.name} trend` }) }),
+        /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: /* @__PURE__ */ jsx(StatePill, { on: p.alarm_on, label: `${p.name} alarm` }) })
+      ] }, p.point_id)) })
+    ] }),
+    /* @__PURE__ */ jsx("p", { className: "px-2 text-xs italic text-muted-foreground", children: "Trend & alarm are set when the device is provisioned and are read-only here." })
   ] });
 }
+
+var __defProp = Object.defineProperty;
+var __getOwnPropSymbols = Object.getOwnPropertySymbols;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __propIsEnum = Object.prototype.propertyIsEnumerable;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __spreadValues = (a, b) => {
+  for (var prop in b || (b = {}))
+    if (__hasOwnProp.call(b, prop))
+      __defNormalProp(a, prop, b[prop]);
+  if (__getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(b)) {
+      if (__propIsEnum.call(b, prop))
+        __defNormalProp(a, prop, b[prop]);
+    }
+  return a;
+};
+var __objRest = (source, exclude) => {
+  var target = {};
+  for (var prop in source)
+    if (__hasOwnProp.call(source, prop) && exclude.indexOf(prop) < 0)
+      target[prop] = source[prop];
+  if (source != null && __getOwnPropSymbols)
+    for (var prop of __getOwnPropSymbols(source)) {
+      if (exclude.indexOf(prop) < 0 && __propIsEnum.call(source, prop))
+        target[prop] = source[prop];
+    }
+  return target;
+};
+
+// src/third-party/qrcodegen/index.ts
+/**
+ * @license QR Code generator library (TypeScript)
+ * Copyright (c) Project Nayuki.
+ * SPDX-License-Identifier: MIT
+ */
+var qrcodegen;
+((qrcodegen2) => {
+  const _QrCode = class _QrCode {
+    /*-- Constructor (low level) and fields --*/
+    // Creates a new QR Code with the given version number,
+    // error correction level, data codeword bytes, and mask number.
+    // This is a low-level API that most users should not use directly.
+    // A mid-level API is the encodeSegments() function.
+    constructor(version, errorCorrectionLevel, dataCodewords, msk) {
+      this.version = version;
+      this.errorCorrectionLevel = errorCorrectionLevel;
+      // The modules of this QR Code (false = light, true = dark).
+      // Immutable after constructor finishes. Accessed through getModule().
+      this.modules = [];
+      // Indicates function modules that are not subjected to masking. Discarded when constructor finishes.
+      this.isFunction = [];
+      if (version < _QrCode.MIN_VERSION || version > _QrCode.MAX_VERSION)
+        throw new RangeError("Version value out of range");
+      if (msk < -1 || msk > 7)
+        throw new RangeError("Mask value out of range");
+      this.size = version * 4 + 17;
+      let row = [];
+      for (let i = 0; i < this.size; i++)
+        row.push(false);
+      for (let i = 0; i < this.size; i++) {
+        this.modules.push(row.slice());
+        this.isFunction.push(row.slice());
+      }
+      this.drawFunctionPatterns();
+      const allCodewords = this.addEccAndInterleave(dataCodewords);
+      this.drawCodewords(allCodewords);
+      if (msk == -1) {
+        let minPenalty = 1e9;
+        for (let i = 0; i < 8; i++) {
+          this.applyMask(i);
+          this.drawFormatBits(i);
+          const penalty = this.getPenaltyScore();
+          if (penalty < minPenalty) {
+            msk = i;
+            minPenalty = penalty;
+          }
+          this.applyMask(i);
+        }
+      }
+      assert(0 <= msk && msk <= 7);
+      this.mask = msk;
+      this.applyMask(msk);
+      this.drawFormatBits(msk);
+      this.isFunction = [];
+    }
+    /*-- Static factory functions (high level) --*/
+    // Returns a QR Code representing the given Unicode text string at the given error correction level.
+    // As a conservative upper bound, this function is guaranteed to succeed for strings that have 738 or fewer
+    // Unicode code points (not UTF-16 code units) if the low error correction level is used. The smallest possible
+    // QR Code version is automatically chosen for the output. The ECC level of the result may be higher than the
+    // ecl argument if it can be done without increasing the version.
+    static encodeText(text, ecl) {
+      const segs = qrcodegen2.QrSegment.makeSegments(text);
+      return _QrCode.encodeSegments(segs, ecl);
+    }
+    // Returns a QR Code representing the given binary data at the given error correction level.
+    // This function always encodes using the binary segment mode, not any text mode. The maximum number of
+    // bytes allowed is 2953. The smallest possible QR Code version is automatically chosen for the output.
+    // The ECC level of the result may be higher than the ecl argument if it can be done without increasing the version.
+    static encodeBinary(data, ecl) {
+      const seg = qrcodegen2.QrSegment.makeBytes(data);
+      return _QrCode.encodeSegments([seg], ecl);
+    }
+    /*-- Static factory functions (mid level) --*/
+    // Returns a QR Code representing the given segments with the given encoding parameters.
+    // The smallest possible QR Code version within the given range is automatically
+    // chosen for the output. Iff boostEcl is true, then the ECC level of the result
+    // may be higher than the ecl argument if it can be done without increasing the
+    // version. The mask number is either between 0 to 7 (inclusive) to force that
+    // mask, or -1 to automatically choose an appropriate mask (which may be slow).
+    // This function allows the user to create a custom sequence of segments that switches
+    // between modes (such as alphanumeric and byte) to encode text in less space.
+    // This is a mid-level API; the high-level API is encodeText() and encodeBinary().
+    static encodeSegments(segs, ecl, minVersion = 1, maxVersion = 40, mask = -1, boostEcl = true) {
+      if (!(_QrCode.MIN_VERSION <= minVersion && minVersion <= maxVersion && maxVersion <= _QrCode.MAX_VERSION) || mask < -1 || mask > 7)
+        throw new RangeError("Invalid value");
+      let version;
+      let dataUsedBits;
+      for (version = minVersion; ; version++) {
+        const dataCapacityBits2 = _QrCode.getNumDataCodewords(version, ecl) * 8;
+        const usedBits = QrSegment.getTotalBits(segs, version);
+        if (usedBits <= dataCapacityBits2) {
+          dataUsedBits = usedBits;
+          break;
+        }
+        if (version >= maxVersion)
+          throw new RangeError("Data too long");
+      }
+      for (const newEcl of [_QrCode.Ecc.MEDIUM, _QrCode.Ecc.QUARTILE, _QrCode.Ecc.HIGH]) {
+        if (boostEcl && dataUsedBits <= _QrCode.getNumDataCodewords(version, newEcl) * 8)
+          ecl = newEcl;
+      }
+      let bb = [];
+      for (const seg of segs) {
+        appendBits(seg.mode.modeBits, 4, bb);
+        appendBits(seg.numChars, seg.mode.numCharCountBits(version), bb);
+        for (const b of seg.getData())
+          bb.push(b);
+      }
+      assert(bb.length == dataUsedBits);
+      const dataCapacityBits = _QrCode.getNumDataCodewords(version, ecl) * 8;
+      assert(bb.length <= dataCapacityBits);
+      appendBits(0, Math.min(4, dataCapacityBits - bb.length), bb);
+      appendBits(0, (8 - bb.length % 8) % 8, bb);
+      assert(bb.length % 8 == 0);
+      for (let padByte = 236; bb.length < dataCapacityBits; padByte ^= 236 ^ 17)
+        appendBits(padByte, 8, bb);
+      let dataCodewords = [];
+      while (dataCodewords.length * 8 < bb.length)
+        dataCodewords.push(0);
+      bb.forEach((b, i) => dataCodewords[i >>> 3] |= b << 7 - (i & 7));
+      return new _QrCode(version, ecl, dataCodewords, mask);
+    }
+    /*-- Accessor methods --*/
+    // Returns the color of the module (pixel) at the given coordinates, which is false
+    // for light or true for dark. The top left corner has the coordinates (x=0, y=0).
+    // If the given coordinates are out of bounds, then false (light) is returned.
+    getModule(x, y) {
+      return 0 <= x && x < this.size && 0 <= y && y < this.size && this.modules[y][x];
+    }
+    // Modified to expose modules for easy access
+    getModules() {
+      return this.modules;
+    }
+    /*-- Private helper methods for constructor: Drawing function modules --*/
+    // Reads this object's version field, and draws and marks all function modules.
+    drawFunctionPatterns() {
+      for (let i = 0; i < this.size; i++) {
+        this.setFunctionModule(6, i, i % 2 == 0);
+        this.setFunctionModule(i, 6, i % 2 == 0);
+      }
+      this.drawFinderPattern(3, 3);
+      this.drawFinderPattern(this.size - 4, 3);
+      this.drawFinderPattern(3, this.size - 4);
+      const alignPatPos = this.getAlignmentPatternPositions();
+      const numAlign = alignPatPos.length;
+      for (let i = 0; i < numAlign; i++) {
+        for (let j = 0; j < numAlign; j++) {
+          if (!(i == 0 && j == 0 || i == 0 && j == numAlign - 1 || i == numAlign - 1 && j == 0))
+            this.drawAlignmentPattern(alignPatPos[i], alignPatPos[j]);
+        }
+      }
+      this.drawFormatBits(0);
+      this.drawVersion();
+    }
+    // Draws two copies of the format bits (with its own error correction code)
+    // based on the given mask and this object's error correction level field.
+    drawFormatBits(mask) {
+      const data = this.errorCorrectionLevel.formatBits << 3 | mask;
+      let rem = data;
+      for (let i = 0; i < 10; i++)
+        rem = rem << 1 ^ (rem >>> 9) * 1335;
+      const bits = (data << 10 | rem) ^ 21522;
+      assert(bits >>> 15 == 0);
+      for (let i = 0; i <= 5; i++)
+        this.setFunctionModule(8, i, getBit(bits, i));
+      this.setFunctionModule(8, 7, getBit(bits, 6));
+      this.setFunctionModule(8, 8, getBit(bits, 7));
+      this.setFunctionModule(7, 8, getBit(bits, 8));
+      for (let i = 9; i < 15; i++)
+        this.setFunctionModule(14 - i, 8, getBit(bits, i));
+      for (let i = 0; i < 8; i++)
+        this.setFunctionModule(this.size - 1 - i, 8, getBit(bits, i));
+      for (let i = 8; i < 15; i++)
+        this.setFunctionModule(8, this.size - 15 + i, getBit(bits, i));
+      this.setFunctionModule(8, this.size - 8, true);
+    }
+    // Draws two copies of the version bits (with its own error correction code),
+    // based on this object's version field, iff 7 <= version <= 40.
+    drawVersion() {
+      if (this.version < 7)
+        return;
+      let rem = this.version;
+      for (let i = 0; i < 12; i++)
+        rem = rem << 1 ^ (rem >>> 11) * 7973;
+      const bits = this.version << 12 | rem;
+      assert(bits >>> 18 == 0);
+      for (let i = 0; i < 18; i++) {
+        const color = getBit(bits, i);
+        const a = this.size - 11 + i % 3;
+        const b = Math.floor(i / 3);
+        this.setFunctionModule(a, b, color);
+        this.setFunctionModule(b, a, color);
+      }
+    }
+    // Draws a 9*9 finder pattern including the border separator,
+    // with the center module at (x, y). Modules can be out of bounds.
+    drawFinderPattern(x, y) {
+      for (let dy = -4; dy <= 4; dy++) {
+        for (let dx = -4; dx <= 4; dx++) {
+          const dist = Math.max(Math.abs(dx), Math.abs(dy));
+          const xx = x + dx;
+          const yy = y + dy;
+          if (0 <= xx && xx < this.size && 0 <= yy && yy < this.size)
+            this.setFunctionModule(xx, yy, dist != 2 && dist != 4);
+        }
+      }
+    }
+    // Draws a 5*5 alignment pattern, with the center module
+    // at (x, y). All modules must be in bounds.
+    drawAlignmentPattern(x, y) {
+      for (let dy = -2; dy <= 2; dy++) {
+        for (let dx = -2; dx <= 2; dx++)
+          this.setFunctionModule(x + dx, y + dy, Math.max(Math.abs(dx), Math.abs(dy)) != 1);
+      }
+    }
+    // Sets the color of a module and marks it as a function module.
+    // Only used by the constructor. Coordinates must be in bounds.
+    setFunctionModule(x, y, isDark) {
+      this.modules[y][x] = isDark;
+      this.isFunction[y][x] = true;
+    }
+    /*-- Private helper methods for constructor: Codewords and masking --*/
+    // Returns a new byte string representing the given data with the appropriate error correction
+    // codewords appended to it, based on this object's version and error correction level.
+    addEccAndInterleave(data) {
+      const ver = this.version;
+      const ecl = this.errorCorrectionLevel;
+      if (data.length != _QrCode.getNumDataCodewords(ver, ecl))
+        throw new RangeError("Invalid argument");
+      const numBlocks = _QrCode.NUM_ERROR_CORRECTION_BLOCKS[ecl.ordinal][ver];
+      const blockEccLen = _QrCode.ECC_CODEWORDS_PER_BLOCK[ecl.ordinal][ver];
+      const rawCodewords = Math.floor(_QrCode.getNumRawDataModules(ver) / 8);
+      const numShortBlocks = numBlocks - rawCodewords % numBlocks;
+      const shortBlockLen = Math.floor(rawCodewords / numBlocks);
+      let blocks = [];
+      const rsDiv = _QrCode.reedSolomonComputeDivisor(blockEccLen);
+      for (let i = 0, k = 0; i < numBlocks; i++) {
+        let dat = data.slice(k, k + shortBlockLen - blockEccLen + (i < numShortBlocks ? 0 : 1));
+        k += dat.length;
+        const ecc = _QrCode.reedSolomonComputeRemainder(dat, rsDiv);
+        if (i < numShortBlocks)
+          dat.push(0);
+        blocks.push(dat.concat(ecc));
+      }
+      let result = [];
+      for (let i = 0; i < blocks[0].length; i++) {
+        blocks.forEach((block, j) => {
+          if (i != shortBlockLen - blockEccLen || j >= numShortBlocks)
+            result.push(block[i]);
+        });
+      }
+      assert(result.length == rawCodewords);
+      return result;
+    }
+    // Draws the given sequence of 8-bit codewords (data and error correction) onto the entire
+    // data area of this QR Code. Function modules need to be marked off before this is called.
+    drawCodewords(data) {
+      if (data.length != Math.floor(_QrCode.getNumRawDataModules(this.version) / 8))
+        throw new RangeError("Invalid argument");
+      let i = 0;
+      for (let right = this.size - 1; right >= 1; right -= 2) {
+        if (right == 6)
+          right = 5;
+        for (let vert = 0; vert < this.size; vert++) {
+          for (let j = 0; j < 2; j++) {
+            const x = right - j;
+            const upward = (right + 1 & 2) == 0;
+            const y = upward ? this.size - 1 - vert : vert;
+            if (!this.isFunction[y][x] && i < data.length * 8) {
+              this.modules[y][x] = getBit(data[i >>> 3], 7 - (i & 7));
+              i++;
+            }
+          }
+        }
+      }
+      assert(i == data.length * 8);
+    }
+    // XORs the codeword modules in this QR Code with the given mask pattern.
+    // The function modules must be marked and the codeword bits must be drawn
+    // before masking. Due to the arithmetic of XOR, calling applyMask() with
+    // the same mask value a second time will undo the mask. A final well-formed
+    // QR Code needs exactly one (not zero, two, etc.) mask applied.
+    applyMask(mask) {
+      if (mask < 0 || mask > 7)
+        throw new RangeError("Mask value out of range");
+      for (let y = 0; y < this.size; y++) {
+        for (let x = 0; x < this.size; x++) {
+          let invert;
+          switch (mask) {
+            case 0:
+              invert = (x + y) % 2 == 0;
+              break;
+            case 1:
+              invert = y % 2 == 0;
+              break;
+            case 2:
+              invert = x % 3 == 0;
+              break;
+            case 3:
+              invert = (x + y) % 3 == 0;
+              break;
+            case 4:
+              invert = (Math.floor(x / 3) + Math.floor(y / 2)) % 2 == 0;
+              break;
+            case 5:
+              invert = x * y % 2 + x * y % 3 == 0;
+              break;
+            case 6:
+              invert = (x * y % 2 + x * y % 3) % 2 == 0;
+              break;
+            case 7:
+              invert = ((x + y) % 2 + x * y % 3) % 2 == 0;
+              break;
+            default:
+              throw new Error("Unreachable");
+          }
+          if (!this.isFunction[y][x] && invert)
+            this.modules[y][x] = !this.modules[y][x];
+        }
+      }
+    }
+    // Calculates and returns the penalty score based on state of this QR Code's current modules.
+    // This is used by the automatic mask choice algorithm to find the mask pattern that yields the lowest score.
+    getPenaltyScore() {
+      let result = 0;
+      for (let y = 0; y < this.size; y++) {
+        let runColor = false;
+        let runX = 0;
+        let runHistory = [0, 0, 0, 0, 0, 0, 0];
+        for (let x = 0; x < this.size; x++) {
+          if (this.modules[y][x] == runColor) {
+            runX++;
+            if (runX == 5)
+              result += _QrCode.PENALTY_N1;
+            else if (runX > 5)
+              result++;
+          } else {
+            this.finderPenaltyAddHistory(runX, runHistory);
+            if (!runColor)
+              result += this.finderPenaltyCountPatterns(runHistory) * _QrCode.PENALTY_N3;
+            runColor = this.modules[y][x];
+            runX = 1;
+          }
+        }
+        result += this.finderPenaltyTerminateAndCount(runColor, runX, runHistory) * _QrCode.PENALTY_N3;
+      }
+      for (let x = 0; x < this.size; x++) {
+        let runColor = false;
+        let runY = 0;
+        let runHistory = [0, 0, 0, 0, 0, 0, 0];
+        for (let y = 0; y < this.size; y++) {
+          if (this.modules[y][x] == runColor) {
+            runY++;
+            if (runY == 5)
+              result += _QrCode.PENALTY_N1;
+            else if (runY > 5)
+              result++;
+          } else {
+            this.finderPenaltyAddHistory(runY, runHistory);
+            if (!runColor)
+              result += this.finderPenaltyCountPatterns(runHistory) * _QrCode.PENALTY_N3;
+            runColor = this.modules[y][x];
+            runY = 1;
+          }
+        }
+        result += this.finderPenaltyTerminateAndCount(runColor, runY, runHistory) * _QrCode.PENALTY_N3;
+      }
+      for (let y = 0; y < this.size - 1; y++) {
+        for (let x = 0; x < this.size - 1; x++) {
+          const color = this.modules[y][x];
+          if (color == this.modules[y][x + 1] && color == this.modules[y + 1][x] && color == this.modules[y + 1][x + 1])
+            result += _QrCode.PENALTY_N2;
+        }
+      }
+      let dark = 0;
+      for (const row of this.modules)
+        dark = row.reduce((sum, color) => sum + (color ? 1 : 0), dark);
+      const total = this.size * this.size;
+      const k = Math.ceil(Math.abs(dark * 20 - total * 10) / total) - 1;
+      assert(0 <= k && k <= 9);
+      result += k * _QrCode.PENALTY_N4;
+      assert(0 <= result && result <= 2568888);
+      return result;
+    }
+    /*-- Private helper functions --*/
+    // Returns an ascending list of positions of alignment patterns for this version number.
+    // Each position is in the range [0,177), and are used on both the x and y axes.
+    // This could be implemented as lookup table of 40 variable-length lists of integers.
+    getAlignmentPatternPositions() {
+      if (this.version == 1)
+        return [];
+      else {
+        const numAlign = Math.floor(this.version / 7) + 2;
+        const step = this.version == 32 ? 26 : Math.ceil((this.version * 4 + 4) / (numAlign * 2 - 2)) * 2;
+        let result = [6];
+        for (let pos = this.size - 7; result.length < numAlign; pos -= step)
+          result.splice(1, 0, pos);
+        return result;
+      }
+    }
+    // Returns the number of data bits that can be stored in a QR Code of the given version number, after
+    // all function modules are excluded. This includes remainder bits, so it might not be a multiple of 8.
+    // The result is in the range [208, 29648]. This could be implemented as a 40-entry lookup table.
+    static getNumRawDataModules(ver) {
+      if (ver < _QrCode.MIN_VERSION || ver > _QrCode.MAX_VERSION)
+        throw new RangeError("Version number out of range");
+      let result = (16 * ver + 128) * ver + 64;
+      if (ver >= 2) {
+        const numAlign = Math.floor(ver / 7) + 2;
+        result -= (25 * numAlign - 10) * numAlign - 55;
+        if (ver >= 7)
+          result -= 36;
+      }
+      assert(208 <= result && result <= 29648);
+      return result;
+    }
+    // Returns the number of 8-bit data (i.e. not error correction) codewords contained in any
+    // QR Code of the given version number and error correction level, with remainder bits discarded.
+    // This stateless pure function could be implemented as a (40*4)-cell lookup table.
+    static getNumDataCodewords(ver, ecl) {
+      return Math.floor(_QrCode.getNumRawDataModules(ver) / 8) - _QrCode.ECC_CODEWORDS_PER_BLOCK[ecl.ordinal][ver] * _QrCode.NUM_ERROR_CORRECTION_BLOCKS[ecl.ordinal][ver];
+    }
+    // Returns a Reed-Solomon ECC generator polynomial for the given degree. This could be
+    // implemented as a lookup table over all possible parameter values, instead of as an algorithm.
+    static reedSolomonComputeDivisor(degree) {
+      if (degree < 1 || degree > 255)
+        throw new RangeError("Degree out of range");
+      let result = [];
+      for (let i = 0; i < degree - 1; i++)
+        result.push(0);
+      result.push(1);
+      let root = 1;
+      for (let i = 0; i < degree; i++) {
+        for (let j = 0; j < result.length; j++) {
+          result[j] = _QrCode.reedSolomonMultiply(result[j], root);
+          if (j + 1 < result.length)
+            result[j] ^= result[j + 1];
+        }
+        root = _QrCode.reedSolomonMultiply(root, 2);
+      }
+      return result;
+    }
+    // Returns the Reed-Solomon error correction codeword for the given data and divisor polynomials.
+    static reedSolomonComputeRemainder(data, divisor) {
+      let result = divisor.map((_) => 0);
+      for (const b of data) {
+        const factor = b ^ result.shift();
+        result.push(0);
+        divisor.forEach((coef, i) => result[i] ^= _QrCode.reedSolomonMultiply(coef, factor));
+      }
+      return result;
+    }
+    // Returns the product of the two given field elements modulo GF(2^8/0x11D). The arguments and result
+    // are unsigned 8-bit integers. This could be implemented as a lookup table of 256*256 entries of uint8.
+    static reedSolomonMultiply(x, y) {
+      if (x >>> 8 != 0 || y >>> 8 != 0)
+        throw new RangeError("Byte out of range");
+      let z = 0;
+      for (let i = 7; i >= 0; i--) {
+        z = z << 1 ^ (z >>> 7) * 285;
+        z ^= (y >>> i & 1) * x;
+      }
+      assert(z >>> 8 == 0);
+      return z;
+    }
+    // Can only be called immediately after a light run is added, and
+    // returns either 0, 1, or 2. A helper function for getPenaltyScore().
+    finderPenaltyCountPatterns(runHistory) {
+      const n = runHistory[1];
+      assert(n <= this.size * 3);
+      const core = n > 0 && runHistory[2] == n && runHistory[3] == n * 3 && runHistory[4] == n && runHistory[5] == n;
+      return (core && runHistory[0] >= n * 4 && runHistory[6] >= n ? 1 : 0) + (core && runHistory[6] >= n * 4 && runHistory[0] >= n ? 1 : 0);
+    }
+    // Must be called at the end of a line (row or column) of modules. A helper function for getPenaltyScore().
+    finderPenaltyTerminateAndCount(currentRunColor, currentRunLength, runHistory) {
+      if (currentRunColor) {
+        this.finderPenaltyAddHistory(currentRunLength, runHistory);
+        currentRunLength = 0;
+      }
+      currentRunLength += this.size;
+      this.finderPenaltyAddHistory(currentRunLength, runHistory);
+      return this.finderPenaltyCountPatterns(runHistory);
+    }
+    // Pushes the given value to the front and drops the last value. A helper function for getPenaltyScore().
+    finderPenaltyAddHistory(currentRunLength, runHistory) {
+      if (runHistory[0] == 0)
+        currentRunLength += this.size;
+      runHistory.pop();
+      runHistory.unshift(currentRunLength);
+    }
+  };
+  /*-- Constants and tables --*/
+  // The minimum version number supported in the QR Code Model 2 standard.
+  _QrCode.MIN_VERSION = 1;
+  // The maximum version number supported in the QR Code Model 2 standard.
+  _QrCode.MAX_VERSION = 40;
+  // For use in getPenaltyScore(), when evaluating which mask is best.
+  _QrCode.PENALTY_N1 = 3;
+  _QrCode.PENALTY_N2 = 3;
+  _QrCode.PENALTY_N3 = 40;
+  _QrCode.PENALTY_N4 = 10;
+  _QrCode.ECC_CODEWORDS_PER_BLOCK = [
+    // Version: (note that index 0 is for padding, and is set to an illegal value)
+    //0,  1,  2,  3,  4,  5,  6,  7,  8,  9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40    Error correction level
+    [-1, 7, 10, 15, 20, 26, 18, 20, 24, 30, 18, 20, 24, 26, 30, 22, 24, 28, 30, 28, 28, 28, 28, 30, 30, 26, 28, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
+    // Low
+    [-1, 10, 16, 26, 18, 24, 16, 18, 22, 22, 26, 30, 22, 22, 24, 24, 28, 28, 26, 26, 26, 26, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28, 28],
+    // Medium
+    [-1, 13, 22, 18, 26, 18, 24, 18, 22, 20, 24, 28, 26, 24, 20, 30, 24, 28, 28, 26, 30, 28, 30, 30, 30, 30, 28, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30],
+    // Quartile
+    [-1, 17, 28, 22, 16, 22, 28, 26, 26, 24, 28, 24, 28, 22, 24, 24, 30, 28, 28, 26, 28, 30, 24, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30, 30]
+    // High
+  ];
+  _QrCode.NUM_ERROR_CORRECTION_BLOCKS = [
+    // Version: (note that index 0 is for padding, and is set to an illegal value)
+    //0, 1, 2, 3, 4, 5, 6, 7, 8, 9,10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40    Error correction level
+    [-1, 1, 1, 1, 1, 1, 2, 2, 2, 2, 4, 4, 4, 4, 4, 6, 6, 6, 6, 7, 8, 8, 9, 9, 10, 12, 12, 12, 13, 14, 15, 16, 17, 18, 19, 19, 20, 21, 22, 24, 25],
+    // Low
+    [-1, 1, 1, 1, 2, 2, 4, 4, 4, 5, 5, 5, 8, 9, 9, 10, 10, 11, 13, 14, 16, 17, 17, 18, 20, 21, 23, 25, 26, 28, 29, 31, 33, 35, 37, 38, 40, 43, 45, 47, 49],
+    // Medium
+    [-1, 1, 1, 2, 2, 4, 4, 6, 6, 8, 8, 8, 10, 12, 16, 12, 17, 16, 18, 21, 20, 23, 23, 25, 27, 29, 34, 34, 35, 38, 40, 43, 45, 48, 51, 53, 56, 59, 62, 65, 68],
+    // Quartile
+    [-1, 1, 1, 2, 4, 4, 4, 5, 6, 8, 8, 11, 11, 16, 16, 18, 16, 19, 21, 25, 25, 25, 34, 30, 32, 35, 37, 40, 42, 45, 48, 51, 54, 57, 60, 63, 66, 70, 74, 77, 81]
+    // High
+  ];
+  qrcodegen2.QrCode = _QrCode;
+  function appendBits(val, len, bb) {
+    if (len < 0 || len > 31 || val >>> len != 0)
+      throw new RangeError("Value out of range");
+    for (let i = len - 1; i >= 0; i--)
+      bb.push(val >>> i & 1);
+  }
+  function getBit(x, i) {
+    return (x >>> i & 1) != 0;
+  }
+  function assert(cond) {
+    if (!cond)
+      throw new Error("Assertion error");
+  }
+  const _QrSegment = class _QrSegment {
+    /*-- Constructor (low level) and fields --*/
+    // Creates a new QR Code segment with the given attributes and data.
+    // The character count (numChars) must agree with the mode and the bit buffer length,
+    // but the constraint isn't checked. The given bit buffer is cloned and stored.
+    constructor(mode, numChars, bitData) {
+      this.mode = mode;
+      this.numChars = numChars;
+      this.bitData = bitData;
+      if (numChars < 0)
+        throw new RangeError("Invalid argument");
+      this.bitData = bitData.slice();
+    }
+    /*-- Static factory functions (mid level) --*/
+    // Returns a segment representing the given binary data encoded in
+    // byte mode. All input byte arrays are acceptable. Any text string
+    // can be converted to UTF-8 bytes and encoded as a byte mode segment.
+    static makeBytes(data) {
+      let bb = [];
+      for (const b of data)
+        appendBits(b, 8, bb);
+      return new _QrSegment(_QrSegment.Mode.BYTE, data.length, bb);
+    }
+    // Returns a segment representing the given string of decimal digits encoded in numeric mode.
+    static makeNumeric(digits) {
+      if (!_QrSegment.isNumeric(digits))
+        throw new RangeError("String contains non-numeric characters");
+      let bb = [];
+      for (let i = 0; i < digits.length; ) {
+        const n = Math.min(digits.length - i, 3);
+        appendBits(parseInt(digits.substring(i, i + n), 10), n * 3 + 1, bb);
+        i += n;
+      }
+      return new _QrSegment(_QrSegment.Mode.NUMERIC, digits.length, bb);
+    }
+    // Returns a segment representing the given text string encoded in alphanumeric mode.
+    // The characters allowed are: 0 to 9, A to Z (uppercase only), space,
+    // dollar, percent, asterisk, plus, hyphen, period, slash, colon.
+    static makeAlphanumeric(text) {
+      if (!_QrSegment.isAlphanumeric(text))
+        throw new RangeError("String contains unencodable characters in alphanumeric mode");
+      let bb = [];
+      let i;
+      for (i = 0; i + 2 <= text.length; i += 2) {
+        let temp = _QrSegment.ALPHANUMERIC_CHARSET.indexOf(text.charAt(i)) * 45;
+        temp += _QrSegment.ALPHANUMERIC_CHARSET.indexOf(text.charAt(i + 1));
+        appendBits(temp, 11, bb);
+      }
+      if (i < text.length)
+        appendBits(_QrSegment.ALPHANUMERIC_CHARSET.indexOf(text.charAt(i)), 6, bb);
+      return new _QrSegment(_QrSegment.Mode.ALPHANUMERIC, text.length, bb);
+    }
+    // Returns a new mutable list of zero or more segments to represent the given Unicode text string.
+    // The result may use various segment modes and switch modes to optimize the length of the bit stream.
+    static makeSegments(text) {
+      if (text == "")
+        return [];
+      else if (_QrSegment.isNumeric(text))
+        return [_QrSegment.makeNumeric(text)];
+      else if (_QrSegment.isAlphanumeric(text))
+        return [_QrSegment.makeAlphanumeric(text)];
+      else
+        return [_QrSegment.makeBytes(_QrSegment.toUtf8ByteArray(text))];
+    }
+    // Returns a segment representing an Extended Channel Interpretation
+    // (ECI) designator with the given assignment value.
+    static makeEci(assignVal) {
+      let bb = [];
+      if (assignVal < 0)
+        throw new RangeError("ECI assignment value out of range");
+      else if (assignVal < 1 << 7)
+        appendBits(assignVal, 8, bb);
+      else if (assignVal < 1 << 14) {
+        appendBits(2, 2, bb);
+        appendBits(assignVal, 14, bb);
+      } else if (assignVal < 1e6) {
+        appendBits(6, 3, bb);
+        appendBits(assignVal, 21, bb);
+      } else
+        throw new RangeError("ECI assignment value out of range");
+      return new _QrSegment(_QrSegment.Mode.ECI, 0, bb);
+    }
+    // Tests whether the given string can be encoded as a segment in numeric mode.
+    // A string is encodable iff each character is in the range 0 to 9.
+    static isNumeric(text) {
+      return _QrSegment.NUMERIC_REGEX.test(text);
+    }
+    // Tests whether the given string can be encoded as a segment in alphanumeric mode.
+    // A string is encodable iff each character is in the following set: 0 to 9, A to Z
+    // (uppercase only), space, dollar, percent, asterisk, plus, hyphen, period, slash, colon.
+    static isAlphanumeric(text) {
+      return _QrSegment.ALPHANUMERIC_REGEX.test(text);
+    }
+    /*-- Methods --*/
+    // Returns a new copy of the data bits of this segment.
+    getData() {
+      return this.bitData.slice();
+    }
+    // (Package-private) Calculates and returns the number of bits needed to encode the given segments at
+    // the given version. The result is infinity if a segment has too many characters to fit its length field.
+    static getTotalBits(segs, version) {
+      let result = 0;
+      for (const seg of segs) {
+        const ccbits = seg.mode.numCharCountBits(version);
+        if (seg.numChars >= 1 << ccbits)
+          return Infinity;
+        result += 4 + ccbits + seg.bitData.length;
+      }
+      return result;
+    }
+    // Returns a new array of bytes representing the given string encoded in UTF-8.
+    static toUtf8ByteArray(str) {
+      str = encodeURI(str);
+      let result = [];
+      for (let i = 0; i < str.length; i++) {
+        if (str.charAt(i) != "%")
+          result.push(str.charCodeAt(i));
+        else {
+          result.push(parseInt(str.substring(i + 1, i + 3), 16));
+          i += 2;
+        }
+      }
+      return result;
+    }
+  };
+  /*-- Constants --*/
+  // Describes precisely all strings that are encodable in numeric mode.
+  _QrSegment.NUMERIC_REGEX = /^[0-9]*$/;
+  // Describes precisely all strings that are encodable in alphanumeric mode.
+  _QrSegment.ALPHANUMERIC_REGEX = /^[A-Z0-9 $%*+.\/:-]*$/;
+  // The set of all legal characters in alphanumeric mode,
+  // where each character value maps to the index in the string.
+  _QrSegment.ALPHANUMERIC_CHARSET = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ $%*+-./:";
+  let QrSegment = _QrSegment;
+  qrcodegen2.QrSegment = _QrSegment;
+})(qrcodegen || (qrcodegen = {}));
+((qrcodegen2) => {
+  ((QrCode2) => {
+    const _Ecc = class _Ecc {
+      // The QR Code can tolerate about 30% erroneous codewords
+      /*-- Constructor and fields --*/
+      constructor(ordinal, formatBits) {
+        this.ordinal = ordinal;
+        this.formatBits = formatBits;
+      }
+    };
+    /*-- Constants --*/
+    _Ecc.LOW = new _Ecc(0, 1);
+    // The QR Code can tolerate about  7% erroneous codewords
+    _Ecc.MEDIUM = new _Ecc(1, 0);
+    // The QR Code can tolerate about 15% erroneous codewords
+    _Ecc.QUARTILE = new _Ecc(2, 3);
+    // The QR Code can tolerate about 25% erroneous codewords
+    _Ecc.HIGH = new _Ecc(3, 2);
+    QrCode2.Ecc = _Ecc;
+  })(qrcodegen2.QrCode || (qrcodegen2.QrCode = {}));
+})(qrcodegen || (qrcodegen = {}));
+((qrcodegen2) => {
+  ((QrSegment2) => {
+    const _Mode = class _Mode {
+      /*-- Constructor and fields --*/
+      constructor(modeBits, numBitsCharCount) {
+        this.modeBits = modeBits;
+        this.numBitsCharCount = numBitsCharCount;
+      }
+      /*-- Method --*/
+      // (Package-private) Returns the bit width of the character count field for a segment in
+      // this mode in a QR Code at the given version number. The result is in the range [0, 16].
+      numCharCountBits(ver) {
+        return this.numBitsCharCount[Math.floor((ver + 7) / 17)];
+      }
+    };
+    /*-- Constants --*/
+    _Mode.NUMERIC = new _Mode(1, [10, 12, 14]);
+    _Mode.ALPHANUMERIC = new _Mode(2, [9, 11, 13]);
+    _Mode.BYTE = new _Mode(4, [8, 16, 16]);
+    _Mode.KANJI = new _Mode(8, [8, 10, 12]);
+    _Mode.ECI = new _Mode(7, [0, 0, 0]);
+    QrSegment2.Mode = _Mode;
+  })(qrcodegen2.QrSegment || (qrcodegen2.QrSegment = {}));
+})(qrcodegen || (qrcodegen = {}));
+var qrcodegen_default = qrcodegen;
+
+// src/index.tsx
+/**
+ * @license qrcode.react
+ * Copyright (c) Paul O'Shannessy
+ * SPDX-License-Identifier: ISC
+ */
+var ERROR_LEVEL_MAP = {
+  L: qrcodegen_default.QrCode.Ecc.LOW,
+  M: qrcodegen_default.QrCode.Ecc.MEDIUM,
+  Q: qrcodegen_default.QrCode.Ecc.QUARTILE,
+  H: qrcodegen_default.QrCode.Ecc.HIGH
+};
+var DEFAULT_SIZE = 128;
+var DEFAULT_LEVEL = "L";
+var DEFAULT_BGCOLOR = "#FFFFFF";
+var DEFAULT_FGCOLOR = "#000000";
+var DEFAULT_INCLUDEMARGIN = false;
+var DEFAULT_MINVERSION = 1;
+var SPEC_MARGIN_SIZE = 4;
+var DEFAULT_MARGIN_SIZE = 0;
+var DEFAULT_IMG_SCALE = 0.1;
+function generatePath(modules, margin = 0) {
+  const ops = [];
+  modules.forEach(function(row, y) {
+    let start = null;
+    row.forEach(function(cell, x) {
+      if (!cell && start !== null) {
+        ops.push(
+          `M${start + margin} ${y + margin}h${x - start}v1H${start + margin}z`
+        );
+        start = null;
+        return;
+      }
+      if (x === row.length - 1) {
+        if (!cell) {
+          return;
+        }
+        if (start === null) {
+          ops.push(`M${x + margin},${y + margin} h1v1H${x + margin}z`);
+        } else {
+          ops.push(
+            `M${start + margin},${y + margin} h${x + 1 - start}v1H${start + margin}z`
+          );
+        }
+        return;
+      }
+      if (cell && start === null) {
+        start = x;
+      }
+    });
+  });
+  return ops.join("");
+}
+function excavateModules(modules, excavation) {
+  return modules.slice().map((row, y) => {
+    if (y < excavation.y || y >= excavation.y + excavation.h) {
+      return row;
+    }
+    return row.map((cell, x) => {
+      if (x < excavation.x || x >= excavation.x + excavation.w) {
+        return cell;
+      }
+      return false;
+    });
+  });
+}
+function getImageSettings(cells, size, margin, imageSettings) {
+  if (imageSettings == null) {
+    return null;
+  }
+  const numCells = cells.length + margin * 2;
+  const defaultSize = Math.floor(size * DEFAULT_IMG_SCALE);
+  const scale = numCells / size;
+  const w = (imageSettings.width || defaultSize) * scale;
+  const h = (imageSettings.height || defaultSize) * scale;
+  const x = imageSettings.x == null ? cells.length / 2 - w / 2 : imageSettings.x * scale;
+  const y = imageSettings.y == null ? cells.length / 2 - h / 2 : imageSettings.y * scale;
+  const opacity = imageSettings.opacity == null ? 1 : imageSettings.opacity;
+  let excavation = null;
+  if (imageSettings.excavate) {
+    let floorX = Math.floor(x);
+    let floorY = Math.floor(y);
+    let ceilW = Math.ceil(w + x - floorX);
+    let ceilH = Math.ceil(h + y - floorY);
+    excavation = { x: floorX, y: floorY, w: ceilW, h: ceilH };
+  }
+  const crossOrigin = imageSettings.crossOrigin;
+  return { x, y, h, w, excavation, opacity, crossOrigin };
+}
+function getMarginSize(includeMargin, marginSize) {
+  if (marginSize != null) {
+    return Math.max(Math.floor(marginSize), 0);
+  }
+  return includeMargin ? SPEC_MARGIN_SIZE : DEFAULT_MARGIN_SIZE;
+}
+function useQRCode({
+  value,
+  level,
+  minVersion,
+  includeMargin,
+  marginSize,
+  imageSettings,
+  size,
+  boostLevel
+}) {
+  let qrcode = React__default.useMemo(() => {
+    const values = Array.isArray(value) ? value : [value];
+    const segments = values.reduce((accum, v) => {
+      accum.push(...qrcodegen_default.QrSegment.makeSegments(v));
+      return accum;
+    }, []);
+    return qrcodegen_default.QrCode.encodeSegments(
+      segments,
+      ERROR_LEVEL_MAP[level],
+      minVersion,
+      void 0,
+      void 0,
+      boostLevel
+    );
+  }, [value, level, minVersion, boostLevel]);
+  const { cells, margin, numCells, calculatedImageSettings } = React__default.useMemo(() => {
+    let cells2 = qrcode.getModules();
+    const margin2 = getMarginSize(includeMargin, marginSize);
+    const numCells2 = cells2.length + margin2 * 2;
+    const calculatedImageSettings2 = getImageSettings(
+      cells2,
+      size,
+      margin2,
+      imageSettings
+    );
+    return {
+      cells: cells2,
+      margin: margin2,
+      numCells: numCells2,
+      calculatedImageSettings: calculatedImageSettings2
+    };
+  }, [qrcode, size, imageSettings, includeMargin, marginSize]);
+  return {
+    qrcode,
+    margin,
+    cells,
+    numCells,
+    calculatedImageSettings
+  };
+}
+var SUPPORTS_PATH2D = function() {
+  try {
+    new Path2D().addPath(new Path2D());
+  } catch (e) {
+    return false;
+  }
+  return true;
+}();
+var QRCodeCanvas = React__default.forwardRef(
+  function QRCodeCanvas2(props, forwardedRef) {
+    const _a = props, {
+      value,
+      size = DEFAULT_SIZE,
+      level = DEFAULT_LEVEL,
+      bgColor = DEFAULT_BGCOLOR,
+      fgColor = DEFAULT_FGCOLOR,
+      includeMargin = DEFAULT_INCLUDEMARGIN,
+      minVersion = DEFAULT_MINVERSION,
+      boostLevel,
+      marginSize,
+      imageSettings
+    } = _a, extraProps = __objRest(_a, [
+      "value",
+      "size",
+      "level",
+      "bgColor",
+      "fgColor",
+      "includeMargin",
+      "minVersion",
+      "boostLevel",
+      "marginSize",
+      "imageSettings"
+    ]);
+    const _b = extraProps, { style } = _b, otherProps = __objRest(_b, ["style"]);
+    const imgSrc = imageSettings == null ? void 0 : imageSettings.src;
+    const _canvas = React__default.useRef(null);
+    const _image = React__default.useRef(null);
+    const setCanvasRef = React__default.useCallback(
+      (node) => {
+        _canvas.current = node;
+        if (typeof forwardedRef === "function") {
+          forwardedRef(node);
+        } else if (forwardedRef) {
+          forwardedRef.current = node;
+        }
+      },
+      [forwardedRef]
+    );
+    const [isImgLoaded, setIsImageLoaded] = React__default.useState(false);
+    const { margin, cells, numCells, calculatedImageSettings } = useQRCode({
+      value,
+      level,
+      minVersion,
+      boostLevel,
+      includeMargin,
+      marginSize,
+      imageSettings,
+      size
+    });
+    React__default.useEffect(() => {
+      if (_canvas.current != null) {
+        const canvas = _canvas.current;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          return;
+        }
+        let cellsToDraw = cells;
+        const image = _image.current;
+        const haveImageToRender = calculatedImageSettings != null && image !== null && image.complete && image.naturalHeight !== 0 && image.naturalWidth !== 0;
+        if (haveImageToRender) {
+          if (calculatedImageSettings.excavation != null) {
+            cellsToDraw = excavateModules(
+              cells,
+              calculatedImageSettings.excavation
+            );
+          }
+        }
+        const pixelRatio = window.devicePixelRatio || 1;
+        canvas.height = canvas.width = size * pixelRatio;
+        const scale = size / numCells * pixelRatio;
+        ctx.scale(scale, scale);
+        ctx.fillStyle = bgColor;
+        ctx.fillRect(0, 0, numCells, numCells);
+        ctx.fillStyle = fgColor;
+        if (SUPPORTS_PATH2D) {
+          ctx.fill(new Path2D(generatePath(cellsToDraw, margin)));
+        } else {
+          cells.forEach(function(row, rdx) {
+            row.forEach(function(cell, cdx) {
+              if (cell) {
+                ctx.fillRect(cdx + margin, rdx + margin, 1, 1);
+              }
+            });
+          });
+        }
+        if (calculatedImageSettings) {
+          ctx.globalAlpha = calculatedImageSettings.opacity;
+        }
+        if (haveImageToRender) {
+          ctx.drawImage(
+            image,
+            calculatedImageSettings.x + margin,
+            calculatedImageSettings.y + margin,
+            calculatedImageSettings.w,
+            calculatedImageSettings.h
+          );
+        }
+      }
+    });
+    React__default.useEffect(() => {
+      setIsImageLoaded(false);
+    }, [imgSrc]);
+    const canvasStyle = __spreadValues({ height: size, width: size }, style);
+    let img = null;
+    if (imgSrc != null) {
+      img = /* @__PURE__ */ React__default.createElement(
+        "img",
+        {
+          src: imgSrc,
+          key: imgSrc,
+          style: { display: "none" },
+          onLoad: () => {
+            setIsImageLoaded(true);
+          },
+          ref: _image,
+          crossOrigin: calculatedImageSettings == null ? void 0 : calculatedImageSettings.crossOrigin
+        }
+      );
+    }
+    return /* @__PURE__ */ React__default.createElement(React__default.Fragment, null, /* @__PURE__ */ React__default.createElement(
+      "canvas",
+      __spreadValues({
+        style: canvasStyle,
+        height: size,
+        width: size,
+        ref: setCanvasRef,
+        role: "img"
+      }, otherProps)
+    ), img);
+  }
+);
+QRCodeCanvas.displayName = "QRCodeCanvas";
+var QRCodeSVG = React__default.forwardRef(
+  function QRCodeSVG2(props, forwardedRef) {
+    const _a = props, {
+      value,
+      size = DEFAULT_SIZE,
+      level = DEFAULT_LEVEL,
+      bgColor = DEFAULT_BGCOLOR,
+      fgColor = DEFAULT_FGCOLOR,
+      includeMargin = DEFAULT_INCLUDEMARGIN,
+      minVersion = DEFAULT_MINVERSION,
+      boostLevel,
+      title,
+      marginSize,
+      imageSettings
+    } = _a, otherProps = __objRest(_a, [
+      "value",
+      "size",
+      "level",
+      "bgColor",
+      "fgColor",
+      "includeMargin",
+      "minVersion",
+      "boostLevel",
+      "title",
+      "marginSize",
+      "imageSettings"
+    ]);
+    const { margin, cells, numCells, calculatedImageSettings } = useQRCode({
+      value,
+      level,
+      minVersion,
+      boostLevel,
+      includeMargin,
+      marginSize,
+      imageSettings,
+      size
+    });
+    let cellsToDraw = cells;
+    let image = null;
+    if (imageSettings != null && calculatedImageSettings != null) {
+      if (calculatedImageSettings.excavation != null) {
+        cellsToDraw = excavateModules(
+          cells,
+          calculatedImageSettings.excavation
+        );
+      }
+      image = /* @__PURE__ */ React__default.createElement(
+        "image",
+        {
+          href: imageSettings.src,
+          height: calculatedImageSettings.h,
+          width: calculatedImageSettings.w,
+          x: calculatedImageSettings.x + margin,
+          y: calculatedImageSettings.y + margin,
+          preserveAspectRatio: "none",
+          opacity: calculatedImageSettings.opacity,
+          crossOrigin: calculatedImageSettings.crossOrigin
+        }
+      );
+    }
+    const fgPath = generatePath(cellsToDraw, margin);
+    return /* @__PURE__ */ React__default.createElement(
+      "svg",
+      __spreadValues({
+        height: size,
+        width: size,
+        viewBox: `0 0 ${numCells} ${numCells}`,
+        ref: forwardedRef,
+        role: "img"
+      }, otherProps),
+      !!title && /* @__PURE__ */ React__default.createElement("title", null, title),
+      /* @__PURE__ */ React__default.createElement(
+        "path",
+        {
+          fill: bgColor,
+          d: `M0,0 h${numCells}v${numCells}H0z`,
+          shapeRendering: "crispEdges"
+        }
+      ),
+      /* @__PURE__ */ React__default.createElement("path", { fill: fgColor, d: fgPath, shapeRendering: "crispEdges" }),
+      image
+    );
+  }
+);
+QRCodeSVG.displayName = "QRCodeSVG";
 
 function Dialog({
   title,
@@ -43133,13 +44546,128 @@ function LabelDialog({
   }, [deviceId]);
   return /* @__PURE__ */ jsx(Dialog, { title: "Device label", onClose, children: error ? /* @__PURE__ */ jsx("p", { className: "text-sm text-destructive", children: error }) : !label ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "loading…" }) : /* @__PURE__ */ jsxs("div", { className: "flex flex-col items-center gap-3", children: [
     /* @__PURE__ */ jsx("div", { className: "text-sm font-semibold text-foreground", children: label.display_name }),
-    /* @__PURE__ */ jsx("img", { src: label.qr_url, alt: `QR code for ${label.serial}`, className: "size-40 rounded border border-border/60 bg-white p-2" }),
+    /* @__PURE__ */ jsx("div", { className: "rounded-lg border border-border/60 bg-white p-3", children: /* @__PURE__ */ jsx(
+      QRCodeSVG,
+      {
+        value: label.qr_url,
+        size: 160,
+        level: "M",
+        marginSize: 0,
+        title: `QR code for ${label.serial}`
+      }
+    ) }),
     /* @__PURE__ */ jsx("code", { className: "break-all text-center font-mono text-xs text-muted-foreground", children: label.code128 }),
     /* @__PURE__ */ jsx("div", { className: "font-mono text-xs text-muted-foreground", children: label.serial })
   ] }) });
 }
 
-const STATUSES = ["", "active", "commissioned", "decommissioned"];
+function PlaceOnPage({
+  device,
+  onClose
+}) {
+  const [pages, setPages] = React.useState([]);
+  const [pageId, setPageId] = React.useState("");
+  const [newPage, setNewPage] = React.useState("");
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState(null);
+  React.useEffect(() => {
+    listPages({ site_id: device.site_id ?? void 0 }).then(setPages).catch(() => setPages([]));
+  }, [device.site_id]);
+  const ready = !!pageId || !!newPage.trim();
+  const submit = () => {
+    if (!ready || busy) return;
+    setBusy(true);
+    setError(null);
+    assignPage(
+      pageId ? { device_id: device.device_id, page_id: pageId } : { device_id: device.device_id, new_page: { name: newPage.trim() } }
+    ).then(() => onClose()).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 rounded-lg border border-border/60 bg-background p-3", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between", children: [
+      /* @__PURE__ */ jsxs("span", { className: "ext-eyebrow", children: [
+        "Place ",
+        device.name ?? device.device_id,
+        " on a page"
+      ] }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          "aria-label": "Cancel",
+          onClick: onClose,
+          className: "cursor-pointer rounded-md p-1 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+          children: /* @__PURE__ */ jsx(X, { className: "size-4" })
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2 sm:flex-row sm:items-end", children: [
+      /* @__PURE__ */ jsxs("label", { className: "flex flex-1 flex-col gap-1.5", children: [
+        /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Existing page" }),
+        /* @__PURE__ */ jsxs(
+          "select",
+          {
+            value: pageId,
+            onChange: (e) => {
+              setPageId(e.target.value);
+              setNewPage("");
+            },
+            "aria-label": "Existing page",
+            className: "cursor-pointer rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground transition-colors hover:border-border focus:border-primary focus:outline-none",
+            children: [
+              /* @__PURE__ */ jsx("option", { value: "", children: "+ New page" }),
+              pages.map((p) => /* @__PURE__ */ jsx("option", { value: p.page_id, children: p.name }, p.page_id))
+            ]
+          }
+        )
+      ] }),
+      !pageId ? /* @__PURE__ */ jsxs("label", { className: "flex flex-1 flex-col gap-1.5", children: [
+        /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "New page name" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            value: newPage,
+            onChange: (e) => setNewPage(e.target.value),
+            onKeyDown: (e) => e.key === "Enter" && submit(),
+            placeholder: "e.g. Floor 3",
+            "aria-label": "New page name",
+            className: "rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+          }
+        )
+      ] }) : null,
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: submit,
+          disabled: busy || !ready,
+          className: "flex shrink-0 cursor-pointer items-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+          children: [
+            /* @__PURE__ */ jsx(Check, { className: "size-4" }),
+            " ",
+            busy ? "Placing…" : "Place"
+          ]
+        }
+      )
+    ] }),
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-xs text-destructive", children: error }) : null
+  ] });
+}
+
+const STATUSES = ["", "pending", "provisioned", "active", "commissioned", "decommissioned"];
+function StatTile({
+  icon: Icon,
+  label,
+  value,
+  tone
+}) {
+  return /* @__PURE__ */ jsxs("div", { className: "ext-glass flex items-center gap-3 p-3", children: [
+    /* @__PURE__ */ jsx("div", { className: "flex size-10 shrink-0 items-center justify-center rounded-lg " + tone, children: /* @__PURE__ */ jsx(Icon, { className: "size-5" }) }),
+    /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+      /* @__PURE__ */ jsx("div", { className: "ext-eyebrow", children: label }),
+      /* @__PURE__ */ jsx("div", { className: "ext-num text-2xl font-semibold leading-tight text-foreground", children: value })
+    ] })
+  ] });
+}
 function DevicesTab() {
   const [rows, setRows] = React.useState([]);
   const [sites, setSites] = React.useState([]);
@@ -43152,20 +44680,34 @@ function DevicesTab() {
   const [editing, setEditing] = React.useState(null);
   const [editName, setEditName] = React.useState("");
   const [label, setLabel] = React.useState(null);
+  const [placing, setPlacing] = React.useState(null);
+  const refresh = useRefreshKey();
   const load = React.useCallback(() => {
     setLoading(true);
     setError(null);
     listDevices({ site_id: site || void 0, status: status || void 0, limit: 500 }).then(setRows).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setLoading(false));
   }, [site, status]);
-  React.useEffect(load, [load]);
+  React.useEffect(load, [load, refresh]);
   React.useEffect(() => {
     listSites().then(setSites).catch(() => setSites([]));
-  }, []);
+  }, [refresh]);
   const filtered = rows.filter((r) => {
     if (!q.trim()) return true;
     const hay = `${r.name ?? ""} ${r.device_id} ${r.template} ${r.address ?? ""}`.toLowerCase();
     return hay.includes(q.trim().toLowerCase());
   });
+  const kpis = React.useMemo(() => {
+    let connected = 0;
+    let syncing = 0;
+    let alerts = 0;
+    for (const r of rows) {
+      const t = statusTone(r.status);
+      if (t.dot === "bg-emerald-500") connected += 1;
+      else if (t.dot === "bg-amber-500") syncing += 1;
+      else if (t.dot === "bg-rose-500") alerts += 1;
+    }
+    return { connected, syncing, alerts };
+  }, [rows]);
   const saveRename = (id) => {
     deviceUpdate({ device_id: id, name: editName.trim() }).then(() => {
       setEditing(null);
@@ -43177,59 +44719,311 @@ function DevicesTab() {
     decommission([id], hard).then(load).catch((e) => setError(e instanceof Error ? e.message : String(e)));
   };
   return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3", children: [
-    /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-end gap-2", children: [
-      /* @__PURE__ */ jsx(
-        "input",
-        {
-          value: q,
-          onChange: (e) => setQ(e.target.value),
-          placeholder: "Search name / id / address",
-          "aria-label": "Search devices",
-          className: "flex-1 rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
-        }
-      ),
-      /* @__PURE__ */ jsxs("select", { value: site, onChange: (e) => setSite(e.target.value), "aria-label": "Filter by site", className: "rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm text-foreground", children: [
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap items-center gap-2", children: [
+      /* @__PURE__ */ jsxs("div", { className: "relative min-w-[14rem] flex-1", children: [
+        /* @__PURE__ */ jsx(Search, { className: "pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" }),
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            value: q,
+            onChange: (e) => setQ(e.target.value),
+            placeholder: "Search name / id / address",
+            "aria-label": "Search devices",
+            className: "w-full rounded-lg border border-border/60 bg-background py-2 pl-9 pr-3 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs("select", { value: site, onChange: (e) => setSite(e.target.value), "aria-label": "Filter by site", className: "cursor-pointer rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground transition-colors hover:border-border focus:border-primary focus:outline-none", children: [
         /* @__PURE__ */ jsx("option", { value: "", children: "All sites" }),
         sites.map((s) => /* @__PURE__ */ jsx("option", { value: s.site_id, children: s.name }, s.site_id))
       ] }),
-      /* @__PURE__ */ jsx("select", { value: status, onChange: (e) => setStatus(e.target.value), "aria-label": "Filter by status", className: "rounded-md border border-border/60 bg-background px-2 py-1.5 text-sm text-foreground", children: STATUSES.map((s) => /* @__PURE__ */ jsx("option", { value: s, children: s || "All statuses" }, s)) })
+      /* @__PURE__ */ jsx("select", { value: status, onChange: (e) => setStatus(e.target.value), "aria-label": "Filter by status", className: "cursor-pointer rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground transition-colors hover:border-border focus:border-primary focus:outline-none", children: STATUSES.map((s) => /* @__PURE__ */ jsx("option", { value: s, children: s || "All statuses" }, s)) }),
+      /* @__PURE__ */ jsx(
+        "button",
+        {
+          type: "button",
+          onClick: load,
+          "aria-label": "Refresh devices",
+          title: "Refresh",
+          className: "flex cursor-pointer items-center gap-1.5 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-border hover:text-foreground",
+          children: /* @__PURE__ */ jsx(RefreshCw, { className: "size-4 " + (loading ? "animate-spin" : "") })
+        }
+      )
     ] }),
     error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
-    /* @__PURE__ */ jsx("div", { className: "overflow-x-auto rounded-lg border border-border/60 bg-card", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
-      /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "text-left text-xs text-muted-foreground", children: [
-        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium" }),
-        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Device" }),
-        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Template" }),
-        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Network/Addr" }),
-        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 font-medium", children: "Status" }),
-        /* @__PURE__ */ jsx("th", { className: "px-2 py-2 text-right font-medium", children: "Actions" })
+    /* @__PURE__ */ jsx("div", { className: "ext-glass overflow-x-auto", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+      /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsxs("tr", { className: "border-b border-border/60 text-left", children: [
+        /* @__PURE__ */ jsx("th", { className: "w-8 px-3 py-2.5" }),
+        /* @__PURE__ */ jsx("th", { className: "px-3 py-2.5 font-medium", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Device" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-3 py-2.5 font-medium", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Template" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-3 py-2.5 font-medium", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Network / Addr" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-3 py-2.5 font-medium", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Status" }) }),
+        /* @__PURE__ */ jsx("th", { className: "px-3 py-2.5 text-right font-medium", children: /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Actions" }) })
       ] }) }),
-      /* @__PURE__ */ jsx("tbody", { children: loading ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "px-2 py-3 text-sm italic text-muted-foreground", children: "loading…" }) }) : filtered.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "px-2 py-3 text-sm italic text-muted-foreground", children: "No devices match." }) }) : filtered.map((r) => /* @__PURE__ */ jsxs(React.Fragment, { children: [
-        /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/40", children: [
-          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Toggle points", onClick: () => setOpen(open === r.device_id ? null : r.device_id), className: "rounded p-0.5 hover:bg-accent", children: open === r.device_id ? /* @__PURE__ */ jsx(ChevronDown, { className: "size-4" }) : /* @__PURE__ */ jsx(ChevronRight, { className: "size-4" }) }) }),
-          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: editing === r.device_id ? /* @__PURE__ */ jsxs("span", { className: "flex gap-1", children: [
-            /* @__PURE__ */ jsx("input", { value: editName, onChange: (e) => setEditName(e.target.value), "aria-label": "Device name", className: "rounded border border-border/60 bg-background px-1.5 py-0.5 text-sm" }),
-            /* @__PURE__ */ jsx("button", { type: "button", onClick: () => saveRename(r.device_id), className: "text-xs text-primary hover:underline", children: "save" })
-          ] }) : /* @__PURE__ */ jsx("button", { type: "button", onClick: () => {
-            setEditing(r.device_id);
-            setEditName(r.name ?? "");
-          }, className: "text-left text-foreground hover:underline", children: r.name ?? r.device_id }) }),
-          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-muted-foreground", children: r.template }),
-          /* @__PURE__ */ jsxs("td", { className: "px-2 py-1.5 text-muted-foreground", children: [
-            r.network ?? "—",
-            " / ",
-            r.address ?? "—"
+      /* @__PURE__ */ jsx("tbody", { children: loading ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "px-3 py-6 text-center text-sm italic text-muted-foreground", children: "Loading devices…" }) }) : filtered.length === 0 ? /* @__PURE__ */ jsx("tr", { children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "px-3 py-6 text-center text-sm italic text-muted-foreground", children: "No devices match." }) }) : filtered.map((r) => {
+        const tone = statusTone(r.status);
+        const isOpen = open === r.device_id;
+        return /* @__PURE__ */ jsxs(React.Fragment, { children: [
+          /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/40 transition-colors hover:bg-muted/30", children: [
+            /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children: /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Toggle points", onClick: () => setOpen(isOpen ? null : r.device_id), className: "cursor-pointer rounded p-0.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", children: isOpen ? /* @__PURE__ */ jsx(ChevronDown, { className: "size-4" }) : /* @__PURE__ */ jsx(ChevronRight, { className: "size-4" }) }) }),
+            /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children: editing === r.device_id ? /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ jsx("input", { value: editName, onChange: (e) => setEditName(e.target.value), "aria-label": "Device name", className: "rounded-md border border-border/60 bg-background px-2 py-1 text-sm outline-none focus:border-primary" }),
+              /* @__PURE__ */ jsx("button", { type: "button", onClick: () => saveRename(r.device_id), className: "cursor-pointer rounded-md bg-primary px-2 py-1 text-xs font-medium text-primary-foreground", children: "save" })
+            ] }) : /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2.5", children: [
+              /* @__PURE__ */ jsx("span", { className: "flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary", children: /* @__PURE__ */ jsx(Radio, { className: "size-4" }) }),
+              /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+                /* @__PURE__ */ jsx(
+                  "a",
+                  {
+                    href: deviceHref(r.device_id),
+                    onClick: (e) => {
+                      e.preventDefault();
+                      gotoDevice(r.device_id);
+                    },
+                    className: "block cursor-pointer truncate text-left font-medium text-foreground transition-colors hover:text-primary",
+                    children: r.name ?? r.device_id
+                  }
+                ),
+                /* @__PURE__ */ jsx("div", { className: "font-mono text-[11px] uppercase tracking-wide text-muted-foreground", children: r.device_id })
+              ] })
+            ] }) }),
+            /* @__PURE__ */ jsx("td", { className: "px-3 py-2 font-mono text-xs text-muted-foreground", children: r.template }),
+            /* @__PURE__ */ jsxs("td", { className: "px-3 py-2 text-muted-foreground", children: [
+              /* @__PURE__ */ jsx("span", { className: "font-mono text-xs", children: r.network ?? "—" }),
+              /* @__PURE__ */ jsx("span", { className: "px-1 text-muted-foreground/50", children: "/" }),
+              /* @__PURE__ */ jsx("span", { className: "font-mono text-xs", children: r.address ?? "—" })
+            ] }),
+            /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children: /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 text-xs font-medium " + tone.text, children: [
+              /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full " + tone.dot }),
+              r.status
+            ] }) }),
+            /* @__PURE__ */ jsx("td", { className: "px-3 py-2", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-1", children: [
+              r.status.toLowerCase().includes("pend") || !r.page_id ? /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Place on page", title: "Place on page", onClick: () => setPlacing(placing === r.device_id ? null : r.device_id), className: "cursor-pointer rounded-md px-2 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/10", children: /* @__PURE__ */ jsxs("span", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ jsx(MapPin, { className: "size-4" }),
+                " Place on page"
+              ] }) }) : null,
+              /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Rename device", title: "Rename", onClick: () => {
+                setEditing(r.device_id);
+                setEditName(r.name ?? "");
+              }, className: "cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx(Pencil, { className: "size-4" }) }),
+              /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Print label", title: "Print label", onClick: () => setLabel(r.device_id), className: "cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx(QrCode, { className: "size-4" }) }),
+              /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Decommission", title: "Decommission", onClick: () => remove(r.device_id, false), className: "cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-rose-500/10 hover:text-rose-400", children: /* @__PURE__ */ jsx(Trash2, { className: "size-4" }) })
+            ] }) })
           ] }),
-          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5 text-muted-foreground", children: r.status }),
-          /* @__PURE__ */ jsx("td", { className: "px-2 py-1.5", children: /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-end gap-2", children: [
-            /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Print label", title: "Print label", onClick: () => setLabel(r.device_id), className: "rounded p-1 hover:bg-accent", children: /* @__PURE__ */ jsx(QrCode, { className: "size-4" }) }),
-            /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Decommission", title: "Decommission", onClick: () => remove(r.device_id, false), className: "rounded p-1 text-destructive hover:bg-accent", children: /* @__PURE__ */ jsx(Trash2, { className: "size-4" }) })
-          ] }) })
-        ] }),
-        open === r.device_id ? /* @__PURE__ */ jsx("tr", { className: "border-t border-border/30 bg-muted/30", children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "p-2", children: /* @__PURE__ */ jsx(DeviceDetail, { deviceId: r.device_id }) }) }) : null
-      ] }, r.device_id)) })
+          placing === r.device_id ? /* @__PURE__ */ jsx("tr", { className: "border-t border-border/30 bg-muted/20", children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "p-3", children: /* @__PURE__ */ jsx(PlaceOnPage, { device: r, onClose: () => setPlacing(null) }) }) }) : null,
+          isOpen ? /* @__PURE__ */ jsx("tr", { className: "border-t border-border/30 bg-muted/20", children: /* @__PURE__ */ jsx("td", { colSpan: 6, className: "p-3", children: /* @__PURE__ */ jsx(DeviceDetail, { deviceId: r.device_id }) }) }) : null
+        ] }, r.device_id);
+      }) })
     ] }) }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 gap-3 lg:grid-cols-4", children: [
+      /* @__PURE__ */ jsx(StatTile, { icon: Wifi, label: "Connected", value: kpis.connected, tone: "bg-emerald-500/10 text-emerald-400" }),
+      /* @__PURE__ */ jsx(StatTile, { icon: RefreshCw, label: "Syncing", value: kpis.syncing, tone: "bg-amber-500/10 text-amber-400" }),
+      /* @__PURE__ */ jsx(StatTile, { icon: TriangleAlert, label: "Alerts", value: kpis.alerts, tone: "bg-rose-500/10 text-rose-400" }),
+      /* @__PURE__ */ jsx(StatTile, { icon: RadioTower, label: "Devices", value: rows.length, tone: "bg-primary/10 text-primary" })
+    ] }),
     label ? /* @__PURE__ */ jsx(LabelDialog, { deviceId: label, onClose: () => setLabel(null) }) : null
+  ] });
+}
+
+function TreeRow({
+  depth,
+  icon: Icon,
+  label,
+  sub,
+  count,
+  expandable,
+  expanded,
+  onToggle,
+  onActivate,
+  accent
+}) {
+  const interactive = !!(onToggle || onActivate);
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      role: "treeitem",
+      "aria-expanded": expandable ? expanded : void 0,
+      style: { paddingLeft: `${depth * 1.25 + 0.5}rem` },
+      onClick: () => onToggle ? onToggle() : onActivate?.(),
+      className: "group flex items-center gap-1.5 rounded-md py-1.5 pr-2 text-sm transition-colors " + (interactive ? "cursor-pointer hover:bg-accent " : ""),
+      children: [
+        /* @__PURE__ */ jsx("span", { className: "flex size-4 shrink-0 items-center justify-center text-muted-foreground", children: expandable ? /* @__PURE__ */ jsx(ChevronRight, { className: "size-4 transition-transform duration-150 " + (expanded ? "rotate-90" : "") }) : null }),
+        /* @__PURE__ */ jsx(Icon, { className: "size-4 shrink-0 " + (accent ? "text-primary" : "text-muted-foreground") }),
+        /* @__PURE__ */ jsx("span", { className: "truncate " + (accent ? "font-medium text-foreground" : "text-foreground"), children: label }),
+        sub ? /* @__PURE__ */ jsx("span", { className: "truncate font-mono text-[11px] text-muted-foreground", children: sub }) : null,
+        typeof count === "number" ? /* @__PURE__ */ jsx("span", { className: "ext-num ml-auto shrink-0 rounded-full border border-border/60 px-1.5 py-0.5 text-[11px] text-muted-foreground", children: count }) : null
+      ]
+    }
+  );
+}
+function SitesTree() {
+  const [sites, setSites] = React.useState([]);
+  const [locations, setLocations] = React.useState([]);
+  const [pages, setPages] = React.useState([]);
+  const [devices, setDevices] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [expanded, setExpanded] = React.useState(/* @__PURE__ */ new Set());
+  const refresh = useRefreshKey();
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([listSites(), listLocations(), listPages({}), listDevices({ limit: 1e3 })]).then(([s, l, p, d]) => {
+      if (cancelled) return;
+      setSites(s);
+      setLocations(l);
+      setPages(p);
+      setDevices(d);
+      setExpanded(new Set(s.map((x) => `site:${x.site_id}`)));
+    }).catch((e) => !cancelled && setError(e instanceof Error ? e.message : String(e))).finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [refresh]);
+  const toggle = (key) => setExpanded((prev) => {
+    const next = new Set(prev);
+    if (next.has(key)) next.delete(key);
+    else next.add(key);
+    return next;
+  });
+  const isOpen = (key) => expanded.has(key);
+  const byLocation = React.useMemo(() => {
+    const m = /* @__PURE__ */ new Map();
+    for (const d of devices) if (d.location_id) m.set(d.location_id, (m.get(d.location_id) ?? 0) + 1);
+    return m;
+  }, [devices]);
+  const byPage = React.useMemo(() => {
+    const m = /* @__PURE__ */ new Map();
+    for (const d of devices) if (d.page_id) m.set(d.page_id, (m.get(d.page_id) ?? 0) + 1);
+    return m;
+  }, [devices]);
+  const bySite = React.useMemo(() => {
+    const m = /* @__PURE__ */ new Map();
+    for (const d of devices) if (d.site_id) m.set(d.site_id, (m.get(d.site_id) ?? 0) + 1);
+    return m;
+  }, [devices]);
+  if (loading) return /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "Loading hierarchy…" });
+  if (error) return /* @__PURE__ */ jsx("p", { className: "text-sm text-destructive", children: error });
+  if (sites.length === 0)
+    return /* @__PURE__ */ jsxs("div", { className: "ext-glass flex flex-col items-center gap-2 px-6 py-10 text-center", children: [
+      /* @__PURE__ */ jsx(Building2, { className: "size-8 text-muted-foreground/60" }),
+      /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "No sites yet." })
+    ] });
+  return /* @__PURE__ */ jsxs("div", { role: "tree", className: "ext-glass flex flex-col gap-0.5 p-2", children: [
+    sites.map((s) => {
+      const siteKey = `site:${s.site_id}`;
+      const siteLocs = locations.filter((l) => l.site_id === s.site_id);
+      const sitePages = pages.filter((p) => p.site_id === s.site_id);
+      const locKey = `${siteKey}:locs`;
+      const pageKey = `${siteKey}:pages`;
+      return /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx(
+          TreeRow,
+          {
+            depth: 0,
+            icon: Building2,
+            label: s.name,
+            sub: s.site_id,
+            count: bySite.get(s.site_id) ?? 0,
+            expandable: true,
+            expanded: isOpen(siteKey),
+            onToggle: () => toggle(siteKey),
+            accent: true
+          }
+        ),
+        isOpen(siteKey) ? /* @__PURE__ */ jsxs(Fragment, { children: [
+          /* @__PURE__ */ jsx(
+            TreeRow,
+            {
+              depth: 1,
+              icon: Folder,
+              label: "Locations",
+              count: siteLocs.length,
+              expandable: true,
+              expanded: isOpen(locKey),
+              onToggle: () => toggle(locKey)
+            }
+          ),
+          isOpen(locKey) ? siteLocs.length === 0 ? /* @__PURE__ */ jsx(EmptyLeaf, { depth: 2, text: "No locations" }) : siteLocs.map((l) => /* @__PURE__ */ jsx(
+            TreeRow,
+            {
+              depth: 2,
+              icon: MapPin,
+              label: l.name,
+              count: byLocation.get(l.location_id) ?? 0
+            },
+            l.location_id
+          )) : null,
+          /* @__PURE__ */ jsx(
+            TreeRow,
+            {
+              depth: 1,
+              icon: Folder,
+              label: "Pages",
+              count: sitePages.length,
+              expandable: true,
+              expanded: isOpen(pageKey),
+              onToggle: () => toggle(pageKey)
+            }
+          ),
+          isOpen(pageKey) ? sitePages.length === 0 ? /* @__PURE__ */ jsx(EmptyLeaf, { depth: 2, text: "No pages" }) : sitePages.map((p) => /* @__PURE__ */ jsx(
+            TreeRow,
+            {
+              depth: 2,
+              icon: FileText,
+              label: p.name,
+              sub: p.page_id,
+              count: byPage.get(p.page_id) ?? 0
+            },
+            p.page_id
+          )) : null
+        ] }) : null
+      ] }, s.site_id);
+    }),
+    /* @__PURE__ */ jsx(
+      UnassignedBranch,
+      {
+        devices: devices.filter((d) => !d.site_id),
+        expanded: isOpen("unassigned"),
+        onToggle: () => toggle("unassigned")
+      }
+    )
+  ] });
+}
+function EmptyLeaf({ depth, text }) {
+  return /* @__PURE__ */ jsx("div", { style: { paddingLeft: `${depth * 1.25 + 0.5}rem` }, className: "py-1 pl-6 text-xs italic text-muted-foreground", children: text });
+}
+function UnassignedBranch({
+  devices,
+  expanded,
+  onToggle
+}) {
+  if (devices.length === 0) return null;
+  return /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx(
+      TreeRow,
+      {
+        depth: 0,
+        icon: Folder,
+        label: "Unassigned devices",
+        count: devices.length,
+        expandable: true,
+        expanded,
+        onToggle
+      }
+    ),
+    expanded ? devices.map((d) => /* @__PURE__ */ jsx(
+      TreeRow,
+      {
+        depth: 1,
+        icon: Radio,
+        label: d.name ?? d.device_id,
+        sub: d.device_id,
+        onActivate: () => gotoDevice(d.device_id)
+      },
+      d.device_id
+    )) : null
   ] });
 }
 
@@ -43241,6 +45035,8 @@ function SitesTab() {
   const [error, setError] = React.useState(null);
   const [siteName, setSiteName] = React.useState("");
   const [locName, setLocName] = React.useState({});
+  const [view, setView] = React.useState("cards");
+  const refresh = useRefreshKey();
   const load = React.useCallback(() => {
     setLoading(true);
     setError(null);
@@ -43249,7 +45045,7 @@ function SitesTab() {
       setLocations(l);
     }).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setLoading(false));
   }, []);
-  React.useEffect(load, [load]);
+  React.useEffect(load, [load, refresh]);
   const addSite = () => {
     if (!siteName.trim()) return;
     siteCreate({ site_id: newId("site"), name: siteName.trim() }).then(() => {
@@ -43265,50 +45061,129 @@ function SitesTab() {
       load();
     }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
   };
-  return /* @__PURE__ */ jsxs("div", { className: "flex max-w-2xl flex-col gap-4", children: [
-    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
-    /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
-      /* @__PURE__ */ jsx(
-        "input",
+  const locKeyDown = (siteId) => (e) => {
+    if (e.key === "Enter") addLocation(siteId);
+  };
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+    /* @__PURE__ */ jsxs("div", { className: "flex w-fit self-end rounded-lg border border-border/60 bg-muted/20 p-0.5 text-sm", children: [
+      /* @__PURE__ */ jsxs(
+        "button",
         {
-          value: siteName,
-          onChange: (e) => setSiteName(e.target.value),
-          placeholder: "New site name",
-          "aria-label": "New site name",
-          className: "flex-1 rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
+          type: "button",
+          onClick: () => setView("cards"),
+          className: "flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors " + (view === "cards" ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/60" : "text-muted-foreground hover:text-foreground"),
+          children: [
+            /* @__PURE__ */ jsx(LayoutGrid, { className: "size-3.5" }),
+            " Cards"
+          ]
         }
       ),
-      /* @__PURE__ */ jsxs("button", { type: "button", onClick: addSite, className: "flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground", children: [
-        /* @__PURE__ */ jsx(Plus, { className: "size-4" }),
-        " Site"
-      ] })
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => setView("tree"),
+          className: "flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors " + (view === "tree" ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/60" : "text-muted-foreground hover:text-foreground"),
+          children: [
+            /* @__PURE__ */ jsx(ListTree, { className: "size-3.5" }),
+            " Tree"
+          ]
+        }
+      )
     ] }),
-    loading ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "loading…" }) : sites.length === 0 ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "No sites yet. Create one above." }) : /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-3", children: sites.map((s) => /* @__PURE__ */ jsxs("li", { className: "rounded-lg border border-border/60 bg-card", children: [
-      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 border-b border-border/60 px-3 py-2", children: [
-        /* @__PURE__ */ jsx(MapPin, { className: "size-4 text-muted-foreground" }),
-        /* @__PURE__ */ jsx("span", { className: "text-sm font-medium text-foreground", children: s.name }),
-        /* @__PURE__ */ jsx("span", { className: "font-mono text-xs text-muted-foreground", children: s.site_id })
+    view === "tree" ? /* @__PURE__ */ jsx(SitesTree, {}) : /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsxs("div", { className: "ext-glass flex flex-col gap-2 p-3 sm:flex-row sm:items-center", children: [
+        /* @__PURE__ */ jsx(
+          "input",
+          {
+            value: siteName,
+            onChange: (e) => setSiteName(e.target.value),
+            onKeyDown: (e) => {
+              if (e.key === "Enter") addSite();
+            },
+            placeholder: "New site name (e.g. Building A)",
+            "aria-label": "New site name",
+            className: "flex-1 rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+          }
+        ),
+        /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: addSite,
+            disabled: !siteName.trim(),
+            className: "flex cursor-pointer items-center justify-center gap-1.5 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+            children: [
+              /* @__PURE__ */ jsx(Plus, { className: "size-4" }),
+              " Site"
+            ]
+          }
+        )
       ] }),
-      /* @__PURE__ */ jsxs("ul", { className: "px-3 py-2", children: [
-        locations.filter((l) => l.site_id === s.site_id).map((l) => /* @__PURE__ */ jsxs("li", { className: "py-0.5 text-sm text-foreground", children: [
-          "• ",
-          l.name
-        ] }, l.location_id)),
-        /* @__PURE__ */ jsxs("li", { className: "mt-2 flex gap-2", children: [
-          /* @__PURE__ */ jsx(
-            "input",
-            {
-              value: locName[s.site_id] ?? "",
-              onChange: (e) => setLocName((m) => ({ ...m, [s.site_id]: e.target.value })),
-              placeholder: "New location",
-              "aria-label": `New location in ${s.name}`,
-              className: "flex-1 rounded-md border border-border/60 bg-background px-2 py-1 text-sm text-foreground outline-none focus:border-primary"
-            }
-          ),
-          /* @__PURE__ */ jsx("button", { type: "button", onClick: () => addLocation(s.site_id), className: "rounded-md border border-border/60 px-2 py-1 text-sm hover:bg-accent", children: "Add" })
-        ] })
-      ] })
-    ] }, s.site_id)) })
+      loading ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "Loading sites…" }) : sites.length === 0 ? /* @__PURE__ */ jsxs("div", { className: "ext-glass flex flex-col items-center gap-2 px-6 py-10 text-center", children: [
+        /* @__PURE__ */ jsx(Building2, { className: "size-8 text-muted-foreground/60" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "No sites yet. Create one above to get started." })
+      ] }) : /* @__PURE__ */ jsx("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3", children: sites.map((s) => {
+        const locs = locations.filter((l) => l.site_id === s.site_id);
+        return /* @__PURE__ */ jsxs("div", { className: "ext-glass group flex flex-col transition-colors hover:border-primary/40", children: [
+          /* @__PURE__ */ jsxs("header", { className: "flex items-start justify-between gap-2 border-b border-border/60 bg-muted/20 px-4 py-3", children: [
+            /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1.5", children: [
+                /* @__PURE__ */ jsx(Building2, { className: "size-4 shrink-0 text-primary" }),
+                /* @__PURE__ */ jsx("h3", { className: "truncate text-sm font-semibold text-foreground", children: s.name })
+              ] }),
+              /* @__PURE__ */ jsx("span", { className: "mt-1 inline-block rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[11px] text-muted-foreground", children: s.site_id })
+            ] }),
+            /* @__PURE__ */ jsxs("span", { className: "ext-num shrink-0 rounded-full border border-border/60 px-2 py-0.5 text-[11px] text-muted-foreground", children: [
+              locs.length,
+              " loc",
+              locs.length === 1 ? "" : "s"
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex-1 px-4 py-3", children: [
+            /* @__PURE__ */ jsx("div", { className: "ext-eyebrow mb-2", children: "Locations" }),
+            locs.length === 0 ? /* @__PURE__ */ jsx("p", { className: "text-xs italic text-muted-foreground", children: "No locations defined yet." }) : /* @__PURE__ */ jsx("ul", { className: "flex flex-col gap-1.5", children: locs.map((l) => /* @__PURE__ */ jsxs(
+              "li",
+              {
+                className: "flex items-center gap-2 rounded-md border border-border/40 bg-muted/20 px-2.5 py-1.5 text-sm text-foreground",
+                children: [
+                  /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 shrink-0 rounded-full bg-primary" }),
+                  /* @__PURE__ */ jsx("span", { className: "truncate", children: l.name })
+                ]
+              },
+              l.location_id
+            )) })
+          ] }),
+          /* @__PURE__ */ jsxs("div", { className: "flex gap-2 border-t border-border/60 bg-muted/10 px-4 py-3", children: [
+            /* @__PURE__ */ jsxs("div", { className: "relative flex-1", children: [
+              /* @__PURE__ */ jsx(MapPin, { className: "pointer-events-none absolute left-2.5 top-1/2 size-3.5 -translate-y-1/2 text-muted-foreground" }),
+              /* @__PURE__ */ jsx(
+                "input",
+                {
+                  value: locName[s.site_id] ?? "",
+                  onChange: (e) => setLocName((m) => ({ ...m, [s.site_id]: e.target.value })),
+                  onKeyDown: locKeyDown(s.site_id),
+                  placeholder: "New location",
+                  "aria-label": `New location in ${s.name}`,
+                  className: "w-full rounded-lg border border-border/60 bg-background py-1.5 pl-8 pr-2.5 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+                }
+              )
+            ] }),
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: () => addLocation(s.site_id),
+                disabled: !(locName[s.site_id] ?? "").trim(),
+                className: "cursor-pointer rounded-lg border border-border/60 px-3 py-1.5 text-sm font-medium text-foreground transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
+                children: "Add"
+              }
+            )
+          ] })
+        ] }, s.site_id);
+      }) })
+    ] })
   ] });
 }
 
@@ -43320,10 +45195,11 @@ function TemplatesTab() {
   const [saveError, setSaveError] = React.useState(null);
   const [saved, setSaved] = React.useState(null);
   const [busy, setBusy] = React.useState(false);
+  const refresh = useRefreshKey();
   const loadList = React.useCallback(() => {
     listTemplates().then(setTemplates).catch((e) => setListError(e instanceof Error ? e.message : String(e)));
   }, []);
-  React.useEffect(loadList, [loadList]);
+  React.useEffect(loadList, [loadList, refresh]);
   const open = (template) => {
     setSelected(template);
     setSaved(null);
@@ -43346,33 +45222,49 @@ function TemplatesTab() {
       loadList();
     }).catch((e) => setSaveError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
   };
-  return /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-[260px_1fr]", children: [
-    /* @__PURE__ */ jsxs("div", { className: "rounded-lg border border-border/60 bg-card", children: [
-      /* @__PURE__ */ jsxs("header", { className: "flex items-center justify-between border-b border-border/60 px-3 py-2", children: [
-        /* @__PURE__ */ jsx("span", { className: "text-sm font-medium", children: "Templates" }),
-        /* @__PURE__ */ jsxs("button", { type: "button", onClick: startNew, className: "flex items-center gap-1 text-xs text-primary hover:underline", children: [
+  const current = templates.find((t) => t.template === selected);
+  return /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-4 md:grid-cols-[280px_1fr]", children: [
+    /* @__PURE__ */ jsxs("div", { className: "ext-glass flex flex-col", children: [
+      /* @__PURE__ */ jsxs("header", { className: "flex items-center justify-between border-b border-border/60 px-3 py-2.5", children: [
+        /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Inventory" }),
+        /* @__PURE__ */ jsxs("button", { type: "button", onClick: startNew, className: "flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10", children: [
           /* @__PURE__ */ jsx(FilePlus2, { className: "size-3.5" }),
           " New"
         ] })
       ] }),
-      listError ? /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm text-destructive", children: listError }) : templates.length === 0 ? /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm italic text-muted-foreground", children: "No templates yet." }) : /* @__PURE__ */ jsx("ul", { className: "max-h-[60vh] overflow-y-auto p-1", children: templates.map((t) => /* @__PURE__ */ jsx("li", { children: /* @__PURE__ */ jsxs(
-        "button",
-        {
-          type: "button",
-          onClick: () => open(t.template),
-          className: "w-full rounded px-2 py-1.5 text-left text-sm hover:bg-accent " + (selected === t.template ? "bg-accent text-accent-foreground" : "text-foreground/85"),
-          children: [
-            /* @__PURE__ */ jsx("div", { className: "truncate", children: t.display_name }),
-            /* @__PURE__ */ jsxs("div", { className: "truncate text-xs text-muted-foreground", children: [
-              t.template,
-              " · v",
-              t.version
-            ] })
-          ]
-        }
-      ) }, t.template)) })
+      listError ? /* @__PURE__ */ jsx("p", { className: "px-3 py-2 text-sm text-destructive", children: listError }) : templates.length === 0 ? /* @__PURE__ */ jsx("p", { className: "px-3 py-3 text-sm italic text-muted-foreground", children: "No templates yet." }) : /* @__PURE__ */ jsx("ul", { className: "max-h-[60vh] overflow-y-auto p-1.5", children: templates.map((t) => {
+        const on = selected === t.template;
+        return /* @__PURE__ */ jsx("li", { children: /* @__PURE__ */ jsxs(
+          "button",
+          {
+            type: "button",
+            onClick: () => open(t.template),
+            className: "group flex w-full cursor-pointer items-start gap-2.5 rounded-lg px-2.5 py-2 text-left transition-colors " + (on ? "bg-primary/10 ring-1 ring-primary/30" : "hover:bg-accent"),
+            children: [
+              /* @__PURE__ */ jsx("span", { className: "mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-md " + (on ? "bg-primary/15 text-primary" : "bg-muted/40 text-muted-foreground"), children: /* @__PURE__ */ jsx(FileCode2, { className: "size-4" }) }),
+              /* @__PURE__ */ jsxs("span", { className: "min-w-0 flex-1", children: [
+                /* @__PURE__ */ jsx("span", { className: "block truncate text-sm font-medium " + (on ? "text-foreground" : "text-foreground/85"), children: t.display_name }),
+                /* @__PURE__ */ jsxs("span", { className: "block truncate font-mono text-[11px] text-muted-foreground", children: [
+                  t.template,
+                  " · v",
+                  t.version
+                ] }),
+                t.network ? /* @__PURE__ */ jsx("span", { className: "mt-1 inline-flex rounded bg-muted/50 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-muted-foreground", children: t.network }) : null
+              ] })
+            ]
+          }
+        ) }, t.template);
+      }) })
     ] }),
-    /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-2", children: selected === null ? /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "Select a template, or create a new one." }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+    /* @__PURE__ */ jsx("div", { className: "ext-glass flex flex-col overflow-hidden", children: selected === null ? /* @__PURE__ */ jsx("div", { className: "flex h-[60vh] items-center justify-center px-6 text-center text-sm italic text-muted-foreground", children: "Select a template, or create a new one." }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+      /* @__PURE__ */ jsx("header", { className: "flex items-center justify-between gap-2 border-b border-border/60 px-4 py-2.5", children: /* @__PURE__ */ jsxs("div", { className: "flex min-w-0 items-center gap-2", children: [
+        /* @__PURE__ */ jsx(FileCode2, { className: "size-4 shrink-0 text-muted-foreground" }),
+        /* @__PURE__ */ jsx("span", { className: "truncate font-mono text-sm text-foreground", children: selected ? `${selected}.yaml` : "new-template.yaml" }),
+        current ? /* @__PURE__ */ jsxs("span", { className: "rounded border border-border/60 px-1.5 py-0.5 font-mono text-[10px] text-muted-foreground", children: [
+          "v",
+          current.version
+        ] }) : /* @__PURE__ */ jsx("span", { className: "rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-amber-400", children: "Draft" })
+      ] }) }),
       /* @__PURE__ */ jsx(
         "textarea",
         {
@@ -43380,21 +45272,30 @@ function TemplatesTab() {
           onChange: (e) => setYaml(e.target.value),
           spellCheck: false,
           "aria-label": "Template YAML",
-          className: "h-[60vh] w-full resize-none rounded-md border border-border/60 bg-background p-3 font-mono text-xs text-foreground outline-none focus:border-primary"
+          className: "h-[55vh] w-full resize-none border-0 bg-background/40 p-4 font-mono text-xs leading-relaxed text-foreground outline-none focus:ring-0"
         }
       ),
-      saveError ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: saveError }) : null,
-      saved ? /* @__PURE__ */ jsx("div", { className: "text-sm text-emerald-500", children: saved }) : null,
-      /* @__PURE__ */ jsx(
-        "button",
-        {
-          type: "button",
-          onClick: save,
-          disabled: busy,
-          className: "self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50",
-          children: busy ? "Saving…" : "Validate & save"
-        }
-      )
+      saveError ? /* @__PURE__ */ jsx("div", { role: "alert", className: "mx-3 mb-2 rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: saveError }) : null,
+      /* @__PURE__ */ jsxs("footer", { className: "flex items-center justify-between gap-2 border-t border-border/60 px-4 py-2.5", children: [
+        /* @__PURE__ */ jsx("div", { className: "flex items-center gap-2 text-xs", children: saved ? /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 font-medium text-emerald-400", children: [
+          /* @__PURE__ */ jsx(Check, { className: "size-3.5" }),
+          " ",
+          saved
+        ] }) : /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 text-muted-foreground", children: [
+          /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full bg-amber-500" }),
+          "Draft mode · unsaved changes"
+        ] }) }),
+        /* @__PURE__ */ jsx(
+          "button",
+          {
+            type: "button",
+            onClick: save,
+            disabled: busy,
+            className: "cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+            children: busy ? "Saving…" : "Validate & Save"
+          }
+        )
+      ] })
     ] }) })
   ] });
 }
@@ -43426,7 +45327,46 @@ function IdentifyCard({ identity }) {
   ] });
 }
 
+function genSerial(model) {
+  const prefix = (model.replace(/[^a-z0-9]/gi, "").slice(0, 3) || "DEV").toUpperCase();
+  const rand = Math.random().toString(36).slice(2, 8).toUpperCase();
+  return `${prefix}-${rand}`;
+}
+function barcodeFor(model, network, serial) {
+  const net = network && network.trim() ? network.trim() : "rubix";
+  const q = `v=1&id=${encodeURIComponent(serial)}&model=${encodeURIComponent(model)}&network=${encodeURIComponent(net)}`;
+  return `rubix://add?${q}`;
+}
+function StepRail({ steps }) {
+  return /* @__PURE__ */ jsx("ol", { className: "flex flex-row gap-4 sm:flex-col sm:gap-0", children: steps.map((s, i) => {
+    const last = i === steps.length - 1;
+    return /* @__PURE__ */ jsxs("li", { className: "relative flex flex-1 gap-3 sm:flex-none sm:pb-6", children: [
+      !last ? /* @__PURE__ */ jsx(
+        "span",
+        {
+          "aria-hidden": true,
+          className: "absolute left-[15px] top-8 hidden h-[calc(100%-1rem)] w-px sm:block " + (s.state === "done" ? "bg-primary/60" : "bg-border/60")
+        }
+      ) : null,
+      /* @__PURE__ */ jsx(
+        "span",
+        {
+          className: "z-10 flex size-8 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors " + (s.state === "done" ? "border-primary bg-primary text-primary-foreground" : s.state === "active" ? "border-primary bg-primary/10 text-primary" : "border-border/60 bg-background text-muted-foreground"),
+          children: s.state === "done" ? /* @__PURE__ */ jsx(Check, { className: "size-4" }) : i + 1
+        }
+      ),
+      /* @__PURE__ */ jsxs("div", { className: "min-w-0 pt-0.5", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-sm font-medium " + (s.state === "pending" ? "text-muted-foreground" : "text-foreground"), children: s.label }),
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow mt-0.5", children: s.hint })
+      ] })
+    ] }, s.label);
+  }) });
+}
 function WizardTab() {
+  const [mode, setMode] = React.useState("pick");
+  const [templates, setTemplates] = React.useState([]);
+  const [model, setModel] = React.useState("");
+  const [serial, setSerial] = React.useState("");
   const [barcode, setBarcode] = React.useState("");
   const [identity, setIdentity] = React.useState(null);
   const [placement, setPlacement] = React.useState(EMPTY_PLACEMENT);
@@ -43436,105 +45376,228 @@ function WizardTab() {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState(null);
   const [result, setResult] = React.useState(null);
+  const refresh = useRefreshKey();
+  React.useEffect(() => {
+    listTemplates().then((ts) => {
+      setTemplates(ts);
+      setModel((cur) => {
+        const next = cur && ts.some((t) => t.template === cur) ? cur : ts[0]?.template ?? "";
+        return next;
+      });
+    }).catch(() => setTemplates([]));
+  }, [refresh]);
+  React.useEffect(() => {
+    if (model) setSerial(genSerial(model));
+  }, [model]);
   const reset = () => {
-    setBarcode("");
     setIdentity(null);
     setPlacement(EMPTY_PLACEMENT);
     setName("");
+    setBarcode("");
     setResult(null);
     setError(null);
+    if (model) setSerial(genSerial(model));
   };
-  const runDecode = () => {
-    if (!barcode.trim()) return;
+  const runDecode = (raw) => {
+    const bc = raw.trim();
+    if (!bc) return;
     setBusy(true);
     setError(null);
-    decode(barcode.trim()).then(setIdentity).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+    decode(bc).then(setIdentity).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+  };
+  const findPicked = () => {
+    if (!model || !serial.trim()) return;
+    const tpl = templates.find((t) => t.template === model);
+    runDecode(barcodeFor(model, tpl?.network ?? "rubix", serial.trim()));
   };
   const runProvision = () => {
     setBusy(true);
     setError(null);
-    provision(buildProvisionInput(barcode.trim(), placement, { trend, alarm }, name)).then(setResult).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
+    const bc = mode === "barcode" ? barcode.trim() : barcodeFor(model, templates.find((t) => t.template === model)?.network ?? "rubix", serial.trim());
+    provision(buildProvisionInput(bc, placement, { trend, alarm }, name)).then(setResult).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setBusy(false));
   };
   if (result) {
-    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-4", children: [
-      /* @__PURE__ */ jsxs("div", { className: "font-semibold text-foreground", children: [
-        "Provisioned device ",
+    return /* @__PURE__ */ jsxs("div", { className: "flex max-w-2xl flex-col gap-3 rounded-xl border border-emerald-500/40 bg-emerald-500/10 p-5", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2 font-semibold text-foreground", children: [
+        /* @__PURE__ */ jsx("span", { className: "flex size-6 items-center justify-center rounded-full bg-emerald-500 text-white", children: /* @__PURE__ */ jsx(Check, { className: "size-4" }) }),
+        "Added ",
         result.device_id
       ] }),
       /* @__PURE__ */ jsxs("div", { className: "text-sm text-muted-foreground", children: [
         result.points,
-        " points · ",
+        " readings · ",
         result.widgets,
-        " widgets · ",
+        " tiles · ",
         result.alarms,
-        " alarms · page ",
-        result.page_id
+        " alarms ·",
+        " ",
+        result.page_id ? "placed on a dashboard page" : "commissioned · pending placement"
       ] }),
+      /* @__PURE__ */ jsx("p", { className: "text-sm text-foreground", children: result.page_id ? /* @__PURE__ */ jsxs(Fragment, { children: [
+        "It’s live now — open ",
+        /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Page preview" }),
+        " to see it, or add another device below."
+      ] }) : /* @__PURE__ */ jsxs(Fragment, { children: [
+        "Commissioned as ",
+        /* @__PURE__ */ jsx("span", { className: "font-medium", children: "pending" }),
+        " — place it on a page later from the ",
+        /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Devices" }),
+        " tab, or add another device below."
+      ] }) }),
       result.warnings.length > 0 ? /* @__PURE__ */ jsx("ul", { className: "text-xs text-foreground", children: result.warnings.map((w, i) => /* @__PURE__ */ jsxs("li", { children: [
         "• ",
         w
       ] }, i)) }) : null,
-      /* @__PURE__ */ jsx("button", { type: "button", onClick: reset, className: "self-start rounded-md bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground", children: "Provision another" })
+      /* @__PURE__ */ jsx("button", { type: "button", onClick: reset, className: "mt-1 cursor-pointer self-start rounded-lg bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90", children: "Add another device" })
     ] });
   }
-  return /* @__PURE__ */ jsxs("div", { className: "flex max-w-2xl flex-col gap-4", children: [
-    /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
-      /* @__PURE__ */ jsx("label", { htmlFor: "wiz-bc", className: "text-xs font-medium text-muted-foreground", children: "Barcode / serial" }),
-      /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
-        /* @__PURE__ */ jsx(
-          "input",
-          {
-            id: "wiz-bc",
-            value: barcode,
-            onChange: (e) => setBarcode(e.target.value),
-            placeholder: "rubix://add?... or device serial",
-            className: "flex-1 rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
-          }
-        ),
-        /* @__PURE__ */ jsx(
-          "button",
-          {
-            type: "button",
-            onClick: runDecode,
-            disabled: busy || !barcode.trim(),
-            className: "rounded-md border border-border/60 px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-50",
-            children: "Decode"
-          }
-        )
-      ] })
-    ] }),
-    error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
-    identity ? /* @__PURE__ */ jsxs(Fragment, { children: [
-      /* @__PURE__ */ jsx(IdentifyCard, { identity }),
-      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1", children: [
-        /* @__PURE__ */ jsx("label", { htmlFor: "wiz-name", className: "text-xs font-medium text-muted-foreground", children: "Device name (optional)" }),
-        /* @__PURE__ */ jsx(
-          "input",
-          {
-            id: "wiz-name",
-            value: name,
-            onChange: (e) => setName(e.target.value),
-            placeholder: identity.template.display_name,
-            className: "rounded-md border border-border/60 bg-background px-3 py-1.5 text-sm text-foreground outline-none focus:border-primary"
-          }
-        )
+  const noTemplates = templates.length === 0;
+  const steps = [
+    { label: "Identification", hint: identity ? "Done" : "In progress", state: identity ? "done" : "active" },
+    { label: "Placement", hint: identity ? "In progress" : "Pending", state: identity ? "active" : "pending" },
+    { label: "Review & Finalize", hint: "Pending", state: "pending" }
+  ];
+  return /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-6 lg:grid-cols-[200px_minmax(0,42rem)]", children: [
+    /* @__PURE__ */ jsx("aside", { className: "lg:pt-2", children: /* @__PURE__ */ jsx(StepRail, { steps }) }),
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+      /* @__PURE__ */ jsxs("div", { className: "ext-glass flex flex-col gap-3 p-5", children: [
+        /* @__PURE__ */ jsxs("div", { children: [
+          /* @__PURE__ */ jsx("div", { className: "text-base font-semibold text-foreground", children: "1. Which device are you adding?" }),
+          /* @__PURE__ */ jsx("p", { className: "mt-0.5 text-sm text-muted-foreground", children: "Pick the device type, or scan/paste the barcode from its sticker." })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "flex w-fit rounded-lg border border-border/60 bg-muted/20 p-0.5 text-sm", children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setMode("pick"),
+              className: "flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors " + (mode === "pick" ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/60" : "text-muted-foreground hover:text-foreground"),
+              children: [
+                /* @__PURE__ */ jsx(QrCode, { className: "size-3.5" }),
+                " Choose a type"
+              ]
+            }
+          ),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setMode("barcode"),
+              className: "flex cursor-pointer items-center gap-1.5 rounded-md px-3 py-1.5 transition-colors " + (mode === "barcode" ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/60" : "text-muted-foreground hover:text-foreground"),
+              children: [
+                /* @__PURE__ */ jsx(ScanLine, { className: "size-3.5" }),
+                " Scan barcode"
+              ]
+            }
+          )
+        ] }),
+        mode === "pick" ? noTemplates ? /* @__PURE__ */ jsxs("div", { className: "rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-foreground", children: [
+          "No device types yet. Open the ",
+          /* @__PURE__ */ jsx("span", { className: "font-medium", children: "Templates" }),
+          " tab and add one (e.g. a LoRa temperature sensor) — then come back here."
+        ] }) : /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-3 sm:flex-row sm:items-end", children: [
+          /* @__PURE__ */ jsxs("label", { className: "flex flex-1 flex-col gap-1.5", children: [
+            /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Device type" }),
+            /* @__PURE__ */ jsx(
+              "select",
+              {
+                value: model,
+                onChange: (e) => setModel(e.target.value),
+                "aria-label": "Device type",
+                className: "cursor-pointer rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground transition-colors hover:border-border focus:border-primary focus:outline-none",
+                children: templates.map((t) => /* @__PURE__ */ jsx("option", { value: t.template, children: t.display_name || t.template }, t.template))
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsxs("label", { className: "flex flex-col gap-1.5", children: [
+            /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "Serial / ID" }),
+            /* @__PURE__ */ jsx(
+              "input",
+              {
+                value: serial,
+                onChange: (e) => setSerial(e.target.value),
+                "aria-label": "Serial",
+                className: "rounded-lg border border-border/60 bg-background px-3 py-2 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+              }
+            )
+          ] }),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: findPicked,
+              disabled: busy || !model || !serial.trim(),
+              className: "cursor-pointer rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+              children: busy ? "…" : "Continue"
+            }
+          )
+        ] }) : /* @__PURE__ */ jsxs("div", { className: "flex gap-2", children: [
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              value: barcode,
+              onChange: (e) => setBarcode(e.target.value),
+              placeholder: "rubix://add?... or device serial",
+              "aria-label": "Barcode / serial",
+              className: "flex-1 rounded-lg border border-border/60 bg-background px-3 py-2 font-mono text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+            }
+          ),
+          /* @__PURE__ */ jsx(
+            "button",
+            {
+              type: "button",
+              onClick: () => runDecode(barcode),
+              disabled: busy || !barcode.trim(),
+              className: "cursor-pointer rounded-lg border border-border/60 px-4 py-2 text-sm font-medium transition-colors hover:bg-accent disabled:cursor-not-allowed disabled:opacity-50",
+              children: "Decode"
+            }
+          )
+        ] })
       ] }),
-      /* @__PURE__ */ jsx(Place, { value: placement, onChange: setPlacement }),
-      /* @__PURE__ */ jsxs("div", { className: "flex gap-6 rounded-md border border-border/60 bg-card p-3", children: [
-        /* @__PURE__ */ jsx(Switch, { checked: trend, onChange: setTrend, label: "Trends" }),
-        /* @__PURE__ */ jsx(Switch, { checked: alarm, onChange: setAlarm, label: "Alarms" })
-      ] }),
-      /* @__PURE__ */ jsx(
-        "button",
-        {
-          type: "button",
-          onClick: runProvision,
-          disabled: busy,
-          className: "self-start rounded-md bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground disabled:opacity-50",
-          children: busy ? "Provisioning…" : "Provision"
-        }
-      )
-    ] }) : null
+      error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-lg border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
+      identity ? /* @__PURE__ */ jsxs("div", { className: "ext-glass ext-glass--accent flex flex-col gap-4 p-5", children: [
+        /* @__PURE__ */ jsx("div", { className: "text-base font-semibold text-foreground", children: "2. Where should it go?" }),
+        /* @__PURE__ */ jsx(IdentifyCard, { identity }),
+        /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-1.5", children: [
+          /* @__PURE__ */ jsx("label", { htmlFor: "wiz-name", className: "ext-eyebrow", children: "Friendly name (optional)" }),
+          /* @__PURE__ */ jsx(
+            "input",
+            {
+              id: "wiz-name",
+              value: name,
+              onChange: (e) => setName(e.target.value),
+              placeholder: identity.template.display_name,
+              className: "rounded-lg border border-border/60 bg-background px-3 py-2 text-sm text-foreground outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/30"
+            }
+          )
+        ] }),
+        /* @__PURE__ */ jsx(Place, { value: placement, onChange: setPlacement }),
+        /* @__PURE__ */ jsxs("div", { className: "flex gap-6 rounded-lg border border-border/60 bg-background p-3", children: [
+          /* @__PURE__ */ jsx(Switch, { checked: trend, onChange: setTrend, label: "Trends" }),
+          /* @__PURE__ */ jsx(Switch, { checked: alarm, onChange: setAlarm, label: "Alarms" })
+        ] }),
+        (() => {
+          const hasSite = !!placement.siteId;
+          const hasPage = !!placement.pageId || !!placement.newPage.trim();
+          const ready = hasSite;
+          const hint = !hasSite ? "Pick or create a site so the device has a home." : !hasPage ? "No page selected — the device will be commissioned as pending; you can place it on a page later from Devices." : null;
+          return /* @__PURE__ */ jsxs(Fragment, { children: [
+            /* @__PURE__ */ jsx(
+              "button",
+              {
+                type: "button",
+                onClick: runProvision,
+                disabled: busy || !ready,
+                title: !hasSite ? hint ?? void 0 : void 0,
+                className: "cursor-pointer self-start rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50",
+                children: busy ? "Adding…" : hasPage ? "Add device" : "Commission (no page)"
+              }
+            ),
+            hint ? /* @__PURE__ */ jsx("p", { className: "text-xs text-muted-foreground", children: hint }) : null
+          ] });
+        })()
+      ] }) : null
+    ] })
   ] });
 }
 
@@ -43624,28 +45687,195 @@ function Select({
 }
 
 function PagePreviewTab() {
+  const [sites, setSites] = React.useState([]);
+  const [siteId, setSiteId] = React.useState("");
   const [pages, setPages] = React.useState([]);
   const [pageId, setPageId] = React.useState("");
   const [error, setError] = React.useState(null);
+  const refresh = useRefreshKey();
   React.useEffect(() => {
-    listPages().then((ps) => {
-      setPages(ps);
-      if (ps[0]) setPageId(ps[0].page_id);
+    listSites().then((ss) => {
+      setSites(ss);
+      setSiteId((cur) => cur && ss.some((s) => s.site_id === cur) ? cur : ss[0]?.site_id ?? "");
     }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
-  }, []);
+  }, [refresh]);
+  React.useEffect(() => {
+    if (!siteId) {
+      setPages([]);
+      setPageId("");
+      return;
+    }
+    listPages({ site_id: siteId }).then((ps) => {
+      setPages(ps);
+      setPageId((cur) => cur && ps.some((p) => p.page_id === cur) ? cur : ps[0]?.page_id ?? "");
+    }).catch((e) => setError(e instanceof Error ? e.message : String(e)));
+  }, [siteId, refresh]);
   return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
     error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 px-3 py-2 text-sm text-destructive", children: error }) : null,
-    /* @__PURE__ */ jsx("div", { className: "max-w-xs", children: /* @__PURE__ */ jsx(
-      Select,
-      {
-        label: "Page",
-        value: pageId,
-        placeholder: "Select a page",
-        options: pages.map((p) => ({ value: p.page_id, label: p.name })),
-        onChange: setPageId
-      }
-    ) }),
+    /* @__PURE__ */ jsxs("div", { className: "flex flex-wrap gap-3", children: [
+      /* @__PURE__ */ jsx("div", { className: "min-w-48", children: /* @__PURE__ */ jsx(
+        Select,
+        {
+          label: "Site",
+          value: siteId,
+          placeholder: "Select a site",
+          options: sites.map((s) => ({ value: s.site_id, label: s.name })),
+          onChange: setSiteId
+        }
+      ) }),
+      /* @__PURE__ */ jsx("div", { className: "min-w-48", children: /* @__PURE__ */ jsx(
+        Select,
+        {
+          label: "Dashboard page",
+          value: pageId,
+          placeholder: pages.length ? "Select a page" : "No pages for this site yet",
+          options: pages.map((p) => ({ value: p.page_id, label: p.name })),
+          onChange: setPageId
+        }
+      ) })
+    ] }),
     /* @__PURE__ */ jsx(PageView, { pageId })
+  ] });
+}
+
+function DevicePage({ deviceId }) {
+  const [device, setDevice] = React.useState(null);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState(null);
+  const [copied, setCopied] = React.useState(false);
+  const [showLabel, setShowLabel] = React.useState(false);
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    listDevices({ limit: 1e3 }).then((rows) => {
+      if (cancelled) return;
+      setDevice(rows.find((r) => r.device_id === deviceId) ?? null);
+    }).catch((e) => !cancelled && setError(e instanceof Error ? e.message : String(e))).finally(() => !cancelled && setLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceId]);
+  const shareUrl = deviceShareUrl(deviceId);
+  const copy = () => {
+    navigator.clipboard?.writeText(shareUrl).then(
+      () => {
+        setCopied(true);
+        window.setTimeout(() => setCopied(false), 1500);
+      },
+      () => void 0
+    );
+  };
+  const back = /* @__PURE__ */ jsxs(
+    "button",
+    {
+      type: "button",
+      onClick: gotoDevicesList,
+      className: "mb-1 flex cursor-pointer items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground",
+      children: [
+        /* @__PURE__ */ jsx(ArrowLeft, { className: "size-4" }),
+        " Back to devices"
+      ]
+    }
+  );
+  if (loading) {
+    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+      back,
+      /* @__PURE__ */ jsx("p", { className: "text-sm italic text-muted-foreground", children: "Loading device…" })
+    ] });
+  }
+  if (error) {
+    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+      back,
+      /* @__PURE__ */ jsx("p", { className: "text-sm text-destructive", children: error })
+    ] });
+  }
+  if (!device) {
+    return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-2", children: [
+      back,
+      /* @__PURE__ */ jsxs("p", { className: "text-sm italic text-muted-foreground", children: [
+        "Device ",
+        /* @__PURE__ */ jsx("span", { className: "font-mono", children: deviceId }),
+        " not found."
+      ] })
+    ] });
+  }
+  const tone = statusTone(device.status);
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+    back,
+    /* @__PURE__ */ jsxs("div", { className: "ext-glass flex flex-col gap-4 p-5 sm:flex-row sm:items-start sm:justify-between", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex items-start gap-3", children: [
+        /* @__PURE__ */ jsx("span", { className: "flex size-12 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary", children: /* @__PURE__ */ jsx(Radio, { className: "size-6" }) }),
+        /* @__PURE__ */ jsxs("div", { className: "min-w-0", children: [
+          /* @__PURE__ */ jsx("h2", { className: "text-xl font-semibold tracking-tight text-foreground", children: device.name ?? device.device_id }),
+          /* @__PURE__ */ jsx("div", { className: "mt-0.5 font-mono text-xs uppercase tracking-wide text-muted-foreground", children: device.device_id }),
+          /* @__PURE__ */ jsxs("div", { className: "mt-2 inline-flex items-center gap-1.5 text-sm font-medium", children: [
+            /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full " + tone.dot }),
+            /* @__PURE__ */ jsx("span", { className: tone.text, children: device.status })
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs(
+        "button",
+        {
+          type: "button",
+          onClick: () => setShowLabel(true),
+          className: "flex cursor-pointer items-center gap-1.5 self-start rounded-lg border border-border/60 px-3 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent",
+          children: [
+            /* @__PURE__ */ jsx(QrCode, { className: "size-4" }),
+            " Provisioning label"
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 gap-4 lg:grid-cols-[minmax(0,1fr)_320px]", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-4", children: [
+        /* @__PURE__ */ jsxs("div", { className: "ext-glass p-5", children: [
+          /* @__PURE__ */ jsx("div", { className: "ext-eyebrow mb-3", children: "Specifications" }),
+          /* @__PURE__ */ jsxs("dl", { className: "grid grid-cols-2 gap-x-6 gap-y-3 text-sm", children: [
+            /* @__PURE__ */ jsx(Spec, { label: "Template", value: device.template, mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "Network", value: device.network ?? "—", mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "Address", value: device.address ?? "—", mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "Status", value: device.status }),
+            /* @__PURE__ */ jsx(Spec, { label: "Site", value: device.site_id ?? "Unassigned", mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "Page", value: device.page_id ?? "—", mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "Provisioned", value: device.provisioned_at ?? "—" })
+          ] })
+        ] }),
+        /* @__PURE__ */ jsxs("div", { className: "ext-glass p-5", children: [
+          /* @__PURE__ */ jsx("div", { className: "ext-eyebrow mb-3", children: "Points" }),
+          /* @__PURE__ */ jsx(DeviceDetail, { deviceId: device.device_id })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "ext-glass flex h-fit flex-col items-center gap-3 p-5", children: [
+        /* @__PURE__ */ jsx("div", { className: "ext-eyebrow self-start", children: "Share this device" }),
+        /* @__PURE__ */ jsx("div", { className: "rounded-lg border border-border/60 bg-white p-3", children: /* @__PURE__ */ jsx(QRCodeSVG, { value: shareUrl, size: 176, level: "M", marginSize: 0, title: `Open ${device.name ?? device.device_id}` }) }),
+        /* @__PURE__ */ jsx("p", { className: "text-center text-xs text-muted-foreground", children: "Scan to open this device's page on another device." }),
+        /* @__PURE__ */ jsxs("div", { className: "flex w-full items-center gap-2 rounded-lg border border-border/60 bg-background p-2", children: [
+          /* @__PURE__ */ jsx("span", { className: "min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground", title: shareUrl, children: shareUrl }),
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: copy,
+              "aria-label": "Copy link",
+              className: "flex shrink-0 cursor-pointer items-center gap-1 rounded-md px-2 py-1 text-xs font-medium transition-colors " + (copied ? "text-emerald-400" : "text-foreground hover:bg-accent"),
+              children: [
+                copied ? /* @__PURE__ */ jsx(Check, { className: "size-3.5" }) : /* @__PURE__ */ jsx(Copy, { className: "size-3.5" }),
+                copied ? "Copied" : "Copy"
+              ]
+            }
+          )
+        ] })
+      ] })
+    ] }),
+    showLabel ? /* @__PURE__ */ jsx(LabelDialog, { deviceId: device.device_id, onClose: () => setShowLabel(false) }) : null
+  ] });
+}
+function Spec({ label, value, mono }) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-0.5", children: [
+    /* @__PURE__ */ jsx("dt", { className: "ext-eyebrow", children: label }),
+    /* @__PURE__ */ jsx("dd", { className: "truncate text-foreground " + (mono ? "font-mono text-xs" : ""), title: value, children: value })
   ] });
 }
 
@@ -43675,15 +45905,40 @@ function ProvisionRouter() {
     }
   );
 }
+function readDeviceFromUrl() {
+  if (typeof window === "undefined") return null;
+  const { pathname, search } = window.location;
+  if (!pathname.includes("/provision/device")) return null;
+  return new URLSearchParams(search).get("id");
+}
 function AdminPanel({ initial }) {
   const [active, setActive] = React.useState(initial);
+  const [deviceId, setDeviceId] = React.useState(() => readDeviceFromUrl());
+  React.useEffect(() => {
+    const onNav = () => setDeviceId(readDeviceFromUrl());
+    window.addEventListener("popstate", onNav);
+    return () => window.removeEventListener("popstate", onNav);
+  }, []);
   const tab = TABS.find((t) => t.id === active) ?? TABS[0];
-  return /* @__PURE__ */ jsxs(Fragment, { children: [
-    /* @__PURE__ */ jsxs("div", { children: [
-      /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: "Provisioning" }),
-      /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Scan-to-dashboard device commissioning" })
+  if (deviceId) {
+    return /* @__PURE__ */ jsx("div", { className: "ext-dash-shell flex flex-col gap-4", children: /* @__PURE__ */ jsx(DevicePage, { deviceId }) });
+  }
+  return /* @__PURE__ */ jsxs("div", { className: "ext-dash-shell flex flex-col gap-4", children: [
+    /* @__PURE__ */ jsxs("header", { className: "flex flex-wrap items-end justify-between gap-3", children: [
+      /* @__PURE__ */ jsxs("div", { className: "flex flex-col gap-0.5", children: [
+        /* @__PURE__ */ jsx("span", { className: "ext-eyebrow", children: "IoT Provisioning" }),
+        /* @__PURE__ */ jsx("h3", { className: "text-xl font-semibold tracking-tight text-foreground", children: "Provisioning" }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: "Scan-to-dashboard device commissioning" })
+      ] }),
+      /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsxs("span", { className: "inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground", children: [
+          /* @__PURE__ */ jsx("span", { className: "inline-block size-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_2px_color-mix(in_oklab,var(--color-primary)_50%,transparent)]" }),
+          "live"
+        ] }),
+        /* @__PURE__ */ jsx("span", { className: "rounded-full border border-border/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground", children: "v2.4.0" })
+      ] })
     ] }),
-    /* @__PURE__ */ jsx("nav", { className: "flex flex-wrap gap-1 border-b border-border/60", children: TABS.map((t) => {
+    /* @__PURE__ */ jsx("nav", { className: "flex flex-wrap gap-1 rounded-xl border border-border/60 bg-muted/20 p-1", children: TABS.map((t) => {
       const Icon = t.icon;
       const on = t.id === active;
       return /* @__PURE__ */ jsxs(
@@ -43691,7 +45946,8 @@ function AdminPanel({ initial }) {
         {
           type: "button",
           onClick: () => setActive(t.id),
-          className: "flex items-center gap-1.5 rounded-t-md px-3 py-2 text-sm transition-colors " + (on ? "border-b-2 border-primary font-medium text-foreground" : "text-muted-foreground hover:text-foreground"),
+          "aria-current": on ? "page" : void 0,
+          className: "flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors duration-200 " + (on ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/60" : "text-muted-foreground hover:bg-card/50 hover:text-foreground"),
           children: [
             /* @__PURE__ */ jsx(Icon, { className: "size-4" }),
             t.label
@@ -43704,7 +45960,7 @@ function AdminPanel({ initial }) {
   ] });
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T08:27:28.950Z"}`;
+const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T23:40:45.656Z"}`;
 if (typeof window !== "undefined") {
   console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
   window.__rubixosBuild = RUBIXOS_BUILD_STAMP;

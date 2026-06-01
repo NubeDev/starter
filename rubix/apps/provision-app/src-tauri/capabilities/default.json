@@ -1,0 +1,10 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Core window + store (persist base_url/session) for the provision app. All agent HTTP goes through Rust commands via reqwest, so no http-plugin scope is granted to the webview.",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "store:default"
+  ]
+}

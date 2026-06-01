@@ -1,15 +1,3 @@
-/* Cascade layer order — MUST be the first declaration in the host
- * bundle. Extensions wrap their Tailwind output in the
- * `rubix-extension` layer (see e.g.
- * `rubix/extensions/com.nubeio.rubixos/ui-src/app.css`). Pre-declaring
- * that layer here, BEFORE Tailwind's own `theme`/`base`/`utilities`
- * layers are established by `@import "tailwindcss"`, makes every host
- * utility — including responsive variants like `lg:grid-cols-[...]` —
- * win over anything an extension's runtime-injected <style> tag emits,
- * regardless of DOM order. Cascade-layer precedence is by declaration
- * order: layers declared earlier lose. */
-@layer rubix-extension, theme, base, components, utilities;
-
 @import 'tailwindcss';
 @import '@nube/starter-ui-kit/scan-source.css';
 @import '@nube/starter-ui-sdui-react/scan-source.css';

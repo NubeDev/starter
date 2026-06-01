@@ -18,6 +18,7 @@
 //!  - [`crud`] / [`ids`] — shared write helpers and id minting.
 
 mod alarms;
+mod assign_page;
 pub mod decode;
 mod device;
 pub mod ids;
@@ -70,6 +71,15 @@ pub fn handle_device_decommission(
     params: &Value,
 ) -> starter_ext_sdk::Result<Value> {
     device::handle_decommission(ctx, params)
+}
+
+/// `bc_device_assign_page` — place a pending device on a page, generate
+/// its widgets, and flip its status to `provisioned`.
+pub fn handle_device_assign_page(
+    ctx: &RubixOsCtx,
+    params: &Value,
+) -> starter_ext_sdk::Result<Value> {
+    assign_page::handle(ctx, params)
 }
 
 /// `bc_site_create`.

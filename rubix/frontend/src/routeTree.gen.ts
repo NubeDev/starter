@@ -23,6 +23,8 @@ import { Route as DashboardsPageIdRouteImport } from './routes/dashboards/$pageI
 import { Route as AdminWarehouseExplorerRouteImport } from './routes/admin/warehouse-explorer'
 import { Route as AdminWarehouseRouteImport } from './routes/admin/warehouse'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminSupervisorRouteImport } from './routes/admin/supervisor'
+import { Route as AdminSchemaExplorerRouteImport } from './routes/admin/schema-explorer'
 import { Route as AdminConsoleRouteImport } from './routes/admin/console'
 import { Route as AdminAccessRouteImport } from './routes/admin/access'
 import { Route as ExtensionsExtIdSplatRouteImport } from './routes/extensions.$extId.$'
@@ -99,6 +101,16 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminSupervisorRoute = AdminSupervisorRouteImport.update({
+  id: '/admin/supervisor',
+  path: '/admin/supervisor',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminSchemaExplorerRoute = AdminSchemaExplorerRouteImport.update({
+  id: '/admin/schema-explorer',
+  path: '/admin/schema-explorer',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminConsoleRoute = AdminConsoleRouteImport.update({
   id: '/admin/console',
   path: '/admin/console',
@@ -134,6 +146,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
   '/admin/console': typeof AdminConsoleRoute
+  '/admin/schema-explorer': typeof AdminSchemaExplorerRoute
+  '/admin/supervisor': typeof AdminSupervisorRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
@@ -154,6 +168,8 @@ export interface FileRoutesByTo {
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
   '/admin/console': typeof AdminConsoleRoute
+  '/admin/schema-explorer': typeof AdminSchemaExplorerRoute
+  '/admin/supervisor': typeof AdminSupervisorRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
@@ -176,6 +192,8 @@ export interface FileRoutesById {
   '/settings': typeof SettingsRoute
   '/admin/access': typeof AdminAccessRoute
   '/admin/console': typeof AdminConsoleRoute
+  '/admin/schema-explorer': typeof AdminSchemaExplorerRoute
+  '/admin/supervisor': typeof AdminSupervisorRoute
   '/admin/users': typeof AdminUsersRoute
   '/admin/warehouse': typeof AdminWarehouseRoute
   '/admin/warehouse-explorer': typeof AdminWarehouseExplorerRoute
@@ -199,6 +217,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/admin/access'
     | '/admin/console'
+    | '/admin/schema-explorer'
+    | '/admin/supervisor'
     | '/admin/users'
     | '/admin/warehouse'
     | '/admin/warehouse-explorer'
@@ -219,6 +239,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/admin/access'
     | '/admin/console'
+    | '/admin/schema-explorer'
+    | '/admin/supervisor'
     | '/admin/users'
     | '/admin/warehouse'
     | '/admin/warehouse-explorer'
@@ -240,6 +262,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/admin/access'
     | '/admin/console'
+    | '/admin/schema-explorer'
+    | '/admin/supervisor'
     | '/admin/users'
     | '/admin/warehouse'
     | '/admin/warehouse-explorer'
@@ -262,6 +286,8 @@ export interface RootRouteChildren {
   SettingsRoute: typeof SettingsRoute
   AdminAccessRoute: typeof AdminAccessRoute
   AdminConsoleRoute: typeof AdminConsoleRoute
+  AdminSchemaExplorerRoute: typeof AdminSchemaExplorerRoute
+  AdminSupervisorRoute: typeof AdminSupervisorRoute
   AdminUsersRoute: typeof AdminUsersRoute
   AdminWarehouseRoute: typeof AdminWarehouseRoute
   AdminWarehouseExplorerRoute: typeof AdminWarehouseExplorerRoute
@@ -373,6 +399,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/supervisor': {
+      id: '/admin/supervisor'
+      path: '/admin/supervisor'
+      fullPath: '/admin/supervisor'
+      preLoaderRoute: typeof AdminSupervisorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/schema-explorer': {
+      id: '/admin/schema-explorer'
+      path: '/admin/schema-explorer'
+      fullPath: '/admin/schema-explorer'
+      preLoaderRoute: typeof AdminSchemaExplorerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/console': {
       id: '/admin/console'
       path: '/admin/console'
@@ -434,6 +474,8 @@ const rootRouteChildren: RootRouteChildren = {
   SettingsRoute: SettingsRoute,
   AdminAccessRoute: AdminAccessRoute,
   AdminConsoleRoute: AdminConsoleRoute,
+  AdminSchemaExplorerRoute: AdminSchemaExplorerRoute,
+  AdminSupervisorRoute: AdminSupervisorRoute,
   AdminUsersRoute: AdminUsersRoute,
   AdminWarehouseRoute: AdminWarehouseRoute,
   AdminWarehouseExplorerRoute: AdminWarehouseExplorerRoute,

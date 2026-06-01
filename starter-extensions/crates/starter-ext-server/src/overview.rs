@@ -100,6 +100,7 @@ pub(crate) async fn overview(State(admin): State<ExtensionAdmin>) -> impl IntoRe
                 worker_runs_total: 0,
                 worker_failures_total: 0,
                 events_dropped_total: 0,
+                group_kills_total: 0,
             },
         });
     }
@@ -133,6 +134,7 @@ async fn build_row(admin: &ExtensionAdmin, rec: &ExtensionRecord) -> ExtensionOv
             restarts_total: h.restarts_total(),
             capability_violations_total: h.capability_violations(),
             events_dropped_total: h.events_dropped(),
+            group_kills_total: h.group_kills_total(),
         },
         None => ProcessGauges {
             process: None,
@@ -140,6 +142,7 @@ async fn build_row(admin: &ExtensionAdmin, rec: &ExtensionRecord) -> ExtensionOv
             restarts_total: 0,
             capability_violations_total: 0,
             events_dropped_total: 0,
+            group_kills_total: 0,
         },
     };
 
@@ -159,6 +162,7 @@ async fn build_row(admin: &ExtensionAdmin, rec: &ExtensionRecord) -> ExtensionOv
             worker_runs_total: 0,
             worker_failures_total: 0,
             events_dropped_total: gauges.events_dropped_total,
+            group_kills_total: gauges.group_kills_total,
         },
     };
 

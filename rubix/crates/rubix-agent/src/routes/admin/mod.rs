@@ -17,6 +17,7 @@ mod query;
 mod registry;
 mod rules;
 mod skills;
+mod supervisor;
 mod tables;
 mod templates;
 mod tools;

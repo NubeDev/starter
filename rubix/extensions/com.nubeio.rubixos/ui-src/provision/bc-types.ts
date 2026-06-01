@@ -60,6 +60,21 @@ export interface ProvisionResult {
   warnings: ReadonlyArray<string>;
 }
 
+/** Input to bc_device_assign_page — one of page_id / new_page is required. */
+export interface AssignPageInput {
+  device_id: string;
+  page_id?: string;
+  new_page?: { name: string };
+}
+
+/** Result of bc_device_assign_page. */
+export interface AssignPageResult {
+  device_id: string;
+  page_id: string;
+  widgets: number;
+  status: string;
+}
+
 /** Generic mutation envelope returned by the write tools. */
 export interface MutationResult {
   operation: string;
@@ -96,6 +111,7 @@ export interface LocationRow {
 
 export interface PageRow {
   page_id: string;
+  site_id: string | null;
   name: string;
   created_at: string;
 }

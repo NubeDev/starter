@@ -9,12 +9,13 @@
 //! Builtin-flavour records have no supervisor to spawn — the factory
 //! returns `Ok(None)` and the route only flips the persisted state.
 
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use async_trait::async_trait;
 use starter_ext_host::ExtensionRecord;
 use starter_ext_spi::RuntimeKind;
-use starter_ext_supervisor::{Supervisor, SupervisorHandle};
+use starter_ext_supervisor::{Supervisor, SupervisorHandle, SupervisorOptions};
 
 /// Spawning the supervisor for one record. Implementations are
 /// `Send + Sync + 'static`; called from the `enable` admin handler.
@@ -50,10 +51,31 @@ impl SupervisorFactoryError {
 /// returns `Ok(None)` for builtin/wasm records.
 ///
 /// Suitable for v0.1 consumers that don't need to customise the spawn
-/// step. The factory is a zero-sized type so a single
-/// `Arc<DefaultSupervisorFactory>` is fine to share.
-#[derive(Debug, Default)]
-pub struct DefaultSupervisorFactory;
+/// step. Carries an optional `pidfile_dir` so every supervisor it spawns
+/// (including the respawn on `enable` / restart) records its child's
+/// process-group id for the boot reaper — set it to the same directory the
+/// host passes to `reap_stale_groups` at startup. `None` keeps the prior
+/// behaviour (live group-signalling only, no cross-restart pidfile).
+#[derive(Debug, Default, Clone)]
+pub struct DefaultSupervisorFactory {
+    pidfile_dir: Option<PathBuf>,
+}
+
+impl DefaultSupervisorFactory {
+    /// Factory that writes per-extension pidfiles under `dir` so the boot
+    /// reaper can clean groups leaked by a `SIGKILL`ed prior instance.
+    pub fn with_pidfile_dir(dir: impl Into<PathBuf>) -> Self {
+        Self {
+            pidfile_dir: Some(dir.into()),
+        }
+    }
+
+    fn opts(&self) -> SupervisorOptions {
+        SupervisorOptions {
+            pidfile_dir: self.pidfile_dir.clone(),
+        }
+    }
+}
 
 #[async_trait]
 impl SupervisorFactory for DefaultSupervisorFactory {
@@ -66,9 +88,13 @@ impl SupervisorFactory for DefaultSupervisorFactory {
             None => return Ok(None), // failed record; nothing to spawn
         };
         match manifest.runtime.kind {
-            RuntimeKind::Process => Supervisor::start(record)
-                .map(Some)
-                .map_err(SupervisorFactoryError::new),
+            RuntimeKind::Process => Supervisor::start_with_opts(
+                record,
+                Arc::new(starter_ext_supervisor::NotImplementedHandler),
+                self.opts(),
+            )
+            .map(Some)
+            .map_err(SupervisorFactoryError::new),
             RuntimeKind::Builtin | RuntimeKind::Wasm => Ok(None),
         }
     }
@@ -85,6 +111,7 @@ pub(crate) type DynFactory = Arc<dyn SupervisorFactory>;
 /// / `authz.check` into its Row-5 backends).
 pub struct WithHostMethodsFactory {
     host_methods: starter_ext_supervisor::SharedHostMethodHandler,
+    pidfile_dir: Option<PathBuf>,
 }
 
 impl WithHostMethodsFactory {
@@ -92,7 +119,18 @@ impl WithHostMethodsFactory {
     /// supervisor it spawns inherits the same `Arc` — cheap to
     /// share, no per-spawn cloning of the underlying handler.
     pub fn new(host_methods: starter_ext_supervisor::SharedHostMethodHandler) -> Self {
-        Self { host_methods }
+        Self {
+            host_methods,
+            pidfile_dir: None,
+        }
+    }
+
+    /// Set the directory each spawned supervisor records its child's
+    /// process-group id into, for the boot reaper. See
+    /// [`DefaultSupervisorFactory::with_pidfile_dir`].
+    pub fn with_pidfile_dir(mut self, dir: impl Into<PathBuf>) -> Self {
+        self.pidfile_dir = Some(dir.into());
+        self
     }
 }
 
@@ -114,9 +152,15 @@ impl SupervisorFactory for WithHostMethodsFactory {
             None => return Ok(None),
         };
         match manifest.runtime.kind {
-            RuntimeKind::Process => Supervisor::start_with(record, self.host_methods.clone())
-                .map(Some)
-                .map_err(SupervisorFactoryError::new),
+            RuntimeKind::Process => Supervisor::start_with_opts(
+                record,
+                self.host_methods.clone(),
+                SupervisorOptions {
+                    pidfile_dir: self.pidfile_dir.clone(),
+                },
+            )
+            .map(Some)
+            .map_err(SupervisorFactoryError::new),
             RuntimeKind::Builtin | RuntimeKind::Wasm => Ok(None),
         }
     }

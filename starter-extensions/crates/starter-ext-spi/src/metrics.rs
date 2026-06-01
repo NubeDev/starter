@@ -55,6 +55,13 @@ pub struct ExtensionMetrics {
     /// Event-ring evictions — entries pushed out of the bounded ring
     /// (monotone, derived from the ring's sequence cursor vs its length).
     pub events_dropped_total: u64,
+    /// Process-group `SIGKILL` escalations — times the supervisor had to
+    /// reap this extension's whole process group because the child (or a
+    /// grandchild it forked) did not exit on its own. `0` for a
+    /// well-behaved extension; a steadily rising value flags one that leaks
+    /// descendants or ignores `SIGTERM`. Always `0` on non-unix.
+    #[serde(default)]
+    pub group_kills_total: u64,
 }
 
 #[cfg(test)]
@@ -74,6 +81,7 @@ mod tests {
             worker_runs_total: 7,
             worker_failures_total: 1,
             events_dropped_total: 5,
+            group_kills_total: 2,
         };
         let j = serde_json::to_value(&m).unwrap();
         assert_eq!(j["lifecycle_state"], "running");

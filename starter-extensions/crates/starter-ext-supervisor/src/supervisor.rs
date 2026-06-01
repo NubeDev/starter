@@ -74,8 +74,16 @@ use crate::capability::{CapabilityGate, CapabilityViolationCounter};
 use crate::event_ring::{EventKind, EventRing, MAX_STDERR_LINE_BYTES};
 use crate::handshake::{manifest_hash, InitHandshake, InitReady};
 use crate::proc_stats::{self, LiveProcess, ProcessCell};
+use crate::reaper;
 use crate::restart::{ExitReason, RestartDecision, RestartTracker};
 use crate::stream::is_streaming_notification;
+
+/// Hard ceiling on how long teardown waits for a group to die after the
+/// terminal signal before giving up and moving on. Bounds every
+/// `child.wait()` on the kill paths so a child that ignores `SIGKILL`
+/// (uninterruptible sleep, exotic state) can never wedge the supervisor
+/// task itself — the leak we are fixing must not be traded for a hang.
+const REAP_WAIT: Duration = Duration::from_secs(5);
 
 /// Why the supervisor decided to wind down. Surfaced to the caller via
 /// the watch channel returned from [`SupervisorHandle::state`] and to
@@ -107,6 +115,13 @@ pub struct SupervisorHandle {
     /// `EventKind::Spawned` push and cleared on exit. Read by
     /// [`Self::pid`] / [`Self::process_stats`].
     process: ProcessCell,
+    /// Cumulative count of times this supervisor escalated a child teardown
+    /// to a whole-process-group `SIGKILL` (`killpg`) — i.e. the child (or a
+    /// grandchild) did not exit on its own and the group had to be reaped.
+    /// A non-zero value over a healthy extension's lifetime points at a
+    /// child that leaks descendants or ignores `SIGTERM`. Surfaced as
+    /// `group_kills_total` on `GET /extensions/<id>/metrics`.
+    group_kills: Arc<AtomicI64>,
 }
 
 impl SupervisorHandle {
@@ -130,6 +145,15 @@ impl SupervisorHandle {
     /// Read the capability-violation counter.
     pub fn capability_violations(&self) -> u64 {
         self.violations.get()
+    }
+
+    /// Cumulative process-group `SIGKILL` escalations over this handle's
+    /// lifetime. Each increment is a child (or grandchild) that did not
+    /// exit on its own and had to be reaped via `killpg`. Surfaced as
+    /// `group_kills_total` on `GET /extensions/<id>/metrics`; a steadily
+    /// rising value flags an extension that leaks descendants.
+    pub fn group_kills_total(&self) -> u64 {
+        self.group_kills.load(Ordering::Relaxed).max(0) as u64
     }
 
     /// Consolidated diagnostics for the live process, derived from the
@@ -425,6 +449,22 @@ impl SupervisorHandle {
     }
 }
 
+/// Optional tuning for a supervisor task. Defaults preserve the prior
+/// behaviour; hosts opt into the orphan-reaping pidfile by setting
+/// [`Self::pidfile_dir`].
+#[derive(Debug, Clone, Default)]
+pub struct SupervisorOptions {
+    /// Directory the supervisor writes a per-extension pidfile into on each
+    /// spawn (recording the child's process-group id) and removes on clean
+    /// teardown. The host's boot path passes the *same* directory to
+    /// [`reaper::reap_stale_groups`] so a child leaked by a `SIGKILL`ed
+    /// prior agent instance is deterministically cleaned on the next boot.
+    ///
+    /// `None` disables the pidfile (live group-signalling still works for
+    /// this run — only the cross-restart safety net is opted out).
+    pub pidfile_dir: Option<PathBuf>,
+}
+
 /// The supervisor's entry point.
 pub struct Supervisor;
 
@@ -448,6 +488,16 @@ impl Supervisor {
     pub fn start_with(
         record: &ExtensionRecord,
         host_methods: crate::host_methods::SharedHostMethodHandler,
+    ) -> Result<SupervisorHandle> {
+        Self::start_with_opts(record, host_methods, SupervisorOptions::default())
+    }
+
+    /// Like [`Self::start_with`] but takes [`SupervisorOptions`] — the
+    /// entry point hosts use to wire the orphan-reaping pidfile directory.
+    pub fn start_with_opts(
+        record: &ExtensionRecord,
+        host_methods: crate::host_methods::SharedHostMethodHandler,
+        opts: SupervisorOptions,
     ) -> Result<SupervisorHandle> {
         let manifest = record
             .manifest
@@ -494,6 +544,7 @@ impl Supervisor {
         let next_request_id = Arc::new(AtomicI64::new(DISPATCH_ID_FLOOR));
         let stream_subscribers: StreamSubscribers = Arc::new(Mutex::new(HashMap::new()));
         let process = proc_stats::new_cell();
+        let group_kills = Arc::new(AtomicI64::new(0));
 
         let task = SupervisorTask {
             id: id.clone(),
@@ -514,6 +565,9 @@ impl Supervisor {
             stream_subscribers: stream_subscribers.clone(),
             host_methods,
             process: process.clone(),
+            pidfile_dir: opts.pidfile_dir,
+            current_pgid: None,
+            group_kills: group_kills.clone(),
         };
         tokio::spawn(task.run());
 
@@ -528,6 +582,7 @@ impl Supervisor {
             next_request_id,
             stream_subscribers,
             process,
+            group_kills,
         })
     }
 }
@@ -567,10 +622,35 @@ struct SupervisorTask {
     /// Shared live-process cell (pid + sampled stats). Set on spawn,
     /// updated on each health tick, cleared on exit.
     process: ProcessCell,
+    /// Directory for the per-extension pidfile (group id), or `None` to
+    /// disable the cross-restart reaper safety net. See
+    /// [`SupervisorOptions::pidfile_dir`].
+    pidfile_dir: Option<PathBuf>,
+    /// Process-group id of the *live* child (== its pid), set on spawn and
+    /// cleared on exit. The basis for whole-group teardown so a wedged
+    /// grandchild dies with its parent.
+    current_pgid: Option<i32>,
+    /// Shared with [`SupervisorHandle::group_kills_total`]; bumped each time
+    /// teardown escalates to a whole-group `SIGKILL`.
+    group_kills: Arc<AtomicI64>,
 }
 
 impl Drop for SupervisorTask {
     fn drop(&mut self) {
+        // Last-ditch teardown: if the task is being dropped while a child
+        // is still live (panic, runtime shutdown that *does* unwind), kill
+        // the whole process group so we never leak the child or its
+        // descendants. `kill_on_drop(true)` only reaches the direct child;
+        // this reaches grandchildren too. On a hard `SIGKILL` of the agent
+        // this never runs — that path is covered by the boot reaper reading
+        // the pidfile we wrote on spawn.
+        #[cfg(unix)]
+        if let Some(pgid) = self.current_pgid.take() {
+            reaper::signal_group(pgid, nix::sys::signal::Signal::SIGKILL);
+        }
+        if let (Some(dir), id) = (self.pidfile_dir.as_ref(), &self.id) {
+            reaper::remove_pidfile(dir, id.as_str());
+        }
         // Cancel every in-flight dispatch — dropping the `oneshot::Sender`
         // makes the receiver fail with `RecvError`, which the handle's
         // `call` translates into `Error::Transport("... child likely
@@ -611,6 +691,15 @@ impl SupervisorTask {
             // process while we are between spawns (or shutting down).
             if let Ok(mut g) = self.process.lock() {
                 *g = None;
+            }
+            // The group for this cycle has been reaped by `spawn_and_serve`
+            // (every exit path there waits on the child / kills the group).
+            // Drop the recorded pgid and the on-disk pidfile so neither the
+            // boot reaper nor Drop acts on a now-dead group; the next spawn
+            // re-records a fresh one.
+            self.current_pgid = None;
+            if let Some(dir) = self.pidfile_dir.as_ref() {
+                reaper::remove_pidfile(dir, self.id.as_str());
             }
 
             // Was a shutdown requested while we were live?
@@ -673,10 +762,33 @@ impl SupervisorTask {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped())
             .kill_on_drop(true);
+        // Put the child in its own process group (gid == child pid). This
+        // is the load-bearing leak fix: teardown signals the whole group
+        // via `killpg`, so a grandchild the child forked dies with it —
+        // `kill_on_drop` alone only ever reaches the direct child.
+        // `process_group` is a *safe*, stable std API (calls `setpgid` in
+        // the child before exec); no `pre_exec`, so the crate keeps
+        // `#![forbid(unsafe_code)]`.
+        #[cfg(unix)]
+        cmd.process_group(0);
         let mut child = cmd
             .spawn()
             .map_err(|e| Error::spawn(format!("exec {:?}: {e}", self.bin)))?;
         let pid = child.id().unwrap_or(0);
+        // On unix the process-group id equals the child pid we just
+        // spawned. Record it so teardown / Drop can `killpg` the group, and
+        // persist it to the pidfile so the next boot's reaper can clean it
+        // if *this* agent is `SIGKILL`ed before it tears the child down.
+        #[cfg(unix)]
+        {
+            self.current_pgid = Some(pid as i32);
+            if let Some(dir) = self.pidfile_dir.as_ref() {
+                if let Err(e) = reaper::write_pidfile(dir, self.id.as_str(), pid as i32) {
+                    warn!(ext = %self.id.as_str(), err = %e,
+                        "failed to write supervisor pidfile (reaper safety-net disabled for this child)");
+                }
+            }
+        }
         self.events.push(EventKind::Spawned { pid });
         // Publish the live pid into the shared cell next to the `Spawned`
         // push so `handle.pid()` / `process_stats()` see the current
@@ -837,14 +949,26 @@ impl SupervisorTask {
                     }
                 }
 
+                // A previously-pinged child whose deadline has passed.
+                // Checked on its own short timer rather than only on the
+                // next health tick, so a wedged child is detected within
+                // `health_timeout` of the deadline instead of surviving a
+                // full extra `health_interval` (the prior two-tick bug).
+                _ = sleep_until_opt(health_deadline), if health_deadline.is_some() => {
+                    self.events.push(EventKind::HealthTimeout);
+                    warn!(ext = %self.id.as_str(), "health timeout — killing child");
+                    self.reap_child(child).await;
+                    return ExitReason::Crash;
+                }
+
                 // Periodic health ping.
                 _ = health_ticker.tick() => {
                     if health_deadline.is_some() {
-                        // Previous ping never came back.
-                        self.events.push(EventKind::HealthTimeout);
-                        warn!(ext = %self.id.as_str(), "health timeout — killing child");
-                        let _ = child.start_kill();
-                        return ExitReason::Crash;
+                        // Deadline still pending at the next tick — let the
+                        // dedicated deadline arm above handle the kill; just
+                        // skip issuing another ping on top of the unanswered
+                        // one.
+                        continue;
                     }
                     let id = next_health_id;
                     next_health_id += 1;
@@ -874,6 +998,9 @@ impl SupervisorTask {
                             // Clean EOF — the child closed stdout.
                             let status = child.wait().await.ok();
                             let code = status.and_then(|s| s.code());
+                            // The main process is gone, but it may have left
+                            // grandchildren in the group — sweep them.
+                            self.kill_group();
                             if code == Some(0) {
                                 self.events.push(EventKind::ExitedClean { code });
                                 return ExitReason::Clean;
@@ -888,7 +1015,10 @@ impl SupervisorTask {
                             self.events.push(EventKind::Crashed {
                                 reason: format!("frame error: {e}"),
                             });
-                            let _ = child.start_kill();
+                            // Reap the child *and* the whole group before
+                            // respawning, so we never leak a wedged child or
+                            // its descendants across the restart cycle.
+                            self.reap_child(child).await;
                             return ExitReason::Crash;
                         }
                     }
@@ -897,6 +1027,9 @@ impl SupervisorTask {
                 // Child exited without closing stdout cleanly.
                 status = child.wait() => {
                     let code = status.ok().and_then(|s| s.code());
+                    // Main process reaped by the `wait()` above; sweep any
+                    // surviving grandchildren in its group.
+                    self.kill_group();
                     if code == Some(0) {
                         self.events.push(EventKind::ExitedClean { code });
                         return ExitReason::Clean;
@@ -1124,26 +1257,77 @@ impl SupervisorTask {
         }
     }
 
-    /// SIGTERM → grace window → SIGKILL.
+    /// SIGTERM → grace window → SIGKILL, applied to the child's whole
+    /// process group.
     ///
-    /// On Unix we send SIGTERM via `kill(2)`; on other platforms tokio's
-    /// `start_kill` is the closest approximation (it sends the platform's
-    /// "polite" signal where one exists).
-    async fn graceful_kill(&self, child: &mut Child) {
+    /// On unix this now sends a *real* `SIGTERM` to the group (`killpg`),
+    /// waits `shutdown_grace_ms` for the child to exit, then `SIGKILL`s the
+    /// group if it has not. Signalling the group (not just the child) means
+    /// a grandchild the extension forked is torn down too. On non-unix we
+    /// fall back to tokio's `start_kill` (SIGKILL-equivalent).
+    async fn graceful_kill(&mut self, child: &mut Child) {
         let grace = Duration::from_millis(self.sup_cfg.shutdown_grace_ms as u64);
-        send_sigterm(child);
+        self.send_sigterm_group(child);
         match tokio::time::timeout(grace, child.wait()).await {
             Ok(_) => {
+                // Direct child exited politely; still sweep the group in
+                // case it left grandchildren behind.
+                self.kill_group();
                 self.events.push(EventKind::ExitedClean { code: Some(0) });
             }
             Err(_) => {
+                // Grace exceeded — escalate to a group-wide SIGKILL, then
+                // bounded-wait so we actually reap the direct child.
+                self.kill_group();
                 let _ = child.start_kill();
-                let _ = child.wait().await;
+                let _ = tokio::time::timeout(REAP_WAIT, child.wait()).await;
                 self.events.push(EventKind::Crashed {
                     reason: "shutdown grace exceeded; SIGKILL".into(),
                 });
             }
         }
+    }
+
+    /// Reap a child on a crash path: escalate to a whole-group `SIGKILL`,
+    /// then bounded-wait on the direct child so it is actually collected
+    /// (not left a zombie) before the loop respawns. Bounded by [`REAP_WAIT`]
+    /// so a child ignoring `SIGKILL` cannot wedge the supervisor task.
+    async fn reap_child(&mut self, child: &mut Child) {
+        let _ = child.start_kill();
+        self.kill_group();
+        let _ = tokio::time::timeout(REAP_WAIT, child.wait()).await;
+    }
+
+    /// Send `SIGKILL` to the live child's whole process group, if one is
+    /// recorded and still has members. Bumps the `group_kills` counter when
+    /// a group was actually signalled (its members had not all exited),
+    /// which is the signal that this extension leaks descendants. No-op on
+    /// non-unix or when no group is live.
+    fn kill_group(&self) {
+        #[cfg(unix)]
+        if let Some(pgid) = self.current_pgid {
+            if reaper::signal_group(pgid, nix::sys::signal::Signal::SIGKILL) {
+                self.group_kills.fetch_add(1, Ordering::Relaxed);
+                debug!(ext = %self.id.as_str(), pgid, "killpg(SIGKILL) — swept process group");
+            }
+        }
+        #[cfg(not(unix))]
+        let _ = &self.current_pgid;
+    }
+
+    /// Send `SIGTERM` to the child's whole process group (unix), or fall
+    /// back to tokio's `start_kill` elsewhere.
+    fn send_sigterm_group(&self, child: &mut Child) {
+        #[cfg(unix)]
+        {
+            if let Some(pgid) = self.current_pgid {
+                reaper::signal_group(pgid, nix::sys::signal::Signal::SIGTERM);
+                return;
+            }
+            let _ = child.start_kill();
+        }
+        #[cfg(not(unix))]
+        let _ = child.start_kill();
     }
 
     fn publish_state(&self, s: LifecycleState) {
@@ -1196,32 +1380,17 @@ where
     Ok(())
 }
 
-/// SIGTERM on Unix; `start_kill` elsewhere. Pulled out so the platform
-/// detail is one line, not a `cfg!` inside the supervisor loop.
-#[cfg(unix)]
-fn send_sigterm(child: &mut Child) {
-    if let Some(pid) = child.id() {
-        // SAFETY of `kill`: we're sending SIGTERM to a pid we own. `libc`
-        // is *not* in our dep tree, so we lean on `nix`-style behaviour via
-        // tokio's start_kill on a clone — no, tokio's start_kill is
-        // SIGKILL. We need SIGTERM. Use the libc syscall through std's
-        // CommandExt? Std has no public SIGTERM sender. Fall through to
-        // `start_kill` so this v0.1 is portable; the grace window then
-        // becomes "wait `shutdown_grace_ms`, then SIGKILL" — which is
-        // what SCOPE describes for shutdown anyway. Future versions can
-        // pull `nix` in and add a SIGTERM-first path.
-        let _ = pid; // silence unused; documented behaviour
+/// Sleep until the given deadline, or forever if `None`. Used by the
+/// wire-loop's dedicated health-deadline `select!` arm so a wedged child is
+/// detected within `health_timeout` of its deadline rather than surviving a
+/// full extra `health_interval`. When `deadline` is `None` the future never
+/// resolves — the arm is paired with an `if health_deadline.is_some()`
+/// guard so it is only polled when a deadline is actually pending.
+async fn sleep_until_opt(deadline: Option<tokio::time::Instant>) {
+    match deadline {
+        Some(at) => tokio::time::sleep_until(at).await,
+        None => std::future::pending::<()>().await,
     }
-    // For v0.1: rely on `kill_on_drop` + `start_kill` to send the
-    // platform's terminal signal at the end of the grace window. The
-    // *interface* (SIGTERM → grace → SIGKILL) is what callers see; the
-    // implementation upgrades when SCOPE's threat model requires it.
-    let _ = child.start_kill();
-}
-
-#[cfg(not(unix))]
-fn send_sigterm(child: &mut Child) {
-    let _ = child.start_kill();
 }
 
 #[cfg(test)]
