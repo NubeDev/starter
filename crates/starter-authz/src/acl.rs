@@ -6,14 +6,11 @@
 //! and per-team Permissions views) batch-load rules once, then
 //! call this per page to avoid N+1 lookups.
 //!
-//! **G2 caveat**: until G3 lands the additive migration that
-//! adds a `resource_id` column to `starter_authz_rules`, rules
-//! cannot target a specific instance — they apply kind-wide.
-//! The summariser treats every rule for the kind as applicable
-//! to every instance, which matches the engine's behavior
-//! today. When G3 lands, switch the bucketing to read
-//! `rule.resource_id` and treat `None` / `"*"` as the tenant-wide
-//! fallback.
+//! G3 — rules now carry an optional `resource_id`. The
+//! summariser buckets per-instance: a rule applies to a page if
+//! its `resource_id` is `None`, `"*"`, or equal to the page id.
+//! The engine itself is unchanged — instance scoping is a UI
+//! affordance.
 
 use std::collections::HashMap;
 
@@ -79,12 +76,21 @@ pub fn summarise(
     kind: &str,
     rules: &[&StoredRule],
     owner: Option<&InstanceOwner>,
+    page_id: &str,
 ) -> EffectiveAcl {
     let mut has_legacy_rules = false;
     let mut highest: HashMap<String, (SubjectRef, PermissionTier)> = HashMap::new();
     let mut tenant_view = false;
 
     for rule in rules {
+        // G3 — bucket by `resource_id`. `None` / `"*"` is the
+        // tenant-wide fallback; a specific id only applies when
+        // it matches the page id we're summarising for.
+        match rule.resource_id.as_deref() {
+            None | Some("*") => {}
+            Some(rid) if rid == page_id => {}
+            _ => continue,
+        }
         if rule.condition.as_deref().is_some_and(|c| !c.is_empty()) {
             has_legacy_rules = true;
             // Condition-based rules don't bucket cleanly into the
@@ -179,6 +185,8 @@ mod tests {
             priority: 100,
             created_by: "test".to_string(),
             tenant_id: Some("t1".to_string()),
+            source: "manual".to_string(),
+            resource_id: None,
         }
     }
 
@@ -209,7 +217,7 @@ mod tests {
     fn buckets_grants_picks_highest_tier() {
         let r1 = rule("a", "team:hvac-ops", &["view"], None);
         let r2 = rule("b", "team:hvac-ops", &["view", "edit"], None);
-        let acl = summarise(RUBIX_DASHBOARD_PAGE, &[&r1, &r2], None);
+        let acl = summarise(RUBIX_DASHBOARD_PAGE, &[&r1, &r2], None, "p1");
         assert_eq!(acl.grants.len(), 1);
         assert_eq!(acl.grants[0].tier, PermissionTier::Edit);
         assert_eq!(acl.share_scope, ShareScope::Specific);
@@ -223,7 +231,7 @@ mod tests {
             &["view"],
             Some("principal.teams contains \"hvac-ops\""),
         );
-        let acl = summarise(RUBIX_DASHBOARD_PAGE, &[&r1], None);
+        let acl = summarise(RUBIX_DASHBOARD_PAGE, &[&r1], None, "p1");
         assert!(acl.has_legacy_rules);
         assert!(acl.grants.is_empty());
     }
@@ -231,7 +239,7 @@ mod tests {
     #[test]
     fn detects_tenant_share_scope_from_wildcard_subject() {
         let r1 = rule("a", "*", &["view"], None);
-        let acl = summarise(RUBIX_DASHBOARD_PAGE, &[&r1], None);
+        let acl = summarise(RUBIX_DASHBOARD_PAGE, &[&r1], None, "p1");
         assert_eq!(acl.share_scope, ShareScope::Tenant);
         assert_eq!(acl.grants.len(), 1);
     }
@@ -244,6 +252,7 @@ mod tests {
             Some(&InstanceOwner {
                 subject: "alice".into(),
             }),
+            "p1",
         );
         assert_eq!(acl.share_scope, ShareScope::Private);
         assert!(acl.grants.is_empty());
@@ -251,9 +260,6 @@ mod tests {
 
     #[test]
     fn owner_self_user_grant_does_not_flip_to_specific() {
-        // A user-grant where the subject is the owner shouldn't
-        // alone mark the page as "specific" — it's still
-        // effectively private.
         let r1 = rule("a", "user:alice", &["view", "edit"], None);
         let acl = summarise(
             RUBIX_DASHBOARD_PAGE,
@@ -261,7 +267,18 @@ mod tests {
             Some(&InstanceOwner {
                 subject: "alice".into(),
             }),
+            "p1",
         );
         assert_eq!(acl.share_scope, ShareScope::Private);
+    }
+
+    #[test]
+    fn instance_scoped_rule_only_matches_target_page() {
+        let mut r1 = rule("a", "team:hvac-ops", &["view"], None);
+        r1.resource_id = Some("p1".into());
+        let acl_p1 = summarise(RUBIX_DASHBOARD_PAGE, &[&r1], None, "p1");
+        let acl_p2 = summarise(RUBIX_DASHBOARD_PAGE, &[&r1], None, "p2");
+        assert_eq!(acl_p1.grants.len(), 1);
+        assert_eq!(acl_p2.grants.len(), 0);
     }
 }

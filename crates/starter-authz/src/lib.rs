@@ -52,6 +52,9 @@ pub mod testing;
 #[cfg(any(feature = "sqlite", feature = "postgres"))]
 pub mod acl;
 
+#[cfg(any(feature = "sqlite", feature = "postgres"))]
+pub mod grants;
+
 pub use surface::{current_surface, with_surface};
 
 pub use audit::{DecisionEntry, DecisionSink, NoopDecisionSink};

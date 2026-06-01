@@ -126,7 +126,11 @@ export function PagesTab({ tenantId }: PagesTabProps) {
         </div>
       ) : null}
 
-      <PageDetailDrawer page={selected} onClose={() => setSelected(null)} />
+      <PageDetailDrawer
+        page={selected}
+        tenantId={tenantId}
+        onClose={() => setSelected(null)}
+      />
     </section>
   );
 }

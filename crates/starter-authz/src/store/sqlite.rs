@@ -65,6 +65,8 @@ fn map_rule(row: sqlx::sqlite::SqliteRow) -> Result<StoredRule, PolicyStoreError
         priority: row.get(6),
         created_by: row.get(7),
         tenant_id: row.get(8),
+        source: row.get(9),
+        resource_id: row.get(10),
     })
 }
 
@@ -83,7 +85,7 @@ impl PolicyStore for SqlitePolicyStore {
 
     async fn list_rules(&self) -> Result<Vec<StoredRule>, PolicyStoreError> {
         let rows = sqlx::query(
-            "SELECT id, role, resource, actions, condition, effect, priority, created_by, tenant_id \
+            "SELECT id, role, resource, actions, condition, effect, priority, created_by, tenant_id, source, resource_id \
              FROM starter_authz_rules \
              ORDER BY priority DESC, created_at ASC, id ASC",
         )
@@ -133,8 +135,8 @@ impl PolicyStore for SqlitePolicyStore {
             .map_err(|e| PolicyStoreError::Backend(format!("serialize actions: {e}")))?;
         let res = sqlx::query(
             "INSERT INTO starter_authz_rules \
-                (id, role, resource, actions, condition, effect, priority, created_by, tenant_id) \
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
+                (id, role, resource, actions, condition, effect, priority, created_by, tenant_id, source, resource_id) \
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11)",
         )
         .bind(&row.id)
         .bind(&row.role)
@@ -145,6 +147,8 @@ impl PolicyStore for SqlitePolicyStore {
         .bind(row.priority)
         .bind(&row.created_by)
         .bind(&row.tenant_id)
+        .bind(&row.source)
+        .bind(&row.resource_id)
         .execute(self.pool.sqlx())
         .await;
         match res {
@@ -162,8 +166,8 @@ impl PolicyStore for SqlitePolicyStore {
         let res = sqlx::query(
             "UPDATE starter_authz_rules \
              SET role = ?1, resource = ?2, actions = ?3, condition = ?4, \
-                 effect = ?5, priority = ?6, tenant_id = ?7 \
-             WHERE id = ?8",
+                 effect = ?5, priority = ?6, tenant_id = ?7, source = ?8, resource_id = ?9 \
+             WHERE id = ?10",
         )
         .bind(&row.role)
         .bind(&row.resource)
@@ -172,6 +176,8 @@ impl PolicyStore for SqlitePolicyStore {
         .bind(&row.effect)
         .bind(row.priority)
         .bind(&row.tenant_id)
+        .bind(&row.source)
+        .bind(&row.resource_id)
         .bind(&row.id)
         .execute(self.pool.sqlx())
         .await

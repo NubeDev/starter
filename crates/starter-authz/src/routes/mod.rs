@@ -13,6 +13,7 @@
 mod assignments;
 mod check;
 mod decisions;
+mod grants;
 mod instances;
 mod resources;
 mod router;

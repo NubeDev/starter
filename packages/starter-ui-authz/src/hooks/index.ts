@@ -28,15 +28,21 @@ import type {
   CreateTenantBody,
   DecisionsPage,
   DecisionsQuery,
+  GrantResponse,
+  GrantsListResponse,
   InstancesPage,
   InstancesQuery,
+  ListGrantsQuery,
   MembershipView,
+  NewGrantBody,
+  PatchGrantBody,
   PatchMemberBody,
   PatchTenantBody,
   ResourcesListResponse,
   RuleBody,
   RuleResponse,
   RulesListResponse,
+  SetShareScopeBody,
   TeamView,
   TenantView,
 } from "@nube/starter-client-ts";
@@ -60,6 +66,15 @@ export const authzKeys = {
       opts?.tenant ?? "",
       opts?.search ?? "",
       opts?.cursor ?? "",
+    ] as const,
+  grants: (q?: ListGrantsQuery) =>
+    [
+      "authz",
+      "grants",
+      q?.subject ?? "",
+      q?.resource_kind ?? "",
+      q?.resource_id ?? "",
+      q?.tenant_id ?? "",
     ] as const,
   decisions: (q?: DecisionsQuery) => ["authz", "decisions", q ?? {}] as const,
 };
@@ -368,6 +383,90 @@ export function useAuthzCheck(): UseMutationResult<CheckResponse, Error, CheckRe
   const c = useStarterClient();
   return useMutation({
     mutationFn: (body) => c.checkAuthz(body),
+  });
+}
+
+// ----------------------------------------------------------------- grants (G3)
+
+export function useGrants(
+  query?: ListGrantsQuery,
+): UseQueryResult<GrantsListResponse, Error> {
+  const c = useStarterClient();
+  return useQuery({
+    queryKey: authzKeys.grants(query),
+    queryFn: () => c.listGrants(query),
+  });
+}
+
+export function useCreateGrant(): UseMutationResult<
+  GrantResponse,
+  Error,
+  NewGrantBody
+> {
+  const c = useStarterClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (body) => c.createGrant(body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["authz", "grants"] });
+      qc.invalidateQueries({ queryKey: ["authz", "instances"] });
+    },
+  });
+}
+
+export function useDeleteGrant(): UseMutationResult<void, Error, string> {
+  const c = useStarterClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id) => c.deleteGrant(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["authz", "grants"] });
+      qc.invalidateQueries({ queryKey: ["authz", "instances"] });
+    },
+  });
+}
+
+export interface PatchGrantArgs {
+  id: string;
+  body: PatchGrantBody;
+}
+
+export function usePatchGrant(): UseMutationResult<
+  GrantResponse,
+  Error,
+  PatchGrantArgs
+> {
+  const c = useStarterClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, body }) => c.patchGrant(id, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["authz", "grants"] });
+      qc.invalidateQueries({ queryKey: ["authz", "instances"] });
+    },
+  });
+}
+
+export interface SetShareScopeArgs {
+  kind: string;
+  resourceId: string;
+  body: SetShareScopeBody;
+}
+
+export function useSetShareScope(): UseMutationResult<
+  void,
+  Error,
+  SetShareScopeArgs
+> {
+  const c = useStarterClient();
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ kind, resourceId, body }) =>
+      c.setShareScope(kind, resourceId, body),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["authz", "grants"] });
+      qc.invalidateQueries({ queryKey: ["authz", "instances"] });
+    },
   });
 }
 

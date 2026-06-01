@@ -116,6 +116,19 @@ impl StaticRbacEngine {
                 }
             }
         }
+        // G3 — synthesise a `team:<slug>` role for each team the
+        // principal carries. The engine already matches by role
+        // string; the grants API persists rules whose `role` is
+        // `team:<slug>`. Synthesising here keeps the SPI stable
+        // (no new field on `Principal`) and works for both the
+        // static and DB-backed engines (db_engine delegates to
+        // `check`, which calls this).
+        for slug in &p.teams {
+            let role = format!("team:{slug}");
+            if !out.contains(&role) {
+                out.push(role);
+            }
+        }
         out
     }
 }
@@ -398,5 +411,42 @@ impl StaticRbacEngine {
             surface: crate::surface::current_surface(),
         };
         self.sink.record(entry).await;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::registry::StaticRegistry;
+    use starter_spi::auth::{Role, Scope};
+
+    fn principal_with_teams(teams: Vec<String>) -> Principal {
+        Principal {
+            subject: "u".into(),
+            role: Role::Reader,
+            scopes: vec![Scope("reader".into())],
+            tenant_id: None,
+            teams,
+            extra: Value::Null,
+        }
+    }
+
+    #[test]
+    fn roles_for_synthesises_team_slug_from_principal_teams() {
+        let registry = Arc::new(StaticRegistry::new());
+        let engine =
+            StaticRbacEngine::from_config(AuthzConfig::default(), registry).expect("engine");
+        let p = principal_with_teams(vec!["hvac-ops".into(), "alerts".into()]);
+        let roles = engine.roles_for(&p);
+        assert!(roles.contains(&"reader".to_string()));
+        assert!(roles.contains(&"team:hvac-ops".to_string()));
+        assert!(roles.contains(&"team:alerts".to_string()));
+        // Deduplication when an assignment already named the team.
+        let p2 = principal_with_teams(vec!["hvac-ops".into(), "hvac-ops".into()]);
+        let roles2 = engine.roles_for(&p2);
+        assert_eq!(
+            roles2.iter().filter(|r| *r == "team:hvac-ops").count(),
+            1
+        );
     }
 }

@@ -110,6 +110,7 @@ async fn admin_app() -> (Router, Arc<DbPolicyEngine>) {
         engine: engine.clone(),
         registry: registry(),
         decision_sink: None,
+        instances: None,
     });
     (with_admin_extension(router), engine)
 }
@@ -167,6 +168,7 @@ async fn admin_routes_require_admin() {
         engine,
         registry: registry(),
         decision_sink: None,
+        instances: None,
     });
     let app = with_role_extension(router, Role::Writer);
     let resp = app
@@ -190,6 +192,7 @@ async fn rule_write_invalidates_cache() {
         engine: engine.clone(),
         registry,
         decision_sink: None,
+        instances: None,
     });
     let app = with_admin_extension(router);
 
@@ -240,6 +243,7 @@ async fn dry_run_matches_real_check() {
         engine: engine.clone(),
         registry,
         decision_sink: None,
+        instances: None,
     });
     let app = with_admin_extension(router);
 
@@ -291,6 +295,8 @@ async fn admin_cannot_lock_themselves_out() {
         priority: 999,
         created_by: "admin".into(),
         tenant_id: None,
+        source: "manual".into(),
+        resource_id: None,
     };
     store.insert_rule(&bad).await.unwrap();
     engine.reload().await.unwrap();
@@ -299,6 +305,7 @@ async fn admin_cannot_lock_themselves_out() {
         engine: engine.clone(),
         registry,
         decision_sink: None,
+        instances: None,
     });
     let app = with_admin_extension(router);
 
@@ -335,6 +342,8 @@ async fn denial_logs_are_greppable() {
             priority: 50,
             created_by: "admin".into(),
             tenant_id: None,
+            source: "manual".into(),
+            resource_id: None,
         })
         .await
         .unwrap();

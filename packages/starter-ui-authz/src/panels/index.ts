@@ -19,6 +19,10 @@ export {
   type PageDetailDrawerProps,
 } from "./page-detail-drawer.js";
 export {
+  GrantsCombobox,
+  type GrantsComboboxProps,
+} from "./grants-combobox.js";
+export {
   UserPicker,
   UserPickerFallback,
   UserDirectoryProvider,

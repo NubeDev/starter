@@ -16,6 +16,7 @@ use starter_spi::auth::{Principal, Role};
 use super::assignments::{create_assignment, delete_assignment, list_assignments};
 use super::check::check_handler;
 use super::decisions::list_decisions;
+use super::grants::{create_grant, delete_grant, list_grants, patch_grant, set_share_scope};
 use super::instances::list_instances;
 use super::resources::list_resources;
 use super::rules::{create_rule, delete_rule, list_rules, update_rule};
@@ -41,6 +42,18 @@ where
         .route(
             "/v1/authz/resources/{kind}/instances",
             get(list_instances),
+        )
+        .route(
+            "/v1/authz/grants",
+            get(list_grants).post(create_grant),
+        )
+        .route(
+            "/v1/authz/grants/{id}",
+            delete(delete_grant).patch(patch_grant),
+        )
+        .route(
+            "/v1/authz/grants/share-scope/{kind}/{resource_id}",
+            put(set_share_scope),
         )
         .route("/v1/authz/check", post(check_handler))
         .route("/v1/authz/decisions", get(list_decisions))

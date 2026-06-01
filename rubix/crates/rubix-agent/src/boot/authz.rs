@@ -206,7 +206,7 @@ impl InstancesProvider for DashboardPageInstancesProvider {
                 let owner = InstanceOwner {
                     subject: p.owner_principal.clone(),
                 };
-                let acl = summarise(RUBIX_DASHBOARD_PAGE, &kind_rules, Some(&owner));
+                let acl = summarise(RUBIX_DASHBOARD_PAGE, &kind_rules, Some(&owner), &p.page_id);
                 ResourceInstance {
                     id: p.page_id.clone(),
                     label: p.title.clone(),
@@ -387,6 +387,8 @@ mod tests {
             priority: 100,
             created_by: "tester".into(),
             tenant_id: tenant_id.map(String::from),
+            source: "manual".into(),
+            resource_id: None,
         }
     }
 

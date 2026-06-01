@@ -132,6 +132,16 @@ pub struct StoredRule {
     /// every tenant); `Some(_)` = only matches a principal bound
     /// to that tenant.
     pub tenant_id: Option<String>,
+    /// G3 — provenance marker. `"manual"` for rows authored via
+    /// the `/v1/authz/rules` admin route or seeded by migrations;
+    /// `"grant"` for rows written by the grants API on top. The
+    /// drawer + per-team Permissions view classify rows by this
+    /// column.
+    pub source: String,
+    /// G3 — when the rule targets a specific instance of a kind
+    /// (e.g. one dashboard page id). `None` = kind-wide rule, the
+    /// behaviour every pre-G3 rule has.
+    pub resource_id: Option<String>,
 }
 
 impl StoredRule {

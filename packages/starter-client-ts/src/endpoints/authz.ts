@@ -186,6 +186,60 @@ export interface InstancesQuery {
   tenant?: string;
 }
 
+// ---------------------------------------------------------------- grants (G3)
+
+/** Subject of a grant. Matches the Rust `GrantSubject` enum. */
+export type GrantSubject =
+  | { kind: "team"; slug: string }
+  | { kind: "user"; sub: string }
+  | { kind: "wildcard" };
+
+/** Server-side view of a grant — the rule row in a typed shape. */
+export interface Grant {
+  id: string;
+  subject: GrantSubject;
+  resource_kind: string;
+  resource_id: string | null;
+  tier: PermissionTier;
+  tenant_id: string;
+}
+
+/** Body for `POST /v1/authz/grants`. */
+export interface NewGrantBody {
+  subject: GrantSubject;
+  resource_kind: string;
+  resource_id?: string | null;
+  tier: PermissionTier;
+  tenant_id: string;
+}
+
+/** Body for `PATCH /v1/authz/grants/:id`. */
+export interface PatchGrantBody {
+  tier: PermissionTier;
+}
+
+/** Body for `PUT /v1/authz/grants/share-scope/:kind/:resource_id`. */
+export interface SetShareScopeBody {
+  scope: ShareScope;
+  /** Required only for super-admin callers. */
+  tenant_id?: string;
+}
+
+export interface GrantsListResponse {
+  grants: Grant[];
+}
+
+export interface GrantResponse {
+  grant: Grant;
+}
+
+export interface ListGrantsQuery {
+  subject?: string;
+  resource_kind?: string;
+  resource_id?: string;
+  tenant_id?: string;
+}
+
 // ---------------------------------------------------------------- augment
 
 declare module "../client/client.js" {
@@ -209,6 +263,16 @@ declare module "../client/client.js" {
     checkAuthz(body: CheckRequest): Promise<CheckResponse>;
     // decisions
     listAuthzDecisions(query?: DecisionsQuery): Promise<DecisionsPage>;
+    // grants (G3)
+    createGrant(body: NewGrantBody): Promise<GrantResponse>;
+    deleteGrant(id: string): Promise<void>;
+    listGrants(query?: ListGrantsQuery): Promise<GrantsListResponse>;
+    patchGrant(id: string, body: PatchGrantBody): Promise<GrantResponse>;
+    setShareScope(
+      kind: string,
+      resourceId: string,
+      body: SetShareScopeBody,
+    ): Promise<void>;
   }
 }
 
@@ -312,6 +376,76 @@ StarterClient.prototype.checkAuthz = function checkAuthz(
     headers: JSON_HEADERS,
     body: JSON.stringify(body),
   });
+};
+
+StarterClient.prototype.createGrant = function createGrant(
+  this: StarterClient,
+  body: NewGrantBody,
+): Promise<GrantResponse> {
+  return fetchJson<GrantResponse>(this, `/v1/authz/grants`, {
+    method: "POST",
+    headers: mutHeaders(),
+    body: JSON.stringify(body),
+  });
+};
+
+StarterClient.prototype.deleteGrant = async function deleteGrant(
+  this: StarterClient,
+  id: string,
+): Promise<void> {
+  await fetchVoid(this, `/v1/authz/grants/${encodeURIComponent(id)}`, {
+    method: "DELETE",
+    headers: readCsrfHeader(),
+  });
+};
+
+StarterClient.prototype.listGrants = function listGrants(
+  this: StarterClient,
+  query?: ListGrantsQuery,
+): Promise<GrantsListResponse> {
+  const qs = new URLSearchParams();
+  if (query?.subject) qs.set("subject", query.subject);
+  if (query?.resource_kind) qs.set("resource_kind", query.resource_kind);
+  if (query?.resource_id) qs.set("resource_id", query.resource_id);
+  if (query?.tenant_id) qs.set("tenant_id", query.tenant_id);
+  const suffix = qs.toString();
+  return fetchJson<GrantsListResponse>(
+    this,
+    suffix ? `/v1/authz/grants?${suffix}` : `/v1/authz/grants`,
+  );
+};
+
+StarterClient.prototype.patchGrant = function patchGrant(
+  this: StarterClient,
+  id: string,
+  body: PatchGrantBody,
+): Promise<GrantResponse> {
+  return fetchJson<GrantResponse>(
+    this,
+    `/v1/authz/grants/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      headers: mutHeaders(),
+      body: JSON.stringify(body),
+    },
+  );
+};
+
+StarterClient.prototype.setShareScope = async function setShareScope(
+  this: StarterClient,
+  kind: string,
+  resourceId: string,
+  body: SetShareScopeBody,
+): Promise<void> {
+  await fetchVoid(
+    this,
+    `/v1/authz/grants/share-scope/${encodeURIComponent(kind)}/${encodeURIComponent(resourceId)}`,
+    {
+      method: "PUT",
+      headers: mutHeaders(),
+      body: JSON.stringify(body),
+    },
+  );
 };
 
 StarterClient.prototype.listAuthzDecisions = function listAuthzDecisions(

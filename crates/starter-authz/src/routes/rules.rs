@@ -38,6 +38,10 @@ pub struct RuleBody {
     /// Phase 7a — tenant scope; `None` is a global rule.
     #[serde(default)]
     pub tenant_id: Option<String>,
+    /// G3 — when set, the rule targets one instance of `resource`.
+    /// `None` keeps the kind-wide behaviour every pre-G3 rule has.
+    #[serde(default)]
+    pub resource_id: Option<String>,
 }
 
 /// JSON view of a stored rule.
@@ -61,6 +65,12 @@ pub struct RuleView {
     pub created_by: String,
     /// Tenant scope; `None` for global rules.
     pub tenant_id: Option<String>,
+    /// G3 — provenance marker (`"manual"` or `"grant"`). Exposed so
+    /// the drawer can classify a row as round-trippable by the
+    /// grants API.
+    pub source: String,
+    /// G3 — instance-scoped resource id; `None` is kind-wide.
+    pub resource_id: Option<String>,
 }
 
 impl From<StoredRule> for RuleView {
@@ -75,6 +85,8 @@ impl From<StoredRule> for RuleView {
             priority: s.priority,
             created_by: s.created_by,
             tenant_id: s.tenant_id,
+            source: s.source,
+            resource_id: s.resource_id,
         }
     }
 }
@@ -112,6 +124,10 @@ pub(super) async fn create_rule(
         priority: body.priority,
         created_by: creator,
         tenant_id: body.tenant_id,
+        // G3 — this endpoint is the manual rules surface; grants
+        // go through `/v1/authz/grants` instead.
+        source: "manual".to_string(),
+        resource_id: body.resource_id,
     };
     match state.engine.store().insert_rule(&row).await {
         Ok(()) => {
@@ -145,6 +161,17 @@ pub(super) async fn update_rule(
     if let Err(r) = validate_effect(&body.effect) {
         return r;
     }
+    // Preserve `source`: a grant edited via this endpoint stays
+    // a grant. Lookup is O(rules) once; acceptable for an admin
+    // mutation.
+    let existing_source = match state.engine.store().list_rules().await {
+        Ok(rows) => rows
+            .into_iter()
+            .find(|r| r.id == id)
+            .map(|r| r.source)
+            .unwrap_or_else(|| "manual".to_string()),
+        Err(e) => return store_err(e),
+    };
     let row = StoredRule {
         id,
         role: body.role,
@@ -155,6 +182,8 @@ pub(super) async fn update_rule(
         priority: body.priority,
         created_by: creator,
         tenant_id: body.tenant_id,
+        source: existing_source,
+        resource_id: body.resource_id,
     };
     match state.engine.store().update_rule(&row).await {
         Ok(()) => {
