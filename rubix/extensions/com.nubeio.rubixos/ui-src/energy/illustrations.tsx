@@ -34,8 +34,8 @@ export function SolarPanelIllustration(
         </linearGradient>
         <radialGradient id="nrg-sun" cx="50%" cy="50%" r="50%">
           <stop offset="0%"  stopColor="#fef3c7" />
-          <stop offset="55%" stopColor="#fbbf24" />
-          <stop offset="100%" stopColor="#f59e0b" />
+          <stop offset="55%" stopColor="var(--color-sun, #fbbf24)" />
+          <stop offset="100%" stopColor="var(--color-sun, #f59e0b)" />
         </radialGradient>
         <linearGradient id="nrg-panel" x1="0" y1="0" x2="1" y2="1">
           <stop offset="0%"  stopColor="#1e3a8a" />
@@ -47,8 +47,8 @@ export function SolarPanelIllustration(
       <rect x="0" y="0" width="160" height="120" rx="14" fill="url(#nrg-sky)" />
       {/* Sun + halo */}
       <circle cx="124" cy="32" r="18" fill="url(#nrg-sun)" opacity="0.95" />
-      <circle cx="124" cy="32" r="28" fill="#fbbf24" opacity="0.12" />
-      <circle cx="124" cy="32" r="40" fill="#fbbf24" opacity="0.06" />
+      <circle cx="124" cy="32" r="28" fill="var(--color-sun, #fbbf24)" opacity="0.12" />
+      <circle cx="124" cy="32" r="40" fill="var(--color-sun, #fbbf24)" opacity="0.06" />
       {/* Rays */}
       {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => {
         const r1 = 22; const r2 = 30;
@@ -288,8 +288,8 @@ export function BatteryIllustration({
           <stop offset="100%" stopColor="#0F0F23" />
         </linearGradient>
         <linearGradient id="nrg-bat-fill" x1="0" y1="0" x2="1" y2="0">
-          <stop offset="0%"  stopColor="#65a30d" />
-          <stop offset="100%" stopColor="#a3e635" />
+          <stop offset="0%"  stopColor="var(--color-moss, #65a30d)" />
+          <stop offset="100%" stopColor="var(--color-lime, #a3e635)" />
         </linearGradient>
         <linearGradient id="nrg-bat-shell" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%"  stopColor="#475569" />
@@ -301,7 +301,7 @@ export function BatteryIllustration({
 
       {/* Bolt */}
       <path d="M118 30 L108 56 L120 56 L110 84 L132 50 L120 50 Z"
-            fill="#a3e635" opacity="0.18" />
+            fill="var(--color-lime, #a3e635)" opacity="0.18" />
 
       {/* Battery shell */}
       <rect x="20" y="42" width="112" height="44" rx="6" fill="url(#nrg-bat-shell)" stroke="#94a3b8" strokeWidth="0.8" />
@@ -336,7 +336,7 @@ export function BatteryIllustration({
       ))}
 
       {/* SOC label */}
-      <text x="76" y="106" textAnchor="middle" fill="#a3e635" fontSize="11" fontWeight="700"
+      <text x="76" y="106" textAnchor="middle" fill="var(--color-lime, #a3e635)" fontSize="11" fontWeight="700"
             style={{ fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace" }}>
         {clamped}% SoC
       </text>
