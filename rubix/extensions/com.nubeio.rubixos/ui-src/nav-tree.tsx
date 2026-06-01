@@ -15,13 +15,18 @@ import * as React from "react";
 import {
   ChevronRight,
   Database,
+  FileCode,
   FileText,
   LineChart,
   LayoutGrid,
+  MapPin,
   Network,
   Router,
+  ScanLine,
   Server,
+  Smartphone,
   Sun,
+  Wand2,
   Zap,
 } from "lucide-react";
 
@@ -64,6 +69,17 @@ const TREE: NavItem[] = [
       { title: "Energy",          href: `/extensions/${EXTENSION_ID}/energy`,  icon: Sun },
       { title: "Report (print)",  href: `/extensions/${EXTENSION_ID}/report`,  icon: FileText },
       { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: LineChart },
+    ],
+  },
+  {
+    title: "Provisioning",
+    icon: ScanLine,
+    children: [
+      { title: "Devices",   href: `/extensions/${EXTENSION_ID}/provision/devices`,   icon: LayoutGrid },
+      { title: "Sites",     href: `/extensions/${EXTENSION_ID}/provision/sites`,     icon: MapPin },
+      { title: "Templates", href: `/extensions/${EXTENSION_ID}/provision/templates`, icon: FileCode },
+      { title: "Scan & add", href: `/extensions/${EXTENSION_ID}/provision/wizard`,   icon: Wand2 },
+      { title: "Phone (PWA)", href: `/extensions/${EXTENSION_ID}/pwa`,               icon: Smartphone },
     ],
   },
 ];

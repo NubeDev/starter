@@ -14,7 +14,6 @@ import {
 
 import Main from "./main";
 import NavTree from "./nav-tree";
-import Provision from "./provision";
 
 interface RemoteFactoryShape {
   singletons: Record<string, { version: string }>;
@@ -28,7 +27,7 @@ const factory: RemoteFactoryShape = {
   },
   init(handle) {
     registerExtensionContributions(handle, {
-      components: { Main, NavTree, Provision },
+      components: { Main, NavTree },
     });
   },
 };

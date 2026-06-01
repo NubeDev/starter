@@ -30,7 +30,10 @@ export default function Provision(): React.ReactElement {
   );
 }
 
-function ProvisionRouter(): React.ReactElement {
+// The router body without its own `BlockShell` wrapper, for mounting
+// inside the host `Main` slot (which is already inside a BlockShell).
+// `Main` dispatches the `provision`/`pwa` routes to this.
+export function ProvisionRouter(): React.ReactElement {
   const route = useExtensionRoute();
   const slot = useSlotContext();
   const theme = useHostTheme();

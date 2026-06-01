@@ -3077,6 +3077,22 @@ createLucideIcon("Save", [
  */
 
 
+const ScanLine = createLucideIcon("ScanLine", [
+  ["path", { d: "M3 7V5a2 2 0 0 1 2-2h2", key: "aa7l1z" }],
+  ["path", { d: "M17 3h2a2 2 0 0 1 2 2v2", key: "4qcy5o" }],
+  ["path", { d: "M21 17v2a2 2 0 0 1-2 2h-2", key: "6vwrx8" }],
+  ["path", { d: "M7 21H5a2 2 0 0 1-2-2v-2", key: "ioqczr" }],
+  ["path", { d: "M7 12h10", key: "b7w52i" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
 createLucideIcon("Search", [
   ["circle", { cx: "11", cy: "11", r: "8", key: "4ej97u" }],
   ["path", { d: "m21 21-4.3-4.3", key: "1qie3q" }]
@@ -3095,6 +3111,19 @@ const Server = createLucideIcon("Server", [
   ["rect", { width: "20", height: "8", x: "2", y: "14", rx: "2", ry: "2", key: "iecqi9" }],
   ["line", { x1: "6", x2: "6.01", y1: "6", y2: "6", key: "16zg32" }],
   ["line", { x1: "6", x2: "6.01", y1: "18", y2: "18", key: "nzw8ys" }]
+]);
+
+/**
+ * @license lucide-react v0.469.0 - ISC
+ *
+ * This source code is licensed under the ISC license.
+ * See the LICENSE file in the root directory of this source tree.
+ */
+
+
+const Smartphone = createLucideIcon("Smartphone", [
+  ["rect", { width: "14", height: "20", x: "5", y: "2", rx: "2", ry: "2", key: "1yt0o3" }],
+  ["path", { d: "M12 18h.01", key: "mhygvu" }]
 ]);
 
 /**
@@ -42426,691 +42455,6 @@ function subtitleFor(s) {
   }
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T06:07:34.419Z"}`;
-if (typeof window !== "undefined") {
-  console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
-  window.__rubixosBuild = RUBIXOS_BUILD_STAMP;
-  document.documentElement.setAttribute("data-rubixos-build", RUBIXOS_BUILD_STAMP);
-}
-function Main() {
-  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
-}
-function MainRouter() {
-  const route = useExtensionRoute();
-  if (route === "hosts") return /* @__PURE__ */ jsx(HostsPage, {});
-  if (route === "networks") return /* @__PURE__ */ jsx(NetworksPage, {});
-  if (route === "devices") return /* @__PURE__ */ jsx(DevicesPage, {});
-  if (route === "history" || route?.startsWith("history/")) return /* @__PURE__ */ jsx(HistoryPage, {});
-  if (route === "usage" || route?.startsWith("usage/")) return /* @__PURE__ */ jsx(UsagePage, {});
-  if (route === "energy" || route?.startsWith("energy/")) return /* @__PURE__ */ jsx(EnergyPageWrapper, {});
-  if (route === "report" || route?.startsWith("report/")) return /* @__PURE__ */ jsx(ReportPage, {});
-  return /* @__PURE__ */ jsx(OverviewPage, {});
-}
-function EnergyPageWrapper() {
-  const slot = useSlotContext();
-  const theme = useHostTheme();
-  return /* @__PURE__ */ jsx(
-    "div",
-    {
-      "data-ext-id": EXTENSION_ID,
-      "data-ext-slot": slot.slotId,
-      "data-ext-theme": theme.mode,
-      className: "p-2 sm:p-3",
-      children: /* @__PURE__ */ jsx(EnergyPage, {})
-    }
-  );
-}
-function UsagePage() {
-  const slot = useSlotContext();
-  const theme = useHostTheme();
-  return /* @__PURE__ */ jsx(
-    Page,
-    {
-      slot: slot.slotId,
-      theme: theme.mode,
-      header: /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: "Energy & Water Overview" }),
-        /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground", children: [
-          EXTENSION_ID,
-          ".meters_list · usage_site_totals · usage_bucketed"
-        ] })
-      ] }),
-      error: null,
-      children: /* @__PURE__ */ jsx(DashboardPage, {})
-    }
-  );
-}
-function OverviewPage() {
-  const slot = useSlotContext();
-  const theme = useHostTheme();
-  const [detail, setDetail] = React.useState(null);
-  const [summary, setSummary] = React.useState(null);
-  const [hosts, setHosts] = React.useState([]);
-  const [error, setError] = React.useState(null);
-  const [loading, setLoading] = React.useState(false);
-  const [tick, setTick] = React.useState(0);
-  React.useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    Promise.all([
-      fetchExtensionDetail(),
-      fetchTemplate(`${EXTENSION_ID}.histories_summary`, {}),
-      fetchTemplate(`${EXTENSION_ID}.hosts_overview`, { limit: 25 })
-    ]).then(([d, s, h]) => {
-      if (cancelled) return;
-      setDetail(d);
-      setSummary(s[0] ?? null);
-      setHosts(h);
-    }).catch((e) => {
-      if (!cancelled) setError(e instanceof Error ? e.message : String(e));
-    }).finally(() => {
-      if (!cancelled) setLoading(false);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [tick]);
-  const totalRows = summary ? Number(summary.sample_count) : null;
-  return /* @__PURE__ */ jsxs(
-    Page,
-    {
-      slot: slot.slotId,
-      theme: theme.mode,
-      header: /* @__PURE__ */ jsx(
-        Header,
-        {
-          subtitle: "Nube-iO Rubix-OS BMS — devices · points · histories",
-          version: detail?.manifest?.version,
-          onRefresh: () => {
-            invalidateExtensionDetail();
-            setTick((t) => t + 1);
-          },
-          loading
-        }
-      ),
-      error,
-      children: [
-        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 md:grid-cols-4 gap-3", children: [
-          /* @__PURE__ */ jsx(Kpi, { label: "Samples", value: fmtInt(totalRows) }),
-          /* @__PURE__ */ jsx(Kpi, { label: "Points (with history)", value: fmtInt(summary?.point_count ?? null) }),
-          /* @__PURE__ */ jsx(Kpi, { label: "Earliest", value: fmtTs(summary?.earliest ?? null) }),
-          /* @__PURE__ */ jsx(Kpi, { label: "Latest", value: fmtTs(summary?.latest ?? null) })
-        ] }),
-        /* @__PURE__ */ jsx(Card, { title: "Hosts", description: `${EXTENSION_ID}.hosts_overview`, children: hosts.length === 0 ? /* @__PURE__ */ jsxs(Empty, { children: [
-          "No hosts. Run ",
-          /* @__PURE__ */ jsx("code", { children: "scripts/load-dump.sh" }),
-          " to ingest a dump."
-        ] }) : /* @__PURE__ */ jsx(Table, { headers: ["Host", "Networks", "Devices", "Points"], children: hosts.map((h) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
-          /* @__PURE__ */ jsxs(Td, { children: [
-            /* @__PURE__ */ jsx(
-              "a",
-              {
-                className: "text-primary hover:underline",
-                href: `/extensions/${EXTENSION_ID}/networks?host=${encodeURIComponent(h.host_uuid)}`,
-                children: h.host_name ?? /* @__PURE__ */ jsx(Mono, { children: h.host_uuid })
-              }
-            ),
-            h.host_description ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground text-xs", children: [
-              " · ",
-              h.host_description
-            ] }) : null
-          ] }),
-          /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.network_count) }),
-          /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.device_count) }),
-          /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.point_count) })
-        ] }, h.host_uuid)) }) }),
-        /* @__PURE__ */ jsx(Card, { title: "Contributions", description: "declared in block.yaml", children: /* @__PURE__ */ jsx(ContribGrid, { detail }) })
-      ]
-    }
-  );
-}
-function HostsPage() {
-  const rows = useTemplate(`${EXTENSION_ID}.hosts_overview`, { limit: 200 });
-  return /* @__PURE__ */ jsx(SimplePage, { title: "Hosts", template: `${EXTENSION_ID}.hosts_overview`, rows, children: (data) => /* @__PURE__ */ jsx(Table, { headers: ["Host", "Networks", "Devices", "Points"], children: data.map((h) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
-    /* @__PURE__ */ jsx(Td, { children: h.host_name ?? /* @__PURE__ */ jsx(Mono, { children: h.host_uuid }) }),
-    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.network_count) }),
-    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.device_count) }),
-    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.point_count) })
-  ] }, h.host_uuid)) }) });
-}
-function NetworksPage() {
-  const rows = useTemplate(`${EXTENSION_ID}.networks_overview`, { limit: 200 });
-  return /* @__PURE__ */ jsx(SimplePage, { title: "Networks", template: `${EXTENSION_ID}.networks_overview`, rows, children: (data) => /* @__PURE__ */ jsx(Table, { headers: ["Network", "Host", "Devices", "Points"], children: data.map((n) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
-    /* @__PURE__ */ jsxs(Td, { children: [
-      n.network_name ?? /* @__PURE__ */ jsx(Mono, { children: n.network_uuid }),
-      n.network_description ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground text-xs", children: [
-        " · ",
-        n.network_description
-      ] }) : null
-    ] }),
-    /* @__PURE__ */ jsx(Td, { children: n.host_name ?? /* @__PURE__ */ jsx(Mono, { children: n.host_uuid ?? "" }) }),
-    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(n.device_count) }),
-    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(n.point_count) })
-  ] }, n.network_uuid)) }) });
-}
-function DevicesPage() {
-  const rows = useTemplate(`${EXTENSION_ID}.devices_overview`, { limit: 200 });
-  return /* @__PURE__ */ jsx(SimplePage, { title: "Devices", template: `${EXTENSION_ID}.devices_overview`, rows, children: (data) => /* @__PURE__ */ jsx(Table, { headers: ["Device", "Network", "Host", "Points"], children: data.map((d) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
-    /* @__PURE__ */ jsxs(Td, { children: [
-      /* @__PURE__ */ jsx(
-        "a",
-        {
-          className: "text-primary hover:underline",
-          href: `/extensions/${EXTENSION_ID}/history?device=${encodeURIComponent(d.device_uuid)}`,
-          children: d.device_name ?? /* @__PURE__ */ jsx(Mono, { children: d.device_uuid })
-        }
-      ),
-      d.device_description ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground text-xs", children: [
-        " · ",
-        d.device_description
-      ] }) : null
-    ] }),
-    /* @__PURE__ */ jsx(Td, { children: d.network_name ?? /* @__PURE__ */ jsx(Mono, { children: d.network_uuid ?? "" }) }),
-    /* @__PURE__ */ jsx(Td, { children: d.host_name ?? /* @__PURE__ */ jsx(Mono, { children: d.host_uuid ?? "" }) }),
-    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(d.point_count) })
-  ] }, d.device_uuid)) }) });
-}
-const RANGES = [
-  { label: "1h", hours: 1, bucket: "1 minute" },
-  { label: "6h", hours: 6, bucket: "5 minutes" },
-  { label: "24h", hours: 24, bucket: "15 minutes" },
-  { label: "7d", hours: 168, bucket: "1 hour" },
-  { label: "30d", hours: 720, bucket: "6 hours" },
-  { label: "1y", hours: 8760, bucket: "1 day" }
-];
-function HistoryPage() {
-  const slot = useSlotContext();
-  const theme = useHostTheme();
-  const params = React.useMemo(() => new URLSearchParams(window.location.search), []);
-  const deviceFilter = params.get("device") ?? "";
-  const [points, setPoints] = React.useState([]);
-  const [pointsLoading, setPointsLoading] = React.useState(false);
-  const [pointsError, setPointsError] = React.useState(null);
-  const [selected, setSelected] = React.useState(null);
-  const [rangeIdx, setRangeIdx] = React.useState(2);
-  const [buckets, setBuckets] = React.useState([]);
-  const [chartLoading, setChartLoading] = React.useState(false);
-  const [chartError, setChartError] = React.useState(null);
-  React.useEffect(() => {
-    let cancelled = false;
-    setPointsLoading(true);
-    const tpl = deviceFilter ? { template: `${EXTENSION_ID}.points_by_device`, params: { device_uuid: deviceFilter, limit: 500 } } : { template: `${EXTENSION_ID}.points_list`, params: { limit: 200, offset: 0 } };
-    fetchTemplate(tpl.template, tpl.params).then((rs) => {
-      if (cancelled) return;
-      setPoints(rs);
-      if (rs.length > 0 && !selected) setSelected(rs[0].uuid);
-    }).catch(
-      (e) => !cancelled && setPointsError(e instanceof Error ? e.message : String(e))
-    ).finally(() => !cancelled && setPointsLoading(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [deviceFilter]);
-  React.useEffect(() => {
-    if (!selected) {
-      setBuckets([]);
-      return;
-    }
-    let cancelled = false;
-    setChartLoading(true);
-    setChartError(null);
-    const r = RANGES[rangeIdx];
-    const to = /* @__PURE__ */ new Date();
-    const from = new Date(to.getTime() - r.hours * 36e5);
-    fetchTemplate(`${EXTENSION_ID}.history_bucketed`, {
-      point_uuid: selected,
-      from: from.toISOString(),
-      to: to.toISOString(),
-      bucket: r.bucket
-    }).then((rs) => !cancelled && setBuckets(rs)).catch(
-      (e) => !cancelled && setChartError(e instanceof Error ? e.message : String(e))
-    ).finally(() => !cancelled && setChartLoading(false));
-    return () => {
-      cancelled = true;
-    };
-  }, [selected, rangeIdx]);
-  const selectedPoint = points.find((p) => p.uuid === selected) ?? null;
-  return /* @__PURE__ */ jsx(
-    Page,
-    {
-      slot: slot.slotId,
-      theme: theme.mode,
-      header: /* @__PURE__ */ jsx("div", { className: "flex items-center justify-between gap-4", children: /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: "History" }),
-        /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground", children: [
-          EXTENSION_ID,
-          ".history_bucketed · Timescale ",
-          `time_bucket()`,
-          " aggregate",
-          deviceFilter ? /* @__PURE__ */ jsxs(Fragment, { children: [
-            " · filtered to device ",
-            /* @__PURE__ */ jsx(Mono, { children: deviceFilter })
-          ] }) : null
-        ] })
-      ] }) }),
-      error: pointsError ?? chartError,
-      children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4", children: [
-        /* @__PURE__ */ jsx(Card, { title: "Points", description: pointsLoading ? "loading…" : `${points.length} points`, children: /* @__PURE__ */ jsxs("div", { className: "max-h-[60vh] overflow-y-auto -mx-1", children: [
-          points.map((p) => /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => setSelected(p.uuid),
-              className: "w-full text-left px-2 py-1.5 rounded text-sm hover:bg-accent " + (p.uuid === selected ? "bg-accent text-accent-foreground" : "text-foreground/85"),
-              children: [
-                /* @__PURE__ */ jsx("div", { className: "truncate", children: p.name ?? p.uuid }),
-                p.device_name ? /* @__PURE__ */ jsx("div", { className: "truncate text-xs text-muted-foreground", children: p.device_name }) : null
-              ]
-            },
-            p.uuid
-          )),
-          points.length === 0 && !pointsLoading ? /* @__PURE__ */ jsx(Empty, { children: "No points. Ingest the dump first." }) : null
-        ] }) }),
-        /* @__PURE__ */ jsxs(
-          Card,
-          {
-            title: selectedPoint?.name ?? "Select a point",
-            description: selectedPoint ? /* @__PURE__ */ jsxs(Fragment, { children: [
-              /* @__PURE__ */ jsx(Mono, { children: selectedPoint.uuid }),
-              selectedPoint.device_name ? /* @__PURE__ */ jsxs(Fragment, { children: [
-                " · ",
-                selectedPoint.device_name
-              ] }) : null,
-              selectedPoint.network_name ? /* @__PURE__ */ jsxs(Fragment, { children: [
-                " · ",
-                selectedPoint.network_name
-              ] }) : null
-            ] }) : "pick a point from the list to chart its history",
-            children: [
-              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 mb-3", children: [
-                RANGES.map((r, i) => /* @__PURE__ */ jsx(
-                  "button",
-                  {
-                    type: "button",
-                    onClick: () => setRangeIdx(i),
-                    className: "px-2 py-1 text-xs rounded border transition-colors " + (i === rangeIdx ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-foreground border-border/60 hover:bg-accent"),
-                    children: r.label
-                  },
-                  r.label
-                )),
-                /* @__PURE__ */ jsxs("span", { className: "ml-3 text-xs text-muted-foreground", children: [
-                  "bucket = ",
-                  RANGES[rangeIdx].bucket
-                ] })
-              ] }),
-              chartLoading ? /* @__PURE__ */ jsx(Empty, { children: "loading…" }) : buckets.length === 0 ? /* @__PURE__ */ jsx(Empty, { children: "No samples in the selected range." }) : /* @__PURE__ */ jsxs("div", { className: "text-primary", children: [
-                /* @__PURE__ */ jsx(HistoryLineChart, { rows: buckets }),
-                /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-4 gap-2 mt-3 text-xs text-muted-foreground", children: [
-                  /* @__PURE__ */ jsx(KpiSm, { label: "buckets", value: String(buckets.length) }),
-                  /* @__PURE__ */ jsx(KpiSm, { label: "min", value: fmtNum(Math.min(...bucketAvgs(buckets))) }),
-                  /* @__PURE__ */ jsx(KpiSm, { label: "max", value: fmtNum(Math.max(...bucketAvgs(buckets))) }),
-                  /* @__PURE__ */ jsx(KpiSm, { label: "avg", value: fmtNum(mean(bucketAvgs(buckets))) })
-                ] })
-              ] })
-            ]
-          }
-        )
-      ] })
-    }
-  );
-}
-function bucketAvgs(rows) {
-  return rows.map((r) => asNumber(r.avg_value)).filter((n) => n !== null);
-}
-function mean(xs) {
-  if (xs.length === 0) return NaN;
-  return xs.reduce((a, b) => a + b, 0) / xs.length;
-}
-function Page({
-  slot,
-  theme,
-  header,
-  error,
-  children
-}) {
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      "data-ext-id": EXTENSION_ID,
-      "data-ext-slot": slot,
-      "data-ext-theme": theme,
-      className: "flex flex-col gap-4 p-4",
-      children: [
-        header,
-        error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-2 text-sm", children: error }) : null,
-        children
-      ]
-    }
-  );
-}
-function Header({
-  subtitle,
-  version,
-  onRefresh,
-  loading
-}) {
-  return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-4", children: [
-    /* @__PURE__ */ jsxs("div", { children: [
-      /* @__PURE__ */ jsxs("h3", { className: "text-lg font-semibold tracking-tight", children: [
-        "Rubix-OS",
-        version ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground font-normal ml-2 text-sm", children: [
-          "v",
-          version
-        ] }) : null
-      ] }),
-      /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: subtitle })
-    ] }),
-    /* @__PURE__ */ jsx(
-      "button",
-      {
-        type: "button",
-        onClick: onRefresh,
-        disabled: loading,
-        className: "text-sm px-3 py-1 rounded border border-border/60 hover:bg-accent disabled:opacity-50",
-        children: loading ? "loading…" : "refresh"
-      }
-    )
-  ] });
-}
-function Card({
-  title,
-  description,
-  children
-}) {
-  return /* @__PURE__ */ jsxs("section", { className: "rounded-lg border border-border/60 bg-card text-card-foreground", children: [
-    /* @__PURE__ */ jsxs("header", { className: "px-3 py-2 border-b border-border/60", children: [
-      /* @__PURE__ */ jsx("div", { className: "text-sm font-medium", children: title }),
-      description ? /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: description }) : null
-    ] }),
-    /* @__PURE__ */ jsx("div", { className: "p-3", children })
-  ] });
-}
-function Kpi({ label, value }) {
-  return /* @__PURE__ */ jsxs("div", { className: "rounded-lg border border-border/60 bg-card text-card-foreground p-3", children: [
-    /* @__PURE__ */ jsx("div", { className: "text-xs uppercase tracking-wide text-muted-foreground", children: label }),
-    /* @__PURE__ */ jsx("div", { className: "text-xl font-semibold tabular-nums", children: value })
-  ] });
-}
-function KpiSm({ label, value }) {
-  return /* @__PURE__ */ jsxs("div", { children: [
-    /* @__PURE__ */ jsx("div", { className: "uppercase tracking-wide text-[0.65rem] opacity-75", children: label }),
-    /* @__PURE__ */ jsx("div", { className: "text-sm font-medium tabular-nums text-foreground", children: value })
-  ] });
-}
-function Table({
-  headers,
-  children
-}) {
-  return /* @__PURE__ */ jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
-    /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsx("tr", { className: "text-left text-xs text-muted-foreground", children: headers.map((h, i) => /* @__PURE__ */ jsx(
-      "th",
-      {
-        className: "py-1.5 px-2 font-medium " + (i >= 1 && i === headers.length - 1 ? "text-right" : ""),
-        children: h
-      },
-      h
-    )) }) }),
-    /* @__PURE__ */ jsx("tbody", { children })
-  ] }) });
-}
-function Td({
-  children,
-  align
-}) {
-  return /* @__PURE__ */ jsx("td", { className: "py-1.5 px-2 " + (align === "right" ? "text-right tabular-nums" : ""), children });
-}
-function Empty({ children }) {
-  return /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground italic", children });
-}
-function Mono({ children }) {
-  return /* @__PURE__ */ jsx("code", { className: "text-xs font-mono", children });
-}
-function fmtInt(v) {
-  if (v === null || v === void 0 || v === "") return "—";
-  const n = typeof v === "number" ? v : Number(v);
-  if (!Number.isFinite(n)) return "—";
-  return n.toLocaleString();
-}
-function fmtNum(v) {
-  if (v === null || v === void 0 || !Number.isFinite(v)) return "—";
-  return v.toFixed(2);
-}
-function fmtTs(v) {
-  if (!v) return "—";
-  const d = new Date(v);
-  if (Number.isNaN(d.getTime())) return v;
-  return d.toLocaleString();
-}
-function SimplePage({
-  title,
-  template,
-  rows,
-  children
-}) {
-  const slot = useSlotContext();
-  const theme = useHostTheme();
-  return /* @__PURE__ */ jsx(
-    Page,
-    {
-      slot: slot.slotId,
-      theme: theme.mode,
-      header: /* @__PURE__ */ jsxs("div", { children: [
-        /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: title }),
-        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: template })
-      ] }),
-      error: rows.error,
-      children: /* @__PURE__ */ jsx(Card, { title, description: rows.loading ? "loading…" : `${rows.data.length} rows`, children: rows.data.length === 0 && !rows.loading ? /* @__PURE__ */ jsx(Empty, { children: "No rows. Ingest the dump first." }) : children(rows.data) })
-    }
-  );
-}
-function useTemplate(template, params) {
-  const [state, setState] = React.useState({ data: [], loading: false, error: null });
-  const key = JSON.stringify(params);
-  React.useEffect(() => {
-    let cancelled = false;
-    setState((s) => ({ ...s, loading: true, error: null }));
-    fetchTemplate(template, params).then((rs) => !cancelled && setState({ data: rs, loading: false, error: null })).catch(
-      (e) => !cancelled && setState({ data: [], loading: false, error: e instanceof Error ? e.message : String(e) })
-    );
-    return () => {
-      cancelled = true;
-    };
-  }, [template, key]);
-  return state;
-}
-function ContribGrid({ detail }) {
-  const c = detail?.manifest?.contributes ?? {};
-  const rows = [
-    ["tools", (c.tools ?? []).map((t) => t.id)],
-    ["warehouse tables", (c.warehouse_tables ?? []).map((t) => t.name)],
-    ["warehouse templates", (c.warehouse_templates ?? []).map((t) => t.name)],
-    ["ui slots", (c.ui?.exposes ?? []).map((e) => e.slot)]
-  ];
-  return /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-1.5", children: rows.map(([label, items]) => /* @__PURE__ */ jsxs("div", { className: "flex items-baseline gap-3 text-sm", children: [
-    /* @__PURE__ */ jsx("span", { className: "text-muted-foreground shrink-0 w-44", children: label }),
-    /* @__PURE__ */ jsx("span", { className: "flex flex-wrap gap-1", children: items.length === 0 ? /* @__PURE__ */ jsx("span", { className: "text-muted-foreground/50", children: "—" }) : items.map((id, i) => /* @__PURE__ */ jsx("code", { className: "rounded bg-muted px-1.5 py-0.5 text-xs font-mono", children: id }, id + i)) })
-  ] }, label)) });
-}
-
-function isBranch(item) {
-  return "children" in item;
-}
-const TREE = [
-  { title: "Overview", href: `/extensions/${EXTENSION_ID}`, icon: LayoutGrid },
-  {
-    title: "Topology",
-    icon: Network,
-    children: [
-      { title: "Hosts", href: `/extensions/${EXTENSION_ID}/hosts`, icon: Server },
-      { title: "Networks", href: `/extensions/${EXTENSION_ID}/networks`, icon: Router },
-      { title: "Devices", href: `/extensions/${EXTENSION_ID}/devices`, icon: Database }
-    ]
-  },
-  {
-    title: "Data",
-    icon: Database,
-    children: [
-      { title: "Energy & Water", href: `/extensions/${EXTENSION_ID}/usage`, icon: Zap },
-      { title: "Energy", href: `/extensions/${EXTENSION_ID}/energy`, icon: Sun },
-      { title: "Report (print)", href: `/extensions/${EXTENSION_ID}/report`, icon: FileText },
-      { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: ChartLine }
-    ]
-  }
-];
-function NavTree() {
-  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(NavTreeInner, {}) });
-}
-function NavTreeInner() {
-  const path = typeof window !== "undefined" ? window.location.pathname : "";
-  return /* @__PURE__ */ jsxs(
-    "div",
-    {
-      "data-slot": "sidebar-group",
-      "data-sidebar": "group",
-      className: "relative flex w-full min-w-0 flex-col p-2",
-      children: [
-        /* @__PURE__ */ jsx(
-          "div",
-          {
-            "data-slot": "sidebar-group-label",
-            "data-sidebar": "group-label",
-            className: "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
-            children: "Rubix-OS"
-          }
-        ),
-        /* @__PURE__ */ jsx(
-          "ul",
-          {
-            "data-slot": "sidebar-menu",
-            "data-sidebar": "menu",
-            className: "flex w-full min-w-0 flex-col gap-1",
-            children: TREE.map(
-              (item) => isBranch(item) ? /* @__PURE__ */ jsx(Branch, { branch: item, currentPath: path }, item.title) : /* @__PURE__ */ jsx(Leaf, { leaf: item, currentPath: path, top: true }, item.href)
-            )
-          }
-        )
-      ]
-    }
-  );
-}
-const MENU_BUTTON_CLASS = "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pe-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 h-8 no-underline";
-const SUB_BUTTON_CLASS = "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-inherit text-sm data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden no-underline";
-function Leaf({
-  leaf,
-  currentPath,
-  top
-}) {
-  const isActive = currentPath === leaf.href || currentPath.startsWith(leaf.href + "/");
-  const Icon = leaf.icon;
-  if (top) {
-    return (
-      // SidebarMenuItem
-      /* @__PURE__ */ jsx(
-        "li",
-        {
-          "data-slot": "sidebar-menu-item",
-          "data-sidebar": "menu-item",
-          className: "group/menu-item relative",
-          children: /* @__PURE__ */ jsxs(
-            "a",
-            {
-              href: leaf.href,
-              "data-slot": "sidebar-menu-button",
-              "data-sidebar": "menu-button",
-              "data-active": isActive,
-              className: MENU_BUTTON_CLASS,
-              children: [
-                Icon ? /* @__PURE__ */ jsx(Icon, {}) : null,
-                /* @__PURE__ */ jsx("span", { children: leaf.title })
-              ]
-            }
-          )
-        }
-      )
-    );
-  }
-  return (
-    // SidebarMenuSubItem
-    /* @__PURE__ */ jsx(
-      "li",
-      {
-        "data-slot": "sidebar-menu-sub-item",
-        "data-sidebar": "menu-sub-item",
-        className: "group/menu-sub-item relative",
-        children: /* @__PURE__ */ jsxs(
-          "a",
-          {
-            href: leaf.href,
-            "data-slot": "sidebar-menu-sub-button",
-            "data-sidebar": "menu-sub-button",
-            "data-size": "md",
-            "data-active": isActive,
-            className: SUB_BUTTON_CLASS,
-            children: [
-              Icon ? /* @__PURE__ */ jsx(Icon, {}) : null,
-              /* @__PURE__ */ jsx("span", { children: leaf.title })
-            ]
-          }
-        )
-      }
-    )
-  );
-}
-function Branch({
-  branch,
-  currentPath
-}) {
-  const defaultOpen = branch.children.some(
-    (c) => currentPath === c.href || currentPath.startsWith(c.href + "/")
-  );
-  const [open, setOpen] = React.useState(defaultOpen);
-  const Icon = branch.icon;
-  return (
-    // SidebarMenuItem wrapping a Collapsible
-    /* @__PURE__ */ jsxs(
-      "li",
-      {
-        "data-slot": "sidebar-menu-item",
-        "data-sidebar": "menu-item",
-        className: "group/collapsible group/menu-item relative",
-        "data-state": open ? "open" : "closed",
-        children: [
-          /* @__PURE__ */ jsxs(
-            "button",
-            {
-              type: "button",
-              onClick: () => setOpen((v) => !v),
-              "aria-expanded": open,
-              "data-slot": "sidebar-menu-button",
-              "data-sidebar": "menu-button",
-              "data-state": open ? "open" : "closed",
-              className: MENU_BUTTON_CLASS + " border-0 bg-transparent cursor-pointer",
-              children: [
-                Icon ? /* @__PURE__ */ jsx(Icon, {}) : null,
-                /* @__PURE__ */ jsx("span", { children: branch.title }),
-                /* @__PURE__ */ jsx(ChevronRight, { className: "ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" })
-              ]
-            }
-          ),
-          open ? (
-            // SidebarMenuSub
-            /* @__PURE__ */ jsx(
-              "ul",
-              {
-                "data-slot": "sidebar-menu-sub",
-                "data-sidebar": "menu-sub",
-                className: "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-s border-sidebar-border px-2.5 py-0.5 group-data-[collapsible=icon]:hidden",
-                children: branch.children.map((leaf) => /* @__PURE__ */ jsx(Leaf, { leaf, currentPath }, leaf.href))
-              }
-            )
-          ) : null
-        ]
-      }
-    )
-  );
-}
-
 const tool = (name) => `${EXTENSION_ID}.${name}`;
 function decode(barcode) {
   return callTool(tool("bc_decode"), { barcode });
@@ -44312,9 +43656,6 @@ const TABS = [
   { id: "wizard", label: "Provision wizard", icon: WandSparkles, render: () => /* @__PURE__ */ jsx(WizardTab, {}) },
   { id: "preview", label: "Page preview", icon: Eye, render: () => /* @__PURE__ */ jsx(PagePreviewTab, {}) }
 ];
-function Provision() {
-  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(ProvisionRouter, {}) });
-}
 function ProvisionRouter() {
   const route = useExtensionRoute();
   const slot = useSlotContext();
@@ -44363,6 +43704,704 @@ function AdminPanel({ initial }) {
   ] });
 }
 
+const RUBIXOS_BUILD_STAMP = `build-${"2026-06-01T08:27:28.950Z"}`;
+if (typeof window !== "undefined") {
+  console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
+  window.__rubixosBuild = RUBIXOS_BUILD_STAMP;
+  document.documentElement.setAttribute("data-rubixos-build", RUBIXOS_BUILD_STAMP);
+}
+function Main() {
+  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(MainRouter, {}) });
+}
+function MainRouter() {
+  const route = useExtensionRoute();
+  if (route === "hosts") return /* @__PURE__ */ jsx(HostsPage, {});
+  if (route === "networks") return /* @__PURE__ */ jsx(NetworksPage, {});
+  if (route === "devices") return /* @__PURE__ */ jsx(DevicesPage, {});
+  if (route === "history" || route?.startsWith("history/")) return /* @__PURE__ */ jsx(HistoryPage, {});
+  if (route === "usage" || route?.startsWith("usage/")) return /* @__PURE__ */ jsx(UsagePage, {});
+  if (route === "energy" || route?.startsWith("energy/")) return /* @__PURE__ */ jsx(EnergyPageWrapper, {});
+  if (route === "report" || route?.startsWith("report/")) return /* @__PURE__ */ jsx(ReportPage, {});
+  if (route === "provision" || route?.startsWith("provision/")) return /* @__PURE__ */ jsx(ProvisionRouter, {});
+  if (route === "pwa" || route?.startsWith("pwa/")) return /* @__PURE__ */ jsx(ProvisionRouter, {});
+  return /* @__PURE__ */ jsx(OverviewPage, {});
+}
+function EnergyPageWrapper() {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  return /* @__PURE__ */ jsx(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID,
+      "data-ext-slot": slot.slotId,
+      "data-ext-theme": theme.mode,
+      className: "p-2 sm:p-3",
+      children: /* @__PURE__ */ jsx(EnergyPage, {})
+    }
+  );
+}
+function UsagePage() {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  return /* @__PURE__ */ jsx(
+    Page,
+    {
+      slot: slot.slotId,
+      theme: theme.mode,
+      header: /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: "Energy & Water Overview" }),
+        /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground", children: [
+          EXTENSION_ID,
+          ".meters_list · usage_site_totals · usage_bucketed"
+        ] })
+      ] }),
+      error: null,
+      children: /* @__PURE__ */ jsx(DashboardPage, {})
+    }
+  );
+}
+function OverviewPage() {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  const [detail, setDetail] = React.useState(null);
+  const [summary, setSummary] = React.useState(null);
+  const [hosts, setHosts] = React.useState([]);
+  const [error, setError] = React.useState(null);
+  const [loading, setLoading] = React.useState(false);
+  const [tick, setTick] = React.useState(0);
+  React.useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    Promise.all([
+      fetchExtensionDetail(),
+      fetchTemplate(`${EXTENSION_ID}.histories_summary`, {}),
+      fetchTemplate(`${EXTENSION_ID}.hosts_overview`, { limit: 25 })
+    ]).then(([d, s, h]) => {
+      if (cancelled) return;
+      setDetail(d);
+      setSummary(s[0] ?? null);
+      setHosts(h);
+    }).catch((e) => {
+      if (!cancelled) setError(e instanceof Error ? e.message : String(e));
+    }).finally(() => {
+      if (!cancelled) setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [tick]);
+  const totalRows = summary ? Number(summary.sample_count) : null;
+  return /* @__PURE__ */ jsxs(
+    Page,
+    {
+      slot: slot.slotId,
+      theme: theme.mode,
+      header: /* @__PURE__ */ jsx(
+        Header,
+        {
+          subtitle: "Nube-iO Rubix-OS BMS — devices · points · histories",
+          version: detail?.manifest?.version,
+          onRefresh: () => {
+            invalidateExtensionDetail();
+            setTick((t) => t + 1);
+          },
+          loading
+        }
+      ),
+      error,
+      children: [
+        /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-2 md:grid-cols-4 gap-3", children: [
+          /* @__PURE__ */ jsx(Kpi, { label: "Samples", value: fmtInt(totalRows) }),
+          /* @__PURE__ */ jsx(Kpi, { label: "Points (with history)", value: fmtInt(summary?.point_count ?? null) }),
+          /* @__PURE__ */ jsx(Kpi, { label: "Earliest", value: fmtTs(summary?.earliest ?? null) }),
+          /* @__PURE__ */ jsx(Kpi, { label: "Latest", value: fmtTs(summary?.latest ?? null) })
+        ] }),
+        /* @__PURE__ */ jsx(Card, { title: "Hosts", description: `${EXTENSION_ID}.hosts_overview`, children: hosts.length === 0 ? /* @__PURE__ */ jsxs(Empty, { children: [
+          "No hosts. Run ",
+          /* @__PURE__ */ jsx("code", { children: "scripts/load-dump.sh" }),
+          " to ingest a dump."
+        ] }) : /* @__PURE__ */ jsx(Table, { headers: ["Host", "Networks", "Devices", "Points"], children: hosts.map((h) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
+          /* @__PURE__ */ jsxs(Td, { children: [
+            /* @__PURE__ */ jsx(
+              "a",
+              {
+                className: "text-primary hover:underline",
+                href: `/extensions/${EXTENSION_ID}/networks?host=${encodeURIComponent(h.host_uuid)}`,
+                children: h.host_name ?? /* @__PURE__ */ jsx(Mono, { children: h.host_uuid })
+              }
+            ),
+            h.host_description ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground text-xs", children: [
+              " · ",
+              h.host_description
+            ] }) : null
+          ] }),
+          /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.network_count) }),
+          /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.device_count) }),
+          /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.point_count) })
+        ] }, h.host_uuid)) }) }),
+        /* @__PURE__ */ jsx(Card, { title: "Contributions", description: "declared in block.yaml", children: /* @__PURE__ */ jsx(ContribGrid, { detail }) })
+      ]
+    }
+  );
+}
+function HostsPage() {
+  const rows = useTemplate(`${EXTENSION_ID}.hosts_overview`, { limit: 200 });
+  return /* @__PURE__ */ jsx(SimplePage, { title: "Hosts", template: `${EXTENSION_ID}.hosts_overview`, rows, children: (data) => /* @__PURE__ */ jsx(Table, { headers: ["Host", "Networks", "Devices", "Points"], children: data.map((h) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
+    /* @__PURE__ */ jsx(Td, { children: h.host_name ?? /* @__PURE__ */ jsx(Mono, { children: h.host_uuid }) }),
+    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.network_count) }),
+    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.device_count) }),
+    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(h.point_count) })
+  ] }, h.host_uuid)) }) });
+}
+function NetworksPage() {
+  const rows = useTemplate(`${EXTENSION_ID}.networks_overview`, { limit: 200 });
+  return /* @__PURE__ */ jsx(SimplePage, { title: "Networks", template: `${EXTENSION_ID}.networks_overview`, rows, children: (data) => /* @__PURE__ */ jsx(Table, { headers: ["Network", "Host", "Devices", "Points"], children: data.map((n) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
+    /* @__PURE__ */ jsxs(Td, { children: [
+      n.network_name ?? /* @__PURE__ */ jsx(Mono, { children: n.network_uuid }),
+      n.network_description ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground text-xs", children: [
+        " · ",
+        n.network_description
+      ] }) : null
+    ] }),
+    /* @__PURE__ */ jsx(Td, { children: n.host_name ?? /* @__PURE__ */ jsx(Mono, { children: n.host_uuid ?? "" }) }),
+    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(n.device_count) }),
+    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(n.point_count) })
+  ] }, n.network_uuid)) }) });
+}
+function DevicesPage() {
+  const rows = useTemplate(`${EXTENSION_ID}.devices_overview`, { limit: 200 });
+  return /* @__PURE__ */ jsx(SimplePage, { title: "Devices", template: `${EXTENSION_ID}.devices_overview`, rows, children: (data) => /* @__PURE__ */ jsx(Table, { headers: ["Device", "Network", "Host", "Points"], children: data.map((d) => /* @__PURE__ */ jsxs("tr", { className: "border-t border-border/60", children: [
+    /* @__PURE__ */ jsxs(Td, { children: [
+      /* @__PURE__ */ jsx(
+        "a",
+        {
+          className: "text-primary hover:underline",
+          href: `/extensions/${EXTENSION_ID}/history?device=${encodeURIComponent(d.device_uuid)}`,
+          children: d.device_name ?? /* @__PURE__ */ jsx(Mono, { children: d.device_uuid })
+        }
+      ),
+      d.device_description ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground text-xs", children: [
+        " · ",
+        d.device_description
+      ] }) : null
+    ] }),
+    /* @__PURE__ */ jsx(Td, { children: d.network_name ?? /* @__PURE__ */ jsx(Mono, { children: d.network_uuid ?? "" }) }),
+    /* @__PURE__ */ jsx(Td, { children: d.host_name ?? /* @__PURE__ */ jsx(Mono, { children: d.host_uuid ?? "" }) }),
+    /* @__PURE__ */ jsx(Td, { align: "right", children: fmtInt(d.point_count) })
+  ] }, d.device_uuid)) }) });
+}
+const RANGES = [
+  { label: "1h", hours: 1, bucket: "1 minute" },
+  { label: "6h", hours: 6, bucket: "5 minutes" },
+  { label: "24h", hours: 24, bucket: "15 minutes" },
+  { label: "7d", hours: 168, bucket: "1 hour" },
+  { label: "30d", hours: 720, bucket: "6 hours" },
+  { label: "1y", hours: 8760, bucket: "1 day" }
+];
+function HistoryPage() {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  const params = React.useMemo(() => new URLSearchParams(window.location.search), []);
+  const deviceFilter = params.get("device") ?? "";
+  const [points, setPoints] = React.useState([]);
+  const [pointsLoading, setPointsLoading] = React.useState(false);
+  const [pointsError, setPointsError] = React.useState(null);
+  const [selected, setSelected] = React.useState(null);
+  const [rangeIdx, setRangeIdx] = React.useState(2);
+  const [buckets, setBuckets] = React.useState([]);
+  const [chartLoading, setChartLoading] = React.useState(false);
+  const [chartError, setChartError] = React.useState(null);
+  React.useEffect(() => {
+    let cancelled = false;
+    setPointsLoading(true);
+    const tpl = deviceFilter ? { template: `${EXTENSION_ID}.points_by_device`, params: { device_uuid: deviceFilter, limit: 500 } } : { template: `${EXTENSION_ID}.points_list`, params: { limit: 200, offset: 0 } };
+    fetchTemplate(tpl.template, tpl.params).then((rs) => {
+      if (cancelled) return;
+      setPoints(rs);
+      if (rs.length > 0 && !selected) setSelected(rs[0].uuid);
+    }).catch(
+      (e) => !cancelled && setPointsError(e instanceof Error ? e.message : String(e))
+    ).finally(() => !cancelled && setPointsLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [deviceFilter]);
+  React.useEffect(() => {
+    if (!selected) {
+      setBuckets([]);
+      return;
+    }
+    let cancelled = false;
+    setChartLoading(true);
+    setChartError(null);
+    const r = RANGES[rangeIdx];
+    const to = /* @__PURE__ */ new Date();
+    const from = new Date(to.getTime() - r.hours * 36e5);
+    fetchTemplate(`${EXTENSION_ID}.history_bucketed`, {
+      point_uuid: selected,
+      from: from.toISOString(),
+      to: to.toISOString(),
+      bucket: r.bucket
+    }).then((rs) => !cancelled && setBuckets(rs)).catch(
+      (e) => !cancelled && setChartError(e instanceof Error ? e.message : String(e))
+    ).finally(() => !cancelled && setChartLoading(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [selected, rangeIdx]);
+  const selectedPoint = points.find((p) => p.uuid === selected) ?? null;
+  return /* @__PURE__ */ jsx(
+    Page,
+    {
+      slot: slot.slotId,
+      theme: theme.mode,
+      header: /* @__PURE__ */ jsx("div", { className: "flex items-center justify-between gap-4", children: /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: "History" }),
+        /* @__PURE__ */ jsxs("p", { className: "text-sm text-muted-foreground", children: [
+          EXTENSION_ID,
+          ".history_bucketed · Timescale ",
+          `time_bucket()`,
+          " aggregate",
+          deviceFilter ? /* @__PURE__ */ jsxs(Fragment, { children: [
+            " · filtered to device ",
+            /* @__PURE__ */ jsx(Mono, { children: deviceFilter })
+          ] }) : null
+        ] })
+      ] }) }),
+      error: pointsError ?? chartError,
+      children: /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-1 md:grid-cols-[260px_1fr] gap-4", children: [
+        /* @__PURE__ */ jsx(Card, { title: "Points", description: pointsLoading ? "loading…" : `${points.length} points`, children: /* @__PURE__ */ jsxs("div", { className: "max-h-[60vh] overflow-y-auto -mx-1", children: [
+          points.map((p) => /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setSelected(p.uuid),
+              className: "w-full text-left px-2 py-1.5 rounded text-sm hover:bg-accent " + (p.uuid === selected ? "bg-accent text-accent-foreground" : "text-foreground/85"),
+              children: [
+                /* @__PURE__ */ jsx("div", { className: "truncate", children: p.name ?? p.uuid }),
+                p.device_name ? /* @__PURE__ */ jsx("div", { className: "truncate text-xs text-muted-foreground", children: p.device_name }) : null
+              ]
+            },
+            p.uuid
+          )),
+          points.length === 0 && !pointsLoading ? /* @__PURE__ */ jsx(Empty, { children: "No points. Ingest the dump first." }) : null
+        ] }) }),
+        /* @__PURE__ */ jsxs(
+          Card,
+          {
+            title: selectedPoint?.name ?? "Select a point",
+            description: selectedPoint ? /* @__PURE__ */ jsxs(Fragment, { children: [
+              /* @__PURE__ */ jsx(Mono, { children: selectedPoint.uuid }),
+              selectedPoint.device_name ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                " · ",
+                selectedPoint.device_name
+              ] }) : null,
+              selectedPoint.network_name ? /* @__PURE__ */ jsxs(Fragment, { children: [
+                " · ",
+                selectedPoint.network_name
+              ] }) : null
+            ] }) : "pick a point from the list to chart its history",
+            children: [
+              /* @__PURE__ */ jsxs("div", { className: "flex items-center gap-1 mb-3", children: [
+                RANGES.map((r, i) => /* @__PURE__ */ jsx(
+                  "button",
+                  {
+                    type: "button",
+                    onClick: () => setRangeIdx(i),
+                    className: "px-2 py-1 text-xs rounded border transition-colors " + (i === rangeIdx ? "bg-primary text-primary-foreground border-primary" : "bg-transparent text-foreground border-border/60 hover:bg-accent"),
+                    children: r.label
+                  },
+                  r.label
+                )),
+                /* @__PURE__ */ jsxs("span", { className: "ml-3 text-xs text-muted-foreground", children: [
+                  "bucket = ",
+                  RANGES[rangeIdx].bucket
+                ] })
+              ] }),
+              chartLoading ? /* @__PURE__ */ jsx(Empty, { children: "loading…" }) : buckets.length === 0 ? /* @__PURE__ */ jsx(Empty, { children: "No samples in the selected range." }) : /* @__PURE__ */ jsxs("div", { className: "text-primary", children: [
+                /* @__PURE__ */ jsx(HistoryLineChart, { rows: buckets }),
+                /* @__PURE__ */ jsxs("div", { className: "grid grid-cols-4 gap-2 mt-3 text-xs text-muted-foreground", children: [
+                  /* @__PURE__ */ jsx(KpiSm, { label: "buckets", value: String(buckets.length) }),
+                  /* @__PURE__ */ jsx(KpiSm, { label: "min", value: fmtNum(Math.min(...bucketAvgs(buckets))) }),
+                  /* @__PURE__ */ jsx(KpiSm, { label: "max", value: fmtNum(Math.max(...bucketAvgs(buckets))) }),
+                  /* @__PURE__ */ jsx(KpiSm, { label: "avg", value: fmtNum(mean(bucketAvgs(buckets))) })
+                ] })
+              ] })
+            ]
+          }
+        )
+      ] })
+    }
+  );
+}
+function bucketAvgs(rows) {
+  return rows.map((r) => asNumber(r.avg_value)).filter((n) => n !== null);
+}
+function mean(xs) {
+  if (xs.length === 0) return NaN;
+  return xs.reduce((a, b) => a + b, 0) / xs.length;
+}
+function Page({
+  slot,
+  theme,
+  header,
+  error,
+  children
+}) {
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-ext-id": EXTENSION_ID,
+      "data-ext-slot": slot,
+      "data-ext-theme": theme,
+      className: "flex flex-col gap-4 p-4",
+      children: [
+        header,
+        error ? /* @__PURE__ */ jsx("div", { role: "alert", className: "rounded-md border border-destructive/40 bg-destructive/10 text-destructive px-3 py-2 text-sm", children: error }) : null,
+        children
+      ]
+    }
+  );
+}
+function Header({
+  subtitle,
+  version,
+  onRefresh,
+  loading
+}) {
+  return /* @__PURE__ */ jsxs("div", { className: "flex items-center justify-between gap-4", children: [
+    /* @__PURE__ */ jsxs("div", { children: [
+      /* @__PURE__ */ jsxs("h3", { className: "text-lg font-semibold tracking-tight", children: [
+        "Rubix-OS",
+        version ? /* @__PURE__ */ jsxs("span", { className: "text-muted-foreground font-normal ml-2 text-sm", children: [
+          "v",
+          version
+        ] }) : null
+      ] }),
+      /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: subtitle })
+    ] }),
+    /* @__PURE__ */ jsx(
+      "button",
+      {
+        type: "button",
+        onClick: onRefresh,
+        disabled: loading,
+        className: "text-sm px-3 py-1 rounded border border-border/60 hover:bg-accent disabled:opacity-50",
+        children: loading ? "loading…" : "refresh"
+      }
+    )
+  ] });
+}
+function Card({
+  title,
+  description,
+  children
+}) {
+  return /* @__PURE__ */ jsxs("section", { className: "rounded-lg border border-border/60 bg-card text-card-foreground", children: [
+    /* @__PURE__ */ jsxs("header", { className: "px-3 py-2 border-b border-border/60", children: [
+      /* @__PURE__ */ jsx("div", { className: "text-sm font-medium", children: title }),
+      description ? /* @__PURE__ */ jsx("div", { className: "text-xs text-muted-foreground", children: description }) : null
+    ] }),
+    /* @__PURE__ */ jsx("div", { className: "p-3", children })
+  ] });
+}
+function Kpi({ label, value }) {
+  return /* @__PURE__ */ jsxs("div", { className: "rounded-lg border border-border/60 bg-card text-card-foreground p-3", children: [
+    /* @__PURE__ */ jsx("div", { className: "text-xs uppercase tracking-wide text-muted-foreground", children: label }),
+    /* @__PURE__ */ jsx("div", { className: "text-xl font-semibold tabular-nums", children: value })
+  ] });
+}
+function KpiSm({ label, value }) {
+  return /* @__PURE__ */ jsxs("div", { children: [
+    /* @__PURE__ */ jsx("div", { className: "uppercase tracking-wide text-[0.65rem] opacity-75", children: label }),
+    /* @__PURE__ */ jsx("div", { className: "text-sm font-medium tabular-nums text-foreground", children: value })
+  ] });
+}
+function Table({
+  headers,
+  children
+}) {
+  return /* @__PURE__ */ jsx("div", { className: "overflow-x-auto", children: /* @__PURE__ */ jsxs("table", { className: "w-full text-sm", children: [
+    /* @__PURE__ */ jsx("thead", { children: /* @__PURE__ */ jsx("tr", { className: "text-left text-xs text-muted-foreground", children: headers.map((h, i) => /* @__PURE__ */ jsx(
+      "th",
+      {
+        className: "py-1.5 px-2 font-medium " + (i >= 1 && i === headers.length - 1 ? "text-right" : ""),
+        children: h
+      },
+      h
+    )) }) }),
+    /* @__PURE__ */ jsx("tbody", { children })
+  ] }) });
+}
+function Td({
+  children,
+  align
+}) {
+  return /* @__PURE__ */ jsx("td", { className: "py-1.5 px-2 " + (align === "right" ? "text-right tabular-nums" : ""), children });
+}
+function Empty({ children }) {
+  return /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground italic", children });
+}
+function Mono({ children }) {
+  return /* @__PURE__ */ jsx("code", { className: "text-xs font-mono", children });
+}
+function fmtInt(v) {
+  if (v === null || v === void 0 || v === "") return "—";
+  const n = typeof v === "number" ? v : Number(v);
+  if (!Number.isFinite(n)) return "—";
+  return n.toLocaleString();
+}
+function fmtNum(v) {
+  if (v === null || v === void 0 || !Number.isFinite(v)) return "—";
+  return v.toFixed(2);
+}
+function fmtTs(v) {
+  if (!v) return "—";
+  const d = new Date(v);
+  if (Number.isNaN(d.getTime())) return v;
+  return d.toLocaleString();
+}
+function SimplePage({
+  title,
+  template,
+  rows,
+  children
+}) {
+  const slot = useSlotContext();
+  const theme = useHostTheme();
+  return /* @__PURE__ */ jsx(
+    Page,
+    {
+      slot: slot.slotId,
+      theme: theme.mode,
+      header: /* @__PURE__ */ jsxs("div", { children: [
+        /* @__PURE__ */ jsx("h3", { className: "text-lg font-semibold tracking-tight", children: title }),
+        /* @__PURE__ */ jsx("p", { className: "text-sm text-muted-foreground", children: template })
+      ] }),
+      error: rows.error,
+      children: /* @__PURE__ */ jsx(Card, { title, description: rows.loading ? "loading…" : `${rows.data.length} rows`, children: rows.data.length === 0 && !rows.loading ? /* @__PURE__ */ jsx(Empty, { children: "No rows. Ingest the dump first." }) : children(rows.data) })
+    }
+  );
+}
+function useTemplate(template, params) {
+  const [state, setState] = React.useState({ data: [], loading: false, error: null });
+  const key = JSON.stringify(params);
+  React.useEffect(() => {
+    let cancelled = false;
+    setState((s) => ({ ...s, loading: true, error: null }));
+    fetchTemplate(template, params).then((rs) => !cancelled && setState({ data: rs, loading: false, error: null })).catch(
+      (e) => !cancelled && setState({ data: [], loading: false, error: e instanceof Error ? e.message : String(e) })
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [template, key]);
+  return state;
+}
+function ContribGrid({ detail }) {
+  const c = detail?.manifest?.contributes ?? {};
+  const rows = [
+    ["tools", (c.tools ?? []).map((t) => t.id)],
+    ["warehouse tables", (c.warehouse_tables ?? []).map((t) => t.name)],
+    ["warehouse templates", (c.warehouse_templates ?? []).map((t) => t.name)],
+    ["ui slots", (c.ui?.exposes ?? []).map((e) => e.slot)]
+  ];
+  return /* @__PURE__ */ jsx("div", { className: "flex flex-col gap-1.5", children: rows.map(([label, items]) => /* @__PURE__ */ jsxs("div", { className: "flex items-baseline gap-3 text-sm", children: [
+    /* @__PURE__ */ jsx("span", { className: "text-muted-foreground shrink-0 w-44", children: label }),
+    /* @__PURE__ */ jsx("span", { className: "flex flex-wrap gap-1", children: items.length === 0 ? /* @__PURE__ */ jsx("span", { className: "text-muted-foreground/50", children: "—" }) : items.map((id, i) => /* @__PURE__ */ jsx("code", { className: "rounded bg-muted px-1.5 py-0.5 text-xs font-mono", children: id }, id + i)) })
+  ] }, label)) });
+}
+
+function isBranch(item) {
+  return "children" in item;
+}
+const TREE = [
+  { title: "Overview", href: `/extensions/${EXTENSION_ID}`, icon: LayoutGrid },
+  {
+    title: "Topology",
+    icon: Network,
+    children: [
+      { title: "Hosts", href: `/extensions/${EXTENSION_ID}/hosts`, icon: Server },
+      { title: "Networks", href: `/extensions/${EXTENSION_ID}/networks`, icon: Router },
+      { title: "Devices", href: `/extensions/${EXTENSION_ID}/devices`, icon: Database }
+    ]
+  },
+  {
+    title: "Data",
+    icon: Database,
+    children: [
+      { title: "Energy & Water", href: `/extensions/${EXTENSION_ID}/usage`, icon: Zap },
+      { title: "Energy", href: `/extensions/${EXTENSION_ID}/energy`, icon: Sun },
+      { title: "Report (print)", href: `/extensions/${EXTENSION_ID}/report`, icon: FileText },
+      { title: "History (chart)", href: `/extensions/${EXTENSION_ID}/history`, icon: ChartLine }
+    ]
+  },
+  {
+    title: "Provisioning",
+    icon: ScanLine,
+    children: [
+      { title: "Devices", href: `/extensions/${EXTENSION_ID}/provision/devices`, icon: LayoutGrid },
+      { title: "Sites", href: `/extensions/${EXTENSION_ID}/provision/sites`, icon: MapPin },
+      { title: "Templates", href: `/extensions/${EXTENSION_ID}/provision/templates`, icon: FileCode },
+      { title: "Scan & add", href: `/extensions/${EXTENSION_ID}/provision/wizard`, icon: WandSparkles },
+      { title: "Phone (PWA)", href: `/extensions/${EXTENSION_ID}/pwa`, icon: Smartphone }
+    ]
+  }
+];
+function NavTree() {
+  return /* @__PURE__ */ jsx(BlockShell, { children: /* @__PURE__ */ jsx(NavTreeInner, {}) });
+}
+function NavTreeInner() {
+  const path = typeof window !== "undefined" ? window.location.pathname : "";
+  return /* @__PURE__ */ jsxs(
+    "div",
+    {
+      "data-slot": "sidebar-group",
+      "data-sidebar": "group",
+      className: "relative flex w-full min-w-0 flex-col p-2",
+      children: [
+        /* @__PURE__ */ jsx(
+          "div",
+          {
+            "data-slot": "sidebar-group-label",
+            "data-sidebar": "group-label",
+            className: "flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-[margin,opacity] duration-200 ease-linear focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0 group-data-[collapsible=icon]:-mt-8 group-data-[collapsible=icon]:opacity-0",
+            children: "Rubix-OS"
+          }
+        ),
+        /* @__PURE__ */ jsx(
+          "ul",
+          {
+            "data-slot": "sidebar-menu",
+            "data-sidebar": "menu",
+            className: "flex w-full min-w-0 flex-col gap-1",
+            children: TREE.map(
+              (item) => isBranch(item) ? /* @__PURE__ */ jsx(Branch, { branch: item, currentPath: path }, item.title) : /* @__PURE__ */ jsx(Leaf, { leaf: item, currentPath: path, top: true }, item.href)
+            )
+          }
+        )
+      ]
+    }
+  );
+}
+const MENU_BUTTON_CLASS = "peer/menu-button flex w-full items-center gap-2 overflow-hidden rounded-md p-2 text-start text-sm outline-hidden ring-sidebar-ring transition-[width,height,padding] hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 group-has-data-[sidebar=menu-action]/menu-item:pe-8 aria-disabled:pointer-events-none aria-disabled:opacity-50 data-[active=true]:bg-sidebar-accent data-[active=true]:font-medium data-[active=true]:text-sidebar-accent-foreground data-[state=open]:hover:bg-sidebar-accent data-[state=open]:hover:text-sidebar-accent-foreground group-data-[collapsible=icon]:size-8! group-data-[collapsible=icon]:p-2! [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 h-8 no-underline";
+const SUB_BUTTON_CLASS = "flex h-7 min-w-0 -translate-x-px items-center gap-2 overflow-hidden rounded-md px-2 text-sidebar-foreground ring-sidebar-ring outline-hidden hover:bg-sidebar-accent hover:text-sidebar-accent-foreground focus-visible:ring-2 active:bg-sidebar-accent active:text-sidebar-accent-foreground disabled:pointer-events-none disabled:opacity-50 [&>span:last-child]:truncate [&>svg]:size-4 [&>svg]:shrink-0 [&>svg]:text-inherit text-sm data-[active=true]:bg-sidebar-accent data-[active=true]:text-sidebar-accent-foreground group-data-[collapsible=icon]:hidden no-underline";
+function Leaf({
+  leaf,
+  currentPath,
+  top
+}) {
+  const isActive = currentPath === leaf.href || currentPath.startsWith(leaf.href + "/");
+  const Icon = leaf.icon;
+  if (top) {
+    return (
+      // SidebarMenuItem
+      /* @__PURE__ */ jsx(
+        "li",
+        {
+          "data-slot": "sidebar-menu-item",
+          "data-sidebar": "menu-item",
+          className: "group/menu-item relative",
+          children: /* @__PURE__ */ jsxs(
+            "a",
+            {
+              href: leaf.href,
+              "data-slot": "sidebar-menu-button",
+              "data-sidebar": "menu-button",
+              "data-active": isActive,
+              className: MENU_BUTTON_CLASS,
+              children: [
+                Icon ? /* @__PURE__ */ jsx(Icon, {}) : null,
+                /* @__PURE__ */ jsx("span", { children: leaf.title })
+              ]
+            }
+          )
+        }
+      )
+    );
+  }
+  return (
+    // SidebarMenuSubItem
+    /* @__PURE__ */ jsx(
+      "li",
+      {
+        "data-slot": "sidebar-menu-sub-item",
+        "data-sidebar": "menu-sub-item",
+        className: "group/menu-sub-item relative",
+        children: /* @__PURE__ */ jsxs(
+          "a",
+          {
+            href: leaf.href,
+            "data-slot": "sidebar-menu-sub-button",
+            "data-sidebar": "menu-sub-button",
+            "data-size": "md",
+            "data-active": isActive,
+            className: SUB_BUTTON_CLASS,
+            children: [
+              Icon ? /* @__PURE__ */ jsx(Icon, {}) : null,
+              /* @__PURE__ */ jsx("span", { children: leaf.title })
+            ]
+          }
+        )
+      }
+    )
+  );
+}
+function Branch({
+  branch,
+  currentPath
+}) {
+  const defaultOpen = branch.children.some(
+    (c) => currentPath === c.href || currentPath.startsWith(c.href + "/")
+  );
+  const [open, setOpen] = React.useState(defaultOpen);
+  const Icon = branch.icon;
+  return (
+    // SidebarMenuItem wrapping a Collapsible
+    /* @__PURE__ */ jsxs(
+      "li",
+      {
+        "data-slot": "sidebar-menu-item",
+        "data-sidebar": "menu-item",
+        className: "group/collapsible group/menu-item relative",
+        "data-state": open ? "open" : "closed",
+        children: [
+          /* @__PURE__ */ jsxs(
+            "button",
+            {
+              type: "button",
+              onClick: () => setOpen((v) => !v),
+              "aria-expanded": open,
+              "data-slot": "sidebar-menu-button",
+              "data-sidebar": "menu-button",
+              "data-state": open ? "open" : "closed",
+              className: MENU_BUTTON_CLASS + " border-0 bg-transparent cursor-pointer",
+              children: [
+                Icon ? /* @__PURE__ */ jsx(Icon, {}) : null,
+                /* @__PURE__ */ jsx("span", { children: branch.title }),
+                /* @__PURE__ */ jsx(ChevronRight, { className: "ms-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" })
+              ]
+            }
+          ),
+          open ? (
+            // SidebarMenuSub
+            /* @__PURE__ */ jsx(
+              "ul",
+              {
+                "data-slot": "sidebar-menu-sub",
+                "data-sidebar": "menu-sub",
+                className: "mx-3.5 flex min-w-0 translate-x-px flex-col gap-1 border-s border-sidebar-border px-2.5 py-0.5 group-data-[collapsible=icon]:hidden",
+                children: branch.children.map((leaf) => /* @__PURE__ */ jsx(Leaf, { leaf, currentPath }, leaf.href))
+              }
+            )
+          ) : null
+        ]
+      }
+    )
+  );
+}
+
 const factory = {
   singletons: {
     react: { version: "19.1.0" },
@@ -44370,7 +44409,7 @@ const factory = {
   },
   init(handle) {
     registerExtensionContributions(handle, {
-      components: { Main, NavTree, Provision }
+      components: { Main, NavTree }
     });
   }
 };

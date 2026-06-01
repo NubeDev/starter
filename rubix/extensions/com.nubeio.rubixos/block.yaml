@@ -510,9 +510,3 @@ contributes:
       - name: NavTree
         module: "./NavTree"
         slot: sidebar-nav
-      # Barcode / provisioning admin panel + phone PWA (BARCODE.md §6).
-      # Removable: drop this entry and the ./Provision export in
-      # remoteEntry.ts and the feature's UI unmounts.
-      - name: Provision
-        module: "./Provision"
-        slot: main

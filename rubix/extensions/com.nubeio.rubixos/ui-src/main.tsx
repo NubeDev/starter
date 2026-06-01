@@ -51,6 +51,7 @@ import { fetchExtensionDetail, invalidateExtensionDetail } from "./detail";
 import { HistoryLineChart } from "./chart";
 import { DashboardPage, ReportPage } from "./dashboard";
 import { EnergyPage } from "./energy";
+import { ProvisionRouter } from "./provision";
 
 export default function Main(): React.ReactElement {
   return (
@@ -69,6 +70,8 @@ function MainRouter(): React.ReactElement {
   if (route === "usage" || route?.startsWith("usage/")) return <UsagePage />;
   if (route === "energy" || route?.startsWith("energy/")) return <EnergyPageWrapper />;
   if (route === "report" || route?.startsWith("report/")) return <ReportPage />;
+  if (route === "provision" || route?.startsWith("provision/")) return <ProvisionRouter />;
+  if (route === "pwa" || route?.startsWith("pwa/")) return <ProvisionRouter />;
   return <OverviewPage />;
 }
 
