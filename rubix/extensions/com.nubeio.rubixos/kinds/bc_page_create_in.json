@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcPageCreateInput",
+  "description": "Create a dashboard page. `row` carries `page_id` and `name`. `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "row": {
+      "type": "object",
+      "description": "Page row — `page_id`, `name`.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["row"],
+  "additionalProperties": false
+}

@@ -1,0 +1,36 @@
+template: micro_edge
+version: 1
+display_name: Micro Edge
+network: lora
+category: sensor
+icon: cpu
+
+points:
+  - key: ui1
+    name: "Universal Input 1"
+    kind: analog
+    widget: stat
+    trend: { default: true, interval: "5m" }
+
+  - key: pulse1
+    name: "Pulse 1"
+    kind: counter
+    widget: counter
+    trend: { default: true, interval: "5m" }
+
+  - key: battery
+    name: Battery
+    unit: "%"
+    kind: analog
+    widget: battery
+    trend: { default: false }
+    alarm:
+      default: true
+      rules:
+        - { when: "< 20", severity: warning, message: "Low battery" }
+
+widget_group:
+  layout: card
+  title: "{{device.name}}"
+  primary: ui1
+  secondary: [pulse1, battery]

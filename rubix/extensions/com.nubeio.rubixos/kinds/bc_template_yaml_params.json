@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcTemplateYamlParams",
+  "description": "Read one device template (including its raw YAML body) by template key.",
+  "type": "object",
+  "properties": {
+    "template": { "type": "string", "minLength": 1 }
+  },
+  "required": ["template"],
+  "additionalProperties": false
+}

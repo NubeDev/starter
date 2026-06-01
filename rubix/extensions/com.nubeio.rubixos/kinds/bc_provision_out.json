@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcProvisionOutput",
+  "description": "Result of a provisioning pass — the device id and counts of the rows materialised, plus any non-fatal warnings.",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string" },
+    "points": { "type": "integer", "minimum": 0 },
+    "widgets": { "type": "integer", "minimum": 0 },
+    "alarms": { "type": "integer", "minimum": 0 },
+    "page_id": { "type": "string" },
+    "warnings": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "required": ["device_id", "points", "widgets"],
+  "additionalProperties": false
+}

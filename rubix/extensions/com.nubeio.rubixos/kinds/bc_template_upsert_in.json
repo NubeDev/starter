@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcTemplateUpsertInput",
+  "description": "Validate and store a YAML device template at runtime. The host parses the YAML, validates it, and upserts it into bc_templates. `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "yaml": {
+      "type": "string",
+      "description": "The device template document, as YAML."
+    }
+  },
+  "required": ["yaml"],
+  "additionalProperties": false
+}

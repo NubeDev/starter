@@ -20,10 +20,21 @@ runtime:
   bin: rubix-nubeio-rubixos-extension
 
 capabilities:
-  # No write grant from the extension itself — the dump is loaded
-  # out-of-band by `scripts/load-dump.sh` using server-side SQL.
-  # If a follow-up adds a streaming-ingest tool (e.g. tail Rubix-OS
-  # MQTT into histories), append a `warehouse_write` grant here.
+  # The Rubix-OS dump itself is still loaded out-of-band by
+  # `scripts/load-dump.sh`. The write grant below is owned solely by
+  # the barcode/provisioning feature (the `bc_*` tables) — see
+  # BARCODE.md §11. Removing that feature = removing this grant.
+  - kind: warehouse_write
+    tables:
+      - bc_templates
+      - bc_sites
+      - bc_locations
+      - bc_devices
+      - bc_points
+      - bc_widgets
+      - bc_pages
+      - bc_alarms
+      - bc_provision_log
   - kind: warehouse_read
     tables:
       - com_nubeio_rubixos__histories
@@ -34,6 +45,16 @@ capabilities:
       - com_nubeio_rubixos__network_meta_tags
       - com_nubeio_rubixos__point_tags
       - com_nubeio_rubixos__point_meta_tags
+      # Barcode/provisioning read surface (BARCODE.md §5).
+      - com_nubeio_rubixos__bc_templates
+      - com_nubeio_rubixos__bc_sites
+      - com_nubeio_rubixos__bc_locations
+      - com_nubeio_rubixos__bc_devices
+      - com_nubeio_rubixos__bc_points
+      - com_nubeio_rubixos__bc_widgets
+      - com_nubeio_rubixos__bc_pages
+      - com_nubeio_rubixos__bc_alarms
+      - com_nubeio_rubixos__bc_provision_log
 
 contributes:
   tools:
@@ -48,6 +69,49 @@ contributes:
       input_schema: kinds/warehouse_query_in.json
       output_schema: kinds/warehouse_query_out.json
       description_file: kinds/warehouse_query.md
+
+    # ----------------------------------------------------------------
+    # Barcode / scan-to-dashboard provisioning (BARCODE.md). Every
+    # tool is `bc_*`-named so the whole feature is removable: delete
+    # these entries + their kinds/bc_* schemas + the bc_* handlers in
+    # process/src/provision/ and the energy/water surface is untouched.
+    # ----------------------------------------------------------------
+    - id: com.nubeio.rubixos.bc_decode
+      input_schema: kinds/bc_decode_in.json
+      output_schema: kinds/bc_decode_out.json
+      description_file: kinds/bc_decode.md
+    - id: com.nubeio.rubixos.bc_provision
+      input_schema: kinds/bc_provision_in.json
+      output_schema: kinds/bc_provision_out.json
+      description_file: kinds/bc_provision.md
+    - id: com.nubeio.rubixos.bc_device_update
+      input_schema: kinds/bc_device_update_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_device.md
+    - id: com.nubeio.rubixos.bc_device_decommission
+      input_schema: kinds/bc_device_decommission_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_device.md
+    - id: com.nubeio.rubixos.bc_site_create
+      input_schema: kinds/bc_site_create_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_site.md
+    - id: com.nubeio.rubixos.bc_location_create
+      input_schema: kinds/bc_location_create_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_site.md
+    - id: com.nubeio.rubixos.bc_page_create
+      input_schema: kinds/bc_page_create_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_page.md
+    - id: com.nubeio.rubixos.bc_template_upsert
+      input_schema: kinds/bc_template_upsert_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_template.md
+    - id: com.nubeio.rubixos.bc_label_render
+      input_schema: kinds/bc_label_render_in.json
+      output_schema: kinds/bc_label_render_out.json
+      description_file: kinds/bc_label.md
 
   warehouse_tables:
     # ------------------------------------------------------------------
@@ -163,6 +227,115 @@ contributes:
         - { name: max_value,    type: "DOUBLE PRECISION", default: "NULL" }
         - { name: sample_count, type: "BIGINT",           default: "NULL" }
 
+    # ------------------------------------------------------------------
+    # Barcode / scan-to-dashboard provisioning catalog (BARCODE.md §4).
+    # All `bc_*`-prefixed and disjoint from the read-only dump tables
+    # above. The host CREATEs each as `com_nubeio_rubixos__bc_<name>`
+    # with `tenant_id TEXT` prepended at column 0; the extension never
+    # writes `tenant_id`. Dropping these nine entries + the write grant
+    # removes the whole feature (BARCODE.md §11).
+    # ------------------------------------------------------------------
+    - name: bc_templates
+      order_by: [template]
+      columns:
+        - { name: template,     type: "TEXT" }
+        - { name: version,      type: "INT",         default: "1" }
+        - { name: display_name, type: "TEXT",        default: "NULL" }
+        - { name: network,      type: "TEXT",        default: "NULL" }
+        - { name: category,     type: "TEXT",        default: "NULL" }
+        - { name: icon,         type: "TEXT",        default: "NULL" }
+        - { name: yaml,         type: "TEXT" }
+        - { name: points_json,  type: "JSONB",       default: "NULL" }
+        - { name: widget_group_json, type: "JSONB",  default: "NULL" }
+        - { name: updated_at,   type: "TIMESTAMPTZ", default: "now()" }
+
+    - name: bc_sites
+      order_by: [site_id]
+      columns:
+        - { name: site_id,    type: "TEXT" }
+        - { name: name,       type: "TEXT",        default: "NULL" }
+        - { name: created_at, type: "TIMESTAMPTZ", default: "now()" }
+
+    - name: bc_locations
+      order_by: [site_id, location_id]
+      columns:
+        - { name: location_id, type: "TEXT" }
+        - { name: site_id,     type: "TEXT" }
+        - { name: name,        type: "TEXT",        default: "NULL" }
+        - { name: created_at,  type: "TIMESTAMPTZ", default: "now()" }
+
+    - name: bc_pages
+      order_by: [page_id]
+      columns:
+        - { name: page_id,    type: "TEXT" }
+        - { name: name,       type: "TEXT",        default: "NULL" }
+        - { name: created_at, type: "TIMESTAMPTZ", default: "now()" }
+
+    - name: bc_devices
+      order_by: [site_id, device_id]
+      columns:
+        - { name: device_id,   type: "TEXT" }
+        - { name: template,    type: "TEXT" }
+        - { name: name,        type: "TEXT", default: "NULL" }
+        - { name: network,     type: "TEXT", default: "NULL" }
+        - { name: address,     type: "TEXT", default: "NULL" }
+        - { name: default_ip,  type: "TEXT", default: "NULL" }
+        - { name: hw_rev,      type: "TEXT", default: "NULL" }
+        - { name: site_id,     type: "TEXT", default: "NULL" }
+        - { name: location_id, type: "TEXT", default: "NULL" }
+        - { name: page_id,     type: "TEXT", default: "NULL" }
+        - { name: status,      type: "TEXT", default: "'provisioned'" }
+        - { name: provisioned_at, type: "TIMESTAMPTZ", default: "now()" }
+
+    - name: bc_points
+      order_by: [device_id, point_id]
+      columns:
+        - { name: point_id,  type: "TEXT" }
+        - { name: device_id, type: "TEXT" }
+        - { name: point_key, type: "TEXT" }
+        - { name: name,      type: "TEXT",    default: "NULL" }
+        - { name: unit,      type: "TEXT",    default: "NULL" }
+        - { name: kind,      type: "TEXT",    default: "NULL" }
+        - { name: widget,    type: "TEXT",    default: "NULL" }
+        - { name: writable,  type: "BOOL",    default: "false" }
+        - { name: trend_on,  type: "BOOL",    default: "false" }
+        - { name: alarm_on,  type: "BOOL",    default: "false" }
+        - { name: trend_interval, type: "TEXT", default: "NULL" }
+
+    - name: bc_widgets
+      order_by: [page_id, device_id, slot]
+      columns:
+        - { name: widget_id, type: "TEXT" }
+        - { name: page_id,   type: "TEXT" }
+        - { name: device_id, type: "TEXT" }
+        - { name: point_id,  type: "TEXT", default: "NULL" }
+        - { name: widget,    type: "TEXT" }
+        - { name: slot,      type: "INT",  default: "0" }
+        - { name: role,      type: "TEXT", default: "NULL" }
+        - { name: title,     type: "TEXT", default: "NULL" }
+
+    - name: bc_alarms
+      order_by: [device_id, alarm_id]
+      columns:
+        - { name: alarm_id,  type: "TEXT" }
+        - { name: device_id, type: "TEXT" }
+        - { name: point_id,  type: "TEXT" }
+        - { name: point_key, type: "TEXT", default: "NULL" }
+        - { name: predicate, type: "TEXT" }
+        - { name: severity,  type: "TEXT", default: "NULL" }
+        - { name: message,   type: "TEXT", default: "NULL" }
+        - { name: enabled,   type: "BOOL", default: "true" }
+
+    - name: bc_provision_log
+      order_by: [at, event_id]
+      columns:
+        - { name: event_id,  type: "TEXT" }
+        - { name: device_id, type: "TEXT", default: "NULL" }
+        - { name: event,     type: "TEXT" }
+        - { name: step,      type: "TEXT", default: "NULL" }
+        - { name: detail,    type: "TEXT", default: "NULL" }
+        - { name: at,        type: "TIMESTAMPTZ", default: "now()" }
+
   # Named warehouse-read templates. Per R7 each `sql_file` is
   # captured verbatim for audit and resolved by name at the host;
   # the SPI never templates the SQL at runtime. `$caller_tenant_id`
@@ -266,6 +439,64 @@ contributes:
         - com_nubeio_rubixos__histories
         - com_nubeio_rubixos__points
 
+    # ----------------------------------------------------------------
+    # Barcode / provisioning reads (BARCODE.md §6). These back the
+    # admin panel and phone PWA. `bc_*`-named so removable with the
+    # rest of the feature.
+    # ----------------------------------------------------------------
+    - name: com.nubeio.rubixos.bc_templates_list
+      params_schema: kinds/bc_templates_list_params.json
+      sql_file:      kinds/bc_templates_list.sql
+      tables: [com_nubeio_rubixos__bc_templates]
+
+    # Single-template read INCLUDING the raw YAML body (the list
+    # template omits it to keep list reads light). Backs the template
+    # editor and the provision engine's template load.
+    - name: com.nubeio.rubixos.bc_template_yaml
+      params_schema: kinds/bc_template_yaml_params.json
+      sql_file:      kinds/bc_template_yaml.sql
+      tables: [com_nubeio_rubixos__bc_templates]
+
+    - name: com.nubeio.rubixos.bc_sites_list
+      params_schema: kinds/bc_sites_list_params.json
+      sql_file:      kinds/bc_sites_list.sql
+      tables: [com_nubeio_rubixos__bc_sites]
+
+    - name: com.nubeio.rubixos.bc_locations_list
+      params_schema: kinds/bc_locations_list_params.json
+      sql_file:      kinds/bc_locations_list.sql
+      tables: [com_nubeio_rubixos__bc_locations]
+
+    - name: com.nubeio.rubixos.bc_pages_list
+      params_schema: kinds/bc_pages_list_params.json
+      sql_file:      kinds/bc_pages_list.sql
+      tables: [com_nubeio_rubixos__bc_pages]
+
+    - name: com.nubeio.rubixos.bc_devices_list
+      params_schema: kinds/bc_devices_list_params.json
+      sql_file:      kinds/bc_devices_list.sql
+      tables: [com_nubeio_rubixos__bc_devices]
+
+    - name: com.nubeio.rubixos.bc_points_by_device
+      params_schema: kinds/bc_points_by_device_params.json
+      sql_file:      kinds/bc_points_by_device.sql
+      tables: [com_nubeio_rubixos__bc_points]
+
+    - name: com.nubeio.rubixos.bc_widgets_by_page
+      params_schema: kinds/bc_widgets_by_page_params.json
+      sql_file:      kinds/bc_widgets_by_page.sql
+      tables: [com_nubeio_rubixos__bc_widgets]
+
+    - name: com.nubeio.rubixos.bc_alarms_by_device
+      params_schema: kinds/bc_alarms_by_device_params.json
+      sql_file:      kinds/bc_alarms_by_device.sql
+      tables: [com_nubeio_rubixos__bc_alarms]
+
+    - name: com.nubeio.rubixos.bc_provision_log_recent
+      params_schema: kinds/bc_provision_log_recent_params.json
+      sql_file:      kinds/bc_provision_log_recent.sql
+      tables: [com_nubeio_rubixos__bc_provision_log]
+
   # Module-Federation UI entry. The host serves `ui/remoteEntry.js`
   # at `/api/v1/extensions/com.nubeio.rubixos/ui/*` and dynamic-
   # imports it when the operator clicks "Load UI" on the
@@ -279,3 +510,9 @@ contributes:
       - name: NavTree
         module: "./NavTree"
         slot: sidebar-nav
+      # Barcode / provisioning admin panel + phone PWA (BARCODE.md §6).
+      # Removable: drop this entry and the ./Provision export in
+      # remoteEntry.ts and the feature's UI unmounts.
+      - name: Provision
+        module: "./Provision"
+        slot: main

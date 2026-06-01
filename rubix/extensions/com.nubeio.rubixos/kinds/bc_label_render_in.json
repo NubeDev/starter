@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcLabelRenderInput",
+  "description": "Render a printable label payload for a provisioned device. `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "Device to render a label for."
+    }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

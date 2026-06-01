@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcDeviceDecommissionInput",
+  "description": "Decommission one or more devices. By default soft-flips the device `status`; when `hard` is true the device and its points, widgets and alarms are cascade-deleted. Tenant-scoped by the host.",
+  "type": "object",
+  "properties": {
+    "device_ids": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "Devices to decommission."
+    },
+    "hard": {
+      "type": "boolean",
+      "default": false,
+      "description": "When true, cascade-delete instead of soft status flip."
+    }
+  },
+  "required": ["device_ids"],
+  "additionalProperties": false
+}

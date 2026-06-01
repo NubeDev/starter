@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcDecodeInput",
+  "description": "Decode a scanned barcode into a ScannedIdentity and resolve its device template. Pure — touches no database.",
+  "type": "object",
+  "properties": {
+    "barcode": {
+      "type": "string",
+      "description": "Raw barcode string as read by the scanner."
+    }
+  },
+  "required": ["barcode"],
+  "additionalProperties": false
+}

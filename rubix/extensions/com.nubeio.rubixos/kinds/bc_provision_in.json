@@ -1,0 +1,56 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcProvisionInput",
+  "description": "Provision a scanned device. Only `barcode` is required; placement and toggles are optional. `new_location` / `new_page` create their target on demand (and are used in preference to `location_id` / `page_id` when present). `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "barcode": {
+      "type": "string",
+      "description": "Raw barcode string to decode and provision."
+    },
+    "site_id": {
+      "type": "string",
+      "description": "Existing site to place the device under."
+    },
+    "location_id": {
+      "type": "string",
+      "description": "Existing location to place the device under."
+    },
+    "new_location": {
+      "type": "object",
+      "description": "Create a location on demand and place the device under it.",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "page_id": {
+      "type": "string",
+      "description": "Existing page to hang the device's widgets on."
+    },
+    "new_page": {
+      "type": "object",
+      "description": "Create a page on demand and hang the device's widgets on it.",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    },
+    "name": {
+      "type": "string",
+      "description": "Override the device display name (defaults to the template name)."
+    },
+    "trend": {
+      "type": "boolean",
+      "description": "Enable trending on the template's trend-eligible points."
+    },
+    "alarm": {
+      "type": "boolean",
+      "description": "Materialise the template's alarm rules."
+    }
+  },
+  "required": ["barcode"],
+  "additionalProperties": false
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcLabelRenderOutput",
+  "description": "Printable label payload for a device.",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string" },
+    "serial": { "type": "string" },
+    "qr_url": { "type": "string", "description": "The `rubix://add?…` deep link encoded into the QR code." },
+    "code128": { "type": "string", "description": "Pipe-delimited Code128 payload." },
+    "display_name": { "type": "string" }
+  },
+  "required": ["device_id", "serial", "qr_url", "code128"],
+  "additionalProperties": false
+}

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcDecodeOutput",
+  "description": "Decoded ScannedIdentity plus the resolved device template. Loosely typed — additional fields may be present.",
+  "type": "object",
+  "properties": {
+    "id": { "type": "string", "description": "Device serial / id parsed from the barcode." },
+    "model": { "type": "string" },
+    "network": { "type": "string" },
+    "address": { "type": "string" },
+    "default_ip": { "type": "string" },
+    "hw": { "type": "string", "description": "Hardware revision." },
+    "template": {
+      "type": "object",
+      "description": "The resolved device template, or absent if the model is unknown.",
+      "properties": {
+        "display_name": { "type": "string" },
+        "points": { "type": "array", "items": { "type": "object" } },
+        "widget_group": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "known_models": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Models the registry can currently provision."
+    }
+  },
+  "additionalProperties": true
+}

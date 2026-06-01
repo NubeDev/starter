@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcDeviceUpdateInput",
+  "description": "Update a device row — rename, re-place onto a different site/location/page, or flip toggles. `row` must carry the `device_id` to update; remaining keys are the columns to set. `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "row": {
+      "type": "object",
+      "description": "Partial device row; must include `device_id`.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["row"],
+  "additionalProperties": false
+}

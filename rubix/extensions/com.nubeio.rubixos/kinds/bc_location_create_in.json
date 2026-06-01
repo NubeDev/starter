@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcLocationCreateInput",
+  "description": "Create a location. `row` carries `location_id`, `site_id` and `name`. `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "row": {
+      "type": "object",
+      "description": "Location row — `location_id`, `site_id`, `name`.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["row"],
+  "additionalProperties": false
+}

@@ -1,0 +1,51 @@
+template: droplet
+version: 1
+display_name: Droplet Wall Sensor
+network: lora
+category: sensor
+icon: droplet
+
+points:
+  - key: temp
+    name: Temperature
+    unit: "°C"
+    kind: analog
+    widget: gauge
+    trend: { default: true, interval: "5m" }
+    alarm:
+      default: false
+      rules:
+        - { when: "> 35", severity: warning, message: "High temperature" }
+        - { when: "< 5",  severity: warning, message: "Low temperature" }
+
+  - key: humidity
+    name: Humidity
+    unit: "%RH"
+    kind: analog
+    widget: gauge
+    trend: { default: true, interval: "5m" }
+
+  - key: battery
+    name: Battery
+    unit: "%"
+    kind: analog
+    widget: battery
+    trend: { default: false }
+    alarm:
+      default: true
+      rules:
+        - { when: "< 20", severity: warning,  message: "Low battery" }
+        - { when: "< 5",  severity: critical, message: "Battery critical" }
+
+  - key: rssi
+    name: Signal
+    unit: dBm
+    kind: analog
+    widget: stat
+    trend: { default: false }
+
+widget_group:
+  layout: card
+  title: "{{device.name}}"
+  primary: temp
+  secondary: [humidity, battery]

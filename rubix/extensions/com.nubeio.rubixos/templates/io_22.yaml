@@ -1,0 +1,26 @@
+template: io_22
+version: 1
+display_name: IO-22 — 22-channel IO Controller
+network: rubix
+category: controller
+icon: server
+
+points:
+  - key: di
+    name: "DI"
+    kind: digital
+    widget: led
+    repeat: 12
+    trend: { default: false }
+
+  - key: do
+    name: "DO"
+    kind: digital
+    widget: toggle
+    writable: true
+    repeat: 10
+    trend: { default: false }
+
+widget_group:
+  layout: row
+  title: "{{device.name}}"
