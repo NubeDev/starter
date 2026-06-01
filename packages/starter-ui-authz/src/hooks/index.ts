@@ -28,6 +28,8 @@ import type {
   CreateTenantBody,
   DecisionsPage,
   DecisionsQuery,
+  InstancesPage,
+  InstancesQuery,
   MembershipView,
   PatchMemberBody,
   PatchTenantBody,
@@ -50,6 +52,15 @@ export const authzKeys = {
   rules: () => ["authz", "rules"] as const,
   assignments: () => ["authz", "assignments"] as const,
   resources: () => ["authz", "resources"] as const,
+  instances: (kind: string, opts?: InstancesQuery) =>
+    [
+      "authz",
+      "instances",
+      kind,
+      opts?.tenant ?? "",
+      opts?.search ?? "",
+      opts?.cursor ?? "",
+    ] as const,
   decisions: (q?: DecisionsQuery) => ["authz", "decisions", q ?? {}] as const,
 };
 
@@ -334,6 +345,20 @@ export function useAuthzResources(): UseQueryResult<ResourcesListResponse, Error
     queryKey: authzKeys.resources(),
     queryFn: () => c.listAuthzResources(),
     staleTime: 60_000,
+  });
+}
+
+// ----------------------------------------------------------------- resource instances
+
+export function useResourceInstances(
+  kind: string,
+  opts?: InstancesQuery,
+): UseQueryResult<InstancesPage, Error> {
+  const c = useStarterClient();
+  return useQuery({
+    queryKey: authzKeys.instances(kind, opts),
+    queryFn: () => c.listResourceInstances(kind, opts),
+    enabled: !!kind,
   });
 }
 

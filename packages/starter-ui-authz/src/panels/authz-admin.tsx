@@ -47,6 +47,7 @@ import {
   ChevronRight,
   Clock,
   FileSearch,
+  FileText,
   Layers,
   Pencil,
   Search,
@@ -74,6 +75,7 @@ import { AssignmentsPanel } from "./assignments-panel.js";
 import { ResourcesPanel } from "./resources-panel.js";
 import { CheckPanel } from "./check-panel.js";
 import { DecisionsPanel } from "./decisions-panel.js";
+import { PagesTab } from "./pages-tab.js";
 import {
   UserDirectoryProvider,
   UserPicker,
@@ -1102,6 +1104,10 @@ function TenantDetail({
           <UserRound className="size-4" aria-hidden />
           {m.shell.tabs.members}
         </TabsTrigger>
+        <TabsTrigger value="pages">
+          <FileText className="size-4" aria-hidden />
+          Pages
+        </TabsTrigger>
         {advanced && (
           <>
             <TabsTrigger value="rules">
@@ -1126,6 +1132,9 @@ function TenantDetail({
       </TabsContent>
       <TabsContent value="members" className="mt-6">
         <TenantMembersTab tenantId={tenantId} />
+      </TabsContent>
+      <TabsContent value="pages" className="mt-6">
+        <PagesTab tenantId={tenantId} />
       </TabsContent>
       {advanced && (
         <>

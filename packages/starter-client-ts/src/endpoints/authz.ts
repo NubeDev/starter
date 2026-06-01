@@ -142,6 +142,50 @@ export interface DecisionsQuery {
   limit?: number;
 }
 
+// ---------------------------------------------------------------- resource instances
+
+export type SubjectRef =
+  | { kind: "team"; slug: string }
+  | { kind: "user"; sub: string }
+  | { kind: "wildcard" };
+
+export type PermissionTier = "View" | "Edit" | "Manage";
+
+export interface GrantSummary {
+  subject: SubjectRef;
+  tier: PermissionTier;
+}
+
+export type ShareScope = "private" | "tenant" | "specific";
+
+export interface EffectiveAcl {
+  share_scope: ShareScope;
+  grants: GrantSummary[];
+  has_legacy_rules: boolean;
+}
+
+export interface ResourceInstance {
+  id: string;
+  label: string;
+  owner?: SubjectRef;
+  updated_at?: string;
+  effective_acl: EffectiveAcl;
+}
+
+export interface InstancesPage {
+  items: ResourceInstance[];
+  next_cursor?: string;
+}
+
+export interface InstancesQuery {
+  search?: string;
+  cursor?: string;
+  /** Clamped server-side to `[1, 200]`; defaults to 50. */
+  limit?: number;
+  /** Override tenant scope; admins with global scope only. */
+  tenant?: string;
+}
+
 // ---------------------------------------------------------------- augment
 
 declare module "../client/client.js" {
@@ -157,6 +201,10 @@ declare module "../client/client.js" {
     deleteAuthzAssignment(id: string): Promise<void>;
     // resources
     listAuthzResources(): Promise<ResourcesListResponse>;
+    listResourceInstances(
+      kind: string,
+      opts?: InstancesQuery,
+    ): Promise<InstancesPage>;
     // dry-run
     checkAuthz(body: CheckRequest): Promise<CheckResponse>;
     // decisions
@@ -238,6 +286,21 @@ StarterClient.prototype.listAuthzResources = function listAuthzResources(
   this: StarterClient,
 ): Promise<ResourcesListResponse> {
   return fetchJson<ResourcesListResponse>(this, `/v1/authz/resources`);
+};
+
+StarterClient.prototype.listResourceInstances = function listResourceInstances(
+  this: StarterClient,
+  kind: string,
+  opts?: InstancesQuery,
+): Promise<InstancesPage> {
+  const qs = new URLSearchParams();
+  if (opts?.search) qs.set("search", opts.search);
+  if (opts?.cursor) qs.set("cursor", opts.cursor);
+  if (opts?.limit !== undefined) qs.set("limit", String(opts.limit));
+  if (opts?.tenant) qs.set("tenant", opts.tenant);
+  const suffix = qs.toString();
+  const path = `/v1/authz/resources/${encodeURIComponent(kind)}/instances`;
+  return fetchJson<InstancesPage>(this, suffix ? `${path}?${suffix}` : path);
 };
 
 StarterClient.prototype.checkAuthz = function checkAuthz(
