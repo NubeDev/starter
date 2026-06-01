@@ -76,6 +76,7 @@ import { ResourcesPanel } from "./resources-panel.js";
 import { CheckPanel } from "./check-panel.js";
 import { DecisionsPanel } from "./decisions-panel.js";
 import { PagesTab } from "./pages-tab.js";
+import { TeamPermissionsTab } from "./team-permissions-tab.js";
 import {
   UserDirectoryProvider,
   UserPicker,
@@ -1292,6 +1293,7 @@ function TeamDetail({
       <TabsList className="flex-wrap">
         <TabsTrigger value="overview">Overview</TabsTrigger>
         <TabsTrigger value="members">{m.shell.tabs.members}</TabsTrigger>
+        <TabsTrigger value="permissions">Permissions</TabsTrigger>
         {advanced && (
           <>
             <TabsTrigger value="rules">{m.shell.tabs.rules}</TabsTrigger>
@@ -1304,6 +1306,13 @@ function TeamDetail({
       </TabsContent>
       <TabsContent value="members" className="mt-6">
         <TeamMembersInline tenantId={tenantId} teamId={teamId} />
+      </TabsContent>
+      <TabsContent value="permissions" className="mt-6">
+        {team ? (
+          <TeamPermissionsTab tenantId={tenantId} teamSlug={team.slug} />
+        ) : (
+          <StateRow variant="loading">Loading team…</StateRow>
+        )}
       </TabsContent>
       {advanced && (
         <>

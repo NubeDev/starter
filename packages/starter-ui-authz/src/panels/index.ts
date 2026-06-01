@@ -15,6 +15,10 @@ export { CheckPanel, type CheckPanelProps } from "./check-panel.js";
 export { DecisionsPanel, type DecisionsPanelProps } from "./decisions-panel.js";
 export { PagesTab, type PagesTabProps } from "./pages-tab.js";
 export {
+  TeamPermissionsTab,
+  type TeamPermissionsTabProps,
+} from "./team-permissions-tab.js";
+export {
   PageDetailDrawer,
   type PageDetailDrawerProps,
 } from "./page-detail-drawer.js";
