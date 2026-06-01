@@ -86,11 +86,22 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
         // enforced without a wrapping `with_role`. The
         // `with_principal` wrap below makes the `Principal`
         // extension available to `admin_gate`.
-        let authz_state = AuthzRoutesState {
-            engine: engine.clone(),
-            registry: boot::authz::build_registry(),
-            decision_sink: Some(decision_sink),
-        };
+        // G2 — per-kind instances registry. Lets
+        // `GET /v1/authz/resources/rubix.dashboard.page/instances`
+        // resolve so the admin UI's Pages tab can render the
+        // effective-ACL summary per dashboard page.
+        let dashboard_store: Arc<dyn rubix_spi::dashboard::DashboardStore> =
+            Arc::new(rubix_store_postgres::PgDashboardStore::new(pool.clone()));
+        let policy_store_for_instances: Arc<
+            dyn starter_authz::store::PolicyStore,
+        > = Arc::new(starter_authz::store::PostgresPolicyStore::new(pool.clone()));
+        let instances_registry = boot::authz::build_instances_registry(
+            dashboard_store,
+            policy_store_for_instances,
+        );
+        let authz_state = AuthzRoutesState::new(engine.clone(), boot::authz::build_registry())
+            .with_decision_sink(decision_sink)
+            .with_instances(instances_registry);
         let authz_routes = authz_router::<()>(authz_state);
         let authz_gated = starter_server::auth::with_principal(
             authz_routes,
