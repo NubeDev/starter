@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { BrowserMultiFormatReader } from '@zxing/browser'
+import { BarcodeFormat, DecodeHintType } from '@zxing/library'
 import { Camera, CameraOff, Keyboard } from 'lucide-react'
 import { useLook } from '../theme/useLook'
 import { TextInput } from '../components/FormKit'
@@ -36,12 +37,16 @@ export function Scanner({ onCode }: { onCode: (raw: string) => void }) {
   const [manual, setManual] = useState('')
 
   useEffect(() => {
-    // StrictMode (dev) mounts effects twice: mount → cleanup → mount. The
-    // camera stream starts asynchronously, so its `controls` resolve AFTER the
-    // first cleanup runs — the `if (stopped) c.stop()` below releases a stream
-    // that finishes opening post-teardown, so a second mount can't end up with
-    // two readers fighting over one <video> element.
-    const reader = new BrowserMultiFormatReader()
+    // Constrain decoding to the formats we actually print (QR + Code128) and
+    // turn on TRY_HARDER. Fewer formats means each frame's decode budget is
+    // spent on the right patterns; TRY_HARDER makes ZXing do a more exhaustive
+    // (rotations, finder-pattern recovery) pass per frame — the right trade for
+    // small, close-held labels where a clean read is hard to get.
+    const hints = new Map<DecodeHintType, unknown>([
+      [DecodeHintType.POSSIBLE_FORMATS, [BarcodeFormat.QR_CODE, BarcodeFormat.CODE_128]],
+      [DecodeHintType.TRY_HARDER, true],
+    ])
+    const reader = new BrowserMultiFormatReader(hints)
     let stopped = false
     let controls: { stop: () => void } | null = null
 
@@ -69,34 +74,52 @@ export function Scanner({ onCode }: { onCode: (raw: string) => void }) {
       }
     }
 
-    reader
-      .decodeFromVideoDevice(undefined, videoRef.current ?? undefined, (result) => {
-        if (result && !stopped) {
-          onCode(result.getText())
-          stop()
-        }
-      })
-      .then((c) => {
-        controls = c
-        if (stopped) {
-          // Torn down before the camera finished opening — release immediately.
-          c.stop()
-          return
-        }
-        enableAutofocus()
-      })
-      .catch((e: unknown) => {
-        if (!stopped) setCamError(describeCamError(e))
-      })
+    // Defer the actual camera open by a tick. StrictMode (and any fast
+    // remount) fires mount → cleanup → mount synchronously; opening the single
+    // rear camera on the first mount and tearing it down mid-open leaves the
+    // second mount's stream unattached (srcObject stays null — the symptom we
+    // saw). By deferring, the throwaway first mount's cleanup cancels its start
+    // BEFORE the hardware opens, so only the surviving mount ever touches the
+    // camera. The timer id is cleared in cleanup.
+    const startTimer = setTimeout(() => {
+      if (stopped) return
+      reader
+        .decodeFromVideoDevice(undefined, videoRef.current ?? undefined, (result) => {
+          if (result && !stopped) {
+            onCode(result.getText())
+            stop()
+          }
+        })
+        .then((c) => {
+          controls = c
+          if (stopped) {
+            // Torn down before the camera finished opening — release immediately.
+            c.stop()
+            return
+          }
+          enableAutofocus()
+        })
+        .catch((e: unknown) => {
+          if (!stopped) setCamError(describeCamError(e))
+        })
+    }, 0)
 
-    return stop
+    return () => {
+      clearTimeout(startTimer)
+      stop()
+    }
   }, [onCode])
 
   return (
     <div className="flex flex-col gap-5">
       {/* camera viewport */}
+      {/* NOTE: no `glass`/backdrop-filter on this container. On Android WebView a
+          live <video> renders on a separate hardware surface that the compositor
+          fails to paint when nested under an ancestor with backdrop-filter — the
+          stream plays (readyState 4) but shows a frozen/blank frame. Use a plain
+          translucent background + border for the frame instead. */}
       <div
-        className="glass relative aspect-square w-full overflow-hidden rounded-2xl"
+        className="relative aspect-square w-full overflow-hidden rounded-2xl border border-white/10 bg-black"
         style={{ boxShadow: `0 0 0 1px ${look.accent}33, 0 18px 50px -20px ${look.accent}` }}
       >
         {camError ? (
