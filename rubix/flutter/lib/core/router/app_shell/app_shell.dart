@@ -126,16 +126,25 @@ class _AppShellState extends ConsumerState<AppShell> {
             bottom: false,
             child: Stack(
               children: [
-                Column(
-                  children: [
-                    topBar,
-                    Expanded(
-                      child: _AnimatedRouteSwitcher(
-                        index: widget.navigationShell.currentIndex,
-                        child: widget.navigationShell,
-                      ),
+                // Push content up so scrollables clear the floating pill nav.
+                // Pill footprint: _pillHeight(68) + _overhang(7) + gap(16) = 91.
+                MediaQuery(
+                  data: MediaQuery.of(context).copyWith(
+                    padding: MediaQuery.of(context).padding.copyWith(
+                      bottom: MediaQuery.of(context).padding.bottom + 91,
                     ),
-                  ],
+                  ),
+                  child: Column(
+                    children: [
+                      topBar,
+                      Expanded(
+                        child: _AnimatedRouteSwitcher(
+                          index: widget.navigationShell.currentIndex,
+                          child: widget.navigationShell,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 // Floating pill nav overlay — overhangs safe area.
                 Positioned(
