@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { ScanLine, Plug, Loader2, Wifi, CheckCircle2, XCircle } from 'lucide-react'
 import { useAuth } from './authContext'
@@ -26,6 +26,30 @@ export function Connect() {
   // so a logout after a same-session login still re-fills the host that was used
   // instead of reverting to 127.0.0.1.
   const [baseUrl, setBaseUrl] = useState(() => transport.savedBaseUrl?.() || DEFAULT_AGENT_URL)
+
+  // Tauri (Android/iOS) keeps the remembered host in the Rust core, so the
+  // synchronous `savedBaseUrl` seed above can't see it and the field falls back
+  // to the compiled-in default. Pull it over `invoke` after mount and replace
+  // the default with the host this device actually last connected to — only
+  // while the field still holds the untouched default, so a user who started
+  // typing (current !== default) is never clobbered.
+  useEffect(() => {
+    if (!transport.savedBaseUrlAsync) return
+    let cancelled = false
+    void transport
+      .savedBaseUrlAsync()
+      .then((remembered) => {
+        if (cancelled || !remembered) return
+        setBaseUrl((current: string) => (current === DEFAULT_AGENT_URL ? remembered : current))
+      })
+      .catch(() => {
+        /* no remembered host — keep the default */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   const [email, setEmail] = useState('op@example.com')
   const [password, setPassword] = useState('rubix-dev-passwd')
 

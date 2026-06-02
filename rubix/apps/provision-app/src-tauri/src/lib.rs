@@ -48,6 +48,7 @@ pub fn run() {
             commands::auth_login::auth_login,
             commands::auth_me::auth_me,
             commands::auth_logout::auth_logout,
+            commands::saved_base_url::saved_base_url,
             commands::tool_dispatch::tool_dispatch,
             commands::queue_enqueue::queue_enqueue,
             commands::queue_list::queue_list,

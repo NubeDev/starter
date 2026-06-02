@@ -8,6 +8,13 @@ export function createTauriTransport(): Transport {
   return {
     kind: 'tauri',
 
+    async savedBaseUrlAsync() {
+      // The remembered host lives in the Rust core (persisted on login, loaded
+      // into the session at startup). Surface it so the Connect form pre-fills
+      // the last agent this device used instead of reverting to the default.
+      return (await invoke<string | null>('saved_base_url')) ?? ''
+    },
+
     ping(baseUrl) {
       return invoke<PingResult>('ping', { baseUrl })
     },

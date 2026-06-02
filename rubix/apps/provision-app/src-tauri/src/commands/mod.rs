@@ -9,4 +9,5 @@ pub mod queue_drop;
 pub mod queue_enqueue;
 pub mod queue_flush;
 pub mod queue_list;
+pub mod saved_base_url;
 pub mod tool_dispatch;

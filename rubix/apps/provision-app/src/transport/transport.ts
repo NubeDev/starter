@@ -39,6 +39,15 @@ export interface Transport {
    * in the Rust core) may omit it; callers fall back to the default.
    */
   savedBaseUrl?(): string
+  /**
+   * Async counterpart of `savedBaseUrl` for transports whose remembered host
+   * lives outside the JS layer. On Tauri the base_url is persisted by the Rust
+   * core (keychain/store) and can only be read over `invoke`, so the Connect
+   * screen hydrates it asynchronously after mount. Returns '' if none. Optional
+   * for the same reason `savedBaseUrl` is — web can answer synchronously and
+   * leaves this unset.
+   */
+  savedBaseUrlAsync?(): Promise<string>
   /** Sign in. Establishes the session (cookie on web, keychain on Tauri). */
   login(baseUrl: string, email: string, password: string): Promise<AuthUser>
   /** Current principal, or null if unauthenticated. */
