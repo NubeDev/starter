@@ -9,3 +9,4 @@ packages:
   - "rubix/extensions/*/ui-src"
   - "rubix/frontend"
   - "rubix/mobile"
+  - "rubix/apps/*"

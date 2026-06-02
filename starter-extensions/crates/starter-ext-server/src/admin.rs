@@ -385,7 +385,7 @@ impl ExtensionAdminBuilder {
                 store,
                 factory: self
                     .factory
-                    .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory)),
+                    .unwrap_or_else(|| Arc::new(DefaultSupervisorFactory::default())),
                 etag_cache,
                 cleanup_providers,
                 pending_restart: RwLock::new(HashMap::new()),

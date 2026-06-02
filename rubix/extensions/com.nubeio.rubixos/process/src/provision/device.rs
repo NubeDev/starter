@@ -38,7 +38,11 @@ pub fn build_row(identity: &ScannedIdentity, template: &str, placement: &Placeme
     row.insert("site_id".into(), json!(placement.site_id));
     row.insert("location_id".into(), json!(placement.location_id));
     row.insert("page_id".into(), json!(placement.page_id));
-    row.insert("status".into(), json!("provisioned"));
+    // A device with no page is commissioned but not yet displayed — it
+    // sits `pending` until a page is assigned (then widgets generate and
+    // it flips to `provisioned`). Page is therefore optional at provision.
+    let status = if placement.page_id.is_some() { "provisioned" } else { "pending" };
+    row.insert("status".into(), json!(status));
     Row::from_map(row)
 }
 

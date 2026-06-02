@@ -10,6 +10,7 @@ use std::sync::Arc;
 
 use rubix_tools::cleaner::RuleRegistry;
 use starter_ext_host::{ExtensionRegistry, TemplateRegistry};
+use starter_ext_supervisor::ReapReport;
 use starter_flow_spi::node::NodeBehavior;
 use starter_spi::tool::Tool;
 
@@ -72,6 +73,13 @@ pub struct AdminState {
     /// v3 — cold-start warmer. Surfaced on the admin endpoint as
     /// `cache.warmer.last_run_at` + `cache.warmer.entries_warmed`.
     pub cache_warmer: Option<starter_cache::Warmer>,
+
+    /// Result of the boot-time supervisor orphan reap — process groups
+    /// left alive by a previously `SIGKILL`ed agent instance that this
+    /// boot reclaimed. Surfaced on `GET /api/v1/admin/supervisor/health`.
+    /// `None` when the extension host is disabled (no supervisors → nothing
+    /// to reap), which the endpoint renders as an empty report.
+    pub supervisor_reaped: Option<Arc<ReapReport>>,
 }
 
 impl AdminState {
@@ -132,6 +140,12 @@ impl AdminState {
     /// Builder: attach the cold-start warmer.
     pub fn with_cache_warmer(mut self, warmer: starter_cache::Warmer) -> Self {
         self.cache_warmer = Some(warmer);
+        self
+    }
+
+    /// Builder: attach the boot-time supervisor orphan-reap report.
+    pub fn with_supervisor_reaped(mut self, reaped: Arc<ReapReport>) -> Self {
+        self.supervisor_reaped = Some(reaped);
         self
     }
 }

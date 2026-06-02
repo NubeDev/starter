@@ -101,6 +101,14 @@ impl RubixOsToolHandlers for RubixOs {
         provision::handle_device_decommission(ctx, &params)
     }
 
+    fn handle_com_nubeio_rubixos_bc_device_assign_page(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        provision::handle_device_assign_page(ctx, &params)
+    }
+
     fn handle_com_nubeio_rubixos_bc_site_create(
         &self,
         ctx: &Self::Ctx,

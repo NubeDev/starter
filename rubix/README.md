@@ -104,6 +104,33 @@ missing in starter, the fix is in starter, not a parallel rubix
 crate. The committed upstream PR list lives in
 [docs/design/STARTER-CHANGES.md](./docs/design/STARTER-CHANGES.md).
 
+## Extension supervisor: process-group lifecycle + orphan reaper
+
+Process-flavour extensions run as child processes under
+`starter-ext-supervisor`. To stop child (and grandchild) processes leaking
+across agent restarts — the failure mode where a `SIGKILL`ed agent (e.g.
+`make reload`, OOM) leaves orphaned `*-extension` processes reparented to
+init — the supervisor:
+
+- spawns every child in its **own process group** and tears the whole group
+  down with `killpg` (SIGTERM → grace → SIGKILL), so a grandchild the
+  extension forked dies with its parent (`kill_on_drop` alone only reaches
+  the direct child);
+- bounded-`wait()`s on every crash path so a child is actually reaped before
+  the supervisor respawns it;
+- writes each child's process-group id to a **pidfile** under
+  `$RUBIX_DATA_ROOT/supervisor-pids/`, and on the next boot **reaps** any
+  group still alive from a prior, hard-killed instance.
+
+Operators see this on two surfaces:
+
+- `GET /api/v1/extensions/overview` (and `/extensions/<id>/metrics`) carries
+  `group_kills_total` per extension — a non-zero, rising value flags an
+  extension that leaks descendants or ignores `SIGTERM`.
+- `GET /api/v1/admin/supervisor/health` reports the boot reaper's results
+  (which process groups were reclaimed at startup). The admin UI renders
+  both at **Admin → Supervisor**.
+
 ## Non-goals (this scope)
 
 - **No frontend.** A future UI is a *client* of this backend.

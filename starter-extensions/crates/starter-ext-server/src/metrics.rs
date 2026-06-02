@@ -50,6 +50,7 @@ pub(crate) async fn metrics(
             restarts_total: h.restarts_total(),
             capability_violations_total: h.capability_violations(),
             events_dropped_total: h.events_dropped(),
+            group_kills_total: h.group_kills_total(),
         },
         // No live supervisor (builtin/wasm, or disabled/stopped): fall
         // back to the record's load-time state and zero gauges. The
@@ -60,6 +61,7 @@ pub(crate) async fn metrics(
             restarts_total: 0,
             capability_violations_total: 0,
             events_dropped_total: 0,
+            group_kills_total: 0,
         },
     };
 

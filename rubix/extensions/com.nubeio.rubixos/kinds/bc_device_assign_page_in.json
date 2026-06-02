@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcDeviceAssignPageInput",
+  "description": "Place an already-commissioned (pending) device on a dashboard page after the fact. Generates the device's widgets on the page and flips its status from `pending` to `provisioned`. Supply an existing `page_id` OR `new_page: { name }` (created on demand under the device's site). `tenant_id` is bound by the host and cannot be supplied.",
+  "type": "object",
+  "properties": {
+    "device_id": {
+      "type": "string",
+      "description": "The device to place (must already exist)."
+    },
+    "page_id": {
+      "type": "string",
+      "description": "Existing page to hang the device's widgets on."
+    },
+    "new_page": {
+      "type": "object",
+      "description": "Create a page on demand (under the device's site) and place the device on it.",
+      "properties": {
+        "name": { "type": "string" }
+      },
+      "required": ["name"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

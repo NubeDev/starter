@@ -35,7 +35,21 @@ hex  = { workspace = true }
 # Backoff jitter (R9: exponential with jitter).
 rand = { workspace = true }
 
+# Safe POSIX signalling for process-group teardown + the boot reaper
+# (`killpg` / `kill`). Unix only; every call site is `#[cfg(unix)]`-gated
+# so the non-unix build falls back to tokio's `start_kill`. No raw FFI —
+# keeps the crate's `#![forbid(unsafe_code)]`.
+[target.'cfg(unix)'.dependencies]
+nix = { workspace = true }
+
 [dev-dependencies]
 tokio      = { version = "1", features = ["rt-multi-thread", "macros", "test-util"] }
 tempfile   = { workspace = true }
 serde_yaml = { workspace = true }
+
+# Tests reach for the same safe POSIX signalling the lib uses (`killpg`,
+# `kill -0` liveness probes) to *prove* process-group teardown reaches a
+# grandchild. `nix` is a `cfg(unix)` *lib* dep, not visible to integration
+# tests, so it is re-declared here as a unix-only dev-dep.
+[target.'cfg(unix)'.dev-dependencies]
+nix = { workspace = true }

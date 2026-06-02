@@ -1,0 +1,42 @@
+# Standalone Tauri v2 app — deliberately its OWN workspace root so it
+# stays independent of the rubix-agent workspace (additive/removable,
+# per BARCODE.md §11). The repo root excludes `rubix/apps` from its
+# member set; the empty `[workspace]` below pins this crate as the root
+# of its own one-member workspace.
+[workspace]
+
+[package]
+name = "provision-app"
+version = "0.1.0"
+edition = "2021"
+description = "Rubix Provision — thin Tauri proxy to rubix-agent + offline scan queue"
+publish = false
+
+# The library Tauri's mobile entrypoints link against; the desktop
+# binary in main.rs calls into it. `cdylib` is required for iOS/Android.
+[lib]
+name = "provision_app_lib"
+crate-type = ["lib", "cdylib", "staticlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-store = "2"
+
+# Transport to rubix-agent: cookies for the session, json bodies,
+# rustls so we don't depend on system OpenSSL on mobile.
+reqwest = { version = "0.12", default-features = false, features = [
+  "json",
+  "cookies",
+  "rustls-tls",
+] }
+
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["sync"] }
+
+# Bundled SQLite: simplest cross-platform/mobile build (no system libsqlite).
+rusqlite = { version = "0.32", features = ["bundled"] }

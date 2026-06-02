@@ -43,7 +43,7 @@ use starter_ext_server::{
 };
 use starter_ext_spi::ExtensionId;
 use starter_ext_store_pg::PgEnablementStore;
-use starter_ext_supervisor::{SharedHostMethodHandler, SupervisorHandle};
+use starter_ext_supervisor::{reaper, ReapReport, SharedHostMethodHandler, SupervisorHandle};
 
 use crate::extensions::RubixHostMethods;
 
@@ -157,6 +157,11 @@ pub struct ExtensionAdminBundle {
     /// handle is wrapped in `Arc` because the MCP adapter clones it
     /// into every per-tool binding it registers.
     pub process_handles: HashMap<ExtensionId, Arc<SupervisorHandle>>,
+    /// Result of the boot-time orphan reap: process groups left alive by a
+    /// prior, `SIGKILL`ed agent instance that this boot cleaned up. Surfaced
+    /// by the admin supervisor-health endpoint so operators can see when
+    /// (and how often) the leak the reaper guards against actually fired.
+    pub reaped: ReapReport,
 }
 
 pub async fn build_extension_admin(
@@ -229,13 +234,41 @@ pub async fn build_extension_admin(
     // autostart spawns supervisors and any child issues its first
     // host call the per-resource manifest gate has the registry
     // it needs.
+    // Pidfile directory for the orphan reaper. Each spawned supervisor
+    // records its child's process-group id here; on the *next* boot we
+    // `killpg` any group still alive from a prior agent instance that was
+    // `SIGKILL`ed before it could tear its children down (the 186-orphan
+    // leak this guards against). Sibling of `installs_dir` so it lives
+    // under the same `$RUBIX_DATA_ROOT`.
+    let pidfile_dir = installs_dir
+        .parent()
+        .map(|p| p.join("supervisor-pids"))
+        .unwrap_or_else(|| installs_dir.join(".supervisor-pids"));
+
+    // Run the reaper *before* autostart so a stale group is killed before
+    // we spawn this instance's children (which could otherwise reuse a pid
+    // and confuse a later reap). Records what was cleaned for the
+    // admin/metrics surface.
+    let reaped = reaper::reap_stale_groups(&pidfile_dir);
+    if reaped.total() > 0 {
+        warn!(target: "rubix-agent::boot::extensions",
+            groups = reaped.total(),
+            killed = reaped.killed(),
+            "boot reaper cleaned process groups orphaned by a prior agent instance");
+        for g in &reaped.groups {
+            info!(target: "rubix-agent::boot::extensions",
+                ext = %g.extension_id, pgid = g.pgid, was_alive = g.was_alive,
+                "reaped supervisor process group");
+        }
+    }
+
     let factory: Arc<dyn SupervisorFactory> = match host_methods {
         Some(handler) => {
             handler.install_extension_registry(registry.clone());
             let shared: SharedHostMethodHandler = handler;
-            Arc::new(WithHostMethodsFactory::new(shared))
+            Arc::new(WithHostMethodsFactory::new(shared).with_pidfile_dir(pidfile_dir.clone()))
         }
-        None => Arc::new(DefaultSupervisorFactory),
+        None => Arc::new(DefaultSupervisorFactory::with_pidfile_dir(pidfile_dir.clone())),
     };
     let mut supervisors: HashMap<String, SupervisorHandle> = HashMap::new();
     // Parallel map keyed by `ExtensionId`, surfaced in the returned
@@ -318,6 +351,7 @@ pub async fn build_extension_admin(
         admin,
         registry,
         process_handles,
+        reaped,
     })
 }
 

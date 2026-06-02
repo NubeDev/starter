@@ -116,6 +116,11 @@ sha2        = "0.10"
 hex         = "0.4"
 rand        = "0.8"
 base64      = "0.22"
+# Safe POSIX wrappers — `starter-ext-supervisor` uses `killpg`/`kill` for
+# process-group teardown + the boot reaper so a wedged grandchild dies
+# with its parent. `signal`/`process` only; no raw FFI, keeping the
+# supervisor's `#![forbid(unsafe_code)]`.
+nix         = { version = "0.29", default-features = false, features = ["signal", "process"] }
 # ULID generator for proxy-owned `invocation_id`s
 # (DOCS/extensions/scope/FLOW-NODES.md R-flow-node-5).
 ulid        = "1"

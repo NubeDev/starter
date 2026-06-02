@@ -106,6 +106,8 @@ pub struct ProcessGauges {
     pub capability_violations_total: u64,
     /// Event-ring evictions.
     pub events_dropped_total: u64,
+    /// Process-group `SIGKILL` escalations (leaked-descendant reaps).
+    pub group_kills_total: u64,
 }
 
 /// A cheap-to-clone handle to the per-extension counter map. Adapters keep
@@ -163,6 +165,7 @@ impl MetricsRegistry {
             worker_runs_total: c.worker_runs,
             worker_failures_total: c.worker_failures,
             events_dropped_total: gauges.events_dropped_total,
+            group_kills_total: gauges.group_kills_total,
         }
     }
 }
@@ -229,6 +232,7 @@ mod tests {
                 restarts_total: 3,
                 capability_violations_total: 2,
                 events_dropped_total: 7,
+                group_kills_total: 4,
             },
         );
 
@@ -243,6 +247,7 @@ mod tests {
         assert_eq!(merged.restarts_total, 3);
         assert_eq!(merged.capability_violations_total, 2);
         assert_eq!(merged.events_dropped_total, 7);
+        assert_eq!(merged.group_kills_total, 4);
         assert!(merged.process.is_none());
     }
 }

@@ -1,15 +1,35 @@
-/* Wrap the entire Tailwind output in the `rubix-extension` cascade
- * layer. The host's theme.css declares `@layer rubix-extension,
- * tailwindcss;` first, which makes every host utility — including
- * responsive variants like `lg:grid-cols-[...]` — win over anything
- * this extension's runtime-injected <style> tag emits. Without this
- * isolation the extension's bundle ships its own `.grid-cols-1`,
- * `.flex`, etc. and, because it's injected AFTER the host bundle, it
- * silently overrides host responsive utilities by source order. */
-@import "tailwindcss" layer(rubix-extension) no-preflight;
+/* Extension CSS isolation strategy:
+ *
+ * The extension ships its own Tailwind bundle and renders alongside
+ * the host's bundle. Both emit identical class names (`.grid-cols-1`,
+ * `.flex`, `.bg-card`, …) so without isolation they collide on every
+ * shared DOM node — and whichever bundle loaded later wins by source
+ * order. That coupling breaks either host or extension responsive
+ * variants, depending on load order.
+ *
+ * The Vite config (vite.config.ts) wires a PostCSS plugin that
+ * prefixes every emitted selector with `[data-ext-id="…"]`, so the
+ * extension's utility rules ONLY apply inside its own DOM subtree.
+ * Every extension page wraps its content in a `<div data-ext-id=…>`
+ * (see main.tsx `Page` + nav-tree.tsx), so the scope matches.
+ *
+ * Imports below:
+ *   - `tailwindcss/theme` with `theme(reference)` brings token names
+ *     into the registry without emitting their values (the host owns
+ *     `:root` token values).
+ *   - `tailwindcss/utilities` emits the utility class rules. We skip
+ *     `tailwindcss/preflight` so the extension doesn't smash host
+ *     element-level defaults.
+ *
+ * The legacy shorthand `@import "tailwindcss" no-preflight;` is NOT a
+ * valid v4 directive — the CSS parser treats the trailing token as a
+ * media query, which is always false, so every utility silently sits
+ * behind a media query that never matches and nothing renders.
+ */
+@import "tailwindcss/theme" theme(reference);
+@import "tailwindcss/utilities";
 
-/* Energy dashboard keyframes + utilities (also layered into
- * `rubix-extension` so host responsive variants stay authoritative). */
+/* Energy dashboard keyframes + utilities. */
 @import "./energy/animations.css";
 
 /* `@theme reference` — tells Tailwind v4 these token names exist so it

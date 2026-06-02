@@ -11,7 +11,7 @@ import {
 import { LayoutGrid, MapPin, FileCode, Wand2, Eye } from "lucide-react";
 import { EXTENSION_ID } from "../types";
 import PwaApp from "../pwa";
-import { DevicesTab, SitesTab, TemplatesTab, WizardTab, PagePreviewTab } from "./tabs";
+import { DevicesTab, SitesTab, TemplatesTab, WizardTab, PagePreviewTab, DevicePage } from "./tabs";
 
 type IconCmp = React.ComponentType<{ className?: string }>;
 const TABS: ReadonlyArray<{ id: string; label: string; icon: IconCmp; render: () => React.ReactElement }> = [
@@ -59,16 +59,58 @@ export function ProvisionRouter(): React.ReactElement {
   );
 }
 
+// Read the device id a deep-link / share URL points at, if the current
+// URL is the device page (`…/provision/device?id=…`). Returns null on the
+// list tabs. Lets a scanned/shared link land directly on the device page.
+function readDeviceFromUrl(): string | null {
+  if (typeof window === "undefined") return null;
+  const { pathname, search } = window.location;
+  if (!pathname.includes("/provision/device")) return null;
+  return new URLSearchParams(search).get("id");
+}
+
 function AdminPanel({ initial }: { initial: string }): React.ReactElement {
   const [active, setActive] = React.useState(initial);
+  // The device page is an overlay route driven by the URL (`?id=…`), so a
+  // shared/scanned link or browser back/forward selects it. `gotoDevice` /
+  // `gotoDevicesList` in `nav.ts` push history + dispatch popstate.
+  const [deviceId, setDeviceId] = React.useState<string | null>(() => readDeviceFromUrl());
+  React.useEffect(() => {
+    const onNav = () => setDeviceId(readDeviceFromUrl());
+    window.addEventListener("popstate", onNav);
+    return () => window.removeEventListener("popstate", onNav);
+  }, []);
+
   const tab = TABS.find((t) => t.id === active) ?? TABS[0]!;
-  return (
-    <>
-      <div>
-        <h3 className="text-lg font-semibold tracking-tight">Provisioning</h3>
-        <p className="text-sm text-muted-foreground">Scan-to-dashboard device commissioning</p>
+
+  if (deviceId) {
+    return (
+      <div className="ext-dash-shell flex flex-col gap-4">
+        <DevicePage deviceId={deviceId} />
       </div>
-      <nav className="flex flex-wrap gap-1 border-b border-border/60">
+    );
+  }
+
+  return (
+    <div className="ext-dash-shell flex flex-col gap-4">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-col gap-0.5">
+          <span className="ext-eyebrow">IoT Provisioning</span>
+          <h3 className="text-xl font-semibold tracking-tight text-foreground">Provisioning</h3>
+          <p className="text-sm text-muted-foreground">Scan-to-dashboard device commissioning</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-3 py-1 text-xs text-muted-foreground">
+            <span className="inline-block size-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_2px_color-mix(in_oklab,var(--color-primary)_50%,transparent)]" />
+            live
+          </span>
+          <span className="rounded-full border border-border/60 px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+            v2.4.0
+          </span>
+        </div>
+      </header>
+
+      <nav className="flex flex-wrap gap-1 rounded-xl border border-border/60 bg-muted/20 p-1">
         {TABS.map((t) => {
           const Icon = t.icon;
           const on = t.id === active;
@@ -77,11 +119,12 @@ function AdminPanel({ initial }: { initial: string }): React.ReactElement {
               key={t.id}
               type="button"
               onClick={() => setActive(t.id)}
+              aria-current={on ? "page" : undefined}
               className={
-                "flex items-center gap-1.5 rounded-t-md px-3 py-2 text-sm transition-colors " +
+                "flex cursor-pointer items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm transition-colors duration-200 " +
                 (on
-                  ? "border-b-2 border-primary font-medium text-foreground"
-                  : "text-muted-foreground hover:text-foreground")
+                  ? "bg-card font-medium text-foreground shadow-sm ring-1 ring-border/60"
+                  : "text-muted-foreground hover:bg-card/50 hover:text-foreground")
               }
             >
               <Icon className="size-4" />
@@ -90,7 +133,8 @@ function AdminPanel({ initial }: { initial: string }): React.ReactElement {
           );
         })}
       </nav>
+
       <div>{tab.render()}</div>
-    </>
+    </div>
   );
 }

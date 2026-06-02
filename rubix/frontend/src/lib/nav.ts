@@ -5,6 +5,7 @@ import {
   Database,
   Gauge,
   GitBranch,
+  HeartPulse,
   Home,
   Layers,
   MessageSquare,
@@ -77,6 +78,12 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Database,
       },
       { labelKey: 'nav.item.console',   href: '/admin/console',   icon: Terminal },
+      {
+        labelKey: 'nav.item.supervisor',
+        defaultMessage: 'Supervisor',
+        href: '/admin/supervisor',
+        icon: HeartPulse,
+      },
     ],
   },
 ]

@@ -19,7 +19,7 @@ use crate::provision::RubixOsCtx;
 pub fn resolve(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Placement> {
     let site_id = opt_str(params, "site_id");
     let location_id = resolve_location(ctx, params, site_id.as_deref())?;
-    let page_id = resolve_page(ctx, params)?;
+    let page_id = resolve_page(ctx, params, site_id.as_deref())?;
     Ok(Placement {
         site_id,
         location_id,
@@ -53,7 +53,11 @@ fn resolve_location(
 
 /// Either the explicit `page_id`, or a freshly-created page from
 /// `new_page: { name }`.
-fn resolve_page(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Option<String>> {
+fn resolve_page(
+    ctx: &RubixOsCtx,
+    params: &Value,
+    site_id: Option<&str>,
+) -> starter_ext_sdk::Result<Option<String>> {
     if let Some(id) = opt_str(params, "page_id") {
         return Ok(Some(id));
     }
@@ -63,10 +67,24 @@ fn resolve_page(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Opt
     let page_id = slug_id("page", &name);
     let mut row = Map::new();
     row.insert("page_id".into(), json!(page_id));
+    // A page belongs to the site the device is being placed at, so the
+    // client can browse "Site → its pages".
+    row.insert("site_id".into(), json!(site_id));
     row.insert("name".into(), json!(name));
     ctx.warehouse_write()
         .insert("bc_pages", vec![Row::from_map(row)])?;
     Ok(Some(page_id))
+}
+
+/// Resolve only the page (existing `page_id` or `new_page: { name }`),
+/// creating it on demand under `site_id`. Used by `bc_device_assign_page`
+/// to place an already-commissioned device on a page after the fact.
+pub fn resolve_page_only(
+    ctx: &RubixOsCtx,
+    params: &Value,
+    site_id: Option<&str>,
+) -> starter_ext_sdk::Result<Option<String>> {
+    resolve_page(ctx, params, site_id)
 }
 
 /// Read `{ name }` out of a `new_location` / `new_page` object.

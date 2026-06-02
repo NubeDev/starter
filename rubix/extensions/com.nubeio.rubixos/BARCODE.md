@@ -1,14 +1,27 @@
 # BARCODE.md — Scan-to-Dashboard provisioning system
 
-**Status:** scope / design intent. Nothing here is built yet.
+**Status:** **built — B0–B7 landed** (catalog provisioning end-to-end).
+Live ingest of real readings remains the sibling concern noted in
+[§10](#10-open-questions). See [§9 Phasing](#9-phasing) for the per-phase
+state and [§6 Frontend](#6-frontend--app) for what the admin UI actually
+does today.
 **Owner:** `com.nubeio.rubixos` extension (this directory).
-**One-line:** *Scan a sticker on a sensor → it appears on a dashboard,
-trending and alarming, placed at a site — without anyone opening a
-laptop.*
+**One-line:** *Add a sensor (scan a sticker **or** pick its type) → it
+appears on a site's dashboard page, trending and alarming, placed at a
+location — without anyone hand-editing config.*
 
 This document is the source of truth for the feature. Keep it updated
 when the shape changes. It is deliberately **self-contained and
 removable** (see [§11 Removability](#11-removability)).
+
+> **What changed since the original scope:** (1) a page now **belongs to
+> a site** (`bc_pages.site_id`) so the client browses *Site → its
+> dashboards* — see [§4.4](#44-bc_pages--a-page-belongs-to-a-site); (2)
+> the admin wizard added a **"pick a device type"** path and **inline
+> site creation** so a human with no barcode and an empty system can
+> still provision — see [§6.2](#62-admin-panel-federated-ui-in-this-extension);
+> (3) all list views re-read fresh after a write so newly-added
+> devices/pages appear without a reload.
 
 ---
 
@@ -48,13 +61,21 @@ Network        LoRa | BACnet | Rubix(REST)      ← the transport
        └─ Point   Temp, Humidity, Battery, DI-1   ← one readable value
 ```
 
-Placement is orthogonal to the network hierarchy:
+Placement is orthogonal to the network hierarchy. A **site** has both a
+physical breakdown (locations) and one or more display surfaces (pages):
 
 ```
-Site           "Building A"        ← a customer location (may pre-exist)
-  └─ Location  "Level 3 — North"   ← a room/zone/floor; created on demand
-       └─ (devices are placed here)
+Site           "Building A"          ← a customer site (may pre-exist; created on demand)
+  ├─ Location  "Level 3 — North"     ← a room/zone/floor; where the device physically sits
+  │    └─ (devices are placed here)
+  └─ Page      "Floor 3 dashboard"   ← a screen the client opens; widgets render here
+       └─ (widgets for placed devices render here)
 ```
+
+So a device carries **both** a `location_id` (physical) and lands its
+widgets on a **page that belongs to the same site** (display). The client
+journey is *Site → its pages → the sensor tiles*. See
+[§4.4](#44-bc_pages--a-page-belongs-to-a-site).
 
 The verb is **provision**:
 
@@ -243,12 +264,12 @@ All new tables follow the host convention: declared **unprefixed** in
 | table (unprefixed)     | what it holds                                            | key column     |
 |------------------------|----------------------------------------------------------|----------------|
 | `bc_templates`         | the YAML files (raw text + parsed metadata)              | `template`     |
-| `bc_sites`             | customer locations ("Building A")                         | `site_id`      |
+| `bc_sites`             | customer sites ("Building A")                            | `site_id`      |
 | `bc_locations`         | zones/floors/rooms under a site                          | `location_id`  |
-| `bc_devices`           | provisioned devices (one row per scan)                   | `device_id`    |
+| `bc_devices`           | provisioned devices (one row per add)                    | `device_id`    |
 | `bc_points`            | points expanded from the template per device             | `point_id`     |
 | `bc_widgets`           | widget instances placed on a page (generated)            | `widget_id`    |
-| `bc_pages`             | dashboard pages the user assigns devices to              | `page_id`      |
+| `bc_pages`             | dashboard pages **scoped to a site** (`site_id`)         | `page_id`      |
 | `bc_alarms`            | armed alarm rules (materialised from template + toggles) | `alarm_id`     |
 | `bc_provision_log`     | audit: every scan/provision/decommission event           | `event_id`     |
 
@@ -313,10 +334,41 @@ files in this repo are just the **seed** loaded at first boot.
     # templates work unchanged.
 ```
 
-`bc_sites`, `bc_locations`, `bc_widgets`, `bc_pages`, `bc_alarms`,
-`bc_provision_log` follow the same shape — full column lists land with
-the implementation; the columns above are load-bearing for the
-walkthrough in [§8](#8-end-to-end-walkthrough).
+### 4.4 `bc_pages` — a page belongs to a site
+
+```yaml
+- name: bc_pages
+  order_by: [site_id, page_id]
+  columns:
+    - { name: page_id,    type: "TEXT" }
+    - { name: site_id,    type: "TEXT", default: "NULL" }  # FK → bc_sites.site_id
+    - { name: name,       type: "TEXT", default: "NULL" }
+    - { name: created_at, type: "TIMESTAMPTZ", default: "now()" }
+```
+
+A **page is a site's dashboard**: it belongs to exactly one site, so the
+mental model is *Site → Location* (where the device physically is) **and**
+*Site → Page → Widget* (what a viewer looks at), both hanging off the same
+site:
+
+```
+Site  "Building A"
+  ├─< Location  "Level 3 — North"   ← PHYSICAL: where the sensor sits
+  └─< Page      "Floor 3 dashboard" ← DISPLAY: a screen the client opens
+                   └─< Widget ── Device.Point   ← one reading, rendered
+```
+
+`site_id` is **nullable** so pages created before this column existed
+read as *unassigned* (they still load; they just aren't tied to a site).
+`bc_provision` stamps the page's `site_id` from the device's chosen site,
+and `bc_pages_list` takes an optional `site_id` filter — empty returns
+every page, a site id returns just that site's dashboards. That filter is
+the *"client opens a site, sees its dashboards"* query.
+
+`bc_sites`, `bc_locations`, `bc_widgets`, `bc_alarms`,
+`bc_provision_log` follow the same shape; the columns above plus
+[§4.1–4.3](#41-bc_templates) are load-bearing for the walkthrough in
+[§8](#8-end-to-end-walkthrough).
 
 **Why histories is reused, not re-invented:** the live readings table
 (`com_nubeio_rubixos__histories`) already exists as a Timescale
@@ -413,8 +465,9 @@ sanity):
 
 ## 6. Frontend / app
 
-Two clients, same backend tools. The phone-first flow is the headline
-("no laptop"); the admin panel is the management surface.
+Two clients, same backend tools and the same shared `Place` step. The
+admin panel is the built, primary surface today; the phone PWA reuses the
+same flow for one-handed field use.
 
 ### 6.1 Phone app (PWA first, native later)
 
@@ -426,8 +479,11 @@ field use:
    wedge input. → calls `bc_decode`.
 2. **Identify** — shows decoded device card ("Droplet · LoRa ·
    DRP-9F2C18", template-derived icon + point list preview).
-3. **Place** — pick **Site** (searchable) → pick **Location** or *＋ New
-   location* (inline create). Optional: pick/create **Page**.
+3. **Place** — pick **Site** (or *＋ create one inline*) → pick
+   **Location** or *＋ New location* → pick/create a **Dashboard page**.
+   The page picker is **scoped to the chosen site** (a page belongs to a
+   site), and only appears once a site is selected. Shared component:
+   [`ui-src/pwa/place.tsx`](ui-src/pwa/place.tsx).
 4. **Toggles** — two switches: *Trending* / *Alarming* (pre-filled from
    template defaults).
 5. **Confirm** — one `bc_provision` call. Success screen shows the live
@@ -438,19 +494,39 @@ gateway is unreachable and sync later. Native (Flutter — see the
 `flutter-*` skills) is a later wrapper if BLE/NFC commissioning is
 needed.
 
-### 6.2 Admin panel (federated UI, in this extension)
+### 6.2 Admin panel (federated UI, in this extension) — **built**
 
-A new `module: "./Provision"` exposed in `contributes.ui[]` (same
-mechanism as the existing `Main` / `Sidebar` / `NavTree`):
+The `./Provision` module (`contributes.ui[].entry: ui/remoteEntry.js`)
+mounts under `/extensions/com.nubeio.rubixos/provision/*` with five tabs
+(see [`ui-src/provision/index.tsx`](ui-src/provision/index.tsx)):
 
-- **Devices** table — list/search/filter `bc_devices`, inline rename,
-  re-place, decommission. Drill-in → live points + per-point
-  trend/alarm toggles.
-- **Sites & Locations** — tree CRUD.
-- **Templates** — list YAML templates, edit-in-place (Monaco), validate,
-  `bc_template_upsert`. Add a new device type without touching the repo.
-- **Provision wizard** — the desktop twin of the phone flow (paste a
-  barcode or type a serial).
+- **Devices** — list/search/filter `bc_devices`, inline rename, print
+  label, decommission. Drill-in → points + per-point toggles.
+- **Sites & Locations** — site + location tree with inline create.
+- **Templates** — list YAML templates, edit-in-place, validate,
+  `bc_template_upsert`. Add a device type without touching the repo.
+- **Provision wizard** — *"add a device"* in two modes:
+  - **Choose a type** (default) — a **dropdown of templates** with an
+    auto-generated serial. **No barcode required** — this is the path a
+    human uses with a sensor in hand. It synthesises the canonical
+    `rubix://add?…` string and runs the same `bc_decode` → place →
+    provision flow.
+  - **Scan barcode** — paste/scan a `rubix://add?…` URL or serial.
+  Then the shared `Place` step (incl. **inline site create**, so an empty
+  system isn't a dead end), trend/alarm switches, and **Add device**.
+  The button stays disabled until a site **and** a page are chosen, with
+  an inline hint explaining why — a device with no page is invisible to
+  viewers. See [`ui-src/provision/tabs/wizard-tab.tsx`](ui-src/provision/tabs/wizard-tab.tsx).
+- **Page preview** — the **client view**: pick a **Site** → one of its
+  **pages** → the page renders its widget tiles. This is the
+  *Site → dashboards → sensors* surface the end user sees.
+
+**Freshness:** every mutation re-reads the affected lists (a shared
+refresh signal in [`ui-src/provision/refresh.ts`](ui-src/provision/refresh.ts)
+plus always-fresh list reads in [`ui-src/api.ts`](ui-src/api.ts)), so a
+just-added device or page shows up **without a page reload**. The ~100 ms
+read-after-write window on a freshly-committed row is covered by staggered
+re-reads.
 
 ### 6.3 Premade widgets (generated from YAML)
 
@@ -530,18 +606,24 @@ psql -c "SELECT event, device_id, step FROM com_nubeio_rubixos__bc_provision_log
 
 ## 9. Phasing
 
-| phase | deliverable                                                                 | done when                                              |
-|-------|-----------------------------------------------------------------------------|--------------------------------------------------------|
-| **B0**| `bc_*` tables in `block.yaml` + write grant; boots, tables exist            | `\dt com_nubeio_rubixos__bc_*` shows 9 tables          |
-| **B1**| `bc_decode` + `templates/droplet.yaml` parse; `bc_template_upsert/_list`    | step 1 of [§8](#8-end-to-end-walkthrough) returns      |
-| **B2**| `bc_site/location/page` CRUD + `bc_provision` (device + points + log)       | step 2 provisions; re-scan is idempotent               |
-| **B3**| widget generation + `bc_widgets` + page renderer reads them                 | step 4 — Droplet card renders from YAML                |
-| **B4**| trend/alarm toggles wired (points write to `histories`; `bc_alarms` armed)  | a value > 35 raises the temp alarm                     |
-| **B5**| admin panel (`./Provision` UI module): devices/sites/templates CRUD         | rename + re-place + edit template from the browser     |
-| **B6**| phone PWA: scan → place → confirm                                           | a phone scan provisions end-to-end                     |
-| **B7**| micro_edge + io_22 templates; `repeat:` expansion; label render             | IO-22 provisions 22 points; printed label re-scans     |
+| phase | status | deliverable                                                                 | done when                                              |
+|-------|--------|-----------------------------------------------------------------------------|--------------------------------------------------------|
+| **B0**| ✅ | `bc_*` tables in `block.yaml` + write grant; boots, tables exist            | `\dt com_nubeio_rubixos__bc_*` shows 9 tables          |
+| **B1**| ✅ | `bc_decode` + `templates/droplet.yaml` parse; `bc_template_upsert/_list`    | step 1 of [§8](#8-end-to-end-walkthrough) returns      |
+| **B2**| ✅ | `bc_site/location/page` CRUD + `bc_provision` (device + points + log)       | step 2 provisions; re-add is idempotent                |
+| **B3**| ✅ | widget generation + `bc_widgets` + page renderer reads them                 | step 4 — Droplet card renders from YAML                |
+| **B4**| ⚠️ | trend/alarm toggles wired; `bc_alarms` armed at provision                   | toggles + `bc_alarms` rows land; **alarm *evaluation* depends on live ingest** (see [§10.2](#10-open-questions)) |
+| **B5**| ✅ | admin panel (`./Provision` UI module): devices/sites/templates CRUD + wizard + page preview | rename + re-place + edit template + add device from the browser |
+| **B6**| ✅ | phone PWA: scan/pick → place → confirm                                       | a phone add provisions end-to-end                      |
+| **B7**| ✅ | micro_edge + io_22 templates; `repeat:` expansion; label render             | IO-22 provisions 22 points; printed label re-scans     |
 
-B0–B4 is the spine ("scan to dashboard"). B5–B7 is breadth.
+Legend: ✅ built · ⚠️ partial (catalog side built; depends on a sibling
+concern). B0–B4 is the spine ("add to dashboard"); B5–B7 is breadth.
+
+Beyond the original B-list, two refinements landed: **pages are
+site-scoped** ([§4.4](#44-bc_pages--a-page-belongs-to-a-site)) and the
+wizard gained a **no-barcode "pick a type" path + inline site create**
+([§6.2](#62-admin-panel-federated-ui-in-this-extension)).
 
 ---
 
@@ -594,31 +676,43 @@ and the `com.rubix.example` / `com.rubix.geo` CRUD references.
 
 ---
 
-## 12. Files this feature will add (proposed layout)
+## 12. Files this feature adds (as built)
 
 ```
 com.nubeio.rubixos/
 ├── BARCODE.md                      ← this scope
-├── block.yaml                      ← + bc_* tables, + write grant, + bc_* tools, + ./Provision ui
-├── templates/                      ← NEW · seed YAML device templates
-│   ├── droplet.yaml
-│   ├── micro_edge.yaml
-│   └── io_22.yaml
-├── kinds/                          ← + bc_* tool schemas + bc_*_list read templates/SQL
-│   ├── bc_decode_in.json   / bc_decode.md
-│   ├── bc_provision_in.json/ bc_provision_out.json / bc_provision.md
-│   ├── bc_devices_list.sql / bc_devices_list_params.json
-│   └── … (site/location/template/widget schemas + SQL)
-├── process/src/
-│   ├── main.rs                     ← + bc_* handlers (thin proxies over warehouse_write)
-│   └── provision/                  ← NEW · decode, template parse, expand, orchestrate
-│       ├── decode.rs
-│       ├── template.rs
-│       └── provision.rs
+├── block.yaml                      ← bc_* tables (incl. bc_pages.site_id), write grant, bc_* tools, ./Provision ui
+├── templates/                      ← seed YAML device templates
+│   ├── droplet.yaml · micro_edge.yaml · io_22.yaml
+├── kinds/                          ← bc_* tool schemas + bc_*_list read templates (SQL + params)
+│   ├── bc_decode_in.json / bc_provision_in.json / …
+│   ├── bc_pages_list.sql + _params.json   (optional $site_id filter)
+│   └── bc_devices_list.sql, bc_widgets_by_page.sql, site/location/template SQL
+├── process/src/provision/          ← backend (separate process binary)
+│   ├── mod.rs                      ← tool handlers (thin proxies over warehouse_write)
+│   ├── decode.rs · identity.rs     ← barcode → ScannedIdentity
+│   ├── template.rs · template_store.rs ← YAML parse + bc_templates store
+│   ├── orchestrate.rs              ← bc_provision: the multi-insert flow
+│   ├── placement.rs                ← resolve/create site · location · page (stamps page.site_id)
+│   ├── points.rs · widgets.rs · alarms.rs · device.rs · label.rs · crud.rs · ids.rs
 └── ui-src/
-    ├── provision/                  ← NEW · admin panel module (./Provision)
-    └── pwa/                        ← NEW · phone scan-to-add flow
+    ├── api.ts                      ← callTool/fetchTemplate (fresh list reads)
+    ├── provision/                  ← admin panel module (./Provision)
+    │   ├── index.tsx               ← 5-tab shell
+    │   ├── bc-api.ts · bc-types.ts · build-input.ts
+    │   ├── refresh.ts              ← shared post-mutation refresh signal
+    │   ├── tabs/                   ← devices · sites · templates · wizard · page-preview (+ detail/label/identify)
+    │   ├── page-render/ · widgets/ ← widget renderers keyed by the `widget` enum
+    └── pwa/                        ← phone flow: scan · identify · place (shared) · confirm
 ```
+
+> **Runtime note:** this extension is `runtime: kind: process` — the
+> backend is a separate binary (`rubix-nubeio-rubixos-extension`), not
+> in-host. The host serves `ui/remoteEntry.js` and pins the `block.yaml`
+> manifest hash at boot (SCOPE R3), so a `block.yaml` change requires
+> rebuilding the binary against it and restarting the agent; table
+> *column* additions are not auto-migrated (`boot::extension_tables`
+> only CREATEs). UI-only changes just need the bundle redeployed.
 
 ---
 
