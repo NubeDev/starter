@@ -77,7 +77,9 @@ mod ui;
 
 pub use admin::{ExtensionAdmin, ExtensionAdminBuilder};
 pub use capabilities::{CapabilityFactory, StubCapabilityFactory};
-pub use cleanup::{CleanupError, CleanupItem, CleanupKind, CleanupProvider, EnablementRowProvider};
+pub use cleanup::{
+    CleanupError, CleanupItem, CleanupKind, CleanupProvider, EnablementRowProvider, PostInstallHook,
+};
 pub use factory::{
     DefaultSupervisorFactory, SupervisorFactory, SupervisorFactoryError, WithHostMethodsFactory,
 };

@@ -6,6 +6,26 @@ import { useLook } from '../theme/useLook'
 import { TextInput } from '../components/FormKit'
 import { PrimaryButton } from '../components/ui'
 
+// Turn a getUserMedia failure into something a field tech can act on. The
+// DOMException `name` is the reliable signal (messages vary by WebView); a
+// denied prompt throws NotAllowedError, which on Android means the OS-level
+// CAMERA grant was declined and must be re-enabled in app settings.
+function describeCamError(e: unknown): string {
+  const name = e instanceof DOMException ? e.name : ''
+  switch (name) {
+    case 'NotAllowedError':
+    case 'SecurityError':
+      return 'Camera permission denied. Enable it in Settings → Apps → Rubix Provision → Permissions, then reopen the scanner.'
+    case 'NotFoundError':
+    case 'OverconstrainedError':
+      return 'No camera found on this device.'
+    case 'NotReadableError':
+      return 'Camera is in use by another app. Close it and try again.'
+    default:
+      return e instanceof Error ? e.message : 'Camera unavailable'
+  }
+}
+
 // Camera viewport (glass-framed, animated scan-line) + a manual fallback to
 // paste/wedge a rubix://add?… URL or serial. Uses @zxing/browser for QR/Code128.
 // Emits the raw decoded string upward; the flow decodes it via bc_decode.
@@ -32,7 +52,7 @@ export function Scanner({ onCode }: { onCode: (raw: string) => void }) {
         controls = c
         if (stopped) c.stop()
       })
-      .catch((e: unknown) => setCamError(e instanceof Error ? e.message : 'Camera unavailable'))
+      .catch((e: unknown) => setCamError(describeCamError(e)))
 
     return () => {
       stopped = true

@@ -7,6 +7,7 @@
 //! (managed state); this struct is shared and stateless beyond the jar.
 
 use std::sync::Arc;
+use std::time::{Duration, Instant};
 
 use reqwest::Client;
 use serde_json::Value;
@@ -35,6 +36,32 @@ impl AgentClient {
             .build()
             .map_err(AgentError::from)?;
         Ok(Self { http })
+    }
+
+    /// `GET {base}/healthz` — a no-auth liveness probe at the host root
+    /// (NOT under the `/api/v1` prefix). Used by the Connect screen's
+    /// "Ping" button to tell "agent unreachable" apart from "bad
+    /// credentials" before a login is even attempted. A short timeout
+    /// keeps a wrong host/IP from hanging the UI. Returns the round-trip
+    /// latency in milliseconds on success.
+    pub async fn ping(&self, base_url: &str, millis: u64) -> Result<u128, AgentError> {
+        let base = base_url.trim_end_matches('/');
+        let url = format!("{base}/healthz");
+        let started = Instant::now();
+        let resp = self
+            .http
+            .get(url)
+            .timeout(Duration::from_millis(millis))
+            .send()
+            .await?;
+        let elapsed = started.elapsed().as_millis();
+        if resp.status().is_success() {
+            Ok(elapsed)
+        } else {
+            let status = resp.status().as_u16();
+            let body = resp.text().await.unwrap_or_default();
+            Err(AgentError::Status { status, body })
+        }
     }
 
     /// `POST {base}/api/v1/auth/login` — sets the session cookie in the

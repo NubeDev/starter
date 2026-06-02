@@ -34,7 +34,13 @@ export function NavBar({
   }
 
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2 pb-6">
+    <div
+      className="pointer-events-none absolute inset-x-0 bottom-0 z-40 flex flex-col items-center gap-2"
+      // Sit clear of the Android system nav bar / iOS home indicator: pad by
+      // the device's safe-area inset plus a 24px (pb-6) breathing gap. Without
+      // the inset the dock is drawn under the system bar and gets clipped.
+      style={{ paddingBottom: 'calc(env(safe-area-inset-bottom, 0px) + 1.5rem)' }}
+    >
       {/* overflow rail — secondary pages, revealed above the bar */}
       <AnimatePresence>
         {overflowOpen && secondary.length > 0 && (

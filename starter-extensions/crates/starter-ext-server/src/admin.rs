@@ -26,7 +26,8 @@ use starter_ext_spi::{ExtensionId, Manifest, RuntimeKind};
 use starter_ext_supervisor::SupervisorHandle;
 
 use crate::cleanup::{
-    CleanupItem, CleanupProvider, EnablementRowProvider, I18nCacheProvider, UiCacheProvider,
+    CleanupItem, CleanupProvider, EnablementRowProvider, I18nCacheProvider, PostInstallHook,
+    UiCacheProvider,
 };
 use crate::etag::EtagCache;
 use crate::factory::{DefaultSupervisorFactory, DynFactory};
@@ -49,6 +50,11 @@ struct Inner {
     /// `build()`; consumer-supplied providers (rubix's warehouse + skill
     /// reclaimers) follow.
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
+    /// Optional consumer-supplied step run by the install handler right
+    /// after a bundle is staged + validated (rubix uses it to create the
+    /// bundle's warehouse tables immediately, instead of waiting for the
+    /// next boot's DDL pass). `None` on a `TestApp` or the generic host.
+    post_install_hook: Option<Arc<dyn PostInstallHook>>,
     /// Ids installed during this process run that are not yet live in the
     /// sealed registry — they surface on next boot. Surfaced as
     /// `restart_required` on the list projection so the UI can badge them.
@@ -102,6 +108,7 @@ impl ExtensionAdmin {
             worker_states: None,
             installs_dir: None,
             cleanup_providers: Vec::new(),
+            post_install_hook: None,
         }
     }
 
@@ -168,6 +175,12 @@ impl ExtensionAdmin {
     /// wired. Used by the install / uninstall endpoints (Phase D.1).
     pub(crate) fn installs_dir(&self) -> Option<&std::path::Path> {
         self.inner.installs_dir.as_deref()
+    }
+
+    /// The consumer-supplied post-install hook, if one was wired. The
+    /// install handler runs it after a successful install.
+    pub(crate) fn post_install_hook(&self) -> Option<&Arc<dyn PostInstallHook>> {
+        self.inner.post_install_hook.as_ref()
     }
 
     pub(crate) fn worker_states(&self, id: &ExtensionId) -> Vec<serde_json::Value> {
@@ -292,6 +305,7 @@ pub struct ExtensionAdminBuilder {
     worker_states: Option<WorkerStatesFn>,
     installs_dir: Option<PathBuf>,
     cleanup_providers: Vec<Arc<dyn CleanupProvider>>,
+    post_install_hook: Option<Arc<dyn PostInstallHook>>,
 }
 
 impl ExtensionAdminBuilder {
@@ -361,6 +375,15 @@ impl ExtensionAdminBuilder {
         self
     }
 
+    /// Register the [`PostInstallHook`] the install handler runs after a
+    /// bundle is validated (rubix wires its warehouse-table creator here so
+    /// a freshly-installed bundle's tables exist immediately, rather than
+    /// only after the next boot's DDL pass).
+    pub fn with_post_install_hook(mut self, hook: Arc<dyn PostInstallHook>) -> Self {
+        self.post_install_hook = Some(hook);
+        self
+    }
+
     /// Materialise the [`ExtensionAdmin`].
     pub fn build(self) -> ExtensionAdmin {
         let registry = self.registry;
@@ -392,6 +415,7 @@ impl ExtensionAdminBuilder {
                 metrics: self.metrics.unwrap_or_default(),
                 worker_states: self.worker_states,
                 installs_dir: self.installs_dir,
+                post_install_hook: self.post_install_hook,
             }),
         }
     }

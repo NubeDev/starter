@@ -278,6 +278,28 @@ pub(crate) async fn install(
         },
     );
 
+    // Run the consumer-supplied post-install hook (rubix: create the
+    // bundle's warehouse tables now, so writes land on a real schema
+    // before the restart makes the extension code live). Best-effort:
+    // the bundle is already on disk and the boot-time DDL pass is the
+    // backstop, so a hook failure logs but does not fail the install.
+    if let (Some(hook), Some(manifest)) = (admin.post_install_hook(), record.manifest.as_ref()) {
+        match hook.run(&ext_id, manifest).await {
+            Ok(summary) => tracing::info!(
+                target: "starter_ext_server::lifecycle",
+                id = %ext_id.as_str(),
+                summary = %summary,
+                "post-install hook ran",
+            ),
+            Err(e) => tracing::warn!(
+                target: "starter_ext_server::lifecycle",
+                id = %ext_id.as_str(),
+                err = %e,
+                "post-install hook failed (non-fatal; boot DDL is the backstop)",
+            ),
+        }
+    }
+
     tracing::info!(
         target: "starter_ext_server::lifecycle",
         id = %ext_id.as_str(),

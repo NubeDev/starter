@@ -1,4 +1,4 @@
-import type { AuthUser, QueueItem, Transport } from './transport'
+import type { AuthUser, PingResult, QueueItem, Transport } from './transport'
 
 // Web/fetch implementation — talks to rubix-agent REST directly when NOT running
 // under Tauri. Carries the session cookie (credentials:'include') + the CSRF
@@ -90,6 +90,29 @@ export function createWebTransport(): Transport {
 
   return {
     kind: 'web',
+
+    async ping(nextBase): Promise<PingResult> {
+      // `/healthz` lives at the agent host ROOT, not under `/api/v1`.
+      // Same-origin/prod: hit `${root}/healthz`. In browser dev the Vite
+      // proxy only forwards `/api`, so a bare `/healthz` won't reach the
+      // agent — but the web build is not the mobile target this is for.
+      const root = nextBase.replace(/\/+$/, '')
+      const target = root ? `${root}/healthz` : '/healthz'
+      const ctrl = new AbortController()
+      const timer = setTimeout(() => ctrl.abort(), 4000)
+      const started = performance.now()
+      try {
+        const res = await fetch(target, { method: 'GET', signal: ctrl.signal })
+        const latency = Math.round(performance.now() - started)
+        if (res.ok) return { ok: true, latency_ms: latency, message: `reachable in ${latency} ms` }
+        return { ok: false, latency_ms: null, message: `agent answered HTTP ${res.status} (host reachable)` }
+      } catch (e) {
+        const reason = e instanceof DOMException && e.name === 'AbortError' ? 'timed out' : String(e)
+        return { ok: false, latency_ms: null, message: `cannot reach ${target}: ${reason}` }
+      } finally {
+        clearTimeout(timer)
+      }
+    },
 
     async login(nextBase, email, password) {
       baseUrl = nextBase

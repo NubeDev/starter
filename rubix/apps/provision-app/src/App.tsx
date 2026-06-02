@@ -62,7 +62,12 @@ function Shell() {
       ) : (
         <>
           <TopBar />
-          <div className="relative min-h-0 flex-1">
+          {/* Fixed-height region between TopBar and the bottom of the frame.
+              Each page owns its own internal scroll + dock spacing (e.g.
+              ScanFlow's `h-full overflow-y-auto pb-32`), so this stays a plain
+              non-scrolling flex child — its `h-full` is what lets the pages
+              size to the viewport instead of to their content. */}
+          <div className="relative min-h-0 flex-1 overflow-hidden">
             <AnimatePresence mode="wait">
               <motion.div
                 key={active.tab}

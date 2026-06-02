@@ -109,9 +109,22 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
                 // UI/i18n-cache providers auto-register upstream.
                 let mut cleanup_providers: Vec<Arc<dyn starter_ext_server::CleanupProvider>> =
                     Vec::new();
+                // The post-install hook creates a freshly-installed bundle's
+                // warehouse tables immediately, closing the boot-only-DDL
+                // window where writes land on a not-yet-created schema. Wired
+                // whenever a warehouse is configured (same condition as the
+                // cleanup reclaimer above).
+                let mut post_install_hook: Option<
+                    Arc<dyn starter_ext_server::PostInstallHook>,
+                > = None;
                 if let Some(wh) = warehouse_client.as_ref() {
                     cleanup_providers.push(Arc::new(
                         rubix_agent::extensions::WarehouseCleanupProvider::new(wh.pool().clone()),
+                    ));
+                    post_install_hook = Some(Arc::new(
+                        rubix_agent::extensions::ExtensionTablesInstallHook::new(
+                            wh.pool().clone(),
+                        ),
                     ));
                 }
                 Some(
@@ -120,6 +133,7 @@ pub(crate) async fn boot_services() -> Result<BootedServices> {
                         pool.sqlx(),
                         ext_host_methods.clone(),
                         cleanup_providers,
+                        post_install_hook,
                     )
                     .await?,
                 )

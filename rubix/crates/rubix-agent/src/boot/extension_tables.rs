@@ -66,40 +66,11 @@ pub async fn create_extension_tables(
         let Some(manifest) = record.manifest.as_ref() else {
             continue;
         };
-        for entry in &manifest.contributes.warehouse_tables {
-            outcome.seen += 1;
-            if !entry.kind.host_manages_ddl() {
-                // The entry exists in the registry so the per-call
-                // allowlist gate still authorises templates that
-                // reference it, but creation is the extension's
-                // responsibility (e.g. a CAGG installed by
-                // `scripts/post-load.sql`). Emitting a plain table
-                // here would race the materialised view and leave
-                // the relation as an empty stub.
-                outcome.deferred_to_extension += 1;
-                info!(
-                    target: "rubix.boot.extensions.tables",
-                    extension = %extension_id.as_str(),
-                    table = %entry.name,
-                    kind = ?entry.kind,
-                    "deferring DDL to extension (non-table kind)",
-                );
-                continue;
-            }
-            match apply_one(warehouse, extension_id, entry).await {
-                Ok(()) => outcome.created_or_existing += 1,
-                Err(reason) => {
-                    outcome.skipped += 1;
-                    warn!(
-                        target: "rubix.boot.extensions.tables",
-                        extension = %extension_id.as_str(),
-                        table = %entry.name,
-                        reason = %reason,
-                        "skipping extension-table DDL",
-                    );
-                }
-            }
-        }
+        let one = create_tables_for_manifest(warehouse, extension_id, manifest).await;
+        outcome.seen += one.seen;
+        outcome.created_or_existing += one.created_or_existing;
+        outcome.skipped += one.skipped;
+        outcome.deferred_to_extension += one.deferred_to_extension;
     }
     info!(
         target: "rubix.boot.extensions.tables",
@@ -109,6 +80,56 @@ pub async fn create_extension_tables(
         deferred_to_extension = outcome.deferred_to_extension,
         "extension warehouse-table DDL applied",
     );
+    outcome
+}
+
+/// Create every host-managed table declared by a single manifest.
+///
+/// Shared by the boot-time sweep ([`create_extension_tables`]) and the
+/// install-time [`crate::extensions::ExtensionTablesInstallHook`], so a
+/// freshly-installed bundle's tables exist immediately rather than only
+/// after the next boot. Idempotent (`CREATE TABLE IF NOT EXISTS`); the
+/// returned outcome counts what this one manifest contributed.
+pub async fn create_tables_for_manifest(
+    warehouse: &WarehouseClient,
+    extension_id: &ExtensionId,
+    manifest: &starter_ext_spi::Manifest,
+) -> ExtensionTablesOutcome {
+    let mut outcome = ExtensionTablesOutcome::default();
+    for entry in &manifest.contributes.warehouse_tables {
+        outcome.seen += 1;
+        if !entry.kind.host_manages_ddl() {
+            // The entry exists in the registry so the per-call
+            // allowlist gate still authorises templates that
+            // reference it, but creation is the extension's
+            // responsibility (e.g. a CAGG installed by
+            // `scripts/post-load.sql`). Emitting a plain table
+            // here would race the materialised view and leave
+            // the relation as an empty stub.
+            outcome.deferred_to_extension += 1;
+            info!(
+                target: "rubix.boot.extensions.tables",
+                extension = %extension_id.as_str(),
+                table = %entry.name,
+                kind = ?entry.kind,
+                "deferring DDL to extension (non-table kind)",
+            );
+            continue;
+        }
+        match apply_one(warehouse, extension_id, entry).await {
+            Ok(()) => outcome.created_or_existing += 1,
+            Err(reason) => {
+                outcome.skipped += 1;
+                warn!(
+                    target: "rubix.boot.extensions.tables",
+                    extension = %extension_id.as_str(),
+                    table = %entry.name,
+                    reason = %reason,
+                    "skipping extension-table DDL",
+                );
+            }
+        }
+    }
     outcome
 }
 

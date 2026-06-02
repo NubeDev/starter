@@ -1,5 +1,5 @@
 import { createContext, useContext } from 'react'
-import type { AuthUser } from '../transport'
+import type { AuthUser, PingResult } from '../transport'
 
 // Auth context + hook, separated from the provider component so the provider
 // module exports only a component (Fast Refresh + one-concept-per-file).
@@ -9,6 +9,8 @@ export interface AuthState {
   busy: boolean
   error: string | null
   transportKind: 'tauri' | 'web'
+  /** Pre-login reachability check; never throws, result is the verdict. */
+  ping: (baseUrl: string) => Promise<PingResult>
   login: (baseUrl: string, email: string, password: string) => Promise<void>
   logout: () => Promise<void>
 }

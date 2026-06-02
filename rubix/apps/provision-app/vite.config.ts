@@ -11,6 +11,13 @@ export default defineConfig({
   server: {
     port: 1421,
     strictPort: true,
+    // Bind to all interfaces so the dev UI is reachable from other devices on
+    // the LAN (e.g. a phone over WiFi at http://<machine-ip>:1421). Vite 8 also
+    // rejects requests whose Host header isn't localhost; `true` accepts any
+    // host, which is what we want for LAN dev where the machine's DHCP IP can
+    // change. (Dev-only server; not used in the bundled app.)
+    host: true,
+    allowedHosts: true,
     // Proxy /api to the rubix-agent so the browser sees a SINGLE origin
     // (localhost:1421). The agent's session cookie is `SameSite=Lax`, which
     // a browser will not store or send on a cross-site fetch — so a

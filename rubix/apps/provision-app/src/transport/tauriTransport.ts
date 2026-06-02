@@ -1,5 +1,5 @@
 import { invoke } from '@tauri-apps/api/core'
-import type { AuthUser, QueueItem, Transport } from './transport'
+import type { AuthUser, PingResult, QueueItem, Transport } from './transport'
 
 // Tauri implementation — calls the Rust core's commands (built by the sibling
 // agent in src-tauri/). The Rust side owns the HTTP session, CSRF, and the
@@ -8,6 +8,9 @@ export function createTauriTransport(): Transport {
   return {
     kind: 'tauri',
 
+    ping(baseUrl) {
+      return invoke<PingResult>('ping', { baseUrl })
+    },
     login(baseUrl, email, password) {
       return invoke<AuthUser>('auth_login', { baseUrl, email, password })
     },

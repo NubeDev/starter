@@ -15,7 +15,21 @@ export interface QueueItem {
   enqueued_at: number
 }
 
+/** Outcome of a pre-login connectivity probe against `{base}/healthz`. */
+export interface PingResult {
+  ok: boolean
+  latency_ms: number | null
+  message: string
+}
+
 export interface Transport {
+  /**
+   * No-auth liveness probe of `{baseUrl}/healthz`. Lets the UI confirm
+   * the agent is reachable (and tell that apart from bad credentials)
+   * before attempting a login. Never throws on an unreachable host —
+   * the failure is reported in `PingResult.ok`/`message`.
+   */
+  ping(baseUrl: string): Promise<PingResult>
   /** Sign in. Establishes the session (cookie on web, keychain on Tauri). */
   login(baseUrl: string, email: string, password: string): Promise<AuthUser>
   /** Current principal, or null if unauthenticated. */

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { ScanLine, Plug, Loader2 } from 'lucide-react'
+import { ScanLine, Plug, Loader2, Wifi, CheckCircle2, XCircle } from 'lucide-react'
 import { useAuth } from './authContext'
 import { useLook } from '../theme/useLook'
 import { Field, TextInput } from '../components/FormKit'
@@ -9,12 +9,33 @@ import { PrimaryButton } from '../components/ui'
 // Gate screen: agent base URL + email/password. Dev defaults baked in as
 // placeholders. Shown until authed. Web build needs the base URL; the Tauri
 // build still collects it so the Rust core knows which host to reach.
+// Default agent base URL for the Connect form. Not hardcoded to one LAN IP:
+// set VITE_AGENT_URL at build/dev time to point the mobile build at your
+// machine (e.g. `VITE_AGENT_URL=http://192.168.1.50:8088 cargo tauri android dev`).
+// Falls back to localhost, which is correct for the desktop build and for a
+// device using `adb reverse tcp:8088 tcp:8088`.
+const DEFAULT_AGENT_URL = import.meta.env.VITE_AGENT_URL ?? 'http://127.0.0.1:8088'
+
 export function Connect() {
-  const { login, busy, error, transportKind } = useAuth()
+  const { ping, login, busy, error, transportKind } = useAuth()
   const look = useLook()
-  const [baseUrl, setBaseUrl] = useState('http://127.0.0.1:8088')
+  const [baseUrl, setBaseUrl] = useState(DEFAULT_AGENT_URL)
   const [email, setEmail] = useState('op@example.com')
   const [password, setPassword] = useState('rubix-dev-passwd')
+
+  // Pre-login reachability probe. `null` = not yet pinged.
+  const [pinging, setPinging] = useState(false)
+  const [pingResult, setPingResult] = useState<{ ok: boolean; message: string } | null>(null)
+
+  const doPing = () => {
+    if (pinging) return
+    setPinging(true)
+    setPingResult(null)
+    void ping(baseUrl.trim())
+      .then((r) => setPingResult({ ok: r.ok, message: r.message }))
+      .catch((e) => setPingResult({ ok: false, message: e instanceof Error ? e.message : String(e) }))
+      .finally(() => setPinging(false))
+  }
 
   const submit = () => {
     if (busy) return
@@ -50,8 +71,41 @@ export function Connect() {
         </div>
         <div className="flex flex-col gap-4">
           <Field label="Agent base URL">
-            <TextInput value={baseUrl} onChange={setBaseUrl} type="url" placeholder="http://127.0.0.1:8088" />
+            <TextInput
+              value={baseUrl}
+              onChange={(v) => {
+                setBaseUrl(v)
+                setPingResult(null) // stale verdict no longer applies to the new host
+              }}
+              type="url"
+              placeholder="http://127.0.0.1:8088"
+            />
           </Field>
+
+          <button
+            type="button"
+            onClick={doPing}
+            disabled={pinging}
+            className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/15 px-4 py-2 text-sm font-medium text-ink transition disabled:opacity-60"
+          >
+            {pinging ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wifi className="h-4 w-4" />}
+            {pinging ? 'Pinging…' : 'Ping agent'}
+          </button>
+
+          {pingResult && (
+            <p
+              className={`inline-flex items-center gap-2 text-sm font-medium ${
+                pingResult.ok ? 'text-online' : 'text-fault'
+              }`}
+            >
+              {pingResult.ok ? (
+                <CheckCircle2 className="h-4 w-4 shrink-0" />
+              ) : (
+                <XCircle className="h-4 w-4 shrink-0" />
+              )}
+              <span className="break-all">{pingResult.message}</span>
+            </p>
+          )}
           <Field label="Email">
             <TextInput value={email} onChange={setEmail} type="email" placeholder="op@example.com" />
           </Field>

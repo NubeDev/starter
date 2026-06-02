@@ -44,6 +44,7 @@ pub fn run() {
         // Each path points at the verb's own module so the macro finds
         // both the `#[command]` fn and its generated `__cmd__*` helper.
         .invoke_handler(tauri::generate_handler![
+            commands::ping::ping,
             commands::auth_login::auth_login,
             commands::auth_me::auth_me,
             commands::auth_logout::auth_logout,

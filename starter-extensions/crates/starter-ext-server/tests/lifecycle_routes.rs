@@ -220,3 +220,63 @@ async fn uninstall_missing_returns_not_found_code() {
     let json: Value = serde_json::from_slice(&bytes).unwrap();
     assert_eq!(json["code"], "uninstall.not_found");
 }
+
+/// A `PostInstallHook` that records the id it was invoked with, so the
+/// test can prove the install handler fires it after a successful
+/// install (this is the seam rubix uses to create a bundle's warehouse
+/// tables immediately instead of only at the next boot).
+#[derive(Default)]
+struct RecordingHook {
+    seen: std::sync::Mutex<Vec<String>>,
+}
+
+#[async_trait::async_trait]
+impl starter_ext_server::PostInstallHook for RecordingHook {
+    async fn run(
+        &self,
+        id: &ExtensionId,
+        _manifest: &starter_ext_spi::Manifest,
+    ) -> Result<String, starter_ext_server::CleanupError> {
+        self.seen.lock().unwrap().push(id.as_str().to_owned());
+        Ok("recorded".into())
+    }
+}
+
+#[tokio::test]
+async fn install_runs_post_install_hook() {
+    let tmp = tempdir().unwrap();
+    let mut reg = ExtensionRegistry::new();
+    reg.seal();
+    let store = Arc::new(InMemoryEnablementStore::new());
+    let hook = Arc::new(RecordingHook::default());
+    let admin = ExtensionAdmin::builder(Arc::new(reg))
+        .with_enablement_store(store as Arc<dyn EnablementStore>)
+        .with_installs_dir(tmp.path().to_path_buf())
+        .with_post_install_hook(hook.clone())
+        .build();
+    let app = router::<()>(admin);
+
+    let tarball = build_tarball(None);
+    let boundary = "----hooktest";
+    let body = multipart_body("file", "ext.tgz", &tarball, boundary);
+
+    let resp = app
+        .oneshot(
+            Request::builder()
+                .method(Method::POST)
+                .uri("/extensions/install")
+                .header(
+                    header::CONTENT_TYPE,
+                    format!("multipart/form-data; boundary={boundary}"),
+                )
+                .body(Body::from(body))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(resp.status(), StatusCode::OK, "install must succeed");
+
+    // The hook fired exactly once, for the just-installed id.
+    let seen = hook.seen.lock().unwrap().clone();
+    assert_eq!(seen, vec!["com.acme.installed".to_owned()]);
+}
