@@ -30,6 +30,15 @@ export interface Transport {
    * the failure is reported in `PingResult.ok`/`message`.
    */
   ping(baseUrl: string): Promise<PingResult>
+  /**
+   * The agent base URL this device last connected to, or '' if none. Lets the
+   * Connect screen pre-fill the host the operator actually used instead of the
+   * compiled-in default — survives logout (logout drops credentials, not the
+   * remembered host). Synchronous: backed by localStorage on web. Optional so
+   * a transport that can't read it synchronously (e.g. Tauri, whose URL lives
+   * in the Rust core) may omit it; callers fall back to the default.
+   */
+  savedBaseUrl?(): string
   /** Sign in. Establishes the session (cookie on web, keychain on Tauri). */
   login(baseUrl: string, email: string, password: string): Promise<AuthUser>
   /** Current principal, or null if unauthenticated. */

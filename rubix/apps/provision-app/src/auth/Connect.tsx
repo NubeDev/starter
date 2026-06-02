@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { ScanLine, Plug, Loader2, Wifi, CheckCircle2, XCircle } from 'lucide-react'
 import { useAuth } from './authContext'
+import { transport } from '../transport'
 import { useLook } from '../theme/useLook'
 import { Field, TextInput } from '../components/FormKit'
 import { PrimaryButton } from '../components/ui'
@@ -19,7 +20,12 @@ const DEFAULT_AGENT_URL = import.meta.env.VITE_AGENT_URL ?? 'http://127.0.0.1:80
 export function Connect() {
   const { ping, login, busy, error, transportKind } = useAuth()
   const look = useLook()
-  const [baseUrl, setBaseUrl] = useState(DEFAULT_AGENT_URL)
+  // Seed the host field with the agent this device last connected to (remembered
+  // across logout — logout clears credentials, not the host), falling back to the
+  // compiled-in default on first run. Read lazily on mount, not at module load,
+  // so a logout after a same-session login still re-fills the host that was used
+  // instead of reverting to 127.0.0.1.
+  const [baseUrl, setBaseUrl] = useState(() => transport.savedBaseUrl?.() || DEFAULT_AGENT_URL)
   const [email, setEmail] = useState('op@example.com')
   const [password, setPassword] = useState('rubix-dev-passwd')
 

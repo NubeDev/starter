@@ -93,6 +93,10 @@ export function createWebTransport(): Transport {
   return {
     kind: 'web',
 
+    savedBaseUrl() {
+      return baseUrl
+    },
+
     async ping(nextBase): Promise<PingResult> {
       // `/healthz` lives at the agent host ROOT, not under `/api/v1`. No auth.
       const root = nextBase.replace(/\/+$/, '')
