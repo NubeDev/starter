@@ -35,34 +35,70 @@ class NubeTabBar extends StatelessWidget {
         children: List.generate(items.length, (i) {
           final selected = i == currentIndex;
           final item = items[i];
-          return GestureDetector(
+          return _NubeTabBarItem(
+            selected: selected,
+            item: item,
             onTap: () => onTap(i),
-            behavior: HitTestBehavior.opaque,
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 180),
-              curve: Curves.easeOut,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              decoration: BoxDecoration(
-                color: selected ? t.surface2.withOpacity(0.18) : Colors.transparent,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(item.icon, color: selected ? t.leaf : t.muted, size: 26),
-                  const SizedBox(height: 2),
-                  Text(
-                    item.label,
-                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          color: selected ? t.leaf : t.muted,
-                          fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
-                        ),
-                  ),
-                ],
-              ),
-            ),
           );
         }),
+      ),
+    );
+  }
+}
+
+class _NubeTabBarItem extends StatefulWidget {
+  const _NubeTabBarItem({
+    required this.selected,
+    required this.item,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final NubeTabItem item;
+  final VoidCallback onTap;
+
+  @override
+  State<_NubeTabBarItem> createState() => _NubeTabBarItemState();
+}
+
+class _NubeTabBarItemState extends State<_NubeTabBarItem> {
+  bool _down = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    final fg = widget.selected ? t.leaf : t.muted;
+    return GestureDetector(
+      onTap: widget.onTap,
+      behavior: HitTestBehavior.opaque,
+      onTapDown: (_) => setState(() => _down = true),
+      onTapUp: (_) => setState(() => _down = false),
+      onTapCancel: () => setState(() => _down = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 50),
+        curve: Curves.easeOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+        decoration: BoxDecoration(
+          color: _down
+              ? t.surface2.withOpacity(0.35)
+              : (widget.selected ? t.surface2.withOpacity(0.18) : Colors.transparent),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(widget.item.icon, color: fg, size: 26),
+            const SizedBox(height: 2),
+            Text(
+              widget.item.label,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: fg,
+                    fontWeight:
+                        widget.selected ? FontWeight.w600 : FontWeight.w400,
+                  ),
+            ),
+          ],
+        ),
       ),
     );
   }

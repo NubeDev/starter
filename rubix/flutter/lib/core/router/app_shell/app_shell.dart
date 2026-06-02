@@ -23,16 +23,15 @@ class AppShell extends ConsumerStatefulWidget {
 
   final StatefulNavigationShell navigationShell;
 
-  static const double _railBreakpoint = 720;
-  static const double _railCollapseBreakpoint = 960;
+  /// Width at which the layout switches from floating pill (mobile) to
+  /// 80px side rail (desktop). Deliberate deviation from Figma 1024px.
+  static const double _pillBreakpoint = 1024;
 
   @override
   ConsumerState<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends ConsumerState<AppShell> {
-  bool? _collapsedOverride;
-
   @override
   Widget build(BuildContext context) {
     final l = AppLocalizations.of(context);
@@ -66,35 +65,29 @@ class _AppShellState extends ConsumerState<AppShell> {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= AppShell._railBreakpoint;
-        final autoCollapse =
-            constraints.maxWidth < AppShell._railCollapseBreakpoint;
-        final collapsed = _collapsedOverride ?? autoCollapse;
+        final wide = constraints.maxWidth >= AppShell._pillBreakpoint;
 
-        final topBar = _TopBar(
-          activeAsync: activeAsync,
-          pinSet: pinSet,
-          onLock: () => ref.read(pinUnlockedProvider.notifier).lock(),
-          onConnectionsTap: () => context.go('/connections'),
-          fallbackLabel: l.home,
-          onToggleSidebar: wide
-              ? () => setState(() => _collapsedOverride = !collapsed)
-              : null,
-          sidebarCollapsed: collapsed,
-          compact: !wide,
-        );
-
+        // ── Desktop (≥ 1024px): 80px frosted side rail + content ──────────
         if (wide) {
+          final topBar = _TopBar(
+            activeAsync: activeAsync,
+            pinSet: pinSet,
+            onLock: () => ref.read(pinUnlockedProvider.notifier).lock(),
+            onConnectionsTap: () => context.go('/connections'),
+            fallbackLabel: l.home,
+            onToggleSidebar: null,
+            sidebarCollapsed: false,
+            compact: false,
+          );
           return Scaffold(
             backgroundColor: t.bg,
             body: SafeArea(
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  _Sidebar(
+                  _SideRailNav(
                     destinations: destinations,
                     selectedIndex: widget.navigationShell.currentIndex,
-                    collapsed: collapsed,
                     onSelected: _go,
                   ),
                   Expanded(
@@ -116,29 +109,48 @@ class _AppShellState extends ConsumerState<AppShell> {
           );
         }
 
+        // ── Mobile (< 1024px): compact top bar + floating pill nav ────────
+        final topBar = _TopBar(
+          activeAsync: activeAsync,
+          pinSet: pinSet,
+          onLock: () => ref.read(pinUnlockedProvider.notifier).lock(),
+          onConnectionsTap: () => context.go('/connections'),
+          fallbackLabel: l.home,
+          onToggleSidebar: null,
+          sidebarCollapsed: false,
+          compact: true,
+        );
         return Scaffold(
           backgroundColor: t.bg,
-          // Let the body paint UNDER the bottom nav so the ambient teal
-          // glow can show through the frosted bar (Figma node 6:185).
-          extendBody: true,
           body: SafeArea(
             bottom: false,
-            child: Column(
+            child: Stack(
               children: [
-                topBar,
-                Expanded(
-                  child: _AnimatedRouteSwitcher(
-                    index: widget.navigationShell.currentIndex,
-                    child: widget.navigationShell,
+                Column(
+                  children: [
+                    topBar,
+                    Expanded(
+                      child: _AnimatedRouteSwitcher(
+                        index: widget.navigationShell.currentIndex,
+                        child: widget.navigationShell,
+                      ),
+                    ),
+                  ],
+                ),
+                // Floating pill nav overlay — overhangs safe area.
+                Positioned(
+                  left: 16,
+                  right: 16,
+                  bottom:
+                      16 + MediaQuery.of(context).padding.bottom,
+                  child: _FloatingPillNav(
+                    destinations: destinations,
+                    selectedIndex: widget.navigationShell.currentIndex,
+                    onSelected: _go,
                   ),
                 ),
               ],
             ),
-          ),
-          bottomNavigationBar: _TabBar(
-            destinations: destinations,
-            selectedIndex: widget.navigationShell.currentIndex,
-            onSelected: _go,
           ),
         );
       },
@@ -165,7 +177,8 @@ class _Destination {
 }
 
 // ---------------------------------------------------------------------------
-// Animated branch switcher — fade + 8px slide between top-level routes.
+// Animated branch switcher — fade-only cross-fade between top-level routes.
+// 150ms, no slide, no scale. Static everywhere else.
 // ---------------------------------------------------------------------------
 class _AnimatedRouteSwitcher extends StatelessWidget {
   const _AnimatedRouteSwitcher({required this.index, required this.child});
@@ -176,19 +189,9 @@ class _AnimatedRouteSwitcher extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
-      duration: const Duration(milliseconds: 260),
-      switchInCurve: Curves.easeOutCubic,
-      switchOutCurve: Curves.easeInCubic,
-      transitionBuilder: (child, anim) {
-        final offset = Tween<Offset>(
-          begin: const Offset(0, 0.012),
-          end: Offset.zero,
-        ).animate(anim);
-        return FadeTransition(
-          opacity: anim,
-          child: SlideTransition(position: offset, child: child),
-        );
-      },
+      duration: const Duration(milliseconds: 150),
+      transitionBuilder: (child, anim) =>
+          FadeTransition(opacity: anim, child: child),
       layoutBuilder: (currentChild, previousChildren) => Stack(
         fit: StackFit.expand,
         alignment: Alignment.topLeft,
@@ -505,46 +508,6 @@ class _CmdKTriggerState extends State<_CmdKTrigger> {
   }
 }
 
-class _BrandMark extends StatelessWidget {
-  const _BrandMark({required this.isDark, required this.leaf});
-  final bool isDark;
-  final Color leaf;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 28,
-      height: 28,
-      decoration: BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [leaf, Color.lerp(leaf, Colors.black, 0.18)!],
-        ),
-        borderRadius: BorderRadius.circular(7),
-        boxShadow: [
-          BoxShadow(
-            color: leaf.withValues(alpha: 0.32),
-            blurRadius: 14,
-            spreadRadius: -2,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        'R',
-        style: TextStyle(
-          color: isDark ? const Color(0xFF0A0A0A) : Colors.white,
-          fontWeight: FontWeight.w700,
-          fontSize: 14,
-          height: 1,
-        ),
-      ),
-    );
-  }
-}
-
 class _FallbackTitle extends StatelessWidget {
   const _FallbackTitle({required this.label});
   final String label;
@@ -678,551 +641,264 @@ class _ChromeIconButtonState extends State<_ChromeIconButton> {
 }
 
 // ---------------------------------------------------------------------------
-// Sidebar (wide layout) — workspace header, sectioned nav, footer user chip.
+// Press-scale \u2014 wraps any tap target; 0.96 on press, 1.0 on release, 100ms.
+// No Material ripple \u2014 NoSplash is already set globally in AppTheme.
 // ---------------------------------------------------------------------------
-class _Sidebar extends StatelessWidget {
-  const _Sidebar({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.collapsed,
-    required this.onSelected,
-  });
+class _PressScale extends StatefulWidget {
+  const _PressScale({required this.child, required this.onTap});
 
-  final List<_Destination> destinations;
-  final int selectedIndex;
-  final bool collapsed;
-  final ValueChanged<int> onSelected;
-
-  static const double _itemHeight = 38;
-  static const double _itemGap = 4;
-  static const double _vPad = 12;
-  static const double _expandedWidth = 240;
-  static const double _collapsedWidth = 64;
-  static const double _sectionHeight = 22;
-  static const double _sectionTopGap = 14;
-  static const double _sectionBottomGap = 8;
-
-  /// Computes the top-Y inside the nav stack for each destination so the
-  /// sliding pill can land on the correct row, accounting for section
-  /// headers when expanded.
-  List<double> _itemTops() {
-    final tops = <double>[];
-    double y = 4; // matches the leading SizedBox(height: 4)
-    String? lastSection;
-    for (var i = 0; i < destinations.length; i++) {
-      final d = destinations[i];
-      if (!collapsed && d.section != lastSection) {
-        if (lastSection != null) y += _sectionTopGap;
-        y += _sectionHeight + _sectionBottomGap;
-        lastSection = d.section;
-      }
-      tops.add(y);
-      y += _itemHeight + _itemGap;
-    }
-    return tops;
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
-    final tops = _itemTops();
-    final pillTop = tops[selectedIndex];
-
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 260),
-      curve: Curves.easeOutCubic,
-      width: collapsed ? _collapsedWidth : _expandedWidth,
-      decoration: BoxDecoration(
-        color: t.surface,
-        border: Border(right: BorderSide(color: t.border)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          _WorkspaceHeader(collapsed: collapsed, isDark: isDark),
-          Container(height: 1, color: t.border),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: _vPad,
-              ),
-              child: Stack(
-                children: [
-                  // Sliding teal accent bar on the left edge.
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeOutCubic,
-                    top: pillTop + 9,
-                    left: -10,
-                    child: Container(
-                      width: 3,
-                      height: _itemHeight - 18,
-                      decoration: BoxDecoration(
-                        color: t.leaf,
-                        borderRadius: const BorderRadius.only(
-                          topRight: Radius.circular(2),
-                          bottomRight: Radius.circular(2),
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: t.leaf.withValues(alpha: 0.45),
-                            blurRadius: 10,
-                            spreadRadius: -1,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  // Sliding background pill — animates between selected items.
-                  AnimatedPositioned(
-                    duration: const Duration(milliseconds: 320),
-                    curve: Curves.easeOutCubic,
-                    top: pillTop,
-                    left: 0,
-                    right: 0,
-                    height: _itemHeight,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF142F33)
-                            : const Color(0xFFF2F7F7),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                    ),
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 4),
-                      for (var i = 0; i < destinations.length; i++) ...[
-                        if (!collapsed &&
-                            (i == 0 ||
-                                destinations[i].section !=
-                                    destinations[i - 1].section)) ...[
-                          if (i != 0) const SizedBox(height: _sectionTopGap),
-                          Padding(
-                            padding: const EdgeInsets.only(
-                              left: 4,
-                              bottom: _sectionBottomGap,
-                            ),
-                            child: SizedBox(
-                              height: _sectionHeight,
-                              child: Align(
-                                alignment: Alignment.centerLeft,
-                                child: NubeEyebrow(destinations[i].section),
-                              ),
-                            ),
-                          ),
-                        ],
-                        _NavItem(
-                          destination: destinations[i],
-                          selected: i == selectedIndex,
-                          collapsed: collapsed,
-                          height: _itemHeight,
-                          onTap: () => onSelected(i),
-                        ),
-                        const SizedBox(height: _itemGap),
-                      ],
-                    ],
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Container(height: 1, color: t.border),
-          _UserFooter(collapsed: collapsed),
-        ],
-      ),
-    );
-  }
-}
-
-class _WorkspaceHeader extends StatelessWidget {
-  const _WorkspaceHeader({required this.collapsed, required this.isDark});
-  final bool collapsed;
-  final bool isDark;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 14, 10, 14),
-      child: Row(
-        children: [
-          _BrandMark(isDark: isDark, leaf: t.leaf),
-          if (!collapsed) ...[
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Nube',
-                    style: TextStyle(
-                      color: t.text,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w600,
-                      letterSpacing: -0.1,
-                      height: 1.15,
-                    ),
-                  ),
-                  Text(
-                    'IoT Console',
-                    style: TextStyle(
-                      color: t.muted,
-                      fontSize: 11.5,
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Icon(LucideIcons.chevronsUpDown, size: 14, color: t.muted),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _UserFooter extends StatelessWidget {
-  const _UserFooter({required this.collapsed});
-  final bool collapsed;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 12, 10, 12),
-      child: Row(
-        children: [
-          Container(
-            width: 30,
-            height: 30,
-            decoration: BoxDecoration(
-              color: t.leaf.withValues(alpha: 0.18),
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: t.leaf.withValues(alpha: 0.30)),
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              'OP',
-              style: TextStyle(
-                color: t.leaf,
-                fontSize: 11,
-                fontWeight: FontWeight.w700,
-                letterSpacing: 0.4,
-              ),
-            ),
-          ),
-          if (!collapsed) ...[
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Operator',
-                    style: TextStyle(
-                      color: t.text,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w600,
-                      height: 1.15,
-                    ),
-                  ),
-                  Text(
-                    'ops@nube.io',
-                    style: TextStyle(
-                      color: t.muted,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w500,
-                      height: 1.2,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            Icon(LucideIcons.chevronsUpDown, size: 14, color: t.muted),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _NavItem extends StatefulWidget {
-  const _NavItem({
-    required this.destination,
-    required this.selected,
-    required this.collapsed,
-    required this.height,
-    required this.onTap,
-  });
-  final _Destination destination;
-  final bool selected;
-  final bool collapsed;
-  final double height;
+  final Widget child;
   final VoidCallback onTap;
 
   @override
-  State<_NavItem> createState() => _NavItemState();
+  State<_PressScale> createState() => _PressScaleState();
 }
 
-class _NavItemState extends State<_NavItem> {
-  bool _hover = false;
-  bool _press = false;
+class _PressScaleState extends State<_PressScale> {
+  bool _pressed = false;
 
   @override
   Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    final selected = widget.selected;
-    final fg = selected ? t.leaf : (_hover ? t.text : t.muted);
-    final scale = _press ? 0.97 : 1.0;
-
-    final row = Row(
-      children: [
-        AnimatedScale(
-          scale: selected ? 1.06 : (_hover ? 1.04 : 1.0),
-          duration: const Duration(milliseconds: 200),
-          curve: Curves.easeOutBack,
-          child: Icon(widget.destination.icon, size: 17, color: fg),
-        ),
-        Flexible(
-          child: ClipRect(
-            child: AnimatedAlign(
-              alignment: Alignment.centerLeft,
-              duration: const Duration(milliseconds: 260),
-              curve: Curves.easeOutCubic,
-              widthFactor: widget.collapsed ? 0 : 1,
-              child: AnimatedOpacity(
-                duration: const Duration(milliseconds: 200),
-                opacity: widget.collapsed ? 0 : 1,
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 10),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: AnimatedDefaultTextStyle(
-                          duration: const Duration(milliseconds: 200),
-                          style: TextStyle(
-                            color: fg,
-                            fontSize: 13.5,
-                            fontWeight: selected
-                                ? FontWeight.w600
-                                : FontWeight.w500,
-                            letterSpacing: -0.1,
-                          ),
-                          child: Text(
-                            widget.destination.label,
-                            maxLines: 1,
-                            overflow: TextOverflow.fade,
-                            softWrap: false,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-
-    final item = SizedBox(
-      height: widget.height,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 10),
-        child: AnimatedScale(
-          scale: scale,
-          duration: const Duration(milliseconds: 120),
-          curve: Curves.easeOutCubic,
-          child: Align(alignment: Alignment.centerLeft, child: row),
-        ),
-      ),
-    );
-
-    final hitArea = MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() {
-        _hover = false;
-        _press = false;
-      }),
-      child: Listener(
-        onPointerDown: (_) => setState(() => _press = true),
-        onPointerUp: (_) => setState(() => _press = false),
-        child: GestureDetector(
-          behavior: HitTestBehavior.opaque,
-          onTap: widget.onTap,
-          child: item,
-        ),
-      ),
-    );
-
-    return widget.collapsed
-        ? Tooltip(
-            message: widget.destination.label,
-            waitDuration: const Duration(milliseconds: 300),
-            child: hitArea,
-          )
-        : hitArea;
-  }
-}
-
-// ---------------------------------------------------------------------------
-// Tab bar (narrow layout) — animated sliding indicator + bouncing icon.
-// ---------------------------------------------------------------------------
-class _TabBar extends StatelessWidget {
-  const _TabBar({
-    required this.destinations,
-    required this.selectedIndex,
-    required this.onSelected,
-  });
-
-  final List<_Destination> destinations;
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    // Frosted-glass recipe — Figma node 6:185. White at 6% fill +
-    // 1px white-at-8% top hairline so the ambient teal glow reads
-    // THROUGH the bar instead of being capped by a solid plate.
-    return ClipRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.06),
-            border: Border(
-              top: BorderSide(
-                color: Colors.white.withValues(alpha: 0.08),
-              ),
-            ),
-          ),
-          padding: EdgeInsets.only(
-            top: 4,
-            bottom: 4 + MediaQuery.of(context).padding.bottom,
-          ),
-          child: LayoutBuilder(
-            builder: (context, constraints) {
-              final n = destinations.length;
-              final itemWidth = constraints.maxWidth / n;
-              return SizedBox(
-                height: 56,
-                child: Stack(
-                  children: [
-                    // Sliding indicator at the top.
-                    AnimatedPositioned(
-                      duration: const Duration(milliseconds: 320),
-                      curve: Curves.easeOutCubic,
-                      left: selectedIndex * itemWidth + itemWidth / 2 - 14,
-                      top: 4,
-                      child: Container(
-                        width: 28,
-                        height: 3,
-                        decoration: BoxDecoration(
-                          color: t.leaf,
-                          borderRadius: BorderRadius.circular(2),
-                          boxShadow: [
-                            BoxShadow(
-                              color: t.leaf.withValues(alpha: 0.45),
-                              blurRadius: 8,
-                              spreadRadius: -1,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    Row(
-                      children: [
-                        for (var i = 0; i < n; i++)
-                          Expanded(
-                            child: _TabItem(
-                              destination: destinations[i],
-                              selected: i == selectedIndex,
-                              onTap: () => onSelected(i),
-                            ),
-                          ),
-                      ],
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TabItem extends StatefulWidget {
-  const _TabItem({
-    required this.destination,
-    required this.selected,
-    required this.onTap,
-  });
-  final _Destination destination;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  State<_TabItem> createState() => _TabItemState();
-}
-
-class _TabItemState extends State<_TabItem> {
-  bool _press = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final t = Theme.of(context).nube;
-    final fg = widget.selected ? t.leaf : t.muted;
     return Listener(
-      onPointerDown: (_) => setState(() => _press = true),
-      onPointerUp: (_) => setState(() => _press = false),
-      onPointerCancel: (_) => setState(() => _press = false),
+      onPointerDown: (_) => setState(() => _pressed = true),
+      onPointerUp: (_) => setState(() => _pressed = false),
+      onPointerCancel: (_) => setState(() => _pressed = false),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
         onTap: widget.onTap,
         child: AnimatedScale(
-          scale: _press ? 0.94 : 1.0,
-          duration: const Duration(milliseconds: 120),
+          scale: _pressed ? 0.96 : 1.0,
+          duration: const Duration(milliseconds: 100),
           curve: Curves.easeOutCubic,
-          child: SizedBox(
-            height: 56,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                AnimatedScale(
-                  scale: widget.selected ? 1.12 : 1.0,
-                  duration: const Duration(milliseconds: 260),
-                  curve: Curves.easeOutBack,
-                  child: Icon(widget.destination.icon, size: 20, color: fg),
-                ),
-                const SizedBox(height: 4),
-                AnimatedDefaultTextStyle(
-                  duration: const Duration(milliseconds: 200),
-                  style: TextStyle(
-                    color: fg,
-                    fontSize: 11,
-                    fontWeight:
-                        widget.selected ? FontWeight.w600 : FontWeight.w500,
-                    letterSpacing: -0.1,
+          child: widget.child,
+        ),
+      ),
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Floating pill nav (mobile, < 1024px).
+//
+// \u2022 68px tall frosted glass pill, 16px from screen edges.
+// \u2022 Active icon inside a 44px teal circle whose top overhangs the pill by 7px.
+// \u2022 Inactive icons: 22px lucide outline, muted teal-grey.
+// \u2022 Active circle slides between positions with AnimatedPositioned 250ms
+//   easeOutCubic.
+// \u2022 No labels, no Material indicators.
+// ---------------------------------------------------------------------------
+class _FloatingPillNav extends StatelessWidget {
+  const _FloatingPillNav({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<_Destination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  static const double _pillHeight = 68;
+  static const double _circleSize = 44;
+  static const double _overhang = 7;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final n = destinations.length;
+        final slotWidth = constraints.maxWidth / n;
+        final circleLeft =
+            selectedIndex * slotWidth + slotWidth / 2 - _circleSize / 2;
+
+        return SizedBox(
+          height: _pillHeight + _overhang,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              // ─ Frosted glass pill ─────────────────────────────────────────────────
+              Positioned(
+                left: 0,
+                right: 0,
+                top: _overhang,
+                bottom: 0,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(_pillHeight / 2),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                    child: Container(
+                      height: _pillHeight,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.06),
+                        borderRadius:
+                            BorderRadius.circular(_pillHeight / 2),
+                        border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.08),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          for (var i = 0; i < n; i++)
+                            Expanded(
+                              child: _PressScale(
+                                onTap: () => onSelected(i),
+                                child: Center(
+                                  child: AnimatedOpacity(
+                                    duration:
+                                        const Duration(milliseconds: 150),
+                                    opacity: i == selectedIndex ? 0 : 1,
+                                    child: Icon(
+                                      destinations[i].icon,
+                                      size: 22,
+                                      color: t.muted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
                   ),
-                  child: Text(widget.destination.label),
                 ),
-              ],
+              ),
+              // ─ Active teal circle (overhangs top by _overhang px) ────────────────────
+              AnimatedPositioned(
+                duration: const Duration(milliseconds: 250),
+                curve: Curves.easeOutCubic,
+                left: circleLeft,
+                top: 0,
+                child: _PressScale(
+                  onTap: () => onSelected(selectedIndex),
+                  child: Container(
+                    width: _circleSize,
+                    height: _circleSize,
+                    decoration: BoxDecoration(
+                      color: t.leaf,
+                      shape: BoxShape.circle,
+                    ),
+                    alignment: Alignment.center,
+                    child: Icon(
+                      destinations[selectedIndex].icon,
+                      size: 22,
+                      color: const Color(0xFF0A1A1A),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Desktop side rail (≥ 1024px).
+//
+// • 80px wide, full screen height, frosted glass, hairline right border.
+// • 4 icons evenly distributed vertically.
+// • Active: 44px teal circle centred in rail — no overhang.
+// • Active circle slides with AnimatedPositioned 250ms easeOutCubic.
+// • Tooltip on each icon (label shown on hover).
+// ---------------------------------------------------------------------------
+class _SideRailNav extends StatelessWidget {
+  const _SideRailNav({
+    required this.destinations,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<_Destination> destinations;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  static const double _railWidth = 80;
+  static const double _circleSize = 44;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = Theme.of(context).nube;
+    return ClipRect(
+      child: BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+        child: Container(
+          width: _railWidth,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.06),
+            border: Border(
+              right: BorderSide(
+                color: Colors.white.withValues(alpha: 0.08),
+              ),
             ),
+          ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final totalHeight = constraints.maxHeight;
+              final n = destinations.length;
+              final slotHeight = totalHeight / n;
+              final circleTop = selectedIndex * slotHeight +
+                  slotHeight / 2 -
+                  _circleSize / 2;
+
+              return Stack(
+                children: [
+                  // ─ Animated active circle ─────────────────────────────────────
+                  AnimatedPositioned(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeOutCubic,
+                    top: circleTop,
+                    left: _railWidth / 2 - _circleSize / 2,
+                    child: Container(
+                      width: _circleSize,
+                      height: _circleSize,
+                      decoration: BoxDecoration(
+                        color: t.leaf,
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(
+                        destinations[selectedIndex].icon,
+                        size: 22,
+                        color: const Color(0xFF0A1A1A),
+                      ),
+                    ),
+                  ),
+                  // ─ Tappable icon slots ─────────────────────────────────────────
+                  Column(
+                    children: [
+                      for (var i = 0; i < n; i++)
+                        Expanded(
+                          child: Tooltip(
+                            message: destinations[i].label,
+                            preferBelow: false,
+                            waitDuration: const Duration(milliseconds: 400),
+                            child: _PressScale(
+                              onTap: () => onSelected(i),
+                              child: SizedBox.expand(
+                                child: Center(
+                                  child: AnimatedOpacity(
+                                    duration:
+                                        const Duration(milliseconds: 150),
+                                    opacity: i == selectedIndex ? 0 : 1,
+                                    child: Icon(
+                                      destinations[i].icon,
+                                      size: 22,
+                                      color: t.muted,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
         ),
       ),

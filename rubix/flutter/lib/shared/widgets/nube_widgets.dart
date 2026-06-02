@@ -66,14 +66,14 @@ class NubeButton extends StatelessWidget {
           null,
         ),
       NubeButtonVariant.outline => (
-          Colors.transparent,
+          t.ghostFill,
           t.text,
-          t.border,
+          t.ghostBorder,
         ),
       NubeButtonVariant.ghost => (
-          Colors.transparent,
+          t.ghostFill,
           t.text,
-          null,
+          t.ghostBorder,
         ),
       NubeButtonVariant.destructive => (
           enabled ? t.danger : t.surface2,
@@ -89,7 +89,7 @@ class NubeButton extends StatelessWidget {
       hoverColor: variant == NubeButtonVariant.primary ||
               variant == NubeButtonVariant.destructive
           ? Colors.white.withValues(alpha: 0.08)
-          : t.surface2,
+          : t.surface2.withValues(alpha: 0.75),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 120),
         curve: Curves.easeOut,
@@ -265,7 +265,7 @@ class _PressableState extends State<_Pressable> {
             Positioned.fill(
               child: IgnorePointer(
                 child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 120),
+                  duration: const Duration(milliseconds: 50),
                   decoration: BoxDecoration(
                     color: overlay,
                     borderRadius: widget.borderRadius,

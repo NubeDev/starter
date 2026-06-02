@@ -4,6 +4,7 @@ import 'package:mobile_scanner/mobile_scanner.dart' as ms;
 import 'package:mobile_scanner/mobile_scanner.dart' show BarcodeCapture, MobileScanner, MobileScannerController, TorchState;
 
 import 'package:rubix_flutter/core/network/barcode/barcode_models.dart';
+import 'package:rubix_flutter/shared/widgets/nube_widgets.dart';
 
 export 'barcode_models.dart';
 
@@ -231,56 +232,56 @@ class _BarcodeScannerScreenState extends State<BarcodeScannerScreen> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
-        child: Card(
-          child: Padding(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.check_circle, size: 48, color: colorScheme.primary),
-                const SizedBox(height: 16),
-                Text('Code Scanned', style: theme.textTheme.titleMedium),
-                const SizedBox(height: 12),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
+        child: NubeCard(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(Icons.check_circle, size: 48, color: colorScheme.primary),
+              const SizedBox(height: 16),
+              Text('Code Scanned', style: theme.textTheme.titleMedium),
+              const SizedBox(height: 12),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: colorScheme.surfaceContainerHighest,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: SelectableText(
+                  _result!.value,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontFamily: 'monospace',
                   ),
-                  child: SelectableText(
-                    _result!.value,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontFamily: 'monospace',
+                  maxLines: 4,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Format: ${_result!.format.name}',
+                style: theme.textTheme.labelSmall,
+              ),
+              const SizedBox(height: 20),
+              Row(
+                children: [
+                  Expanded(
+                    child: NubeButton(
+                      label: widget.rescanLabel,
+                      onPressed: _resetScan,
+                      variant: NubeButtonVariant.outline,
                     ),
-                    maxLines: 4,
                   ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Format: ${_result!.format.name}',
-                  style: theme.textTheme.labelSmall,
-                ),
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: _resetScan,
-                        child: Text(widget.rescanLabel),
-                      ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: NubeButton(
+                      label: widget.confirmLabel,
+                      onPressed: () => Navigator.of(context).pop(_result),
+                      variant: NubeButtonVariant.ghost,
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(_result),
-                        child: Text(widget.confirmLabel),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
+                  ),
+                ],
+              ),
+            ],
           ),
         ),
       ),

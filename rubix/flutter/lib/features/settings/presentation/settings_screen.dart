@@ -7,6 +7,7 @@ import 'package:rubix_flutter/core/theme/app_theme.dart';
 import 'package:rubix_flutter/core/theme/theme_providers.dart';
 import 'package:rubix_flutter/features/auth/data/auth_controller.dart';
 import 'package:rubix_flutter/features/home/presentation/home_controller.dart';
+import 'package:rubix_flutter/shared/widgets/shadcn_switch.dart';
 import 'package:rubix_flutter/shared/widgets/scaffold/ambient_glow_background.dart';
 
 /// Settings — Figma-aligned: hero with serif-italic accent, dense
@@ -209,13 +210,9 @@ class _AppLockRowState extends State<_AppLockRow> {
                 ),
               ),
             ),
-            Switch(
+            ShadcnSwitch(
               value: _on,
               onChanged: (v) => setState(() => _on = v),
-              activeColor: Colors.white,
-              activeTrackColor: t.leaf,
-              inactiveThumbColor: t.muted,
-              inactiveTrackColor: t.border,
             ),
           ],
         ),
@@ -304,23 +301,32 @@ class _SegmentButton<T> extends StatefulWidget {
 
 class _SegmentButtonState<T> extends State<_SegmentButton<T>> {
   bool _hover = false;
+  bool _press = false;
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pressTint = t.surface2.withValues(alpha: 0.65);
     final bg = widget.selected
         ? (isDark ? const Color(0xFF142F33) : const Color(0xFFF2F7F7))
-        : (_hover ? t.surface2 : Colors.transparent);
+        : (_press ? pressTint : (_hover ? t.surface2 : Colors.transparent));
     final fg = widget.selected ? t.leaf : t.muted;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
+      onExit: (_) => setState(() {
+        _hover = false;
+        _press = false;
+      }),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _press = true),
+        onTapUp: (_) => setState(() => _press = false),
+        onTapCancel: () => setState(() => _press = false),
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: const Duration(milliseconds: 50),
           padding: const EdgeInsets.symmetric(vertical: 8),
           decoration: BoxDecoration(
             color: bg,
@@ -408,19 +414,30 @@ class _LangRow extends StatefulWidget {
 
 class _LangRowState extends State<_LangRow> {
   bool _hover = false;
+  bool _press = false;
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
+    final bg = _press
+        ? t.surface2.withValues(alpha: 0.7)
+        : (_hover ? t.surface2 : Colors.transparent);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
+      onExit: (_) => setState(() {
+        _hover = false;
+        _press = false;
+      }),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _press = true),
+        onTapUp: (_) => setState(() => _press = false),
+        onTapCancel: () => setState(() => _press = false),
         onTap: widget.onTap,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
-          color: _hover ? t.surface2 : Colors.transparent,
+          duration: const Duration(milliseconds: 50),
+          color: bg,
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
           child: Row(
             children: [
@@ -463,23 +480,32 @@ class _SignOutButton extends StatefulWidget {
 
 class _SignOutButtonState extends State<_SignOutButton> {
   bool _hover = false;
+  bool _press = false;
+
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context).nube;
+    final bg = _press
+        ? t.danger.withValues(alpha: 0.12)
+        : (_hover ? t.danger.withValues(alpha: 0.08) : t.ghostFill);
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
+      onExit: (_) => setState(() {
+        _hover = false;
+        _press = false;
+      }),
       child: GestureDetector(
         behavior: HitTestBehavior.opaque,
+        onTapDown: (_) => setState(() => _press = true),
+        onTapUp: (_) => setState(() => _press = false),
+        onTapCancel: () => setState(() => _press = false),
         onTap: () => widget.onTap(),
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 120),
+          duration: const Duration(milliseconds: 50),
           height: 52,
           decoration: BoxDecoration(
-            color: _hover
-                ? t.danger.withValues(alpha: 0.08)
-                : t.ghostFill,
+            color: bg,
             borderRadius: BorderRadius.circular(14),
             border: Border.all(color: t.ghostBorder, width: 1),
           ),
