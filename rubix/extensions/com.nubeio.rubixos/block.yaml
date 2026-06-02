@@ -108,6 +108,14 @@ contributes:
       input_schema: kinds/bc_page_create_in.json
       output_schema: kinds/bc_write_out.json
       description_file: kinds/bc_page.md
+    - id: com.nubeio.rubixos.bc_page_update
+      input_schema: kinds/bc_page_update_in.json
+      output_schema: kinds/bc_write_out.json
+      description_file: kinds/bc_page.md
+    - id: com.nubeio.rubixos.bc_page_delete
+      input_schema: kinds/bc_page_delete_in.json
+      output_schema: kinds/bc_page_delete_out.json
+      description_file: kinds/bc_page.md
     - id: com.nubeio.rubixos.bc_template_upsert
       input_schema: kinds/bc_template_upsert_in.json
       output_schema: kinds/bc_write_out.json

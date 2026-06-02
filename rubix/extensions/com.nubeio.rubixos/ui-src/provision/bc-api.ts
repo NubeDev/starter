@@ -14,6 +14,7 @@ import type {
   LocationRow,
   LogRow,
   MutationResult,
+  PageDeleteResult,
   PageRow,
   PointRow,
   ProvisionInput,
@@ -81,6 +82,19 @@ export function pageCreate(
   row: { page_id: string; name: string; site_id?: string; location_id?: string },
 ): Promise<MutationResult> {
   return mutate<MutationResult>(tool("bc_page_create"), { row });
+}
+
+// Update a page by `page_id` — rename, or re-pin its site/location.
+export function pageUpdate(
+  row: { page_id: string; name?: string; site_id?: string; location_id?: string },
+): Promise<MutationResult> {
+  return mutate<MutationResult>(tool("bc_page_update"), { row });
+}
+
+// Delete a page by `page_id`. Its widgets are dropped; devices placed on
+// it are kept but detached (page_id cleared, status → pending).
+export function pageDelete(page_id: string): Promise<PageDeleteResult> {
+  return mutate<PageDeleteResult>(tool("bc_page_delete"), { row: { page_id } });
 }
 
 export function templateUpsert(yaml: string): Promise<MutationResult> {

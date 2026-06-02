@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BcPageDeleteInput",
+  "description": "Delete a dashboard page by `page_id`. The page's widgets are removed and any devices placed on the page are kept but detached — their `page_id` is cleared and `status` flips to `pending` (unprovisioned), so they can be re-placed. `row` carries the `page_id` to delete.",
+  "type": "object",
+  "properties": {
+    "row": {
+      "type": "object",
+      "description": "Page row — must include `page_id`.",
+      "additionalProperties": true
+    }
+  },
+  "required": ["row"],
+  "additionalProperties": false
+}

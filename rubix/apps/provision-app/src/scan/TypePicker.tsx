@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useRefreshKey } from '../api/refresh'
 import { templatesList } from '../api/bc'
 import { mintId } from '../api/ids'
+import { buildAddUrl } from './buildAddUrl'
 import { Field, Picker } from '../components/FormKit'
 import { PrimaryButton } from '../components/ui'
 import { useLook } from '../theme/useLook'
@@ -24,10 +25,7 @@ export function TypePicker({ onSynthesized }: { onSynthesized: (raw: string) => 
     const t = templates.find((x) => x.template === chosen)
     if (!t) return
     const serial = mintId(t.template.slice(0, 3).toUpperCase()).replace(/_/g, '-')
-    const raw = `rubix://add?id=${serial}&model=${encodeURIComponent(t.template)}&network=${encodeURIComponent(
-      t.network,
-    )}&v=1`
-    onSynthesized(raw)
+    onSynthesized(buildAddUrl({ id: serial, model: t.template, network: t.network }))
   }
 
   return (

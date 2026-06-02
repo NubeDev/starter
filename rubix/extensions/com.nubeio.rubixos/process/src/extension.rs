@@ -133,6 +133,22 @@ impl RubixOsToolHandlers for RubixOs {
         provision::handle_page_create(ctx, &params)
     }
 
+    fn handle_com_nubeio_rubixos_bc_page_update(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        provision::handle_page_update(ctx, &params)
+    }
+
+    fn handle_com_nubeio_rubixos_bc_page_delete(
+        &self,
+        ctx: &Self::Ctx,
+        params: Value,
+    ) -> starter_ext_sdk::Result<Value> {
+        provision::handle_page_delete(ctx, &params)
+    }
+
     fn handle_com_nubeio_rubixos_bc_template_upsert(
         &self,
         ctx: &Self::Ctx,

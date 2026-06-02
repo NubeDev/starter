@@ -1,0 +1,14 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "bc page delete output",
+  "description": "Result of `bc_page_delete`: the page row removed, plus how many widgets were dropped and how many devices were detached (kept, flipped to `pending`).",
+  "type": "object",
+  "required": ["operation", "affected"],
+  "properties": {
+    "operation": { "type": "string" },
+    "affected": { "type": "integer", "minimum": 0 },
+    "widgets_deleted": { "type": "integer", "minimum": 0 },
+    "devices_detached": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

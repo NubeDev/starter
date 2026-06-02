@@ -1,7 +1,7 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { QRCodeSVG } from 'qrcode.react'
 import { ArrowLeft, MapPin, Pencil, Printer, Trash2 } from 'lucide-react'
+import { QrLabel } from '../scan/QrLabel'
 import { useRefreshKey } from '../api/refresh'
 import { pointsByDevice, deviceUpdate, decommission, labelRender } from '../api/bc'
 import { Toggle, TextInput } from '../components/FormKit'
@@ -24,7 +24,6 @@ export function DeviceDetail({ device, onBack }: { device: DeviceRow; onBack: ()
   const [name, setName] = useState(device.name ?? '')
   const [label, setLabel] = useState<LabelRender | null>(null)
   const [placing, setPlacing] = useState(false)
-  const labelRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     pointsByDevice(device.device_id).then(setPoints).catch(() => {})
@@ -56,30 +55,6 @@ export function DeviceDetail({ device, onBack }: { device: DeviceRow; onBack: ()
     labelRender(device.device_id)
       .then(setLabel)
       .catch((e: unknown) => toast.show(e instanceof Error ? e.message : 'Label failed', '#ff5a52'))
-  }
-
-  // Pop a print window with just the label markup so a field tech can send the
-  // QR sticker straight to a label printer. We clone the rendered label node so
-  // the printed QR is identical to what's on screen (no re-encode drift).
-  const printLabel = () => {
-    const node = labelRef.current
-    if (!node) return
-    const win = window.open('', '_blank', 'width=420,height=560')
-    if (!win) {
-      toast.show('Allow pop-ups to print labels', '#ff5a52')
-      return
-    }
-    win.document.write(
-      `<!doctype html><html><head><title>${label?.serial ?? 'label'}</title>` +
-        `<style>body{margin:0;display:grid;place-items:center;min-height:100vh;` +
-        `font-family:ui-sans-serif,system-ui,sans-serif}` +
-        `.label{display:flex;flex-direction:column;align-items:center;gap:8px;padding:16px}` +
-        `.serial{font-family:ui-monospace,monospace;font-size:12px}` +
-        `.name{font-weight:700;font-size:16px}</style></head>` +
-        `<body><div class="label">${node.innerHTML}</div>` +
-        `<script>window.onload=function(){window.print();window.close()}</script></body></html>`,
-    )
-    win.document.close()
   }
 
   return (
@@ -143,26 +118,12 @@ export function DeviceDetail({ device, onBack }: { device: DeviceRow; onBack: ()
 
       <BottomSheet open={!!label} onClose={() => setLabel(null)} title="Print label">
         {label && (
-          <div className="flex flex-col items-center gap-4 text-center">
-            {/* `qr_url` is the QR *payload* (a `rubix://add?…` string), not an
-                image URL — encode it into a real QR so it scans back through the
-                same bc_decode flow. (An <img src> of the raw scheme is broken.) */}
-            <div ref={labelRef} className="flex flex-col items-center gap-2">
-              <div className="rounded-xl bg-white p-3">
-                <QRCodeSVG value={label.qr_url} size={160} level="M" marginSize={0} title={`QR code for ${label.serial}`} />
-              </div>
-              <p className="name text-lg font-bold text-ink">{label.display_name}</p>
-              <p className="serial font-mono text-sm text-ink-variant">{label.serial}</p>
-              <p className="font-mono text-xs text-ink-muted">{label.code128}</p>
-            </div>
-            <button
-              onClick={printLabel}
-              className="glass flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold text-ink"
-            >
-              <Printer className="h-4 w-4" style={{ color: look.accent }} />
-              Print sticker
-            </button>
-          </div>
+          <QrLabel
+            value={label.qr_url}
+            title={label.display_name ?? undefined}
+            subtitle={label.serial}
+            caption={label.code128}
+          />
         )}
       </BottomSheet>
 

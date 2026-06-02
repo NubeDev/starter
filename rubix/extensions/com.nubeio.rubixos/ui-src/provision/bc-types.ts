@@ -83,6 +83,15 @@ export interface MutationResult {
   template?: unknown;
 }
 
+// Result of `bc_page_delete`: the page removed, plus how many widgets
+// were dropped and how many devices were detached (kept, → pending).
+export interface PageDeleteResult {
+  operation: string;
+  affected: number;
+  widgets_deleted: number;
+  devices_detached: number;
+}
+
 export interface DeviceRow {
   device_id: string;
   template: string;
