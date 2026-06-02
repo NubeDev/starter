@@ -36,28 +36,60 @@ export function Scanner({ onCode }: { onCode: (raw: string) => void }) {
   const [manual, setManual] = useState('')
 
   useEffect(() => {
+    // StrictMode (dev) mounts effects twice: mount → cleanup → mount. The
+    // camera stream starts asynchronously, so its `controls` resolve AFTER the
+    // first cleanup runs — the `if (stopped) c.stop()` below releases a stream
+    // that finishes opening post-teardown, so a second mount can't end up with
+    // two readers fighting over one <video> element.
     const reader = new BrowserMultiFormatReader()
     let stopped = false
     let controls: { stop: () => void } | null = null
 
+    const stop = () => {
+      stopped = true
+      controls?.stop()
+      controls = null
+    }
+
+    // After the stream is live, nudge the rear camera to keep refocusing on a
+    // close-held QR label. This is best-effort and additive — it never changes
+    // how the camera STARTS (that's decodeFromVideoDevice below, the path that
+    // works), only re-asserts continuous autofocus on the already-running track
+    // when the hardware reports it as supported. `focusMode` isn't in the
+    // standard MediaTrackConstraints type but Android Chromium honours it.
+    const enableAutofocus = () => {
+      const stream = videoRef.current?.srcObject
+      if (!(stream instanceof MediaStream)) return
+      const track = stream.getVideoTracks()[0]
+      if (!track?.getCapabilities) return
+      const caps = track.getCapabilities() as Record<string, unknown>
+      if (Array.isArray(caps.focusMode) && caps.focusMode.includes('continuous')) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        track.applyConstraints({ advanced: [{ focusMode: 'continuous' } as any] }).catch(() => {})
+      }
+    }
+
     reader
       .decodeFromVideoDevice(undefined, videoRef.current ?? undefined, (result) => {
         if (result && !stopped) {
-          stopped = true
-          controls?.stop()
           onCode(result.getText())
+          stop()
         }
       })
       .then((c) => {
         controls = c
-        if (stopped) c.stop()
+        if (stopped) {
+          // Torn down before the camera finished opening — release immediately.
+          c.stop()
+          return
+        }
+        enableAutofocus()
       })
-      .catch((e: unknown) => setCamError(describeCamError(e)))
+      .catch((e: unknown) => {
+        if (!stopped) setCamError(describeCamError(e))
+      })
 
-    return () => {
-      stopped = true
-      controls?.stop()
-    }
+    return stop
   }, [onCode])
 
   return (
