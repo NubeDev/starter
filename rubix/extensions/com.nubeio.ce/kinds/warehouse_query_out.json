@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WarehouseQueryOutput",
+  "description": "Result of a contributed warehouse_template read.",
+  "type": "object",
+  "required": ["template", "rows", "count"],
+  "properties": {
+    "template": { "type": "string" },
+    "rows": { "type": "array", "items": { "type": "object" } },
+    "count": { "type": "integer", "minimum": 0 }
+  },
+  "additionalProperties": false
+}

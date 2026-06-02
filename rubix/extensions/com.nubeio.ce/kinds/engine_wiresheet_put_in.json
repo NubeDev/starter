@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EngineWiresheetPutInput",
+  "description": "Push an edited node/edge graph back to a control engine, reprogramming it. The graph shape mirrors `engine_wiresheet_out`.",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string" },
+    "nodes": { "type": "array", "items": { "type": "object", "additionalProperties": true } },
+    "edges": { "type": "array", "items": { "type": "object", "additionalProperties": true } }
+  },
+  "required": ["device_id", "nodes", "edges"],
+  "additionalProperties": false
+}

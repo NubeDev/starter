@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeviceGetParams",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string" }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

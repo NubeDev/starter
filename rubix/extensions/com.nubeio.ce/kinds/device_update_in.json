@@ -1,0 +1,19 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeviceUpdateInput",
+  "description": "Update a control-engine row. `device_id` selects the row; remaining keys are the columns to set. `tenant_id` is bound by the host.",
+  "type": "object",
+  "properties": {
+    "device_id":   { "type": "string" },
+    "name":        { "type": "string" },
+    "description": { "type": "string" },
+    "engine_kind": { "type": "string" },
+    "ip":          { "type": "string" },
+    "port":        { "type": "integer", "minimum": 1, "maximum": 65535 },
+    "username":    { "type": "string" },
+    "password":    { "type": "string" },
+    "status":      { "type": "string" }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

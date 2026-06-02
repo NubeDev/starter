@@ -112,6 +112,7 @@ export interface LocationRow {
 export interface PageRow {
   page_id: string;
   site_id: string | null;
+  location_id: string | null;
   name: string;
   created_at: string;
 }

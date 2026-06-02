@@ -77,7 +77,9 @@ export function locationCreate(
   return mutate<MutationResult>(tool("bc_location_create"), { row });
 }
 
-export function pageCreate(row: { page_id: string; name: string }): Promise<MutationResult> {
+export function pageCreate(
+  row: { page_id: string; name: string; site_id?: string; location_id?: string },
+): Promise<MutationResult> {
   return mutate<MutationResult>(tool("bc_page_create"), { row });
 }
 
@@ -108,7 +110,7 @@ export function listLocations(
 }
 
 export function listPages(
-  params: { site_id?: string; limit?: number } = {},
+  params: { site_id?: string; location_id?: string; limit?: number } = {},
 ): Promise<ReadonlyArray<PageRow>> {
   return fetchTemplate<PageRow>(tool("bc_pages_list"), { limit: 200, ...params });
 }

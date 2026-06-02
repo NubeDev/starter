@@ -1,0 +1,79 @@
+/* Extension CSS isolation — see com.nubeio.rubixos/ui-src/app.css for
+ * the full rationale. The Vite PostCSS plugin prefixes every selector
+ * with `[data-ext-id="com.nubeio.ce"]` so the extension's Tailwind
+ * utilities only apply inside its own DOM subtree.
+ *
+ * `tailwindcss/theme` (reference) brings token names into the registry
+ * without emitting values (the host owns `:root`); `tailwindcss/
+ * utilities` emits the class rules. Preflight is skipped so we don't
+ * smash host element defaults.
+ */
+@import "tailwindcss/theme" theme(reference);
+@import "tailwindcss/utilities";
+
+/* React-Flow base styles for the wiresheet + the BaseNode visuals. */
+@import "@xyflow/react/dist/style.css";
+@import "@nube/starter-ui-flow/styles.css";
+
+@theme reference {
+  --color-background: initial;
+  --color-foreground: initial;
+  --color-card: initial;
+  --color-card-foreground: initial;
+  --color-popover: initial;
+  --color-popover-foreground: initial;
+  --color-primary: initial;
+  --color-primary-foreground: initial;
+  --color-secondary: initial;
+  --color-secondary-foreground: initial;
+  --color-muted: initial;
+  --color-muted-foreground: initial;
+  --color-accent: initial;
+  --color-accent-foreground: initial;
+  --color-destructive: initial;
+  --color-border: initial;
+  --color-input: initial;
+  --color-ring: initial;
+  --color-sidebar: initial;
+  --color-sidebar-foreground: initial;
+  --color-sidebar-primary: initial;
+  --color-sidebar-primary-foreground: initial;
+  --color-sidebar-accent: initial;
+  --color-sidebar-accent-foreground: initial;
+  --color-sidebar-border: initial;
+  --color-sidebar-ring: initial;
+
+  --radius-sm: initial;
+  --radius-md: initial;
+  --radius-lg: initial;
+  --radius-xl: initial;
+
+  --font-sans: initial;
+  --font-mono: initial;
+}
+
+/* Soft uppercase eyebrow label, matching the host's section headers. */
+.ext-eyebrow {
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-muted-foreground, #64748b);
+}
+
+/* Card primitive used by the device list + wiresheet chrome. */
+.ext-card {
+  border-radius: 12px;
+  background: var(--color-card, #ffffff);
+  border: 1px solid var(--color-border, rgba(15, 23, 42, 0.1));
+}
+
+/* Wiresheet canvas fills the page surface below the toolbar. */
+.ext-wiresheet {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 9rem);
+  min-height: 24rem;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--color-border, rgba(15, 23, 42, 0.1));
+}

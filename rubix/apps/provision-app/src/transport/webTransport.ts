@@ -43,7 +43,7 @@ export function createWebTransport(): Transport {
     // Prefer SAME-ORIGIN /api so the browser keeps the agent's session
     // cookie. The cookie is `SameSite=Lax` — a browser will not send it on a
     // cross-site fetch, so calling the agent's absolute origin (e.g.
-    // 127.0.0.1:8088) from a page on localhost:1420 authenticates login but
+    // 127.0.0.1:8088) from a page on localhost:1421 authenticates login but
     // then drops the cookie on every tool call ("no caller identity / system
     // frame" → 403). In dev, Vite proxies /api → the agent (vite.config.ts);
     // in prod the app is served same-origin by the agent. Only fall back to

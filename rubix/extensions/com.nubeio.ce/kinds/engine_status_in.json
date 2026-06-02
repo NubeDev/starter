@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EngineStatusInput",
+  "description": "Ping a registered control engine and report reachability. The engine is resolved from `ce_devices` by `device_id`.",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string" }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

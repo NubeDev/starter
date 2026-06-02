@@ -269,15 +269,18 @@ contributes:
         - { name: created_at,  type: "TIMESTAMPTZ", default: "now()" }
 
     - name: bc_pages
-      order_by: [site_id, page_id]
+      order_by: [site_id, location_id, page_id]
       columns:
         - { name: page_id,    type: "TEXT" }
-        # A page is a site's dashboard: it belongs to one site, so the
-        # client browses "Site → its pages". Nullable for pages created
-        # before this column existed (they read as unassigned).
-        - { name: site_id,    type: "TEXT",        default: "NULL" }
-        - { name: name,       type: "TEXT",        default: "NULL" }
-        - { name: created_at, type: "TIMESTAMPTZ", default: "now()" }
+        # A page is a dashboard that belongs to one site and (optionally)
+        # one location within it, so the client browses
+        # "Site → Location → its pages". Both ids are nullable: legacy
+        # pages predating these columns read as unassigned, and a page
+        # may be pinned to a site without a specific location.
+        - { name: site_id,     type: "TEXT",        default: "NULL" }
+        - { name: location_id, type: "TEXT",        default: "NULL" }
+        - { name: name,        type: "TEXT",        default: "NULL" }
+        - { name: created_at,  type: "TIMESTAMPTZ", default: "now()" }
 
     - name: bc_devices
       order_by: [site_id, device_id]

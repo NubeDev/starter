@@ -1,0 +1,13 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EngineStatusOutput",
+  "description": "Reachability of a control engine.",
+  "type": "object",
+  "required": ["device_id", "online"],
+  "properties": {
+    "device_id": { "type": "string" },
+    "online": { "type": "boolean" },
+    "version": { "type": ["string", "null"] }
+  },
+  "additionalProperties": true
+}

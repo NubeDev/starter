@@ -1,0 +1,44 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EngineWiresheetOutput",
+  "description": "A control-engine program shaped as a node/edge graph the wiresheet (React-Flow / BaseNode) can render.",
+  "type": "object",
+  "required": ["device_id", "nodes", "edges"],
+  "properties": {
+    "device_id": { "type": "string" },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id":    { "type": "string" },
+          "kind":  { "type": "string", "description": "Node-kind id in the BaseNode registry." },
+          "label": { "type": "string" },
+          "position": {
+            "type": "object",
+            "properties": { "x": { "type": "number" }, "y": { "type": "number" } }
+          },
+          "config": { "type": "object", "additionalProperties": true }
+        },
+        "required": ["id", "kind"],
+        "additionalProperties": true
+      }
+    },
+    "edges": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id":         { "type": "string" },
+          "source":     { "type": "string" },
+          "target":     { "type": "string" },
+          "sourceSlot": { "type": "string" },
+          "targetSlot": { "type": "string" }
+        },
+        "required": ["id", "source", "target"],
+        "additionalProperties": true
+      }
+    }
+  },
+  "additionalProperties": false
+}

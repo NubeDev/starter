@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "EngineWiresheetGetInput",
+  "description": "Fetch the current program from a control engine as a node/edge graph for the wiresheet canvas.",
+  "type": "object",
+  "properties": {
+    "device_id": { "type": "string" }
+  },
+  "required": ["device_id"],
+  "additionalProperties": false
+}

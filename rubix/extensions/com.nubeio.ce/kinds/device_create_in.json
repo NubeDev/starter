@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "DeviceCreateInput",
+  "description": "Register one control engine. `tenant_id` is bound by the host and cannot be supplied. `password` is stored as-is in this scaffold — a real build should pass a secret reference instead.",
+  "type": "object",
+  "properties": {
+    "device_id":   { "type": "string", "description": "Stable id for the engine row." },
+    "name":        { "type": "string" },
+    "description": { "type": "string" },
+    "engine_kind": { "type": "string", "description": "e.g. `niagara`, `sedona`." },
+    "ip":          { "type": "string", "description": "Host/IP of the control engine." },
+    "port":        { "type": "integer", "minimum": 1, "maximum": 65535, "default": 443 },
+    "username":    { "type": "string" },
+    "password":    { "type": "string" }
+  },
+  "required": ["device_id", "ip"],
+  "additionalProperties": false
+}

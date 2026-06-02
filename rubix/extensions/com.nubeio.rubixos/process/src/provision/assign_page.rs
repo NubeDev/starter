@@ -27,13 +27,18 @@ pub fn handle(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Value
     let device_id = take_str(params, "device_id", "bc_device_assign_page")?;
     let device = load_device(ctx, &device_id)?;
 
-    // The page may exist or be created on demand from `new_page`.
-    let page_id = placement::resolve_page_only(ctx, params, device.site_id.as_deref())?
-        .ok_or_else(|| {
-            Error::Validation(
-                "bc_device_assign_page: a `page_id` or `new_page.name` is required".into(),
-            )
-        })?;
+    // The page may exist or be created on demand from `new_page`. A new
+    // page inherits the device's site and location so it slots into the
+    // "Site → Location → its pages" tree.
+    let page_id = placement::resolve_page_only(
+        ctx,
+        params,
+        device.site_id.as_deref(),
+        device.location_id.as_deref(),
+    )?
+    .ok_or_else(|| {
+        Error::Validation("bc_device_assign_page: a `page_id` or `new_page.name` is required".into())
+    })?;
 
     // Re-derive the device's points from its template so widget slots
     // and titles match what a fresh provision would produce. Toggles are
@@ -58,11 +63,13 @@ pub fn handle(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Value
 }
 
 /// The device fields this verb needs: its template (to regenerate
-/// widgets), display name, and current site (a page belongs to a site).
+/// widgets), display name, and current site/location (an on-demand page
+/// inherits them).
 struct DeviceRef {
     template: String,
     name: String,
     site_id: Option<String>,
+    location_id: Option<String>,
 }
 
 /// Read one device row by id via the bundled list template, matching on
@@ -100,7 +107,13 @@ fn load_device(ctx: &RubixOsCtx, device_id: &str) -> starter_ext_sdk::Result<Dev
         .and_then(Value::as_str)
         .filter(|s| !s.is_empty())
         .map(str::to_owned);
-    Ok(DeviceRef { template, name, site_id })
+    let location_id = row
+        .0
+        .get("location_id")
+        .and_then(Value::as_str)
+        .filter(|s| !s.is_empty())
+        .map(str::to_owned);
+    Ok(DeviceRef { template, name, site_id, location_id })
 }
 
 /// Clear this device's existing widgets then insert the fresh set —

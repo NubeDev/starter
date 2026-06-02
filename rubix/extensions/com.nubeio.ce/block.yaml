@@ -1,0 +1,139 @@
+# `com.nubeio.ce` — Control-Engine device manager.
+#
+# CRUD over remote control engines (Niagara-kit / Sedona-style
+# flow-based runtimes). The operator registers an engine by its
+# connection details (IP, port, username, password), then opens a
+# wiresheet (React-Flow canvas built on `@nube/starter-ui-flow`'s
+# BaseNode) to remotely program it over the engine's REST API.
+#
+# Two halves:
+#
+#  - **Warehouse table** (`ce_devices`) — the catalog of registered
+#    engines. The host CREATEs it empty at boot via
+#    `boot::extension_tables` (prefixing `com_nubeio_ce__` and
+#    prepending `tenant_id TEXT`). The extension owns the write grant.
+#  - **REST client** — the extension process is the proxy between the
+#    browser and each control engine. The `ce_engine_*` tools forward
+#    a CRUD/wiresheet request to the engine named in the params over
+#    HTTP and return the engine's response. (Logic is stubbed — this
+#    scaffold only lays out the call surface.)
+#
+# Per SCOPE R8 the only dependency is `starter-ext-sdk`.
+
+id: com.nubeio.ce
+v: 1
+version: 0.1.0
+display_name: Nube-iO Control Engine
+runtime:
+  kind: process
+  bin: rubix-nubeio-ce-extension
+
+capabilities:
+  # The device catalog. CRUD on engine connection rows.
+  - kind: warehouse_write
+    tables:
+      - ce_devices
+  - kind: warehouse_read
+    tables:
+      - com_nubeio_ce__ce_devices
+
+contributes:
+  tools:
+    - id: com.nubeio.ce.echo
+      input_schema: kinds/echo_in.json
+      output_schema: kinds/echo_out.json
+      description_file: kinds/echo.md
+
+    # Browser-facing proxy over WarehouseReadHandle. Refuses any
+    # template outside this extension's namespace.
+    - id: com.nubeio.ce.warehouse_query
+      input_schema: kinds/warehouse_query_in.json
+      output_schema: kinds/warehouse_query_out.json
+      description_file: kinds/warehouse_query.md
+
+    # ----------------------------------------------------------------
+    # Device CRUD (the `ce_devices` catalog). Each tool writes one
+    # engine connection row. `tenant_id` is bound host-side.
+    # ----------------------------------------------------------------
+    - id: com.nubeio.ce.device_create
+      input_schema: kinds/device_create_in.json
+      output_schema: kinds/ce_write_out.json
+      description_file: kinds/device.md
+    - id: com.nubeio.ce.device_update
+      input_schema: kinds/device_update_in.json
+      output_schema: kinds/ce_write_out.json
+      description_file: kinds/device.md
+    - id: com.nubeio.ce.device_delete
+      input_schema: kinds/device_delete_in.json
+      output_schema: kinds/ce_write_out.json
+      description_file: kinds/device.md
+
+    # ----------------------------------------------------------------
+    # Control-engine REST proxy. The extension process holds the
+    # connection details and forwards a wiresheet read/write to the
+    # remote runtime over HTTP. Logic is stubbed in this scaffold.
+    # ----------------------------------------------------------------
+    - id: com.nubeio.ce.engine_status
+      input_schema: kinds/engine_status_in.json
+      output_schema: kinds/engine_status_out.json
+      description_file: kinds/engine.md
+    - id: com.nubeio.ce.engine_wiresheet_get
+      input_schema: kinds/engine_wiresheet_get_in.json
+      output_schema: kinds/engine_wiresheet_out.json
+      description_file: kinds/engine.md
+    - id: com.nubeio.ce.engine_wiresheet_put
+      input_schema: kinds/engine_wiresheet_put_in.json
+      output_schema: kinds/ce_write_out.json
+      description_file: kinds/engine.md
+
+  warehouse_tables:
+    # ------------------------------------------------------------------
+    # Registered control engines. One row per remote flow-runtime the
+    # operator can program. The host CREATEs this as
+    # `com_nubeio_ce__ce_devices` with `tenant_id TEXT` prepended at
+    # column 0; the extension never writes `tenant_id`.
+    #
+    # NOTE: `password` is stored here for the scaffold. A real build
+    # should hold a secret reference / vault handle, not the cleartext.
+    # ------------------------------------------------------------------
+    - name: ce_devices
+      order_by: [device_id]
+      columns:
+        - { name: device_id,   type: "TEXT" }
+        - { name: name,        type: "TEXT", default: "NULL" }
+        - { name: description, type: "TEXT", default: "NULL" }
+        - { name: engine_kind, type: "TEXT", default: "NULL" }
+        - { name: ip,          type: "TEXT" }
+        - { name: port,        type: "INT",  default: "443" }
+        - { name: username,    type: "TEXT", default: "NULL" }
+        - { name: password,    type: "TEXT", default: "NULL" }
+        - { name: status,      type: "TEXT", default: "'unknown'" }
+        - { name: created_at,  type: "TIMESTAMPTZ", default: "now()" }
+        - { name: updated_at,  type: "TIMESTAMPTZ", default: "now()" }
+
+  # Named warehouse-read templates. `sql_file` is captured verbatim
+  # and resolved by name at the host; `$caller_tenant_id` is bound
+  # from the operator session and cannot be spoofed by the caller.
+  warehouse_templates:
+    - name: com.nubeio.ce.devices_list
+      params_schema: kinds/devices_list_params.json
+      sql_file:      kinds/devices_list.sql
+      tables: [com_nubeio_ce__ce_devices]
+
+    - name: com.nubeio.ce.device_get
+      params_schema: kinds/device_get_params.json
+      sql_file:      kinds/device_get.sql
+      tables: [com_nubeio_ce__ce_devices]
+
+  # Module-Federation UI entry. The host serves `ui/remoteEntry.js`
+  # at `/api/v1/extensions/com.nubeio.ce/ui/*` and dynamic-imports it
+  # when the operator opens the extension or the matching slot renders.
+  ui:
+    entry: ui/remoteEntry.js
+    exposes:
+      - name: Main
+        module: "./Main"
+        slot: main
+      - name: NavTree
+        module: "./NavTree"
+        slot: sidebar-nav

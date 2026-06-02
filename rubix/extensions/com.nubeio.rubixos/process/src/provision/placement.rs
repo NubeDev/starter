@@ -19,7 +19,9 @@ use crate::provision::RubixOsCtx;
 pub fn resolve(ctx: &RubixOsCtx, params: &Value) -> starter_ext_sdk::Result<Placement> {
     let site_id = opt_str(params, "site_id");
     let location_id = resolve_location(ctx, params, site_id.as_deref())?;
-    let page_id = resolve_page(ctx, params, site_id.as_deref())?;
+    // A page on-demand-created here inherits the device's location, so
+    // the client can browse "Site → Location → its pages".
+    let page_id = resolve_page(ctx, params, site_id.as_deref(), location_id.as_deref())?;
     Ok(Placement {
         site_id,
         location_id,
@@ -57,6 +59,7 @@ fn resolve_page(
     ctx: &RubixOsCtx,
     params: &Value,
     site_id: Option<&str>,
+    location_id: Option<&str>,
 ) -> starter_ext_sdk::Result<Option<String>> {
     if let Some(id) = opt_str(params, "page_id") {
         return Ok(Some(id));
@@ -67,9 +70,11 @@ fn resolve_page(
     let page_id = slug_id("page", &name);
     let mut row = Map::new();
     row.insert("page_id".into(), json!(page_id));
-    // A page belongs to the site the device is being placed at, so the
-    // client can browse "Site → its pages".
+    // A page belongs to the site the device is being placed at and, when
+    // known, the location within it — so the client can browse
+    // "Site → Location → its pages".
     row.insert("site_id".into(), json!(site_id));
+    row.insert("location_id".into(), json!(location_id));
     row.insert("name".into(), json!(name));
     ctx.warehouse_write()
         .insert("bc_pages", vec![Row::from_map(row)])?;
@@ -77,14 +82,16 @@ fn resolve_page(
 }
 
 /// Resolve only the page (existing `page_id` or `new_page: { name }`),
-/// creating it on demand under `site_id`. Used by `bc_device_assign_page`
+/// creating it on demand under `site_id` (and `location_id`, when the
+/// caller knows the device's location). Used by `bc_device_assign_page`
 /// to place an already-commissioned device on a page after the fact.
 pub fn resolve_page_only(
     ctx: &RubixOsCtx,
     params: &Value,
     site_id: Option<&str>,
+    location_id: Option<&str>,
 ) -> starter_ext_sdk::Result<Option<String>> {
-    resolve_page(ctx, params, site_id)
+    resolve_page(ctx, params, site_id, location_id)
 }
 
 /// Read `{ name }` out of a `new_location` / `new_page` object.
