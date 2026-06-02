@@ -18,18 +18,10 @@ export default defineConfig({
     // change. (Dev-only server; not used in the bundled app.)
     host: true,
     allowedHosts: true,
-    // Proxy /api to the rubix-agent so the browser sees a SINGLE origin
-    // (localhost:1421). The agent's session cookie is `SameSite=Lax`, which
-    // a browser will not store or send on a cross-site fetch — so a
-    // cross-origin call (1421 → 127.0.0.1:8088) authenticates the login but
-    // drops the cookie on every subsequent tool call ("no caller identity").
-    // Same-origin via this proxy makes the cookie first-party and it sticks.
-    // Override the target with VITE_AGENT_PROXY when the agent runs elsewhere.
-    proxy: {
-      '/api': {
-        target: process.env.VITE_AGENT_PROXY ?? 'http://127.0.0.1:8088',
-        changeOrigin: true,
-      },
-    },
+    // No /api proxy: the web transport talks to the agent's absolute URL
+    // directly and authenticates with a Bearer token (see webTransport.ts), so
+    // there's no same-origin cookie to preserve. The agent's permissive CORS
+    // allows the cross-origin Authorization header. This is what lets the app
+    // reach a remote agent over the internet, not just one on this machine.
   },
 })

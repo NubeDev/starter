@@ -1,33 +1,46 @@
 import type { AuthUser, PingResult, QueueItem, Transport } from './transport'
 
-// Web/fetch implementation — talks to rubix-agent REST directly when NOT running
-// under Tauri. Carries the session cookie (credentials:'include') + the CSRF
-// token header on mutating calls. Read dedup + epoch-invalidation mirror the
-// extension's api.ts so a read after a write can never join a stale in-flight
-// request (the ~100ms read-after-write race).
+// Web/fetch implementation — talks to the rubix-agent REST API directly over
+// the network (LAN or internet), authenticating with a Bearer token.
+//
+// Why Bearer and not the session cookie: the agent's `starter_session` cookie
+// is `SameSite=Lax`, so a browser will NOT send it on a cross-site request. As
+// soon as the app and the agent live on different origins — which is the whole
+// point here, the phone talking to a remote agent — cookie auth is dead on
+// arrival (login succeeds, every later call drops the cookie → 401/403).
+//
+// The agent is built for exactly this: `POST /auth/token` mints a `sak_…`
+// Bearer (the documented "cookie-less counterpart of login — mobile, native
+// desktop, and CLI sign-in", 30-day TTL), and every protected route accepts
+// `Authorization: Bearer sak_…` with no cookie. So we mint a token at login,
+// persist it, and send it on every call against the absolute agent URL. No
+// proxy, no cookie, no CSRF (CSRF only guards cookie auth) — works over the air.
 
 const BASE_KEY = 'rbx.provision.baseUrl'
+const TOKEN_KEY = 'rbx.provision.token'
 const QUEUE_KEY = 'rbx.provision.queue'
 
-// Persist the agent base URL so reloads keep talking to the same host.
-function readBaseUrl(): string {
+function readStored(key: string): string {
   try {
-    return localStorage.getItem(BASE_KEY) ?? ''
+    return localStorage.getItem(key) ?? ''
   } catch {
     return ''
   }
 }
-function writeBaseUrl(url: string) {
+function writeStored(key: string, value: string) {
   try {
-    localStorage.setItem(BASE_KEY, url)
+    if (value) localStorage.setItem(key, value)
+    else localStorage.removeItem(key)
   } catch {
     /* ignore */
   }
 }
 
 export function createWebTransport(): Transport {
-  let baseUrl = readBaseUrl()
-  let csrfToken = ''
+  // Persist base URL + token so a reload keeps talking to the same agent
+  // without forcing the operator to re-enter credentials.
+  let baseUrl = readStored(BASE_KEY)
+  let token = readStored(TOKEN_KEY)
 
   // Coalesce concurrent identical reads onto one in-flight promise; the epoch
   // is part of the key so a post-write read can't reuse a pre-write request.
@@ -39,37 +52,20 @@ export function createWebTransport(): Transport {
     inFlight.clear()
   }
 
+  // Absolute URL against the configured agent. The agent serves the API under
+  // `/api/v1`; healthz lives at the host root.
   function url(path: string): string {
-    // Prefer SAME-ORIGIN /api so the browser keeps the agent's session
-    // cookie. The cookie is `SameSite=Lax` — a browser will not send it on a
-    // cross-site fetch, so calling the agent's absolute origin (e.g.
-    // 127.0.0.1:8088) from a page on localhost:1421 authenticates login but
-    // then drops the cookie on every tool call ("no caller identity / system
-    // frame" → 403). In dev, Vite proxies /api → the agent (vite.config.ts);
-    // in prod the app is served same-origin by the agent. Only fall back to
-    // an absolute base if one is set AND it already matches the page origin.
     const root = baseUrl.replace(/\/+$/, '')
-    const sameOrigin =
-      typeof window !== 'undefined' && root && root === window.location.origin
-    if (sameOrigin) return `${root}${path}`
-    return path
+    return `${root}${path}`
   }
 
-  async function request<T>(path: string, init: RequestInit, isMutation: boolean): Promise<T> {
+  async function request<T>(path: string, init: RequestInit): Promise<T> {
     const headers = new Headers(init.headers)
     headers.set('accept', 'application/json')
     if (init.body) headers.set('content-type', 'application/json')
-    if (isMutation && csrfToken) headers.set('X-CSRF-Token', csrfToken)
+    if (token) headers.set('authorization', `Bearer ${token}`)
 
-    const res = await fetch(url(path), {
-      ...init,
-      headers,
-      credentials: 'include',
-    })
-
-    // Capture a freshly-minted CSRF token if the agent rotates it via header.
-    const rotated = res.headers.get('X-CSRF-Token')
-    if (rotated) csrfToken = rotated
+    const res = await fetch(url(path), { ...init, headers })
 
     const text = await res.text()
     let parsed: unknown
@@ -79,6 +75,12 @@ export function createWebTransport(): Transport {
       parsed = text
     }
     if (!res.ok) {
+      // A stale/expired token (30-day TTL) shows up as 401 — drop it so the
+      // app falls back to the Connect screen instead of looping on a dead token.
+      if (res.status === 401) {
+        token = ''
+        writeStored(TOKEN_KEY, '')
+      }
       const msg =
         parsed && typeof parsed === 'object' && parsed && 'error' in parsed
           ? String((parsed as { error: unknown }).error)
@@ -91,11 +93,12 @@ export function createWebTransport(): Transport {
   return {
     kind: 'web',
 
+    savedBaseUrl() {
+      return baseUrl
+    },
+
     async ping(nextBase): Promise<PingResult> {
-      // `/healthz` lives at the agent host ROOT, not under `/api/v1`.
-      // Same-origin/prod: hit `${root}/healthz`. In browser dev the Vite
-      // proxy only forwards `/api`, so a bare `/healthz` won't reach the
-      // agent — but the web build is not the mobile target this is for.
+      // `/healthz` lives at the agent host ROOT, not under `/api/v1`. No auth.
       const root = nextBase.replace(/\/+$/, '')
       const target = root ? `${root}/healthz` : '/healthz'
       const ctrl = new AbortController()
@@ -116,26 +119,28 @@ export function createWebTransport(): Transport {
 
     async login(nextBase, email, password) {
       baseUrl = nextBase
-      writeBaseUrl(nextBase)
-      const out = await request<{ user?: AuthUser; csrf_token?: string } & AuthUser>(
-        '/api/v1/auth/login',
-        { method: 'POST', body: JSON.stringify({ email, password }) },
-        true,
-      )
-      if (out.csrf_token) csrfToken = out.csrf_token
+      writeStored(BASE_KEY, nextBase)
+      // Mint a Bearer token. This is the cookie-less sign-in path; the response
+      // carries the `sak_…` plaintext exactly once, so we persist it now.
+      const out = await request<{ token: string; expires_at?: string }>('/api/v1/auth/token', {
+        method: 'POST',
+        body: JSON.stringify({ email, password }),
+      })
+      token = out.token
+      writeStored(TOKEN_KEY, token)
       invalidateReads()
-      return out.user ?? (out as AuthUser)
+      // `/auth/token` returns only the token; fetch the principal for the UI.
+      const user = await this.me()
+      if (!user) throw new Error('login succeeded but identity lookup failed')
+      return user
     },
 
     async me() {
-      if (!baseUrl) return null
+      if (!baseUrl || !token) return null
       try {
-        const out = await request<{ user?: AuthUser; csrf_token?: string } & AuthUser>(
-          '/api/v1/auth/me',
-          { method: 'GET' },
-          false,
-        )
-        if (out.csrf_token) csrfToken = out.csrf_token
+        const out = await request<{ user?: AuthUser } & AuthUser>('/api/v1/auth/me', {
+          method: 'GET',
+        })
         return out.user ?? (out as AuthUser)
       } catch {
         return null
@@ -143,12 +148,12 @@ export function createWebTransport(): Transport {
     },
 
     async logout() {
-      try {
-        await request<void>('/api/v1/auth/logout', { method: 'POST' }, true)
-      } finally {
-        csrfToken = ''
-        invalidateReads()
-      }
+      // Bearer tokens are stateless on the client side; clearing the stored
+      // token signs this device out. (The token remains valid server-side until
+      // its TTL — there is no per-token revoke route exposed here.)
+      token = ''
+      writeStored(TOKEN_KEY, '')
+      invalidateReads()
     },
 
     dispatch<T>(toolId: string, params: unknown, opts?: { fresh?: boolean }) {
@@ -158,12 +163,7 @@ export function createWebTransport(): Transport {
         const existing = inFlight.get(key)
         if (existing) return existing as Promise<T>
       }
-      const p = request<T>(
-        `/api/v1/tools/${toolId}`,
-        { method: 'POST', body },
-        // a tool call is a potential mutation; send CSRF defensively
-        true,
-      ).finally(() => {
+      const p = request<T>(`/api/v1/tools/${toolId}`, { method: 'POST', body }).finally(() => {
         if (inFlight.get(key) === p) inFlight.delete(key)
       })
       if (!opts?.fresh) inFlight.set(key, p)
