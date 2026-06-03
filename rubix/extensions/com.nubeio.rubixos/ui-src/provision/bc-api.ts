@@ -113,6 +113,15 @@ export function listDevices(
   return fetchTemplate<DeviceRow>(tool("bc_devices_list"), params);
 }
 
+// Read a single device by id — the R in CRUD. Returns the full row
+// (incl. `default_ip` / `hw_rev`, which the list projection omits), or
+// null when no device matches in the caller's tenant.
+export function getDevice(device_id: string): Promise<DeviceRow | null> {
+  return fetchTemplate<DeviceRow>(tool("bc_device_get"), { device_id }).then(
+    (rows) => rows[0] ?? null,
+  );
+}
+
 export function listSites(limit = 200): Promise<ReadonlyArray<SiteRow>> {
   return fetchTemplate<SiteRow>(tool("bc_sites_list"), { limit });
 }

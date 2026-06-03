@@ -210,6 +210,15 @@ pub struct RubixCapabilityFactory {
     /// substrate's fail-closed `StubAuthz`. Set via
     /// [`Self::with_authz_engine`].
     authz_engine: Option<Arc<dyn PolicyEngine>>,
+    /// v3 WarehouseWriter chokepoint parts. When both are `Some`, the
+    /// per-call [`RubixWarehouseWriteBackend`] is built with
+    /// [`RubixWarehouseWriteBackend::with_writer`], so every successful
+    /// insert/update/delete fires the deduped cache-invalidation tags
+    /// for the tables it touched. `None` (the default) leaves writes
+    /// best-effort — cached reads then serve stale rows until TTL. Set
+    /// via [`Self::with_writer_chokepoint`].
+    writer_registry: Option<Arc<starter_cache::WriterTagRegistry>>,
+    writer_invalidator: Option<Arc<dyn starter_cache::Invalidator>>,
 }
 
 impl std::fmt::Debug for RubixCapabilityFactory {
@@ -242,7 +251,27 @@ impl RubixCapabilityFactory {
             extension_registry: None,
             dashboard_store: None,
             authz_engine: None,
+            writer_registry: None,
+            writer_invalidator: None,
         }
+    }
+
+    /// Attach the v3 WarehouseWriter chokepoint parts (the bucket-tag
+    /// registry derived from cache specs + the shared cache
+    /// invalidator). Builder-style. Once installed, every write through
+    /// [`CapabilityFactory::warehouse_write`] invalidates the cached
+    /// reads for the tables it touched, so a re-fetch right after a
+    /// create/update/delete observes the new state instead of a stale
+    /// cache entry. Both parts are required; pass the same instances the
+    /// dispatcher cache uses so writes and reads share one cache.
+    pub fn with_writer_chokepoint(
+        mut self,
+        registry: Arc<starter_cache::WriterTagRegistry>,
+        invalidator: Arc<dyn starter_cache::Invalidator>,
+    ) -> Self {
+        self.writer_registry = Some(registry);
+        self.writer_invalidator = Some(invalidator);
+        self
     }
 
     /// Attach a [`DashboardStore`]. Once installed,
@@ -414,13 +443,22 @@ impl starter_ext_server::CapabilityFactory for RubixCapabilityFactory {
             self.extension_registry.as_deref(),
             extension,
         ));
-        Arc::new(RubixWarehouseWriteBackend::new(
+        let mut backend = RubixWarehouseWriteBackend::new(
             self.client.clone(),
             tenant_id,
             extension.clone(),
             granted_tables,
             table_specs,
-        ))
+        );
+        // v3 — attach the cache-invalidation chokepoint when the host
+        // wired it (so writes drop the cached reads they invalidate).
+        if let (Some(reg), Some(inv)) = (
+            self.writer_registry.as_ref(),
+            self.writer_invalidator.as_ref(),
+        ) {
+            backend = backend.with_writer(reg.clone(), inv.clone());
+        }
+        Arc::new(backend)
     }
 
     fn dashboard(

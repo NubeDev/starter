@@ -180,6 +180,38 @@ impl RubixWarehouseWriteBackend {
             })
         })
     }
+
+    /// Fire a blanket table-level cache invalidation after a successful
+    /// `update`/`delete`. `insert` has its own dimension-aware path (it
+    /// holds full rows); a delete only has key values and an update may
+    /// touch arbitrary columns, so both just drop *every* cached entry
+    /// tagged for the table — which is all the v0 opt-in cache
+    /// (`invalidate_on.tables`, table-level only) consumes. A no-op when
+    /// `rows == 0` (nothing changed) or no invalidator is wired
+    /// (host-internal / v0 callers). Without this, a cached read served
+    /// the pre-mutation row for the rest of its TTL — i.e. an
+    /// update/delete looked like it "didn't work" until the cache aged
+    /// out. See `fe-cache-opt-in` and `cache-v0-progress`.
+    fn invalidate_table(&self, full_table: &str, rows: u64) {
+        if rows == 0 {
+            return;
+        }
+        let (Some(reg), Some(inv)) = (
+            self.writer_registry.as_ref(),
+            self.writer_invalidator.as_ref(),
+        ) else {
+            return;
+        };
+        use starter_cache::WarehouseWriter as _;
+        let writer = starter_cache::DefaultWarehouseWriter::new(inv.clone(), (**reg).clone());
+        let row = starter_cache::WriteRow::table_only(full_table);
+        tokio::task::block_in_place(|| {
+            tokio::runtime::Handle::current().block_on(async move {
+                writer.enqueue_many(vec![row]).await;
+                writer.commit().await;
+            });
+        });
+    }
 }
 
 impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
@@ -431,6 +463,10 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
             })?;
             total_affected += affected;
         }
+        // v3 — drop cached reads for this table so a re-fetch right
+        // after the write observes the new rows, not the pre-update
+        // cache (table-level; mirrors `insert`'s chokepoint).
+        self.invalidate_table(&full_table, total_affected);
         Ok(total_affected)
     }
 
@@ -490,7 +526,7 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
             .map_err(|e| Error::extension_internal(format!("bind tenant_id: {e}")))?;
 
         let pool = self.client.pool().clone();
-        tokio::task::block_in_place(|| {
+        let affected = tokio::task::block_in_place(|| {
             tokio::runtime::Handle::current().block_on(async move {
                 sqlx::query_with::<Postgres, _>(&sql, args)
                     .execute(&pool)
@@ -498,7 +534,11 @@ impl WarehouseWriteBackend for RubixWarehouseWriteBackend {
                     .map(|r| r.rows_affected())
                     .map_err(|e| Error::extension_internal(format!("DELETE failed: {e}")))
             })
-        })
+        })?;
+        // v3 — drop cached reads for this table so a re-fetch right
+        // after the delete no longer returns the removed rows.
+        self.invalidate_table(&full_table, affected);
+        Ok(affected)
     }
 }
 

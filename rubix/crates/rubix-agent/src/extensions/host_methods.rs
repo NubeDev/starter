@@ -103,6 +103,25 @@ pub struct RubixHostMethods {
     /// doesn't land on every boot for hosts whose extensions
     /// never declare `http_out`.
     http_client: Arc<std::sync::OnceLock<reqwest::Client>>,
+    /// Optional v3 WarehouseWriter chokepoint parts. Set-once via
+    /// [`Self::install_writer_chokepoint`] (installed after the cache
+    /// layer's writer registry + invalidator exist at boot). When set,
+    /// the per-call write backend minted for `warehouse.{write,update,
+    /// delete}` fires cache-invalidation tags so a cached read taken
+    /// right after a process extension's write observes the new state
+    /// instead of the stale pre-write entry. When unset, writes stay
+    /// best-effort (cached reads serve stale until TTL).
+    writer_chokepoint: Arc<std::sync::OnceLock<WriterChokepoint>>,
+}
+
+/// The two parts a write backend needs to fire cache invalidation:
+/// the bucket-tag registry (derived from cache specs) and the shared
+/// invalidator the read cache also consults. Bundled so the optional
+/// field is a single set-once move.
+#[derive(Clone)]
+struct WriterChokepoint {
+    registry: Arc<starter_cache::WriterTagRegistry>,
+    invalidator: Arc<dyn starter_cache::Invalidator>,
 }
 
 /// Warehouse plumbing the handler needs to mint a per-call
@@ -146,6 +165,33 @@ impl RubixHostMethods {
             extension_registry: Arc::new(std::sync::OnceLock::new()),
             secrets: Arc::new(std::sync::OnceLock::new()),
             http_client: Arc::new(std::sync::OnceLock::new()),
+            writer_chokepoint: Arc::new(std::sync::OnceLock::new()),
+        }
+    }
+
+    /// Install the v3 WarehouseWriter chokepoint. Set-once. Pass the
+    /// same `WriterTagRegistry` + `Invalidator` the dispatcher cache
+    /// uses so writes and reads share one invalidation surface. Once
+    /// installed, `warehouse.{write,update,delete}` drop the cached
+    /// reads for the tables they touch.
+    pub fn install_writer_chokepoint(
+        &self,
+        registry: Arc<starter_cache::WriterTagRegistry>,
+        invalidator: Arc<dyn starter_cache::Invalidator>,
+    ) {
+        let _ = self.writer_chokepoint.set(WriterChokepoint {
+            registry,
+            invalidator,
+        });
+    }
+
+    /// Attach the installed writer chokepoint to a freshly-minted write
+    /// backend, if one is wired. No-op (returns the backend unchanged)
+    /// when the host didn't install it.
+    fn attach_writer(&self, backend: RubixWarehouseWriteBackend) -> RubixWarehouseWriteBackend {
+        match self.writer_chokepoint.get() {
+            Some(cp) => backend.with_writer(cp.registry.clone(), cp.invalidator.clone()),
+            None => backend,
         }
     }
 
@@ -300,13 +346,13 @@ impl HostMethodHandler for RubixHostMethods {
                 let tenant = caller.and_then(|c| c.tenant_id.clone());
                 let granted_tables = warehouse_write_grant(registry, extension);
                 let table_specs = Arc::new(warehouse_tables_for(registry, extension));
-                let backend = RubixWarehouseWriteBackend::new(
+                let backend = self.attach_writer(RubixWarehouseWriteBackend::new(
                     wh.client,
                     tenant,
                     extension.clone(),
                     granted_tables,
                     table_specs,
-                );
+                ));
                 let table = req.table.clone();
                 let rows = req.rows;
                 let inserted = tokio::task::spawn_blocking(move || backend.insert(&table, rows))
@@ -329,13 +375,13 @@ impl HostMethodHandler for RubixHostMethods {
                 let tenant = caller.and_then(|c| c.tenant_id.clone());
                 let granted_tables = warehouse_write_grant(registry, extension);
                 let table_specs = Arc::new(warehouse_tables_for(registry, extension));
-                let backend = RubixWarehouseWriteBackend::new(
+                let backend = self.attach_writer(RubixWarehouseWriteBackend::new(
                     wh.client,
                     tenant,
                     extension.clone(),
                     granted_tables,
                     table_specs,
-                );
+                ));
                 let table = req.table.clone();
                 let key_column = req.key_column.clone();
                 let rows = req.rows;
@@ -360,13 +406,13 @@ impl HostMethodHandler for RubixHostMethods {
                 let tenant = caller.and_then(|c| c.tenant_id.clone());
                 let granted_tables = warehouse_write_grant(registry, extension);
                 let table_specs = Arc::new(warehouse_tables_for(registry, extension));
-                let backend = RubixWarehouseWriteBackend::new(
+                let backend = self.attach_writer(RubixWarehouseWriteBackend::new(
                     wh.client,
                     tenant,
                     extension.clone(),
                     granted_tables,
                     table_specs,
-                );
+                ));
                 let table = req.table.clone();
                 let key_column = req.key_column.clone();
                 let keys = req.keys;

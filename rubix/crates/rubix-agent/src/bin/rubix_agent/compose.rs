@@ -198,12 +198,6 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
                     host_methods.install_event_bus(event_bus.clone());
                 }
                 admin_state = admin_state.with_templates(template_registry.clone());
-                let factory: Arc<dyn CapabilityFactory> = Arc::new(
-                    RubixCapabilityFactory::new(wh_client, template_registry, event_bus.clone())
-                        .with_extension_registry(bundle.registry.clone())
-                        .with_dashboard_store(dashboard_store)
-                        .with_authz_engine(engine.clone()),
-                );
 
                 // Cache layer. Per-tenant cap defaults to 10k
                 // entries; an operator can override with
@@ -350,9 +344,34 @@ pub(crate) async fn compose_and_serve(svc: BootedServices, runtime_canary: Canar
                     }
                     std::sync::Arc::new(starter_cache::WriterTagRegistry::from_specs(specs))
                 };
-                let _ = writer_registry; // wired via factory in a
-                                         // follow-up; surface
-                                         // available to host paths.
+
+                // v3 — hand the chokepoint to the process-extension host
+                // methods too. Process extensions issue warehouse writes
+                // over JSON-RPC (`warehouse.{write,update,delete}` in
+                // `RubixHostMethods`), which mint their own write backend
+                // and never touch the capability factory below — so they
+                // need the registry + invalidator wired here as well, or
+                // their writes won't invalidate cached reads.
+                if let Some(host_methods) = ext_host_methods.as_ref() {
+                    host_methods
+                        .install_writer_chokepoint(writer_registry.clone(), invalidator.clone());
+                }
+
+                // Capability factory. Built here (rather than earlier)
+                // so it can take the v3 WarehouseWriter chokepoint parts
+                // — the `writer_registry` above + the shared cache
+                // `invalidator` — and hand them to every per-call
+                // warehouse_write backend. Without this, extension
+                // writes never invalidate cached reads, so a re-fetch
+                // right after a create/update/delete serves the stale
+                // pre-write row until the entry's TTL expires.
+                let factory: Arc<dyn CapabilityFactory> = Arc::new(
+                    RubixCapabilityFactory::new(wh_client, template_registry, event_bus.clone())
+                        .with_extension_registry(bundle.registry.clone())
+                        .with_dashboard_store(dashboard_store)
+                        .with_authz_engine(engine.clone())
+                        .with_writer_chokepoint(writer_registry.clone(), invalidator.clone()),
+                );
 
                 // v3 — fire cold-start warming if requested. Runs
                 // once at boot; never blocks the rest of startup.

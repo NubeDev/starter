@@ -42689,6 +42689,11 @@ function labelRender(device_id) {
 function listDevices(params = {}) {
   return fetchTemplate(tool("bc_devices_list"), params);
 }
+function getDevice(device_id) {
+  return fetchTemplate(tool("bc_device_get"), { device_id }).then(
+    (rows) => rows[0] ?? null
+  );
+}
 function listSites(limit = 200) {
   return fetchTemplate(tool("bc_sites_list"), { limit });
 }
@@ -44696,11 +44701,29 @@ function DevicesTab() {
     setError(null);
     listDevices({ site_id: site || void 0, status: status || void 0, limit: 500 }).then(setRows).catch((e) => setError(e instanceof Error ? e.message : String(e))).finally(() => setLoading(false));
   }, [site, status]);
+  const poll = React.useCallback(() => {
+    listDevices({ site_id: site || void 0, status: status || void 0, limit: 500 }).then(setRows).catch(() => void 0);
+  }, [site, status]);
   React.useEffect(load, [load, refresh]);
   React.useEffect(() => {
     listSites().then(setSites).catch(() => setSites([]));
   }, [refresh]);
-  const filtered = rows.filter((r) => {
+  React.useEffect(() => {
+    const busy = () => document.hidden || editing !== null || placing !== null;
+    const id = window.setInterval(() => {
+      if (!busy()) poll();
+    }, 5e3);
+    const onVisible = () => {
+      if (!busy()) poll();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      window.clearInterval(id);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, [poll, editing, placing]);
+  const visible = rows.filter((r) => status !== "" || r.status.toLowerCase() !== "decommissioned");
+  const filtered = visible.filter((r) => {
     if (!q.trim()) return true;
     const hay = `${r.name ?? ""} ${r.device_id} ${r.template} ${r.address ?? ""}`.toLowerCase();
     return hay.includes(q.trim().toLowerCase());
@@ -44709,14 +44732,14 @@ function DevicesTab() {
     let connected = 0;
     let syncing = 0;
     let alerts = 0;
-    for (const r of rows) {
+    for (const r of visible) {
       const t = statusTone(r.status);
       if (t.dot === "bg-emerald-500") connected += 1;
       else if (t.dot === "bg-amber-500") syncing += 1;
       else if (t.dot === "bg-rose-500") alerts += 1;
     }
     return { connected, syncing, alerts };
-  }, [rows]);
+  }, [visible]);
   const saveRename = (id) => {
     deviceUpdate({ device_id: id, name: editName.trim() }).then(() => {
       setEditing(null);
@@ -44811,6 +44834,10 @@ function DevicesTab() {
                 /* @__PURE__ */ jsx(MapPin, { className: "size-4" }),
                 " Place on page"
               ] }) }) : null,
+              /* @__PURE__ */ jsx("a", { href: deviceHref(r.device_id), "aria-label": "See device", title: "See", onClick: (e) => {
+                e.preventDefault();
+                gotoDevice(r.device_id);
+              }, className: "cursor-pointer rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx(Eye, { className: "size-4" }) }),
               /* @__PURE__ */ jsx("button", { type: "button", "aria-label": "Rename device", title: "Rename", onClick: () => {
                 setEditing(r.device_id);
                 setEditName(r.name ?? "");
@@ -44828,7 +44855,7 @@ function DevicesTab() {
       /* @__PURE__ */ jsx(StatTile, { icon: Wifi, label: "Connected", value: kpis.connected, tone: "bg-emerald-500/10 text-emerald-400" }),
       /* @__PURE__ */ jsx(StatTile, { icon: RefreshCw, label: "Syncing", value: kpis.syncing, tone: "bg-amber-500/10 text-amber-400" }),
       /* @__PURE__ */ jsx(StatTile, { icon: TriangleAlert, label: "Alerts", value: kpis.alerts, tone: "bg-rose-500/10 text-rose-400" }),
-      /* @__PURE__ */ jsx(StatTile, { icon: RadioTower, label: "Devices", value: rows.length, tone: "bg-primary/10 text-primary" })
+      /* @__PURE__ */ jsx(StatTile, { icon: RadioTower, label: "Devices", value: visible.length, tone: "bg-primary/10 text-primary" })
     ] }),
     label ? /* @__PURE__ */ jsx(LabelDialog, { deviceId: label, onClose: () => setLabel(null) }) : null
   ] });
@@ -46132,9 +46159,9 @@ function DevicePage({ deviceId }) {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    listDevices({ limit: 1e3 }).then((rows) => {
+    getDevice(deviceId).then((row) => {
       if (cancelled) return;
-      setDevice(rows.find((r) => r.device_id === deviceId) ?? null);
+      setDevice(row);
     }).catch((e) => !cancelled && setError(e instanceof Error ? e.message : String(e))).finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
@@ -46220,6 +46247,8 @@ function DevicePage({ deviceId }) {
             /* @__PURE__ */ jsx(Spec, { label: "Template", value: device.template, mono: true }),
             /* @__PURE__ */ jsx(Spec, { label: "Network", value: device.network ?? "—", mono: true }),
             /* @__PURE__ */ jsx(Spec, { label: "Address", value: device.address ?? "—", mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "Default IP", value: device.default_ip ?? "—", mono: true }),
+            /* @__PURE__ */ jsx(Spec, { label: "HW rev", value: device.hw_rev ?? "—", mono: true }),
             /* @__PURE__ */ jsx(Spec, { label: "Status", value: device.status }),
             /* @__PURE__ */ jsx(Spec, { label: "Site", value: device.site_id ?? "Unassigned", mono: true }),
             /* @__PURE__ */ jsx(Spec, { label: "Page", value: device.page_id ?? "—", mono: true }),
@@ -46344,7 +46373,7 @@ function AdminPanel({ initial }) {
   ] });
 }
 
-const RUBIXOS_BUILD_STAMP = `build-${"2026-06-02T07:20:34.237Z"}`;
+const RUBIXOS_BUILD_STAMP = `build-${"2026-06-03T08:08:37.663Z"}`;
 if (typeof window !== "undefined") {
   console.info("[com.nubeio.rubixos] bundle loaded —", RUBIXOS_BUILD_STAMP);
   window.__rubixosBuild = RUBIXOS_BUILD_STAMP;

@@ -6,6 +6,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:provision_app/core/api/bc_api.dart';
 import 'package:provision_app/core/network/credential_store.dart';
 import 'package:provision_app/core/network/transport.dart';
+import 'package:provision_app/features/scan/domain/build_add_url.dart';
 
 /// LIVE integration test for the REST client — drives the REAL [RubixTransport]
 /// and [BcApi] against a running rubix-agent, with no UI and no Flutter plugins
@@ -129,5 +130,36 @@ void main() {
     expect(raw.containsKey('rows'), isTrue,
         reason: 'envelope missing "rows" — BcApi._query reads res["rows"]');
     expect(raw['rows'], isA<List<dynamic>>());
+  });
+
+  // Regression for the "Pick a type → Use this type" crash: bc_decode returns
+  // the template's `widget_group` as a JSON object (or null), which the client
+  // model used to (mis)type as String — `_JsonMap is not a subtype of String?`.
+  // This replays the exact TypePicker flow: list templates, synthesise the
+  // canonical add-URL, then decode it.
+  test('bc_decode parses a synthesised type-picker URL (widget_group object)',
+      () async {
+    await transport.login(_baseUrl, _email, _password);
+
+    final templates = await bc.templatesList();
+    // ignore: avoid_print
+    print('TEMPLATES count=${templates.length}');
+    expect(templates, isNotEmpty,
+        reason: 'no templates to pick from at $_baseUrl');
+
+    final t = templates.first;
+    final url = buildAddUrl(id: 'TEST-0001', model: t.template, network: t.network);
+    // ignore: avoid_print
+    print('DECODE url=$url');
+
+    // The actual bug: this fromJson used to throw on the widget_group object.
+    final id = await bc.decode(url);
+    // ignore: avoid_print
+    print('DECODED id=${id.id} model=${id.model} '
+        'template="${id.template.displayName}" '
+        'widgetGroup=${id.template.widgetGroup}');
+
+    expect(id.model, t.template);
+    expect(id.template.displayName, isNotEmpty);
   });
 }

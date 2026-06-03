@@ -5,7 +5,7 @@
 import * as React from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { ArrowLeft, Check, Copy, QrCode, Radio } from "lucide-react";
-import { listDevices } from "../bc-api";
+import { getDevice } from "../bc-api";
 import { deviceShareUrl, gotoDevicesList } from "../nav";
 import { statusTone } from "../status";
 import type { DeviceRow } from "../bc-types";
@@ -23,11 +23,12 @@ export function DevicePage({ deviceId }: { deviceId: string }): React.ReactEleme
     let cancelled = false;
     setLoading(true);
     setError(null);
-    // No single-device read tool; filter the list (bounded, cheap).
-    listDevices({ limit: 1000 })
-      .then((rows) => {
+    // Single-device read (R of CRUD) — fetches just this row by id
+    // rather than listing the fleet and filtering client-side.
+    getDevice(deviceId)
+      .then((row) => {
         if (cancelled) return;
-        setDevice(rows.find((r) => r.device_id === deviceId) ?? null);
+        setDevice(row);
       })
       .catch((e: unknown) => !cancelled && setError(e instanceof Error ? e.message : String(e)))
       .finally(() => !cancelled && setLoading(false));
@@ -117,6 +118,8 @@ export function DevicePage({ deviceId }: { deviceId: string }): React.ReactEleme
               <Spec label="Template" value={device.template} mono />
               <Spec label="Network" value={device.network ?? "—"} mono />
               <Spec label="Address" value={device.address ?? "—"} mono />
+              <Spec label="Default IP" value={device.default_ip ?? "—"} mono />
+              <Spec label="HW rev" value={device.hw_rev ?? "—"} mono />
               <Spec label="Status" value={device.status} />
               <Spec label="Site" value={device.site_id ?? "Unassigned"} mono />
               <Spec label="Page" value={device.page_id ?? "—"} mono />

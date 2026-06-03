@@ -496,6 +496,11 @@ contributes:
       sql_file:      kinds/bc_devices_list.sql
       tables: [com_nubeio_rubixos__bc_devices]
 
+    - name: com.nubeio.rubixos.bc_device_get
+      params_schema: kinds/bc_device_get_params.json
+      sql_file:      kinds/bc_device_get.sql
+      tables: [com_nubeio_rubixos__bc_devices]
+
     - name: com.nubeio.rubixos.bc_points_by_device
       params_schema: kinds/bc_points_by_device_params.json
       sql_file:      kinds/bc_points_by_device.sql

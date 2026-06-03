@@ -103,6 +103,10 @@ export interface DeviceRow {
   page_id: string | null;
   status: string;
   provisioned_at: string | null;
+  // Only projected by the single-device read (`bc_device_get`); the
+  // lighter `bc_devices_list` omits them, so they're optional here.
+  default_ip?: string | null;
+  hw_rev?: string | null;
 }
 
 export interface SiteRow {

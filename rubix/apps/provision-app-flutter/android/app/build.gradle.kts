@@ -7,8 +7,13 @@ plugins {
 
 android {
     namespace = "com.nubeio.provision_app"
-    compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // Pinned to 36 (above flutter.compileSdkVersion = 35): mobile_scanner must
+    // be compiled against Android SDK 36. SDKs are backward compatible.
+    compileSdk = 36
+    // Pinned above flutter.ndkVersion (26.3.x): path_provider_android and
+    // shared_preferences_android require NDK 27.0.12077973. NDKs are backward
+    // compatible, so the highest required version wins.
+    ndkVersion = "27.0.12077973"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
@@ -24,7 +29,9 @@ android {
         applicationId = "com.nubeio.provision_app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // Pinned to 23 (above flutter.minSdkVersion = 21): mobile_scanner
+        // declares minSdk 23.
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
